@@ -272,8 +272,14 @@ and no knob lowers it, and the decoration severity of #995 never softens it. The
 is the one above, so a group tint, a gradient, a row band, a region-frame fill or a flat
 band under the label is read as completed, and a label whose ink is too close to what
 lies beneath it is a gate error. A label that carries its own box (a label chip, an
-opaque Rect one paint order below it) is judged on that box; a translucent chip or host
-is judged on its composited ground (#1013, below). A Rect with a
+opaque Rect one paint order below it) is judged on that box; a nonrect chip
+is projected from Layout-completed Symbol parts before its Text (#1286).
+The first part keeps `chip:<text-placement-id>` and later parts use `:partN`;
+all parts retain their whole-chip Layout owner/visible collision frame.
+Its actual nonzero fill paths, not the Symbol envelope, decide coverage at
+the contrast sample. Unreadable covering chip geometry fails closed.
+A translucent chip or host, including overlapping catalog parts in paint
+order, is judged on its composited ground (#1013, below). A Rect with a
 completed catalogue pattern (Scene v0.7) is ground in two colours, as a canvas
 texture is: the substrate is its fill and the ink its stroke, and every
 classified text and mark over it, except a decoration, is judged on both, the

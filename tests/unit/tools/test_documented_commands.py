@@ -123,3 +123,58 @@ def test_a_broken_skill_command_fails_the_execute_gate(tmp_path):
 
     with pytest.raises(DocumentedCommandError, match="E_DOCUMENTED_COMMAND_EXECUTION:" + __import__("re").escape(str(Path("skills/chrona/SKILL.md"))) + ":2:exit=9"):
         execute(discover(root), root, executable=(sys.executable, "-c", program))
+
+
+# --- the wheel path (#1301) -------------------------------------------------------------------------------------------
+
+CLONE_MARK = "<!-- chrona:doc-check requires: clone the Project is in examples/ -->\n"
+
+
+def test_a_command_naming_an_unshipped_examples_path_fails_unless_it_is_marked(tmp_path):
+    bare = discover(_document_root(tmp_path, "```sh\nchrona render examples/aster-ssd/project.yaml --output t.svg\n```\n"))
+    with pytest.raises(DocumentedCommandError, match="E_DOCUMENTED_COMMAND_UNSHIPPED_PATH") as error:
+        check_documented_commands.check_shipped(bare)
+    assert "README.md:2:examples/aster-ssd/project.yaml" in str(error.value)
+
+    marked = discover(_document_root(tmp_path, CLONE_MARK + "```sh\nchrona render examples/aster-ssd/project.yaml --output t.svg\n```\n"))
+    check_documented_commands.check_shipped(marked)
+    assert check_documented_commands.requires_clone(marked[0])
+    # an option value counts too
+    option = discover(_document_root(tmp_path, "```sh\nchrona render p.yaml --view=examples/a/v.yaml\n```\n"))
+    with pytest.raises(DocumentedCommandError, match="UNSHIPPED_PATH"):
+        check_documented_commands.check_shipped(option)
+
+
+def test_the_wheel_workspace_is_empty_and_skips_the_clone_commands(tmp_path):
+    root = _document_root(tmp_path, CLONE_MARK + "```sh\nchrona render examples/a/project.yaml\n```\n```sh\nchrona init p\n```\n")
+    (root / "examples").mkdir()
+    (root / "examples" / "seen.txt").write_text("x")
+    commands = discover(root)
+    probe = ("import os, sys; open('ran.log', 'a').write(' '.join(sys.argv[1:]) + ' ' + str(os.path.exists('examples')) + '\\n')")
+    log = tmp_path / "ran.log"
+
+    execute(commands, root, executable=(sys.executable, "-c", probe, "-"), wheel=True)  # nothing is copied; the clone command is skipped
+    assert not log.exists()  # the workspace is disposable; the probe wrote there, not here
+
+
+def test_every_documented_command_of_the_repository_is_shipped_or_marked():
+    check_documented_commands.check_shipped(discover(Path(__file__).resolve().parents[3]))
+
+
+def test_first_project_names_exactly_the_presets_chrona_lists():
+    import re
+    from chrona.usecases.preset_library import list_builtin_presets
+
+    text = (Path(__file__).resolve().parents[3] / "docs" / "guides" / "first-project.md").read_text(encoding="utf-8")
+    sentence = re.search(r"Available ids are\s+(.*?)\(`chrona preset list`", text, re.S)
+    named = re.findall(r"`([a-z-]+)`", sentence.group(1))
+    assert named == [item["id"] for item in list_builtin_presets()]
+
+
+def test_the_first_shell_block_of_the_readme_is_the_user_path():
+    import re
+
+    text = (Path(__file__).resolve().parents[3] / "README.md").read_text(encoding="utf-8")
+    block = re.search(r"```(?:bash|sh)\n(.*?)```", text, re.S).group(1)
+    assert "pip install" in block and "chrona init" in block and "chrona render" in block
+    assert " -e " not in block and "pytest" not in block

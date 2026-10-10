@@ -47,6 +47,14 @@ def _is_terse_fence(info: str) -> bool:
 
 FENCE = re.compile(r"^\s*(?P<fence>`{3,}|~{3,})(?P<info>[^`~]*)$")
 SKIP = re.compile(r"^<!-- chrona:doc-check skip: (?P<reason>.+) -->$")
+# `requires: clone <reason>`: the command reads files only a repository clone has (examples/, skills/). It runs in the clone
+# workspace and is skipped in the wheel workspace; an unmarked command that names such a path is rejected (#1301).
+REQUIRES_CLONE = re.compile(r"^<!-- chrona:doc-check requires: clone (?P<reason>.+) -->$")
+REQUIRES_PREFIX = "requires: clone "
+CLONE_ONLY_ROOTS = ("examples/",)
+# The skill's own commands name `skills/chrona/...`, the copy `chrona skill copy` writes; they run in the clone workspace
+# (the skill is not rewritten for this check) and are skipped in the wheel workspace, which has no such copy.
+SKILL_ROOT = "skills/"
 EXPECT_ERROR = re.compile(r"^<!-- chrona:doc-check expect-error: (?P<code>E_[A-Z0-9_]+) -->$")
 EXPECT_YAML = re.compile(r"^<!-- chrona:doc-check expect-yaml: next -->$")
 SKIP_PREFIX = "<!-- chrona:doc-check"
@@ -102,9 +110,11 @@ def discover(root: Path) -> tuple[DocumentedCommand, ...]:
             marker = SKIP.fullmatch(line)
             expected = EXPECT_ERROR.fullmatch(line)
             emitted = EXPECT_YAML.fullmatch(line)
-            if marker is not None or expected is not None or emitted is not None:
+            cloned = REQUIRES_CLONE.fullmatch(line)
+            if marker is not None or expected is not None or emitted is not None or cloned is not None:
                 reason = (marker["reason"].strip() if marker is not None
-                          else "expect-error " + expected["code"] if expected is not None else "expect-yaml next")
+                          else "expect-error " + expected["code"] if expected is not None
+                          else REQUIRES_PREFIX + cloned["reason"].strip() if cloned is not None else "expect-yaml next")
                 if pending_skip is not None or not reason:
                     raise _error("E_DOCUMENTED_COMMAND_SKIP", relative, index + 1)
                 pending_skip = (reason, index + 1)
@@ -284,6 +294,37 @@ def validate(command: DocumentedCommand, parser: argparse.ArgumentParser) -> Non
         index += 1
 
 
+def requires_clone(command: DocumentedCommand) -> bool:
+    return command.skip_reason is not None and command.skip_reason.startswith(REQUIRES_PREFIX)
+
+
+def unshipped_paths(commands: tuple[DocumentedCommand, ...]) -> list[str]:
+    """Commands that name a clone-only path (`examples/...`) without a `requires: clone` marker.
+
+    A wheel ships `examples/halcyon-1` and the skill under `chrona/resources`, not at those paths in the user's directory,
+    so such a command fails after `pip install` unless it says it needs a clone."""
+    found: list[str] = []
+    for command in commands:
+        if command.skip_reason is not None:
+            continue
+        for token in command.tokens[1:]:
+            value = token.partition("=")[2] if token.startswith("--") else token
+            if value.startswith(CLONE_ONLY_ROOTS):
+                found.append(f"{command.path}:{command.line}:{value}")
+                break
+    return found
+
+
+def _names_skill_copy(command: DocumentedCommand) -> bool:
+    return any((token.partition("=")[2] if token.startswith("--") else token).startswith(SKILL_ROOT) for token in command.tokens[1:])
+
+
+def check_shipped(commands: tuple[DocumentedCommand, ...]) -> None:
+    found = unshipped_paths(commands)
+    if found:
+        raise DocumentedCommandError("E_DOCUMENTED_COMMAND_UNSHIPPED_PATH\n" + "\n".join(found))
+
+
 def _installed_chrona() -> tuple[str, ...]:
     scripts = sysconfig.get_path("scripts")
     executable = Path(scripts or ".") / ("chrona.exe" if os.name == "nt" else "chrona")
@@ -293,21 +334,26 @@ def _installed_chrona() -> tuple[str, ...]:
 
 
 def execute(commands: tuple[DocumentedCommand, ...], root: Path, *, timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
-            executable: tuple[str, ...] | None = None) -> None:
-    """Run non-skipped documented commands in a disposable fixture workspace."""
+            executable: tuple[str, ...] | None = None, wheel: bool = False) -> None:
+    """Run non-skipped documented commands in a disposable workspace.
+
+    The default workspace is a clone's: it holds the repository's `examples/` and `skills/`. With `wheel` it is empty, as
+    a user's directory after `pip install`, and the commands marked `requires: clone` are skipped (#1301)."""
     if executable is None:
         executable = _installed_chrona()
     with tempfile.TemporaryDirectory(prefix="chrona-doc-check-") as temporary:
         workspace = Path(temporary)
         examples = root / "examples"
-        if examples.is_dir():
+        if examples.is_dir() and not wheel:
             shutil.copytree(examples, workspace / "examples")
         skills = root / "skills"
-        if skills.is_dir():
+        if skills.is_dir() and not wheel:
             shutil.copytree(skills, workspace / "skills")
         environment = {**os.environ, "PYTHONUTF8": "1"}
         for command in commands:
-            if command.skip_reason is not None:
+            if command.skip_reason is not None and not (requires_clone(command) and not wheel):
+                continue
+            if wheel and _names_skill_copy(command):
                 continue
             try:
                 completed = subprocess.run(
@@ -361,11 +407,14 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=Path("docs/guides/cli-reference.md"))
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--execute", action="store_true")
+    parser.add_argument("--wheel", action="store_true",
+                        help="execute in an empty workspace (an installed wheel), skipping `requires: clone` commands")
     args = parser.parse_args(); root = args.root.resolve()
     from chrona.app.cli import _parser
     live = _parser(); commands = discover(root)
     for command in commands:
         validate(command, live)
+    check_shipped(commands)
     check_plans(discover_plans(root))
     output = args.output if args.output.is_absolute() else root / args.output
     content = render_reference(live)
@@ -375,7 +424,7 @@ def main() -> None:
     else:
         write(output, content)
     if args.execute:
-        execute(commands, root)
+        execute(commands, root, wheel=args.wheel)
 
 
 if __name__ == "__main__":

@@ -90,6 +90,7 @@ schemas:
       circlePrimitive: "sha256:3951ee6eedb963af2d49b4724dedfd927bd666274cde643c9f53f3d89642eef0"
       patternCirclePrimitive: "sha256:ec3cc9872f79ec9dd7098cf19ffe65ec5a094ed0903418c8ec22096409e045e5"
       rectanglePrimitive: "sha256:a2ac233755d3628e8ed4c1b1cddf62395d91e1f1d1b31a29e0af2f31ae5ea6ee"
+      catalogNineSliceGeometry: "sha256:194d6caae95154267abaabbf575bdc7304dcd8d96b8d579df6d9fb5bd4030e25"
       paintMode: "sha256:476cd8a51a54d57c9f7766ecee7a9847e503af90694281af8a533d2f68817986"
       lineCap: "sha256:820934abad2dd1b8b43fec9cf215695b9438f661c2f124c58942fda31655bf04"
       lineJoin: "sha256:b31b1d3d192a31c0bbd6de0afb0134780a9da466d7ada1dd905a2c086d8f9df0"

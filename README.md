@@ -54,14 +54,31 @@ to the issue dates re-renders it.</sup>
 
 ## Quick start
 
+Install chrona with the renderer, create a small editable project and render its first slide
+(the output suffix selects the format; use `.png` for a PNG):
+
+```bash
+python -m pip install '.[render]'
+chrona init my-chrona-project
+chrona render my-chrona-project/project.yaml --actual my-chrona-project/actual.yaml \
+  --viewport 1600xauto --output my-chrona-project/plan.svg
+chrona render my-chrona-project/project.yaml --actual my-chrona-project/actual.yaml \
+  --viewport 1600xauto --output my-chrona-project/plan.png
+```
+
+The resulting SVG is a Draft for review, not immutable materializer evidence. The three generated
+source files are yours to edit. Use `--preset PATH` to choose an explicit presentation preset, or
+explicit View/Theme/Color Scheme/Layout paths to override its members. Check your own plan with
+`chrona validate` and `chrona schedule`:
+
 <!-- chrona:doc-check skip: requires an author-provided Project path -->
 ```bash
-python -m pip install -e '.[dev,render]'
-pytest
 chrona validate path/to/project.yaml
 chrona schedule path/to/project.yaml
 python -m chrona validate path/to/project.yaml
 ```
+
+To work on chrona itself, see [Develop chrona](CONTRIBUTING.md#development-setup).
 
 Draft rendering defaults to a content-sized `1600xauto` viewport. Use an
 explicit `--viewport WIDTHxHEIGHT` when you need a finite minimum allocation.
@@ -96,10 +113,11 @@ cycles as semantic errors.
 resolved placements into a deterministic SVG timeline. SVG coordinates are not
 project data and are never used to schedule or validate a project.
 
-Try the included plan-only controller example. `render` deliberately requires
+Try the plan-only controller example (these commands read `examples/` and need a clone of the repository). `render` deliberately requires
 every presentation input explicitly; omit `--actual` because this View declares
 it optional:
 
+<!-- chrona:doc-check requires: clone the example inputs live under examples/ and are not part of the wheel -->
 ```bash
 chrona render examples/controller-z/project.yaml \
   --view examples/controller-z/views/plan-only.yaml \
@@ -113,6 +131,7 @@ For a broader semiconductor bring-up example with fixed and scheduled spans, wor
 exceptions, endpoint dependencies, parallel qualification work, gates, entities,
 annotations, and observations, add the executive View and Actual Set:
 
+<!-- chrona:doc-check requires: clone the example inputs live under examples/ and are not part of the wheel -->
 ```bash
 chrona render examples/controller-z/project.yaml \
   --view examples/controller-z/views/executive.yaml \
@@ -212,22 +231,11 @@ See [Specification 64](docs/specification/64-portable-icon-catalogs.md) and
 [Controller Z's icon Context](examples/controller-z/contexts/icons.yaml) for a
 fully pinned materialized example.
 
-Create a small editable project and render its first Draft with the bundled
-default presentation preset:
+The complete reproducible HALCYON corpus remains available explicitly. Its Japanese slides declare the font
+package `packages/chrona-fonts-noto-cjk`, which is not published, so materializing needs a clone with
+`pip install -e packages/chrona-fonts-noto-cjk`:
 
-```bash
-chrona init my-chrona-project
-chrona render my-chrona-project/project.yaml --actual my-chrona-project/actual.yaml \
-  --viewport 1600xauto --output my-chrona-project/plan.svg
-```
-
-The resulting SVG is a Draft for review, not immutable materializer evidence.
-The three generated source files are yours to edit.  Use `--preset PATH` to
-choose an explicit presentation preset, or explicit View/Theme/Color Scheme/
-Layout paths to override its members.
-
-The complete reproducible HALCYON corpus remains available explicitly:
-
+<!-- chrona:doc-check requires: clone the HALCYON slides need packages/chrona-fonts-noto-cjk, which a wheel does not install -->
 ```bash
 chrona init my-halcyon-example --example halcyon-1
 chrona materialize my-halcyon-example/manifest.yaml \
