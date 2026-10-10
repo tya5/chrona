@@ -34,7 +34,7 @@ the wrong tool there, and the file says so honestly.
 3. **Edit `project.yaml`, then render again.** Never edit the generated picture.
 4. **Run `chrona schedule`, not only `chrona validate`.** `validate` finds structure
    errors and dependency cycles, but it computes no dates: a fixed date that contradicts
-   its dependencies and contradictory bounds pass `validate` with `[]` and are rejected
+   its dependencies and contradictory bounds pass `validate` (`{"status": "ok", "diagnostics": []}`) and are rejected
    by `schedule` and `render`.
 5. **Copy a preset once, then edit the copy.** Do not edit a copied preset in place to
    change one token each time; do not edit the files inside the installed package.

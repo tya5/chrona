@@ -68,7 +68,7 @@ def test_schedule_fence_equals_what_chrona_schedule_prints(monkeypatch, capsys):
 def test_the_example_validates_cleanly(monkeypatch, capsys):
     status, out, _err = run_cli(monkeypatch, capsys, "validate", str(EXAMPLE))
 
-    assert (status, json.loads(out)) == (0, [])
+    assert (status, json.loads(out)) == (0, {"status": "ok", "diagnostics": []})
 
 
 def test_preset_ids_named_by_the_skill_are_builtin_ids():
