@@ -212,7 +212,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--icon-catalog", action="append", default=[],
                          help="explicit local icon catalog YAML path; repeatable")
     command.add_argument("--font-metrics", help="declared-metrics-v3 YAML descriptor; paths resolve beside it")
-    command.add_argument("--system-fonts", action="store_true", help="draft-only: measure and rasterize the Theme's exact installed face")
+    command.add_argument("--system-fonts", action="store_true", help="require the Theme's exact installed face through fontconfig (installed fonts are always usable; this refuses a fallback)")
     command.add_argument("--viewport", default=f"{DEFAULT_DRAFT_VIEWPORT[0]}xauto", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600xauto)")
     command.add_argument("--locale", choices=("en-US", "ja-JP"), default="en-US",
                          help="render locale: en-US or ja-JP (default: en-US)")

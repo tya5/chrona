@@ -43,6 +43,7 @@ from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMe
 from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import PresentationInfo
+from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
 from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_role_consumers import unread_diagnostics as unread_theme_diagnostics
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
@@ -278,10 +279,11 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     environment = render_closure.context.environment
     asset_root = request.asset_root or snapshot_directory(request.snapshot_root, render_closure.context.identity.revision)
     resolution = request.draft_font_resolution
-    if resolution is not None and render_closure.context.identity.revision != "draft":
-        raise RenderFailed("E_FONT_SYSTEM_IMMUTABLE", "system font resolution cannot render immutable Context", "presentation")
-    if resolution is not None and render_closure.context.target.kind not in {"svg", "png"}:
-        raise RenderFailed("E_FONT_SYSTEM_IMMUTABLE", "system font resolution cannot render this target", "presentation")
+    if resolution is None:
+        # Installed fonts are a normal source on every path (#1281): a role whose font stack is not one declared exact
+        # face resolves to an installed face or the packaged Noto Sans; declared faces keep precedence.
+        resolution = resolve_theme_font_stacks(theme, environment.font_metrics, asset_root=asset_root,
+                                               asset_resolver=request.asset_resolver)
     if resolution is not None and resolution.tabular_warnings:
         theme = effective_draft_numeric_theme(theme, tuple(item.role for item in resolution.tabular_warnings))
     font_metrics = resolution.metrics if resolution is not None else _font_metrics(
@@ -477,6 +479,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                         render_closure.summary_profile.summary if render_closure.summary_profile else None))
     if unread_roles:
         surface = replace(surface, diagnostics=(*surface.diagnostics, *unread_roles))
+    if resolution is not None and resolution.notes:
+        surface = replace(surface, diagnostics=(*surface.diagnostics, *resolution.notes))
     try:
         validate_surface_visual_profile(surface, visual_profile)
     except VisualCapabilityError as error:

@@ -46,8 +46,10 @@ class FontMetricsCatalog:
     metrics: dict[tuple[str, int], "FontMetrics"]
 
     def select(self, family: str, weight: int) -> "FontMetrics":
+        # A resolved family stack (`A, B, C`) is registered under its whole text; otherwise the first family selects.
+        metric = self.metrics.get((family.strip().casefold(), weight)) if "," in family else None
         selected = _families(family)[0] if _families(family) else ""
-        metric = self.metrics.get((selected.casefold(), weight))
+        metric = metric or self.metrics.get((selected.casefold(), weight))
         if metric is None:
             available = sorted((item.family, item.weight) for item in self.metrics.values())
             raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE",
@@ -113,21 +115,30 @@ class FontMetrics:
                         "E_FONT_GLYPH_UNAVAILABLE",
                         f"family={_shown(self.family)} weight={self.weight} codepoint=U+{codepoint:04X} has no numeric advance; text_length={len(value)}",
                     )
-                if self.substitute_metrics is not None:
-                    fallback_advance = self.substitute_metrics.advances.get(codepoint)
-                    if fallback_advance is not None:
-                        self.substitutions.add(FontGlyphSubstitution(
-                            self.family, self.substitute_metrics.family, self.weight,
-                            codepoint, value,
-                        ))
-                        total += fallback_advance * self.units_per_em / self.substitute_metrics.units_per_em
-                        continue
+                # A character the face lacks takes the next face of the stack that has it, as a browser does (#1281).
+                fallback = self.substitute_metrics
+                while fallback is not None and codepoint not in fallback.advances:
+                    fallback = fallback.substitute_metrics
+                if fallback is not None:
+                    self.substitutions.add(FontGlyphSubstitution(
+                        self.family, fallback.family, self.weight, codepoint, value,
+                    ))
+                    total += fallback.advances[codepoint] * self.units_per_em / fallback.units_per_em
+                    continue
                 raise FontMetricsError(
                     "E_FONT_GLYPH_UNAVAILABLE",
-                    f"family={_shown(self.family)} weight={self.weight} codepoint=U+{codepoint:04X} has no advance; text_length={len(value)}",
+                    f"family={_shown(self.family)} weight={self.weight} codepoint=U+{codepoint:04X} ({character!r}) has no advance in the face stack [{self.face_names()}]; text_length={len(value)}",
                 )
             total += advance
         return total / self.units_per_em * size + max(0, len(value) - 1) * letter_spacing
+
+    def face_names(self) -> str:
+        """The family of this face and of every face behind it in the stack, in order."""
+        names, face = [], self
+        while face is not None:
+            names.append(face.family)
+            face = face.substitute_metrics
+        return ", ".join(names)
 
     def ensure_numeric_spacing(self, numeric_spacing: str) -> None:
         """Reject a selected numeric feature that this primary face cannot measure."""
@@ -163,6 +174,16 @@ class FontFile:
 
 def _families(font_stack: str) -> list[str]:
     return [family.strip().strip("'\"") for family in font_stack.split(",") if family.strip()]
+
+
+# CSS generic families name no installed face: they end a stack and are not resolved (#1281).
+GENERIC_FAMILIES = frozenset({"serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui", "ui-serif",
+                              "ui-sans-serif", "ui-monospace", "ui-rounded", "emoji", "math", "fangsong"})
+
+
+def named_families(font_stack: str) -> list[str]:
+    """The families a stack names, without the CSS generic ones."""
+    return [family for family in _families(font_stack) if family.casefold() not in GENERIC_FAMILIES]
 
 
 def _identity(path: Path) -> str:
