@@ -74,13 +74,35 @@ compatibility promise:
 
 ### Merge coordination
 
-There is no repository merge lock. Before the final push, the base must be the
+There is no repository merge lock. Docs-only PRs classified as `docs` may land
+on any previously ready main base when their own checks pass, their head is
+current and GitHub confirms a clean merge. They do not wait for a new sync or
+require the current main tip. Derived-owned reports are never docs-only;
+the classifier shares the bot's report inventory. Code and generated-evidence
+PRs retain the strict rule below. Release acceptance is unchanged.
+
+For code and generated-evidence PRs, before the final push, the base must be the
 `origin/main` tip whose `derived-main` check run is `completed`/`success`
 (`gh api --method GET repos/tya5/chrona/commits/<sha>/check-runs -f check_name=derived-main -f filter=all`).
 If `main` advances while checks run, rebase onto the new ready tip and re-run;
 never patch generated output. When two sessions are about to merge, the one
 merging posts a one-line "Merging #N now" on its issue, and a fix that turns a
 red `main` green goes first.
+
+Every landing costs one serial ready-tip cycle (about 15 min of derived sync
+plus a re-run of CI), so spend cycles on code, not paperwork:
+
+- **Batch documents.** Literal acceptance reviews, release records and other
+  `docs/`-only changes go out as one PR per session per merge window, not one
+  PR per issue.
+- **Batch small code PRs.** When a session has three or more small, separately
+  reviewed and green PRs waiting, land them as one integration PR (each commit
+  keeps its own `Refs #N`) instead of one cycle each. Keep a PR separate when it
+  touches derived inputs another open PR also touches, or when it is large
+  enough that a failure would block the others.
+- **Reviewer PRs** (examples, docs) count in the same lane: the dev session
+  that lands next brings them to the ready tip and lands them before its own
+  next item (board #454, row 1).
 
 1. **Establish the baseline.** Read the issue body and later comments, current
    `main`, active plans, relevant specifications/ADRs, code, tests, and public
@@ -232,8 +254,11 @@ the same non-cancelling, multi-pending concurrency queue. Cleanup preserves
 unknown or active gates and never changes commit check runs or release evidence;
 an already-absent ref is harmless. Release checkout uses the dispatched SHA.
 
-The `derived-ready` PR check waits (boundedly) for `derived-main` on the
-current exact `main` tip and rechecks that tip before success. Production
+For code and generated-evidence PRs, `derived-ready` waits (boundedly) for
+`derived-main` on the current exact `main` tip and rechecks that tip before
+success. Docs-only PRs check trusted readiness of their event base once and
+require a current head and affirmative clean mergeability, without waiting.
+Production
 status-only strict branch protection is a separate deployment step: do not
 claim that failed syncs block merges until the Actions check source and bot
 fast-forward route have been proven on a disposable protected branch and the
