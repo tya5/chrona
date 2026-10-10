@@ -2,9 +2,9 @@
 
 # Issue #1286 — label chip shape acceptance
 
-Validation checkpoint: `4fcb3cdcea8e2948e3623f2fa727d8dc880b6e52`;
-public parent checkpoint `b5862b8ab6d79f704543185f898905d00e3823c6` (#1287).
-These are pending dependency preparations, not merged release bases.
+Validation checkpoint: `6c77dd7b7a076fd088e348ae25d87f04091ab36c`,
+ordinarily adopting main `eb4e83fd601f7d5a1621a6fc91323266a7ea50b4`
+and the prepared #1287 dependency. Neither feature is a merged release base.
 [Current design, architecture review and plan](https://github.com/tya5/chrona/issues/1286#issuecomment-6088639263).
 Local acceptance only: no PR, public artifact or exact-main release gate is complete. Do not close.
 
@@ -26,7 +26,7 @@ Local acceptance only: no PR, public artifact or exact-main release gate is comp
 
 Synthetic render evidence: 12 cases across both integration files; the final as-of file passed 8 tests and the period/variance file passed 4. Final focused closure/measurement/lane/ground/period batch: 43 passed; builder/geometry/lane/ground batch: 88 passed; legacy chip/as-of/viewer-fit batch: 48 passed. Independent absent-token replay: Scene 22,949 bytes, SHA256 `e5f8b0c395e6b891d065e9152f2aa302d51d4f5162e3680edec12d802f2b93ea`; SVG 6,992 bytes, SHA256 `74bf8d570ca05067f0000a3002520bb237113b11ac682e21ae367ec0e82c3e0b`; root verified both complete streams with `cmp`.
 
-Current prepared-parent render/schema batch: 17 passed (12.81s). Fresh S0
+Current prepared-parent render/schema batch: 17 passed (13.39s). Predecessor S0
 against ready main `fed9727461e6fefa5b092cdea638bf3a722dfcef` passed: L1 36 equal,
 two schemas with approved deltas (three own Theme paths and one inherited
 #1283 Layout path); L2 470 documents and L3 739 probes, with expected invalid
