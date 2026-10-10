@@ -8,6 +8,7 @@ import yaml
 
 from tools.classify_ci_change import classify_paths
 from tools.derived_report_inventory import REPORTS
+from tests.support.workflow_shell import workflow_bash
 
 BASE, HEAD, TIP = "a" * 40, "b" * 40, "c" * 40
 
@@ -19,8 +20,8 @@ def _run(tmp_path, **overrides):
     assert '.app.slug == "github-actions"' in script
     assert "sort_by([.started_at // .created_at, .id])" in script
     calls = tmp_path / "calls"
-    programs = {
-        "gh": '''#!/bin/sh
+    prefix = '''
+gh() {
 printf '%s\\n' "gh $*" >> "$CALLS"
 case "$*" in
   */pulls/*)
@@ -31,28 +32,24 @@ case "$*" in
   */check-runs*) printf '%s\\n' "$TRUSTED";;
   *) exit 9;;
 esac
-''',
-        "git": '''#!/bin/sh
+}
+git() {
 printf '%s\\n' "git $*" >> "$CALLS"
 printf '%s\\trefs/heads/main\\n' "$CURRENT_TIP"
-''',
-        "sleep": '''#!/bin/sh
+}
+sleep() {
 printf '%s\\n' "sleep $*" >> "$CALLS"
-exit 98
-''',
-    }
-    for name, content in programs.items():
-        path = tmp_path / name
-        path.write_text(content)
-        path.chmod(0o755)
-    env = {**os.environ, "PATH": str(tmp_path) + os.pathsep + os.environ["PATH"],
-        "CALLS": str(calls), "EVENT_NAME": "pull_request", "PR_BASE_SHA": BASE,
+return 98
+}
+'''
+    env = {**os.environ,
+        "CALLS": calls.as_posix(), "EVENT_NAME": "pull_request", "PR_BASE_SHA": BASE,
         "PR_BASE_REF": "main", "PR_NUMBER": "42", "PR_HEAD_SHA": HEAD,
         "GITHUB_REPOSITORY": "tya5/chrona", "PR_KIND": "docs", "PREVIEW": "success",
         "CONFORMANCE": "success", "PYTEST": "skipped", "NEWEST": "skipped",
         "CURRENT_HEAD": HEAD, "CURRENT_REF": "main", "MERGEABLE": "true",
         "TRUSTED": "completed:success", "CURRENT_TIP": TIP, **overrides}
-    result = subprocess.run(["bash", "-euo", "pipefail", "-c", script], env=env,
+    result = subprocess.run([workflow_bash(), "-euo", "pipefail", "-c", prefix + script], env=env,
                             capture_output=True, text=True, timeout=5)
     return result, calls.read_text() if calls.exists() else ""
 

@@ -24,6 +24,6 @@ Release pending: fresh PR snapshot/current-head gates and exact published-main t
 
 ## Architecture conclusion
 
-CI-only change: the dependency-free report authority is consumed by the generator and classifier; no copied ownership list, generated edits, product/resource/schema changes, sync retirement changes or release-gate exemption. Docs require successful own dependency outcomes, current head, main base, affirmative mergeability and latest trusted base readiness; unknown/failure fails closed. Code retains bounded readiness polling and its final exact-tip check. Full three-OS release remains mandatory.
+CI-only change: the dependency-free report authority is consumed by the generator and classifier; no copied ownership list, generated edits, product/resource/schema changes, sync retirement changes or release-gate exemption. Docs require successful own dependency outcomes, current head, main base, affirmative mergeability and latest trusted base readiness; unknown/failure fails closed. Code retains bounded readiness polling and its final exact-tip check. Workflow tests use the shared Actions-compatible Bash selector and shell-function stand-ins, including Windows Git Bash, without external API calls. Full three-OS release remains mandatory.
 
 Focused classifier/gate/conformance-workflow/derived-evidence/workflow batch: **60 passed (27.82s)**. Trusted-gate/cleanup regression batch: **52 passed (7.90s)**.
