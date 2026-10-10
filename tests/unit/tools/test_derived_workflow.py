@@ -212,6 +212,8 @@ def test_unproven_generated_orphans_remain_rejected(tmp_path: Path, break_contin
 def test_snapshot_records_historically_declared_retirement_and_source_bytes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    from tools.derived_evidence import validate_no_orphan_materializers
+
     _init_repo(tmp_path)
     deck = tmp_path / "examples/deck"
     generated = deck / "generated"
@@ -226,12 +228,16 @@ def test_snapshot_records_historically_declared_retirement_and_source_bytes(
 
     manifest.write_text("slides:\n  - id: new\n    expectedSvg: generated/new.svg\n")
     new.write_bytes(b"source baseline new bytes\n")
-    source = _commit(tmp_path, "delete old declaration after source output")
+    _commit(tmp_path, "delete old declaration after source output")
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs/unrelated.md").write_text("later source documentation\n")
+    source = _commit(tmp_path, "unrelated commit before source sync")
 
     original_run = subprocess.run
 
     def write_fake_derived(args, *call_args, **call_kwargs):
         if args[1:] == ["-m", "tools.derived_evidence", "--write"]:
+            validate_no_orphan_materializers(tmp_path)
             for path in derived_workflow.derived_paths(tmp_path):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("fresh derived bytes\n")
@@ -250,6 +256,12 @@ def test_snapshot_records_historically_declared_retirement_and_source_bytes(
     with tarfile.open(destination, "r:gz") as archive:
         assert "examples/deck/generated/old.svg" not in archive.getnames()
     assert not old.exists()
+
+    planted = generated / "never-declared.svg"
+    planted.write_bytes(b"untracked, never-declared bytes\n")
+    with pytest.raises(ValueError, match="E_DERIVED_EVIDENCE_UNDECLARED_OUTPUT"):
+        derived_workflow.make_snapshot(tmp_path, source, tmp_path / "refused.tar.gz")
+    assert planted.read_bytes() == b"untracked, never-declared bytes\n"
 
 
 def test_prepare_candidate_preserves_noop_sha_and_stages_only_derived_paths(
