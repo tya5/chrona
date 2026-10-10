@@ -4,8 +4,11 @@
 
 Implementation `43e30d82`; source-main integration `c4f248b1` adopts
 `3d363889cc8ddb42070c391edf943a44d2a1cf82` (#1285 small caps).
-Its derived sync remains pending; the final ready-base snapshot and release
-are not yet accepted. [PR #1311](https://github.com/tya5/chrona/pull/1311)
+Ready base `51bc172e746b878754afcb9209947d96e3bf4979` is adopted;
+[trusted gate 38029801782](https://github.com/tya5/chrona/actions/runs/38029801782)
+completed successfully. Its only follow-up changes are managed reports, so
+the tested source and SVG/Scene trees are identical. Final ready-base PR snapshot
+and release are not yet accepted. [PR #1311](https://github.com/tya5/chrona/pull/1311)
 also carries the independent final acceptance table for #1327.
 Authority: [design](../../design/issue-1279-canvas-viewport-design-2026-10-10.md)
 and [implementation plan](../../planning/active/issue-1279-canvas-viewport-implementation-plan-2026-10-10.md).
