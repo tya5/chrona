@@ -3,8 +3,8 @@
 # Issue #1318 — temporary gate ref cleanup
 
 Implementation: `d49846566edd3f203fb6d8a9a228b822cbaa4dcc`; preparation
-`1498192b1e292f0f60aa68c55be6277243685175` ordinarily adopts ready main
-`127392c426010f8381c984d8ff45f6c1e46f3791`. Helper/workflow/procedure/test
+`7aca8e4a62c96ae08ab2e6abb52a0f43d3d9fdb9` ordinarily adopts ready main
+`51bc172e746b878754afcb9209947d96e3bf4979`. Helper/workflow/procedure/test
 bytes remain unchanged from the tested `9a4510c8` checkpoint.
 [Current design, architecture and plan](https://github.com/tya5/chrona/issues/1318#issuecomment-6093049623).
 WIP only; its PR waits for earlier M0/#1279 work. Do not close.
@@ -23,7 +23,7 @@ WIP only; its PR waits for earlier M0/#1279 work. Do not close.
 
 ## Programme-level criteria (optional)
 
-Current helper/workflow batch: 43 passed (11.61s); trusted-gate batch:
+Current helper/workflow batch: 43 passed (12.29s); previous unchanged trusted-gate batch:
 4 passed (0.03s). Real read-only
 candidate inspection on ready `fed97274` returned `would-delete`; no ref changed.
 Independent review found no unsafe deletion, gate weakening or ownership defect.
