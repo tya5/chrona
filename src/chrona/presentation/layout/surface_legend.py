@@ -12,7 +12,8 @@ from chrona.presentation.layout.surface_marks import (
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
 from chrona.presentation.layout.relation_terminals import marker_geometry
-from chrona.presentation.layout.mark_geometry import symbol_parts
+from chrona.presentation.layout.mark_geometry import complete_point_outline, symbol_parts
+from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.layout.surface_quality import (
     GEOMETRY_TOLERANCE, CollisionDomain, FitWarning, MarkPlacement, RelationPlacement, ShapePlacement, SlotPlacement,
@@ -202,6 +203,10 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
                 request.theme_tokens.variant_symbol("planned"), (x, y, width, height),
                 catalog_glyphs=getattr(request.theme_tokens, "catalog_glyphs", None),
             )
+            parts = complete_point_outline(
+                parts, paint_role=resolve_point_paint_role(
+                    role, gate_declared=request.theme_tokens.has_role("gate"), legend=True),
+                theme_tokens=request.theme_tokens)
             marks.append(MarkPlacement(f"legend-swatch:{role}", role,
                                        bounds,
                                        (x + width / 2, y + height / 2), (x + width / 2, y + height / 2),

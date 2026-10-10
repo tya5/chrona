@@ -692,6 +692,22 @@ viewBox without independently repositioning primitives.
 Malformed profile constraints and invalid references remain errors. Scene and
 adapters MUST NOT resolve this shortage independently.
 
+**Declared viewport overrun (#1279).** The original Render Context viewport
+declaration remains distinct from content-adjusted allocation and completed
+canvas bounds. Layout MUST emit one `W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT` when the
+completed canvas starts before zero or ends beyond a declared axis, using
+Layout's coordinate tolerance. Compare full extents, not only dimensions.
+Draft auto block has no declared block constraint; its inline constraint remains.
+The warning changes no geometry, clipping or rendering eligibility. Its facts
+include declared inline/block sizes (null block for auto), actual starts/sizes,
+and the five largest native-slot contributors with positive start/end overruns
+on declared axes, ordered by descending largest overrun then slot identity,
+plus the total contributor count. Attribute completed geometry and allocated
+slots, not self-derived full-canvas textures or overlays. Both table-timeline
+and dependency-network obey the same rule. Scene carries the completed warning;
+the shared report producer formats it with stable surface/source identity and
+`sourceRef: /body/environment/viewport`. Fitting surfaces emit none.
+
 ### 13.1 Content-coherent table-timeline allocation (#468)
 
 For a table-timeline surface whose measured row/track content has a finite

@@ -3,8 +3,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from decimal import Decimal
+from itertools import chain
 from typing import Any, Mapping
 
+from chrona.presentation.layout.canvas_viewport import CanvasViewportWarning, canvas_viewport_warning
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.pattern_placement import PatternedPlacement, complete_pattern_placement
 from chrona.presentation.layout.stroke_alignment import complete_aligned_strokes
@@ -49,6 +51,7 @@ class DependencyNetworkLayout:
     aligned_strokes: tuple[AlignedStrokePlacement, ...] = ()
     diagnostics: tuple[str, ...] = ()
     canvas_overlays: CanvasOverlays | None = None
+    canvas_warning: CanvasViewportWarning | None = None
 
 
 def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None, bounds: Rect,
@@ -192,9 +195,17 @@ def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> Depende
         relations=tuple(replace(item, slot_id=slots["network"].slot_id) for item in placed.relations))
     if headings.text:
         placed = replace(placed, text=(*headings.text, *placed.text))
+    warning = canvas_viewport_warning(
+        surface_id="dependency-network", declared=request.declared_viewport, actual=placed.canvas_bounds,
+        contributors=chain(
+            ((slot.slot_id, slot.bounds) for slot in slots.values()),
+            ((item.slot_id, item.bounds) for item in (*placed.nodes, *placed.text)),
+            ((relation.slot_id, Rect(Decimal(str(inline)), Decimal(str(block)), Decimal(0), Decimal(0)))
+             for relation in placed.relations for inline, block in relation.points)))
     return replace(placed, fit_warnings=(*headings.warnings, *placed.fit_warnings),
                    diagnostics=(*headings.diagnostics,
-                                *(heading_batch.diagnostics if heading_batch is not None else ())))
+                                *(heading_batch.diagnostics if heading_batch is not None else ())),
+                   canvas_warning=warning)
 
 
 def _title_measurement(measured_sources: MeasuredSources) -> MeasuredTextRun:
