@@ -2,13 +2,14 @@
 
 # Issue #1286 — label chip shape acceptance
 
-Validation checkpoint: `1d99c5d2620efbf63d0b949a527fd2db221cdcca`, ordinarily
-adopting ready main `612c1449d68e4abf2267f1bad7db10360cbf7b05`, including
-merged #1287, #1336, #1279 and dev B's legend fix. The exact base's
-[derived-main gate](https://github.com/tya5/chrona/actions/runs/38046325711) succeeded.
-No chip PR is open.
+Validation checkpoint: `f07f5592a008801de26c5827d9e514029710769e`, ordinarily
+adopting ready main `e960cbc633162b30e9c5b447a53086152f348b9d`, including
+merged #1287, #1336, #1279, #1303 and dev B's legend fix. The exact base's
+[derived-main gate](https://github.com/tya5/chrona/actions/runs/38048408711) succeeded.
+Feature PR: [#1348](https://github.com/tya5/chrona/pull/1348).
 [Current design, architecture review and plan](https://github.com/tya5/chrona/issues/1286#issuecomment-6088639263).
-Local acceptance only: no PR, public artifact or exact-main release gate is complete. Do not close.
+Synthetic acceptance and the predecessor artifact are verified; refreshed
+exact-head artifacts/checks and exact-main release remain pending. Do not close.
 
 ## Literal issue acceptance
 
@@ -38,15 +39,30 @@ and SVG 6,992 bytes, SHA256 `74bf8d570ca05067f0000a3002520bb237113b11ac682e21ae3
 both lengths and hashes without geometry or provenance normalization.
 
 Final-base S0 (`python -m tools.schema_equivalence --base-rev origin/main`)
-against exact ready `612c1449` passed: L1 37 equal / one Theme expansion
-(three declared pointers); L2 482 tracked / 378 mapped / four unchanged invalid
-documents / zero unparseable; L3 739 probes (462 reject / 277 accept).
-L2+L3 took 36.6s within the 60s budget. Baseline absence notes and inherited
-five Layout L2 allowances are disclosed; the latter have zero later schema
-merges and are nonblocking. No pruning or timing waiver was used.
+against exact ready `e960cbc6`: L1 37 equal / one Theme expansion (three
+declared pointers); L2 482 tracked / 378 mapped / four known invalid /
+zero unparseable; L3 739 probes (462 reject / 277 accept). Semantic comparisons
+pass, but the command fails its sole runtime check: L2+L3 102.8s / 60s.
+The host load average was 234.16 with another active pytest process; do not
+change unrelated processes or waive timing. The unchanged CI conformance
+command enforces the same 60s gate; success there is required before merge.
+Inherited five Layout allowances have zero later schema merges and remain
+nonblocking; baseline absence notes are disclosed, with no pruning.
 Only three pending chipShape L1 allowances remain; the unrelated landed
 group-header L1 allowance was already retired by public commit `b982d583`.
 No authored examples, workflows or generated outputs differ from the ready base.
+
+CI run `38046848144` exposed one intended Theme enum-message change:
+`render-ingress-findings-across-resources` still expected the pre-chip type list.
+Root reproduced the failure (1.97s); only that golden string adds `chipShape`.
+No failure classification, diagnostic fields or product rule is changed.
+Six ingress/schema CLI cases pass (3.43s) after #1303 integration; combined
+chip/schema/validation/diagnostic tests pass 44 cases (15.43s).
+The old run's other shards, conformance and public reproduction passed;
+its `derived-ready` failure follows the failed pytest shard, not a new defect.
+The [predecessor artifact receipt](https://github.com/tya5/chrona/issues/1286#issuecomment-6096882778)
+verifies all 46 raw Scene/SVG pairs unchanged against ready `612c1449`.
+This is not a substitute for the refreshed exact-base snapshot.
 
 ## Architecture conclusion
 
