@@ -1,3 +1,5 @@
+<!-- chrona:literal-acceptance/v1 -->
+
 # Issue 1327 acceptance
 
 Source: [issue and current plan](https://github.com/tya5/chrona/issues/1327#issuecomment-6093224721).
@@ -6,10 +8,17 @@ The offending composite allowance was already retired by PR #1320; no schema or 
 The prune diagnostic preserves fail-closed proof and distinguishes pre-merge restatement from reviewed post-merge retirement.
 Independent Luna review: passed; no layer, runtime behavior, or generated-output changes.
 
-| Literal acceptance | Status | Evidence |
-| --- | --- | --- |
-| `tools.schema_equivalence --base-rev origin/main` passes on main after the fix. | not met | Local candidate passes all three layers against published `bcc0ecbb`: 38 equal schemas, 470 documents, 739 probes; L2+L3 35.9s. Exact published-main verification remains pending. |
-| A schema PR rebased onto it, such as #1326, passes S0. | not met | Requires dev B's updated schema PR; no old-base CI is claimed as evidence. |
+## Literal issue acceptance
+
+### Issue #1327
+
+- Source: [Issue #1327](https://github.com/tya5/chrona/issues/1327)
+- Observed: 2026-10-10
+
+| # | Literal acceptance criterion | Disposition | Evidence | Successor |
+| ---: | --- | --- | --- | --- |
+| 1 | `tools.schema_equivalence --base-rev origin/main` passes on main after the fix. | not met | Local candidate passes all three layers against published `bcc0ecbb`: 38 equal schemas, 470 documents, 739 probes; L2+L3 35.9s. Exact published-main verification remains pending. | — |
+| 2 | A schema PR rebased onto it, such as #1326, passes S0. | not met | Requires dev B's updated schema PR; no old-base CI is claimed as evidence. | — |
 
 Focused command: `.venv/bin/python -m pytest -q tests/unit/tools/test_schema_expected_delta_lifecycle.py`
 — 23 passed in 20.89s, including a real overlapping schema merge retaining the unproven record and actionable guidance.
