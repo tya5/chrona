@@ -8,6 +8,7 @@ or slide directory.
 |---|---|
 | [`controller-z/`](controller-z/) | Compact silicon bring-up project rendered through multiple presentation directions. |
 | [`aster-ssd/`](aster-ssd/) | Larger SSD program rendered as a five-view presentation gallery. |
+| [`chrona-roadmap/`](chrona-roadmap/) | Chrona's own road to a release candidate, drawn in the target B design and updated from GitHub issue dates. |
 
 Files named `expected.svg` are deterministic acceptance artifacts. `preview.png` is a
 raster review artifact. Edit YAML sources, regenerate the output, and verify the exact

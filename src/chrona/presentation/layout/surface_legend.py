@@ -15,8 +15,8 @@ from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.mark_geometry import symbol_parts
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.layout.surface_quality import (
-    CollisionDomain, FitWarning, MarkPlacement, RelationPlacement, ShapePlacement, SlotPlacement, SurfaceLayoutRequest,
-    TextPlacement,
+    GEOMETRY_TOLERANCE, CollisionDomain, FitWarning, MarkPlacement, RelationPlacement, ShapePlacement, SlotPlacement,
+    SurfaceLayoutRequest, TextPlacement,
 )
 
 
@@ -297,6 +297,14 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             final_legend_end = max(final_legend_end, Decimal(str(label_end)))
             cursor += row_height + gap
     final_size = max(legend.bounds.block_size, final_legend_end - legend.bounds.block)
+    if (direction == "inline" and legend.bounds.block_size >= text_line_block
+            and final_legend_end - legend.bounds.block > legend.bounds.block_size + GEOMETRY_TOLERANCE):
+        # The wrapped rows are known only now: a legend that needs more rows than its slot has still warns, with the
+        # block its rows really need (a slot shorter than one row is reported by the track check) (#1273).
+        side_content_warnings.append(FitWarning(
+            "W_LAYOUT_VISIBLE_OVERFLOW", legend.slot_id, "legend", "layout-track", "visible-overflow",
+            float(legend.bounds.inline_size), float(final_legend_end - legend.bounds.block),
+            float(legend.bounds.inline_size), float(legend.bounds.block_size)))
     replacement = replace(legend, bounds=Rect(legend.bounds.inline, legend.bounds.block,
                                                legend.bounds.inline_size, final_size))
     return SurfaceLegendBatch(replacement, tuple(marks), tuple(shapes), tuple(relations), tuple(text),
