@@ -247,7 +247,8 @@ body:
     zero: plain
     missing: blank
     missingBy:
-      inProgress: em-dash
+      inProgress:
+        text: '?'
       dueUnobserved: blank
       notYetDue: blank
     align: end
