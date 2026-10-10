@@ -248,6 +248,14 @@ SVG/PNG and contour-aware pattern observation; ordinary glyph Symbols are not
 new pattern-authoring sites.
 Ordinary Rect pattern identity and Theme applicability remain unchanged.
 
+For this cut-Symbol case, existing pattern `origin` retains the original paint
+anchor, while `regionBounds` and `clipBounds` equal the visible primitive
+envelope. The Symbol's own closed outline is the contour; no second contour
+field is serialized. A differing origin is valid only with this completed
+window-cut Symbol, not an ordinary Rect or arbitrary patterned glyph. Layout
+retains the original mark/progress/summary paint anchor before intersection;
+Scene and adapters must not infer it from the clipped envelope.
+
 ## 8. Completed contrast evidence (#459)
 
 For finite classified text, decoration and data-mark roles, contrast is
