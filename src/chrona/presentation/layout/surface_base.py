@@ -30,6 +30,7 @@ from chrona.presentation.layout.surface_quality import (
     GroupPlacement, RowPlacement, ScalePlacement, SlotPlacement, SurfaceLayoutRequest,
 )
 from chrona.presentation.layout.mark_geometry import compose_item_marks
+from chrona.presentation.layout.mark_facet_visibility import admitted_source_selection
 from chrona.presentation.layout.surface_mark_visibility import (
     ItemMarkVisibilityIndex, MarkOccurrence, MarkOccurrenceKind,
     ensure_request_mark_visibility_index,
@@ -174,17 +175,18 @@ def _provisional_point_facets(*, projection: Any, rows: tuple[Any, ...], scale: 
         kind = (occurrence_kind if occurrence_kind is not None else
                 MarkOccurrenceKind.LANE_SOURCE if projection.lane_membership is not None else
                 MarkOccurrenceKind.ROW if projection.rows else MarkOccurrenceKind.AUTO)
+        visibility = (mark_visibility_index.lookup(
+            MarkOccurrence(
+                kind, (container_id if container_id is not None else
+                       row_id if projection.rows else item.object_id),
+                item.item_id or item.object_id, item.object_id, source_kind,
+            ), projection=projection, as_of=as_of,
+        ) if mark_visibility_index is not None else None)
         composition = compose_item_marks(
             item=item, instance_id=instance_id, source_kind=source_kind, frame=frame,
             as_of=as_of, theme_tokens=theme_tokens, slot_id=slot_id,
             emit_missing_actual=emit_missing_actual, emit_diagnostics=False,
-            selection=(mark_visibility_index.lookup(
-                MarkOccurrence(
-                    kind, (container_id if container_id is not None else
-                           row_id if projection.rows else item.object_id),
-                    item.item_id or item.object_id, item.object_id, source_kind,
-                ), projection=projection, as_of=as_of,
-            ).selection if mark_visibility_index is not None else None),
+            selection=admitted_source_selection(visibility) if visibility is not None else None,
         )
         instance = LaneProjectionInstance(row_id, item.item_id or item.object_id,
                                           item.object_id, item.source_kind)

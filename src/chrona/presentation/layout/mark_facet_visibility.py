@@ -1,7 +1,7 @@
 """Immutable, date-only window visibility shared by Layout geometry consumers."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from enum import StrEnum
 from typing import NoReturn
@@ -38,6 +38,19 @@ class ItemMarkVisibility:
     source_ref: str
     selection: ItemMarkFacetSelection
     facets: tuple[MarkFacetVisibility, ...]
+
+
+def admitted_source_selection(visibility: ItemMarkVisibility) -> ItemMarkFacetSelection:
+    """Read the shared admission result before measuring visible footprints.
+
+    Keep the original source closure on ``visibility``. This geometric
+    consumer view does not select dates again or modify any admitted fact.
+    """
+    admitted = tuple(facet.source for facet in visibility.facets
+                     if facet.disposition != FacetDisposition.OMITTED)
+    if admitted == visibility.selection.facets:
+        return visibility.selection
+    return replace(visibility.selection, facets=admitted)
 
 
 def complete_item_visibility(

@@ -97,6 +97,34 @@ def test_prepared_selection_is_reused_by_provisional_and_final_mark_composition(
     assert selected == [(request.projection.items[0], "combined")]
 
 
+@pytest.mark.parametrize("at,expected", [(date(2025, 12, 31), 0),
+                                        (date(2027, 1, 1), 0),
+                                        (date(2026, 6, 1), 1)])
+def test_explicit_point_preflight_measures_only_admitted_points(monkeypatch, at, expected):
+    from chrona.presentation.layout import surface_base
+    from chrona.presentation.layout.surface_mark_visibility import build_item_mark_visibility_index
+    from chrona.presentation.layout.surface_marks import resolve_mark_geometries
+    from chrona.presentation.layout.surface_quality import ScalePlacement
+    from chrona.presentation.model.projection import WindowMode
+
+    request = _axis_request(())
+    point = replace(request.projection.items[0], source_type="point", planned={"at": at})
+    projection = replace(request.projection, items=(point,), window_mode=WindowMode.EXPLICIT)
+    index = build_item_mark_visibility_index(projection, as_of=None)
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("outside-window point must not reach footprint measurement")
+    if not expected:
+        monkeypatch.setattr(surface_base, "_mark_facets", forbidden)
+    result = surface_base._provisional_point_facets(
+        projection=projection, rows=(SimpleNamespace(row_id="point", items=(point,)),),
+        scale=ScalePlacement("scale", "axis", *projection.window, 0, 100, 0, 100 / 365),
+        as_of=None, theme_tokens=request.theme_tokens, slot_id="timeline",
+        mark_block_size=8, role_geometries=resolve_mark_geometries(request.theme_tokens),
+        mark_visibility_index=index,
+    )
+    assert len(result) == expected
+
+
 @pytest.mark.parametrize("occurrence_kind", ["row", "lane-final", "folded"])
 def test_final_composition_looks_up_row_lane_alias_and_folded_selection(
         monkeypatch, occurrence_kind):

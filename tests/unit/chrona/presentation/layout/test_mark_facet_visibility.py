@@ -9,7 +9,7 @@ from chrona.presentation.layout.semantic_mark_facets import (
     MarkFacetAbsence,
 )
 from chrona.presentation.model.projection import WindowMode
-from chrona.presentation.layout.mark_facet_visibility import complete_item_visibility
+from chrona.presentation.layout.mark_facet_visibility import admitted_source_selection, complete_item_visibility
 from chrona.presentation.layout.model import LayoutError
 
 
@@ -57,6 +57,25 @@ def _one(source, *, mode=WindowMode.EXPLICIT, start=D2, end=D6):
 
 def _span(start, finish, *, facet="planned", semantic_id="planned"):
     return LogicalMarkFacet(facet, semantic_id, "span", start=start, finish=finish)
+
+
+def test_admission_view_keeps_original_closure_and_admitted_source_identity():
+    outside = LogicalMarkFacet("planned", "planned", "point", at=D1)
+    inside = LogicalMarkFacet("actual", "actual", "point", at=D3)
+    selection = _selection(outside, inside)
+    visibility = _visible(selection)
+    admitted = admitted_source_selection(visibility)
+    assert admitted.facets == (inside,)
+    assert admitted.facets[0] is inside
+    assert visibility.selection is selection
+    assert selection.facets == (outside, inside)
+    assert admitted.absences is selection.absences
+
+
+@pytest.mark.parametrize("mode", [WindowMode.EXPLICIT, WindowMode.SELECTED_PLANNED])
+def test_unchanged_admission_keeps_selection_identity(mode):
+    selection = _selection(LogicalMarkFacet("planned", "planned", "point", at=D3))
+    assert admitted_source_selection(_visible(selection, mode=mode)) is selection
 
 
 @pytest.mark.parametrize(
