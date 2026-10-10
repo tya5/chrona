@@ -89,7 +89,7 @@ def _check_heading(heading: Any, pointer: str) -> None:
             raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/{key}", detail=f"expected one of {list(allowed)}")
 
 
-def _check_frames(profile: Mapping[str, Any]) -> None:
+def _check_node_declarations(profile: Mapping[str, Any]) -> None:
     def visit(node: Any, path: str) -> None:
         if not isinstance(node, Mapping):
             return
@@ -121,7 +121,7 @@ def _validate_schema(profile: Mapping[str, Any]) -> None:
     schema = LAYOUT_SCHEMAS.get(profile.get("version"))
     if schema is None:
         raise LayoutError("E_LAYOUT_SCHEMA", "/version")
-    _check_frames(profile)
+    _check_node_declarations(profile)
     errors = tuple(schema_validator(schema).iter_errors(profile))
     if errors:
         identity = profile.get("id")
