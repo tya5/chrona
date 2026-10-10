@@ -7,6 +7,7 @@ import math
 from typing import Any
 
 from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand, RelationFanIn, StrokeClip, TextFit
+from chrona.presentation.layout.canvas_viewport import CanvasViewportWarning
 from chrona.presentation.layout.pattern_placement import PatternTilePrimitive
 from chrona.presentation.model.font_metrics import FontTabularWarning
 from chrona.presentation.model.info_diagnostics import PresentationInfo
@@ -228,6 +229,15 @@ class StrokeFinish:
 
 
 @dataclass(frozen=True)
+class TextRun:
+    """One run of a text line at its own size, as Layout measured it (a small-caps line has several, #1285)."""
+
+    text: str
+    font_size: float
+    inline_size: float
+
+
+@dataclass(frozen=True)
 class TextLayout:
     """One measured text result shared by Scene geometry and renderer serialization."""
 
@@ -249,8 +259,13 @@ class TextLayout:
     horizontal_scale: float = 1.0
     # The completed viewer-fit facts of a box role's text (#1050); None is `raw`.
     fit: TextFit | None = None
+    # One tuple of runs per line when the role is `small-caps` (#1285); empty otherwise. The runs' texts join to the line.
+    runs: tuple[tuple[TextRun, ...], ...] = ()
 
     def __post_init__(self) -> None:
+        if self.runs and (len(self.runs) != len(self.lines) or any(
+                "".join(run.text for run in line) != text for line, text in zip(self.runs, self.lines))):
+            raise ValueError(f"E_PRESENTATION_TEXT_LAYOUT_INVALID: TextLayout.runs; expected one run tuple per line whose texts join to that line; found {_brief(self.runs)}")
         # `tilt` (#584) is a Layout-completed rigid rotation of a note by a small non-zero angle about the
         # baseline start; the quarter turns remain the only other rotations.
         tilted = (self.orientation == "tilt" and not isinstance(self.rotation_degrees, bool)
@@ -665,6 +680,7 @@ class SceneSurface:
     lane_clearance: float | None = None
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
     primitive_provenance: tuple[PrimitiveProvenance, ...] = ()
+    canvas_warning: CanvasViewportWarning | None = None
 
     def __post_init__(self) -> None:
         """Reject incomplete clip references before any adapter can serialize them."""

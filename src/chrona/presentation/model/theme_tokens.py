@@ -49,6 +49,17 @@ HORIZONTAL_SCALE_FLOOR = Decimal("0.5")
 HORIZONTAL_SCALE_CEILING = Decimal("1")
 
 
+SMALL_CAPS_FLOOR = Decimal("0.5")
+SMALL_CAPS_CEILING = Decimal("1")
+
+
+def checked_small_caps_scale(value: Decimal, pointer: str) -> Decimal:
+    """Return a declared small-caps scale (open interval 0.5 to 1), or raise the typed range diagnostic."""
+    if not value.is_finite() or value <= SMALL_CAPS_FLOOR or value >= SMALL_CAPS_CEILING:
+        raise ThemeTokenError("E_THEME_TEXT_SCALE_RANGE", pointer)
+    return value
+
+
 def checked_horizontal_scale(value: Decimal, pointer: str) -> Decimal:
     """Return a declared horizontal scale, or raise the typed range diagnostic at its Theme pointer."""
     if not value.is_finite() or value < HORIZONTAL_SCALE_FLOOR or value > HORIZONTAL_SCALE_CEILING:
@@ -70,6 +81,8 @@ class TextTreatment:
     horizontal_scale: Decimal = Decimal(1)
 
     def paint_content(self, content: str) -> str:
+        if self.transform.startswith("small-caps"):
+            return content.upper()
         return {
             "none": content,
             "uppercase": content.upper(),
@@ -456,8 +469,17 @@ class ThemeTokenView:
         spacing = self.number(role, "letterSpacing")
         transform = self.token(role, "textTransform", "textTransform")
         numeric_spacing = self.token(role, "numericSpacing", "numericSpacing")
+        small_caps = self.optional_number(role, "smallCapsScale")
+        if transform == "small-caps":
+            # The scale rides in the resolved transform (`small-caps:0.8`), so every measurement site that already
+            # passes the transform measures each run at its own size (#1285).
+            if small_caps is None:
+                raise ThemeTokenError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}/smallCapsScale")
+            transform = f"small-caps:{checked_small_caps_scale(small_caps, f'/body/roles/{role}/smallCapsScale')}"
+        elif small_caps is not None:
+            raise ThemeTokenError("E_THEME_TEXT_TREATMENT_CONFLICT", f"/body/roles/{role}/smallCapsScale")
         if (spacing < Decimal("-1") or spacing > Decimal("1")
-                or transform not in {"none", "uppercase", "lowercase", "capitalize"}
+                or transform.partition(":")[0] not in {"none", "uppercase", "lowercase", "capitalize", "small-caps"}
                 or numeric_spacing not in {"proportional", "tabular"}):
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}",
                                   f"role={_shown(role)}, letterSpacing={_shown(spacing)}, textTransform={_shown(transform)}, numericSpacing={_shown(numeric_spacing)}; expected spacing [-1, 1], transform none/uppercase/lowercase/capitalize, numeric spacing proportional/tabular")

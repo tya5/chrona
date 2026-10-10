@@ -9,6 +9,7 @@ from dataclasses import dataclass, replace
 from typing import Any, Mapping
 
 from chrona.presentation.layout.dependency_network import compose_dependency_network_surface
+from chrona.presentation.layout.canvas_viewport import DeclaredViewport
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.layout.model import LayoutError, LayoutManifest
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
@@ -28,7 +29,7 @@ from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, PrimitiveProvenance, review_row_subjects
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, ThemeTokenView
 from chrona.presentation.scene.pattern_geometry import pattern_geometry, pattern_kind, project_pattern_placement
-from chrona.presentation.scene.model import DecorationDisposition, ImageFill, ImageTile, SceneColumn, SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, SymbolGeometry, TextLayout
+from chrona.presentation.scene.model import DecorationDisposition, ImageFill, ImageTile, SceneColumn, SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, SymbolGeometry, TextLayout, TextRun
 from chrona.presentation.scene.model import (
     SceneLaneMember, SceneLaneObstacle, SceneLaneRectObstacle, SceneLaneSegmentObstacle,
     requires_lane_member_provenance,
@@ -72,12 +73,22 @@ class SceneBuildInput:
     fixed_lane_preflight: FixedLanePreflight | None = None
     capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
     surface_preparation: SurfacePreRowGeometry | None = None
+    declared_viewport: DeclaredViewport | None = None
 
 
 _REQUIRED_SOURCES = {
     "table-timeline": frozenset(("table", "timeline", "timeline-axis")),
     "dependency-network": frozenset(("network",)),
 }
+
+
+def _scene_transform(text_transform: str) -> str:
+    """The Scene names the transform without its scale: the runs carry every size (#1285)."""
+    return "small-caps" if text_transform.startswith("small-caps") else text_transform
+
+
+def _scene_runs(runs: tuple[Any, ...]) -> tuple[tuple[TextRun, ...], ...]:
+    return tuple(tuple(TextRun(run.text, run.font_size, run.inline_size) for run in line) for line in runs)
 
 
 def _heading_paint_role(tokens: ThemeTokenView, role: str = "heading") -> str:
@@ -382,7 +393,8 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
                       visual_requests: tuple[Any, ...] = (),
                       fixed_lane_preflight: FixedLanePreflight | None = None,
                       capacity_short_sources: tuple[CapacitySourceEvidence, ...] = (),
-                      surface_preparation: SurfacePreRowGeometry | None = None) -> SceneBuildInput:
+                      surface_preparation: SurfacePreRowGeometry | None = None,
+                      declared_viewport: DeclaredViewport | None = None) -> SceneBuildInput:
     """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
     if not isinstance(layout_manifest, LayoutManifest):
         raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
@@ -407,7 +419,7 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
     return SceneBuildInput(projection, surface_content, layout_manifest,
                            ThemeTokenView(resolved_theme), font_metrics, measured_sources,
                            dict(capabilities), visual_profile, viewport, icon_assets, visual_requests,
-                           fixed_lane_preflight, capacity_short_sources, surface_preparation)
+                           fixed_lane_preflight, capacity_short_sources, surface_preparation, declared_viewport)
 
 
 def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
@@ -445,6 +457,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             visual_requests=value.visual_requests,
             fixed_lane_preflight=value.fixed_lane_preflight,
             capacity_short_sources=value.capacity_short_sources,
+            declared_viewport=value.declared_viewport,
         ))
         composition = compose_surface_layout(request, prepared=value.surface_preparation)
     except LayoutError as error:
@@ -571,8 +584,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                             placed.baseline or (float(placed.bounds.inline), float(placed.bounds.block)),
                             placed.lines, placed.font_family, placed.font_weight, placed.font_size,
                             placed.line_height, placed.font_asset_identity, placed.letter_spacing,
-                            placed.text_transform, placed.numeric_spacing, placed.orientation, placed.rotation_degrees,
-                            placed.horizontal_scale, placed.fit)
+                            _scene_transform(placed.text_transform), placed.numeric_spacing, placed.orientation,
+                            placed.rotation_degrees, placed.horizontal_scale, placed.fit, _scene_runs(placed.runs))
         classification = contrast_binding(role)
         treatment = (value.theme_tokens.contrast_treatment(role)
                      if classification is not None and classification.contrast_class == ContrastClass.STATE_TEXT else None)
@@ -1163,6 +1176,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                         lane_obstacles=lane_obstacles, lane_clearance=lane_clearance,
                         diagnostic_provenance=placed_surface.diagnostic_provenance,
                         primitive_provenance=tuple(primitive_provenance))
+    surface = replace(surface, canvas_warning=placed_surface.canvas_warning)
     return project_canvas_overlays(surface, placed_surface.canvas_overlays, value.theme_tokens, value.visual_profile)
 
 
@@ -1187,7 +1201,8 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
         placed = compose_dependency_network_surface(SurfaceLayoutRequest(
             projection=projection, surface_content=value.surface_content,
             layout_manifest=value.layout_manifest, measured_sources=value.measured_sources,
-            theme_tokens=value.theme_tokens, font_metrics=value.font_metrics))
+            theme_tokens=value.theme_tokens, font_metrics=value.font_metrics,
+            declared_viewport=value.declared_viewport))
     except LayoutError as error:
         raise SceneBuildError(error.diagnostic_id, error.path) from error
     slots = tuple(SceneSlot(item.node_id, item.source, None,
@@ -1229,8 +1244,8 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                             text.baseline or (float(text.bounds.inline), float(text.bounds.block)),
                             text.lines, text.font_family, text.font_weight, text.font_size,
                             text.line_height, text.font_asset_identity, text.letter_spacing,
-                            text.text_transform, text.numeric_spacing, text.orientation, text.rotation_degrees,
-                            text.horizontal_scale)
+                            _scene_transform(text.text_transform), text.numeric_spacing, text.orientation,
+                            text.rotation_degrees, text.horizontal_scale, None, _scene_runs(text.runs))
         primitives.append(ScenePrimitive(text.placement_id, PrimitiveKind.TEXT, text.source_ref,
                                          text.slot_id if text.slot_id in heading_part_slots else "network",
                                          binding.purpose, paint_role, layout.bounds, text=text.content,
@@ -1278,4 +1293,5 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                         fit_warnings=placed.fit_warnings,
                         diagnostic_provenance=getattr(placed, "diagnostic_provenance", ()),
                         primitive_provenance=tuple(primitive_provenance))
+    surface = replace(surface, canvas_warning=placed.canvas_warning)
     return project_canvas_overlays(surface, placed.canvas_overlays, value.theme_tokens, value.visual_profile)

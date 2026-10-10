@@ -65,6 +65,9 @@ class SourceInput:
     # `block` closes the stack's actual placement envelope and baselines.
     run_flow: str = "stack"
     run_gap: Decimal = Decimal(0)
+    # A `grid` flow: the declared column count and the height of one row (#1290); entries fill the columns in order.
+    columns: int | None = None
+    row_block: Decimal = Decimal(0)
     # A producer-declared smallest inline size the content can shrink to; when
     # unset the smallest size is the preferred one (nothing shrinks).
     min_inline: Decimal | None = None
@@ -232,7 +235,17 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                 float(treatment.letter_spacing), treatment.transform, treatment.numeric_spacing,
                 float(treatment.horizontal_scale)))
         run_measurements[source] = tuple(measured_runs)
-        if value.run_flow == "line" and measured_runs:
+        grid_block: Decimal | None = None
+        if value.run_flow == "grid" and measured_runs and value.columns:
+            # A declared grid is exactly measurable here: each column is as wide as its widest entry, `run_gap` apart,
+            # and the rows are known from the entry count (#1290).
+            count = len(measured_runs)
+            width_of = [max((measured_runs[index].inline_size for index in range(column, count, value.columns)),
+                            default=Decimal(0)) for column in range(min(value.columns, count))]
+            rows = -(-count // value.columns)
+            measured_width = sum(width_of, Decimal(0)) + value.run_gap * (len(width_of) - 1)
+            grid_block = value.row_block * rows + value.run_gap * (rows - 1)
+        elif value.run_flow == "line" and measured_runs:
             measured_width = (sum((run.inline_size for run in measured_runs), Decimal(0))
                               + value.run_gap * (len(measured_runs) - 1))
         else:
@@ -244,6 +257,8 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                           * typography.text_treatment(run.typography_role).line_height for run in runs), Decimal(0))
         if not runs:
             text_block = text_line
+        if grid_block is not None:
+            text_block = grid_block
         # The preferred block of a wrapping line keeps the conservative stack (a content-sized slot is unchanged), but
         # its minimum is one row: how many rows it really needs is known only once the slot's inline size is, and
         # the legend placement pass checks that and reports the true required block (#1273).

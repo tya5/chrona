@@ -119,6 +119,7 @@ _FIT_CAUSES: Mapping[str, str] = {
     "W_LAYOUT_MARK_OVERFLOW": "a mark does not fit its space",
     "W_LAYOUT_LABEL_OVERFLOW": "a label does not fit its space",
     "W_LAYOUT_GROUP_HEADER_OVERFLOW": "a group header does not fit its space",
+    "W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT": "the completed canvas exceeds the declared viewport",
 }
 _SCENE_CAUSES: Mapping[str, str] = {
     "W_SCENE_SUPPRESSED_PRIMITIVE_EMITTED": "a drawing element that layout left out was emitted anyway",
@@ -163,6 +164,36 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
     if code in _SURFACE_CAUSES:
         return WarningText(_SURFACE_CAUSES[code], identity.removeprefix(code).removeprefix(":"))
     if code in _FIT_CAUSES:
+        if code == "W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT":
+            declared = payload.get("declared")
+            actual = payload.get("actual")
+            if isinstance(declared, Mapping) and isinstance(actual, Mapping):
+                block = "auto" if declared.get("blockSize") is None else _number(declared.get("blockSize"))
+                declared_size = f"{_number(declared.get('inlineSize'))}x{block}"
+                actual_extent = (f"origin {_number(actual.get('inlineStart'))},{_number(actual.get('blockStart'))} "
+                                 f"size {_number(actual.get('inlineSize'))}x{_number(actual.get('blockSize'))}")
+            else:
+                declared_size, actual_extent = "unknown", "unknown"
+            subjects = []
+            for item in _items(payload.get("contributors")):
+                if not isinstance(item, Mapping):
+                    continue
+                overrun = item.get("overrun")
+                if not isinstance(overrun, Mapping):
+                    continue
+                edges = [f"{edge} {_number(overrun.get(key))}" for edge, key in (
+                    ("inline-start", "inlineStart"), ("inline-end", "inlineEnd"),
+                    ("block-start", "blockStart"), ("block-end", "blockEnd"))
+                    if isinstance(overrun.get(key), (int, float)) and overrun.get(key) > 0]
+                if edges:
+                    subjects.append(f"{item.get('slotId')} ({', '.join(edges)})")
+            contributor_count = payload.get("contributorCount", len(subjects))
+            contributor_text = ", ".join(subjects) if subjects else "no slot detail"
+            if isinstance(contributor_count, int) and contributor_count > len(subjects):
+                contributor_text += f", and {contributor_count - len(subjects)} more"
+            subject = (f"surface {payload.get('surfaceId')} at {payload.get('sourceRef')}: "
+                       f"declared {declared_size}, actual {actual_extent}; contributors: {contributor_text}")
+            return WarningText(_FIT_CAUSES[code], subject)
         cause = f"{_FIT_CAUSES[code]} ({payload.get('failureKind')}, {payload.get('behaviour')})"
         needs = f"needs {_number(payload.get('requiredInline'))}x{_number(payload.get('requiredBlock'))}"
         has = f"has {_number(payload.get('availableInline'))}x{_number(payload.get('availableBlock'))}"
