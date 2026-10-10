@@ -90,6 +90,32 @@ columns and gutters, regardless of a flexible track's allocated share. See
 Specification 33 §5 for how a flexible track resolves a `minmax` minimum against its
 share.
 
+**Bounded table text (#1295).** An optional table slot `maxInlineShare`
+(Specification 33 section 6) takes precedence over unbroken natural content
+floors, not over authored fixed dimensions. Layout measures the required cell
+insets, hierarchy indents, group tabs, icon/affix reservations, gutters and permitted ellipsis at the bounded
+column widths; an infeasible mandatory minimum is `E_LAYOUT_TABLE_OVERFLOW`,
+never uniform font/column shrink or a wider table/timeline host.
+
+View `tableColumns[].text` and `heading.text` reuse `{wrap: allow|forbid}`;
+absence means `forbid`. Column intent covers its header and cells. Heading
+intent covers kicker/title/subtitle and the implicit Project title. Layout
+uses the existing measured word/CJK wrapping mechanism and typography/run
+metrics. Fitting text returns its exact source unchanged, without whitespace
+normalization. An indivisible overlong unit uses source-preserving ellipsis
+and `W_LAYOUT_TEXT_ELLIPSIZED` naming that text and its measured shortage;
+no abbreviation dictionary or font-size reduction is implied.
+
+Bounded column measurement precedes header and row/lane allocation. The header
+prefix reserves its completed multiline requirement; each row includes its
+own tallest completed multiline cell, in the cell's typography role. Heading
+line demand similarly precedes track allocation; wrapping is not a post-Scene
+newline or clip. Scene/adapters preserve completed lines and geometry. Without
+the optional declarations, existing natural-width and overflow behavior is
+unchanged. Packaged default/builtin declarations migrate atomically; fitting
+short-title geometry, paint, routes and diagnostics remain unchanged, with only
+enumerated resource-identity provenance changes for the migrated resources.
+
 A review row's block requirement is the largest of: `timeline.row.minBlockSize`;
 its mark-track extent plus `timeline.row.paddingBlock`; and the largest line block
 (`fontSize × lineHeight`) among its table cell roles plus

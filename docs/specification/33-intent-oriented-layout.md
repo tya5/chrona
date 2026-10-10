@@ -256,6 +256,25 @@ an absent maximum means unbounded within the declared viewport.
 
 ## 6. Placement, overflow, and distribution
 
+A `source: table` slot may declare finite `maxInlineShare` in `(0, 1]`
+(#1295). Its strict ceiling is that share of the independently resolved parent
+inner inline budget, after inline padding. A row subtracts its active-child
+inline gaps; a column's block gaps and overlay gaps are not inline deductions.
+A flow uses its parent inner inline budget before line selection. In a grid,
+the budget is the independently resolved spanned cell width, including only
+the gaps internal to that span. Resolve the ceiling before intrinsic floors
+and flexible allocation; redistribute a capped flexible share to the remaining
+tracks under Section 5, never enlarge the parent to honour the table's text.
+
+The budget must be finite and determined without that table's uncapped
+intrinsic width. A content-sized ancestor or intrinsic grid track is not itself
+proof of such a budget. An unresolved/circular budget, or an authored fixed
+size or non-content minimum above the ceiling, is `E_LAYOUT_TABLE_OVERFLOW`.
+The property is invalid on another source or a container. It does not change
+ordinary `fitContent`, fixed, `fr`, or `minmax` semantics when absent; the
+explicit table exception to natural content floors is specified in
+[Specification 24](24-table-timeline-presentation.md#21-table-and-row-metrics-480).
+
 Every slot declares `place.inline` and `place.block`. Containers declare `alignItems`
 for the cross axis and `justifyContent` for the main axis. A slot value overrides its
 container's item alignment on that axis.
