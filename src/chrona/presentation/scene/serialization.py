@@ -57,6 +57,8 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
                    for surface in scene.surfaces for primitive in surface.primitives)
     has_scale = any(primitive.text_layout is not None and primitive.text_layout.horizontal_scale != 1
                     for surface in scene.surfaces for primitive in surface.primitives)
+    has_runs = any(primitive.text_layout is not None and primitive.text_layout.runs
+                   for surface in scene.surfaces for primitive in surface.primitives)
     has_fit = any(primitive.viewer_fit != "raw" or (primitive.text_layout is not None and primitive.text_layout.fit is not None)
                   for surface in scene.surfaces for primitive in surface.primitives)
     has_stroke_clip = any(primitive.stroke_clip is not None for surface in scene.surfaces for primitive in surface.primitives)
@@ -67,7 +69,7 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
         primitive.from_instance_id is not None or primitive.to_instance_id is not None
         for surface in scene.surfaces for primitive in surface.primitives)
     return {
-        "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale or has_fit or has_marker_axis or has_stroke_clip
+        "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale or has_runs or has_fit or has_marker_axis or has_stroke_clip
                     or has_relation_endpoint_identity
                     else "chrona/scene/v0.6"),
         "kind": "scene",
@@ -523,6 +525,9 @@ def _text_layout(value: TextLayout) -> dict[str, Any]:
     result["rotationDegrees"] = value.rotation_degrees
     if value.horizontal_scale != 1:
         result["horizontalScale"] = value.horizontal_scale
+    if value.runs:
+        result["runs"] = [[{"text": run.text, "fontSize": run.font_size, "inlineSize": run.inline_size}
+                           for run in line] for line in value.runs]
     if value.fit is not None:
         fit: dict[str, Any] = {"mode": value.fit.mode}
         if value.fit.line_inline_sizes:

@@ -1,0 +1,13 @@
+version: chrona/snapshot-ref/v0.3
+kind: snapshot-ref
+id: chrona-roadmap-plan-2026-10-10
+body:
+  project:
+    id: chrona-roadmap
+    kind: project
+    store:
+      provider: local
+      identity: chrona-roadmap-example
+    address: snapshots/plan-2026-10-10/project.yaml
+    revision:
+      token: plan-2026-10-10
