@@ -364,6 +364,7 @@ class SlotPlacement:
     direction: str = "block"
     gap: Decimal | None = None
     item_min_inline_size: Decimal | None = None
+    columns: int | None = None
 
 
 @dataclass(frozen=True)
