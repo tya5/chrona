@@ -810,12 +810,6 @@ body:
     group-band.fill: category:default
     row-band.fill: category:default
     group-header-band.fill: category:default
-    group:bus.fill: category:bus
-    group:payload.fill: category:payload
-    group:ait.fill: category:ait
-    group:ground.fill: category:ground
-    group:launch.fill: category:launch
-    group:ops.fill: category:ops
     planned.fill: category:bar
     planned.stroke: category:barEdge
     network-node.fill: surfaceRaised
@@ -885,15 +879,6 @@ body:
     table.header.blockSize: table-header-height
     timeline.groupHeader.blockSize: timeline-group-header-size
     timeline.relation.cornerRadius: timeline-relation-radius
-  colorScales:
-    owner:
-      slots:
-        bus: bus
-        payload: payload
-        ait: ait
-        ground: ground
-        launch: launch
-        ops: ops
   annotationKinds:
     risk:
       label: RISK
