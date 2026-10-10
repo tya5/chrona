@@ -166,7 +166,7 @@ def test_first_project_names_exactly_the_presets_chrona_lists():
     from chrona.usecases.preset_library import list_builtin_presets
 
     text = (Path(__file__).resolve().parents[3] / "docs" / "guides" / "first-project.md").read_text(encoding="utf-8")
-    sentence = re.search(r"Available ids are\s+(.*?)\(`chrona preset list`", text, re.S)
+    sentence = re.search(r"Available ids are\s+(.*?)`chrona preset list`", text, re.S)
     named = re.findall(r"`([a-z-]+)`", sentence.group(1))
     assert named == [item["id"] for item in list_builtin_presets()]
 
