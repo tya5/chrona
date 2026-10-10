@@ -81,6 +81,7 @@ def run() -> None:
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary)
         starter, corpus = root / "my-chrona-project", root / "my-halcyon-example"
+        stages, stage_svg = root / "tutorial", root / "tutorial-07.svg"
         output = corpus / "out"
         draft = root / "draft-project.yaml"
         default_svg, starter_svg = root / "default.svg", starter / "plan.svg"
@@ -91,6 +92,9 @@ def run() -> None:
         for arguments in (
             ["init", str(starter)],
             ["render", str(starter / "project.yaml"), "--actual", str(starter / "actual.yaml"), "--output", str(starter_svg)],
+            ["init", str(stages), "--example", "onboarding"],
+            ["render", str(stages / "07-actuals" / "project.yaml"), "--actual", str(stages / "07-actuals" / "actual.yaml"),
+             "--view", str(stages / "07-actuals" / "view.yaml"), "--output", str(stage_svg)],
             ["init", str(corpus), "--example", "halcyon-1"],
             ["render", str(draft), "--output", str(default_svg)],
             ["materialize", str(corpus / "manifest.yaml"), "--slide", "mission-brief", "--output", str(output)],
@@ -113,6 +117,10 @@ def run() -> None:
             completed = subprocess.run(command, cwd=root, text=True, capture_output=True, check=False)
             if completed.returncode:
                 raise AssertionError(f"documented fresh-project command failed: chrona {' '.join(arguments)}\n{completed.stdout}\n{completed.stderr}")
+        if not stage_svg.read_bytes().startswith(b"<svg") or not (stages / "01-spans" / "project.yaml").is_file():
+            raise AssertionError("the onboarding stages were not initialized from the wheel or did not render")
+        if (stages / ".chrona").exists():
+            raise AssertionError("the onboarding stages are plain Projects: init must not write a Store")
         if not (output / "review.svg").is_file():
             raise AssertionError("documented materialize command did not create its artifact")
         if not default_svg.read_bytes().startswith(b"<svg"):
