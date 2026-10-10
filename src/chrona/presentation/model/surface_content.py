@@ -306,7 +306,8 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
             "progress": (item.actual or {}).get("progress")}.get(facet)
 
 
-def display_value(value: Any, missing: str, formatter: str | BooleanPresencePresentation = "text", *, locale: str = "en-US") -> str:
+def display_value(value: Any, missing: str, formatter: str | BooleanPresencePresentation = "text", *, locale: str = "en-US",
+                  zero: str = "signed") -> str:
     """Format a normalized table value according to its declared View contract."""
     if value is None:
         return {"blank": "", "em-dash": "—", "unknown": "unknown",
@@ -332,9 +333,9 @@ def display_value(value: Any, missing: str, formatter: str | BooleanPresencePres
         if isinstance(value.get("at"), date):
             return _format_compact_date(value["at"], include_year=True, locale=locale)
     if formatter == "signedDays" and isinstance(value, int) and not isinstance(value, bool):
-        return f"{value:+d}d"
+        return f"{value:d}d" if value == 0 and zero == "plain" else f"{value:+d}d"
     if formatter == "signedNumber" and isinstance(value, int) and not isinstance(value, bool):
-        return f"{value:+d}"
+        return f"{value:d}" if value == 0 and zero == "plain" else f"{value:+d}"
     return str(value)
 
 
