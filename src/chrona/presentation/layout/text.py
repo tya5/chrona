@@ -221,6 +221,7 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
     letter_spacing = float(treatment.letter_spacing)
     width = max(measure_text_width(line, font_size=font_size, font_metrics=font_metrics,
                                    letter_spacing=letter_spacing,
+                                   text_transform=treatment.transform,
                                    numeric_spacing=treatment.numeric_spacing)
                 for line in (lines or (content,)))
     scale = float(treatment.horizontal_scale)

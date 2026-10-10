@@ -214,6 +214,7 @@ def _axis_text_run_geometry(*, content: str, inline: float, baseline_block: floa
     font_size, line_height = float(treatment.font_size), float(treatment.line_height)
     width = measure_text_width(content, font_size=font_size, font_metrics=metrics,
                                letter_spacing=float(treatment.letter_spacing),
+                               text_transform=treatment.transform,
                                numeric_spacing=treatment.numeric_spacing)
     height = font_size * line_height
     rotation = {"horizontal": 0, "rotate-cw": 90, "rotate-ccw": -90}[orientation]

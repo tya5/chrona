@@ -23,6 +23,27 @@ from chrona.presentation.model.semantic_registry import semantic_binding
 from tests.unit.chrona.presentation.scene import test_v05_builder as base
 
 
+@pytest.mark.parametrize("orientation,rotation", [("horizontal", 0), ("rotate-cw", 90), ("rotate-ccw", -90)])
+@pytest.mark.parametrize("scale", [1, 0.5])
+@pytest.mark.parametrize("transform,advance", [("none", 2), ("uppercase", 12)])
+def test_axis_run_bounds_measure_the_painted_glyph_at_one_compression(orientation, rotation, scale, transform, advance):
+    from chrona.presentation.layout.surface_axis import _axis_text_run_geometry
+    from chrona.presentation.layout.text import measured_text_bounds, scaled_metric
+    from chrona.presentation.model.theme_tokens import TextTreatment
+
+    class Font:
+        def width(self, content, size):
+            return sum(12 if char == "M" else 2 for char in content) * size
+
+    treatment = TextTreatment("Test", 400, 10, 1, 0, transform, "proportional", horizontal_scale=scale)
+    run = _axis_text_run_geometry(content="m", inline=20, baseline_block=30,
+        treatment=treatment, metrics=scaled_metric(Font(), scale), orientation=orientation)
+
+    assert run.content == "m"
+    assert run.bounds == measured_text_bounds(inline=20, baseline_block=30,
+        width=advance * 10 * scale, height=10, font_size=10, rotation=rotation)
+
+
 def _axis_request(tiers):
     item = base.ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2027, 1, 1)}, None, None, ())
     projection = base.ReviewProjection((item,), (date(2026, 1, 1), date(2027, 1, 1)), (), ())
