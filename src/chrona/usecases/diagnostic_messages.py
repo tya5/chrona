@@ -175,6 +175,10 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
     if code == "W_FONT_GLYPH_SUBSTITUTED":
         return WarningText(f"a glyph missing from {payload.get('requestedFamily')} is drawn with "
                            f"{payload.get('fallbackFamily')}", f"{payload.get('codepoint')} in {payload.get('text')!r}")
+    if code == "W_FONT_FALLBACK_PACKAGED":
+        fields = dict(part.split("=", 1) for part in identity.removeprefix(code).removeprefix(":").split(";") if "=" in part)
+        return WarningText(f"no installed face matches {fields.get('requested', '?')}, so the packaged "
+                           f"{fields.get('face', 'Noto Sans')} is used", fields.get("role", ""))
     if code == "W_PRESENTATION_SCALE_NOT_SEPARABLE":
         first, second = (_items(payload.get("values")) + ["?", "?"])[:2]
         return WarningText(f"two colors of scale {payload.get('scaleId')} are not separable under "
