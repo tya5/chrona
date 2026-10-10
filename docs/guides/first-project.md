@@ -23,8 +23,8 @@ still require their typesetter descriptor flags.
 
 To select a supplied appearance explicitly, copy one into your own source tree
 and render through its ordinary local preset.  Available ids are
-`mission-light`, `control-room-dark`, `print-mono`, `executive-light`, and
-`elevated-light`.
+`mission-light`, `control-room-dark`, `print-mono`, `executive-light`,
+`elevated-light`, `editorial`, and `technical-print` (`chrona preset list` prints them).
 
 ```bash
 chrona preset copy control-room-dark --output my-first-chrona-project/looks/control-room-dark
@@ -35,7 +35,7 @@ chrona render my-first-chrona-project/project.yaml \
 ```
 
 The copied `preset.yaml`, `view.yaml`, `theme.yaml`, `scheme.yaml`, and
-`layout.yaml` are ordinary editable files. All five supplied looks render
+`layout.yaml` are ordinary editable files. All supplied looks render
 with the default SVG profile. `elevated-light` uses a visible flat fallback
 there; select `--visual-profile chrona-output/visual/v0.7-svg` explicitly
 when you want its gradient and shadow treatment.
@@ -66,6 +66,7 @@ These two Draft renders use the same Project, View, Scheme and Layout. The
 derived output has a 30 px title and 16 px table header, versus 24 px and
 14 px in the base output.
 
+<!-- chrona:doc-check requires: clone the commands read files that only a clone of the repository has (examples/ is not in the wheel) -->
 ```bash
 chrona render examples/aster-ssd/project.yaml \
   --view examples/aster-ssd/views/01-overview.yaml \
@@ -81,8 +82,10 @@ chrona render examples/aster-ssd/project.yaml \
   --actual examples/aster-ssd/actual.yaml --output aster-derived.svg
 ```
 
-For a complete materialized regression corpus instead, request it explicitly:
+For a complete materialized regression corpus instead, request it explicitly (from a clone with
+`pip install -e packages/chrona-fonts-noto-cjk`; an installed wheel does not carry that font package yet):
 
+<!-- chrona:doc-check requires: clone init --example halcyon-1 needs packages/chrona-fonts-noto-cjk, which a wheel does not install -->
 ```bash
 chrona init my-halcyon-corpus --example halcyon-1
 ```
