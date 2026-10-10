@@ -4,7 +4,7 @@
 
 Source PR: [#1312](https://github.com/tya5/chrona/pull/1312), head `c82a335935eb80352dbe94277da341bbf5a0783c`, base `e614aae4a8c891546e1863c609d03fac9a707002`. Public contract and design: [Status](https://github.com/tya5/chrona/issues/1284#issuecomment-6087491029). Layout owns the offset and measured text extent; glyph geometry and Scene projection remain unchanged.
 
-PR checks: [run 38006132465](https://github.com/tya5/chrona/actions/runs/38006132465) has passed derived preview, conformance and MCP; pytest shards and newest-Python reproduction remain pending. [Artifact audit](https://github.com/tya5/chrona/pull/1312#issuecomment-6091376674): 151 safe paths verified against the exact base; all 71 SVGs and 71 Scenes byte-identical; no additions or removals; only the diagnostic inventory changed. Current-base focused batch: 16 passed; S0: 38 schema structures equal.
+PR checks: [run 38006132465](https://github.com/tya5/chrona/actions/runs/38006132465) succeeded, including all pytest shards, newest-Python reproduction, conformance, MCP and derived readiness. [Artifact audit](https://github.com/tya5/chrona/pull/1312#issuecomment-6091376674): 151 safe paths verified against the exact base; all 71 SVGs and 71 Scenes byte-identical; no additions or removals; only the diagnostic inventory changed. Current-base focused batch: 16 passed; S0: 38 schema structures equal. PR #1312 merged as `92fdc4cbefc7a9509328f031a15b4736a4a56394`.
 
 ## Literal issue acceptance
 
