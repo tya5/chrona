@@ -18,6 +18,7 @@ from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.semantic_mark_facets import select_item_mark_facets
 from chrona.presentation.model.projection import ReviewProjection, WindowMode
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
+from chrona.presentation.layout.window_label_admission import WindowLabelAdmission, complete_window_label_admission
 
 if TYPE_CHECKING:
     from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
@@ -49,10 +50,12 @@ class ItemMarkVisibilityIndex:
     projection: ReviewProjection = field(repr=False, compare=False)
     as_of: date | None
     entries: TypingMapping[MarkOccurrence, ItemMarkVisibility]
+    label_entries: TypingMapping[MarkOccurrence, WindowLabelAdmission] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         # Copy before wrapping so a caller retaining the input dict cannot mutate this index.
         object.__setattr__(self, "entries", MappingProxyType(dict(self.entries)))
+        object.__setattr__(self, "label_entries", MappingProxyType(dict(self.label_entries)))
 
     def require_match(self, projection: ReviewProjection, as_of: date | None) -> None:
         if projection is not self.projection or as_of != self.as_of:
@@ -63,6 +66,15 @@ class ItemMarkVisibilityIndex:
                as_of: date | None) -> ItemMarkVisibility:
         self.require_match(projection, as_of)
         return self.entries[occurrence]
+
+    def lookup_label(self, occurrence: MarkOccurrence, *, projection: ReviewProjection,
+                     as_of: date | None) -> WindowLabelAdmission:
+        self.require_match(projection, as_of)
+        result = self.label_entries.get(occurrence)
+        if not isinstance(result, WindowLabelAdmission):
+            raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/items",
+                              detail="stage=label-admission; reason=missing-cache-entry")
+        return result
 
 
 def outside_window_provenance(index: ItemMarkVisibilityIndex) -> DiagnosticProvenance | None:
@@ -109,6 +121,7 @@ def build_item_mark_visibility_index(
 ) -> ItemMarkVisibilityIndex:
     """Select and complete each source occurrence once, adding typed lane aliases."""
     entries: dict[MarkOccurrence, ItemMarkVisibility] = {}
+    label_entries: dict[MarkOccurrence, WindowLabelAdmission] = {}
 
     def add(occurrence: MarkOccurrence, *, item: object, instance_id: str,
             source_ref: str, emit_missing_actual: bool = True,
@@ -123,6 +136,8 @@ def build_item_mark_visibility_index(
             emit_diagnostics=emit_diagnostics,
         )
         entries[occurrence] = result
+        label_entries[occurrence] = complete_window_label_admission(
+            item, result, window_mode=projection.window_mode, window=projection.window)
         return result
 
     if projection.lane_membership is not None:
@@ -155,6 +170,7 @@ def build_item_mark_visibility_index(
                 raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/laneRows",
                                   detail="stage=index; reason=duplicate-lane-alias")
             entries[final_occurrence] = visibility
+            label_entries[final_occurrence] = label_entries[source_occurrence]
     elif projection.rows:
         for row in projection.rows:
             for item in row.items:
@@ -192,7 +208,7 @@ def build_item_mark_visibility_index(
                 emit_diagnostics=False,
             )
 
-    return ItemMarkVisibilityIndex(projection, as_of, entries)
+    return ItemMarkVisibilityIndex(projection, as_of, entries, label_entries)
 
 
 def ensure_item_mark_visibility_index(
