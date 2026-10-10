@@ -5,9 +5,13 @@
 Recovery base: `ea681d44324cffe509a5d0530655cb849386b54e` (failed sync
 38010814862); [design, architecture review and implementation plan](https://github.com/tya5/chrona/issues/1321#issuecomment-6092377582).
 This is the exclusively assigned red-main tooling fix, not normal feature publication.
-Current local dry-run proves all 52 retirements without changing generated files.
-Public snapshot, source sync/trusted gate and final-review-containing full release
-remain pending; do not close.
+PR #1323 merged as `6fe0dacf04e31b5e542f422f4f16eaa5f8810998` after every
+substantive check and [independent artifact audit](https://github.com/tya5/chrona/pull/1323#issuecomment-6092580719)
+passed. [Sync](https://github.com/tya5/chrona/actions/runs/38016810914) published
+bot-generated main `fed9727461e6fefa5b092cdea638bf3a722dfcef`: all 99 outputs
+match the audited snapshot; exactly 52 retired paths are absent, with no extra
+changes. This final record joins #1283's publication batch; its containing-main
+three-OS full release remains required before closure.
 
 ## Literal issue acceptance
 
@@ -18,13 +22,17 @@ remain pending; do not close.
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | Main `derived-main` is green on a commit after the fix, and the 52 orphan files are gone from the tree. | not met | [Recovery disposition](https://github.com/tya5/chrona/issues/1321#issuecomment-6092377582): exact-main trusted sync and bot-owned retirement remain required. The read-only source dry-run recognizes exactly 52 formerly declared, unchanged tracked outputs. | — |
+| 1 | Main `derived-main` is green on a commit after the fix, and the 52 orphan files are gone from the tree. | met | [Trusted gate](https://github.com/tya5/chrona/actions/runs/38017276223) completed success on fed97274; check114110242946 independently verified as completed/success from github-actions. [Sync](https://github.com/tya5/chrona/actions/runs/38016810914) fast-forwarded actual main to that SHA. Exact tree/snapshot audit proves all 52 retired paths absent and all 99 surviving blobs identical. | — |
 | 2 | A synthetic test deletes a slide, then lands an unrelated commit, then syncs. The test sees the outputs retired, and a planted never-declared file still rejected. | met | [Synthetic git-history and snapshot tests](../../../tests/unit/tools/test_derived_workflow.py): one snapshot case covers deletion, unrelated docs commit, actual retirement, exact source bytes in the before archive, and a subsequent planted never-declared output refused by the real orphan validator. Separate cases cover independent ancestors, non-FF merges, modified/restored and deleted/recreated refusals. Combined workflow/trusted-gate batch: 24 passed (11.81s). | — |
 | 3 | Do not edit `examples/**` by hand. | met | Only [workflow tooling](../../../tools/derived_workflow.py), [synthetic tests](../../../tests/unit/tools/test_derived_workflow.py) and this review change. No authored example or managed generated output edits. | — |
 
 ## Programme-level criteria (optional)
 
-None. Public release remains unverified; local tests and a dry-run do not prove main recovery.
+None. The old unready-base PR derived-ready wait was cancelled after recovery merge;
+it is not counted green and no gate was weakened. Full run
+[38017599861](https://github.com/tya5/chrona/actions/runs/38017599861) covers the
+recovered implementation, not this updated final record. Closure waits for the
+successful exact-main full release containing this record.
 
 ## Architecture conclusion
 

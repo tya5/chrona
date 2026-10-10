@@ -301,7 +301,7 @@ def measure_natural_normal_flow_block(profile: ResolvedLayoutProfile, *, viewpor
     def child_block(node: Mapping[str, Any], path: str, available_inline: Decimal) -> Decimal:
         measured = _measure_node(node, path, measurements, profile)
         required = block(node, path, available_inline)
-        if node["kind"] in {"overlay", "grid"}:
+        if node["kind"] in {"overlay", "grid", "flow"}:
             measured = _block_measurement(measured, required)
         minimum, target, _ = _spec_base(node["blockSize"], axis="block", measurement=measured,
                                         profile=profile, path=path + "/blockSize")
@@ -312,7 +312,7 @@ def measure_natural_normal_flow_block(profile: ResolvedLayoutProfile, *, viewpor
     root = profile.profile["root"] if node is None else node
     natural = block(root, node_path, _d(viewport_inline))
     measure = _measure_node(root, node_path, measurements, profile)
-    if root["kind"] in {"overlay", "grid"}:
+    if root["kind"] in {"overlay", "grid", "flow"}:
         measure = _block_measurement(measure, natural)
     minimum, target, _ = _spec_base(root["blockSize"], axis="block", measurement=measure,
                                     profile=profile, path=node_path + "/blockSize")
@@ -427,12 +427,33 @@ class _Arranger:
                        available_inline=rect.inline_size, available_block=rect.block_size)
         return rect.inline + i0, rect.block + b0, max(ZERO, inline_size), max(ZERO, block_size)
 
+    def _wrapped_block(self, child: Mapping[str, Any], path: str, measure: Measurement, inline: Decimal) -> Measurement:
+        """A flow child's block measurement at the inline extent it is arranged at; other kinds are unchanged."""
+        if child["kind"] != "flow":
+            return measure
+        return _block_measurement(measure, _natural_child_block(child, path, inline, self.measurements, self.profile))
+
+    def _column_child_inline(self, child: Mapping[str, Any], path: str, measure: Measurement,
+                             cross: Decimal, node: Mapping[str, Any]) -> Decimal:
+        """The inline extent a column gives a child, as `_linear` resolves it for arrangement."""
+        spec = child["inlineSize"]
+        if isinstance(spec, dict) and "aspectRatio" in spec:
+            return cross
+        align = child.get("place", {}).get("inline", node["alignItems"])
+        return _cross_size(_spec_base(spec, axis="inline", measurement=measure, profile=self.profile,
+                                      path=path + "/inlineSize"), cross, stretch=align == "stretch")
+
     def _linear(self, node: Mapping[str, Any], path: str, rect: Rect) -> None:
         inline, block, inline_size, block_size = self._content(node, path, rect)
         row = node["kind"] == "row"; main = inline_size if row else block_size
         cross = block_size if row else inline_size; gap = _gap(self.profile, node, path)
         children = _active_children(node, self.measurements)
         measured = [_measure_node(child, f"{path}/children/{i}", self.measurements, self.profile) for i, child in children]
+        if not row:
+            # A flow child wraps at the inline extent the column gives it, so its block allocation is its line stack
+            # there, as arrangement will lay it out (#1219).
+            measured = [self._wrapped_block(child, f"{path}/children/{i}", m, self._column_child_inline(child, f"{path}/children/{i}", m, cross, node))
+                        for (i, child), m in zip(children, measured)]
         specs = [child["inlineSize" if row else "blockSize"] for _, child in children]
         specs = [
             {"fixed": cross * _d(spec["aspectRatio"]) if row else cross / _d(spec["aspectRatio"])}
@@ -441,6 +462,10 @@ class _Arranger:
         ]
         paths = [f"{path}/children/{i}/{'inlineSize' if row else 'blockSize'}" for i, _ in children]
         sizes = _allocate(specs, main - gap * max(0, len(children)-1), measured, axis="inline" if row else "block", profile=self.profile, paths=paths)
+        if row:
+            # The same for a flow in a row: its block is the line stack at the inline size the row allocated it.
+            measured = [self._wrapped_block(child, f"{path}/children/{i}", m, size)
+                        for (i, child), m, size in zip(children, measured, sizes)]
         used = sum(sizes, ZERO) + gap * max(0, len(children)-1)
         if used > main:
             self._warn(node, path, required_inline=used if row else cross,

@@ -2,12 +2,15 @@
 
 # Issue #927 — derived figures acceptance
 
+Status: selected optional scope met; issue closed after the review-containing exact-main release.
+
 Merged source: `d4eef57f5422b31ca568ec9f174af24a704deb16` from
 [PR 1259](https://github.com/tya5/chrona/pull/1259), with design and selected
 scope in [issue Status](https://github.com/tya5/chrona/issues/927#issuecomment-6071114520).
-Current public main is `0617e671c51ed14fe0d242a37a18a744bd85b7e8`. Publish this
-refreshed review and pass the exact-main release gate containing it before
-closing.
+The review was published in `d4c93f64ae888d335c0aa4b412e05686894bf76b`.
+The exact-main release on that commit passed [run 37987979274](https://github.com/tya5/chrona/actions/runs/37987979274),
+including Ubuntu, macOS and Windows pytest/conformance/wheel-smoke, MCP floor
+and newest-Python public-materializer reproduction.
 
 ## Literal issue acceptance
 
@@ -47,7 +50,6 @@ neutral count/date facts without importing projection types. Presentation comple
 group, period and annotation strings before measurement; Layout owns geometry, Scene
 and adapters carry completed content. Group and global identities are separate;
 missing facts never become zero. Existing literal captions and omitted declarations
-retain their contracts. The selected implementation scope is met; the refreshed
-review and its exact-main release remain required before closure. Current
-`0617e671` release run [37982405666](https://github.com/tya5/chrona/actions/runs/37982405666)
-is in progress and predates this refreshed review.
+retain their contracts. The selected implementation scope is met; scalar
+critical-path forecast/day delta remains unselected and unclaimed. The exact-main
+release succeeded and issue 927 is closed.
