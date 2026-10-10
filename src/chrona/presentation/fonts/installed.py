@@ -11,6 +11,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
+import logging
 import os
 from pathlib import Path
 from struct import error as struct_error  # fontTools raises struct.error on truncated tables
@@ -53,6 +54,21 @@ def default_font_directories(*, platform: str | None = None, environ: Mapping[st
         directories = [data_home / "fonts", user / ".fonts", *(item / "fonts" for item in data_dirs)]
     directories += [Path(item) for item in env.get(PATH_VARIABLE, "").split(os.pathsep) if item]
     return tuple(directories)
+
+
+@contextmanager
+def _quiet_fonttools() -> Iterator[None]:
+    """Discovery reads every installed face; fontTools warns about each odd one (`'created' timestamp seems very low` on macOS).
+
+    Those warnings are about a font file we only index, not about the render: silence them for the scan, and restore the level (#1369).
+    """
+    logger = logging.getLogger("fontTools")
+    previous = logger.level
+    logger.setLevel(logging.ERROR)
+    try:
+        yield
+    finally:
+        logger.setLevel(previous)
 
 
 def _name_values(font: TTFont, name_ids: Iterable[int]) -> list[str]:
@@ -148,8 +164,9 @@ class InstalledFontIndex:
             for directory in self._directories:
                 paths.extend(_files_under(directory))
             found: list[InstalledFace] = []
-            for path in dict.fromkeys(paths):
-                found.extend(_faces_in(path))
+            with _quiet_fonttools():
+                for path in dict.fromkeys(paths):
+                    found.extend(_faces_in(path))
             self._faces = tuple(sorted(found, key=lambda face: (face.family.casefold(), face.weight, str(face.path), face.index)))
         return self._faces
 
