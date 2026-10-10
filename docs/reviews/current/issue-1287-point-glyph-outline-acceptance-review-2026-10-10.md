@@ -2,9 +2,9 @@
 
 # Issue #1287 — point glyph outline acceptance
 
-Published preparation: `d4215dcca0138de90329829caa44f7497bd8b14d`, ordinarily
-adopting #1283's pending PR head `8ba462d826e1fc18a47070350a844a84c0ade8b1`
-and ready main `484f5cd83ac24e91b7d435be18dfb5be1ebade04`.
+Validation checkpoint: `7a3d12472f1908db0e32b9062c2b20516693eed8`, ordinarily
+adopting #1283's published pending PR head `018efae2556ee3faada55f08d9ebfb32ae6c0b00`
+and ready main `fed9727461e6fefa5b092cdea638bf3a722dfcef`.
 This is a preparation checkpoint, not a merged dependency or release base.
 [Selected design and architecture review](https://github.com/tya5/chrona/issues/1287#issuecomment-6088427990).
 Local acceptance is verified; public artifact and release gates remain pending. Do not close.
@@ -25,8 +25,10 @@ Local acceptance is verified; public artifact and release gates remain pending. 
 
 ## Programme-level criteria (optional)
 
-Current prepared-parent integration/outline/projection batch: 39 passed (31.67s),
+Current prepared-parent integration/outline/projection batch: 39 passed (36.90s),
 including the independent frozen projection comparisons.
+Independent adoption audit confirms exactly the 18 owned files relative to the
+published parent, with no schema, examples, generated or workflow changes.
 Earlier focused batch: 281 passed (29.93s); expanded integration batch: 11 passed (16.49s), including complete-Scene/SVG byte checks and catalogue finish preservation.
 [Lane footprint/port test](../../../tests/unit/chrona/presentation/layout/test_point_outline.py) retains the completed gate width rather than planned-role fallback and keeps semantic ports on the original part. [Projection test](../../../tests/unit/chrona/presentation/scene/test_mark_geometry.py) separates intrinsic catalogue finish metadata from a role-bound outline.
 
