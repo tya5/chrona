@@ -48,4 +48,3 @@ def test_unit_tests_have_no_wallclock_assertions_outside_benchmark_allowlist():
                 if refs:
                     violations.append(f"{relative}:{node.lineno}: {', '.join(sorted(refs))}")
     assert not violations, "wall-clock unit assertions: " + "; ".join(violations)
-
