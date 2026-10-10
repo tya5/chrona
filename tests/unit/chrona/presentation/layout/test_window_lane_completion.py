@@ -8,13 +8,16 @@ import pytest
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.surface_lanes import preflight_fixed_lane_layout
-from chrona.presentation.model.projection import WindowMode
+from chrona.presentation.model.projection import ObservationState, WindowMode
+from tests.unit.chrona.presentation.layout.test_lane_window_marks import _fixture
 from tests.unit.chrona.presentation.layout.test_lane_item_footprints import _window_footprint_fixture
 from tests.unit.chrona.presentation.layout.test_surface_axis_tier_geometry import _axis_request
 
 
-def _request(*, point=False, all_outside=False, containing=False, mode=WindowMode.EXPLICIT):
-    projection, _, _ = _window_footprint_fixture(point=point, all_outside=all_outside, mode=mode)
+def _request(*, point=False, all_outside=False, containing=False, mode=WindowMode.EXPLICIT,
+             projection=None):
+    if projection is None:
+        projection, _, _ = _window_footprint_fixture(point=point, all_outside=all_outside, mode=mode)
     if containing:
         projection = replace(projection, window=(date(2026, 1, 1), date(2026, 1, 10)))
     request = _axis_request(())
@@ -52,6 +55,26 @@ def test_containing_explicit_lane_keeps_derived_placement_identical():
     derived = compose_surface_layout(_request(containing=True, mode=WindowMode.SELECTED_PLANNED)).placement
     assert explicit == derived
     assert explicit.lane_window_absences == ()
+
+
+def test_final_comparison_marks_keep_occurrence_and_countable_member_distinct():
+    projection, _ = _fixture()
+    primary = projection.rows[0].items[0]
+    snapshot = replace(primary, item_id="snapshot-item", object_id="snapshot-object",
+                       source_kind="snapshot", actual=None, roles=("planned",),
+                       planned={"start": date(2026, 2, 3), "end": date(2026, 2, 4)},
+                       observation_state=ObservationState.NOT_YET_DUE)
+    projection = replace(projection,
+        rows=(replace(projection.rows[0], items=(primary, snapshot)),),
+        lane_rows=(replace(projection.lane_rows[0], items=(primary, snapshot),
+                           member_item_ids=("item", "item")),))
+    placement = compose_surface_layout(_request(projection=projection)).placement
+    assert {mark.placement_id for mark in placement.marks} == {
+        "actual:lane:item", "planned:lane:snapshot-item"}
+    assert {mark.lane_member_id for mark in placement.marks} == {"item"}
+    assert len(placement.lane_window_absences) == 1
+    assert placement.lane_window_absences[0].member_id == "item"
+    assert placement.lane_window_absences[0].expected.purpose == "planned"
 
 
 def test_missing_visible_final_mark_is_not_excused_by_an_unrelated_window_absence(monkeypatch):
