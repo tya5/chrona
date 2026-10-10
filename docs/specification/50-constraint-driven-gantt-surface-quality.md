@@ -187,6 +187,17 @@ not alter data-only lane membership. Disjoint spans and out-of-window points
 are omitted, not mapped beyond the plot. Point insets include only admitted
 facets and retain their existing complete symbol/icon/stroke geometry.
 
+Window omission does not remove an expected source mark from the lane closure.
+Layout records a typed outside-window absence against that exact expected
+instance/facet and validates that every expected mark is either completed or
+accounted for by such an absence, never both. An absent in-window mark remains
+an error. A lane member with all its facets omitted retains its table row and
+data-only membership; its preflight footprint may be empty only when this
+complete typed absence account proves why. It retains ordinary track allocation
+and does not acquire a fake mark, port, obstacle, or minimum footprint. Visuals
+bound to an omitted host are intentionally unpainted, not invalid selectors.
+The same immutable visibility closure supplies this account and final geometry.
+
 Intersecting spans retain original dates alongside the visible interval.
 Progress is computed over the original span, then intersected with the visible
 host; applying its fraction to an already shortened host is forbidden. Delta

@@ -204,6 +204,19 @@ remain strict. Model, schema, serializer, validator and inspection consumers
 recognize the same typed value. Layout proves the clip equals its plot; Scene
 validates containment against the supplied clip, not an inferred plot boundary.
 
+For an explicitly omitted lane mark, Layout passes a completed typed
+`windowAbsences` inventory to Scene alongside the unchanged member identity.
+Each absence retains the opaque source occurrence/facet identity, source ref,
+source kind, semantic mark role and the `outside-window` reason. Scene projects
+these facts without deciding temporal visibility. Final Layout, not Scene,
+checks them against the original expected-source inventory (Spec 50).
+An empty member primary-mark inventory is admitted only with this explicit
+omission account for its expected primary marks; ordinary missing emission
+remains invalid. Empty lane obstacles are admitted only when no visible lane
+geometry remains and every otherwise empty member has the completed account.
+Absent metadata preserves existing serialization and strict lane validation;
+the additive optional metadata selects Scene v0.7, leaving v0.6 strict.
+
 An adapter applies the supplied paint clip outside the completed primitive's
 effects, so fill, stroke, terminals, shadow and glow remain inside it. It must
 not substitute the stroke-alignment-only `strokeClip` or a visible host
