@@ -3,7 +3,8 @@
 # Issue #1291 — axis label containment acceptance
 
 Prepared implementation `957bc641` includes measurement prerequisite
-`fb77feec`, adopting ready main `8388f8158da881a3bb1c2d93f0b175a7e3cc0a07`.
+`fb77feec`; integration `972a58c5` adopts ready main
+`51bc172e746b878754afcb9209947d96e3bf4979` (#1285 small caps).
 [Design and architecture authority](https://github.com/tya5/chrona/issues/1291#issuecomment-6093419760).
 Local evidence only; no PR, current-corpus snapshot or exact-main release yet.
 
@@ -34,6 +35,10 @@ cover secondary omission, no false visible target, unpainted hosts, rotation and
 candidate-summary parity. [Shared text tests](../../../tests/unit/chrona/presentation/layout/test_text.py)
 prove transformed asymmetric glyph bounds, multiline text and one compression.
 
-Release still requires adopting dev B's published small-caps contract (#1332),
-fresh focused integration checks, the current-corpus snapshot/count audit,
+Current integration: 129 axis/index/geometry/text/Scene/end-edge/small-caps
+tests passed (10.49s). The shared-text merge retains declared transform
+measurement on original source lines and small-caps per-run metrics; independent
+Luna review found no ownership, provenance or double-scaling defect.
+Release still requires resolving the adjacent #1294 contract question,
+the current-corpus snapshot/count audit,
 exact-head PR gates and acceptance-containing exact-main full release. Do not close.
