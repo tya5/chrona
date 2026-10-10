@@ -274,14 +274,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     lane_route_plan = plan_lane_route_reservations(LaneRoutePlanContext(
         member_label_context, member_label_requests.pre_route, tuple(text), surface_obstacles,
         lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
-            tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index)))
+            tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot))))
     surface_obstacles.extend(lane_route_plan.reservations)
     place_label_phase(member_label_requests.pre_route)
 
     route_label_plan = compose_routes_and_member_labels(RouteLabelPlanContext(
         member_label_context, member_label_requests.post_route, tuple(text), surface_obstacles,
         lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
-            tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index)))
+            tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot))))
     surface_obstacles = route_label_plan.obstacles
     routes_batch = route_label_plan.routes
     relations = list(routes_batch.relations)

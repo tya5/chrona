@@ -12,6 +12,8 @@ from chrona.presentation.layout.labels import LabelRect, place_label
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
 from chrona.presentation.layout.window_relation_admission import complete_window_relation_endpoint_absence
+from chrona.presentation.layout.window_relation_geometry import relation_geometry_inside_plot
+from chrona.presentation.layout.mark_facet_visibility import FacetDisposition
 from chrona.presentation.model.projection import WindowMode
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacles_intersect,
@@ -35,7 +37,7 @@ from chrona.presentation.layout.relation_fan_in import (
 from chrona.presentation.layout.path_geometry import flatten_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
 from chrona.presentation.layout.surface_quality import (
-    CollisionDomain, MarkPlacement, PathCommand, RelationPlacement, RowPlacement, ShapePlacement,
+    CollisionDomain, MarkPlacement, PaintClip, PathCommand, RelationPlacement, RowPlacement, ShapePlacement,
     SurfaceLayoutRequest, TextPlacement,
 )
 from chrona.presentation.layout.text import metric_for_role, measure_text_width, place_text
@@ -55,6 +57,7 @@ class SurfaceRoutesContext:
     metric_values: Mapping[str, Any]
     text: tuple[TextPlacement, ...]
     obstacles: SurfaceObstacleIndex
+    plot_bounds: tuple[float, float, float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -132,6 +135,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     if explicit_window and visibility_index is None:
         raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/window",
                           detail="stage=relation-admission; reason=missing-visibility-index")
+    window_affected = explicit_window and any(
+        facet.disposition != FacetDisposition.CONTAINED
+        for visibility in visibility_index.entries.values() for facet in visibility.facets)
+    plot_clip = PaintClip(context.plot_bounds) if window_affected and context.plot_bounds is not None else None
     timeline_bounds = context.timeline_bounds
     marks = context.marks
     rows, groups = context.rows, context.groups
@@ -291,6 +298,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
 
     marker_start = centred_on_route(marker_geometry(request.theme_tokens.marker("relationSourceTerminal")), "source")
     marker_end = centred_on_route(marker_geometry(request.theme_tokens.marker("relationTargetTerminal")), "target")
+    window_rejected = [False]
 
     def prepare_route(points, width, hosts, source_side, target_side, *,
                       start_minimum=0.0, end_minimum=0.0):
@@ -338,6 +346,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             if any(marker is not None and marker.centred and marker.angle_degrees is not None
                    for marker in (first, last)):
                 return None
+        if plot_clip is not None and not relation_geometry_inside_plot(plot_clip, drawn,
+                marker_start=first, marker_end=last, stroke_width=width):
+            window_rejected[0] = True
+            return None
         return reduced
 
     def terminal_segments_fit(points, width):
@@ -475,6 +487,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             request.theme_tokens.marker("relationTargetTerminal"), stroke_width=dependency_stroke), "target")
         for source_id, source_anchor in relation_anchors.get(str(source), ()):
             for target_id, target_anchor in relation_anchors.get(str(target), ()):
+                window_rejected[0] = False
                 source_mark, target_mark = relation_marks.get(source_id), relation_marks.get(target_id)
                 scene_id = (f"relation:{relation_id}:{source_id}:{target_id}"
                             if projection.rows else f"relation:{relation_id}")
@@ -491,9 +504,12 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                             suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED",
                             semantic_id=relation.semantic_id, source_ref=relation_id,
                             from_instance_id=source_id, to_instance_id=target_id,
-                            window_endpoint_absences=proofs))
+                            window_endpoint_absences=proofs, window_suppression_reason="outside-window"))
                         diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
                         continue
+                if window_affected and plot_clip is None:
+                    raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/window",
+                                      detail="stage=routing; reason=missing-completed-plot")
                 source_nominal = (source_mark.start_port if relation.source_endpoint in {"start", "at"}
                                   else source_mark.end_port) if source_mark else source_anchor
                 target_nominal = (target_mark.start_port if relation.target_endpoint in {"start", "at"}
@@ -524,7 +540,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         paint_id=relation.semantic_id, terminal=completed_end), entry_penalty, bends, length)
 
                 selection = select_relation_route(port_pairs, obstacles=obstacles,
-                        bounds=(timeline_bounds[0], route_top, timeline_bounds[0] + timeline_bounds[2], route_bottom),
+                        bounds=((plot_clip.bounds[0], plot_clip.bounds[1],
+                                 plot_clip.bounds[0] + plot_clip.bounds[2], plot_clip.bounds[1] + plot_clip.bounds[3])
+                                if plot_clip is not None else
+                                (timeline_bounds[0], route_top, timeline_bounds[0] + timeline_bounds[2], route_bottom)),
                         source_host_id=source_mark.placement_id if source_mark else None,
                         target_host_id=target_mark.placement_id if target_mark else None,
                         relation_scene_id=scene_id, max_bends=context.layout_manifest.relation_max_bends,
@@ -558,7 +577,12 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     if request.surface_content.relation_overflow == "suppress":
                         relations.append(RelationPlacement(scene_id,
                             f"{source_id}:{relation.source_endpoint}", f"{target_id}:{relation.target_endpoint}",
-                            suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
+                            suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED",
+                            semantic_id=relation.semantic_id if window_rejected[0] else "dependency",
+                            source_ref=relation_id if window_rejected[0] else "",
+                            from_instance_id=source_id if window_rejected[0] else None,
+                            to_instance_id=target_id if window_rejected[0] else None,
+                            window_suppression_reason="plot-containment" if window_rejected[0] else None))
                         diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
                         if lane_selection is not None:
                             diagnostics.append(RouteSuppressionEvidence(scene_id, lane_selection.attempts).diagnostic)
@@ -590,11 +614,6 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 source_egress, target_egress = selected_pair
                 source_port_id = f"{source_id}:{relation.source_endpoint}:{source_egress.side}"
                 target_port_id = target_port(relation, target_id, target_mark, target_egress)
-                for mark, side, port in ((source_mark, source_egress.side, source_egress.exposed_port),
-                                          (target_mark, target_egress.side, target_egress.exposed_port)):
-                    obstacle_id = f"port:{mark.placement_id if mark else scene_id}:{side}"
-                    if not obstacles.has(obstacle_id):
-                        register_port(obstacle_id, port)
                 radius = float(context.metric_values.get("timeline.relation.cornerRadius", 0))
                 # Entry eligibility concerns the complete semantic corridor,
                 # including the part subsequently occupied by a round head.
@@ -615,7 +634,22 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         if radius > 0 and not fallback else ()),
                     marker_start=completed_start, marker_end=completed_end,
                     label_content=relation_label_content(relation), source_ref=relation_id,
-                    from_instance_id=source_id, to_instance_id=target_id)
+                    from_instance_id=source_id, to_instance_id=target_id, paint_clip=plot_clip)
+                if plot_clip is not None and not relation_geometry_inside_plot(plot_clip, placed.points,
+                        path_commands=placed.path_commands, marker_start=placed.marker_start,
+                        marker_end=placed.marker_end, stroke_width=dependency_stroke):
+                    relations.append(RelationPlacement(scene_id, source_port_id, target_port_id,
+                        suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED",
+                        semantic_id=relation.semantic_id, source_ref=relation_id,
+                        from_instance_id=source_id, to_instance_id=target_id,
+                        window_suppression_reason="plot-containment"))
+                    diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
+                    continue
+                for mark, side, port in ((source_mark, source_egress.side, source_egress.exposed_port),
+                                        (target_mark, target_egress.side, target_egress.exposed_port)):
+                    obstacle_id = f"port:{mark.placement_id if mark else scene_id}:{side}"
+                    if not obstacles.has(obstacle_id):
+                        register_port(obstacle_id, port)
                 relations.append(placed)
                 node_segments.setdefault(source_id, []).append(NodeApproach(scene_id, (points[0], points[1])))
                 node_segments.setdefault(target_id, []).append(NodeApproach(scene_id, (points[-2], points[-1]),

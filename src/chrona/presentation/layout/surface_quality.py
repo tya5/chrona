@@ -498,6 +498,8 @@ class RelationPlacement:
     to_instance_id: str | None = None
     fan_in: RelationFanIn | None = None
     window_endpoint_absences: tuple[WindowRelationEndpointAbsence, ...] = ()
+    window_suppression_reason: str | None = None
+    paint_clip: PaintClip | None = None
 
 
 @dataclass(frozen=True)
@@ -818,6 +820,13 @@ class SurfacePlacement:
                         and intersects(item.bounds, other.bounds)):
                     raise ValueError(f"E_LAYOUT_TEXT_OVERLAP:{item.placement_id}:{other.placement_id}")
         for relation in self.relations:
+            if (relation.window_suppression_reason not in {None, "outside-window", "plot-containment"}
+                    or (bool(relation.window_endpoint_absences)
+                        != (relation.window_suppression_reason == "outside-window"))
+                    or (relation.window_suppression_reason is not None
+                        and (not relation.suppressed or not relation.source_ref))
+                    or (relation.suppressed and relation.paint_clip is not None)):
+                raise ValueError(f"E_LAYOUT_RELATION_SUPPRESSION_INVALID:{relation.relation_id}")
             if relation.window_endpoint_absences:
                 from chrona.presentation.layout.window_relation_admission import WindowRelationEndpointAbsence
                 if (not relation.suppressed or not relation.source_ref

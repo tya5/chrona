@@ -99,3 +99,46 @@ def test_completed_relation_rejects_unowned_or_painted_window_absence(change):
     invalid = replace(placement.relations[0], **change)
     with pytest.raises(ValueError, match="E_LAYOUT_RELATION_SUPPRESSION_INVALID"):
         SurfacePlacement(relations=(invalid,)).assert_valid()
+
+
+def _surviving_relation_request(overflow="suppress"):
+    projection, _, _ = _window_footprint_fixture()
+    items = (projection.items[0],
+        replace(projection.items[1], planned={"start": date(2026, 1, 3), "end": date(2026, 1, 4)}),
+        replace(projection.items[2], planned={"start": date(2026, 1, 5), "end": date(2026, 1, 6)}))
+    projection = replace(projection, items=items,
+        rows=tuple(replace(row, items=(item,)) for row, item in zip(projection.rows, items, strict=True)),
+        lane_rows=(replace(projection.lane_rows[0], items=items),))
+    request = _request(projection=projection)
+    fact = RelationPresentationFact("dep", "object-4", "end", "object-6", "start", 0, None, "dependency")
+    return replace(request, surface_content=replace(request.surface_content,
+        relations=(fact,), relation_overflow=overflow))
+
+
+def test_surviving_relation_carries_completed_plot_clip_without_moving_original_ports():
+    from chrona.presentation.layout.window_relation_geometry import relation_geometry_inside_plot
+    placement = compose_surface_layout(_surviving_relation_request()).placement
+    relation = placement.relations[0]
+    assert not relation.suppressed and relation.paint_clip is not None
+    hosts = {mark.source_ref: mark for mark in placement.marks}
+    assert relation.points[0] == hosts["object-4"].end_port
+    assert relation.points[-1] == hosts["object-6"].start_port
+    assert relation_geometry_inside_plot(relation.paint_clip, relation.points,
+        path_commands=relation.path_commands, marker_start=relation.marker_start,
+        marker_end=relation.marker_end, stroke_width=1)
+
+
+@pytest.mark.parametrize("overflow", ["suppress", "visible-overflow"])
+def test_terminal_that_cannot_fit_is_suppressed_without_truncating_it_or_moving_ports(monkeypatch, overflow):
+    import chrona.presentation.layout.surface_routes as owner
+    original = owner.marker_geometry
+    def huge(value, **kwargs):
+        return original({**value, "headWidth": 1_000_000}, **kwargs)
+    monkeypatch.setattr(owner, "marker_geometry", huge)
+    placement = compose_surface_layout(_surviving_relation_request(overflow)).placement
+    relation = placement.relations[0]
+    assert relation.suppressed and relation.points == ()
+    assert relation.window_suppression_reason == "plot-containment"
+    assert relation.source_ref == "dep" and relation.paint_clip is None
+    assert {mark.source_ref for mark in placement.marks} == {"object-4", "object-6"}
+    assert all(mark.start_port is not None and mark.end_port is not None for mark in placement.marks)
