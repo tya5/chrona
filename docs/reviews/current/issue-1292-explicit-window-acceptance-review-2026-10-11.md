@@ -30,4 +30,8 @@ in the final lane inventory. Pre-code Spec50 clarification `0504c7a7` and
 implementation `091baff1` restrict that account by typed ownership, never ID
 prefixes. Synthetic regression and explicit-window batches: 53 passed (9.73s),
 including partial owner, stripped owner and duplicate/missing rejection.
-The four affected materializers are being rechecked; acceptance remains pending.
+All four affected materializers now pass with Scene/SVG byte identity against
+the adopted `6c18b9e1` evidence. Combined with the retained all46 audit, 45
+outputs are unchanged; baseline-ghosts intentionally clips one snapshot and
+adds seven relation paint clips plus its outside-window warning (SVG inspected).
+Final READY-base and release acceptance remain pending.
