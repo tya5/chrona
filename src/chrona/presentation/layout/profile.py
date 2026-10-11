@@ -221,6 +221,7 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
                 collect_tokens(child)
 
     collect_tokens(profile["root"])
+    collect_tokens(profile["reviewSurface"].get("maxBlockSize"))
     declared = tuple(profile["requiredThemeTokens"])
     if tuple(sorted(declared)) != declared:
         raise LayoutError("E_LAYOUT_TOKEN_REQUIREMENTS", "/requiredThemeTokens")
@@ -230,6 +231,9 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
     extraneous = sorted(set(declared) - used_tokens)
     if extraneous:
         raise LayoutError("E_LAYOUT_TOKEN_REQUIREMENT_EXTRANEOUS", "/requiredThemeTokens", extraneous[0])
+    if "maxBlockSize" in profile["reviewSurface"]:
+        path = "/reviewSurface/maxBlockSize"
+        distances[path] = _distance(profile["reviewSurface"]["maxBlockSize"], theme_values, path, literals, used_tokens)
 
     def size_distances(spec: Any, path: str) -> None:
         if not isinstance(spec, dict):

@@ -19,7 +19,7 @@ from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, 
 if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement.
     from chrona.presentation.layout.canvas_overlays import CanvasOverlays
     from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip
-    from chrona.presentation.layout.canvas_viewport import CanvasViewportWarning, DeclaredViewport
+    from chrona.presentation.layout.canvas_viewport import AutoBlockSizeWarning, CanvasViewportWarning, DeclaredViewport
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, FIT_ADJUSTS, TEXT_FOLLOWS_BOX
 
 
@@ -585,6 +585,7 @@ class SurfaceLayoutRequest:
     capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
     as_of_chip_measurement: MeasuredLabelChip | None = None
     declared_viewport: DeclaredViewport | None = None
+    auto_block_limit: Decimal | None = None
     progress: RenderProgress | None = field(default=None, compare=False, repr=False)
 
 
@@ -719,6 +720,7 @@ class SurfacePlacement:
     canvas_overlays: CanvasOverlays | None = None
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
     canvas_warning: CanvasViewportWarning | None = None
+    auto_block_warning: AutoBlockSizeWarning | None = None
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""

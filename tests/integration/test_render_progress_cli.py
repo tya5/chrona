@@ -165,3 +165,25 @@ def test_terminal_probe_failure_disables_only_feedback(monkeypatch, failure):
 
     monkeypatch.setattr(cli.sys, "stderr", FailedTerminal())
     assert cli._draft_render_progress(False) is None
+
+
+def test_actual_cli_default_reports_its_declared_limit_and_emitted_row_count(tmp_path):
+    import yaml
+
+    project = tmp_path / "tall.yaml"
+    project.write_text(yaml.safe_dump({
+        "version": "timeline/v0.7", "project": {"id": "tall", "title": "Tall review"},
+        "objects": {f"t{i}": {"type": "task", "title": f"Task {i}", "schedule": {
+            "mode": "fixed-span", "start": "2027-01-04", "end": "2027-01-18"}} for i in range(60)},
+        "relations": [],
+    }))
+    scene = tmp_path / "tall.scene.json"
+    result = subprocess.run(_command(project, tmp_path / "tall.svg", "--relations", "none",
+                                    "--emit-scene", str(scene)), capture_output=True, check=True)
+    report = json.loads(result.stdout)
+    warnings = [w for w in report["warnings"] if w["code"] == "W_LAYOUT_AUTO_BLOCK_SIZE"]
+    assert len(warnings) == 1
+    assert warnings[0]["maxBlockSize"] == 3600
+    assert warnings[0]["actualBlockSize"] > 3600
+    assert warnings[0]["rowCount"] == len(json.loads(scene.read_bytes())["surfaces"][0]["rows"]) == 60
+    assert result.stderr == b""

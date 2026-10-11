@@ -419,6 +419,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             capacity_short_sources=short_sources,
             as_of_chip_measurement=as_of_chip_measurement,
             declared_viewport=declared_viewport,
+            auto_block_limit=resolved_layout.distances.get("/reviewSurface/maxBlockSize"),
             progress=request.progress,
         )
 
@@ -473,6 +474,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         fixed_lane_preflight=fixed_lane_preflight,
         capacity_short_sources=capacity_short_sources,
         surface_preparation=surface_preparation,
+        auto_block_limit=resolved_layout.distances.get("/reviewSurface/maxBlockSize"),
         declared_viewport=declared_viewport,
         progress=request.progress,
     )
@@ -536,6 +538,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         contrast_warnings=contrast_warnings,
         surface_provenance=surface.diagnostic_provenance,
         canvas_warning=surface.canvas_warning,
+        auto_block_warning=surface.auto_block_warning,
     )
     # Surface diagnostics are already in the preliminary Scene. Append only
     # the post-composition families, preserving duplicates and their order.

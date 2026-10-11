@@ -7,7 +7,7 @@ import math
 from typing import Any
 
 from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand, RelationFanIn, StrokeClip, TextFit
-from chrona.presentation.layout.canvas_viewport import CanvasViewportWarning
+from chrona.presentation.layout.canvas_viewport import AutoBlockSizeWarning, CanvasViewportWarning
 from chrona.presentation.layout.pattern_placement import PatternTilePrimitive
 from chrona.presentation.model.font_metrics import FontTabularWarning
 from chrona.presentation.model.info_diagnostics import PresentationInfo
@@ -681,6 +681,7 @@ class SceneSurface:
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
     primitive_provenance: tuple[PrimitiveProvenance, ...] = ()
     canvas_warning: CanvasViewportWarning | None = None
+    auto_block_warning: AutoBlockSizeWarning | None = None
 
     def __post_init__(self) -> None:
         """Reject incomplete clip references before any adapter can serialize them."""

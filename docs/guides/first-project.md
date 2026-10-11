@@ -21,6 +21,10 @@ is unchanged, and a nonterminal without the flag receives no progress lines.
 Use `--relations none` to skip dependency lines, or `--relations semantic` to
 show them on top of any preset. Scheduling still includes every dependency;
 the override does not edit your View or saved render-review Context.
+The bundled default warns when an auto-height canvas exceeds its declared
+Layout `reviewSurface.maxBlockSize` of 3600 units. The warning reports rows
+and actual height without resizing the drawing. Use View selection/grouping
+for a smaller review; paging is a future option, not a current CLI feature.
 The output filename also selects the format: `.svg`, `.png`, `.pdf`, `.typ`
 and `.tex` select SVG, PNG, PDF, Typst and TikZ respectively. Without a
 suffix, Draft defaults to SVG. An explicit `--format` must match a recognized

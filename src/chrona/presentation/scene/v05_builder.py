@@ -75,6 +75,7 @@ class SceneBuildInput:
     capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
     surface_preparation: SurfacePreRowGeometry | None = None
     declared_viewport: DeclaredViewport | None = None
+    auto_block_limit: Decimal | None = None
     progress: RenderProgress | None = field(default=None, compare=False, repr=False)
 
 
@@ -397,6 +398,7 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
                       capacity_short_sources: tuple[CapacitySourceEvidence, ...] = (),
                       surface_preparation: SurfacePreRowGeometry | None = None,
                       declared_viewport: DeclaredViewport | None = None,
+                      auto_block_limit: Decimal | None = None,
                       progress: RenderProgress | None = None) -> SceneBuildInput:
     """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
     if not isinstance(layout_manifest, LayoutManifest):
@@ -423,7 +425,7 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
                            ThemeTokenView(resolved_theme), font_metrics, measured_sources,
                            dict(capabilities), visual_profile, viewport, icon_assets, visual_requests,
                            fixed_lane_preflight, capacity_short_sources, surface_preparation, declared_viewport,
-                           progress=progress)
+                           progress=progress, auto_block_limit=auto_block_limit)
 
 
 def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
@@ -462,6 +464,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             fixed_lane_preflight=value.fixed_lane_preflight,
             capacity_short_sources=value.capacity_short_sources,
             declared_viewport=value.declared_viewport,
+            auto_block_limit=value.auto_block_limit,
             progress=value.progress,
         ))
         composition = compose_surface_layout(request, prepared=value.surface_preparation)
@@ -1202,7 +1205,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                         lane_obstacles=lane_obstacles, lane_clearance=lane_clearance,
                         diagnostic_provenance=placed_surface.diagnostic_provenance,
                         primitive_provenance=tuple(primitive_provenance))
-    surface = replace(surface, canvas_warning=placed_surface.canvas_warning)
+    surface = replace(surface, canvas_warning=placed_surface.canvas_warning,
+                      auto_block_warning=placed_surface.auto_block_warning)
     return project_canvas_overlays(surface, placed_surface.canvas_overlays, value.theme_tokens, value.visual_profile)
 
 

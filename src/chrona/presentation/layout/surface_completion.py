@@ -8,7 +8,7 @@ from dataclasses import dataclass, field, replace
 from decimal import Decimal
 from itertools import chain
 from typing import Any
-from chrona.presentation.layout.canvas_viewport import canvas_viewport_warning
+from chrona.presentation.layout.canvas_viewport import auto_block_size_warning, canvas_viewport_warning
 from chrona.presentation.layout.icon_geometry import complete_icon_paths
 from chrona.presentation.layout.mark_geometry import MarkFacetAbsence
 from chrona.presentation.layout.model import (LayoutError, Rect)
@@ -423,6 +423,9 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                                                                         lane_emissions, request.theme_tokens),
                                  canvas_overlays=canvas_overlays,
                                  diagnostic_provenance=context.diagnostic_provenance,
-                                 canvas_warning=canvas_warning)
+                                 canvas_warning=canvas_warning,
+                                 auto_block_warning=auto_block_size_warning(
+                                     surface_id="table-timeline", row_count=len(rows), actual=canvas,
+                                     declared=request.declared_viewport, limit=request.auto_block_limit))
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))
