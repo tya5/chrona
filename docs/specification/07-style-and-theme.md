@@ -281,7 +281,10 @@ This authoring form is Theme v0.15; derived Theme inheritance is v0.16.
 **Derived Theme members (#1401).** A derived Theme (v0.16) names its pinned base (`extends`: id, path, `sourceContentIdentity`,
 `contentIdentity`) and may declare `values`, `roles`, `colorBindings`, `colorScales`, `annotationKinds` and `metrics`. An entry it
 declares replaces the base's entry of that name as a whole, or is added when the base declares none of that name; nothing is
-removed, and a role the derived Theme restates is replaced as a whole (to add a role member, restate the role with the member).
+removed. Roles merge one level further: each declared role member replaces or
+adds that member; omitted members of the base role remain. A member's value is
+replaced as a whole, not recursively merged. Omitting a role or declaring an
+empty role does not delete it or any inherited member; deletion is unsupported.
 The merged result is validated as the Theme it is, by `theme-v0.15`, number references and every role, contrast and
 required-token rule, exactly as for a Theme written without inheritance, so a derived Theme that adds a token or a role resolves
 to the Theme one would write by hand. The pins are unchanged (`E_THEME_INHERITANCE_SOURCE_IDENTITY`,
