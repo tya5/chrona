@@ -1,6 +1,7 @@
 """Keep the packaged-axis evidence checker sensitive to actual geometry (#1294)."""
 from copy import deepcopy
 from datetime import date
+from pathlib import Path
 
 import pytest
 
@@ -29,14 +30,63 @@ def test_one_year_band_lane_with_a_centered_hosted_auto_label_passes():
     check_bounded_axis_cells(_scene())
 
 
-def test_the_checker_accepts_the_actual_packaged_auto_axis(tmp_path):
-    parts = sr.bundle("executive-light")
+def _two_lane_scene():
+    scene = _scene()
+    items = scene["surfaces"][0]["primitives"]
+    for band in items[:2]:
+        band["bounds"]["blockSize"] = 20
+    items[2]["bounds"]["block"] = 25
+    for band in deepcopy(items[:2]):
+        band["id"] = band["id"].replace(":0:", ":3:")
+        band["bounds"]["block"] = 40
+        items.append(band)
+    return scene
+
+
+def test_decorative_second_band_can_coexist_with_hosted_auto_labels():
+    check_bounded_axis_cells(_two_lane_scene())
+
+
+def test_band_lanes_need_not_fill_an_explicitly_larger_axis_slot():
+    scene = _two_lane_scene()
+    surface = scene["surfaces"][0]
+    surface["slots"][0]["bounds"]["blockSize"] = 60
+    next(item for item in surface["primitives"] if item["id"] == "axis-rule")["bounds"]["block"] = 80
+    check_bounded_axis_cells(scene)
+
+
+def test_band_lanes_cannot_overflow_the_axis_slot():
+    scene = _two_lane_scene()
+    scene["surfaces"][0]["slots"][0]["bounds"]["blockSize"] = 30
+    with pytest.raises(AssertionError):
+        check_bounded_axis_cells(scene)
+
+
+@pytest.mark.parametrize("shift", [-1, 1])
+def test_the_checker_rejects_gaps_and_overlaps_between_band_lanes(shift):
+    scene = _two_lane_scene()
+    for item in scene["surfaces"][0]["primitives"]:
+        if item["id"].startswith("axis-band-rect:3:"):
+            item["bounds"]["block"] += shift
+    with pytest.raises(AssertionError):
+        check_bounded_axis_cells(scene)
+
+
+@pytest.mark.parametrize("preset", ["executive-light", "technical-print"])
+def test_the_checker_accepts_the_actual_packaged_auto_axis(tmp_path, preset):
+    parts = sr.bundle(preset)
     parts["view"]["body"]["window"] = {
         "mode": "explicit", "start": "2026-01-01", "end": "2028-01-01",
     }
+    catalogs = ((Path(__file__).resolve().parents[4] /
+                 "src/chrona/resources/icons/chrona-theme-starter-v2026-10-09.yaml",)
+                if preset == "technical-print" else ())
     rendered = sr.render(tmp_path, sr.project({"a": sr.span("a", date(2026, 2, 1), 40)}),
-                         presentation=parts)
-    check_bounded_axis_cells(scene_document(rendered.scene))
+                         presentation=parts, icon_catalogs=catalogs)
+    scene = scene_document(rendered.scene)
+    assert any(item["id"].startswith("axis-label:")
+               for item in scene["surfaces"][0]["primitives"])
+    check_bounded_axis_cells(scene)
 
 
 def test_fixed_axis_centering_remains_covered_with_explicit_legacy_declarations(tmp_path):
