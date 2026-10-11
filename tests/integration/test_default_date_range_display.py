@@ -1,5 +1,6 @@
 """Live View admission and actual init/default-render acceptance (#1293)."""
 from hashlib import sha256
+from pathlib import Path
 import json
 import sys
 
@@ -52,7 +53,17 @@ def test_endpoint_mode_is_rejected_outside_date_range(formatter):
         schema_validator("view-v0.28.schema.yaml").validate(document)
 
 
-def test_init_starter_default_scene_uses_inclusive_plan_cells(tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize("default_encoding", ["utf-8", "cp1252"])
+def test_init_starter_default_scene_uses_inclusive_plan_cells(
+    tmp_path, monkeypatch, capsys, default_encoding,
+):
+    native_read_text = Path.read_text
+
+    def read_text(path, encoding=None, errors=None, **kwargs):
+        return native_read_text(path, encoding=encoding or default_encoding,
+                                errors=errors, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", read_text)
     project = tmp_path / "starter"
     monkeypatch.setattr(sys, "argv", ["chrona", "init", str(project)])
     main()
@@ -61,13 +72,13 @@ def test_init_starter_default_scene_uses_inclusive_plan_cells(tmp_path, monkeypa
     monkeypatch.setattr(sys, "argv", ["chrona", "render", str(project / "project.yaml"),
                                       "--emit-scene", str(scene), "--output", str(svg)])
     main()
-    document = json.loads(scene.read_text())
+    document = json.loads(scene.read_text(encoding="utf-8"))
     cells = {item["id"]: item["text"] for item in document["surfaces"][0]["primitives"]
              if item["id"].startswith("cell:") and item["id"].endswith(":Plan")}
     assert cells == {"cell:design:Plan": "01 Oct – 30 Oct", "cell:build:Plan": "03 Nov – 14 Dec",
                      "cell:release:Plan": "18 Dec 2026"}
     assert (project / "project.yaml").read_bytes() == original
-    assert "01 Oct – 30 Oct" in svg.read_text()
+    assert "01 Oct – 30 Oct" in svg.read_text(encoding="utf-8")
 
 
 def test_all_builtin_date_range_columns_explicitly_use_inclusive_mode():
