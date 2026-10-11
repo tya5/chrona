@@ -42,7 +42,15 @@ early/direct/candidate cases cover equal, reversed and invalid bounds and
 prove no visibility geometry is built before rejection. Structural checks:
 11 packages/37 inward edges;228 modules reachable, none orphaned.
 
-No active PR or full-release claim. Main `b65df355` is still synchronizing;
-predecessor merges and final trusted READY adoption remain required. Before
+CLI characterization migration: three render stdout records only; argv, exit,
+stderr and file metadata unchanged. Each gains truthful axis thinning/density
+warnings. HALCYON keeps six suppressed labels: `structure` replaces
+`launch-contract`; other five unchanged. No example edits or warning masking.
+Python3.11 targeted CLI suite:4 passed (55.23s), including unknown-command.
+Python3.13 unknown-command wording also fails on the pre-padding predecessor;
+it is not a critical-path regression and is not re-recorded here.
+
+No active PR or full-release claim. Predecessor merges and final trusted READY
+adoption remain required. Before
 closure, inspect the fresh corpus count table/Scene/SVG, current-head PR gates
 and review-containing exact-main three-OS release. No authored examples edits.
