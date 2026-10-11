@@ -28,9 +28,11 @@ None. Local criteria do not substitute for the required release gate.
 
 ## Verification and release
 
-Local integration `905e0951` adopts trusted READY `9ea350d5`, table `379b40ef`
-and #1292's CI correction `83393e92` by ordinary merges, without conflicts.
-Own-worktree Python3.11:141 tests pass (133.82s), covering actual default
+Current integration adopts public table `49cfb0ef` and trusted READY main
+`477e571d` by ordinary merge without conflicts. Own-worktree Python3.13:
+43 focused tests pass (3.66s), covering selected-planned Scene/SVG and
+diagnostics, model window modes and shared visibility validation.
+Earlier own-worktree Python3.11:141 tests pass (133.82s), covering actual default
 Scene/SVG/degenerate diagnostic, selected-planned model, missing-Actual scope,
 lane inventory, bounded packaged tables, explicit windows, date/axis,
 merged legend-grid, live ID-site/ownership/schema-annotation checks.
@@ -42,8 +44,7 @@ six-label suppression inventory); argv/exit/stderr/file metadata unchanged.
 Own Python3.11 CLI characterization previously4 passed; Python3.13's
 pre-existing unknown-command wording failure is not re-recorded or excluded.
 
-This integration is local only: GitHub DNS prevents fetch/push. Public WIP
-remains `006df092`. No active PR, authored examples changes or release claim.
-After connectivity recovers: reconcile latest trusted READY/predecessors,
-publish, inspect current schema/PR/corpus Scene-SVG evidence and the exact
+Public preparation does not authorize acceptance. No active PR or authored
+examples changes. After predecessor #1295 merges: reconcile latest READY,
+inspect current schema/PR/corpus Scene-SVG evidence and the exact
 acceptance-containing main three-OS gate before deliberate closure.
