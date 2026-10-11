@@ -39,6 +39,7 @@ slides:
   halcyon-1/gallery-editorial-lanes: {axisLabels: 13}
   halcyon-1/gallery-image-notes: {axisLabels: 13, chips: ['chip:as-of-label']}
   halcyon-1/gallery-text-compression: {axisLabels: 13, chips: ['chip:as-of-label', 'chip:period-label:launch-window']}
+  halcyon-1/gates: {axisLabels: 11}
   halcyon-1/glyph-gates: {axisLabels: 13, chips: ['chip:as-of-label', 'chip:period-label:launch-window']}
   halcyon-1/launch-campaign: {axisLabels: 7}
   halcyon-1/marquee: {axisLabels: 13, chips: ['chip:as-of-label']}
@@ -51,4 +52,3 @@ slides:
   halcyon-1/titlecard: {axisLabels: 22, chips: ['chip:as-of-label']}
   halcyon-1/tvac-slip: {axisLabels: 7, chips: ['chip:as-of-label']}
   halcyon-1/yuya: {axisLabels: 13, chips: ['chip:as-of-label']}
-  orion-asic/gates: {axisLabels: 18}

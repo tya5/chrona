@@ -80,8 +80,8 @@ def test_advanced_tutorial_examples_select_their_declared_closure_edges():
     assert scenario_view["body"]["comparison"]["baseline"] == "scenario"
     assert snapshot_view["body"]["comparison"]["baseline"] == "snapshot"
     assert context["body"]["inputs"]["snapshot"]["kind"] == "snapshot-ref"
-    orion = ROOT / "examples/orion-asic"
-    extended = yaml.safe_load((orion / "project.yaml").read_bytes())
-    package = extended["extensions"][0]["resource"]
+    package = project["extensions"][0]["resource"]
     assert package["kind"] == "profile-package"
-    assert (orion / package["address"]).is_file()
+    assert (halcyon / package["address"]).is_file()
+    gates_view = yaml.safe_load((halcyon / "views/26-gates.yaml").read_bytes())
+    assert gates_view["body"]["comparison"]["scenario"] in project["scenarios"]
