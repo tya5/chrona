@@ -18,6 +18,7 @@ from chrona.presentation.layout.canvas_overlays import CanvasOverlays, complete_
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, RelationPlacement, TextPlacement, intersects
 from chrona.presentation.layout.surface_quality import SlotPlacement, SurfaceLayoutRequest
 from chrona.presentation.layout.slot_heading import complete_slot_headings, content_slot
+from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.layout.surface_heading import place_surface_headings
 
 
@@ -62,7 +63,8 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None
                                       canvas_bounds: Rect | None = None,
                                       theme_tokens: Any | None = None,
                                       route_bounds: Rect | None = None,
-                                      heading_text: tuple[TextPlacement, ...] | None = None) -> DependencyNetworkLayout:
+                                      heading_text: tuple[TextPlacement, ...] | None = None,
+                                      progress: RenderProgress | None = None) -> DependencyNetworkLayout:
     """Place a typed View graph without reading Project, View syntax, or Scene state."""
     nodes, edges = tuple(network.nodes), tuple(network.edges)
     ids = {node.object_id for node in nodes}
@@ -99,7 +101,8 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None
     canvas = _completed_canvas(requested_canvas, title_bounds, tuple(node.bounds for node in placed),
                                tuple(item.bounds for item in text))
     route_region = _expand_route_bounds(route_bounds, placed) if route_bounds is not None else canvas
-    relations, route_warnings = _route_edges(edges, placed, route_region, max_bends, max_detour_ratio)
+    relations, route_warnings = _route_edges(edges, placed, route_region, max_bends, max_detour_ratio,
+                                            progress=progress)
     patterns: tuple[PatternedPlacement, ...] = ()
     optional_pattern = getattr(theme_tokens, "optional_pattern", None)
     if callable(optional_pattern):
@@ -182,6 +185,7 @@ def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> Depende
         max_detour_ratio=manifest.relation_max_detour_ratio,
         canvas_bounds=manifest.viewport, theme_tokens=request.theme_tokens,
         route_bounds=route_bounds,
+        progress=request.progress,
         heading_text=tuple(replace(item, semantic_id={
             "title": "titleText", "kicker": "kickerText", "subtitle": "subtitleText"
         }[item.placement_id]) for item in heading_batch.text) if heading_batch is not None else None)
@@ -314,12 +318,14 @@ def _place_title(measured: MeasuredTextRun, bounds: Rect) -> TextPlacement:
 
 
 def _route_edges(edges: tuple[Any, ...], nodes: list[NetworkNodePlacement], bounds: Rect,
-                 max_bends: int, max_detour_ratio: float) -> tuple[tuple[RelationPlacement, ...], tuple[FitWarning, ...]]:
+                 max_bends: int, max_detour_ratio: float, *,
+                 progress: RenderProgress | None = None) -> tuple[tuple[RelationPlacement, ...], tuple[FitWarning, ...]]:
     by_id = {node.object_id: node for node in nodes}
     boxes = {node.object_id: _box(node.bounds) for node in nodes}
     relations = []
     warnings = []
-    for edge in edges:
+    observed_edges = progress.routing(edges, pass_name="network") if progress is not None else edges
+    for edge in observed_edges:
         source, target = by_id[edge.source_id], by_id[edge.target_id]
         try:
             points = place_relation_route(source_port=source.output_port, target_port=target.input_port,

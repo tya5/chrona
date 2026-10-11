@@ -419,6 +419,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             capacity_short_sources=short_sources,
             as_of_chip_measurement=as_of_chip_measurement,
             declared_viewport=declared_viewport,
+            progress=request.progress,
         )
 
     if view.surface == "table-timeline":
@@ -473,6 +474,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         capacity_short_sources=capacity_short_sources,
         surface_preparation=surface_preparation,
         declared_viewport=declared_viewport,
+        progress=request.progress,
     )
 
     unused = ledger.unused()

@@ -1,7 +1,7 @@
 """Coordinates one bounded route/name recovery; reads completed marks, label requests and a clean obstacle index."""
 from __future__ import annotations
 
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, replace
 from typing import Callable
 
 from chrona.presentation.layout.labels import LabelRequest
@@ -65,11 +65,13 @@ def _relation_status(routes: SurfaceRoutesBatch) -> dict[str, int]:
 
 
 def _trial(context: RouteLabelPlanContext, pre_requests: tuple[LabelRequest, ...],
-           post_requests: tuple[LabelRequest, ...]) -> RouteLabelPlan:
+           post_requests: tuple[LabelRequest, ...], *,
+           progress_pass: str = "route-label-baseline") -> RouteLabelPlan:
     obstacles = context.clean_obstacles.copy()
     pre = (place_member_labels(context.member_labels, pre_requests, obstacles)
            if pre_requests else _empty_members())
-    route_context = context.routes_for(obstacles, (*context.base_text, *pre.text))
+    route_context = replace(context.routes_for(obstacles, (*context.base_text, *pre.text)),
+                            progress_pass=progress_pass)
     routes = compose_surface_routes(route_context)
     post = (place_member_labels(context.member_labels, post_requests, obstacles)
             if post_requests else _empty_members())
@@ -93,7 +95,7 @@ def compose_routes_and_member_labels(context: RouteLabelPlanContext) -> RouteLab
 
     lost_ids = {item.placement_id for item in lost}
     remaining = tuple(item for item in context.post_route_requests if item.placement_id not in lost_ids)
-    retry = _trial(context, lost, remaining)
+    retry = _trial(context, lost, remaining, progress_pass="route-label-recovery")
     retry_lost_ids = {item.placement_id for item in _lost_requests(context.post_route_requests, retry.members)}
     if not retry_lost_ids < lost_ids:
         return baseline

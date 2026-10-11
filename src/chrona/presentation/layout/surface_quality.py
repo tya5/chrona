@@ -12,6 +12,7 @@ from chrona.presentation.layout.pattern_placement import PatternedPlacement
 from chrona.presentation.layout.obstacles import ObstacleGeometry
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.model.info_diagnostics import PresentationInfo, SuppressedPlotLabels
+from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, axis_label_semantic_ids
 
@@ -584,6 +585,7 @@ class SurfaceLayoutRequest:
     capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
     as_of_chip_measurement: MeasuredLabelChip | None = None
     declared_viewport: DeclaredViewport | None = None
+    progress: RenderProgress | None = field(default=None, compare=False, repr=False)
 
 
 @dataclass(frozen=True)
