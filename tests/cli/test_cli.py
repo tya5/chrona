@@ -1545,15 +1545,34 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
     context_ref = _snapshot_resource(tmp_path, token, "context.yaml", context, "render-context", context["id"])
     reference_path, output = tmp_path / "context-ref.yaml", tmp_path / "review.svg"
     reference_path.write_text(yaml.safe_dump(context_ref), encoding="utf-8")
+    scene_output = tmp_path / "review.scene.json"
+    canonical_scenes = []
+    original_serialize = cli.serialize_scene
+
+    def capture_scene(completed):
+        encoded = original_serialize(completed)
+        canonical_scenes.append(encoded)
+        return encoded
+
+    monkeypatch.setattr(cli, "serialize_scene", capture_scene)
     monkeypatch.setattr(sys, "argv", [
         "chrona", "render-review", "--context-reference", str(reference_path),
         "--snapshot-root", str(tmp_path), "--store-identity", "cli-test", "--output", str(output),
+        "--emit-scene", str(scene_output),
     ])
     main()
     review_warnings = _success_warning_payloads(capsys)
     rendered = output.read_text(encoding="utf-8")
     assert 'data-source-ref="firmware"' in rendered
     assert 'data-presentation-adapter="legacy-v0.1"' not in rendered
+    [canonical_scene] = canonical_scenes
+    readable_scene = scene_output.read_bytes()
+    assert json.loads(readable_scene) == json.loads(canonical_scene)
+    for surface in json.loads(readable_scene)["surfaces"]:
+        for primitive in surface["primitives"]:
+            line = json.dumps(primitive, ensure_ascii=False, separators=(",", ":")).encode()
+            assert sum(candidate.strip().removesuffix(b",") == line
+                       for candidate in readable_scene.split(b"\n")) == 1
 
     mismatch = tmp_path / "immutable.png"
     monkeypatch.setattr(sys, "argv", [

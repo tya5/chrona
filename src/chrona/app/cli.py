@@ -14,6 +14,7 @@ from typing import Any, NoReturn
 from chrona.usecases.review_projects import review_projects
 from chrona.app.agent_tools import registry_document
 from chrona.app.agent_workspace import WorkspaceScope
+from chrona.app.scene_inspection import format_inspection_scene
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.identity import content_identity, json_value
 from chrona.core.source_ranges import attach_ranges
@@ -719,7 +720,7 @@ def _write_render_outputs(rendered: RenderedReview, args: argparse.Namespace) ->
         if scene_path.exists():
             raise CliFailure("E_SCENE_OUTPUT_EXISTS", "scene output destination already exists", "scene", exit_code=2)
         try:
-            scene_bytes = serialize_scene(rendered.scene)
+            scene_bytes = format_inspection_scene(serialize_scene(rendered.scene))
         except SceneSerializationError as error:
             raise CliFailure(str(error), "completed Scene cannot be serialized", "scene") from error
     Path(args.output).write_bytes(rendered.artifact.content)
