@@ -14,8 +14,13 @@ safety/quality/search predicates are unchanged. Priority/normalization/delta
 batch84 PASS1.67s; priority/fan-in/node-approach/terminal/reduction batch77
 PASS2.83s; imports and Layout float checks PASS. This does not establish
 protected existence, enable quality fallback or satisfy literal rows1–3.
-Public WIP: `7afdfc86d523701d1801ee92176d0c850db06909`, containing trusted
-READY `fa862e40745aa134198dfe070aa347c451dd7ffe`.
+Current integration: `fc1cce86` adopts main `8a16dca1` normally; test correction
+`4f0cdc41` preserves full-Project canonical relation identity and verifies
+actual critical-first routing progress advances0..N by processing ordinal,
+not declaration index. Priority/progress/cache/obstacle/delta108 PASS19.91s;
+priority plus all content normalization77 PASS1.03s; inward imports/Layout
+floats PASS. No safety/quality predicate, search cap or protected diagnostic
+is enabled by this integration. Current-head CI/release remains pending.
 Delta-label code: `f498467f`; pre-code Specs33/50: `42092313`, `38ea6e96`.
 Protected routing remains in design; no full-issue or release acceptance.
 
