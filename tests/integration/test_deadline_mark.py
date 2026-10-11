@@ -59,6 +59,9 @@ def _parts(show: str | None = "all", *, color: str = "text", reach: float = 1.7,
         body["roles"]["deadline-mark"] = {"strokeWidth": "deadline-width", "markReach": "deadline-reach",
                                           "markPaintOrder": "deadline-order"}
         body["colorBindings"]["deadline-mark.stroke"] = color
+    else:  # the bundled appearances declare the role since #946: "no role" removes it
+        body["roles"].pop("deadline-mark", None)
+        body["colorBindings"].pop("deadline-mark.stroke", None)
     parts["view"]["body"]["window"] = dict(WINDOW)
     if show is not None:
         parts["view"]["body"]["deadlines"] = {"show": show}
