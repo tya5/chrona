@@ -278,18 +278,23 @@ def test_every_finding_of_several_figures_is_reported_together(tmp_path):
     assert codes == ["E_FIGURE_PERIOD_UNKNOWN", "E_FIGURE_OBJECT_UNKNOWN"]
 
 
-def test_a_metric_naming_an_undeclared_figure_is_refused_with_the_declared_ones(tmp_path):
-    with pytest.raises(RenderFailed) as failure:
-        _render(tmp_path, _parts(COUNTDOWN), _summary(_metric("missing", metric_id="m")))
-    assert failure.value.code == "E_VIEW_FIGURE_UNKNOWN"
-    assert "missing" in failure.value.message and "countdown" in failure.value.message
-    assert failure.value.source_ref == "/body/panels/key/metrics/m"
+def test_a_metric_naming_a_figure_the_view_does_not_supply_is_not_drawn_and_reported(tmp_path):
+    rendered = _render(tmp_path, _parts(COUNTDOWN), _summary(_metric("missing", metric_id="m"), _metric(metric_id="countdown")))
+    assert _texts(rendered)["summary:key:countdown:value"] == "28"  # the bound metric is drawn
+    assert not any(":m:" in key for key in _texts(rendered))  # the unbound one is not
+    assert "I_SUMMARY_FIGURE_UNBOUND:panel=key;metric=m;figure=missing" in rendered.scene.diagnostics
+    assert [item.code for item in rendered.info_diagnostics] == ["I_SUMMARY_FIGURE_UNBOUND"]
 
 
-def test_a_metric_naming_a_figure_when_the_view_declares_none_says_none(tmp_path):
-    with pytest.raises(RenderFailed) as failure:
-        _render(tmp_path, _parts(), _summary(_metric("countdown", metric_id="m")))
-    assert failure.value.code == "E_VIEW_FIGURE_UNKNOWN" and "declared: none" in failure.value.message
+def test_a_view_that_declares_no_figure_draws_no_figure_metric_and_does_not_fail(tmp_path):
+    bound = _render(tmp_path, _parts(), _summary(_metric("countdown", metric_id="m"), _metric("n", metric_id="n")))
+    assert "I_SUMMARY_FIGURE_UNBOUND:panel=key;metric=m;figure=countdown" in bound.scene.diagnostics
+    assert not any(key.startswith("summary:key") for key in _texts(bound))  # a panel left with no metric is not drawn
+
+
+def test_a_summary_with_every_figure_supplied_reports_nothing(tmp_path):
+    rendered = _render(tmp_path, _parts(COUNTDOWN), _summary(_metric(metric_id="countdown")))
+    assert rendered.info_diagnostics == () and not any(item.startswith("I_SUMMARY") for item in rendered.scene.diagnostics)
 
 
 def test_a_figure_cannot_be_formatted_as_a_date(tmp_path):

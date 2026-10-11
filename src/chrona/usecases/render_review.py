@@ -43,7 +43,7 @@ from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
 from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
-from chrona.presentation.model.info_diagnostics import PresentationInfo
+from chrona.presentation.model.info_diagnostics import PresentationInfo, UnboundSummaryFigure
 from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
 from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_role_consumers import unread_diagnostics as unread_theme_diagnostics
@@ -289,9 +289,9 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         theme = effective_draft_numeric_theme(theme, tuple(item.role for item in resolution.tabular_warnings))
     font_metrics = resolution.metrics if resolution is not None else _font_metrics(
         theme, environment.font_metrics, asset_root, request.asset_resolver)
-    _check_summary_figures(render_closure.summary_profile.summary if render_closure.summary_profile else None, projection, view)
-    summary = normalize_summary_content(render_closure.summary_profile.summary if render_closure.summary_profile else None,
-                                        projection, render_closure.actual_set.observations_input if render_closure.actual_set else None,
+    bound_summary, unbound_figures = _bind_summary_figures(
+        render_closure.summary_profile.summary if render_closure.summary_profile else None, projection, view)
+    summary = normalize_summary_content(bound_summary, projection, render_closure.actual_set.observations_input if render_closure.actual_set else None,
                                         project)
     if render_closure.summary_profile is not None:
         ledger.summary()
@@ -543,10 +543,11 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     # Surface diagnostics are already in the preliminary Scene. Append only
     # the post-composition families, preserving duplicates and their order.
     appended = warning_records[sum(item.startswith("W_") for item in surface.diagnostics):]
-    scene = replace(scene, diagnostics=(*scene.diagnostics, *(item.identity for item in appended)))
+    scene = replace(scene, diagnostics=(*scene.diagnostics, *(item.scene_diagnostic() for item in unbound_figures),
+                                        *(item.identity for item in appended)))
     return RenderedReview(artifact, surface, scene, frozenset(ledger.read), scenario_provenance,
                           glyph_warnings, perceptibility_warnings, contrast_warnings,
-                          surface.info_diagnostics, collisions, attachments, deadlines, warning_records)
+                          (*surface.info_diagnostics, *unbound_figures), collisions, attachments, deadlines, warning_records)
 
 
 def _below_plot_reserve(view: Any, *, actual_set: Any, projection: Any, theme_tokens: Any,
@@ -858,14 +859,23 @@ def _complete_annotation_headers(content: SurfaceContentInput, theme: Mapping[st
     return replace(content, annotations=tuple(annotations))
 
 
-def _check_summary_figures(summary: Any, projection: Any, view: ViewInput) -> None:
-    """A Summary Profile metric naming a figure must name one the View declared, in a format an integer has (#586)."""
+def _bind_summary_figures(summary: Any, projection: Any, view: ViewInput) -> tuple[Any, tuple[UnboundSummaryFigure, ...]]:
+    """Bind a Summary Profile's figure metrics to the figures the View supplies (#586, #1344).
+
+    A metric whose figure the View does not declare is a slot the View leaves unbound: it is not drawn (a panel left with no
+    metric is not drawn either) and an info diagnostic names it, so one design renders against a Project that has no such
+    figure. A figure the View declares with a format it cannot take is still refused.
+    """
     declared = dict(projection.figures)
     kinds = {item.figure_id: item.kind for item in view.figures}
+    unbound: list[UnboundSummaryFigure] = []
+    panels = []
     for panel in summary.panels if summary is not None else ():
+        kept = []
         for metric in panel.metrics:
             source = getattr(metric, "source", None)
             if not isinstance(source, Mapping) or "figure" not in source:
+                kept.append(metric)
                 continue
             path = f"/body/panels/{panel.id}/metrics/{metric.id}"
             if source["figure"] not in declared:
@@ -874,15 +884,19 @@ def _check_summary_figures(summary: Any, projection: Any, view: ViewInput) -> No
                     raise RenderFailed("E_FIGURE_SCOPE_UNAVAILABLE",
                                        f"summary metric {metric.id} names group-scoped figure {source['figure']} without a current group",
                                        "presentation", path)
-                known = ", ".join(declared) if declared else "none"
-                raise RenderFailed("E_VIEW_FIGURE_UNKNOWN",
-                                   f"summary metric {metric.id} names figure {source['figure']}, which the View does not declare (declared: {known})",
-                                   "presentation", path)
+                unbound.append(UnboundSummaryFigure(panel.id, metric.id, str(source["figure"])))
+                continue
+            kept.append(metric)
             if metric.format == "date" or (metric.format == "signedDays" and kinds.get(source["figure"]) == "count"):
                 raise RenderFailed("E_PRESENTATION_SUMMARY_FORMAT",
                                    f"summary metric {metric.id} cannot format {kinds.get(source['figure'])} figure "
                                    f"{source['figure']} as {metric.format}",
                                    "presentation", f"{path}/format")
+        if kept or not panel.metrics:
+            panels.append(replace(panel, metrics=tuple(kept)))
+    if not unbound:
+        return summary, ()
+    return replace(summary, panels=tuple(panels)), tuple(unbound)
 
 
 def _resolved_figures(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput,

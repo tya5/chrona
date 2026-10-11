@@ -72,4 +72,25 @@ class PaintOmission:
                 f"profile={self.visual_profile};paintable={suggested}")
 
 
-PresentationInfo = SuppressedPlotLabels | PaintOmission
+@dataclass(frozen=True)
+class UnboundSummaryFigure:
+    """A Summary Profile metric whose figure the View does not supply: the metric is not drawn (#1344)."""
+
+    panel_id: str
+    metric_id: str
+    figure_id: str
+
+    def __post_init__(self) -> None:
+        if any(not value or any(char in value for char in ";=") for value in (self.panel_id, self.metric_id, self.figure_id)):
+            raise _diagnostic_error(f"UnboundSummaryFigure panel={_shown(self.panel_id)}, metric={_shown(self.metric_id)}, "
+                                    f"figure={_shown(self.figure_id)}; expected nonempty delimiter-safe ids")
+
+    @property
+    def code(self) -> str:
+        return "I_SUMMARY_FIGURE_UNBOUND"
+
+    def scene_diagnostic(self) -> str:
+        return f"{self.code}:panel={self.panel_id};metric={self.metric_id};figure={self.figure_id}"
+
+
+PresentationInfo = SuppressedPlotLabels | PaintOmission | UnboundSummaryFigure

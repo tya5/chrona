@@ -23,7 +23,7 @@ observation.
 
 ## Derived figure source (#586)
 
-A typed metric `source` may also be `{figure: <id>}`, naming a global figure the View declares (Specification 06 section 7.2; Specification 05 section 12.2). Day figures accept `count` (`63`), `signedDays` (`+63d`) or `text` (`63`); count figures accept `count` or `text`. An incompatible formatter is `E_PRESENTATION_SUMMARY_FORMAT`, an undeclared id is `E_VIEW_FIGURE_UNKNOWN`, and a group-only figure is `E_FIGURE_SCOPE_UNAVAILABLE`. The metric `label` is the caption, so a `figures` panel shows the number over it. The `unknown` rule below applies to the other sources only: a figure whose fact is missing refuses the render before content is built, so it is never rendered as `unknown`.
+A typed metric `source` may also be `{figure: <id>}`, naming a global figure the View declares (Specification 06 section 7.2; Specification 05 section 12.2). Day figures accept `count` (`63`), `signedDays` (`+63d`) or `text` (`63`); count figures accept `count` or `text`. An incompatible formatter is `E_PRESENTATION_SUMMARY_FORMAT`, an id the View does not declare leaves the metric unbound (#1344): it is not drawn, a panel left with no metric is not drawn, and the Scene carries the info diagnostic `I_SUMMARY_FIGURE_UNBOUND:panel=<id>;metric=<id>;figure=<id>`, so one design renders against a Project whose View supplies no such figure; and a group-only figure is `E_FIGURE_SCOPE_UNAVAILABLE`. The metric `label` is the caption, so a `figures` panel shows the number over it. The `unknown` rule below applies to the other sources only: a figure whose fact is missing refuses the render before content is built, so it is never rendered as `unknown`.
 
 ## Validation and compatibility
 
