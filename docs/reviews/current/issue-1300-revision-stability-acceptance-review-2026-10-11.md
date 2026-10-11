@@ -5,6 +5,15 @@
 Inspection slice: `3a2f7aa59f4d6f6f97a700c2df8fb19fa43bfbf3`;
 pre-code Spec08 design: `ba4ee5fac13251aa0f01f021f918ac6a6b6efd7d`.
 [Current design/architecture/implementation plan](https://github.com/tya5/chrona/issues/1300#issuecomment-6095643389).
+
+Independent critical-priority slice: pre-code Spec50 `7acdee7c`, code `f5e42d04`.
+Layout's typed ordering helper processes critical facts first while preserving
+within-class arrival/tie/cycle order and original declaration indices. Actual
+scheduler→Layout calls and Scene/SVG declaration order are verified; ordinary
+safety/quality/search predicates are unchanged. Priority/normalization/delta
+batch84 PASS1.67s; priority/fan-in/node-approach/terminal/reduction batch77
+PASS2.83s; imports and Layout float checks PASS. This does not establish
+protected existence, enable quality fallback or satisfy literal rows1–3.
 Public WIP: `7afdfc86d523701d1801ee92176d0c850db06909`, containing trusted
 READY `fa862e40745aa134198dfe070aa347c451dd7ffe`.
 Delta-label code: `f498467f`; pre-code Specs33/50: `42092313`, `38ea6e96`.
