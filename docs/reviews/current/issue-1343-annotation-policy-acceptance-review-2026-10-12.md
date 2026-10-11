@@ -37,5 +37,26 @@ all primitives, diagnostics and SVG bytes stay identical. No compatibility
 measurement branch, schema waiver or corpus edit hides these changes.
 Layout remains measurement/search/geometry owner; semantic expansion only
 closes ordinary immutable intent. Scene/adapters are unchanged.
-Full public snapshot counts and release CI are pending, not inferred from
-this five-design subset.
+Local all46-context materializer preflight is complete (four workers,
+`materialize(write=False)` into disposable output; original evidence untouched).
+All contexts render and both documents parse;12 Scenes/8 SVGs change, with
+zero added or removed primitives anywhere. All dependency routes, primary
+marks and plot labels remain unchanged. The five approved design SVGs remain
+byte-identical. The eight visible changes are the approved natural-host
+allocation correction, not a new candidate/search policy:
+
+| Slide | Changed primitives | Changed content | Canvas height |
+| --- | ---: | --- | --- |
+| controller-z/annotation-kinds | 24 | Footer/status/texture geometry;2 old status overflow findings removed | 1174→946 |
+| controller-z/viewer-fit | 25 | Footer/status/texture geometry;diagnostics unchanged | 1021→966 |
+| controller-z/annotation-rounded | 40 | Footer and one note frame/text/leader;host-fit warning added,canvas warning removed | 946→900 |
+| controller-z/slot-heading | 37 | Footer and one note frame/text/leader;host-fit warning added,canvas warning removed | 946→900 |
+| halcyon-1/programme-board | 18 | Legend positions only | unchanged |
+| halcyon-1/glyph-gates | 20 | Legend positions only | unchanged |
+| halcyon-1/gallery-image-notes | 18 | Legend positions only | unchanged |
+| halcyon-1/gallery-text-compression | 18 | Legend positions only | unchanged |
+
+The four Scene-only changes are roadmap and target B/Yuya/Marquee: one
+annotation-host fit warning each,zero primitive changes.34 complete Scene/SVG
+pairs stay byte-identical. Current-head CI-owned snapshot verification and
+containing-review release remain pending; this local preflight is not release.
