@@ -341,7 +341,9 @@ def orthogonal_route_candidates(
         graph = _build_sparse_graph(
             start, end, event_rects, grid_offset=grid_offset, bounds=bounds, clear=clear)
         if memo is not None and graph_key is not None:
-            memo.store(graph_key, graph)
+            nodes, edges, heuristic = graph
+            records = 1 + 2 * len(nodes) + sum(map(len, edges)) + len(heuristic)
+            memo.store(graph_key, graph, record_count=records)
     ordered, adjacency, remaining_items = graph
     node_id = {point: number for number, point in enumerate(ordered)}
     source, target = node_id[start], node_id[end]

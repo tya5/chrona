@@ -522,7 +522,7 @@ def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
     except RouteSearchFailure as failure:
         memo.store(key, str(failure))
         raise
-    memo.store(key, outcome)
+    memo.store(key, outcome, record_count=1 + len(outcome))
     return outcome
 
 
