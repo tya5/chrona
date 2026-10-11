@@ -43,12 +43,14 @@ Layout returns only completed placements. Scene accepts `SurfacePlacement` and i
 
 For every table column, Layout measures the header and all selected normalized cell strings. A `visible-overflow` table slot retains measured unbroken bounds and completes visible natural geometry even when it escapes the allocated slot; Layout expands the completed canvas where needed. Layout MUST NOT uniformly shrink columns below those bounds.
 
-An explicitly declared table `maxInlineShare` is the strict opt-in exception
+An explicitly declared table `maxInlineShare` or normalized table `text.wrap: allow` is the strict opt-in exception
 (Specifications 24 section 2.1 and 33 section 6): bounded measured
 wrap/ellipsis requirements replace unbroken intrinsic content floors before
 allocation. Neither visible-overflow nor natural source measurement may widen
 that table beyond its ceiling. Missing finite parent budget or infeasible
-mandatory geometry is `E_LAYOUT_TABLE_OVERFLOW`. Without this declaration,
+mandatory geometry is `E_LAYOUT_TABLE_OVERFLOW`. Wrap without an explicit share
+uses the independent full-share budget and closes at the actual allocated width.
+Without either declaration,
 the unbroken natural-geometry contract above remains unchanged. All fitted
 text, multiline row/header demand and source-linked ellipsis evidence are
 completed by Layout, never inferred or repaired by Scene/adapters.
