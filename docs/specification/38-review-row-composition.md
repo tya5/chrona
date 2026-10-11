@@ -36,8 +36,11 @@ Migration: presentation previously required the optional authored ID and used
 it directly. Relation primitive IDs and source-keyed relation diagnostics now
 use the canonical identity even for named declarations; consumers must not
 construct these IDs from the authored name alone. This changes identity, not
-Project scheduling, endpoint meaning or paint intent. Dependency sorting uses
-the same canonical identity rather than an authored-name compatibility path.
+Project scheduling, endpoint meaning or paint intent. Identity is not a priority
+policy: lane predecessor ties and network-edge ordering retain their declared
+relation-name key, with canonical identity used when the name is empty/absent
+and to distinguish equal names. Projection closes this ordering fact separately
+from identity; the lane allocator never reconstructs a name from an opaque ID.
 
 ## 1. Contract
 
