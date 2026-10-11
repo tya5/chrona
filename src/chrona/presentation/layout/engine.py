@@ -11,6 +11,7 @@ from chrona.presentation.layout.model import (
     LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect, RegionFrame, ResolvedLayoutProfile, SlotHeading,
 )
 from chrona.presentation.layout.surface_quality import FitWarning
+from chrona.presentation.layout.tracks import resolve_flexible_tracks as _resolve_flexible_tracks
 
 
 getcontext().prec = 28
@@ -195,55 +196,6 @@ def _unbounded_spec_base(spec: Any, *, axis: str, measurement: Measurement | Non
         value = min(maximum, max(minimum, min(preferred, bound)))
         return minimum, value, ZERO
     raise LayoutError("E_LAYOUT_SCHEMA", path)
-
-
-def _resolve_flexible_tracks(bases: list[tuple[Decimal, Decimal | None, Decimal]], available: Decimal) -> list[Decimal]:
-    """Resolve one axis's tracks from their (minimum, maximum, weight) bases:
-    fixed/intrinsic tracks (`weight == 0`) first, then flexible (`fr`/`fill`)
-    tracks by CSS Grid's "find the size of an fr" algorithm (#487, ADR-0032).
-
-    A flexible track's `minmax` minimum is a floor its fr share must clear,
-    never an amount added underneath it. Each round computes one `fr` unit from
-    the space still available to the remaining flexible tracks; any track whose
-    minimum exceeds its own share at that `fr`, or whose maximum is smaller than
-    that share, is frozen at that bound and removed from the set so the rest
-    redistribute what is left, at the next round's recomputed `fr`. This keeps
-    the total at `available` — never oversubscribing it — unless every flexible
-    track's minimum together already exceeds `available`, in which case each
-    keeps its minimum and the caller's existing typed-overflow completion
-    applies, as before."""
-    sizes: list[Decimal | None] = [None] * len(bases)
-    flexible = [index for index, (_, _, weight) in enumerate(bases) if weight > ZERO]
-    for index, (minimum, target, weight) in enumerate(bases):
-        if weight == ZERO:
-            sizes[index] = target if target is not None else minimum
-    non_flex_total = sum((sizes[index] for index in range(len(bases)) if sizes[index] is not None), ZERO)
-    # A valid profile with too little space still has a finite natural
-    # placement.  The caller records its typed overflow and the composition
-    # layer expands the completed canvas around the resulting bounds.
-    leftover = available - non_flex_total
-    while flexible:
-        total_weight = sum((bases[index][2] for index in flexible), ZERO)
-        fr = leftover / total_weight if leftover > ZERO else ZERO
-        violators = [index for index in flexible if bases[index][0] > fr * bases[index][2]]
-        if violators:
-            for index in violators:
-                sizes[index] = bases[index][0]
-                leftover -= bases[index][0]
-            flexible = [index for index in flexible if index not in violators]
-            continue
-        clamped = [index for index in flexible
-                   if bases[index][1] is not None and bases[index][1] < fr * bases[index][2]]
-        if clamped:
-            for index in clamped:
-                sizes[index] = bases[index][1]
-                leftover -= bases[index][1]
-            flexible = [index for index in flexible if index not in clamped]
-            continue
-        for index in flexible:
-            sizes[index] = fr * bases[index][2]
-        break
-    return sizes  # type: ignore[return-value]
 
 
 def _allocate(specs: list[Any], available: Decimal, measurements: list[Measurement | None], *, axis: str, profile: ResolvedLayoutProfile, paths: list[str], sizing: LayoutSizingContext | None = None) -> list[Decimal]:
