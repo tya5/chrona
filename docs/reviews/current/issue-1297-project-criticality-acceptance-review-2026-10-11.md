@@ -28,21 +28,13 @@ compiled HALCYON and its synthetic twin have no zero-float driving path to
 project finish; typed bus-test float is41 working-days of engineering. Placement,
 lag and twin-equality assertions remain. Complete compile/stroke/hosted-index/
 project-finish family38 PASS19.06s; combined M1 acceptance/structure67 PASS6.35s.
-Current corrected-head PR CI and exact-main release are still pending.
+On READY7563df4c, the affected CLI/gallery and schedule-unit batch passed126
+tests350.33s. Four successful schedule golden records change only typed float
+facts; placements, diagnostics, warnings, files and exit codes are unchanged.
+HALCYON's longer unit-bearing stdout uses the existing stream digest policy.
 
-Current integration `4c92a3ec` adopts merged PR1411 source main `36d8ed8d`
-without conflicts. One Python3.13 M1 batch passes55 tests (6.17s), including
-the complete15-test schedule/typed-float contract family. Complete agent-tool
-tests187 passed on corrected table `f02bc0bb` (33.08s).
-Scheduler/usecase/CLI/hash-seed regressions additionally205 PASS (431.35s)
-on current source integration `4c92a3ec` before publication.
-Earlier broad integration tests are evidence for their named revisions, not current release
-acceptance; the independent Python argparse wording is tracked under #1306.
-
-After ordinary `9ee4dbce` adoption, CLI assertions3, schedule characterization23 and explicit-unit contracts10 pass. Scheduler/hash-seed batch23 passes (56.60s), including eight seeds per command. Broader scheduler, point/calendar/property, usecase, projection and MCP consumers:322 passed (61.20s). Only four successful schedule golden records change; baseline/current raw comparison proves placements, diagnostics, warnings, files and exit codes unchanged. HALCYON's longer unit-bearing stdout uses the existing stream digest policy.
-
-Public audit at `5e27fb5d`:46/46 materialize successfully;45 Scene/SVG pairs
-remain byte-identical. Only `halcyon-1/dependency-network` changes. Its existing
+Corrected-head snapshot11700046472 atd98ca1be: all46 Scene/SVG pairs parse;
+the criticality-only change is `halcyon-1/dependency-network`. Its existing
 `frr-launch`, `launch-leop`, `leop-firstlight` edges lose critical-role paint
 because the old component/fixed-date inference is not a zero-float driving
 path to project finish. Added/removed primitives, changed coordinates/routes,
@@ -50,7 +42,10 @@ text and diagnostics:0. Changed primitive roles/paints:3; the manifest role
 counts follow those changes. SVG XML comparison independently confirms only
 the same three `data-purpose`/`stroke` attributes change; element counts and
 all text remain unchanged. Expected evidence mismatch is disclosed, not
-absorbed into authored examples. The final CI snapshot must reproduce it.
+absorbed into authored examples. Other M1 deltas are disclosed in the1296/1347
+reviews. CI38132741366 passed all product/reproduction checks; derived-ready
+failed only because main advanced. Final post1413 READY integration, its fresh
+snapshot/checks and exact-main three-OS release remain required before closure.
 
 ## Architecture conclusion
 

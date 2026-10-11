@@ -23,17 +23,16 @@ Release pending: final preceding-item READY integration, CI public Scene/SVG del
 
 PR1416 integration correction `8062c71e`: combined M1 acceptance/structure67
 PASS6.35s, including filled-heading/inline-size families; glyph/default/placement
-family175 PASS104.67s. Snapshot11698754531 at26337656 independently checks
+family175 PASS104.67s. Corrected snapshot11700046472 atd98ca1be checks
 actual Title Card SVG: two subject headings wrap, six former heading/body
 collision diagnostics disappear, canvas stays1600×900, no new diagnostics.
-Corrected-head snapshot/CI and exact-main release remain pending.
-
-Current integration `4c92a3ec` adopts merged PR1411 source main `36d8ed8d`
-without conflicts. One Python3.13 M1 batch passes55 tests (6.17s), including
-all21 filled-heading Scene/SVG and inline-size tests.
-Authored examples diff is empty; no integration conflict.
-
-Owned kind-header, fill, stamp, bar-bleed and measurement tests at `313280e0`:115 passed (145.25s). Filled-heading/measurement suite after adding non-slot isolation and short-heading byte characterization:21 passed (8.20s). After internal variant typing, selected heading, measurement-bound, maximum and tilted-fill tests:23 passed (30.84s). Import direction:11 packages/37 inward edges;214 reachable modules, none orphaned. Unbreakable words, explicit forbid and content/non-slot candidates retain natural lines; short filled headings retain whole Scene/SVG bytes.
+All46 Scene/SVG pairs match the preceding26337656 snapshot. On READY7563df4c,
+the affected CLI/gallery and schedule-unit batch passed126 tests350.33s.
+Unbreakable words, explicit forbid and non-slot candidates retain natural lines;
+short filled headings retain whole Scene/SVG bytes. Authored examples are unchanged.
+CI38132741366 passed all product/reproduction checks; derived-ready failed only
+because main advanced. Final post1413 READY integration, its fresh snapshot/checks
+and exact-main three-OS release remain required before closure.
 
 ## Architecture conclusion
 
