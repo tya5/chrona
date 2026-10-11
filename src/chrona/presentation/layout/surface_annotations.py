@@ -32,7 +32,9 @@ from chrona.presentation.layout.rounded_outline import (
 from chrona.presentation.layout.annotation_inline_size import fill_note, fill_target
 from chrona.presentation.layout.viewer_fit import fit_text, require_followable_content
 from chrona.presentation.model.theme_tokens import ViewerFitToken
-from chrona.presentation.layout.annotation_kind_frame import EMPTY_FRAME, measure_kind_frame, place_kind_frame
+from chrona.presentation.layout.annotation_kind_frame import (
+    EMPTY_FRAME, complete_kind_heading, measure_kind_frame, place_kind_frame,
+)
 from chrona.presentation.layout.annotation_tilt import (
     nearest_boundary_point, rotate_commands, polygon_commands, rotate_shape, rotate_text, rotated_corners, rotated_extent, tilt_for,
 )
@@ -615,8 +617,12 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         content_top, content_right, content_bottom, content_left = (
                             max(value, clearance) for value in (content_top, content_right, content_bottom, content_left))
 
-                    def measure_note(measured_content: str, wrap_bound: float, may_wrap: bool
+                    def measure_note(measured_content: str, wrap_bound: float, may_wrap: bool, *, wrap_heading: bool = False
                                      ) -> tuple[tuple[str, ...], float, tuple[float, float]]:
+                        frame = (complete_kind_heading(
+                            kind_measure, available_inline=wrap_bound + annotation_leading + annotation_trailing,
+                            may_wrap=may_wrap, theme_tokens=request.theme_tokens, metric_for=metric_for)
+                            if wrap_heading else kind_measure)
                         lines = (wrap_text(measured_content, available_inline=wrap_bound, font_size=size, font_metrics=annotation_metrics,
                                            letter_spacing=float(annotation_treatment.letter_spacing),
                                            text_transform=annotation_treatment.transform)
@@ -627,9 +633,9 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                      for line in lines)
                         body_inline = annotation_leading + widest + annotation_trailing
                         return lines, widest, (
-                            max(body_inline, kind_measure.header_inline) + kind_measure.inline_insets
+                            max(body_inline, frame.header_inline) + frame.inline_insets
                             + content_left + content_right,
-                            max(size * line_height * len(lines) + kind_measure.header_block, kind_measure.stamp_block)
+                            max(size * line_height * len(lines) + frame.header_block, frame.stamp_block)
                             + content_top + content_bottom)
 
                     # A tilted note is searched and registered through the axis-aligned bounds of its rotated
@@ -647,10 +653,11 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             measured_content, wrap_available, may_wrap)
                         search_size = (rotated_extent(*frame_size, tilt_angle) if tilt_angle else frame_size)
                         filled_variant = None
+                        filled_kind = kind_measure
                         if fill_declared and annotation_slot is not None:
                             fill_may_wrap = (wrap_declared != "forbid" or plot_wrap_em is not None or list_entry)
                             filled_variant = fill_note(
-                                lambda bound: measure_note(measured_content, bound, fill_may_wrap),
+                                lambda bound: measure_note(measured_content, bound, fill_may_wrap, wrap_heading=True),
                                 target=fill_target(float(annotation_slot.bounds.inline_size),
                                                    max_inline_em=(float(container.max_inline_em)
                                                                   if container.max_inline_em is not None else None),
@@ -658,13 +665,17 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                 chrome=(annotation_leading + annotation_trailing + kind_measure.inline_insets
                                         + content_left + content_right),
                                 tilt_degrees=tilt_angle)
+                            filled_kind = complete_kind_heading(
+                                kind_measure,
+                                available_inline=filled_variant.wrap_inline + annotation_leading + annotation_trailing,
+                                may_wrap=fill_may_wrap, theme_tokens=request.theme_tokens, metric_for=metric_for)
                         measured_fill_size = (
                             rotated_extent(filled_variant.frame_inline, filled_variant.frame_block, tilt_angle)
                             if filled_variant is not None and tilt_angle else
                             (filled_variant.frame_inline, filled_variant.frame_block)
                             if filled_variant is not None else None)
                         return (measured_content, lines, measured_width, frame_size, search_size,
-                                filled_variant, measured_fill_size)
+                                filled_variant, measured_fill_size, filled_kind)
 
                     plot_variant = measure_variant(body_content, list_entry=False)
                     list_variant = (measure_variant(list_content, list_entry=True)
@@ -700,15 +711,15 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             list_variant = (measure_variant(list_content, list_entry=True)
                                             if has_index_suppression else plot_variant)
                     (content, annotation_lines, text_width, frame_size, annotation_size,
-                     filled, fill_size) = plot_variant
+                     filled, fill_size, filled_kind) = plot_variant
 
                     def use_variant(candidate: Any | None) -> None:
                         nonlocal content, annotation_lines, text_width, frame_width, frame_height
-                        nonlocal annotation_size, filled, fill_size
+                        nonlocal annotation_size, filled, fill_size, filled_kind
                         variant = (list_variant if has_index_suppression and candidate is not None
                                    and _is_annotation_list_candidate(candidate) else plot_variant)
                         (content, annotation_lines, text_width, frame_size, annotation_size,
-                         filled, fill_size) = variant
+                         filled, fill_size, filled_kind) = variant
                         frame_width, frame_height = frame_size
 
                     used_fill = False
@@ -928,6 +939,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         # The note sits in its slot at the slot's width (#1051): the wrapped lines and frame are the
                         # filled ones, and a trailing visual stands at the box's end edge.
                         annotation_lines, frame_width, frame_height = filled.lines, filled.frame_inline, filled.frame_block
+                        kind_measure = filled_kind
                         text_width = (frame_width - annotation_leading - annotation_trailing - kind_measure.inline_insets
                                       - content_left - content_right)
                     elif fill_declared:

@@ -27,6 +27,7 @@ class FilledNote:
     text_width: float
     frame_inline: float
     frame_block: float
+    wrap_inline: float
 
 
 def fill_target(slot_inline: float, *, max_inline_em: float | None, text_size: float) -> float:
@@ -46,15 +47,17 @@ def fill_note(measure: NoteMeasurer, *, target: float, chrome: float, tilt_degre
     `w * |cos a| + h * |sin a| = target`, where the height `h` follows the wrap, by a bounded monotone iteration.
     """
     if not tilt_degrees:
-        lines, text_width, (need_inline, block) = measure(max(1.0, target - chrome))
-        return FilledNote(lines, text_width, max(target, need_inline), block)
+        wrap_inline = max(1.0, target - chrome)
+        lines, text_width, (need_inline, block) = measure(wrap_inline)
+        return FilledNote(lines, text_width, max(target, need_inline), block, wrap_inline)
     angle = radians(tilt_degrees)
     along, across = abs(cos(angle)), abs(sin(angle))
     frame = target
     for _ in range(MAX_TILT_ROUNDS):
-        lines, text_width, (need_inline, block) = measure(max(1.0, frame - chrome))
+        wrap_inline = max(1.0, frame - chrome)
+        lines, text_width, (need_inline, block) = measure(wrap_inline)
         allowed = (target - block * across) / along - _TILT_EPSILON
         if allowed >= frame - _TILT_EPSILON:
-            return FilledNote(lines, text_width, max(allowed, need_inline), block)
+            return FilledNote(lines, text_width, max(allowed, need_inline), block, wrap_inline)
         frame = max(allowed, 1.0)
-    return FilledNote(lines, text_width, max(frame, need_inline), block)
+    return FilledNote(lines, text_width, max(frame, need_inline), block, wrap_inline)

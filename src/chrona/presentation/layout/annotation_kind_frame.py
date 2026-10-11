@@ -19,7 +19,7 @@ from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.surface_quality import (
     AnnotationPresentation, CollisionDomain, ShapePlacement, TextPlacement,
 )
-from chrona.presentation.layout.text import measure_text_width, place_text
+from chrona.presentation.layout.text import measure_text_width, place_text, wrap_text
 from chrona.presentation.model.theme_tokens import (
     AnnotationKindFrame, AnnotationKindToken, ThemeTokenError, ThemeTokenView,
 )
@@ -60,6 +60,7 @@ class KindFrameMeasure:
     bar_width: str = "fill"
     bar_bleed: str = "none"
     stamp_placement: str = "column"
+    heading_lines: tuple[str, ...] = ()
 
     @property
     def stamp_at_start(self) -> bool:
@@ -155,6 +156,25 @@ def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame:
         heading, bar_block, bar_inline, frame.bar_width, frame.bar_bleed, frame.stamp_placement)
 
 
+def complete_kind_heading(measure: KindFrameMeasure, *, available_inline: float, may_wrap: bool,
+                          theme_tokens: ThemeTokenView, metric_for: Callable[[str], Any]) -> KindFrameMeasure:
+    """Close one filled variant without mutating its natural heading measurement."""
+    heading = measure.heading
+    if heading is None or not may_wrap:
+        return measure
+    treatment = theme_tokens.text_treatment(heading.role)
+    metrics = metric_for(heading.role)
+    lines = wrap_text(heading.content, available_inline=available_inline,
+                      font_size=heading.font_size, font_metrics=metrics,
+                      letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform)
+    width = max(measure_text_width(line, font_size=heading.font_size, font_metrics=metrics,
+                                  letter_spacing=float(treatment.letter_spacing),
+                                  text_transform=treatment.transform) for line in lines)
+    return replace(measure, heading=replace(heading, width=width), heading_lines=lines,
+                   header_inline=max(measure.bar_inline, width),
+                   header_block=measure.bar_block + heading.font_size * heading.leading * len(lines))
+
+
 def place_kind_frame(measure: KindFrameMeasure, *, annotation_id: str, presentation: AnnotationPresentation,
                      content_box: tuple[float, float, float, float], theme_tokens: ThemeTokenView,
                      font_metrics: Any, annotation_slot: str, paint_order: int,
@@ -220,7 +240,7 @@ def place_kind_frame(measure: KindFrameMeasure, *, annotation_id: str, presentat
     if measure.heading is not None:
         line = measure.heading
         placed = place_text(placement_id=f"annotation-heading:{annotation_id}", source_ref=annotation_id,
-                            content=line.content, inline=inner_x,
+                            content=line.content, lines=measure.heading_lines or None, inline=inner_x,
                             baseline_block=inner_y + measure.bar_block + line.font_size,
                             typography_role=line.role, theme_tokens=theme_tokens, font_metrics=font_metrics,
                             collision_region="annotations", collision_domain=CollisionDomain(annotation_slot, "content"),
