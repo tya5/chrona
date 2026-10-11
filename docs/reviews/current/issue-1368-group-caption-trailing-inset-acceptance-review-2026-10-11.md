@@ -18,7 +18,7 @@ Implementation: `dbd88829`. [Current design/architecture/implementation record](
 
 ## Programme-level criteria (optional)
 
-**Release pending:** ordinarily adopted reviewer PR #1390 at source main `26dd9f5c`, following trusted READY `39d6cc9a` containing #1367/#1366/#1385. Current caption, text-extent and strip Scene/SVG integration: **61 passed** (68.36s). Fresh READY-base public snapshot, exact-head gates and acceptance-containing exact-main three-OS release must succeed before closure. Local completion is not published release acceptance.
+**Release pending:** ordinarily adopted trusted READY `0071e5ee`, including #1361/#1389/#1372. Caption, text-extent and strip Scene/SVG integration on this base: **61 passed** (44.89s). Fresh public snapshot, exact-head gates and acceptance-containing exact-main three-OS release must succeed before closure. Local completion is not published release acceptance.
 
 ## Architecture conclusion
 
