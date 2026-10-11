@@ -41,6 +41,18 @@ def test_a_short_body_keeps_the_target_and_a_long_one_wraps_inside_what_the_chro
     assert long.text_width <= 200 - 6.0
 
 
+@pytest.mark.parametrize("degrees", [0, -3, 4, 15])
+def test_fill_retains_the_exact_selected_measurement_bound(degrees):
+    calls = []
+    measure = _measure("aaaa bbbb " * 12)
+    def tracked(bound):
+        calls.append(bound)
+        return measure(bound)
+    note = fill_note(tracked, target=240, chrome=6, tilt_degrees=degrees)
+    assert note.wrap_inline == calls[-1]
+    assert note.lines == measure(note.wrap_inline)[0]
+
+
 def test_an_unbreakable_word_or_a_header_wider_than_the_target_widens_the_frame_and_is_not_clipped():
     word = fill_note(_measure("x" * 40), target=200, chrome=6.0)
     assert word.frame_inline == 40 * CHAR + 6.0 and word.lines == ("x" * 40,)

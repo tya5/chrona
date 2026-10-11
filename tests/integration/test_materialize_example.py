@@ -524,7 +524,8 @@ def test_halcyon_avionics_bustest_lag_is_the_authored_two_workdays():
     assert result.placements["avionics"]["end"].isoformat() == "2027-04-27"
     assert result.placements["bus-test"]["start"].isoformat() == "2027-04-29"
     assert result.placements["bus-test"]["end"].isoformat() == "2027-05-13"
-    assert result.analysis.total_float["bus-test"] == 41
+    total_float = result.analysis.total_float["bus-test"]
+    assert (total_float.value, total_float.unit, total_float.calendar) == (41, "working-days", "engineering")
 
 def test_materializer_uses_each_declared_halcyon_slide_context(tmp_path):
     example = ROOT / "examples/halcyon-1"
