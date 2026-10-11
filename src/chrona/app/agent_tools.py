@@ -619,12 +619,12 @@ _TOOLS: tuple[ToolSpec, ...] = (
     ),
     ToolSpec(
         "list_presets", "List builtin presets",
-        "List the builtin preset ids that render_draft accepts as 'preset', with the gallery set of each, and the "
+        "List the builtin preset ids that render_draft accepts as 'preset', with the gallery set that shows each (when one does), and the "
         "preset used when none is named.",
         _input_schema({}),
         _output_schema({
             "presets": {"type": "array", "items": {
-                "type": "object", "additionalProperties": False, "required": ["id", "gallerySet"],
+                "type": "object", "additionalProperties": False, "required": ["id"],
                 "properties": {"id": {"type": "string"}, "gallerySet": {"type": "string"}}}},
             "default": {"type": "string"},
         }),
