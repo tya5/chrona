@@ -9,7 +9,25 @@ from typing import Any, Literal
 from chrona.presentation.layout.model import Rect, geometry_sum
 from chrona.presentation.model.font_metrics import named_families
 from chrona.presentation.layout.surface_quality import (AnnotationPresentation, CollisionDomain, TextPlacement,
-                                                        TextRunPlacement)
+                                                        TextRunPlacement, FitWarning)
+from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
+
+
+def ellipsized_text_warning(placement: TextPlacement, *, theme_tokens: Any,
+                            font_metrics: Any, failure_kind: str) -> FitWarning | None:
+    """Report a completed source-preserving fallback without selecting policy."""
+    if placement.overflow != "ellipsized":
+        return None
+    treatment = theme_tokens.text_treatment(placement.typography_role)
+    metrics = metric_for_role(theme_tokens, placement.typography_role, font_metrics)
+    source = placement.source_content if placement.source_content is not None else placement.content
+    width = measure_text_width(source, font_size=float(treatment.font_size), font_metrics=metrics,
+                               letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+                               numeric_spacing=treatment.numeric_spacing)
+    return FitWarning("W_LAYOUT_TEXT_ELLIPSIZED", placement.placement_id, placement.source_ref,
+                      failure_kind, "ellipsize-with-source", width, float(placement.bounds.block_size),
+                      placement.available_inline_size if placement.available_inline_size is not None else float(placement.bounds.inline_size),
+                      float(placement.bounds.block_size), (DiagnosticSubject(placement.source_ref, source),))
 
 
 def _text_error(code: str, owner: str, **operands: object) -> ValueError:

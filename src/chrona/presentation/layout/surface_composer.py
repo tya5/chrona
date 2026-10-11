@@ -292,6 +292,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
 
     side_content_warnings: list[FitWarning] = list(group_batch.warnings)
     side_content_warnings.extend(headings.warnings)
+    side_content_warnings.extend(table_batch.warnings)
+    side_content_warnings.extend(heading_batch.warnings)
     legend = by_source.get("legend")
     if legend:
         legend_batch = place_legend(SurfaceLegendContext(

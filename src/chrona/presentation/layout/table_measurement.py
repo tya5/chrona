@@ -68,7 +68,7 @@ def _fit_table_text(content: str, *, available: float, role: str, wrap: str,
     return fit
 
 
-def measure_bounded_table(table: TableContent, *, available_inline: float,
+def measure_bounded_table(table: TableContent, *, available_inline: float | Decimal,
                            tokens: Any, font_metrics: Any, metric_values: Mapping[str, Decimal],
                            original: Measurement, reserved_inline: float = 0.0) -> BoundedTableMeasurement:
     """Close actual header/cell lines before row, prefix or source allocation.
@@ -80,7 +80,7 @@ def measure_bounded_table(table: TableContent, *, available_inline: float,
     if (not isfinite(available_inline) or not isfinite(reserved_inline)
             or reserved_inline < 0 or available_inline <= reserved_inline):
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/table", detail="no finite content inline budget")
-    content_inline = available_inline - reserved_inline
+    content_inline = float(available_inline) - reserved_inline
     inset = float(tokens.text_treatment("text").font_size)
     step = metric_values.get("table.indent.inlineSize")
     lead = (header_child_lead(tokens, first_column=bool(table.columns)

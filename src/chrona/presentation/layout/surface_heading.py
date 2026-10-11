@@ -6,8 +6,8 @@ from typing import Mapping
 
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun
-from chrona.presentation.layout.surface_quality import CollisionDomain, SlotPlacement, SurfaceLayoutRequest, TextPlacement
-from chrona.presentation.layout.text import measured_text_bounds, place_text
+from chrona.presentation.layout.surface_quality import CollisionDomain, SlotPlacement, SurfaceLayoutRequest, TextPlacement, FitWarning
+from chrona.presentation.layout.text import ellipsized_text_warning, measured_text_bounds, place_text
 
 
 HEADING_PARTS = (("kicker", "kicker"), ("title", "heading"), ("subtitle", "subtitle"))
@@ -19,6 +19,7 @@ class HeadingPlacementBatch:
 
     text: tuple[TextPlacement, ...]
     diagnostics: tuple[str, ...] = ()
+    warnings: tuple[FitWarning, ...] = ()
 
 
 def place_surface_headings(request: SurfaceLayoutRequest,
@@ -30,7 +31,8 @@ def place_surface_headings(request: SurfaceLayoutRequest,
     No geometry or source selection is left for Scene to infer.
     """
     if "title" in slots:
-        return HeadingPlacementBatch(place_heading(request, slots["title"], measured))
+        text = place_heading(request, slots["title"], measured)
+        return HeadingPlacementBatch(text, warnings=_heading_warnings(text, request))
     text: list[TextPlacement] = []
     diagnostics: list[str] = []
     for part, role in HEADING_PARTS:
@@ -71,7 +73,13 @@ def place_surface_headings(request: SurfaceLayoutRequest,
             source_content=source.text_runs()[0].content,
             available_inline_start=float(slot.bounds.inline),
             available_inline_size=float(slot.bounds.inline_size)))
-    return HeadingPlacementBatch(tuple(text), tuple(diagnostics))
+    return HeadingPlacementBatch(tuple(text), tuple(diagnostics), _heading_warnings(tuple(text), request))
+
+
+def _heading_warnings(text: tuple[TextPlacement, ...], request: SurfaceLayoutRequest) -> tuple[FitWarning, ...]:
+    return tuple(warning for item in text if (warning := ellipsized_text_warning(
+        item, theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+        failure_kind="heading-text")) is not None)
 
 
 def place_heading(request: SurfaceLayoutRequest, slot: SlotPlacement, measured: MeasuredSources) -> tuple[TextPlacement, ...]:

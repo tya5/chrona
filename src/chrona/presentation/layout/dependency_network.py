@@ -202,7 +202,9 @@ def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> Depende
             ((item.slot_id, item.bounds) for item in (*placed.nodes, *placed.text)),
             ((relation.slot_id, Rect(Decimal(str(inline)), Decimal(str(block)), Decimal(0), Decimal(0)))
              for relation in placed.relations for inline, block in relation.points)))
-    return replace(placed, fit_warnings=(*headings.warnings, *placed.fit_warnings),
+    return replace(placed, fit_warnings=(*headings.warnings,
+                                        *(heading_batch.warnings if heading_batch is not None else ()),
+                                        *placed.fit_warnings),
                    diagnostics=(*headings.diagnostics,
                                 *(heading_batch.diagnostics if heading_batch is not None else ())),
                    canvas_warning=warning)

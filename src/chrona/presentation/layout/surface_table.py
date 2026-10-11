@@ -13,9 +13,9 @@ from chrona.presentation.layout.group_tags import header_child_lead
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_base import SurfaceBaseGeometry
 from chrona.presentation.layout.surface_quality import (
-    CollisionDomain, ColumnPlacement, SlotPlacement, SurfaceLayoutRequest, TextPlacement,
+    CollisionDomain, ColumnPlacement, SlotPlacement, SurfaceLayoutRequest, TextPlacement, FitWarning,
 )
-from chrona.presentation.layout.text import (centred_text_baseline, ellipsize_text, measure_text_width,
+from chrona.presentation.layout.text import (centred_text_baseline, ellipsize_text, ellipsized_text_warning, measure_text_width,
                                              metric_for_role, place_text)
 from chrona.presentation.layout.table_measurement import BoundedTableMeasurement
 
@@ -26,6 +26,7 @@ class SurfaceTablePlacements:
     layout_columns: tuple[TableColumnPlacement, ...]
     columns: tuple[ColumnPlacement, ...]
     text: tuple[TextPlacement, ...]
+    warnings: tuple[FitWarning, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -230,7 +231,10 @@ def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | N
                 collision_domain=CollisionDomain("table", f"row:{row.row_id}"), source_content=content,
                 available_inline_start=position[0] + indent, available_inline_size=available,
                 semantic_id=cell.semantic_id, lines=closed.fit.lines if closed is not None else None))
-    return SurfaceTablePlacements(tuple(layout_columns), seed.columns, tuple(text))
+    warnings = tuple(warning for item in text if (warning := ellipsized_text_warning(
+        item, theme_tokens=tokens, font_metrics=font_metrics, failure_kind="table-text")) is not None
+    ) if seed.bounded_table is not None else ()
+    return SurfaceTablePlacements(tuple(layout_columns), seed.columns, tuple(text), warnings)
 
 
 def _resolve_table_text(content: str, available_inline: float, typography_role: str,

@@ -32,6 +32,7 @@ from chrona.presentation.layout.presentation import validate_label_text_role, va
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.slot_heading import headed_slot_ids, reserve_slot_heading_blocks
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources, resolve_theme_metrics
+from chrona.presentation.layout.source_sizing import SourceSizingSession
 from chrona.presentation.layout.surface_legend import LegendArrangement, legend_arrangement, legend_source_input
 from chrona.presentation.layout.label_visual_measurement import resolve_label_visual_advances
 from chrona.presentation.layout.surface_composer import prepare_surface_content, prepare_surface_natural_candidate
@@ -384,8 +385,16 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         Decimal(environment.viewport_inline),
         None if request.draft_auto_block else Decimal(environment.viewport_block))
     measurements = _slot_measurements(resolved_layout.profile["root"], measured)
+    source_sizing = SourceSizingSession(resolved_layout, measured, theme=theme,
+                                       font_metrics=font_metrics, content=selected_content)
+
+    def sizing_context(block: int | Decimal):
+        return source_sizing.context(viewport_inline=viewport["inlineSize"], viewport_block=block,
+                                     measurements=measurements, content_sized=request.draft_auto_block)
+
     natural_block_floor = max(1, int(measure_natural_normal_flow_block(
-        resolved_layout, viewport_inline=viewport["inlineSize"], measurements=measurements
+        resolved_layout, viewport_inline=viewport["inlineSize"], measurements=measurements,
+        sizing=sizing_context(viewport["blockSize"]) if source_sizing.active else None,
     ).to_integral_value(rounding=ROUND_CEILING))) if request.draft_auto_block else viewport["blockSize"]
     capacity_short_sources = ()
     # An as-of chip placed `below-plot` (#1063) needs its block under the last row, so the timeline asks for it too.
@@ -407,7 +416,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         return SurfaceLayoutRequest(
             projection=projection, presentation_contract=normalize_presentation_input(content),
             surface_content=content, layout_manifest=candidate,
-            measured_sources=measured, theme_tokens=ThemeTokenView(theme), font_metrics=font_metrics,
+            measured_sources=source_sizing.close_manifest(candidate),
+            theme_tokens=ThemeTokenView(theme), font_metrics=font_metrics,
             capabilities={name: True for name in render_closure.context.target.capabilities},
             icon_assets=icon_assets, visual_requests=visual_requests,
             capacity_short_sources=short_sources,
@@ -426,6 +436,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             measurements=measurements,
             required_blocks=candidate_demand,
             content_sized=request.draft_auto_block,
+            sizing=sizing_context if source_sizing.active else None,
         )
         viewport["blockSize"] = block_resolution.extent
         capacity_short_sources = tuple(CapacitySourceEvidence(
@@ -438,7 +449,9 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         resolved_layout, viewport_inline=viewport["inlineSize"],
         viewport_block=viewport["blockSize"], measurements=measurements,
         content_sized=request.draft_auto_block,
+        sizing=sizing_context(viewport["blockSize"]) if source_sizing.active else None,
     )
+    measured = source_sizing.close_manifest(manifest)
 
     fixed_lane_preflight = None
     surface_preparation = None
@@ -1045,7 +1058,7 @@ def _heading_part_sources(heading: HeadingContent) -> dict[str, SourceInput]:
         sources[source_ref] = SourceInput(
             lines=(text,) if text else (), typography_role=role,
             runs=(SourceTextRun(text, role, source_ref),) if text else (),
-            content_present=bool(text), run_flow="block")
+            content_present=bool(text), run_flow="block", text_wrap=heading.text_wrap)
     return sources
 
 
@@ -1066,11 +1079,13 @@ def _title_source(project: dict[str, Any], heading: HeadingContent | None) -> So
         if subtitle is not None:
             runs += (SourceTextRun(subtitle, "subtitle", "subtitle"),)
         return SourceInput(tuple(run.content for run in runs), typography_role="heading", runs=runs,
-                           run_flow="block")
+                           run_flow="block", text_wrap=heading.text_wrap)
     if subtitle is None:
-        return SourceInput((title,), typography_role="heading")
+        return SourceInput((title,), typography_role="heading",
+                           text_wrap=heading.text_wrap if heading is not None else "forbid")
     return SourceInput((title, subtitle), typography_role="heading",
-                       runs=(SourceTextRun(title, "heading"), SourceTextRun(subtitle, "subtitle")))
+                       runs=(SourceTextRun(title, "heading"), SourceTextRun(subtitle, "subtitle")),
+                       text_wrap=heading.text_wrap if heading is not None else "forbid")
 
 
 def _annotation_source_input(view: ViewInput, visual_requests: tuple[VisualRequest, ...],
