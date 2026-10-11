@@ -20,6 +20,25 @@ resolve from the selected Actual set. A View using a source absent from the Cont
 diagnoses before projection. No source may mean a branch tip, local working file,
 implicit latest snapshot, or copied schedule payload.
 
+### Dependency identity closure (#1302)
+
+Review relation facts, lane-packing dependencies and network edges use the Core
+`relation_identity(index, declaration)` identity, matching Scheduler driving
+facts. The index is zero-based in the complete Project relation sequence,
+before filtering: `relation:<index>:<declared-id>` for a nonempty authored ID,
+otherwise `relation:<index>`. Empty or omitted IDs never make a valid Project
+unrenderable. An authored ID resembling a generated ID cannot collide with it.
+Projection does not invent a second fallback or mutate the Project. Scene
+instance identities derive from that opaque identity and endpoint occurrences;
+Scene and adapters do not resolve declaration identities themselves.
+
+Migration: presentation previously required the optional authored ID and used
+it directly. Relation primitive IDs and source-keyed relation diagnostics now
+use the canonical identity even for named declarations; consumers must not
+construct these IDs from the authored name alone. This changes identity, not
+Project scheduling, endpoint meaning or paint intent. Dependency sorting uses
+the same canonical identity rather than an authored-name compatibility path.
+
 ## 1. Contract
 
 A Review row is a stable View-local presentation composition, not a Project object,
