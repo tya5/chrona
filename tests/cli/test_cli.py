@@ -741,7 +741,8 @@ def test_cli_preset_list_reports_every_catalogue_entry_in_order(monkeypatch, cap
 
     payload = json.loads(capsys.readouterr().out)
     assert payload["status"] == "ok"
-    assert payload["presets"] == [{"id": entry["id"], "gallerySet": entry["gallerySet"]} for entry in expected]
+    assert payload["presets"] == [
+        {"id": entry["id"], **({"gallerySet": entry["gallerySet"]} if "gallerySet" in entry else {})} for entry in expected]
 
 
 @pytest.mark.parametrize(
