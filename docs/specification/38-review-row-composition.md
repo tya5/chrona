@@ -31,6 +31,9 @@ unrenderable. An authored ID resembling a generated ID cannot collide with it.
 Projection does not invent a second fallback or mutate the Project. Scene
 instance identities derive from that opaque identity and endpoint occurrences;
 Scene and adapters do not resolve declaration identities themselves.
+Layout carries the canonical declaration identity as `RelationPlacement.source_ref`;
+Scene copies that field to `sourceRef`, never splitting the placement ID. This
+keeps source-keyed duplicate-path checks distinct from instance identity.
 
 Migration: presentation previously required the optional authored ID and used
 it directly. Relation primitive IDs and source-keyed relation diagnostics now
