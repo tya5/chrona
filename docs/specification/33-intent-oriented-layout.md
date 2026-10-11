@@ -50,6 +50,14 @@ flattened standalone profile whose identity is that of the effective value. Ever
 derived profile's identity and the Scene with no Context edit, while the derived profile's `extends` pin is re-pinned inside
 the design that owns both.
 
+Store-backed chain resolution and cycle detection belong to ingress. A chain
+edge is identified by Store provider/identity, address and revision token;
+reusing a resource id or address at a different revision is not a cycle.
+After reading and verifying the complete base chain, ingress passes a
+standalone base to declarative Layout composition. That composition validates
+the declarations and applies stable-node overrides/top-level replacements;
+it does not resolve Store references or reject a completed base by resource id.
+
 Whole Layout Profiles are the reusable composition unit. Theme resources are the
 reusable value unit. Render Context binds separate immutable Theme and Layout resource
 references to a Project, View, optional Detail/Summary/Actual inputs, viewport, locale,
