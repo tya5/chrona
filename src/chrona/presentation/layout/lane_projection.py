@@ -9,9 +9,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 from urllib.parse import quote
+from typing import Any
 
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.semantic_mark_facets import due_end_missing_actual_selected
 from chrona.presentation.model.projection import ObservationState, ReviewProjection
+
+
+def folded_instance_id(folded: Any, item: Any) -> str:
+    """Keep a header point's comparison members addressable without inventing rows."""
+    return f"group-header:{folded.group_id}:{item.item_id or item.object_id}"
 
 
 @dataclass(frozen=True, order=True)
@@ -56,6 +63,29 @@ class LaneProjectionClosure:
     expected_marks: tuple[ExpectedLaneMark, ...]
     intentional_absences: tuple[LaneIntentionalAbsence, ...]
     attached_hosts: tuple[tuple[LaneProjectionInstance, LaneProjectionInstance], ...]
+
+
+def lane_instance_owners(projection: Any, closure: LaneProjectionClosure) -> dict[LaneProjectionInstance, tuple[str, str]]:
+    """Join original Review occurrences to final lanes without decoding IDs."""
+    lane_rows = {row.lane_id: row for row in projection.lane_rows}
+    source_rows = {row.row_id: row for row in projection.rows}
+    owners: dict[LaneProjectionInstance, tuple[str, str]] = {}
+    for instance in closure.instances:
+        row = source_rows.get(instance.row_id)
+        if row is None or not row.items:
+            raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/rows")
+        member_id = row.items[0].item_id or row.items[0].object_id
+        assignment = projection.lane_membership.assignment_for(member_id)
+        lane_row = lane_rows.get(assignment.lane_id)
+        if lane_row is None or not any(
+            candidate_member_id == member_id
+            and (item.item_id or item.object_id, item.object_id, item.source_kind)
+            == (instance.item_id, instance.object_id, instance.source_kind)
+            for item, candidate_member_id in zip(lane_row.items, lane_row.member_item_ids, strict=True)
+        ):
+            raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/laneRows")
+        owners[instance] = (lane_row.lane_id, instance.item_id)
+    return owners
 
 
 def lane_missing_actual_visible(projection: ReviewProjection) -> bool:
@@ -147,7 +177,7 @@ def close_lane_projection(
                 anchor = item.planned.get("end" if item.source_type == "span" else "at")
                 if not isinstance(anchor, date):
                     raise LayoutError("E_LAYOUT_LANE_EXPECTED_MARK_INVALID", f"{path}/planned")
-                if missing_actual_visible:
+                if due_end_missing_actual_selected(item, emit_missing_actual=missing_actual_visible):
                     _expect_mark(expected_marks, instance, "missing-actual", "missing-actual")
                 else:
                     intentional_absences.append(LaneIntentionalAbsence(
@@ -194,7 +224,7 @@ def close_lane_projection(
             anchor = item.planned.get("end" if item.source_type == "span" else "at")
             if not isinstance(anchor, date):
                 raise LayoutError("E_LAYOUT_LANE_EXPECTED_MARK_INVALID", f"{path}/planned")
-            if missing_actual_visible:
+            if due_end_missing_actual_selected(item, emit_missing_actual=missing_actual_visible):
                 _expect_mark(expected_marks, instance, "missing-actual", "missing-actual")
             else:
                 intentional_absences.append(LaneIntentionalAbsence(

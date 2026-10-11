@@ -63,3 +63,11 @@ entries:
           noticeSourcePath: chrona-theme-starter.NOTICE
           contentIdentity: sha256:2945f6d2767ca0cc2c8a4a6045055c6f1ee944f5097269ee45340904856b0ec0
           noticeContentIdentity: sha256:b07fa7bbb7bff0acdfb2cf02905b7ca7ad1db3ead9f59b13f47c4ced097f3eb6
+  - id: chrona-default-draft
+    gallerySet: bundled-default
+    members:
+      view: {id: chrona-preset-editorial-readable-default, kind: view, sourceRoot: presets/bundles/editorial-readable-default, sourcePath: view.yaml}
+      theme: {id: chrona-builtin-editorial-readable-default, kind: theme, sourceRoot: presets/bundles/editorial-readable-default, sourcePath: theme.yaml}
+      colorScheme: {id: chrona-builtin-editorial, kind: color-scheme, sourceRoot: presets/bundles/editorial, sourcePath: scheme.yaml}
+      layout: {id: chrona-builtin-editorial, kind: layout-profile, sourceRoot: presets/bundles/editorial, sourcePath: layout.yaml}
+      detailProfile: {id: chrona-builtin-editorial-detail, kind: review-detail-profile, sourceRoot: presets/bundles/editorial, sourcePath: detail.yaml}

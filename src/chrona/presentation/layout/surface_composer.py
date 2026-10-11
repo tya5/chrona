@@ -39,7 +39,8 @@ from chrona.presentation.layout.surface_table import (
 from chrona.presentation.layout.surface_heading import place_surface_headings
 from chrona.presentation.layout.surface_groups import (compose_group_presentation, translate_group_header_text)
 from chrona.presentation.layout.surface_backgrounds import (
-    compose_calendar_backgrounds, compose_group_tabs, compose_row_group_backgrounds, replace_group_header_band,
+    compose_calendar_backgrounds, compose_group_header_strips, compose_group_tabs,
+    compose_row_group_backgrounds, replace_group_header_band,
 )
 from chrona.presentation.layout.surface_axis import (
     complete_axis_plot,
@@ -48,7 +49,8 @@ from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT_FALLBACK
 from chrona.presentation.layout.as_of_cone import complete_as_of_cone
 from chrona.presentation.layout.surface_deadlines import compose_deadline_marks
 from chrona.presentation.layout.surface_periods import compose_period_bands, period_label_requests
-from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance
+from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
+from chrona.presentation.layout.label_visual_measurement import absent_label_visual_sources
 from chrona.presentation.layout.text import metric_for_role
 from chrona.presentation.layout.labels import (LabelRect, LabelRequest)
 from chrona.presentation.layout.obstacles import (
@@ -178,6 +180,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
                                                    block_delta=block_delta))
         shapes = list(replace_group_header_band(
             tuple(shapes), update, extent=base.layout_manifest.background_extents.get("groupHeaderBand", "")))
+    shapes.extend(compose_group_header_strips(base=base, groups=tuple(groups), theme_tokens=request.theme_tokens))
     shapes.extend(compose_group_tabs(
         groups=tuple(groups), theme_tokens=request.theme_tokens,
         tag_column=(base.table_bounds[0], base.group_tag_inline_size) if base.group_tag_inline_size else None))
@@ -199,6 +202,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     if base.as_of_foot_fallback and as_of_label is not None:
         diagnostics.append(f"{BELOW_PLOT_FALLBACK}:as-of-label")
     member_label_requests = build_member_label_requests(member_label_context)
+    for absence in member_label_requests.window_absences:
+        diagnostics.append(absence.diagnostic)
+        diagnostic_provenance.append(DiagnosticProvenance(absence.diagnostic,
+            (DiagnosticSubject.project_object(absence.source_ref),)))
     member_label_subjects = {
         item.placement_id: item.subjects
         for item in (*member_label_requests.pre_route, *member_label_requests.post_route)
@@ -209,7 +216,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         member_label_requests = replace(member_label_requests,
                                         pre_route=(*period_requests, *member_label_requests.pre_route))
     candidate_icons: list[IconPlacement] = []
-    handled_candidate_visuals: set[str] = set()
+    handled_candidate_visuals: set[str] = set(absent_label_visual_sources(
+        member_label_requests.window_absences, visual_requests=request.visual_requests,
+        icon_assets=request.icon_assets))
     lane_label_suppressions: list[LaneLabelSuppression] = []
     # One monotonically growing Layout inventory is shared by labels, semantic
     # routes and annotations. Background bands deliberately do not enter it.
@@ -265,14 +274,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     lane_route_plan = plan_lane_route_reservations(LaneRoutePlanContext(
         member_label_context, member_label_requests.pre_route, tuple(text), surface_obstacles,
         lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
-            tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index)))
+            tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot))))
     surface_obstacles.extend(lane_route_plan.reservations)
     place_label_phase(member_label_requests.pre_route)
 
     route_label_plan = compose_routes_and_member_labels(RouteLabelPlanContext(
         member_label_context, member_label_requests.post_route, tuple(text), surface_obstacles,
         lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
-            tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index)))
+            tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot))))
     surface_obstacles = route_label_plan.obstacles
     routes_batch = route_label_plan.routes
     relations = list(routes_batch.relations)
@@ -375,4 +384,5 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         visible_route_fallbacks=visible_route_fallbacks, visible_group_header_overflows=visible_group_header_overflows,
         lane_label_suppressions=lane_label_suppressions,
         diagnostic_provenance=tuple(diagnostic_provenance),
+        window_label_absences=member_label_requests.window_absences,
         visible_label_subjects=visible_label_subjects))

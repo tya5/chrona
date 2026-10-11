@@ -39,6 +39,34 @@ share their row's bounds through Layout-assigned subtracks. This preserves a coh
 table/timeline alignment without treating a milestone, Snapshot, or Actual as a special
 renderer case.
 
+### 1.1 Date-range endpoint display (#1293)
+
+A `format: dateRange` column MAY declare `endDisplay: inclusive | exclusive`.
+Omission means `exclusive` and preserves existing authored output. The property
+is valid only for `dateRange`; invalid values or formatter combinations fail
+View validation. The live View schema adds this optional property in place.
+
+For a complete half-open interval with date-valued `start < end`, exclusive
+display formats the stored endpoint; inclusive display formats `end − 1`
+calendar day. Planned `end` and Actual `finish` have the same exclusive endpoint
+meaning (Specs 03 §4 and 06 §4). This display calculation does not mutate the
+source, schedule, deltas, or bar geometry. With a working calendar it still
+subtracts one calendar day, not the last working day.
+
+An inclusive one-day interval collapses to one compact date without a year:
+`[2027-01-04, 2027-01-05)` reads `04 Jan` in `en-US` and `1月4日` in `ja-JP`.
+Other complete ranges retain the existing locale and same-year/cross-year
+formatting, using the displayed endpoint. Points, missing values, incomplete
+or open intervals, and non-positive ranges retain their existing formatting;
+this option introduces no temporal data validator.
+
+Content normalization applies this rule once, before affixes and Layout
+measurement. Layout receives completed cell text; Scene and adapters emit it
+without endpoint calculation. The bundled default and every builtin preset
+declare inclusive display on their date-range columns through the packaged
+resource authority (Spec 32 §4). Existing example Views are not rewritten;
+changed corpus cells and their causes must be listed with the migration.
+
 ## 2. Axis, groups, and layout
 
 The View continues to own its explicit temporal window. The profile may use two or

@@ -164,7 +164,7 @@ def test_validate_and_schedule_of_a_plan_equal_the_same_commands_on_its_compiled
     staged = _run(monkeypatch, capsys, command, "compiled.yaml")
     assert direct[0] == 0 and direct == staged
     if command == "validate":
-        assert direct[1] == "[]\n"
+        assert direct[1] == "{\"status\": \"ok\", \"diagnostics\": []}\n"
     else:
         assert json.loads(direct[1])["placements"]
 

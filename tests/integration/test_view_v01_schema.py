@@ -45,6 +45,16 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("path", reachable_view_paths(ROOT))
 
 
+def _assert_view_copy_except_axis(packaged: Path, corpus: Path) -> None:
+    # Published axis and endpoint migrations are independent of old corpus copies.
+    values = [yaml.safe_load(path.read_bytes()) for path in (packaged, corpus)]
+    for value in values:
+        value["body"].pop("axis")
+        for column in value["body"].get("tableColumns", ()):
+            column.pop("endDisplay", None)
+    assert values[0] == values[1]
+
+
 def test_declared_public_v03_view_validates(path: Path):
     value = safe_load(path.read_bytes())
     version = value.get("version")
@@ -58,7 +68,7 @@ def test_declared_public_v03_view_validates(path: Path):
 
 def test_lane_resource_migration_inventory_and_editorial_mirror():
     library = yaml.safe_load((ROOT / "src/chrona/resources/presets/library.yaml").read_text(encoding="utf-8"))
-    entries = {entry["id"]: entry for entry in library["entries"]}
+    entries = {entry["id"]: entry for entry in library["entries"] if entry["id"] != "chrona-default-draft"}  # the default has automatic rows, below
     assert len(entries) == 7
     for preset_id, entry in entries.items():
         member = entry["members"]["view"]
@@ -75,18 +85,21 @@ def test_lane_resource_migration_inventory_and_editorial_mirror():
     default = yaml.safe_load((ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/view.yaml").read_text(encoding="utf-8"))
     assert default["body"]["rows"] == {"mode": "automatic"}
     assert [column["id"] for column in default["body"]["tableColumns"]] == ["Task", "Plan"]
+    assert default["body"]["tableColumns"][1]["endDisplay"] == "inclusive"
     assert default["version"] == "chrona/view/v0.28"
-    assert (ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/view.yaml").read_bytes() == \
-        (ROOT / "examples/halcyon-1/views/editorial-readable-default.yaml").read_bytes()
+    _assert_view_copy_except_axis(
+        ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/view.yaml",
+        ROOT / "examples/halcyon-1/views/editorial-readable-default.yaml")
 
     package_view = ROOT / "src/chrona/resources/presets/bundles/editorial/view-lanes.yaml"
     corpus_view = ROOT / "examples/halcyon-1/views/editorial-lanes.yaml"
-    assert package_view.read_bytes() == corpus_view.read_bytes()
+    _assert_view_copy_except_axis(package_view, corpus_view)
     reference = yaml.safe_load((ROOT / "examples/halcyon-1/views/editorial.yaml").read_text(encoding="utf-8"))
     assert reference["id"] == "chrona-preset-editorial"
     assert reference["body"]["rows"]["mode"] == "automatic"
-    assert (ROOT / "src/chrona/resources/presets/bundles/editorial/view.yaml").read_bytes() == \
-        (ROOT / "examples/halcyon-1/views/editorial.yaml").read_bytes()
+    _assert_view_copy_except_axis(
+        ROOT / "src/chrona/resources/presets/bundles/editorial/view.yaml",
+        ROOT / "examples/halcyon-1/views/editorial.yaml")
 
 
 def test_halcyon_lane_slides_and_full_02_packing_policy():

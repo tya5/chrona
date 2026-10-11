@@ -55,13 +55,17 @@ def test_typeset_opacity_failure_names_scene_and_invalid_value():
     assert "fade-3" in message and "1.25" in message and "[0, 1]" in message
 
 
-def test_typst_rounded_path_failure_names_primitive_and_path_count():
-    node = ScenePrimitive("curve-4", "Path", "src", "path", "planned", "planned", (1, 1, 3, 3),
-                          points=((1, 1), (3, 3)), path_commands=(PathCommand("move", ((1, 1),)),),
-                          paint=ScenePaint(None, "#000", 1, (), 1))
-    message = _error_text(lambda: v05_typeset.render_v05_typst(_surface(node)))
-    assert message.startswith("E_PRESENTATION_ROUNDED_PATH_UNSUPPORTED:")
-    assert "curve-4" in message and "1 path commands" in message
+def test_typst_draws_a_rounded_path_as_a_curve_and_names_a_path_without_two_points():
+    rounded = ScenePrimitive("curve-4", "Path", "src", "path", "planned", "planned", (1, 1, 3, 3),
+                             points=((1, 1), (3, 3)),
+                             path_commands=(PathCommand("move", ((1, 1),)), PathCommand("quadratic", ((1, 3), (3, 3)))),
+                             paint=ScenePaint(None, "#000", 1, (), 1))
+    assert "curve.quad((1pt, 3pt), (3pt, 3pt))" in v05_typeset.render_v05_typst(_surface(rounded))
+
+    short = ScenePrimitive("curve-5", "Path", "src", "path", "planned", "planned", (1, 1, 3, 3),
+                           points=((1, 1),), paint=ScenePaint(None, "#000", 1, (), 1))
+    message = _error_text(lambda: v05_typeset.render_v05_typst(_surface(short)))
+    assert message.startswith("E_PRESENTATION_PRIMITIVE_INVALID:") and "curve-5" in message and "two Path points" in message
 
 
 def test_tikz_capability_failure_names_primitive_and_requested_scale():

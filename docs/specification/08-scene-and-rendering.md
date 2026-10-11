@@ -818,6 +818,27 @@ A renderer consumes a completed Scene plus its resolved token values and returns
 
 SVG is a deterministic export target. An SVG renderer maps primitives to SVG elements and maps `sceneId`/`sourceRef` into stable metadata attributes or an equivalent manifest. The SVG file is generated output; hand-editing it does not change Chrona semantics.
 
+### 8.1.1 Typst and TikZ (#1308)
+
+The Typst (`chrona-typst/v0.1`, Typst 0.13) and TikZ (`chrona-tikz/v0.1`) adapters serialise the primitives every bundled
+appearance except `technical-print` produces, one element per primitive, each preceded by a `scene-id` comment:
+
+| Primitive | Typst | TikZ |
+| --- | --- | --- |
+| `Rect` (fill and/or stroke, corner radius) | `#rect` | `\path ... rectangle` |
+| `Text` (single style, tracking, number width, rotation) | `#text` | `\node` |
+| `Symbol` (a closed outline of move, line and quadratic commands; fill and/or stroke) | `#curve` | `\path` |
+| `Path` (points or move, line and quadratic commands; stroke and width) | `#curve` | `\draw` |
+| a Path end marker | a second filled or stroked `#curve` after the Path | a second `\path` or `\draw` after it |
+
+An end marker is lowered by the SVG marker rule to absolute plain commands: the marker box's reference point
+(`head_length - attachment_offset`, `head_width / 2`) sits on the path end, turned to the path direction there (`angle_degrees`
+when the marker fixes one) and scaled by the stroke width unless the marker is in physical units. The adapter adds no Scene
+field. Still refused with `E_VISUAL_CAPABILITY_UNSUPPORTED`, naming each primitive, its role and the feature: `pattern`
+fills, required wobble, aligned stroke clips, small-caps runs, and (TikZ) a compressed text. A render target needs a visual
+profile that serves it: a preset that prefers an SVG-only profile (`elevated-light`, `technical-print`) takes
+`--visual-profile chrona-output/visual/v0.5-baseline`.
+
 ### 8.2 Interactive canvas and tldraw
 
 An interactive canvas adapter projects the Scene into the canvas store and preserves a mapping back to `sceneId` and source references. The canvas store is not the Project source of truth. A user interaction becomes a later Application Architecture command that proposes a Project or View change, which must be validated against the relevant specification before a new Scene is built.

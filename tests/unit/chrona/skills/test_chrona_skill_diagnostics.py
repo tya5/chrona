@@ -7,6 +7,7 @@ import json
 import re
 from functools import cache
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import yaml
@@ -191,15 +192,45 @@ def test_a_cramped_viewport_prints_the_warnings_and_note_the_skill_lists_in_stdo
     envelope = json.loads(out)
     assert envelope["status"] == "ok" and envelope["diagnostics"] == []
     codes = {item["code"] for item in envelope["warnings"]}
-    assert {"W_LAYOUT_LABEL_SUPPRESSED", "W_LAYOUT_LABEL_OVERFLOW", "W_SCENE_TEXT_INTERSECTION",
-            "I_LAYOUT_PLOT_LABELS_SUPPRESSED"} <= codes
+    # Axis labels that do not fit are no longer painted outside their cells.
+    assert {"W_LAYOUT_LABEL_SUPPRESSED", "I_LAYOUT_PLOT_LABELS_SUPPRESSED"} <= codes
     assert (tmp_path / "plan.svg").is_file()
+
+
+def test_non_axis_text_intersection_produces_the_warning_the_skill_names(capsys):
+    from chrona.app.cli import _emit_render_result
+    from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
+    from chrona.usecases.render_review import _warnings_from_findings
+    from chrona.usecases.warning_ledger import collect_render_warnings
+
+    bounds = {"inline": 0, "block": 0, "inlineSize": 10, "blockSize": 10}
+    document = {"version": "chrona/scene/v0.6", "kind": "scene", "surfaces": [{
+        "id": "synthetic", "slots": [{"id": "heading", "bounds": bounds, "overflow": "fit"}],
+        "canvasPaint": {"fill": "#FFFFFF", "opacity": 1},
+        "primitives": [{"id": identifier, "kind": "Text", "slotId": "heading",
+                        "bounds": bounds, "paintOrder": 0}
+                       for identifier in ("heading:first", "heading:second")],
+    }]}
+    findings = evaluate_scene_perceptibility(document)
+    records = collect_render_warnings(
+        surface_diagnostics=(), tabular_warnings=(), glyph_warnings=(), fit_warnings=(),
+        perceptibility_warnings=_warnings_from_findings(findings),
+        scale_collisions=(), attachment_warnings=(),
+    )
+    _emit_render_result(SimpleNamespace(warning_records=records, info_diagnostics=()))
+    captured = capsys.readouterr()
+    envelope = json.loads(captured.out)
+    assert captured.err == "" and envelope["status"] == "ok" and envelope["diagnostics"] == []
+    row = next(item for item in envelope["warnings"] if item["code"] == "W_SCENE_TEXT_INTERSECTION")
+    assert row["severity"] == "warning"
+    assert row["primitiveIds"] == ["heading:first", "heading:second"]
+    assert not is_bare(row["code"], row["message"])
 
 
 def test_every_code_this_file_provokes_is_named_by_the_skill():
     provoked = {code for case in PLAN_CASES for code in case[5]}
     provoked |= {"E_INPUT_IO", "E_INPUT_YAML", "E_COMMAND_SYNTAX", "E_RENDER_OUTPUT_EXTENSION", "E_RENDER_OUTPUT_FORMAT_MISMATCH",
                  "E_BUILTIN_PRESET_UNKNOWN", "E_INIT_OUTPUT_EXISTS", "E_BUILTIN_PRESET_OUTPUT_EXISTS", "E_SKILL_OUTPUT_EXISTS",
-                 "W_LAYOUT_LABEL_SUPPRESSED", "W_LAYOUT_LABEL_OVERFLOW", "W_SCENE_TEXT_INTERSECTION", "I_LAYOUT_PLOT_LABELS_SUPPRESSED"}
+                 "W_LAYOUT_LABEL_SUPPRESSED", "W_SCENE_TEXT_INTERSECTION", "I_LAYOUT_PLOT_LABELS_SUPPRESSED"}
 
     assert provoked <= _skill_codes()

@@ -14,11 +14,22 @@ from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.presentation import MarkBandFrame
 from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
-from chrona.presentation.layout.filled_contour import ContourUnionError, union_filled_contours
-from chrona.presentation.layout.surface_quality import MarkPlacement
-from chrona.presentation.model.projection import ObservationState
+from chrona.presentation.layout.filled_contour import (
+    ContourUnionError, union_filled_contours,
+    intersect_visible_host_contour,
+)
+from chrona.presentation.layout.surface_quality import MarkPlacement, PaintClip
+from chrona.presentation.layout.window_span_geometry import (
+    complete_clipped_span_geometry,
+)
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
+from chrona.presentation.layout.semantic_mark_facets import (
+    ItemMarkFacetSelection, MarkFacetAbsence, select_item_mark_facets,
+)
+from chrona.presentation.layout.mark_facet_visibility import (
+    FacetDisposition, MarkFacetVisibility,
+)
 
 
 def _brief(value: object) -> str:
@@ -78,14 +89,6 @@ def complete_point_outline(parts: tuple[SymbolPartPlacement, ...], *,
 
 
 @dataclass(frozen=True)
-class MarkFacetAbsence:
-    """One deliberately unprojected facet and the semantic reason it is absent."""
-
-    facet: str
-    reason: str
-
-
-@dataclass(frozen=True)
 class MarkItemComposition:
     """Complete item mark closure, including observable omissions and warnings."""
 
@@ -93,6 +96,64 @@ class MarkItemComposition:
     diagnostics: tuple[str, ...]
     absences: tuple[MarkFacetAbsence, ...]
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
+
+
+@dataclass(frozen=True)
+class CompletedWindowMark:
+    """Original source mark plus its explicit-window completed geometry."""
+
+    original: MarkPlacement
+    visible: MarkPlacement | None
+    paint_clip: PaintClip | None
+    visibility: MarkFacetVisibility
+
+
+def complete_mark_window_geometry(
+    mark: MarkPlacement, facet_visibility: MarkFacetVisibility,
+    scale: ScalePlacement, plot: Rect,
+) -> CompletedWindowMark:
+    """Complete one selected mark against its date visibility and plot rectangle.
+
+    Contained marks preserve object identity. Omitted facets produce no visible
+    mark. A clipped span gets a new contour and a finite plot paint clip while
+    retaining the untouched original placement for paint/progress provenance.
+    """
+    if facet_visibility.disposition == FacetDisposition.OMITTED:
+        return CompletedWindowMark(mark, None, None, facet_visibility)
+    if facet_visibility.disposition == FacetDisposition.CONTAINED:
+        return CompletedWindowMark(mark, mark, None, facet_visibility)
+    geometry = complete_clipped_span_geometry(
+        mark.bounds, mark.path_commands, mark.corner_radius, facet_visibility, scale, plot,
+        source_ref=mark.source_ref)
+    visible_host, contour, source_contour = geometry.bounds, geometry.contour, geometry.source_contour
+
+    closes_open_end = mark.mark_shape == "open-span" and facet_visibility.cut_finish
+    completed_parts = []
+    for part in mark.symbol_parts:
+        if part.commands == source_contour:
+            completed_parts.append(replace(part, commands=contour))
+        else:
+            # Preserve each part's paint, but never project its uncut source
+            # geometry. The shared intersection fails closed on unsupported
+            # or malformed contours rather than retaining outside ink.
+            clipped_part = intersect_visible_host_contour(
+                part.commands, contour, visible_host,
+                source_ref=mark.source_ref, facet=facet_visibility.source.facet)
+            if clipped_part:
+                completed_parts.append(replace(part, commands=clipped_part))
+    clip = geometry.paint_clip
+    visible = replace(
+        mark, bounds=visible_host,
+        start_port=mark.start_port if facet_visibility.start_port_visible else None,
+        end_port=mark.end_port if facet_visibility.end_port_visible else None,
+        mark_shape="span" if closes_open_end else mark.mark_shape,
+        corner_radius=0.0, path_commands=contour,
+        end_treatment="closed" if closes_open_end else mark.end_treatment,
+        paint_clip=clip,
+        pattern_origin=(float(mark.bounds.inline), float(mark.bounds.block)),
+        symbol_parts=tuple(completed_parts),
+    )
+    return CompletedWindowMark(mark, visible, clip, facet_visibility)
 
 
 def _coordinate(value: date, scale: ScalePlacement) -> float:
@@ -104,145 +165,87 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
                        frame: MarkBandFrame, as_of: date | None,
                        theme_tokens: object, slot_id: str, paint_order_base: int = 100,
                        emit_missing_actual: bool = True,
-                       emit_diagnostics: bool = True) -> MarkItemComposition:
+                       emit_diagnostics: bool = True,
+                       selection: ItemMarkFacetSelection | None = None) -> MarkItemComposition:
     """Complete planned and observed marks for one selected Review item.
 
     The caller owns candidate identity and the mark-band frame. This function
-    owns facet selection, date mapping, local bounds/ports, visible mark
-    geometry, and the typed account of intentional omissions.
+    consumes a prepared source selection (or selects for direct callers), then
+    owns date mapping, local bounds/ports, visible mark geometry, and the typed
+    account of intentional omissions.
     """
     marks: list[MarkPlacement] = []
-    diagnostics: list[str] = []
-    absences: list[MarkFacetAbsence] = []
-    planned = item.planned
-    actual = item.actual or {}
     planned_semantic = "snapshot" if source_kind in {"snapshot", "scenario"} else "planned"
-    planned_block, planned_size = frame.role_bounds(planned_semantic)
-    actual_block, actual_size = frame.role_bounds("actual")
-    missing_block, missing_size = frame.role_bounds("missing-actual")
+    # Preserve the established eager role lookup order while leaving source
+    # selection independent from the frame.
+    role_bounds = {
+        planned_semantic: frame.role_bounds(planned_semantic),
+        "actual": frame.role_bounds("actual"),
+        "missing-actual": frame.role_bounds("missing-actual"),
+    }
+    if selection is None:
+        selection = select_item_mark_facets(item=item, source_kind=source_kind, as_of=as_of,
+                                            emit_missing_actual=emit_missing_actual,
+                                            emit_diagnostics=emit_diagnostics)
+    elif (selection.source_kind != source_kind or selection.as_of != as_of
+          or selection.missing_actual_eligible != bool(emit_missing_actual)):
+        raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/items",
+                          detail="stage=composition; reason=selection-mismatch")
+    for facet in selection.facets:
+        placement_id = f"{facet.facet}:{instance_id}"
+        if facet.shape == "point":
+            at = facet.at
+            assert at is not None
+            x = _coordinate(at, frame.inline_scale)
+            # Point symbols retain each semantic role's own size and offset (#1066).
+            symbol_block, symbol_size = frame.symbol_bounds(facet.semantic_id)
+            bounds = Rect(Decimal(str(x - symbol_size / 2)), Decimal(str(symbol_block)),
+                          Decimal(str(symbol_size)), Decimal(str(symbol_size)))
+            port = (x, symbol_block + symbol_size / 2)
+            marks.append(compose_mark_placement(
+                frame=frame, placement_id=placement_id, source_ref=item.object_id,
+                bounds=bounds, start_port=port, end_port=port, shape="point",
+                semantic_id=facet.semantic_id, theme_tokens=theme_tokens, slot_id=slot_id,
+                paint_order_base=paint_order_base,
+            ))
+            continue
 
-    if source_kind == "actual":
-        absences.append(MarkFacetAbsence("planned", "actual-only-member"))
-    elif item.source_type == "point":
-        x = _coordinate(planned["at"], frame.inline_scale)
-        # A point mark's symbol takes the role's own size and offset when the Theme declares them (#1066).
-        symbol_block, symbol_size = frame.symbol_bounds(planned_semantic)
-        bounds = Rect(Decimal(str(x - symbol_size / 2)), Decimal(str(symbol_block)),
-                      Decimal(str(symbol_size)), Decimal(str(symbol_size)))
-        port = (x, symbol_block + symbol_size / 2)
-        marks.append(compose_mark_placement(
-            frame=frame, placement_id=f"planned:{instance_id}", source_ref=item.object_id,
-            bounds=bounds, start_port=port, end_port=port, shape="point",
-            semantic_id=planned_semantic, theme_tokens=theme_tokens, slot_id=slot_id,
-            paint_order_base=paint_order_base,
-        ))
-    else:
-        x1, x2 = _coordinate(planned["start"], frame.inline_scale), _coordinate(planned["end"], frame.inline_scale)
-        bounds = Rect(Decimal(str(x1)), Decimal(str(planned_block)),
-                      Decimal(str(max(1.0, x2 - x1))), Decimal(str(planned_size)))
-        marks.append(compose_mark_placement(
-            frame=frame, placement_id=f"planned:{instance_id}", source_ref=item.object_id,
-            bounds=bounds, start_port=(x1, planned_block + planned_size / 2),
-            end_port=(x2, planned_block + planned_size / 2), shape="span",
-            semantic_id=planned_semantic, theme_tokens=theme_tokens, slot_id=slot_id,
-            paint_order_base=paint_order_base,
-        ))
-
-    # An Actual that runs to as-of: declared `openUntil: asOf`, or marked in progress by the View (#991).
-    runs_to_as_of = (actual.get("openUntil") == "asOf"
-                     or (emit_missing_actual and getattr(item, "missing_actual_mark", "due-end") == "in-progress"))
-    open_actual = (source_kind in {"actual", "combined"} and item.source_type == "span"
-                   and runs_to_as_of and isinstance(actual.get("start"), date)
-                   and as_of is not None)
-    if (source_kind in {"actual", "combined"} and item.source_type == "span"
-            and isinstance(actual.get("start"), date) and isinstance(actual.get("finish"), date)):
-        x1, x2 = _coordinate(actual["start"], frame.inline_scale), _coordinate(actual["finish"], frame.inline_scale)
-        bounds = Rect(Decimal(str(x1)), Decimal(str(actual_block)),
-                      Decimal(str(max(1.0, x2 - x1))), Decimal(str(actual_size)))
-        marks.append(compose_mark_placement(
-            frame=frame, placement_id=f"actual:{instance_id}", source_ref=item.object_id,
-            bounds=bounds, start_port=(x1, actual_block + actual_size / 2),
-            end_port=(x2, actual_block + actual_size / 2), shape="span",
-            semantic_id="actual", theme_tokens=theme_tokens, slot_id=slot_id,
-            paint_order_base=paint_order_base,
-        ))
-    elif open_actual:
-        x1, x2 = _coordinate(actual["start"], frame.inline_scale), _coordinate(as_of, frame.inline_scale)
-        if x2 <= x1:
-            if emit_diagnostics:
-                diagnostics.append(f"W_LAYOUT_OPEN_ACTUAL_INVALID:{item.object_id}")
-            absences.append(MarkFacetAbsence("actual", "invalid-open-actual"))
+        start = facet.start
+        finish = facet.finish
+        assert start is not None and finish is not None
+        x1, x2 = _coordinate(start, frame.inline_scale), _coordinate(finish, frame.inline_scale)
+        block, size = role_bounds[facet.semantic_id]
+        if facet.geometry == "end-tick":
+            width = max(1.0, size * 1.5)
+            y = block
+            start_port = end_port = (x1, block)
+        elif facet.geometry == "open-span":
+            width = x2 - x1
+            y = block
+            start_port = (x1, block + size / 2)
+            end_port = (x2, block + size / 2)
         else:
-            if emit_missing_actual and getattr(item, "missing_actual_mark", "due-end") == "in-progress":
-                # An in-progress span (#991) is drawn as the missing-actual span from its actual start to
-                # as-of, in place of its open actual.
-                bounds = Rect(Decimal(str(x1)), Decimal(str(missing_block)),
-                              Decimal(str(x2 - x1)), Decimal(str(missing_size)))
-                marks.append(compose_mark_placement(
-                    frame=frame, placement_id=f"missing-actual:{instance_id}", source_ref=item.object_id,
-                    bounds=bounds, start_port=(x1, missing_block + missing_size / 2),
-                    end_port=(x2, missing_block + missing_size / 2), shape="span",
-                    semantic_id="missing-actual", theme_tokens=theme_tokens, slot_id=slot_id,
-                    paint_order_base=paint_order_base,
-                ))
-            else:
-                bounds = Rect(Decimal(str(x1)), Decimal(str(actual_block)),
-                              Decimal(str(x2 - x1)), Decimal(str(actual_size)))
-                marks.append(compose_mark_placement(
-                    frame=frame, placement_id=f"actual:{instance_id}", source_ref=item.object_id,
-                    bounds=bounds, start_port=(x1, actual_block + actual_size / 2),
-                    end_port=(x2, actual_block + actual_size / 2), shape="open-span",
-                    semantic_id="actual", theme_tokens=theme_tokens, slot_id=slot_id,
-                    paint_order_base=paint_order_base, end_treatment="open",
-                ))
-    elif (source_kind in {"actual", "combined"} and item.source_type == "point"
-          and isinstance(actual.get("at"), date)):
-        x = _coordinate(actual["at"], frame.inline_scale)
-        symbol_block, symbol_size = frame.symbol_bounds("actual")
-        bounds = Rect(Decimal(str(x - symbol_size / 2)), Decimal(str(symbol_block)),
-                      Decimal(str(symbol_size)), Decimal(str(symbol_size)))
-        port = (x, symbol_block + symbol_size / 2)
+            # Keep the legacy 1px minimum for ordinary planned/actual spans;
+            # in-progress missing-Actual spans historically use exact duration.
+            width = (x2 - x1 if facet.geometry == "in-progress"
+                     else max(1.0, x2 - x1))
+            y = block
+            start_port = (x1, block + size / 2)
+            end_port = (x2, block + size / 2)
+        bounds = Rect(Decimal(str(x1)), Decimal(str(y)), Decimal(str(width)), Decimal(str(size)))
         marks.append(compose_mark_placement(
-            frame=frame, placement_id=f"actual:{instance_id}", source_ref=item.object_id,
-            bounds=bounds, start_port=port, end_port=port, shape="point",
-            semantic_id="actual", theme_tokens=theme_tokens, slot_id=slot_id,
-            paint_order_base=paint_order_base,
+            frame=frame, placement_id=placement_id, source_ref=item.object_id,
+            bounds=bounds, start_port=start_port, end_port=end_port, shape=facet.shape,
+            semantic_id=facet.semantic_id, theme_tokens=theme_tokens, slot_id=slot_id,
+            paint_order_base=paint_order_base, end_treatment=facet.end_treatment,
         ))
-    elif source_kind in {"actual", "combined", "primary"}:
-        if source_kind == "primary" and item.observation_state == ObservationState.RECORDED:
-            absences.append(MarkFacetAbsence("actual", "recorded-on-companion-member"))
-        elif actual.get("openUntil") == "asOf" and isinstance(actual.get("start"), date) and as_of is None:
-            if emit_diagnostics:
-                diagnostics.append(f"W_LAYOUT_OPEN_ACTUAL_AS_OF_REQUIRED:{item.object_id}")
-            absences.append(MarkFacetAbsence("actual", "as-of-required"))
-        elif actual:
-            if emit_diagnostics:
-                diagnostics.append(f"W_LAYOUT_ACTUAL_INCOMPLETE:{item.object_id}")
-            absences.append(MarkFacetAbsence("actual", "incomplete-observation"))
-        elif (emit_missing_actual and item.observation_state == ObservationState.DUE_UNOBSERVED
-              and getattr(item, "missing_actual_mark", "due-end") == "due-end"):
-            anchor = planned.get("end", planned.get("at"))
-            if isinstance(anchor, date):
-                x = _coordinate(anchor, frame.inline_scale)
-                bounds = Rect(Decimal(str(x)), Decimal(str(missing_block)),
-                              Decimal(str(max(1.0, missing_size * 1.5))), Decimal(str(missing_size)))
-                marks.append(compose_mark_placement(
-                    frame=frame, placement_id=f"missing-actual:{instance_id}", source_ref=item.object_id,
-                    bounds=bounds, start_port=(x, missing_block), end_port=(x, missing_block),
-                    shape="span", semantic_id="missing-actual", theme_tokens=theme_tokens,
-                    slot_id=slot_id, paint_order_base=paint_order_base,
-                ))
-            else:
-                absences.append(MarkFacetAbsence("missing-actual", "planned-anchor-unavailable"))
-        else:
-            absences.append(MarkFacetAbsence("actual", "no-selected-observation"))
-    else:
-        absences.append(MarkFacetAbsence("actual", "member-has-no-actual-facet"))
 
     subject = DiagnosticSubject.project_object(item.object_id, getattr(item, "title", None))
-    provenance = tuple(DiagnosticProvenance(diagnostic, (subject,)) for diagnostic in diagnostics)
+    diagnostics = selection.diagnostics if emit_diagnostics else ()
+    provenance = tuple(DiagnosticProvenance(diagnostic, (subject,))
+                       for diagnostic in diagnostics)
     marks = [replace(mark, subjects=(subject,)) for mark in marks]
-    return MarkItemComposition(tuple(marks), tuple(diagnostics), tuple(absences), provenance)
+    return MarkItemComposition(tuple(marks), diagnostics, selection.absences, provenance)
 
 
 def symbol_parts(value: Mapping[str, object], bounds: tuple[float, float, float, float],

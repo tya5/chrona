@@ -179,6 +179,131 @@ and routes use the same completed inset scale in lane preflight and final
 composition. Layout diagnoses a non-positive usable range as
 `E_LAYOUT_MARK_OVERFLOW` rather than letting an adapter clip the point.
 
+**Explicit-window visibility closure (#1292).** Before point-inset measurement
+or lane-footprint preflight, Layout derives one immutable visibility result per
+instance and source facet from the projection's explicit-window provenance.
+The same result drives automatic, lane and folded final composition; it does
+not alter data-only lane membership. Disjoint spans and out-of-window points
+are omitted, not mapped beyond the plot. Point insets include only admitted
+facets and retain their existing complete symbol/icon/stroke geometry.
+
+Window omission does not remove an expected source mark from the lane closure.
+Layout records a typed outside-window absence against that exact expected
+instance/facet and validates that every expected mark is either completed or
+accounted for by such an absence, never both. An absent in-window mark remains
+an error. A lane member with all its facets omitted retains its table row and
+data-only membership; its preflight footprint may be empty only when this
+complete typed absence account proves why. It retains ordinary track allocation
+and does not acquire a fake mark, port, obstacle, or minimum footprint. Visuals
+bound to an omitted host are intentionally unpainted, not invalid selectors.
+The same immutable visibility closure supplies this account and final geometry.
+
+Final lane completion validates the original expected/admitted/absent partition
+against that cache before emission. The final mark inventory is restricted to
+typed lane-owned placements, not every mark on the surface: legend swatches and
+other unowned decorations remain outside the lane account. Any placement with
+lane row, member, or source-kind metadata participates in this validation;
+partial ownership, missing marks and duplicate marks cannot escape it. No
+placement-ID prefix or project-specific exception selects this inventory.
+A wholly omitted row retains its allocated
+tracks; its `laneMarkBandBlock` is the minimum completed track block in that
+row, not an invented mark or temporal port. A row with visible marks keeps the
+existing minimum painted-mark block. Missing tracks or an unaccounted missing
+mark remain errors; Scene never chooses this row geometry.
+
+Intersecting spans retain original dates alongside the visible interval.
+Progress is computed over the original span, then intersected with the visible
+host; applying its fraction to an already shortened host is forbidden. Delta
+facts remain original. Summary and missing-Actual geometry use the same
+closure, not separate date-coordinate fallbacks.
+
+A complete Actual interval must satisfy `start < finish` (Specs 03 and 06).
+Before explicit-window intersection, a nonpositive source interval fails closed
+with `E_LAYOUT_WINDOW_CLIP`, source/facet identity, `stage: visibility` and
+`reason: nonpositive-source-interval`; it is neither omitted nor converted to
+a point. Incomplete and open observations retain their existing policy. This
+guard does not change derived-window behavior or validate Actual ingestion.
+
+Only original temporal endpoints that remain visible provide dependency ports:
+span starts are in `[start, end)`, span exclusive ends in `(start, end]`, and
+points in `[start, end)`. A window cut does not invent a temporal endpoint at
+its edge. A relation lacking a required visible endpoint is suppressed with
+`W_LAYOUT_RELATION_SUPPRESSED` and typed outside-window cause/source facts;
+raw relation-anchor fallback is forbidden. Surviving route paint must remain
+inside the completed plot.
+
+The same original-endpoint eligibility gates a `finishDelta` label candidate:
+span terminals use `(start, end]`, point anchors use `[start, end)`. An outside
+anchor suppresses the label through the existing source-associated suppression
+path, without changing its delta fact or falling back to raw coordinates.
+
+Layout normalizes window label admission once, before lane text measurement,
+and final placement consumes the same decision. For a combined title and
+`finishDelta` label, endpoint admission applies only to the delta component:
+retain the title when its completed host is visible, but omit the inadmissible
+delta text. A delta-only candidate is wholly suppressed. Its original anchor
+selection remains Actual finish when available, otherwise the selected Plan
+end or point; neither the clipped edge nor an as-of substitute is an endpoint.
+An omitted label host suppresses its whole hosted label, including attached
+or folded labels, regardless of the ordinary overflow policy.
+
+Such a temporal suppression is a non-spatial typed Layout absence, keyed by
+label placement identity, original source occurrence, host/anchor facet,
+semantic label role and reason `outside-window`, with source subjects. It is
+checked against the immutable visibility closure and normalized label intent;
+it cannot coexist with a placed or spatially suppressed label of that identity.
+Do not fabricate an anchor, measured box, `TextPlacement` or collision obstacle.
+Emit the existing source-associated `W_LAYOUT_LABEL_SUPPRESSED` for a wholly
+suppressed label; removing only a delta component does not count as suppression
+of the remaining title. Member-name absences count once in
+`I_LAYOUT_PLOT_LABELS_SUPPRESSED`; other label roles do not enlarge that count.
+Temporal absences are distinct from lane capacity/obstruction evidence.
+Contained and derived-window label decisions preserve their existing intent,
+measurement, placement and serialized output.
+
+Layout aggregates clipped or omitted object-backed facets into one
+`W_LAYOUT_OUTSIDE_WINDOW` per surface, with deterministic deduplicated object
+subjects and source refs (Spec 66); per-facet reasons remain typed internal
+evidence. Unchanged contained facets and derived-window paths retain existing
+Scene output and produce no outside-window warning. Neither Scene nor an
+adapter chooses visibility, remeasures geometry, or changes the viewport to
+accommodate omitted geometry.
+
+For a partially visible span, Layout intersects its original filled contour
+with the visible host and completes a closed inward V notch at each cut edge.
+With pre-notch visible-host inline size `W`, block size `H`, and that span's
+temporal cut count `C` (one or two), notch depth is `min(H / 4, W / (4 * C))`.
+Its mouth is flush with and centered on the cut edge, opens `H / 2` in the
+block direction, and points inward by that inline depth. This general,
+dimension-relative rule has no pixel minimum or project-specific tuning. The
+uncut edge retains its original rounding. A window cut is not Actual's open-end
+treatment and does not change the source interval or endpoint identity.
+Original progress is intersected with this completed host contour, including
+its notches, rather than repainting a rectangular track over the cue.
+Unavailable, non-finite or failed contour operations fail closed with
+`E_LAYOUT_WINDOW_CLIP`, carrying bounded source/facet identity and operation
+stage/reason, never backend exception text or a rectangular fallback.
+
+Layout supplies a completed optional plot paint clip for cut geometry and
+surviving relation paint that needs boundary containment (Spec 46). Filled
+contours, points, terminal geometry and primitive bounds are completed inside
+the plot before Scene projection; the paint clip additionally contains stroke
+and effects. Date-admitted points retain full glyph/icon geometry through
+existing painted-footprint insets, not a substituted span contour. A required
+glyph that cannot fit retains the existing mark-overflow failure.
+Relations keep their original ports and complete terminal contours; if no
+route can contain the whole geometry, suppress it with
+`W_LAYOUT_RELATION_SUPPRESSED` and reason `plot-containment`. Do not move a port
+or truncate a terminal to force acceptance. The paint clip contains stroke
+and effects around otherwise contained terminal geometry.
+Contained and derived-window marks acquire no new clip or contour metadata.
+
+An already-admitted patterned Rect consumer may project the completed cut
+contour as a Symbol. Layout preserves the original uncut repeat origin while
+completing the visible region and contour clip; pattern observation tests actual
+contour ink, not its rectangular envelope. This does not extend Theme pattern
+admission to additional roles (Spec 07).
+
 The timeline as-of label is a constrained exception to generic
 visible-overflow behavior. Layout measures its text and any declared chip
 footprint, then tries the plot top margin beside the as-of rule followed by
@@ -367,11 +492,38 @@ Scene/SVG bytes remain unchanged. See the [L3b route-evidence correction](../des
 
 ### 3.4 Groups and legend
 
+**Independent header-row strip (#1367).** A drawable Theme
+`group-header-strip` role emits one `groupHeaderStrip` Rect per completed
+group header, with purpose/visual role `group-header-strip` and identity
+`group-header-strip:<group-id>`. Optional Layout Profile
+`backgroundExtents.groupHeaderStrip` is `table | timeline | both`; omission
+means `both`, and `text` is not admitted. Clip its inline extent to the chosen
+region and use exactly the final header block extent after folded-mark
+completion. No header means no strip; body rows never receive it. Strip
+selection is independent of body-group decoration; existing header-band
+selection and geometry remain unchanged. An absent strip role preserves
+existing Scene/SVG output. Explicit treatment `none` paints no strip and
+preserves SVG output, while retaining Scene's generic declared-decoration
+absence disclosure; it has no strip-specific exception.
+
+For intersecting layers of the same group, declared orders must satisfy
+`groupBand < groupHeaderStrip < groupHeaderBand` wherever each pair exists.
+The strip must also precede hosted header text, including when no caption band
+is emitted. Layout rejects violations with `E_LAYOUT_GROUP_HEADER_STRIP_ORDER`
+at `/body/roles/group-header-strip/backgroundPaintOrder`, naming the conflicting
+placements and orders. A strictly ordered same-group strip/body or
+strip/caption pair may composite translucent fills; this is an additional
+explicit layer relation, not permission for arbitrary same-rank overlaps.
+Existing period/calendar overlay ranks and all unrelated overlap errors remain
+unchanged. Layout completes geometry and clipped pattern placements; Scene
+projects primitives/paint, and adapters never select bounds or layer order.
+
 **Text-sized header bands (#1283).** Layout Profile
 `backgroundExtents.groupHeaderBand: text` uses the completed header-content
 inline interval: band start through the last nonsuppressed measured text/run
 end, including the leading `labelInset` or existing tab reservation. It adds
-no trailing or symmetric padding and clamps the interval to the table column.
+no trailing or symmetric padding unless the optional trailing inset below is
+declared, and clamps the interval to the table column.
 The existing text overflow policy and band block extent are unchanged. With
 all runs suppressed the interval contains only its leading inset (zero width
 when that inset is zero); missing horizontal content bounds fail with
@@ -380,6 +532,22 @@ band's block extent, retaining its completed inline interval. Other background
 extents, group-decoration selection and vertical tag cells remain unchanged.
 `text` is not admitted for other background roles. Layout owns the completed
 Rect; Scene and adapters do not measure or fit the band.
+
+**Trailing caption inset (#1368).** `groupHeader.labelInsetEnd` names a
+finite, nonnegative number token in units of `groupHeader`'s font size.
+For `groupHeaderBand: text`, Layout adds that ratio times the header font
+size to the last actually drawn, nonsuppressed text/run end, then applies the
+existing table-column clamp. Leading inset/tab reservation, glyph positions,
+ellipsis policy and measured content bounds are unchanged. The inset belongs
+to band geometry, not to text bounds or the independent header-row strip.
+When no positive-width nonsuppressed text is drawn, retain the existing
+leading-only band extent without adding a trailing inset. Absence or zero
+keeps existing geometry; other band extents do not consume the valid inset.
+Negative or non-number tokens fail with existing `E_THEME_TOKEN_TYPE` at
+`/body/roles/groupHeader/labelInsetEnd`. Vertical tags reject the authored
+horizontal-only property with `E_THEME_ROLE_PROPERTY_UNSUPPORTED` at that
+pointer, consistently with `labelInset`. Folded marks still change only the
+band's block extent. Scene and adapters serialize the completed Rect.
 
 **Horizontal header inset (#1284).** `groupHeader.labelInset` names a finite,
 nonnegative font-size ratio. Layout places plain and role-marked header text
@@ -469,6 +637,31 @@ that is illegible on a dark or patterned target fails the gate like any other te
 
 **The plot (#880).** The plot is the timeline slot down to the bottom of its last row (the last group's content when groups exist), and never past the slot; with no rows it is the slot. A slot is an allocation and the rows are the content, so a surface given more block room than its rows need has an empty strip under the last row. The ground (group and row bands) stops at the last row, and every overlay that spans the height of the plot ends there too: the full-height `grid-major` and `grid-minor` lines, each closed day, the as-of line and a period band (and the anchor of a `bottom` period label). Axis ticks and the axis rule are not plot-height overlays and are unchanged. A slot the rows fill is unchanged. Inline, the plot is the timeline slot: the scale is inset by what point marks protrude (#501), so the window maps to a range narrower than the slot, and the margin that leaves at each end belongs to the plot. An axis band cell, a closed-day cell or a period band that starts or ends at the window edge reaches the plot edge there (an axis band cell takes no `cellGap` on that outer end), so band, ground and axis rule end at the same edge. Positions inside the window (interval starts, gridlines, labels, marks, the as-of line) do not move, and a scale that fills the plot is unchanged. Layout owns the extent; Scene and adapters carry the completed primitives. A region frame (#889) around the timeline slot follows the slot's allocation, not the plot: inside a panel taller
 than its rows the ground and every plot-height overlay still end at the last row and the strip below is the panel's own paper.
+
+**Axis label containment (#1291).** Layout admits each transformed, measured
+primary/secondary run only inside its clipped logical interval, the axis block
+and the plot inline extent. A painted band for that interval in the primary's
+native block lane also constrains the run to its completed cell, including
+`cellGap` and the outer-edge rule above. Select that cell by primary block centre,
+then paint/native emission order, independently of inline-centre fit; an inline
+gap cannot bypass its containment guard. An equal calendar interval painted in
+another block lane is not the label's cell and does not constrain it.
+Paint-host attribution may cross units (month labels on a quarter band): the
+topmost painted cell under the primary's centre is its host, ordered by paint
+order then native emission order. Hosted text must fit that host's full box;
+Layout never switches to a neighbouring cell to hide overflow. Without a painted
+host the identity is absent, but logical containment still applies.
+
+A non-fitting primary is thinned with `W_LAYOUT_AXIS_LABEL_THINNED`; its typed
+outcome and suppression decision remain, but neither run, a visible target nor
+a visible-overflow record is emitted. If only the secondary cannot fit, Layout
+omits it with `W_LAYOUT_AXIS_SECONDARY_OMITTED` and recomputes the primary without
+it; a surviving secondary shares the primary's host. Candidate summaries and
+final placement use the same completed cell and admission geometry. This rule
+supersedes axis `visible-overflow`, including rotated runs and both window
+edges, without changing the window, tier/unit selection, regular thinning
+cadence or colours. Scene and adapters carry completed bounds; they do not clip,
+reformat, measure or expand the canvas to recover an axis label.
 
 A selected named period (#582; Spec 06 §7.1) completes one `Rect` background:
 placement id `period-band:<period id>`, `sourceRef` the period id, semantic

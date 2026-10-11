@@ -5,6 +5,11 @@ import re
 import subprocess
 import sys
 
+if __package__:
+    from tools.derived_report_inventory import REPORTS
+else:  # The no-install classify-pr job executes this file directly.
+    from derived_report_inventory import REPORTS
+
 
 _SHA = re.compile(r"[0-9a-fA-F]{40}\Z")
 
@@ -13,6 +18,8 @@ def classify_paths(paths: tuple[str, ...]) -> str:
     if not paths:
         return "code"
     for path in paths:
+        if path in REPORTS:
+            return "code"
         if path.startswith("docs/") and len(path) > len("docs/"):
             continue
         if path in {"AGENTS.md", ".ignore"} or ("/" not in path and path.startswith("README")):

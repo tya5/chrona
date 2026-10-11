@@ -393,3 +393,19 @@ catalogue (section 6.2), the diagnostic fields (`sourceRange`, `hint`, `source`)
 the exit codes and stream rule (section 7), the all-errors-in-one-pass behaviour, that a rejected plan never emits a
 Project, the draft dispatch (section 7.1) and the hand-off rule (compile first, then edit the YAML for anything the
 syntax cannot say). The skill and any MCP tool are specified by their own documents.
+
+## 11. `chrona import`: a table as a front end (#1307)
+
+`chrona import TABLE --output PROJECT [--actual-output ACTUAL]` reads a CSV or TSV table, one row per object, and writes the
+Project YAML (and an Actual Set). The closed column vocabulary is `id`, `title`, `type`, `start`, `end` (exclusive) or `finish`
+(inclusive), `duration`, `parent`, `predecessors` (the `after` grammar of section 3), `deadline`, `calendar`, `progress`,
+`actual_start` and `actual_finish`; headers match case-insensitively, any other column becomes a text entry of the object's
+`fields`, and `--columns` maps header names to the vocabulary. The importer turns the table into a terse plan and compiles it
+with the compiler of section 4, so the Project is byte-identical to `chrona compile` of that plan; `fields` are added to the
+compiled mapping and the emitter of section 8 writes it. `progress` (a fraction, or a percentage when above 1 or written with
+`%`) and the `actual_*` dates become observations of an Actual Set (`--as-of` sets its date); `--actual-output` is required when
+the table has them. Every finding of the compiler or of Core validation, and the importer's own (`E_IMPORT_ID_MISSING`,
+`E_IMPORT_ID_DUPLICATE`, `E_IMPORT_PARENT_UNKNOWN`, `E_IMPORT_PARENT_CYCLE`, `E_IMPORT_COLUMN_MISSING`,
+`E_IMPORT_COLUMN_DUPLICATE`, `E_IMPORT_COLUMN_CONFLICT`, `E_IMPORT_ROW_TOO_LONG`, `E_IMPORT_DATE_INVALID`,
+`E_IMPORT_PROGRESS_INVALID`), is reported in one run with `cell: {row, column, header}` (row 1 is the header), exit code 1;
+an unreadable table or an existing output is exit code 2, and nothing is overwritten.

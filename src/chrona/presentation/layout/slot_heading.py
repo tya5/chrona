@@ -59,16 +59,19 @@ def _headed_content_slots(node: Mapping[str, Any]) -> tuple[str, ...]:
     return tuple(found)
 
 
-def _start_column_slots(node: Mapping[str, Any]) -> dict[str, tuple[str, str]]:
-    """Legend slots that declare `columns` and a `start-column` caption: source -> (node id, caption text) (#1290)."""
-    found: dict[str, tuple[str, str]] = {}
+def _start_column_slots(node: Mapping[str, Any], path: str = "/root") -> dict[str, tuple[str, str, str | None]]:
+    """Legend slots that declare `columns` and a `start-column` caption: source -> (node id, caption text, gap key) (#1290).
+
+    The gap key is the distance pointer of a declared caption `gap` (#1392), else None."""
+    found: dict[str, tuple[str, str, str | None]] = {}
     if node.get("kind") == "slot":
         heading = node.get("heading")
         if (isinstance(heading, Mapping) and heading.get("block") == "start-column"
                 and node.get("source") == "legend" and node.get("columns")):
-            found[str(node["source"])] = (str(node["id"]), str(heading["text"]))
-    for child in node.get("children", ()):
-        found.update(_start_column_slots(child))
+            found[str(node["source"])] = (str(node["id"]), str(heading["text"]),
+                                          f"{path}/heading/gap" if "gap" in heading else None)
+    for index, child in enumerate(node.get("children", ())):
+        found.update(_start_column_slots(child, f"{path}/children/{index}"))
     return found
 
 
@@ -109,12 +112,13 @@ def reserve_slot_heading_blocks(measured: MeasuredSources, resolved_layout: Any,
     overrides = dict(getattr(content, "slot_heading_text", ()) or ())
     for source in columns:
         # A start-column caption takes inline room beside the entries, not a block above them (#1290).
-        node_id, text = start_column[source]
+        node_id, text, gap_key = start_column[source]
         metrics = metric_for_role(tokens, tokens.slot_heading_role(), font_metrics)
+        caption_gap = resolved_layout.distances[gap_key] if gap_key is not None else size * _GAP_EM
         width = Decimal(str(measure_text_width(
             overrides.get(node_id, text), font_size=float(treatment.font_size), font_metrics=metrics,
             letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
-            numeric_spacing=treatment.numeric_spacing))) + size * _GAP_EM
+            numeric_spacing=treatment.numeric_spacing))) + caption_gap
         line = size * Decimal(str(treatment.line_height))
         item = measurements[source]
         measurements[source] = Measurement(
@@ -280,7 +284,8 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
                 collision_domain=CollisionDomain("slot-heading", decision.node_id),
                 source_content=source_content, semantic_id=SLOT_HEADING_SEMANTIC_ID, slot_id=slot.slot_id,
                 available_inline_start=float(bounds.inline), available_inline_size=available))
-            inline_reserve[source] = min(Decimal(str(width)) + gap, bounds.inline_size)
+            caption_gap = heading.gap if heading.gap is not None else gap
+            inline_reserve[source] = min(Decimal(str(width)) + caption_gap, bounds.inline_size)
             continue
         if heading.block in {"header-row", "axis-tier"}:
             beside = (axis is not None and axis.slot_id != slot.slot_id

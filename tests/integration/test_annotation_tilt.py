@@ -224,12 +224,12 @@ def test_rendering_twice_gives_the_same_bytes(tmp_path):
     assert first.artifact.content == second.artifact.content
 
 
-def test_tikz_draws_the_rotation_and_typst_keeps_rejecting_a_symbol_box(tmp_path):
+def test_tikz_draws_the_rotation_and_typst_draws_the_symbol_box_as_a_curve(tmp_path):
     surface = _render(tmp_path, tilt=[4]).surface
     tikz = render_v05_tikz(surface)
     assert "rotate=4" in tikz
-    with pytest.raises(ValueError, match="E_VISUAL_CAPABILITY_UNSUPPORTED"):
-        render_v05_typst(surface)
+    typst = render_v05_typst(surface)  # the tilted box is a closed Symbol outline (#1308)
+    assert "#curve(" in typst and "curve.close()" in typst
 
 
 def test_the_contrast_gate_judges_the_rotated_text_on_its_box(tmp_path):

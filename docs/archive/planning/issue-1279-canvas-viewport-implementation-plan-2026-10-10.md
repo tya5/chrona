@@ -2,7 +2,7 @@
 
 Public design base: `2f5d20a407957113e22c10e343a20f43f4fb49eb` on ready main `5360a127`.
 [Design](../../design/issue-1279-canvas-viewport-design-2026-10-10.md) and
-[architecture review](../../reviews/current/issue-1279-canvas-viewport-architecture-review-2026-10-10.md)
+[architecture review](../reviews/issue-1279-canvas-viewport-architecture-review-2026-10-10.md)
 define the contract; [design plan](issue-1279-canvas-viewport-design-plan-2026-10-10.md)
 contains every literal acceptance criterion.
 

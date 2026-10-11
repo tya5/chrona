@@ -166,7 +166,7 @@ def test_first_project_names_exactly_the_presets_chrona_lists():
     from chrona.usecases.preset_library import list_builtin_presets
 
     text = (Path(__file__).resolve().parents[3] / "docs" / "guides" / "first-project.md").read_text(encoding="utf-8")
-    sentence = re.search(r"Available ids are\s+(.*?)\(`chrona preset list`", text, re.S)
+    sentence = re.search(r"Available ids are\s+(.*?)`chrona preset list`", text, re.S)
     named = re.findall(r"`([a-z-]+)`", sentence.group(1))
     assert named == [item["id"] for item in list_builtin_presets()]
 
@@ -178,3 +178,18 @@ def test_the_first_shell_block_of_the_readme_is_the_user_path():
     block = re.search(r"```(?:bash|sh)\n(.*?)```", text, re.S).group(1)
     assert "pip install" in block and "chrona init" in block and "chrona render" in block
     assert " -e " not in block and "pytest" not in block
+
+
+def test_a_file_fence_is_written_to_the_workspace_and_never_run_as_commands(tmp_path):
+    content = ("<!-- chrona:doc-check file: plan.csv -->\n```csv\nid,title\nchrona,not a command\n```\n"
+               "```sh\nchrona import plan.csv --output p.yaml\n```\n")
+    root = _document_root(tmp_path, content)
+
+    assert [command.tokens for command in discover(root)] == [("chrona", "import", "plan.csv", "--output", "p.yaml")]
+    files = check_documented_commands.discover_files(root)
+    assert files == ((Path("README.md"), 3, "plan.csv", "id,title\nchrona,not a command\n"),)
+    probe = "import sys; open('seen.txt', 'w').write(open('plan.csv').read()); print(sys.argv[1:])"
+    execute(discover(root), root, executable=(sys.executable, "-c", probe), files=files)  # the file exists for the command
+
+    with pytest.raises(DocumentedCommandError, match="E_DOCUMENTED_COMMAND_SKIP"):
+        discover(_document_root(tmp_path, "<!-- chrona:doc-check file: a.csv -->\ntext\n```csv\nx\n```\n"))

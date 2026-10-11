@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -49,8 +50,9 @@ def test_builtin_catalogue_copy_and_no_asset_flag_render_are_visible_in_svg_and_
     assert scene["version"] == "chrona/scene/v0.7"
     primitives = [item for surface in scene["surfaces"] for item in surface["primitives"]]
     assert any(item.get("visualRole") == "axis-band-decoration2" and item.get("pattern") for item in primitives)
-    assert any(item.get("visualRole") == "milestone" and item.get("kind") == "Symbol"
-               and len(item.get("symbol", {}).get("outline", ())) > 8 for item in primitives)
+    assert any(item.get("id", "").startswith("axis-label:") for item in primitives)
+    assert any(item.get("id", "").startswith("legend-swatch:milestone") and item.get("kind") == "Symbol"
+               and len(item.get("symbol", {}).get("outline", ())) > 8 for item in primitives)  # the key is painted as the planned point (#499)
     assert any(item.get("id", "").startswith("legend-swatch:milestone") for item in primitives)
     pattern_id = next(item["id"] for item in primitives if item.get("visualRole") == "axis-band-decoration2"
                       and item.get("pattern"))
@@ -75,11 +77,19 @@ def test_builtin_catalogue_copy_and_no_asset_flag_render_are_visible_in_svg_and_
     with Image.open(png) as image:
         image.load()
         assert image.width > 1000 and image.height > 500
-        pattern_colors = {pixel[:3] for _count, pixel in image.crop((554, 118, 570, 135)).getcolors(maxcolors=100000)}
+        band = next(item["bounds"] for item in primitives if item["id"] == pattern_id)
+        interior = (math.ceil(band["inline"]) + 1, math.ceil(band["block"]) + 1,
+                    math.floor(band["inline"] + band["inlineSize"]) - 1,
+                    math.floor(band["block"] + band["blockSize"]) - 1)
+        assert interior[2] > interior[0] and interior[3] > interior[1]
+        pattern_colors = {pixel[:3] for _count, pixel in image.crop(interior).getcolors(maxcolors=100000)}
         assert (242, 242, 242) in pattern_colors and (216, 216, 216) in pattern_colors
-        legend_glyph = image.crop((213, 821, 249, 857))
-        assert sum(count for count, pixel in legend_glyph.getcolors(maxcolors=100000)
-                   if pixel[:3] == (13, 13, 13)) > 400
+        key = next(item for item in primitives if item.get("id", "").startswith("legend-swatch:milestone"))["bounds"]
+        legend_glyph = image.crop((int(key["inline"]) - 1, int(key["block"]) - 1, int(key["inline"] + key["inlineSize"]) + 2,
+                                   int(key["block"] + key["blockSize"]) + 2))  # located from the Scene: the legend row moves with its keys (#499)
+        # the key is the chart's own hollow planned milestone (#499): an ink outline on the white ground, not a solid fill
+        ink = sum(count for count, pixel in legend_glyph.getcolors(maxcolors=100000) if sum(pixel[:3]) < 3 * 128)
+        assert 40 < ink < 400
 
 
 def test_missing_preset_glyph_reports_exact_theme_pointer_and_set_name(tmp_path, monkeypatch, capsys):
