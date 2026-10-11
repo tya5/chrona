@@ -21,9 +21,20 @@
 
 ## Programme-level criteria (optional)
 
-Release pending: final READY integration, completed public Scene/SVG audit with every critical-role change disclosed, current-head PR gates and acceptance-containing exact-main three-OS release. No closure is authorized by local rows.
+Release pending: final READY integration, current-head PR snapshot/gates and acceptance-containing exact-main three-OS release. No closure is authorized by local rows.
 
-After ordinary `9ee4dbce` adoption, CLI assertions3, schedule characterization23 and explicit-unit contracts10 pass. Scheduler/hash-seed batch23 passes (56.60s), including eight seeds per command. Broader scheduler, point/calendar/property, usecase, projection and MCP consumers:322 passed (61.20s). Only four successful schedule golden records change; baseline/current raw comparison proves placements, diagnostics, warnings, files and exit codes unchanged. HALCYON's longer unit-bearing stdout uses the existing stream digest policy. The public audit remains pending.
+After ordinary `9ee4dbce` adoption, CLI assertions3, schedule characterization23 and explicit-unit contracts10 pass. Scheduler/hash-seed batch23 passes (56.60s), including eight seeds per command. Broader scheduler, point/calendar/property, usecase, projection and MCP consumers:322 passed (61.20s). Only four successful schedule golden records change; baseline/current raw comparison proves placements, diagnostics, warnings, files and exit codes unchanged. HALCYON's longer unit-bearing stdout uses the existing stream digest policy.
+
+Public audit at `5e27fb5d`:46/46 materialize successfully;45 Scene/SVG pairs
+remain byte-identical. Only `halcyon-1/dependency-network` changes. Its existing
+`frr-launch`, `launch-leop`, `leop-firstlight` edges lose critical-role paint
+because the old component/fixed-date inference is not a zero-float driving
+path to project finish. Added/removed primitives, changed coordinates/routes,
+text and diagnostics:0. Changed primitive roles/paints:3; the manifest role
+counts follow those changes. SVG XML comparison independently confirms only
+the same three `data-purpose`/`stroke` attributes change; element counts and
+all text remain unchanged. Expected evidence mismatch is disclosed, not
+absorbed into authored examples. The final CI snapshot must reproduce it.
 
 ## Architecture conclusion
 
