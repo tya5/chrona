@@ -9,4 +9,5 @@ Explicit selection/order/candidates remain unchanged; only opted-in resources
 gain automatic expansion. Spec44 records the natural-host measurement correction
 and its migration impact. Schemas add optional members in place under Spec56;
 candidate/anchor vocabulary must be shared, not copied. No examples migration
-is developer-owned. Rendered five-design acceptance remains unverified.
+is developer-owned. Focused five-design rendering is verified; public snapshot
+and containing-review release acceptance remain pending.
