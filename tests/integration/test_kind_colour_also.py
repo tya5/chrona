@@ -20,6 +20,12 @@ def _render(tmp_path, *, also: dict | None = None):
     source = ak.project(("risk", "note"))
     parts = sr.bundle()
     ak.with_view_notes(parts, source, connector="leader")
+    # A rail gives each leader a genuinely separated endpoint; plot-near may
+    # validly choose a touching box and have no nonzero connector to paint.
+    sr.with_note_rail(parts)
+    for note in parts["view"]["body"]["annotations"]:
+        note["candidates"] = [sr.candidate("rail", region={"kind": "slot", "source": "annotations"},
+                                            search_kind="row-aligned", connector="leader")]
     ak.with_kind_theme(parts, kinds=kinds, bar=False, border_side="start", label_fill="text")
     return ak.render(tmp_path, source, parts) if hasattr(ak, "render") else sr.render(tmp_path, source, presentation=parts)
 

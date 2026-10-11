@@ -77,7 +77,8 @@ def test_a_fit_decision_flips_because_the_measured_width_changed(tmp_path):
     base = _render(_sub(tmp_path, "base"))
     scaled = _render(_sub(tmp_path, "scaled"), scale=SCALE)
     shown = {key for key in tt.texts(scaled) if key.startswith("member-label:")}
-    assert shown and not {key for key in tt.texts(base) if key.startswith("member-label:")}
+    natural_shown = {key for key in tt.texts(base) if key.startswith("member-label:")}
+    assert shown - natural_shown, "compression must make an otherwise suppressed label fit"
     for key in shown:
         item = tt.texts(scaled)[key]
         assert item.text_layout.horizontal_scale == SCALE

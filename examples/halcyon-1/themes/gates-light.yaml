@@ -1,6 +1,6 @@
 version: chrona/theme/v0.15
 kind: theme
-id: orion-light
+id: gates-light
 body:
   values:
     opacity.axis-band:
@@ -350,9 +350,9 @@ body:
     group-band.fill: category:default
     row-band.fill: category:default
     group-header-band.fill: surfaceRaised
-    group:factory-team.fill: category:factory-team
-    group:fw-team.fill: category:fw-team
-    group:validation-team.fill: category:validation-team
+    group:bus.fill: category:bus
+    group:payload.fill: category:payload
+    group:ait.fill: category:ait
     planned.fill: accent
     planned.stroke: text
     network-node.fill: surfaceRaised
@@ -395,8 +395,8 @@ body:
     table.indent.inlineSize: table-indent
     table.header.blockSize: table-header-height
   colorScales:
-    revision:
+    model:
       slots:
-        A0: revision-a0
-        A1: revision-a1
-        B0: revision-b0
+        EM: model-em
+        QM: model-qm
+        FM: model-fm

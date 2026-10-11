@@ -1,75 +1,76 @@
 version: chrona/render-context/v0.17
 kind: render-context
-id: orion-asic-gates
+id: halcyon-1-26-gates
 body:
   project:
-    id: orion-asic
+    id: halcyon-1
     kind: project
     store:
       provider: local
-      identity: orion-asic-example
+      identity: halcyon-1-example
     address: project.yaml
     revision:
-      token: example-v1
+      token: example-v5
+    contentIdentity: sha256:e92c4090c55439ff43a21b9877972fcc0a8e4cbed50a06245fd1caae6edc328b
   view:
-    id: orion-asic-gates
+    id: halcyon-26-gates
     kind: view
     store:
       provider: local
-      identity: orion-asic-example
-    address: views/gates.yaml
+      identity: halcyon-1-example
+    address: views/26-gates.yaml
     revision:
       token: example-v1
   theme:
-    id: orion-light
+    id: gates-light
     kind: theme
     store:
       provider: local
-      identity: orion-asic-example
-    address: themes/orion-light.yaml
+      identity: halcyon-1-example
+    address: themes/gates-light.yaml
     revision:
       token: example-v1
   colorScheme:
-    id: orion-light
+    id: gates-light
     kind: color-scheme
     store:
       provider: local
-      identity: orion-asic-example
-    address: schemes/orion-light.yaml
+      identity: halcyon-1-example
+    address: schemes/gates-light.yaml
     revision:
       token: example-v1
   layout:
-    id: orion-review
+    id: gates-review
     kind: layout-profile
     store:
       provider: local
-      identity: orion-asic-example
-    address: layouts/orion-review.yaml
+      identity: halcyon-1-example
+    address: layouts/gates-review.yaml
     revision:
       token: example-v1
   inputs:
     actual:
-      id: orion-asic-observed
+      id: halcyon-1-observed-2027-08-20
       kind: actual-set
       store:
         provider: local
-        identity: orion-asic-example
+        identity: halcyon-1-example
       address: actual.yaml
       revision:
         token: example-v1
     detailProfile:
-      id: orion-asic-review-detail
+      id: halcyon-gates-detail
       kind: review-detail-profile
       store:
         provider: local
-        identity: orion-asic-example
-      address: profiles/review-detail.yaml
+        identity: halcyon-1-example
+      address: profiles/gates-detail.yaml
       revision:
         token: example-v1
   environment:
     viewport:
       inlineSize: 1600
-      blockSize: 900
+      blockSize: 1200
     locale: en-US
     fontMetrics:
       algorithm: declared-metrics-v3

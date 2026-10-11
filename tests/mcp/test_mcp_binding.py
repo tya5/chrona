@@ -288,7 +288,7 @@ def test_render_review_on_a_read_only_server_returns_the_svg_as_an_embedded_reso
     root = initialize_project(tmp_path / "corpus", example="halcyon-1")
     (root / "ctx.yaml").write_text(
         "id: halcyon-1-01-mission-brief\nkind: render-context\nstore: {provider: local, identity: halcyon-1-example}\n"
-        "address: contexts/01-mission-brief.yaml\nrevision: {token: example-v4}\n", encoding="utf-8")
+        "address: contexts/01-mission-brief.yaml\nrevision: {token: example-v5}\n", encoding="utf-8")
 
     result = run(root, lambda client: client.call_tool("render_review", {"contextReference": "ctx.yaml"}))
 
