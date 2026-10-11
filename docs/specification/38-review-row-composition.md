@@ -94,6 +94,44 @@ competing selection/order authorities.
 
 ## 2. Projection semantics
 
+### Hierarchy row appearance (#1302)
+
+`grouping: {by: hierarchy, depth: all, rollup: header}` selects the complete
+finite Project hierarchy. `depth: all` has no presentation-depth cutoff;
+nonnegative integer depths retain their relative-depth cutoff. Core remains
+the only owner of containment, rollup dates and tree validity. View closes
+root selection and preorder, ordering siblings with the declared ordering.
+
+A selected rollup is one ordinary Review row, not an additional field-group
+band. With `rollup: header`, its title in `hierarchyColumn` is `groupHeader`
+content and typography; other declared columns retain their source facts.
+The same table measurement, fitting, indentation and row allocation close it.
+With `rollup: none`, the selected row retains ordinary table content, without
+header emphasis. Both modes suppress the rollup's temporal marks, progress,
+deadline decoration and optional plot/delta labels. They do not hide child
+rows or erase selected relation endpoints. `rollup: bar` retains the existing
+temporal facets and summary-bar overlay, labels and relation-host behavior.
+Non-rollup rows and non-hierarchy grouping are unchanged.
+
+View projects temporal-paint admission on each Review Item, including its
+comparison occurrences. Layout separately closes unpainted temporal endpoint
+ports from the scheduled geometry and existing window admission. Such ports
+carry instance/source identity and original start/end coordinates, not paint,
+host contours or obstacles. A clipped-away endpoint stays unavailable; it
+is never replaced by a window edge or table/row edge. Routes to unpainted
+ports have no fabricated mark-host exemption and pass the same stroke,
+terminal, text, mark, bounds and route-safety checks as other relations.
+Scene emits only completed painted marks and completed routes; adapters do
+not resolve ports, measure header text or delete primitives.
+
+Migration: hierarchy header/none previously leaked ordinary rollup marks and
+plot labels. Their removal is intentional. Flat output is unchanged when
+Theme/Layout resources are held fixed. Header text keeps its table placement
+identity and Project provenance, but has group-header purpose/paint rather
+than table-cell metadata. The packaged default selects all hierarchy depths,
+uses its Task hierarchy column and header rollups, and no longer excludes
+Project groups. No preset-ID or project-specific code branch is permitted.
+
 The projection contains `ReviewRowProjection` values in row order. Each has
 `row_id`, `label`, `group_id`, `table_subject_id`, and ordered `ReviewItemProjection`
 values. An item projection contains its View item ID, source kind, stable object ID,
