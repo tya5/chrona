@@ -110,7 +110,7 @@ body:
       value: 6
     timeline-row-height:
       type: number
-      value: 68
+      value: {expr: '{timeline-mark-size} + {timeline-row-padding}'}
     timeline-row-padding:
       type: number
       value: 8
