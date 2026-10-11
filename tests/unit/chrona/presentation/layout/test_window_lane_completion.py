@@ -98,6 +98,47 @@ def test_duplicate_visible_mark_is_not_a_complete_emission(monkeypatch):
         compose_surface_layout(_request())
 
 
+def test_unowned_surface_mark_does_not_enter_the_lane_inventory(monkeypatch):
+    import chrona.presentation.layout.surface_composer as composer
+    original = composer.complete_surface_layout
+    def with_decoration(context):
+        decoration = replace(context.marks[0], placement_id="opaque-decoration",
+                             source_ref="decoration", lane_row_id=None,
+                             lane_member_id=None, lane_source_kind=None)
+        return original(replace(context, marks=(*context.marks, decoration)))
+    monkeypatch.setattr(composer, "complete_surface_layout", with_decoration)
+    placement = compose_surface_layout(_request()).placement
+    assert any(mark.placement_id == "opaque-decoration" for mark in placement.marks)
+    assert all(emission.placement_id != "opaque-decoration" for emission in placement.lane_emissions)
+    assert len(placement.lane_window_absences) == 2
+
+
+@pytest.mark.parametrize("owner_field", ["lane_row_id", "lane_member_id", "lane_source_kind"])
+def test_partial_owner_on_extra_mark_cannot_escape_lane_validation(monkeypatch, owner_field):
+    import chrona.presentation.layout.surface_composer as composer
+    original = composer.complete_surface_layout
+    def with_partial_owner(context):
+        ownership = {"lane_row_id": None, "lane_member_id": None, "lane_source_kind": None}
+        ownership[owner_field] = "invalid"
+        decoration = replace(context.marks[0], placement_id="opaque-decoration", **ownership)
+        return original(replace(context, marks=(*context.marks, decoration)))
+    monkeypatch.setattr(composer, "complete_surface_layout", with_partial_owner)
+    with pytest.raises(LayoutError, match="final-emission-mismatch"):
+        compose_surface_layout(_request())
+
+
+def test_removing_all_ownership_does_not_excuse_a_missing_expected_mark(monkeypatch):
+    import chrona.presentation.layout.surface_composer as composer
+    original = composer.complete_surface_layout
+    def without_owner(context):
+        marks = tuple(replace(mark, lane_row_id=None, lane_member_id=None,
+                              lane_source_kind=None) for mark in context.marks)
+        return original(replace(context, marks=marks))
+    monkeypatch.setattr(composer, "complete_surface_layout", without_owner)
+    with pytest.raises(LayoutError, match="final-emission-mismatch"):
+        compose_surface_layout(_request())
+
+
 def test_wholly_omitted_row_still_requires_its_real_allocated_tracks(monkeypatch):
     import chrona.presentation.layout.surface_composer as composer
     original = composer.complete_surface_layout

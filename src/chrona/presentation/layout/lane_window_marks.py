@@ -139,8 +139,12 @@ def complete_lane_window_handoff(
         expected_keys.append((f"{mark.purpose}:{lane_id}:{occurrence_id}", instance.object_id,
                               lane_id, member_id, instance.source_kind, facet.source.semantic_id))
         admitted_rows.add(lane_id)
+    # The surface also owns legend/decorative marks. Validate every typed lane
+    # claim (including partial claims), without admitting unrelated surface paint.
+    lane_marks = tuple(mark for mark in marks if any(value is not None for value in
+                       (mark.lane_row_id, mark.lane_member_id, mark.lane_source_kind)))
     actual = [(mark.placement_id, mark.source_ref, mark.lane_row_id, mark.lane_member_id,
-               mark.lane_source_kind, mark.semantic_id) for mark in marks]
+               mark.lane_source_kind, mark.semantic_id) for mark in lane_marks]
     if len(actual) != len(expected_keys) or set(actual) != set(expected_keys):
         _invalid("final-emission-mismatch")
     original_rows = {owners[mark.instance][0] for mark in account.source.expected_marks}
