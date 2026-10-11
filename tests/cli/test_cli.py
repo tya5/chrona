@@ -273,7 +273,10 @@ def test_cli_schedule_matches_library_result(tmp_path, monkeypatch, capsys):
     output = json.loads(capsys.readouterr().out)
     assert output["placements"] == {"gate": {"at": "2026-10-01"}}
     assert output["placements"] == json.loads(json.dumps(schedule(project).placements, default=str))
-    assert output["analysis"] == {"criticalObjectIds": ["gate"], "totalFloat": {"gate": 0}}
+    assert output["analysis"] == {
+        "criticalObjectIds": [],
+        "totalFloat": {"gate": {"value": 0, "unit": "calendar-days", "calendar": None}},
+    }
 
 
 def test_cli_render_parser_advertises_the_bundled_default_preset():
@@ -361,7 +364,7 @@ def test_cli_infers_png_bytes_and_rejects_explicit_svg_png_mismatch(tmp_path, mo
 
 
 @pytest.mark.parametrize("viewport", (None, "1600x900"))
-def test_cli_halcyon_default_draft_has_coherent_slots_and_month_axis(tmp_path, monkeypatch, capsys, viewport):
+def test_cli_halcyon_default_draft_has_coherent_slots_and_auto_axis(tmp_path, monkeypatch, capsys, viewport):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     output, scene_path = tmp_path / "plan.svg", tmp_path / "plan.scene.json"
     argv = ["chrona", "render", str(root / "examples/halcyon-1/project.yaml"),
@@ -376,9 +379,12 @@ def test_cli_halcyon_default_draft_has_coherent_slots_and_month_axis(tmp_path, m
         "W_LAYOUT_MARK_OVERFLOW", "W_LAYOUT_ROW_DENSITY", "W_SCENE_TEXT_INTERSECTION") for item in warnings)
     svg = output.read_text(encoding="utf-8")
     assert 'data-scene-id="axis-label:2:' in svg
-    # #383/#429: the bundled default is now the Editorial preset, whose axis
-    # role transforms month labels to uppercase (letterSpacing.wide, #410).
-    assert ">MAR</text>" in svg
+    # The declared auto tier uses year-qualified month forms and Editorial
+    # typography transforms them to uppercase; SVG must retain those labels.
+    labels = ["".join(node.itertext()) for node in ET.fromstring(svg).iter()
+              if node.attrib.get("data-scene-id", "").startswith("axis-label:2:")]
+    assert labels and "MAR 2027" in labels
+    assert all(label == label.upper() for label in labels)
     scene = json.loads(scene_path.read_text(encoding="utf-8"))
     surface = scene["surfaces"][0]
     slots = {slot["source"]: slot["bounds"] for slot in surface["slots"]}
@@ -1234,7 +1240,9 @@ def test_cli_schedule_analysis_uses_project_order_and_halcyon_facts(tmp_path, mo
     path.write_text(yaml.safe_dump(project, sort_keys=False), encoding="utf-8")
     monkeypatch.setattr(sys, "argv", ["chrona", "schedule", str(path)])
     main()
-    assert json.loads(capsys.readouterr().out)["analysis"]["criticalObjectIds"] == ["second", "first"]
+    ordered_analysis = json.loads(capsys.readouterr().out)["analysis"]
+    assert ordered_analysis["criticalObjectIds"] == []  # isolated fixed dates are not driving paths
+    assert list(ordered_analysis["totalFloat"]) == ["second", "first"]
 
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     halcyon = yaml.safe_load((root / "examples/halcyon-1/project.yaml").read_text(encoding="utf-8"))
@@ -1244,7 +1252,10 @@ def test_cli_schedule_analysis_uses_project_order_and_halcyon_facts(tmp_path, mo
     expected = schedule(halcyon).analysis
     assert payload["analysis"] == {
         "criticalObjectIds": [object_id for object_id in halcyon["objects"] if object_id in expected.critical],
-        "totalFloat": expected.total_float,
+        "totalFloat": {
+            object_id: {"value": value.value, "unit": value.unit, "calendar": value.calendar}
+            for object_id, value in expected.total_float.items()
+        },
     }
 
 

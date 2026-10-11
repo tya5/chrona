@@ -188,6 +188,84 @@ Scene value according to this specification. No renderer may repair or
 reinterpret a completed obstacle, and no obstacle may feed back into lane
 membership.
 
+### 7.1 Completed plot paint containment (#1292)
+
+Layout may provide an optional `paintClip: {bounds}` on a completed primitive.
+Its finite positive bounds are the completed plot rectangle, not an adapter
+inference. Primitive geometry and bounds must already lie inside it; this is
+not permission to retain raw out-of-window coordinates behind a viewport clip.
+Scene validates and projects this geometry without selecting visibility,
+moving endpoints, or changing paint. No clip is serialized when absent.
+Malformed clip data fails with `E_PRESENTATION_PRIMITIVE_INVALID` before
+artifact creation. The optional Scene field is added in place; absence keeps
+existing serialized inputs unchanged. Its additive contract belongs to Scene
+v0.7; feature detection selects that version when present, and older versions
+remain strict. Model, schema, serializer, validator and inspection consumers
+recognize the same typed value. Layout proves the clip equals its plot; Scene
+validates containment against the supplied clip, not an inferred plot boundary.
+
+For an explicitly omitted lane mark, Layout passes a completed typed
+`windowAbsences` inventory to Scene alongside the unchanged member identity.
+Each absence retains the opaque source occurrence/facet identity, source ref,
+source kind, semantic mark role and the `outside-window` reason. Scene projects
+these facts without deciding temporal visibility. Final Layout, not Scene,
+checks them against the original expected-source inventory (Spec 50).
+An empty member primary-mark inventory is admitted only with this explicit
+omission account for its expected primary marks; ordinary missing emission
+remains invalid. Empty lane obstacles are admitted only when no visible lane
+geometry remains and every otherwise empty member has the completed account.
+Absent metadata preserves existing serialization and strict lane validation;
+the additive optional metadata selects Scene v0.7, leaving v0.6 strict.
+
+The inventory is optional `windowAbsences` on each `laneMembers` entry, omitted
+when empty. Each record carries `placementId`, `instanceId`, `facet`, `sourceRef`,
+`sourceKind`, `semanticRole` and `reason: outside-window` from the original
+expected mark. Identifiers are opaque and nonempty; placement IDs and
+`(instanceId, facet)` pairs are unique within that member. Scene does not
+decode them into dates, members or geometry. Layout joins the
+original occurrence to the final countable member and proves the complete
+expected/admitted/absent partition before projecting these records. Missing
+primary IDs require an absence for an expected primary mark, not merely an
+unrelated Actual or label absence. Empty emitted IDs require this same account;
+empty obstacles additionally require no emitted lane geometry. Malformed or
+unaccounted empty inventories fail `E_PRESENTATION_PRIMITIVE_INVALID`.
+
+During Scene construction, paint-independent clip containment is checked as
+soon as geometry is projected. Terminal containment additionally depends on
+the resolved stroke width: it is checked when the Scene paint payload is
+attached, not on an unpainted intermediate primitive. The adapter-ready Scene
+and raw document validation still require the complete terminal contour to be
+inside the supplied clip. No terminal is resized or moved by this validation.
+For an explicitly clipped relation Path, its Scene host bounds are the supplied
+Layout paint-clip bounds; completed route points and terminal contours remain
+the actual geometry. An unclipped Path retains its existing bounds convention.
+
+An adapter applies the supplied paint clip outside the completed primitive's
+effects, so fill, stroke, terminals, shadow and glow remain inside it. It must
+not substitute the stroke-alignment-only `strokeClip` or a visible host
+primitive. An unsupported target rejects the combination with
+`E_PRESENTATION_PAINT_UNSUPPORTED:<target>` before artifact creation instead
+of silently dropping containment.
+
+An existing patterned Rect consumer cut by an explicit window may carry a
+Layout-completed Symbol contour and its unchanged paint channels. Its repeat
+origin remains the original uncut anchor; visible region/clip bounds enclose
+the completed contour, whose own commands carry the uncut rounding and cut
+notches. Scene's pattern contact/contrast evidence uses that actual contour.
+The pattern contract decouples original repeat origin from visible region and
+clip bounds, and permits this completed Symbol in model/schema, serialization,
+SVG/PNG and contour-aware pattern observation; ordinary glyph Symbols are not
+new pattern-authoring sites.
+Ordinary Rect pattern identity and Theme applicability remain unchanged.
+
+For this cut-Symbol case, existing pattern `origin` retains the original paint
+anchor, while `regionBounds` and `clipBounds` equal the visible primitive
+envelope. The Symbol's own closed outline is the contour; no second contour
+field is serialized. A differing origin is valid only with this completed
+window-cut Symbol, not an ordinary Rect or arbitrary patterned glyph. Layout
+retains the original mark/progress/summary paint anchor before intersection;
+Scene and adapters must not infer it from the clipped envelope.
+
 ## 8. Completed contrast evidence (#459)
 
 For finite classified text, decoration and data-mark roles, contrast is
