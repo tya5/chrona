@@ -478,6 +478,15 @@ unchanged edge only after checking it against every newly selected obstacle.
 No recovery trial may reuse routes if pre-route labels change the selected
 obstacle content or completed endpoint inputs.
 
+The same base may retain a bounded working set of endpoint projection-line
+visibility facts. A line uses the base's event coordinates; only an identical
+consecutive edge may reuse a fact, and an endpoint-split edge is checked anew.
+Changing selected content, bounds, offset or selected exemptions invalidates
+these facts. Cache admission/eviction never changes graph membership, neighbor
+order, heuristic or candidate allowance. Projection-line preparation counters
+remain separate from base builds and endpoint assemblies; its active retained
+geometry must remain O(M), not grow with all endpoint pairs or render history.
+
 **Entry obstacles (#1109 R4).** A comparison-host corridor exempts only named,
 physically connected marks of that endpoint. A detached snapshot or actual
 mark remains an obstacle even when it belongs to the same object. Entry stubs
