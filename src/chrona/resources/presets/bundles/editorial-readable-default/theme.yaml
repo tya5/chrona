@@ -147,9 +147,6 @@ body:
     opacity.group-band:
       type: number
       value: 1
-    opacity.row-band:
-      type: number
-      value: 0.12
     opacity.group-header-band:
       type: number
       value: 1
@@ -217,15 +214,13 @@ body:
   roles:
     group-band:
       backgroundTreatment: fill
-      backgroundPaintOrder: 10
+      backgroundPaintOrder: 8
       opacity: opacity.group-band
-    row-band:
-      backgroundTreatment: fill
-      backgroundPaintOrder: 10
-      opacity: opacity.row-band
+    row-rule:
+      strokeWidth: stroke-width
     group-header-band:
       backgroundTreatment: fill
-      backgroundPaintOrder: 11
+      backgroundPaintOrder: 9
       opacity: opacity.group-header-band
     calendar-closed:
       backgroundTreatment: fill
@@ -470,7 +465,7 @@ body:
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
     group-band.fill: surfaceRaised
-    row-band.fill: category:default
+    row-rule.stroke: neutral
     group-header-band.fill: surfaceRaised
     metric.fill: text
     calendar-closed.fill: text

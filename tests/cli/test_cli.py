@@ -397,7 +397,8 @@ def test_cli_halcyon_default_draft_has_coherent_slots_and_auto_axis(tmp_path, mo
                 if item.code == "E_SCENE_TEXT_INTERSECTION"]
 
 
-def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize("with_actual", [False, True])
+def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_path, monkeypatch, capsys, with_actual):
     destination = tmp_path / "first-plan"
     output = destination / "plan.svg"
     scene_path = destination / "plan.scene.json"
@@ -405,16 +406,37 @@ def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_pat
     monkeypatch.setattr(sys, "argv", ["chrona", "init", str(destination)])
     main()
     capsys.readouterr()  # the success result of the setup command (#1304)
+    observed = yaml.safe_load((destination / "actual.yaml").read_text(encoding="utf-8"))["body"]
+    assert len(observed["observations"]) == 1
+    observation = observed["observations"][0]
+    assert observation["projectObjectId"] == "design"
+    assert observation["actual"]["openUntil"] == "asOf"
+    assert observation["actual"]["progress"] == 0.6
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(destination / "project.yaml"), "--actual", str(destination / "actual.yaml"),
+        "chrona", "render", str(destination / "project.yaml"),
+        *(["--actual", str(destination / "actual.yaml")] if with_actual else []),
         "--viewport", "1600xauto", "--output", str(output), "--emit-scene", str(scene_path),
     ])
     main()
+
+    envelope = json.loads(capsys.readouterr().out)
+    assert envelope["status"] == "ok"
+    assert envelope["warnings"] == []
 
     svg_bytes = output.read_bytes()
     assert svg_bytes.startswith(b"<svg")
     surface = json.loads(scene_path.read_text(encoding="utf-8"))["surfaces"][0]
     svg = ET.fromstring(svg_bytes)
+    fills = [item for item in surface["primitives"] if item.get("purpose") == "progress-fill"]
+    assert bool(fills) == with_actual
+    if with_actual:
+        assert all(item["sourceRef"] == "design" for item in fills)
+        assert all(item["bounds"]["inlineSize"] > 0 for item in fills)
+        svg_ids = {value for element in svg.iter()
+                   for value in (element.get("id"), element.get("data-scene-id")) if value}
+        assert all(item["id"] in svg_ids for item in fills)
+    assert any(item["id"].startswith("row-rule:") for item in surface["primitives"])
+    assert not any(item["id"].startswith("row-band:") for item in surface["primitives"])
     canvas = surface["canvasBounds"]
     assert 0 < canvas["blockSize"] < 900  # The synthetic Draft closure seed is not an output minimum.
     assert float(svg.attrib["width"].removesuffix("px")) == pytest.approx(canvas["inlineSize"], abs=0.01)

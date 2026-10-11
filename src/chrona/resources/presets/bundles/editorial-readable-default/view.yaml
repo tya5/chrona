@@ -71,7 +71,7 @@ body:
       every: 1
       role: grid-minor
   backgroundDecoration:
-    rows: alternate
+    rows: rules
     groups: all
   tableColumns:
   - id: Task

@@ -155,26 +155,27 @@ def _assert_automatic_default_keeps_plot_names_and_row_guides(
     timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
     rows = {row["id"]: row["bounds"] for row in surface["rows"]}
     primitives = {item["id"]: item for item in _primitives(scene)}
-    bands = {key: item for key, item in primitives.items() if key.startswith("row-band:")}
+    guides = {key: item for key, item in primitives.items() if key.startswith("row-rule:")}
     planned = {key: item for key, item in primitives.items() if key.startswith("planned:")}
     labels = {key: item for key, item in primitives.items() if key.startswith("member-label:")}
     suppressed = {diagnostic.split("W_LAYOUT_LABEL_SUPPRESSED:", 1)[1]
                   for diagnostic in scene["diagnostics"]
                   if diagnostic.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")}
-    assert rows and bands and planned
+    assert rows and guides and planned
+    assert not any(key.startswith("row-band:") for key in primitives)
     assert all(item["bounds"]["inline"] + item["bounds"]["inlineSize"] >=
                timeline["inline"] + timeline["inlineSize"] - 0.01
-               for item in bands.values())
-    edges = {round(item["bounds"]["block"], 3) for item in bands.values()} | {
+               for item in guides.values())
+    edges = {round(item["bounds"]["block"], 3) for item in guides.values()} | {
         round(item["bounds"]["block"] + item["bounds"]["blockSize"], 3)
-        for item in bands.values()
+        for item in guides.values()
     }
     assert all(round(bounds["block"], 3) in edges or
                round(bounds["block"] + bounds["blockSize"], 3) in edges
                for bounds in rows.values())
     assert len(labels) + len(suppressed) == len(planned)
     assert suppressed.isdisjoint(labels)
-    assert svg.count('id="row-band:') == len(bands)
+    assert svg.count('id="row-rule:') == len(guides)
     assert all(f'id="{key}"' in svg for key in labels)
     assert all(f'id="{key}"' not in svg for key in suppressed)
 
