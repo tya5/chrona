@@ -381,9 +381,12 @@ Presentation carries this as an immutable `RelationPresentationFact.critical`
 boolean: its canonical full-Project declaration identity must be in scheduler
 `driving_relations`, and both endpoint objects must carry scheduler-derived
 critical-path membership. The selected paint semantic neither supplies nor
-overrides this fact. Closing this input alone does not enable protected search
-or change ordinary route selection; that requires the feasibility design below.
-Layout routes them before ordinary relations. Declared quality limits remain
+overrides this fact. Layout processes critical relations before ordinary
+relations, retaining arrivals-before-departures and declaration ties within
+each class. This priority pass may be published independently of protected
+feasibility; it retains declaration-based placement identity/output order and
+does not itself enable the quality exception or establish safe-path completeness.
+Declared quality limits remain
 preferences for these relations: first select a safe quality-eligible route;
 if none is found, retain a safe completed route even when `maxBends` or
 `maxDetourRatio` is exceeded. Ordinary relations keep their hard quality
