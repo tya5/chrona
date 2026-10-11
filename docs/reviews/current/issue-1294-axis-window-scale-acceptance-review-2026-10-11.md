@@ -20,25 +20,34 @@ Implementation: `0064cfaf`, `53d401f6`, `69a917f1`. [Current design and implemen
 
 ## Programme-level criteria (optional)
 
-Release pending: trusted READY-base integration, fresh public artifacts/current-head PR gates and acceptance-containing exact-main three-OS release. Local rows do not authorize closure.
+Release pending: refreshed exact-head artifacts/PR gates and acceptance-containing
+exact-main three-OS release. Local rows do not authorize closure.
 
-Related focused suite: 156 passed (13.84s), including regular cadence, natural typography, fixed/automatic tier geometry, lane placement, all nine packaged Views, week forms, explicit fixed-month secondary declarations and band containment. After strengthening per-tier reporting and using exact issue titles, the default suite passed again: six tests (4.54s).
+Base: trusted READY `95b2fddc` ([gate38108591778](https://github.com/tya5/chrona/actions/runs/38108591778)).
+Schema equivalence:38 equal schemas,482 documents/739 probes; four known invalid
+fixtures unchanged, L2+L3=37.3s. No schema changes in the CI repair.
 
-Public audit at `52112c77`: all46 manifest materializers succeed; every Scene
-and SVG is byte-identical to its declared public artifact. Focused schema/preset
-migration guards:60 passed (46.08s). The fresh CI artifact and exact-main
-release are still required after final READY-base integration.
-Ordinary `9ee4dbce` adoption changes only upstream reports/reviews; actual
-default, natural-typography and tier-geometry tests pass again:69 (5.13s).
-After #1391 merged at `b05b09bf`, ordinary integration `895bdf72` passes
-the same axis tests plus trailing-caption integration:83 (14.57s).
-Schema-equivalence against `b05b09bf`: PASS; all38 live schemas equal,
-482 documents/739 probes, four known invalid fixtures unchanged;
-L2+L3=37.3s within the60s budget.
-Final-base ordinary adoption `ad49ede5` includes trusted READY main
-`95b2fddc` (derived-main [38108591778](https://github.com/tya5/chrona/actions/runs/38108591778));
-its only addition is diagnostics inventory. Actual default-axis/caption tests
-pass again:20 (16.93s). Final-head artifacts/PR and exact-main release remain pending.
+[PR1399 first run38109100024](https://github.com/tya5/chrona/actions/runs/38109100024)
+failed11 tests across all three shards. [Repair design and failure disposition](https://github.com/tya5/chrona/issues/1294#issuecomment-6105259331):
+restore Technical Print's declared patterned month band; preserve old two-band
+size fixtures explicitly; update superseded fixed-label and selective-thinning
+assertions to published Spec39. Fixed/start-aligned inset coverage remains in
+its explicit synthetic fixture. No adapter capability check is weakened.
+
+Repair focused suite:103 passed (42.84s), covering diagnostics, Scene outcomes,
+derived sizes, band geometry, packaged declarations and default window scales.
+Band checker mutation tests:13 passed (3.77s), including two contiguous lanes
+and rejected lane gaps/overlaps. Actual Technical Print SVG/PNG/copy and both
+typesetter-capability checks:3 passed (20.92s). PNG sampling follows the actual
+Scene band instead of an obsolete fixed coordinate; expected ink/substrate
+colors and PNG/SVG raster byte equality are retained.
+An earlier batch completed6 tests (both HALCYON CLI viewports, catalogue
+contract/render, missing-asset rejection and default preset render) before a
+fixed-coordinate PNG assertion failed; it was stopped, not counted as a
+successful whole-suite run. Mission/Technical HALCYON checks and refreshed CI
+evidence remain pending.
+First-head artifact11690588178 had all46 Scene and46 SVG bytes identical;
+it is not evidence for the repair head.
 
 ## Architecture conclusion
 

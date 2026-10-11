@@ -82,9 +82,11 @@ def check_bounded_axis_cells(scene: dict) -> None:
     bands = [item for key, item in primitives.items() if key.startswith("axis-band-rect:")]
     labels = [item for key, item in primitives.items() if key.startswith("axis-label:")]
     lanes = sorted({(round(band["bounds"]["block"], 3), round(band["bounds"]["blockSize"], 3)) for band in bands})
-    assert len(lanes) == 1  # the packaged auto-label tier shares one year-band lane
+    assert lanes  # Decorative band lanes are independent of auto label cadence.
     assert lanes[0][0] == pytest.approx(axis["block"])
-    assert lanes[0][1] == pytest.approx(axis["blockSize"])
+    assert sum(size for _, size in lanes) == pytest.approx(axis["blockSize"])
+    assert all(top + size == pytest.approx(next_top)
+               for (top, size), (next_top, _) in zip(lanes, lanes[1:]))
     for band in bands:
         box = band["bounds"]
         assert box["inlineSize"] > 0 and box["blockSize"] > 0

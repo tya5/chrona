@@ -67,6 +67,10 @@ body:
         orientation: horizontal
     - unit: month
       every: 1
+      role: band
+      typographyRole: axisMonth
+    - unit: month
+      every: 1
       role: grid-minor
   backgroundDecoration:
     rows: none

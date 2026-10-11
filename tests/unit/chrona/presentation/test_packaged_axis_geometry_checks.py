@@ -29,6 +29,33 @@ def test_one_year_band_lane_with_a_centered_hosted_auto_label_passes():
     check_bounded_axis_cells(_scene())
 
 
+def _two_lane_scene():
+    scene = _scene()
+    items = scene["surfaces"][0]["primitives"]
+    for band in items[:2]:
+        band["bounds"]["blockSize"] = 20
+    items[2]["bounds"]["block"] = 25
+    for band in deepcopy(items[:2]):
+        band["id"] = band["id"].replace(":0:", ":3:")
+        band["bounds"]["block"] = 40
+        items.append(band)
+    return scene
+
+
+def test_decorative_second_band_can_coexist_with_hosted_auto_labels():
+    check_bounded_axis_cells(_two_lane_scene())
+
+
+@pytest.mark.parametrize("shift", [-1, 1])
+def test_the_checker_rejects_gaps_and_overlaps_between_band_lanes(shift):
+    scene = _two_lane_scene()
+    for item in scene["surfaces"][0]["primitives"]:
+        if item["id"].startswith("axis-band-rect:3:"):
+            item["bounds"]["block"] += shift
+    with pytest.raises(AssertionError):
+        check_bounded_axis_cells(scene)
+
+
 def test_the_checker_accepts_the_actual_packaged_auto_axis(tmp_path):
     parts = sr.bundle("executive-light")
     parts["view"]["body"]["window"] = {

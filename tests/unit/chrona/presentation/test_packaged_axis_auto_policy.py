@@ -19,8 +19,8 @@ EXPECTED_FORMS = {
 
 def _assert_axis_policy(document: dict, *, source: str) -> None:
     tiers = document["body"]["axis"]["tiers"]
-    assert tiers == [
-        {"unit": "year", "every": 1, "role": "band", "typographyRole": "axisQuarter"},
+    policy_tiers = [tier for tier in tiers if tier["role"] != "band"]
+    assert policy_tiers == [
         {"unit": "quarter", "every": 1, "role": "grid-major"},
         {
             "unit": "auto",
@@ -36,6 +36,17 @@ def _assert_axis_policy(document: dict, *, source: str) -> None:
         },
         {"unit": "month", "every": 1, "role": "grid-minor"},
     ], source
+    bands = [tier for tier in tiers if tier["role"] == "band"]
+    expected_bands = [
+        {"unit": "year", "every": 1, "role": "band", "typographyRole": "axisQuarter"},
+    ]
+    if document["id"] == "chrona-preset-technical-print":
+        # Preserve the second band's declared patterned Theme paint; auto
+        # label cadence is independent of these decorative band hosts.
+        expected_bands.append(
+            {"unit": "month", "every": 1, "role": "band", "typographyRole": "axisMonth"},
+        )
+    assert bands == expected_bands, source
 
 
 def _resolved_builtin_view(entry: dict) -> tuple[ViewContract, dict]:
