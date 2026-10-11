@@ -10,6 +10,23 @@ from tests.unit.chrona.presentation.layout.test_sources import theme
 from tests.unit.chrona.presentation.layout.test_table_inline_budget import container, measurement, profile, slot
 
 
+def test_wrapping_table_without_share_uses_full_independent_grid_cell_budget():
+    resolved = profile(container("grid", [slot(share=None, cell={"row": 1, "column": 1})],
+                                 columnTracks=[{"fixed": 400}], rowTracks=["content"]))
+    measured = measure_sources({"table": SourceInput(item_count=2, column_count=2, table=content("Short"))},
+                               theme(), font_metrics=Metrics())
+    session = SourceSizingSession(resolved, measured, theme=theme(), font_metrics=Metrics(),
+                                   content=SimpleNamespace(group_presentation="none"))
+    measurements = {"table": measured.measurements["table"]}
+    context = session.context(viewport_inline=1000, viewport_block=5000, measurements=measurements)
+    assert context.source_budgets["table"].ceiling == 400
+    manifest = solve_layout(resolved, viewport_inline=1000, viewport_block=5000,
+                             measurements=measurements, sizing=context)
+    ordinary = solve_layout(resolved, viewport_inline=1000, viewport_block=5000, measurements=measurements)
+    assert manifest == ordinary
+    assert session.close_manifest(manifest).bounded_tables["table"].available_inline == 400
+
+
 def test_session_reuses_final_allocated_width_not_the_initial_ceiling():
     resolved = profile(container("row", [slot(inlineSize={"fr": 3}),
                                          slot("other", share=None, source="timeline", inlineSize={"fr": 7})]))

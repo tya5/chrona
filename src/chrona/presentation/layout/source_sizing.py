@@ -26,13 +26,18 @@ class SourceSizingSession:
         self.tokens = ThemeTokenView(theme)
         selected: dict[str, str] = {}
         headings: set[str] = set()
+        wrapping_tables: set[str] = set()
 
         def visit(node: Mapping[str, Any]) -> None:
             if node["kind"] == "slot":
                 source, slot_id = str(node["source"]), str(node["id"])
                 value = measured.inputs.get(source)
-                if source == "table" and "maxInlineShare" in node:
+                table_wrap = (source == "table" and value is not None and value.table is not None
+                              and any(column.text_wrap == "allow" for column in value.table.columns))
+                if source == "table" and ("maxInlineShare" in node or table_wrap):
                     selected[slot_id] = source
+                    if table_wrap:
+                        wrapping_tables.add(slot_id)
                 elif (source in {"title", "heading.title", "heading.kicker", "heading.subtitle"}
                       and value is not None and value.content_present and value.text_wrap == "allow"):
                     selected[slot_id] = source
@@ -43,6 +48,7 @@ class SourceSizingSession:
         visit(profile.profile["root"])
         self.slot_sources = MappingProxyType(selected)
         self.heading_slots = frozenset(headings)
+        self.wrapping_table_slots = frozenset(wrapping_tables)
         self._cache: dict[tuple[str, Decimal], MeasuredSources] = {}
         self.table_reserved_inline = (group_tag_column_size(self.tokens) if "table" in selected.values() and vertical_group_tags(
             SurfaceLayoutRequest(surface_content=content, theme_tokens=self.tokens)) else 0.0)
@@ -55,7 +61,8 @@ class SourceSizingSession:
                 measurements: Mapping[str, Any], content_sized: bool = False) -> LayoutSizingContext:
         budgets = resolve_source_inline_budgets(
             self.profile, viewport_inline=viewport_inline, viewport_block=viewport_block,
-            measurements=measurements, content_sized=content_sized, heading_slots=self.heading_slots)
+            measurements=measurements, content_sized=content_sized, heading_slots=self.heading_slots,
+            wrapping_table_slots=self.wrapping_table_slots)
 
         def measure(slot_id: str, width: Decimal):
             source = self.slot_sources[slot_id]

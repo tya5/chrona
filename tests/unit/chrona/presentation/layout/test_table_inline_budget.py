@@ -44,6 +44,15 @@ def profile(root):
     return resolve_layout_profile(raw, available_sources=SOURCES, theme=theme())
 
 
+@pytest.mark.parametrize("nested", [False, True])
+def test_share_schema_rejects_non_table_sources_at_each_child_depth(nested):
+    child = slot(source="title")
+    if nested:
+        child = container("column", [child], id="nested")
+    with pytest.raises(LayoutError, match="E_LAYOUT_SCHEMA"):
+        profile(container("column", [child]))
+
+
 def measurement(inline=2000):
     return Measurement(D(inline), D(inline), D(inline), D(10), D(10), D(10))
 

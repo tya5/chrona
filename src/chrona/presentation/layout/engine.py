@@ -458,9 +458,9 @@ def _bounded_child_inline(node: Mapping[str, Any], path: str, available: Decimal
     if used > sizing.by_path[path].ceiling:
         raise LayoutError(sizing.by_path[path].failure_code, path, str(node["id"]),
                           "authored inline size exceeds the declared ceiling")
-    # A heading's full-share budget constrains text, not the existing Grid
-    # cell-filling allocation. Tables have a separate declared share ceiling.
-    return available if preserve_cell_extent and sizing.by_path[path].source_kind == "heading" else used
+    # Full-share text budgets constrain copy without shrinking the existing
+    # Grid host. A smaller declared share still constrains the host itself.
+    return available if preserve_cell_extent and sizing.by_path[path].ceiling == available else used
 
 
 def _cross_position(align: str, start: Decimal, available: Decimal, size: Decimal, safety: str = "strict") -> tuple[Decimal, Decimal]:
@@ -477,7 +477,8 @@ class _Arranger:
     def __init__(self, profile: ResolvedLayoutProfile, measurements: Mapping[str, Measurement], *,
                  content_sized: bool = False, collect_inline_budgets: bool = False,
                  sizing: LayoutSizingContext | None = None,
-                 heading_slots: frozenset[str] = frozenset()):
+                 heading_slots: frozenset[str] = frozenset(),
+                 wrapping_table_slots: frozenset[str] = frozenset()):
         self.profile, self.measurements = profile, measurements
         self.content_sized = content_sized
         self.decisions: list[LayoutDecision] = []
@@ -487,14 +488,17 @@ class _Arranger:
         self.sizing = sizing
         self.heading_slots = (frozenset(b.slot_id for b in sizing.source_budgets.values()
                                        if b.source_kind == "heading") if sizing else heading_slots)
+        self.wrapping_table_slots = (frozenset(b.slot_id for b in sizing.source_budgets.values()
+                                              if b.source_kind == "table") if sizing else wrapping_table_slots)
 
     def _record_inline_budget(self, child: Mapping[str, Any], path: str,
                               available_inline: Decimal) -> None:
         slot_id = str(child["id"])
         heading = slot_id in self.heading_slots
-        if not self.collect_inline_budgets or ("maxInlineShare" not in child and not heading):
+        if not self.collect_inline_budgets or ("maxInlineShare" not in child and not heading
+                                              and slot_id not in self.wrapping_table_slots):
             return
-        ceiling = available_inline * (Decimal(1) if heading else _d(child["maxInlineShare"]))
+        ceiling = available_inline * (Decimal(1) if heading else _d(child.get("maxInlineShare", 1)))
         if not ceiling.is_finite() or ceiling <= ZERO:
             raise LayoutError("E_LAYOUT_TEXT_OVERFLOW" if heading else "E_LAYOUT_TABLE_OVERFLOW", path, slot_id,
                               "no positive independently allocated inline budget")
@@ -890,7 +894,8 @@ def resolve_source_inline_budgets(profile: ResolvedLayoutProfile, *,
                                  viewport_block: int | float | Decimal,
                                  measurements: Mapping[str, Measurement],
                                  content_sized: bool = False,
-                                 heading_slots: frozenset[str] = frozenset()) -> Mapping[str, SourceInlineBudget]:
+                                 heading_slots: frozenset[str] = frozenset(),
+                                 wrapping_table_slots: frozenset[str] = frozenset()) -> Mapping[str, SourceInlineBudget]:
     """Probe parent/cell budgets with all selected source demands neutralized.
 
     The ordinary arranger remains the only implementation of padding, active
@@ -902,7 +907,8 @@ def resolve_source_inline_budgets(profile: ResolvedLayoutProfile, *,
     capped: list[str] = []
 
     def visit(node: Mapping[str, Any]) -> None:
-        if "maxInlineShare" in node or str(node["id"]) in heading_slots:
+        if ("maxInlineShare" in node or str(node["id"]) in heading_slots
+                or str(node["id"]) in wrapping_table_slots):
             capped.append(str(node["id"]))
         for _, child in _active_children(node, measurements) if "children" in node else ():
             visit(child)
@@ -922,7 +928,7 @@ def resolve_source_inline_budgets(profile: ResolvedLayoutProfile, *,
         except KeyError as error:
             raise LayoutError("E_LAYOUT_MEASUREMENT_REQUIRED", "/root", slot_id) from error
     arranger = _Arranger(profile, neutral, content_sized=content_sized, collect_inline_budgets=True,
-                         heading_slots=heading_slots)
+                         heading_slots=heading_slots, wrapping_table_slots=wrapping_table_slots)
     arranger.arrange(root, "/root", viewport)
     return MappingProxyType(dict(arranger.source_inline_budgets))
 

@@ -65,6 +65,20 @@ def test_short_table_keeps_actual_scene_geometry_and_paint_unchanged(tmp_path):
     assert bounded.artifact.content == ordinary.artifact.content
 
 
+def test_authored_table_wrap_without_share_closes_at_fixed_allocated_width(tmp_path):
+    presentation = parts()
+    table = sr.find_node(presentation["layout"], "table")
+    table.pop("maxInlineShare")
+    table["inlineSize"] = {"fixed": 320}
+    presentation["view"]["body"]["tableColumns"][0]["text"] = {"wrap": "allow"}
+    rendered = sr.render(tmp_path, source("task words " * 100), presentation=presentation)
+    allocated = next(item.bounds for item in rendered.surface.slots if item.source == "table")
+    cell = next(item for item in rendered.surface.primitives if item.scene_id == "cell:a:Task")
+    assert allocated[2] == 320
+    assert len(cell.text_layout.lines) > 1
+    assert cell.text_layout.bounds[0] + cell.text_layout.bounds[2] <= allocated[0] + allocated[2]
+
+
 def test_render_pipeline_projects_authored_heading_and_table_wrap_intent(tmp_path):
     presentation = parts()
     presentation["view"]["body"]["heading"] = {"text": {"wrap": "allow"}}
