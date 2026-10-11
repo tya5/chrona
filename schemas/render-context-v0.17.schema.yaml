@@ -147,6 +147,16 @@ $defs:
         then: {not: {required: [identity]}}
   fontMetrics:
     description: "Complete identity-pinned measured assets and optional target-local raster font assets."
+    examples:
+      - algorithm: declared-metrics-v3
+        missingFont: diagnose
+        assets:
+          - family: Acme Sans
+            weight: 400
+            metrics:
+              locator: {provider: context, address: font_metrics/acme-regular.json}
+              contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      - {algorithm: declared-metrics-v3, missingFont: diagnose, fontSet: chrona.noto-sans}
     type: object
     required: [algorithm, missingFont]
     oneOf:
