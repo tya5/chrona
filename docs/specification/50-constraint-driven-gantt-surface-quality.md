@@ -373,7 +373,36 @@ admission still apply. No previous-render state is needed.
 
 View relation intent becomes `none` or an object with `mode: semantic` and `overflow: suppress | visible-overflow`. Layout Profile adds `relationRouting.maxBends` and `relationRouting.maxDetourRatio` numeric geometry policy.
 
-Layout routes between completed ports through deterministic orthogonal candidates. A route is acceptable when it stays in the timeline, avoids required obstacles, has at most `maxBends`, and its Manhattan length is at most `maxDetourRatio × directDistance`. Eligible candidates use the ranking below. With `visible-overflow`, no acceptable route completes as the deterministic direct path plus `W_LAYOUT_ROUTE_FALLBACK`; explicit suppression creates `W_LAYOUT_RELATION_SUPPRESSED`.
+Layout routes between completed ports through deterministic orthogonal candidates. An ordinary route is acceptable when it stays in the timeline, avoids required obstacles, has at most `maxBends`, and its Manhattan length is at most `maxDetourRatio × directDistance`. Eligible candidates use the ranking below. With `visible-overflow`, no acceptable ordinary route completes as the deterministic direct path plus `W_LAYOUT_ROUTE_FALLBACK`; explicit suppression creates `W_LAYOUT_RELATION_SUPPRESSED`.
+
+**Protected critical relations (#1300).** Scheduler driving-path facts, not
+paint roles or a project-specific rule, identify protected critical relations.
+Layout routes them before ordinary relations. Declared quality limits remain
+preferences for these relations: first select a safe quality-eligible route;
+if none is found, retain a safe completed route even when `maxBends` or
+`maxDetourRatio` is exceeded. Ordinary relations keep their hard quality
+limits. This intentional exception does not waive resolved endpoint admission,
+timeline bounds, required mark/text/label clearance, terminal and stroke
+validity, or self-overlap rejection. A blocked egress or endpoint outside the
+declared window is not repaired by moving the semantic endpoint.
+
+The over-quality selection retains the declared limits and actual completed
+measurements in typed Layout evidence; do not raise the limits or label it a
+quality-eligible attempt. Layout emits
+`I_LAYOUT_CRITICAL_RELATION_QUALITY_FALLBACK:` followed by JSON containing
+`relationId`, `bends`, `maxBends`, `length`, `directLength` and
+`maxDetourRatio`. These are the same completed-route measurements used by the
+ordinary quality predicate (including its zero-direct-length convention).
+Scene projects completed geometry and diagnostics; adapters do not reroute
+or reclassify criticality.
+
+Suppress a protected relation only after establishing that no safe completed
+route exists, and emit `W_LAYOUT_CRITICAL_RELATION_SUPPRESSED` with relation
+identity and the failure evidence. Neither the ordinary sparse graph nor its
+4096-expansion exhaustion proves that geometric impossibility. The protected
+feasibility algorithm, its completeness argument and its input-dependent work
+accounting must be finalized before implementing this exception; the existing
+ordinary-search bounds below do not cover that additional pass.
 
 **Candidate search (#1109 R5).** One bounded sparse
 visibility search supplies alternatives for each endpoint pair, rather than
