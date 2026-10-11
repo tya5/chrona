@@ -9,6 +9,7 @@ from datetime import date
 
 import pytest
 
+from chrona.presentation.scene.serialization import serialize_scene
 from tests.support import synthetic_review as sr
 
 ROLES = ("planned", "milestone", "calendar-closed", "actual")
@@ -16,13 +17,20 @@ LABELS = {"planned": "Planned work", "milestone": "Gate review", "calendar-close
           "actual": "Actual work"}
 
 
-def _render(tmp_path, *, columns=None, heading=None, direction=None, roles=ROLES):
+def _render(tmp_path, *, columns=None, heading=None, direction=None, roles=ROLES, distribution=None, wide=False):
     parts = sr.bundle("executive-light")
     legend = sr.find_node(parts["layout"], "legend")
     if columns is not None:
         legend["columns"] = columns
     if direction is not None:
         legend["direction"] = direction
+    if distribution is not None:
+        legend["columnDistribution"] = distribution
+    if wide:  # a legend panel with room beyond its content, as a designed panel has
+        footer = sr.find_node(parts["layout"], "footer")
+        footer["children"].remove(legend)  # out of the content-sized footer flow, into a full-width row of the page
+        legend.update(inlineSize="fill", place={"inline": "stretch", "block": "first-baseline", "safety": "safe"})
+        parts["layout"]["root"]["children"].append(legend)
     if heading is not None:
         legend["heading"] = heading
     body = parts["theme"]["body"]
@@ -109,3 +117,57 @@ def test_a_start_column_heading_on_a_legend_without_columns_falls_back_to_the_to
     rendered = _render(tmp_path, heading={"text": "The key", "block": "start-column"})
 
     assert any("I_LAYOUT_SLOT_HEADING_NO_START_COLUMN" in item for item in rendered.scene.diagnostics)
+
+
+# --- #1392: spread the columns, declare the caption gap --------------------------------------------------------------
+
+def _swatch_starts(rendered, roles=("planned", "milestone", "calendar-closed")):
+    return [_entries(rendered)[role][0][0] for role in roles]
+
+
+def test_spread_gives_evenly_spaced_column_starts_and_the_last_column_ends_within_the_slot(tmp_path):
+    packed = _render(_sub(tmp_path, "packed"), columns=3, wide=True)
+    spread = _render(_sub(tmp_path, "spread"), columns=3, distribution="spread", wide=True)
+    legend = next(item for item in spread.surface.slots if item.source == "legend")
+    starts = _swatch_starts(spread)
+    pitches = [round(b - a, 3) for a, b in zip(starts, starts[1:])]
+
+    assert starts[0] == pytest.approx(_swatch_starts(packed)[0])  # the first column stays at the slot start
+    assert len(set(pitches)) == 1 and pitches[0] > _swatch_starts(packed)[1] - _swatch_starts(packed)[0]  # evenly spaced, wider than packed
+    slot_end = legend.bounds[0] + legend.bounds[2]
+    last_label = _entries(spread)["calendar-closed"][1]
+    assert last_label[0] + last_label[2] <= slot_end + 1e-6
+    assert starts[-1] < slot_end
+
+
+def test_spread_keeps_entries_start_aligned_in_their_column_and_the_rows_unchanged(tmp_path):
+    packed = _entries(_render(_sub(tmp_path, "packed"), columns=3, wide=True))
+    spread = _entries(_render(_sub(tmp_path, "spread"), columns=3, distribution="spread", wide=True))
+
+    assert spread["actual"][0][0] == pytest.approx(spread["planned"][0][0])  # entry 3 is back in column 0
+    for role in ROLES:
+        assert spread[role][0][1] == pytest.approx(packed[role][0][1])  # no row moved
+
+
+def test_start_distribution_and_the_absent_declaration_are_byte_identical(tmp_path):
+    absent = _render(_sub(tmp_path, "absent"), columns=3, wide=True)
+    start = _render(_sub(tmp_path, "start"), columns=3, distribution="start", wide=True)
+
+    assert absent.artifact.content == start.artifact.content  # the Scene differs only in the Layout resource identity it records
+
+
+def test_a_declared_caption_gap_places_the_first_column_at_caption_end_plus_that_gap(tmp_path):
+    default = _render(_sub(tmp_path, "default"), columns=2, heading={"text": "The key", "block": "start-column"})
+    declared = _render(_sub(tmp_path, "declared"), columns=2, heading={"text": "The key", "block": "start-column", "gap": 24})
+
+    def caption_end(rendered):
+        heading = next(item for item in rendered.surface.primitives if item.scene_id.startswith("slot-heading:"))
+        return heading.bounds[0] + heading.bounds[2]
+
+    assert _entries(declared)["planned"][0][0] == pytest.approx(caption_end(declared) + 24)
+    half_font = (_entries(default)["planned"][0][0] - caption_end(default))
+    assert half_font != pytest.approx(24) and half_font > 0  # the default is the unchanged half-font-size gap
+
+
+def serialize(rendered):
+    return serialize_scene(rendered.scene)
