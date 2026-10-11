@@ -26,4 +26,4 @@ Layout carries completed per-header band padding separately from measured conten
 
 Own-venv caption/text-extent integration: **39 passed** (44.10s), including plain/mixed-role independent-strip joins. Broader integration/strip join77 and adjacent leading-inset/run/builder90 passed. No full release claim.
 
-Schema-equivalence against source main `39d6cc9a`: **PASS**, live Theme additive=1/equal=37; 482 documents/739 probes, four known invalid fixtures unchanged. L2+L3=58.8s within the60s budget. #1367 owns the stale View delta retirements; this item does not repeat them.
+Schema-equivalence against trusted READY `0071e5ee`: **PASS**, live Theme additive=1/equal=37; 482 documents/739 probes, four known invalid fixtures unchanged. L2+L3=41.2s within the60s budget. Proven merged #1389 delta entries are retired before the next schema merge.
