@@ -8,7 +8,7 @@ from math import hypot, isfinite
 from typing import TYPE_CHECKING, Any
 
 from chrona.presentation.layout.model import Rect
-from chrona.presentation.layout.pattern_placement import PatternedPlacement
+from chrona.presentation.layout.pattern_placement import PatternedPlacement, PatternPathCommand
 from chrona.presentation.layout.obstacles import ObstacleGeometry
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.model.info_diagnostics import PresentationInfo, SuppressedPlotLabels
@@ -20,7 +20,11 @@ if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement
     from chrona.presentation.layout.canvas_overlays import CanvasOverlays
     from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip
     from chrona.presentation.layout.canvas_viewport import AutoBlockSizeWarning, CanvasViewportWarning, DeclaredViewport
+    from chrona.presentation.layout.surface_mark_visibility import ItemMarkVisibilityIndex
+    from chrona.presentation.layout.lane_window_marks import LaneWindowPlacementAbsence
+    from chrona.presentation.layout.window_relation_admission import WindowRelationEndpointAbsence
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, FIT_ADJUSTS, TEXT_FOLLOWS_BOX
+from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
 
 
 def _diagnostic_value(value: Any) -> str:
@@ -66,6 +70,24 @@ def is_closed_stroke_contour(commands: tuple[PathCommand, ...]) -> bool:
                                      for px, py in points[1:]):
             return False
     return True
+
+
+@dataclass(frozen=True)
+class PaintClip:
+    """A finite positive completed paint-clip rectangle in surface coordinates."""
+
+    bounds: tuple[float, float, float, float]
+
+    def __post_init__(self) -> None:
+        if (not isinstance(self.bounds, tuple) or len(self.bounds) != 4
+                or any(isinstance(value, bool) or not isinstance(value, (int, float))
+                       or not isfinite(value) for value in self.bounds)
+                or self.bounds[2] <= 0 or self.bounds[3] <= 0
+                or not isfinite(self.bounds[0] + self.bounds[2])
+                or not isfinite(self.bounds[1] + self.bounds[3])):
+            raise ValueError(
+                f"E_PRESENTATION_PRIMITIVE_INVALID: PaintClip.bounds={_diagnostic_value(self.bounds)}; "
+                "expected finite inline/block coordinates and positive inline/block extents")
 
 
 @dataclass(frozen=True)
@@ -290,8 +312,9 @@ class MarkPlacement:
     placement_id: str
     source_ref: str
     bounds: Rect
-    start_port: tuple[float, float]
-    end_port: tuple[float, float]
+    # None means the original temporal endpoint is unavailable, never a cut-edge port.
+    start_port: tuple[float, float] | None
+    end_port: tuple[float, float] | None
     required: bool = True
     mark_shape: str = "span"
     corner_radius: float = 0.0
@@ -305,6 +328,8 @@ class MarkPlacement:
     lane_member_id: str | None = None
     lane_source_kind: str | None = None
     subjects: tuple[DiagnosticSubject, ...] = ()
+    paint_clip: PaintClip | None = None
+    pattern_origin: tuple[float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -354,6 +379,8 @@ class ShapePlacement:
     subjects: tuple[DiagnosticSubject, ...] = ()
     # Completed visible frame, when nonrect paint extends beyond nominal bounds.
     collision_bounds: Rect | None = None
+    paint_clip: PaintClip | None = None
+    pattern_origin: tuple[float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -474,6 +501,9 @@ class RelationPlacement:
     from_instance_id: str | None = None
     to_instance_id: str | None = None
     fan_in: RelationFanIn | None = None
+    window_endpoint_absences: tuple[WindowRelationEndpointAbsence, ...] = ()
+    window_suppression_reason: str | None = None
+    paint_clip: PaintClip | None = None
 
 
 @dataclass(frozen=True)
@@ -587,6 +617,7 @@ class SurfaceLayoutRequest:
     declared_viewport: DeclaredViewport | None = None
     auto_block_limit: Decimal | None = None
     progress: RenderProgress | None = field(default=None, compare=False, repr=False)
+    mark_visibility_index: ItemMarkVisibilityIndex | None = None
 
 
 @dataclass(frozen=True)
@@ -721,11 +752,34 @@ class SurfacePlacement:
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
     canvas_warning: CanvasViewportWarning | None = None
     auto_block_warning: AutoBlockSizeWarning | None = None
+    window_label_absences: tuple[WindowLabelAbsence, ...] = ()
+    lane_window_absences: tuple[LaneWindowPlacementAbsence, ...] = ()
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""
+        from chrona.presentation.layout.lane_window_marks import LaneWindowPlacementAbsence
+        if any(not isinstance(item, LaneWindowPlacementAbsence) for item in self.lane_window_absences):
+            raise ValueError("E_LAYOUT_WINDOW_CLIP: invalid completed lane absence")
+        keys = {(item.row_id, item.member_id, item.expected.placement_id)
+                for item in self.lane_window_absences}
+        emitted_ids = {mark.placement_id for mark in self.marks}
+        rows = {row.row_id for row in self.rows}
+        if (len(keys) != len(self.lane_window_absences)
+                or any(item.row_id not in rows or
+                       f"{item.expected.purpose}:{item.row_id}:{item.expected.instance.item_id}" in emitted_ids
+                       for item in self.lane_window_absences)):
+            raise ValueError("E_LAYOUT_WINDOW_CLIP: duplicate, unowned or also-emitted lane absence")
         suppressed_members = {item.placement_id for item in self.text
                               if item.semantic_id == "memberLabel" and item.overflow == "suppressed"}
+        if any(not isinstance(item, WindowLabelAbsence) for item in self.window_label_absences):
+            raise ValueError("E_LAYOUT_SUPPRESSION_COUNT_INVALID: invalid temporal label type")
+        temporal_ids = {item.placement_id for item in self.window_label_absences}
+        if (len(temporal_ids) != len(self.window_label_absences)
+                or temporal_ids.intersection(item.placement_id for item in self.text)
+                or any(item.diagnostic not in self.diagnostics for item in self.window_label_absences)):
+            raise ValueError("E_LAYOUT_SUPPRESSION_COUNT_INVALID: invalid temporal label account")
+        suppressed_members.update(item.placement_id for item in self.window_label_absences
+                                  if item.semantic_id == "memberLabel")
         suppressed_lane_members = {item.placement_id for item in self.text
                                    if item.semantic_id == "memberLabel" and item.overflow == "suppressed"
                                    and item.lane_row_id is not None}
@@ -773,6 +827,21 @@ class SurfacePlacement:
                         and intersects(item.bounds, other.bounds)):
                     raise ValueError(f"E_LAYOUT_TEXT_OVERLAP:{item.placement_id}:{other.placement_id}")
         for relation in self.relations:
+            if (relation.window_suppression_reason not in {None, "outside-window", "plot-containment"}
+                    or (bool(relation.window_endpoint_absences)
+                        != (relation.window_suppression_reason == "outside-window"))
+                    or (relation.window_suppression_reason is not None
+                        and (not relation.suppressed or not relation.source_ref))
+                    or (relation.suppressed and relation.paint_clip is not None)):
+                raise ValueError(f"E_LAYOUT_RELATION_SUPPRESSION_INVALID:{relation.relation_id}")
+            if relation.window_endpoint_absences:
+                from chrona.presentation.layout.window_relation_admission import WindowRelationEndpointAbsence
+                if (not relation.suppressed or not relation.source_ref
+                        or any(not isinstance(proof, WindowRelationEndpointAbsence)
+                               for proof in relation.window_endpoint_absences)):
+                    raise ValueError(f"E_LAYOUT_RELATION_SUPPRESSION_INVALID:{relation.relation_id}")
+                for proof in relation.window_endpoint_absences:
+                    proof.validate_cache()
             if relation.corner_radius < 0:
                 raise ValueError(f"E_LAYOUT_RELATION_CORNER_RADIUS_INVALID:{relation.relation_id}")
             if relation.suppressed:
@@ -816,8 +885,16 @@ class SurfacePlacement:
             mark = marks_by_id.get(item.placement_id)
             shape = shapes_by_id.get(item.placement_id)
             if not ((mark is not None and mark.mark_shape == "span")
-                    or (shape is not None and shape.kind == "Rect")):
+                    or (shape is not None and shape.kind == "Rect")
+                    or (shape is not None and shape.kind == "Symbol" and item.pattern.cut_contour)):
                 raise ValueError(f"E_LAYOUT_PATTERN_REGION_INVALID:{item.placement_id}")
+            if item.pattern.cut_contour:
+                host = mark if mark is not None else shape
+                contour = tuple(PatternPathCommand(command.kind, command.points) for command in host.path_commands)
+                if (host.paint_clip is None or host.pattern_origin != item.pattern.origin
+                        or contour != item.pattern.cut_contour or host.bounds != item.pattern.region
+                        or host.semantic_id not in {"missing-actual", "progressFill", "summaryBar"}):
+                    raise ValueError(f"E_LAYOUT_PATTERN_REGION_INVALID:{item.placement_id}")
         hosts = {item.placement_id: item for item in self.marks}
         hosts.update({item.placement_id: item for item in self.shapes})
         emitted_mark_hosts = {

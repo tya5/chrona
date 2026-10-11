@@ -6,7 +6,8 @@ from datetime import date
 import math
 from typing import Any
 
-from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand, RelationFanIn, StrokeClip, TextFit
+from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PaintClip, PathCommand, RelationFanIn, StrokeClip, TextFit
+from chrona.presentation.layout.relation_terminals import project_marker_outline
 from chrona.presentation.layout.canvas_viewport import AutoBlockSizeWarning, CanvasViewportWarning
 from chrona.presentation.layout.pattern_placement import PatternTilePrimitive
 from chrona.presentation.model.font_metrics import FontTabularWarning
@@ -14,6 +15,7 @@ from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, PrimitiveProvenance
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding, semantic_binding
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, TEXT_FOLLOWS_BOX, VIEWER_FIT_MODES
+from chrona.presentation.scene.pattern_host import completed_pattern_host_valid
 
 
 LANE_MEMBER_BINDING_IDS = (
@@ -40,6 +42,19 @@ def _finite_number(value: object) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
+def completed_marker_outline(marker: MarkerGeometry, *, side: str,
+                             points: tuple[tuple[float, float], ...],
+                             path_commands: tuple[PathCommand, ...],
+                             stroke_width: float | None) -> tuple[PathCommand, ...]:
+    """Scene validation's shared projection of already completed terminal facts.
+
+    No token resolution, routing, endpoint selection or geometry adjustment is
+    performed. Typed and raw Scene validation use the same finite transform.
+    """
+    return project_marker_outline(marker, side=side, points=points,
+                                  path_commands=path_commands, stroke_width=stroke_width)
+
+
 def _brief(value: object, *, limit: int = 72) -> str:
     """Describe a scalar or tuple shape without dumping Scene payloads."""
     if isinstance(value, str):
@@ -61,6 +76,40 @@ def _pair_brief(value: object) -> str:
 
 def _invalid(field: str, value: object, expected: str, *, owner: str = "Scene") -> ValueError:
     return ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: {owner}.{field}; expected {expected}; found {_brief(value)}")
+
+
+def _paint_clip_contains(clip: PaintClip, bounds: object, points: object) -> bool:
+    """Check completed absolute geometry against a supplied clip, without interpreting routes."""
+    if not isinstance(bounds, tuple) or len(bounds) != 4 or not all(_finite_number(value) for value in bounds):
+        return False
+    left, top, width, height = bounds
+    if width < 0 or height < 0 or not math.isfinite(left + width) or not math.isfinite(top + height):
+        return False
+    x0, y0, clip_width, clip_height = clip.bounds
+    x1, y1 = x0 + clip_width, y0 + clip_height
+    if not math.isfinite(x1) or not math.isfinite(y1):
+        return False
+    if left < x0 or top < y0 or left + width > x1 or top + height > y1:
+        return False
+    if not isinstance(points, tuple):
+        return False
+    for point in points:
+        if (not isinstance(point, tuple) or len(point) != 2
+                or not all(_finite_number(value) for value in point)
+                or not (x0 <= point[0] <= x1 and y0 <= point[1] <= y1)):
+            return False
+    return True
+
+
+def _path_points(commands: object) -> tuple[object, ...] | None:
+    if not isinstance(commands, tuple):
+        return None
+    points: list[object] = []
+    for command in commands:
+        if not isinstance(command, PathCommand) or not isinstance(command.points, tuple):
+            return None
+        points.extend(command.points)
+    return tuple(points)
 
 
 def requires_lane_member_provenance(kind: str, purpose: str) -> bool:
@@ -406,6 +455,7 @@ class ScenePrimitive:
     # The viewer-fit mode of a text-bearing box (#1050); `raw` is today's output.
     viewer_fit: str = "raw"
     stroke_clip: StrokeClip | None = None
+    paint_clip: PaintClip | None = None
 
     def __post_init__(self) -> None:
         if self.stroke_clip is not None and (self.kind not in {"Rect", "Symbol", "Path"}
@@ -421,7 +471,14 @@ class ScenePrimitive:
                     or self.clip_source_id is not None or self.image_fill_pending is not None))):
             raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} viewer_fit/pattern/clip_source_id/image_fill_pending; expected a known fit mode on Rect or Symbol, with box-follows-text only on a plain Rect; found mode={_brief(self.viewer_fit)}, kind={_brief(self.kind)}, pattern={_brief(self.pattern)}, clip_source_id={_brief(self.clip_source_id)}, image_fill_pending={_brief(self.image_fill_pending)}")
         if (((self.marker_start is not None or self.marker_end is not None) and self.kind != "Path")
-                or (self.pattern is not None and self.kind != "Rect")
+                or (self.pattern is not None and not completed_pattern_host_valid(
+                    kind=self.kind, purpose=self.purpose, visual_role=self.visual_role,
+                    bounds=self.bounds, catalog=bool(self.pattern.primitives),
+                    origin=self.pattern.origin, region=self.pattern.region_bounds,
+                    clip=self.pattern.clip_bounds, radius=self.pattern.corner_radius,
+                    outline=self.symbol.outline if isinstance(self.symbol, SymbolGeometry) else (),
+                    paint_clipped=self.paint_clip is not None, end_treatment=self.end_treatment,
+                    glyph=self.glyph_paint_mode is not None))
                 or (self.image_fill_pending is not None and self.kind not in {"Rect", "Symbol"})
                 or (self.paint is not None and self.paint.radial_gradient is not None and (
                     self.kind != "Rect" or self.pattern is not None
@@ -463,7 +520,7 @@ class ScenePrimitive:
                                                or self.icon_viewport is None
                                                or any(item <= 0 for item in self.icon_viewport)))
                 or (self.kind != "Icon" and self.icon_viewport is not None)):
-            raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} has incompatible completed fields; expected marker_start/marker_end only on Path, pattern only on Rect, symbol exactly on Symbol, radial paint only on plain filled Rect, glyph paint only on Symbol, table/lane/relation fields consistent with purpose/kind, and icon viewport only on Icon; found sourceRef={_brief(self.source_ref)}, kind={_brief(self.kind)}, purpose={_brief(self.purpose)}, marker_start={_brief(self.marker_start)}, marker_end={_brief(self.marker_end)}, pattern={_brief(self.pattern)}, symbol={_brief(self.symbol)}, radial_gradient={_brief(getattr(self.paint, 'radial_gradient', self.paint) if self.paint is not None else None)}, glyph_mode={_brief(self.glyph_paint_mode)}, table_row_id={_brief(self.table_row_id)}, table_column_id={_brief(self.table_column_id)}, lane_row_id={_brief(self.lane_row_id)}, lane_member_id={_brief(self.lane_member_id)}, from_instance_id={_brief(self.from_instance_id)}, to_instance_id={_brief(self.to_instance_id)}, icon_kind={_brief(self.icon_kind)}, icon_viewport={_brief(self.icon_viewport)}")
+            raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} has incompatible completed fields; expected marker_start/marker_end only on Path, pattern only on a phase-preserving Rect or completed closed window-cut Symbol, symbol exactly on Symbol, radial paint only on plain filled Rect, glyph paint only on Symbol, table/lane/relation fields consistent with purpose/kind, and icon viewport only on Icon; found sourceRef={_brief(self.source_ref)}, kind={_brief(self.kind)}, purpose={_brief(self.purpose)}, marker_start={_brief(self.marker_start)}, marker_end={_brief(self.marker_end)}, pattern={_brief(self.pattern)}, symbol={_brief(self.symbol)}, radial_gradient={_brief(getattr(self.paint, 'radial_gradient', self.paint) if self.paint is not None else None)}, glyph_mode={_brief(self.glyph_paint_mode)}, table_row_id={_brief(self.table_row_id)}, table_column_id={_brief(self.table_column_id)}, lane_row_id={_brief(self.lane_row_id)}, lane_member_id={_brief(self.lane_member_id)}, from_instance_id={_brief(self.from_instance_id)}, to_instance_id={_brief(self.to_instance_id)}, icon_kind={_brief(self.icon_kind)}, icon_viewport={_brief(self.icon_viewport)}")
         if self.end_treatment not in {"closed", "open"}:
             raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} end_treatment; expected 'closed' or 'open'; found {_brief(self.end_treatment)}")
         classified = contrast_binding(self.visual_role)
@@ -477,6 +534,73 @@ class ScenePrimitive:
             raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} paint_order; expected a non-negative integer; found {_brief(self.paint_order)}")
         if self.end_treatment == "open" and (self.kind != "Symbol" or self.symbol is None or self.purpose != "actual"):
             raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} end_treatment/kind/symbol/purpose; expected open treatment only on an actual Symbol with completed symbol geometry; found treatment={_brief(self.end_treatment)}, kind={_brief(self.kind)}, symbol={_brief(self.symbol)}, purpose={_brief(self.purpose)}")
+        if self.paint_clip is not None:
+            if not isinstance(self.paint_clip, PaintClip):
+                raise _invalid("paint_clip", self.paint_clip, "a completed finite positive PaintClip", owner=f"primitive {_brief(self.scene_id)}")
+            if not isinstance(self.bounds, tuple) or len(self.bounds) != 4:
+                raise _invalid("bounds", self.bounds, "four completed coordinates", owner=f"primitive {_brief(self.scene_id)} paint_clip")
+            geometry = [("bounds", self.bounds, ())]
+            geometry.append(("points", (self.bounds[0], self.bounds[1], 0, 0), self.points))
+            path_points = _path_points(self.path_commands)
+            if path_points is None:
+                raise _invalid("path_commands", self.path_commands, "completed path commands", owner=f"primitive {_brief(self.scene_id)} paint_clip")
+            if path_points:
+                geometry.append(("path_commands", (self.bounds[0], self.bounds[1], 0, 0), path_points))
+            if self.symbol is not None:
+                symbol_points = _path_points(self.symbol.outline)
+                if symbol_points is None:
+                    raise _invalid("symbol.outline", self.symbol.outline, "completed absolute path commands", owner=f"primitive {_brief(self.scene_id)} paint_clip")
+                geometry.append(("symbol.outline", (self.bounds[0], self.bounds[1], 0, 0), symbol_points))
+            for index, icon_path in enumerate(self.icon_paths):
+                if not isinstance(icon_path, SceneIconPath) or not isinstance(icon_path.commands, tuple):
+                    raise _invalid(f"icon_paths[{index}]", icon_path, "completed absolute icon path geometry",
+                                   owner=f"primitive {_brief(self.scene_id)} paint_clip")
+                icon_points: list[object] = []
+                for command in icon_path.commands:
+                    if (not isinstance(command, tuple) or len(command) != 2
+                            or not isinstance(command[1], tuple)):
+                        raise _invalid(f"icon_paths[{index}].commands", command,
+                                       "completed command kind and absolute point tuples",
+                                       owner=f"primitive {_brief(self.scene_id)} paint_clip")
+                    icon_points.extend(command[1])
+                geometry.append((f"icon_paths[{index}]", (self.bounds[0], self.bounds[1], 0, 0),
+                                 tuple(icon_points)))
+            for index, icon_path in enumerate(self.icon_path_geometry):
+                commands = getattr(icon_path, "commands", None)
+                if not isinstance(commands, tuple):
+                    raise _invalid(f"icon_path_geometry[{index}]", icon_path,
+                                   "Layout-completed absolute icon path commands",
+                                   owner=f"primitive {_brief(self.scene_id)} paint_clip")
+                icon_points = []
+                for command in commands:
+                    if (not isinstance(command, tuple) or len(command) != 2
+                            or not isinstance(command[1], tuple)):
+                        raise _invalid(f"icon_path_geometry[{index}].commands", command,
+                                       "completed command kind and absolute point tuples",
+                                       owner=f"primitive {_brief(self.scene_id)} paint_clip")
+                    icon_points.extend(command[1])
+                geometry.append((f"icon_path_geometry[{index}]", (self.bounds[0], self.bounds[1], 0, 0),
+                                 tuple(icon_points)))
+            for field_name, marker, side in (("marker_start", self.marker_start, "start"),
+                                             ("marker_end", self.marker_end, "end")):
+                # Stroke-relative terminal geometry closes after paint binding;
+                # replace(..., paint=...) reruns this validation before emission.
+                if marker is None or (not marker.physical_units and self.paint is None):
+                    continue
+                try:
+                    projected = completed_marker_outline(
+                        marker, side=side, points=self.points, path_commands=self.path_commands,
+                        stroke_width=self.paint.stroke_width if self.paint is not None else None)
+                except ValueError as error:
+                    raise _invalid(field_name, marker, "a finite completed terminal projection within paint_clip",
+                                   owner=f"primitive {_brief(self.scene_id)}") from error
+                marker_points = _path_points(projected)
+                geometry.append((field_name, (self.bounds[0], self.bounds[1], 0, 0), marker_points or ()))
+            for field_name, bounds, points in geometry:
+                if not _paint_clip_contains(self.paint_clip, bounds, points):
+                    raise _invalid(field_name, self.paint_clip.bounds,
+                                   "completed absolute geometry contained by paint_clip.bounds",
+                                   owner=f"primitive {_brief(self.scene_id)}")
 
 @dataclass(frozen=True)
 class SceneSlot:
@@ -525,6 +649,32 @@ class SceneGroup:
 
 
 @dataclass(frozen=True)
+class SceneLaneWindowAbsence:
+    """Layout-proven original mark omission; contains no temporal or spatial policy."""
+
+    placement_id: str
+    instance_id: str
+    facet: str
+    source_ref: str
+    source_kind: str
+    semantic_role: str
+    reason: str = "outside-window"
+
+    def __post_init__(self) -> None:
+        if (not all(isinstance(value, str) and value for value in
+                    (self.placement_id, self.instance_id, self.source_ref, self.source_kind))
+                or self.reason != "outside-window"
+                or (self.facet, self.semantic_role) not in {
+                    ("planned", "planned"), ("planned", "snapshot"), ("planned", "scenario"),
+                    ("actual", "actual"), ("missing-actual", "missing-actual")}):
+            raise _invalid("placement_id/instance_id/facet/source_ref/source_kind/semantic_role/reason",
+                           (self.placement_id, self.instance_id, self.facet, self.source_ref,
+                            self.source_kind, self.semantic_role, self.reason),
+                           "opaque original identifiers and a source-mark facet/role omitted outside-window",
+                           owner="SceneLaneWindowAbsence")
+
+
+@dataclass(frozen=True)
 class SceneLaneMember:
     """Closed lane membership and primitive-emission inventory for one member."""
 
@@ -532,13 +682,17 @@ class SceneLaneMember:
     member_id: str
     emitted_primitive_ids: tuple[str, ...]
     primary_mark_ids: tuple[str, ...]
+    window_absences: tuple[SceneLaneWindowAbsence, ...] = ()
 
     def __post_init__(self) -> None:
         if (not isinstance(self.row_id, str) or not self.row_id
                 or not isinstance(self.member_id, str) or not self.member_id
                 or not isinstance(self.emitted_primitive_ids, tuple)
                 or not isinstance(self.primary_mark_ids, tuple)
-                or not self.emitted_primitive_ids or not self.primary_mark_ids
+                or not isinstance(self.window_absences, tuple)
+                or any(not isinstance(item, SceneLaneWindowAbsence) for item in self.window_absences)
+                or ((not self.emitted_primitive_ids or not self.primary_mark_ids)
+                    and not any(item.facet == "planned" for item in self.window_absences))
                 or any(not isinstance(item, str) or not item
                        for item in (*self.emitted_primitive_ids, *self.primary_mark_ids))
                 or len(set(self.emitted_primitive_ids)) != len(self.emitted_primitive_ids)
@@ -546,7 +700,13 @@ class SceneLaneMember:
                 or not set(self.primary_mark_ids) <= set(self.emitted_primitive_ids)):
             raise _invalid("row_id/member_id/emitted_primitive_ids/primary_mark_ids",
                            (self.row_id, self.member_id, self.emitted_primitive_ids, self.primary_mark_ids),
-                           "non-empty row/member IDs, non-empty unique tuple IDs, and primary marks drawn from emitted IDs",
+                           "non-empty row/member IDs, unique tuple IDs, primary marks drawn from emitted IDs, and original primary omission proof for empty inventories",
+                           owner="SceneLaneMember")
+        if (len({item.placement_id for item in self.window_absences}) != len(self.window_absences)
+                or len({(item.instance_id, item.facet) for item in self.window_absences}) != len(self.window_absences)
+                or any(item.placement_id in self.emitted_primitive_ids for item in self.window_absences)):
+            raise _invalid("window_absences", self.window_absences,
+                           "unique original placement and instance/facet keys, not also emitted",
                            owner="SceneLaneMember")
 
 
@@ -707,7 +867,7 @@ class SceneSurface:
                 raise _invalid("lane_members/lane_obstacles/lane_clearance", (self.lane_members, self.lane_obstacles, self.lane_clearance),
                                "empty lane facts when lane_mode is None", owner=f"SceneSurface({_brief(self.surface_id)})")
         else:
-            if (not self.lane_members or not self.lane_obstacles
+            if (not self.lane_members
                     or not _finite_number(self.lane_clearance)
                     or self.lane_clearance < 0
                     or any(not isinstance(item, SceneLaneObstacle) for item in self.lane_obstacles) or any(

@@ -33,6 +33,9 @@ from chrona.presentation.layout.surface_geometry import (
 from chrona.presentation.layout.surface_lanes import lane_owner
 from chrona.presentation.layout.lane_mark_facets import span_mark_footprint
 from chrona.presentation.layout.text import metric_for_role, measure_text_width, place_text, wrap_text
+from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
+from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
+from chrona.presentation.model.projection import WindowMode
 
 
 @dataclass(frozen=True)
@@ -60,6 +63,7 @@ class SurfaceMemberLabelContext:
 class SurfaceMemberLabelRequests:
     pre_route: tuple[LabelRequest, ...]
     post_route: tuple[LabelRequest, ...]
+    window_absences: tuple[WindowLabelAbsence, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -140,6 +144,36 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
     preflight = request.fixed_lane_preflight
     measured = {item.placement_id: item for item in preflight.measured_labels} if preflight else {}
     requests: list[LabelRequest] = []
+    window_absences: list[WindowLabelAbsence] = []
+
+    def admission_for(item, container_id, *, folded=False):
+        if getattr(projection, "window_mode", None) != WindowMode.EXPLICIT:
+            return None, None
+        kind = (MarkOccurrenceKind.FOLDED if folded else MarkOccurrenceKind.LANE_FINAL
+                if projection.lane_membership is not None else MarkOccurrenceKind.ROW
+                if projection.rows else MarkOccurrenceKind.AUTO)
+        occurrence = MarkOccurrence(kind, container_id if kind != MarkOccurrenceKind.AUTO else item.object_id,
+            item.item_id or item.object_id, item.object_id,
+            "combined" if kind == MarkOccurrenceKind.AUTO else item.source_kind)
+        index = request.mark_visibility_index
+        if index is None:
+            raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/items",
+                              detail="stage=label-admission; reason=missing-visibility-index")
+        return occurrence, index.lookup_label(occurrence, projection=projection,
+                                              as_of=request.surface_content.as_of)
+
+    def normalize(placement_id, item, components, occurrence, admission, *, semantic_id="memberLabel", lane=None):
+        if admission is None:
+            return tuple(value for _, value in components)
+        parts = admission.admit_components(tuple(components), semantic_id=semantic_id)
+        if not parts:
+            absence = WindowLabelAbsence(placement_id, item.object_id, occurrence, semantic_id,
+                admission, tuple(components), lane[0] if lane else None, lane[1] if lane else None,
+                visibility_index=request.mark_visibility_index)
+            absence.validate_cache(request.mark_visibility_index)
+            window_absences.append(absence)
+            return ()
+        return parts
     if context.as_of_label is not None:
         x, content = context.as_of_label
         requests.append(LabelRequest("as-of-label", "actual-set", content,
@@ -164,15 +198,19 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 if not isinstance(start_at, date) and not isinstance(end_at, date):
                     continue
                 attached = attached_labels.get(item.object_id) if getattr(item, "attached_to", None) else None
-                parts = []
+                components = []
                 if attached is not None:
-                    parts.append(attached)
+                    components.append(("attached", attached))
                 elif not contract.labels.enabled:
                     continue
                 if attached is None and "title" in contract.labels.content:
-                    parts.append(item.title)
+                    components.append(("title", item.title))
                 if attached is None and "finishDelta" in contract.labels.content and item.finish_delta is not None:
-                    parts.append(f"{item.finish_delta:+d}d")
+                    components.append(("finishDelta", f"{item.finish_delta:+d}d"))
+                if not components:
+                    continue
+                occurrence, admission = admission_for(item, review_row.row_id)
+                parts = normalize(f"member-label:{instance_id}", item, components, occurrence, admission, lane=lane)
                 if not parts:
                     continue
                 host_kind = "actual" if item.source_kind == "actual" else "planned"
@@ -218,6 +256,11 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
             host_kind = "actual" if folded.item.source_kind == "actual" else "planned"
             mark = marks.get(f"{host_kind}:{instance_id}")
             group = groups.get(folded.group_id)
+            occurrence, admission = admission_for(folded.item, folded.group_id, folded=True)
+            parts = normalize(f"member-label:{instance_id}", folded.item,
+                (("title", folded.item.title),), occurrence, admission)
+            if not parts:
+                continue
             if folded.item.source_kind == "actual" and mark is None:
                 raise LayoutError("E_LAYOUT_LABEL_HOST_UNAVAILABLE",
                     f"/placement/member-label:group-header:{folded.group_id}:{folded.item.object_id}")
@@ -239,6 +282,12 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
             if (item.finish_delta is None or "finishDelta" in contract.labels.content
                     or projection.lane_membership is not None):
                 continue
+            occurrence, admission = admission_for(item, review_row.row_id)
+            parts = normalize(f"variance:{instance_id}", item,
+                (("finishDelta", f"{item.finish_delta:+d}d"),), occurrence, admission,
+                semantic_id="finishDelta")
+            if not parts:
+                continue
             mark = marks.get(f"actual:{instance_id}") or marks.get(f"planned:{instance_id}")
             track = tracks[layout_id]
             actual = item.actual or {}
@@ -256,7 +305,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
         (projection.lane_membership is not None and item.semantic_id == "memberLabel"))
     pre_ids = {id(item) for item in pre_route}
     post_route = tuple(item for item in requests if id(item) not in pre_ids)
-    return SurfaceMemberLabelRequests(pre_route, post_route)
+    return SurfaceMemberLabelRequests(pre_route, post_route, tuple(window_absences))
 
 
 def place_member_labels(context: SurfaceMemberLabelContext,
