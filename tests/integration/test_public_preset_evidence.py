@@ -7,6 +7,7 @@ import yaml
 
 from chrona.app.cli import main
 from chrona.presentation.contracts import ClosureIdentity, PresentationPresetContract, ViewContract, parse_contract
+from tests.support import synthetic_review as sr
 
 
 ROOT = Path(__file__).parents[2]
@@ -34,20 +35,27 @@ def _assert_packaged_view_contract(path: Path, expected_id: str) -> dict:
 
 
 def _assert_view_copy_except_axis(packaged: Path, corpus: Path) -> None:
-    """Guard all declarations except the published axis/endpoint migrations."""
+    """Guard all declarations except published packaged policy migrations."""
     package_document = yaml.safe_load(packaged.read_bytes())
     corpus_document = yaml.safe_load(corpus.read_bytes())
     for document in (package_document, corpus_document):
+        document.pop("version")  # the packaged reference adopts the live View contract
         document["body"].pop("axis")
+        heading = document["body"].get("heading", {})
+        heading.pop("text", None)
+        if not heading:
+            document["body"].pop("heading", None)
         for column in document["body"].get("tableColumns", ()):
             column.pop("endDisplay", None)
+            column.pop("text", None)
+        document["body"].get("rows", {}).get("laneTable", {}).pop("text", None)
     assert package_document == corpus_document
 
 
 def test_editorial_non_view_corpus_copies_match_and_packaged_view_is_independent():
     """Packaged Views own general policy; authored corpus Views remain independent.
 
-    The unchanged Theme/Layout/Scheme/profile copies still retain their byte guard.
+    Theme/Scheme/profile retain byte guards; Layout permits only its declared cap.
     """
     bundle = ROOT / "src/chrona/resources/presets/bundles/editorial"
     corpus = ROOT / "examples/halcyon-1"
@@ -60,7 +68,13 @@ def test_editorial_non_view_corpus_copies_match_and_packaged_view_is_independent
     for bundle_name, corpus_path in pairs.items():
         bundle_path = bundle / bundle_name
         assert bundle_path.is_file() and corpus_path.is_file()
-        assert bundle_path.read_bytes() == corpus_path.read_bytes(), (bundle_name, corpus_path)
+        if bundle_name == "layout.yaml":
+            packaged_layout = yaml.safe_load(bundle_path.read_bytes())
+            corpus_layout = yaml.safe_load(corpus_path.read_bytes())
+            assert sr.find_node(packaged_layout, "table").pop("maxInlineShare") == 0.4
+            assert packaged_layout == corpus_layout
+        else:
+            assert bundle_path.read_bytes() == corpus_path.read_bytes(), (bundle_name, corpus_path)
     _assert_packaged_view_contract(bundle / "view.yaml", "chrona-preset-editorial")
     _assert_view_copy_except_axis(bundle / "view.yaml", corpus / "views/editorial.yaml")
 
