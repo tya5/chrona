@@ -915,7 +915,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         if relation.relation_id.startswith("legend-swatch:"):
             source = relation.relation_id.removeprefix("legend-swatch:")
         else:
-            source = relation.relation_id.removeprefix("relation:").split(":", 1)[0]
+            source = relation.source_ref
         dependency = semantic_binding(relation.semantic_id)
         bounds = relation.paint_clip.bounds if relation.paint_clip is not None else (0, 0, 0, 0)
         if relation.relation_id.startswith("legend-swatch:") and relation.points:

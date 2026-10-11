@@ -273,6 +273,34 @@ def test_a_valid_project_with_optional_relation_id_renders_through_real_ingress(
     assert rendered.surface.primitives
 
 
+def test_distinct_relation_sources_remain_opaque_in_scene_and_svg(tmp_path):
+    from xml.etree import ElementTree
+    from chrona.core.relation_identity import relation_identity
+    from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
+    from chrona.presentation.scene.serialization import scene_document
+    from tests.support import synthetic_review as sr
+
+    relations = [
+        {"id": name, "type": "dependency", "from": {"object": left, "endpoint": "end"},
+         "to": {"object": right, "endpoint": "start"}, "lag": "0d"}
+        for name, left, right in (("first:part", "a", "b"), ("second:part", "b", "c"))
+    ]
+    source = sr.with_calendar(sr.project({
+        key: sr.span(key, date(2026, 2, 2 + index * 7), 3)
+        for index, key in enumerate(("a", "b", "c"))
+    }, relations))
+    rendered = sr.render(tmp_path, source)
+    expected = {relation_identity(index, declaration) for index, declaration in enumerate(relations)}
+    paths = [item for item in rendered.surface.primitives
+             if item.source_kind == "relation" and item.scene_id.startswith("relation:")]
+    assert len(paths) == 2
+    assert {item.source_ref for item in paths} == expected
+    svg = ElementTree.fromstring(rendered.artifact.content)
+    assert expected <= {item.get("data-source-ref") for item in svg.iter()}
+    assert not [finding for finding in evaluate_scene_perceptibility(scene_document(rendered.scene))
+                if finding.code == "E_SCENE_RELATION_PATH_DUPLICATE"]
+
+
 def test_lane_projection_object_key_wins_over_field_and_unknown_target_fails():
     project = {"objects": {
         "a": {"title": "A", "fields": {"slot": "field-a"}},
