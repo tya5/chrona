@@ -15,6 +15,45 @@ properties:
     type: array
     uniqueItems: true
     items: {$ref: "#/$defs/id"}
+  viewDefaults:
+    description: "The View members this Layout profile supplies by default, as a View body fragment (#1341): the design half of a View. A member the View declares replaces the design's whole member; a member it omits takes the design's. Each member is validated as the View member it becomes, after the merge. `comparison`, `rows` and `window` merge one level down and only into a member the View declares."
+    type: object
+    additionalProperties: false
+    properties:
+      visibility: {description: "Default View `visibility` (labels, relations, annotations, links, fallback)."}
+      axis: {description: "Default View `axis` (the tier set)."}
+      deadlines: {description: "Default View `deadlines` (show)."}
+      shading: {description: "Default View `shading` (non-working days, exceptions)."}
+      timePresentation: {description: "Default View `timePresentation` (as-of marker form, calendar-closed presentation)."}
+      annotationPresentation: {description: "Default View `annotationPresentation`."}
+      backgroundDecoration: {description: "Default View `backgroundDecoration` (rows, groups)."}
+      progressFill: {description: "Default View `progressFill` (source)."}
+      comparison:
+        description: "Design half of the View `comparison` member: policy for how a comparison is shown."
+        type: object
+        additionalProperties: false
+        properties:
+          baselineMarks: {description: "Default View `comparison.baselineMarks`."}
+          missingActualScope: {description: "Default View `comparison.missingActualScope`."}
+          deltaUnit: {description: "Default View `comparison.deltaUnit`."}
+          facets: {description: "Default View `comparison.facets`."}
+      rows:
+        description: "Design half of the View `rows` member: the row structure."
+        type: object
+        additionalProperties: false
+        properties:
+          mode: {description: "Default View `rows.mode`."}
+          trackAllocation: {description: "Default View `rows.trackAllocation`."}
+          packing: {description: "Default View `rows.packing`."}
+          laneTable: {description: "Default View `rows.laneTable`."}
+          points: {description: "Default View `rows.points`."}
+          items: {description: "Default View `rows.items`."}
+      window:
+        description: "Design half of the View `window` member."
+        type: object
+        additionalProperties: false
+        properties:
+          marginDays: {description: "Default View `window.marginDays`."}
   reviewSurface:
     type: object
     description: "Finite arrangement policies for the table--timeline review surface."
