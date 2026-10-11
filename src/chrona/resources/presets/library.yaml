@@ -1,21 +1,18 @@
 version: chrona/preset-library/v0.2
 entries:
   - id: mission-light
-    gallerySet: halcyon-mission-brief-appearance
     members:
       view: {id: chrona-preset-mission-light, kind: view, sourceRoot: presets/bundles/mission-light, sourcePath: view.yaml}
       theme: {id: chrona-builtin-mission-light, kind: theme, sourceRoot: presets/bundles/mission-light, sourcePath: theme.yaml}
       colorScheme: {id: mission-light, kind: color-scheme, sourceRoot: presets/bundles/mission-light, sourcePath: scheme.yaml}
       layout: {id: chrona-builtin-mission-light, kind: layout-profile, sourceRoot: presets/bundles/mission-light, sourcePath: layout.yaml}
   - id: control-room-dark
-    gallerySet: halcyon-mission-brief-appearance
     members:
       view: {id: chrona-preset-control-room-dark, kind: view, sourceRoot: presets/bundles/control-room-dark, sourcePath: view.yaml}
       theme: {id: chrona-builtin-control-room-dark, kind: theme, sourceRoot: presets/bundles/control-room-dark, sourcePath: theme.yaml}
       colorScheme: {id: control-room-dark, kind: color-scheme, sourceRoot: presets/bundles/control-room-dark, sourcePath: scheme.yaml}
       layout: {id: chrona-builtin-control-room-dark, kind: layout-profile, sourceRoot: presets/bundles/control-room-dark, sourcePath: layout.yaml}
   - id: print-mono
-    gallerySet: halcyon-mission-brief-appearance
     members:
       view: {id: chrona-preset-print-mono, kind: view, sourceRoot: presets/bundles/print-mono, sourcePath: view.yaml}
       theme: {id: chrona-builtin-print-mono, kind: theme, sourceRoot: presets/bundles/print-mono, sourcePath: theme.yaml}
@@ -39,7 +36,6 @@ entries:
       layout: {id: chrona-builtin-elevated-light, kind: layout-profile, sourceRoot: presets/bundles/elevated-light, sourcePath: layout.yaml}
       detailProfile: {id: chrona-builtin-legend, kind: review-detail-profile, sourceRoot: presets/bundles/elevated-light, sourcePath: detail.yaml}
   - id: editorial
-    gallerySet: generated-design-directions
     members:
       view: {id: chrona-preset-editorial-lanes, kind: view, sourceRoot: presets/bundles/editorial, sourcePath: view-lanes.yaml}
       theme: {id: chrona-builtin-editorial, kind: theme, sourceRoot: presets/bundles/editorial, sourcePath: theme.yaml}
@@ -47,7 +43,6 @@ entries:
       layout: {id: chrona-builtin-editorial, kind: layout-profile, sourceRoot: presets/bundles/editorial, sourcePath: layout.yaml}
       detailProfile: {id: chrona-builtin-editorial-detail, kind: review-detail-profile, sourceRoot: presets/bundles/editorial, sourcePath: detail.yaml}
   - id: technical-print
-    gallerySet: generated-design-directions
     visualProfile: {preferred: chrona-output/visual/v0.7-svg}
     members:
       view: {id: chrona-preset-technical-print, kind: view, sourceRoot: presets/bundles/technical-print, sourcePath: view.yaml}
@@ -64,7 +59,6 @@ entries:
           contentIdentity: sha256:2945f6d2767ca0cc2c8a4a6045055c6f1ee944f5097269ee45340904856b0ec0
           noticeContentIdentity: sha256:b07fa7bbb7bff0acdfb2cf02905b7ca7ad1db3ead9f59b13f47c4ced097f3eb6
   - id: chrona-default-draft
-    gallerySet: bundled-default
     members:
       view: {id: chrona-preset-editorial-readable-default, kind: view, sourceRoot: presets/bundles/editorial-readable-default, sourcePath: view.yaml}
       theme: {id: chrona-builtin-editorial-readable-default, kind: theme, sourceRoot: presets/bundles/editorial-readable-default, sourcePath: theme.yaml}

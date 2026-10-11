@@ -658,12 +658,14 @@ def _host_under(subject: Mapping[str, Any], primitives: list[Any], index: int,
         except (KeyError, TypeError, ValueError):
             inside = False
         unreadable = False
-        if inside and prior.get("kind") == "Symbol" and is_label_chip_role(prior.get("visualRole")):
+        catalog_pattern = prior.get("pattern")
+        cut_pattern = isinstance(catalog_pattern, Mapping) and bool(catalog_pattern.get("primitives"))
+        if inside and prior.get("kind") == "Symbol" and (is_label_chip_role(prior.get("visualRole")) or cut_pattern):
             symbol = prior.get("symbol")
             outline = symbol.get("outline") if isinstance(symbol, Mapping) else None
             try:
                 if not isinstance(outline, list) or not outline:
-                    raise InkTouchError("unreadable chip fill")
+                    raise InkTouchError("unreadable completed host fill")
                 # The same nonzero completed-path inspector used for sparse
                 # artwork; zero-area bounds ask about this actual sample.
                 inside = fill_touches(outline, (x, y, 0.0, 0.0))

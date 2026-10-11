@@ -196,7 +196,7 @@
   "exit": 0,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"ok\", \"presets\": [{\"id\": \"mission-light\", \"gallerySet\": \"halcyon-mission-brief-appearance\"}, {\"id\": \"control-room-dark\", \"gallerySet\": \"halcyon-mission-brief-appearance\"}, {\"id\": \"print-mono\", \"gallerySet\": \"halcyon-mission-brief-appearance\"}, {\"id\": \"executive-light\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"elevated-light\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"editorial\", \"gallerySet\": \"generated-design-directions\"}, {\"id\": \"technical-print\", \"gallerySet\": \"generated-design-directions\"}, {\"id\": \"chrona-default-draft\", \"gallerySet\": \"bundled-default\"}], \"default\": \"chrona-default-draft\"}\n"
+  "stdout": "{\"status\": \"ok\", \"presets\": [{\"id\": \"mission-light\"}, {\"id\": \"control-room-dark\"}, {\"id\": \"print-mono\"}, {\"id\": \"executive-light\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"elevated-light\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"editorial\"}, {\"id\": \"technical-print\"}, {\"id\": \"chrona-default-draft\"}], \"default\": \"chrona-default-draft\"}\n"
  },
  "render-actual": {
   "argv": [

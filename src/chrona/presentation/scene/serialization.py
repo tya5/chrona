@@ -8,11 +8,12 @@ from typing import Any, Mapping
 
 from chrona.presentation.scene.model import (
     PRIMARY_LANE_MARK_PURPOSES, DecorationDisposition, InspectionScene, LinearGradient, RadialGradient,
-    PatternGeometry, SceneIconPath, SceneLaneObstacle, SceneLaneRectObstacle,
+    PatternGeometry, SceneIconPath, SceneLaneMember, SceneLaneWindowAbsence, SceneLaneObstacle, SceneLaneRectObstacle,
     SceneLaneSegmentObstacle, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish,
-    TextLayout, requires_lane_member_provenance,
+    TextLayout, requires_lane_member_provenance, MarkerGeometry, PathCommand, completed_marker_outline,
 )
 from chrona.resources import schema_validator
+from chrona.presentation.scene.pattern_host import completed_pattern_host_valid
 
 
 class SceneSerializationError(ValueError):
@@ -62,6 +63,8 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
     has_fit = any(primitive.viewer_fit != "raw" or (primitive.text_layout is not None and primitive.text_layout.fit is not None)
                   for surface in scene.surfaces for primitive in surface.primitives)
     has_stroke_clip = any(primitive.stroke_clip is not None for surface in scene.surfaces for primitive in surface.primitives)
+    has_paint_clip = any(primitive.paint_clip is not None for surface in scene.surfaces for primitive in surface.primitives)
+    has_window_absences = any(member.window_absences for surface in scene.surfaces for member in surface.lane_members)
     has_marker_axis = any(marker is not None and (marker.angle_degrees is not None or marker.physical_units)
                          for surface in scene.surfaces for primitive in surface.primitives
                          for marker in (primitive.marker_start, primitive.marker_end))
@@ -69,8 +72,8 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
         primitive.from_instance_id is not None or primitive.to_instance_id is not None
         for surface in scene.surfaces for primitive in surface.primitives)
     return {
-        "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale or has_runs or has_fit or has_marker_axis or has_stroke_clip
-                    or has_relation_endpoint_identity
+        "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale or has_runs or has_fit or has_marker_axis or has_stroke_clip or has_paint_clip
+                    or has_relation_endpoint_identity or has_window_absences
                     else "chrona/scene/v0.6"),
         "kind": "scene",
         "provenance": {
@@ -126,14 +129,153 @@ def validate_scene_document(document: Mapping[str, Any]) -> None:
     except Exception as error:  # schema resource failures have no public partial document
         nested = str(error).split(": ", 1)[-1] if isinstance(error, SceneSerializationError) else type(error).__name__
         raise _scene_error(f"{schema_name or 'Scene schema'} validation could not complete: {_brief(nested)}") from error
+    surfaces = document.get("surfaces")
+    has_window_absences = any("windowAbsences" in member
+        for surface in surfaces if isinstance(surface, Mapping)
+        and isinstance(surface.get("laneMembers"), list)
+        for member in surface["laneMembers"] if isinstance(member, Mapping)) if isinstance(surfaces, list) else False
     if errors:
+        if has_window_absences:
+            raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: windowAbsences requires complete valid original mark facts")
+        if any("paintClip" in error.absolute_path for error in errors):
+            raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: paintClip requires completed finite positive bounds")
         first = errors[0]
         path = "/" + "/".join(str(part)[:64] for part in first.absolute_path)
         raise _scene_error(f"{schema_name} rejected the document: {len(errors)} schema error(s), first at {path or '/'}")
+    if any(not _finite(primitive["paintClip"])
+           for surface in document.get("surfaces", ())
+           for primitive in surface.get("primitives", ()) if "paintClip" in primitive):
+        raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: paintClip bounds must be finite")
     if not _finite(document):
         raise _scene_error("document contains a non-finite numeric Scene fact; check completed bounds, paint, or measurement fields")
     if not _references_are_closed(document):
+        if has_window_absences:
+            raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: window omission and emitted lane inventories must be closed")
         raise _scene_error("surface cross-references must resolve among declared slots, rows, columns, primitives, and lane facts")
+    if not _paint_clips_are_closed(document):
+        raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: completed primitive geometry must be contained by its paintClip bounds")
+    if not _pattern_hosts_are_closed(document):
+        raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: pattern requires an unchanged Rect phase or a closed window-cut Symbol host")
+
+
+def _pattern_hosts_are_closed(document: Mapping[str, Any]) -> bool:
+    """Apply the typed completed-host contract to schema-validated public facts."""
+    def bounds(value: Mapping[str, Any] | None) -> tuple[float, ...] | None:
+        return tuple(value[key] for key in ("inline", "block", "inlineSize", "blockSize")) if value is not None else None
+
+    for surface in document["surfaces"]:
+        for primitive in surface["primitives"]:
+            pattern = primitive.get("pattern")
+            if pattern is None:
+                continue
+            try:
+                outline = tuple(PathCommand(command["kind"], tuple(tuple(point) for point in command["points"]))
+                                for command in primitive.get("symbol", {}).get("outline", ()))
+            except ValueError:
+                return False
+            if not completed_pattern_host_valid(
+                    kind=primitive["kind"], purpose=primitive["purpose"], visual_role=primitive["visualRole"],
+                    bounds=bounds(primitive["bounds"]), catalog=bool(pattern.get("primitives")),
+                    origin=tuple(pattern["origin"]) if "origin" in pattern else None,
+                    region=bounds(pattern.get("regionBounds")), clip=bounds(pattern.get("clipBounds")),
+                    radius=pattern.get("cornerRadius"), outline=outline,
+                    paint_clipped="paintClip" in primitive,
+                    end_treatment=primitive.get("endTreatment", "closed")):
+                return False
+    return True
+
+
+def _paint_clips_are_closed(document: Mapping[str, Any]) -> bool:
+    """Validate supplied clip containment in serialized absolute geometry."""
+    for surface in document.get("surfaces", ()):
+        if not isinstance(surface, Mapping):
+            return False
+        for primitive in surface.get("primitives", ()):
+            if not isinstance(primitive, Mapping):
+                return False
+            clip = primitive.get("paintClip")
+            if clip is None:
+                continue
+            if not isinstance(clip, Mapping):
+                return False
+            clip_bounds = clip.get("bounds")
+            if not isinstance(clip_bounds, Mapping):
+                return False
+            left, top = clip_bounds.get("inline"), clip_bounds.get("block")
+            right = left + clip_bounds.get("inlineSize") if isinstance(left, (int, float)) and isinstance(clip_bounds.get("inlineSize"), (int, float)) else None
+            bottom = top + clip_bounds.get("blockSize") if isinstance(top, (int, float)) and isinstance(clip_bounds.get("blockSize"), (int, float)) else None
+            if right is None or bottom is None or not math.isfinite(right) or not math.isfinite(bottom):
+                return False
+            bounds = primitive.get("bounds")
+            if not isinstance(bounds, Mapping):
+                return False
+            x, y = bounds.get("inline"), bounds.get("block")
+            width, height = bounds.get("inlineSize"), bounds.get("blockSize")
+            if (not all(isinstance(value, (int, float)) for value in (x, y, width, height))
+                    or width < 0 or height < 0 or not math.isfinite(x + width) or not math.isfinite(y + height)
+                    or x < left or y < top or x + width > right or y + height > bottom):
+                return False
+            points: list[Any] = []
+            for field in ("points", "pathCommands"):
+                values = primitive.get(field) or ()
+                if field == "points":
+                    points.extend(values)
+                else:
+                    for command in values:
+                        if not isinstance(command, Mapping):
+                            return False
+                        points.extend(command.get("points") or ())
+            symbol = primitive.get("symbol")
+            if symbol is not None:
+                if not isinstance(symbol, Mapping):
+                    return False
+                for command in symbol.get("outline") or ():
+                    if not isinstance(command, Mapping):
+                        return False
+                    points.extend(command.get("points") or ())
+            icon = primitive.get("icon")
+            if isinstance(icon, Mapping):
+                for icon_path in icon.get("paths") or ():
+                    if not isinstance(icon_path, Mapping):
+                        return False
+                    for command in icon_path.get("commands") or ():
+                        if not isinstance(command, Mapping):
+                            return False
+                        points.extend(command.get("points") or ())
+            host_paint = primitive.get("paint")
+            host_stroke_width = host_paint.get("strokeWidth") if isinstance(host_paint, Mapping) else None
+            route_points = tuple(tuple(point) for point in primitive.get("points") or ())
+            route_commands = tuple(PathCommand(command["kind"], tuple(tuple(point) for point in command["points"]))
+                                   for command in primitive.get("pathCommands") or ())
+            for marker_field, side in (("markerStart", "start"), ("markerEnd", "end")):
+                raw_marker = primitive.get(marker_field)
+                if raw_marker is None:
+                    continue
+                if not isinstance(raw_marker, Mapping):
+                    return False
+                try:
+                    outline = tuple(PathCommand(command["kind"], tuple(tuple(point) for point in command["points"]))
+                                    for command in raw_marker["outline"])
+                    marker = MarkerGeometry(
+                        outline, raw_marker["headLength"], raw_marker["headWidth"],
+                        raw_marker["attachmentOffset"], raw_marker["paintMode"],
+                        angle_degrees=raw_marker.get("angleDegrees"),
+                        physical_units=raw_marker.get("units") == "userSpaceOnUse",
+                        stroke_width=raw_marker.get("strokeWidth"),
+                    )
+                    projected = completed_marker_outline(marker, side=side, points=route_points,
+                                                       path_commands=route_commands,
+                                                       stroke_width=host_stroke_width)
+                except (KeyError, TypeError, ValueError):
+                    return False
+                for command in projected:
+                    points.extend(command.points)
+            if any(not isinstance(point, (list, tuple)) or len(point) != 2
+                   or not all(isinstance(value, (int, float)) for value in point)
+                   or not (left <= point[0] <= right and top <= point[1] <= bottom)
+                   for point in points):
+                return False
+    return True
 
 
 def _references_are_closed(document: Mapping[str, Any]) -> bool:
@@ -175,7 +317,7 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
         else:
             lane_obstacles = surface.get("laneObstacles", ())
             lane_clearance = surface.get("laneClearance")
-            if (lane_mode != "lanes" or not lane_members or not lane_obstacles
+            if (lane_mode != "lanes" or not lane_members
                     or not _valid_number(lane_clearance) or lane_clearance < 0):
                 return False
             if (len(lane_rows) != len(row_items)
@@ -193,9 +335,17 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
                 emitted = member.get("emittedPrimitiveIds")
                 primary = member.get("primaryMarkIds")
                 if (row_id not in lane_rows or not isinstance(member_id, str) or not member_id
-                        or not isinstance(emitted, list) or not emitted
-                        or not isinstance(primary, list) or not primary
+                        or not isinstance(emitted, list)
+                        or not isinstance(primary, list)
                         or not set(primary) <= set(emitted)):
+                    return False
+                try:
+                    absences = tuple(SceneLaneWindowAbsence(
+                        item["placementId"], item["instanceId"], item["facet"], item["sourceRef"],
+                        item["sourceKind"], item["semanticRole"], item["reason"])
+                        for item in member.get("windowAbsences", ()))
+                    SceneLaneMember(row_id, member_id, tuple(emitted), tuple(primary), absences)
+                except (KeyError, TypeError, ValueError):
                     return False
                 key = (row_id, member_id)
                 if key in member_keys or len(set(emitted)) != len(emitted) or len(set(primary)) != len(primary):
@@ -403,12 +553,20 @@ def _surface(surface: SceneSurface) -> dict[str, Any]:
         result["laneMembers"] = [
             {"rowId": item.row_id, "memberId": item.member_id,
              "emittedPrimitiveIds": list(item.emitted_primitive_ids),
-             "primaryMarkIds": list(item.primary_mark_ids)}
+             "primaryMarkIds": list(item.primary_mark_ids),
+             **({"windowAbsences": [_window_absence(absence) for absence in item.window_absences]}
+                if item.window_absences else {})}
             for item in surface.lane_members
         ]
         result["laneObstacles"] = [_lane_obstacle(item) for item in surface.lane_obstacles]
         result["laneClearance"] = surface.lane_clearance
     return result
+
+
+def _window_absence(item: SceneLaneWindowAbsence) -> dict[str, str]:
+    return {"placementId": item.placement_id, "instanceId": item.instance_id,
+            "facet": item.facet, "sourceRef": item.source_ref, "sourceKind": item.source_kind,
+            "semanticRole": item.semantic_role, "reason": item.reason}
 
 
 def _lane_obstacle(item: SceneLaneObstacle) -> dict[str, Any]:
@@ -473,6 +631,7 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
         "strokeClip": ({"outside": item.stroke_clip.outside, "region": _bounds(item.stroke_clip.region),
                         **({"outline": [_path(command) for command in item.stroke_clip.outline]}
                            if item.stroke_clip.outline else {})} if item.stroke_clip is not None else None),
+        "paintClip": {"bounds": _bounds(item.paint_clip.bounds)} if item.paint_clip is not None else None,
         "fromInstanceId": item.from_instance_id,
         "toInstanceId": item.to_instance_id,
         "fanIn": ({"targetPortId": item.fan_in.target_port_id,
