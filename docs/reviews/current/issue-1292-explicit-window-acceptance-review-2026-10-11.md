@@ -19,26 +19,14 @@ Implementation: `b599e66b`. [Current design, architecture and implementation rec
 
 ## Programme-level criteria (optional)
 
-Pending: final READY-base adoption, public artifact review and exact-main three-OS release CI. These local rows do not authorize closure.
+Current trusted READY9ea350d5 (derived-main38118112401) adopted by ordinary merge. Explicit-window Scene/SVG, paint clips, typed lane absences, window mode, date display, default axis and merged legend-grid integration:76 passed (34.01s). Import11 packages37 inward edges;224 reachable modules/no orphan;live schema annotations pass. Authored examples diff remains empty.
 
-Final disjoint focused batches: 109 passed (18.21s; production/builder/typed and raw clip validation/SVG-PNG containment), 111 passed (2.51s; lane/pattern/stroke adapters). Import direction: 11 packages, 37 edges, all inward. Schema-equivalence against `6c18b9e1`: PASS (Scene six exact deltas, 37 equal; 482 documents/739 probes; four known-invalid fixtures unchanged).
+Current schema gate against READY9ea350d5:Scene six declared deltas,37 equal schemas,482 documents739 probes,four known-invalid unchanged. Sole failure:L2+L3=70.6s exceeds the unchanged60s budget; not accepted as green. CI must pass the same strict gate before release; cause of this timing excess is not established by semantic equivalence. Schema tooling proved/retired two merged #1293 delta entries without refreshing baseline verdicts. Previous public audit:45 unchanged;baseline-ghosts intentionally clips one snapshot/adds seven relation paint clips and an outside-window warning. That older audit is not current-head proof; inspect the new CI snapshot as one batch.
 
-Layout owns visibility, original endpoints, completed contours and clip bounds. Scene copies these facts and typed absence identities; only stroke-relative terminal validation waits for paint binding, then typed and raw Scene enforce full containment. Physical-unit terminals still validate before paint. No routing, text measurement, date selection or geometry repair was added to Scene/adapters.
+PR1410 head `dd76a7e4`, [CI38119890657](https://github.com/tya5/chrona/actions/runs/38119890657): conformance, shard3, MCP and newest-Python public reproduction pass; shards1/2 fail three tests (Scene ID-site count, missing module ownership entry, and in-progress lane inventory). The derived-ready failure follows those failed shards. All three reproduced locally; no unrelated failure was excluded. The pre-code issue correction restores the existing View-selected due-end rule through one shared Layout predicate, retains exact source-inventory validation, and records the approved generated IDs/module ownership without checker exemptions. Failed tests, synthetic span/point × primary/combined scope twins and lane/window regressions:77 pass (38.69s); import11/37 inward,224 reachable/no orphan. Correction is local only until GitHub DNS/fetch recovers; prior-head green checks are not correction-head evidence. No examples edits or full-local repeat. Current snapshot artifact11695440550 exists (101 generated paths); DNS currently prevents local ZIP/SVG audit.
 
-Public audit found four lane renders wrongly including an unowned legend mark
-in the final lane inventory. Pre-code Spec50 clarification `0504c7a7` and
-implementation `091baff1` restrict that account by typed ownership, never ID
-prefixes. Synthetic regression and explicit-window batches: 53 passed (9.73s),
-including partial owner, stripped owner and duplicate/missing rejection.
-All four affected materializers now pass with Scene/SVG byte identity against
-the adopted `6c18b9e1` evidence. Combined with the retained all46 audit, 45
-outputs are unchanged; baseline-ghosts intentionally clips one snapshot and
-adds seven relation paint clips plus its outside-window warning (SVG inspected).
-Final READY-base and release acceptance remain pending.
-Ordinary integration `c934d13b` includes READY main `95b2fddc` and the
-published #1293/#1294 WIPs. The only merge conflict was independent Scene
-and View delta entries in the schema ledger; both were retained. Window/
-paint-clip/caption60 tests pass (30.04s); integrated window/date/axis/typed
-placement83 pass (20.73s). Combined schema-equivalence: PASS, Scene/View
-delta2/equal36,482 documents739 probes,four known invalid unchanged;
-L2+L3=50.9s within60s. Import direction remains11 packages/37 inward edges.
+Connectivity workaround is verified: per-command DoH/resolve, no persistent network change; origin/main remains trusted READY9ea350d5. Artifact11695440550 ZIP digest matches `a60a717c…ea06d`:101 before/after paths, no additions/removals;45 Scene and45 SVG byte-identical. Only baseline-ghosts changes: one snapshot's filled contour/window clipping and seven relation paint clips/bounds, no added/removed primitives; other two changes are derived reports. This is exactdd76 evidence, not the corrective head's release proof. The #1293 Windows release test's missing UTF-8 reads reproduced under forcedcp1252; commit383751a0 fixes decoding and retains exact date/SVG assertions, UTF-8/cp1252 variants and source byte identity. Combined date/default and three CI-failure regressions:49 pass (24.94s). No product/date/paint policy change from this test repair.
+
+## Architecture conclusion
+
+Layout owns window visibility, original-source absences, completed contours and clips. Scene projects typed facts and validates paint-relative containment, never repairs geometry or routes. Lane accounting uses typed ownership, not primitive-ID prefixes or project exceptions. Specs06/07/38/46/50 are normative; all literal rows above are met locally, but current-head artifact/CI and acceptance-containing exact-main three-OS release remain required. Issue stays open.
