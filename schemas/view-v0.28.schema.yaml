@@ -354,6 +354,7 @@ allOf:
               title: {description: "The title template; a Project without a title shows `Chrona`.", type: string, minLength: 1, examples: ["{project} programme board"]}
               subtitle: {description: "The subtitle template, drawn under the title in the Theme's `subtitle` typography role.", type: string, minLength: 1, examples: ["as of {asOf}"]}
               dateForm: {description: "The form of {asOf}; absent is the localized date.", enum: [localized-date, day-month, day-month-year]}
+              text: {$ref: "#/$defs/presentationIntent/properties/text"}
           slotHeadingText:
             description: "Optional literal caption replacements keyed by resolved Layout slot node ID. Each target must already declare a heading; only its text is replaced."
             type: object
@@ -468,6 +469,7 @@ allOf:
                 zero:
                   description: "How a zero value of a `signedNumber` or `signedDays` column reads: `signed` (the default) keeps the sign (`+0`, `+0d`), `plain` draws it without one (`0`, `0d`); non-zero values keep their sign either way (#1289). An `onTime` affix still wraps the text."
                   enum: [signed, plain]
+                text: {$ref: "#/$defs/presentationIntent/properties/text"}
                 affixes:
                   description: "Per-state text affixes (#588) wrapped around the formatted cell text: slip, onTime and ahead for a signed format (a value above, at and below zero), missing for an absent value. Absent, the cell is the formatted text."
                   examples: [{slip: {suffix: "!"}, missing: {suffix: "?"}}]
@@ -687,6 +689,7 @@ allOf:
                 properties:
                   label: {enum: [group, lane]}
                   count: {type: boolean, default: false}
+                  text: {$ref: "#/$defs/presentationIntent/properties/text"}
               points: {description: "Automatic-row point policy; attached (the default) draws a point that attachesTo a selected span on that span's row.", enum: [attached, own-row, group-header, predecessor]}
               items:
                 type: array

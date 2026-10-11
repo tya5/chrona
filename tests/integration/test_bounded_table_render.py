@@ -1,5 +1,4 @@
 from copy import deepcopy
-from dataclasses import replace
 from datetime import date
 
 import pytest
@@ -41,15 +40,12 @@ def test_standard_render_enforces_declared_table_bound_with_source_linked_ellips
     assert "…" in rendered.artifact.content.decode()
 
 
-def test_normalized_heading_ellipsis_reaches_public_warning_with_full_source(tmp_path, monkeypatch):
-    import chrona.usecases.render_review as usecase
-
-    original = usecase.compose_heading
-    monkeypatch.setattr(usecase, "compose_heading", lambda *args, **kwargs: replace(
-        original(*args, **kwargs), text_wrap="allow"))
+def test_authored_heading_ellipsis_reaches_public_warning_with_full_source(tmp_path):
+    presentation = parts()
+    presentation["view"]["body"]["heading"] = {"text": {"wrap": "allow"}}
     project = source("Alpha")
     project["project"]["title"] = "X" * 800
-    rendered = sr.render(tmp_path, project, presentation=parts())
+    rendered = sr.render(tmp_path, project, presentation=presentation)
     warning = next(item.payload for item in rendered.warning_records
                    if item.payload["code"] == "W_LAYOUT_TEXT_ELLIPSIZED" and item.payload.get("placementId") == "title")
     assert warning["sourceTitle"] == "X" * 800
@@ -69,23 +65,13 @@ def test_short_table_keeps_actual_scene_geometry_and_paint_unchanged(tmp_path):
     assert bounded.artifact.content == ordinary.artifact.content
 
 
-def test_render_pipeline_projects_normalized_heading_and_table_wrap_intent(tmp_path, monkeypatch):
-    # Exercise the normalized intent seam while shared View schema work waits
-    # for dev B. This is render/adapter evidence, not YAML-admission evidence.
-    import chrona.usecases.render_review as usecase
-
-    heading, table = usecase.compose_heading, usecase.normalize_v05_table_content
-    monkeypatch.setattr(usecase, "compose_heading", lambda *args, **kwargs: replace(
-        heading(*args, **kwargs), text_wrap="allow"))
-
-    def wrapped_table(*args, **kwargs):
-        result = table(*args, **kwargs)
-        return replace(result, columns=tuple(replace(column, text_wrap="allow") for column in result.columns))
-
-    monkeypatch.setattr(usecase, "normalize_v05_table_content", wrapped_table)
+def test_render_pipeline_projects_authored_heading_and_table_wrap_intent(tmp_path):
+    presentation = parts()
+    presentation["view"]["body"]["heading"] = {"text": {"wrap": "allow"}}
+    presentation["view"]["body"]["tableColumns"][0]["text"] = {"wrap": "allow"}
     project = source("task words " * 100)
     project["project"]["title"] = "project title " * 80
-    rendered = sr.render(tmp_path, project, presentation=parts())
+    rendered = sr.render(tmp_path, project, presentation=presentation)
     texts = {item.scene_id: item for item in rendered.surface.primitives if getattr(item, "text_layout", None)}
     assert len(texts["title"].text_layout.lines) > 1
     assert len(texts["cell:a:Task"].text_layout.lines) > 1

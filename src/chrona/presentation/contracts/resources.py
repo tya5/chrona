@@ -161,6 +161,7 @@ class TableColumn:
     missing_by: FrozenDict | None = None  # the `missing` text by observation state (#991)
     text_role: str | None = None  # the Theme text role of this column's cells (#1062)
     zero: str = "signed"  # `plain` draws a zero signed value without its sign (#1289)
+    text_wrap: str = "forbid"
 
 
 @dataclass(frozen=True)
@@ -200,6 +201,7 @@ class ViewLaneTable:
 
     label: ViewLaneLabel
     count: bool = False
+    text_wrap: str = "forbid"
 
 
 @dataclass(frozen=True)
@@ -249,6 +251,7 @@ class ViewHeading:
     subtitle: str | None = None
     date_form: str = "localized-date"
     kicker: str | None = None
+    text_wrap: str = "forbid"
 
 
 @dataclass(frozen=True)
@@ -926,7 +929,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                                       _column_affixes(column["id"], column.get("affixes")),
                                       freeze(column["missingBy"]) if "missingBy" in column else None,
                                       str(column["textRole"]) if "textRole" in column else None,
-                                      str(column.get("zero", "signed")))
+                                      str(column.get("zero", "signed")),
+                                      str(column.get("text", {}).get("wrap", "forbid")))
                           for column in body.get("tableColumns", ()))
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)
@@ -945,7 +949,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         tuple(body.get("annotations", ())), ViewRows(
             ViewRowMode(str(rows["mode"])), row_items, str(rows.get("points", "attached")),
             ViewTrackAllocation(str(rows["trackAllocation"])) if "trackAllocation" in rows else None,
-            (ViewLaneTable(ViewLaneLabel(str(rows["laneTable"]["label"])), bool(rows["laneTable"].get("count", False)))
+            (ViewLaneTable(ViewLaneLabel(str(rows["laneTable"]["label"])), bool(rows["laneTable"].get("count", False)),
+                           str(rows["laneTable"].get("text", {}).get("wrap", "forbid")))
              if "laneTable" in rows else None),
             (tuple(str(item) for item in rows.get("packing", ("explicit", "attached")))
              if version == "chrona/view/v0.28" else ()),
@@ -1084,7 +1089,8 @@ def _view_heading(raw: Any) -> ViewHeading | None:
     heading = ViewHeading(str(raw["title"]) if "title" in raw else None,
                           str(raw["subtitle"]) if "subtitle" in raw else None,
                           str(raw.get("dateForm", "localized-date")),
-                          str(raw["kicker"]) if "kicker" in raw else None)
+                          str(raw["kicker"]) if "kicker" in raw else None,
+                          str(raw.get("text", {}).get("wrap", "forbid")))
     try:
         for template in (heading.kicker, heading.title, heading.subtitle):
             if template is not None:

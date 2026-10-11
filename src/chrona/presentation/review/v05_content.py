@@ -47,7 +47,8 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
     if getattr(view.rows.mode, "value", view.rows.mode) == "lanes":
         return _lane_table_content(projection, project, view)
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
-    columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width), column.header_orientation)
+    columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width), column.header_orientation,
+                                       text_wrap=column.text_wrap)
                     for column in view.table_columns)
     as_of = date.fromisoformat(str(actual_body["asOf"])) if isinstance(actual_body.get("asOf"), str) else None
     def cell_parts(item: Any, column: Any, row_index: int) -> tuple[str, str, str]:
@@ -119,9 +120,11 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
     lane_table = view.rows.lane_table
     if projection.lane_membership is None or not projection.lane_rows or lane_table is None:
         raise ValueError(f"E_REVIEW_LANE_TABLE_PROJECTION: laneMembership={projection.lane_membership is not None}, laneRows={len(projection.lane_rows)}, laneTable={lane_table is not None}")
-    columns = (TableColumnContent("Lane", "Lane", "start", TableColumnWidth("content", "content")),)
+    columns = (TableColumnContent("Lane", "Lane", "start", TableColumnWidth("content", "content"),
+                                  text_wrap=lane_table.text_wrap),)
     if lane_table.count:
-        columns += (TableColumnContent("Items", "Items", "end", TableColumnWidth("content", "content")),)
+        columns += (TableColumnContent("Items", "Items", "end", TableColumnWidth("content", "content"),
+                                       text_wrap=lane_table.text_wrap),)
     entities = project.get("entities", {})
     cells = []
     levels = []
@@ -517,6 +520,7 @@ def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Map
         title=title,
         subtitle=render_heading(heading.subtitle, facts) if heading.subtitle is not None else None,
         kicker=render_heading(heading.kicker, facts) if heading.kicker is not None else None,
+        text_wrap=heading.text_wrap,
     )
 
 
