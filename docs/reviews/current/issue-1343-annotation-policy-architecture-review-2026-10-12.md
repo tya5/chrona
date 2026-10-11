@@ -10,6 +10,8 @@ Specs33/44/50: Layout still completes all measured geometry/search/connectors;
 normalized intents preserve truthful Project-anchor diagnostic references.
 #1341: policy is one whole-member ingress overlay, not a second inheritance path.
 Spec56: additive optional properties and shared schema fragments; no version bump.
+Network boundary: the new members follow its existing annotation exclusions;
+accepting ignored intent would violate the completed-placement contract.
 Explicit legacy declarations retain order/geometry; new identity/policy failures
 apply only to opted-in expansion. No ID-special case or previous-render cache.
 Risk/gate: prove actual five-design Scene/SVG placements and unchanged legacy

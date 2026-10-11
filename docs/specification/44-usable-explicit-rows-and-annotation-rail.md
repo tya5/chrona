@@ -31,8 +31,11 @@ fallback position.
 
 ## Reusable Project-note placement (#1343)
 
-Implementation pending. Project annotations remain the authority for narrative
-text, kind and `anchor.object`. An effective View MAY declare
+Implementation pending. The two new declarations are table-timeline intent and follow the existing
+dependency-network exclusion of annotation placement; network Views reject
+them rather than silently ignoring completed-note intent.
+Project annotations remain the authority for narrative text, kind and
+`anchor.object`. An effective View MAY declare
 `annotationBindings`, an ordered finite list of `{kind, temporalKind, purpose,
 facet, endpoint}`. `kind` matches the exact Project kind; `temporalKind` is
 `point`, `span` or `any`, classified from the selected object's resolved

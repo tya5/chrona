@@ -14,6 +14,8 @@ Reuse ordinary typed annotation intents and existing Layout candidate completion
 do not add Scene/adapter placement or Project-specific rules. If completion
 reveals a missing contract, return to design before altering product behavior.
 Permanent `examples/**` migration is reviewer-owned; no authored managed evidence.
+Extend existing dependency-network annotation exclusions to both new members;
+test rejection rather than accepting intent its Layout cannot complete.
 Publish coherent implementation/test/review units in one eventual PR; inspect
 its CI-owned public snapshot as a batch, focused tests and schema gate locally,
 full three-OS containing-review release in CI. Keep both literal criteria open
