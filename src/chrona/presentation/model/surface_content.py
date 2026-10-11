@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import date
 from dataclasses import dataclass, field
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec
 from chrona.presentation.model.placement_candidates import PlacementCandidate
@@ -23,6 +23,7 @@ class HeadingContent:
     title: str
     subtitle: str | None = None
     kicker: str | None = None
+    text_wrap: Literal["allow", "forbid"] = "forbid"
 
 
 @dataclass(frozen=True)
@@ -93,6 +94,7 @@ class TableColumnContent:
     align: str
     width: TableColumnWidth
     header_orientation: str = "horizontal"
+    text_wrap: Literal["allow", "forbid"] = "forbid"
 
 
 @dataclass(frozen=True)

@@ -13,6 +13,7 @@ from chrona.presentation.layout.presentation import (
 )
 from chrona.presentation.layout.text import measure_text_width, metric_for_role, paint_text
 from chrona.presentation.layout.text_stack import MeasuredTextStack, measure_text_stack
+from chrona.presentation.layout.table_measurement import BoundedTableMeasurement, measure_bounded_table
 from chrona.presentation.layout.summary_flow import MeasuredSummary, measure_summary
 from chrona.presentation.model.surface_content import AxisTier, SummaryContent, TableContent
 from chrona.presentation.model.theme_tokens import ThemeTokenView
@@ -96,6 +97,7 @@ class MeasuredSources:
     run_measurements: Mapping[str, tuple[MeasuredTextRun, ...]] = field(default_factory=dict)
     block_stacks: Mapping[str, MeasuredTextStack] = field(default_factory=dict)
     summary_flows: Mapping[str, MeasuredSummary] = field(default_factory=dict)
+    bounded_tables: Mapping[str, BoundedTableMeasurement] = field(default_factory=dict)
 
 
 REQUIRED_METRICS = (
@@ -185,7 +187,8 @@ def derived_track_block_size(metrics: Mapping[str, Decimal]) -> Decimal | None:
 
 
 def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any], *, font_metrics: Any,
-                    required_metrics: tuple[str, ...] = ()) -> MeasuredSources:
+                    required_metrics: tuple[str, ...] = (), table_inline: float | None = None,
+                    table_reserved_inline: float = 0.0) -> MeasuredSources:
     """Measure every declared source once without reading Layout or renderer state."""
     metric = resolve_theme_metrics(theme, required_metrics=required_metrics)
     typography = ThemeTokenView(theme)
@@ -200,6 +203,7 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
     run_measurements: dict[str, tuple[MeasuredTextRun, ...]] = {}
     block_stacks: dict[str, MeasuredTextStack] = {}
     summary_flows: dict[str, MeasuredSummary] = {}
+    bounded_tables: dict[str, BoundedTableMeasurement] = {}
     for source, value in sorted(inputs.items()):
         if not value.content_present:
             result[source] = Measurement(*(Decimal(0) for _ in range(6)))
@@ -334,7 +338,14 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             (summary_flow.runs[-1].baseline if summary_flow and summary_flow.runs else
              stack.baselines[-1] if stack else Decimal(str(first_metrics.baseline(0, float(font_size), float(line_height))))),
         )
-    return MeasuredSources(result, dict(inputs), metric, run_measurements, block_stacks, summary_flows)
+        if source == "table" and table_inline is not None and value.table is not None:
+            closed = measure_bounded_table(value.table, available_inline=table_inline,
+                                            tokens=typography, font_metrics=font_metrics,
+                                            metric_values=metric, original=result[source],
+                                            reserved_inline=table_reserved_inline)
+            bounded_tables[source] = closed
+            result[source] = closed.measurement
+    return MeasuredSources(result, dict(inputs), metric, run_measurements, block_stacks, summary_flows, bounded_tables)
 
 
 def _table_content_inline(table: TableContent, typography: ThemeTokenView, font_metrics: Any,
