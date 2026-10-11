@@ -457,6 +457,36 @@ retained records, not platform-dependent bytes or the input-sized active graph,
 frontier and obstacle data. Graph preparation counters distinguish rebuilds
 from candidate-frontier work.
 
+**Surface visibility preparation (#1420).** A live prepared obstacle selection
+owns an input-sized, endpoint-independent visibility base: obstacle-offset
+corners, boundary events and exact visibility of consecutive collinear base
+nodes. Reuse it for the same selected content, bounds, grid offset and selected
+port exemptions, including equal-content copies. Excluded ports/routes do not
+invalidate it. This active geometry is separate from the4096-record retained
+search memo and is released with its owning selection, not a global cache.
+Endpoint projections still form the identical per-query sparse graph. Reuse
+only exact base edges; new or split edges use the unchanged collision oracle.
+Reverse heuristics and frontier state remain endpoint-specific. Thus reuse
+must preserve ordered nodes, adjacency, candidate order and exhaustion, not
+only connectivity. Counters report visibility-base builds separately from
+endpoint graph assemblies and reverse/frontier work. With fixed surface
+bounds/offset and no selected port exemptions, base builds are bounded by
+the number of distinct selected obstacle contents, not endpoint candidates.
+Selected additions require an updated base; overridden or removed geometry
+cannot reuse an old visibility proof. Incremental preparation may reuse an
+unchanged edge only after checking it against every newly selected obstacle.
+No recovery trial may reuse routes if pre-route labels change the selected
+obstacle content or completed endpoint inputs.
+
+The same base may retain a bounded working set of endpoint projection-line
+visibility facts. A line uses the base's event coordinates; only an identical
+consecutive edge may reuse a fact, and an endpoint-split edge is checked anew.
+Changing selected content, bounds, offset or selected exemptions invalidates
+these facts. Cache admission/eviction never changes graph membership, neighbor
+order, heuristic or candidate allowance. Projection-line preparation counters
+remain separate from base builds and endpoint assemblies; its active retained
+geometry must remain O(M), not grow with all endpoint pairs or render history.
+
 **Entry obstacles (#1109 R4).** A comparison-host corridor exempts only named,
 physically connected marks of that endpoint. A detached snapshot or actual
 mark remains an obstacle even when it belongs to the same object. Entry stubs

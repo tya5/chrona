@@ -159,6 +159,74 @@ def test_add_between_queries_invalidates_the_prepared_selection() -> None:
     assert index.select() == index.all()
 
 
+def _prepared_marks():
+    index = SurfaceObstacleIndex()
+    for number in range(80):
+        x = float(number * 10)
+        index.add(SurfaceObstacle(f"mark:{number:03d}", "mark", "timeline",
+                                  ObstacleRect(x, 0, x + 4, 4)))
+    query = ObstacleSegment((1, -1), (1, 5), stroke_width=0.5)
+    for _ in range(_GRID_AFTER_QUERIES + 2):
+        assert index.collisions(query, classes=("mark",), regions=("timeline",)) == naive_collisions(
+            index, query, classes=("mark",), regions=("timeline",))
+    prepared = index._selection(("mark",), ("timeline",))
+    assert prepared._grid is not None
+    return index, query, prepared
+
+
+@pytest.mark.parametrize("obstacle_class,region", [
+    ("port", "timeline"), ("dependency-route", "timeline"), ("mark", "table"),
+])
+def test_unselected_additions_preserve_the_exact_prepared_grid(obstacle_class, region):
+    index, query, prepared = _prepared_marks()
+    grid = prepared._grid
+    for number in range(20):
+        index.add(SurfaceObstacle(f"new:{number}", obstacle_class, region, ObstacleRect(0, 0, 3, 3)))
+        assert index._selection(("mark",), ("timeline",)) is prepared
+        assert prepared._grid is grid
+        assert index.collisions(query, classes=("mark",), regions=("timeline",)) == naive_collisions(
+            index, query, classes=("mark",), regions=("timeline",))
+
+
+def test_shared_copy_selection_diverges_only_when_its_content_changes():
+    index, query, prepared = _prepared_marks()
+    clone = index.copy()
+    assert clone._prepared is index._prepared  # query-only, copy-on-write inventory
+    assert clone._selection(("mark",), ("timeline",)) is prepared
+    clone.add(SurfaceObstacle("zz:new", "mark", "timeline", ObstacleRect(0, 0, 3, 3)))
+    assert clone._prepared is not index._prepared
+    assert clone._selection(("mark",), ("timeline",)) is not prepared
+    assert index._selection(("mark",), ("timeline",)) is prepared
+    for snapshot in (index, clone):
+        assert snapshot.collisions(query, classes=("mark",), regions=("timeline",)) == naive_collisions(
+            snapshot, query, classes=("mark",), regions=("timeline",))
+    assert not index.has("zz:new")
+
+
+def test_geometry_overrides_invalidate_only_affected_selections():
+    index, query, prepared = _prepared_marks()
+    index.add(SurfaceObstacle("text:other", "text", "table", ObstacleRect(0, 0, 3, 3)))
+    text = index._selection(("text",), None)
+    copy = index.copy(geometry_overrides={"text:other": ObstacleRect(20, 20, 23, 23)})
+    assert copy._selection(("mark",), ("timeline",)) is prepared
+    assert copy._selection(("text",), None) is not text
+    changed_mark = index.copy(geometry_overrides={"mark:000": ObstacleRect(20, 20, 24, 24)})
+    assert changed_mark._selection(("mark",), ("timeline",)) is not prepared
+    assert changed_mark._selection(("text",), None) is text
+    for snapshot in (index, copy, changed_mark):
+        assert snapshot.collisions(query) == naive_collisions(snapshot, query)
+
+
+def test_preserved_grid_still_validates_ports_against_the_current_snapshot():
+    index, query, prepared = _prepared_marks()
+    clone = index.copy()
+    clone.add(SurfaceObstacle("port:new", "port", "timeline", ObstacleRect(0, 0, 1, 1)))
+    assert clone._selection(("mark",), ("timeline",)) is prepared
+    assert clone.collisions(query, classes=("mark",), regions=("timeline",), port_ids=("port:new",))
+    with pytest.raises(ValueError, match="E_LAYOUT_OBSTACLE_EXEMPTION_INVALID"):
+        index.collisions(query, classes=("mark",), regions=("timeline",), port_ids=("port:new",))
+
+
 def test_exemptions_and_generator_filters_match() -> None:
     rng = Random("exempt")
     index = random_index(rng, 50, 1.0)
