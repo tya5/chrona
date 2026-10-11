@@ -708,6 +708,50 @@ and dependency-network obey the same rule. Scene carries the completed warning;
 the shared report producer formats it with stable surface/source identity and
 `sourceRef: /body/environment/viewport`. Fitting surfaces emit none.
 
+**Auto-block readability limit and paging decision (#1299).**
+
+Optional `reviewSurface.maxBlockSize` reuses the nonnegative distance/Theme-token
+grammar and required-token resolution. Omission disables this advisory; zero
+is valid. After completing an auto-block surface, Layout emits exactly one
+`W_LAYOUT_AUTO_BLOCK_SIZE` when the completed canvas block size strictly
+exceeds the resolved limit. Equality and fitting surfaces emit none. Its typed
+facts are surface ID, emitted row count, actual block size, declared limit and
+`sourceRef: /reviewSurface/maxBlockSize`; Scene and reports transport those facts.
+This advisory does not resize, clip, reroute or reject the surface. Finite
+declared block requests retain the separate viewport diagnostic above.
+
+The bundled default selects a dedicated standalone Layout with the existing
+default geometry and limit 3600 (four 900-unit reference frames). Catalogue
+Editorial resources remain unchanged. The new default Layout identity is an
+intentional provenance migration, not a claim of byte-identical default Scene.
+Existing profiles omitting the property keep their behavior; add the optional
+property in place under Spec 56 section 3.2.
+
+Advice names available selection/grouping controls and distinguishes paging
+as a future option. Paging is deferred, opt-in only for an auto surface above
+its declared limit: preserve whole row/lane units, repeat continued group
+headers, share one temporal window and inline scale, and represent cross-page
+relations with explicit continuations rather than deleting Core dependencies.
+This issue adds no paging syntax or page-splitting implementation.
+
+**Render progress side channel (#1299).**
+
+An optional typed presentation observer receives schedule, layout, routing and
+output phase events. CLI alone enables/formats it on stderr when stderr is a
+terminal or `--progress` is given; a nonterminal without the flag adds no bytes.
+It is ephemeral, outside resource/closure/cache identity and serialized Scene,
+and never influences geometry, routing order, budgets or artifacts. Progress
+sink I/O failure detaches that sink without rejecting rendering. Core has no
+terminal or observer dependency; use cases report phases around existing work.
+
+For each Layout routing pass, report `0/N` then `k/N` in existing routing order,
+where N counts selected semantic relation declarations, not physical row/facet
+instances, and k advances after all instances of a declaration complete or are
+omitted. Separately name rehearsal passes; do not present their repeated work
+as a monotonic final-route count. Zero selected relations performs no search.
+Quiet/progress artifact and byte-characterization tests isolate this side
+channel from the independently declared default-height policy migration.
+
 ### 13.1 Content-coherent table-timeline allocation (#468)
 
 For a table-timeline surface whose measured row/track content has a finite
