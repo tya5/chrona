@@ -459,14 +459,14 @@ def test_relation_critical_fact_is_scheduler_membership_not_selected_paint(
     view = typed_view({"body": {"tableColumns": (), "visibility": {
         "relations": {"mode": mode}, "annotations": "none"}}})
     content = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
-    selected = [fact for fact in content.relations if fact.relation_id == "selected"]
+    selected = [fact for fact in content.relations if fact.relation_id == "relation:1:selected"]
     if mode == "critical" and not driving:
         assert selected == []
     else:
         assert len(selected) == 1
         assert selected[0].critical is (driving and source_critical and target_critical)
         assert selected[0].semantic_id == ("dependency-critical" if mode == "critical" else "dependency")
-    assert all(not fact.critical for fact in content.relations if fact.relation_id == "preceding")
+    assert all(not fact.critical for fact in content.relations if fact.relation_id == "relation:0:preceding")
 
 
 def test_critical_relation_mode_uses_only_scheduler_driving_relations():
@@ -517,7 +517,8 @@ def test_critical_relation_fact_closes_real_scheduler_analysis_through_projectio
                                          analysis=scheduled.analysis)
     content = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
     assert {fact.relation_id: fact.critical for fact in content.relations} == {
-        "start-long": True, "start-short": False, "long-finish": True, "short-finish": False}
+        "relation:0:start-long": True, "relation:1:start-short": False,
+        "relation:2:long-finish": True, "relation:3:short-finish": False}
     assert all(fact.semantic_id == "dependency" for fact in content.relations)
 
 

@@ -4,6 +4,7 @@ from xml.etree import ElementTree
 import yaml
 
 from chrona.presentation.layout import surface_routes
+from chrona.presentation.model.render_progress import RenderProgress
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
 
 
@@ -44,11 +45,22 @@ def test_scheduler_critical_relations_route_first_but_emit_in_declaration_order(
 
     monkeypatch.setattr(surface_routes, "dependency_routing_order", observed_order)
     monkeypatch.setattr(surface_routes, "select_relation_route", observed_select)
-    rendered = render_draft(DraftRenderRequest(project=path, target_kind="svg")).rendered
+    progress_events = []
+    rendered = render_draft(DraftRenderRequest(project=path, target_kind="svg",
+                                              progress=RenderProgress(progress_events.append))).rendered
     expected = ((1, "start", "long", True, "dependency"), (3, "long", "finish", True, "dependency"),
                 (0, "start", "short", False, "dependency"), (2, "short", "finish", False, "dependency"))
     assert batches and all(batch == expected for batch in batches)
     assert attempts
+    passes = []
+    for event in progress_events:
+        if event.phase != "routing" or event.completed is None:
+            continue
+        assert event.total == len(names)
+        if event.completed == 0:
+            passes.append([])
+        passes[-1].append(event.completed)
+    assert passes and all(values == list(range(len(names) + 1)) for values in passes)
     assert len(attempts) == len(expected_attempts)
     assert all(identity.startswith(prefix) for identity, prefix in zip(attempts, expected_attempts))
     routes = [item for item in rendered.surface.primitives
