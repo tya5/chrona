@@ -353,6 +353,21 @@ Scene projects the completed fact; adapters neither recount nor draw a marker.
 
 `finishDelta` has exactly one text representation per item. When selected in `labels.content`, no second standalone variance text is emitted. Its semantic role remains derived from the signed value.
 
+A standalone finish-delta label is anchored to the completed actual mark when
+available, otherwise its planned mark. Its canonical side order is `end`,
+`start`, `above`, `below`; a clear canonical end slot always wins before any
+side-neighborhood search. Translating that mark does not choose a different
+side unless the translated slot collides or leaves its allocation. Combined
+member-name/delta labels retain their authored member-name side policy.
+Layout retains the rejected canonical slots' typed obstruction evidence.
+When the selected side differs from the preferred end side, it emits
+`I_LAYOUT_FINISH_DELTA_ANCHOR_FALLBACK:` followed by JSON containing
+`placementId`, `preferredSide`, `selectedSide`, sorted `blockerPlacementIds`
+and `outsideBounds`. Blockers identify the actual completed mark, text or
+route placements; a bounds failure is not attributed to an imaginary mark.
+The existing overflow/suppression policy and explicit-window endpoint
+admission still apply. No previous-render state is needed.
+
 ### 3.3 Relations
 
 View relation intent becomes `none` or an object with `mode: semantic` and `overflow: suppress | visible-overflow`. Layout Profile adds `relationRouting.maxBends` and `relationRouting.maxDetourRatio` numeric geometry policy.
