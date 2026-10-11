@@ -18,9 +18,24 @@ DECIMAL_SUM_FUNCTIONS = {
 }
 
 
+DECIMAL_SEEDED_SUM_FUNCTIONS = {
+    "presentation.py": frozenset({"_bounded_column_widths"}),
+    "surface_base.py": frozenset({"prepare_surface_inline"}),
+    "table_measurement.py": frozenset({"measure_bounded_table"}),
+    "tracks.py": frozenset({"resolve_flexible_tracks"}),
+}
+
+
+def _decimal_zero(node: ast.expr) -> bool:
+    return (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+            and node.func.id == "Decimal" and not node.keywords and len(node.args) == 1
+            and isinstance(node.args[0], ast.Constant) and node.args[0].value == 0)
+
+
 class _Sums(ast.NodeVisitor):
-    def __init__(self, file_name: str) -> None:
+    def __init__(self, file_name: str, decimal_zeros: frozenset[str] = frozenset()) -> None:
         self.file_name = file_name
+        self.decimal_zeros = decimal_zeros
         self.function = "<module>"
         self.violations: list[str] = []
 
@@ -37,6 +52,10 @@ class _Sums(ast.NodeVisitor):
     def _allowed(self, node: ast.Call) -> bool:
         if self.function in DECIMAL_SUM_FUNCTIONS.get(self.file_name, frozenset()):
             return True
+        if (self.function in DECIMAL_SEEDED_SUM_FUNCTIONS.get(self.file_name, frozenset())
+                and len(node.args) == 2 and not node.keywords):
+            seed = node.args[1]
+            return _decimal_zero(seed) or (isinstance(seed, ast.Name) and seed.id in self.decimal_zeros)
         if len(node.args) != 1 or node.keywords:
             return False
         value = node.args[0]
@@ -49,8 +68,12 @@ def violations(root: Path = LAYOUT) -> tuple[str, ...]:
     """Return stable failures for direct builtin sums outside reviewed classes."""
     found: list[str] = []
     for path in sorted(root.glob("*.py")):
-        visitor = _Sums(path.name)
-        visitor.visit(ast.parse(path.read_text(encoding="utf-8")))
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        decimal_zeros = frozenset(target.id for node in tree.body
+                                 if isinstance(node, ast.Assign) and _decimal_zero(node.value)
+                                 for target in node.targets if isinstance(target, ast.Name))
+        visitor = _Sums(path.name, decimal_zeros)
+        visitor.visit(tree)
         found.extend(visitor.violations)
     return tuple(found)
 
