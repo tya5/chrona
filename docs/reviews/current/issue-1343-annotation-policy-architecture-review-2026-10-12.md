@@ -15,4 +15,9 @@ accepting ignored intent would violate the completed-placement contract.
 Explicit legacy declarations retain order/geometry; new identity/policy failures
 apply only to opted-in expansion. No ID-special case or previous-render cache.
 Risk/gate: prove actual five-design Scene/SVG placements and unchanged legacy
-bytes; source-policy equivalence alone is not acceptance. No product code yet.
+declaration semantics; source-policy equivalence alone is not acceptance.
+Correction: a synthetic migration exposes raw-View annotation SourceInput
+measurement (empty narrative for Project references), shifting status rows by
+one line. Use closed intents for both natural measurement and placement;
+disclose changed legacy natural-host allocation rather than preserve the bug.
+Five-design primitives/diagnostics/SVG identity remains mandatory.

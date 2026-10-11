@@ -76,7 +76,15 @@ anchor diagnostics reference `/annotations/<escaped key>/anchor` in the
 Project, not an invented View-list index. Layout receives the resulting
 ordinary typed annotation intents and owns measurement, candidate search,
 obstacles, box and connector geometry. Scene/adapters remain projection.
-Without either new declaration, existing annotation output is unchanged.
+Both natural slot measurement and placement consume this same closed intent:
+annotation SourceInput includes resolved narrative/numbering/visual advances,
+and notes SourceInput includes only unconsumed notes. Neither re-reads the raw
+View list or counts consumed Project notes. This corrects the existing
+prefix-only measurement of Project-referenced annotations. Legacy naturally
+sized annotation/notes hosts may change allocation; fixed five-design note
+placement and serialized SVG remain acceptance gates. Existing explicit
+selection/identity/candidates are not changed or kept behind a compatibility
+measurement path.
 
 ## Boundary with slide vocabulary
 

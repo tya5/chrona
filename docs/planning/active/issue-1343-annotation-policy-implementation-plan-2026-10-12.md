@@ -16,6 +16,10 @@ reveals a missing contract, return to design before altering product behavior.
 Permanent `examples/**` migration is reviewer-owned; no authored managed evidence.
 Extend existing dependency-network annotation exclusions to both new members;
 test rejection rather than accepting intent its Layout cannot complete.
+Natural-source correction: `usecases/render_review.py` must feed annotation
+and unconsumed-note SourceInputs from the same closed SurfaceContentInput.
+Preserve the failing synthetic primitive/SVG migration comparison; repeat the
+five-design gate and disclose all affected public natural-host allocations.
 Publish coherent implementation/test/review units in one eventual PR; inspect
 its CI-owned public snapshot as a batch, focused tests and schema gate locally,
 full three-OS containing-review release in CI. Keep both literal criteria open
