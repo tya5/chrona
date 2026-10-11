@@ -602,6 +602,7 @@ $defs:
           kind: {description: "Select the regular burst outline.", const: burst}
           points: {description: "Number of outer points; the closed outline has twice this many vertices.", type: integer, minimum: 2}
           innerRatio: {description: "Inner radius divided by outer radius.", type: number, exclusiveMinimum: 0, maximum: 1}
+          fit: {description: "Outline fit over the padded text rectangle; runtime default circle preserves the existing outline.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/chipShapeFit", default: circle}
       - description: "A catalogue glyph stretched over the chip text box with shared nine-slice geometry."
         examples: [{kind: catalog, glyph: "chrona-parts:burst", sliceInsets: {top: 2, right: 2, bottom: 2, left: 2}, unitEm: 0.1}]
         type: object

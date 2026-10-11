@@ -292,9 +292,20 @@ def test_pdf_rasterizer_identity_mismatch_is_rejected():
     ("tikz", {"engine": "tectonic", "version": "0.15.0", "adapterGrammar": "chrona-tikz/v0.1"}),
 ])
 def test_typeset_rejects_completed_geometry_it_cannot_serialize(kind, descriptor):
+    from datetime import date
+    from chrona.presentation.layout.surface_quality import PathCommand, StrokeClip
+    from chrona.presentation.scene.model import ScenePaint, ScenePrimitive, SceneSurface, SurfaceScaleManifest
+
+    outline = (PathCommand("move", ((2, 3),)), PathCommand("line", ((10, 3),)), PathCommand("line", ((10, 9),)),
+               PathCommand("line", ((2, 9),)), PathCommand("line", ((2, 3),)))
+    box = ScenePrimitive("stroke-box", "Rect", "a", "object", "planned", "planned", (2, 3, 8, 6),
+                         paint=ScenePaint("#224466", "#112233", 4, (), 1), stroke_clip=StrokeClip(outline, False, (0, 0, 20, 20), 4))
+    scale = SurfaceScaleManifest("s", "primary", date(2026, 1, 1), date(2026, 1, 2), 0, 20, 0, 20)
+    surface = SceneSurface("s", (), (), (), scale, (box,), ScenePaint("#ffffff", None, None, (), 1), canvas_bounds=(0, 0, 20, 20))
     renderer = renderer_for({"kind": kind, "capabilities": []}, {"typesetter": descriptor})
-    with pytest.raises(ValueError, match="E_VISUAL_CAPABILITY_UNSUPPORTED"):
-        renderer.render(_completed_surface())
+    with pytest.raises(ValueError, match="E_VISUAL_CAPABILITY_UNSUPPORTED") as error:
+        renderer.render(surface)
+    assert "stroke-box" in str(error.value) and "aligned stroke clip" in str(error.value)  # the primitive and its feature
 
 
 def test_typeset_target_rejects_svg_semantic_requirement():

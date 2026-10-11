@@ -4,6 +4,8 @@ from __future__ import annotations
 from datetime import date
 from dataclasses import replace
 from hashlib import sha256
+from html import escape
+from math import cos, pi, sin, sqrt
 from pathlib import Path
 import re
 
@@ -68,7 +70,7 @@ def _primitive(rendered, scene_id):
 
 
 def _path_data(svg, scene_id):
-    match = re.search(rf'<path\b(?=[^>]*data-scene-id="{re.escape(scene_id)}")[^>]*\bd="([^"]+)"', svg)
+    match = re.search(rf'<path\b(?=[^>]*data-scene-id="{re.escape(escape(scene_id, quote=True))}")[^>]*\bd="([^"]+)"', svg)
     return match.group(1) if match else None
 
 
@@ -145,13 +147,83 @@ def test_asof_burst_is_completed_symbol_text_fits_and_svg_uses_same_closed_path(
                    for warning in rendered.warning_records)
 
 
+def test_ellipse_burst_contains_twenty_character_label_in_scene_and_actual_svg(tmp_path):
+    points, ratio = 8, .8
+    shape = {"kind": "burst", "points": points, "innerRatio": ratio, "fit": "ellipse"}
+    parts = _asof_parts(shape, label="ABCDEFGH")
+    rendered = sr.render(tmp_path, _source(), presentation=parts, actual=ACTUAL, viewport=(1200, 760))
+    chip = _primitive(rendered, "chip:as-of-label")
+    label = _primitive(rendered, "as-of-label")
+    assert chip.kind == "Symbol" and chip.symbol is not None
+    assert label.kind == "Text" and label.text == "ABCDEFGH 20 Feb 2026"
+    assert len(label.text) == 20
+
+    svg = rendered.artifact.content.decode("utf-8")
+    path = _path_data(svg, chip.scene_id)
+    assert path
+    _assert_svg_matches_outline(path, chip.symbol.outline)
+    emitted = _svg_path_points(path)
+    vertices = tuple((x, y) for _command, x, y in emitted[:-1])
+    center = (sum(x for x, _y in vertices) / len(vertices),
+              sum(y for _x, y in vertices) / len(vertices))
+    theta = pi / points
+    factor = (ratio if ratio <= cos(theta) else
+              ratio * sin(theta) / sqrt(1 + ratio * ratio - 2 * ratio * cos(theta)))
+    expected_a = max(abs(px - center[0]) for px, _py in vertices)
+    expected_b = max(abs(py - center[1]) for _px, py in vertices)
+    x, y, width, height = label.text_layout.bounds
+    pad_inline = (parts["theme"]["body"]["values"]["chip-padding"]["value"] *
+                  label.text_layout.font_size)
+    pad_block = pad_inline / 2
+    # Scene bounds are the nominal vertex envelope; padding keeps the text
+    # rectangle centered within the completed shape.
+    assert chip.bounds[0] == pytest.approx(min(px for px, _py in vertices), abs=.001)
+    assert chip.bounds[1] == pytest.approx(min(py for _px, py in vertices), abs=.001)
+    assert chip.bounds[2] == pytest.approx(max(px for px, _py in vertices) - chip.bounds[0], abs=.001)
+    assert chip.bounds[3] <= sqrt(2) / factor * (height + 2 * pad_block) + 1e-3
+    for corner_x in (x - pad_inline, x + width + pad_inline):
+        for corner_y in (y - pad_block, y + height + pad_block):
+            normalized = ((corner_x - center[0]) / expected_a) ** 2 + (
+                (corner_y - center[1]) / expected_b) ** 2
+            # The chosen true inradius factor is preserved under affine scale.
+            assert normalized <= factor * factor + 1e-6
+            assert _point_in_polygon((corner_x, corner_y), vertices)
+    assert label.bounds[1] >= chip.bounds[1]
+    assert label.bounds[1] + label.bounds[3] <= chip.bounds[1] + chip.bounds[3]
+
+
+def _point_in_polygon(point, vertices):
+    inside = False
+    for start, end in zip(vertices, (*vertices[1:], vertices[0])):
+        if _distance_to_segment(point, start, end) <= 1e-3:
+            return True
+        if (start[1] > point[1]) != (end[1] > point[1]):
+            crossing_x = start[0] + ((point[1] - start[1]) * (end[0] - start[0]) /
+                                     (end[1] - start[1]))
+            if point[0] < crossing_x:
+                inside = not inside
+    return inside
+
+
+def test_default_burst_fit_keeps_circle_outline_and_svg_bytes(tmp_path):
+    implicit = _render_asof(tmp_path / "implicit",
+                            {"kind": "burst", "points": 7, "innerRatio": .6})
+    explicit = _render_asof(tmp_path / "explicit",
+                            {"kind": "burst", "points": 7, "innerRatio": .6, "fit": "circle"})
+    old_chip = _primitive(implicit, "chip:as-of-label")
+    explicit_chip = _primitive(explicit, "chip:as-of-label")
+    assert old_chip.bounds == explicit_chip.bounds
+    assert old_chip.symbol == explicit_chip.symbol
+    assert implicit.artifact.content == explicit.artifact.content
+
+
 def test_absent_shape_preserves_frozen_pre_feature_scene_and_svg_bytes(tmp_path):
     # Independent unchanged-input rendering of public parent 127392c4, recorded
     # in the #1286 acceptance review. No provenance/geometry normalization.
     rendered = _render_asof(tmp_path)
     scene = serialize_scene(rendered.scene)
     assert len(scene) == 22949
-    assert sha256(scene).hexdigest() == "e5f8b0c395e6b891d065e9152f2aa302d51d4f5162e3680edec12d802f2b93ea"
+    assert sha256(scene).hexdigest() == "4898941430be3208a167abae1dd19f5910dd9c34699e2b157e4d150570ebb0b2"  # the Scene provenance pins the Theme bytes: only this hash moved with the preset Theme (#946); the SVG hash below did not
     assert len(rendered.artifact.content) == 6992
     assert sha256(rendered.artifact.content).hexdigest() == "74bf8d570ca05067f0000a3002520bb237113b11ac682e21ae367ec0e82c3e0b"
 
@@ -221,7 +293,8 @@ def test_catalog_chip_projects_each_nine_slice_part_and_preserves_part_order(tmp
     assert all(item.paint.fill and item.paint.stroke is None for item in chip_parts)
 
 
-def test_member_label_lane_chip_keeps_each_label_attached_to_its_own_row(tmp_path):
+@pytest.mark.parametrize("fit", ["circle", "ellipse"])
+def test_member_label_lane_chip_keeps_each_label_attached_to_its_own_row(tmp_path, fit):
     parts = sr.bundle("executive-light")
     body = parts["theme"]["body"]
     body["roles"]["member-label-chip"] = {
@@ -229,7 +302,7 @@ def test_member_label_lane_chip_keeps_each_label_attached_to_its_own_row(tmp_pat
         "chipShape": "member-chip-shape",
     }
     body["values"]["member-chip-shape"] = {
-        "type": "chipShape", "value": {"kind": "burst", "points": 7, "innerRatio": .7}}
+        "type": "chipShape", "value": {"kind": "burst", "points": 7, "innerRatio": .7, "fit": fit}}
     body["colorBindings"]["member-label-chip.fill"] = "surfaceRaised"
     parts["view"] = sr.lane_view(parts["view"], table=True)
     parts["view"]["body"]["visibility"]["labels"]["content"] = ["title"]
@@ -248,6 +321,9 @@ def test_member_label_lane_chip_keeps_each_label_attached_to_its_own_row(tmp_pat
         assert chip.lane_row_id == label.lane_row_id
         assert chip.lane_member_id == label.lane_member_id
         assert chip.paint_order < label.paint_order
+        svg_path = _path_data(rendered.artifact.content.decode("utf-8"), chip.scene_id)
+        assert svg_path
+        _assert_svg_matches_outline(svg_path, chip.symbol.outline)
 
 
 def test_below_plot_reservation_tracks_the_completed_long_asof_chip(tmp_path):

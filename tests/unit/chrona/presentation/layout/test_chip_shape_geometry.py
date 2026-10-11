@@ -100,6 +100,67 @@ def test_burst_radius_and_text_corner_clearance(points, ratio):
         float(geometry.padded_text_bounds.block) + padding[1])
 
 
+def _burst_inradius_factor(points, ratio):
+    theta = pi / points
+    if ratio <= cos(theta):
+        return ratio
+    return ratio * sin(theta) / sqrt(1 + ratio * ratio - 2 * ratio * cos(theta))
+
+
+@pytest.mark.parametrize("points,ratio", [(2, 1), (5, .4), (5, .95), (8, .95), (7, 1)])
+def test_ellipse_fit_affinely_contains_padded_rectangle_and_bounds_height(points, ratio):
+    text_width, text_height = 132.0, 19.0
+    padding = (7.0, 4.0)
+    padded_width = text_width + 2 * padding[0]
+    padded_height = text_height + 2 * padding[1]
+    factor = _burst_inradius_factor(points, ratio)
+    geometry = complete_chip_geometry(
+        text_inline=text_width, text_block=text_height, padding=padding,
+        shape=BurstChipShape(points, Decimal(str(ratio)), "ellipse"), font_size=13,
+    )
+    commands = geometry.symbol_parts[0].commands
+    vertices = tuple(command.points[0] for command in commands[:-1])
+    assert len(vertices) == 2 * points
+    center_x = float(geometry.padded_text_bounds.inline) + padded_width / 2
+    center_y = float(geometry.padded_text_bounds.block) + padded_height / 2
+    semiaxis_x = padded_width / (sqrt(2) * factor)
+    semiaxis_y = padded_height / (sqrt(2) * factor)
+    theta = pi / points
+    for index, (x, y) in enumerate(vertices):
+        radius = 1.0 if index % 2 == 0 else ratio
+        angle = -pi / 2 + index * theta
+        assert x - center_x == pytest.approx(semiaxis_x * radius * cos(angle), abs=1e-10)
+        assert y - center_y == pytest.approx(semiaxis_y * radius * sin(angle), abs=1e-10)
+    for x in (float(geometry.padded_text_bounds.inline),
+              float(geometry.padded_text_bounds.inline + geometry.padded_text_bounds.inline_size)):
+        for y in (float(geometry.padded_text_bounds.block),
+                  float(geometry.padded_text_bounds.block + geometry.padded_text_bounds.block_size)):
+            assert _point_in_or_on_polygon((x, y), vertices)
+            normalized_radius = ((x - center_x) / semiaxis_x) ** 2 + ((y - center_y) / semiaxis_y) ** 2
+            assert normalized_radius <= factor * factor + 1e-12
+    assert geometry.outer_bounds.inline == 0 and geometry.outer_bounds.block == 0
+    assert geometry.outer_bounds.block_size <= sqrt(2) / factor * padded_height + 1e-9
+
+
+@pytest.mark.parametrize("points,ratio", [(2, 1), (5, .4), (7, .95)])
+def test_ellipse_block_extent_does_not_depend_on_text_inline_width(points, ratio):
+    shape = BurstChipShape(points, Decimal(str(ratio)), "ellipse")
+    short = complete_chip_geometry(text_inline=20, text_block=15, padding=(3, 4),
+                                   shape=shape, font_size=12)
+    long = complete_chip_geometry(text_inline=200, text_block=15, padding=(3, 4),
+                                  shape=shape, font_size=12)
+    assert short.outer_bounds.block_size == long.outer_bounds.block_size
+    assert short.outer_bounds.inline_size < long.outer_bounds.inline_size
+
+
+@pytest.mark.parametrize("text_size,padding", [((0, 12), (0, 2)), ((12, 0), (2, 0))])
+def test_ellipse_zero_padded_axis_is_rejected_as_invalid_geometry(text_size, padding):
+    with pytest.raises(ChipGeometryError) as caught:
+        complete_chip_geometry(text_inline=text_size[0], text_block=text_size[1], padding=padding,
+                               shape=BurstChipShape(5, Decimal(".4"), "ellipse"), font_size=12)
+    assert caught.value.reason == "invalid-measurement"
+
+
 def test_catalog_nine_slice_preserves_parts_order_stroke_width_and_text_inset():
     glyph = _catalog("", parts=[
         {"paint": "fill", "data": _rect_path(0, 0, 10, 10)},
@@ -166,7 +227,8 @@ def test_invalid_measured_geometry_is_rejected(values):
                                shape=RectangleChipShape(), font_size=font_size)
 
 
-def test_huge_numeric_conversion_and_unrepresentable_inradius_fail_closed():
+@pytest.mark.parametrize("fit", ["circle", "ellipse"])
+def test_huge_numeric_conversion_and_unrepresentable_inradius_fail_closed(fit):
     with pytest.raises(ChipGeometryError) as huge:
         complete_chip_geometry(text_inline=10 ** 10000, text_block=10, padding=(1, 1),
                                shape=RectangleChipShape(), font_size=12)
@@ -174,10 +236,10 @@ def test_huge_numeric_conversion_and_unrepresentable_inradius_fail_closed():
 
     with pytest.raises(ChipGeometryError) as tiny_ratio:
         complete_chip_geometry(text_inline=100, text_block=20, padding=(4, 2),
-                               shape=BurstChipShape(5, Decimal("1e-320")), font_size=12)
+                               shape=BurstChipShape(5, Decimal("1e-320"), fit), font_size=12)
     assert tiny_ratio.value.reason == "nonfinite-geometry"
 
     with pytest.raises(ChipGeometryError) as huge_points:
         complete_chip_geometry(text_inline=100, text_block=20, padding=(4, 2),
-                               shape=BurstChipShape(10 ** 400, Decimal(".5")), font_size=12)
+                               shape=BurstChipShape(10 ** 400, Decimal(".5"), fit), font_size=12)
     assert huge_points.value.reason == "nonfinite-geometry"
