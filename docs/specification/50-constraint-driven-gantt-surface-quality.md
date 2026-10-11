@@ -140,7 +140,10 @@ candidates are exhausted, a declared `visible-overflow` request may emit the
 first declared near-mark candidate despite a collision or viewport escape,
 with the ordinary overflow warning; it cannot waive the association bound.
 A required request with no valid near-mark candidate fails with
-`E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE`; it never emits detached text. The
+`E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE`; it never emits detached text.
+Layout closes host identity for every row mode, including compound glyphs;
+the host names an emitted primitive, not an abstract multi-part mark. Declared
+lane-emission identities remain authoritative. Scene projects that identity.
 Scene acceptance check pairs each emitted member label to its own completed
 mark through `hostPlacementId`, additionally checking lane/member identity
 when present, never by visual order or nearest distance. No member-label
@@ -409,6 +412,50 @@ obstacle/mark safety. Arbitrary original terminal-leg lengths are not minima.
 Each reduction removes vertices; blocked reductions retain the safe detour.
 All eligible finite port pairs are compared, with exact rank ties retaining
 the first declared pair. Scene and adapters do not simplify geometry.
+
+**Relation-instance search budget (#1298).** One route-selection call owns
+4096 candidate-frontier expansions, rather than resetting 4096 for every
+port pair. For P declared pairs, divide that allowance evenly: pair i gets
+`4096 // P + int(i < 4096 % P)` in the existing deterministic pair order.
+Blocked pairs do not transfer unused allowance; therefore processing speed,
+cache hits and earlier search success cannot change a later pair's allowance.
+Compare the fully safe, completed, quality-eligible candidates actually found
+within those allowances using the existing rank and tie rule. A pair with
+zero allowance is search-limited, not geometrically impossible. Exhaustion
+retains `E_PRESENTATION_ROUTE_LIMIT` evidence; it never relaxes mark/text,
+terminal, self-overlap, bend or detour checks. With no eligible route, keep
+the existing declared safe fallback/suppression and diagnostic contract.
+
+Surface source exits have at most four cardinal ports; target entries add
+at most one horizontal stub, so P is at most20, independent of comparison
+sibling count. For R completed source/target relation instances and at most
+five composition/rehearsal passes, there are at most100R candidate-generator
+calls and20480R processed frontier expansions. A final over-limit pop per
+pair may discover exhaustion; it does not process that state. Immutable
+history indexes examine only nearby orientation/coordinate intervals, then
+apply the unchanged exact intersection predicate. Each processed state has
+at most four neighbors and at most4096 history segments, giving at most
+`20 * R * 4096**2` exact history predicates across those passes.
+This bounds candidate search, not all rendering by a constant: each pair's
+finite visibility-graph preparation still depends on the selected obstacle
+count M (O(M) nodes/edges and O(M**2) worst-case collision work). Counters and
+benchmarks must distinguish graph preparation from candidate-frontier work.
+Search-limited evidence is not a proof that no route exists; any later
+critical-route completeness policy must retain that distinction.
+
+**Retained search memo capacity (#1298).** The obstacle-index lineage admits
+at most4096 logical records of cached payloads and, separately,4096 records
+of interned selection contents (also at most256 content IDs). A selection
+costs one container plus one record per obstacle; a completed route costs one
+container plus one per point; a stored failure costs one. An immutable sparse
+graph costs one container plus two records per node (point and adjacency), one
+per directed edge and one per reverse-heuristic entry. Existing keys consume
+no additional capacity. Admission is non-evicting; oversized/full-capacity
+values run fresh while admitted hits remain usable. Exact keys, route order,
+frontier quotas, failure semantics and safety checks are unchanged. This bounds
+retained records, not platform-dependent bytes or the input-sized active graph,
+frontier and obstacle data. Graph preparation counters distinguish rebuilds
+from candidate-frontier work.
 
 **Entry obstacles (#1109 R4).** A comparison-host corridor exempts only named,
 physically connected marks of that endpoint. A detached snapshot or actual

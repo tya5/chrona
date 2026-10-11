@@ -85,7 +85,7 @@ def test_the_properties_run_on_the_real_analysis_pass():
     for project, _ in _plans():
         result = schedule(project)
         assert result.ok and result.analysis is not None, project
-        assert all(value >= 0 for value in result.analysis.total_float.values()), project
+        assert all(value.value >= 0 for value in result.analysis.total_float.values()), project
 
 
 def test_i1_a_derived_plan_is_accepted_and_its_fixed_twin_places_identically():

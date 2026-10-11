@@ -15,6 +15,7 @@ from chrona.presentation.layout.mark_facet_visibility import (
     FacetDisposition, ItemMarkVisibility, complete_item_visibility,
 )
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.projection_window import require_positive_projection_window
 from chrona.presentation.layout.semantic_mark_facets import select_item_mark_facets
 from chrona.presentation.model.projection import ReviewProjection, WindowMode
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
@@ -228,11 +229,7 @@ def ensure_item_mark_visibility_index(
 def ensure_request_mark_visibility_index(request: SurfaceLayoutRequest) -> SurfaceLayoutRequest:
     """Attach one request-lifetime index, or reject a stale cached binding."""
     projection = request.projection
-    if projection is None:
-        raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection")
-    start, end = projection.window
-    if not isinstance(start, date) or not isinstance(end, date) or start >= end:
-        raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/window")
+    require_positive_projection_window(projection)
     as_of = getattr(getattr(request, "surface_content", None), "as_of", None)
     index = request.mark_visibility_index
     if index is None:

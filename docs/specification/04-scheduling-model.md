@@ -494,9 +494,13 @@ than `max` is the same diagnostic. A point with no relation into `at` and no `mi
 `E_DERIVATION` at `/objects/<id>/schedule`, reported by validation, so `validate` and `schedule` agree. A
 cycle through scheduled points is reported by the scheduler like any other cycle (Section 16).
 
-Analysis treats a scheduled point like any other non-fixed object: it joins the critical path and has float,
-and its latest date honours `constraints.at.max`. The backward rule that turns a latest target into a latest
-source through a lag is stated in [Spec 57](57-public-schedule-analysis.md).
+Analysis treats a scheduled point like any other non-fixed object: it has float
+and joins the critical path when it meets the project-finish/zero-float
+driving-path rule. Its latest date honours `constraints.at.max`.
+Fixed/anchored dates stay fixed in the backward pass but are not critical
+merely because they cannot move. The global terminal target, critical
+membership, unit-bearing float and backward lag rule are stated in
+[Spec 57](57-public-schedule-analysis.md).
 
 A scheduled point is a derived **plan**, not a forecast. Actual values never move a planned date
 (Section 17): a late predecessor actual does not move the gate; editing the plan does. A scheduled point is not
