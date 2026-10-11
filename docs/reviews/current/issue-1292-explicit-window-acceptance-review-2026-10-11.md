@@ -19,6 +19,19 @@ Implementation: `b599e66b`. [Current design, architecture and implementation rec
 
 ## Programme-level criteria (optional)
 
+READY main `42e37d8d` and #1293 PR head `2dde5ba6` adopted by ordinary
+merge `c943690d`. Explicit-window production Scene/SVG, paint clipping,
+lane absences, window mode, default-axis and default-date integration:
+57 passed (25.62s). Authored examples diff empty. This is preparation;
+ordered predecessor merges, current-head artifact and release gates remain required.
+
+Preparation now includes final #1294 repair `ac14998c` through #1293 WIP
+`e4da9031`; explicit-window, SVG paint-clip, inclusive date, default-axis and
+packaged-policy tests pass:42 (23.22s). Ordinary main adoption `7508cc0a`
+adds only reviewer #1400's Sunday trailing-inset declaration; no authored
+examples changes. This is not release acceptance; upstream issue merges,
+fresh trusted READY, current-head public artifacts and full release remain required.
+
 Pending: final READY-base adoption, public artifact review and exact-main three-OS release CI. These local rows do not authorize closure.
 
 Final disjoint focused batches: 109 passed (18.21s; production/builder/typed and raw clip validation/SVG-PNG containment), 111 passed (2.51s; lane/pattern/stroke adapters). Import direction: 11 packages, 37 edges, all inward. Schema-equivalence against `6c18b9e1`: PASS (Scene six exact deltas, 37 equal; 482 documents/739 probes; four known-invalid fixtures unchanged).

@@ -23,6 +23,13 @@ Implementation: `0064cfaf`, `53d401f6`, `69a917f1`. [Current design and implemen
 Release pending: refreshed exact-head artifacts/PR gates and acceptance-containing
 exact-main three-OS release. Local rows do not authorize closure.
 
+After reviewer PR1400 landed, ordinary adoption `8f3d39ae` includes current
+trusted READY `21342640` (gate38111727925). Only Sunday's source inset and
+its six generated caption rectangles changed upstream. Actual default axis,
+all packaged policies/host geometry and caption tests pass:39 (23.68s).
+The previously verified ac14998c artifact11692011108 has all46 Scene/SVG
+bytes identical; final adopted-head artifacts and gates are still required.
+
 Base: trusted READY `95b2fddc` ([gate38108591778](https://github.com/tya5/chrona/actions/runs/38108591778)).
 Schema equivalence:38 equal schemas,482 documents/739 probes; four known invalid
 fixtures unchanged, L2+L3=37.3s. No schema changes in the CI repair.
