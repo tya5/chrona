@@ -360,7 +360,8 @@ side-neighborhood search. Translating that mark does not choose a different
 side unless the translated slot collides or leaves its allocation. Combined
 member-name/delta labels retain their authored member-name side policy.
 Layout retains the rejected canonical slots' typed obstruction evidence.
-When the selected side differs from the preferred end side, it emits
+When the canonical end slot is blocked or outside the allocation and a
+fallback position is selected (even on the same side), it emits
 `I_LAYOUT_FINISH_DELTA_ANCHOR_FALLBACK:` followed by JSON containing
 `placementId`, `preferredSide`, `selectedSide`, sorted `blockerPlacementIds`
 and `outsideBounds`. Blockers identify the actual completed mark, text or
