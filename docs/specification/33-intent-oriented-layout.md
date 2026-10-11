@@ -42,6 +42,22 @@ An override key names one existing node ID. An override may replace declared pro
 of that node but cannot change its ID, kind, or insert executable content. Unknown IDs,
 base cycles, kind changes, null deletion, and multiple bases diagnose.
 
+`extends` resolves when the Render Context closure is read (#1342), the way a derived Theme does: the base is an ordinary
+pinned reference that any Store the reader reads can hold (the example's own, a shared design Store or the packaged
+`chrona.resources` store), its `contentIdentity` is verified on read, bases may chain, and the closure resource is the
+flattened standalone profile whose identity is that of the effective value. Every top-level member the derived profile states
+(for example `viewDefaults`, `relationRouting`) replaces the base's; the rest is inherited. Editing a base therefore moves the
+derived profile's identity and the Scene with no Context edit, while the derived profile's `extends` pin is re-pinned inside
+the design that owns both.
+
+Store-backed chain resolution and cycle detection belong to ingress. A chain
+edge is identified by Store provider/identity, address and revision token;
+reusing a resource id or address at a different revision is not a cycle.
+After reading and verifying the complete base chain, ingress passes a
+standalone base to declarative Layout composition. That composition validates
+the declarations and applies stable-node overrides/top-level replacements;
+it does not resolve Store references or reject a completed base by resource id.
+
 Whole Layout Profiles are the reusable composition unit. Theme resources are the
 reusable value unit. Render Context binds separate immutable Theme and Layout resource
 references to a Project, View, optional Detail/Summary/Actual inputs, viewport, locale,
@@ -188,6 +204,20 @@ bounds, baseline, typography and explicit slot owner directly into Scene.
 
 `facet` and `repeat` are not M24 layout operators. View may expose a typed repeated
 source, which Layout can arrange with `grid` or `flow`; Layout cannot partition facts.
+
+
+### `viewDefaults`: the design members of a View (#1341)
+
+A Layout profile may declare `viewDefaults`, a View body fragment (`visibility`, `axis`, `deadlines`, `shading`,
+`timePresentation`, `annotationPresentation`, `backgroundDecoration`, `progressFill`, and the design halves of `comparison`,
+`rows` and `window`; see Specification 06 section 9.2). The View closure overlays it under the View before validation: a member
+the View declares wins as a whole, an omitted member takes the profile's.
+Split members merge by design sub-member, creating an omitted member from
+those sub-members only; explicit declarations win and missing required
+connection fields remain View validation errors (Specification 06 section 9.2).
+Layout reads the merged View only; it never sees which
+half a member came from. The members are validated as View members after the merge, so a malformed default is an ordinary View
+error. `viewDefaults` is optional; a profile without it changes nothing.
 
 ## 4. Logical axes and writing mode
 

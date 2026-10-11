@@ -17,6 +17,8 @@ from typing import Any
 from chrona.core.validation import load_yaml
 from chrona.operational.baselines import compare_baseline
 from chrona.operational.store_config import ConfiguredStoreReader
+from chrona.core.ports import SnapshotReadError
+from chrona.storage.package_store import is_package_reference, read_package_reference
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.usecases.failure_report import StableFailure
 
@@ -24,6 +26,43 @@ from chrona.usecases.failure_report import StableFailure
 def load_reference(path: str | Path) -> dict[str, Any]:
     """Load one resource-reference YAML file, as ``--context-reference`` and ``--baseline-reference`` do."""
     return load_yaml(path)
+
+
+class PackageAwareReader(LocalSnapshotReader):
+    """A local Store reader that also reads `package` references from the packaged store (#1342)."""
+
+    def read(self, reference: dict[str, Any]) -> bytes:
+        if is_package_reference(reference):
+            return read_package_reference(reference)
+        return super().read(reference)
+
+
+class SharedDesignReader(PackageAwareReader):
+    """The reader of the Context's own Store that also reads shared designs (#1342).
+
+    A reference to the Context's Store is read as before. A reference to another Store the configuration declares is read
+    from that Store under its own integrity; a `package` reference is read from the packaged store. Every Store is read-only,
+    and nothing is copied: the same reference resolves the same bytes here and in `materialize`.
+    """
+
+    def __init__(self, config: ConfiguredStoreReader, key: tuple[str, str], root: Path, *, require_content_identity: bool,
+                 allow_missing_content_identity: bool) -> None:
+        super().__init__(root, key[1], require_content_identity=require_content_identity)
+        self._config, self._key, self._allow_missing = config, key, allow_missing_content_identity
+
+    def read(self, reference: dict[str, Any]) -> bytes:
+        if is_package_reference(reference):
+            return read_package_reference(reference)
+        store = reference.get("store") if isinstance(reference, dict) else None
+        other = (store.get("provider"), store.get("identity")) if isinstance(store, dict) else None
+        if other is None or other == self._key:
+            return super().read(reference)
+        root = self._config.roots.get(other)
+        if root is None:
+            raise SnapshotReadError("E_STORE_CONFIG_REQUIRED", f"the Store config does not declare Store {other[0]}/{other[1]}, which "
+                                    f"reference {reference.get('id')!r} names")
+        required = self._config.integrity[other] == "required" and not self._allow_missing
+        return LocalSnapshotReader(root, other[1], require_content_identity=required).read(reference)
 
 
 def snapshot_reader_for(
@@ -43,7 +82,8 @@ def snapshot_reader_for(
                             "store-config", "/", 2)
     root = config.roots[key]
     required = config.integrity[key] == "required" and not allow_missing_content_identity
-    return LocalSnapshotReader(root, key[1], require_content_identity=required), root
+    return SharedDesignReader(config, key, root, require_content_identity=required,
+                              allow_missing_content_identity=allow_missing_content_identity), root
 
 
 def compare_store_baseline(

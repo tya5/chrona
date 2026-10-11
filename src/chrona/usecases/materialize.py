@@ -9,6 +9,7 @@ import json
 import shutil
 import tempfile
 from types import MappingProxyType
+from collections.abc import Mapping
 from typing import Any
 
 import yaml
@@ -20,7 +21,7 @@ from chrona.presentation.model.theme_inheritance import ThemeInheritanceError, i
 from chrona.resources import safe_load
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.core.ports import SnapshotReadError
-from chrona.core.store_address import StoreAddressError, check_store_address, resolve_store_address
+from chrona.core.store_address import StoreAddressError, check_store_address, check_store_segment, resolve_store_address
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.usecases.render_review import RenderRequest, RenderedReview, render_review
@@ -180,7 +181,42 @@ def _package_resource(address: str):
     return resource
 
 
-def _reference_payload(example: Path, reference: dict[str, Any]) -> bytes:
+def _shared_root(reference: dict[str, Any], stores: Mapping[str, Path] | None) -> Path | None:
+    """The root of the declared read-only shared-design Store a local reference names, else None (the example itself)."""
+    store = reference.get("store", {})
+    if stores and store.get("provider") == "local":
+        return stores.get(store.get("identity"))
+    return None
+
+
+def _shared_stores(example: Path, declared: object) -> dict[str, Path]:
+    """The manifest's read-only shared-design Stores (`stores: [{identity, root}]`), roots relative to the manifest (#1342)."""
+    if declared is None:
+        return {}
+    if not isinstance(declared, list):
+        raise _context_error("manifest stores", "a list of {identity, root}", declared)
+    roots: dict[str, Path] = {}
+    for entry in declared:
+        identity, root = (entry.get("identity"), entry.get("root")) if isinstance(entry, dict) else (None, None)
+        if not isinstance(identity, str) or not identity or not isinstance(root, str) or not root or identity in roots:
+            raise _context_error("manifest stores entry", "a distinct identity and a root", entry)
+        path = (example / root).resolve()
+        if not path.is_dir():
+            raise ValueError(f"E_MATERIALIZER_STORE: shared design Store {_label(identity)} root {_label(root)} is not a directory")
+        try:
+            check_store_segment(identity)
+        except StoreAddressError as error:
+            raise ValueError(f"E_MATERIALIZER_STORE: shared design Store identity {_label(identity)} is not a safe single segment") from error
+        roots[identity] = path
+    return roots
+
+
+def _staged_address(reference: dict[str, Any], stores: Mapping[str, Path] | None, address: str) -> str:
+    """Where a copied reference sits in the snapshot: a shared Store's files go under their own Store segment."""
+    return f"_store-{reference['store']['identity']}/{address}" if _shared_root(reference, stores) is not None else address
+
+
+def _reference_payload(example: Path, reference: dict[str, Any], stores: Mapping[str, Path] | None = None) -> bytes:
     address = reference.get("address")
     if not isinstance(address, str):
         raise _context_error("reference", "string address", address)
@@ -188,25 +224,26 @@ def _reference_payload(example: Path, reference: dict[str, Any]) -> bytes:
         if reference.get("store", {}).get("identity") != "chrona.resources":
             raise ValueError(f"E_MATERIALIZER_PACKAGE_RESOURCE: {_label(address)} requires store identity chrona.resources, found {_label(reference.get('store', {}).get('identity'))}")
         payload = _package_resource(address).read_bytes()
-        if reference.get("contentIdentity") != _identity(payload):
+        if reference.get("contentIdentity") not in (None, _identity(payload)):  # unpinned: the identity is computed and recorded (#1342)
             raise ValueError(f"E_MATERIALIZER_PACKAGE_IDENTITY: package reference {_label(reference.get('id'))} at {_label(address)}; expected {_label(reference.get('contentIdentity'))}, found {_identity(payload)}")
         return payload
     if reference.get("store", {}).get("provider") != "local":
         raise ValueError(f"E_MATERIALIZER_PROVIDER: reference {_label(reference.get('kind'))}:{_label(reference.get('id'))} at {_label(address)} requires local or package provider, found {_label(reference.get('store', {}).get('provider'))}")
-    return _inside(example, address).read_bytes()
+    return _inside(_shared_root(reference, stores) or example, address).read_bytes()
 
 
 def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *, target_token: str | None = None,
-                    theme_stack: tuple[str, ...] = (), overlay: _OverlayBuilder | None = None) -> bytes:
+                    theme_stack: tuple[str, ...] = (), overlay: _OverlayBuilder | None = None,
+                    stores: Mapping[str, Path] | None = None) -> bytes:
     token, address = reference.get("revision", {}).get("token"), reference.get("address")
     if not isinstance(token, str) or not isinstance(address, str):
         raise _context_error("reference", "string revision token and address", {"token": token, "address": address})
-    payload = _reference_payload(example, reference)
+    payload = _reference_payload(example, reference, stores)
     if reference.get("contentIdentity") not in (None, _identity(payload)):
         raise ValueError(f"E_CONTENT_IDENTITY: reference {_label(reference.get('kind'))}:{_label(reference.get('id'))} at {_label(address)}; expected {_label(reference.get('contentIdentity'))}, found {_identity(payload)}")
     package_reference = reference.get("store", {}).get("provider") == "package"
     if not (overlay is not None and package_reference):
-        target = _inside(snapshot_directory(snapshot, target_token or token), address)
+        target = _inside(snapshot_directory(snapshot, target_token or token), _staged_address(reference, stores, address))
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(payload)
     if overlay is not None:
@@ -221,7 +258,7 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *,
             except ThemeInheritanceError as error:
                 raise ValueError(f"{error.code}: {error.detail}" if error.detail else error.code) from error
             try:
-                _copy_reference(example, base, snapshot, theme_stack=(*theme_stack, address), overlay=overlay)
+                _copy_reference(example, base, snapshot, theme_stack=(*theme_stack, address), overlay=overlay, stores=stores)
             except ValueError as error:
                 if _code(error) == "E_CONTENT_IDENTITY":
                     raise ValueError(f"E_THEME_INHERITANCE_SOURCE_IDENTITY: base theme for {_label(reference.get('id'))} at {_label(address)} failed identity verification ({error})") from error
@@ -232,12 +269,13 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *,
         nested = safe_load(payload).get("body", {}).get("project")
         if not isinstance(nested, dict):
             raise _context_error("snapshot reference", "embedded Project reference object", nested)
-        _copy_reference(example, nested, snapshot, overlay=overlay)
+        _copy_reference(example, nested, snapshot, overlay=overlay, stores=stores)
     return payload
 
 
 def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot: Path,
-                      catalog_payload: bytes, overlay: _OverlayBuilder | None = None) -> dict[str, Any]:
+                      catalog_payload: bytes, overlay: _OverlayBuilder | None = None,
+                      stores: Mapping[str, Path] | None = None) -> dict[str, Any]:
     """Copy only declared, identity-pinned catalog bytes into the immutable snapshot."""
     token, address = catalog_reference.get("revision", {}).get("token"), catalog_reference.get("address")
     if not isinstance(token, str) or not isinstance(address, str):
@@ -259,7 +297,7 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
         if catalog_reference.get("store", {}).get("provider") == "package":
             payload = _package_resource(asset_address).read_bytes()
         else:
-            source_path = _inside(example, asset_address)
+            source_path = _inside(_shared_root(catalog_reference, stores) or example, asset_address)
             if source_path.is_symlink():
                 raise ValueError(f"E_ICON_ASSET_PATH: icon {_label(icon_id)} asset at {_label(asset_address)} must not be a symlink")
             payload = source_path.read_bytes()
@@ -268,7 +306,7 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
         package_asset = catalog_reference.get("store", {}).get("provider") == "package"
         staged_path = None
         if not (overlay is not None and package_asset):
-            target = _inside(snapshot_directory(snapshot, token), asset_address)
+            target = _inside(snapshot_directory(snapshot, token), _staged_address(catalog_reference, stores, asset_address))
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(payload)
             staged_path = target
@@ -287,7 +325,8 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
 
 
 def _copy_extension_packages(example: Path, project_reference: dict[str, Any], snapshot: Path,
-                             project_payload: bytes, overlay: _OverlayBuilder | None = None) -> None:
+                             project_payload: bytes, overlay: _OverlayBuilder | None = None,
+                             stores: Mapping[str, Path] | None = None) -> None:
     """Copy the pinned profile packages a Project declares, so the closure can read them."""
     project = safe_load(project_payload)
     for extension in (project.get("extensions") or []) if isinstance(project, dict) else []:
@@ -296,12 +335,13 @@ def _copy_extension_packages(example: Path, project_reference: dict[str, Any], s
             continue
         if resource.get("kind") != "profile-package":
             raise _context_error("Project extension resource", "profile-package reference", resource.get("kind"))
-        _copy_reference(example, resource, snapshot, overlay=overlay)
+        _copy_reference(example, resource, snapshot, overlay=overlay, stores=stores)
 
 
 def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
                          *, decoded_catalogs: dict[str, Any] | None = None,
-                         overlay_builder: _OverlayBuilder | None = None) -> tuple[dict[str, Any], str]:
+                         overlay_builder: _OverlayBuilder | None = None,
+                         stores: Mapping[str, Path] | None = None) -> tuple[dict[str, Any], str]:
     raw_context = context_path.read_bytes()
     context = safe_load(raw_context)
     if context.get("version") not in RENDER_CONTEXT_VERSIONS or context.get("kind") != "render-context":
@@ -311,18 +351,18 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
     references = [body[name] for name in ("project", "view", "theme", "colorScheme", "layout")]
     inputs = body.get("inputs", {})
     references.extend(value for key, value in inputs.items() if key != "iconCatalogs")
-    copied_payloads = { _reference_key(item): _copy_reference(example, item, snapshot, overlay=overlay_builder)
+    copied_payloads = { _reference_key(item): _copy_reference(example, item, snapshot, overlay=overlay_builder, stores=stores)
                         for item in references }
     _copy_extension_packages(example, body["project"], snapshot,
-                             copied_payloads[_reference_key(body["project"])], overlay_builder)
+                             copied_payloads[_reference_key(body["project"])], overlay_builder, stores)
     for icon_catalog in inputs.get("iconCatalogs", ()):
         if not isinstance(icon_catalog, dict) or icon_catalog.get("kind") != "icon-catalog":
             raise _context_error("context inputs.iconCatalogs", "icon-catalog reference object", icon_catalog)
         catalog_payload = _copy_reference(
             example, icon_catalog, snapshot,
             target_token=revision if icon_catalog.get("store", {}).get("provider") == "package" else None,
-            overlay=overlay_builder)
-        catalog = _copy_icon_assets(example, icon_catalog, snapshot, catalog_payload, overlay_builder)
+            overlay=overlay_builder, stores=stores)
+        catalog = _copy_icon_assets(example, icon_catalog, snapshot, catalog_payload, overlay_builder, stores)
         if decoded_catalogs is not None:
             decoded_catalogs[_identity(catalog_payload)] = catalog
     destination = snapshot_directory(snapshot, revision)
@@ -380,7 +420,8 @@ def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool
         decoded_catalogs: dict[str, Any] = {}
         overlay_builder = _OverlayBuilder(Path(temporary))
         reference, _ = copy_context_closure(example, context_path, snapshot, decoded_catalogs=decoded_catalogs,
-                                            overlay_builder=overlay_builder)
+                                            overlay_builder=overlay_builder,
+                                            stores=_shared_stores(example, manifest.get("stores")))
         overlay = overlay_builder.finish()
         closure = resolve_render_context(reference, overlay,
                                          decoded_resources=decoded_catalogs)

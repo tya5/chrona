@@ -30,7 +30,7 @@ from chrona.storage.loader import load_project
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.operational.store_config import load_store_config
 from chrona.operational.store_commands import OPERATIONS, run_store_command
-from chrona.operational.store_reads import compare_store_baseline, load_reference, snapshot_reader_for
+from chrona.operational.store_reads import PackageAwareReader, compare_store_baseline, load_reference, snapshot_reader_for
 from chrona.usecases.context_review import render_context_closure, resolve_context_closure
 from chrona.usecases.authoring_commands import apply_authoring_command, parse_authoring_command, workspace_revision
 from chrona.operational.authoring_commands import cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
@@ -501,7 +501,7 @@ def _render_review_reader(args: argparse.Namespace, reference: dict[str, Any]) -
         if args.snapshot_root is None or args.store_identity is None:
             raise CliFailure("E_COMMAND_SYNTAX", "render-review requires --store-config or both --snapshot-root and --store-identity", exit_code=2)
         root = Path(args.snapshot_root)
-        return LocalSnapshotReader(root, args.store_identity, require_content_identity=not allow_missing), root
+        return PackageAwareReader(root, args.store_identity, require_content_identity=not allow_missing), root
     if args.snapshot_root is not None or args.store_identity is not None:
         raise CliFailure("E_COMMAND_SYNTAX", "--store-config replaces --snapshot-root and --store-identity", exit_code=2)
     try:
@@ -818,7 +818,7 @@ def _run_render_review_gallery(args: argparse.Namespace) -> None:
     destination = Path(args.output_directory)
     if destination.exists() and any(destination.iterdir()):
         raise CliFailure("E_SCHEME_GALLERY_OUTPUT", "output directory must be empty", "gallery")
-    reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=not args.allow_missing_content_identity)
+    reader = PackageAwareReader(Path(args.snapshot_root), args.store_identity, require_content_identity=not args.allow_missing_content_identity)
     entries = []
     for reference_path in args.context_reference:
         closure = resolve_render_context(load_yaml(reference_path), reader)
