@@ -142,6 +142,23 @@ remain rejection controls. A malformed new fixture initially named an
 unregistered host; the fixture now registers it and the exemption validator
 remains unchanged. No authored examples or managed outputs change.
 
+## Policy-wiring design review
+
+Specification 50 closes schema normalization, derived-member replacement,
+entry-side back-route order and the exact typed info summary. Layout Manifest
+retains the effective policy; its legacy `best` canonical payload omits the
+new member. The summary counts actual selection calls, not Scene paths or
+logical Project relations, and separates no-search shape completion from any
+fallback search, including a later shape winner. Existing typed info transport
+requires an explicit CLI projection; diagnostic strings alone would be silently
+absent from that channel. Add no paint or Scene-schema fields. Profile wiring
+is additive in place; the owner-selected absent default intentionally changes
+routing and label phase order, while declared best preserves old behavior.
+Review against Spec 33 inheritance/phase authority, Spec 50 safety, Spec 56
+vocabulary/normalization and Spec 66 producer-owned evidence is consistent.
+Budget and approximate-search contracts remain unresolved; no ignored public
+budget member is added by this slice.
+
 ## Literal acceptance (all currently not met for the new policy)
 
 | Criterion copied from the issue | Required evidence |

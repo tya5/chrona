@@ -413,6 +413,32 @@ remain authoritative. Relation labels and annotations follow completed routes.
 Reviewer-owned explicit `best` declarations on approved targets must land
 before or with the default change. Their truthful resource provenance changes
 must be distinguished from route/paint changes, not normalized away.
+The optional in-place schema member uses the shared `relationSearchPolicy`
+vocabulary. Layout normalization supplies the absent-member default; a schema
+`default` annotation alone is not runtime behavior. A derived profile's stated
+`relationRouting` replaces that whole base member (Spec 33); existing required
+limits remain required. Invalid policy values fail `E_LAYOUT_SCHEMA` at the
+declaration, not during routing.
+
+For `entry: side`, the existing finite row-gap back-route completion remains
+available after ordinary selection fails to side-enter. First-fit tries its
+admitted source egresses in the same physical preference order and takes the
+first fully legal back-route, without all-egress ranking or another visibility
+search; best keeps existing rank comparison. Neither policy shortens mandatory
+terminal corridors or makes primary marks passable to achieve side entry.
+
+Layout emits one typed `RelationRoutingSummary` per first-fit table-timeline
+surface, projected as `I_LAYOUT_RELATION_ROUTING:` plus canonical JSON with
+`surfaceId`, `relationInstances`, `shapeSettled` and `fallbackSearch`.
+`relationInstances` counts actual selection invocations, excluding outside-window
+endpoint omissions. `shapeSettled` counts invocations completed by a shape
+without ever invoking search. `fallbackSearch` counts invocations that entered
+search, even if a later pair's shape ultimately wins; the counts are disjoint.
+Blocked egress-only invocations belong to neither count. Emit the summary even
+when all counts are zero. Best without an explicit new budget emits no summary,
+preserving existing diagnostic bytes. Scene projects the typed fact without
+recounting paths; CLI/MCP expose its fields with severity `info`, not a warning
+or evidence that all relations were drawn.
 Explicit `searchBudget` accounting and approximate fallback-search changes
 are separate unresolved design slices; this section does not authorize an
 ignored budget declaration or an unreviewed change to `best`.
