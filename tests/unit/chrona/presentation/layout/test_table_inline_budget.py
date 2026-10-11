@@ -5,7 +5,8 @@ from decimal import Decimal as D
 import pytest
 
 from chrona.presentation.layout.engine import (
-    TableInlineBudget, _Arranger, _limit_inline_base, _resolve_flexible_tracks,
+    LayoutSizingContext, TableInlineBudget, _Arranger, _limit_inline_base, _resolve_flexible_tracks,
+    measure_natural_normal_flow_block, resolve_content_block_extent,
     resolve_table_inline_budgets, solve_layout, validate_table_inline_budgets,
 )
 from chrona.presentation.layout.model import LayoutError, Measurement, Rect
@@ -167,3 +168,233 @@ def test_closure_rejects_added_or_removed_active_table_budget():
         validate_table_inline_budgets({"table": budget}, {})
     with pytest.raises(LayoutError, match="E_LAYOUT_TABLE_OVERFLOW"):
         validate_table_inline_budgets({}, {"table": budget})
+
+
+def bounded_measurement(inline, block=10):
+    return Measurement(D(20), D(inline), D(inline), D(block), D(block), D(block))
+
+
+def solve(resolved, sources, sizing):
+    return solve_layout(resolved, viewport_inline=1000, viewport_block=500,
+                        measurements=sources, sizing=sizing)
+
+
+def bounds(manifest):
+    return {item.node_id: item.bounds for item in manifest.decisions}
+
+
+def test_row_capped_flexible_track_redistributes_space_to_plot():
+    resolved = profile(container("row", [slot(share=0.2, inlineSize={"fr": 1}),
+                                         slot("other", share=None, source="timeline", inlineSize={"fr": 1})]))
+    budgets = probe(resolved, {"table": measurement(), "other": measurement(30)})
+    sources = {"table": bounded_measurement(192), "other": measurement(30)}
+    result = solve(resolved, sources, LayoutSizingContext(budgets))
+    placed = bounds(result)
+    assert placed["table"].inline_size == 192
+    assert placed["other"].inline_size == 768
+    assert not result.fit_warnings
+
+
+@pytest.mark.parametrize("kind", ["column", "overlay", "flow"])
+@pytest.mark.parametrize("size", ["content", {"fr": 1}, {"minmax": {"min": "content", "max": {"fr": 1}}}])
+def test_cap_applies_to_cross_and_flow_allocation_without_stretch(kind, size):
+    resolved = profile(container(kind, [slot(inlineSize=size)]))
+    budgets = probe(resolved, {"table": measurement()})
+    result = solve(resolved, {"table": bounded_measurement(392)}, LayoutSizingContext(budgets))
+    assert bounds(result)["table"].inline_size == 392
+    assert not result.fit_warnings
+
+
+def test_flow_uses_bounded_width_before_selecting_lines():
+    resolved = profile(container("flow", [slot(), slot("other", share=None, source="title")]))
+    budgets = probe(resolved, {"table": measurement(), "other": measurement(550)})
+    result = solve(resolved, {"table": bounded_measurement(392), "other": measurement(550)},
+                   LayoutSizingContext(budgets))
+    placed = bounds(result)
+    assert placed["table"].block == placed["other"].block == 10
+    assert placed["other"].inline == 422
+
+
+def test_grid_keeps_full_independent_track_but_caps_its_table_slot():
+    resolved = profile(container("grid", [slot(cell={"column": 1, "row": 1})],
+                                 columnTracks=[{"fr": 1}, {"fr": 1}], rowTracks=["content"]))
+    budgets = probe(resolved, {"table": measurement()})
+    result = solve(resolved, {"table": bounded_measurement(192)}, LayoutSizingContext(budgets))
+    assert budgets["table"].available_inline == 480
+    assert bounds(result)["table"].inline_size == 192
+    assert not result.fit_warnings
+
+
+@pytest.mark.parametrize("kind", ["row", "column", "overlay", "flow", "grid"])
+def test_actual_width_source_closure_is_shared_by_natural_and_arranged_block(kind):
+    table = slot(inlineSize={"fr": 1})
+    other = slot("other", share=None, source="title", inlineSize={"fr": 9})
+    extra = {}
+    if kind == "grid":
+        table["cell"] = {"column": 1, "row": 1}
+        other["cell"] = {"column": 2, "row": 1}
+        extra = dict(columnTracks=[{"fr": 1}, {"fr": 9}], rowTracks=["content"])
+    resolved = profile(container(kind, [table, other], **extra))
+    raw_sources = {"table": measurement(), "other": measurement(30)}
+    budgets = probe(resolved, raw_sources)
+    widths = []
+
+    def remeasure(slot_id, inline):
+        assert slot_id == "table"
+        widths.append(inline)
+        lines = (D(1000) / inline).to_integral_value(rounding="ROUND_CEILING")
+        return bounded_measurement(inline, lines * 10)
+
+    sources = {**raw_sources, "table": bounded_measurement(budgets["table"].ceiling)}
+    sizing = LayoutSizingContext(budgets, measure_table=remeasure)
+    result = solve(resolved, sources, sizing)
+    table_bounds = bounds(result)["table"]
+    assert table_bounds.inline_size <= budgets["table"].ceiling
+    expected = (D(1000) / table_bounds.inline_size).to_integral_value(rounding="ROUND_CEILING") * 10
+    assert table_bounds.block_size >= expected
+    natural = measure_natural_normal_flow_block(resolved, viewport_inline=1000,
+                                                measurements=sources, sizing=sizing)
+    assert natural >= expected + 20
+    assert table_bounds.inline_size in widths
+    assert not result.fit_warnings
+
+
+@pytest.mark.parametrize("kind", ["row", "column", "overlay", "flow", "grid"])
+def test_authored_fixed_inline_floor_above_cap_fails_in_every_container(kind):
+    child = slot(inlineSize={"fixed": 500})
+    extra = {}
+    if kind == "grid":
+        child["cell"] = {"column": 1, "row": 1}
+        extra = dict(columnTracks=[{"fr": 1}], rowTracks=[{"fr": 1}])
+    resolved = profile(container(kind, [child], **extra))
+    budgets = probe(resolved, {"table": measurement()})
+    with pytest.raises(LayoutError, match="E_LAYOUT_TABLE_OVERFLOW"):
+        solve(resolved, {"table": bounded_measurement(392)}, LayoutSizingContext(budgets))
+
+
+def test_empty_sizing_context_preserves_entire_existing_manifest():
+    resolved = profile(container("row", [slot(share=None)]))
+    sources = {"table": measurement(100)}
+    assert solve(resolved, sources, None).canonical_bytes() == solve(
+        resolved, sources, LayoutSizingContext({})).canonical_bytes()
+
+
+def test_context_is_a_frozen_snapshot_not_a_mutable_resource_side_channel():
+    budget = TableInlineBudget("table", "/root/children/0", D(100), D(40))
+    mutable = {"table": budget}
+    sizing = LayoutSizingContext(mutable)
+    mutable.clear()
+    assert sizing.table_budgets == {"table": budget}
+    with pytest.raises(TypeError):
+        sizing.by_path[budget.path] = budget
+
+
+def test_final_arrangement_rejects_table_dependent_parent_budget():
+    inner = container("column", [slot(), slot("other", share=None, source="title")],
+                      id="inner", inlineSize="content", gap=0, padding=0)
+    resolved = profile(container("column", [inner], gap=0, padding=0))
+    raw_sources = {"table": measurement(), "other": measurement(100)}
+    budgets = probe(resolved, raw_sources)
+    # Bad source closure still exposes uncapped intrinsic demand to the parent.
+    with pytest.raises(LayoutError, match="E_LAYOUT_TABLE_OVERFLOW"):
+        solve(resolved, raw_sources, LayoutSizingContext(budgets))
+
+
+@pytest.mark.parametrize("content_sized", [False, True])
+def test_content_extent_trials_keep_the_same_bounded_source_closure(content_sized):
+    resolved = profile(container("column", [slot(inlineSize={"fr": 1}, blockSize="fill")]))
+    budgets = probe(resolved, {"table": measurement()})
+    widths = []
+
+    def remeasure(slot_id, inline):
+        widths.append(inline)
+        return bounded_measurement(inline, 80)
+
+    sizing = LayoutSizingContext(budgets, remeasure)
+    sources = {"table": bounded_measurement(392)}
+    extent = resolve_content_block_extent(resolved, viewport_inline=1000, minimum_block=50,
+                                          measurements=sources, required_blocks={"table": D(80)},
+                                          content_sized=content_sized, sizing=sizing)
+    assert extent.extent == 100
+    assert not extent.short_sources
+    assert widths and set(widths) == {D(392)}
+    final = solve_layout(resolved, viewport_inline=1000, viewport_block=extent.extent,
+                         measurements=sources, content_sized=content_sized, sizing=sizing)
+    assert bounds(final)["table"].block_size == 80
+    assert not final.fit_warnings
+
+
+@pytest.mark.parametrize("kind", ["row", "column", "overlay", "flow", "grid"])
+def test_fitting_context_preserves_complete_manifest_and_baselines(kind):
+    table = slot(share=1, inlineSize={"fr": 1})
+    other = slot("other", share=None, source="title", inlineSize={"fr": 1})
+    extra = {}
+    if kind == "grid":
+        table["cell"] = {"column": 1, "row": 1}
+        other["cell"] = {"column": 2, "row": 1}
+        extra = dict(columnTracks=[{"fr": 1}, {"fr": 1}], rowTracks=["content"])
+    resolved = profile(container(kind, [table, other], **extra))
+    source = Measurement(D(20), D(20), D(20), D(10), D(10), D(10), D(7), D(7))
+    sources = {"table": source, "other": source}
+    sizing = LayoutSizingContext(probe(resolved, sources), lambda slot_id, inline: source)
+    assert solve(resolved, sources, sizing).canonical_bytes() == solve(resolved, sources, None).canonical_bytes()
+
+
+def test_source_mandatory_width_must_fit_actual_fr_allocation_not_just_ceiling():
+    resolved = profile(container("row", [slot(inlineSize={"fr": 1}),
+                                         slot("other", share=None, source="title", inlineSize={"fr": 99})]))
+    raw_sources = {"table": measurement(), "other": measurement(30)}
+    budgets = probe(resolved, raw_sources)
+    sizing = LayoutSizingContext(budgets, lambda slot_id, inline: bounded_measurement(inline))
+    with pytest.raises(LayoutError, match="E_LAYOUT_TABLE_OVERFLOW"):
+        solve(resolved, {**raw_sources, "table": bounded_measurement(384)}, sizing)
+
+
+def test_flow_item_minimum_above_ceiling_is_not_silently_reduced():
+    resolved = profile(container("flow", [slot(share=0.01)]))
+    budgets = probe(resolved, {"table": measurement()})
+    with pytest.raises(LayoutError, match="E_LAYOUT_TABLE_OVERFLOW"):
+        solve(resolved, {"table": Measurement(D(1), D(9), D(9), D(10), D(10), D(10))},
+               LayoutSizingContext(budgets))
+
+
+@pytest.mark.parametrize("kind", ["row", "column", "overlay", "flow", "grid"])
+def test_authored_aspect_size_above_cap_is_not_clamped(kind):
+    child = slot(inlineSize={"aspectRatio": 2}, blockSize={"fixed": 500})
+    extra = {}
+    if kind == "grid":
+        child["cell"] = {"column": 1, "row": 1}
+        extra = dict(columnTracks=[{"fr": 1}], rowTracks=[{"fixed": 500}])
+    resolved = profile(container(kind, [child], **extra))
+    budgets = probe(resolved, {"table": measurement()})
+    with pytest.raises(LayoutError, match="E_LAYOUT_TABLE_OVERFLOW"):
+        solve(resolved, {"table": bounded_measurement(392)}, LayoutSizingContext(budgets))
+
+
+@pytest.mark.parametrize("content_sized", [False, True])
+def test_coupled_extent_builds_independent_budgets_for_each_candidate(content_sized):
+    inner = container("row", [slot(blockSize="fill"),
+                              slot("other", share=None, source="timeline", inlineSize="fill", blockSize="fill")],
+                      id="inner", inlineSize={"aspectRatio": 2}, blockSize="fill", padding=0, gap=0)
+    resolved = profile(container("column", [inner], padding=0, gap=0))
+    raw_sources = {"table": measurement(), "other": measurement(30)}
+    requested_budgets = []
+
+    def for_extent(block):
+        budgets = resolve_table_inline_budgets(resolved, viewport_inline=1000, viewport_block=block,
+                                               measurements=raw_sources, content_sized=content_sized)
+        assert budgets["table"].ceiling == block * D("0.8")
+        requested_budgets.append((block, budgets["table"].ceiling))
+        return LayoutSizingContext(budgets, lambda slot_id, inline: bounded_measurement(inline, 80))
+
+    extent = resolve_content_block_extent(resolved, viewport_inline=1000, minimum_block=50,
+                                          measurements=raw_sources, required_blocks={"table": D(80)},
+                                          content_sized=content_sized, sizing=for_extent)
+    assert extent.extent == 80
+    assert not extent.short_sources
+    assert len(set(ceiling for _, ceiling in requested_budgets)) > 1
+    final = solve_layout(resolved, viewport_inline=1000, viewport_block=extent.extent,
+                         measurements=raw_sources, content_sized=content_sized, sizing=for_extent(D(80)))
+    assert bounds(final)["table"].inline_size == 64
+    assert bounds(final)["table"].block_size == 80
+    assert not final.fit_warnings
