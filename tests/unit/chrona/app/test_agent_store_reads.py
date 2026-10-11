@@ -27,7 +27,7 @@ CODES = lambda result: [row["code"] for row in result.structured["diagnostics"]]
 CONTEXT_REFERENCE = {
     "id": "halcyon-1-01-mission-brief", "kind": "render-context",
     "store": {"provider": "local", "identity": "halcyon-1-example"},
-    "address": "contexts/01-mission-brief.yaml", "revision": {"token": "example-v4"},
+    "address": "contexts/01-mission-brief.yaml", "revision": {"token": "example-v5"},
 }
 BAD_PATHS = ["../outside.yaml", "/etc/passwd", "ctx\\a.yaml", "C:/x.yaml", "con.yaml", "a/../../x.yaml", ".", "a//b.yaml"]
 
@@ -67,7 +67,7 @@ class Corpus:
 
     @property
     def context_file(self) -> Path:
-        return self.root / ".chrona" / "store" / "revision-example-v4" / "contexts" / "01-mission-brief.yaml"
+        return self.root / ".chrona" / "store" / "revision-example-v5" / "contexts" / "01-mission-brief.yaml"
 
     def reference(self, name: str = "ctx.yaml", **changes) -> str:
         (self.root / name).write_text(yaml.safe_dump({**CONTEXT_REFERENCE, **changes}), encoding="utf-8")
