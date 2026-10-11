@@ -31,7 +31,7 @@ fallback position.
 
 ## Reusable Project-note placement (#1343)
 
-Implementation pending. The two new declarations are table-timeline intent and follow the existing
+The two new declarations are table-timeline intent and follow the existing
 dependency-network exclusion of annotation placement; network Views reject
 them rather than silently ignoring completed-note intent.
 Project annotations remain the authority for narrative text, kind and

@@ -47,6 +47,10 @@ schemas:
       sha256IdentityOrNull: "sha256:ec41ec601f4e71f5e428fcb79f1bdc02746284c05c7672e49832563b918e7095"
       literalCaption: "sha256:a374a48a49ff3f7805cf60f5aad2e275e0e36f900fc9a90824fcc826bb3b0195"
       storeAddress: "sha256:a0a56e56b36ebdc841897e6498a84ba4fc1c43f157e8fe2668f96d3059ac718c"
+      annotationLegacyPlacement: "sha256:935522b7ba892d916acca9a56e0dd21ca4fb33da40753e24f4c477e0846f8210"
+      annotationCandidates: "sha256:2daa0753bf0c453e7f80c7bc8f3d8f78ffd0ae9677ce96ea0b39f8b6ab7bba9e"
+      annotationPlacementPolicy: "sha256:5dbd61db1ea073720443ba0076b7d17fd148629de6dee8fed99b339169d358c7"
+      annotationPlacementByPurpose: "sha256:3241c3e652f34b517df15f2fd84e25af0e71bbc67542f266e1a9b91731ce9be2"
   - {file: presentation-preset-v0.1.schema.yaml, kind: presentation-preset, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: preset-library-v0.2.schema.yaml, kind: builtin-preset-library, state: live, consumers: [src/chrona/usecases/preset_library.py]}
   - {file: example-registry-v0.1.schema.yaml, kind: example-registry, state: live, consumers: [src/chrona/resources/__init__.py]}
@@ -105,6 +109,7 @@ schemas:
       monthLabelForm: "sha256:8e84803c4ff90e2e6163372510a03cecece9ceb714e7571723b9d638017af737"
       quarterLabelForm: "sha256:51ca08f50380128f3b58bf55a2ef3b9954781e327cd16dc4652995a116d2ae65"
       annotationPurpose: "sha256:6334d4284f2d7977d981b54609eb2eebdcd0cc24f3e2a490d6aa428391c7cccf"
+      plannedActualFacet: "sha256:1661dd28bc389d4663f1ff8477c2fed047bcd140b3ccd88cd4e65d59d0f044fd"
       annotationSide: "sha256:8b7453e1c16755eed298aa09fc8d5702fb7a24359f4f90e5063d240725606ca9"
       annotationAlignment: "sha256:78e88eae1e0678883bce8130ce34bc068d2ec435da9e905ba651c4345078f058"
       logicalAlignment: "sha256:78e88eae1e0678883bce8130ce34bc068d2ec435da9e905ba651c4345078f058"

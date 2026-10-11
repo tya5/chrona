@@ -30,6 +30,10 @@ $defs:
     description: "Author intent for an annotation."
     examples: [callout]
     enum: [callout, highlight, note, explanatory-arrow]
+  plannedActualFacet:
+    description: "A primary temporal facet used by annotation anchors and semantic marks."
+    examples: [planned]
+    enum: [planned, actual]
   annotationSide:
     description: "Logical side of the anchor on which an annotation is placed."
     examples: [above]
