@@ -19,6 +19,15 @@
 
 ## Programme-level criteria (optional)
 
+Latest preparation combines #1292 window closure, #1293 endpoint display and
+final #1294 repair `ac14998c`: explicit-window, packaged/bounded table, default
+date/axis and typed table measurement/placement tests pass:99 (50.64s).
+Fresh schema-equivalence against READY `95b2fddc` passes: Layout/Scene/View
+delta=3, equal=35,482 documents/739 probes, four known-invalid fixtures
+unchanged; L2+L3=50.5s. Ordinary main adoption `6d1b8ec0` adds only reviewer
+#1400's Sunday inset declaration. Final upstream merges/READY adoption and
+public/current-head/full-release gates remain pending; no acceptance shortcut.
+
 Release pending: final trusted READY integration, public artifact/identity migration disposition, current schema gate and PR checks, then review-containing exact-main three-OS release. No closure is authorized by these local rows.
 
 Packaged/default, all-nine live-View and bounded-render batch: 23 passed (20.95s).
