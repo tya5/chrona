@@ -35,9 +35,10 @@ do not receive this advisory.
 Architecture: CLI owns terminal I/O; Draft overrides View before admission/effective identity freeze; Core dependencies/schedules are unchanged. Layout alone compares completed geometry against resolved declared limits; Scene transports typed facts. No resizing, route changes, clocks, serialization authority or implemented paging. Default Layout provenance intentionally changes; catalogue Editorial and mirrors remain unchanged. Paging follow-up is specified in Spec33.
 
 Current import check:11 packages/37 inward edges. Full schema gate against
-origin/main7563df4c PASS:one additive Layout schema,37 equal,483 documents
-(379 mapped),739 probes (462 rejected/277 accepted), four known-invalid
-unchanged; L2+L3=50.2s against unchanged60s budget. The provided tool proves
+origin/main60ddbbe5 PASS at preparation `39903716`:one additive Layout
+schema,37 equal,480 documents (377 mapped),739 probes (462 rejected/277
+accepted), four known-invalid unchanged; L2+L3=29.8s against unchanged60s
+budget. The provided tool proves
 and retires19 merged L1 entries; L2/L3 predecessor records remain intact.
 Authored examples diff is empty. Current PR/public-artifact and containing-review
 exact-main three-OS release remain required; no second active PR is opened.
