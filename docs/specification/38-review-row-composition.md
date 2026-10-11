@@ -154,7 +154,9 @@ produce identical membership under every Theme and renderer.
 Generated lane row order preserves resolved View group order. Within a group,
 each lane takes the minimum selected View-row rank among its countable members,
 with lane ID as the stable tie-break. Comparison facets do not add ranks or
-members. Ordering never changes membership, founder identity or allocation;
+members. Ordering never changes assignments, founder identity or allocation.
+View closes `LaneMembership.lanes` and projected lane rows in the same order;
+Layout's exact membership/row correspondence invariant remains mandatory.
 Layout consumes these already ordered View lane rows. Packaged presets retain
 their declared planned-start ordering rather than being re-sorted by lane ID.
 
