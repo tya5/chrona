@@ -440,6 +440,20 @@ benchmarks must distinguish graph preparation from candidate-frontier work.
 Search-limited evidence is not a proof that no route exists; any later
 critical-route completeness policy must retain that distinction.
 
+**Retained search memo capacity (#1298).** The obstacle-index lineage admits
+at most4096 logical records of cached payloads and, separately,4096 records
+of interned selection contents (also at most256 content IDs). A selection
+costs one container plus one record per obstacle; a completed route costs one
+container plus one per point; a stored failure costs one. An immutable sparse
+graph costs one container plus two records per node (point and adjacency), one
+per directed edge and one per reverse-heuristic entry. Existing keys consume
+no additional capacity. Admission is non-evicting; oversized/full-capacity
+values run fresh while admitted hits remain usable. Exact keys, route order,
+frontier quotas, failure semantics and safety checks are unchanged. This bounds
+retained records, not platform-dependent bytes or the input-sized active graph,
+frontier and obstacle data. Graph preparation counters distinguish rebuilds
+from candidate-frontier work.
+
 **Entry obstacles (#1109 R4).** A comparison-host corridor exempts only named,
 physically connected marks of that endpoint. A detached snapshot or actual
 mark remains an obstacle even when it belongs to the same object. Entry stubs
