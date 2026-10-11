@@ -34,8 +34,9 @@ def _assert_readable(rendered):
     diagnostics = rendered.surface.diagnostics
     assert not any(item.startswith("W_LAYOUT_LABEL_OVERFLOW:axis-label:") for item in diagnostics)
     thinned = [item for item in diagnostics if item.startswith("W_LAYOUT_AXIS_LABEL_THINNED:")]
-    if thinned:
-        assert any(item.startswith("W_LAYOUT_AXIS_DENSITY:") for item in diagnostics)
+    for tier in {item.split(":")[2] for item in thinned}:
+        assert any(item.startswith(f"W_LAYOUT_AXIS_DENSITY:axis-tier:{tier}:thinned=")
+                   for item in diagnostics), tier
     findings = evaluate_scene_perceptibility(scene_document(rendered.scene))
     assert not any("TEXT_INTERSECTION" in item.code and
                    all(identifier.startswith("axis-label:") for identifier in item.primitive_ids)
