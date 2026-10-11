@@ -31,6 +31,11 @@ Current READY focused setup/import/timing/loader-policy, agent-tools and
 deadline batch: 232 passed (23.35 s). Final strengthened import guard and
 documented quick smoke: 42 passed (5.11 s), including direct `Path.open` and
 Python3.13 glob keyword forwarding. No existing assertion or corpus case was removed.
+Independent detached checkout of `7dbe83d7`, with its own Python 3.13 venv
+and only documented dev/render/CJK dependencies (MCP absent): documented quick
+smoke plus contributor-setup, whole-import and unit-timing guards, 55 passed
+(12.76 s); `pip check` reports no broken requirements and the editable import
+points to that checkout. This is not evidence of a full unit-suite CI pass.
 The all-module diagnostic found eager skill-launch data and deadline discovery
 missed by the former four-module spy; session fixtures and collection hooks
 now defer those reads without changing data, rendering or scheduler checks.
