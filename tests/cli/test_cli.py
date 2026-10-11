@@ -273,7 +273,10 @@ def test_cli_schedule_matches_library_result(tmp_path, monkeypatch, capsys):
     output = json.loads(capsys.readouterr().out)
     assert output["placements"] == {"gate": {"at": "2026-10-01"}}
     assert output["placements"] == json.loads(json.dumps(schedule(project).placements, default=str))
-    assert output["analysis"] == {"criticalObjectIds": ["gate"], "totalFloat": {"gate": 0}}
+    assert output["analysis"] == {
+        "criticalObjectIds": [],
+        "totalFloat": {"gate": {"value": 0, "unit": "calendar-days", "calendar": None}},
+    }
 
 
 def test_cli_render_parser_advertises_the_bundled_default_preset():
@@ -1234,7 +1237,9 @@ def test_cli_schedule_analysis_uses_project_order_and_halcyon_facts(tmp_path, mo
     path.write_text(yaml.safe_dump(project, sort_keys=False), encoding="utf-8")
     monkeypatch.setattr(sys, "argv", ["chrona", "schedule", str(path)])
     main()
-    assert json.loads(capsys.readouterr().out)["analysis"]["criticalObjectIds"] == ["second", "first"]
+    ordered_analysis = json.loads(capsys.readouterr().out)["analysis"]
+    assert ordered_analysis["criticalObjectIds"] == []  # isolated fixed dates are not driving paths
+    assert list(ordered_analysis["totalFloat"]) == ["second", "first"]
 
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     halcyon = yaml.safe_load((root / "examples/halcyon-1/project.yaml").read_text(encoding="utf-8"))
@@ -1244,7 +1249,10 @@ def test_cli_schedule_analysis_uses_project_order_and_halcyon_facts(tmp_path, mo
     expected = schedule(halcyon).analysis
     assert payload["analysis"] == {
         "criticalObjectIds": [object_id for object_id in halcyon["objects"] if object_id in expected.critical],
-        "totalFloat": expected.total_float,
+        "totalFloat": {
+            object_id: {"value": value.value, "unit": value.unit, "calendar": value.calendar}
+            for object_id, value in expected.total_float.items()
+        },
     }
 
 
