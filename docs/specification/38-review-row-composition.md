@@ -151,6 +151,13 @@ labels, icons, stroke widths, mark bounds, Actual dates, Scene geometry,
 collision obstacles or the output target. The same Project and View therefore
 produce identical membership under every Theme and renderer.
 
+Generated lane row order preserves resolved View group order. Within a group,
+each lane takes the minimum selected View-row rank among its countable members,
+with lane ID as the stable tie-break. Comparison facets do not add ranks or
+members. Ordering never changes membership, founder identity or allocation;
+Layout consumes these already ordered View lane rows. Packaged presets retain
+their declared planned-start ordering rather than being re-sorted by lane ID.
+
 View v0.28 adds `rows.packing`, a duplicate-free subsequence of
 `[explicit, attached, chain, dates]`, defaulting to
 `[explicit, attached]`. The subsequence preserves this order; `chain` and
@@ -335,8 +342,13 @@ member's title; a multi-member lane shows its group's title, with its first
 member's title appended when that group has multiple multi-member lanes.
 For an ungrouped multi-member lane, the founder member's authored Project
 title is its human heading. Generated lane IDs, founder IDs and explicit lane
-keys are identity, never display-title fallbacks. A View-requested `Items` column remains declared
-intent; public Views with an all-one count SHOULD omit it. This changes
+keys are identity, never display-title fallbacks. `laneTable.count` accepts
+`false` (also the runtime default), `true`, or `auto`. Boolean declarations
+retain their exact meaning. `auto` resolves once from completed immutable
+countable lane membership: show `Items` iff any selected lane has more than
+one member, consistently across the table. Actual/Snapshot/scenario facets
+never increase that count. Packaged lane tables declare `auto`.
+This changes
 display text, not lane identity or membership (#554). A visible delta table
 promise removed during resource migration must be selected in lane-label
 content or explicitly retired.
