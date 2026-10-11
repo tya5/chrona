@@ -44,8 +44,11 @@ the same three `data-purpose`/`stroke` attributes change; element counts and
 all text remain unchanged. Expected evidence mismatch is disclosed, not
 absorbed into authored examples. Other M1 deltas are disclosed in the1296/1347
 reviews. CI38132741366 passed all product/reproduction checks; derived-ready
-failed only because main advanced. Final post1413 READY integration, its fresh
-snapshot/checks and exact-main three-OS release remain required before closure.
+failed only because main advanced. Post1413 integrationc783dc73 passes57 focused
+tests16.75s, including live/synthetic HALCYON, compile and project-finish/units.
+Exact trusted READYcc94cf2c is adopted without conflicts or product/test changes.
+Fresh current-head snapshot/checks and exact-main three-OS release remain
+required before closure.
 
 ## Architecture conclusion
 
