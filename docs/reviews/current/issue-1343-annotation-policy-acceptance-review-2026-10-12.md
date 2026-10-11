@@ -4,8 +4,9 @@
 Source implementation: `b60432b7ea1f49f946ec016ba16cb74f9d7b2864` on READY
 `53ad70d98cb19fd974938b6c39d96980f2c4db09`.
 [Published plan/design/architecture review](../../planning/active/issue-1343-annotation-policy-implementation-plan-2026-10-12.md).
-Local evidence only; PR artifact review and containing-review three-OS release
-remain required. Do not close from these local dispositions.
+Local acceptance is proven; corrected-head CI/artifact review and the
+containing-review three-OS release remain required. Do not close from local
+dispositions.
 
 ## Literal issue acceptance
 
@@ -28,6 +29,11 @@ with a synthetic primitive/SVG twin in the PR path. Schema equivalence PASS:
 1 additive/1 exact declared delta/36 equal,739 probes; L2+L3=17.6s.
 Shared schema inventory/annotations/references, inward imports (11/37), Layout
 float accumulation and literal-review validation pass.
+Release-test correction: `9e64f70a` closes all15 failures identified in
+[initial CI](https://github.com/tya5/chrona/actions/runs/38177565670): approved
+shared-schema accounting/probes and pre-serialization float-boundary oracles,
+without product changes. Schema/default177 tests PASS19.69s; rail/rounded41
+tests PASS74.26s, including0.001px-overlap/outside-paper rejection controls.
 
 Measurement migration disclosed: target B/Yuya/Marquee gain one annotation-host
 fit warning each, with zero primitive or SVG changes; Title Card/Sunday have
@@ -58,5 +64,8 @@ allocation correction, not a new candidate/search policy:
 
 The four Scene-only changes are roadmap and target B/Yuya/Marquee: one
 annotation-host fit warning each,zero primitive changes.34 complete Scene/SVG
-pairs stay byte-identical. Current-head CI-owned snapshot verification and
-containing-review release remain pending; this local preflight is not release.
+pairs stay byte-identical. [PR1425](https://github.com/tya5/chrona/pull/1425)
+artifact11716526401 on`b28f0bcd` was inspected: all101 paths/46 pairs parsed,
+all92 Scene/SVG bytes exactly equal local preflight, with only three additional
+CI-managed inventory/contrast/coverage reports changing. Corrected-head CI and
+containing-review release remain pending; an earlier artifact is not release.
