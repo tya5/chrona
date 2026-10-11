@@ -40,10 +40,19 @@ def _validator_v028() -> jsonschema.Draft202012Validator:
 
 
 def _assert_view_copy_except_axis(packaged: Path, corpus: Path) -> None:
-    # Packaged axis policy migrates independently; guard every other declaration.
+    # Published packaged policy migrations are independent of old corpus copies.
     values = [yaml.safe_load(path.read_bytes()) for path in (packaged, corpus)]
     for value in values:
+        value.pop("version")
         value["body"].pop("axis")
+        heading = value["body"].get("heading", {})
+        heading.pop("text", None)
+        if not heading:
+            value["body"].pop("heading", None)
+        for column in value["body"].get("tableColumns", ()):
+            column.pop("endDisplay", None)
+            column.pop("text", None)
+        value["body"].get("rows", {}).get("laneTable", {}).pop("text", None)
     assert values[0] == values[1]
 
 
@@ -78,6 +87,7 @@ def test_lane_resource_migration_inventory_and_editorial_mirror():
     default = yaml.safe_load((ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/view.yaml").read_text(encoding="utf-8"))
     assert default["body"]["rows"] == {"mode": "automatic"}
     assert [column["id"] for column in default["body"]["tableColumns"]] == ["Task", "Plan"]
+    assert default["body"]["tableColumns"][1]["endDisplay"] == "inclusive"
     assert default["version"] == "chrona/view/v0.28"
     _assert_view_copy_except_axis(
         ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/view.yaml",

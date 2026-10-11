@@ -35,6 +35,7 @@ root:
         - id: table
           kind: slot
           source: table
+          maxInlineShare: 0.4
           inlineSize: {minmax: {min: content, max: {fr: 1}}}
           blockSize: fill
           place: {inline: stretch, block: stretch, safety: strict}
