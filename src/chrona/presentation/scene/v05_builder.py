@@ -10,7 +10,7 @@ from typing import Any, Mapping
 
 from chrona.presentation.layout.dependency_network import compose_dependency_network_surface
 from chrona.presentation.layout.canvas_viewport import DeclaredViewport
-from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
+from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest, completed_symbol_primitive_ids
 from chrona.presentation.layout.model import LayoutError, LayoutManifest
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
@@ -138,8 +138,8 @@ def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose
     """Emit one milestone's Symbol primitive(s): one for a built-in shape, several sibling
 
     primitives (one per painted part, ascending paint order) for a Theme-bound glyph.
-    Geometry and paint intents arrive completed by Layout. Scene assigns
-    primitive identity and delegates each part's paint conversion.
+    Geometry, identity and paint intents arrive completed by Layout. Scene
+    projects each part and delegates its paint conversion.
     """
     base_paint_order = shared.pop("paint_order", 0)
     # Parts stack in ascending paint order, except where the whole glyph is one layer (a note's artwork, #848).
@@ -147,8 +147,8 @@ def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose
     if primitive_ids is not None and len(primitive_ids) != len(completed_parts):
         raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", scene_id,
                               "typed lane handoff part count differs from Layout geometry")
-    return [ScenePrimitive((primitive_ids[index] if primitive_ids is not None else
-                            f"{scene_id}:part{index}" if part.paint_mode is not None else scene_id),
+    emitted_ids = primitive_ids if primitive_ids is not None else completed_symbol_primitive_ids(scene_id, completed_parts)
+    return [ScenePrimitive(emitted_ids[index],
                            PrimitiveKind.SYMBOL, source_ref, source_kind, purpose, visual_role,
                            bounds, symbol=SymbolGeometry(part.commands), paint_order=base_paint_order + index * order_step,
                            glyph_paint_mode=part.paint_mode, glyph_paint_color=part.paint_color,

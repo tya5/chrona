@@ -6,7 +6,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 43 | 284 | 1.000 | 7.583 | 0 | 4 |
+| actual | `actual` | required | 3.000 | 43 | 289 | 1.000 | 7.583 | 0 | 4 |
 | annotation-artwork | `annotation-artwork` | enabled | 1.100 | 3 | 19 | 1.493 | 5.241 | 0 | 0 |
 | annotation-artwork | `annotation-artwork-rods` | enabled | 1.100 | 1 | 12 | 2.262 | 2.262 | 0 | 0 |
 | annotation-border-bottom | `annotation-border-bottom` | enabled | 1.100 | 2 | 3 | 15.434 | 15.434 | 0 | 0 |
@@ -27,18 +27,18 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | annotation-text | `annotation-note-text` | required | 4.500 | 15 | 37 | 5.859 | 13.973 | 0 | 0 |
 | as-of-label | `as-of-label` | required | 4.500 | 6 | 6 | 3.717 | 4.929 | 0 | 2 |
 | as-of-label | `text` | required | 4.500 | 35 | 35 | 9.223 | 14.573 | 0 | 0 |
-| axis-band | `axis-band-decoration` | enabled | 1.100 | 45 | 121 | 1.053 | 1.579 | 0 | 4 |
+| axis-band | `axis-band-decoration` | enabled | 1.100 | 45 | 120 | 1.053 | 1.579 | 0 | 4 |
 | axis-band | `axis-band-decoration2` | absent | 1.100 | 6 | 0 | — | — | 0 | 0 |
 | axis-band | `axis-band-decoration2` | enabled | 1.100 | 5 | 33 | 1.146 | 1.154 | 0 | 0 |
 | axis-label | `axis-label2` | required | 4.500 | 11 | 37 | 5.727 | 10.019 | 0 | 0 |
 | axis-label | `axis-label3` | required | 4.500 | 11 | 98 | 5.448 | 8.683 | 0 | 0 |
-| axis-label | `text` | required | 4.500 | 34 | 287 | 8.629 | 10.306 | 0 | 0 |
+| axis-label | `text` | required | 4.500 | 34 | 280 | 8.629 | 10.306 | 0 | 0 |
 | calendar-closed | `calendar-closed` | absent | 1.100 | 1 | 0 | — | — | 0 | 0 |
 | calendar-closed | `calendar-closed` | enabled | 1.100 | 44 | 1880 | 1.050 | 1.414 | 0 | 256 |
 | calendar-exception | `calendar-exception` | enabled | 1.100 | 5 | 20 | 1.216 | 1.270 | 0 | 0 |
-| finish-delta | `variance-ahead` | deemphasized | 3.000 | 1 | 3 | 7.708 | 7.708 | 0 | 0 |
-| finish-delta | `variance-behind` | required | 4.500 | 26 | 54 | 4.562 | 5.571 | 0 | 0 |
-| finish-delta | `variance-on-track` | required | 4.500 | 2 | 5 | 5.692 | 5.692 | 0 | 0 |
+| finish-delta | `variance-ahead` | deemphasized | 3.000 | 2 | 4 | 3.043 | 7.708 | 0 | 0 |
+| finish-delta | `variance-behind` | required | 4.500 | 26 | 57 | 4.562 | 5.571 | 0 | 0 |
+| finish-delta | `variance-on-track` | required | 4.500 | 3 | 6 | 5.692 | 5.692 | 0 | 0 |
 | group-decoration | `group-band` | absent | 1.100 | 12 | 0 | — | — | 0 | 0 |
 | group-decoration | `group-band` | enabled | 1.100 | 32 | 96 | 1.116 | 1.116 | 0 | 0 |
 | group-detail | `text` | required | 4.500 | 24 | 72 | 11.935 | 16.268 | 0 | 0 |
@@ -65,7 +65,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | member-label | `member-label-inside-planned` | required | 4.500 | 19 | 19 | 4.651 | 5.727 | 0 | 0 |
 | member-label | `text` | required | 4.500 | 35 | 344 | 10.019 | 14.573 | 0 | 0 |
 | milestone-digest-entry | `text` | required | 4.500 | 24 | 48 | 11.935 | 16.268 | 0 | 0 |
-| missingActual | `missing-actual` | required | 3.000 | 35 | 49 | 1.491 | 13.556 | 0 | 3 |
+| missingActual | `missing-actual` | required | 3.000 | 36 | 50 | 1.491 | 13.397 | 0 | 3 |
 | network-node | `network-node` | required | 3.000 | 1 | 16 | 17.747 | 17.747 | 0 | 0 |
 | note-index | `note-index` | required | 4.500 | 2 | 4 | 6.157 | 6.463 | 0 | 0 |
 | observation-cell | `text` | required | 4.500 | 24 | 72 | 11.935 | 16.268 | 0 | 0 |
@@ -75,15 +75,15 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | period-band | `period-band` | enabled | 1.100 | 9 | 15 | 1.000 | 1.337 | 0 | 1 |
 | period-label | `period-label` | required | 4.500 | 9 | 9 | 1.692 | 10.661 | 0 | 3 |
 | planned | `gate` | required | 3.000 | 6 | 46 | 1.000 | 9.106 | 0 | 1 |
-| planned | `planned` | required | 3.000 | 45 | 550 | 1.163 | 13.238 | 0 | 2 |
-| progress-fill | `progress-fill` | required | 3.000 | 30 | 94 | 3.216 | 4.789 | 0 | 0 |
-| project-note | `text` | required | 4.500 | 28 | 62 | 10.019 | 16.268 | 0 | 0 |
-| relation-label | `text` | required | 4.500 | 16 | 107 | 11.934 | 14.573 | 0 | 0 |
+| planned | `planned` | required | 3.000 | 45 | 552 | 1.163 | 13.238 | 0 | 2 |
+| progress-fill | `progress-fill` | required | 3.000 | 30 | 99 | 3.216 | 4.789 | 0 | 0 |
+| project-note | `text` | required | 4.500 | 28 | 64 | 10.019 | 16.268 | 0 | 0 |
+| relation-label | `text` | required | 4.500 | 17 | 111 | 11.934 | 14.573 | 0 | 0 |
 | row-decoration | `row-band` | absent | 1.100 | 12 | 0 | — | — | 0 | 0 |
 | row-decoration | `row-band` | enabled | 1.100 | 14 | 56 | 1.000 | 1.116 | 0 | 4 |
 | row-rule | `row-rule` | enabled | 1.100 | 4 | 104 | 1.067 | 1.227 | 0 | 1 |
 | slot-heading | `slot-heading` | required | 4.500 | 7 | 7 | 5.448 | 6.667 | 0 | 0 |
-| snapshot | `snapshot` | required | 3.000 | 8 | 48 | 2.469 | 6.091 | 0 | 6 |
+| snapshot | `snapshot` | required | 3.000 | 9 | 59 | 2.469 | 9.106 | 0 | 6 |
 | subtitle-text | `subtitle` | required | 4.500 | 6 | 6 | 4.747 | 6.058 | 0 | 0 |
 | subtitle-text | `text` | required | 4.500 | 1 | 1 | 16.268 | 16.268 | 0 | 0 |
 | summary-bar | `summary-bar` | required | 3.000 | 2 | 2 | 5.817 | 6.712 | 0 | 0 |
@@ -95,10 +95,10 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | summary-unit | `summary-unit` | required | 4.500 | 1 | 1 | 6.720 | 6.720 | 0 | 0 |
 | table-cell | `missing-actual-cell` | required | 4.500 | 1 | 1 | 5.448 | 5.448 | 0 | 0 |
 | table-cell | `table-cell-secondary` | required | 4.500 | 7 | 164 | 5.184 | 6.959 | 0 | 0 |
-| table-cell | `text` | required | 4.500 | 45 | 916 | 8.683 | 16.268 | 0 | 0 |
-| table-cell | `variance-ahead` | deemphasized | 3.000 | 7 | 20 | 4.312 | 6.357 | 0 | 0 |
-| table-cell | `variance-behind` | required | 4.500 | 11 | 48 | 5.022 | 5.669 | 0 | 0 |
-| table-cell | `variance-on-track` | required | 4.500 | 8 | 24 | 5.184 | 7.032 | 0 | 0 |
+| table-cell | `text` | required | 4.500 | 45 | 919 | 8.683 | 16.268 | 0 | 0 |
+| table-cell | `variance-ahead` | deemphasized | 3.000 | 8 | 21 | 3.397 | 6.357 | 0 | 0 |
+| table-cell | `variance-behind` | required | 4.500 | 11 | 51 | 5.022 | 5.926 | 0 | 0 |
+| table-cell | `variance-on-track` | required | 4.500 | 9 | 25 | 5.184 | 7.032 | 0 | 0 |
 | table-column-label | `tableColumnLabel` | required | 4.500 | 6 | 18 | 5.184 | 6.058 | 0 | 0 |
 | table-column-label | `text` | required | 4.500 | 39 | 69 | 10.019 | 16.268 | 0 | 0 |
 | title-text | `heading` | required | 4.500 | 4 | 4 | 7.959 | 14.219 | 0 | 0 |
@@ -6952,25 +6952,25 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header-strip:payload` | `group-header-strip` | 800.000, 352.577 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 1.350 | 1.100 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header-strip:payload` | `group-header-strip` | 800.000, 352.577 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.000 | 1.100 | warning |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `kicker` | `kicker` | 423.733, 68.951 | `region-frame:title-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:actual` | `legend` | 1141.929, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:calendar-exception` | `legend` | 1145.826, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:dependency` | `legend` | 1042.122, 113.500 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:milestone` | `legend` | 1014.166, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:missing-actual` | `legend` | 908.646, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:period-band` | `legend` | 903.187, 113.500 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:planned` | `legend` | 1018.840, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:snapshot` | `legend` | 882.146, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:actual` | `actual` | 1106.049, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 4.747 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:calendar-exception` | `calendar-exception` | 1106.049, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.270 | 1.100 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:milestone:part1` | `gate` | 977.195, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 839.098, 79.300 | `legend-swatch:missing-actual` | pattern-substrate | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 839.098, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 839.098, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.000 | 3.000 | warning |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:period-band` | `period-band` | 839.098, 113.500 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.163 | 1.100 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:period-band` | `period-band` | 839.098, 113.500 | `legend-swatch:period-band` | pattern-substrate | `#E4F0D6` | stroke | 2.217 | 1.100 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:period-band` | `period-band` | 839.098, 113.500 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 2.578 | 1.100 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:planned` | `planned` | 977.195, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:snapshot` | `snapshot` | 828.098, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 3.454 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:actual` | `legend` | 1391.412, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:calendar-exception` | `legend` | 1395.309, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:dependency` | `legend` | 1173.993, 113.500 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:milestone` | `legend` | 1146.037, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:missing-actual` | `legend` | 954.146, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:period-band` | `legend` | 948.687, 113.500 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:planned` | `legend` | 1150.711, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:snapshot` | `legend` | 927.646, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:actual` | `actual` | 1355.533, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 4.747 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:calendar-exception` | `calendar-exception` | 1355.533, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.270 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:milestone:part1` | `gate` | 1109.065, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 884.598, 79.300 | `legend-swatch:missing-actual` | pattern-substrate | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 884.598, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 884.598, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.000 | 3.000 | warning |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:period-band` | `period-band` | 884.598, 113.500 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.163 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:period-band` | `period-band` | 884.598, 113.500 | `legend-swatch:period-band` | pattern-substrate | `#E4F0D6` | stroke | 2.217 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:period-band` | `period-band` | 884.598, 113.500 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 2.578 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:planned` | `planned` | 1109.065, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:snapshot` | `snapshot` | 873.598, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 3.454 | 3.000 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `missing-actual:tvac:tvac` | `missing-actual` | 1109.272, 504.693 | `missing-actual:tvac:tvac` | pattern-substrate | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `missing-actual:tvac:tvac` | `missing-actual` | 1109.272, 504.693 | `planned:tvac:tvac` | flat | `#7EC8E3` | stroke | 9.330 | 3.000 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `missing-actual:tvac:tvac` | `missing-actual` | 1109.272, 504.693 | `planned:tvac:tvac` | flat | `#7EC8E3` | fill | 1.832 | 3.000 | warning |
@@ -7094,126 +7094,161 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `column:Phase` | `tableColumnLabel` | 303.932, 170.450 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `column:What` | `tableColumnLabel` | 56.892, 170.450 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `title` | `heading` | 161.460, 85.888 | `region-frame:title-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `actual:evt:evt` | `actual` | 918.061, 656.800 | `planned:evt:evt` | flat | `#3B6FB6` | stroke | 3.204 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `actual:fab-a0:fab-a0` | `actual` | 669.069, 380.800 | `planned:fab-a0:fab-a0` | flat | `#3B6FB6` | stroke | 3.204 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `actual:rtl-freeze:rtl-freeze` | `actual` | 538.210, 168.800 | `planned:rtl-freeze:rtl-freeze` | flat | `#3B6FB6` | stroke | 3.204 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `actual:tapeout:tapeout` | `actual` | 659.069, 232.800 | `planned:tapeout:tapeout` | flat | `#3B6FB6` | stroke | 3.204 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `as-of-label` | `text` | 1046.184, 130.100 | `group:design` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 563.198, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 745.404, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-band-rect:0:2` | `axis-band-decoration` | 993.491, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-band-rect:0:3` | `axis-band-decoration` | 1240.215, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-band-rect:0:4` | `axis-band-decoration` | 1470.129, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:2:0` | `text` | 568.198, 76.000 | `axis-band-rect:0:0` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:2:1` | `text` | 745.404, 76.000 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:2:2` | `text` | 993.491, 76.000 | `axis-band-rect:0:2` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:2:3` | `text` | 1240.215, 76.000 | `axis-band-rect:0:3` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:2:4` | `text` | 1465.129, 76.000 | `axis-band-rect:0:4` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:3:1` | `text` | 548.578, 90.400 | `axis-band-rect:0:0` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:3:10` | `text` | 1291.526, 90.400 | `axis-band-rect:0:3` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:3:11` | `text` | 1371.153, 90.400 | `axis-band-rect:0:4` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:3:12` | `text` | 1460.004, 90.400 | `axis-band-rect:0:4` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:3:13` | `text` | 1543.653, 90.400 | `axis-band-rect:0:4` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:3:2` | `text` | 629.729, 90.400 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:3:3` | `text` | 715.748, 90.400 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:3:4` | `text` | 796.941, 90.400 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:3:5` | `text` | 879.522, 90.400 | `axis-band-rect:0:2` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:3:6` | `text` | 965.512, 90.400 | `axis-band-rect:0:2` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:3:7` | `text` | 1042.944, 90.400 | `axis-band-rect:0:2` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:3:8` | `text` | 1126.173, 90.400 | `axis-band-rect:0:3` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `axis-label:3:9` | `text` | 1209.826, 90.400 | `axis-band-rect:0:3` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `calendar-closed:2026-09-21` | `calendar-closed` | 592.735, 434.800 | `group:product` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `calendar-closed:2026-11-23` | `calendar-closed` | 764.487, 434.800 | `group:product` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `calendar-closed:2026-12-25` | `calendar-closed` | 851.727, 434.800 | `group:product` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `calendar-closed:2027-01-01` | `calendar-closed` | 870.810, 434.800 | `group:product` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `variance:fab-a0:fab-a0` | `variance-behind` | 789.023, 360.500 | `group:product` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `variance:rtl-freeze:rtl-freeze` | `variance-behind` | 668.525, 168.800 | `group:design` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `group:design` | `group-band` | 1041.200, 222.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `group:product` | `group-band` | 1041.200, 434.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `group:validation` | `group-band` | 1041.200, 646.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `group-detail:design` | `text` | 154.907, 779.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `group-detail:product` | `text` | 248.336, 798.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `group-detail:validation` | `text` | 214.295, 818.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `group-header:design` | `text` | 69.955, 126.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `group-header:product` | `text` | 91.578, 338.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `group-header:validation` | `text` | 79.867, 550.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `legend:actual` | `text` | 1442.302, 805.138 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `legend:planned` | `text` | 1463.834, 781.338 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `legend:scale:revision:A0` | `text` | 1417.738, 827.938 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `legend:scale:revision:A1` | `text` | 1416.880, 850.738 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `legend:scale:revision:B0` | `text` | 1417.804, 873.538 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `legend-swatch:actual` | `actual` | 1396.000, 805.138 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `legend-swatch:planned` | `planned` | 1396.000, 781.338 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `legend-swatch:scale:revision:A0` | `planned` | 1396.000, 827.938 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `legend-swatch:scale:revision:A1` | `planned` | 1396.000, 850.738 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `legend-swatch:scale:revision:B0` | `planned` | 1396.000, 873.538 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `legend-swatch:actual:progress-fill` | `progress-fill` | 1396.000, 805.138 | `legend-swatch:actual` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `milestone:evt` | `text` | 661.875, 798.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `milestone:tapeout` | `text` | 603.453, 779.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `observations:row:dvt-customer:cell:area` | `text` | 864.279, 857.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `observations:row:dvt-customer:cell:disposition` | `text` | 1292.547, 857.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `observations:row:dvt-customer:cell:observation` | `text` | 1078.686, 857.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `observations:row:a0-yield:cell:area` | `variance-ahead` | 882.150, 818.400 | `canvas` | canvas | `#FFFFFF` | fill | 3.397 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `observations:row:a0-yield:cell:disposition` | `variance-ahead` | 1284.315, 818.400 | `canvas` | canvas | `#FFFFFF` | fill | 3.397 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `observations:row:a0-yield:cell:observation` | `variance-ahead` | 1087.212, 818.400 | `canvas` | canvas | `#FFFFFF` | fill | 3.397 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `observations:header:area` | `text` | 866.316, 779.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `observations:header:disposition` | `text` | 1298.063, 779.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `observations:header:observation` | `text` | 977.564, 779.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `observations:row:a0-yield:source` | `text` | 960.851, 798.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `observations:row:dvt-customer:source` | `text` | 961.649, 838.000 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `planned:bringup-a0:bringup-a0` | `planned` | 928.061, 592.800 | `group:validation` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `planned:dvt:dvt` | `planned` | 1129.803, 720.800 | `group:validation` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `planned:evt:evt` | `planned` | 918.061, 656.800 | `group:validation` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `planned:fab-a0:fab-a0` | `planned` | 660.890, 380.800 | `group:product` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `planned:pvt:pvt` | `planned` | 1173.422, 444.800 | `group:product` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `planned:ramp:ramp` | `planned` | 1211.590, 508.800 | `group:product` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `planned:respin-a1:respin-a1` | `planned` | 966.229, 296.800 | `group:design` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `planned:rtl-freeze:rtl-freeze` | `planned` | 538.210, 168.800 | `group:design` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `planned:tapeout:tapeout` | `planned` | 650.890, 232.800 | `group:design` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `progress-fill:actual:fab-a0:fab-a0` | `progress-fill` | 669.069, 380.800 | `actual:fab-a0:fab-a0` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `progress-fill:actual:rtl-freeze:rtl-freeze` | `progress-fill` | 538.210, 168.800 | `actual:rtl-freeze:rtl-freeze` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `note:a1-decision` | `text` | 278.338, 893.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:bringup-a0:Approval` | `text` | 356.830, 592.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:bringup-a0:Revision` | `text` | 286.623, 592.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:bringup-a0:Work package` | `text` | 132.171, 592.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:bringup-a0:Δ` | `text` | 461.400, 592.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:dvt:Approval` | `text` | 384.151, 720.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:dvt:Revision` | `text` | 285.622, 720.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:dvt:Work package` | `text` | 103.926, 720.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:dvt:Δ` | `text` | 461.400, 720.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:evt:Approval` | `text` | 388.302, 656.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:evt:Revision` | `text` | 286.623, 656.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:evt:Work package` | `text` | 120.600, 656.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:evt:Δ` | `text` | 461.400, 656.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:fab-a0:Approval` | `text` | 356.830, 380.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:fab-a0:Revision` | `text` | 286.623, 380.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:fab-a0:Work package` | `text` | 90.395, 380.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:pvt:Approval` | `text` | 384.151, 444.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:pvt:Revision` | `text` | 285.622, 444.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:pvt:Work package` | `text` | 117.324, 444.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:pvt:Δ` | `text` | 461.400, 444.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:ramp:Approval` | `text` | 356.830, 508.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:ramp:Revision` | `text` | 286.700, 508.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:ramp:Work package` | `text` | 79.734, 508.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:ramp:Δ` | `text` | 461.400, 508.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:respin-a1:Approval` | `text` | 356.830, 296.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:respin-a1:Revision` | `text` | 285.622, 296.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:respin-a1:Work package` | `text` | 74.582, 296.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:respin-a1:Δ` | `text` | 461.400, 296.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:rtl-freeze:Approval` | `text` | 356.830, 168.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:rtl-freeze:Revision` | `text` | 286.623, 168.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:rtl-freeze:Work package` | `text` | 99.460, 168.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:tapeout:Approval` | `text` | 356.830, 232.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:tapeout:Revision` | `text` | 286.623, 232.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:tapeout:Work package` | `text` | 62.430, 232.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:tapeout:Δ` | `text` | 461.400, 232.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:fab-a0:Δ` | `variance-behind` | 456.087, 380.800 | `canvas` | canvas | `#FFFFFF` | fill | 6.219 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `cell:rtl-freeze:Δ` | `variance-behind` | 456.087, 168.800 | `canvas` | canvas | `#FFFFFF` | fill | 6.219 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `column:Approval` | `text` | 386.328, 78.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `column:Revision` | `text` | 305.446, 78.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `column:Work package` | `text` | 70.704, 78.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `column:Δ` | `text` | 463.927, 78.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `title` | `text` | 800.000, 42.456 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `actual:avionics:avionics` | `actual` | 748.130, 360.800 | `planned:avionics:avionics` | flat | `#8DB6E8` | stroke | 7.738 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `actual:bus-test:bus-test` | `actual` | 929.879, 424.800 | `group:bus` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `actual:cdr:cdr` | `actual` | 874.442, 488.800 | `planned:cdr:cdr` | flat | `#3F8F6B` | stroke | 4.147 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `actual:detector:detector` | `actual` | 770.848, 636.800 | `planned:detector:detector` | flat | `#3F8F6B` | stroke | 4.147 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `actual:eps:eps` | `actual` | 675.430, 296.800 | `planned:eps:eps` | flat | `#3F8F6B` | stroke | 4.147 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `actual:optics:optics` | `actual` | 611.818, 572.800 | `planned:optics:optics` | flat | `#8DB6E8` | stroke | 7.738 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `actual:payload-delivery:payload-delivery` | `actual` | 1147.065, 764.800 | `planned:payload-delivery:payload-delivery` | flat | `#EBA33F` | stroke | 7.625 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `actual:payload-tvac:payload-tvac` | `actual` | 816.286, 700.800 | `planned:payload-tvac:payload-tvac` | flat | `#3F8F6B` | stroke | 4.147 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `actual:structure:structure` | `actual` | 611.818, 232.800 | `planned:structure:structure` | flat | `#8DB6E8` | stroke | 7.738 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `as-of-label` | `text` | 1424.623, 130.100 | `group:bus` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 613.634, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 927.607, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `axis-band-rect:0:2` | `axis-band-decoration` | 1343.358, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `axis-band-rect:0:3` | `axis-band-decoration` | 1564.184, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `axis-label:2:0` | `text` | 618.634, 76.000 | `axis-band-rect:0:0` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `axis-label:2:1` | `text` | 927.607, 76.000 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `axis-label:2:2` | `text` | 1343.358, 76.000 | `axis-band-rect:0:2` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `axis-label:3:0` | `text` | 526.588, 90.400 | `axis-band-rect:0:0` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `axis-label:3:1` | `text` | 591.298, 90.400 | `axis-band-rect:0:0` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `axis-label:3:2` | `text` | 730.870, 90.400 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `axis-label:3:3` | `text` | 869.047, 90.400 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `axis-label:3:4` | `text` | 1007.089, 90.400 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `axis-label:3:5` | `text` | 1141.240, 90.400 | `axis-band-rect:0:2` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `axis-label:3:6` | `text` | 1286.434, 90.400 | `axis-band-rect:0:2` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `axis-label:3:7` | `text` | 1426.425, 90.400 | `axis-band-rect:0:2` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `calendar-closed:2027-04-02` | `calendar-closed` | 725.411, 498.800 | `group:bus` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `calendar-closed:2027-05-31` | `calendar-closed` | 993.491, 498.800 | `group:bus` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `calendar-closed:2027-07-05` | `calendar-closed` | 1152.521, 498.800 | `group:bus` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `calendar-closed:2027-09-06` | `calendar-closed` | 1438.776, 498.800 | `group:bus` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `variance:eps:eps` | `variance-ahead` | 661.367, 296.800 | `group:bus` | flat | `#EEF3F8` | fill | 3.043 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `variance:avionics:avionics` | `variance-behind` | 868.448, 360.800 | `group:bus` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `variance:bus-test:bus-test` | `variance-behind` | 954.869, 405.500 | `group:bus` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `variance:detector:detector` | `variance-behind` | 827.436, 636.800 | `group:payload` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `variance:optics:optics` | `variance-behind` | 740.307, 572.800 | `group:payload` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `variance:payload-tvac:payload-tvac` | `variance-behind` | 903.426, 700.800 | `group:payload` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `variance:structure:structure` | `variance-on-track` | 677.702, 212.500 | `group:bus` | flat | `#EEF3F8` | fill | 6.770 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `group:ait` | `group-band` | 1041.200, 838.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `group:bus` | `group-band` | 1041.200, 318.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `group:payload` | `group-band` | 1041.200, 658.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `group-detail:ait` | `text` | 260.306, 1021.000 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `group-detail:bus` | `text` | 316.740, 981.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `group-detail:payload` | `text` | 320.233, 1001.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `group-header:ait` | `text` | 124.226, 806.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `group-header:bus` | `text` | 72.300, 126.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `group-header:payload` | `text` | 79.482, 530.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:actual` | `text` | 70.302, 1121.738 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:planned` | `text` | 91.834, 1097.938 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:scale:model:EM` | `text` | 47.178, 1144.538 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:scale:model:FM` | `text` | 46.956, 1190.138 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:scale:model:QM` | `text` | 48.528, 1167.338 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:actual` | `actual` | 24.000, 1121.738 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:planned` | `planned` | 24.000, 1097.938 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:scale:model:EM` | `planned` | 24.000, 1144.538 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:scale:model:FM` | `planned` | 24.000, 1190.138 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:scale:model:QM` | `planned` | 24.000, 1167.338 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:actual:progress-fill` | `progress-fill` | 24.000, 1121.738 | `legend-swatch:actual` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `milestone:cdr` | `text` | 833.652, 981.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `milestone:psr` | `text` | 813.870, 1001.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `missing-actual:pdr:pdr` | `missing-actual` | 598.187, 168.800 | `planned:pdr:pdr` | flat | `#8DB6E8` | stroke | 7.738 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:payload-fast-track:cell:area` | `text` | 1076.843, 1060.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:payload-fast-track:cell:disposition` | `text` | 1519.622, 1060.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:payload-fast-track:cell:observation` | `text` | 1295.562, 1060.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:psr-approval:cell:area` | `variance-ahead` | 1063.270, 1021.000 | `canvas` | canvas | `#FFFFFF` | fill | 3.397 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:psr-approval:cell:disposition` | `variance-ahead` | 1511.390, 1021.000 | `canvas` | canvas | `#FFFFFF` | fill | 3.397 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:psr-approval:cell:observation` | `variance-ahead` | 1274.408, 1021.000 | `canvas` | canvas | `#FFFFFF` | fill | 3.397 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:header:area` | `text` | 1066.077, 981.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:header:disposition` | `text` | 1525.138, 981.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:header:observation` | `text` | 1167.189, 981.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:payload-fast-track:source` | `text` | 1161.753, 1040.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:psr-approval:source` | `text` | 1160.955, 1001.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:avionics:avionics` | `planned` | 743.586, 360.800 | `planned:avionics:scenario:payload-fast-track:avionics` | flat | `#C9CED8` | stroke | 10.306 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:bus-test:bus-test` | `planned` | 848.092, 424.800 | `planned:bus-test:scenario:payload-fast-track:bus-test` | flat | `#C9CED8` | stroke | 10.306 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:cdr:cdr` | `planned` | 874.442, 488.800 | `planned:cdr:scenario:payload-fast-track:cdr` | flat | `#C9CED8` | stroke | 10.306 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:detector:detector` | `planned` | 739.042, 636.800 | `planned:detector:scenario:payload-fast-track:detector` | flat | `#C9CED8` | stroke | 10.306 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:eps:eps` | `planned` | 675.430, 296.800 | `planned:eps:scenario:payload-fast-track:eps` | flat | `#C9CED8` | stroke | 10.306 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:optics:optics` | `planned` | 611.818, 572.800 | `planned:optics:scenario:payload-fast-track:optics` | flat | `#C9CED8` | stroke | 10.306 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:payload-delivery:payload-delivery` | `planned` | 1128.890, 764.800 | `planned:payload-delivery:scenario:payload-fast-track:payload-delivery` | flat | `#C9CED8` | stroke | 10.306 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:payload-tvac:payload-tvac` | `planned` | 802.655, 700.800 | `planned:payload-tvac:scenario:payload-fast-track:payload-tvac` | flat | `#C9CED8` | stroke | 10.306 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:pdr:pdr` | `planned` | 588.187, 168.800 | `planned:pdr:scenario:payload-fast-track:pdr` | flat | `#C9CED8` | stroke | 10.306 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:psr:psr` | `planned` | 1446.951, 848.800 | `planned:psr:scenario:payload-fast-track:psr` | flat | `#C9CED8` | stroke | 10.306 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:structure:structure` | `planned` | 611.818, 232.800 | `planned:structure:scenario:payload-fast-track:structure` | flat | `#C9CED8` | stroke | 10.306 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:avionics:avionics` | `progress-fill` | 748.130, 360.800 | `actual:avionics:avionics` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:bus-test:bus-test` | `progress-fill` | 929.879, 424.800 | `actual:bus-test:bus-test` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:detector:detector` | `progress-fill` | 770.848, 636.800 | `actual:detector:detector` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:eps:eps` | `progress-fill` | 675.430, 296.800 | `actual:eps:eps` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:optics:optics` | `progress-fill` | 611.818, 572.800 | `actual:optics:optics` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:payload-tvac:payload-tvac` | `progress-fill` | 816.286, 700.800 | `actual:payload-tvac:payload-tvac` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:structure:structure` | `progress-fill` | 611.818, 232.800 | `actual:structure:structure` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `note:station` | `text` | 1403.919, 1135.000 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `note:tvac` | `text` | 1404.808, 1115.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `note:window` | `text` | 1409.106, 1095.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `relation-label:avionics-bustest:avionics:avionics:bus-test:bus-test` | `text` | 815.896, 397.800 | `group:bus` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `relation-label:optics-detector:optics:optics:detector:detector` | `text` | 721.368, 650.100 | `group:payload` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `relation-label:pdr-structure:pdr:pdr:structure:structure` | `text` | 577.789, 207.050 | `group:bus` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `relation-label:tvac-delivery:payload-tvac:payload-tvac:payload-delivery:payload-delivery` | `text` | 983.947, 751.500 | `group:payload` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:avionics:scenario:payload-fast-track:avionics` | `snapshot` | 743.586, 360.800 | `group:bus` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:bus-test:scenario:payload-fast-track:bus-test` | `snapshot` | 848.092, 424.800 | `group:bus` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:cdr:scenario:payload-fast-track:cdr` | `snapshot` | 874.442, 488.800 | `group:bus` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:detector:scenario:payload-fast-track:detector` | `snapshot` | 739.042, 636.800 | `group:payload` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:eps:scenario:payload-fast-track:eps` | `snapshot` | 675.430, 296.800 | `group:bus` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:optics:scenario:payload-fast-track:optics` | `snapshot` | 611.818, 572.800 | `group:payload` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:payload-delivery:scenario:payload-fast-track:payload-delivery` | `snapshot` | 1128.890, 764.800 | `group:payload` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:payload-tvac:scenario:payload-fast-track:payload-tvac` | `snapshot` | 779.936, 700.800 | `group:payload` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:pdr:scenario:payload-fast-track:pdr` | `snapshot` | 588.187, 168.800 | `group:bus` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:psr:scenario:payload-fast-track:psr` | `snapshot` | 1446.951, 848.800 | `group:ait` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `planned:structure:scenario:payload-fast-track:structure` | `snapshot` | 611.818, 232.800 | `group:bus` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:avionics:Approval` | `text` | 348.822, 360.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:avionics:Model` | `text` | 293.777, 360.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:avionics:Work package` | `text` | 89.359, 360.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:bus-test:Approval` | `text` | 348.822, 424.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:bus-test:Model` | `text` | 295.352, 424.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:bus-test:Work package` | `text` | 85.271, 424.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:cdr:Approval` | `text` | 380.294, 488.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:cdr:Model` | `text` | 295.352, 488.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:cdr:Work package` | `text` | 93.881, 488.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:cdr:Δ` | `text` | 461.400, 488.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:detector:Approval` | `text` | 348.822, 636.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:detector:Model` | `text` | 295.352, 636.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:detector:Work package` | `text` | 89.282, 636.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:eps:Approval` | `text` | 348.822, 296.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:eps:Model` | `text` | 295.352, 296.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:eps:Work package` | `text` | 112.312, 296.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:optics:Approval` | `text` | 348.822, 572.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:optics:Model` | `text` | 293.777, 572.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:optics:Work package` | `text` | 104.731, 572.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:payload-delivery:Approval` | `text` | 348.822, 764.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:payload-delivery:Model` | `text` | 293.518, 764.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:payload-delivery:Work package` | `text` | 82.338, 764.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:payload-delivery:Δ` | `text` | 461.400, 764.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:payload-tvac:Approval` | `text` | 348.822, 700.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:payload-tvac:Model` | `text` | 295.352, 700.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:payload-tvac:Work package` | `text` | 106.089, 700.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:pdr:Approval` | `text` | 380.294, 168.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:pdr:Model` | `text` | 293.777, 168.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:pdr:Work package` | `text` | 109.085, 168.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:pdr:Δ` | `text` | 461.400, 168.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:psr:Approval` | `text` | 376.143, 848.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:psr:Model` | `text` | 293.518, 848.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:psr:Work package` | `text` | 74.589, 848.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:psr:Δ` | `text` | 461.400, 848.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:structure:Approval` | `text` | 348.822, 232.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:structure:Model` | `text` | 293.777, 232.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:structure:Work package` | `text` | 119.172, 232.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:eps:Δ` | `variance-ahead` | 457.837, 296.800 | `canvas` | canvas | `#FFFFFF` | fill | 3.397 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:avionics:Δ` | `variance-behind` | 456.087, 360.800 | `canvas` | canvas | `#FFFFFF` | fill | 6.219 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:bus-test:Δ` | `variance-behind` | 452.083, 424.800 | `canvas` | canvas | `#FFFFFF` | fill | 6.219 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:detector:Δ` | `variance-behind` | 456.087, 636.800 | `canvas` | canvas | `#FFFFFF` | fill | 6.219 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:optics:Δ` | `variance-behind` | 456.087, 572.800 | `canvas` | canvas | `#FFFFFF` | fill | 6.219 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:payload-tvac:Δ` | `variance-behind` | 452.083, 700.800 | `canvas` | canvas | `#FFFFFF` | fill | 6.219 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `cell:structure:Δ` | `variance-on-track` | 456.087, 232.800 | `canvas` | canvas | `#FFFFFF` | fill | 7.557 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `column:Approval` | `text` | 378.320, 78.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `column:Model` | `text` | 304.179, 78.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `column:Work package` | `text` | 70.704, 78.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `column:Δ` | `text` | 463.927, 78.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `title` | `text` | 800.000, 42.456 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 
 ## Themes not opted in
 
@@ -7235,4 +7270,4 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 Every independently required decoration role is enabled in committed Scene evidence; group-band, group-header-band or group-header-strip supplies the group concept, and row-band or row-rule supplies the row concept when there are no corpus errors.
 
 
-Findings: 7143; errors: 0; warnings: 307.
+Findings: 7178; errors: 0; warnings: 307.

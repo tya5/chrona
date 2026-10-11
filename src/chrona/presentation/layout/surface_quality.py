@@ -27,6 +27,12 @@ from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, FIT_ADJUSTS
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
 
 
+def completed_symbol_primitive_ids(placement_id: str, parts: tuple[Any, ...]) -> tuple[str, ...]:
+    """Close the existing renderer-neutral identity of each completed glyph part."""
+    return tuple(f"{placement_id}:part{index}" if part.paint_mode is not None else placement_id
+                 for index, part in enumerate(parts))
+
+
 def _diagnostic_value(value: Any) -> str:
     """Bounded scalar context; never expand invalid payload objects."""
     return repr(value[:160]) if isinstance(value, str) else type(value).__name__
@@ -897,17 +903,28 @@ class SurfacePlacement:
                     raise ValueError(f"E_LAYOUT_PATTERN_REGION_INVALID:{item.placement_id}")
         hosts = {item.placement_id: item for item in self.marks}
         hosts.update({item.placement_id: item for item in self.shapes})
+        lane_mark_ids = {emission.placement_id for emission in self.lane_emissions
+                         if emission.placement_type == "mark"}
         emitted_mark_hosts = {
+            primitive_id: (mark, index)
+            for mark in self.marks if mark.placement_id not in lane_mark_ids
+            for index, primitive_id in enumerate(completed_symbol_primitive_ids(mark.placement_id, mark.symbol_parts))
+        }
+        emitted_mark_hosts.update({
             facet.primitive_id: (hosts.get(emission.placement_id), facet.part_index or 0)
             for emission in self.lane_emissions if emission.placement_type == "mark"
             for facet in emission.facets
-        }
+        })
         for item in self.text:
             if item.host_placement_id is None:
                 continue
             host = hosts.get(item.host_placement_id)
             part_index = 0
-            if host is None and item.host_placement_id in emitted_mark_hosts:
+            if (isinstance(host, MarkPlacement)
+                    and (host.symbol_parts or host.placement_id in lane_mark_ids)
+                    and item.host_placement_id not in emitted_mark_hosts):
+                host = None
+            if item.host_placement_id in emitted_mark_hosts:
                 host, part_index = emitted_mark_hosts[item.host_placement_id]
             if (host is None or host.slot_id != item.slot_id
                     or host.paint_order + part_index >= item.paint_order):

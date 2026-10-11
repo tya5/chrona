@@ -203,22 +203,29 @@ _UNSET = object()
 class _RouteMemo:
     """Search results keyed by the exact content a search read; bounded, never evicting."""
 
-    __slots__ = ("results", "contents")
+    __slots__ = ("results", "contents", "result_records", "content_records")
 
     def __init__(self) -> None:
         self.results: dict[tuple, object] = {}
         self.contents: dict[tuple[str, ...], int] = {}
+        self.result_records = 0
+        self.content_records = 0
 
     def content_id(self, content: tuple[str, ...]) -> int | None:
         """A small id equal exactly when the contents are equal; None once the bound is reached."""
         known = self.contents.get(content)
-        if known is None and len(self.contents) < _ROUTE_MEMO_CONTENT_LIMIT:
+        records = 1 + len(content)
+        if (known is None and len(self.contents) < _ROUTE_MEMO_CONTENT_LIMIT
+                and self.content_records + records <= ROUTE_MEMO_LIMIT):
             known = self.contents[content] = len(self.contents)
+            self.content_records += records
         return known
 
-    def store(self, key: tuple, value: object) -> None:
-        if len(self.results) < ROUTE_MEMO_LIMIT:
+    def store(self, key: tuple, value: object, *, record_count: int = 1) -> None:
+        """Admit a pure payload only when its retained records fit; never evict."""
+        if key not in self.results and self.result_records + record_count <= ROUTE_MEMO_LIMIT:
             self.results[key] = value
+            self.result_records += record_count
 
 
 class _PreparedSelection:
