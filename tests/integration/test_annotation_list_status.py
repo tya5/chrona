@@ -9,6 +9,7 @@ from xml.etree import ElementTree
 from chrona.presentation.layout import surface_annotations
 from chrona.presentation.scene.serialization import serialize_scene
 from tests.support import synthetic_review as sr
+from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 
 # #1271 centers four group-header lines (+0.2 px); annotation boxes,
@@ -25,7 +26,7 @@ def _fixture():
         )
         for index in range(4)
     })
-    parts = sr.bundle()
+    parts = use_legacy_six_tier_axis(sr.bundle())
     parts["view"] = sr.lane_view(parts["view"])
     sr.add_notes(
         source, parts["view"], [f"gate-{index}" for index in range(4)],

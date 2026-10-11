@@ -47,33 +47,24 @@ body:
     annotations: none
   axis:
     tiers:
-    - unit: quarter
+    - unit: year
       every: 1
       role: band
       typographyRole: axisQuarter
     - unit: quarter
       every: 1
       role: grid-major
-    - unit: quarter
+    - unit: auto
       every: 1
       role: labels
       typographyRole: axisQuarter
       label:
-        form: year-quarter
+        forms:
+          month: short-month-year
+          quarter: year-quarter
+          half: half-year
+          year: year
         align: center
-        overflow: visible-overflow
-        orientation: horizontal
-    - unit: month
-      every: 1
-      role: band
-      typographyRole: axisMonth
-    - unit: month
-      every: 1
-      role: labels
-      typographyRole: axisMonth
-      label:
-        form: short-month
-        align: start
         overflow: thin-with-record
         orientation: horizontal
     - unit: month
@@ -95,6 +86,7 @@ body:
     source:
       facet: planned
     format: dateRange
+    endDisplay: inclusive
     missing: em-dash
     align: start
     width: content
