@@ -27,6 +27,9 @@ from chrona.presentation.contracts import (
     freeze, parse_contract, validate_icon_catalog_entry, validate_theme_asset_entry, IconRasterSource,
 )
 from chrona.presentation.model.authoring import AuthoringError, normalize_authoring_workspace
+from chrona.presentation.model.layout_inheritance import (
+    LayoutInheritanceError, is_derived_layout, resolve_snapshot_layout,
+)
 from chrona.presentation.model.theme_inheritance import (
     ThemeInheritanceError, is_derived_theme, resolve_draft_theme, resolve_snapshot_theme,
 )
@@ -1286,9 +1289,15 @@ def _load_reference_source(reference: dict[str, Any], reader: SnapshotReader, ex
     if actual_id != reference.get("id"):
         raise ClosureError("E_CLOSURE_ID", detail=f"reference id {reference.get('id')!r} names a {expected_kind} whose own id is {actual_id!r}")
     derived = expected_kind == "theme" and is_derived_theme(value)
+    if expected_kind == "layout-profile" and is_derived_layout(value):
+        try:
+            value = resolve_snapshot_layout(value, reader)
+        except LayoutInheritanceError as error:
+            raise ClosureError(error.code, detail=error.detail or None) from error
+        derived = True  # the effective profile is the resource: its identity is that of the flattened value
     referenced = False
     try:
-        if derived:
+        if derived and expected_kind == "theme":
             value = resolve_snapshot_theme(value, reference, reader)
         referenced = expected_kind == "theme" and uses_references(value)
         if referenced:
