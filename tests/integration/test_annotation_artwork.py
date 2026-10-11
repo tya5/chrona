@@ -302,17 +302,15 @@ CLIPPING = {"glyph": aw.CLIPPING, "insets": aw.CLIPPING_TOP, "unit_em": 0.12,
             "content": {"top": 0.9, "right": 0.8, "bottom": 0.8, "left": 0.8}}
 
 
-def test_typst_rejects_every_artwork_part_and_tikz_draws_a_fill_part_and_refuses_a_stroke_part(tmp_path):
+def test_typst_and_tikz_draw_every_artwork_part_a_filled_or_a_stroked_outline(tmp_path):
     from chrona.presentation.renderers.v05_typeset import render_v05_tikz, render_v05_typst
 
     scroll = _render(_sub(tmp_path, "scroll"))
     clipping = _render(_sub(tmp_path, "clipping"), **CLIPPING)
     for rendered in (scroll, clipping):
-        with pytest.raises(ValueError, match="E_VISUAL_CAPABILITY_UNSUPPORTED"):
-            render_v05_typst(rendered.surface)
-    assert "annotation-artwork:view-n0:part0" in render_v05_tikz(clipping.surface)   # one filled path
-    with pytest.raises(ValueError, match="E_PRESENTATION_PAINT_INVALID"):            # the scroll's stroked cord has no fill
-        render_v05_tikz(scroll.surface)
+        typst, tikz = render_v05_typst(rendered.surface), render_v05_tikz(rendered.surface)
+        assert "annotation-artwork:view-n0:part0" in typst and "annotation-artwork:view-n0:part0" in tikz  # #1308: symbols are drawn
+    assert "stroke: (paint: " in render_v05_typst(scroll.surface)   # the scroll's stroked cord has no fill, only a stroke
 
 
 def test_an_omitted_artwork_leaves_a_scene_typst_still_compiles(tmp_path):

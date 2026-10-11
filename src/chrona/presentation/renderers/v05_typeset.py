@@ -1,6 +1,8 @@
 """Positioned Typst and TikZ serialization of completed Scene surfaces."""
 from __future__ import annotations
 
+from math import atan2, cos, degrees, radians, sin
+
 from chrona.core.ports import RenderArtifact
 from chrona.presentation.scene.model import ScenePrimitive, SceneSurface
 
@@ -127,6 +129,117 @@ def _tikz_rect_paint(node: ScenePrimitive) -> str:
     return ", ".join(values) + _tikz_opacity(node)
 
 
+def _segment_points(node: ScenePrimitive) -> list[tuple[float, float]]:
+    """The vertices a Path runs through, in order (quadratic controls included as the segment's direction)."""
+    if node.path_commands:
+        return [point for command in node.path_commands for point in command.points]
+    return list(node.points)
+
+
+def _direction(origin: tuple[float, float], target: tuple[float, float]) -> float | None:
+    dx, dy = target[0] - origin[0], target[1] - origin[1]
+    return None if dx == 0 and dy == 0 else degrees(atan2(dy, dx))
+
+
+def _lower_marker(node: ScenePrimitive, which: str) -> tuple[list[tuple[str, tuple[tuple[float, float], ...]]], object, float]:
+    """Lower a path end marker to absolute plain path commands by the SVG marker rule.
+
+    The marker outline is in its own box (`head_length` x `head_width`); its reference point
+    (`head_length - attachment_offset`, `head_width / 2`) is placed on the path end, turned to the path direction there
+    (`angle_degrees` when the marker fixes one), and scaled by the stroke width unless it is in physical units. Returns the
+    commands, the marker geometry and the stroke width used for a stroked marker (#1308).
+    """
+    marker = node.marker_start if which == "start" else node.marker_end
+    points = _segment_points(node)
+    if marker is None or len(points) < 2:
+        raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, "a Path with two points for its marker"))
+    if which == "start":
+        vertex, toward = points[0], next((point for point in points[1:] if point != points[0]), points[1])
+    else:
+        vertex, toward = points[-1], next((point for point in reversed(points[:-1]) if point != points[-1]), points[-2])
+    if marker.angle_degrees is not None:
+        angle = float(marker.angle_degrees)
+    else:
+        # `auto` follows the path: forward from the start vertex, and into the end vertex
+        found = _direction(vertex, toward) if which == "start" else _direction(toward, vertex)
+        if found is None:
+            raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, "a Path whose end segment has a direction"))
+        angle = found
+    width = node.paint.stroke_width if node.paint is not None and node.paint.stroke_width is not None else 1.0
+    scale = 1.0 if marker.physical_units else float(width)
+    ref_x, ref_y = marker.head_length - marker.attachment_offset, marker.head_width / 2
+    cos_a, sin_a = cos(radians(angle)), sin(radians(angle))
+
+    def place(point: tuple[float, float]) -> tuple[float, float]:
+        u, v = (point[0] - ref_x) * scale, (point[1] - ref_y) * scale
+        return (vertex[0] + u * cos_a - v * sin_a, vertex[1] + u * sin_a + v * cos_a)
+
+    commands = []
+    for command in marker.outline:
+        if command.kind not in {"move", "line", "quadratic"}:
+            raise _error("E_PRESENTATION_PRIMITIVE_INVALID", f"scene_id={node.scene_id!r} marker outline command={command.kind!r}; expected move, line, or quadratic")
+        commands.append((command.kind, tuple(place(point) for point in command.points)))
+    stroke_width = (marker.stroke_width if marker.physical_units and marker.stroke_width is not None else 1.0) * (1.0 if marker.physical_units else scale)
+    return commands, marker, stroke_width
+
+
+def _markers(node: ScenePrimitive) -> list[tuple[str, list, object, float]]:
+    return [(which, *_lower_marker(node, which)) for which, marker in (("start", node.marker_start), ("end", node.marker_end)) if marker is not None]
+
+
+def _path_commands(node: ScenePrimitive) -> list[tuple[str, tuple[tuple[float, float], ...]]]:
+    if len(node.points) < 2:
+        raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, f"at least two Path points; received {len(node.points)}"))
+    if node.path_commands:
+        for command in node.path_commands:
+            if command.kind not in {"move", "line", "quadratic"}:
+                raise _error("E_PRESENTATION_PRIMITIVE_INVALID", f"scene_id={node.scene_id!r} Path command={command.kind!r}; expected move, line, or quadratic")
+        return [(command.kind, tuple(command.points)) for command in node.path_commands]
+    return [("move" if index == 0 else "line", (point,)) for index, point in enumerate(node.points)]
+
+
+def _typst_pt(point: tuple[float, float]) -> str:
+    return f"({_number(point[0])}pt, {_number(point[1])}pt)"
+
+
+def _typst_curve(commands: list, *, fill: str | None, stroke: str | None, close: bool) -> str:
+    """One absolutely positioned Typst `curve` element for completed path commands (Typst 0.13)."""
+    items = []
+    for kind, points in commands:
+        if kind == "move":
+            items.append(f"curve.move({_typst_pt(points[0])})")
+        elif kind == "line":
+            items.append(f"curve.line({_typst_pt(points[0])})")
+        else:
+            items.append(f"curve.quad({_typst_pt(points[0])}, {_typst_pt(points[1])})")
+    if close:
+        items.append("curve.close()")
+    return f"#place(left: 0pt, top: 0pt)[#curve(fill: {fill or 'none'}, stroke: {stroke or 'none'}, {', '.join(items)})]"
+
+
+def _typst_color(node: ScenePrimitive, channel: str) -> str:
+    color, opacity = _color(node, channel), _opacity(node)
+    return f'rgb("{color}")' if opacity == 1 else f'rgb("{color}").transparentize({_number((1 - opacity) * 100)}%)'
+
+
+def _typst_stroke(node: ScenePrimitive, channel: str = "stroke") -> str:
+    width = node.paint.stroke_width if node.paint is not None else None
+    color = _typst_color(node, channel)
+    return f"(paint: {color}, thickness: {_number(width)}pt)" if width is not None else color
+
+
+def _tikz_data(commands: list) -> str:
+    parts = []
+    for kind, points in commands:
+        if kind == "move":
+            parts.append(f"({_number(points[0][0])},{_number(points[0][1])})")
+        elif kind == "line":
+            parts.append(f"-- ({_number(points[0][0])},{_number(points[0][1])})")
+        else:
+            parts.append(f".. controls ({_number(points[0][0])},{_number(points[0][1])}) .. ({_number(points[1][0])},{_number(points[1][1])})")
+    return " ".join(parts)
+
+
 def _validate(surface: object) -> SceneSurface:
     if not isinstance(surface, SceneSurface) or surface.canvas_paint is None:
         raise _error("E_PRESENTATION_RENDER_INPUT", f"Typst/TikZ requires SceneSurface with canvas paint; received {type(surface).__name__}")
@@ -145,18 +258,14 @@ def _unsupported_details(surface: SceneSurface, target: str) -> str:
         features = []
         if node.paint is not None and node.paint.wobble is not None and node.paint.wobble.fidelity == "required":
             features.append("required wobble")
-        if node.marker_start is not None or node.marker_end is not None:
-            features.append("path markers")
         if node.pattern is not None:
             features.append("pattern")
-        if target == "Typst" and node.symbol is not None:
-            features.append("symbol")
         if node.stroke_clip is not None:
             features.append("aligned stroke clip")
         if node.text_layout is not None and node.text_layout.runs:
             features.append("small-caps runs")
         if features:
-            reasons.append(f"{node.scene_id!r}: {', '.join(features)}")
+            reasons.append(f"{node.scene_id!r} (role {node.visual_role}): {', '.join(features)}")
     return f"{target} cannot serialize completed features ({'; '.join(reasons)}); select SVG"
 
 
@@ -164,7 +273,7 @@ def render_v05_typst(surface: SceneSurface) -> str:
     if any(node.stroke_clip is not None or (node.text_layout is not None and node.text_layout.runs)
            for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "Typst"))
-    if _requires_wobble(surface) or any(node.marker_start is not None or node.marker_end is not None or node.pattern is not None or node.symbol is not None for node in surface.primitives):
+    if _requires_wobble(surface) or any(node.pattern is not None for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "Typst"))
     if surface.canvas_bounds is None:
         raise _error("E_PRESENTATION_RENDER_INPUT", "Typst requires completed canvasBounds")
@@ -199,14 +308,23 @@ def render_v05_typst(surface: SceneSurface) -> str:
         elif node.kind == "Symbol":
             if node.symbol is None:
                 raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, "completed Symbol geometry"))
-            raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _primitive_detail(node, "SVG for symbol geometry"))
+            commands = [(command.kind, tuple(command.points)) for command in node.symbol.outline]
+            for kind, _points in commands:
+                if kind not in {"move", "line", "quadratic"}:
+                    raise _error("E_PRESENTATION_PRIMITIVE_INVALID", f"scene_id={node.scene_id!r} Symbol outline command={kind!r}; expected move, line, or quadratic")
+            paint = node.paint
+            if paint is None or (paint.fill is None and paint.stroke is None):
+                raise _error("E_PRESENTATION_PAINT_INVALID", _primitive_detail(node, "a Symbol with completed fill or stroke paint"))
+            parts.append(_typst_curve(commands, fill=_typst_color(node, "fill") if paint.fill is not None else None,
+                                      stroke=_typst_stroke(node) if paint.stroke is not None else None, close=True))
         elif node.kind == "Path":
-            if node.path_commands:
-                raise _error("E_PRESENTATION_ROUNDED_PATH_UNSUPPORTED", _primitive_detail(node, f"Typst path without path_commands; received {len(node.path_commands)} path commands"))
-            if len(node.points) < 2:
-                raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, "at least two Path points"))
-            points = ", ".join(f"({_number(px)}pt, {_number(py)}pt)" for px, py in node.points)
-            parts.append(f'// path points: {points} stroke: {_color(node, "stroke")} opacity: {_number(_opacity(node))}')
+            parts.append(_typst_curve(_path_commands(node), fill=None, stroke=_typst_stroke(node), close=False))
+            for which, commands, marker, stroke_width in _markers(node):
+                parts.append(f"// marker-{which} of scene-id: {_typst_string(node.scene_id)}")
+                if marker.paint_mode == "fill":
+                    parts.append(_typst_curve(commands, fill=_typst_color(node, "stroke"), stroke=None, close=True))
+                else:
+                    parts.append(_typst_curve(commands, fill=None, stroke=f"(paint: {_typst_color(node, 'stroke')}, thickness: {_number(stroke_width)}pt)", close=False))
         else:
             raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, "a supported Rect, Text, Symbol, or Path primitive"))
     return "\n".join(parts) + "\n"
@@ -216,7 +334,7 @@ def render_v05_tikz(surface: SceneSurface) -> str:
     if any(node.stroke_clip is not None or (node.text_layout is not None and node.text_layout.runs)
            for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "TikZ"))
-    if _requires_wobble(surface) or any(node.marker_start is not None or node.marker_end is not None or node.pattern is not None for node in surface.primitives):
+    if _requires_wobble(surface) or any(node.pattern is not None for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "TikZ"))
     if surface.canvas_bounds is None:
         raise _error("E_PRESENTATION_RENDER_INPUT", "TikZ requires completed canvasBounds")
@@ -249,39 +367,24 @@ def render_v05_tikz(surface: SceneSurface) -> str:
         elif node.kind == "Symbol":
             if node.symbol is None:
                 raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, "completed Symbol geometry"))
-            if node.symbol.outline:
-                commands = []
-                for command in node.symbol.outline:
-                    if command.kind == "move":
-                        commands.append(f"({_number(command.points[0][0])},{_number(command.points[0][1])})")
-                    elif command.kind == "line":
-                        commands.append(f"-- ({_number(command.points[0][0])},{_number(command.points[0][1])})")
-                    elif command.kind == "quadratic":
-                        control, end = command.points
-                        commands.append(f".. controls ({_number(control[0])},{_number(control[1])}) .. ({_number(end[0])},{_number(end[1])})")
-                    else:
-                        raise _error("E_PRESENTATION_PRIMITIVE_INVALID", f"scene_id={node.scene_id!r} Symbol outline command={command.kind!r}; expected move, line, or quadratic")
-                parts.append(f"\\path[fill={_color(node, 'fill')}{_tikz_opacity(node)}] {' '.join(commands)};")
-                continue
+            symbol = [(command.kind, tuple(command.points)) for command in node.symbol.outline]
+            for kind, _points in symbol:
+                if kind not in {"move", "line", "quadratic"}:
+                    raise _error("E_PRESENTATION_PRIMITIVE_INVALID", f"scene_id={node.scene_id!r} Symbol outline command={kind!r}; expected move, line, or quadratic")
+            paint = node.paint
+            if paint is None or (paint.fill is None and paint.stroke is None):
+                raise _error("E_PRESENTATION_PAINT_INVALID", _primitive_detail(node, "a Symbol with completed fill or stroke paint"))
+            parts.append(f"\\path[{_tikz_rect_paint(node)}] {_tikz_data(symbol)};")
         elif node.kind == "Path":
-            if len(node.points) < 2:
-                raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, f"at least two Path points; received {len(node.points)}"))
-            if node.path_commands:
-                commands = []
-                for command in node.path_commands:
-                    if command.kind == "move":
-                        commands.append(f"({_number(command.points[0][0])},{_number(command.points[0][1])})")
-                    elif command.kind == "line":
-                        commands.append(f"-- ({_number(command.points[0][0])},{_number(command.points[0][1])})")
-                    elif command.kind == "quadratic":
-                        control, end = command.points
-                        commands.append(f".. controls ({_number(control[0])},{_number(control[1])}) .. ({_number(end[0])},{_number(end[1])})")
-                    else:
-                        raise _error("E_PRESENTATION_PRIMITIVE_INVALID", f"scene_id={node.scene_id!r} Path command={command.kind!r}; expected move, line, or quadratic")
-                points = " ".join(commands)
-            else:
-                points = " -- ".join(f"({_number(px)},{_number(py)})" for px, py in node.points)
-            parts.append(f"\\draw[draw={_color(node, 'stroke')}, opacity={_number(_opacity(node))}] {points};")
+            width = node.paint.stroke_width if node.paint is not None else None
+            line = f", line width={_number(width)}pt" if width is not None else ""
+            parts.append(f"\\draw[draw={_color(node, 'stroke')}, opacity={_number(_opacity(node))}{line}] {_tikz_data(_path_commands(node))};")
+            for which, commands, marker, stroke_width in _markers(node):
+                parts.append(f"% marker-{which} of scene-id: {_tex_string(node.scene_id)}")
+                if marker.paint_mode == "fill":
+                    parts.append(f"\\path[fill={_color(node, 'stroke')}{_tikz_opacity(node)}] {_tikz_data(commands)} -- cycle;")
+                else:
+                    parts.append(f"\\draw[draw={_color(node, 'stroke')}, opacity={_number(_opacity(node))}, line width={_number(stroke_width)}pt] {_tikz_data(commands)};")
         else:
             raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, "a supported Rect, Text, Symbol, or Path primitive"))
     parts.extend((r"\end{tikzpicture}", r"\end{document}"))

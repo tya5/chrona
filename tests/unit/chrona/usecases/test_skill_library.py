@@ -86,10 +86,12 @@ def test_a_tree_without_skill_md_is_refused(tmp_path, monkeypatch):
     assert not (tmp_path / "skill").exists()
 
 
-def test_the_command_copies_silently_and_refuses_a_second_copy(tmp_path, monkeypatch, capsys):
+def test_the_command_copies_reports_what_it_wrote_and_refuses_a_second_copy(tmp_path, monkeypatch, capsys):
     argv = ("skill", "copy", "--output", str(tmp_path / "out" / "chrona"))
 
-    assert run_cli(monkeypatch, capsys, *argv) == (0, "", "")
+    status, out, err = run_cli(monkeypatch, capsys, *argv)
+    report = json.loads(out)
+    assert (status, err, report["status"]) == (0, "", "ok") and "SKILL.md" in report["created"]
     status, out, _err = run_cli(monkeypatch, capsys, *argv)
 
     assert status == 1

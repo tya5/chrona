@@ -86,6 +86,10 @@ $defs:
     description: "Finite completed review-surface background regions; contexts may declare named subsets or extensions."
     examples: [table]
     enum: [table, timeline, both]
+  chipShapeFit:
+    description: "Independent-axis ellipse fitting or the original circle fitting of a burst chip."
+    examples: [ellipse]
+    enum: [circle, ellipse]
   dateEndpoint:
     description: "Completed-date endpoint of a Project object: the point `at`, or the `start` or `end` of a span."
     examples: [end]

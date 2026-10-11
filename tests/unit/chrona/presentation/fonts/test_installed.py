@@ -130,3 +130,25 @@ def test_an_injected_index_replaces_the_hosts_for_its_scope(tmp_path):
         assert installed_fonts() is injected
         assert installed_fonts().find("Acme Sans", 400) is not None
     assert installed_fonts() is not injected
+
+
+def test_discovery_over_a_face_with_an_old_created_timestamp_writes_nothing_to_stderr(tmp_path, capfd):
+    """#1369: fontTools warns `'created' timestamp seems very low` per face; the scan must stay silent and leave logging as it found it."""
+    font = TTFont(REGULAR)
+    font["head"].created = 0  # 1904-01-01, what some system faces carry
+    font.save(tmp_path / "old.ttf")
+    logger = logging.getLogger("fontTools")
+    handler = logging.StreamHandler()  # the stderr handler the CLI's unconfigured logging ends up with
+    previous_level, previous_handlers = logger.level, list(logger.handlers)
+    logger.setLevel(logging.NOTSET)
+    logger.addHandler(handler)
+    try:
+        faces = InstalledFontIndex([tmp_path]).faces()
+        assert [face.path.name for face in faces] == ["old.ttf"]
+        assert logger.level == logging.NOTSET  # restored
+    finally:
+        logger.removeHandler(handler)
+        logger.setLevel(previous_level)
+        logger.handlers[:] = previous_handlers
+    captured = capfd.readouterr()
+    assert captured.err == "" and captured.out == ""

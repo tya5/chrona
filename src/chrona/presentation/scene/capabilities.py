@@ -154,6 +154,7 @@ _CANVAS_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "g
 _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",))
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
+    "labelInsetEnd",
     "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "glyphSize", "glyphPitch", "chipPadding", "chipMinBlockSize", "chipShape", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach", "barBleed",
     "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign", "align", "barWidth", "blockGap", "inlineGap",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "annotationContainer", "marker", "symbol", "edge",
@@ -235,7 +236,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _SHARED_TEXT_ICON_PAINT | _VIEWER_FIT,
              scene_kinds=frozenset(("Text",)))
     register("groupHeader", "Layout text measurement and group tag column",
-             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode", "align", "labelInset")) | _VIEWER_FIT)
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode", "align", "labelInset", "labelInsetEnd")) | _VIEWER_FIT)
     register("axis", "Layout axis-tier measurement and inline visual reservation",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _AXIS_MEASUREMENT | _VIEWER_FIT)
     register("axisMonth axisQuarter axisSecondary axis2 axis3", "Layout axis-tier measurement",
@@ -323,7 +324,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
              scene_kinds=frozenset(("Rect",)))
     # The group, row and group-header bands are always one Rect, so they admit a catalogue pattern (#1282).
-    register("group-band row-band group-header-band", "Layout background and Scene Rect",
+    register("group-band row-band group-header-band group-header-strip", "Layout background and Scene Rect",
              _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
              scene_kinds=frozenset(("Rect",)))
     register("group-tab", "Layout group header tab and Scene Rect",
@@ -374,7 +375,7 @@ _OPEN_LEGEND_PROPERTIES = _RECT_PAINT
 _CATALOG_PATTERN_ROLES = frozenset((
     "missing-actual", "network-node", "progress-fill", "summary-bar",
     "annotation-highlight-box", "axis-band-decoration", "axis-band-decoration2", "period-band", "group-tab",
-    "group-band", "row-band", "group-header-band", "as-of-label-chip", "member-label-chip", "finish-delta-chip", "canvas-texture", "canvas-overlay", "region-frame",
+    "group-band", "row-band", "group-header-band", "group-header-strip", "as-of-label-chip", "member-label-chip", "finish-delta-chip", "canvas-texture", "canvas-overlay", "region-frame",
 ))
 
 

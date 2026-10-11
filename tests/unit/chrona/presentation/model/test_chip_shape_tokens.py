@@ -5,9 +5,14 @@ import pytest
 from chrona.presentation.model.theme_tokens import (
     BurstChipShape, CatalogChipShape, RectangleChipShape, ThemeTokenError, ThemeTokenView,
 )
+from chrona.resources import schema_document, validator_for_schema
 
 
 ROLES = ("as-of-label-chip", "member-label-chip", "finish-delta-chip", "period-label-chip")
+_CHIP_SHAPE_SCHEMA = validator_for_schema({
+    "$defs": schema_document("theme-v0.15.schema.yaml")["$defs"],
+    "$ref": "#/$defs/chipShape",
+})
 
 
 def _theme(value=None, *, role=ROLES[0], properties=None, tokens=None):
@@ -35,6 +40,49 @@ def test_burst_normalization_is_policy_only_and_keeps_text_follows_box(role, poi
     tokens = ThemeTokenView(_theme({"kind": "burst", "points": points, "innerRatio": ratio},
                                   role=role, properties={"viewerFit": "text-follows-box"}))
     assert tokens.label_chip_shape(role) == BurstChipShape(points, Decimal(str(ratio)))
+
+
+@pytest.mark.parametrize("fit", ["circle", "ellipse"])
+def test_burst_fit_defaults_to_circle_and_accepts_explicit_closed_values(fit):
+    implicit = ThemeTokenView(_theme({"kind": "burst", "points": 7, "innerRatio": .4}))
+    explicit = ThemeTokenView(_theme({"kind": "burst", "points": 7, "innerRatio": .4, "fit": fit}))
+    assert implicit.label_chip_shape(ROLES[0]) == BurstChipShape(7, Decimal(".4"), "circle")
+    assert explicit.label_chip_shape(ROLES[0]) == BurstChipShape(7, Decimal(".4"), fit)
+
+
+def test_chip_shape_schema_accepts_burst_fit_default_and_closed_values():
+    for value in (
+        {"kind": "burst", "points": 5, "innerRatio": .4},
+        {"kind": "burst", "points": 5, "innerRatio": .4, "fit": "circle"},
+        {"kind": "burst", "points": 5, "innerRatio": .4, "fit": "ellipse"},
+    ):
+        assert _CHIP_SHAPE_SCHEMA.is_valid(value), value
+
+
+@pytest.mark.parametrize("value", [
+    {"kind": "burst", "points": 5, "innerRatio": .4, "fit": 1},
+    {"kind": "burst", "points": 5, "innerRatio": .4, "fit": None},
+    {"kind": "burst", "points": 5, "innerRatio": .4, "fit": {"kind": "ellipse"}},
+    {"kind": "burst", "points": 5, "innerRatio": .4, "fit": "square"},
+    {"kind": "rectangle", "fit": "ellipse"},
+    {"kind": "catalog", "glyph": "test:box", "sliceInsets": {
+        "top": 0, "right": 0, "bottom": 0, "left": 0}, "unitEm": .25, "fit": "ellipse"},
+])
+def test_chip_shape_schema_rejects_invalid_or_non_burst_fit(value):
+    assert not _CHIP_SHAPE_SCHEMA.is_valid(value), value
+
+
+@pytest.mark.parametrize("shape,path_suffix", [
+    ({"kind": "burst", "points": 7, "innerRatio": .4, "fit": "square"}, "/fit"),
+    ({"kind": "rectangle", "fit": "ellipse"}, ""),
+    ({"kind": "catalog", "glyph": "test:box", "sliceInsets": {
+        "top": 0, "right": 0, "bottom": 0, "left": 0}, "unitEm": .25, "fit": "ellipse"}, ""),
+])
+def test_burst_fit_is_closed_and_rejected_on_other_shape_kinds(shape, path_suffix):
+    with pytest.raises(ThemeTokenError) as error:
+        ThemeTokenView(_theme(shape)).label_chip_shape(ROLES[0])
+    assert error.value.diagnostic_id == "E_THEME_TOKEN_TYPE"
+    assert error.value.path == f"/body/roles/{ROLES[0]}/chipShape{path_suffix}"
 
 
 @pytest.mark.parametrize("value,suffix", [

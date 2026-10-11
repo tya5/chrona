@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 import math
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, KindHeader, kind_header
 from chrona.presentation.model.semantic_registry import is_annotation_artwork_role, is_label_chip_role
@@ -122,6 +122,7 @@ class BurstChipShape:
 
     points: int
     inner_ratio: Decimal
+    fit: Literal["circle", "ellipse"] = "circle"
 
 
 @dataclass(frozen=True)
@@ -715,7 +716,8 @@ class ThemeTokenView:
         kind = value.get("kind")
         if kind == "rectangle" and set(value) == {"kind"}:
             return RectangleChipShape()
-        if kind == "burst" and set(value) == {"kind", "points", "innerRatio"}:
+        if kind == "burst" and set(value) in ({"kind", "points", "innerRatio"},
+                                             {"kind", "points", "innerRatio", "fit"}):
             points, ratio = value["points"], value["innerRatio"]
             if (isinstance(points, bool) or not isinstance(points, (int, float)) or points < 2
                     or isinstance(points, float) and (not math.isfinite(points) or not points.is_integer())):
@@ -725,7 +727,10 @@ class ThemeTokenView:
             inner_ratio = self._decimal(ratio, role, "chipShape/innerRatio")
             if inner_ratio is None or not 0 < inner_ratio <= 1:
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/innerRatio")
-            result: ChipShapeToken = BurstChipShape(int(points), inner_ratio)
+            fit = value.get("fit", "circle")
+            if fit not in ("circle", "ellipse"):
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/fit")
+            result: ChipShapeToken = BurstChipShape(int(points), inner_ratio, fit)
         elif kind == "catalog" and set(value) == {"kind", "glyph", "sliceInsets", "unitEm"}:
             glyph, insets, unit = self._catalog_slice_geometry(value, role, "chipShape")
             result = CatalogChipShape(glyph, insets, unit)

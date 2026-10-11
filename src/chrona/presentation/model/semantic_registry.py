@@ -163,6 +163,7 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("rowBand", "decoration", "row-decoration", "row-band", "row-band", ContrastClass.DECORATION),
     _binding("rowRule", "decoration", "row-rule", "row-rule", "row-rule", ContrastClass.DECORATION),
     _binding("groupHeaderBand", "decoration", "group-header-band", "group-header-band", "group-header-band", ContrastClass.DECORATION),
+    _binding("groupHeaderStrip", "decoration", "group-header-strip", "group-header-strip", "group-header-strip", ContrastClass.DECORATION),
     # A patterned tab on each group header (#882), a Theme role Layout completes beside the header text.
     _binding("groupTab", "decoration", "group-tab", "group-tab", "group-tab", ContrastClass.DECORATION),
     _binding("groupHeader", "decoration", "group-header", "group-header", "groupHeader", ContrastClass.GROUND_TEXT),

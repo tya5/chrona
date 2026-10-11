@@ -16,21 +16,22 @@ editable Draft renders, not byte-pinned published evidence.
 | 6 | Parent/child hierarchy and rollup schedule | [Project](../../examples/onboarding/06-rollup/project.yaml) |
 | 7 | Observed dates and progress | [Project](../../examples/onboarding/07-actuals/project.yaml), [Actual Set](../../examples/onboarding/07-actuals/actual.yaml), [progress View](../../examples/onboarding/07-actuals/view.yaml) |
 
-Run each command from a clone of the repository (the stages live under `examples/`, which a
-`pip install` does not ship), compare the result with the preceding stage, and edit a
-title or date in that stage's Project before rendering it again:
+The stages ship with chrona. `chrona init tutorial --example onboarding` copies them into a new
+`tutorial` directory (the same files as the links above, in a clone or after `pip install`). Run each
+command, compare the result with the preceding stage, and edit a title or date in that stage's Project
+before rendering it again:
 
-<!-- chrona:doc-check requires: clone the commands read files that only a clone of the repository has (examples/ is not in the wheel) -->
 ```bash
-chrona render examples/onboarding/01-spans/project.yaml --output tutorial-01.svg
-chrona render examples/onboarding/02-gate/project.yaml --output tutorial-02.svg
-chrona render examples/onboarding/03-relations/project.yaml --output tutorial-03.svg
-chrona render examples/onboarding/04-calendar/project.yaml --output tutorial-04.svg
-chrona render examples/onboarding/05-constraints/project.yaml --output tutorial-05.svg
-chrona render examples/onboarding/06-rollup/project.yaml --output tutorial-06.svg
-chrona render examples/onboarding/07-actuals/project.yaml \
-  --actual examples/onboarding/07-actuals/actual.yaml \
-  --view examples/onboarding/07-actuals/view.yaml --output tutorial-07.svg
+chrona init tutorial --example onboarding
+chrona render tutorial/01-spans/project.yaml --output tutorial-01.svg
+chrona render tutorial/02-gate/project.yaml --output tutorial-02.svg
+chrona render tutorial/03-relations/project.yaml --output tutorial-03.svg
+chrona render tutorial/04-calendar/project.yaml --output tutorial-04.svg
+chrona render tutorial/05-constraints/project.yaml --output tutorial-05.svg
+chrona render tutorial/06-rollup/project.yaml --output tutorial-06.svg
+chrona render tutorial/07-actuals/project.yaml \
+  --actual tutorial/07-actuals/actual.yaml \
+  --view tutorial/07-actuals/view.yaml --output tutorial-07.svg
 ```
 
 The next three concepts cross source boundaries. A scenario is declared in

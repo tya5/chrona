@@ -28,6 +28,12 @@ Adding a third language requires a table-data entry and schema/catalog
 registration, not an axis formatter branch. Arbitrary host locale lookup,
 format strings and path-based table discovery are forbidden.
 
+A week labels tier selects `iso-week` (the default, `2026-W42`) or a form that names the week's first day:
+`start-day-month` (`12 Oct`; `10月12日` under `ja-JP`) and `start-numeric` (`10/12`; `10/12` under `ja-JP`). The first day is the
+start of the natural week interval the tier already computes, so a week that crosses a month or year boundary is named by
+its own first day, not by the clipped window edge; there is no week-start setting. `secondary` accepts the same forms
+(#1278).
+
 Layout uses the selected table to produce the same text for natural-bucket
 candidate fitting and final placement. The selected ID is part of the typed
 placement outcome. Scene projects completed text and adapters serialize it;

@@ -12,10 +12,11 @@ from chrona.presentation.model.point_paint import resolve_point_paint_role
 def test_gate_role_substitution_preserves_only_the_existing_point_and_legend_cases(
     role, gate_declared, legend,
 ):
-    expected = (
-        "gate"
-        if gate_declared and ((legend and role == "milestone") or (not legend and role == "planned"))
-        else role
-    )
+    if legend and role == "milestone":
+        expected = "gate" if gate_declared else "planned"  # the key is a miniature of the chart's planned point (#499)
+    elif gate_declared and not legend and role == "planned":
+        expected = "gate"
+    else:
+        expected = role
 
     assert resolve_point_paint_role(role, gate_declared=gate_declared, legend=legend) == expected

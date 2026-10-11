@@ -14,10 +14,23 @@ from chrona.presentation.layout.surface_groups import (
     GroupHeaderExtentUpdate, replace_group_header_extent,
 )
 from chrona.presentation.layout.surface_quality import GroupPlacement, MarkPlacement, ShapePlacement
-from chrona.presentation.layout.mark_geometry import MarkFacetAbsence, compose_item_marks
-from chrona.presentation.model.projection import shared_track_member_key
+from chrona.presentation.layout.mark_geometry import (
+    CompletedWindowMark, MarkFacetAbsence, complete_mark_window_geometry, compose_item_marks,
+)
+from chrona.presentation.layout.mark_facet_visibility import FacetDisposition, admitted_source_selection
+from chrona.presentation.layout.window_span_geometry import complete_clipped_span_geometry
+from chrona.presentation.layout.filled_contour import (
+    intersect_visible_host_contour,
+)
+from chrona.presentation.layout.rounded_outline import rounded_rect_commands
+from chrona.presentation.model.projection import WindowMode, shared_track_member_key
 from chrona.presentation.layout.surface_geometry import coordinate_for_date
-from chrona.presentation.layout.lane_projection import lane_missing_actual_visible
+from chrona.presentation.layout.lane_projection import (
+    folded_instance_id, lane_missing_actual_visible,
+)
+from chrona.presentation.layout.surface_mark_visibility import (
+    MarkOccurrence, MarkOccurrenceKind, outside_window_provenance,
+)
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 
 if TYPE_CHECKING:
@@ -89,11 +102,6 @@ def _default_actual_symbol(actual: MarkGeometry, planned: MarkGeometry) -> MarkG
     return replace(actual, symbol_height=height, symbol_offset=offset)
 
 
-def folded_instance_id(folded: Any, item: Any) -> str:
-    """Keep a header point's comparison members addressable without inventing rows."""
-    return f"group-header:{folded.group_id}:{item.item_id or item.object_id}"
-
-
 @dataclass(frozen=True)
 class SurfaceMarksBatch:
     """Completed source marks, progress/summary shapes and folded-host updates."""
@@ -106,6 +114,7 @@ class SurfaceMarksBatch:
     absences: tuple[MarkFacetAbsence, ...]
     visible_group_header_overflows: tuple[tuple[str, Rect, float], ...]
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
+    window_marks: tuple[CompletedWindowMark, ...] = ()
 
 
 def progress_fill_bounds(host: Rect, fraction: float,
@@ -124,6 +133,32 @@ def progress_fill_bounds(host: Rect, fraction: float,
                 host.block_size - 2 * block_inset)
 
 
+def complete_progress_shape(host: MarkPlacement, *, original_host: MarkPlacement,
+                            fraction: float, inset_ratio: Decimal,
+                            radius_ratio: Decimal) -> ShapePlacement | None:
+    """The same original-host progress geometry for preflight and final paint."""
+    bounds = progress_fill_bounds(original_host.bounds, fraction, inset_ratio)
+    if bounds is None or bounds.inline_size <= 0:
+        return None
+    radius = float(radius_ratio) * float(min(bounds.inline_size, bounds.block_size))
+    pattern_origin = (float(bounds.inline), float(bounds.block)) if host.paint_clip is not None else None
+    commands, kind = (), "Rect"
+    if host.paint_clip is not None:
+        original = rounded_rect_commands(tuple(map(float, (
+            bounds.inline, bounds.block, bounds.inline_size, bounds.block_size))), radius)
+        commands = intersect_visible_host_contour(original, host.path_commands, host.bounds,
+                                                  source_ref=host.source_ref, facet="progress")
+        if not commands:
+            return None
+        bounds, kind, radius = host.bounds, "Symbol", 0.0
+    return ShapePlacement(
+        f"progress-fill:{host.placement_id}", host.source_ref, kind, bounds,
+        required=False, slot_id=host.slot_id, clip_host_id=host.placement_id,
+        paint_order=host.paint_order + 1, corner_radius=radius,
+        semantic_id="progressFill", path_commands=commands, paint_clip=host.paint_clip,
+        pattern_origin=pattern_origin)
+
+
 def compose_surface_marks(base: SurfaceBaseGeometry, *,
                           lane_owner: Callable[[Any, Any], tuple[str, str] | None]) -> SurfaceMarksBatch:
     """Place row and folded marks, then progress fills and summary span bars."""
@@ -135,8 +170,45 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
     role_geometries = base.role_geometries
     mark_block_size = base.mark_block_size
     contract = request.presentation_contract
+    visibility_index = getattr(request, "mark_visibility_index", None)
+    if getattr(projection, "window_mode", None) == WindowMode.EXPLICIT and visibility_index is None:
+        raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/window",
+                          detail="stage=composition; reason=missing-visibility-index")
+
+    def prepared_visibility(item: Any, *, kind: MarkOccurrenceKind,
+                           container_id: str, source_kind: str, as_of: date | None):
+        if visibility_index is None:
+            return None
+        occurrence = MarkOccurrence(kind, container_id, item.item_id or item.object_id,
+                                    item.object_id, source_kind)
+        return visibility_index.lookup(occurrence, projection=projection,
+                                       as_of=as_of)
+
+    window_marks: list[CompletedWindowMark] = []
+
+    def completed_marks(composition, visibility, instance_id):
+        if visibility is None:
+            return composition.marks
+        facets = {f"{facet.source.facet}:{instance_id}": facet for facet in visibility.facets}
+        result = []
+        for mark in composition.marks:
+            facet = facets.get(mark.placement_id)
+            if facet is None:
+                raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/items",
+                                  detail="stage=composition; reason=unaccounted-mark")
+            completed = complete_mark_window_geometry(mark, facet, scale, base.plot)
+            window_marks.append(completed)
+            if completed.visible is not None:
+                result.append(completed.visible)
+        return tuple(result)
+
     diagnostics: list[str] = []
     diagnostic_provenance: list[DiagnosticProvenance] = []
+    if visibility_index is not None:
+        outside = outside_window_provenance(visibility_index)
+        if outside is not None:
+            diagnostics.append(outside.diagnostic)
+            diagnostic_provenance.append(outside)
     absences: list[MarkFacetAbsence] = []
     marks: list[MarkPlacement] = []
     track_by_id = {item.instance_id: item for item in tracks}
@@ -153,16 +225,24 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             track = track_by_id[layout_id]
             frame = MarkBandFrame.from_track(track, scale, role_geometries, allocation)
             source_kind = item.source_kind if projection.rows else "combined"
+            occurrence_kind = (MarkOccurrenceKind.LANE_FINAL if owner is not None else
+                               MarkOccurrenceKind.ROW if projection.rows else MarkOccurrenceKind.AUTO)
+            occurrence_container = owner[0] if owner is not None else (
+                review_row.row_id if projection.rows else item.object_id)
+            visibility = prepared_visibility(
+                item, kind=occurrence_kind, container_id=occurrence_container,
+                source_kind=source_kind, as_of=contract.time.as_of)
             composition = compose_item_marks(
                 item=item, instance_id=instance_id, source_kind=source_kind, frame=frame,
                 as_of=contract.time.as_of, theme_tokens=request.theme_tokens,
                 slot_id=timeline.slot_id, paint_order_base=MARK_PAINT_ORDER_BASE,
                 emit_missing_actual=(lane_missing_actual_visible(projection)
                     if owner is not None else True),
+                selection=admitted_source_selection(visibility) if visibility is not None else None,
             )
             marks.extend(replace(mark, lane_row_id=owner[0], lane_member_id=owner[1],
                                  lane_source_kind=source_kind) if owner is not None else mark
-                         for mark in composition.marks)
+                         for mark in completed_marks(composition, visibility, instance_id))
             diagnostics.extend(composition.diagnostics)
             diagnostic_provenance.extend(composition.diagnostic_provenance)
             absences.extend(composition.absences)
@@ -203,18 +283,23 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             for _, item in members:
                 instance_id = folded_instance_id(folded, item)
                 frame = MarkBandFrame(scale, block, mark_block_size, role_geometries, allocation)
+                visibility = prepared_visibility(
+                    item, kind=MarkOccurrenceKind.FOLDED, container_id=folded.group_id,
+                    source_kind=item.source_kind, as_of=contract.time.as_of)
                 composition = compose_item_marks(
                     item=item, instance_id=instance_id, source_kind=item.source_kind, frame=frame,
                     as_of=contract.time.as_of, theme_tokens=request.theme_tokens,
                     slot_id=timeline.slot_id, paint_order_base=MARK_PAINT_ORDER_BASE,
                     emit_missing_actual=False, emit_diagnostics=False,
+                    selection=admitted_source_selection(visibility) if visibility is not None else None,
                 )
-                marks.extend(composition.marks)
+                marks.extend(completed_marks(composition, visibility, instance_id))
                 diagnostics.extend(composition.diagnostics)
                 diagnostic_provenance.extend(composition.diagnostic_provenance)
                 absences.extend(composition.absences)
 
     mark_by_id = {item.placement_id: item for item in marks}
+    original_mark_by_id = {item.original.placement_id: item.original for item in window_marks}
     progress_shapes: list[ShapePlacement] = []
     progress_source = request.surface_content.progress_fill_source
     if progress_source is not None:
@@ -234,14 +319,12 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                 host = mark_by_id.get(f"{host_prefix}:{instance_id}")
                 if host is None or fraction == 0:
                     continue
-                bounds = progress_fill_bounds(host.bounds, float(fraction), progress_inset)
-                if bounds is not None and bounds.inline_size > 0:
-                    radius = float(progress_radius) * float(min(bounds.inline_size, bounds.block_size))
-                    progress_shapes.append(ShapePlacement(
-                        f"progress-fill:{host.placement_id}", item.object_id, "Rect", bounds,
-                        required=False, slot_id=host.slot_id, clip_host_id=host.placement_id,
-                        paint_order=host.paint_order + 1, corner_radius=radius,
-                        semantic_id="progressFill", lane_row_id=owner[0] if owner else None,
+                original_host = original_mark_by_id.get(host.placement_id, host)
+                shape = complete_progress_shape(host, original_host=original_host,
+                    fraction=float(fraction), inset_ratio=progress_inset, radius_ratio=progress_radius)
+                if shape is not None:
+                    progress_shapes.append(replace(shape,
+                        lane_row_id=owner[0] if owner else None,
                         lane_member_id=owner[1] if owner else None,
                         subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
 
@@ -253,16 +336,39 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                         if item.item_id == review_row.table_subject_id and item.source_kind != "actual"), None)
         if subject is None or subject.source_type != "span":
             continue
+        visibility = prepared_visibility(
+            subject, kind=MarkOccurrenceKind.ROW if projection.rows else MarkOccurrenceKind.AUTO,
+            container_id=review_row.row_id if projection.rows else subject.object_id,
+            source_kind=subject.source_kind if projection.rows else "combined",
+            as_of=contract.time.as_of)
+        planned_visibility = (next((facet for facet in visibility.facets
+                                    if facet.source.facet == "planned"), None)
+                              if visibility is not None else None)
+        if visibility is not None and planned_visibility is None:
+            raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/items",
+                              detail="stage=summary; reason=unaccounted-facet")
+        if planned_visibility is not None and planned_visibility.disposition == FacetDisposition.OMITTED:
+            continue
         start_at, end_at = subject.planned.get("start"), subject.planned.get("end")
         if not isinstance(start_at, date) or not isinstance(end_at, date):
             continue
         x1, x2 = coordinate_for_date(start_at, scale), coordinate_for_date(end_at, scale)
         height = float(request.theme_tokens.summary_bar_height("summary-bar")) * float(
             base.metric_values["timeline.mark.blockSize"])
+        bounds = Rect(Decimal(str(x1)), row.bounds.block,
+                      Decimal(str(max(1.0, x2 - x1))), Decimal(str(height)))
+        commands, kind, paint_clip = (), "Rect", None
+        pattern_origin = None
+        if planned_visibility is not None and planned_visibility.disposition == FacetDisposition.CLIPPED:
+            pattern_origin = (float(bounds.inline), float(bounds.block))
+            geometry = complete_clipped_span_geometry(
+                bounds, (), 0.0, planned_visibility, scale, base.plot, source_ref=subject.object_id)
+            bounds, commands, kind, paint_clip = geometry.bounds, geometry.contour, "Symbol", geometry.paint_clip
         summary_shapes.append(ShapePlacement(
-            f"summary-bar:{review_row.row_id}", subject.object_id, "Rect",
-            Rect(Decimal(str(x1)), row.bounds.block, Decimal(str(max(1.0, x2 - x1))), Decimal(str(height))),
-            semantic_id="summaryBar"))
+            f"summary-bar:{review_row.row_id}", subject.object_id, kind,
+            bounds, semantic_id="summaryBar", path_commands=commands, paint_clip=paint_clip,
+            pattern_origin=pattern_origin))
     return SurfaceMarksBatch(tuple(marks), tuple(progress_shapes), tuple(summary_shapes), groups,
                              tuple(updates), tuple(diagnostics), tuple(absences),
-                             tuple(visible_header_overflows), tuple(diagnostic_provenance))
+                             tuple(visible_header_overflows), tuple(diagnostic_provenance),
+                             tuple(window_marks))

@@ -24,6 +24,6 @@ properties:
         path:
           type: string
           pattern: "^examples/[a-z][a-z0-9-]*$"
-          description: Packaged directory of the example, relative to the resources root; it holds a manifest.yaml.
+          description: Packaged directory of the example, relative to the resources root; it holds a manifest.yaml (a corpus) or numbered stage directories that each hold a project.yaml.
           examples: [examples/halcyon-1]
         purpose: {type: string, minLength: 1, description: One line saying what the example demonstrates.}

@@ -111,27 +111,17 @@ def report_document(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
         if finding["visualRole"] in decoration_roles and finding["disposition"] == "enabled":
             by_scene.setdefault(record["scene"], set()).add(finding["visualRole"])
             corpus_roles.add(finding["visualRole"])
-    # A single scene need not carry every decoration role at once, and some
-    # roles are never both required: Issue #481 makes groupBand and
-    # groupHeaderBand mutually exclusive by design (a group's own band
-    # already includes its own header row, so painting a separate header
-    # accent under it would only double-tint that row at a contrast the two
-    # colours were never chosen against — see the #481 design correction).
-    # The witness is corpus-wide (every decoration role evaluated with
-    # disposition "enabled" somewhere in the committed public evidence, not
-    # all in one scene). Mutually exclusive render alternatives form one
-    # required concept: group-band/group-header-band paint a group's body or
-    # header, while row-band/row-rule paint the row-decoration choice selected
-    # by the View. Every emitted role remains in the findings above.
-    mutually_exclusive_groups = (
-        {"group-band", "group-header-band"},
+    # Coverage is corpus-wide. Members of a shared decoration concept may
+    # coexist; every emitted role is still evaluated and reported separately.
+    coverage_concepts = (
+        {"group-band", "group-header-band", "group-header-strip"},
         {"row-band", "row-rule"},
     )
-    exclusive_members = frozenset().union(*mutually_exclusive_groups)
-    required_singly = decoration_roles - exclusive_members
+    concept_members = frozenset().union(*coverage_concepts)
+    required_singly = decoration_roles - concept_members
     witnesses = sorted(scene for scene, roles in by_scene.items() if roles == decoration_roles)
     corpus_errors = [] if (required_singly <= corpus_roles
-                          and all(group & corpus_roles for group in mutually_exclusive_groups)) else [
+                          and all(group & corpus_roles for group in coverage_concepts)) else [
         "E_PRESENTATION_CONTRAST_DECORATION_WITNESS"]
     free: dict[str, dict[str, Any]] = {}
     for record in ordered:
@@ -193,8 +183,8 @@ def render_markdown(report: Mapping[str, Any]) -> str:
                   *(f"| `{row['theme']}` | {row['sceneCount']} | {row['warningCount']} | {row['errorCount']} |"
                     for row in report.get("notOptedIn", ()))))
     lines.extend(("", "## Decoration corpus witness", "",
-                  "Every non-exclusive decoration role is enabled in committed Scene evidence; "
-                  "group-band or group-header-band supplies the group concept, and row-band or row-rule supplies "
+                  "Every independently required decoration role is enabled in committed Scene evidence; "
+                  "group-band, group-header-band or group-header-strip supplies the group concept, and row-band or row-rule supplies "
                   "the row concept when there are no corpus errors.", "",
                   *(f"- `{scene}`" for scene in report["witnessScenes"]),
                   *(f"- ERROR `{code}`" for code in report["corpusErrors"]),

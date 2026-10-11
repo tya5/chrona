@@ -1,9 +1,9 @@
 """Normalized presentation content inputs."""
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Mapping
 
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec
 from chrona.presentation.model.placement_candidates import PlacementCandidate
@@ -306,10 +306,12 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
             "progress": (item.actual or {}).get("progress")}.get(facet)
 
 
-def display_value(value: Any, missing: str, formatter: str | BooleanPresencePresentation = "text", *, locale: str = "en-US",
-                  zero: str = "signed") -> str:
+def display_value(value: Any, missing: str | Mapping[str, Any], formatter: str | BooleanPresencePresentation = "text", *,
+                  locale: str = "en-US", zero: str = "signed", end_display: str = "exclusive") -> str:
     """Format a normalized table value according to its declared View contract."""
     if value is None:
+        if isinstance(missing, Mapping):
+            return str(missing["text"])  # an author-chosen literal, shown exactly (#1288)
         return {"blank": "", "em-dash": "—", "unknown": "unknown",
                 "in-progress": "in progress"}[missing]
     if isinstance(value, bool):
@@ -327,6 +329,10 @@ def display_value(value: Any, missing: str, formatter: str | BooleanPresencePres
     if formatter == "dateRange" and isinstance(value, dict):
         start, end = value.get("start"), value.get("end", value.get("finish"))
         if isinstance(start, date) and isinstance(end, date):
+            if end_display == "inclusive" and start < end:
+                end -= timedelta(days=1)
+                if start == end:
+                    return _format_compact_date(start, include_year=False, locale=locale)
             return _format_date_range(start, end, locale=locale)
         if isinstance(start, date) and end is None:
             return f"{_format_compact_date(start, include_year=True, locale=locale)} –"

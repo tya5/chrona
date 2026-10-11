@@ -72,16 +72,18 @@ def test_init_template_resolves_to_the_single_source_authority():
 def test_example_registry_names_exactly_the_examples_the_wheel_ships():
     """#574: `init --example` choices come from the registry, and the wheel ships
     exactly the registered examples (no unregistered corpus rides along)."""
-    assert example_ids() == ("halcyon-1",)
+    assert example_ids() == ("halcyon-1", "onboarding")
     for entry in example_registry().values():
-        assert template_resource(entry["id"]).joinpath("manifest.yaml").is_file()
+        template = template_resource(entry["id"])
+        assert template.joinpath("manifest.yaml").is_file() or any(
+            child.joinpath("project.yaml").is_file() for child in template.iterdir() if child.is_dir())
     forced = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["hatch"]["build"]["targets"]["wheel"]["force-include"]
     shipped = {source for source in forced if source.startswith("examples/")}
     assert shipped == {entry["path"] for entry in example_registry().values()}
 
 
 def test_unregistered_example_is_rejected_naming_the_available_ids():
-    with pytest.raises(ValueError, match=r"E_INIT_EXAMPLE.*'controller-z'.*halcyon-1"):
+    with pytest.raises(ValueError, match=r"E_INIT_EXAMPLE.*'controller-z'.*halcyon-1, onboarding"):
         template_resource("controller-z")
 
 
@@ -164,3 +166,14 @@ def test_bundled_material_catalog_is_complete_and_size_bounded():
     assert contract.entry_aliases["flag"] == "flag-outline-rounded"
     assert contract.entry_aliases["check-outline-rounded"] == "check-rounded"
     assert perf_counter() - started < 10
+
+
+def test_init_onboarding_copies_the_seven_stages_byte_for_byte_and_writes_no_store(tmp_path):
+    from chrona.usecases.local_authoring import initialize_project
+
+    initialize_project(tmp_path / "tutorial", example="onboarding")
+
+    stages = sorted(path.name for path in (tmp_path / "tutorial").iterdir())
+    assert stages == sorted(path.name for path in (ROOT / "examples" / "onboarding").iterdir())  # no .chrona Store, no manifest
+    for source in (ROOT / "examples" / "onboarding").rglob("*.yaml"):
+        assert (tmp_path / "tutorial" / source.relative_to(ROOT / "examples" / "onboarding")).read_bytes() == source.read_bytes()

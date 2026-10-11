@@ -4,7 +4,7 @@ A terse plan is a short text file (`plan.chrona`): one line per task, gate or gr
 the line. `chrona validate`, `schedule` and `render` take it directly; `chrona compile` writes the Chrona Project
 (`project.yaml`). The compiler checks the plan, reports every error with a line and column, and hands the Project to
 the normal validator. Normative rules: [Spec 65](../specification/65-terse-plan-syntax.md); what a plan becomes in
-YAML: [terse-plan-mapping.md](terse-plan-mapping.md).
+YAML: [terse-plan-mapping.md](terse-plan-mapping.md). A plan that already lives in a spreadsheet: [import it from CSV](csv-import.md).
 
 ## The loop
 

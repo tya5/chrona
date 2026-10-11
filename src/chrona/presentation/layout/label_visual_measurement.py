@@ -60,10 +60,8 @@ def measure_label_visual_run(placement_id: str, content: str, typography_role: s
     )
 
 
-def resolve_label_visual_advances(placement_id: str, typography_role: str, *,
-                                  visual_requests: tuple[Any, ...], icon_assets: dict[str, Any],
-                                  theme_tokens: Any) -> tuple[tuple[Any, Any, float, float], ...]:
-    """Resolve closed icon assets and inline advances for one label identity."""
+def matching_label_visuals(placement_id: str, visual_requests: tuple[Any, ...]) -> tuple[Any, ...]:
+    """Bind original label identity before either measurement or omission."""
     matching = []
     for visual in visual_requests:
         if visual.target_kind in {"mark", "axis-band", "axis-label"}:
@@ -72,6 +70,33 @@ def resolve_label_visual_advances(placement_id: str, typography_role: str, *,
         target = selector.get("placementId") or visual_target_placement_id(visual.target_kind, selector)
         if placement_id == target or ("placementId" not in selector and placement_id.startswith(target + ":")):
             matching.append(visual)
+    return tuple(matching)
+
+
+def absent_label_visual_sources(absences: tuple[Any, ...], *,
+                               visual_requests: tuple[Any, ...],
+                               icon_assets: dict[str, Any]) -> frozenset[str]:
+    """Validate omitted label bindings without creating icon/text geometry."""
+    handled: set[str] = set()
+    for absence in absences:
+        absence.validate_cache(absence.visibility_index)
+        occupied: set[str] = set()
+        for visual in matching_label_visuals(absence.placement_id, visual_requests):
+            if visual.side in occupied:
+                raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", visual.source_ref)
+            occupied.add(visual.side)
+            icon = icon_assets.get(visual.ref or "")
+            if icon is None or icon.viewport[1] <= 0:
+                raise LayoutError("E_ICON_NAME_UNKNOWN", visual.source_ref)
+            handled.add(visual.source_ref)
+    return frozenset(handled)
+
+
+def resolve_label_visual_advances(placement_id: str, typography_role: str, *,
+                                  visual_requests: tuple[Any, ...], icon_assets: dict[str, Any],
+                                  theme_tokens: Any) -> tuple[tuple[Any, Any, float, float], ...]:
+    """Resolve closed icon assets and inline advances for one label identity."""
+    matching = matching_label_visuals(placement_id, visual_requests)
     if not matching:
         return ()
     found: dict[str, tuple[Any, Any, float, float]] = {}

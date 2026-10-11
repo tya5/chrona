@@ -34,7 +34,7 @@ slides:
   controller-z/text-roles: {axisLabels: 7, dvtHosted: true}
   controller-z/viewer-fit: {axisLabels: 7, dvtHosted: true}
   halcyon-1/dependency-network: {axisLabels: 0}
-  halcyon-1/flight-readiness: {axisLabels: 3}
+  halcyon-1/flight-readiness: {axisLabels: 1}
   halcyon-1/gallery-editorial: {axisLabels: 13}
   halcyon-1/gallery-editorial-lanes: {axisLabels: 13}
   halcyon-1/gallery-image-notes: {axisLabels: 13, chips: ['chip:as-of-label']}

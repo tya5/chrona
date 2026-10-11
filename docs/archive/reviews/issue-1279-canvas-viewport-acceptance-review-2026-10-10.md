@@ -14,7 +14,7 @@ PR checks and containing-review release remain required.
 [PR #1311](https://github.com/tya5/chrona/pull/1311)
 also carries the independent final acceptance table for #1327.
 Authority: [design](../../design/issue-1279-canvas-viewport-design-2026-10-10.md)
-and [implementation plan](../../planning/active/issue-1279-canvas-viewport-implementation-plan-2026-10-10.md).
+and [implementation plan](../planning/issue-1279-canvas-viewport-implementation-plan-2026-10-10.md).
 
 ## Literal issue acceptance
 

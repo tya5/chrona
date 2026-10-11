@@ -173,7 +173,7 @@ body:
     nonWorking: true
     exceptions: true
   backgroundDecoration:
-    rows: none
+    rows: rules
     groups: all
   hierarchyColumn: The company
   tableColumns:
