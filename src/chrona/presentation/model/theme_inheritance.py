@@ -87,6 +87,9 @@ def _source_identity(payload: bytes) -> str:
     return "sha256:" + sha256(payload).hexdigest()
 
 
+# The Theme body members a derived Theme may replace or add to, entry by entry (Specification 07 section 5).
+MERGED_MEMBERS = ("values", "roles", "colorBindings", "colorScales", "annotationKinds", "metrics")
+
 BaseLoader = Callable[[str, Mapping[str, Any]], tuple[dict[str, Any], str, str]]
 
 
@@ -123,15 +126,26 @@ def _resolve(value: dict[str, Any], key: str, load_base: BaseLoader,
     body = effective.get("body")
     if not isinstance(body, dict):
         raise ThemeInheritanceError("E_THEME_INHERITANCE_EFFECTIVE_SCHEMA", "the base Theme has no body mapping")
-    for name in ("values", "roles"):
-        replacement, target = value["body"].get(name, {}), body.get(name)
+    for name in MERGED_MEMBERS:
+        replacement = value["body"].get(name, {})
+        if not replacement:
+            continue
+        # Roles retain omitted members; other maps replace whole entries.
+        # No merge level removes inherited content (#1401).
+        target = body.setdefault(name, {})
         if not isinstance(target, dict):
             raise ThemeInheritanceError("E_THEME_INHERITANCE_EFFECTIVE_SCHEMA", f"body.{name} of the base Theme is not a mapping")
-        unknown = [entry for entry in replacement if entry not in target]
-        if unknown:
-            raise ThemeInheritanceError("E_THEME_INHERITANCE_OVERRIDE_UNKNOWN",
-                                        f"body.{name} overrides entries the base Theme does not declare: {unknown}")
-        target.update(deepcopy(replacement))
+        if name == "roles":
+            for role, members in replacement.items():
+                inherited = target.get(role)
+                if isinstance(inherited, dict) and isinstance(members, dict):
+                    inherited.update(deepcopy(members))
+                else:
+                    # New roles and malformed values still reach the effective
+                    # schema, which owns validation and its existing diagnostic.
+                    target[role] = deepcopy(members)
+        else:
+            target.update(deepcopy(replacement))
     effective_schema = "theme-v0.15.schema.yaml"
     problems = tuple(schema_validator(effective_schema).iter_errors(effective))
     if problems:

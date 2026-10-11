@@ -392,6 +392,26 @@ integrated balloon tail or a strict routed connection to a short balloon tip.
 Layout records the topology; View does not declare path coordinates. See
 [the C3 correction](../design/issue-466-c3-routed-tail-correction-2026-09-29.md).
 
+### 9.2 The View as the connector, and the design it takes from the Layout profile (#1341)
+
+A View is the thin connector between a project and a design. What names the project's ids, fields, dates or wording stays in the
+View: `surface`, `selection`, `ordering`, the window's `mode`, `start` and `end`, the grouping key and order, the lane keys, the
+comparison bindings (`baseline`, `scenario`, `actual`, `observationSelection`), periods, figures, markers' `source`, headings and
+captions, table column captions and sources, annotation anchors and text, hierarchy column, icon encodings. How the surface looks
+and is laid out is design, and a Layout profile may supply it as `viewDefaults`, a View body fragment (Specification 33).
+
+Slice 1 moves these members: `visibility`, `axis`, `deadlines`, `shading`, `timePresentation`, `annotationPresentation`,
+`backgroundDecoration`, `progressFill` (whole members), and the design halves of `comparison` (`baselineMarks`,
+`missingActualScope`, `deltaUnit`, `facets`), `rows` (`mode`, `trackAllocation`, `packing`, `laneTable`, `points`, `items`) and
+`window` (`marginDays`). The rule is whole-member replacement: a member the View declares replaces the design's whole member, a
+member it omits takes the design's. The three split members merge one level
+down: an omitted member is created from the profile's design sub-members,
+while declared sub-members win. Connection fields are never supplied by the
+design. Explicitly malformed View members are not repaired; missing required
+connection fields remain ordinary View validation errors. The
+merge happens at ingress, before validation, so the merged View is validated as the View it is; a Layout profile without
+`viewDefaults`, or a View declaring every member, is untouched, which keeps every existing View byte-identical.
+
 ## 10. Diagnostics
 
 View evaluation SHOULD report stable diagnostics for unknown Project, Snapshot, Actual, or object references; incompatible temporal domains; duplicate comparison identity; and invalid explicit windows. Exact identifiers and schema are deferred to the View schema and Application Architecture work.
