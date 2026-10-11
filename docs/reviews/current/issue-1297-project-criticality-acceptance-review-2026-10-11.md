@@ -26,8 +26,10 @@ Release pending: final READY integration, current-head PR snapshot/gates and acc
 Current integration `4c92a3ec` adopts merged PR1411 source main `36d8ed8d`
 without conflicts. One Python3.13 M1 batch passes55 tests (6.17s), including
 the complete15-test schedule/typed-float contract family. Complete agent-tool
-tests187 passed on corrected table `f02bc0bb` (33.08s). Earlier broad
-integration tests are evidence for their named revisions, not current release
+tests187 passed on corrected table `f02bc0bb` (33.08s).
+Scheduler/usecase/CLI/hash-seed regressions additionally205 PASS (431.35s)
+on current source integration `4c92a3ec` before publication.
+Earlier broad integration tests are evidence for their named revisions, not current release
 acceptance; the independent Python argparse wording is tracked under #1306.
 
 After ordinary `9ee4dbce` adoption, CLI assertions3, schedule characterization23 and explicit-unit contracts10 pass. Scheduler/hash-seed batch23 passes (56.60s), including eight seeds per command. Broader scheduler, point/calendar/property, usecase, projection and MCP consumers:322 passed (61.20s). Only four successful schedule golden records change; baseline/current raw comparison proves placements, diagnostics, warnings, files and exit codes unchanged. HALCYON's longer unit-bearing stdout uses the existing stream digest policy.

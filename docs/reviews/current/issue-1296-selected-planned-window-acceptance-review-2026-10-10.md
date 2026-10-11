@@ -33,6 +33,17 @@ by ordinary merge without conflicts. One Python3.13 M1 batch passes55 tests
 (6.17s): actual default Scene/SVG and degenerate diagnostics, selected-planned
 window modes, project criticality/float contracts and filled-note headings.
 The earlier43-test visibility/window batch passed on corrected table `f02bc0bb`.
+Scheduler/usecase/CLI/hash-seed regressions205 PASS (431.35s); packaged bounds,
+chip shapes, viewer-fit chips and annotation-list regressions54 PASS (24.67s).
+The latter exposed four fully dispositioned failures before publication:
+removing only the new padding in an ephemeral counterfactual reproduces all
+three preceding Scene/SVG hashes exactly. Current bytes remain asserted, not
+normalized. Synthetic added/changed/removed primitive counts are5/11/0
+(chip-shape, one formerly suppressed label now placed),10/14/0 (viewer-fit chip,
+new boundary triggers existing axis thinning/density),7/32/0 (annotation list,
+same empty diagnostics and all four entries/indexes/leaders retained).
+The burst test independently checks exact Scene closure and exact rounded SVG
+closure; existing full-outline serialization tolerances are unchanged.
 Earlier own-worktree Python3.11:141 tests pass (133.82s), covering actual default
 Scene/SVG/degenerate diagnostic, selected-planned model, missing-Actual scope,
 lane inventory, bounded packaged tables, explicit windows, date/axis,
