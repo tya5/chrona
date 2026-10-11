@@ -202,6 +202,13 @@ If padded bounds cannot be represented in the Date domain, diagnose
 wrapping or silently clamping. An empty eligible set is a diagnostic,
 never a current-date default.
 
+Before timeline geometry or visibility-index preparation, Layout validates the
+completed projection's positive Date window. A still-degenerate or invalid
+window reports `E_PRESENTATION_PROJECTION_REQUIRED` at `/projection/window`,
+naming the bounds, selected object identifiers and positive-Date-window cause.
+Early, direct and candidate-preparation entry paths share this validation;
+they must not lose owner-local detail through a generic fallback.
+
 Date-based Views use the Date temporal domain. DateTime View behavior is deferred until a corresponding Core scheduling profile exists. Human-facing inclusive end-date display is a View or renderer concern and MUST NOT alter Core half-open span semantics.
 
 **Explicit-window visibility (#1292).** The projection retains the selected
