@@ -20,7 +20,7 @@ from typing import Any
 from chrona.presentation.contracts.diagnostics import PresentationResourceSource
 
 WHOLE_MEMBERS = ("visibility", "axis", "deadlines", "shading", "timePresentation", "annotationPresentation",
-                 "backgroundDecoration", "progressFill")
+                 "backgroundDecoration", "progressFill", "annotationPlacement")
 SPLIT_MEMBERS: Mapping[str, tuple[str, ...]] = {
     "comparison": ("baselineMarks", "missingActualScope", "deltaUnit", "facets"),
     "rows": ("mode", "trackAllocation", "packing", "laneTable", "points", "items"),

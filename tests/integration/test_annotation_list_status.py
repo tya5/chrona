@@ -15,7 +15,9 @@ from tests.support.legacy_axis import use_legacy_six_tier_axis
 # #1296 pads the selected-planned window, moving anchors and adding axis buckets.
 # Removing only that rule independently reproduces both preceding byte hashes.
 # All four entries/indexes/leaders remain present; diagnostics remain empty.
-NO_SUPPRESSION_SCENE_SHA256 = "82d6f6c09ac6adb3823da1d083e4344bf753fc53fcce2edd80b2a0427d0fc3c0"
+# #1343 closes natural measurements from resolved annotation/unconsumed-note
+# content. Slot metadata changes; every visible SVG byte remains identical.
+NO_SUPPRESSION_SCENE_SHA256 = "dffcc3c623989fa56fbad64095a51ab379ea281c1720f35f99eafffd4f732b5e"
 NO_SUPPRESSION_SVG_SHA256 = "3e9593666a8f1e60d9180ca6f9697e0ff912626fbe565080edbf5a57d9c5c5ce"
 
 

@@ -28,7 +28,7 @@ def _source_map(*, surface="table-timeline", legacy_heading=None, view_heading=N
     projection = SimpleNamespace(lane_rows=(), rows=(SimpleNamespace(label="Row"),), items=(),
                                  window=(date(2026, 1, 1), date(2026, 1, 2)), network=None)
     content = SimpleNamespace(axis_tiers=(), group_details=(), milestones=(),
-                               observation_rows=(), observation_columns=())
+                               observation_rows=(), observation_columns=(), notes=())
     return _source_inputs(
         {"project": {"title": "Project title"}, "annotations": {}}, view, projection,
         SummaryContent(()), content=content,
