@@ -31,6 +31,10 @@ tests pass:28 (5.27s). Public audit at `3a51cfdb`:46/46 PASS, all declared
 Scene/SVG bytes identical. Retained outputs: `chrona-1293-public-audit-7kiya4vl`.
 Subsequent `512ae424` adds only #1294's acceptance-review lines, not product code.
 
+Current READY `42e37d8d` (trusted gate38113860903) adopted at `3cd42db8`.
+Date-range formatter and actual-default integration:22 passed (6.45s).
+The new PR's snapshot and exact-main release are still required.
+
 ## Architecture conclusion
 
 View owns the explicit display choice; normalization applies it once before
