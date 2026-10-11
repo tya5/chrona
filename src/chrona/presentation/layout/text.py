@@ -2,12 +2,32 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from dataclasses import dataclass
+from math import isfinite
 from typing import Any, Literal
 
 from chrona.presentation.layout.model import Rect, geometry_sum
 from chrona.presentation.model.font_metrics import named_families
 from chrona.presentation.layout.surface_quality import (AnnotationPresentation, CollisionDomain, TextPlacement,
-                                                        TextRunPlacement)
+                                                        TextRunPlacement, FitWarning)
+from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
+
+
+def ellipsized_text_warning(placement: TextPlacement, *, theme_tokens: Any,
+                            font_metrics: Any, failure_kind: str) -> FitWarning | None:
+    """Report a completed source-preserving fallback without selecting policy."""
+    if placement.overflow != "ellipsized":
+        return None
+    treatment = theme_tokens.text_treatment(placement.typography_role)
+    metrics = metric_for_role(theme_tokens, placement.typography_role, font_metrics)
+    source = placement.source_content if placement.source_content is not None else placement.content
+    width = measure_text_width(source, font_size=float(treatment.font_size), font_metrics=metrics,
+                               letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+                               numeric_spacing=treatment.numeric_spacing)
+    return FitWarning("W_LAYOUT_TEXT_ELLIPSIZED", placement.placement_id, placement.source_ref,
+                      failure_kind, "ellipsize-with-source", width, float(placement.bounds.block_size),
+                      placement.available_inline_size if placement.available_inline_size is not None else float(placement.bounds.inline_size),
+                      float(placement.bounds.block_size), (DiagnosticSubject(placement.source_ref, source),))
 
 
 def _text_error(code: str, owner: str, **operands: object) -> ValueError:
@@ -202,6 +222,61 @@ def wrap_text(content: str, *, available_inline: float, font_size: float, font_m
     if current:
         lines.append(current)
     return tuple(lines or [content])
+
+
+@dataclass(frozen=True, slots=True)
+class TextLineFit:
+    """Measured lines for allocation; the caller retains source/provenance.
+
+    A fit is not a placed primitive or a diagnostic. Table/heading owners use
+    its line demand before allocation and complete their own fit evidence.
+    """
+
+    lines: tuple[str, ...]
+    inline_size: float
+    natural_inline_size: float
+    ellipsized: bool
+
+    @property
+    def content(self) -> str:
+        return "\n".join(self.lines)
+
+
+def fit_text_lines(content: str, *, available_inline: float, font_size: float, font_metrics: Any,
+                   wrap: Literal["allow", "forbid"] = "forbid", letter_spacing: float = 0,
+                   text_transform: str = "none", numeric_spacing: str = "proportional") -> TextLineFit | None:
+    """Close bounded text with exact metrics, without selecting owner policy.
+
+    Fitting text is returned byte-for-byte, including whitespace. Otherwise
+    declared wrapping uses existing word/CJK boundaries; indivisible units
+    use source-prefix ellipsis. None means even the mandatory ellipsis cannot
+    fit (or the supplied budget is invalid); the owner decides the failure.
+    The supplied metrics already carry the role's horizontal compression.
+    """
+    if wrap not in {"allow", "forbid"}:
+        raise _text_error("E_PRESENTATION_WRAP_INPUT", "bounded text fitting", wrap=wrap)
+    if not isfinite(available_inline) or available_inline < 0:
+        return None
+    measurement = dict(font_size=font_size, font_metrics=font_metrics, letter_spacing=letter_spacing,
+                       text_transform=text_transform, numeric_spacing=numeric_spacing)
+    natural = measure_text_width(content, **measurement)
+    if natural <= available_inline:
+        return TextLineFit((content,), natural, natural, False)
+    if available_inline == 0:
+        return None
+    source_lines = (wrap_text(content, available_inline=available_inline, **measurement)
+                    if wrap == "allow" else (content,))
+    lines: list[str] = []
+    widths: list[float] = []
+    ellipsized = False
+    for line in source_lines:
+        resolved = ellipsize_text(line, available_inline=available_inline, **measurement)
+        if not resolved and line:
+            return None
+        ellipsized |= resolved != line
+        lines.append(resolved)
+        widths.append(measure_text_width(resolved, **measurement))
+    return TextLineFit(tuple(lines), max(widths), natural, ellipsized)
 
 
 def centred_text_baseline(bounds: Rect, *, font_size: Any, line_height: Any) -> float:
