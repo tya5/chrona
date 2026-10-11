@@ -34,6 +34,7 @@ from chrona.presentation.layout.route_reduction import simplify_relation_route, 
 from chrona.presentation.layout.relation_fan_in import (
     NodeApproach, complete_fan_in, same_port_arrivals, target_port_identity, terminal_style,
 )
+from chrona.presentation.layout.relation_routing_order import dependency_routing_order
 from chrona.presentation.layout.path_geometry import flatten_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
 from chrona.presentation.layout.surface_quality import (
@@ -370,25 +371,6 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                                                 paint_id, terminal_style(terminal))))
                    for previous in node_segments.get(node, ()))
 
-    def routing_order(declared):
-        """Stable arrivals-before-departures; cyclic remainder keeps declaration order."""
-        indegree, followers = {}, {}
-        for item in declared:
-            source, target = str(item.source_object_id), str(item.target_object_id)
-            indegree.setdefault(source, 0)
-            indegree[target] = indegree.get(target, 0) + 1
-            followers.setdefault(source, []).append(target)
-        ready = [node for node in indegree if not indegree[node]]
-        rank = {}
-        for node in ready:
-            rank[node] = len(rank)
-            for target in followers.get(node, ()):
-                indegree[target] -= 1
-                if not indegree[target]:
-                    ready.append(target)
-        return sorted(enumerate(declared), key=lambda pair:
-                      rank.get(str(pair[1].target_object_id), len(rank)))
-
     back_route_reason = [""]
 
     def back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal):
@@ -478,7 +460,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             back_route_reason[0] = ""
         return chosen
 
-    for declared_index, relation in routing_order(request.surface_content.relations):
+    for declared_index, relation in dependency_routing_order(request.surface_content.relations):
         source, target, relation_id = relation.source_object_id, relation.target_object_id, relation.relation_id
         dependency_stroke = relation_stroke(relation)
         marker_start = centred_on_route(marker_geometry(
