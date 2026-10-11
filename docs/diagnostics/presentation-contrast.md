@@ -63,7 +63,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | legend-swatch | `progress-fill` | required | 3.000 | 25 | 25 | 3.216 | 4.789 | 0 | 0 |
 | legend-swatch | `snapshot` | required | 3.000 | 7 | 7 | 2.594 | 5.817 | 0 | 1 |
 | member-label | `member-label-inside-planned` | required | 4.500 | 19 | 19 | 4.651 | 5.727 | 0 | 0 |
-| member-label | `text` | required | 4.500 | 35 | 344 | 10.019 | 14.573 | 0 | 0 |
+| member-label | `text` | required | 4.500 | 35 | 341 | 10.019 | 14.573 | 0 | 0 |
 | milestone-digest-entry | `text` | required | 4.500 | 24 | 48 | 11.935 | 16.268 | 0 | 0 |
 | missingActual | `missing-actual` | required | 3.000 | 36 | 50 | 1.491 | 13.397 | 0 | 3 |
 | network-node | `network-node` | required | 3.000 | 1 | 16 | 17.747 | 17.747 | 0 | 0 |
@@ -436,22 +436,22 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 244.800 | `planned:firmware:firmware` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `actual:performance:performance` | `actual` | 1110.907, 480.800 | `planned:performance:performance` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `actual:silicon-bringup:silicon-bringup` | `actual` | 1069.083, 316.800 | `planned:silicon-bringup:silicon-bringup` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-border:evb-note:start` | `annotation-kind-accent` | 938.285, 556.900 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-border:evb-note:start` | `annotation-kind-accent` | 852.408, 459.100 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-border:pvt-note:start` | `annotation-kind-accent` | 1405.906, 527.700 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-bar:evb-note` | `annotation-kind-bar` | 996.162, 527.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-bar:evb-note` | `annotation-kind-bar` | 910.285, 429.700 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-bar:pvt-note` | `annotation-kind-bar` | 1464.203, 488.500 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-text:evb-note:0` | `annotation-kind-label` | 983.482, 521.500 | `annotation-kind-bar:evb-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-text:evb-note:0` | `annotation-kind-label` | 897.605, 423.700 | `annotation-kind-bar:evb-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-text:pvt-note:0` | `annotation-kind-label` | 1451.103, 482.500 | `annotation-kind-bar:pvt-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-text:evb-note:1` | `annotation-kind-secondary` | 989.495, 536.500 | `annotation-kind-bar:evb-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-text:evb-note:1` | `annotation-kind-secondary` | 903.618, 438.700 | `annotation-kind-bar:evb-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-text:pvt-note:1` | `annotation-kind-secondary` | 1457.116, 497.500 | `annotation-kind-bar:pvt-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part0` | `annotation-kind-stamp` | 1058.539, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | stroke | 6.833 | 1.100 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part1` | `annotation-kind-stamp` | 1083.039, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part2` | `annotation-kind-stamp` | 1083.039, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part3` | `annotation-kind-stamp` | 1083.039, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part4` | `annotation-kind-stamp` | 1083.039, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part5` | `annotation-kind-stamp` | 1083.039, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part6` | `annotation-kind-stamp` | 1083.039, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part7` | `annotation-kind-stamp` | 1083.039, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part0` | `annotation-kind-stamp` | 972.662, 420.700 | `annotation-box:evb-note` | flat | `#18171C` | stroke | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part1` | `annotation-kind-stamp` | 997.162, 420.700 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part2` | `annotation-kind-stamp` | 997.162, 420.700 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part3` | `annotation-kind-stamp` | 997.162, 420.700 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part4` | `annotation-kind-stamp` | 997.162, 420.700 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part5` | `annotation-kind-stamp` | 997.162, 420.700 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part6` | `annotation-kind-stamp` | 997.162, 420.700 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part7` | `annotation-kind-stamp` | 997.162, 420.700 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:pvt-note:part0` | `annotation-kind-stamp` | 1527.000, 479.500 | `annotation-box:pvt-note` | flat | `#18171C` | stroke | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:pvt-note:part1` | `annotation-kind-stamp` | 1551.500, 479.500 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:pvt-note:part2` | `annotation-kind-stamp` | 1551.500, 479.500 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
@@ -462,7 +462,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:pvt-note:part7` | `annotation-kind-stamp` | 1551.500, 479.500 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-status:evb-note` | `text` | 45.742, 997.600 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-status:pvt-note` | `text` | 45.742, 1115.200 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-text:evb-note` | `annotation-callout-text` | 996.162, 576.400 | `annotation-box:evb-note` | flat | `#18171C` | fill | 15.434 | 4.500 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-text:evb-note` | `annotation-callout-text` | 910.285, 478.600 | `annotation-box:evb-note` | flat | `#18171C` | fill | 15.434 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-text:pvt-note` | `annotation-callout-text` | 1464.203, 547.200 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 15.434 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `as-of-label` | `text` | 1336.038, 130.100 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 718.035, 92.800 | `canvas-texture` | flat | `#0A0A0C` | fill | 1.292 | 1.100 | info |
@@ -540,7 +540,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1077.512, 383.500 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `member-label:ga:ga` | `text` | 1512.923, 691.500 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 455.500 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `member-label:performance:performance` | `text` | 1126.372, 455.500 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `member-label:pvt:pvt` | `text` | 1400.909, 619.500 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `milestone:evb-arrival` | `text` | 736.075, 779.400 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
@@ -816,7 +816,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/annotations.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1077.512, 383.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `member-label:ga:ga` | `text` | 1512.923, 691.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/annotations.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/annotations.scene.json` | `member-label:performance:performance` | `text` | 1126.372, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `member-label:pvt:pvt` | `text` | 1400.909, 619.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `milestone:evb-arrival` | `text` | 736.075, 778.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
@@ -941,7 +941,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/as-of-foot.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1077.512, 403.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 239.100 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `member-label:ga:ga` | `text` | 1512.923, 711.100 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/as-of-foot.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 475.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-foot.scene.json` | `member-label:performance:performance` | `text` | 1126.372, 475.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `member-label:pvt:pvt` | `text` | 1400.909, 639.100 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 311.100 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `milestone:evb-arrival` | `text` | 736.075, 798.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
@@ -973,7 +973,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/as-of-foot.scene.json` | `note:pvt-exit` | `text` | 192.441, 932.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 564.486, 230.400 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1273.732, 323.100 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/as-of-foot.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1000.279, 513.700 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-foot.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1025.404, 513.700 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:pvt` | `text` | 1202.883, 624.400 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `relation-label:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup` | `text` | 1092.355, 378.300 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `relation-label:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival` | `text` | 943.979, 348.400 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
@@ -1079,7 +1079,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/axis-alternating.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1077.512, 383.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-alternating.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-alternating.scene.json` | `member-label:ga:ga` | `text` | 1512.923, 691.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/axis-alternating.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/axis-alternating.scene.json` | `member-label:performance:performance` | `text` | 1126.372, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-alternating.scene.json` | `member-label:pvt:pvt` | `text` | 1400.909, 619.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-alternating.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-alternating.scene.json` | `milestone:evb-arrival` | `text` | 736.075, 778.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
@@ -1111,7 +1111,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/axis-alternating.scene.json` | `note:pvt-exit` | `text` | 192.441, 912.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/axis-alternating.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 564.486, 210.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-alternating.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1273.732, 303.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/axis-alternating.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1000.279, 494.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/axis-alternating.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1025.404, 494.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-alternating.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:pvt` | `text` | 1202.883, 604.800 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-alternating.scene.json` | `relation-label:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup` | `text` | 1092.355, 354.800 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-alternating.scene.json` | `relation-label:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival` | `text` | 943.979, 328.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
@@ -1218,7 +1218,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1077.512, 383.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `member-label:ga:ga` | `text` | 1512.923, 691.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/axis-cell-corners.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/axis-cell-corners.scene.json` | `member-label:performance:performance` | `text` | 1126.372, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `member-label:pvt:pvt` | `text` | 1400.909, 619.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `milestone:evb-arrival` | `text` | 736.075, 778.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
@@ -1250,7 +1250,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `note:pvt-exit` | `text` | 192.441, 912.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 564.486, 210.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1273.732, 303.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/axis-cell-corners.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1000.279, 494.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/axis-cell-corners.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1025.404, 494.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:pvt` | `text` | 1202.883, 604.800 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `relation-label:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup` | `text` | 1092.355, 358.700 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `relation-label:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival` | `text` | 943.979, 328.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
@@ -1355,7 +1355,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1077.512, 383.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `member-label:ga:ga` | `text` | 1512.923, 691.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/axis-interval-scales.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/axis-interval-scales.scene.json` | `member-label:performance:performance` | `text` | 1126.372, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `member-label:pvt:pvt` | `text` | 1400.909, 619.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `milestone:evb-arrival` | `text` | 736.075, 778.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
@@ -1387,7 +1387,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `note:pvt-exit` | `text` | 192.441, 912.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 564.486, 210.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1273.732, 303.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/axis-interval-scales.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1000.279, 494.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/axis-interval-scales.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1025.404, 494.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:pvt` | `text` | 1202.883, 604.800 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `relation-label:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup` | `text` | 1092.355, 354.800 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `relation-label:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival` | `text` | 943.979, 328.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
@@ -1785,7 +1785,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/elevated.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1077.512, 383.500 | `group:validation-team` | gradient-sample | `#F4F7FB` | fill | 15.140 | 4.500 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `group:fw-team` | gradient-sample | `#F0F4FA` | fill | 14.739 | 4.500 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `member-label:ga:ga` | `text` | 1512.923, 691.500 | `group:factory-team` | gradient-sample | `#FDFEFE` | fill | 16.101 | 4.500 | info |
-| `examples/controller-z/generated/elevated.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 455.500 | `group:validation-team` | gradient-sample | `#F5F8FC` | fill | 15.273 | 4.500 | info |
+| `examples/controller-z/generated/elevated.scene.json` | `member-label:performance:performance` | `text` | 1126.372, 455.500 | `group:validation-team` | gradient-sample | `#F6F8FC` | fill | 15.301 | 4.500 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `member-label:pvt:pvt` | `text` | 1400.909, 619.500 | `group:factory-team` | gradient-sample | `#FAFCFD` | fill | 15.809 | 4.500 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `group:fw-team` | gradient-sample | `#F7F9FC` | fill | 15.425 | 4.500 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `milestone:evb-arrival` | `text` | 736.075, 778.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
@@ -1817,7 +1817,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/elevated.scene.json` | `note:pvt-exit` | `text` | 192.441, 912.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 564.486, 210.050 | `group:fw-team` | gradient-sample | `#ECF1F9` | fill | 14.345 | 4.500 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1273.732, 303.500 | `group:fw-team` | gradient-sample | `#F9FBFD` | fill | 15.684 | 4.500 | info |
-| `examples/controller-z/generated/elevated.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1000.279, 494.100 | `group:validation-team` | gradient-sample | `#F4F7FB` | fill | 15.140 | 4.500 | info |
+| `examples/controller-z/generated/elevated.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1025.404, 494.100 | `group:validation-team` | gradient-sample | `#F5F8FC` | fill | 15.273 | 4.500 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:pvt` | `text` | 1202.883, 604.800 | `group:factory-team` | gradient-sample | `#F7F9FC` | fill | 15.425 | 4.500 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `relation-label:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup` | `text` | 1092.355, 358.700 | `group:validation-team` | gradient-sample | `#F4F7FB` | fill | 15.140 | 4.500 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `relation-label:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival` | `text` | 943.979, 328.050 | `group:fw-team` | gradient-sample | `#F4F7FB` | fill | 15.140 | 4.500 | info |
@@ -1919,7 +1919,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/executive.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1077.512, 383.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/executive.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/executive.scene.json` | `member-label:ga:ga` | `text` | 1512.923, 691.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/executive.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/executive.scene.json` | `member-label:performance:performance` | `text` | 1126.372, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/executive.scene.json` | `member-label:pvt:pvt` | `text` | 1400.909, 619.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/executive.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/executive.scene.json` | `milestone:evb-arrival` | `text` | 736.075, 778.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
@@ -1951,7 +1951,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/executive.scene.json` | `note:pvt-exit` | `text` | 192.441, 912.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/executive.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 564.486, 210.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/executive.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1273.732, 303.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/executive.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1000.279, 494.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/executive.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1025.404, 494.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/executive.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:pvt` | `text` | 1202.883, 604.800 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/executive.scene.json` | `relation-label:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup` | `text` | 1092.355, 358.700 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/executive.scene.json` | `relation-label:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival` | `text` | 943.979, 328.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
@@ -2053,7 +2053,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/group-child-indent.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1077.512, 383.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `member-label:ga:ga` | `text` | 1512.923, 691.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/group-child-indent.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/group-child-indent.scene.json` | `member-label:performance:performance` | `text` | 1126.372, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `member-label:pvt:pvt` | `text` | 1400.909, 619.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `milestone:evb-arrival` | `text` | 736.075, 778.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
@@ -2085,7 +2085,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/group-child-indent.scene.json` | `note:pvt-exit` | `text` | 192.441, 912.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 564.486, 210.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1273.732, 303.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/group-child-indent.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1000.279, 494.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/group-child-indent.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1025.404, 494.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:pvt` | `text` | 1202.883, 604.800 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `relation-label:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup` | `text` | 1092.355, 358.700 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `relation-label:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival` | `text` | 943.979, 328.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
@@ -2142,7 +2142,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/group-header-runs.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1077.512, 383.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/group-header-runs.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/group-header-runs.scene.json` | `member-label:ga:ga` | `text` | 1512.923, 691.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
-| `examples/controller-z/generated/group-header-runs.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 455.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `member-label:performance:performance` | `text` | 1126.372, 455.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/group-header-runs.scene.json` | `member-label:pvt:pvt` | `text` | 1400.909, 619.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/group-header-runs.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/group-header-runs.scene.json` | `milestone:evb-arrival` | `text` | 736.075, 778.600 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
@@ -2174,7 +2174,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/group-header-runs.scene.json` | `note:pvt-exit` | `text` | 192.441, 912.200 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/group-header-runs.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 564.486, 210.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/group-header-runs.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1273.732, 303.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
-| `examples/controller-z/generated/group-header-runs.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1000.279, 494.100 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1025.404, 494.100 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/group-header-runs.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:pvt` | `text` | 1202.883, 604.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/group-header-runs.scene.json` | `relation-label:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup` | `text` | 1092.355, 358.700 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/group-header-runs.scene.json` | `relation-label:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival` | `text` | 943.979, 328.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
@@ -2271,7 +2271,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/icons.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1077.512, 383.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/icons.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/icons.scene.json` | `member-label:ga:ga` | `text` | 1512.923, 691.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/icons.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/icons.scene.json` | `member-label:performance:performance` | `text` | 1126.372, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/icons.scene.json` | `member-label:pvt:pvt` | `text` | 1400.909, 619.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/icons.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/icons.scene.json` | `milestone:evb-arrival` | `text` | 736.075, 778.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
@@ -2390,7 +2390,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/in-progress.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1077.512, 383.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/in-progress.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/in-progress.scene.json` | `member-label:ga:ga` | `text` | 1512.923, 691.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/in-progress.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/in-progress.scene.json` | `member-label:performance:performance` | `text` | 1126.372, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/in-progress.scene.json` | `member-label:pvt:pvt` | `text` | 1400.909, 619.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/in-progress.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/in-progress.scene.json` | `milestone:evb-arrival` | `text` | 736.075, 778.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
@@ -2421,7 +2421,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/in-progress.scene.json` | `note:pvt-exit` | `text` | 192.441, 912.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/in-progress.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 564.486, 210.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/in-progress.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1273.732, 303.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/in-progress.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1000.279, 494.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/in-progress.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1025.404, 494.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/in-progress.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:pvt` | `text` | 1202.883, 604.800 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/in-progress.scene.json` | `relation-label:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup` | `text` | 1092.355, 358.700 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/in-progress.scene.json` | `relation-label:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival` | `text` | 943.979, 328.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
@@ -2522,7 +2522,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/material-icons.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1074.954, 384.450 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/material-icons.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 220.450 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/material-icons.scene.json` | `member-label:ga:ga` | `text` | 1517.428, 692.450 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/material-icons.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 456.450 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/material-icons.scene.json` | `member-label:performance:performance` | `text` | 1119.324, 456.450 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/material-icons.scene.json` | `member-label:pvt:pvt` | `text` | 1394.669, 620.450 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/material-icons.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 292.450 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/material-icons.scene.json` | `milestone:evb-arrival` | `text` | 717.403, 777.900 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
@@ -2693,7 +2693,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/progress-track.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1077.512, 383.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/progress-track.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/progress-track.scene.json` | `member-label:ga:ga` | `text` | 1512.923, 691.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/progress-track.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/progress-track.scene.json` | `member-label:performance:performance` | `text` | 1126.372, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/progress-track.scene.json` | `member-label:pvt:pvt` | `text` | 1400.909, 619.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/progress-track.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/progress-track.scene.json` | `milestone:evb-arrival` | `text` | 736.075, 778.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
@@ -2725,7 +2725,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/progress-track.scene.json` | `note:pvt-exit` | `text` | 192.441, 912.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/progress-track.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 564.486, 210.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/progress-track.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1273.732, 303.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/progress-track.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1000.279, 494.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/progress-track.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1025.404, 494.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/progress-track.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:pvt` | `text` | 1202.883, 604.800 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/progress-track.scene.json` | `relation-label:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup` | `text` | 1092.355, 358.700 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/progress-track.scene.json` | `relation-label:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival` | `text` | 943.979, 328.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
@@ -2828,7 +2828,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/region-frames.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1072.712, 467.950 | `group:validation-team` | flat | `#E6DBBE` | fill | 13.154 | 4.500 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `member-label:firmware:firmware` | `text` | 797.653, 304.950 | `group:fw-team` | flat | `#E6DBBE` | fill | 13.154 | 4.500 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `member-label:ga:ga` | `text` | 1496.923, 793.950 | `group:factory-team` | flat | `#E6DBBE` | fill | 13.154 | 4.500 | info |
-| `examples/controller-z/generated/region-frames.scene.json` | `member-label:performance:performance` | `text` | 1094.381, 549.450 | `row-band:performance` | flat | `#F1E6CC` | fill | 14.612 | 4.500 | info |
+| `examples/controller-z/generated/region-frames.scene.json` | `member-label:performance:performance` | `text` | 1121.572, 549.450 | `row-band:performance` | flat | `#F1E6CC` | fill | 14.612 | 4.500 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `member-label:pvt:pvt` | `text` | 1390.285, 712.450 | `row-band:pvt` | flat | `#F1E6CC` | fill | 14.612 | 4.500 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1118.256, 386.450 | `row-band:silicon-bringup` | flat | `#F1E6CC` | fill | 14.612 | 4.500 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `missing-actual:architecture:architecture` | `missing-actual` | 606.656, 248.750 | `row-band:architecture` | flat | `#F1E6CC` | stroke | 14.612 | 3.000 | info |
@@ -2845,7 +2845,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/region-frames.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1063.685, 411.750 | `actual:silicon-bringup:silicon-bringup` | flat | `#1F7A52` | stroke | 3.421 | 3.000 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 569.094, 291.500 | `group:fw-team` | flat | `#E6DBBE` | fill | 13.154 | 4.500 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1264.004, 398.450 | `row-band:silicon-bringup` | flat | `#F1E6CC` | fill | 14.612 | 4.500 | info |
-| `examples/controller-z/generated/region-frames.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 994.209, 588.050 | `row-band:performance` | flat | `#F1E6CC` | fill | 14.612 | 4.500 | info |
+| `examples/controller-z/generated/region-frames.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1020.156, 588.050 | `row-band:performance` | flat | `#F1E6CC` | fill | 14.612 | 4.500 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:pvt` | `text` | 1192.259, 703.000 | `row-band:pvt` | flat | `#F1E6CC` | fill | 14.612 | 4.500 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `relation-label:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup` | `text` | 941.496, 444.500 | `row-band:silicon-bringup` | flat | `#F1E6CC` | fill | 14.612 | 4.500 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `relation-label:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival` | `text` | 940.225, 413.750 | `row-band:silicon-bringup` | flat | `#F1E6CC` | fill | 14.612 | 4.500 | info |
@@ -3111,7 +3111,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/surface-glow.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1077.512, 383.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/surface-glow.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/surface-glow.scene.json` | `member-label:ga:ga` | `text` | 1512.923, 691.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
-| `examples/controller-z/generated/surface-glow.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 455.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/surface-glow.scene.json` | `member-label:performance:performance` | `text` | 1126.372, 455.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/surface-glow.scene.json` | `member-label:pvt:pvt` | `text` | 1400.909, 619.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/surface-glow.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/surface-glow.scene.json` | `milestone:evb-arrival` | `text` | 736.075, 778.600 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
@@ -3143,7 +3143,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/surface-glow.scene.json` | `note:pvt-exit` | `text` | 192.441, 912.200 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/surface-glow.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 564.486, 210.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/surface-glow.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1273.732, 303.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
-| `examples/controller-z/generated/surface-glow.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1000.279, 494.100 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/surface-glow.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1025.404, 494.100 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/surface-glow.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:pvt` | `text` | 1202.883, 604.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/surface-glow.scene.json` | `relation-label:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup` | `text` | 1092.355, 358.700 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/surface-glow.scene.json` | `relation-label:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival` | `text` | 943.979, 328.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
@@ -3409,7 +3409,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/viewer-fit.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1077.512, 383.500 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/viewer-fit.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/viewer-fit.scene.json` | `member-label:ga:ga` | `text` | 1512.923, 691.500 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
-| `examples/controller-z/generated/viewer-fit.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 455.500 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
+| `examples/controller-z/generated/viewer-fit.scene.json` | `member-label:performance:performance` | `text` | 1126.372, 455.500 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/viewer-fit.scene.json` | `member-label:pvt:pvt` | `text` | 1400.909, 619.500 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/viewer-fit.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/viewer-fit.scene.json` | `milestone:evb-arrival` | `text` | 736.075, 778.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
@@ -3800,9 +3800,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/01-mission-brief.scene.json` | `calendar-closed:2027-11-28` | `calendar-closed` | 1550.458, 377.100 | `group:` | flat | `#EEF2F7` | stroke | 1.400 | 1.100 | info |
 | `examples/halcyon-1/generated/01-mission-brief.scene.json` | `group:` | `group-band` | 1167.507, 377.100 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
 | `examples/halcyon-1/generated/01-mission-brief.scene.json` | `member-label:avionics:avionics` | `text` | 1032.518, 242.100 | `group:` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
-| `examples/halcyon-1/generated/01-mission-brief.scene.json` | `member-label:bus-test:bus-test` | `text` | 856.153, 302.100 | `group:` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
 | `examples/halcyon-1/generated/01-mission-brief.scene.json` | `member-label:campaign:campaign` | `text` | 1290.683, 482.100 | `group:` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
-| `examples/halcyon-1/generated/01-mission-brief.scene.json` | `member-label:cdr:cdr` | `text` | 883.156, 332.100 | `group:` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
 | `examples/halcyon-1/generated/01-mission-brief.scene.json` | `member-label:first-light:first-light` | `text` | 1471.403, 602.100 | `group:` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
 | `examples/halcyon-1/generated/01-mission-brief.scene.json` | `member-label:frr:frr` | `text` | 1323.803, 512.100 | `group:` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
 | `examples/halcyon-1/generated/01-mission-brief.scene.json` | `member-label:integration:integration` | `text` | 1294.536, 392.100 | `group:` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
@@ -3810,7 +3808,6 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/01-mission-brief.scene.json` | `member-label:leop:leop` | `text` | 1351.939, 572.100 | `group:` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
 | `examples/halcyon-1/generated/01-mission-brief.scene.json` | `member-label:optics:optics` | `text` | 968.686, 182.100 | `group:` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
 | `examples/halcyon-1/generated/01-mission-brief.scene.json` | `member-label:payload-delivery:payload-delivery` | `text` | 1054.968, 362.100 | `group:` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
-| `examples/halcyon-1/generated/01-mission-brief.scene.json` | `member-label:payload-tvac:payload-tvac` | `text` | 1073.771, 272.100 | `group:` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
 | `examples/halcyon-1/generated/01-mission-brief.scene.json` | `member-label:pdr:pdr` | `text` | 888.066, 152.100 | `group:` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
 | `examples/halcyon-1/generated/01-mission-brief.scene.json` | `member-label:psr:psr` | `text` | 1262.576, 452.100 | `group:` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
 | `examples/halcyon-1/generated/01-mission-brief.scene.json` | `member-label:structure:structure` | `text` | 999.467, 212.100 | `group:` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
@@ -7279,4 +7276,4 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 Every independently required decoration role is enabled in committed Scene evidence; group-band, group-header-band or group-header-strip supplies the group concept, and row-band or row-rule supplies the row concept when there are no corpus errors.
 
 
-Findings: 7187; errors: 0; warnings: 307.
+Findings: 7184; errors: 0; warnings: 307.
