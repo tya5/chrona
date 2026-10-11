@@ -11,10 +11,19 @@ import shutil
 from pathlib import Path
 
 import pytest
+import yaml
 
+from chrona.core.relation_identity import relation_identity
 from tools.materialize_example import materialize
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _declared_relation_identity(identifier):
+    project = yaml.safe_load((ROOT / "examples/halcyon-1/project.yaml").read_bytes())
+    index, relation = next((index, relation) for index, relation in enumerate(project["relations"])
+                           if relation.get("id") == identifier)
+    return relation_identity(index, relation)
 
 
 def _relation_paths(node) -> list[dict]:
@@ -31,7 +40,7 @@ def test_target_b_optics_detector_enters_the_start_horizontally(tmp_path):
     materialize(ROOT / "examples/halcyon-1/manifest.yaml", "target-b", tmp_path / "target-b", write=False)
     paths = {path["sourceRef"]: path["points"] for path in
              _relation_paths(json.loads((tmp_path / "target-b/review.scene.json").read_text(encoding="utf-8")))}
-    points = paths["optics-detector"]
+    points = paths[_declared_relation_identity("optics-detector")]
     assert points[-2][1] == points[-1][1] and points[-2][0] < points[-1][0]
     for relation, relation_points in paths.items():
         for a, b, c in zip(relation_points, relation_points[1:], relation_points[2:]):
@@ -51,7 +60,7 @@ def test_target_b_with_entry_side_enters_from_the_side_or_says_why(tmp_path):
     materialize(copy / "manifest.yaml", "target-b", tmp_path / "out", write=True)
     scene = json.loads((tmp_path / "out/review.scene.json").read_text(encoding="utf-8"))
     paths = {path["sourceRef"]: path["points"] for path in _relation_paths(scene)}
-    reasons = {line.split(":")[2]: line.partition(";reason=")[2]
+    reasons = {line.removeprefix("I_LAYOUT_RELATION_ENTRY_FALLBACK:").partition(";reason=")[0]: line.partition(";reason=")[2]
                for line in scene["diagnostics"] if line.startswith("I_LAYOUT_RELATION_ENTRY_FALLBACK:")}
     sideways = {relation for relation, points in paths.items() if points[-2][1] == points[-1][1]}
     assert paths and sideways, "the declared context must emit actual relations, including side entries"
@@ -61,6 +70,6 @@ def test_target_b_with_entry_side_enters_from_the_side_or_says_why(tmp_path):
     # arrivals. The literal target acceptance is now 24/24, not historical fallbacks.
     assert len(paths) == 24
     assert sideways == set(paths), exceptions
-    assert {"station-comms", "avionics-bustest", "delivery-integration",
-            "launch-leop", "tvac-emc"} <= sideways
+    assert {_declared_relation_identity(identifier) for identifier in
+            ("station-comms", "avionics-bustest", "delivery-integration", "launch-leop", "tvac-emc")} <= sideways
     assert not reasons, reasons
