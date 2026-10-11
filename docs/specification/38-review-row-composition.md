@@ -231,8 +231,18 @@ inventory: an unselected `missingActual` facet creates neither a Layout mark
 nor a preflight obstacle, Scene primitive, or lane handoff entry. Scene does
 not make a second visibility decision. Non-lane output remains unchanged.
 
+An explicit-window omission retains selected membership and the original
+expected source-mark inventory. Layout accounts for it with the typed absence
+closure in Spec 50; Scene projects that account under Spec 46 §7.1. This is
+not an exemption for an unaccounted missing mark or a geometry-driven lane edit.
+
 Every packed item has a plot-name request; the lane table has no item row to
-carry it. A lane-mode `visibility.labels` object MUST select plot placement
+carry it. The sole temporal exception is an explicit-window omission of its
+host: Spec 50 requires a typed, non-spatial label absence instead of a request
+with an invented anchor. Membership and the table remain unchanged, and the
+source-keyed member suppression count includes that absence exactly once.
+Window-admitted names share the normalized component intent in Spec 50 across
+preflight and final placement. A lane-mode `visibility.labels` object MUST select plot placement
 and `title`; omitted `content` means `[title, finishDelta]`, while a declared
 list may omit `finishDelta`. Omitted `side` means `auto`, and an authored
 `side` and `visibility.fallback.labels` order (including `inside`) are honored.
@@ -264,7 +274,7 @@ absolute block displacement, smaller block coordinate, and stable identity;
 no lattice cap or remote full-row label position is permitted. `pack` lanes
 and non-lane labels retain their established bounded side-neighborhood search.
 
-Each suppressed name has a typed Layout fact with lane/member, final row extent,
+Each spatially suppressed name has a typed Layout fact with lane/member, final row extent,
 remaining row capacity and reason `capacity` or `obstruction`, checked against
 its suppressed `TextPlacement` and aggregate count. “Cannot grow” means `fill`
 has no unallocated timeline block after headers and other row minima. A
