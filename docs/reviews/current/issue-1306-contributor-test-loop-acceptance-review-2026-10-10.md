@@ -64,3 +64,6 @@ MCP2.0 plus setup/import/selection and MCP/CLI tests:93 passed53.13s;
 after the stdin correction, setup/import/selection guards:44 passed4.67s.
 CI38165240609 was cancelled before replaying known failures. A repaired-head
 CI pass remains required; none of these focused results closes acceptance row1.
+The existing dependency-only checkout was fast-forwarded to `8d57cb6a`:
+MCP remains absent; quick smoke plus setup/import/selection/timing/loader
+guards81 passed6.95s. No fresh environment or full local suite was repeated.
