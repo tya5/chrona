@@ -86,3 +86,24 @@ def test_nonterminating_track_width_retains_exact_budget_identity():
     width = next(item.bounds.inline_size for item in manifest.decisions if item.node_id == "table")
     assert width == D(960) / 7
     assert session.close_manifest(manifest).bounded_tables["table"].available_inline == width
+
+
+def test_heading_remeasurement_reuses_closed_metrics_without_axis_inputs():
+    declared = theme()
+    value = SourceInput(("words " * 100,), typography_role="heading", text_wrap="allow")
+    measured = measure_sources({"title": value}, declared, font_metrics=Metrics())
+    metrics = dict(measured.metric_values)
+    metrics["timeline.axis.blockSize"] = D(73)
+    metrics["table.header.blockSize"] = D(73)
+    measured = replace(measured, metric_values=metrics)
+    # Candidate-local text is not a complete axis dependency closure.
+    declared["body"]["metrics"].pop("timeline.axis.blockSize")
+    declared["body"]["metrics"].pop("table.header.blockSize")
+    resolved = profile(container("column", [slot("copy", share=None, source="title")]))
+    session = SourceSizingSession(resolved, measured, theme=declared, font_metrics=Metrics(),
+                                  content=SimpleNamespace(group_presentation="none"))
+    closed = session._at_width("title", D(100))
+    assert closed.metric_values == metrics
+    assert closed.metric_values is not metrics
+    assert len(closed.run_measurements["title"][0].lines) > 1
+    assert measured.metric_values == metrics

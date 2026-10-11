@@ -86,7 +86,7 @@ class SourceSizingSession:
                              bounded_tables={source: table})
         else:
             closed = measure_sources({source: value}, self.theme, font_metrics=self.font_metrics,
-                                      heading_inline={source: width})
+                                      heading_inline={source: width}, resolved_metrics=self.measured.metric_values)
             closed = reserve_slot_heading_blocks(closed, self.profile, self.tokens,
                                                  content=self.content, font_metrics=self.font_metrics)
         self._cache[key] = closed

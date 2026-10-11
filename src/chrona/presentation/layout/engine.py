@@ -907,17 +907,22 @@ def resolve_source_inline_budgets(profile: ResolvedLayoutProfile, *,
     not prove source feasibility or enforce the cap on completed placements.
     """
     capped: list[str] = []
+    heading_ancestors: dict[str, tuple[str, ...]] = {}
+    nodes: dict[str, tuple[Mapping[str, Any], str]] = {}
 
-    def visit(node: Mapping[str, Any]) -> None:
-        if ("maxInlineShare" in node or str(node["id"]) in heading_slots
-                or str(node["id"]) in wrapping_table_slots):
+    def visit(node: Mapping[str, Any], ancestors: tuple[str, ...] = (), path: str = "/root") -> None:
+        node_id = str(node["id"])
+        nodes[node_id] = node, path
+        if node_id in heading_slots:
+            heading_ancestors[node_id] = ancestors
+        if "maxInlineShare" in node or node_id in wrapping_table_slots:
             capped.append(str(node["id"]))
-        for _, child in _active_children(node, measurements) if "children" in node else ():
-            visit(child)
+        for index, child in _active_children(node, measurements) if "children" in node else ():
+            visit(child, (*ancestors, node_id), f"{path}/children/{index}")
 
     root = profile.profile["root"]
     visit(root)
-    if not capped:
+    if not capped and not heading_ancestors:
         return MappingProxyType({})
     viewport = Rect(ZERO, ZERO, _d(viewport_inline), _d(viewport_block))
     if viewport.inline_size <= ZERO or viewport.block_size <= ZERO:
@@ -929,8 +934,35 @@ def resolve_source_inline_budgets(profile: ResolvedLayoutProfile, *,
                                        preferred_inline=ZERO, max_inline=ZERO)
         except KeyError as error:
             raise LayoutError("E_LAYOUT_MEASUREMENT_REQUIRED", "/root", slot_id) from error
+    # A fitting heading is an ordinary intrinsic demand, not a width-dependent
+    # source. Erasing it would collapse a content-sized host containing only
+    # that heading. Use the existing arranger's inline evidence to identify
+    # actual shortage. Compare native Decimal extents, not rounded reporting
+    # warnings, and do not mistake an unrelated sibling's overflow for text
+    # shortage at the heading.
+    natural = _Arranger(profile, neutral, content_sized=content_sized)
+    natural.arrange(root, "/root", viewport)
+    bounds = {decision.node_id: decision.bounds for decision in natural.decisions}
+
+    def heading_needs_closure(slot_id: str, ancestors: tuple[str, ...]) -> bool:
+        placed = bounds[slot_id].inline_size
+        available = placed
+        for ancestor in ancestors:
+            node, path = nodes[ancestor]
+            i0, i1, _, _ = _padding(profile, node, path)
+            inner = max(ZERO, bounds[ancestor].inline_size - i0 - i1)
+            if node["kind"] == "row":
+                inner -= _gap(profile, node, path) * max(0, len(_active_children(node, measurements)) - 1)
+            available = min(available, inner)
+        return placed > available or measurements[slot_id].preferred_inline > available
+
+    selected_headings = frozenset(slot_id for slot_id, ancestors in heading_ancestors.items()
+                                  if heading_needs_closure(slot_id, ancestors))
+    for slot_id in selected_headings:
+        neutral[slot_id] = replace(neutral[slot_id], min_inline=ZERO,
+                                   preferred_inline=ZERO, max_inline=ZERO)
     arranger = _Arranger(profile, neutral, content_sized=content_sized, collect_inline_budgets=True,
-                         heading_slots=heading_slots, wrapping_table_slots=wrapping_table_slots)
+                         heading_slots=selected_headings, wrapping_table_slots=wrapping_table_slots)
     arranger.arrange(root, "/root", viewport)
     return MappingProxyType(dict(arranger.source_inline_budgets))
 

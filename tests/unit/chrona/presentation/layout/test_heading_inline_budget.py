@@ -77,6 +77,50 @@ def test_fitting_heading_sizing_preserves_complete_manifest(kind):
     assert solve_layout(resolved, viewport_inline=1000, viewport_block=5000, measurements=measurements, sizing=context) == ordinary
 
 
+@pytest.mark.parametrize("kind", ["row", "column", "overlay", "flow", "grid"])
+def test_fitting_heading_keeps_its_intrinsic_parent_and_complete_manifest(kind):
+    extra = dict(columnTracks=["content"], rowTracks=["content"]) if kind == "grid" else {}
+    copy = heading(**({"cell": {"row": 1, "column": 1}} if kind == "grid" else {}))
+    inner = container(kind, [copy], id="inner", inlineSize="content", blockSize="content", **extra)
+    resolved = profile(container("column", [inner]))
+    source = SourceInput(("Short",), typography_role="heading", text_wrap="allow")
+    measurements = {"copy": measure_sources({"title": source}, theme(), font_metrics=Metrics()).measurements["title"]}
+    budgets, context, closed = closure(resolved, source, measurements)
+    assert not budgets
+    ordinary = solve_layout(resolved, viewport_inline=1000, viewport_block=5000, measurements=measurements)
+    assert solve_layout(resolved, viewport_inline=1000, viewport_block=5000,
+                        measurements=measurements, sizing=context) == ordinary
+    assert not closed
+
+
+def test_long_heading_wraps_inside_a_nested_independently_sized_parent():
+    inner = container("column", [heading()], id="inner", inlineSize={"fixed": 400}, blockSize="content")
+    resolved = profile(container("column", [inner]))
+    source = SourceInput(("heading words " * 100,), typography_role="heading", text_wrap="allow")
+    measurements = {"copy": measure_sources({"title": source}, theme(), font_metrics=Metrics()).measurements["title"]}
+    budgets, context, closed = closure(resolved, source, measurements)
+    assert budgets["copy"].ceiling == 380
+    manifest = solve_layout(resolved, viewport_inline=1000, viewport_block=5000,
+                            measurements=measurements, sizing=context)
+    placed = next(item.bounds for item in manifest.decisions if item.node_id == "copy")
+    assert len(closed[placed.inline_size].run_measurements["title"][0].lines) > 1
+    assert not manifest.fit_warnings
+
+
+def test_an_unrelated_siblings_overflow_does_not_activate_fitting_heading_closure():
+    resolved = profile(container("row", [heading(), slot("other", share=None, source="timeline",
+                                                         inlineSize={"fixed": 1200})]))
+    source = SourceInput(("Short",), typography_role="heading", text_wrap="allow")
+    measurements = {"copy": measure_sources({"title": source}, theme(), font_metrics=Metrics()).measurements["title"],
+                    "other": measurement(30)}
+    budgets, context, _ = closure(resolved, source, measurements)
+    assert not budgets
+    ordinary = solve_layout(resolved, viewport_inline=1000, viewport_block=5000, measurements=measurements)
+    assert ordinary.fit_warnings
+    assert solve_layout(resolved, viewport_inline=1000, viewport_block=5000,
+                        measurements=measurements, sizing=context) == ordinary
+
+
 def test_heading_authored_minimum_above_budget_uses_text_diagnostic():
     resolved = profile(container("column", [heading(inlineSize={"fixed": 1200})]))
     source = SourceInput(("Short",), typography_role="heading", text_wrap="allow")
