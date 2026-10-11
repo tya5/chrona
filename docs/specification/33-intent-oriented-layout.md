@@ -189,6 +189,16 @@ bounds, baseline, typography and explicit slot owner directly into Scene.
 `facet` and `repeat` are not M24 layout operators. View may expose a typed repeated
 source, which Layout can arrange with `grid` or `flow`; Layout cannot partition facts.
 
+
+### `viewDefaults`: the design members of a View (#1341)
+
+A Layout profile may declare `viewDefaults`, a View body fragment (`visibility`, `axis`, `deadlines`, `shading`,
+`timePresentation`, `annotationPresentation`, `backgroundDecoration`, `progressFill`, and the design halves of `comparison`,
+`rows` and `window`; see Specification 06 section 9.2). The View closure overlays it under the View before validation: a member
+the View declares wins as a whole, an omitted member takes the profile's. Layout reads the merged View only; it never sees which
+half a member came from. The members are validated as View members after the merge, so a malformed default is an ordinary View
+error. `viewDefaults` is optional; a profile without it changes nothing.
+
 ## 4. Logical axes and writing mode
 
 Normative directions are logical:

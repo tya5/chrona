@@ -69,6 +69,9 @@ def collect_presentation_contracts(
     error.  The source order is the declared closure order; schema errors are
     already pointer/rule/message ordered by ``explain_schema_errors``.
     """
+    from chrona.presentation.contracts.view_defaults import apply_view_defaults
+
+    sources = apply_view_defaults(sources)  # a Layout profile's `viewDefaults` under the View (#1341)
     contracts: list[ResourceContract] = []
     diagnostics: list[PresentationDiagnostic] = []
     schema_reports: list[tuple[PresentationResourceSource, SchemaErrorExplanations | None,
