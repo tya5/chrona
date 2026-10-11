@@ -107,8 +107,11 @@ minima and gutters alone exceed the slot, fail with `E_LAYOUT_TABLE_OVERFLOW`;
 do not proportionally shrink completed columns or their typography.
 
 View `tableColumns[].text`, `rows.laneTable.text` and `heading.text` reuse `{wrap: allow|forbid}`;
-absence means `forbid`. Column intent covers its header and cells. Heading
-intent covers kicker/title/subtitle and the implicit Project title. Layout
+absence means `forbid`. These optional intents use the live View v0.28 contract. A packaged reference
+View still on v0.27 migrates to the existing v0.28 version before adopting them;
+independently authored corpus Views are not rewritten by this migration.
+Column intent covers its header and cells. Heading intent covers
+kicker/title/subtitle and the implicit Project title. Layout
 applies lane-table intent to both derived columns (lane label and optional
 item count), without changing lane membership or source facts. Table wrapping
 also works in an authored fixed/flexible track without `maxInlineShare`;
