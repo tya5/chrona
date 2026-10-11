@@ -571,8 +571,10 @@ _TOOLS: tuple[ToolSpec, ...] = (
     ToolSpec(
         "schedule_project", "Compute a Project's schedule",
         "Compute the schedule of a Project YAML file in the workspace. On 'ok' returns placements per object id "
-        "({start, end} or {at}, ISO dates, end exclusive) and the analysis (critical object ids, total float in "
-        "calendar days). A fixed date that contradicts its dependencies, or a bound that cannot be met, is rejected "
+        "({start, end} or {at}, ISO dates, end exclusive) and the analysis (critical object ids on zero-float "
+        "driving paths to project finish; totalFloat records {value, unit, calendar}, with calendar-days/null "
+        "or working-days/effective object calendar id, including Project fallback). A fixed date that contradicts "
+        "its dependencies, or a bound that cannot be met, is rejected "
         "here and not by validate_project (a dependency cycle is rejected by both). 'warnings' lists W_DEADLINE for each object planned to finish after its deadline "
         "(the plan is still scheduled; the deadline is a promise, not a bound). Read dates from this result; never compute a date by hand.",
         _input_schema({"project": _WORKSPACE_PATH_PROPERTY}, ["project"]),
@@ -584,7 +586,18 @@ _TOOLS: tuple[ToolSpec, ...] = (
                          "required": ["criticalObjectIds", "totalFloat"],
                          "properties": {"criticalObjectIds": {"type": "array", "items": {"type": "string"}},
                                         "totalFloat": {"type": "object",
-                                                       "additionalProperties": {"type": "integer", "minimum": 0}}}},
+                                                       "additionalProperties": {
+                                                           "type": "object", "additionalProperties": False,
+                                                           "required": ["value", "unit", "calendar"],
+                                                           "properties": {"value": {"type": "integer", "minimum": 0},
+                                                                          "unit": {"enum": ["calendar-days", "working-days"]},
+                                                                          "calendar": {"type": ["string", "null"]}},
+                                                           "oneOf": [
+                                                               {"properties": {"unit": {"const": "calendar-days"},
+                                                                               "calendar": {"type": "null"}}},
+                                                               {"properties": {"unit": {"const": "working-days"},
+                                                                               "calendar": {"type": "string", "minLength": 1}}},
+                                                           ]}}}},
             "warnings": {"type": "array", "items": {"$ref": "#/$defs/diagnostic"}},
         }),
         _schedule_project,

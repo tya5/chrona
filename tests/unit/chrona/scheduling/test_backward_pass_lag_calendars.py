@@ -46,7 +46,7 @@ def test_a_lag_read_from_a_non_working_source_end_does_not_raise():
     assert result.placements["a"] == {"start": date(2027, 5, 24), "end": date(2027, 5, 29)}
     analysis = result.analysis
     assert analysis is not None
-    assert analysis.total_float == {"root": 0, "s": 0, "a": 0}
+    assert {key: value.value for key, value in analysis.total_float.items()} == {"root": 0, "s": 0, "a": 0}
     assert analysis.latest_placements["s"] == result.placements["s"]
 
 
@@ -60,7 +60,7 @@ def test_a_working_day_span_before_a_non_working_target_has_no_phantom_float():
     result = schedule(project)
     assert result.ok
     assert result.placements["s"] == {"start": date(2027, 5, 20), "end": date(2027, 5, 21)}
-    assert result.analysis.total_float["s"] == 0
+    assert result.analysis.total_float["s"].value == 0
     assert result.analysis.latest_placements["s"]["start"] == date(2027, 5, 20)
 
 
@@ -74,7 +74,7 @@ def test_the_latest_start_of_a_working_day_span_is_a_working_date():
     result = schedule(project)
     assert result.ok and result.placements["s"] == {"start": date(2027, 5, 20), "end": date(2027, 5, 21)}
     assert result.analysis.latest_placements["s"] == {"start": date(2027, 5, 21), "end": date(2027, 5, 24)}
-    assert result.analysis.total_float["s"] == 1
+    assert result.analysis.total_float["s"].value == 1
 
 
 def _amounts(rng):
@@ -139,8 +139,8 @@ def test_the_real_analysis_pass_never_raises_and_every_latest_date_is_reachable_
         result = schedule(project)
         assert result.ok, (project, result.diagnostics)
         analysis = result.analysis
-        assert analysis is not None and all(value >= 0 for value in analysis.total_float.values()), project
-        with_float += any(analysis.total_float.values())
+        assert analysis is not None and all(value.value >= 0 for value in analysis.total_float.values()), project
+        with_float += any(value.value for value in analysis.total_float.values())
         for relation in project["relations"]:
             source, target, lag = relation["from"], relation["to"], relation["lag"]
             amount = lag if isinstance(lag, str) else lag["value"]

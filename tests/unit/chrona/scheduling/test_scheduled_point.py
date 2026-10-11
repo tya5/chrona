@@ -167,12 +167,12 @@ def test_g8_a_derived_gate_that_ends_a_chain_keeps_total_float_meaningful():
                  rel("b-g", "b", "end", "g", "at", "0d"), rel("c-g", "c", "end", "g", "at", "0d")]
     derived = schedule(proj(objects, relations))
     assert derived.analysis.critical == frozenset({"a", "c", "g"})
-    assert derived.analysis.total_float["b"] == 5
+    assert derived.analysis.total_float["b"].value == 5
     slack = copy.deepcopy(objects)
     slack["g"]["schedule"] = {"mode": "fixed-point", "at": "2027-06-30"}
     fixed = schedule(proj(slack, relations))
-    assert fixed.analysis.critical == frozenset({"a", "g"})
-    assert (fixed.analysis.total_float["b"], fixed.analysis.total_float["c"]) == (35, 30)
+    assert fixed.analysis.critical == frozenset()
+    assert (fixed.analysis.total_float["b"].value, fixed.analysis.total_float["c"].value) == (35, 30)
 
 
 def test_g8_the_latest_date_of_a_derived_gate_honours_its_cap():

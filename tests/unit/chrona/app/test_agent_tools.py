@@ -237,9 +237,14 @@ def test_schedule_returns_sorted_placements_and_analysis(scope):
     }
     assert list(result.structured["placements"]) == sorted(result.structured["placements"])
     analysis = result.structured["analysis"]
-    assert analysis["criticalObjectIds"] == ["kickoff", "launch"]
+    assert analysis["criticalObjectIds"] == []
     assert list(analysis["totalFloat"]) == sorted(analysis["totalFloat"])
-    assert analysis["totalFloat"] == {"build": 9, "design": 9, "kickoff": 0, "launch": 0}
+    assert analysis["totalFloat"] == {
+        "build": {"value": 9, "unit": "working-days", "calendar": "office"},
+        "design": {"value": 9, "unit": "working-days", "calendar": "office"},
+        "kickoff": {"value": 0, "unit": "working-days", "calendar": "office"},
+        "launch": {"value": 0, "unit": "working-days", "calendar": "office"},
+    }
 
 
 def test_schedule_does_not_trust_the_key_order_of_total_float(scope, monkeypatch):

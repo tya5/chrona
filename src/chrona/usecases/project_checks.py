@@ -106,7 +106,8 @@ def schedule_project_mapping(project: dict[str, Any]) -> ProjectSchedule:
         object_order = tuple(project.get("objects", {}))
         derived = {
             "criticalObjectIds": [object_id for object_id in object_order if object_id in analysis.critical],
-            "totalFloat": analysis.total_float,
+            "totalFloat": {object_id: {"value": value.value, "unit": value.unit, "calendar": value.calendar}
+                           for object_id, value in analysis.total_float.items()},
         }
     return ProjectSchedule((), result.placements, derived, deadline_warnings(project, result.placements))
 

@@ -258,7 +258,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         actual = _actual(latest.get(object_id))
         observation_state = _observation_state(planned, latest.get(object_id), as_of)
         finish_delta = _finish_delta(planned, actual)
-        total_float = analysis.total_float.get(object_id) if analysis is not None else None
+        float_value = analysis.total_float.get(object_id) if analysis is not None else None
+        total_float = float_value.value if float_value is not None else None
         critical = object_id in analysis.critical if analysis is not None else False
         link = _object_link(project["objects"][object_id].get("link"))
         entry = hierarchy_entries.get(object_id)
@@ -631,7 +632,8 @@ def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[s
     result: dict[str, ReviewItem] = {}
     for object_id, planned in placements.items():
         source_type = "point" if "at" in planned else "span"
-        total_float = analysis.total_float.get(object_id) if analysis is not None else None
+        float_value = analysis.total_float.get(object_id) if analysis is not None else None
+        total_float = float_value.value if float_value is not None else None
         critical = object_id in analysis.critical if analysis is not None else False
         result[object_id] = ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,

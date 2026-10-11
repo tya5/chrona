@@ -37,7 +37,7 @@ def test_fixed_target_violation_is_not_repaired_by_moving_target():
     assert "E_FIXED_TARGET_VIOLATION" in {item.id for item in result.diagnostics}
 
 
-def test_scheduler_derives_total_float_and_critical_chain_per_component():
+def test_scheduler_derives_total_float_and_critical_chain_to_project_finish():
     project = _project(
         {
             "start": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-10-01", "end": "2026-10-02"}},
@@ -54,18 +54,19 @@ def test_scheduler_derives_total_float_and_critical_chain_per_component():
     )
     result = schedule(project)
     assert result.ok and result.analysis is not None
-    assert result.analysis.total_float == {"start": 0, "critical": 0, "slack": 2, "finish": 0}
+    assert {key: value.value for key, value in result.analysis.total_float.items()} == {
+        "start": 0, "critical": 0, "slack": 2, "finish": 0}
     assert result.analysis.critical == frozenset({"start", "critical", "finish"})
     assert result.analysis.driving_relations == frozenset({"relation:0", "relation:1", "relation:2"})
 
 
-def test_scheduler_marks_disconnected_singletons_critical():
+def test_scheduler_does_not_mark_disconnected_fixed_singletons_critical():
     result = schedule(_project({
         "a": {"type": "task", "schedule": {"mode": "fixed-point", "at": "2026-10-01"}},
         "b": {"type": "task", "schedule": {"mode": "fixed-point", "at": "2026-10-10"}},
     }))
     assert result.ok and result.analysis is not None
-    assert result.analysis.critical == frozenset({"a", "b"})
+    assert result.analysis.critical == frozenset()
 
 
 def test_scheduler_distinguishes_driving_relations_from_zero_float_endpoints():
@@ -132,8 +133,10 @@ def test_scheduler_counts_float_in_the_objects_working_calendar():
     project["calendars"] = {"weekdays": {"working_days": ["mon", "tue", "wed", "thu", "fri"]}}
     result = schedule(project)
     assert result.ok and result.analysis is not None
-    assert result.analysis.total_float["slack"] == 3
-    assert result.analysis.critical == frozenset({"start", "critical", "finish"})
+    assert result.analysis.total_float["slack"].value == 3
+    # The fixed end is Saturday; its 0d bound is not the Monday start reached
+    # by calendar normalization. Frozen-date zero float alone is not a path.
+    assert result.analysis.critical == frozenset({"critical", "finish"})
 
 
 def test_scheduler_with_diagnostics_exposes_no_partial_analysis():

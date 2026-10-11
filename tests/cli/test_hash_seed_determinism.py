@@ -51,7 +51,9 @@ def test_schedule_prints_total_float_in_project_object_order(project):
     objects = [name for name, item in yaml.safe_load(path.read_text(encoding="utf-8"))["objects"].items()
                if item["schedule"]["mode"] != "rollup"]
     assert list(analysis["totalFloat"]) == objects
-    assert analysis["criticalObjectIds"] == [name for name in objects if analysis["totalFloat"][name] == 0]
+    critical = set(analysis["criticalObjectIds"])
+    assert analysis["criticalObjectIds"] == [name for name in objects if name in critical]
+    assert all(analysis["totalFloat"][name]["value"] == 0 for name in critical)
 
 
 _PROBE = """
@@ -60,7 +62,7 @@ from chrona.scheduling.scheduler import schedule
 project = yaml.safe_load(open(sys.argv[1], encoding="utf-8"))
 analysis = schedule(project).analysis
 print(json.dumps({"float": list(analysis.total_float), "latest": list(analysis.latest_placements),
-                  "targets": list(analysis.component_targets)}))
+                  "finish": analysis.project_finish.isoformat()}))
 """
 
 
@@ -76,5 +78,5 @@ def test_every_mapping_of_the_analysis_follows_the_project_object_order_under_ev
                               env={**os.environ, "PYTHONHASHSEED": str(seed)})
         record = json.loads(done.stdout)
         assert record["float"] == objects and record["latest"] == objects, seed
-        seen.add(tuple(record["targets"]))
+        seen.add(record["finish"])
     assert len(seen) == 1

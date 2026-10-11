@@ -80,7 +80,7 @@ def test_schedule_document_keeps_the_published_key_order_and_object_order(tmp_pa
     assert list(document) == ["placements", "diagnostics", "warnings", "analysis"]
     assert document["diagnostics"] == [] and document["warnings"] == []
     assert list(document["analysis"]) == ["criticalObjectIds", "totalFloat"]
-    assert document["analysis"]["criticalObjectIds"] == ["design", "release"]
+    assert document["analysis"]["criticalObjectIds"] == []
     assert document["placements"] is outcome.placements
 
 

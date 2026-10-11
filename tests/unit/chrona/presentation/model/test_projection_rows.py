@@ -11,7 +11,7 @@ from chrona.presentation.contracts.resources import (
     ViewComparison, ViewGrouping, ViewInput, ViewLaneKeys, ViewOrdering, ViewRow, ViewRowItem, ViewRows, ViewSelection,
     ViewVisibility, ViewWindow, freeze,
 )
-from chrona.scheduling.scheduler import ScheduleAnalysis
+from chrona.scheduling.scheduler import ScheduleAnalysis, TotalFloat
 from chrona.scheduling.scheduler import schedule
 
 
@@ -312,8 +312,8 @@ def test_projection_carries_current_and_snapshot_analysis_without_crossing_them(
         "rows": {"mode": "explicit", "items": [{"id": "r", "depth": 0, "items": [
             {"id": "old", "source": {"kind": "snapshot", "object": "task"}},
             {"id": "now", "source": {"kind": "primary", "object": "task"}}]}]}}}
-    current_analysis = ScheduleAnalysis({}, {"task": 3}, frozenset(), {"task": date(2026, 2, 2)})
-    snapshot_analysis = ScheduleAnalysis({}, {"task": 0}, frozenset({"task"}), {"task": date(2026, 1, 2)})
+    current_analysis = ScheduleAnalysis({}, {"task": TotalFloat(3, None)}, frozenset(), date(2026, 2, 2))
+    snapshot_analysis = ScheduleAnalysis({}, {"task": TotalFloat(0, None)}, frozenset({"task"}), date(2026, 1, 2))
     projection = build_review_projection(project, {"task": {"start": date(2026, 2, 1), "end": date(2026, 2, 2)}},
         typed_view(view), None, snapshot_project=historic,
         snapshot_placements={"task": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}},
