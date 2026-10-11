@@ -28,6 +28,8 @@ Public audit at `52112c77`: all46 manifest materializers succeed; every Scene
 and SVG is byte-identical to its declared public artifact. Focused schema/preset
 migration guards:60 passed (46.08s). The fresh CI artifact and exact-main
 release are still required after final READY-base integration.
+Ordinary `9ee4dbce` adoption changes only upstream reports/reviews; actual
+default, natural-typography and tier-geometry tests pass again:69 (5.13s).
 
 ## Architecture conclusion
 
