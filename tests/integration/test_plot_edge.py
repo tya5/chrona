@@ -17,6 +17,7 @@ from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.surface_geometry import extend_to_plot_edges
 from chrona.presentation.layout.surface_quality import ScalePlacement
 from tests.support import synthetic_review as sr
+from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 WINDOW = {"mode": "explicit", "start": "2026-01-01", "end": "2026-04-01"}
 FEBRUARY = {"title": "February", "start": "2026-02-01", "end": "2026-03-01"}
@@ -28,7 +29,7 @@ def _render(tmp_path: Path, *, milestone: date = date(2026, 3, 31), periods=("fe
     source = sr.with_calendar(sr.project({"a": sr.span("a", date(2026, 1, 5), 40), "g": sr.point("g", milestone)}),
                               ("mon",))
     source["periods"] = {"february": FEBRUARY, "whole": WHOLE}
-    parts = sr.bundle("executive-light")
+    parts = use_legacy_six_tier_axis(sr.bundle("executive-light"))
     parts["view"]["body"]["window"] = dict(WINDOW)
     parts["view"]["body"]["periods"] = [{"id": item} for item in periods]
     parts["theme"]["body"]["roles"]["period-band"] = {

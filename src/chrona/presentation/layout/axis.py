@@ -28,20 +28,21 @@ class AxisThinningSchedule:
 
 
 def thinning_schedule(label_fits: tuple[bool, ...]) -> AxisThinningSchedule:
-    """Retain exactly the candidates whose own measured label fits.
+    """Choose the smallest phase-zero stride whose candidates all fit.
 
-    Each candidate's fit is measured against its own clipped interval and does
-    not depend on any other candidate's disposition, so a fitting candidate is
-    never thinned to keep a uniform pattern, and a non-fitting candidate is
-    always thinned.  Thinning may not remove every candidate; a tier with no
-    fitting candidate at all diagnoses instead, as before.
+    Fit remains local to each natural interval; a stride never widens it.
+    Empty input or an unfit first candidate has no viable phase-zero subset.
     """
-    retained = tuple(index for index, fits in enumerate(label_fits) if fits)
-    if not retained:
-        raise _axis_error("E_PRESENTATION_AXIS_OVERFLOW", "axis tier labels",
-                          candidate_count=len(label_fits), fit_results=label_fits)
-    thinned = tuple(index for index, fits in enumerate(label_fits) if not fits)
-    return AxisThinningSchedule(retained, thinned)
+    retained: tuple[int, ...] = ()
+    if label_fits and label_fits[0]:
+        for stride in range(1, len(label_fits) + 1):
+            positions = range(0, len(label_fits), stride)
+            if all(label_fits[index] for index in positions):
+                retained = tuple(positions)
+                break
+    retained_set = frozenset(retained)
+    return AxisThinningSchedule(retained, tuple(index for index in range(len(label_fits))
+                                               if index not in retained_set))
 
 
 _FORMS_BY_LEVEL = {

@@ -243,6 +243,49 @@ def test_surface_placement_closes_axis_outcomes_for_later_failure_policy():
         )).assert_valid()
 
 
+def _axis_surface_with_primary_outcome(*, label_fits, disposition, reason):
+    interval = AxisIntervalOutcome(
+        "axis-label:0:0", date(2026, 1, 1), date(2026, 2, 1),
+        date(2026, 1, 1), date(2026, 2, 1), "Jan", label_fits,
+        disposition, reason,
+    )
+    return SurfacePlacement(axis_tier_outcomes=(
+        AxisTierOutcome(0, "/view/body/axis/tiers/0", "labels", ("month",), "month", 1,
+                        "short-month", (interval,), "en-US"),
+    ))
+
+
+@pytest.mark.parametrize(("label_fits", "reason"), [
+    (False, "label-does-not-fit"),
+    (True, "regular-cadence"),
+    (True, "phase-unavailable"),
+])
+def test_thinned_axis_primary_reason_preserves_measured_fit(label_fits, reason):
+    _axis_surface_with_primary_outcome(
+        label_fits=label_fits, disposition="thinned", reason=reason,
+    ).assert_valid()
+
+
+@pytest.mark.parametrize(("label_fits", "reason"), [
+    (True, "label-does-not-fit"),
+    (False, "regular-cadence"),
+    (False, "phase-unavailable"),
+])
+def test_thinned_axis_primary_rejects_reason_that_contradicts_measured_fit(label_fits, reason):
+    with pytest.raises(ValueError, match="E_LAYOUT_AXIS_OUTCOME_INVALID:0"):
+        _axis_surface_with_primary_outcome(
+            label_fits=label_fits, disposition="thinned", reason=reason,
+        ).assert_valid()
+
+
+@pytest.mark.parametrize("reason", ["label-does-not-fit", "regular-cadence", "phase-unavailable"])
+def test_placed_axis_primary_rejects_omission_reason(reason):
+    with pytest.raises(ValueError, match="E_LAYOUT_AXIS_OUTCOME_INVALID:0"):
+        _axis_surface_with_primary_outcome(
+            label_fits=True, disposition="placed", reason=reason,
+        ).assert_valid()
+
+
 @pytest.mark.parametrize("length", [4, 20, 58, 132, 388])
 def test_inset_progress_track_measures_the_fraction_against_the_inner_track(length):
     """#430: 0 is empty and 1 fills the inner track edge to edge at every bar length."""
