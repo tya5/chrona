@@ -404,8 +404,16 @@ allOf:
               type: object
               required: [id, source, missing, align, width, headerOrientation]
               additionalProperties: false
+              allOf:
+                - if: {required: [endDisplay]}
+                  then:
+                    required: [format]
+                    properties: {format: {const: dateRange}}
               properties:
                 id: {type: string, minLength: 1}
+                endDisplay:
+                  description: "Display-only dateRange endpoint: inclusive shows end minus one calendar day for positive spans; absent/exclusive preserves the stored exclusive end."
+                  enum: [inclusive, exclusive]
                 source:
                   oneOf:
                     - {enum: [id, title, objectType, entity, rowIndex, wbsCode, path, totalFloat]}
