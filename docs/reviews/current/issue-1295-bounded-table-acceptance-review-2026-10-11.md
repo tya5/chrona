@@ -28,8 +28,13 @@ unchanged (L2+L3=38.7s). Pre-integration public audit: all46 materializers pass,
 Scene/SVG bytes unchanged. Ordinary integration of the published #1293/#1294
 WIPs preserves both policies; 45 date-range/bounded-preset tests passed (18.13s)
 and three precise corpus-mirror guards passed (4.29s). Typed parsing retains
-both endpoint and wrapping fields by keyword. Final integration schema/artifact
-and release gates remain pending. A baseline gate label that already overflowed
+both endpoint and wrapping fields by keyword. Integrated schema-equivalence
+passes against `e19005d0` after declaring the three exact optional wrap
+additions alongside the endpoint conditional: Layout/View delta=2, equal=36,
+482 documents/739 probes, four known-invalid fixtures unchanged;
+L2+L3=34.6s. The gate's combined conditional classification is not a new
+runtime rule. Final READY/artifact and release gates remain pending.
+A baseline gate label that already overflowed
 is not fitting-copy evidence: opt-in ellipsis changes it intentionally.
 
 ## Architecture conclusion
