@@ -5,9 +5,9 @@ from decimal import Decimal as D
 import pytest
 
 from chrona.presentation.layout.engine import (
-    LayoutSizingContext, TableInlineBudget, _Arranger, _limit_inline_base, _resolve_flexible_tracks,
+    LayoutSizingContext, SourceInlineBudget, _Arranger, _limit_inline_base, _resolve_flexible_tracks,
     measure_natural_normal_flow_block, resolve_content_block_extent,
-    resolve_table_inline_budgets, solve_layout, validate_table_inline_budgets,
+    resolve_source_inline_budgets, solve_layout, validate_source_inline_budgets,
 )
 from chrona.presentation.layout.model import LayoutError, Measurement, Rect
 from chrona.presentation.layout.profile import resolve_layout_profile
@@ -49,15 +49,15 @@ def measurement(inline=2000):
 
 
 def probe(resolved, measurements):
-    return resolve_table_inline_budgets(resolved, viewport_inline=1000,
+    return resolve_source_inline_budgets(resolved, viewport_inline=1000,
                                        viewport_block=500, measurements=measurements)
 
 
 def actual(resolved, measurements):
-    arranger = _Arranger(resolved, measurements, collect_table_budgets=True)
+    arranger = _Arranger(resolved, measurements, collect_inline_budgets=True)
     arranger._record_inline_budget(resolved.profile["root"], "/root", D(1000))
     arranger.arrange(resolved.profile["root"], "/root", Rect(D(0), D(0), D(1000), D(500)))
-    return arranger.table_inline_budgets
+    return arranger.source_inline_budgets
 
 
 @pytest.mark.parametrize("kind,available", [("row", 960), ("column", 980),
@@ -65,7 +65,7 @@ def actual(resolved, measurements):
 def test_parent_budget_is_after_padding_and_only_row_active_gaps(kind, available):
     resolved = profile(container(kind, [slot(), slot("other", share=None, source="title")]))
     result = probe(resolved, {"table": measurement(), "other": measurement(30)})
-    assert result["table"] == TableInlineBudget("table", "/root/children/0",
+    assert result["table"] == SourceInlineBudget("table", "/root/children/0",
                                                 D(available), D(available) * D("0.4"))
     with pytest.raises(TypeError):
         result["table"] = result["table"]
@@ -84,7 +84,7 @@ def test_grid_budget_uses_independent_spanned_cell_with_internal_gaps():
     result = probe(resolved, {"table": measurement()})
     assert result["table"].available_inline == 520
     assert result["table"].ceiling == 208
-    validate_table_inline_budgets(result, actual(resolved, {"table": measurement(100)}))
+    validate_source_inline_budgets(result, actual(resolved, {"table": measurement(100)}))
 
 
 def test_flexible_grid_cell_is_not_recursively_shrunk_by_the_share():
@@ -93,7 +93,7 @@ def test_flexible_grid_cell_is_not_recursively_shrunk_by_the_share():
     result = probe(resolved, {"table": measurement()})
     assert result["table"].available_inline == 480
     assert result["table"].ceiling == 192
-    validate_table_inline_budgets(result, actual(resolved, {"table": measurement(100)}))
+    validate_source_inline_budgets(result, actual(resolved, {"table": measurement(100)}))
 
 
 def test_intrinsic_grid_track_is_not_an_independent_budget():
@@ -111,9 +111,9 @@ def test_content_parent_may_use_an_independent_sibling_floor_but_not_table_feedb
     source = {"table": measurement(), "other": measurement(100)}
     result = probe(resolved, source)
     assert result["table"].ceiling == 40
-    validate_table_inline_budgets(result, actual(resolved, {**source, "table": measurement(40)}))
+    validate_source_inline_budgets(result, actual(resolved, {**source, "table": measurement(40)}))
     with pytest.raises(LayoutError, match="E_LAYOUT_TABLE_OVERFLOW"):
-        validate_table_inline_budgets(result, actual(resolved, {**source, "table": measurement(120)}))
+        validate_source_inline_budgets(result, actual(resolved, {**source, "table": measurement(120)}))
 
 
 def test_content_parent_without_other_inline_authority_is_rejected():
@@ -142,12 +142,12 @@ def test_absent_declaration_has_no_probe_work_and_preserves_existing_solve():
 
 @pytest.mark.parametrize("base", [(D(20), D(25), D(0)), (D(20), D(25), D(3))])
 def test_fitting_track_base_is_exactly_preserved(base):
-    budget = TableInlineBudget("table", "/root/children/0", D(100), D(40))
+    budget = SourceInlineBudget("table", "/root/children/0", D(100), D(40))
     assert _limit_inline_base(base, budget) == base
 
 
 def test_cap_is_flexible_maximum_not_a_fixed_share_or_an_extra_minimum():
-    budget = TableInlineBudget("table", "/root/children/0", D(100), D(40))
+    budget = SourceInlineBudget("table", "/root/children/0", D(100), D(40))
     capped = _limit_inline_base((D(20), None, D(1)), budget)
     assert capped == (D(20), D(40), D(1))
     assert _resolve_flexible_tracks([capped, (D(0), None, D(1))], D(100)) == [D(40), D(60)]
@@ -155,7 +155,7 @@ def test_cap_is_flexible_maximum_not_a_fixed_share_or_an_extra_minimum():
 
 
 def test_mandatory_and_authored_minimum_is_not_erased_to_make_the_cap_fit():
-    budget = TableInlineBudget("table", "/root/children/0", D(100), D(40))
+    budget = SourceInlineBudget("table", "/root/children/0", D(100), D(40))
     with pytest.raises(LayoutError, match="E_LAYOUT_TABLE_OVERFLOW") as caught:
         _limit_inline_base((D(60), D(60), D(0)), budget)
     assert caught.value.path == budget.path
@@ -163,11 +163,11 @@ def test_mandatory_and_authored_minimum_is_not_erased_to_make_the_cap_fit():
 
 
 def test_closure_rejects_added_or_removed_active_table_budget():
-    budget = TableInlineBudget("table", "/root/children/0", D(100), D(40))
+    budget = SourceInlineBudget("table", "/root/children/0", D(100), D(40))
     with pytest.raises(LayoutError, match="E_LAYOUT_TABLE_OVERFLOW"):
-        validate_table_inline_budgets({"table": budget}, {})
+        validate_source_inline_budgets({"table": budget}, {})
     with pytest.raises(LayoutError, match="E_LAYOUT_TABLE_OVERFLOW"):
-        validate_table_inline_budgets({}, {"table": budget})
+        validate_source_inline_budgets({}, {"table": budget})
 
 
 def bounded_measurement(inline, block=10):
@@ -246,7 +246,7 @@ def test_actual_width_source_closure_is_shared_by_natural_and_arranged_block(kin
         return bounded_measurement(inline, lines * 10)
 
     sources = {**raw_sources, "table": bounded_measurement(budgets["table"].ceiling)}
-    sizing = LayoutSizingContext(budgets, measure_table=remeasure)
+    sizing = LayoutSizingContext(budgets, measure_source=remeasure)
     result = solve(resolved, sources, sizing)
     table_bounds = bounds(result)["table"]
     assert table_bounds.inline_size <= budgets["table"].ceiling
@@ -280,11 +280,11 @@ def test_empty_sizing_context_preserves_entire_existing_manifest():
 
 
 def test_context_is_a_frozen_snapshot_not_a_mutable_resource_side_channel():
-    budget = TableInlineBudget("table", "/root/children/0", D(100), D(40))
+    budget = SourceInlineBudget("table", "/root/children/0", D(100), D(40))
     mutable = {"table": budget}
     sizing = LayoutSizingContext(mutable)
     mutable.clear()
-    assert sizing.table_budgets == {"table": budget}
+    assert sizing.source_budgets == {"table": budget}
     with pytest.raises(TypeError):
         sizing.by_path[budget.path] = budget
 
@@ -381,7 +381,7 @@ def test_coupled_extent_builds_independent_budgets_for_each_candidate(content_si
     requested_budgets = []
 
     def for_extent(block):
-        budgets = resolve_table_inline_budgets(resolved, viewport_inline=1000, viewport_block=block,
+        budgets = resolve_source_inline_budgets(resolved, viewport_inline=1000, viewport_block=block,
                                                measurements=raw_sources, content_sized=content_sized)
         assert budgets["table"].ceiling == block * D("0.8")
         requested_budgets.append((block, budgets["table"].ceiling))

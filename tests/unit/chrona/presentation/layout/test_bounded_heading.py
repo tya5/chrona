@@ -112,6 +112,11 @@ def test_inline_reservation_is_removed_before_text_fit_and_kept_in_source_width(
         measure(source, budget=D(30))
 
 
+def test_declared_source_floor_survives_intrinsic_width_shortage():
+    source = SourceInput(("words " * 100,), typography_role="heading", text_wrap="allow", min_inline=D(200))
+    assert measure(source).measurements["title"].min_inline == 200
+
+
 def test_forbid_or_absent_budget_does_not_activate_wrapping():
     source = SourceInput(("word " * 100,), typography_role="heading")
     ordinary = measure_sources({"title": source}, theme(), font_metrics=Metrics())

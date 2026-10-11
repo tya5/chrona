@@ -230,6 +230,8 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             numeric_spacing=(first_treatment.numeric_spacing if value.run_flow == "block" or value.summary is not None
                              else "proportional"))))
         measured_runs = []
+        heading_minima: list[Decimal] = []
+        heading_shortage = False
         for run in runs:
             treatment = typography.text_treatment(run.typography_role)
             run_metrics = metric_for_role(typography, run.typography_role, font_metrics)
@@ -248,6 +250,12 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                 float(treatment.letter_spacing), treatment.transform, treatment.numeric_spacing,
                 float(treatment.horizontal_scale)))
             if heading_budget is not None:
+                heading_shortage = heading_shortage or width > heading_budget
+                ellipse = Decimal(str(measure_text_width(
+                    "…", font_size=float(run_size), font_metrics=run_metrics,
+                    letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+                    numeric_spacing=treatment.numeric_spacing))) + run.inline_advance
+                heading_minima.append(min(width, ellipse))
                 fit = fit_text_lines(run.content, available_inline=float(heading_budget - run.inline_advance),
                                      font_size=float(run_size), font_metrics=run_metrics, wrap="allow",
                                      letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
@@ -355,6 +363,9 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             minimum_inline = min(preferred_inline, text_inline)
             if value.min_inline is not None:
                 minimum_inline = min(preferred_inline, value.min_inline)
+            if heading_shortage:
+                mandatory = max(heading_minima, default=Decimal(0))
+                minimum_inline = (max(mandatory, minimum_inline) if value.min_inline is not None else mandatory)
         result[source] = Measurement(
             minimum_inline, preferred_inline, preferred_inline * 2,
             min(preferred_block, minimum_text_block), preferred_block, preferred_block * 2,
