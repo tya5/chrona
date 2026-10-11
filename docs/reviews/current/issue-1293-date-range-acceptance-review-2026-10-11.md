@@ -21,9 +21,10 @@ Authority: Spec24 section1.1, published before code at `a5144289`. Implementatio
 ## Programme-level criteria (optional)
 
 Focused formatter/live schema/init/corpus-mirror batch: 24 passed (6.86s).
-Full schema-equivalence against `e19005d0`: PASS; two exact View deltas,
+Full schema-equivalence at `16ddae45` against trusted READY `95b2fddc`: PASS;
+one changed View schema (two exact endpoint property/constraint paths),
 37 equal schemas, 482 documents/739 probes, four known-invalid fixtures
-unchanged; L2+L3=48.7s. Final READY/public snapshot and review-containing
+unchanged; L2+L3=57.3s within60s. Final READY/public snapshot and review-containing
 exact-main three-OS release remain pending; issue stays open.
 After ordinary integration of main `b05b09bf`, date-range/default-axis
 tests pass:28 (5.27s). Public audit at `3a51cfdb`:46/46 PASS, all declared
