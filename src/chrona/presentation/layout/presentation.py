@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from decimal import Decimal
 import math
 from typing import TYPE_CHECKING, Any, Callable, Literal, Mapping
 
 from chrona.presentation.layout.model import LayoutError, geometry_sum
 from chrona.presentation.layout.text import measure_text_width, metric_for_role
+from chrona.presentation.layout.tracks import resolve_flexible_tracks
 from chrona.presentation.model.projection import ObservationState, shared_track_member_key
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent
 
@@ -190,6 +192,68 @@ def table_content_inline_size(natural_widths: tuple[float, ...], gutter: float) 
     return geometry_sum(natural_widths) + gutter * max(0, len(natural_widths) - 1)
 
 
+def measure_table_column_minima(*, columns: tuple[TableColumnContent, ...],
+                                cells: tuple[TableCellContent, ...],
+                                measure_text: Callable[[str, str, str], float], minimum_inline: float,
+                                hierarchy_column: str | None = None,
+                                cell_indents: Mapping[str, float] | None = None,
+                                header_role: str = "text") -> tuple[float, ...]:
+    """Measure each bounded column's own inset, hierarchy and affix/text floor.
+
+    A fitting short value may be narrower than an ellipsis. Otherwise the
+    complete affixes and permitted ellipsis must fit in the cell's own role.
+    Rotated/vertical headers occupy their native inline line-box thickness,
+    not their horizontal text advance. Source closure retains the full text.
+    """
+    indents = cell_indents or {}
+
+    def compact(content: str, role: str, orientation: str,
+                prefix: str = "", suffix: str = "") -> float:
+        natural = measure_text(content, role, orientation)
+        if not content or orientation != "horizontal":
+            return natural
+        return min(natural, measure_text(prefix + "…" + suffix, role, "horizontal"))
+
+    content_by_column = {column.column_id: [compact(column.header, header_role, column.header_orientation)]
+                         for column in columns}
+    for cell in cells:
+        indent = indents.get(cell.object_id, 0.0) if cell.column_id == hierarchy_column else 0.0
+        content_by_column.setdefault(cell.column_id, []).append(
+            compact(cell.content, cell.typography_role, "horizontal", cell.affix_prefix, cell.affix_suffix) + indent)
+    return tuple(max(minimum_inline, max(content_by_column[column.column_id], default=0.0) + minimum_inline)
+                 for column in columns)
+
+
+def _bounded_column_widths(columns: tuple[TableColumnContent, ...], natural: tuple[float, ...],
+                            minima: tuple[float, ...], available: float) -> tuple[float, ...]:
+    """Apply Spec 24's shortage rule through the shared bounded-track solver."""
+    if (len(minima) != len(columns) or not math.isfinite(available)
+            or any(not math.isfinite(low) or low < 0 or low > high
+                   for low, high in zip(minima, natural))):
+        raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table",
+                          detail="invalid mandatory column measurements")
+    floor = tuple(Decimal(str(value)) for value in minima)
+    budget = Decimal(str(available))
+    if sum(floor, Decimal(0)) > budget:
+        raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table",
+                          detail="mandatory columns and gutters exceed the table slot")
+    fixed = [index for index, column in enumerate(columns) if not column.width.flexible]
+    flexible = [index for index, column in enumerate(columns) if column.width.flexible]
+    fixed_budget = budget - sum((floor[index] for index in flexible), Decimal(0))
+    fixed_widths = resolve_flexible_tracks(
+        [(floor[index], Decimal(str(natural[index])), Decimal(1)) for index in fixed], fixed_budget)
+    remaining = budget - sum(fixed_widths, Decimal(0))
+    weights = [1.0 if columns[index].width.maximum == "fill" else columns[index].width.fraction
+               for index in flexible]
+    if any(not math.isfinite(weight) or weight <= 0 for weight in weights):
+        raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table",
+                          detail="invalid flexible column weight")
+    flexible_widths = resolve_flexible_tracks(
+        [(floor[index], None, Decimal(str(weight))) for index, weight in zip(flexible, weights)], remaining)
+    by_index = dict(zip(fixed, fixed_widths)) | dict(zip(flexible, flexible_widths))
+    return tuple(float(by_index[index]) for index in range(len(columns)))
+
+
 def place_table_columns(*, columns: tuple[TableColumnContent, ...],
                         cells: tuple[TableCellContent, ...],
                         bounds: tuple[float, float, float, float],
@@ -198,6 +262,7 @@ def place_table_columns(*, columns: tuple[TableColumnContent, ...],
                         hierarchy_column: str | None = None,
                         cell_indents: Mapping[str, float] | None = None,
                         header_role: str = "text",
+                        mandatory_inline: tuple[float, ...] | None = None,
                         ) -> tuple[TableColumnPlacement, ...]:
     """Allocate only declared-flexible columns after measured minima close."""
     natural_widths = measure_table_columns(columns=columns, cells=cells, measure_text=measure_text,
@@ -208,24 +273,26 @@ def place_table_columns(*, columns: tuple[TableColumnContent, ...],
     available = bounds[2] - gutter * max(0, len(natural_widths) - 1)
     if sum(column.width.maximum == "fill" for column in columns) > 1:
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
-    ellipsis_floor = max(minimum_inline, measure_text("…", "text", "horizontal")) + minimum_inline
-    minima = tuple(natural if column.width.minimum == "content" else ellipsis_floor
-                   for column, natural in zip(columns, natural_widths, strict=True))
     # A normal visible-overflow table retains natural measured columns even
     # when they exceed its requested slot.  Ellipsis remains the sole compact
     # disposition and therefore still needs finite minima inside the slot.
     preferred_total = geometry_sum(natural_widths)
-    base = (minima if preferred_total > available and overflow == "ellipsize-with-source"
-            else natural_widths)
-    flexible = tuple(index for index, column in enumerate(columns) if column.width.flexible)
-    # A declared compact representation is retained where it fits.  If even
-    # its measured ellipsis minima exceed the requested slot, those minima are
-    # still completed visibly rather than becoming a fit refusal.
-    remaining = max(0.0, available - geometry_sum(base))
-    weights = geometry_sum(columns[index].width.fraction for index in flexible)
-    widths = tuple(width + (remaining * columns[index].width.fraction / weights
-                            if index in flexible and weights else 0.0)
-                   for index, width in enumerate(base))
+    if mandatory_inline is not None and preferred_total > available:
+        widths = _bounded_column_widths(columns, natural_widths, mandatory_inline, available)
+    else:
+        ellipsis_floor = max(minimum_inline, measure_text("…", "text", "horizontal")) + minimum_inline
+        minima = tuple(natural if column.width.minimum == "content" else ellipsis_floor
+                       for column, natural in zip(columns, natural_widths, strict=True))
+        base = (minima if preferred_total > available and overflow == "ellipsize-with-source"
+                else natural_widths)
+        flexible = tuple(index for index, column in enumerate(columns) if column.width.flexible)
+        # Preserve the ordinary source-preserving compact disposition, including
+        # visible mandatory overflow, when no strict bounded minima were supplied.
+        remaining = max(0.0, available - geometry_sum(base))
+        weights = geometry_sum(columns[index].width.fraction for index in flexible)
+        widths = tuple(width + (remaining * columns[index].width.fraction / weights
+                                if index in flexible and weights else 0.0)
+                       for index, width in enumerate(base))
     cursor = bounds[0]
     placements: list[TableColumnPlacement] = []
     for column, natural, width in zip(columns, natural_widths, widths, strict=True):
@@ -265,7 +332,8 @@ def required_row_block_extents(*, review_rows: tuple[Any, ...], row_minimum: flo
                                row_padding: float, mark_block_size: float,
                                role_geometries: Mapping[str, MarkGeometry] | None = None,
                                mark_band_allocation: MarkBandAllocation | None = None,
-                               text_line_block: float = 0.0) -> tuple[float, ...]:
+                               text_line_block: float = 0.0,
+                               row_text_blocks: Mapping[str, Decimal] | None = None) -> tuple[float, ...]:
     """Close each row's minimum before any surplus distribution occurs.
 
     ``row_padding`` is the row's total block padding.  It is added once to the
@@ -274,8 +342,14 @@ def required_row_block_extents(*, review_rows: tuple[Any, ...], row_minimum: flo
     """
     if row_minimum <= 0 or row_padding < 0 or text_line_block < 0:
         raise LayoutError("E_LAYOUT_ROW_REQUIREMENT", "/measuredSources/metricValues/timeline.row")
-    text_requirement = text_line_block + row_padding if text_line_block else 0.0
-    return tuple(max(row_minimum, text_requirement, minimum_track_block_extent(
+    def text_requirement(row: Any) -> float:
+        block = text_line_block
+        if row_text_blocks is not None:
+            block = max(block, float(row_text_blocks.get(row.row_id, 0)),
+                        float(row_text_blocks.get(row.table_subject_id, 0)))
+        return block + row_padding if block else 0.0
+
+    return tuple(max(row_minimum, text_requirement(row), minimum_track_block_extent(
         review_row=row, mark_block_size=mark_block_size, role_geometries=role_geometries,
         mark_band_allocation=mark_band_allocation,
     ) + row_padding) for row in review_rows)

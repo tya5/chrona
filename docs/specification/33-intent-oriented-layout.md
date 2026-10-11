@@ -256,6 +256,37 @@ an absent maximum means unbounded within the declared viewport.
 
 ## 6. Placement, overflow, and distribution
 
+A `source: table` slot may declare finite `maxInlineShare` in `(0, 1]`
+(#1295). Its strict ceiling is that share of the independently resolved parent
+inner inline budget, after inline padding. A row subtracts its active-child
+inline gaps; a column's block gaps and overlay gaps are not inline deductions.
+A flow uses its parent inner inline budget before line selection. In a grid,
+the budget is the independently resolved spanned cell width, including only
+the gaps internal to that span. Resolve the ceiling before intrinsic floors
+and flexible allocation; redistribute a capped flexible share to the remaining
+tracks under Section 5, never enlarge the parent to honour the table's text.
+
+The budget must be finite and determined without that table's uncapped
+intrinsic width. A content-sized ancestor or intrinsic grid track is not itself
+proof of such a budget. An unresolved/circular budget, or an authored fixed
+size or non-content minimum above the ceiling, is `E_LAYOUT_TABLE_OVERFLOW`.
+The property is invalid on another source or a container. It does not change
+ordinary `fitContent`, fixed, `fr`, or `minmax` semantics when absent; the
+explicit table exception to natural content floors is specified in
+[Specification 24](24-table-timeline-presentation.md#21-table-and-row-metrics-480).
+
+Heading and table sources with View `wrap: allow` use the same independent
+parent/cell budget closure with a full-share ceiling unless the table declares
+`maxInlineShare`. This does not admit that property on heading slots.
+The normalized source intent selects the wrapping slots;
+the engine does not inspect View YAML or Project copy. Neutralize all selected
+width-dependent source demands together while probing, then remeasure each at
+its allocated width before block allocation. A circular budget, an authored
+minimum above the ceiling, or mandatory text that cannot fit is
+`E_LAYOUT_TEXT_OVERFLOW` for a heading, not `E_LAYOUT_TABLE_OVERFLOW`.
+Full-share budgets retain the existing Grid cell-filling allocation; text is
+closed inside that cell rather than shrinking the host to its fitting copy.
+
 Every slot declares `place.inline` and `place.block`. Containers declare `alignItems`
 for the cross axis and `justifyContent` for the main axis. A slot value overrides its
 container's item alignment on that axis.
@@ -319,8 +350,10 @@ Source adapters may read View-owned semantic modes and Theme `metrics` bindings.
 not read Layout YAML, resize or move their slot, allocate peer slots, or supply fallback
 coordinates. Every author-tunable source-internal distance is a Theme number token reached
 through a closed semantic metric name. A missing binding or non-number token diagnoses;
-there is no renderer default table. Layout source measurements are collected once, frozen,
-and reused by arrangement and Scene composition so the two passes cannot disagree.
+there is no renderer default table. Source content, typography and font assets are
+collected once and frozen. Width-dependent Layout measurements close against each
+candidate's independently resolved allocation; arrangement and composition reuse
+the final candidate's closure, never an earlier width's lines or baselines.
 
 The initial metric contract is namespaced by source/component (`text.*`, `table.*`,
 `timeline.*`, `axis.*`, `legend.*`, `notes.*`, `icon.*`). The adapter owns the closed key set and

@@ -1,7 +1,8 @@
-version: chrona/view/v0.27
+version: chrona/view/v0.28
 kind: view
 id: chrona-preset-editorial
 body:
+  heading: {text: {wrap: allow}}
   surface: table-timeline
   selection:
     include:
@@ -47,33 +48,24 @@ body:
     annotations: none
   axis:
     tiers:
-    - unit: quarter
+    - unit: year
       every: 1
       role: band
       typographyRole: axisQuarter
     - unit: quarter
       every: 1
       role: grid-major
-    - unit: quarter
+    - unit: auto
       every: 1
       role: labels
       typographyRole: axisQuarter
       label:
-        form: year-quarter
+        forms:
+          month: short-month-year
+          quarter: year-quarter
+          half: half-year
+          year: year
         align: center
-        overflow: visible-overflow
-        orientation: horizontal
-    - unit: month
-      every: 1
-      role: band
-      typographyRole: axisMonth
-    - unit: month
-      every: 1
-      role: labels
-      typographyRole: axisMonth
-      label:
-        form: short-month
-        align: start
         overflow: thin-with-record
         orientation: horizontal
     - unit: month
@@ -84,12 +76,14 @@ body:
     groups: all
   tableColumns:
   - id: Task
+    text: {wrap: allow}
     source: title
     missing: em-dash
     align: start
     width: {minmax: {min: content, max: {fr: 1}}}
     headerOrientation: horizontal
   - id: Owner
+    text: {wrap: allow}
     source: {field: owner}
     missing: em-dash
     align: start

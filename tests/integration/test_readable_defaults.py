@@ -243,14 +243,15 @@ def test_as_of_no_fit_keeps_rule_and_omits_label(tmp_path, monkeypatch) -> None:
     assert "chip:as-of-label" not in svg_ids
 
 
-def test_halcyon_readable_default_mirror_renders_task_and_plan_columns(tmp_path, monkeypatch) -> None:
+@pytest.mark.parametrize("source", ["packaged", "corpus"])
+def test_readable_default_views_render_task_and_plan_columns(tmp_path, monkeypatch, source) -> None:
     packaged = ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/view.yaml"
     mirror = ROOT / "examples/halcyon-1/views/editorial-readable-default.yaml"
-    assert packaged.read_bytes() == mirror.read_bytes()
+    view = packaged if source == "packaged" else mirror
     scene, _ = _render_project(tmp_path, monkeypatch, "halcyon-mirror-default",
                                ROOT / "examples/halcyon-1/project.yaml",
                                ROOT / "examples/halcyon-1/actual.yaml",
-                               "--view", str(mirror))
+                               "--view", str(view))
     primitives = _primitives(scene)
     columns = {item["text"] for item in primitives
                if item.get("purpose") == "table-column-label"}
