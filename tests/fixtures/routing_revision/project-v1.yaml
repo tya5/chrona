@@ -1,0 +1,44 @@
+# Exact supplied launch trial from issue #1300; also the 19/10 input for #1420.
+version: timeline/v0.7
+project: {id: nimbus-launch, title: Nimbus 2.0 launch (Q1 2027), calendar: office}
+calendars:
+  office:
+    working_days: [mon, tue, wed, thu, fri]
+    exceptions:
+      - {date: '2027-01-01', working: false}
+      - {date: '2027-01-18', working: false}
+      - {date: '2027-02-15', working: false}
+objects:
+  product: {type: group, title: Product, schedule: {mode: rollup}}
+  spec: {type: task, title: Finalize feature spec, parent: product, schedule: {mode: fixed-span, start: '2027-01-04', end: '2027-01-15'}}
+  build: {type: task, title: Build core features, parent: product, schedule: {mode: scheduled, amount: 25wd}}
+  beta: {type: task, title: Private beta, parent: product, schedule: {mode: scheduled, amount: 10wd}}
+  bugfix: {type: task, title: Beta bug fixing, parent: product, schedule: {mode: scheduled, amount: 8wd}}
+  release-build: {type: task, title: Release candidate build, parent: product, schedule: {mode: scheduled, amount: 3wd}}
+
+  marketing: {type: group, title: Marketing, schedule: {mode: rollup}}
+  positioning: {type: task, title: Positioning and messaging, parent: marketing, schedule: {mode: fixed-span, start: '2027-01-11', end: '2027-01-29'}}
+  website: {type: task, title: Launch website, parent: marketing, schedule: {mode: scheduled, amount: 15wd}}
+  press: {type: task, title: Press kit and briefings, parent: marketing, schedule: {mode: scheduled, amount: 10wd}}
+  campaign: {type: task, title: Paid campaign, parent: marketing, schedule: {mode: fixed-span, start: '2027-03-22', end: '2027-04-02'}}
+
+  operations: {type: group, title: Operations, schedule: {mode: rollup}}
+  pricing: {type: task, title: Pricing and billing setup, parent: operations, schedule: {mode: scheduled, amount: 10wd}}
+  support: {type: task, title: Support playbooks, parent: operations, schedule: {mode: scheduled, amount: 8wd}}
+  training: {type: task, title: Sales training, parent: operations, schedule: {mode: scheduled, amount: 5wd}}
+  infra: {type: task, title: Scale-out infrastructure, parent: operations, schedule: {mode: fixed-span, start: '2027-02-01', end: '2027-02-26'}}
+
+  kickoff: {type: gate, title: Kickoff, schedule: {mode: fixed-point, at: '2027-01-04'}}
+  beta-start: {type: gate, title: Beta starts, schedule: {mode: fixed-point, at: '2027-02-22'}}
+  launch: {type: gate, title: Public launch, deadline: '2027-03-31', schedule: {mode: fixed-point, at: '2027-03-23'}}
+relations:
+  - {id: spec-build, type: dependency, from: {object: spec, endpoint: end}, to: {object: build, endpoint: start}, lag: 0d}
+  - {id: build-beta, type: dependency, from: {object: build, endpoint: end}, to: {object: beta, endpoint: start}, lag: 0d}
+  - {id: beta-bugfix, type: dependency, from: {object: beta, endpoint: start}, to: {object: bugfix, endpoint: start}, lag: 3wd}
+  - {id: bugfix-rc, type: dependency, from: {object: bugfix, endpoint: end}, to: {object: release-build, endpoint: start}, lag: 0d}
+  - {id: rc-launch, type: dependency, from: {object: release-build, endpoint: end}, to: {object: launch, endpoint: at}, lag: 0d}
+  - {id: pos-web, type: dependency, from: {object: positioning, endpoint: end}, to: {object: website, endpoint: start}, lag: 0d}
+  - {id: pos-press, type: dependency, from: {object: positioning, endpoint: end}, to: {object: press, endpoint: start}, lag: 5wd}
+  - {id: spec-pricing, type: dependency, from: {object: spec, endpoint: end}, to: {object: pricing, endpoint: start}, lag: 0d}
+  - {id: pricing-support, type: dependency, from: {object: pricing, endpoint: end}, to: {object: support, endpoint: start}, lag: 0d}
+  - {id: support-training, type: dependency, from: {object: support, endpoint: end}, to: {object: training, endpoint: start}, lag: 0d}

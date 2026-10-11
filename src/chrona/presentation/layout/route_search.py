@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
+from collections import OrderedDict
 from bisect import bisect_left, bisect_right
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from heapq import heappop, heappush
 from itertools import count
 from math import hypot, isfinite, nextafter
@@ -37,6 +38,14 @@ SparseGraph = tuple[
 ]
 
 HistoryEntry = tuple[float, float, float, tuple[Point, Point]]
+_PROJECTION_LINE_LIMIT = 16
+
+
+def _build_projection_line(axis: int, coordinate: float, events: tuple[float, ...], clear
+                           ) -> Mapping[tuple[Point, Point], bool]:
+    """Exact visibility on one base-event line, before endpoint splits."""
+    points = tuple((value, coordinate) if axis == 0 else (coordinate, value) for value in events)
+    return MappingProxyType({(a, b): clear(a, b) for a, b in zip(points, points[1:])})
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,6 +54,23 @@ class _VisibilityBase:
 
     nodes: frozenset[Point]
     visibility: Mapping[tuple[Point, Point], bool]
+    x_events: tuple[float, ...]
+    y_events: tuple[float, ...]
+    _projection_lines: OrderedDict[tuple[int, str], Mapping[tuple[Point, Point], bool]] = field(
+        default_factory=OrderedDict, compare=False, repr=False)
+
+    def projection_line(self, axis: int, coordinate: float, clear) -> Mapping[tuple[Point, Point], bool]:
+        """A bounded pure-fact working set; eviction cannot affect route choice."""
+        key = (axis, repr(coordinate))
+        known = self._projection_lines.get(key)
+        if known is not None:
+            self._projection_lines.move_to_end(key)
+            return known
+        prepared = _build_projection_line(axis, coordinate, self.x_events if axis == 0 else self.y_events, clear)
+        if len(self._projection_lines) >= _PROJECTION_LINE_LIMIT:
+            self._projection_lines.popitem(last=False)
+        self._projection_lines[key] = prepared
+        return prepared
 
 
 def _build_visibility_base(
@@ -84,7 +110,7 @@ def _build_visibility_base(
                 old = previous.visibility.get((a, b)) if previous is not None else None
                 visibility[(a, b)] = (clear(a, b) if old is None
                                       else old and clear_additions(a, b))
-    return _VisibilityBase(frozenset(nodes), MappingProxyType(visibility))
+    return _VisibilityBase(frozenset(nodes), MappingProxyType(visibility), tuple(sorted(xs)), tuple(sorted(ys)))
 
 
 @dataclass(frozen=True, slots=True)
@@ -225,10 +251,17 @@ def _build_sparse_graph(
     for groups, axis in ((by_x.values(), 1), (by_y.values(), 0)):
         for group in groups:
             group.sort()
+            coordinate = ordered[group[0][1]][1 - axis]
+            endpoint_line = coordinate in (start[1 - axis], end[1 - axis])
+            projection_visibility = None
             for (_, first), (_, second) in zip(group, group[1:]):
                 a, b = ordered[first], ordered[second]
                 visible = (visibility_base.visibility.get((a, b))
                            if visibility_base is not None else None)
+                if visible is None and visibility_base is not None and endpoint_line:
+                    if projection_visibility is None:
+                        projection_visibility = visibility_base.projection_line(axis, coordinate, clear)
+                    visible = projection_visibility.get((a, b))
                 if visible is None:
                     visible = clear(a, b)
                 if visible:

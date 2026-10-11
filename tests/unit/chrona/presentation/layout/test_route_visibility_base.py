@@ -170,3 +170,67 @@ def test_multiple_selected_additions_incrementally_recheck_old_edges_without_a_s
     next_scope = index.route_visibility_scope(("mark", "dependency-route"), None, ())
     assert next_scope.previous_bases is current_store
     assert len(next_scope.additions) == 1  # do not keep the old delta/history
+
+
+def test_projection_line_work_is_reused_but_split_edges_keep_the_full_oracle(monkeypatch):
+    index = _index()
+    rects = tuple(obstacle_envelope(item.geometry) for item in index.all())
+    calls = Counter()
+    original_line = search._build_projection_line
+
+    def build_line(*args, **kwargs):
+        calls["line_builds"] += 1
+        return original_line(*args, **kwargs)
+
+    def clear(a, b):
+        calls["collision_queries"] += 1
+        return not index.collisions(ObstacleSegment(a, b))
+
+    monkeypatch.setattr(search, "_build_projection_line", build_line)
+    base = search._build_visibility_base(rects, grid_offset=2, bounds=(-2, -6, 32, 6), clear=clear)
+    calls.clear()
+    first = search._build_sparse_graph((0, 0), (30, 0), rects, grid_offset=2,
+                                        bounds=(-2, -6, 32, 6), clear=clear, visibility_base=base)
+    first_work = calls["collision_queries"]
+    first_lines = calls["line_builds"]
+    calls["collision_queries"] = 0
+    second = search._build_sparse_graph((0, 0), (30, 0), rects, grid_offset=2,
+                                         bounds=(-2, -6, 32, 6), clear=clear, visibility_base=base)
+    assert first == second
+    assert first_lines > 0 and calls["line_builds"] == first_lines
+    assert 0 < calls["collision_queries"] < first_work  # endpoint splits are NOT cached blindly
+    fresh = search._build_sparse_graph((0, 0), (30, 0), rects, grid_offset=2,
+                                        bounds=(-2, -6, 32, 6), clear=clear)
+    assert first == fresh
+
+
+def test_projection_working_set_is_bounded_and_eviction_preserves_facts():
+    index = _index()
+    rects = tuple(obstacle_envelope(item.geometry) for item in index.all())
+
+    def clear(a, b):
+        return not index.collisions(ObstacleSegment(a, b))
+
+    base = search._build_visibility_base(rects, grid_offset=2, bounds=(-2, -6, 32, 6), clear=clear)
+    original = base.projection_line(0, 0.0, clear)
+    for number in range(40):
+        base.projection_line(number % 2, number / 10, clear)
+        assert len(base._projection_lines) <= search._PROJECTION_LINE_LIMIT
+        retained = sum(len(value) for value in base._projection_lines.values())
+        assert retained <= search._PROJECTION_LINE_LIMIT * max(len(base.x_events), len(base.y_events))
+    assert (0, repr(0.0)) not in base._projection_lines
+    assert base.projection_line(0, 0.0, clear) == original
+
+
+def test_selected_addition_does_not_inherit_projection_line_facts():
+    index = _index()
+    _outcome(index)
+    before = index.copy()
+    old = next(iter(index.route_visibility_scope(None, None, ()).bases.values()))
+    assert old._projection_lines
+    index.add(SurfaceObstacle("new-blocker", "mark", "timeline", ObstacleRect(0, -3, 1, 3)))
+    _outcome(index, start=(0, -5), end=(30, 5))
+    new = next(iter(index.route_visibility_scope(None, None, ()).bases.values()))
+    assert new._projection_lines is not old._projection_lines
+    assert new.projection_line(1, 0.5, lambda a, b: not index.collisions(ObstacleSegment(a, b))) != (
+        old.projection_line(1, 0.5, lambda a, b: not before.collisions(ObstacleSegment(a, b))))
