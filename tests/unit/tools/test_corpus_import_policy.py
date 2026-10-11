@@ -9,12 +9,8 @@ import sys
 import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
-IMPORT_MODULES = (
-    "tests.acceptance.output.test_public_geometry_regressions",
-    "tests.acceptance.output.test_generated_output_properties",
-    "tests.acceptance.output.test_closure_inputs_are_read",
-    "tests.integration.test_view_v01_schema",
-)
+IMPORT_MODULES = tuple(".".join(path.relative_to(ROOT).with_suffix("").parts)
+                       for path in sorted((ROOT / "tests").rglob("test_*.py")))
 CORPUS_LOADERS = {"declared_slides", "reachable_view_paths", "manifest_targets"}
 
 
@@ -135,11 +131,12 @@ def test_importing_corpus_test_modules_does_not_read_example_yaml(tmp_path: Path
     script = r'''
 import importlib
 from pathlib import Path
+import pytest
 
 def _is_example_path(path):
     return "examples" in path.parts and path.suffix.lower() in {".yaml", ".yml"}
 
-for method_name in ("read_bytes", "read_text"):
+for method_name in ("read_bytes", "read_text", "open"):
     original = getattr(Path, method_name)
     def guarded(self, *args, _original=original, _method=method_name, **kwargs):
         if _is_example_path(self):
@@ -148,10 +145,10 @@ for method_name in ("read_bytes", "read_text"):
     setattr(Path, method_name, guarded)
 
 original_glob = Path.glob
-def guarded_glob(self, pattern):
+def guarded_glob(self, pattern, *args, **kwargs):
     if "examples" in self.parts and "manifest.yaml" in pattern:
         raise AssertionError(f"manifest discovery during import: {self}/{pattern}")
-    return original_glob(self, pattern)
+    return original_glob(self, pattern, *args, **kwargs)
 Path.glob = guarded_glob
 
 import tools.derived_evidence as derived
@@ -164,7 +161,12 @@ reachability.reachable_view_paths = forbidden
 evidence.declared_slides = forbidden
 
 for module in MODULES:
-    importlib.import_module(module)
+    try:
+        importlib.import_module(module)
+    except pytest.skip.Exception:
+        # Honor modules' explicit optional-dependency skips, just as collection
+        # does; import failures and assertion failures still fail this guard.
+        pass
 '''.replace("MODULES", repr(IMPORT_MODULES))
     result = subprocess.run([sys.executable, "-c", script], cwd=ROOT, text=True,
                             capture_output=True, check=False)
