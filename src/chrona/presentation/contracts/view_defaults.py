@@ -7,7 +7,7 @@ View it is. Pure and project-independent: it reads two mappings and returns a ma
 
 Rule (the reviewer-approved design note on #1341, decision 2): a member the View declares replaces the design's whole member;
 a member it omits takes the design's. The three members whose sub-members split between connection and design (`comparison`,
-`rows`, `window`) merge one level down, and only into a member the View declares. A Layout profile without `viewDefaults`, or a
+`rows`, `window`) merge one level down, creating omitted members from design sub-members only. A Layout profile without `viewDefaults`, or a
 View that declares every member, is untouched.
 """
 from __future__ import annotations
@@ -39,7 +39,13 @@ def merge_view_defaults(view: Mapping[str, Any], defaults: Mapping[str, Any]) ->
             body[name] = deepcopy(defaults[name])
     for name, members in SPLIT_MEMBERS.items():
         declared, offered = body.get(name), defaults.get(name)
-        if isinstance(declared, dict) and isinstance(offered, Mapping):
+        if not isinstance(offered, Mapping):
+            continue
+        if name not in body:
+            supplied = {member: deepcopy(offered[member]) for member in members if member in offered}
+            if supplied:
+                body[name] = supplied
+        elif isinstance(declared, dict):
             for member in members:
                 if member in offered and member not in declared:
                     declared[member] = deepcopy(offered[member])
