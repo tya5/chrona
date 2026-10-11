@@ -2,30 +2,35 @@
 from __future__ import annotations
 
 from datetime import date
+from dataclasses import replace
+from importlib import import_module
 from pathlib import Path
 
-import yaml
 import pytest
 
-from chrona.resources import builtin_preset_source_root
+from chrona.resources import safe_load
+from chrona.usecases import preset_library
+from chrona.usecases.failure_report import report_failure
+from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
 
 
 def _editorial_default_parts() -> dict:
-    parts = sr.bundle("editorial")
-    root = builtin_preset_source_root("presets/bundles/editorial-readable-default")
-    parts["view"] = yaml.safe_load(root.joinpath("view.yaml").read_bytes())
-    return parts
+    entry = next(item for item in preset_library._library()
+                 if item["id"] == preset_library.DEFAULT_PRESET_ID)
+    return {kind: safe_load(preset_library._read_member(preset_library._member(entry, member)))
+            for kind, member in (("view", "view"), ("theme", "theme"),
+                                 ("scheme", "colorScheme"), ("layout", "layout"))}
 
 
 def _case(case: str) -> tuple[dict, tuple[str, ...]]:
-    start = date(2026, 1, 5)
+    start = date(2027, 1, 4)
     if case == "eleven-day-span":
-        return sr.project({"span": sr.span("span", start, 11, title="Eleven day span")}), ("span",)
+        return sr.project({"span": sr.span("span", start, 11, title="The only task")}), ("span",)
     if case == "one-day-span":
         return sr.project({"span": sr.span("span", start, 1, title="One day span")}), ("span",)
     if case == "single-gate":
-        return sr.project({"gate": sr.point("gate", start, title="Single gate")}), ("gate",)
+        return sr.project({"gate": sr.point("gate", start, title="Go live")}), ("gate",)
     if case == "same-date-gates":
         return sr.project({
             "gate-a": sr.point("gate-a", start, title="Gate A"),
@@ -80,3 +85,24 @@ def test_selected_planned_default_pads_sparse_spans_and_gates(tmp_path: Path, ca
         dates.extend(date.fromisoformat(schedule[key]) for key in ("start", "end", "at") if key in schedule)
     assert scale.domain_start < min(dates)
     assert max(dates) < scale.domain_end
+
+
+def test_degenerate_completed_projection_keeps_owner_detail_in_public_diagnostic(tmp_path, monkeypatch):
+    # Valid source selection normally prevents this internal fault. Inject it at
+    # the projection boundary to test the real render/report path, not a mock report.
+    render_module = import_module("chrona.usecases.render_review")
+    original = render_module.build_review_projection
+    at = date(2027, 1, 4)
+    def degenerate(*args, **kwargs):
+        return replace(original(*args, **kwargs), window=(at, at))
+    monkeypatch.setattr(render_module, "build_review_projection", degenerate)
+    with pytest.raises(RenderFailed) as caught:
+        sr.render(tmp_path, sr.project({"gate": sr.point("gate", at)}),
+                  presentation=_editorial_default_parts())
+    diagnostic = report_failure(caught.value).payload()["diagnostics"][0]
+    assert diagnostic["code"] == "E_PRESENTATION_PROJECTION_REQUIRED"
+    assert diagnostic["sourceRef"] == "/projection/window"
+    assert "2027, 1, 4" in diagnostic["message"]
+    assert "gate" in diagnostic["message"]
+    assert "positive Date window" in diagnostic["message"]
+    assert "no further detail" not in diagnostic["message"]
