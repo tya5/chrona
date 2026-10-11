@@ -130,6 +130,18 @@ their candidate/quota/rank behavior remain unchanged. New selection still
 passes completed semantic corridors through the existing terminal preparation,
 full-route safety and measured quality gates before returning a route.
 
+Foundation implemented and locally reviewed: explicit internal first-fit
+selects finite shape proposals through the existing completion function, with
+an immutable shape-settled fact. Public schema/default wiring has not started.
+Focused shape/annotation-diagnostic/routing/search/label batch: 119 pass in
+2.85 s; inward imports, module reachability (236, none orphaned), float
+accumulation and diff checks pass. The no-graph test forbids both graph assembly
+and search; a quality-rejected negative control proves actual fallback graph
+work. Terminal refusal, foreign-host text collision and prepared self-overlap
+remain rejection controls. A malformed new fixture initially named an
+unregistered host; the fixture now registers it and the exemption validator
+remains unchanged. No authored examples or managed outputs change.
+
 ## Literal acceptance (all currently not met for the new policy)
 
 | Criterion copied from the issue | Required evidence |
