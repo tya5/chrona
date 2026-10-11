@@ -42,6 +42,14 @@ An override key names one existing node ID. An override may replace declared pro
 of that node but cannot change its ID, kind, or insert executable content. Unknown IDs,
 base cycles, kind changes, null deletion, and multiple bases diagnose.
 
+`extends` resolves when the Render Context closure is read (#1342), the way a derived Theme does: the base is an ordinary
+pinned reference that any Store the reader reads can hold (the example's own, a shared design Store or the packaged
+`chrona.resources` store), its `contentIdentity` is verified on read, bases may chain, and the closure resource is the
+flattened standalone profile whose identity is that of the effective value. Every top-level member the derived profile states
+(for example `viewDefaults`, `relationRouting`) replaces the base's; the rest is inherited. Editing a base therefore moves the
+derived profile's identity and the Scene with no Context edit, while the derived profile's `extends` pin is re-pinned inside
+the design that owns both.
+
 Whole Layout Profiles are the reusable composition unit. Theme resources are the
 reusable value unit. Render Context binds separate immutable Theme and Layout resource
 references to a Project, View, optional Detail/Summary/Actual inputs, viewport, locale,

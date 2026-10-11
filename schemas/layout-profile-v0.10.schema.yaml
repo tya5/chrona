@@ -109,7 +109,7 @@ $defs:
         additionalProperties: false
         required: [provider, identity]
         properties:
-          provider: {description: "Store provider implementation.", enum: [git, local, content]}
+          provider: {description: "Store provider implementation.", enum: [git, local, content, package]}
           identity: {description: "Stable Store identity.", type: string, minLength: 1}
           locator: {description: "Optional provider-specific Store locator.", type: string, minLength: 1}
       address: {description: "Strict Store-relative profile address (the `storeAddress` definition of the common part).", examples: ["layouts/briefing.yaml"], minLength: 1, $ref: "urn:chrona:common-v0.1#/$defs/storeAddress"}

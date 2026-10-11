@@ -174,12 +174,15 @@ def _merge_base(profile: Mapping[str, Any], bases: Mapping[str, LayoutBase], sta
         if "id" in override or "kind" in override:
             raise LayoutError("E_LAYOUT_OVERRIDE_KIND", f"/overrides/{node_id}", node_id)
         target.update(deepcopy(override))
-    resolved["id"] = profile["id"]
-    resolved["flowDirection"] = profile["flowDirection"]
-    resolved["dependencyNetworkFlowDirection"] = profile["dependencyNetworkFlowDirection"]
-    resolved["requiredThemeTokens"] = deepcopy(profile["requiredThemeTokens"])
-    resolved["reviewSurface"] = deepcopy(profile["reviewSurface"])
+    for key, value in profile.items():  # every member the derived profile states replaces the base's (#1342)
+        if key not in ("extends", "overrides"):
+            resolved[key] = deepcopy(value)
     return resolved
+
+
+def flatten_layout_profile(profile: Mapping[str, Any], bases: Mapping[str, LayoutBase]) -> dict[str, Any]:
+    """The standalone profile a derived (`extends` plus `overrides`) profile stands for, given its resolved bases."""
+    return _merge_base(profile, bases, (str(profile.get("id", "")),))
 
 
 def _distance(value: Any, theme_values: Mapping[str, Any], path: str, literals: list[str], used_tokens: set[str]) -> Decimal:
