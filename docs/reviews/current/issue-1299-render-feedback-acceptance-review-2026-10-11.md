@@ -1,7 +1,7 @@
 <!-- chrona:literal-acceptance/v1 -->
 # Render feedback acceptance (#1299)
 
-Authority: pre-code `c14a86aa`, Specs06 §6.1 and33 §13; [living work record](https://github.com/tya5/chrona/issues/1299#issuecomment-6095558700). Implementation: observer/routing `b3d401fc`/`dc31c097`, CLI `99e111c0`, relation override `d67cdf94`, height policy `8eaa30a3`; current READY7563df4c adoption `85bd7220`, retained default table-bound correction `29d02e9d`.
+Authority: pre-code `c14a86aa`, Specs06 §6.1 and33 §13; [living work record](https://github.com/tya5/chrona/issues/1299#issuecomment-6095558700). Implementation: observer/routing `b3d401fc`/`dc31c097`, CLI `99e111c0`, relation override `d67cdf94`, height policy `8eaa30a3`; retained default table-bound correction `29d02e9d`. Post-M1/#1298 integration `c3d2bf55` is preparation, not final READY/release acceptance.
 
 ## Literal issue acceptance
 
@@ -23,6 +23,10 @@ Current own Python3.11 focused suite:107 PASS42.44s, covering progress/PTY,
 height limits, relation override, packaged table bounds and explicit-window
 relation/lane/Scene absences. Merge keeps completed paint/absence geometry and
 separate progress-pass identity; plot bounds retain their positional handoff.
+Post-M1/#1298 combined batch:60 PASS33.56s on `a5b1e229`, covering actual CLI
+progress/relations, completed height-limit output, work counters, history and
+memo quotas. Product/test/schema bytes remain identical at `c3d2bf55`; ordinary
+integration has no conflicts and authors no examples or derived report changes.
 The standalone default preserves merged table maxInlineShare0.4, adding only
 the declared height limit and truthful Layout ID; the whole-resource equality
 test remains intact. Network auto remains rejected; finite network requests
