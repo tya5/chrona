@@ -30,6 +30,19 @@ def _month_labels(view: dict) -> dict:
 def _parts(*, placement="inline", secondary_size=9, **overrides) -> dict:
     parts = sr.bundle("executive-light")
     parts["view"]["body"]["window"] = dict(WINDOW)
+    # Secondary declarations exercise a fixed month tier, not preset defaults.
+    parts["view"]["body"]["axis"]["tiers"] = [
+        {"unit": "quarter", "every": 1, "role": "band", "typographyRole": "axisQuarter"},
+        {"unit": "quarter", "every": 1, "role": "grid-major"},
+        {"unit": "quarter", "every": 1, "role": "labels", "typographyRole": "axisQuarter",
+         "label": {"form": "year-quarter", "align": "center", "overflow": "visible-overflow",
+                   "orientation": "horizontal"}},
+        {"unit": "month", "every": 1, "role": "band", "typographyRole": "axisMonth"},
+        {"unit": "month", "every": 1, "role": "labels", "typographyRole": "axisMonth",
+         "label": {"form": "short-month", "align": "start", "overflow": "thin-with-record",
+                   "orientation": "horizontal"}},
+        {"unit": "month", "every": 1, "role": "grid-minor"},
+    ]
     label = _month_labels(parts["view"])["label"]
     label["nameTable"] = "en-US"
     label["secondary"] = {"form": "numeric-month", "nameTable": "en-US", "typographyRole": "axisSecondary",
