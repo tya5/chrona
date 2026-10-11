@@ -60,10 +60,13 @@ def test_default_axis_is_readable_from_one_month_to_ten_years(tmp_path, end):
 
 def test_reported_five_year_project_has_no_axis_label_intersections(tmp_path):
     source = sr.project({
-        "p1": sr.span("p1", date(2027, 1, 4), (date(2028, 6, 30) - date(2027, 1, 4)).days),
-        "p2": sr.span("p2", date(2028, 3, 1), (date(2030, 2, 28) - date(2028, 3, 1)).days),
-        "p3": sr.span("p3", date(2029, 10, 1), (date(2031, 12, 31) - date(2029, 10, 1)).days),
-        "m1": sr.point("m1", date(2028, 1, 15)),
-        "m2": sr.point("m2", date(2030, 3, 1)),
+        "p1": sr.span("p1", date(2027, 1, 4), (date(2028, 6, 30) - date(2027, 1, 4)).days,
+                      title="Phase 1 research"),
+        "p2": sr.span("p2", date(2028, 3, 1), (date(2030, 2, 28) - date(2028, 3, 1)).days,
+                      title="Phase 2 platform build"),
+        "p3": sr.span("p3", date(2029, 10, 1), (date(2031, 12, 31) - date(2029, 10, 1)).days,
+                      title="Phase 3 rollout"),
+        "m1": sr.point("m1", date(2028, 1, 15), title="Funding round"),
+        "m2": sr.point("m2", date(2030, 3, 1), title="GA"),
     })
     _assert_readable(sr.render(tmp_path, source, presentation=_default_parts()))
