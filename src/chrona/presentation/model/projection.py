@@ -9,6 +9,7 @@ from enum import StrEnum
 from typing import Any
 
 from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
+from chrona.core.relation_identity import relation_identity
 from chrona.presentation.contracts.resources import ViewInput
 from chrona.presentation.review.lane_membership import (
     LaneItem, LaneMembership, LanePackingInput, PlannedPoint, PlannedSpan,
@@ -405,9 +406,10 @@ def _project_lane_membership(project: dict[str, Any], rows: tuple[ReviewRowProje
         if key is not None and (not isinstance(key, str) or not key):
             raise ValueError(f"E_REVIEW_LANE_KEY: the lane key of object {item.object_id!r} must be a non-empty string, got {key!r}")
         items.append(LaneItem(item.item_id, item.object_id, group_id, planned, key, attached_host))
-    relations = tuple(SelectedFSRelation(str(relation["id"]), str(relation["from"]["object"]),
-                                         str(relation["to"]["object"]))
-                      for relation in project.get("relations", ())
+    relations = tuple(SelectedFSRelation(relation_identity(index, relation), str(relation["from"]["object"]),
+                                         str(relation["to"]["object"]),
+                                         relation.get("id") or relation_identity(index, relation))
+                      for index, relation in enumerate(project.get("relations", ()))
                       if relation.get("type") == "dependency"
                       and relation.get("from", {}).get("endpoint") == "end"
                       and relation.get("to", {}).get("endpoint") == "start"
@@ -426,16 +428,19 @@ def _dependency_network_projection(project: dict[str, Any], selected: list[Revie
                                         _network_order_key(item, view), item.critical, item.source_kind)
                   for item in selected)
     edges = []
-    for relation in project.get("relations", ()):
+    for index, relation in enumerate(project.get("relations", ())):
         source = relation.get("from", {})
         target = relation.get("to", {})
         source_id, target_id = source.get("object"), target.get("object")
         if source_id not in selected_ids or target_id not in selected_ids:
             continue
-        edges.append(DependencyNetworkEdge(str(relation["id"]), str(source_id), str(target_id),
+        identity = relation_identity(index, relation)
+        edge = DependencyNetworkEdge(identity, str(source_id), str(target_id),
                                            str(source.get("endpoint", "end")), str(target.get("endpoint", "start")),
-                                           all(item.critical for item in selected if item.object_id in {source_id, target_id})))
-    return DependencyNetworkProjection(nodes, tuple(sorted(edges, key=lambda item: item.relation_id)))
+                                           all(item.critical for item in selected if item.object_id in {source_id, target_id}))
+        edges.append((relation.get("id") or identity, edge))
+    return DependencyNetworkProjection(nodes, tuple(edge for _, edge in sorted(
+        edges, key=lambda item: (item[0], item[1].relation_id))))
 
 
 def _network_order_key(item: ReviewItem, view: ViewInput) -> tuple[Any, ...]:

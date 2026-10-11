@@ -219,6 +219,60 @@ def test_lane_projection_derives_chain_and_attachment_without_actual_or_geometry
     assert (gate_row.group_id, gate.group_id, gate.attached_to) == ("bus", "bus", "avionics")
 
 
+@pytest.mark.parametrize("surface", ("table-timeline", "dependency-network"))
+def test_selected_dependency_identity_keeps_its_full_project_index(surface):
+    from tests.support import synthetic_review as sr
+
+    source = sr.with_calendar(sr.project({
+        "x": sr.span("x", date(2026, 2, 2), 3),
+        "a": sr.span("a", date(2026, 2, 2), 3),
+        "b": sr.span("b", date(2026, 2, 9), 3),
+    }, [
+        {"id": "outside", "type": "dependency", "from": {"object": "x", "endpoint": "end"},
+         "to": {"object": "b", "endpoint": "start"}, "lag": "0d"},
+        {"type": "dependency", "from": {"object": "a", "endpoint": "end"},
+         "to": {"object": "b", "endpoint": "start"}, "lag": "0d"},
+        {"id": "relation:1", "type": "dependency", "from": {"object": "a", "endpoint": "end"},
+         "to": {"object": "b", "endpoint": "start"}, "lag": "0d"},
+    ]))
+    view = typed_view({"body": {
+        "selection": {"include": {"ids": ["a", "b"]}},
+        "rows": {"mode": "lanes" if surface == "table-timeline" else "automatic"},
+        "window": {"mode": "selected-planned"}, "comparison": {"actual": "optional"},
+    }})
+    view = replace(view, surface=surface, rows=replace(view.rows, packing=("chain",)))
+    result = schedule(source)
+    assert result.ok
+    projection = build_review_projection(source, result.placements, view, None)
+
+    if surface == "table-timeline":
+        membership = projection.lane_membership
+        assert membership.assignment_for("a").lane_id == membership.assignment_for("b").lane_id
+        assert membership.assignment_for("b").rule == "chain"
+        assert membership.assignment_for("b").source_id == "relation:1"
+    else:
+        assert tuple(edge.relation_id for edge in projection.network.edges) == (
+            "relation:1", "relation:2:relation:1")
+
+
+@pytest.mark.parametrize("declared_id", (None, "", "r", "relation:0"))
+def test_a_valid_project_with_optional_relation_id_renders_through_real_ingress(tmp_path, declared_id):
+    from xml.etree import ElementTree
+    from chrona.core.validation import validate_project
+    from tests.support import synthetic_review as sr
+
+    relation = {"type": "dependency", "from": {"object": "a", "endpoint": "end"},
+                "to": {"object": "b", "endpoint": "start"}, "lag": "0d"}
+    if declared_id is not None:
+        relation["id"] = declared_id
+    source = sr.with_calendar(sr.project({"a": sr.span("a", date(2026, 2, 2), 3),
+                                         "b": sr.span("b", date(2026, 2, 9), 3)}, [relation]))
+    assert validate_project(source) == []
+    rendered = sr.render(tmp_path, source)
+    assert ElementTree.fromstring(rendered.artifact.content).tag.endswith("svg")
+    assert rendered.surface.primitives
+
+
 def test_lane_projection_object_key_wins_over_field_and_unknown_target_fails():
     project = {"objects": {
         "a": {"title": "A", "fields": {"slot": "field-a"}},
