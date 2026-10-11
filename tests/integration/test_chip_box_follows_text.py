@@ -12,11 +12,12 @@ from chrona.presentation.scene.contrast_policy import evaluate_scene_contrast
 from chrona.presentation.scene.serialization import scene_document, serialize_scene
 from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
+from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 
 def _parts(*, viewer_fit: str | None = None, radius: float = 0, physical_radius=None,
            stroke: bool = False, solid_fill: bool = True):
-    parts = sr.bundle("executive-light")
+    parts = use_legacy_six_tier_axis(sr.bundle("executive-light"))
     body = parts["theme"]["body"]
     body_view = parts["view"]["body"]
     for key in ("selection", "grouping", "ordering"):
@@ -106,7 +107,9 @@ def test_default_and_explicit_raw_chip_output_are_byte_identical(tmp_path):
     explicit_raw = _render(tmp_path, "explicit-raw", viewer_fit="raw")
     assert raw.artifact.content == explicit_raw.artifact.content
     assert sha256(raw.artifact.content).hexdigest() == "51c54350062c2774890471a04b76bd42e2e2775d04d81547523e0e92687049ef"
-    assert sha256(serialize_scene(raw.scene)).hexdigest() == "445031fb33b78daae640a2c9720a9d66fa76210079eb0da978f6710334807368"
+    # READY-477e571d resources reproduce 445031fb. #1295 changes only their
+    # View/Layout provenance; every other Scene field and SVG byte is identical.
+    assert sha256(serialize_scene(raw.scene)).hexdigest() == "5e027fbe0416213797bfc27c273a615ae43ced18309317e7d6da1b3439e023bd"
     labels = [item for item in raw.surface.primitives if item.kind == "Text" and item.purpose == "member-label"]
     assert labels and any(len(item.text_layout.lines) > 1 for item in labels)
     assert "<tspan" in raw.artifact.content.decode("utf-8")

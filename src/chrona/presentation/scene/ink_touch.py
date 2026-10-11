@@ -25,7 +25,7 @@ class InkTouchError(ValueError):
     """A malformed outline: not a list of finite `move`, `line` and `quadratic` commands."""
 
 
-def subpaths(outline: Iterable[Mapping[str, Any]]) -> tuple[tuple[Point, ...], ...]:
+def subpaths(outline: Iterable[Mapping[str, Any]], *, include_degenerate: bool = False) -> tuple[tuple[Point, ...], ...]:
     """Flatten a completed outline into polylines, one per `move`; a closing line stays an explicit point."""
     result: list[list[Point]] = []
     for command in outline:
@@ -50,7 +50,7 @@ def subpaths(outline: Iterable[Mapping[str, Any]]) -> tuple[tuple[Point, ...], .
                                    u * u * start[1] + 2 * u * t * control[1] + t * t * end[1]))
         else:
             raise InkTouchError("invalid outline command")
-    return tuple(tuple(path) for path in result if len(path) >= 2)
+    return tuple(tuple(path) for path in result if include_degenerate or len(path) >= 2)
 
 
 def fill_touches(outline: Sequence[Mapping[str, Any]], bounds: Rect) -> bool:
@@ -65,6 +65,66 @@ def fill_touches(outline: Sequence[Mapping[str, Any]], bounds: Rect) -> bool:
     # No edge meets the rectangle, so it lies wholly inside or wholly outside the filled area: one point decides.
     centre = ((x0 + x1) / 2, (y0 + y1) / 2)
     return sum(_winding(path, centre) for path in paths) != 0
+
+
+def filled_trapezoids(outline: Sequence[Mapping[str, Any]]) -> tuple[tuple[Point, ...], ...]:
+    """Convex cells of the completed nonzero fill, using the same curve chords.
+
+    Vertex and crossing heights divide the paths into bands where edge order
+    is fixed. Winding selects filled intervals, preserving holes and overlaps.
+    This decomposes supplied ink; it does not create Layout placements.
+    """
+    paths = subpaths(outline, include_degenerate=True)
+    if not paths or any(len(path) < 4 or path[-1] != path[0] for path in paths):
+        raise InkTouchError("pattern host requires closed nondegenerate subpaths")
+    edges = tuple((a, b) for path in paths for a, b in zip(path, path[1:]) if a[1] != b[1])
+    heights = {point[1] for path in paths for point in path}
+    for index, (a, b) in enumerate(edges):
+        for c, d in edges[index + 1:]:
+            if max(min(a[1], b[1]), min(c[1], d[1])) >= min(max(a[1], b[1]), max(c[1], d[1])):
+                continue
+            ax, ay = b[0] - a[0], b[1] - a[1]
+            cx, cy = d[0] - c[0], d[1] - c[1]
+            denominator = ax * cy - ay * cx
+            if denominator == 0:
+                continue
+            dx, dy = c[0] - a[0], c[1] - a[1]
+            t = (dx * cy - dy * cx) / denominator
+            u = (dx * ay - dy * ax) / denominator
+            if not all(isfinite(value) for value in (denominator, t, u)):
+                raise InkTouchError("non-finite host contour crossing")
+            if 0 < t < 1 and 0 < u < 1:
+                heights.add(a[1] + t * ay)
+
+    def at(edge, y):
+        a, b = edge
+        value = a[0] + (y - a[1]) * (b[0] - a[0]) / (b[1] - a[1])
+        if not isfinite(value):
+            raise InkTouchError("non-finite host contour band")
+        return value
+
+    result = []
+    ordered = sorted(heights)
+    for low, high in zip(ordered, ordered[1:]):
+        mid = low + (high - low) / 2
+        if not isfinite(mid):
+            raise InkTouchError("non-finite host contour band")
+        crossings = sorted((at(edge, mid), edge) for edge in edges
+                           if min(edge[0][1], edge[1][1]) < mid < max(edge[0][1], edge[1][1]))
+        winding = 0
+        previous = None
+        for position, edge in crossings:
+            if winding and previous is not None and previous[0] < position:
+                left = previous[1]
+                result.append(((at(left, low), low), (at(edge, low), low),
+                               (at(edge, high), high), (at(left, high), high)))
+            winding += 1 if edge[1][1] > edge[0][1] else -1
+            previous = (position, edge)
+        if winding:
+            raise InkTouchError("unclosed host contour winding")
+    if not result:
+        raise InkTouchError("empty host contour fill")
+    return tuple(result)
 
 
 def stroke_touches(outline: Sequence[Mapping[str, Any]], bounds: Rect, stroke_width: float) -> bool:

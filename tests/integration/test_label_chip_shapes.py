@@ -15,6 +15,7 @@ import yaml
 from chrona.presentation.scene.serialization import serialize_scene
 from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
+from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -24,7 +25,7 @@ ACTUAL = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "obse
 
 
 def _asof_parts(shape=None, *, label="TODAY!", catalog_stroke=False, numeric_spacing=None):
-    parts = sr.bundle("executive-light")
+    parts = use_legacy_six_tier_axis(sr.bundle("executive-light"))
     theme = parts["theme"]["body"]
     if numeric_spacing is not None:
         # Exercise a treatment supported by the existing Theme grammar, not a
@@ -222,7 +223,9 @@ def test_absent_shape_preserves_frozen_pre_feature_scene_and_svg_bytes(tmp_path)
     rendered = _render_asof(tmp_path)
     scene = serialize_scene(rendered.scene)
     assert len(scene) == 22949
-    assert sha256(scene).hexdigest() == "4898941430be3208a167abae1dd19f5910dd9c34699e2b157e4d150570ebb0b2"  # the Scene provenance pins the Theme bytes: only this hash moved with the preset Theme (#946); the SVG hash below did not
+    # READY-477e571d resources reproduce 48989414. #1295 changes only their
+    # View/Layout provenance; every other Scene field and SVG byte is identical.
+    assert sha256(scene).hexdigest() == "52e5f1880d35c19a05b1093e64787b604b400d204917f2888c87edf397c27b09"
     assert len(rendered.artifact.content) == 6992
     assert sha256(rendered.artifact.content).hexdigest() == "74bf8d570ca05067f0000a3002520bb237113b11ac682e21ae367ec0e82c3e0b"
 

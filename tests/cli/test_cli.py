@@ -361,7 +361,7 @@ def test_cli_infers_png_bytes_and_rejects_explicit_svg_png_mismatch(tmp_path, mo
 
 
 @pytest.mark.parametrize("viewport", (None, "1600x900"))
-def test_cli_halcyon_default_draft_has_coherent_slots_and_month_axis(tmp_path, monkeypatch, capsys, viewport):
+def test_cli_halcyon_default_draft_has_coherent_slots_and_auto_axis(tmp_path, monkeypatch, capsys, viewport):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     output, scene_path = tmp_path / "plan.svg", tmp_path / "plan.scene.json"
     argv = ["chrona", "render", str(root / "examples/halcyon-1/project.yaml"),
@@ -376,9 +376,12 @@ def test_cli_halcyon_default_draft_has_coherent_slots_and_month_axis(tmp_path, m
         "W_LAYOUT_MARK_OVERFLOW", "W_LAYOUT_ROW_DENSITY", "W_SCENE_TEXT_INTERSECTION") for item in warnings)
     svg = output.read_text(encoding="utf-8")
     assert 'data-scene-id="axis-label:2:' in svg
-    # #383/#429: the bundled default is now the Editorial preset, whose axis
-    # role transforms month labels to uppercase (letterSpacing.wide, #410).
-    assert ">MAR</text>" in svg
+    # The declared auto tier uses year-qualified month forms and Editorial
+    # typography transforms them to uppercase; SVG must retain those labels.
+    labels = ["".join(node.itertext()) for node in ET.fromstring(svg).iter()
+              if node.attrib.get("data-scene-id", "").startswith("axis-label:2:")]
+    assert labels and "MAR 2027" in labels
+    assert all(label == label.upper() for label in labels)
     scene = json.loads(scene_path.read_text(encoding="utf-8"))
     surface = scene["surfaces"][0]
     slots = {slot["source"]: slot["bounds"] for slot in surface["slots"]}
@@ -735,7 +738,8 @@ def test_cli_preset_list_reports_every_catalogue_entry_in_order(monkeypatch, cap
 
     payload = json.loads(capsys.readouterr().out)
     assert payload["status"] == "ok"
-    assert payload["presets"] == [{"id": entry["id"], "gallerySet": entry["gallerySet"]} for entry in expected]
+    assert payload["presets"] == [
+        {"id": entry["id"], **({"gallerySet": entry["gallerySet"]} if "gallerySet" in entry else {})} for entry in expected]
 
 
 @pytest.mark.parametrize(

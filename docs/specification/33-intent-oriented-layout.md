@@ -70,7 +70,7 @@ swatch and its own label), and may declare `itemMinInlineSize` when `direction:
 inline`, wrapping exactly as a `flow` container wraps its children (#427). A `legend` slot may instead declare `columns` (an integer of at least 1; #1290): the entries
 fill the columns in reading order (entry k in column k mod `columns`, row k div `columns`), each column as wide as its
 widest entry (swatch, gap and label), `gap` apart, every row as tall as the tallest key; `direction` and `itemMinInlineSize`
-are then not used. A declared grid is measured exactly at measurement time (width of its columns, `ceil(count / columns)`
+are then not used. `columnDistribution` (#1392) is `start` (the default, today's packing from the inline start) or `spread`: under `spread` every column has the same width, the slot's inline size less the gaps divided by the column count, so the column starts are evenly spaced and the last column ends within the slot; entries stay start-aligned in their column and no row moves. When that width is below the widest entry of any column the columns stay packed as under `start`. A declared grid is measured exactly at measurement time (width of its columns, `ceil(count / columns)`
 rows), so the slot is allocated its true block and a grid taller than its slot is the ordinary track overflow. Each
 entry's swatch is constructed by the same geometry its role's `primitive_kind`
 already uses for an object mark, relation, or decoration; Layout never derives a
@@ -141,7 +141,7 @@ geometry independently of visible or thinned labels; band-only and rotated tiers
 content starts below the whole axis band and any larger caption line/gap. Without a compatible neighboring
 tier, or when that aligned caption line cannot fit inside its slot, `top` applies and Layout records
 `I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER:<node>`; the baseline is never clamped while claiming tier alignment.
-At `start-column` (#1290) the caption holds the inline-start column of a `legend` slot that declares `columns`: its line starts at the slot's block start and inline start, inside the entries' block extent, and the entries start after its measured width and half the font size (the measurement of the legend slot grows by that inline extent and is at least one line tall); no entry overlaps it. On any other slot, or a legend without `columns`, `top` applies and Layout records `I_LAYOUT_SLOT_HEADING_NO_START_COLUMN:<node>`.
+At `start-column` (#1290) the caption holds the inline-start column of a `legend` slot that declares `columns`: its line starts at the slot's block start and inline start, inside the entries' block extent, and the entries start after its measured width and the caption's `gap` (a distance, a literal or a Theme token; absent means half the font size) (the measurement of the legend slot grows by that inline extent and is at least one line tall); no entry overlaps it. On any other slot, or a legend without `columns`, `top` applies and Layout records `I_LAYOUT_SLOT_HEADING_NO_START_COLUMN:<node>`.
 The slot's content starts below the line and its gap, and below the band when the caption sits in it, so nothing
 lies under the caption; the slot keeps its full bounds. The native owner then lays out its content in that
 reduced viewport: title runs, table/timeline rows, axis tiers, dependency-network geometry and detail-panel
@@ -256,6 +256,41 @@ an absent maximum means unbounded within the declared viewport.
 
 ## 6. Placement, overflow, and distribution
 
+A `source: table` slot may declare finite `maxInlineShare` in `(0, 1]`
+(#1295). Its strict ceiling is that share of the independently resolved parent
+inner inline budget, after inline padding. A row subtracts its active-child
+inline gaps; a column's block gaps and overlay gaps are not inline deductions.
+A flow uses its parent inner inline budget before line selection. In a grid,
+the budget is the independently resolved spanned cell width, including only
+the gaps internal to that span. Resolve the ceiling before intrinsic floors
+and flexible allocation; redistribute a capped flexible share to the remaining
+tracks under Section 5, never enlarge the parent to honour the table's text.
+
+The budget must be finite and determined without that table's uncapped
+intrinsic width. A content-sized ancestor or intrinsic grid track is not itself
+proof of such a budget. An unresolved/circular budget, or an authored fixed
+size or non-content minimum above the ceiling, is `E_LAYOUT_TABLE_OVERFLOW`.
+The property is invalid on another source or a container. It does not change
+ordinary `fitContent`, fixed, `fr`, or `minmax` semantics when absent; the
+explicit table exception to natural content floors is specified in
+[Specification 24](24-table-timeline-presentation.md#21-table-and-row-metrics-480).
+
+Heading and table sources with View `wrap: allow` use the same independent
+parent/cell budget closure with a full-share ceiling unless the table declares
+`maxInlineShare`. This does not admit that property on heading slots.
+The normalized source intent selects the wrapping slots;
+the engine does not inspect View YAML or Project copy. A fitting heading retains
+its natural intrinsic demand, including inside a content-sized host. Select
+heading closure only on inline shortage in its natural allocation, using native
+measurement and ancestor inner extents; unrelated sibling or block overflow
+does not activate it. Neutralize all selected
+width-dependent source demands together while probing, then remeasure each at
+its allocated width before block allocation. A circular budget, an authored
+minimum above the ceiling, or mandatory text that cannot fit is
+`E_LAYOUT_TEXT_OVERFLOW` for a heading, not `E_LAYOUT_TABLE_OVERFLOW`.
+Full-share budgets retain the existing Grid cell-filling allocation; text is
+closed inside that cell rather than shrinking the host to its fitting copy.
+
 Every slot declares `place.inline` and `place.block`. Containers declare `alignItems`
 for the cross axis and `justifyContent` for the main axis. A slot value overrides its
 container's item alignment on that axis.
@@ -319,8 +354,10 @@ Source adapters may read View-owned semantic modes and Theme `metrics` bindings.
 not read Layout YAML, resize or move their slot, allocate peer slots, or supply fallback
 coordinates. Every author-tunable source-internal distance is a Theme number token reached
 through a closed semantic metric name. A missing binding or non-number token diagnoses;
-there is no renderer default table. Layout source measurements are collected once, frozen,
-and reused by arrangement and Scene composition so the two passes cannot disagree.
+there is no renderer default table. Source content, typography and font assets are
+collected once and frozen. Width-dependent Layout measurements close against each
+candidate's independently resolved allocation; arrangement and composition reuse
+the final candidate's closure, never an earlier width's lines or baselines.
 
 The initial metric contract is namespaced by source/component (`text.*`, `table.*`,
 `timeline.*`, `axis.*`, `legend.*`, `notes.*`, `icon.*`). The adapter owns the closed key set and
@@ -434,6 +471,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_groups` | Place group-header text and group presentation from completed base extents. |
 | `surface_axis` | Place axis bands/labels and targets; derive calendar overlay intervals from the completed scale. |
 | `surface_marks` | Place tracks/marks/folded points/progress. |
+| `surface_mark_visibility` | Close selected source mark occurrences and window admission once, with typed source/final lane aliases; no membership or Scene geometry repair. |
 | `surface_member_labels` | Build requests and place member/item labels. |
 | `surface_lanes` | Adapt/preflight fixed lanes; emit lane facets and close host identities. |
 | `surface_lane_route_plan` | Plan the route corridors member names must keep clear by rehearsing the name and route phases on private index copies; return corridors only. |

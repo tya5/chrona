@@ -90,8 +90,8 @@ def _read_member(member: dict[str, Any]) -> bytes:
 
 
 def list_builtin_presets() -> list[dict[str, str]]:
-    """Return the finite catalogue's id/gallerySet pairs, in `library.yaml` order (#429)."""
-    return [{"id": str(entry["id"]), "gallerySet": str(entry["gallerySet"])} for entry in _library()]
+    """Return the finite catalogue's ids, each with its `gallerySet` when a gallery set shows it, in `library.yaml` order (#429, #1403)."""
+    return [{"id": str(entry["id"]), **({"gallerySet": str(entry["gallerySet"])} if "gallerySet" in entry else {})} for entry in _library()]
 
 
 def is_builtin_preset_id(identifier: str) -> bool:

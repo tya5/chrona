@@ -28,6 +28,14 @@ class ObservationState(StrEnum):
     UNAVAILABLE = "unavailable"
 
 
+class WindowMode(StrEnum):
+    """Declared View window policy retained as projection provenance."""
+
+    SELECTED_PLANNED = "selected-planned"
+    SELECTED_COMPARISON = "selected-comparison"
+    EXPLICIT = "explicit"
+
+
 def shared_track_member_key(member: Any, source_index: int) -> tuple[int, int, int]:
     """Return the sole stable semantic traversal order for normalized track members."""
     if getattr(member, "track", "stacked") != "shared":
@@ -190,6 +198,7 @@ class ReviewProjection:
     figures: tuple[tuple[str, int], ...] = ()  # (figure id, days) the Core resolved from the View's `figures` (#586)
     deadlines: tuple[ReviewDeadline, ...] = ()  # the Project deadlines the View's `deadlines` shows, in Project order (#822)
     group_figures: tuple[tuple[str, tuple[tuple[str, int], ...]], ...] = ()
+    window_mode: WindowMode = WindowMode.SELECTED_PLANNED
 
 
 @dataclass(frozen=True)
@@ -314,7 +323,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         view.comparison.facets, hierarchy, view.surface,
         _dependency_network_projection(project, selected, view),
         frozenset(getattr(analysis, "driving_relations", ()),), folded_points,
-        lane_membership, lane_rows)
+        lane_membership, lane_rows, window_mode=WindowMode(view.window.mode))
 
 
 def _project_lane_rows(rows: tuple[ReviewRowProjection, ...], membership: LaneMembership

@@ -11,6 +11,7 @@ import pytest
 
 from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
+from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 
 def _parts(*, row: float | None = None, padding: float | None = None, drop: tuple[str, ...] = (),
@@ -28,7 +29,9 @@ def _parts(*, row: float | None = None, padding: float | None = None, drop: tupl
 
 
 def _lanes(*, quarter: float | None = None, drop: tuple[str, ...] = (), explicit: dict[str, float] | None = None) -> dict:
-    parts = _parts(drop=drop, explicit=explicit)
+    # This fixture tests the independent two-lane size derivation, not the
+    # current packaged automatic-axis policy.
+    parts = use_legacy_six_tier_axis(_parts(drop=drop, explicit=explicit))
     if quarter is not None:
         parts["theme"]["body"]["values"]["axis-lane-quarter"]["value"] = quarter
     return parts

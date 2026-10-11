@@ -67,7 +67,7 @@ def _check_frame(frame: Any, pointer: str) -> None:
                           detail="expected a non-negative distance or a {token: id} reference")
 
 
-_HEADING_KEYS = frozenset({"text", "align", "block"})
+_HEADING_KEYS = frozenset({"text", "align", "block", "gap"})
 
 
 def _check_heading(heading: Any, pointer: str) -> None:
@@ -89,10 +89,17 @@ def _check_heading(heading: Any, pointer: str) -> None:
             raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/{key}", detail=f"expected one of {list(allowed)}")
 
 
-def _check_frames(profile: Mapping[str, Any]) -> None:
+def _check_node_declarations(profile: Mapping[str, Any]) -> None:
     def visit(node: Any, path: str) -> None:
         if not isinstance(node, Mapping):
             return
+        if "maxInlineShare" in node:
+            value = node["maxInlineShare"]
+            if (node.get("kind") != "slot" or node.get("source") != "table"
+                    or isinstance(value, bool) or not isinstance(value, (int, float))
+                    or not Decimal(str(value)).is_finite() or not 0 < value <= 1):
+                raise LayoutError("E_LAYOUT_SCHEMA", f"{path}/maxInlineShare",
+                                  detail="expected a finite share in (0, 1] on a table slot")
         if "frame" in node:
             _check_frame(node["frame"], f"{path}/frame")
         if "heading" in node:
@@ -114,7 +121,7 @@ def _validate_schema(profile: Mapping[str, Any]) -> None:
     schema = LAYOUT_SCHEMAS.get(profile.get("version"))
     if schema is None:
         raise LayoutError("E_LAYOUT_SCHEMA", "/version")
-    _check_frames(profile)
+    _check_node_declarations(profile)
     errors = tuple(schema_validator(schema).iter_errors(profile))
     if errors:
         identity = profile.get("id")
@@ -268,6 +275,9 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
                     key = f"{path}/{name}/{side}"; distances[key] = _distance(side_value, theme_values, key, literals, used_tokens)
             else:
                 key = f"{path}/{name}"; distances[key] = _distance(value, theme_values, key, literals, used_tokens)
+        if isinstance(node.get("heading"), dict) and "gap" in node["heading"]:
+            key = f"{path}/heading/gap"
+            distances[key] = _distance(node["heading"]["gap"], theme_values, key, literals, used_tokens)
         if "inset" in node.get("frame", {}):
             key = f"{path}/frame/inset"
             distances[key] = _distance(node["frame"]["inset"], theme_values, key, literals, used_tokens)
