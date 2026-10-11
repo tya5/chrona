@@ -18,7 +18,7 @@ Implementation `d2c61bcd`; scale fixtures `e9bf6e74`.
 | ---: | --- | --- | --- | --- |
 | 1 | The work-unit counter test from item 3 passes and states the bound it checks. | met | [Whole-Project counter tests](../../../tests/integration/test_relation_search_work_bound.py) cover0/10/50/200 relations including composition trials; [search counter/quota tests](../../../tests/unit/chrona/presentation/layout/test_relation_search_budget.py) also cover genuine exhaustion and cache hits. For R completed instances and ≤5 passes: generator calls≤100R, frontier pops≤81920R, exact history predicates≤20R·4096²; graph preparation is recorded separately. | — |
 | 2 | The existing route tests pass unchanged, or changed routes are listed and justified. | met | [Route/memo tests](../../../tests/unit/chrona/presentation/layout/test_route_memo_equivalence.py) and integrated placement/ports, lane corridors, terminals, relation labels, history/intersection/memo and annotation-routing batch:362 passed65.90s at `fc9c6b6b`, unchanged expectations. Final integrated public-route deltas still need their own disposition. | — |
-| 3 | The trial's 200-item/46-relation plan and 1000-item/228-relation plan both complete. The PR reports their CPU time and peak RSS (for the record, not as a gate). | not met | Corrected public source1cd70178:200 completed twice (user101.775/109.168s, peak RSS94765056/75595776B);1000 completed twice (user4509.23/4381.15s, system17.06/9.97s, peak RSS195215360/206127104B). [Completed1000 measurements](https://github.com/tya5/chrona/issues/1298#issuecomment-6108565815) and [exact public-source provenance](https://github.com/tya5/chrona/issues/1298#issuecomment-6108601657). Final integrated baseline/evidence still require acceptance. | — |
+| 3 | The trial's 200-item/46-relation plan and 1000-item/228-relation plan both complete. The PR reports their CPU time and peak RSS (for the record, not as a gate). | met | Corrected public source1cd70178:200 completed twice (user101.775/109.168s, peak RSS94765056/75595776B);1000 completed twice (user4509.23/4381.15s, system17.06/9.97s, peak RSS195215360/206127104B). [Completed1000 measurements/applicability](https://github.com/tya5/chrona/issues/1298#issuecomment-6108565815) and [exact public-source provenance](https://github.com/tya5/chrona/issues/1298#issuecomment-6108601657); the publication PR reports these measurements, not a timing gate. | — |
 | 4 | Output stays byte-identical across two runs. | met | [Corrected200 measurements/hashes](https://github.com/tya5/chrona/issues/1298#issuecomment-6094821308) and [both completed1000 runs plus integration audit](https://github.com/tya5/chrona/issues/1298#issuecomment-6108565815) have identical Scene/SVG bytes, without restart or source mutation. Actual integrated200 output is identical too; the measured1000 routing baseline remains applicable as detailed below. | — |
 | 5 | Do not edit `examples/**`. | met | [Product implementation](https://github.com/tya5/chrona/commit/d2c61bcd) and [capacity correction](https://github.com/tya5/chrona/commit/f0ec4c2c) author no examples changes. Final diff after predecessor landing must confirm this; public differences are disclosed, not absorbed into corpus edits. | — |
 
@@ -52,8 +52,12 @@ parts. This supports using the named completed1000 measurements; it does not
 claim a newly completed1000 render on the integrated source.
 [Published measurements and applicability facts](https://github.com/tya5/chrona/issues/1298#issuecomment-6108565815).
 
-**Release pending:** final READY adoption, PR publication of measured results,
-batched public-artifact changes with reasons, current-head PR
+Final public base: trusted READY `60ddbbe555b780b397d53c60dc19edd9129c80f0`,
+[derived-main success](https://github.com/tya5/chrona/actions/runs/38141351465).
+Ordinary merge has no conflicts; product/test/schema/workflow bytes are identical
+to the362-test passing preparation. Authored examples/report differences are empty.
+
+**Release pending:** batched public-artifact changes with reasons, current-head PR
 gates and exact acceptance-containing main three-OS release. Do not close.
 
 ## Architecture conclusion
