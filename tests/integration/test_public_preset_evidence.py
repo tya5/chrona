@@ -34,10 +34,23 @@ def _assert_packaged_view_contract(path: Path, expected_id: str) -> dict:
     return document
 
 
-def _assert_view_copy_except_axis(packaged: Path, corpus: Path) -> None:
+def _assert_view_copy_except_axis(packaged: Path, corpus: Path, *, first_run: bool = False) -> None:
     """Guard all declarations except published packaged policy migrations."""
     package_document = yaml.safe_load(packaged.read_bytes())
     corpus_document = yaml.safe_load(corpus.read_bytes())
+    if first_run:
+        # Specs32/38 migrate only the packaged first-run default, not the
+        # independently authored HALCYON reference. All other fields stay guarded.
+        body = corpus_document["body"]
+        body["selection"].pop("exclude")
+        body["grouping"] = {"by": "hierarchy", "depth": "all", "rollup": "header"}
+        body["hierarchyColumn"] = "Task"
+        body["backgroundDecoration"]["rows"] = "rules"
+    lane_table = package_document["body"].get("rows", {}).get("laneTable", {})
+    if lane_table.get("count") == "auto":
+        reference_table = corpus_document["body"]["rows"]["laneTable"]
+        assert reference_table["count"] is True
+        reference_table["count"] = "auto"  # Spec38 packaged singleton-count policy
     for document in (package_document, corpus_document):
         document.pop("version")  # the packaged reference adopts the live View contract
         document["body"].pop("axis")
@@ -155,15 +168,13 @@ def test_readable_default_resources_are_selected_from_the_packaged_authority():
     }
     for name, corpus_path in pairs.items():
         package_bytes = (bundle / name).read_bytes()
-        if name != "view.yaml":
-            assert package_bytes == corpus_path.read_bytes(), name
         declared = yaml.safe_load(package_bytes)
         assert declared["id"] == resources["view" if name == "view.yaml" else "theme"]["id"]
         assert resources["view" if name == "view.yaml" else "theme"]["path"] == \
             f"bundles/editorial-readable-default/{name}"
         if name == "view.yaml":
             _assert_packaged_view_contract(bundle / name, resources["view"]["id"])
-            _assert_view_copy_except_axis(bundle / name, corpus_path)
+            _assert_view_copy_except_axis(bundle / name, corpus_path, first_run=True)
             labels = declared["body"]["visibility"]["labels"]
             assert (labels["placement"], labels["content"], labels["side"]) == ("plot", ["title"], "end")
             assert declared["version"] == "chrona/view/v0.28"
@@ -171,12 +182,23 @@ def test_readable_default_resources_are_selected_from_the_packaged_authority():
             assert [column["id"] for column in declared["body"]["tableColumns"]] == ["Task", "Plan"]
             assert declared["body"]["tableColumns"][1]["endDisplay"] == "inclusive"
             assert declared["body"]["visibility"]["fallback"]["labels"] == ["end", "start", "suppress"]
-            assert declared["body"]["backgroundDecoration"]["rows"] == "alternate"
+            assert declared["body"]["backgroundDecoration"]["rows"] == "rules"
+            assert declared["body"]["grouping"] == {"by": "hierarchy", "depth": "all", "rollup": "header"}
+            assert declared["body"]["hierarchyColumn"] == "Task"
         else:
             body = declared["body"]
-            assert body["values"]["opacity.row-band"]["value"] == 0.12
-            assert body["roles"]["row-band"]["opacity"] == "opacity.row-band"
-            assert body["colorBindings"]["row-band.fill"] == "category:default"
+            expected = yaml.safe_load(corpus_path.read_bytes())
+            migrated = expected["body"]
+            migrated["values"].pop("opacity.row-band")
+            migrated["values"]["timeline-row-height"]["value"] = {
+                "expr": "{timeline-mark-size} + {timeline-row-padding}"}
+            migrated["roles"].pop("row-band")
+            migrated["roles"]["row-rule"] = {"strokeWidth": "stroke-width"}
+            migrated["roles"]["group-band"]["backgroundPaintOrder"] = 8
+            migrated["roles"]["group-header-band"]["backgroundPaintOrder"] = 9
+            migrated["colorBindings"].pop("row-band.fill")
+            migrated["colorBindings"]["row-rule.stroke"] = "neutral"
+            assert declared == expected  # keep every unaffected Theme declaration
     assert resources["view"] == {
         "id": "chrona-preset-editorial-readable-default", "kind": "view",
         "path": "bundles/editorial-readable-default/view.yaml",
