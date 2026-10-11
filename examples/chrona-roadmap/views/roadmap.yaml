@@ -127,6 +127,15 @@ body:
       typographyRole: axisQuarter
     - unit: week
       every: 1
+      role: labels
+      label:
+        form: start-day-month
+        align: start
+        overflow: thin-with-record
+        orientation: horizontal
+      typographyRole: axisMonth
+    - unit: week
+      every: 1
       role: grid-minor
   markers:
   - kind: asOf

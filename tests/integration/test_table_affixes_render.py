@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from chrona.presentation.model.closure import ClosureError
+from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
 
 START = date(2026, 3, 2)
@@ -116,10 +117,18 @@ def test_a_narrow_column_ellipsizes_the_value_and_keeps_the_affix(tmp_path) -> N
     assert cells["b0"] == "+0d" and cells["c0"] == "-3d"
 
 
-def test_when_the_affix_alone_does_not_fit_the_whole_string_is_ellipsized(tmp_path) -> None:
+def test_bounded_allocation_reserves_the_complete_affix_before_ellipsizing_the_core(tmp_path) -> None:
     cells = _cells(_narrow(tmp_path, 80))
 
-    assert cells["a0"] != "!!" and "!" not in cells["a0"][:-1]
+    assert cells["a0"] == "…!!"
+
+
+@pytest.mark.parametrize("inline", [20, 40, 60])
+def test_an_infeasible_affix_table_fails_instead_of_shrinking_columns(tmp_path, inline) -> None:
+    with pytest.raises(RenderFailed) as error:
+        _narrow(tmp_path, inline)
+    assert (error.value.code, error.value.source_ref) == (
+        "E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
 
 
 @pytest.mark.parametrize(("affixes", "fmt", "code"), [
