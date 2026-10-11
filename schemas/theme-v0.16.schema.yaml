@@ -10,7 +10,7 @@ properties:
   kind: {description: "Presentation resource kind.", const: theme}
   id: {description: "Id assigned to the complete effective Theme.", type: string, minLength: 1}
   body:
-    description: "Pinned base reference and finite whole-entry replacements."
+    description: "Pinned base reference and entries to replace or add; roles merge by member, other maps by whole entry. Nothing is removed."
     type: object
     required: [extends]
     additionalProperties: false
@@ -25,5 +25,9 @@ properties:
           path: {description: "Safe relative path from this source to its base source.", $ref: "urn:chrona:common-v0.1#/$defs/safeRelativePath", examples: [base.yaml]}
           sourceContentIdentity: {description: "SHA-256 of exact base source bytes for the snapshot reader.", $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity", examples: ["sha256:0000000000000000000000000000000000000000000000000000000000000000"]}
           contentIdentity: {description: "Canonical identity of the resolved complete base Theme.", $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity", examples: ["sha256:0000000000000000000000000000000000000000000000000000000000000000"]}
-      values: {description: "Whole replacements for existing base value entries.", type: object}
-      roles: {description: "Whole replacements for existing base role entries.", type: object}
+      values: {description: "Value entries to replace, or to add when the base declares none of that name.", type: object}
+      roles: {description: "Role members to replace or add; omitted base members are kept. Member values replace as a whole; deletion is unsupported.", type: object}
+      colorBindings: {description: "Color Scheme bindings to replace or add, by binding name.", type: object}
+      colorScales: {description: "Color scales to replace as a whole or to add, by scale id.", type: object}
+      annotationKinds: {description: "Annotation kind headers to replace as a whole or to add, by kind.", type: object}
+      metrics: {description: "Source-measurement metric bindings to replace or add, by metric name.", type: object}
