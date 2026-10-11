@@ -17,6 +17,13 @@ new-policy timings and output changes remain unverified.
 Baseline focused validation: 69 tests pass in 2.31 s (visibility preparation,
 graph memo, path-history/intersection equivalence, routing placement, label
 recovery and diagnostic details), in this worktree's Python 3.13 venv.
+Additional characterization/budget/selection batch: 25 pass in 1.75 s.
+The [finite-quota counterexample](../../../tests/unit/chrona/presentation/layout/test_routing_policy_characterization.py)
+finds three candidates with the exact reverse bound and zero with an admissible
+geometric bound under the same 32-expansion quota. Ranked selection succeeds
+before and fails after that bound-only change. Applying that optimization to
+`best` therefore contradicts its unchanged-output criterion; this is measured
+evidence, not an assumed risk. Selected-design disposition still needs agreement.
 
 Use case: authors choose inexpensive deterministic routing or the existing
 ranked routing, without a project-size threshold. The default change is an
