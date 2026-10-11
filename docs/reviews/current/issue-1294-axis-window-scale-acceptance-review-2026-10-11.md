@@ -30,6 +30,12 @@ migration guards:60 passed (46.08s). The fresh CI artifact and exact-main
 release are still required after final READY-base integration.
 Ordinary `9ee4dbce` adoption changes only upstream reports/reviews; actual
 default, natural-typography and tier-geometry tests pass again:69 (5.13s).
+After #1391 merged at `b05b09bf`, ordinary integration `895bdf72` passes
+the same axis tests plus trailing-caption integration:83 (14.57s).
+Schema-equivalence against `b05b09bf`: PASS; all38 live schemas equal,
+482 documents/739 probes, four known invalid fixtures unchanged;
+L2+L3=37.3s within the60s budget.
+The new main's trusted READY and final-head/release gates remain pending.
 
 ## Architecture conclusion
 
