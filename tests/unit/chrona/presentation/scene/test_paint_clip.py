@@ -1,6 +1,7 @@
 """Optional v0.7 paint clip records Layout's completed absolute containment."""
 
 import json
+from dataclasses import replace
 
 import pytest
 
@@ -117,6 +118,19 @@ def test_marker_projection_uses_source_endpoints_and_completed_tangent() -> None
     actual_curve = project_marker_outline(marker, side="start", points=((20, 50), (30, 60)),
                                           path_commands=curved, stroke_width=1)
     assert actual_curve[0].points[0] == (22, 46)  # vertical start tangent, not endpoint chord
+
+
+def test_stroke_relative_terminal_is_checked_after_paint_binding_and_by_raw_scene():
+    intermediate = _primitive(kind="Path", bounds=(10, 20, 30, 40), points=((20, 40), (30, 40)),
+                              marker_start=_marker(physical_units=False), paint_clip=PaintClip((10, 20, 30, 40)))
+    complete = replace(intermediate, paint=ScenePaint(None, "#000000", 1, (), 1))
+    validate_scene_document(scene_document(_scene(complete)))
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        replace(intermediate, paint=ScenePaint(None, "#000000", 5, (), 1))
+    document = scene_document(_scene(complete))
+    document["surfaces"][0]["primitives"][0]["paint"]["strokeWidth"] = 5
+    with pytest.raises(SceneSerializationError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        validate_scene_document(document)
 
 
 def test_marker_projection_matches_explicit_angle_and_legacy_stroke_units() -> None:

@@ -75,3 +75,64 @@ def test_containing_window_preserves_complete_scene_surface_and_svg(tmp_path, la
     assert explicit.surface == derived.surface
     assert explicit.artifact.content == derived.artifact.content
     assert not any(r.payload["code"] == "W_LAYOUT_OUTSIDE_WINDOW" for r in explicit.warning_records)
+
+
+@pytest.mark.parametrize("lanes", [False, True], ids=["rows", "lanes"])
+def test_all_objects_outside_keep_rows_without_fabricated_marks(tmp_path, lanes):
+    parts = _parts(lanes)
+    parts["view"]["body"]["window"] = {"mode": "explicit", "start": "2027-01-01", "end": "2027-01-09"}
+    source = _source()
+    rendered = sr.render(tmp_path, source, presentation=parts)
+    assert len(rendered.surface.rows) == len(source["objects"])
+    assert not any(p.slot_id == "timeline" and p.source_ref in source["objects"]
+                   for p in rendered.surface.primitives)
+    if lanes:
+        assert len(rendered.surface.lane_members) == len(source["objects"])
+        assert all(not member.primary_mark_ids and member.window_absences
+                   for member in rendered.surface.lane_members)
+
+
+@pytest.mark.parametrize("lanes", [False, True], ids=["rows", "lanes"])
+@pytest.mark.parametrize("open_actual", [False, True], ids=["closed", "open"])
+def test_actual_and_progress_project_completed_cut_contours(tmp_path, lanes, open_actual):
+    parts = _parts(lanes)
+    parts["view"]["body"]["window"] = {"mode": "explicit", "start": "2026-01-05", "end": "2026-01-09"}
+    parts["view"]["body"]["progressFill"] = {"source": "actual"}
+    actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "observed", "body": {
+        "asOf": "2026-01-08", "observations": [{"id": "a", "sequence": 1, "projectObjectId": "across",
+            "actual": {"start": "2026-01-01", "progress": 0.9,
+                       **({"openUntil": "asOf"} if open_actual else {"finish": "2026-01-08"})}}]}}
+    rendered = sr.render(tmp_path, _source(), presentation=parts, actual=actual)
+    marks = [p for p in rendered.surface.primitives if p.source_ref == "across"
+             and p.purpose in {"actual", "progress-fill"}]
+    assert {p.purpose for p in marks} == {"actual", "progress-fill"}
+    assert all(p.kind == "Symbol" and p.paint_clip is not None for p in marks)
+    x, y, w, h = next(slot.bounds for slot in rendered.surface.slots if slot.source == "timeline")
+    assert all(x <= a <= x + w and y <= b <= y + h
+               for p in marks for command in p.symbol.outline for a, b in command.points)
+
+
+@pytest.mark.parametrize("lanes", [False, True], ids=["rows", "lanes"])
+def test_relations_use_only_original_visible_endpoints(tmp_path, lanes):
+    parts = _parts(lanes)
+    parts["view"]["body"]["window"] = {"mode": "explicit", "start": "2026-01-05", "end": "2026-01-09"}
+    source = sr.project({"before": sr.span("before", date(2026, 1, 1), 2),
+                         "a": sr.span("a", date(2026, 1, 5), 1),
+                         "b": sr.span("b", date(2026, 1, 7), 1)}, [
+        {"id": "outside", "type": "dependency", "lag": "0d", "from": {"object": "before", "endpoint": "end"},
+         "to": {"object": "a", "endpoint": "start"}},
+        {"id": "inside", "type": "dependency", "lag": "0d", "from": {"object": "a", "endpoint": "end"},
+         "to": {"object": "b", "endpoint": "start"}}])
+    rendered = sr.render(tmp_path, source, presentation=parts)
+    relations = [p for p in rendered.surface.primitives if p.source_ref in {"inside", "outside"}]
+    assert {p.source_ref for p in relations} == {"inside"}
+    assert all(p.paint_clip is not None for p in relations)
+    x, y, w, h = next(slot.bounds for slot in rendered.surface.slots if slot.source == "timeline")
+    for p in relations:
+        # Paths carry completed points/commands, not a rectangular host bound.
+        coordinates = (*p.points, *(point for command in p.path_commands for point in command.points))
+        if p.symbol is not None:
+            coordinates += tuple(point for command in p.symbol.outline for point in command.points)
+        assert coordinates
+        assert all(x <= a <= x + w and y <= b <= y + h for a, b in coordinates)
+    assert any(r.payload["code"] == "W_LAYOUT_RELATION_SUPPRESSED" for r in rendered.warning_records)

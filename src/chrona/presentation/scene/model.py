@@ -583,7 +583,9 @@ class ScenePrimitive:
                                  tuple(icon_points)))
             for field_name, marker, side in (("marker_start", self.marker_start, "start"),
                                              ("marker_end", self.marker_end, "end")):
-                if marker is None:
+                # Stroke-relative terminal geometry closes after paint binding;
+                # replace(..., paint=...) reruns this validation before emission.
+                if marker is None or (not marker.physical_units and self.paint is None):
                     continue
                 try:
                     projected = completed_marker_outline(
