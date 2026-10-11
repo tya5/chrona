@@ -19,6 +19,12 @@ Implementation: `b599e66b`. [Current design, architecture and implementation rec
 
 ## Programme-level criteria (optional)
 
+READY main `42e37d8d` and #1293 PR head `2dde5ba6` adopted by ordinary
+merge `c943690d`. Explicit-window production Scene/SVG, paint clipping,
+lane absences, window mode, default-axis and default-date integration:
+57 passed (25.62s). Authored examples diff empty. This is preparation;
+ordered predecessor merges, current-head artifact and release gates remain required.
+
 Preparation now includes final #1294 repair `ac14998c` through #1293 WIP
 `e4da9031`; explicit-window, SVG paint-clip, inclusive date, default-axis and
 packaged-policy tests pass:42 (23.22s). Ordinary main adoption `7508cc0a`
