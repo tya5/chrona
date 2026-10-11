@@ -26,3 +26,10 @@ Against public baseline, target B/Yuya/Marquee retain every primitive and SVG
 byte but gain one truthful natural-host fit warning each; disclose those Scene
 diagnostic changes, not a geometry waiver. Synthetic natural-host golden bytes
 may migrate after direct old/new comparison under the same approved rule.
+
+CI boundary review: the rail child-edge difference is about1e-13px; rounded
+paper corner-distance error is at most7.2e-15px. These are pre-serialization
+float roundoff, not changed geometry policy. Specs33/44 retain their contracts;
+test oracles use existing Layout `GEOMETRY_TOLERANCE` (1e-6px), with adversarial
+0.001px overlap/outside-paper controls. Scene/SVG precision and product code
+remain unchanged; no actual overlap, acceptance item or output byte is waived.

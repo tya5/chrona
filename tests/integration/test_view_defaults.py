@@ -139,7 +139,7 @@ def test_the_merged_view_is_validated_as_the_view_it_is(tmp_path):
 
 def test_the_member_lists_are_the_design_half_of_the_reviewed_classification():
     assert set(WHOLE_MEMBERS) == {"visibility", "axis", "deadlines", "shading", "timePresentation", "annotationPresentation",
-                                  "backgroundDecoration", "progressFill"}
+                                  "backgroundDecoration", "progressFill", "annotationPlacement"}
     assert {name: set(members) for name, members in SPLIT_MEMBERS.items()} == {
         "comparison": {"baselineMarks", "missingActualScope", "deltaUnit", "facets"},
         "rows": {"mode", "trackAllocation", "packing", "laneTable", "points", "items"}, "window": {"marginDays"}}

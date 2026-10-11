@@ -13,6 +13,7 @@ from math import hypot, sqrt
 import pytest
 
 from chrona.presentation.renderers.v05_typeset import render_v05_tikz, render_v05_typst
+from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
 from tests.support import annotation_artwork as aw
 from tests.support import annotation_border as ab
 from tests.support import annotation_kinds as ak
@@ -139,7 +140,18 @@ def test_text_is_inset_by_at_least_the_corner_clearance_so_it_stays_on_the_paper
         assert tx >= x + clearance - TOL and ty >= y + clearance - TOL
         assert tx + tw <= x + w - clearance + TOL and ty + th <= y + h - clearance + TOL
         for corner in ((tx, ty), (tx + tw, ty), (tx + tw, ty + th), (tx, ty + th)):
-            assert inside_rounded(corner, box.bounds, [(box.corner_radius,) * 2] * 4)
+            assert inside_rounded(corner, box.bounds, [(box.corner_radius,) * 2] * 4,
+                                  tolerance=float(GEOMETRY_TOLERANCE))
+
+
+def test_rounded_paper_oracle_rejects_a_serializable_clearance_violation():
+    radius = 21.0
+    inset = radius * (1 - 1 / sqrt(2))
+    point = (inset, inset)
+    radii = [(radius, radius)] * 4
+    assert inside_rounded(point, (0, 0, 100, 100), radii, tolerance=float(GEOMETRY_TOLERANCE))
+    assert not inside_rounded((point[0] - 0.001, point[1] - 0.001), (0, 0, 100, 100), radii,
+                              tolerance=float(GEOMETRY_TOLERANCE))
 
 
 def test_a_small_radius_keeps_the_larger_declared_inset(tmp_path):

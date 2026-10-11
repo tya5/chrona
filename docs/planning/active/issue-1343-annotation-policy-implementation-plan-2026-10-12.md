@@ -24,3 +24,9 @@ Publish coherent implementation/test/review units in one eventual PR; inspect
 its CI-owned public snapshot as a batch, focused tests and schema gate locally,
 full three-OS containing-review release in CI. Keep both literal criteria open
 until direct rendered evidence and release gates prove them.
+
+Release-test closure: probe all four shared annotation shapes, account for
+relocated/shared vocabulary and identifier sites, validate both endpoint sites
+and the new whole-member default. Boundary oracles follow existing Layout
+precision with failing visible-overlap/paper controls; do not alter placement.
+Run these schema/default/rail/rounded regressions together before publication.

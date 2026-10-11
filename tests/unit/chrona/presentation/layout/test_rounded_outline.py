@@ -12,18 +12,19 @@ from chrona.presentation.layout.rounded_outline import (
 BOX = (10.0, 20.0, 120.0, 60.0)
 
 
-def inside_rounded(point, box, radii):
+def inside_rounded(point, box, radii, *, tolerance=0.0):
     """Whether ``point`` is inside the rectangle ``box`` whose corners (tl, tr, br, bl) have elliptical ``radii``."""
     px, py = point
     x, y, w, h = box
-    if not (x <= px <= x + w and y <= py <= y + h):
+    if not (x - tolerance <= px <= x + w + tolerance and y - tolerance <= py <= y + h + tolerance):
         return False
     corners = ((x, y, 1, 1), (x + w, y, -1, 1), (x + w, y + h, -1, -1), (x, y + h, 1, -1))
     for (cx, cy, sx, sy), (rx, ry) in zip(corners, radii):
         if rx <= 0 or ry <= 0:
             continue
         u, v = (px - cx) * sx, (py - cy) * sy
-        if u < rx and v < ry and ((rx - u) / rx) ** 2 + ((ry - v) / ry) ** 2 > 1:
+        if (u < rx and v < ry
+                and ((rx - u) / rx) ** 2 + ((ry - v) / ry) ** 2 > 1 + 2 * tolerance / min(rx, ry)):
             return False
     return True
 

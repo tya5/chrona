@@ -19,6 +19,7 @@ from tools.schema_inventory import definition_digest, load_inventory, validate_f
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 SCHEMAS = ROOT / "schemas"
 VOCABULARY = "vocabulary-v0.1.schema.yaml"
+COMMON = "common-v0.1.schema.yaml"
 VOCABULARY_ID = "urn:chrona:vocabulary-v0.1"
 ENTRIES = load_inventory(SCHEMAS / "schema-inventory-v0.1.yaml")
 LIVE = tuple(entry["file"] for entry in ENTRIES if entry["state"] == "live")
@@ -326,9 +327,10 @@ def test_annotation_vocabulary_is_the_published_values_in_order():
 
 
 @pytest.mark.parametrize(("name", "definition", "count"), [
-    (VIEW, "annotationPurpose", 1), (WORKSPACE, "annotationPurpose", 1),
-    (VIEW, "annotationSide", 2), (WORKSPACE, "annotationSide", 1),
-    (VIEW, "annotationAlignment", 1), (WORKSPACE, "annotationAlignment", 1),
+    (VIEW, "annotationPurpose", 2), (COMMON, "annotationPurpose", 1), (WORKSPACE, "annotationPurpose", 1),
+    (COMMON, "annotationSide", 2), (WORKSPACE, "annotationSide", 1),
+    (COMMON, "annotationAlignment", 1), (WORKSPACE, "annotationAlignment", 1),
+    (VIEW, "plannedActualFacet", 3),
     (VIEW, "annotationVisibilityMode", 2), (VIEW, "relationVisibilityMode", 1),
     (WORKSPACE, "guidedAnnotationVisibilityMode", 1), (WORKSPACE, "guidedRelationVisibilityMode", 1),
     (VIEW, "viewGroupingBy", 1), (WORKSPACE, "guidedViewGroupingBy", 1),
@@ -381,9 +383,15 @@ def test_the_guided_workspace_accepts_no_visibility_value_the_view_rejects():
 
 
 def test_view_and_workspace_annotation_enums_are_one_definition():
-    # B2: the two schemas share the exact purpose, side and alignment vocabulary through one definition each.
-    for definition in ("annotationPurpose", "annotationSide", "annotationAlignment"):
-        assert _sites(VIEW, definition) and _sites(WORKSPACE, definition), definition
+    # View delegates placement shapes to common; those shapes and the guided
+    # workspace must still reference the same exact vocabulary, not copy it.
+    for owner, definition in ((VIEW, "annotationPurpose"), (COMMON, "annotationSide"),
+                              (COMMON, "annotationAlignment")):
+        assert _sites(owner, definition) and _sites(WORKSPACE, definition), definition
+    view = _schema(VIEW)
+    placement = view["allOf"][1]["properties"]["body"]["properties"]["annotations"]["items"]["properties"]
+    assert placement["placement"] == {"$ref": "urn:chrona:common-v0.1#/$defs/annotationLegacyPlacement"}
+    assert placement["candidates"] == {"$ref": "urn:chrona:common-v0.1#/$defs/annotationCandidates"}
 
 
 def test_annotation_side_is_one_concept_for_a_rung_and_an_adjacent_search():
@@ -540,15 +548,16 @@ def test_end_widens_the_anchor_endpoint_to_a_superset_of_the_project_endpoints()
     assert not validator.is_valid("End") and not validator.is_valid("finish ")
 
 
-@pytest.mark.parametrize(("name", "definition", "count"), [(PROJECT, "dateEndpoint", 1), (VIEW, "anchorEndpoint", 1)])
+@pytest.mark.parametrize(("name", "definition", "count"), [(PROJECT, "dateEndpoint", 1), (VIEW, "anchorEndpoint", 2)])
 def test_each_endpoint_site_references_its_definition_and_accepts_exactly_it(name, definition, count):
     sites = _sites(name, definition)
     assert len(sites) == count, sites
-    validator = _site_validator(name, sites[0])
     allowed = _defs()[definition]["enum"]
-    assert [value for value in allowed if not validator.is_valid(value)] == []
-    for value in ("finish", "end", "body", "center", "At", "", None, 3):
-        assert validator.is_valid(value) is (isinstance(value, str) and value in allowed), (definition, value)
+    for pointer in sites:
+        validator = _site_validator(name, pointer)
+        assert [value for value in allowed if not validator.is_valid(value)] == [], pointer
+        for value in ("finish", "end", "body", "center", "At", "", None, 3):
+            assert validator.is_valid(value) is (isinstance(value, str) and value in allowed), (pointer, definition, value)
 
 
 def test_endpoint_code_twins_equal_the_schema_vocabulary():
