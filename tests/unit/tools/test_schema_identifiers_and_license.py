@@ -75,8 +75,8 @@ ID_SITES: dict[tuple[str, str], int] = {
     ("project-v0.7.schema.yaml", "unconstrained-string"): 1,
     ("render-context-v0.17.schema.yaml", "non-empty-string"): 2,
     ("review-detail-profile-v0.1.schema.yaml", "bounded-non-empty-string"): 4,
-    # R6 adds Layout-generated target-port and terminal-owner identities, not authored IDs.
-    ("scene-v0.7.schema.yaml", "scene-text"): 31,
+    # R6 ports/terminals and #1292 absence placement/instance IDs are Layout-generated, not authored.
+    ("scene-v0.7.schema.yaml", "scene-text"): 33,
     ("snapshot-ref-v0.3.schema.yaml", "non-empty-string"): 1,
     ("summary-profile-v0.2.schema.yaml", "non-empty-string"): 3,
     ("theme-asset-source-v0.2.schema.yaml", "portable-name"): 1,

@@ -196,6 +196,17 @@ never a current-date default.
 
 Date-based Views use the Date temporal domain. DateTime View behavior is deferred until a corresponding Core scheduling profile exists. Human-facing inclusive end-date display is a View or renderer concern and MUST NOT alter Core half-open span semantics.
 
+**Explicit-window visibility (#1292).** The projection retains the selected
+window mode as typed provenance; equal dates do not imply equal window policy.
+Only `explicit` selects the bounded mark-visibility contract in Spec 50.
+An intersecting span keeps its original source interval and table row while
+Layout completes its visible part. A wholly disjoint span, or a point outside
+`[start, end)`, keeps its table row but has no plot facet. Snapshot, scenario,
+Actual and missing-Actual facets are evaluated independently without rewriting
+Project dates, observation state, progress fractions or delta facts. A point
+at `start` is included; a point at `end` is excluded. Derived-window selection
+is not changed by this rule.
+
 ### 7.1 Named periods (#582)
 
 A `table-timeline` View MAY select named Project periods (Spec 05 §12.1) with `periods: [{id}]`, each drawn as a band across the plot rows over the period's dates. The selection owns only which periods are shown and in what order (the order is the drawing order); the period's dates are a Project fact and its colour, stroke, opacity and pattern are Theme role `period-band` (Spec 07), its geometry Layout's (Spec 50 §3.4). The band is clipped to the View window and never extends it: a period with no extent left draws nothing and is recorded as the Scene diagnostic `I_LAYOUT_PERIOD_OUTSIDE_WINDOW:<id>`. An id the Project does not declare is `E_VIEW_PERIOD_UNKNOWN` (pointer `/body/periods/<i>/id`; the message lists the declared ids) and a repeated id is `E_VIEW_PERIOD_DUPLICATE`; nothing is skipped silently. The member is optional and additive in `chrona/view/v0.28`; a `dependency-network` View, which has no timeline, MUST NOT declare it. A View without `periods` renders as before.

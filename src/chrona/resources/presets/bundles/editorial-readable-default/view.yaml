@@ -83,6 +83,7 @@ body:
     source:
       facet: planned
     format: dateRange
+    endDisplay: inclusive
     missing: em-dash
     align: start
     width: content
