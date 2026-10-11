@@ -35,7 +35,10 @@ the same axis tests plus trailing-caption integration:83 (14.57s).
 Schema-equivalence against `b05b09bf`: PASS; all38 live schemas equal,
 482 documents/739 probes, four known invalid fixtures unchanged;
 L2+L3=37.3s within the60s budget.
-The new main's trusted READY and final-head/release gates remain pending.
+Final-base ordinary adoption `ad49ede5` includes trusted READY main
+`95b2fddc` (derived-main [38108591778](https://github.com/tya5/chrona/actions/runs/38108591778));
+its only addition is diagnostics inventory. Actual default-axis/caption tests
+pass again:20 (16.93s). Final-head artifacts/PR and exact-main release remain pending.
 
 ## Architecture conclusion
 
