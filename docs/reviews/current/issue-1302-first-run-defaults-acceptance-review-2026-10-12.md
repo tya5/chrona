@@ -1,7 +1,8 @@
 <!-- chrona:literal-acceptance/v1 -->
 # First-run defaults acceptance (#1302)
 
-WIP implementation through `7cb26df9`, based on READY `fa862e40745aa134198dfe070aa347c451dd7ffe`.
+Implementation through `7cb26df9`, integrated normally with #1299/#1306 on
+trusted READY `b694b8589479bdf6bcf67ef9b1f3557067662f76`.
 [Current design, architecture review and implementation plan](https://github.com/tya5/chrona/issues/1302#issuecomment-6095688853).
 The rows below record local evidence only; public-artifact review, current-head CI
 and exact-main three-OS release remain required. This is not permission to close.
@@ -25,13 +26,17 @@ and exact-main three-OS release remain required. This is not permission to close
 
 ## Programme-level criteria (optional)
 
-Combined #1299/#1302 preflight `319cf63c`:60 focused tests pass30.11s,
-including every former9 CI failure and default contract migrations; all-valid
-conformance Theme and all-preset ordering batch17 pass6.35s. Catalogue copy
-guards remain; only exact approved default/hierarchy/pitch/count changes are
-normalized against historical references. Imports11 packages/37 inward edges
-and Layout float check pass. Named relation IDs intentionally migrate to Core
-canonical identity; standalone default Layout identity changes under #1299.
+Current integration:129 focused cases pass59.52s; two shared-design checks fail
+against stale committed Scene/SVG because canonical relation identities change.
+Those assertions remain intact and must pass against the CI-owned PR snapshot;
+no expected generated files are authored locally. The actual starter/PNG,
+all-valid conformance Theme, all-preset order, hierarchy and pitch cases pass.
+Contributor/import/CI-selection/MCP integration batch328 passes92.16s.
+Catalogue copy guards retain every unaffected declaration. Imports11 packages/
+37 inward edges, Layout floats and literal reviews pass. Named relation IDs
+intentionally migrate to Core canonical identity; default Layout identity
+changes under #1299. The PR must disclose per-slide byte/primitive/diagnostic
+counts before release acceptance.
 
 Architecture: Core owns dates/critical facts/identity; View owns hierarchy and
 lane order/count; Theme declares paint and pitch floor; Layout completes text,

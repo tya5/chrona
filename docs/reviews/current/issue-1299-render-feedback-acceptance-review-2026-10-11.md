@@ -1,7 +1,7 @@
 <!-- chrona:literal-acceptance/v1 -->
 # Render feedback acceptance (#1299)
 
-Authority: pre-code `c14a86aa`, Specs06 §6.1 and33 §13; [living work record](https://github.com/tya5/chrona/issues/1299#issuecomment-6095558700). Implementation: observer/routing `b3d401fc`/`dc31c097`, CLI `99e111c0`, relation override `d67cdf94`, height policy `8eaa30a3`; retained default table-bound correction `29d02e9d`. Current integration `576bb60b` adopts trusted READY `fa862e40745aa134198dfe070aa347c451dd7ffe`. PR/artifact and exact-main release acceptance remain pending.
+Authority: pre-code `c14a86aa`, Specs06 §6.1 and33 §13; [living work record](https://github.com/tya5/chrona/issues/1299#issuecomment-6095558700). Implementation: observer/routing `b3d401fc`/`dc31c097`, CLI `99e111c0`, relation override `d67cdf94`, height policy `8eaa30a3`; retained table-bound correction `29d02e9d`. Integrated with #1302/#1306 on trusted READY `b694b8589479bdf6bcf67ef9b1f3557067662f76`. PR/artifact and exact-main release acceptance remain pending.
 
 ## Literal issue acceptance
 
@@ -19,41 +19,27 @@ Authority: pre-code `c14a86aa`, Specs06 §6.1 and33 §13; [living work record](h
 
 ## Programme-level criteria (optional)
 
-Current READY integration focused batch:35 PASS18.46s, covering actual CLI
-progress/PTY/relations, completed height-limit output, observer behavior and
-Draft relation normalization. Ordinary integration has no conflicts and authors
-no examples or derived report changes. Prior quota/history evidence does not
-replace current-head CI or release acceptance.
-Combined #1302 preflight found the old60-row warning fixture invalid after
-derived pitch: actual height2842px is correctly below3600. Revised CLI coverage
-checks both2 and120 rows against completed Scene height, exact warning height
-and row count; standalone2 PASS5.26s, combined hierarchy/pitch/feedback33
-PASS21.85s. No product threshold or geometry changed to satisfy the test.
-The standalone default preserves merged table maxInlineShare0.4, adding only
-the declared height limit and truthful Layout ID; the whole-resource equality
-test remains intact. Network auto remains rejected; finite network requests
-do not receive this advisory.
+Current integration:129 focused cases pass59.52s; two shared-design assertions
+against stale committed generated evidence remain unchanged and require the
+CI-owned snapshot. Progress/PTY/relations, height-limit, observer and default
+cases pass. Contributor/import/CI-selection/MCP batch328 passes92.16s.
+Imports11 packages/37 inward edges, Layout floats and literal reviews pass.
+Schema gate after design-reuse adoption passes:one additive/one declared
+changed/36 equal schemas,739 probes and four unchanged known-invalid documents.
+The supported tool proves and retires5 merged design-reuse L1 entries; no
+baseline refresh or authored examples/report changes.
 
-Architecture: CLI owns terminal I/O; Draft overrides View before admission/effective identity freeze; Core dependencies/schedules are unchanged. Layout alone compares completed geometry against resolved declared limits; Scene transports typed facts. No resizing, route changes, clocks, serialization authority or implemented paging. Default Layout provenance intentionally changes; catalogue Editorial and mirrors remain unchanged. Paging follow-up is specified in Spec33.
+The completed-height test uses2/120 rows after #1302's derived pitch; its old
+60-row case is correctly below3600. No threshold or geometry was changed to
+satisfy a test. The standalone default preserves maxInlineShare0.4; omitted
+limits are inert and network-auto admission remains unchanged.
+Earlier CI38163628369's9 failures were explicit stub/default-identity migrations,
+authored CLI reference generation and real Scene-field delivery registration;
+all48 affected/related tests pass25.85s. Managed inventories are not patched.
 
-Current import check:11 packages/37 inward edges. Full schema gate against
-origin/main `fa862e40` PASS:one additive Layout schema,37 equal,480 documents
-(377 mapped),739 probes (462 rejected/277 accepted), four known-invalid
-unchanged; L2+L3=21.2s against unchanged60s budget. The provided tool proves
-and retires19 merged L1 entries; L2/L3 predecessor records remain intact.
-Authored examples diff is empty. Current PR/public-artifact and containing-review
-exact-main three-OS release remain required; no second active PR is opened.
-
-CI38163628369 is terminal red on all3 OS with the same9 test failures:
-two synthetic request stubs omit the new typed input (five cases), the packaged
-default Layout expectation retains the old identity, CLI reference omits the
-new flags, and the delivery manifest omits auto_block_warning (two cases).
-Fixes explicitly supply the omitted stub input, assert truthful Layout identity,
-regenerate the authored reference, and register the real render_review consumer.
-No product compatibility branch or assertion removal. The9 cases plus CLI,
-geometry/provenance, progress and height-policy regressions:48 passed25.85s.
-Conformance also fails managed diagnostic/declared-value inventories on this
-WIP dispatch, which lacks the PR snapshot, plus the two source omissions above.
-Managed reports remain untouched and require generated PR evidence. MCP-floor
-and newest-Python reproduction passed; repaired-head and exact-main release
-remain unverified.
+Architecture: CLI owns terminal I/O; Draft overrides View before identity/admission;
+Core dependencies remain unchanged. Layout compares completed geometry with
+declared limits; Scene carries typed evidence. No resizing, clocks, adapter
+placement or implemented paging; the paging follow-up is specified in Spec33.
+Current-head PR artifacts/checks and containing-review exact-main three-OS
+release remain required before closure.
