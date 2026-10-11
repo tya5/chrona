@@ -258,17 +258,28 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
     row_padding = float(metric_values["timeline.row.paddingBlock"])
     text_line_block = table_text_line_block(
         request.theme_tokens, (cell.typography_role for cell in request.surface_content.table_cells))
+    bounded_table = getattr(measured_sources, "bounded_tables", {}).get("table")
+    row_text_blocks = dict(bounded_table.row_text_blocks) if bounded_table is not None else None
     if projection.lane_membership is not None:
         assert request.fixed_lane_preflight is not None
         requirement_by_row = dict(request.fixed_lane_preflight.row_requirements)
         requirements = tuple(requirement_by_row[row.row_id] for row in review_row_values)
+        if row_text_blocks is not None:
+            requirements = tuple(max(required, max(float(row_text_blocks.get(row.row_id, 0)),
+                                                   float(row_text_blocks.get(row.table_subject_id, 0)))
+                                     + row_padding)
+                                 for row, required in zip(review_row_values, requirements, strict=True))
         natural_block = request.fixed_lane_preflight.natural_block_requirement
+        if row_text_blocks is not None:
+            natural_block += sum((Decimal(str(required)) - Decimal(str(requirement_by_row[row.row_id]))
+                                  for row, required in zip(review_row_values, requirements, strict=True)), Decimal(0))
     else:
         requirements = required_row_block_extents(
             review_rows=review_row_values, row_minimum=float(metric_values["timeline.row.minBlockSize"]),
             row_padding=row_padding, mark_block_size=mark_block_size,
             role_geometries=role_geometries, text_line_block=text_line_block,
             mark_band_allocation=mark_band_allocation,
+            row_text_blocks=row_text_blocks,
         )
         headers = sum(bool(row.group_id) and bool(group_header_size)
                       and (index == 0 or review_row_values[index - 1].group_id != row.group_id)

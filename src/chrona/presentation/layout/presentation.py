@@ -332,7 +332,8 @@ def required_row_block_extents(*, review_rows: tuple[Any, ...], row_minimum: flo
                                row_padding: float, mark_block_size: float,
                                role_geometries: Mapping[str, MarkGeometry] | None = None,
                                mark_band_allocation: MarkBandAllocation | None = None,
-                               text_line_block: float = 0.0) -> tuple[float, ...]:
+                               text_line_block: float = 0.0,
+                               row_text_blocks: Mapping[str, Decimal] | None = None) -> tuple[float, ...]:
     """Close each row's minimum before any surplus distribution occurs.
 
     ``row_padding`` is the row's total block padding.  It is added once to the
@@ -341,8 +342,14 @@ def required_row_block_extents(*, review_rows: tuple[Any, ...], row_minimum: flo
     """
     if row_minimum <= 0 or row_padding < 0 or text_line_block < 0:
         raise LayoutError("E_LAYOUT_ROW_REQUIREMENT", "/measuredSources/metricValues/timeline.row")
-    text_requirement = text_line_block + row_padding if text_line_block else 0.0
-    return tuple(max(row_minimum, text_requirement, minimum_track_block_extent(
+    def text_requirement(row: Any) -> float:
+        block = text_line_block
+        if row_text_blocks is not None:
+            block = max(block, float(row_text_blocks.get(row.row_id, 0)),
+                        float(row_text_blocks.get(row.table_subject_id, 0)))
+        return block + row_padding if block else 0.0
+
+    return tuple(max(row_minimum, text_requirement(row), minimum_track_block_extent(
         review_row=row, mark_block_size=mark_block_size, role_geometries=role_geometries,
         mark_band_allocation=mark_band_allocation,
     ) + row_padding) for row in review_rows)

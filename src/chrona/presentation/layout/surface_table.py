@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Any
 
@@ -17,6 +17,7 @@ from chrona.presentation.layout.surface_quality import (
 )
 from chrona.presentation.layout.text import (centred_text_baseline, ellipsize_text, measure_text_width,
                                              metric_for_role, place_text)
+from chrona.presentation.layout.table_measurement import BoundedTableMeasurement
 
 
 @dataclass(frozen=True)
@@ -39,6 +40,7 @@ class SurfaceTableHeaderSeed:
     header_text: tuple[TextPlacement, ...]
     cell_indents: tuple[tuple[str, float], ...]
     header_end_block: Decimal | None
+    bounded_table: BoundedTableMeasurement | None = None
 
 
 @dataclass(frozen=True)
@@ -96,23 +98,40 @@ def prepare_table_header_seed(*, request: SurfaceLayoutRequest, table: SlotPlace
                       else table_cell_indent(grouped=bool(row.group_id), depth=row.depth, inset=body_size,
                                              indent=indent_step))
         cell_indents[row.row_id] = cell_indents[row.table_subject_id] = row_indent
-    layout_columns = place_table_columns(
-        columns=columns_intent, cells=cells, bounds=table_bounds,
-        measure_text=measure_table_text, minimum_inline=body_size,
-        overflow=table.overflow,
-        gutter=float(metric_values.get("table.column.gutter.inlineSize", 0)),
-        hierarchy_column=hierarchy_column,
-        cell_indents=cell_indents, header_role=header_role)
+    bounded = getattr(request.measured_sources, "bounded_tables", {}).get("table")
+    if bounded is not None:
+        if (bounded.available_inline != table.bounds.inline_size
+                or bounded.reserved_inline != Decimal(str(group_tag_inline_size))):
+            raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/table",
+                              detail="bounded source closure does not match allocated table geometry")
+        if tuple(item.column_id for item in bounded.columns) != tuple(item.column_id for item in columns_intent):
+            raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/table", detail="bounded source columns disagree")
+        layout_columns = tuple(replace(item, inline=float(table.bounds.inline) + item.inline)
+                               for item in bounded.columns)
+        cell_indents = dict(bounded.cell_indents)
+    else:
+        layout_columns = place_table_columns(
+            columns=columns_intent, cells=cells, bounds=table_bounds,
+            measure_text=measure_table_text, minimum_inline=body_size,
+            overflow=table.overflow,
+            gutter=float(metric_values.get("table.column.gutter.inlineSize", 0)),
+            hierarchy_column=hierarchy_column,
+            cell_indents=cell_indents, header_role=header_role)
     positions = {item.column_id: (item.inline, item.inline_size) for item in layout_columns}
     column_widths = {item.column_id: item.inline_size for item in layout_columns}
     column_intents = {item.column_id: item for item in columns_intent}
     header_text: list[TextPlacement] = []
+    closed_headers = {item.column_id: item for item in bounded.headers} if bounded is not None else {}
     for column in columns_intent:
         column_id, label = column.column_id, column.header
         available = max(0.0, column_widths[column_id] - body_size)
-        resolved, overflow = _resolve_table_text(
-            label, available, header_role, table.overflow, tokens, font_metrics)
-        header_width = measure_text_width(
+        closed = closed_headers.get(column_id)
+        if closed is not None:
+            resolved, overflow = closed.fit.content, "ellipsized" if closed.fit.ellipsized else "fit"
+        else:
+            resolved, overflow = _resolve_table_text(
+                label, available, header_role, table.overflow, tokens, font_metrics)
+        header_width = closed.fit.inline_size if closed is not None else measure_text_width(
             resolved, font_size=header_size, font_metrics=header_metrics,
             letter_spacing=float(header_treatment.letter_spacing),
             text_transform=header_treatment.transform,
@@ -126,12 +145,16 @@ def prepare_table_header_seed(*, request: SurfaceLayoutRequest, table: SlotPlace
         header_text.append(place_text(
             placement_id=f"column:{column_id}", source_ref="view:tableColumns", content=resolved,
             inline=_aligned_inline(resolved, column_id, positions[column_id][0], available,
-                                   header_role, column.header_orientation, measure_table_text, column_intents),
+                                   header_role, column.header_orientation, measure_table_text, column_intents,
+                                   measured_width=(float(header_treatment.font_size * header_treatment.line_height)
+                                                   if column.header_orientation != "horizontal" else closed.fit.inline_size)
+                                   if closed is not None else None),
             baseline_block=baseline, typography_role=header_role, theme_tokens=tokens,
             font_metrics=font_metrics, overflow=overflow, collision_region="table",
             collision_domain=CollisionDomain("table", "header"), source_content=label,
             available_inline_start=positions[column_id][0], available_inline_size=available,
-            orientation=column.header_orientation))
+            orientation=column.header_orientation,
+            lines=closed.fit.lines if closed is not None else None))
     column_placements = tuple(
         ColumnPlacement(item.column_id, column.header,
                         Rect(Decimal(str(item.inline)), Decimal(str(table_bounds[1])),
@@ -141,7 +164,7 @@ def prepare_table_header_seed(*, request: SurfaceLayoutRequest, table: SlotPlace
     end = max((item.bounds.block + item.bounds.block_size for item in header_text), default=None)
     return SurfaceTableHeaderSeed(table, group_tag_inline_size, table_bounds,
                                   tuple(layout_columns), column_placements,
-                                  tuple(header_text), tuple(cell_indents.items()), end)
+                                  tuple(header_text), tuple(cell_indents.items()), end, bounded)
 
 
 def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | None = None) -> SurfaceTablePlacements:
@@ -163,6 +186,8 @@ def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | N
     column_intents = {item.column_id: item for item in columns_intent}
     cell_indents = dict(seed.cell_indents)
     text: list[TextPlacement] = list(seed.header_text)
+    closed_cells = ({(item.source_ref, item.column_id): item for item in seed.bounded_table.cells}
+                    if seed.bounded_table is not None else {})
 
     row_by_subject = {item.row_id: item for item in rows} | {item.object_id: item for item in rows}
     for cell in cells:
@@ -171,12 +196,16 @@ def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | N
         position = positions.get(column_id)
         if row is not None and position is not None and column_id in column_intents:
             treatment = tokens.text_treatment(typography_role)
-            indent = (cell_indents[object_id]
+            indent = ((cell_indents.get(object_id, 0) if seed.bounded_table is not None else cell_indents[object_id])
                       if column_id == request.surface_content.table_hierarchy_column else 0)
             available = max(0.0, column_widths[column_id] - indent - body_size)
-            resolved, overflow = _resolve_table_text(
-                content, available, typography_role, table.overflow, tokens, font_metrics)
-            if overflow == "ellipsized" and (cell.affix_prefix or cell.affix_suffix):
+            closed = closed_cells.get((object_id, column_id))
+            if closed is not None:
+                resolved, overflow = closed.fit.content, "ellipsized" if closed.fit.ellipsized else "fit"
+            else:
+                resolved, overflow = _resolve_table_text(
+                    content, available, typography_role, table.overflow, tokens, font_metrics)
+            if closed is None and overflow == "ellipsized" and (cell.affix_prefix or cell.affix_suffix):
                 # The state's affix survives an ellipsis (#588): only the formatted core is cut, within the
                 # width the affixes leave; when they alone do not fit, the whole string stays ellipsized.
                 affix_width = measure_table_text(cell.affix_prefix + cell.affix_suffix, typography_role, "horizontal")
@@ -189,14 +218,18 @@ def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | N
             text.append(place_text(
                 placement_id=f"cell:{object_id}:{column_id}", source_ref=object_id, content=resolved,
                 inline=_aligned_inline(resolved, column_id, position[0] + indent, available,
-                                       typography_role, "horizontal", measure_table_text, column_intents),
+                                       typography_role, "horizontal", measure_table_text, column_intents,
+                                       measured_width=closed.fit.inline_size if closed is not None else None),
                 baseline_block=centred_text_baseline(
-                    row.bounds, font_size=treatment.font_size, line_height=treatment.line_height),
+                    row.bounds, font_size=treatment.font_size, line_height=treatment.line_height)
+                    - (float(closed.block_size) - float(treatment.font_size * treatment.line_height)) / 2
+                    if closed is not None else centred_text_baseline(
+                        row.bounds, font_size=treatment.font_size, line_height=treatment.line_height),
                 typography_role=typography_role, theme_tokens=tokens, font_metrics=font_metrics,
                 overflow=overflow, collision_region="table",
                 collision_domain=CollisionDomain("table", f"row:{row.row_id}"), source_content=content,
                 available_inline_start=position[0] + indent, available_inline_size=available,
-                semantic_id=cell.semantic_id))
+                semantic_id=cell.semantic_id, lines=closed.fit.lines if closed is not None else None))
     return SurfaceTablePlacements(tuple(layout_columns), seed.columns, tuple(text))
 
 
@@ -215,8 +248,8 @@ def _resolve_table_text(content: str, available_inline: float, typography_role: 
 
 def _aligned_inline(content: str, column_id: str, start: float, available_inline: float,
                     typography_role: str, orientation: str, measure_table_text: Any,
-                    column_intents: Mapping[str, Any]) -> float:
-    width = measure_table_text(content, typography_role, orientation)
+                    column_intents: Mapping[str, Any], *, measured_width: float | None = None) -> float:
+    width = measured_width if measured_width is not None else measure_table_text(content, typography_role, orientation)
     align = column_intents[column_id].align
     if align == "end":
         return start + max(0.0, available_inline - width)
