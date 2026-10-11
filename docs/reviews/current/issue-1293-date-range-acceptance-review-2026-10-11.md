@@ -43,6 +43,11 @@ passed (3.04s). New-head CI and release remain required.
 
 ## Architecture conclusion
 
+READY main `b5b6ca46` adopted at `67fdba18` after its successful derived-main
+check. Live schema annotations pass; formatter, actual default Scene/SVG and
+new legend-grid integration:33 passed (254.54s, loaded host). No authored
+examples changes. Current-head PR snapshot/checks and exact-main release remain required.
+
 View owns the explicit display choice; normalization applies it once before
 Layout measures text. Domain dates, schedules, bars and routes are unchanged.
 Existing authored Views default to exclusive; only the packaged default Plan
