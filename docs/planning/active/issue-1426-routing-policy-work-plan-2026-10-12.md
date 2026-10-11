@@ -159,6 +159,32 @@ vocabulary/normalization and Spec 66 producer-owned evidence is consistent.
 Budget and approximate-search contracts remain unresolved; no ignored public
 budget member is added by this slice.
 
+### Wiring implementation plan
+
+1. Add the shared vocabulary/frozen definition and optional Layout schema
+   member, with finite-vocabulary policy and schema probes. Normalize it in
+   `engine.solve_layout`; carry it in `LayoutManifest`, preserving best's
+   legacy canonical payload. Tests: `test_relation_search_profile.py`, shared
+   vocabulary/schema tests and schema-equivalence against current main.
+2. Pass the policy and completed row-gap channels to `surface_routes`; carry
+   actual search-use evidence from selection, and complete the selected
+   entry-side back-route rule. Tests: shape selection including a later shape
+   after failed search, existing entry/back-route and terminal safety tests.
+3. Partition only member/delta requests after routes under first-fit in
+   `surface_composer`; bypass lane rehearsals and disable lost-name recovery
+   through `surface_route_label_plan`. Best keeps its old path. Test actual
+   routing-call counts in synthetic lane and automatic Scene/SVG renders,
+   with the pre-existing recovery tests as negative controls.
+4. Produce the typed summary in Layout, hand it through `surface_completion`
+   to existing Scene info projection, and add an explicit payload mapping in
+   `draft_render.warning_payloads`. Tests validate count invariants, actual
+   Scene diagnostic JSON and CLI/MCP severity; no adapter geometry/counting.
+
+Publish this approved slice plan before code. Keep the combined code on the
+same issue WIP; no default-flip merge or release acceptance before reviewer
+migration and all remaining budget/search/public-output gates. Focused tests
+and schema/ownership checks precede publication; use CI for full-suite release.
+
 ## Literal acceptance (all currently not met for the new policy)
 
 | Criterion copied from the issue | Required evidence |
