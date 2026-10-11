@@ -11,7 +11,7 @@ import yaml
 from chrona.app.cli import main
 
 ROOT = Path(__file__).resolve().parents[2]
-CZ = ROOT / "examples/controller-z"
+CZ = ROOT / "tests/fixtures/controller-z"
 
 
 def _surface(name: str) -> dict:

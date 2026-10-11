@@ -25,7 +25,7 @@ def _root() -> Path:
 
 def _balloon_theme(tmp_path: Path) -> Path:
     root = _root()
-    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    theme = yaml.safe_load((root / "tests/fixtures/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
     theme["body"]["values"]["balloon-container"] = {
         "type": "annotationContainer",
         "value": {"outline": "balloon", "cornerRadius": 0.2, "tailBaseEm": 0.6},
@@ -39,12 +39,12 @@ def _balloon_theme(tmp_path: Path) -> Path:
 def _render(tmp_path: Path):
     root = _root()
     draft = resolve_draft_render(
-        project_path=root / "examples/controller-z/project.yaml",
+        project_path=root / "tests/fixtures/controller-z/project.yaml",
         view_path=root / "tests/fixtures/candidate-placement/view.yaml",
         theme_path=_balloon_theme(tmp_path),
-        scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
+        scheme_path=root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
         layout_path=root / "conformance/layout-profile-intent-v0.2.yaml",
-        actual_path=root / "examples/controller-z/actual.yaml",
+        actual_path=root / "tests/fixtures/controller-z/actual.yaml",
         viewport=(1600, 900),
     )
     request = RenderRequest(closure=draft.closure, snapshot_root=draft.asset_root, asset_root=draft.asset_root,
@@ -75,12 +75,12 @@ def test_a_theme_without_the_annotation_container_token_raises_a_stable_diagnost
 
     root = _root()
     draft = resolve_draft_render(
-        project_path=root / "examples/controller-z/project.yaml",
+        project_path=root / "tests/fixtures/controller-z/project.yaml",
         view_path=root / "tests/fixtures/candidate-placement/view.yaml",
-        theme_path=root / "examples/controller-z/themes/executive-light.yaml",
-        scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
+        theme_path=root / "tests/fixtures/controller-z/themes/executive-light.yaml",
+        scheme_path=root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
         layout_path=root / "conformance/layout-profile-intent-v0.2.yaml",
-        actual_path=root / "examples/controller-z/actual.yaml",
+        actual_path=root / "tests/fixtures/controller-z/actual.yaml",
         viewport=(1600, 900),
     )
     request = RenderRequest(closure=draft.closure, snapshot_root=draft.asset_root, asset_root=draft.asset_root,

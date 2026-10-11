@@ -19,10 +19,10 @@ def _root() -> Path:
 
 def _paths(root: Path) -> dict[str, Path]:
     return {
-        "project_path": root / "examples/controller-z/project.yaml",
-        "view_path": root / "examples/controller-z/views/executive.yaml",
-        "theme_path": root / "examples/controller-z/themes/executive-light.yaml",
-        "scheme_path": root / "examples/controller-z/schemes/executive-light.yaml",
+        "project_path": root / "tests/fixtures/controller-z/project.yaml",
+        "view_path": root / "tests/fixtures/controller-z/views/executive.yaml",
+        "theme_path": root / "tests/fixtures/controller-z/themes/executive-light.yaml",
+        "scheme_path": root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
         "layout_path": root / "conformance/layout-profile-intent-v0.2.yaml",
     }
 
@@ -30,8 +30,8 @@ def _paths(root: Path) -> dict[str, Path]:
 def test_draft_closure_accepts_optional_review_inputs():
     root = _root()
     draft = resolve_draft_render(
-        **_paths(root), actual_path=root / "examples/controller-z/actual.yaml",
-        detail_path=root / "examples/controller-z/profiles/review-detail.yaml",
+        **_paths(root), actual_path=root / "tests/fixtures/controller-z/actual.yaml",
+        detail_path=root / "tests/fixtures/controller-z/profiles/review-detail.yaml",
     )
     assert draft.closure.actual_set is not None
     assert draft.closure.detail_profile is not None
@@ -50,7 +50,7 @@ def test_draft_closure_aggregates_every_schema_finding_in_the_known_resource_set
 
 def test_draft_closure_reports_unsupported_view_version_at_version_pointer(tmp_path):
     root = _root()
-    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
     view["version"] = "chrona/view/v0.22"
     stale_view = tmp_path / "stale-view.yaml"
     stale_view.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
@@ -65,7 +65,7 @@ def test_draft_closure_reports_unsupported_view_version_at_version_pointer(tmp_p
 
 
 def test_draft_preset_resolves_the_same_typed_resources_as_explicit_inputs():
-    root = _root() / "examples/controller-z"
+    root = _root() / "tests/fixtures/controller-z"
     preset = root / "executive-light.preset.yaml"
     draft = resolve_draft_render(project_path=root / "project.yaml", preset_path=preset, preset_root=root)
     explicit = resolve_draft_render(
@@ -80,12 +80,12 @@ def test_draft_preset_resolves_the_same_typed_resources_as_explicit_inputs():
 def test_bundled_default_preset_resolves_a_non_halcyon_project_with_or_without_actuals():
     root = _root()
     values = {
-        "project_path": root / "examples/controller-z/project.yaml",
+        "project_path": root / "tests/fixtures/controller-z/project.yaml",
         "preset_path": Path(str(default_preset_resource())),
         "preset_root": Path(str(default_preset_root())),
     }
     without_actual = resolve_draft_render(**values)
-    with_actual = resolve_draft_render(**values, actual_path=root / "examples/controller-z/actual.yaml")
+    with_actual = resolve_draft_render(**values, actual_path=root / "tests/fixtures/controller-z/actual.yaml")
     # #383/#429: the bundled default's own top-level id stays chrona-default-draft
     # (D1: no rename); its View is the readable Editorial-derived default.
     assert without_actual.closure.resource("view").id == with_actual.closure.resource("view").id == "chrona-preset-editorial-readable-default"
@@ -168,7 +168,7 @@ def test_system_font_opt_in_reuses_packaged_exact_face_without_host_discovery():
 
 def test_system_font_opt_in_closes_multiple_theme_faces_before_layout(tmp_path):
     root = _root()
-    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    theme = yaml.safe_load((root / "tests/fixtures/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
     theme["body"]["values"]["editorial"]["value"] = "Fixture Sans"
     theme["body"]["values"]["heading-weight"] = {"type": "fontWeight", "value": 700}
     theme["body"]["roles"]["heading"]["fontWeight"] = "heading-weight"
@@ -183,7 +183,7 @@ def test_system_font_opt_in_closes_multiple_theme_faces_before_layout(tmp_path):
         return SystemFontFace(family, weight, path, family, weight,
                               "sha256:" + sha256(path.read_bytes()).hexdigest())
     draft = resolve_draft_render(**(_paths(root) | {"theme_path": theme_path,
-                                                    "actual_path": root / "examples/controller-z/actual.yaml"}), system_fonts=True,
+                                                    "actual_path": root / "tests/fixtures/controller-z/actual.yaml"}), system_fonts=True,
                                  system_font_resolver=host)
     assert draft.font_resolution is not None
     assert tuple((face.family, face.weight) for face in draft.font_resolution.faces) == (("Fixture Sans", 400),)
@@ -214,9 +214,9 @@ def test_guided_draft_closure_normalizes_in_memory_and_records_non_scene_provena
     preset_root = tmp_path / "preset"
     preset_root.mkdir()
     resources = {
-        "view.yaml": yaml.safe_load((root / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8")),
-        "theme.yaml": yaml.safe_load((root / "examples/aster-ssd/themes/executive-light.yaml").read_text(encoding="utf-8")),
-        "scheme.yaml": yaml.safe_load((root / "examples/aster-ssd/schemes/executive-light.yaml").read_text(encoding="utf-8")),
+        "view.yaml": yaml.safe_load((root / "tests/fixtures/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8")),
+        "theme.yaml": yaml.safe_load((root / "tests/fixtures/aster-ssd/themes/executive-light.yaml").read_text(encoding="utf-8")),
+        "scheme.yaml": yaml.safe_load((root / "tests/fixtures/aster-ssd/schemes/executive-light.yaml").read_text(encoding="utf-8")),
         "layout.yaml": yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8")),
     }
     resources["view.yaml"]["body"]["selection"] = {"include": {"types": ["task"]}}
@@ -268,9 +268,9 @@ def test_guided_draft_closure_uses_only_preset_declared_icon_catalogs(tmp_path):
     preset_root = tmp_path / "preset"
     preset_root.mkdir()
     resources = {
-        "view.yaml": yaml.safe_load((root / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8")),
-        "theme.yaml": yaml.safe_load((root / "examples/aster-ssd/themes/executive-light.yaml").read_text(encoding="utf-8")),
-        "scheme.yaml": yaml.safe_load((root / "examples/aster-ssd/schemes/executive-light.yaml").read_text(encoding="utf-8")),
+        "view.yaml": yaml.safe_load((root / "tests/fixtures/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8")),
+        "theme.yaml": yaml.safe_load((root / "tests/fixtures/aster-ssd/themes/executive-light.yaml").read_text(encoding="utf-8")),
+        "scheme.yaml": yaml.safe_load((root / "tests/fixtures/aster-ssd/schemes/executive-light.yaml").read_text(encoding="utf-8")),
         "layout.yaml": yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8")),
         "icons.yaml": {"version": "chrona/icon-catalog/v0.3", "kind": "icon-catalog", "id": "preset-icons",
                        "body": {"set": "preset", "aliases": [], "entryAliases": {},
@@ -308,7 +308,7 @@ def test_guided_draft_closure_uses_only_preset_declared_icon_catalogs(tmp_path):
 @pytest.fixture
 def preset_with(tmp_path):
     """Write a Controller Z preset variant outside the example; resources resolve from the example root."""
-    root = _root() / "examples/controller-z"
+    root = _root() / "tests/fixtures/controller-z"
 
     def make(**body: object) -> Path:
         preset = yaml.safe_load((root / "executive-light.preset.yaml").read_text(encoding="utf-8"))
@@ -321,7 +321,7 @@ def preset_with(tmp_path):
 
 
 def test_preset_detail_profile_applies_unless_an_explicit_detail_is_given(preset_with):
-    root = _root() / "examples/controller-z"
+    root = _root() / "tests/fixtures/controller-z"
     preset = preset_with(detailProfile={"id": "controller-z-review-detail", "kind": "review-detail-profile",
                                         "path": "profiles/review-detail.yaml"})
     draft = resolve_draft_render(project_path=root / "project.yaml", actual_path=root / "actual.yaml", preset_path=preset, preset_root=root)
@@ -336,7 +336,7 @@ def test_preset_detail_profile_applies_unless_an_explicit_detail_is_given(preset
 
 
 def test_preset_preferred_visual_profile_applies_unless_a_flag_is_given(preset_with):
-    root = _root() / "examples/controller-z"
+    root = _root() / "tests/fixtures/controller-z"
     preset = preset_with(visualProfile={"preferred": "chrona-output/visual/v0.7-svg"})
     preferred = resolve_draft_render(project_path=root / "project.yaml", preset_path=preset, preset_root=root)
     assert preferred.closure.context.target.visual_profile == "chrona-output/visual/v0.7-svg"

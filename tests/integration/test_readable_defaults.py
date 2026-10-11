@@ -259,7 +259,7 @@ def test_halcyon_readable_default_mirror_renders_task_and_plan_columns(tmp_path,
 
 
 def test_attached_milestones_default_keeps_host_title_visible(tmp_path, monkeypatch) -> None:
-    example = ROOT / "examples/attached-milestones"
+    example = ROOT / "tests/fixtures/attached-milestones"
     scene, svg_path = _render_project(tmp_path, monkeypatch, "attached-default",
                                       example / "project.yaml", example / "actual.yaml")
     primitives = _primitives(scene)

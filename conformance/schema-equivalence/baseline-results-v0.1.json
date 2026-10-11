@@ -786,17 +786,17 @@
     "rule": "pattern"
    },
    "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:valid": null,
-   "color-scheme|examples/aster-ssd/schemes/executive-light.yaml/id|identifier:empty": {
+   "color-scheme|tests/fixtures/aster-ssd/schemes/executive-light.yaml/id|identifier:empty": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected minLength 1",
     "pointer": "/id",
     "rule": "minLength"
    },
-   "color-scheme|examples/aster-ssd/schemes/executive-light.yaml/id|identifier:newline": null,
-   "color-scheme|examples/aster-ssd/schemes/executive-light.yaml/id|identifier:non-ascii": null,
-   "color-scheme|examples/aster-ssd/schemes/executive-light.yaml/id|identifier:nul": null,
-   "color-scheme|examples/aster-ssd/schemes/executive-light.yaml/id|identifier:space": null,
-   "color-scheme|examples/aster-ssd/schemes/executive-light.yaml/id|identifier:valid": null,
+   "color-scheme|tests/fixtures/aster-ssd/schemes/executive-light.yaml/id|identifier:newline": null,
+   "color-scheme|tests/fixtures/aster-ssd/schemes/executive-light.yaml/id|identifier:non-ascii": null,
+   "color-scheme|tests/fixtures/aster-ssd/schemes/executive-light.yaml/id|identifier:nul": null,
+   "color-scheme|tests/fixtures/aster-ssd/schemes/executive-light.yaml/id|identifier:space": null,
+   "color-scheme|tests/fixtures/aster-ssd/schemes/executive-light.yaml/id|identifier:valid": null,
    "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/commandId|identifier:empty": {
     "code": "E_OPERATIONAL_SCHEMA",
     "message": "expected minLength 1",
@@ -1264,45 +1264,45 @@
    "icon-catalog|tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml/id|identifier:nul": null,
    "icon-catalog|tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml/id|identifier:space": null,
    "icon-catalog|tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml/id|identifier:valid": null,
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/contentIdentity|sha256:no-prefix": {
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/provenance/resources/0/contentIdentity|sha256:no-prefix": {
     "code": "E_SCENE_SERIALIZATION",
     "message": "",
     "pointer": "",
     "rule": ""
    },
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/contentIdentity|sha256:short": {
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/provenance/resources/0/contentIdentity|sha256:short": {
     "code": "E_SCENE_SERIALIZATION",
     "message": "",
     "pointer": "",
     "rule": ""
    },
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/contentIdentity|sha256:trailing-newline": null,
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/contentIdentity|sha256:uppercase-hex": {
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/provenance/resources/0/contentIdentity|sha256:trailing-newline": null,
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/provenance/resources/0/contentIdentity|sha256:uppercase-hex": {
     "code": "E_SCENE_SERIALIZATION",
     "message": "",
     "pointer": "",
     "rule": ""
    },
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/contentIdentity|sha256:valid": null,
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:empty": {
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/provenance/resources/0/contentIdentity|sha256:valid": null,
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:empty": {
     "code": "E_SCENE_SERIALIZATION",
     "message": "",
     "pointer": "",
     "rule": ""
    },
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:newline": null,
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:non-ascii": null,
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:nul": null,
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:space": null,
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:valid": null,
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:impossible-day": null,
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:impossible-month": null,
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:non-leap-february-29": null,
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:trailing-newline": null,
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:unicode-digits": null,
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:valid": null,
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:year-zero": null,
-   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:zero-date": null,
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:newline": null,
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:non-ascii": null,
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:nul": null,
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:space": null,
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:valid": null,
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:impossible-day": null,
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:impossible-month": null,
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:non-leap-february-29": null,
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:trailing-newline": null,
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:unicode-digits": null,
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:valid": null,
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:year-zero": null,
+   "inspection-scene|tests/fixtures/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:zero-date": null,
    "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/children/0/source|path:absolute": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
@@ -1494,75 +1494,75 @@
    "presentation-materialization-receipt|inline:materialization-receipt/id|identifier:nul": null,
    "presentation-materialization-receipt|inline:materialization-receipt/id|identifier:space": null,
    "presentation-materialization-receipt|inline:materialization-receipt/id|identifier:valid": null,
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:absolute": {
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:absolute": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
     "pointer": "/body/resources/view/path",
     "rule": "pattern"
    },
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:backslash": {
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:backslash": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
     "pointer": "/body/resources/view/path",
     "rule": "pattern"
    },
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:dot": {
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:dot": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
     "pointer": "/body/resources/view/path",
     "rule": "pattern"
    },
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:dot-dot": {
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:dot-dot": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
     "pointer": "/body/resources/view/path",
     "rule": "pattern"
    },
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:double-slash": null,
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:embedded-newline": {
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:double-slash": null,
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:embedded-newline": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
     "pointer": "/body/resources/view/path",
     "rule": "pattern"
    },
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:nested": null,
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:non-ascii": {
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:nested": null,
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:non-ascii": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
     "pointer": "/body/resources/view/path",
     "rule": "pattern"
    },
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:nul": {
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:nul": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
     "pointer": "/body/resources/view/path",
     "rule": "pattern"
    },
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:space": {
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:space": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
     "pointer": "/body/resources/view/path",
     "rule": "pattern"
    },
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:trailing-newline": null,
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:traversal": {
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:trailing-newline": null,
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:traversal": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
     "pointer": "/body/resources/view/path",
     "rule": "pattern"
    },
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:valid": null,
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/id|identifier:empty": {
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:valid": null,
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/id|identifier:empty": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected minLength 1",
     "pointer": "/id",
     "rule": "minLength"
    },
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/id|identifier:newline": null,
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/id|identifier:non-ascii": null,
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/id|identifier:nul": null,
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/id|identifier:space": null,
-   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/id|identifier:valid": null,
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/id|identifier:newline": null,
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/id|identifier:non-ascii": null,
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/id|identifier:nul": null,
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/id|identifier:space": null,
+   "presentation-preset|tests/fixtures/controller-z/elevated-light.preset.yaml/id|identifier:valid": null,
    "profile-package|conformance/implementation-delivery-profile-invalid-field-v0.2.yaml/contentIdentity|sha256:no-prefix": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
@@ -1792,138 +1792,138 @@
     "pointer": "/objects/gate/schedule",
     "rule": ""
    },
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/contentIdentity|sha256:no-prefix": {
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/contentIdentity|sha256:no-prefix": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
     "pointer": "/body/environment/fontMetrics/assets/0/metrics/contentIdentity",
     "rule": "pattern"
    },
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/contentIdentity|sha256:short": {
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/contentIdentity|sha256:short": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
     "pointer": "/body/environment/fontMetrics/assets/0/metrics/contentIdentity",
     "rule": "pattern"
    },
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/contentIdentity|sha256:trailing-newline": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/contentIdentity|sha256:uppercase-hex": {
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/contentIdentity|sha256:trailing-newline": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/contentIdentity|sha256:uppercase-hex": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
     "pointer": "/body/environment/fontMetrics/assets/0/metrics/contentIdentity",
     "rule": "pattern"
    },
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/contentIdentity|sha256:valid": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:absolute": {
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/contentIdentity|sha256:valid": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:absolute": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.\\\\.(?:/|$)).+$'",
     "pointer": "/body/environment/fontMetrics/assets/0/metrics/locator/address",
     "rule": "pattern"
    },
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:all-dot-segment": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:backslash": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:colon": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:dot-dot": {
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:all-dot-segment": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:backslash": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:colon": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:dot-dot": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.\\\\.(?:/|$)).+$'",
     "pointer": "/body/environment/fontMetrics/assets/0/metrics/locator/address",
     "rule": "pattern"
    },
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:dot-segment-inner": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:dot-segment-leading": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:drive-absolute": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:drive-relative": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:embedded-newline": {
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:dot-segment-inner": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:dot-segment-leading": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:drive-absolute": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:drive-relative": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:embedded-newline": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.\\\\.(?:/|$)).+$'",
     "pointer": "/body/environment/fontMetrics/assets/0/metrics/locator/address",
     "rule": "pattern"
    },
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:empty-segment": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:inner-traversal": {
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:empty-segment": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:inner-traversal": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.\\\\.(?:/|$)).+$'",
     "pointer": "/body/environment/fontMetrics/assets/0/metrics/locator/address",
     "rule": "pattern"
    },
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:non-ascii": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:nul": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:space": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:tab": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:trailing-newline": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:trailing-slash": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:traversal": {
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:non-ascii": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:nul": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:space": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:tab": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:trailing-newline": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:trailing-slash": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:traversal": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.\\\\.(?:/|$)).+$'",
     "pointer": "/body/environment/fontMetrics/assets/0/metrics/locator/address",
     "rule": "pattern"
    },
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:unc": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:valid": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:absolute": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:all-dot-segment": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:backslash": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:colon": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:dot-dot": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:dot-segment-inner": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:dot-segment-leading": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:drive-absolute": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:drive-relative": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:embedded-newline": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:empty-segment": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:inner-traversal": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:non-ascii": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:nul": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:space": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:tab": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:trailing-newline": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:trailing-slash": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:traversal": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:unc": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:valid": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:absolute": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:all-dot-segment": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:backslash": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:colon": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:dot-dot": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:dot-segment-inner": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:dot-segment-leading": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:drive-absolute": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:drive-relative": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:embedded-newline": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:empty-segment": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:inner-traversal": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:non-ascii": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:nul": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:space": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:tab": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:trailing-newline": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:trailing-slash": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:traversal": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:unc": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|address:valid": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:absolute": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:backslash": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:dot": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:dot-dot": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:double-slash": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:embedded-newline": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:nested": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:non-ascii": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:nul": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:space": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:trailing-newline": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:traversal": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:valid": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/id|identifier:empty": {
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:unc": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/locator/address|address:valid": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:absolute": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:all-dot-segment": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:backslash": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:colon": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:dot-dot": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:dot-segment-inner": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:dot-segment-leading": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:drive-absolute": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:drive-relative": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:embedded-newline": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:empty-segment": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:inner-traversal": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:non-ascii": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:nul": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:space": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:tab": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:trailing-newline": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:trailing-slash": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:traversal": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:unc": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/layout/address|address:valid": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:absolute": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:all-dot-segment": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:backslash": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:colon": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:dot-dot": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:dot-segment-inner": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:dot-segment-leading": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:drive-absolute": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:drive-relative": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:embedded-newline": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:empty-segment": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:inner-traversal": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:non-ascii": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:nul": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:space": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:tab": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:trailing-newline": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:trailing-slash": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:traversal": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:unc": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|address:valid": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|path:absolute": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|path:backslash": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|path:dot": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|path:dot-dot": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|path:double-slash": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|path:embedded-newline": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|path:nested": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|path:non-ascii": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|path:nul": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|path:space": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|path:trailing-newline": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|path:traversal": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/body/project/address|path:valid": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/id|identifier:empty": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected minLength 1",
     "pointer": "/id",
     "rule": "minLength"
    },
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/id|identifier:newline": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/id|identifier:non-ascii": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/id|identifier:nul": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/id|identifier:space": null,
-   "render-context|examples/aster-ssd/contexts/01-overview.yaml/id|identifier:valid": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/id|identifier:newline": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/id|identifier:non-ascii": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/id|identifier:nul": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/id|identifier:space": null,
+   "render-context|tests/fixtures/aster-ssd/contexts/01-overview.yaml/id|identifier:valid": null,
    "review-detail-profile|conformance/review-detail-profile-v0.1.yaml/id|identifier:empty": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected minLength 1",
@@ -3461,6 +3461,78 @@
   },
   {
    "error": null,
+   "path": "tests/fixtures/aster-ssd/actual.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/aster-ssd/contexts/01-overview.yaml",
+   "schema": "render-context-v0.17.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/aster-ssd/generated/overview.scene.json",
+   "schema": "scene-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/aster-ssd/layouts/executive-review.yaml",
+   "schema": "layout-profile-v0.10.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/aster-ssd/profiles/review-detail.yaml",
+   "schema": "review-detail-profile-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/aster-ssd/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/aster-ssd/schemes/executive-light.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/aster-ssd/themes/executive-light.yaml",
+   "schema": "theme-v0.15.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/aster-ssd/themes/onboarding-variation.yaml",
+   "schema": "theme-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/aster-ssd/views/01-overview.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/attached-milestones/actual.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/attached-milestones/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
    "path": "tests/fixtures/candidate-placement/view-image-container.yaml",
    "schema": "view-v0.27.schema.yaml",
    "valid": true
@@ -3468,6 +3540,339 @@
   {
    "error": null,
    "path": "tests/fixtures/candidate-placement/view.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/cli_characterization/halcyon-1/actual.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/cli_characterization/halcyon-1/layout.yaml",
+   "schema": "layout-profile-v0.10.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/cli_characterization/halcyon-1/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/cli_characterization/halcyon-1/scheme.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/cli_characterization/halcyon-1/theme.yaml",
+   "schema": "theme-v0.15.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/cli_characterization/halcyon-1/view.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/cli_characterization/starter-actual.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/cli_characterization/starter.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z-ja/actual.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z-ja/contexts/axis-secondary.yaml",
+   "schema": "render-context-v0.17.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z-ja/contexts/executive.yaml",
+   "schema": "render-context-v0.17.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z-ja/generated/executive.scene.json",
+   "schema": "scene-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z-ja/layouts/executive-review.yaml",
+   "schema": "layout-profile-v0.10.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z-ja/profiles/review-detail.yaml",
+   "schema": "review-detail-profile-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z-ja/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z-ja/schemes/executive-light.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z-ja/themes/axis-secondary.yaml",
+   "schema": "theme-v0.15.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z-ja/themes/executive-light.yaml",
+   "schema": "theme-v0.15.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z-ja/views/axis-secondary.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z-ja/views/executive.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/actual.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/contexts/annotations.yaml",
+   "schema": "render-context-v0.17.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/contexts/elevated.yaml",
+   "schema": "render-context-v0.17.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/contexts/executive.yaml",
+   "schema": "render-context-v0.17.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/contexts/icons.yaml",
+   "schema": "render-context-v0.17.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/contexts/material-icons.yaml",
+   "schema": "render-context-v0.17.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/contexts/plan-only.yaml",
+   "schema": "render-context-v0.17.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/curriculum/scale-30.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/elevated-light.preset.yaml",
+   "schema": "presentation-preset-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/executive-light.preset.yaml",
+   "schema": "presentation-preset-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/generated/annotations.scene.json",
+   "schema": "scene-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/generated/elevated.scene.json",
+   "schema": "scene-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/generated/executive.scene.json",
+   "schema": "scene-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/generated/icons.scene.json",
+   "schema": "scene-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/generated/material-icons.scene.json",
+   "schema": "scene-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/generated/plan-only.scene.json",
+   "schema": "scene-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/generated/progress-track.scene.json",
+   "schema": "scene-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/icons.yaml",
+   "schema": "icon-catalog-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/imported-icons.yaml",
+   "schema": "icon-catalog-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/layouts/annotations-review.yaml",
+   "schema": "layout-profile-v0.10.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/layouts/executive-review.yaml",
+   "schema": "layout-profile-v0.10.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/profiles/review-detail.yaml",
+   "schema": "review-detail-profile-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": {
+    "pointer": "/",
+    "rule": "additionalProperties"
+   },
+   "path": "tests/fixtures/controller-z/profiles/summary.yaml",
+   "schema": "summary-profile-v0.2.schema.yaml",
+   "valid": false
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/schemes/executive-light.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/snapshots/baseline.yaml",
+   "schema": "snapshot-ref-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/snapshots/baseline/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/themes/elevated-light.yaml",
+   "schema": "theme-v0.15.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/themes/executive-light.yaml",
+   "schema": "theme-v0.15.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/themes/material-icons-light.yaml",
+   "schema": "theme-v0.15.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/views/annotations.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/views/executive.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/views/icons.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/views/material-icons.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/controller-z/views/plan-only.yaml",
    "schema": "view-v0.27.schema.yaml",
    "valid": true
   },
@@ -3481,6 +3886,12 @@
    "error": null,
    "path": "tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml",
    "schema": "icon-catalog-v0.4.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/icons/theme-assets-valid.normalized-v0.5.yaml",
+   "schema": "icon-catalog-v0.5.schema.yaml",
    "valid": true
   },
   {
@@ -3523,6 +3934,84 @@
    "error": null,
    "path": "tests/fixtures/multi-lane-milestones/view.yaml",
    "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/surface-decoration/scanlines-theme-assets.yaml",
+   "schema": "theme-asset-source-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/terse/anchors-bounds.project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/terse/calendars.project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/terse/deadlines.project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/terse/derived-gates.project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/terse/forward-references.project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/terse/groups.project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/terse/halcyon-1-core.project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/terse/halcyon-1-core.twin.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/terse/issue-sketch.project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/terse/minimal-starter.project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/terse/special-characters.project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/terse/yaml-hazard-names.project.yaml",
+   "schema": "project-v0.7.schema.yaml",
    "valid": true
   }
  ],

@@ -26,7 +26,7 @@ def _layout(source: Path, destination: Path, *, distribution=None, member_names=
 
 
 def _lane_setup(tmp_path):
-    example = _root() / "examples/controller-z"
+    example = _root() / "tests/fixtures/controller-z"
     view = yaml.safe_load((example / "views/icons.yaml").read_text(encoding="utf-8"))
     view["version"] = "chrona/view/v0.28"
     body = view["body"]
@@ -56,7 +56,7 @@ def _auto_setup(tmp_path):
         "placement": "plot", "content": ["title"], "side": "auto", "overflow": "suppress"}
     view_path = tmp_path / "auto-view.yaml"
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
-    example = _root() / "examples/controller-z"
+    example = _root() / "tests/fixtures/controller-z"
     return dict(project_path=fixture / "project.yaml", view_path=view_path,
                 theme_path=example / "themes/executive-light.yaml", scheme_path=example / "schemes/executive-light.yaml",
                 actual_path=fixture / "actual.yaml", viewport=(1600, 900)

@@ -47,7 +47,7 @@ def test_committed_as_of_label_is_a_bare_word_in_a_filled_chip():
 
 def test_a_label_chip_is_not_specific_to_the_as_of_marker(tmp_path, monkeypatch):
     """The same Theme role naming gives member labels chips; no as-of code path is involved."""
-    theme = yaml.safe_load((ROOT / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    theme = yaml.safe_load((ROOT / "tests/fixtures/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
     body = theme["body"]
     # A small padding: a member label (text, not chip) must stay inside its
     # own row band (#488), and Controller Z's labels sit just above their bars.
@@ -58,11 +58,11 @@ def test_a_label_chip_is_not_specific_to_the_as_of_marker(tmp_path, monkeypatch)
     theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
     scene_path = tmp_path / "scene.json"
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(ROOT / "examples/controller-z/project.yaml"),
-        "--actual", str(ROOT / "examples/controller-z/actual.yaml"),
-        "--view", str(ROOT / "examples/controller-z/views/executive.yaml"), "--theme", str(theme_path),
-        "--scheme", str(ROOT / "examples/controller-z/schemes/executive-light.yaml"),
-        "--layout", str(ROOT / "examples/controller-z/layouts/executive-review.yaml"),
+        "chrona", "render", str(ROOT / "tests/fixtures/controller-z/project.yaml"),
+        "--actual", str(ROOT / "tests/fixtures/controller-z/actual.yaml"),
+        "--view", str(ROOT / "tests/fixtures/controller-z/views/executive.yaml"), "--theme", str(theme_path),
+        "--scheme", str(ROOT / "tests/fixtures/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(ROOT / "tests/fixtures/controller-z/layouts/executive-review.yaml"),
         "--output", str(tmp_path / "out.svg"), "--emit-scene", str(scene_path),
     ])
     main()

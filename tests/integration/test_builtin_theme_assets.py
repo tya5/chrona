@@ -17,7 +17,7 @@ from chrona.usecases.preset_library import copy_builtin_preset
 
 
 ROOT = Path(__file__).resolve().parents[2]
-PROJECT = ROOT / "examples/controller-z/project.yaml"
+PROJECT = ROOT / "tests/fixtures/controller-z/project.yaml"
 FONTS = ROOT / "src/chrona/resources/fonts"
 
 

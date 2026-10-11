@@ -13,8 +13,8 @@ ROOT = Path(__file__).resolve().parents[3]
 
 def test_current_example_contexts_bind_exact_source_bytes():
     for relative in (
-        "examples/controller-z/contexts/executive.yaml",
-        "examples/aster-ssd/contexts/01-overview.yaml",
+        "tests/fixtures/controller-z/contexts/executive.yaml",
+        "tests/fixtures/aster-ssd/contexts/01-overview.yaml",
         "examples/halcyon-1/contexts/01-mission-brief.yaml",
         "examples/halcyon-1/contexts/02-programme-board.yaml",
         "examples/halcyon-1/contexts/03-launch-campaign.yaml",

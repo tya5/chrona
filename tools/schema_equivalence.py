@@ -1002,7 +1002,7 @@ class ProbeSite:
 
 _C = "conformance/"
 _REGISTRY_REPAIR = (("/payload/registry", {"provider": "local", "identity": "ci-baselines"}),)
-_SCENE = "examples/controller-z/generated/plan-only.scene.json"
+_SCENE = "tests/fixtures/controller-z/generated/plan-only.scene.json"
 _OPERATIONAL = "docs/examples/operational-workflows/"
 
 PROBE_SITES: tuple[ProbeSite, ...] = (
@@ -1016,7 +1016,7 @@ PROBE_SITES: tuple[ProbeSite, ...] = (
     ProbeSite("automation-result", _OPERATIONAL + "accepted-baseline-result.yaml", "/requestContentIdentity", "sha256"),
     ProbeSite("automation-result", _OPERATIONAL + "accepted-baseline-result.yaml", "/inputs/0/address", "path"),
     ProbeSite("automation-result", _OPERATIONAL + "accepted-baseline-result.yaml", "/inputs/0/id", "identifier"),
-    ProbeSite("color-scheme", "examples/aster-ssd/schemes/executive-light.yaml", "/id", "identifier"),
+    ProbeSite("color-scheme", "tests/fixtures/aster-ssd/schemes/executive-light.yaml", "/id", "identifier"),
     ProbeSite("command-request", _OPERATIONAL + "accepted-capture-command.yaml", "/expectedContentIdentity", "sha256",
               repair=_REGISTRY_REPAIR),
     ProbeSite("command-request", _OPERATIONAL + "accepted-capture-command.yaml", "/target/address", "path",
@@ -1028,8 +1028,8 @@ PROBE_SITES: tuple[ProbeSite, ...] = (
     ProbeSite("icon-catalog", "tests/fixtures/icons/theme-assets-valid.normalized-v0.5.yaml", "/id", "identifier"),
     ProbeSite("layout-profile", _C + "layout-profile-intent-v0.2.yaml", "/root/id", "identifier"),
     ProbeSite("layout-profile", _C + "layout-profile-intent-v0.2.yaml", "/root/children/0/source", "path"),
-    ProbeSite("presentation-preset", "examples/controller-z/elevated-light.preset.yaml", "/body/resources/view/path", "path"),
-    ProbeSite("presentation-preset", "examples/controller-z/elevated-light.preset.yaml", "/id", "identifier"),
+    ProbeSite("presentation-preset", "tests/fixtures/controller-z/elevated-light.preset.yaml", "/body/resources/view/path", "path"),
+    ProbeSite("presentation-preset", "tests/fixtures/controller-z/elevated-light.preset.yaml", "/id", "identifier"),
     ProbeSite("builtin-preset-library", "src/chrona/resources/presets/library.yaml",
               "/entries/6/members/iconCatalogs/0/contentIdentity", "sha256"),
     ProbeSite("builtin-preset-library", "src/chrona/resources/presets/library.yaml", "/entries/0/id", "identifier"),
@@ -1038,10 +1038,10 @@ PROBE_SITES: tuple[ProbeSite, ...] = (
     ProbeSite("project", _C + "calendar.yaml", "/objects/predecessor/schedule/start", "date"),
     ProbeSite("project", _C + "calendar.yaml", "/project/id", "identifier"),
     ProbeSite("project", _C + "calendar.yaml", "/relations/0/from/endpoint", "endpoint"),
-    ProbeSite("render-context", "examples/aster-ssd/contexts/01-overview.yaml", "/body/project/address", "path"),
-    ProbeSite("render-context", "examples/aster-ssd/contexts/01-overview.yaml",
+    ProbeSite("render-context", "tests/fixtures/aster-ssd/contexts/01-overview.yaml", "/body/project/address", "path"),
+    ProbeSite("render-context", "tests/fixtures/aster-ssd/contexts/01-overview.yaml",
               "/body/environment/fontMetrics/assets/0/metrics/contentIdentity", "sha256"),
-    ProbeSite("render-context", "examples/aster-ssd/contexts/01-overview.yaml", "/id", "identifier"),
+    ProbeSite("render-context", "tests/fixtures/aster-ssd/contexts/01-overview.yaml", "/id", "identifier"),
     ProbeSite("review-detail-profile", _C + "review-detail-profile-v0.1.yaml", "/id", "identifier"),
     ProbeSite("inspection-scene", _SCENE, "/surfaces/0/scale/domainStart", "date"),
     ProbeSite("inspection-scene", _SCENE, "/provenance/resources/0/contentIdentity", "sha256"),
@@ -1081,9 +1081,9 @@ PROBE_SITES: tuple[ProbeSite, ...] = (
     ProbeSite("derived-theme", "inline:derived-theme", "/body/extends/path", "path"),
     ProbeSite("derived-theme", "inline:derived-theme", "/body/extends/contentIdentity", "sha256"),
     # Store address sites of the strict `storeAddress` (#710): the `address` family lists every rejected input.
-    ProbeSite("render-context", "examples/aster-ssd/contexts/01-overview.yaml", "/body/project/address", "address"),
-    ProbeSite("render-context", "examples/aster-ssd/contexts/01-overview.yaml", "/body/layout/address", "address"),
-    ProbeSite("render-context", "examples/aster-ssd/contexts/01-overview.yaml",
+    ProbeSite("render-context", "tests/fixtures/aster-ssd/contexts/01-overview.yaml", "/body/project/address", "address"),
+    ProbeSite("render-context", "tests/fixtures/aster-ssd/contexts/01-overview.yaml", "/body/layout/address", "address"),
+    ProbeSite("render-context", "tests/fixtures/aster-ssd/contexts/01-overview.yaml",
               "/body/environment/fontMetrics/assets/0/metrics/locator/address", "address"),
     ProbeSite("layout-profile", _C + "layout-profile-override-v0.2.yaml", "/extends/address", "address"),
     ProbeSite("command-request", _OPERATIONAL + "accepted-capture-command.yaml", "/target/address", "address",

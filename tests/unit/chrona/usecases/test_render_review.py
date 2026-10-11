@@ -134,7 +134,7 @@ def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():
     # I662 S4a: `end` is the span-end's canonical anchor spelling and `finish` its alias; the endpoint text reaches Layout ids
     # and port choice, so the two spellings must give the same Scene bytes and the same SVG. The controller-z annotations
     # context anchors four annotations to a span finish (three planned, one actual explanatory arrow, suppressed since #1074) and one to a point.
-    example = ROOT / "examples/controller-z"
+    example = ROOT / "tests/fixtures/controller-z"
     with tempfile.TemporaryDirectory() as temporary:
         snapshot = Path(temporary) / "snapshot"
         snapshot.mkdir()

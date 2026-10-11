@@ -13,7 +13,7 @@ from chrona.presentation.icons.importer import import_iconify
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EXAMPLE = ROOT / "examples/controller-z"
+EXAMPLE = ROOT / "tests/fixtures/controller-z"
 ASSETS = EXAMPLE / "assets"
 CATALOG = EXAMPLE / "icons.yaml"
 

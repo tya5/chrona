@@ -68,7 +68,7 @@ def _catalog(tmp_path: Path) -> Path:
 
 def _image_container_theme(tmp_path: Path) -> Path:
     root = _root()
-    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    theme = yaml.safe_load((root / "tests/fixtures/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
     theme["body"]["values"]["frame-container"] = {
         "type": "annotationContainer",
         "value": {
@@ -86,12 +86,12 @@ def _image_container_theme(tmp_path: Path) -> Path:
 def _render(tmp_path: Path, *, view_name: str = "view-image-container.yaml", theme_path: Path | None = None):
     root = _root()
     draft = resolve_draft_render(
-        project_path=root / "examples/controller-z/project.yaml",
+        project_path=root / "tests/fixtures/controller-z/project.yaml",
         view_path=root / "tests/fixtures/candidate-placement" / view_name,
         theme_path=theme_path or _image_container_theme(tmp_path),
-        scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
+        scheme_path=root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
         layout_path=root / "conformance/layout-profile-intent-v0.2.yaml",
-        actual_path=root / "examples/controller-z/actual.yaml",
+        actual_path=root / "tests/fixtures/controller-z/actual.yaml",
         icon_catalog_paths=(_catalog(tmp_path),),
         viewport=(1600, 900),
     )
@@ -140,7 +140,7 @@ def test_a_theme_binding_an_unresolved_catalog_reference_raises_a_stable_diagnos
     import tempfile
     with tempfile.TemporaryDirectory() as raw:
         tmp_path = Path(raw)
-        theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+        theme = yaml.safe_load((root / "tests/fixtures/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
         theme["body"]["values"]["frame-container"] = {
             "type": "annotationContainer",
             "value": {"outline": "image", "image": "fixture:missing", "cornerRadius": 0,

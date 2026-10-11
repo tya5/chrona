@@ -14,7 +14,7 @@ SVG_NS = "{http://www.w3.org/2000/svg}"
 
 def test_controller_baseline_ghosts_emits_start_start_label_without_shared_node_route_overlap(tmp_path):
     result = materialize(
-        ROOT / "examples/controller-z/manifest.yaml", "baseline-ghosts",
+        ROOT / "tests/fixtures/controller-z/manifest.yaml", "baseline-ghosts",
         tmp_path / "controller-baseline-ghosts", write=False,
     )
     rendered = result.rendered

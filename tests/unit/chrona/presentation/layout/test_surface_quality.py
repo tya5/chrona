@@ -274,7 +274,7 @@ def test_layout_row_lane_anchor_is_completed_and_bounded():
 def test_committed_progress_track_example_draws_inset_capsules_at_several_lengths():
     import json
     from pathlib import Path
-    scene = json.loads((Path(__file__).resolve().parents[5] / "examples/controller-z/generated/progress-track.scene.json")
+    scene = json.loads((Path(__file__).resolve().parents[5] / "tests/fixtures/controller-z/generated/progress-track.scene.json")
                        .read_text(encoding="utf-8"))
     primitives = {}
 
