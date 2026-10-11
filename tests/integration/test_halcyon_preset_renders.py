@@ -20,7 +20,8 @@ ROOT = Path(__file__).resolve().parents[2]
 HALCYON = "examples/halcyon-1/project.yaml"
 HALCYON_ACTUAL = "examples/halcyon-1/actual.yaml"
 PRESETS = [entry["id"] for entry in yaml.safe_load(
-    (ROOT / "src/chrona/resources/presets/library.yaml").read_text(encoding="utf-8"))["entries"]]
+    (ROOT / "src/chrona/resources/presets/library.yaml").read_text(encoding="utf-8"))["entries"]
+    if entry["id"] != "chrona-default-draft"]  # the bundled default is the "default" case; its bundle is editorial-readable-default (#1305)
 
 
 def _applicable(name: str):
