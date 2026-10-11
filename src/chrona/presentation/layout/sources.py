@@ -1,7 +1,7 @@
 """Pure source measurement inputs shared by layout and Scene composition."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from decimal import Decimal, InvalidOperation
 from typing import Any, Mapping
 
@@ -11,7 +11,7 @@ from chrona.presentation.layout.model import LayoutError, Measurement
 from chrona.presentation.layout.presentation import (
     header_group_cell_indent, measure_table_columns, place_table_columns, table_cell_indent, table_content_inline_size, table_text_measurer,
 )
-from chrona.presentation.layout.text import measure_text_width, metric_for_role, paint_text
+from chrona.presentation.layout.text import fit_text_lines, measure_text_width, metric_for_role, paint_text
 from chrona.presentation.layout.text_stack import MeasuredTextStack, measure_text_stack
 from chrona.presentation.layout.table_measurement import BoundedTableMeasurement, measure_bounded_table
 from chrona.presentation.layout.summary_flow import MeasuredSummary, measure_summary
@@ -48,6 +48,8 @@ class MeasuredTextRun:
     text_transform: str = "none"
     numeric_spacing: str = "proportional"
     horizontal_scale: float = 1.0
+    lines: tuple[str, ...] = ()
+    overflow: str = "fit"
 
 
 @dataclass(frozen=True)
@@ -78,6 +80,7 @@ class SourceInput:
     # A declared source may be available while its selected View part is empty.
     # Empty sources contribute no runs and have zero natural extent.
     content_present: bool = True
+    text_wrap: str = "forbid"
 
     def text_runs(self) -> tuple[SourceTextRun, ...]:
         if not self.content_present:
@@ -188,8 +191,9 @@ def derived_track_block_size(metrics: Mapping[str, Decimal]) -> Decimal | None:
 
 def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any], *, font_metrics: Any,
                     required_metrics: tuple[str, ...] = (), table_inline: float | None = None,
-                    table_reserved_inline: float = 0.0) -> MeasuredSources:
-    """Measure every declared source once without reading Layout or renderer state."""
+                    table_reserved_inline: float = 0.0,
+                    heading_inline: Mapping[str, Decimal] | None = None) -> MeasuredSources:
+    """Close immutable source facts at optional independently allocated widths."""
     metric = resolve_theme_metrics(theme, required_metrics=required_metrics)
     typography = ThemeTokenView(theme)
     derive_axis_metrics(metric, theme, inputs, typography, font_metrics)
@@ -210,6 +214,11 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             run_measurements[source] = ()
             continue
         runs = value.text_runs()
+        heading_budget = ((heading_inline or {}).get(source)
+                          if source in {"title", "heading.title", "heading.kicker", "heading.subtitle"}
+                          and value.text_wrap == "allow" else None)
+        if heading_budget is not None and (not heading_budget.is_finite() or heading_budget <= 0):
+            raise LayoutError("E_LAYOUT_TEXT_OVERFLOW", f"/sources/{source}", detail="no finite heading inline budget")
         first_role = runs[0].typography_role if runs else value.typography_role
         first_treatment = typography.text_treatment(first_role)
         first_metrics = metric_for_role(typography, first_role, font_metrics)
@@ -238,6 +247,21 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                 float(run_size), float(run_line_height), str(run_metrics.content_identity),
                 float(treatment.letter_spacing), treatment.transform, treatment.numeric_spacing,
                 float(treatment.horizontal_scale)))
+            if heading_budget is not None:
+                fit = fit_text_lines(run.content, available_inline=float(heading_budget - run.inline_advance),
+                                     font_size=float(run_size), font_metrics=run_metrics, wrap="allow",
+                                     letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+                                     numeric_spacing=treatment.numeric_spacing)
+                if fit is None:
+                    raise LayoutError("E_LAYOUT_TEXT_OVERFLOW", f"/sources/{source}", run.source_ref,
+                                      "mandatory ellipsis and inline reservation cannot fit")
+                if fit.content != run.content:
+                    measured_runs[-1] = replace(
+                        measured_runs[-1], content=paint_text(fit.content, text_transform=treatment.transform),
+                        inline_size=Decimal(str(fit.inline_size)) + run.inline_advance,
+                        block_size=run_size * run_line_height * len(fit.lines),
+                        lines=tuple(paint_text(line, text_transform=treatment.transform) for line in fit.lines),
+                        overflow="ellipsized" if fit.ellipsized else "fit")
         run_measurements[source] = tuple(measured_runs)
         grid_block: Decimal | None = None
         if value.run_flow == "grid" and measured_runs and value.columns:
@@ -257,8 +281,7 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
         # The block size stays the stack of every run for a `line` too: how many rows a
         # wrapping line needs depends on the inline size the slot is given, which is not
         # known here, so the slot keeps its conservative height (#497 changes inline size only).
-        text_block = sum((typography.text_treatment(run.typography_role).font_size
-                          * typography.text_treatment(run.typography_role).line_height for run in runs), Decimal(0))
+        text_block = sum((run.block_size for run in measured_runs), Decimal(0))
         if not runs:
             text_block = text_line
         if grid_block is not None:
@@ -286,6 +309,8 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             summary_flows[source] = summary_flow
             measured_width, text_block = summary_flow.inline_size, summary_flow.block_size
         text_inline = max(average_advance, measured_width)
+        if heading_budget is not None:
+            text_inline = min(text_inline, heading_budget)
         if source == "table":
             # One measure sizes the slot and places its columns (Specification 24 section 2.1).
             # The metric is a per-column floor for a content-sized slot.
@@ -338,6 +363,22 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             (summary_flow.runs[-1].baseline if summary_flow and summary_flow.runs else
              stack.baselines[-1] if stack else Decimal(str(first_metrics.baseline(0, float(font_size), float(line_height))))),
         )
+        if heading_budget is not None and measured_runs and any(run.lines for run in measured_runs):
+            last = measured_runs[-1]
+            last_baseline = stack.baselines[-1] if stack else last.baseline
+            if stack is None and len(measured_runs) > 1:
+                previous = measured_runs[0]
+                previous_baseline = previous.baseline
+                prefix = previous.block_size
+                for run in measured_runs[1:]:
+                    last_baseline = max(prefix + run.baseline,
+                                        previous_baseline - Decimal(str(previous.font_size))
+                                        + previous.block_size + Decimal(str(run.font_size)))
+                    previous, previous_baseline = run, last_baseline
+                    prefix += run.block_size
+            last_baseline += (Decimal(str(last.font_size)) * Decimal(str(last.line_height))
+                              * max(0, len(last.lines) - 1))
+            result[source] = replace(result[source], last_baseline=last_baseline)
         if source == "table" and table_inline is not None and value.table is not None:
             closed = measure_bounded_table(value.table, available_inline=table_inline,
                                             tokens=typography, font_metrics=font_metrics,

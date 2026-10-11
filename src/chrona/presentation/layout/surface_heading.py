@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Mapping
 
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.sources import MeasuredSources
+from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun
 from chrona.presentation.layout.surface_quality import CollisionDomain, SlotPlacement, SurfaceLayoutRequest, TextPlacement
 from chrona.presentation.layout.text import measured_text_bounds, place_text
 
@@ -60,7 +60,8 @@ def place_surface_headings(request: SurfaceLayoutRequest,
                                  width=float(run.inline_size), height=float(run.block_size),
                                  font_size=run.font_size, rotation=0), role,
             baseline=(float(slot.bounds.inline), baseline),
-            lines=(run.content,), font_family=run.font_family, font_weight=run.font_weight,
+            lines=run.lines or (run.content,), overflow=run.overflow,
+            font_family=run.font_family, font_weight=run.font_weight,
             font_size=run.font_size, line_height=run.line_height,
             letter_spacing=run.letter_spacing, text_transform=run.text_transform,
             numeric_spacing=run.numeric_spacing, horizontal_scale=run.horizontal_scale,
@@ -80,13 +81,15 @@ def place_heading(request: SurfaceLayoutRequest, slot: SlotPlacement, measured: 
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/measurements/title")
 
     def place(identifier: str, content: str, role: str, baseline: float,
-              source_content: str | None = None) -> TextPlacement:
+              source_content: str | None = None, closed: MeasuredTextRun | None = None) -> TextPlacement:
         return place_text(
             placement_id=identifier, source_ref="title", content=content,
             inline=float(slot.bounds.inline), baseline_block=baseline,
             typography_role=role, theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
             collision_region="title", collision_domain=CollisionDomain("title", "content"),
             source_content=source_content if source_content is not None else content,
+            lines=closed.lines or None if closed is not None else None,
+            overflow=closed.overflow if closed is not None else "fit",
             available_inline_start=float(slot.bounds.inline),
             available_inline_size=float(slot.bounds.inline_size))
 
@@ -98,7 +101,7 @@ def place_heading(request: SurfaceLayoutRequest, slot: SlotPlacement, measured: 
                 or any(run.source_ref is None for run in runs)):
             raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/blockStacks/title")
         return tuple(place(run.source_ref, closed.content, run.typography_role,
-                           float(slot.bounds.block) + float(baseline), source_content=run.content)
+                           float(slot.bounds.block) + float(baseline), source_content=run.content, closed=closed)
                      for run, closed, baseline in zip(runs, measured_runs, stack.baselines))
 
     # No kicker: retain the existing title/deck measurement and equations.
@@ -109,9 +112,11 @@ def place_heading(request: SurfaceLayoutRequest, slot: SlotPlacement, measured: 
     # passing the reduced content viewport does not apply the caption offset twice.
     baseline = (float(slot.bounds.block) + float(runs[0].baseline) if runs
                 else float(slot.bounds.block) + float(measurement.first_baseline or 0))
-    text = [place("title", title, "heading", baseline)]
+    text = [place("title", runs[0].content if runs and runs[0].lines else title, "heading", baseline,
+                  source_content=title, closed=runs[0] if runs else None)]
     if source is not None and len(source.lines) > 1 and len(runs) > 1:
-        text.append(place("subtitle", source.lines[1], runs[1].typography_role, max(
+        text.append(place("subtitle", runs[1].content if runs[1].lines else source.lines[1], runs[1].typography_role, max(
             float(slot.bounds.block) + float(runs[0].block_size) + float(runs[1].baseline),
-            float(text[0].bounds.block + text[0].bounds.block_size) + runs[1].font_size)))
+            float(text[0].bounds.block + text[0].bounds.block_size) + runs[1].font_size),
+            source_content=source.lines[1], closed=runs[1]))
     return tuple(text)
