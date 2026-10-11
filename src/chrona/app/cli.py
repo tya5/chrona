@@ -475,7 +475,7 @@ def _parser() -> JsonArgumentParser:
 
 
 def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_root: Path | None = None,
-                   draft_font_resolution=None) -> RenderedReview:
+                   draft_font_resolution=None, preset_visual_profile_fallback=None) -> RenderedReview:
     """Adapt one resolved closure to the render use case; its failures are reported by `main`."""
     request = RenderRequest(
         closure=closure, snapshot_root=Path(getattr(args, "snapshot_root", ".")),
@@ -484,6 +484,7 @@ def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_ro
         asset_root=asset_root,
         draft_auto_block=getattr(args, "draft_auto_block", False),
         draft_font_resolution=draft_font_resolution,
+        preset_visual_profile_fallback=preset_visual_profile_fallback,
     )
     return render_review(request)
 
@@ -739,7 +740,8 @@ def _run_guided_draft_render(args: argparse.Namespace) -> None:
         typesetter=_draft_typesetter_identity(args, target_kind),
     )
     args.draft_auto_block = draft.auto_block
-    rendered = _render_review(draft.closure, args, asset_root=draft.asset_root)
+    rendered = _render_review(draft.closure, args, asset_root=draft.asset_root,
+                              preset_visual_profile_fallback=draft.preset_visual_profile_fallback)
     Path(args.output).write_bytes(rendered.artifact.content)
     if args.provenance:
         provenance = draft.closure.guided_provenance

@@ -44,6 +44,7 @@ from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMe
 from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import PresentationInfo
+from chrona.presentation.model.preset_target import PresetVisualProfileFallback
 from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
 from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_role_consumers import unread_diagnostics as unread_theme_diagnostics
@@ -127,6 +128,7 @@ class RenderRequest:
     asset_resolver: FontAssetResolver | None = None
     draft_auto_block: bool = False
     draft_font_resolution: DraftFontResolution | None = None
+    preset_visual_profile_fallback: PresetVisualProfileFallback | None = None
 
 
 @dataclass(frozen=True)
@@ -146,6 +148,7 @@ class RenderedReview:
     attachment_warnings: tuple[AttachmentWarning, ...] = ()
     deadline_warnings: tuple[Diagnostic, ...] = ()
     warning_records: tuple[RenderWarning, ...] = ()
+    preset_visual_profile_fallback: PresetVisualProfileFallback | None = None
 
 
 @dataclass(frozen=True)
@@ -546,7 +549,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     scene = replace(scene, diagnostics=(*scene.diagnostics, *(item.identity for item in appended)))
     return RenderedReview(artifact, surface, scene, frozenset(ledger.read), scenario_provenance,
                           glyph_warnings, perceptibility_warnings, contrast_warnings,
-                          surface.info_diagnostics, collisions, attachments, deadlines, warning_records)
+                          surface.info_diagnostics, collisions, attachments, deadlines, warning_records,
+                          preset_visual_profile_fallback=request.preset_visual_profile_fallback)
 
 
 def _below_plot_reserve(view: Any, *, actual_set: Any, projection: Any, theme_tokens: Any,

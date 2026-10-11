@@ -343,6 +343,19 @@ def test_render_draft_png_bytes_equal_the_cli_png(scope, monkeypatch, capsys, wo
     assert result.structured["format"] == "png" and result.structured["byteLength"] == len(png)
 
 
+@pytest.mark.parametrize("preset", ["technical-print", "elevated-light"])
+def test_mcp_png_preset_reports_the_target_fallback(scope, preset):
+    result = run(scope, "render_draft", project="small.yaml", preset=preset, format="png")
+    assert result.structured["status"] == "ok" and result.structured["format"] == "png"
+    assert result.attachments[0].data.startswith(b"\x89PNG\r\n\x1a\n")
+    (info,) = [item for item in result.structured["warnings"]
+               if item["code"] == "I_PRESET_VISUAL_PROFILE_FALLBACK"]
+    assert info["severity"] == "info"
+    assert info["detail"] == {"presetId": f"chrona-builtin-{preset}",
+                              "preferredProfile": "chrona-output/visual/v0.7-svg",
+                              "selectedProfile": "chrona-output/visual/v0.7-png", "targetKind": "png"}
+
+
 def test_render_draft_inline_svg_is_an_embedded_resource_equal_to_the_cli_file(scope, monkeypatch, capsys, workspace):
     result = run(scope, "render_draft", project="small.yaml", inline="svg")
     assert cli(monkeypatch, capsys, workspace, "render", "small.yaml", "--output", "out.svg")[0] == 0

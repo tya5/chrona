@@ -173,6 +173,7 @@ def render_draft(request: DraftRenderRequest) -> DraftRenderResult:
             closure=closure.closure, snapshot_root=Path("."), scheduler=ReferenceScheduler(),
             require_all_inputs_read=False, asset_root=closure.asset_root,
             draft_auto_block=closure.auto_block, draft_font_resolution=closure.font_resolution,
+            preset_visual_profile_fallback=closure.preset_visual_profile_fallback,
         ))
     finally:
         if owned_tempdir is not None:
@@ -187,6 +188,13 @@ def warning_payloads(rendered: RenderedReview) -> list[dict[str, Any]]:
     ``message`` (#782). The Scene keeps every per-placement fact.
     """
     payloads: list[dict[str, Any]] = collapse_warnings([warning.payload for warning in rendered.warning_records])
+    fallback = getattr(rendered, "preset_visual_profile_fallback", None)
+    if fallback is not None:
+        payloads.append({"code": fallback.code, "severity": "info", "presetId": fallback.preset_id,
+                         "preferredProfile": fallback.preferred_profile, "selectedProfile": fallback.selected_profile,
+                         "targetKind": fallback.target_kind,
+                         "message": f"preset {fallback.preset_id} prefers {fallback.preferred_profile}; "
+                                    f"selected {fallback.selected_profile} for {fallback.target_kind}"})
     for info in rendered.info_diagnostics:
         if isinstance(info, SuppressedPlotLabels):
             payloads.append({"code": info.code, "severity": "info", "surfaceId": info.surface_id,

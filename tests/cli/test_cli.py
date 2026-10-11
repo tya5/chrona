@@ -933,6 +933,45 @@ def test_cli_guided_draft_infers_png_and_rejects_mismatch(tmp_path, monkeypatch,
     assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_RENDER_OUTPUT_FORMAT_MISMATCH"
 
 
+@pytest.mark.parametrize("preset", ["technical-print", "elevated-light"])
+def test_cli_png_preset_falls_back_but_never_overrides_an_explicit_profile(tmp_path, monkeypatch, capsys, preset):
+    starter = tmp_path / "starter"
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(starter)])
+    main()
+    capsys.readouterr()
+    output = tmp_path / "review.png"
+    argv = ["chrona", "render", str(starter / "project.yaml"), "--preset", preset, "--output", str(output)]
+    monkeypatch.setattr(sys, "argv", argv)
+    main()
+    assert output.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+    envelope = json.loads(capsys.readouterr().out)
+    assert envelope["status"] == "ok"
+    (fallback,) = [item for item in envelope["warnings"] if item["code"] == "I_PRESET_VISUAL_PROFILE_FALLBACK"]
+    assert fallback["severity"] == "info" and fallback["targetKind"] == "png"
+    output.unlink()
+    monkeypatch.setattr(sys, "argv", [*argv, "--visual-profile", "chrona-output/visual/v0.7-svg"])
+    with pytest.raises(SystemExit):
+        main()
+    assert not output.exists()
+    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_VISUAL_CAPABILITY_PROFILE"
+
+
+def test_guided_workspace_png_reports_its_declared_profile_fallback(tmp_path, monkeypatch, capsys):
+    workspace = _guided_workspace(tmp_path)
+    preset_path = tmp_path / "preset" / "starter.yaml"
+    preset = yaml.safe_load(preset_path.read_text(encoding="utf-8"))
+    preset["body"]["visualProfile"] = {"preferred": "chrona-output/visual/v0.7-svg"}
+    preset_path.write_text(yaml.safe_dump(preset, sort_keys=False), encoding="utf-8")
+    output = tmp_path / "guided.png"
+    monkeypatch.setattr(sys, "argv", ["chrona", "render-workspace", str(workspace), "--output", str(output)])
+    main()
+    assert output.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+    (fallback,) = [item for item in json.loads(capsys.readouterr().out)["warnings"]
+                   if item["code"] == "I_PRESET_VISUAL_PROFILE_FALLBACK"]
+    assert fallback["presetId"] == "starter"
+    assert fallback["selectedProfile"] == "chrona-output/visual/v0.7-png"
+
+
 def test_cli_renders_the_plan_only_example_without_an_actual_set(tmp_path, monkeypatch):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     output = tmp_path / "plan-only.svg"

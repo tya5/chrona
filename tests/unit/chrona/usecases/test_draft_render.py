@@ -104,6 +104,25 @@ def test_render_draft_bytes_equal_the_cli_output_file(project, tmp_path, monkeyp
     assert (tmp_path / "cli.svg").read_bytes() == render_draft(request).artifact.content
 
 
+@pytest.mark.parametrize("preset", ["technical-print", "elevated-light"])
+def test_png_draft_uses_a_target_peer_and_reports_it_outside_scene(project, preset):
+    rendered = render_draft(DraftRenderRequest(project=project, preset=preset, target_kind="png")).rendered
+    assert rendered.artifact.content.startswith(b"\x89PNG\r\n\x1a\n")
+    fallback = rendered.preset_visual_profile_fallback
+    assert fallback is not None
+    assert fallback.preset_id == f"chrona-builtin-{preset}"
+    assert fallback.preferred_profile == "chrona-output/visual/v0.7-svg"
+    assert fallback.selected_profile == "chrona-output/visual/v0.7-png"
+    assert fallback.target_kind == "png"
+    (payload,) = [item for item in warning_payloads(rendered) if item["code"] == fallback.code]
+    assert payload["severity"] == "info"
+    assert payload["selectedProfile"] == fallback.selected_profile
+    assert payload["preferredProfile"] == fallback.preferred_profile
+    assert payload["targetKind"] == "png"
+    assert not any(fallback.code in diagnostic for diagnostic in rendered.scene.diagnostics)
+    assert not any(fallback.code in diagnostic for diagnostic in rendered.surface.diagnostics)
+
+
 def test_render_draft_failures_are_typed_for_the_failure_report(project, tmp_path):
     with pytest.raises(StableFailure) as raised:
         render_draft(DraftRenderRequest(project=project, target_kind="svg", viewport="0x0"))

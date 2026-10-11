@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from difflib import get_close_matches
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from hashlib import sha256
 from importlib.metadata import version
 import math
@@ -16,6 +16,8 @@ import yaml
 
 from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
 from chrona.presentation.scene.capabilities import theme_catalog_pattern_consumer
+from chrona.presentation.scene.visual_capabilities import preferred_target_visual_profile
+from chrona.presentation.model.preset_target import PresetVisualProfileFallback
 from chrona.presentation.icons import IconNormalizationError, IconPathCommand, NormalizedIconPath, NormalizedVectorIcon, validate_png
 from chrona.presentation.contracts import (
     ActualSetContract, AuthoringWorkspaceContract, ClosureIdentity, ContractError, SchemaContractError, IconCatalogContract, IconEntry, IconPath, LayoutProfileContract,
@@ -196,6 +198,7 @@ class DraftRender:
     asset_root: Path
     auto_block: bool = False
     font_resolution: DraftFontResolution | None = None
+    preset_visual_profile_fallback: PresetVisualProfileFallback | None = None
 
 
 @dataclass(frozen=True)
@@ -239,7 +242,7 @@ def resolve_draft_render(
     declared_catalog_paths = (_draft_preset_catalog_paths(preset, preset_path, preset_root)
                               if not icon_catalog_paths and preset is not None and preset_path is not None else ())
     selected_catalog_paths = icon_catalog_paths or declared_catalog_paths
-    visual_profile = _preset_visual_profile(preset.contract if preset is not None else None, visual_profile, target_kind)
+    visual_profile, profile_fallback = _preset_visual_profile(preset.contract if preset is not None else None, visual_profile, target_kind)
     paths = (("project", project_path),
              ("view", view_path or preset_paths.get("view")),
              ("theme", theme_path or preset_paths.get("theme")),
@@ -259,29 +262,30 @@ def resolve_draft_render(
     resources = _collect_presentation_resources(sources)
     catalog_resources = tuple(resource for resource in resources if resource.kind == "icon-catalog")
     _validate_icon_catalog_set(catalog_resources)
-    return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
+    draft = _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
                                         visual_profile=visual_profile, typesetter=typesetter,
                                         icon_assets=_load_draft_icon_assets(catalog_resources, selected_catalog_paths,
                                                                             _draft_view(resources), _draft_theme_refs(resources)),
                                         font_metrics=(safe_load(font_metrics_path.read_bytes()) if font_metrics_path else None),
                                         font_asset_root=(font_metrics_path.parent.resolve() if font_metrics_path else None),
                                         system_fonts=system_fonts, system_font_resolver=system_font_resolver)
+    return replace(draft, preset_visual_profile_fallback=profile_fallback)
 
 
 _BASELINE_VISUAL_PROFILE = "chrona-output/visual/v0.5-baseline"
 
 
-def _preset_visual_profile(preset: object, requested: str | None, target_kind: str) -> str:
+def _preset_visual_profile(preset: object, requested: str | None, target_kind: str) -> tuple[str, PresetVisualProfileFallback | None]:
     """An explicit profile wins; otherwise the preset's preferred profile, else the baseline."""
     if requested is not None:
-        return requested
+        return requested, None
     preferred = preset.preferred_visual_profile if isinstance(preset, PresentationPresetContract) else None
     if preferred is None:
-        return _BASELINE_VISUAL_PROFILE
-    if preferred != _BASELINE_VISUAL_PROFILE and not preferred.endswith(f"-{target_kind}"):
-        raise ClosureError("E_PRESET_VISUAL_PROFILE_TARGET", "/body/visualProfile/preferred",
-                           f"preset prefers {preferred}, which cannot serve {target_kind}; pass --visual-profile explicitly")
-    return preferred
+        return _BASELINE_VISUAL_PROFILE, None
+    selected = preferred_target_visual_profile(preferred, target_kind)
+    fallback = (PresetVisualProfileFallback(preset.identity.id, preferred, selected, target_kind)
+                if selected != preferred else None)
+    return selected, fallback
 
 
 def _draft_preset_paths(preset: Any, preset_path: Path, preset_root: Path | None = None) -> dict[str, Path]:
@@ -346,7 +350,7 @@ def resolve_guided_draft_render(
     preset_resource = _load_draft_resource("presentation-preset", preset_path)
     if not isinstance(preset_resource.contract, PresentationPresetContract):
         raise ClosureError("E_AUTHORING_PRESET_SCHEMA", detail=f"{preset_path.name} is not a presentation preset")
-    visual_profile = _preset_visual_profile(preset_resource.contract, visual_profile, target_kind)
+    visual_profile, profile_fallback = _preset_visual_profile(preset_resource.contract, visual_profile, target_kind)
     resource_declarations = (*preset_resource.contract.resources.values(), *preset_resource.contract.compatible_color_schemes)
     resources_by_path = {
         str(declaration["path"]): safe_load(_declared_child(preset_path.parent, str(declaration["path"])).read_bytes())
@@ -373,10 +377,11 @@ def resolve_guided_draft_render(
     _validate_icon_catalog_set(catalog_resources)
     binding_identity = "sha256:" + sha256(yaml.safe_dump(_plain_value(workspace_resource.contract.binding), sort_keys=True).encode()).hexdigest()
     provenance = GuidedAuthoringProvenance(workspace_resource.content_identity, preset_resource.content_identity, binding_identity)
-    return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
+    draft = _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
                                         visual_profile=visual_profile, typesetter=typesetter, provenance=provenance,
                                         icon_assets=_load_draft_icon_assets(catalog_resources, catalog_paths,
                                                                             _draft_view(resources), _draft_theme_refs(resources)))
+    return replace(draft, preset_visual_profile_fallback=profile_fallback)
 
 
 def _declared_child(root: Path, relative: str) -> Path:
