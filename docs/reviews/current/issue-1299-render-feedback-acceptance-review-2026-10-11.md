@@ -24,6 +24,11 @@ progress/PTY/relations, completed height-limit output, observer behavior and
 Draft relation normalization. Ordinary integration has no conflicts and authors
 no examples or derived report changes. Prior quota/history evidence does not
 replace current-head CI or release acceptance.
+Combined #1302 preflight found the old60-row warning fixture invalid after
+derived pitch: actual height2842px is correctly below3600. Revised CLI coverage
+checks both2 and120 rows against completed Scene height, exact warning height
+and row count; standalone2 PASS5.26s, combined hierarchy/pitch/feedback33
+PASS21.85s. No product threshold or geometry changed to satisfy the test.
 The standalone default preserves merged table maxInlineShare0.4, adding only
 the declared height limit and truthful Layout ID; the whole-resource equality
 test remains intact. Network auto remains rejected; finite network requests
