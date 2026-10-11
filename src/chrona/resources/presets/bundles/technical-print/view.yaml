@@ -55,7 +55,7 @@ body:
     - unit: auto
       every: 1
       role: labels
-      typographyRole: axisQuarter
+      typographyRole: axis
       label:
         forms:
           month: short-month-year

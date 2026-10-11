@@ -84,7 +84,7 @@ def check_bounded_axis_cells(scene: dict) -> None:
     lanes = sorted({(round(band["bounds"]["block"], 3), round(band["bounds"]["blockSize"], 3)) for band in bands})
     assert lanes  # Decorative band lanes are independent of auto label cadence.
     assert lanes[0][0] == pytest.approx(axis["block"])
-    assert sum(size for _, size in lanes) == pytest.approx(axis["blockSize"])
+    assert lanes[-1][0] + lanes[-1][1] <= axis["block"] + axis["blockSize"] + 0.01
     assert all(top + size == pytest.approx(next_top)
                for (top, size), (next_top, _) in zip(lanes, lanes[1:]))
     for band in bands:

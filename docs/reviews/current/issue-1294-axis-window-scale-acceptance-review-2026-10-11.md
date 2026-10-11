@@ -33,19 +33,26 @@ restore Technical Print's declared patterned month band; preserve old two-band
 size fixtures explicitly; update superseded fixed-label and selective-thinning
 assertions to published Spec39. Fixed/start-aligned inset coverage remains in
 its explicit synthetic fixture. No adapter capability check is weakened.
+The [final resource correction](https://github.com/tya5/chrona/issues/1294#issuecomment-6105325469)
+connects Technical Print auto labels to existing `axis` typography rather than
+the old fixed-quarter 52px lane. Theme remains unchanged; both original bands
+and paint identities survive, and actual labels must exist. An allocated axis
+may reserve room beyond its contained, contiguous decorative lanes.
 
 Repair focused suite:103 passed (42.84s), covering diagnostics, Scene outcomes,
 derived sizes, band geometry, packaged declarations and default window scales.
-Band checker mutation tests:13 passed (3.77s), including two contiguous lanes
-and rejected lane gaps/overlaps. Actual Technical Print SVG/PNG/copy and both
-typesetter-capability checks:3 passed (20.92s). PNG sampling follows the actual
-Scene band instead of an obsolete fixed coordinate; expected ink/substrate
-colors and PNG/SVG raster byte equality are retained.
-An earlier batch completed6 tests (both HALCYON CLI viewports, catalogue
-contract/render, missing-asset rejection and default preset render) before a
-fixed-coordinate PNG assertion failed; it was stopped, not counted as a
-successful whole-suite run. Mission/Technical HALCYON checks and refreshed CI
-evidence remain pending.
+Final packaged-policy/geometry, actual SVG/PNG/copy/catalogue and all preset
+typesetter export checks:40 passed (92.76s). Technical Print retains strict
+unsupported-pattern rejection in both adapters and now requires nonempty SVG
+axis labels. PNG sampling follows Scene bounds; expected ink/substrate colors
+and PNG/SVG raster byte equality remain strict. Subsequent expanded geometry
+tests cover actual Technical Print hosts and explicit unused axis space.
+Those expanded geometry tests pass:16 (5.64s), including nonempty labels in
+both actual packaged Views and rejection of lane gaps/overlap/axis overflow.
+Both HALCYON CLI viewports passed in an interrupted batch, not counted as a
+successful whole suite. The intermediate two-band/fixed-quarter declaration
+failed the Technical HALCYON check; final HALCYON and release checks are left
+to refreshed CI rather than duplicating its expensive full render locally.
 First-head artifact11690588178 had all46 Scene and46 SVG bytes identical;
 it is not evidence for the repair head.
 

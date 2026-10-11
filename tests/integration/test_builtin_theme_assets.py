@@ -50,6 +50,7 @@ def test_builtin_catalogue_copy_and_no_asset_flag_render_are_visible_in_svg_and_
     assert scene["version"] == "chrona/scene/v0.7"
     primitives = [item for surface in scene["surfaces"] for item in surface["primitives"]]
     assert any(item.get("visualRole") == "axis-band-decoration2" and item.get("pattern") for item in primitives)
+    assert any(item.get("id", "").startswith("axis-label:") for item in primitives)
     assert any(item.get("id", "").startswith("legend-swatch:milestone") and item.get("kind") == "Symbol"
                and len(item.get("symbol", {}).get("outline", ())) > 8 for item in primitives)  # the key is painted as the planned point (#499)
     assert any(item.get("id", "").startswith("legend-swatch:milestone") for item in primitives)
