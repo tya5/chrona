@@ -1,10 +1,24 @@
-version: chrona/view/v0.27
+version: chrona/view/v0.28
 kind: view
-id: orion-asic-gates
+id: halcyon-26-gates
 body:
   surface: table-timeline
+  heading:
+    title: "{project} · Review gates by model"
   selection:
     include:
+      ids:
+      - pdr
+      - structure
+      - avionics
+      - eps
+      - bus-test
+      - cdr
+      - optics
+      - detector
+      - payload-tvac
+      - payload-delivery
+      - psr
       types:
       - span
       - point
@@ -13,9 +27,9 @@ body:
     field: owner
     missing: other
     order:
-    - design
-    - product
-    - validation
+    - bus
+    - payload
+    - ait
     presentation: header
   ordering:
     by: plannedStart
@@ -23,10 +37,11 @@ body:
     tieBreak: id
   window:
     mode: explicit
-    start: '2026-08-24'
-    end: '2027-09-13'
+    start: '2027-02-15'
+    end: '2027-10-04'
   comparison:
-    baseline: primary
+    baseline: scenario
+    scenario: payload-fast-track
     actual: required
     observationSelection: latest
     deltaUnit: calendar-days
@@ -41,14 +56,14 @@ body:
   progressFill:
     source: actual
   colorEncoding:
-    scale: revision
+    scale: model
     target: planned
     source:
-      field: revision
+      field: model
     domain:
-    - A0
-    - A1
-    - B0
+    - EM
+    - QM
+    - FM
   visibility:
     labels:
       placement: table
@@ -59,6 +74,8 @@ body:
     relations:
       mode: semantic
       overflow: suppress
+      content:
+      - lag
     annotations:
       mode: presentation
       marker: numbered
@@ -110,9 +127,9 @@ body:
     align: start
     width: {minmax: {min: content, max: {fr: 1}}}
     headerOrientation: horizontal
-  - id: Revision
+  - id: Model
     source:
-      field: revision
+      field: model
     missing: em-dash
     align: start
     width: content

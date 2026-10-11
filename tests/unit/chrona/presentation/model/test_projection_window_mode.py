@@ -10,8 +10,12 @@ def _projection(mode: str) -> ReviewProjection:
     project = {"objects": {"task": {"title": "Task", "fields": {}}}, "entities": {}}
     placements = {"task": {"start": date(2026, 1, 1), "end": date(2026, 1, 10)}}
     window = {"mode": mode}
+    if mode == "selected-comparison":
+        # Match selected-planned's required one-day padding explicitly;
+        # comparison does not acquire that padding implicitly (#1296).
+        window["marginDays"] = 1
     if mode == "explicit":
-        window.update(start="2026-01-01", end="2026-01-10")
+        window.update(start="2025-12-31", end="2026-01-11")
     view = typed_view({"body": {
         "comparison": {"actual": "optional", "facets": []},
         "window": window,
@@ -36,7 +40,7 @@ def test_projection_retains_declared_window_mode_even_when_date_windows_match():
         "explicit": WindowMode.EXPLICIT,
     }
     assert {projection.window for projection in projections.values()} == {
-        (date(2026, 1, 1), date(2026, 1, 10)),
+        (date(2025, 12, 31), date(2026, 1, 11)),
     }
 
     # Mode is the only changed projection fact for these equal-window inputs.
