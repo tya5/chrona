@@ -12,6 +12,7 @@ from urllib.parse import quote
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.semantic_mark_facets import due_end_missing_actual_selected
 from chrona.presentation.model.projection import ObservationState, ReviewProjection
 
 
@@ -176,7 +177,7 @@ def close_lane_projection(
                 anchor = item.planned.get("end" if item.source_type == "span" else "at")
                 if not isinstance(anchor, date):
                     raise LayoutError("E_LAYOUT_LANE_EXPECTED_MARK_INVALID", f"{path}/planned")
-                if missing_actual_visible:
+                if due_end_missing_actual_selected(item, emit_missing_actual=missing_actual_visible):
                     _expect_mark(expected_marks, instance, "missing-actual", "missing-actual")
                 else:
                     intentional_absences.append(LaneIntentionalAbsence(
@@ -223,7 +224,7 @@ def close_lane_projection(
             anchor = item.planned.get("end" if item.source_type == "span" else "at")
             if not isinstance(anchor, date):
                 raise LayoutError("E_LAYOUT_LANE_EXPECTED_MARK_INVALID", f"{path}/planned")
-            if missing_actual_visible:
+            if due_end_missing_actual_selected(item, emit_missing_actual=missing_actual_visible):
                 _expect_mark(expected_marks, instance, "missing-actual", "missing-actual")
             else:
                 intentional_absences.append(LaneIntentionalAbsence(

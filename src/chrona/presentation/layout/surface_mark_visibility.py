@@ -1,4 +1,4 @@
-"""Typed, immutable index of window-completed source mark occurrences."""
+"""Owns source mark selection/window visibility cache; reads selected Review facts and cutoff."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
