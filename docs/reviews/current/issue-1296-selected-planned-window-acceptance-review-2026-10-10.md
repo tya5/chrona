@@ -49,5 +49,8 @@ Editorial8/127/0; Editorial-lanes8/153/0; Title Card0/34/0. Actual SVG XML
 and Scene were both inspected; all46 Scene/SVG pairs match the preceding26337656
 snapshot. Synthetic frozen-byte cases remain asserted without normalization.
 Current-head CI38132741366 passed all product/reproduction checks; derived-ready
-failed only because main advanced. Final post1413 READY integration, its fresh
-snapshot/checks and exact-main three-OS release remain required before closure.
+failed only because main advanced. Post1413 integrationc783dc73 passes57 focused
+tests16.75s (HALCYON/compile, project-finish/units, sparse Scene/SVG and headings).
+Exact trusted READYcc94cf2c is adopted without conflicts or product/test changes.
+Fresh current-head snapshot/checks and exact-main three-OS release remain
+required before closure.
