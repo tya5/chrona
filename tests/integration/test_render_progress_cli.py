@@ -167,14 +167,15 @@ def test_terminal_probe_failure_disables_only_feedback(monkeypatch, failure):
     assert cli._draft_render_progress(False) is None
 
 
-def test_actual_cli_default_reports_its_declared_limit_and_emitted_row_count(tmp_path):
+@pytest.mark.parametrize("row_count, exceeds_limit", [(2, False), (120, True)])
+def test_actual_cli_default_reports_its_declared_limit_and_emitted_row_count(tmp_path, row_count, exceeds_limit):
     import yaml
 
     project = tmp_path / "tall.yaml"
     project.write_text(yaml.safe_dump({
         "version": "timeline/v0.7", "project": {"id": "tall", "title": "Tall review"},
         "objects": {f"t{i}": {"type": "task", "title": f"Task {i}", "schedule": {
-            "mode": "fixed-span", "start": "2027-01-04", "end": "2027-01-18"}} for i in range(60)},
+            "mode": "fixed-span", "start": "2027-01-04", "end": "2027-01-18"}} for i in range(row_count)},
         "relations": [],
     }))
     scene = tmp_path / "tall.scene.json"
@@ -182,8 +183,12 @@ def test_actual_cli_default_reports_its_declared_limit_and_emitted_row_count(tmp
                                     "--emit-scene", str(scene)), capture_output=True, check=True)
     report = json.loads(result.stdout)
     warnings = [w for w in report["warnings"] if w["code"] == "W_LAYOUT_AUTO_BLOCK_SIZE"]
-    assert len(warnings) == 1
-    assert warnings[0]["maxBlockSize"] == 3600
-    assert warnings[0]["actualBlockSize"] > 3600
-    assert warnings[0]["rowCount"] == len(json.loads(scene.read_bytes())["surfaces"][0]["rows"]) == 60
+    surface = json.loads(scene.read_bytes())["surfaces"][0]
+    assert len(surface["rows"]) == row_count
+    assert (surface["canvasBounds"]["blockSize"] > 3600) is exceeds_limit
+    assert len(warnings) == int(exceeds_limit)
+    if exceeds_limit:
+        assert warnings[0]["maxBlockSize"] == 3600
+        assert warnings[0]["actualBlockSize"] == surface["canvasBounds"]["blockSize"]
+        assert warnings[0]["rowCount"] == row_count
     assert result.stderr == b""
