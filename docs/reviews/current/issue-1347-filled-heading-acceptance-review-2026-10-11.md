@@ -21,9 +21,9 @@ Implementation: `313280e0`. [Current design/architecture/implementation record](
 
 Release pending: final preceding-item READY integration, CI public Scene/SVG delta disclosure/current-head gates and acceptance-containing exact-main three-OS release. Local rows do not authorize closure.
 
-Current preparation adopts public #1297 `7c4bf8ba`, #1296 `94e97c02`,
-corrected #1295 `f02bc0bb` and READY main `477e571d` by ordinary merges.
-Filled-heading Scene/SVG and inline-size tests21 pass (10.80s).
+Current integration `4c92a3ec` adopts merged PR1411 source main `36d8ed8d`
+without conflicts. One Python3.13 M1 batch passes55 tests (6.17s), including
+all21 filled-heading Scene/SVG and inline-size tests.
 Authored examples diff is empty; no integration conflict.
 
 Owned kind-header, fill, stamp, bar-bleed and measurement tests at `313280e0`:115 passed (145.25s). Filled-heading/measurement suite after adding non-slot isolation and short-heading byte characterization:21 passed (8.20s). After internal variant typing, selected heading, measurement-bound, maximum and tilted-fill tests:23 passed (30.84s). Import direction:11 packages/37 inward edges;214 reachable modules, none orphaned. Unbreakable words, explicit forbid and content/non-slot candidates retain natural lines; short filled headings retain whole Scene/SVG bytes.

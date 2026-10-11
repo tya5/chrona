@@ -23,11 +23,10 @@
 
 Release pending: final READY integration, current-head PR snapshot/gates and acceptance-containing exact-main three-OS release. No closure is authorized by local rows.
 
-Current preparation adopts public #1296 `94e97c02`, corrected #1295 `f02bc0bb`
-and READY main `477e571d` by ordinary merges. The current warning-fixture
-changes merge automatically with the typed-float API tests; no product conflict.
-Own Python3.13 schedule/typed-float contracts15 pass (2.14s); complete agent-tool
-tests187 pass (33.08s). Earlier broad
+Current integration `4c92a3ec` adopts merged PR1411 source main `36d8ed8d`
+without conflicts. One Python3.13 M1 batch passes55 tests (6.17s), including
+the complete15-test schedule/typed-float contract family. Complete agent-tool
+tests187 passed on corrected table `f02bc0bb` (33.08s). Earlier broad
 integration tests are evidence for their named revisions, not current release
 acceptance; the independent Python argparse wording is tracked under #1306.
 
