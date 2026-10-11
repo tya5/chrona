@@ -104,8 +104,13 @@ class PatternPlacement:
     region: Rect
     clip: Rect
     corner_radius: float
+    cut_contour: tuple[PatternPathCommand, ...] = ()
 
     def __post_init__(self) -> None:
+        if (not isinstance(self.origin, tuple) or len(self.origin) != 2
+                or not isinstance(self.cut_contour, tuple)
+                or any(not isinstance(command, PatternPathCommand) for command in self.cut_contour)):
+            raise _detail_error("PatternPlacement requires an origin pair and typed cut_contour commands")
         if (not all(isfinite(value) for value in
                     (self.tile_inline_size, self.tile_block_size, self.angle_degrees,
                      *self.origin, self.corner_radius))
@@ -116,11 +121,29 @@ class PatternPlacement:
                 or not 1 <= self.density_basis_points <= 10_000
                 or not 1 <= len(self.primitives) <= 64
                 or not isinstance(self.region, Rect) or self.clip != self.region
-                or self.origin != (float(self.region.inline), float(self.region.block))
+                or (not self.cut_contour and self.origin != (float(self.region.inline), float(self.region.block)))
                 or self.corner_radius < 0
                 or self.corner_radius > min(float(self.region.inline_size),
                                             float(self.region.block_size)) / 2):
             raise _detail_error(f"PatternPlacement requires finite positive tile sizes, angle in [0, 360), density 1..10000, 1..64 primitives, matching clip/region/origin, and valid corner radius; tile=({self.tile_inline_size!r}, {self.tile_block_size!r}), angle={self.angle_degrees!r}, density={self.density_basis_points!r}, primitive_count={len(self.primitives)}, corner_radius={self.corner_radius!r}")
+        if self.cut_contour:
+            x, y, width, height = map(float, (self.region.inline, self.region.block,
+                                            self.region.inline_size, self.region.block_size))
+            start = end = None
+            valid = self.corner_radius == 0 and self.cut_contour[0].kind == "move"
+            for command in self.cut_contour:
+                if command.kind == "move":
+                    if start is not None and end != start:
+                        valid = False
+                    start = end = command.points[0]
+                elif command.kind == "close":
+                    end = start
+                else:
+                    end = command.points[-1]
+                valid = valid and all(x <= px <= x + width and y <= py <= y + height
+                                      for px, py in command.points)
+            if not valid or end != start:
+                raise _detail_error("PatternPlacement cut_contour requires closed completed subpaths within its visible region and zero corner radius")
 
 
 @dataclass(frozen=True)
@@ -136,8 +159,10 @@ class PatternedPlacement:
 
 
 def complete_pattern_placement(pattern: Mapping[str, object], bounds: Rect,
-                               corner_radius: float = 0.0) -> PatternPlacement:
-    """Complete one normalized catalogue pattern over a Rect's top-left phase."""
+                               corner_radius: float = 0.0, *,
+                               origin: tuple[float, float] | None = None,
+                               cut_contour: tuple[PatternPathCommand, ...] = ()) -> PatternPlacement:
+    """Complete a visible region; retain a different original phase only with a cut contour."""
     try:
         tile = pattern["tile"]
         if not isinstance(tile, Mapping):
@@ -151,9 +176,9 @@ def complete_pattern_placement(pattern: Mapping[str, object], bounds: Rect,
             raise _detail_error(f"pattern.primitives has type={type(source_primitives).__name__}; expected a sequence of 1..64 normalized tile primitives")
         primitives = tuple(_primitive(value, index) for index, value in enumerate(source_primitives))
         radius = _finite(corner_radius, "corner_radius")
-        origin = (float(bounds.inline), float(bounds.block))
+        origin = origin if origin is not None else (float(bounds.inline), float(bounds.block))
         return PatternPlacement(width, height, angle, density, primitives, origin,
-                                bounds, bounds, radius)
+                                bounds, bounds, radius, cut_contour)
     except (KeyError, TypeError, ValueError, OverflowError) as error:
         detail = str(error).replace("\n", " ")[:240] or f"invalid pattern fields={tuple(sorted(str(key) for key in pattern.keys()))!r}"
         raise LayoutError("E_PRESENTATION_PRIMITIVE_INVALID", "/layout/pattern", detail=detail) from error
