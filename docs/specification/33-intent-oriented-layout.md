@@ -151,12 +151,17 @@ separately; one annotation's body/summary counts once. N is the possible
 narrative occurrences in the immutable input. Try candidate counts N down to0;
 accept the first completed layout whose receipts equal its candidate. Each
 trial has fresh mutable placement/obstacle/diagnostic state and count-correct
-SourceInputs; rejected trials leak no geometry/cache results or diagnostics.
+SourceInputs; rejected trials leak no placement/index state or diagnostics.
 At mostN+1 trials, not guessed-count convergence. No consistent count is
 `E_LAYOUT_FIGURE_COUNT_UNSTABLE`, with domain/trial count; never substitute
 selected counts. No late template read means one ordinary composition; unused
 late figures then resolve from its receipts. Scene/adapters do not recount
 or replace text after geometry. Existing resources remain unchanged.
+Reject only typed candidate-admission failures, including unavailable number
+names or count-dependent required fit; retain their evidence on no solution.
+Unrelated schema/resource/semantic errors propagate unchanged, not as a count
+cycle. Reuse only pure measurements with complete content/metric keys; mutable
+placement/index/diagnostic state remains isolated between trials.
 A slot whose `source` is any enumerated slot source, and an override of such a slot, may
 declare `heading: {text, align, block}`: a caption over the slot. This includes the native title, table,
 timeline, timeline-axis, dependency-network, group-details, milestones and observations owners as well as

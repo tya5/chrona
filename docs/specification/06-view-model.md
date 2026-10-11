@@ -297,8 +297,9 @@ only by heading parts/slot captions; other consumers refuse it with
 
 Optional `figureFormats` maps declared count-figure IDs to closed text formats.
 Layout `viewDefaults.figureFormats` offers whole-member replacement; a View
-map, including `{}`, replaces it. Unknown IDs, non-count figures or unsupported
-options are `E_VIEW_FIGURE_FORMAT_INVALID` at that entry. Omission keeps decimal
+map, including `{}`, replaces it. Malformed shapes/options retain the schema
+diagnostic. Unknown IDs or non-count targets are `E_VIEW_FIGURE_FORMAT_INVALID`
+at that entry. Omission keeps decimal
 text. Forms: `digits` (`minimumDigits: 1..80`, default1), `english-words`
 (`capitalize`, default false), `kanji`, `kanji-formal`. Zero is `0`, `zero` or
 `〇`; padding never truncates. English uses hyphenated tens, spaces between
@@ -306,6 +307,9 @@ scale groups, no comma or “and”, names through quintillion (0..10^21−1).
 Kanji forms share existing Presentation digit/ten name tables (0..99), not
 a new Core/localization table; ordinal ranges do not change. Outside available
 names is `E_VIEW_FIGURE_FORMAT_RANGE`, with value/form/range, not silent digits.
+For a late candidate this is admission rejection, not a fatal error on the
+possible upper count: a lower representable self-consistent count may exist.
+If no admitted candidate closes, Spec33's failure includes that range evidence.
 Template consumers use the selected format; Summary metrics retain raw integers
 and their own format. Theme's existing text treatment applies afterwards.
 

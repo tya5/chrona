@@ -1,9 +1,10 @@
 # Reusable heading counts (#1346)
 
-Baseline: trusted READY `8a16dca1f4616beda7283c90ab9a4b24c70c03a2`.
+Public foundation: PR1425 source `8574785a9fc9a629b45069d9dab62f21c8649e7d`;
+trusted derived READY/release pending. Last READY `8a16dca1`.
 [Issue and current work record](https://github.com/tya5/chrona/issues/1346#issuecomment-6112367414).
-#1343 / PR1425 closes selected note identity/content; it must merge before
-product implementation. No product changes or second implementation PR here.
+#1343 closes selected note identity/content and is merged. No product changes
+or second implementation PR here; final code publication adopts its READY tip.
 
 | Literal acceptance | Evidence required |
 | --- | --- |
@@ -44,7 +45,10 @@ progress/cache isolation in the needed Layout-owned closure. Finalize files
 after inspecting the merged #1343 request pipeline; a callback must not make
 usecases the geometry owner. Tests prove no extra trials without late reads.
 
-Next publication: implementation slices/files after #1343 merges, then pure
+Candidate-admission/range/fit rejection must be typed; unrelated invalid inputs
+retain their original diagnostics. Test upper counts outside kanji names with
+a valid lower completion, and errors unrelated to the count closure.
+Next publication: implementation slices/files against the merged foundation, then pure
 format/membership and Layout suppression/no-fixed-point tests, disposable
 three-design/roadmap materializers, batch public evidence and exact-main
 containing-review release. No second implementation PR before that dependency.
