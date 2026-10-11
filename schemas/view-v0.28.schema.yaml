@@ -406,7 +406,11 @@ allOf:
               required: [id, source, missing, align, width, headerOrientation]
               additionalProperties: false
               allOf:
-                - if: {required: [endDisplay]}
+                - description: "An explicit endpoint display is valid only for a dateRange column."
+                  examples:
+                    - {format: dateRange, endDisplay: inclusive}
+                    - {format: dateRange, endDisplay: exclusive}
+                  if: {required: [endDisplay]}
                   then:
                     required: [format]
                     properties: {format: {const: dateRange}}
