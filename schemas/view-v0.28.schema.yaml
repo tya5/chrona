@@ -700,7 +700,7 @@ allOf:
                 additionalProperties: false
                 properties:
                   label: {enum: [group, lane]}
-                  count: {type: boolean, default: false}
+                  count: {anyOf: [{type: boolean}, {enum: [auto]}], default: false, description: "auto shows Items only when completed countable lane membership includes a multi-member lane."}
                   text: {$ref: "#/$defs/presentationIntent/properties/text"}
               points: {description: "Automatic-row point policy; attached (the default) draws a point that attachesTo a selected span on that span's row.", enum: [attached, own-row, group-header, predecessor]}
               items:

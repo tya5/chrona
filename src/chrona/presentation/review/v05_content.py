@@ -123,7 +123,9 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
         raise ValueError(f"E_REVIEW_LANE_TABLE_PROJECTION: laneMembership={projection.lane_membership is not None}, laneRows={len(projection.lane_rows)}, laneTable={lane_table is not None}")
     columns = (TableColumnContent("Lane", "Lane", "start", TableColumnWidth("content", "content"),
                                   text_wrap=lane_table.text_wrap),)
-    if lane_table.count:
+    show_count = (lane_table.count is True or (lane_table.count == "auto"
+                  and any(len(lane.member_item_ids) > 1 for lane in projection.lane_membership.lanes)))
+    if show_count:
         columns += (TableColumnContent("Items", "Items", "end", TableColumnWidth("content", "content"),
                                        text_wrap=lane_table.text_wrap),)
     entities = project.get("entities", {})
@@ -175,7 +177,7 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
                 if row.group_id in disambiguate_groups:
                     label = f"{label} — {first_title}"
         cells.append(TableCellContent(row.lane_id, "Lane", label, "tableCell"))
-        if lane_table.count:
+        if show_count:
             member_count = len(lane.member_item_ids)
             cells.append(TableCellContent(row.lane_id, "Items", str(member_count), "tableCell", "numeric"))
         levels.append(TableRowLevel((row.lane_id,), bool(row.group_id)))

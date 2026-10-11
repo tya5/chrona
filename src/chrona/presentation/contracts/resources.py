@@ -6,7 +6,7 @@ from datetime import date
 from enum import StrEnum
 import math
 import re
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 
 
 from chrona.core.figures import AsOfFact, FigureSpec, GroupStartFact, ObjectFact, PeriodFact
@@ -201,7 +201,7 @@ class ViewLaneTable:
     """Finite aggregate summary intent for generated lane rows."""
 
     label: ViewLaneLabel
-    count: bool = False
+    count: bool | Literal["auto"] = False
     text_wrap: str = "forbid"
 
 
@@ -951,7 +951,7 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         tuple(body.get("annotations", ())), ViewRows(
             ViewRowMode(str(rows["mode"])), row_items, str(rows.get("points", "attached")),
             ViewTrackAllocation(str(rows["trackAllocation"])) if "trackAllocation" in rows else None,
-            (ViewLaneTable(ViewLaneLabel(str(rows["laneTable"]["label"])), bool(rows["laneTable"].get("count", False)),
+            (ViewLaneTable(ViewLaneLabel(str(rows["laneTable"]["label"])), rows["laneTable"].get("count", False),
                            str(rows["laneTable"].get("text", {}).get("wrap", "forbid")))
              if "laneTable" in rows else None),
             (tuple(str(item) for item in rows.get("packing", ("explicit", "attached")))

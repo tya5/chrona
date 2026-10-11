@@ -175,6 +175,27 @@ def test_lane_projection_keeps_attached_point_unassigned_until_packing():
     assert projection.lane_membership.assignment_for("host").lane_id != projection.lane_membership.assignment_for("gate").lane_id
 
 
+@pytest.mark.parametrize("by, direction, expected", [
+    ("plannedStart", "ascending", ("z", "a")),
+    ("plannedStart", "descending", ("a", "z")),
+    ("id", "ascending", ("a", "z")),
+])
+def test_lane_row_order_follows_view_without_changing_assignments(by, direction, expected):
+    project = {"objects": {key: {"title": key, "fields": {}} for key in ("a", "z")}, "relations": []}
+    placements = {"a": {"start": date(2026, 1, 10), "end": date(2026, 1, 12)},
+                  "z": {"start": date(2026, 1, 1), "end": date(2026, 1, 3)}}
+    view = ViewInput(None, None, ViewOrdering(by, direction, "id"), ViewWindow("selected-planned", None, None, 0),
+        ViewComparison(None, "optional", None, None, ()), ViewVisibility(False, "none", "none"), (), (),
+        ViewRows("lanes", (), packing=("explicit", "attached")), None, (), None, None, None)
+    projected = build_review_projection(project, placements, view, None)
+    assert tuple(row.items[0].object_id for row in projected.lane_rows) == expected
+    assert tuple(row.lane_id for row in projected.lane_rows) == tuple(lane.lane_id for lane in projected.lane_membership.lanes)
+    baseline = build_review_projection(project, placements, replace(view, ordering=ViewOrdering("id", "ascending", "id")), None)
+    assert projected.lane_membership.assignments == baseline.lane_membership.assignments
+    assert {lane.lane_id: lane.member_item_ids for lane in projected.lane_membership.lanes} == {
+        lane.lane_id: lane.member_item_ids for lane in baseline.lane_membership.lanes}
+
+
 def test_lane_projection_derives_chain_and_attachment_without_actual_or_geometry():
     project = {"objects": {
         "structure": {"title": "Structure", "fields": {"team": "bus"}},

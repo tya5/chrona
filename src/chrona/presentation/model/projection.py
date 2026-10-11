@@ -308,6 +308,10 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     rows, folded_points = _compose_rows(view, selected, snapshots, scenario_items, project)
     lane_membership = _project_lane_membership(project, rows, view) if view.rows.mode == "lanes" else None
     lane_rows = _project_lane_rows(rows, lane_membership) if lane_membership is not None else ()
+    if lane_membership is not None:
+        lanes_by_id = {lane.lane_id: lane for lane in lane_membership.lanes}
+        lane_membership = replace(lane_membership,
+                                  lanes=tuple(lanes_by_id[row.lane_id] for row in lane_rows))
     dates = [v for row in rows for item in row.items for v in item.planned.values()]
     dates += [v for point in folded_points for v in point.item.planned.values()]
     if view.window.mode == "selected-comparison":
@@ -374,7 +378,11 @@ def _project_lane_rows(rows: tuple[ReviewRowProjection, ...], membership: LaneMe
                 member_item_ids.append(member_id)
         output.append(ReviewLaneRowProjection(lane.lane_id, lane.group_id,
                                               tuple(members), tuple(member_item_ids)))
-    return tuple(output)
+    row_ranks = {member_id: rank for rank, member_id in enumerate(source_rows)}
+    group_ranks = {group_id: rank for rank, group_id in enumerate(dict.fromkeys(row.group_id for row in rows))}
+    return tuple(sorted(output, key=lambda lane: (
+        group_ranks[lane.group_id],
+        min(row_ranks[member_id] for member_id in lane.member_item_ids), lane.lane_id)))
 
 
 def _project_lane_membership(project: dict[str, Any], rows: tuple[ReviewRowProjection, ...],
