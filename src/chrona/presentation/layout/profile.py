@@ -166,6 +166,17 @@ def _merge_base(profile: Mapping[str, Any], bases: Mapping[str, LayoutBase], sta
     if base is None or base.revision != reference["revision"]["token"] or base.content_identity != reference["contentIdentity"]:
         raise LayoutError("E_LAYOUT_REFERENCE_UNKNOWN", "/extends", base_id)
     resolved = _merge_base(base.profile, bases, stack + (base_id,))
+    return compose_layout_profile(profile, resolved)
+
+
+def compose_layout_profile(profile: Mapping[str, Any], base: Mapping[str, Any]) -> dict[str, Any]:
+    """Apply declarations to a completed base; no Store or chain resolution."""
+    _validate_schema(profile)
+    _validate_schema(base)
+    if "root" not in base:
+        raise LayoutError("E_LAYOUT_REFERENCE_UNKNOWN", "/extends",
+                          detail="Layout composition requires a standalone base.")
+    resolved = deepcopy(dict(base))
     index, _ = _nodes(resolved["root"])
     for node_id, override in profile["overrides"].items():
         target = index.get(node_id)

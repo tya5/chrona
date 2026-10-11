@@ -10,7 +10,7 @@ from typing import Any, Mapping
 
 from chrona.core.ports import SnapshotReader, SnapshotReadError
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.profile import LayoutBase, flatten_layout_profile
+from chrona.presentation.layout.profile import compose_layout_profile
 from chrona.resources import safe_load
 
 
@@ -35,7 +35,9 @@ def _flatten(value: dict[str, Any], reader: SnapshotReader, stack: tuple[tuple[A
         return value
     reference = value["extends"]
     store = reference.get("store", {}) if isinstance(reference, Mapping) else {}
-    key = (store.get("provider"), store.get("identity"), reference.get("address"))
+    revision = reference.get("revision")
+    token = revision.get("token") if isinstance(revision, Mapping) else None
+    key = (store.get("provider"), store.get("identity"), reference.get("address"), token)
     if key in stack:
         raise LayoutInheritanceError("E_LAYOUT_BASE_CYCLE", f"Layout inheritance repeats {key[2]!r}")
     try:
@@ -47,8 +49,7 @@ def _flatten(value: dict[str, Any], reader: SnapshotReader, stack: tuple[tuple[A
         raise LayoutInheritanceError("E_CLOSURE_ID", f"base Layout reference {reference.get('id')!r} names a profile whose own id is "
                                      f"{base.get('id') if isinstance(base, dict) else type(base).__name__!r}")
     resolved = _flatten(base, reader, (*stack, key))
-    bases = {str(reference["id"]): LayoutBase(resolved, reference["revision"]["token"], reference["contentIdentity"])}
     try:
-        return flatten_layout_profile(value, bases)
+        return compose_layout_profile(value, resolved)
     except LayoutError as error:
         raise LayoutInheritanceError(error.diagnostic_id, f"{error.path} {error.detail}".strip()) from error
