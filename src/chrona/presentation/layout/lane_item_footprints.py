@@ -25,12 +25,18 @@ from chrona.presentation.layout.lane_subtracks import (
     LaneItemFootprints,
 )
 from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
-from chrona.presentation.layout.mark_geometry import compose_item_marks
-from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
+from chrona.presentation.layout.mark_geometry import compose_item_marks, complete_mark_window_geometry
+from chrona.presentation.layout.mark_facet_visibility import admitted_source_selection, FacetDisposition
+from chrona.presentation.layout.lane_window_marks import complete_lane_window_mark_account
+from chrona.presentation.layout.model import LayoutError, Rect
+from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, obstacle_envelope
 from chrona.presentation.layout.presentation import MarkBandFrame
 from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
 from chrona.presentation.layout.surface_quality import ScalePlacement, VisualRequest
+from chrona.presentation.layout.surface_mark_visibility import (
+    ItemMarkVisibilityIndex, MarkOccurrence, MarkOccurrenceKind,
+    ensure_item_mark_visibility_index,
+)
 from chrona.presentation.model.projection import ReviewProjection
 
 
@@ -47,6 +53,7 @@ def compose_lane_item_footprints(
     mark_band_allocation: MarkBandAllocation | None = None,
     visual_requests: Sequence[VisualRequest] = (),
     progress_fill_source: str | None = None,
+    mark_visibility_index: ItemMarkVisibilityIndex | None = None,
 ) -> tuple[LaneItemFootprints, ...]:
     """Return all visible mark facets grouped by fixed data-only membership.
 
@@ -61,10 +68,20 @@ def compose_lane_item_footprints(
             or mark_band_size <= 0):
         raise LayoutError("E_LAYOUT_LANE_FOOTPRINT_INPUT", "/projection/laneRows")
     closure = close_lane_projection(projection, as_of=as_of)
+    mark_visibility_index = ensure_item_mark_visibility_index(
+        projection, as_of=as_of, index=mark_visibility_index)
+    window_account = complete_lane_window_mark_account(
+        projection, as_of=as_of, visibility_index=mark_visibility_index)
+    omitted_mark_keys = {(absence.expected.instance, absence.expected.purpose)
+                         for absence in window_account.absences}
     items = _item_by_instance(projection, closure)
     bound_marks: dict = {}
     if visual_requests:
         _, bound_marks = bind_lane_visual_requests(projection, closure, visual_requests)
+    # Selectors were checked against the original source inventory above.
+    # An intentionally omitted host is unpainted, not an invalid selector.
+    bound_marks = {key: value for key, value in bound_marks.items()
+                   if key not in omitted_mark_keys}
 
     member_order = tuple(item_id for lane in membership.lanes for item_id in lane.member_item_ids)
     if (len(set(member_order)) != len(member_order)
@@ -92,17 +109,46 @@ def compose_lane_item_footprints(
 
     frame = MarkBandFrame.zero_origin(scale, float(mark_band_size), role_geometries, mark_band_allocation)
     marks_by_instance = {}
+    original_marks = {}
     for instance in closure.instances:
+        occurrence = MarkOccurrence(
+            MarkOccurrenceKind.LANE_SOURCE, instance.row_id, instance.item_id,
+            instance.object_id, instance.source_kind,
+        )
+        visibility = mark_visibility_index.lookup(
+            occurrence, projection=projection, as_of=as_of)
         composition = compose_item_marks(
             item=items[instance], instance_id=instance.placement_key,
             source_kind=instance.source_kind, frame=frame, as_of=as_of,
             theme_tokens=theme_tokens, slot_id=slot_id,
             emit_missing_actual=lane_missing_actual_visible(projection), emit_diagnostics=False,
+            selection=admitted_source_selection(visibility),
         )
-        marks_by_instance[instance] = composition.marks
+        facets = {f"{facet.source.facet}:{instance.placement_key}": facet for facet in visibility.facets}
+        completed_marks = []
+        for mark in composition.marks:
+            original_marks[mark.placement_id] = mark
+            facet = facets.get(mark.placement_id)
+            if facet is None:
+                raise LayoutError("E_LAYOUT_WINDOW_CLIP", mark.placement_id,
+                                  detail="stage=preflight; reason=unaccounted-mark")
+            if facet.disposition == FacetDisposition.CLIPPED:
+                # Only inline time is clipped in the provisional zero-origin
+                # frame. Its block envelope comes from the original painted
+                # facets, not a guessed final row height or fake geometry.
+                envelopes = tuple(obstacle_envelope(value.visible_footprint)
+                                  for value in _mark_facets(items[instance], instance, mark, theme_tokens))
+                top = min(value[1] for value in envelopes)
+                bottom = max(value[3] for value in envelopes)
+                plot = Rect(scale.range_start, top, scale.range_end - scale.range_start, bottom - top)
+                mark = complete_mark_window_geometry(mark, facet, scale, plot).visible
+            if mark is not None:
+                completed_marks.append(mark)
+        marks_by_instance[instance] = tuple(completed_marks)
     all_marks = tuple(mark for instance in closure.instances for mark in marks_by_instance[instance])
     icons = _compose_mark_icons(all_marks, bound_marks, icon_assets, theme_tokens)
-    progress = _compose_progress(closure, items, marks_by_instance, progress_fill_source, theme_tokens)
+    progress = _compose_progress(closure, items, marks_by_instance, progress_fill_source, theme_tokens,
+                                 original_marks=original_marks)
     collected: dict[LaneProjectionInstance, list[LaneFacetFootprint]] = defaultdict(list)
     facet_purposes: dict[LaneProjectionInstance, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
     hosted_icons: dict[LaneProjectionInstance, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
@@ -174,7 +220,10 @@ def compose_lane_item_footprints(
                 for child in child_instances:
                     _add_overlay_pairs(collected, host, child)
 
+    wholly_omitted = window_account.wholly_omitted_instances
     if any(not any(collected.get(instance) for instance in instances_by_member.get(member_id, ()))
+           and not all(instance in wholly_omitted
+                       for instance in instances_by_member.get(member_id, ()))
            for member_id in member_order):
         raise LayoutError("E_LAYOUT_LANE_FOOTPRINT_EMPTY", "/projection/laneRows")
     return tuple(

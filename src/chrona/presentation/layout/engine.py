@@ -1,19 +1,93 @@
 """Deterministic normal-flow engine for intent-oriented Layout Profile v0.2."""
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from collections import Counter
 from decimal import ROUND_CEILING, Decimal, getcontext
-from typing import Any, Callable, Mapping
+from types import MappingProxyType
+from typing import Any, Callable, Literal, Mapping
 
 from chrona.presentation.layout.model import (
     LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect, RegionFrame, ResolvedLayoutProfile, SlotHeading,
 )
 from chrona.presentation.layout.surface_quality import FitWarning
+from chrona.presentation.layout.tracks import resolve_flexible_tracks as _resolve_flexible_tracks
 
 
 getcontext().prec = 28
 ZERO = Decimal(0)
+
+
+@dataclass(frozen=True, slots=True)
+class SourceInlineBudget:
+    """Runtime allocation evidence, never part of a resolved resource identity."""
+
+    slot_id: str
+    path: str
+    available_inline: Decimal
+    ceiling: Decimal
+    source_kind: Literal["table", "heading"] = "table"
+
+    @property
+    def failure_code(self) -> str:
+        return "E_LAYOUT_TEXT_OVERFLOW" if self.source_kind == "heading" else "E_LAYOUT_TABLE_OVERFLOW"
+
+
+@dataclass(frozen=True, slots=True)
+class LayoutSizingContext:
+    """Per-solve source closure and ceilings, separate from resource resolution."""
+
+    source_budgets: Mapping[str, SourceInlineBudget]
+    measure_source: Callable[[str, Decimal], Measurement] | None = None
+    by_path: Mapping[str, SourceInlineBudget] = field(init=False)
+
+    def __post_init__(self) -> None:
+        budgets = dict(self.source_budgets)
+        object.__setattr__(self, "source_budgets", MappingProxyType(budgets))
+        object.__setattr__(self, "by_path", MappingProxyType({b.path: b for b in budgets.values()}))
+
+    def measurement(self, node: Mapping[str, Any], path: str, inline: Decimal,
+                    fallback: Measurement) -> Measurement:
+        if path not in self.by_path or self.measure_source is None:
+            return fallback
+        return self.measure_source(str(node["id"]), inline)
+
+    def close_sources(self, measurements: Mapping[str, Measurement]) -> Mapping[str, Measurement]:
+        if self.measure_source is None:
+            return measurements
+        result = dict(measurements)
+        for slot_id, budget in self.source_budgets.items():
+            if slot_id not in result:
+                raise LayoutError("E_LAYOUT_MEASUREMENT_REQUIRED", budget.path, slot_id)
+            result[slot_id] = self.measure_source(slot_id, budget.ceiling)
+        return result
+
+
+def _limit_inline_base(base: tuple[Decimal, Decimal | None, Decimal],
+                       budget: SourceInlineBudget) -> tuple[Decimal, Decimal, Decimal]:
+    """Cap a track without converting flexible allocation into a fixed track.
+
+    Intrinsic text floors must already be closed by the source at this budget;
+    this function never erases a mandatory or authored minimum.
+    """
+    minimum, target, weight = base
+    if minimum > budget.ceiling:
+        raise LayoutError(budget.failure_code, budget.path, budget.slot_id,
+                          "mandatory or authored inline minimum exceeds the declared ceiling")
+    return minimum, min(target, budget.ceiling) if target is not None else budget.ceiling, weight
+
+
+def validate_source_inline_budgets(expected: Mapping[str, SourceInlineBudget],
+                                 actual: Mapping[str, SourceInlineBudget]) -> None:
+    """Reject a circular parent budget after bounded source allocation."""
+    for slot_id, budget in expected.items():
+        if actual.get(slot_id) != budget:
+            raise LayoutError(budget.failure_code, budget.path, slot_id,
+                              "source inline budget depends on its intrinsic allocation")
+    if actual.keys() != expected.keys():
+        slot_id = next(key for key in actual if key not in expected)
+        raise LayoutError(actual[slot_id].failure_code, actual[slot_id].path, slot_id,
+                          "budget closure changed its active sources")
 
 
 def _d(value: Any) -> Decimal:
@@ -74,7 +148,26 @@ def _block_measurement(measure: Measurement, block: Decimal) -> Measurement:
                        block, block, block, measure.first_baseline, measure.last_baseline)
 
 
-def _spec_base(spec: Any, *, axis: str, measurement: Measurement | None, profile: ResolvedLayoutProfile, path: str) -> tuple[Decimal, Decimal | None, Decimal]:
+def _retain_required_row_blocks(measurements: list[Measurement | None],
+                                required: Mapping[int, Decimal]) -> None:
+    """A bounded cell's completed line stack cannot be lost to a later cell."""
+    for row, block in required.items():
+        measured = measurements[row]
+        if measured is not None:
+            measurements[row] = replace(measured, min_block=max(measured.min_block, block),
+                                         preferred_block=max(measured.preferred_block, block),
+                                         max_block=max(measured.max_block, block))
+
+
+def _spec_base(spec: Any, *, axis: str, measurement: Measurement | None,
+               profile: ResolvedLayoutProfile, path: str,
+               sizing: LayoutSizingContext | None = None) -> tuple[Decimal, Decimal | None, Decimal]:
+    base = _unbounded_spec_base(spec, axis=axis, measurement=measurement, profile=profile, path=path)
+    budget = sizing.by_path.get(path.removesuffix("/inlineSize")) if sizing and axis == "inline" else None
+    return _limit_inline_base(base, budget) if budget is not None else base
+
+
+def _unbounded_spec_base(spec: Any, *, axis: str, measurement: Measurement | None, profile: ResolvedLayoutProfile, path: str) -> tuple[Decimal, Decimal | None, Decimal]:
     """Return minimum, preferred/fixed target, and flex weight."""
     if spec == "fill":
         return ZERO, None, Decimal(1)
@@ -82,7 +175,8 @@ def _spec_base(spec: Any, *, axis: str, measurement: Measurement | None, profile
         return ZERO, None, _d(spec["fr"])
     if isinstance(spec, dict) and "fixed" in spec:
         value = spec["fixed"]
-        fixed = _d(value) if isinstance(value, (int, float)) else _distance(profile, path + "/fixed")
+        # Aspect-derived track sizes are native Decimal geometry, not tokens.
+        fixed = _d(value) if isinstance(value, (int, float, Decimal)) else _distance(profile, path + "/fixed")
         return fixed, fixed, ZERO
     if isinstance(spec, dict) and "aspectRatio" in spec:
         return ZERO, None, ZERO
@@ -109,57 +203,8 @@ def _spec_base(spec: Any, *, axis: str, measurement: Measurement | None, profile
     raise LayoutError("E_LAYOUT_SCHEMA", path)
 
 
-def _resolve_flexible_tracks(bases: list[tuple[Decimal, Decimal | None, Decimal]], available: Decimal) -> list[Decimal]:
-    """Resolve one axis's tracks from their (minimum, maximum, weight) bases:
-    fixed/intrinsic tracks (`weight == 0`) first, then flexible (`fr`/`fill`)
-    tracks by CSS Grid's "find the size of an fr" algorithm (#487, ADR-0032).
-
-    A flexible track's `minmax` minimum is a floor its fr share must clear,
-    never an amount added underneath it. Each round computes one `fr` unit from
-    the space still available to the remaining flexible tracks; any track whose
-    minimum exceeds its own share at that `fr`, or whose maximum is smaller than
-    that share, is frozen at that bound and removed from the set so the rest
-    redistribute what is left, at the next round's recomputed `fr`. This keeps
-    the total at `available` — never oversubscribing it — unless every flexible
-    track's minimum together already exceeds `available`, in which case each
-    keeps its minimum and the caller's existing typed-overflow completion
-    applies, as before."""
-    sizes: list[Decimal | None] = [None] * len(bases)
-    flexible = [index for index, (_, _, weight) in enumerate(bases) if weight > ZERO]
-    for index, (minimum, target, weight) in enumerate(bases):
-        if weight == ZERO:
-            sizes[index] = target if target is not None else minimum
-    non_flex_total = sum((sizes[index] for index in range(len(bases)) if sizes[index] is not None), ZERO)
-    # A valid profile with too little space still has a finite natural
-    # placement.  The caller records its typed overflow and the composition
-    # layer expands the completed canvas around the resulting bounds.
-    leftover = available - non_flex_total
-    while flexible:
-        total_weight = sum((bases[index][2] for index in flexible), ZERO)
-        fr = leftover / total_weight if leftover > ZERO else ZERO
-        violators = [index for index in flexible if bases[index][0] > fr * bases[index][2]]
-        if violators:
-            for index in violators:
-                sizes[index] = bases[index][0]
-                leftover -= bases[index][0]
-            flexible = [index for index in flexible if index not in violators]
-            continue
-        clamped = [index for index in flexible
-                   if bases[index][1] is not None and bases[index][1] < fr * bases[index][2]]
-        if clamped:
-            for index in clamped:
-                sizes[index] = bases[index][1]
-                leftover -= bases[index][1]
-            flexible = [index for index in flexible if index not in clamped]
-            continue
-        for index in flexible:
-            sizes[index] = fr * bases[index][2]
-        break
-    return sizes  # type: ignore[return-value]
-
-
-def _allocate(specs: list[Any], available: Decimal, measurements: list[Measurement | None], *, axis: str, profile: ResolvedLayoutProfile, paths: list[str]) -> list[Decimal]:
-    bases = [_spec_base(spec, axis=axis, measurement=measure, profile=profile, path=path) for spec, measure, path in zip(specs, measurements, paths)]
+def _allocate(specs: list[Any], available: Decimal, measurements: list[Measurement | None], *, axis: str, profile: ResolvedLayoutProfile, paths: list[str], sizing: LayoutSizingContext | None = None) -> list[Decimal]:
+    bases = [_spec_base(spec, axis=axis, measurement=measure, profile=profile, path=path, sizing=sizing) for spec, measure, path in zip(specs, measurements, paths)]
     return _resolve_flexible_tracks(bases, available)
 
 
@@ -197,7 +242,8 @@ def _measure_node(node: Mapping[str, Any], path: str, measurements: Mapping[str,
 
 def _flow_lines(node: Mapping[str, Any], path: str, measurements: Mapping[str, Measurement],
                 profile: ResolvedLayoutProfile, inline_size: Decimal,
-                height_for: Callable[[Mapping[str, Any], str, Decimal], Decimal]
+                height_for: Callable[[Mapping[str, Any], str, Decimal], Decimal],
+                sizing: LayoutSizingContext | None = None,
                 ) -> list[list[tuple[int, Mapping[str, Any], Measurement, Decimal, Decimal]]]:
     """Resolve flow wrapping once for both natural measurement and arrangement."""
     gap = _gap(profile, node, path)
@@ -208,7 +254,20 @@ def _flow_lines(node: Mapping[str, Any], path: str, measurements: Mapping[str, M
         child_path = f"{path}/children/{index}"
         measured = _measure_node(child, child_path, measurements, profile)
         width = max(minimum, measured.preferred_inline)
+        budget = sizing.by_path.get(child_path) if sizing else None
+        if budget is not None:
+            base = _spec_base(child["inlineSize"], axis="inline", measurement=measured,
+                              profile=profile, path=child_path + "/inlineSize", sizing=sizing)
+            if minimum > budget.ceiling:
+                raise LayoutError(budget.failure_code, child_path, str(child["id"]),
+                                  "Flow item minimum exceeds the declared ceiling")
+            width = (base[1] if base[2] == ZERO and base[1] is not None
+                     else min(width, budget.ceiling))
+            width = max(minimum, base[0], width)
+            measured = sizing.measurement(child, child_path, width, measured)
         height = height_for(child, child_path, width)  # the extent it is arranged at: natural sizes are kept (Spec 33 section 13)
+        if budget is not None:
+            height = measured.preferred_block
         block_spec = child["blockSize"]
         if not (isinstance(block_spec, dict) and "aspectRatio" in block_spec):
             block_minimum, block_target, block_weight = _spec_base(
@@ -219,6 +278,9 @@ def _flow_lines(node: Mapping[str, Any], path: str, measurements: Mapping[str, M
             width = max(minimum, height * _d(child["inlineSize"]["aspectRatio"]))
         if isinstance(child.get("blockSize"), dict) and "aspectRatio" in child["blockSize"]:
             height = width / _d(child["blockSize"]["aspectRatio"])
+        if budget is not None and width > budget.ceiling:
+            raise LayoutError(budget.failure_code, child_path, str(child["id"]),
+                              "authored aspect size exceeds the declared ceiling")
         needed = width if not lines[-1] else gap + width
         if lines[-1] and used + needed > inline_size:
             lines.append([])
@@ -232,28 +294,37 @@ def _flow_lines(node: Mapping[str, Any], path: str, measurements: Mapping[str, M
 def measure_natural_normal_flow_block(profile: ResolvedLayoutProfile, *, viewport_inline: int,
                                       measurements: Mapping[str, Measurement],
                                       node: Mapping[str, Any] | None = None,
-                                      node_path: str = "/root") -> Decimal:
+                                      node_path: str = "/root",
+                                      sizing: LayoutSizingContext | None = None) -> Decimal:
     """Measure natural normal-flow block extent with arrangement's track rules.
 
     This is a Layout-owned sizing input. It follows the resolved inline extent
     for wrapped flows, uses the same grid track bases as arrangement, and omits
     anchored overlay decoration from the normal-flow envelope.
     """
+    if sizing:
+        measurements = sizing.close_sources(measurements)
     def block(node: Mapping[str, Any], path: str, available_inline: Decimal) -> Decimal:
         if node["kind"] == "slot":
-            return _slot_measurement(node, measurements, path).preferred_block
+            measured = _slot_measurement(node, measurements, path)
+            return (sizing.measurement(node, path, available_inline, measured)
+                    if sizing else measured).preferred_block
         i0, i1, b0, b1 = _padding(profile, node, path)
         inner_inline = max(ZERO, available_inline - i0 - i1)
         gap = _gap(profile, node, path)
         children = _active_children(node, measurements)
         kind = node["kind"]
         if kind == "overlay":
-            natural = max((block(child, f"{path}/children/{index}", inner_inline)
+            natural = max((block(child, f"{path}/children/{index}",
+                                 _bounded_child_inline(child, f"{path}/children/{index}", inner_inline,
+                                                       _measure_node(child, f"{path}/children/{index}", measurements, profile),
+                                                       profile, sizing)
+                                 if sizing and f"{path}/children/{index}" in sizing.by_path else inner_inline)
                            for index, child in children if "anchor" not in child), default=ZERO)
             return natural + b0 + b1
         if kind == "flow":
             flow = _flow_lines(node, path, measurements, profile, inner_inline,
-                               lambda child, child_path, width: block(child, child_path, width))
+                               lambda child, child_path, width: block(child, child_path, width), sizing)
             return sum((max((item[4] for item in line), default=ZERO) for line in flow), ZERO) + \
                 gap * max(0, len(flow) - 1) + b0 + b1
         if kind == "grid":
@@ -261,6 +332,7 @@ def measure_natural_normal_flow_block(profile: ResolvedLayoutProfile, *, viewpor
             col_measures: list[Measurement | None] = [None] * len(columns)
             row_measures: list[Measurement | None] = [None] * len(rows)
             child_measures: dict[int, Measurement] = {}
+            required_rows: dict[int, Decimal] = {}
             for index, child in children:
                 measured = _measure_node(child, f"{path}/children/{index}", measurements, profile)
                 child_measures[index] = measured
@@ -276,8 +348,15 @@ def measure_natural_normal_flow_block(profile: ResolvedLayoutProfile, *, viewpor
                     column, span = cell["column"] - 1, cell.get("columnSpan", 1)
                     child_inline = sum(col_sizes[column:column + span], ZERO) + gap * (span - 1)
                     natural_block = _natural_child_block(child, f"{path}/children/{index}",
-                                                         child_inline, measurements, profile)
+                                                         _bounded_child_inline(child, f"{path}/children/{index}",
+                                                                              child_inline, child_measures[index],
+                                                                              profile, sizing, preserve_cell_extent=True),
+                                                         measurements, profile, sizing)
                     row_measures[cell["row"] - 1] = _block_measurement(child_measures[index], natural_block)
+                    if sizing and f"{path}/children/{index}" in sizing.by_path:
+                        row = cell["row"] - 1
+                        required_rows[row] = max(required_rows.get(row, ZERO), natural_block)
+            _retain_required_row_blocks(row_measures, required_rows)
             row_bases = [_spec_base(spec, axis="block", measurement=measure, profile=profile,
                                     path=f"{path}/rowTracks/{i}")
                          for i, (spec, measure) in enumerate(zip(rows, row_measures))]
@@ -289,17 +368,23 @@ def measure_natural_normal_flow_block(profile: ResolvedLayoutProfile, *, viewpor
             specs = [child["inlineSize"] for _, child in children]
             sizes = _allocate(specs, inner_inline - gap * max(0, len(children) - 1), child_measures,
                               axis="inline", profile=profile,
-                              paths=[f"{path}/children/{index}/inlineSize" for index, _ in children])
+                              paths=[f"{path}/children/{index}/inlineSize" for index, _ in children], sizing=sizing)
             return max((child_block(child, f"{path}/children/{index}", size)
                         for (index, child), size in zip(children, sizes)), default=ZERO) + b0 + b1
         total = b0 + b1 + gap * max(0, len(children) - 1)
         for index, child in children:
             child_path = f"{path}/children/{index}"
-            total += child_block(child, child_path, inner_inline)
+            child_inline = inner_inline
+            if sizing and child_path in sizing.by_path:
+                measured = _measure_node(child, child_path, measurements, profile)
+                child_inline = _bounded_child_inline(child, child_path, inner_inline, measured, profile, sizing)
+            total += child_block(child, child_path, child_inline)
         return total
 
     def child_block(node: Mapping[str, Any], path: str, available_inline: Decimal) -> Decimal:
         measured = _measure_node(node, path, measurements, profile)
+        if sizing:
+            measured = sizing.measurement(node, path, available_inline, measured)
         required = block(node, path, available_inline)
         if node["kind"] in {"overlay", "grid", "flow"}:
             measured = _block_measurement(measured, required)
@@ -323,10 +408,11 @@ def measure_natural_normal_flow_block(profile: ResolvedLayoutProfile, *, viewpor
 
 def _natural_child_block(node: Mapping[str, Any], path: str, available_inline: Decimal,
                          measurements: Mapping[str, Measurement],
-                         profile: ResolvedLayoutProfile) -> Decimal:
+                         profile: ResolvedLayoutProfile,
+                         sizing: LayoutSizingContext | None = None) -> Decimal:
     return measure_natural_normal_flow_block(
         profile, viewport_inline=available_inline, measurements=measurements,
-        node=node, node_path=path,
+        node=node, node_path=path, sizing=sizing,
     )
 
 
@@ -351,6 +437,32 @@ def _cross_size(base: tuple[Decimal, Decimal | None, Decimal], available: Decima
     return target if target is not None else available
 
 
+def _bounded_child_inline(node: Mapping[str, Any], path: str, available: Decimal,
+                           measured: Measurement, profile: ResolvedLayoutProfile,
+                           sizing: LayoutSizingContext | None,
+                           block_size: Decimal | None = None, *,
+                           preserve_cell_extent: bool = False) -> Decimal:
+    """Resolve a capped child inside its independently allocated cross/cell space."""
+    if sizing is None or path not in sizing.by_path:
+        return available
+    base = _spec_base(node["inlineSize"], axis="inline", measurement=measured,
+                      profile=profile, path=path + "/inlineSize", sizing=sizing)
+    used = _cross_size(base, available, stretch=True)
+    spec = node["inlineSize"]
+    if isinstance(spec, dict) and "aspectRatio" in spec:
+        if block_size is None:
+            block_base = _spec_base(node["blockSize"], axis="block", measurement=measured,
+                                    profile=profile, path=path + "/blockSize")
+            block_size = block_base[1] if block_base[1] is not None else measured.preferred_block
+        used = block_size * _d(spec["aspectRatio"])
+    if used > sizing.by_path[path].ceiling:
+        raise LayoutError(sizing.by_path[path].failure_code, path, str(node["id"]),
+                          "authored inline size exceeds the declared ceiling")
+    # Full-share text budgets constrain copy without shrinking the existing
+    # Grid host. A smaller declared share still constrains the host itself.
+    return available if preserve_cell_extent and sizing.by_path[path].ceiling == available else used
+
+
 def _cross_position(align: str, start: Decimal, available: Decimal, size: Decimal, safety: str = "strict") -> tuple[Decimal, Decimal]:
     # Sizing is already complete. Alignment must not replace fixed, intrinsic,
     # bounded or aspect-derived dimensions with the container's extent.
@@ -363,11 +475,35 @@ def _cross_position(align: str, start: Decimal, available: Decimal, size: Decima
 
 class _Arranger:
     def __init__(self, profile: ResolvedLayoutProfile, measurements: Mapping[str, Measurement], *,
-                 content_sized: bool = False):
+                 content_sized: bool = False, collect_inline_budgets: bool = False,
+                 sizing: LayoutSizingContext | None = None,
+                 heading_slots: frozenset[str] = frozenset(),
+                 wrapping_table_slots: frozenset[str] = frozenset()):
         self.profile, self.measurements = profile, measurements
         self.content_sized = content_sized
         self.decisions: list[LayoutDecision] = []
         self.fit_warnings: list[FitWarning] = []
+        self.source_inline_budgets: dict[str, SourceInlineBudget] = {}
+        self.collect_inline_budgets = collect_inline_budgets or sizing is not None
+        self.sizing = sizing
+        self.heading_slots = (frozenset(b.slot_id for b in sizing.source_budgets.values()
+                                       if b.source_kind == "heading") if sizing else heading_slots)
+        self.wrapping_table_slots = (frozenset(b.slot_id for b in sizing.source_budgets.values()
+                                              if b.source_kind == "table") if sizing else wrapping_table_slots)
+
+    def _record_inline_budget(self, child: Mapping[str, Any], path: str,
+                              available_inline: Decimal) -> None:
+        slot_id = str(child["id"])
+        heading = slot_id in self.heading_slots
+        if not self.collect_inline_budgets or ("maxInlineShare" not in child and not heading
+                                              and slot_id not in self.wrapping_table_slots):
+            return
+        ceiling = available_inline * (Decimal(1) if heading else _d(child.get("maxInlineShare", 1)))
+        if not ceiling.is_finite() or ceiling <= ZERO:
+            raise LayoutError("E_LAYOUT_TEXT_OVERFLOW" if heading else "E_LAYOUT_TABLE_OVERFLOW", path, slot_id,
+                              "no positive independently allocated inline budget")
+        self.source_inline_budgets[slot_id] = SourceInlineBudget(
+            slot_id, path, available_inline, ceiling, "heading" if heading else "table")
 
     def _warn(self, node: Mapping[str, Any], path: str, *, required_inline: Decimal,
               required_block: Decimal, available_inline: Decimal, available_block: Decimal) -> None:
@@ -407,6 +543,12 @@ class _Arranger:
         ))
         if kind == "slot":
             measure = _slot_measurement(node, self.measurements, path)
+            if self.sizing:
+                measure = self.sizing.measurement(node, path, rect.inline_size, measure)
+                budget = self.sizing.by_path.get(path)
+                if budget and (rect.inline_size > budget.ceiling or rect.inline_size < measure.min_inline):
+                    raise LayoutError(budget.failure_code, path, node_id,
+                                      "completed source does not fit its strict inline budget")
             if rect.inline_size < measure.min_inline or rect.block_size < measure.min_block:
                 self._warn(node, path, required_inline=measure.min_inline,
                            required_block=measure.min_block, available_inline=rect.inline_size,
@@ -429,15 +571,19 @@ class _Arranger:
         return rect.inline + i0, rect.block + b0, max(ZERO, inline_size), max(ZERO, block_size)
 
     def _wrapped_block(self, child: Mapping[str, Any], path: str, measure: Measurement, inline: Decimal) -> Measurement:
-        """A flow child's block measurement at the inline extent it is arranged at; other kinds are unchanged."""
+        """Close a bounded source or Flow block at its actual arranged inline extent."""
+        if self.sizing and path in self.sizing.by_path:
+            return self.sizing.measurement(child, path, inline, measure)
         if child["kind"] != "flow":
             return measure
-        return _block_measurement(measure, _natural_child_block(child, path, inline, self.measurements, self.profile))
+        return _block_measurement(measure, _natural_child_block(child, path, inline, self.measurements, self.profile, self.sizing))
 
     def _column_child_inline(self, child: Mapping[str, Any], path: str, measure: Measurement,
                              cross: Decimal, node: Mapping[str, Any]) -> Decimal:
         """The inline extent a column gives a child, as `_linear` resolves it for arrangement."""
         spec = child["inlineSize"]
+        if self.sizing and path in self.sizing.by_path:
+            return _bounded_child_inline(child, path, cross, measure, self.profile, self.sizing)
         if isinstance(spec, dict) and "aspectRatio" in spec:
             return cross
         align = child.get("place", {}).get("inline", node["alignItems"])
@@ -449,6 +595,9 @@ class _Arranger:
         row = node["kind"] == "row"; main = inline_size if row else block_size
         cross = block_size if row else inline_size; gap = _gap(self.profile, node, path)
         children = _active_children(node, self.measurements)
+        available_inline = inline_size - gap * max(0, len(children) - 1) if row else inline_size
+        for index, child in children:
+            self._record_inline_budget(child, f"{path}/children/{index}", available_inline)
         measured = [_measure_node(child, f"{path}/children/{i}", self.measurements, self.profile) for i, child in children]
         if not row:
             # A flow child wraps at the inline extent the column gives it, so its block allocation is its line stack
@@ -462,7 +611,7 @@ class _Arranger:
             for spec in specs
         ]
         paths = [f"{path}/children/{i}/{'inlineSize' if row else 'blockSize'}" for i, _ in children]
-        sizes = _allocate(specs, main - gap * max(0, len(children)-1), measured, axis="inline" if row else "block", profile=self.profile, paths=paths)
+        sizes = _allocate(specs, main - gap * max(0, len(children)-1), measured, axis="inline" if row else "block", profile=self.profile, paths=paths, sizing=self.sizing)
         if row:
             # The same for a flow in a row: its block is the line stack at the inline size the row allocated it.
             measured = [self._wrapped_block(child, f"{path}/children/{i}", m, size)
@@ -488,8 +637,9 @@ class _Arranger:
             if isinstance(cross_spec, dict) and "aspectRatio" in cross_spec:
                 ratio = _d(cross_spec["aspectRatio"]); cross_used = main_size / ratio if row else main_size * ratio
             else:
-                minimum, target, weight = _spec_base(cross_spec, axis="block" if row else "inline", measurement=child_measure, profile=self.profile, path=cross_path)
-                cross_used = _cross_size((minimum, target, weight), cross, stretch=align == "stretch")
+                minimum, target, weight = _spec_base(cross_spec, axis="block" if row else "inline", measurement=child_measure, profile=self.profile, path=cross_path, sizing=self.sizing)
+                capped_cross = not row and self.sizing and child_path in self.sizing.by_path
+                cross_used = _cross_size((minimum, target, weight), cross, stretch=align == "stretch" or bool(capped_cross))
                 if (not row and not weight and cross_spec == "content" and child.get("kind") == "slot"
                         and child.get("source") in _SHRINKING_SOURCES
                         and child.get("overflow") == "ellipsize-with-source"):
@@ -512,6 +662,7 @@ class _Arranger:
         cols, rows = node["columnTracks"], node["rowTracks"]
         col_measures: list[Measurement | None] = [None] * len(cols); row_measures: list[Measurement | None] = [None] * len(rows)
         child_measures: dict[int, Measurement] = {}
+        required_rows: dict[int, Decimal] = {}
         for i, child in _active_children(node, self.measurements):
             measure = _measure_node(child, f"{path}/children/{i}", self.measurements, self.profile); child_measures[i] = measure; cell=child["cell"]
             if cell.get("columnSpan",1)==1: col_measures[cell["column"]-1]=measure
@@ -521,13 +672,20 @@ class _Arranger:
             if cell.get("rowSpan", 1) != 1:
                 continue
             measure = child_measures[i]
-            if self.content_sized:
+            child_path = f"{path}/children/{i}"
+            if self.content_sized or (self.sizing and child_path in self.sizing.by_path):
                 column, span = cell["column"] - 1, cell.get("columnSpan", 1)
                 child_inline = sum(col_sizes[column:column + span], ZERO) + gap * (span - 1)
-                natural_block = _natural_child_block(child, f"{path}/children/{i}", child_inline,
-                                                     self.measurements, self.profile)
+                child_inline = _bounded_child_inline(child, child_path, child_inline, measure, self.profile, self.sizing,
+                                                      preserve_cell_extent=True)
+                natural_block = _natural_child_block(child, child_path, child_inline,
+                                                     self.measurements, self.profile, self.sizing)
                 measure = _block_measurement(measure, natural_block)
+                if self.sizing and child_path in self.sizing.by_path:
+                    row = cell["row"] - 1
+                    required_rows[row] = max(required_rows.get(row, ZERO), natural_block)
             row_measures[cell["row"] - 1] = measure
+        _retain_required_row_blocks(row_measures, required_rows)
         row_sizes=_allocate(rows,block_size-gap*(len(rows)-1),row_measures,axis="block",profile=self.profile,paths=[f"{path}/rowTracks/{i}" for i in range(len(rows))])
         required_inline = sum(col_sizes, ZERO) + gap * max(0, len(cols)-1)
         required_block = sum(row_sizes, ZERO) + gap * max(0, len(rows)-1)
@@ -540,15 +698,29 @@ class _Arranger:
         for size in row_sizes: row_starts.append(cursor); cursor+=size+gap
         for i,child in _active_children(node, self.measurements):
             cell=child["cell"]; c=cell["column"]-1; r=cell["row"]-1; cs=cell.get("columnSpan",1); rs=cell.get("rowSpan",1)
-            self.arrange(child,f"{path}/children/{i}",Rect(col_starts[c],row_starts[r],sum(col_sizes[c:c+cs],ZERO)+gap*(cs-1),sum(row_sizes[r:r+rs],ZERO)+gap*(rs-1)))
+            self._record_inline_budget(child, f"{path}/children/{i}",
+                                       sum(col_sizes[c:c+cs], ZERO) + gap * (cs - 1))
+            child_path = f"{path}/children/{i}"
+            child_inline = sum(col_sizes[c:c+cs], ZERO) + gap * (cs - 1)
+            child_block = sum(row_sizes[r:r+rs], ZERO) + gap * (rs - 1)
+            child_start = col_starts[c]
+            if self.sizing and child_path in self.sizing.by_path:
+                used_inline = _bounded_child_inline(child, child_path, child_inline, child_measures[i],
+                                                     self.profile, self.sizing, child_block, preserve_cell_extent=True)
+                align = child.get("place", {}).get("inline", node["alignItems"])
+                child_start, child_inline = _cross_position(align, child_start, child_inline, used_inline)
+            self.arrange(child, child_path, Rect(child_start, row_starts[r], child_inline, child_block))
 
     def _flow(self, node: Mapping[str, Any], path: str, rect: Rect) -> None:
         inline, block, inline_size, block_size = self._content(node,path,rect); gap=_gap(self.profile,node,path)
+        for index, child in _active_children(node, self.measurements):
+            self._record_inline_budget(child, f"{path}/children/{index}", inline_size)
         lines = _flow_lines(node, path, self.measurements, self.profile, inline_size,
                             lambda child, child_path, width:
-                            _natural_child_block(child, child_path, width, self.measurements, self.profile)
+                            _natural_child_block(child, child_path, width, self.measurements, self.profile, self.sizing)
                             if self.content_sized else
-                            _measure_node(child, child_path, self.measurements, self.profile).preferred_block)
+                            _measure_node(child, child_path, self.measurements, self.profile).preferred_block,
+                            self.sizing)
         cursor_b=block
         for line in lines:
             line_height=max((item[4] for item in line),default=ZERO)
@@ -584,15 +756,22 @@ class _Arranger:
         inline, block, inline_size, block_size = self._content(node, path, rect)
         content = Rect(inline, block, inline_size, block_size)
         children = _active_children(node, self.measurements)
+        for index, child in children:
+            self._record_inline_budget(child, f"{path}/children/{index}", inline_size)
         indexed = {str(child["id"]): (index, child) for index, child in children}
         bounds: dict[str, Rect] = {}
 
         def child_size(child: Mapping[str, Any], child_path: str) -> tuple[Decimal, Decimal]:
             measure = _measure_node(child, child_path, self.measurements, self.profile)
-            inline_base = _spec_base(child["inlineSize"], axis="inline", measurement=measure, profile=self.profile, path=child_path + "/inlineSize")
+            inline_base = _spec_base(child["inlineSize"], axis="inline", measurement=measure, profile=self.profile, path=child_path + "/inlineSize", sizing=self.sizing)
             block_base = _spec_base(child["blockSize"], axis="block", measurement=measure, profile=self.profile, path=child_path + "/blockSize")
             place = child.get("place", {})
-            used_inline = _cross_size(inline_base, inline_size, stretch=place.get("inline") == "stretch")
+            capped = self.sizing and child_path in self.sizing.by_path
+            used_inline = _cross_size(inline_base, inline_size, stretch=place.get("inline") == "stretch" or bool(capped))
+            if capped:
+                measure = self.sizing.measurement(child, child_path, used_inline, measure)
+                block_base = _spec_base(child["blockSize"], axis="block", measurement=measure,
+                                        profile=self.profile, path=child_path + "/blockSize")
             used_block = _cross_size(block_base, block_size, stretch=place.get("block") == "stretch")
             if isinstance(child["inlineSize"], dict) and "aspectRatio" in child["inlineSize"]:
                 used_inline = used_block * _d(child["inlineSize"]["aspectRatio"])
@@ -710,14 +889,63 @@ class _Arranger:
                 raise LayoutError("E_LAYOUT_CONSTRAINT_CYCLE", path, sorted(pending)[0])
 
 
-def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float | Decimal, viewport_block: int | float | Decimal, measurements: Mapping[str, Measurement], content_sized: bool = False) -> LayoutManifest:
+def resolve_source_inline_budgets(profile: ResolvedLayoutProfile, *,
+                                 viewport_inline: int | float | Decimal,
+                                 viewport_block: int | float | Decimal,
+                                 measurements: Mapping[str, Measurement],
+                                 content_sized: bool = False,
+                                 heading_slots: frozenset[str] = frozenset(),
+                                 wrapping_table_slots: frozenset[str] = frozenset()) -> Mapping[str, SourceInlineBudget]:
+    """Probe parent/cell budgets with all selected source demands neutralized.
+
+    The ordinary arranger remains the only implementation of padding, active
+    children, flexible tracks, spans and Flow. The source owner then closes
+    mandatory and bounded measurements; its final arrangement must reproduce
+    these budgets via ``validate_source_inline_budgets``. This probe alone does
+    not prove source feasibility or enforce the cap on completed placements.
+    """
+    capped: list[str] = []
+
+    def visit(node: Mapping[str, Any]) -> None:
+        if ("maxInlineShare" in node or str(node["id"]) in heading_slots
+                or str(node["id"]) in wrapping_table_slots):
+            capped.append(str(node["id"]))
+        for _, child in _active_children(node, measurements) if "children" in node else ():
+            visit(child)
+
+    root = profile.profile["root"]
+    visit(root)
+    if not capped:
+        return MappingProxyType({})
+    viewport = Rect(ZERO, ZERO, _d(viewport_inline), _d(viewport_block))
+    if viewport.inline_size <= ZERO or viewport.block_size <= ZERO:
+        raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY", "/viewport")
+    neutral = dict(measurements)
+    for slot_id in capped:
+        try:
+            neutral[slot_id] = replace(neutral[slot_id], min_inline=ZERO,
+                                       preferred_inline=ZERO, max_inline=ZERO)
+        except KeyError as error:
+            raise LayoutError("E_LAYOUT_MEASUREMENT_REQUIRED", "/root", slot_id) from error
+    arranger = _Arranger(profile, neutral, content_sized=content_sized, collect_inline_budgets=True,
+                         heading_slots=heading_slots, wrapping_table_slots=wrapping_table_slots)
+    arranger.arrange(root, "/root", viewport)
+    return MappingProxyType(dict(arranger.source_inline_budgets))
+
+
+def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float | Decimal, viewport_block: int | float | Decimal, measurements: Mapping[str, Measurement], content_sized: bool = False, sizing: LayoutSizingContext | None = None) -> LayoutManifest:
     """Measure and arrange normal-flow and bounded relative layout nodes."""
     viewport = Rect(ZERO, ZERO, _d(viewport_inline), _d(viewport_block))
     if viewport.inline_size <= ZERO or viewport.block_size <= ZERO:
         raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY", "/viewport")
     root = profile.profile["root"]
+    if sizing:
+        measurements = sizing.close_sources(measurements)
     _measure_node(root, "/root", measurements, profile)
-    arranger = _Arranger(profile, measurements, content_sized=content_sized); arranger.arrange(root, "/root", viewport)
+    arranger = _Arranger(profile, measurements, content_sized=content_sized, sizing=sizing)
+    arranger.arrange(root, "/root", viewport)
+    if sizing:
+        validate_source_inline_budgets(sizing.source_budgets, arranger.source_inline_budgets)
     relation_routing = profile.profile.get("relationRouting", {})
     annotation_routing = profile.profile["reviewSurface"]["annotationRouting"]
     return LayoutManifest(
@@ -864,7 +1092,8 @@ def _first_fitting_extent(fits: Callable[[int], bool], minimum_block: int, known
 def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inline: int,
                                  minimum_block: int, measurements: Mapping[str, Measurement],
                                  required_blocks: Mapping[str, Decimal] | Callable[[LayoutManifest], Mapping[str, Decimal]],
-                                 content_sized: bool = False) -> ContentBlockResolution:
+                                 content_sized: bool = False,
+                                 sizing: LayoutSizingContext | Callable[[Decimal], LayoutSizingContext] | None = None) -> ContentBlockResolution:
     """Resolve measured content hosts against one coherent finite profile.
 
     The probe is a normal finite arrangement.  Each declared content
@@ -877,6 +1106,15 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
     """
     if minimum_block <= 0:
         raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY", "/viewport")
+
+    def solve_at(block: int | Decimal) -> LayoutManifest:
+        # A block-to-inline coupling may legally change an independent parent
+        # budget between trials. Build a fresh source closure for that trial;
+        # never reuse the initial viewport's ceiling or relax final validation.
+        context = sizing(_d(block)) if callable(sizing) else sizing
+        return solve_layout(profile, viewport_inline=viewport_inline, viewport_block=block,
+                             measurements=measurements, content_sized=content_sized, sizing=context)
+
     def allocations(manifest: LayoutManifest) -> dict[str, Decimal]:
         return {item.source: item.bounds.block_size for item in manifest.decisions if item.source}
 
@@ -887,9 +1125,7 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
             raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/layoutManifest/sources/" + missing[0])
         return required
 
-    requested = solve_layout(profile, viewport_inline=viewport_inline,
-                             viewport_block=minimum_block, measurements=measurements,
-                             content_sized=content_sized)
+    requested = solve_at(minimum_block)
     requested_allocated = allocations(requested)
     requested_required = requirements(requested)
     if (all(requested_allocated[source] >= required for source, required in requested_required.items())
@@ -899,15 +1135,13 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
         # Finite Draft and immutable requests preserve #468's requested
         # minimum and source-deficit reallocation behavior exactly.
         probe_block = max(_d(minimum_block), max(requested_required.values(), default=ZERO) + _d(minimum_block))
-        manifest = solve_layout(profile, viewport_inline=viewport_inline,
-                                viewport_block=probe_block, measurements=measurements)
+        manifest = solve_at(probe_block)
         allocated = allocations(manifest)
         probe_required = requirements(manifest)
         extent = max((_d(minimum_block), *(probe_block - allocated[source] + required
                                            for source, required in probe_required.items())))
         candidate = int(extent.to_integral_value(rounding=ROUND_CEILING))
-        final = solve_layout(profile, viewport_inline=viewport_inline,
-                             viewport_block=candidate, measurements=measurements)
+        final = solve_at(candidate)
         final_allocated = allocations(final)
         final_required = requirements(final)
         short_sources = tuple(
@@ -918,8 +1152,7 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
         if _block_extent_feeds_inline(profile):
             # A coupled profile: an earlier extent than the deficit probe's may already fit (#1214).
             def finite_fits(extent: int) -> bool:
-                trial = solve_layout(profile, viewport_inline=viewport_inline,
-                                     viewport_block=extent, measurements=measurements)
+                trial = solve_at(extent)
                 trial_allocated = allocations(trial)
                 return all(trial_allocated[source] >= required for source, required in requirements(trial).items())
             earliest = _first_fitting_extent(finite_fits, int(minimum_block), candidate)
@@ -937,9 +1170,7 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
     # The intrinsic whole-profile measurement supplies the auto floor. Add
     # declared content needs on top, then verify the final complete manifest.
     probe_block = max(_d(minimum_block), max(requested_required.values(), default=ZERO) + _d(minimum_block))
-    manifest = solve_layout(profile, viewport_inline=viewport_inline,
-                            viewport_block=probe_block, measurements=measurements,
-                            content_sized=True)
+    manifest = solve_at(probe_block)
     allocated = allocations(manifest)
     probe_required = requirements(manifest)
     probe_satisfied = (all(allocated[source] >= required for source, required in probe_required.items())
@@ -956,9 +1187,7 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
     candidate = int(extent.to_integral_value(rounding=ROUND_CEILING))
 
     def satisfies(extent: int) -> bool:
-        manifest = solve_layout(profile, viewport_inline=viewport_inline,
-                                viewport_block=extent, measurements=measurements,
-                                content_sized=True)
+        manifest = solve_at(extent)
         source_allocated = allocations(manifest)
         candidate_required = requirements(manifest)
         return (all(source_allocated[source] >= required for source, required in candidate_required.items())
