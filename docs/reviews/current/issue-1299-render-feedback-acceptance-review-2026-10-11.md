@@ -1,14 +1,14 @@
 <!-- chrona:literal-acceptance/v1 -->
 # Render feedback acceptance (#1299)
 
-Authority: pre-code `c14a86aa`, Specs06 §6.1 and33 §13; [living work record](https://github.com/tya5/chrona/issues/1299#issuecomment-6095558700). Implementation: observer/routing `b3d401fc`/`dc31c097`, CLI `99e111c0`, relation override `d67cdf94`, height policy `8eaa30a3`; retained default table-bound correction `29d02e9d`. Post-M1/#1298 integration `c3d2bf55` is preparation, not final READY/release acceptance.
+Authority: pre-code `c14a86aa`, Specs06 §6.1 and33 §13; [living work record](https://github.com/tya5/chrona/issues/1299#issuecomment-6095558700). Implementation: observer/routing `b3d401fc`/`dc31c097`, CLI `99e111c0`, relation override `d67cdf94`, height policy `8eaa30a3`; retained default table-bound correction `29d02e9d`. Current integration `576bb60b` adopts trusted READY `fa862e40745aa134198dfe070aa347c451dd7ffe`. PR/artifact and exact-main release acceptance remain pending.
 
 ## Literal issue acceptance
 
 ### Issue #1299
 
 - Source: [Issue #1299](https://github.com/tya5/chrona/issues/1299)
-- Observed: 2026-10-11
+- Observed: 2026-10-12
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
@@ -19,14 +19,11 @@ Authority: pre-code `c14a86aa`, Specs06 §6.1 and33 §13; [living work record](h
 
 ## Programme-level criteria (optional)
 
-Current own Python3.11 focused suite:107 PASS42.44s, covering progress/PTY,
-height limits, relation override, packaged table bounds and explicit-window
-relation/lane/Scene absences. Merge keeps completed paint/absence geometry and
-separate progress-pass identity; plot bounds retain their positional handoff.
-Post-M1/#1298 combined batch:60 PASS33.56s on `a5b1e229`, covering actual CLI
-progress/relations, completed height-limit output, work counters, history and
-memo quotas. Product/test/schema bytes remain identical at `c3d2bf55`; ordinary
-integration has no conflicts and authors no examples or derived report changes.
+Current READY integration focused batch:35 PASS18.46s, covering actual CLI
+progress/PTY/relations, completed height-limit output, observer behavior and
+Draft relation normalization. Ordinary integration has no conflicts and authors
+no examples or derived report changes. Prior quota/history evidence does not
+replace current-head CI or release acceptance.
 The standalone default preserves merged table maxInlineShare0.4, adding only
 the declared height limit and truthful Layout ID; the whole-resource equality
 test remains intact. Network auto remains rejected; finite network requests
@@ -35,10 +32,9 @@ do not receive this advisory.
 Architecture: CLI owns terminal I/O; Draft overrides View before admission/effective identity freeze; Core dependencies/schedules are unchanged. Layout alone compares completed geometry against resolved declared limits; Scene transports typed facts. No resizing, route changes, clocks, serialization authority or implemented paging. Default Layout provenance intentionally changes; catalogue Editorial and mirrors remain unchanged. Paging follow-up is specified in Spec33.
 
 Current import check:11 packages/37 inward edges. Full schema gate against
-origin/main60ddbbe5 PASS at preparation `39903716`:one additive Layout
-schema,37 equal,480 documents (377 mapped),739 probes (462 rejected/277
-accepted), four known-invalid unchanged; L2+L3=29.8s against unchanged60s
-budget. The provided tool proves
+origin/main `fa862e40` PASS:one additive Layout schema,37 equal,480 documents
+(377 mapped),739 probes (462 rejected/277 accepted), four known-invalid
+unchanged; L2+L3=21.2s against unchanged60s budget. The provided tool proves
 and retires19 merged L1 entries; L2/L3 predecessor records remain intact.
 Authored examples diff is empty. Current PR/public-artifact and containing-review
 exact-main three-OS release remain required; no second active PR is opened.
