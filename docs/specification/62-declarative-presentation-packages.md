@@ -79,7 +79,7 @@ As of #429/#383, `library.yaml` carries entries across two unrelated catalogues
 — a "preset tuning" set produced by tuning corpus-project resources, and a
 "generated design directions" set produced against #425's externally
 generated references — distinguished only by the entry's `gallerySet`
-field, which is catalog-internal bookkeeping and is not the Design Space
+field (#1403: now present only where a set under `docs/gallery/sets/` shows the preset), which is catalog-internal bookkeeping and is not the Design Space
 discovery classification §2.1 describes for a future registry candidate.
 Under the #496 design, a v0.2 catalogue member is an exact wheel resource
 reference; copy includes its declared bytes and complete notice, and preset
