@@ -26,6 +26,15 @@ and exact-main three-OS release remain required. This is not permission to close
 
 ## Programme-level criteria (optional)
 
+PR1423 merged at `9ff63e74`; trusted READY `53ad70d9` contains this review.
+Exact-main release [38173848565](https://github.com/tya5/chrona/actions/runs/38173848565)
+is not accepted: macOS reports two corpus assertions using pre-1302 IDs.
+Test-only correction `501dddd7` maps declared IDs through Core identity,
+retains all horizontal-entry/self-overlap/24-route assertions, and preserves
+whole canonical IDs when parsing fallback reasons. The two corpus cases and
+their synthetic twins pass:22 tests/26.43s. No product, examples, or derived
+output changes. A containing-review three-OS release is still required.
+
 CI38170085140 has28 failures across its three shards; conformance, MCP and
 newest-Python reproduction pass. [Correction plan](https://github.com/tya5/chrona/pull/1423#issuecomment-6113256906)
 is implemented in `51b4e517`: canonical Core identity assertions, shared exact
