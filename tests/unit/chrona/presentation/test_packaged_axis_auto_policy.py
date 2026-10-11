@@ -19,14 +19,14 @@ EXPECTED_FORMS = {
 
 def _assert_axis_policy(document: dict, *, source: str) -> None:
     tiers = document["body"]["axis"]["tiers"]
-    assert tiers == [
-        {"unit": "year", "every": 1, "role": "band", "typographyRole": "axisQuarter"},
+    policy_tiers = [tier for tier in tiers if tier["role"] != "band"]
+    assert policy_tiers == [
         {"unit": "quarter", "every": 1, "role": "grid-major"},
         {
             "unit": "auto",
             "every": 1,
             "role": "labels",
-            "typographyRole": "axisQuarter",
+            "typographyRole": "axis" if document["id"] == "chrona-preset-technical-print" else "axisQuarter",
             "label": {
                 "forms": EXPECTED_FORMS,
                 "align": "center",
@@ -36,6 +36,24 @@ def _assert_axis_policy(document: dict, *, source: str) -> None:
         },
         {"unit": "month", "every": 1, "role": "grid-minor"},
     ], source
+    bands = [tier for tier in tiers if tier["role"] == "band"]
+    expected_bands = [
+        {"unit": "year", "every": 1, "role": "band", "typographyRole": "axisQuarter"},
+    ]
+    if document["id"] == "chrona-preset-technical-print":
+        expected_bands.append(
+            {"unit": "month", "every": 1, "role": "band", "typographyRole": "axisMonth"},
+        )
+    assert bands == expected_bands, source
+
+
+def test_technical_pattern_and_label_ink_retain_the_declared_band_paint():
+    path = ROOT / "src/chrona/resources/presets/bundles/technical-print/theme.yaml"
+    body = safe_load(path.read_bytes())["body"]
+    assert body["roles"]["axis-band-decoration2"]["pattern"] == "starter-halftone"
+    assert body["colorBindings"]["axis-band-decoration.fill"] == "text"
+    assert body["colorBindings"]["axis-band-decoration2.fill"] == "surfaceRaised"
+    assert body["colorBindings"]["axis-label2.fill"] == "surface"
 
 
 def _resolved_builtin_view(entry: dict) -> tuple[ViewContract, dict]:

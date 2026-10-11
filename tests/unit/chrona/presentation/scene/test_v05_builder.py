@@ -1302,9 +1302,8 @@ def test_layout_records_auto_candidate_and_completed_axis_label_measurements():
     assert all(item.label is not None and item.label_fits and item.disposition == "placed" for item in labels.intervals)
 
 
-def test_thin_with_record_drops_only_one_disproportionately_wide_label():
-    """#482: a single wide label (for example, a locale that widens one quarter's
-    text) must not thin any other, otherwise-fitting label in the tier."""
+def test_thin_with_record_records_unavailable_phase_after_an_unfit_first_label():
+    """An unfit first natural interval cannot seed a phase-zero cadence."""
 
     class _WideQ1Font:
         content_identity = "sha256:test"
@@ -1335,10 +1334,10 @@ def test_thin_with_record_drops_only_one_disproportionately_wide_label():
 
     (labels,) = composition.placement.axis_tier_outcomes
     assert [item.label for item in labels.intervals] == ["2026年Q1", "2026年Q2", "2026年Q3", "2026年Q4"]
-    # Only the one disproportionately wide label is thinned; every fitting
-    # label -- including the ones sharing its residue class -- is placed.
+    assert [item.label_fits for item in labels.intervals] == [False, True, True, True]
     assert [(item.disposition, item.reason) for item in labels.intervals] == [
-        ("thinned", "label-does-not-fit"), ("placed", None), ("placed", None), ("placed", None),
+        ("thinned", "label-does-not-fit"),
+        ("thinned", "phase-unavailable"), ("thinned", "phase-unavailable"), ("thinned", "phase-unavailable"),
     ]
 
 

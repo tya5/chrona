@@ -4,6 +4,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacleIndex
 from chrona.presentation.layout.surface_quality import MarkPlacement
 
@@ -43,9 +44,9 @@ def connector_boundary_ports(mark: MarkPlacement, endpoint: str,
                              toward: tuple[float, float]) -> tuple[tuple[str, tuple[float, float]], ...]:
     """Enumerate finite outline ports in deterministic distance/side order."""
     if endpoint == "start" and mark.mark_shape != "point":
-        return (("start", mark.start_port),)
+        return () if mark.start_port is None else (("start", mark.start_port),)
     if endpoint in {"finish", "end"} and mark.mark_shape != "point":
-        return (("end", mark.end_port),)
+        return () if mark.end_port is None else (("end", mark.end_port),)
     if endpoint not in {"at", "body", "start", "finish", "end"}:
         raise ValueError(f"E_PRESENTATION_ANCHOR_MISSING: connector endpoint={endpoint!r}; expected at, body, start, finish, or end")
     bounds = mark.bounds
@@ -63,7 +64,12 @@ def connector_boundary_ports(mark: MarkPlacement, endpoint: str,
 def connector_boundary_port(mark: MarkPlacement, endpoint: str,
                             toward: tuple[float, float]) -> tuple[float, float]:
     """Return the preferred boundary port for callers without route search."""
-    return connector_boundary_ports(mark, endpoint, toward)[0][1]
+    ports = connector_boundary_ports(mark, endpoint, toward)
+    if not ports:
+        raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", "/layout/connectorPort",
+                          node_id=mark.placement_id[:120],
+                          detail=f"endpoint={endpoint!r}; reason=temporal-endpoint-unavailable")
+    return ports[0][1]
 
 
 def connector_egress_candidates(mark: MarkPlacement, endpoint: str,
@@ -79,6 +85,10 @@ def connector_egress_candidates(mark: MarkPlacement, endpoint: str,
     """
     if endpoint not in {"start", "finish", "end", "at", "body"}:
         raise ValueError(f"E_PRESENTATION_ANCHOR_MISSING: connector endpoint={endpoint!r}; expected start, finish, end, at, or body")
+    if ((endpoint == "start" and mark.mark_shape != "point" and mark.start_port is None)
+            or (endpoint in {"finish", "end"} and mark.mark_shape != "point"
+                and mark.end_port is None)):
+        return ()
     connected = {mark.placement_id: mark}
     pending = [mark]
     while pending:

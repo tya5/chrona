@@ -51,9 +51,19 @@ def test_fitting_surface_has_no_canvas_warning(tmp_path):
 @pytest.mark.parametrize("block", [900, None])
 def test_negative_origin_warns_with_full_extent_and_keeps_auto_block_unconstrained(tmp_path, block):
     parts = sr.bundle()
-    parts["view"]["body"]["window"] = {"mode": "explicit", "start": "2026-01-10", "end": "2026-01-20"}
+    # A deliberate overlay anchor, not the out-of-window mark defect (#1292),
+    # proves the independent general canvas-growth warning (#1279).
+    title = parts["layout"]["root"]["children"][0]
+    title["anchor"] = {"self": {"inline": "end", "block": "start"},
+                       "target": {"inline": {"ref": "parent", "point": "start"},
+                                  "block": {"ref": "parent", "point": "start"}}}
+    title["place"]["safety"] = "strict"
+    parts["layout"]["root"]["children"][0] = {
+        "id": "title-overlay", "kind": "overlay", "inlineSize": "fill", "blockSize": "content",
+        "padding": {"token": "spacing.none"}, "children": [title]}
     rendered = sr.render(tmp_path, _source(), presentation=parts, viewport=(1600, block))
     assert rendered.surface.canvas_bounds[0] < 0
+    assert not any(item.payload["code"] == "W_LAYOUT_OUTSIDE_WINDOW" for item in rendered.warning_records)
     payload = _warning(rendered)
     assert payload["declared"] == {"inlineSize": 1600, "blockSize": block}
     assert any(item["overrun"]["inlineStart"] > 0 for item in payload["contributors"])

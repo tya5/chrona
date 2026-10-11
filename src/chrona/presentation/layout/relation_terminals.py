@@ -125,6 +125,128 @@ def terminal_length(marker: MarkerGeometry | None) -> float:
     return marker.painted_run if marker.painted_run is not None and not marker.centred else marker.head_length
 
 
+def project_marker_outline(marker: MarkerGeometry, *, side: str, points: tuple[tuple[float, float], ...],
+                           path_commands: tuple[PathCommand, ...], stroke_width: float | None
+                           ) -> tuple[PathCommand, ...]:
+    """Project a completed marker outline exactly as the SVG marker reference transform does.
+
+    This is a geometry projection only: it chooses neither a route nor a port. ``side`` names the already
+    completed path endpoint, whose point and tangent are supplied by Layout/Scene. SVG's reference point is
+    ``(head_length - attachment_offset, head_width / 2)``. ``userSpaceOnUse`` has unit scale; legacy
+    ``markerUnits=strokeWidth`` scales the viewBox by the completed host stroke width.
+    """
+    if side not in {"start", "end"}:
+        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: marker side must be a completed start or end endpoint")
+    anchors = _marker_anchor_tangents(side, points, path_commands)
+    if (not isfinite(marker.head_length) or not isfinite(marker.head_width)
+            or marker.head_length <= 0 or marker.head_width <= 0
+            or not isfinite(marker.attachment_offset)
+            or (not marker.physical_units
+                and not 0 <= marker.attachment_offset <= marker.head_length)):
+        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: marker projection requires finite completed dimensions, offset, and angle")
+    if (not marker.outline or any(not isfinite(value) for command in marker.outline
+                                  for point in command.points for value in point)):
+        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: marker projection requires a finite non-empty completed outline")
+    if marker.physical_units:
+        scale = 1.0
+    else:
+        if (isinstance(stroke_width, bool) or not isinstance(stroke_width, (int, float))
+                or not isfinite(stroke_width) or stroke_width <= 0):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: strokeWidth-unit marker requires a finite positive host stroke width")
+        scale = float(stroke_width)
+    ref_x, ref_y = marker.head_length - marker.attachment_offset, marker.head_width / 2
+    projected: list[PathCommand] = []
+    for anchor, tangent in anchors:
+        angle = marker.angle_degrees if marker.angle_degrees is not None else tangent
+        if not isfinite(angle):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: marker projection requires a finite completed angle")
+        for command in marker.outline:
+            transformed = tuple(_marker_point(point, anchor, angle, scale, ref_x, ref_y)
+                                for point in command.points)
+            if any(not isfinite(value) for point in transformed for value in point):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: marker projection produced a non-finite absolute coordinate")
+            projected.append(PathCommand(command.kind, transformed))
+    return tuple(projected)
+
+
+def _marker_anchor_tangents(side: str, points: tuple[tuple[float, float], ...],
+                            commands: tuple[PathCommand, ...]) -> tuple[tuple[tuple[float, float], float], ...]:
+    """Read SVG marker anchors and true endpoint tangents without changing the supplied path."""
+    if commands:
+        if any(command.kind not in {"move", "line", "quadratic"} for command in commands):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: marker projection requires completed move/line/quadratic path commands")
+        if any(not isfinite(value) for command in commands for point in command.points for value in point):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: marker projection path has non-finite coordinates")
+        if commands[0].kind != "move":
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: marker projection path must begin with a move command")
+        subpaths: list[list[PathCommand]] = []
+        for command in commands:
+            if command.kind == "move":
+                subpaths.append([command])
+            elif not subpaths:
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: marker projection path has drawing commands before its move")
+            else:
+                subpaths[-1].append(command)
+        results = []
+        # SVG marker-start/end belong to the entire path, not every subpath.
+        # https://www.w3.org/TR/SVG2/painting.html#VertexMarkerProperties
+        for subpath in (subpaths[0] if side == "start" else subpaths[-1],):
+            anchor = subpath[0].points[0] if side == "start" else subpath[-1].points[-1]
+            current = subpath[0].points[0]
+            directed: list[tuple[tuple[float, float], tuple[float, float], tuple[float, float], tuple[float, float]]] = []
+            for command in subpath[1:]:
+                end = command.points[-1]
+                start_tangent = command.points[0] if command.kind == "quadratic" else end
+                end_tangent = current if command.kind == "line" else command.points[0]
+                directed.append((current, start_tangent, end_tangent, end))
+                current = end
+            samples = directed if side == "start" else list(reversed(directed))
+            tangent = None
+            for start, start_tangent, end_tangent, end in samples:
+                if side == "start":
+                    dx, dy = start_tangent[0] - start[0], start_tangent[1] - start[1]
+                    if dx == 0 and dy == 0:
+                        dx, dy = end[0] - start[0], end[1] - start[1]
+                else:
+                    dx, dy = end[0] - end_tangent[0], end[1] - end_tangent[1]
+                    if dx == 0 and dy == 0:
+                        dx, dy = end[0] - start[0], end[1] - start[1]
+                if dx or dy:
+                    tangent = degrees(atan2(dy, dx))
+                    break
+            if tangent is None:
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: marker projection path has no nonzero endpoint tangent")
+            results.append((anchor, tangent))
+        return tuple(results)
+    else:
+        if len(points) < 2:
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: marker projection requires a completed path endpoint and tangent")
+        if any(not isfinite(value) for point in points for value in point):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: marker projection path has non-finite coordinates")
+        anchor = points[0] if side == "start" else points[-1]
+        candidates = list(zip(points, points[1:]))
+        if side == "end":
+            candidates.reverse()
+    for start, end in candidates:
+        dx, dy = end[0] - start[0], end[1] - start[1]
+        if dx or dy:
+            return ((anchor, degrees(atan2(dy, dx))),)
+    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: marker projection requires a nonzero endpoint tangent")
+
+
+def _marker_point(point: tuple[float, float], anchor: tuple[float, float], angle: float,
+                  scale: float, ref_x: float, ref_y: float) -> tuple[float, float]:
+    radians = angle % 360
+    if radians in {0, 90, 180, 270}:
+        cosine, sine = ((1, 0), (0, 1), (-1, 0), (0, -1))[int(radians / 90)]
+    else:
+        radians *= pi / 180
+        cosine, sine = cos(radians), sin(radians)
+    x, y = (point[0] - ref_x) * scale, (point[1] - ref_y) * scale
+    return (anchor[0] + x * cosine - y * sine,
+            anchor[1] + x * sine + y * cosine)
+
+
 def orient_terminal(marker: MarkerGeometry | None, points: tuple[tuple[float, float], ...],
                     side: str, *, source: bool) -> MarkerGeometry | None:
     """Complete a short-tangent marker's axis in Layout, leaving honest tangents unchanged."""

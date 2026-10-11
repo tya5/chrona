@@ -39,6 +39,7 @@ from chrona.presentation.scene.paint import (
     is_ink_only_surface_pattern, resolve_cone_paint, resolve_scene_paint, resolve_surface_pattern_admission,
 )
 from chrona.presentation.scene.surface_overlays import project_canvas_overlays
+from chrona.presentation.scene.window_absences import project_lane_window_absences
 from chrona.presentation.scene.stroke_wobble import (
     MAX_OUTLINE_POINTS, WobbleLimitError, complete_path_wobble, complete_rect_wobble,
 )
@@ -156,6 +157,16 @@ def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose
                                                else None),
                            glyph_line_cap=part.line_cap, glyph_line_join=part.line_join, **shared)
             for index, part in enumerate(completed_parts)]
+
+
+def _completed_host_primitive(scene_id: str, source_ref: str, source_kind: str,
+                              purpose: str, visual_role: str, bounds: tuple[float, float, float, float],
+                              placement: Any, **shared: Any) -> ScenePrimitive:
+    """Project Layout's native rectangle or completed cut outline without inference."""
+    return ScenePrimitive(scene_id, PrimitiveKind.SYMBOL if placement.path_commands else PrimitiveKind.RECT,
+                          source_ref, source_kind, purpose, visual_role, bounds,
+                          symbol=SymbolGeometry(placement.path_commands) if placement.path_commands else None,
+                          paint_clip=placement.paint_clip, **shared)
 
 
 def _attach_completed_patterns(primitives: tuple[ScenePrimitive, ...],
@@ -729,8 +740,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                                     paint_order=planned_mark.paint_order, end_treatment=planned_mark.end_treatment))
                 record_project_primitives(planned_ids or (planned_id,), item)
             else:
-                primitives.append(ScenePrimitive(planned_id, PrimitiveKind.RECT, item.object_id, "object", planned_binding.purpose, planned_role,
-                                                 bounds,
+                primitives.append(_completed_host_primitive(planned_id, item.object_id, "object", planned_binding.purpose, planned_role,
+                                                 bounds, planned_mark,
                                                  corner_radius=planned_mark.corner_radius,
                                                  href=href, link_title=link_title, slot_id=planned_mark.slot_id,
                                                  paint_order=planned_mark.paint_order, end_treatment=planned_mark.end_treatment))
@@ -749,11 +760,12 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                                         bounds, actual_mark.symbol_parts,
                                                         primitive_ids=actual_ids,
                                                         corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
+                                                        paint_clip=actual_mark.paint_clip,
                                                         paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
                     record_project_primitives(actual_ids or (actual_id,), item)
                 else:
-                    primitives.append(ScenePrimitive(actual_id, PrimitiveKind.RECT, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
-                                                     bounds, corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
+                    primitives.append(_completed_host_primitive(actual_id, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
+                                                     bounds, actual_mark, corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
                                                      paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
                     record_project_primitives((actual_id,), item)
             else:
@@ -771,8 +783,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             bounds = (float(missing_mark.bounds.inline), float(missing_mark.bounds.block),
                       float(missing_mark.bounds.inline_size), float(missing_mark.bounds.block_size))
             missing_binding = semantic_binding("missingActual")
-            primitives.append(ScenePrimitive(missing_id, PrimitiveKind.RECT, item.object_id, "object", missing_binding.purpose, missing_binding.scene_role,
-                                             bounds, corner_radius=missing_mark.corner_radius, slot_id=missing_mark.slot_id,
+            primitives.append(_completed_host_primitive(missing_id, item.object_id, "object", missing_binding.purpose, missing_binding.scene_role,
+                                             bounds, missing_mark, corner_radius=missing_mark.corner_radius, slot_id=missing_mark.slot_id,
                                              paint_order=missing_mark.paint_order, end_treatment=missing_mark.end_treatment))
             record_project_primitives((missing_id,), item)
         label_id = f"member-label:{instance_id}"
@@ -905,7 +917,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         else:
             source = relation.relation_id.removeprefix("relation:").split(":", 1)[0]
         dependency = semantic_binding(relation.semantic_id)
-        bounds = (0, 0, 0, 0)
+        bounds = relation.paint_clip.bounds if relation.paint_clip is not None else (0, 0, 0, 0)
         if relation.relation_id.startswith("legend-swatch:") and relation.points:
             # A legend key's bounds enclose its points (and the half stroke), so bounds-based checks see it (#499).
             xs, ys = [point[0] for point in relation.points], [point[1] for point in relation.points]
@@ -917,6 +929,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, "relation", dependency.purpose, dependency.scene_role,
                                          bounds, marker_start=relation.marker_start, marker_end=relation.marker_end,
                                          points=relation.points, path_commands=relation.path_commands,
+                                         paint_clip=relation.paint_clip,
                                          paint_order=relation.paint_order, slot_id=relation.slot_id,
                                          from_instance_id=relation.from_instance_id,
                                          to_instance_id=relation.to_instance_id,
@@ -932,8 +945,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                              slot_id=placed.slot_id, corner_radius=placed.corner_radius or None))
         elif placed.placement_id.startswith("progress-fill:"):
             progress = semantic_binding("progressFill")
-            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "object",
-                                             progress.purpose, progress.scene_role, bounds, slot_id=placed.slot_id,
+            primitives.append(_completed_host_primitive(placed.placement_id, placed.source_ref, "object",
+                                             progress.purpose, progress.scene_role, bounds, placed, slot_id=placed.slot_id,
                                              paint_order=placed.paint_order, clip_source_id=placed.clip_host_id,
                                              corner_radius=placed.corner_radius or None))
             if placed.subjects:
@@ -967,8 +980,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                     primitive_provenance.append(PrimitiveProvenance(placed.placement_id, placed.subjects))
         elif placed.placement_id.startswith("summary-bar:"):
             summary_bar = semantic_binding("summaryBar")
-            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "summary",
-                                             summary_bar.purpose, summary_bar.scene_role, bounds,
+            primitives.append(_completed_host_primitive(placed.placement_id, placed.source_ref, "summary",
+                                             summary_bar.purpose, summary_bar.scene_role, bounds, placed,
                                              paint_order=placed.paint_order))
         elif placed.semantic_id == "annotationArtwork":
             artwork = semantic_binding("annotationArtwork")
@@ -1081,8 +1094,10 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         source = relation.source_ref
         leader = semantic_binding(relation.semantic_id)
         purpose, role, layer = leader.purpose, leader.scene_role, "annotation"
-        primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, layer, purpose, role, (0, 0, 0, 0),
+        bounds = relation.paint_clip.bounds if relation.paint_clip is not None else (0, 0, 0, 0)
+        primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, layer, purpose, role, bounds,
                                          points=relation.points, path_commands=relation.path_commands,
+                                         paint_clip=relation.paint_clip,
                                          marker_end=relation.marker_end,
                                          paint_order=relation.paint_order))
         record_annotation_primitives((relation.relation_id,), relation.source_ref)
@@ -1156,7 +1171,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         missing = next((item.scene_id for item in completed_primitives
                         if requires_lane_member_provenance(item.kind, item.purpose)
                         and item.scene_id not in owner_by_primitive), None)
-        if not owner_by_primitive or unexpected is not None or missing is not None:
+        if ((not owner_by_primitive and not placed_surface.lane_window_absences)
+                or unexpected is not None or missing is not None):
             mismatch = unexpected or missing or "lane-emission-inventory"
             raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", mismatch,
                                   f"Scene lane emission differs from typed Layout handoff: {mismatch}")
@@ -1170,6 +1186,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         for primitive_id, owner in owner_by_primitive.items():
             emitted_by_member.setdefault(owner, []).append(primitive_id)
         primary_purposes = {"planned", "snapshot"}
+        absences_by_member = project_lane_window_absences(placed_surface.lane_window_absences)
         member_values = []
         for row in projection.lane_rows:
             for member_id in dict.fromkeys(row.member_item_ids):
@@ -1177,7 +1194,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 primary_ids = tuple(identifier for identifier in identifiers
                                      if primitive_by_id[identifier].purpose in primary_purposes)
                 try:
-                    member_values.append(SceneLaneMember(row.lane_id, member_id, identifiers, primary_ids))
+                    member_values.append(SceneLaneMember(row.lane_id, member_id, identifiers, primary_ids,
+                                                         tuple(absences_by_member.get((row.lane_id, member_id), ()))))
                 except ValueError as error:
                     raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", member_id,
                                           f"invalid lane member inventory row={row.lane_id}; "

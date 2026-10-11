@@ -49,12 +49,10 @@ def test_member_name_request_error_names_invalid_terminal_options():
     assert "sides=('end',)" in str(caught.value)
 
 
-def test_axis_thinning_error_names_tier_fit_results():
-    with pytest.raises(ValueError) as overflow:
-        thinning_schedule((False, False, False))
-    assert str(overflow.value).startswith("E_PRESENTATION_AXIS_OVERFLOW:")
-    assert "candidate_count=3" in str(overflow.value)
-    assert "fit_results=(False, False, False)" in str(overflow.value)
+def test_axis_thinning_preserves_every_omitted_position_when_no_phase_fits():
+    result = thinning_schedule((False, False, False))
+    assert result.retained_positions == ()
+    assert result.thinned_positions == (0, 1, 2)
 
 def test_axis_format_error_names_level_and_requested_form():
     from chrona.presentation.axis_intervals import axis_intervals
