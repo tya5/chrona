@@ -19,6 +19,7 @@ from chrona.operational.store_config import load_store_config
 from chrona.operational.store_reads import load_reference, snapshot_reader_for
 from chrona.presentation.model.closure import ClosureError
 from chrona.resources import safe_load
+from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.usecases.context_review import render_context_closure, resolve_context_closure
 from chrona.usecases.local_authoring import initialize_project
 from chrona.usecases.materialize import materialize
@@ -135,19 +136,26 @@ def _workspace(tmp_path: Path) -> tuple[Path, dict]:
     return project, designs
 
 
+def _context_token(project: Path) -> str:
+    return str(_load(project / CONTEXT)["body"]["project"]["revision"]["token"])
+
+
+def _staged_context(project: Path) -> Path:
+    return snapshot_directory(project / ".chrona" / "store", _context_token(project)) / CONTEXT
+
+
 def _reference(project: Path) -> dict:
     document = _load(project / CONTEXT)
     path = project / "context-reference.yaml"
     _dump(path, {"id": document["id"], "kind": "render-context", "store": {"provider": "local", "identity": "halcyon-1-example"},
-                 "address": CONTEXT, "revision": {"token": "example-v4"}})
+                 "address": CONTEXT, "revision": {"token": _context_token(project)}})
     return load_reference(path)
 
 
 def test_render_review_reads_the_shared_store_the_config_declares(tmp_path: Path) -> None:
     project, designs = _workspace(tmp_path)
-    store_root = project / ".chrona" / "store"
     # the Context itself lives in the example Store: stage the edited copy there beside the original closure
-    staged = store_root / "revision-example-v4" / CONTEXT
+    staged = _staged_context(project)
     shutil.copy2(project / CONTEXT, staged)
     reference = _reference(project)
     config = load_store_config(str(project / ".chrona" / "store.yaml"))
@@ -166,7 +174,7 @@ def test_render_review_reads_the_shared_store_the_config_declares(tmp_path: Path
 
 def test_a_store_the_config_does_not_declare_is_a_typed_failure(tmp_path: Path) -> None:
     project, _ = _workspace(tmp_path)
-    shutil.copy2(project / CONTEXT, project / ".chrona" / "store" / "revision-example-v4" / CONTEXT)
+    shutil.copy2(project / CONTEXT, _staged_context(project))
     config = _load(project / ".chrona" / "store.yaml")
     config["stores"] = config["stores"][:1]
     _dump(project / ".chrona" / "store.yaml", config)
@@ -193,7 +201,7 @@ def _derive(project: Path, designs: Path, *, base: dict, overrides: dict) -> dic
     context["body"]["layout"] = {"id": "briefing-roomy", "kind": "layout-profile", "store": {"provider": "local", "identity": DESIGN},
                                  "address": "layouts/briefing-roomy.yaml", "revision": {"token": "example-v1"}}
     _dump(project / CONTEXT, context)
-    shutil.copy2(project / CONTEXT, project / ".chrona" / "store" / "revision-example-v4" / CONTEXT)
+    shutil.copy2(project / CONTEXT, _staged_context(project))
     return derived
 
 
