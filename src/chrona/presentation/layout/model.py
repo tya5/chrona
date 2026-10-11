@@ -92,6 +92,7 @@ class SlotHeading:
     text: str
     align: str = "start"
     block: str = "top"
+    gap: Decimal | None = None  # a `start-column` caption's declared gap to the entries (#1392); None keeps half the font size
 
 
 @dataclass(frozen=True)
@@ -110,6 +111,7 @@ class LayoutDecision:
     frame: RegionFrame | None = None
     heading: SlotHeading | None = None
     columns: int | None = None
+    column_distribution: str = "start"
 
 
 @dataclass(frozen=True)

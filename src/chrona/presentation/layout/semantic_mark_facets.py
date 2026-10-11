@@ -47,6 +47,13 @@ class ItemMarkFacetSelection:
     absences: tuple[MarkFacetAbsence, ...]
 
 
+def due_end_missing_actual_selected(item: Any, *, emit_missing_actual: bool) -> bool:
+    """One View-selected due-end rule for source facets and lane inventory."""
+    return (emit_missing_actual
+            and item.observation_state == ObservationState.DUE_UNOBSERVED
+            and getattr(item, "missing_actual_mark", "due-end") == "due-end")
+
+
 def select_item_mark_facets(*, item: Any, source_kind: str,
                             as_of: date | None,
                             emit_missing_actual: bool = True,
@@ -104,8 +111,7 @@ def select_item_mark_facets(*, item: Any, source_kind: str,
             if emit_diagnostics:
                 diagnostics.append(f"W_LAYOUT_ACTUAL_INCOMPLETE:{item.object_id}")
             absences.append(MarkFacetAbsence("actual", "incomplete-observation"))
-        elif (emit_missing_actual and item.observation_state == ObservationState.DUE_UNOBSERVED
-              and getattr(item, "missing_actual_mark", "due-end") == "due-end"):
+        elif due_end_missing_actual_selected(item, emit_missing_actual=emit_missing_actual):
             anchor = planned.get("end", planned.get("at"))
             if isinstance(anchor, date):
                 facets.append(LogicalMarkFacet("missing-actual", "missing-actual", "span",

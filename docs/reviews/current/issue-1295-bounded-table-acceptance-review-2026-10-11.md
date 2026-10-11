@@ -19,32 +19,26 @@
 
 ## Programme-level criteria (optional)
 
-Latest preparation combines #1292 window closure, #1293 endpoint display and
-final #1294 repair `ac14998c`: explicit-window, packaged/bounded table, default
-date/axis and typed table measurement/placement tests pass:99 (50.64s).
-Fresh schema-equivalence against READY `95b2fddc` passes: Layout/Scene/View
-delta=3, equal=35,482 documents/739 probes, four known-invalid fixtures
-unchanged; L2+L3=50.5s. Ordinary main adoption `6d1b8ec0` adds only reviewer
-#1400's Sunday inset declaration. Final upstream merges/READY adoption and
-public/current-head/full-release gates remain pending; no acceptance shortcut.
+Current preparation adopts READY main `477e571d` (merged PR1410 and its
+verified generated snapshot) by ordinary merge. The adjacent schema additions
+retain both table-only `maxInlineShare` and legend `columnDistribution`;
+no policy collision, checker exemption or authored examples change.
+Current-head table/render/packaged/measurement/placement/heading/share batch:
+159 passed (28.47s). Prior adjacent default/window/axis/legend integration:
+120 passed (54.77s); UTF-8 default-date checks15 passed (2.82s).
 
-Release pending: final trusted READY integration, public artifact/identity migration disposition, current schema gate and PR checks, then review-containing exact-main three-OS release. No closure is authorized by these local rows.
+Current full schema comparison against `9ea350d5`: Layout/Scene/View delta=3,
+equal=35,482 documents (378 mapped),739 probes, four known-invalid fixtures
+unchanged. The sole failure is L2+L3=85.6s against the unchanged60s budget;
+semantic agreement is not a green gate. CI must pass the strict gate, with
+no local timing waiver or baseline refresh.
 
-Packaged/default, all-nine live-View and bounded-render batch: 23 passed (20.95s).
-Schema-equivalence passed against `e19005d0`: nine Layout and one reference-View
-version-migration deltas, live View additions, four known-invalid fixtures
-unchanged (L2+L3=38.7s). Pre-integration public audit: all46 materializers pass,
-Scene/SVG bytes unchanged. Ordinary integration of the published #1293/#1294
-WIPs preserves both policies; 45 date-range/bounded-preset tests passed (18.13s)
-and three precise corpus-mirror guards passed (4.29s). Typed parsing retains
-both endpoint and wrapping fields by keyword. Integrated schema-equivalence
-passes against `e19005d0` after declaring the three exact optional wrap
-additions alongside the endpoint conditional: Layout/View delta=2, equal=36,
-482 documents/739 probes, four known-invalid fixtures unchanged;
-L2+L3=34.6s. The gate's combined conditional classification is not a new
-runtime rule. Final READY/artifact and release gates remain pending.
-A baseline gate label that already overflowed
-is not fitting-copy evidence: opt-in ellipsis changes it intentionally.
+Public current-head artifact and intentional resource-identity/output changes
+still require batch review. Older46-materializer success is not proof of this
+head. A baseline gate label that already overflowed is not fitting-copy
+evidence: opt-in ellipsis changes it intentionally. Release remains pending:
+current-head PR checks and review-containing exact-main
+three-OS release. These local rows do not authorize closure.
 
 ## Architecture conclusion
 
