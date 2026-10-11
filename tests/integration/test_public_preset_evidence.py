@@ -100,7 +100,7 @@ def test_legend_swatch_marks_are_never_checked_against_the_timeline_bottom(tmp_p
 def test_editorial_library_entry_matches_the_bundle_resources():
     library = yaml.safe_load((ROOT / "src/chrona/resources/presets/library.yaml").read_bytes())
     entry = next(item for item in library["entries"] if item["id"] == "editorial")
-    assert entry["gallerySet"] == "generated-design-directions"
+    assert "gallerySet" not in entry  # no gallery set shows Editorial (#1403)
     bundle = ROOT / "src/chrona/resources/presets/bundles/editorial"
     for name, member in entry["members"].items():
         assert member["sourceRoot"] == "presets/bundles/editorial"
@@ -156,7 +156,7 @@ def test_readable_default_resources_are_mirrored_and_selected_without_mutating_e
     ]
     library = yaml.safe_load((ROOT / "src/chrona/resources/presets/library.yaml").read_bytes())
     editorial = next(item for item in library["entries"] if item["id"] == "editorial")
-    assert editorial["gallerySet"] == "generated-design-directions"
+    assert "gallerySet" not in editorial  # no gallery set shows Editorial (#1403)
     assert editorial["members"]["view"]["sourceRoot"] == "presets/bundles/editorial"
     assert editorial["members"]["view"]["id"] == "chrona-preset-editorial-lanes"
     assert editorial["members"]["view"]["sourcePath"] == "view-lanes.yaml"
