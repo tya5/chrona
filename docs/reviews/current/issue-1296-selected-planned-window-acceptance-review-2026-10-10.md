@@ -28,29 +28,26 @@ None. Local criteria do not substitute for the required release gate.
 
 ## Verification and release
 
-Combined predecessor integration `73552416` includes #1292/#1293/#1295,
-final #1294 repair `ac14998c` and main `b65df355`. Its new early visibility
-entry exposed a missing diagnostic detail; the failing public test was retained.
-One Layout projection-window validator now runs before early/direct/candidate
-geometry. It keeps the existing code/path and dates/selected IDs/cause;
-normal model padding and completed geometry remain unchanged.
+Publication: [M1 integration PR1416](https://github.com/tya5/chrona/pull/1416).
+[Published correction design/review/plan](https://github.com/tya5/chrona/issues/1296#issuecomment-6108018243)
+precedes product correction `8062c71e`. Layout now closes every mark's emitted
+host ID; lane IDs and strict source/slot/order validation remain authoritative.
+Scene projects the same IDs, geometry and paint, without repairing associations.
 
-Focused combined suite:90 passed (62.41s): actual library-default Scene/SVG,
-public fault-injection diagnostic, model windows, explicit clipping, inclusive
-date display, bounded tables and default-axis windows. Nine parameterized
-early/direct/candidate cases cover equal, reversed and invalid bounds and
-prove no visibility geometry is built before rejection. Structural checks:
-11 packages/37 inward edges;228 modules reachable, none orphaned.
+Focused Python3.13 evidence:175 passed104.67s (host/point glyphs, placements,
+actual Scene/SVG defaults);38 passed19.06s (stroke/hosted indices, compile,
+project-finish);67 passed6.35s (M1 acceptance and structure). On READY7563df4c,
+the full affected CLI/gallery and schedule-unit batch passed126 tests350.33s.
+Synthetic crowding/mutation/paint fixtures declare explicit windows or rails;
+their safety assertions remain. Exact default warning and ledger deltas are
+asserted, not broadly waived.
 
-CLI characterization migration: three render stdout records only; argv, exit,
-stderr and file metadata unchanged. Each gains truthful axis thinning/density
-warnings. HALCYON keeps six suppressed labels: `structure` replaces
-`launch-contract`; other five unchanged. No example edits or warning masking.
-Python3.11 targeted CLI suite:4 passed (55.23s), including unknown-command.
-Python3.13 unknown-command wording also fails on the pre-padding predecessor;
-it is not a critical-path regression and is not re-recorded here.
-
-No active PR or full-release claim. Predecessor merges and final trusted READY
-adoption remain required. Before
-closure, inspect the fresh corpus count table/Scene/SVG, current-head PR gates
-and review-containing exact-main three-OS release. No authored examples edits.
+Corrected-head snapshot11700046472 atd98ca1be:101 paths, none added/removed;41 of46
+Scene/SVG pairs identical. The five changed pairs contain no new diagnostics:
+plan-only1/47/0 primitives added/changed/removed; dependency-network0/3/0;
+Editorial8/127/0; Editorial-lanes8/153/0; Title Card0/34/0. Actual SVG XML
+and Scene were both inspected; all46 Scene/SVG pairs match the preceding26337656
+snapshot. Synthetic frozen-byte cases remain asserted without normalization.
+Current-head CI38132741366 passed all product/reproduction checks; derived-ready
+failed only because main advanced. Final post1413 READY integration, its fresh
+snapshot/checks and exact-main three-OS release remain required before closure.

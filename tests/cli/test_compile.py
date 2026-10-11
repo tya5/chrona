@@ -56,7 +56,11 @@ def test_the_output_validates_and_schedules_through_the_existing_commands(tmp_pa
     assert _run("compile", str(FIXTURES / "halcyon-1-core.chrona"), "-o", str(destination)).returncode == 0
     assert _run("validate", str(destination)).stdout.strip() == b'{"status": "ok", "diagnostics": []}'
     scheduled = json.loads(_run("schedule", str(destination)).stdout)
-    assert len(scheduled["placements"]) == 29 and scheduled["analysis"]["criticalObjectIds"]
+    assert len(scheduled["placements"]) == 29
+    # This plan has no zero-float driving path to the global project finish.
+    assert scheduled["analysis"]["criticalObjectIds"] == []
+    assert all(value["unit"] == ("working-days" if value["calendar"] is not None else "calendar-days")
+               for value in scheduled["analysis"]["totalFloat"].values())
 
 
 def test_compile_output_refuses_an_existing_file(tmp_path):

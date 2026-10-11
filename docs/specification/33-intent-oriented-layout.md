@@ -279,7 +279,11 @@ Heading and table sources with View `wrap: allow` use the same independent
 parent/cell budget closure with a full-share ceiling unless the table declares
 `maxInlineShare`. This does not admit that property on heading slots.
 The normalized source intent selects the wrapping slots;
-the engine does not inspect View YAML or Project copy. Neutralize all selected
+the engine does not inspect View YAML or Project copy. A fitting heading retains
+its natural intrinsic demand, including inside a content-sized host. Select
+heading closure only on inline shortage in its natural allocation, using native
+measurement and ancestor inner extents; unrelated sibling or block overflow
+does not activate it. Neutralize all selected
 width-dependent source demands together while probing, then remeasure each at
 its allocated width before block allocation. A circular budget, an authored
 minimum above the ceiling, or mandatory text that cannot fit is

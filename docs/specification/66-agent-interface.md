@@ -66,7 +66,7 @@ not understate a write, whatever it overwrites); `idempotentHint: true` and `ope
   otherwise is `E_MCP_PATH_SYNTAX`); `viewport` defaults to `1600xauto`, `locale` to `en-US`, `format` (`svg` or `png`, the artifact
   that `contentIdentity` and `byteLength` describe) to `svg`, `inline` to `image`. Result: `format`, `contentIdentity`
   (`sha256:` of the artifact bytes), `byteLength`, `pngAvailable`, `warnings`.
-- `list_presets {}`: result `presets` (`id`, `gallerySet`, in the order of `chrona preset list`) and `default`
+- `list_presets {}`: result `presets` (`id`, and `gallerySet` when a gallery set shows the preset, in the order of `chrona preset list`) and `default`
   (`chrona-default-draft`).
 
 ### 2.1 The Store command tools

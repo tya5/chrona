@@ -93,3 +93,8 @@ slides:
     context: contexts/25-sunday.yaml
     expectedSvg: generated/25-sunday.svg
     expectedScene: generated/25-sunday.scene.json
+  - id: gates
+    evidence: "Extension-typed PDR/CDR/PSR review gates with a package-defined approval enum and model field on the bus and payload chain, a colour scale by model (EM/QM/FM), and a fast-tracked negative lag in a compared scenario (folded from the retired orion-asic example)."
+    context: contexts/26-gates.yaml
+    expectedSvg: generated/26-gates.svg
+    expectedScene: generated/26-gates.scene.json

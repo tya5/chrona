@@ -118,7 +118,8 @@ def test_asof_burst_is_completed_symbol_text_fits_and_svg_uses_same_closed_path(
     svg_points = _svg_path_points(path)
     vertices = tuple((x, y) for command, x, y in svg_points[:-1])
     assert len(vertices) == 2 * points
-    assert commands[-1].kind == "line" and commands[-1].points[0] == vertices[0]
+    assert commands[-1].kind == "line" and commands[-1].points[0] == commands[0].points[0]
+    assert svg_points[-1] == ("L", *vertices[0])
     cx = sum(x for x, _ in vertices) / len(vertices)
     cy = sum(y for _, y in vertices) / len(vertices)
     radii = tuple(((x - cx) ** 2 + (y - cy) ** 2) ** .5 for x, y in vertices)
@@ -217,15 +218,16 @@ def test_default_burst_fit_keeps_circle_outline_and_svg_bytes(tmp_path):
     assert implicit.artifact.content == explicit.artifact.content
 
 
-def test_absent_shape_preserves_frozen_pre_feature_scene_and_svg_bytes(tmp_path):
-    # Independent unchanged-input rendering of public parent 127392c4, recorded
-    # in the #1286 acceptance review. No provenance/geometry normalization.
+def test_absent_shape_preserves_characterized_scene_and_svg_bytes(tmp_path):
+    # #1296 intentionally pads selected-planned windows. Removing only that
+    # rule independently reproduces the preceding Scene/SVG hashes exactly.
+    # Keep actual current bytes frozen, without provenance/geometry normalization.
     rendered = _render_asof(tmp_path)
     scene = serialize_scene(rendered.scene)
-    assert len(scene) == 22949
-    assert sha256(scene).hexdigest() == "4898941430be3208a167abae1dd19f5910dd9c34699e2b157e4d150570ebb0b2"  # the Scene provenance pins the Theme bytes: only this hash moved with the preset Theme (#946); the SVG hash below did not
-    assert len(rendered.artifact.content) == 6992
-    assert sha256(rendered.artifact.content).hexdigest() == "74bf8d570ca05067f0000a3002520bb237113b11ac682e21ae367ec0e82c3e0b"
+    assert len(scene) == 26405
+    assert sha256(scene).hexdigest() == "0afd521d979f285cbc06a090223bf4038b266139f6a9a4e01625241cecf46ac3"
+    assert len(rendered.artifact.content) == 8173
+    assert sha256(rendered.artifact.content).hexdigest() == "3f700aae2dd6cc1e5d42370babe2805a2231ec2c8a643eb07dc1317cc4cc7437"
 
 
 def test_absent_shape_and_explicit_rectangle_are_scene_and_svg_byte_identical(tmp_path):

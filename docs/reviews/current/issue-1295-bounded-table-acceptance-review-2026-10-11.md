@@ -19,32 +19,63 @@
 
 ## Programme-level criteria (optional)
 
-Latest preparation combines #1292 window closure, #1293 endpoint display and
-final #1294 repair `ac14998c`: explicit-window, packaged/bounded table, default
-date/axis and typed table measurement/placement tests pass:99 (50.64s).
-Fresh schema-equivalence against READY `95b2fddc` passes: Layout/Scene/View
-delta=3, equal=35,482 documents/739 probes, four known-invalid fixtures
-unchanged; L2+L3=50.5s. Ordinary main adoption `6d1b8ec0` adds only reviewer
-#1400's Sunday inset declaration. Final upstream merges/READY adoption and
-public/current-head/full-release gates remain pending; no acceptance shortcut.
+Current preparation adopts READY main `477e571d` (merged PR1410 and its
+verified generated snapshot) by ordinary merge. The adjacent schema additions
+retain both table-only `maxInlineShare` and legend `columnDistribution`;
+no policy collision, checker exemption or authored examples change.
+Current-head table/render/packaged/measurement/placement/heading/share batch:
+159 passed (28.47s). Prior adjacent default/window/axis/legend integration:
+120 passed (54.77s); UTF-8 default-date checks15 passed (2.82s).
 
-Release pending: final trusted READY integration, public artifact/identity migration disposition, current schema gate and PR checks, then review-containing exact-main three-OS release. No closure is authorized by these local rows.
+Current full schema comparison against `9ea350d5`: Layout/Scene/View delta=3,
+equal=35,482 documents (378 mapped),739 probes, four known-invalid fixtures
+unchanged. The sole failure is L2+L3=85.6s against the unchanged60s budget;
+semantic agreement is not a green gate. CI must pass the strict gate, with
+no local timing waiver or baseline refresh.
 
-Packaged/default, all-nine live-View and bounded-render batch: 23 passed (20.95s).
-Schema-equivalence passed against `e19005d0`: nine Layout and one reference-View
-version-migration deltas, live View additions, four known-invalid fixtures
-unchanged (L2+L3=38.7s). Pre-integration public audit: all46 materializers pass,
-Scene/SVG bytes unchanged. Ordinary integration of the published #1293/#1294
-WIPs preserves both policies; 45 date-range/bounded-preset tests passed (18.13s)
-and three precise corpus-mirror guards passed (4.29s). Typed parsing retains
-both endpoint and wrapping fields by keyword. Integrated schema-equivalence
-passes against `e19005d0` after declaring the three exact optional wrap
-additions alongside the endpoint conditional: Layout/View delta=2, equal=36,
-482 documents/739 probes, four known-invalid fixtures unchanged;
-L2+L3=34.6s. The gate's combined conditional classification is not a new
-runtime rule. Final READY/artifact and release gates remain pending.
-A baseline gate label that already overflowed
-is not fitting-copy evidence: opt-in ellipsis changes it intentionally.
+Public head `49cfb0ef`, run38124948692 artifact11696806849, verified ZIP
+SHA256 `54ee9326181efa4187ef92938402a32319a226c2e19f82b973b3a9ed61087050`:
+101 paths, no additions/removals, all46 Scene/SVG pairs byte-identical;
+only diagnostic inventory and coverage reports change. Strict CI schema gate
+passes (20.58s). Conformance fails on eight unclassified exact-Decimal
+sums. The reviewed function+explicit-Decimal-seed classification locally passes
+with97 focused tests (4.87s), including rejection of unseeded/float-seeded sums;
+that classification changes no product code or golden output.
+All three PR shards are terminal: 37 failing tests, including the checker.
+Additional families are derived-axis/header dependency loss (3), nested
+content-sized heading budgets (26), cramped CLI/agent rendering (3), frozen
+Scene identity checks (3), affix allocation (1), and the precision checker (1).
+Original failures are dispositioned below, not waived by a baseline refresh.
+Candidate-local heading measurement now
+reuses closed render metrics instead of deriving them from a one-source
+subset: derived-size/source-sizing/source-measurement batch33 passed (12.22s),
+including an immutable metric-reuse regression. Correction source commit:
+`701c6bec` (prepared from the identical local tree). Corrected-head CI and
+snapshot remain required.
+Frozen Scene identities are independently dispositioned: render the same three
+synthetic scenarios using exact View/Layout resources from READY477e571d.
+Old Scene hashes48989414/445031fb/f26aa795 are reproduced; current hashes
+52e5f188/5e027fbe/d5752026 differ only in provenance. All three complete Scenes
+are otherwise identical and actual SVG bytes are identical. Only those three
+Scene expectations change; unchanged SVG hashes and semantic assertions remain.
+The three exact characterization tests pass (4.25s).
+Fitting intrinsic headings retain natural demands; closure selection uses
+native Decimal source/ancestor extents, never float reporting warnings or an
+unrelated sibling's overflow. Seven new nested-host/independent-long-heading/
+unrelated-sibling cases accompany heading/region-frame batch104 PASS33.12s and
+bounded/source/packaged batch65 PASS21.58s. Strict circular table gates remain.
+Affix allocation follows published Spec24:80px retains `…!!`;20/40/60px
+reject impossible mandatory columns. All18 affix tests pass (12.42s).
+Warning-envelope tests use an explicitly uncapped local preset; a separate
+300px default test proves typed E_LAYOUT_TABLE_OVERFLOW and no output file.
+No production tiny-viewport exception. The complete failed-family regression
+batch now passes329 tests (144.23s), including all previously failing test
+files, new negative cases and the precision checker. Float checker separately
+passes. Exact-head CI must still prove the full PR and generated output gates.
+A baseline gate label that already overflowed is not fitting-copy
+evidence: opt-in ellipsis changes it intentionally. Release remains pending:
+current-head PR checks and review-containing exact-main
+three-OS release. These local rows do not authorize closure.
 
 ## Architecture conclusion
 
