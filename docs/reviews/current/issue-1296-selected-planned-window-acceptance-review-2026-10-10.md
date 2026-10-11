@@ -28,29 +28,23 @@ None. Local criteria do not substitute for the required release gate.
 
 ## Verification and release
 
-Combined predecessor integration `73552416` includes #1292/#1293/#1295,
-final #1294 repair `ac14998c` and main `b65df355`. Its new early visibility
-entry exposed a missing diagnostic detail; the failing public test was retained.
-One Layout projection-window validator now runs before early/direct/candidate
-geometry. It keeps the existing code/path and dates/selected IDs/cause;
-normal model padding and completed geometry remain unchanged.
+Current integration adopts public table `49cfb0ef` and trusted READY main
+`477e571d` by ordinary merge without conflicts. Own-worktree Python3.13:
+43 focused tests pass (3.66s), covering selected-planned Scene/SVG and
+diagnostics, model window modes and shared visibility validation.
+Earlier own-worktree Python3.11:141 tests pass (133.82s), covering actual default
+Scene/SVG/degenerate diagnostic, selected-planned model, missing-Actual scope,
+lane inventory, bounded packaged tables, explicit windows, date/axis,
+merged legend-grid, live ID-site/ownership/schema-annotation checks.
+The comparison fixture keeps explicit zero-margin/whole-projection assertions;
+the shared window validator rejects before visibility geometry with dates/IDs/cause.
 
-Focused combined suite:90 passed (62.41s): actual library-default Scene/SVG,
-public fault-injection diagnostic, model windows, explicit clipping, inclusive
-date display, bounded tables and default-axis windows. Nine parameterized
-early/direct/candidate cases cover equal, reversed and invalid bounds and
-prove no visibility geometry is built before rejection. Structural checks:
-11 packages/37 inward edges;228 modules reachable, none orphaned.
+CLI migration remains three stdout records only (axis density and the disclosed
+six-label suppression inventory); argv/exit/stderr/file metadata unchanged.
+Own Python3.11 CLI characterization previously4 passed; Python3.13's
+pre-existing unknown-command wording failure is not re-recorded or excluded.
 
-CLI characterization migration: three render stdout records only; argv, exit,
-stderr and file metadata unchanged. Each gains truthful axis thinning/density
-warnings. HALCYON keeps six suppressed labels: `structure` replaces
-`launch-contract`; other five unchanged. No example edits or warning masking.
-Python3.11 targeted CLI suite:4 passed (55.23s), including unknown-command.
-Python3.13 unknown-command wording also fails on the pre-padding predecessor;
-it is not a critical-path regression and is not re-recorded here.
-
-No active PR or full-release claim. Predecessor merges and final trusted READY
-adoption remain required. Before
-closure, inspect the fresh corpus count table/Scene/SVG, current-head PR gates
-and review-containing exact-main three-OS release. No authored examples edits.
+Public preparation does not authorize acceptance. No active PR or authored
+examples changes. After predecessor #1295 merges: reconcile latest READY,
+inspect current schema/PR/corpus Scene-SVG evidence and the exact
+acceptance-containing main three-OS gate before deliberate closure.

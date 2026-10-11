@@ -75,6 +75,32 @@ def test_attached_host_must_resolve_to_exactly_one_selected_instance_in_same_row
         close_lane_projection(duplicate_hosts, as_of=None)
 
 
+@pytest.mark.parametrize("source_kind", ["primary", "combined"])
+@pytest.mark.parametrize("source_type", ["span", "point"])
+@pytest.mark.parametrize("mark_scope,facet_visible,expected_missing", [
+    ("due-end", True, True), ("none", True, False), ("due-end", False, False),
+])
+def test_due_end_scope_agrees_between_lane_inventory_and_source_selection(
+    source_kind, source_type, mark_scope, facet_visible, expected_missing,
+):
+    from chrona.presentation.layout.semantic_mark_facets import select_item_mark_facets
+
+    item = replace(_item("item", source_kind=source_kind,
+                         state=ObservationState.DUE_UNOBSERVED),
+                   missing_actual_mark=mark_scope, source_type=source_type)
+    if source_type == "point":
+        item = replace(item, planned={"at": date(2026, 1, 3)})
+    projection = replace(_projection(ReviewRowProjection("row", "Row", "g", "item", (item,))),
+                         comparison_facets=("missingActual",) if facet_visible else ("planned",))
+    closure = close_lane_projection(projection, as_of=date(2026, 1, 4))
+    selection = select_item_mark_facets(item=item, source_kind=source_kind,
+                                       as_of=date(2026, 1, 4),
+                                       emit_missing_actual=facet_visible)
+    assert {mark.purpose for mark in closure.expected_marks} == {
+        facet.facet for facet in selection.facets
+    } == ({"planned", "missing-actual"} if expected_missing else {"planned"})
+
+
 def test_folded_points_and_non_timeline_projection_fail_closed():
     folded = ReviewProjection((), (date(2026, 1, 1), date(2026, 2, 1)), (), (),
                               rows=(ReviewRowProjection("row", "Row", "g", "item", (_item("item"),)),),
