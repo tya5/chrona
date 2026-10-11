@@ -34,11 +34,13 @@ def _assert_packaged_view_contract(path: Path, expected_id: str) -> dict:
 
 
 def _assert_view_copy_except_axis(packaged: Path, corpus: Path) -> None:
-    """Only the explicitly migrated axis policy may differ in these old copies."""
+    """Guard all declarations except the published axis/endpoint migrations."""
     package_document = yaml.safe_load(packaged.read_bytes())
     corpus_document = yaml.safe_load(corpus.read_bytes())
     for document in (package_document, corpus_document):
         document["body"].pop("axis")
+        for column in document["body"].get("tableColumns", ()):
+            column.pop("endDisplay", None)
     assert package_document == corpus_document
 
 
@@ -153,6 +155,7 @@ def test_readable_default_resources_are_selected_from_the_packaged_authority():
             assert declared["version"] == "chrona/view/v0.28"
             assert declared["body"]["rows"] == {"mode": "automatic"}
             assert [column["id"] for column in declared["body"]["tableColumns"]] == ["Task", "Plan"]
+            assert declared["body"]["tableColumns"][1]["endDisplay"] == "inclusive"
             assert declared["body"]["visibility"]["fallback"]["labels"] == ["end", "start", "suppress"]
             assert declared["body"]["backgroundDecoration"]["rows"] == "alternate"
         else:
