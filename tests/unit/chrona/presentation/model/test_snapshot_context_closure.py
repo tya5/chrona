@@ -97,6 +97,13 @@ def test_snapshot_stale_special_profile_versions_keep_version_diagnostic_after_i
         resource_path = example_root / original["address"]
         value = yaml.safe_load(resource_path.read_text(encoding="utf-8"))
         kind = original["kind"]
+        for extension in value.get("extensions", ()) if key == "project" else ():
+            # The Project's pinned profile packages move into the test store byte for byte.
+            package = extension["resource"]
+            package_path = snapshot_directory(tmp_path, package["revision"]["token"]) / package["address"]
+            package_path.parent.mkdir(parents=True, exist_ok=True)
+            package_path.write_bytes((example_root / package["address"]).read_bytes())
+            package["store"] = {"provider": "local", "identity": "test"}
         if key == context_key:
             value["version"] = stale_version
         ref = _write(tmp_path, token, original["address"], value)
