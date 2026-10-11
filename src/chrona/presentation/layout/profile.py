@@ -67,7 +67,7 @@ def _check_frame(frame: Any, pointer: str) -> None:
                           detail="expected a non-negative distance or a {token: id} reference")
 
 
-_HEADING_KEYS = frozenset({"text", "align", "block"})
+_HEADING_KEYS = frozenset({"text", "align", "block", "gap"})
 
 
 def _check_heading(heading: Any, pointer: str) -> None:
@@ -275,6 +275,9 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
                     key = f"{path}/{name}/{side}"; distances[key] = _distance(side_value, theme_values, key, literals, used_tokens)
             else:
                 key = f"{path}/{name}"; distances[key] = _distance(value, theme_values, key, literals, used_tokens)
+        if isinstance(node.get("heading"), dict) and "gap" in node["heading"]:
+            key = f"{path}/heading/gap"
+            distances[key] = _distance(node["heading"]["gap"], theme_values, key, literals, used_tokens)
         if "inset" in node.get("frame", {}):
             key = f"{path}/frame/inset"
             distances[key] = _distance(node["frame"]["inset"], theme_values, key, literals, used_tokens)
