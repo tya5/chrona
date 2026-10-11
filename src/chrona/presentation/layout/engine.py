@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from collections import Counter
 from decimal import ROUND_CEILING, Decimal, getcontext
+from types import MappingProxyType
 from typing import Any, Callable, Mapping
 
 from chrona.presentation.layout.model import (
@@ -14,6 +15,43 @@ from chrona.presentation.layout.surface_quality import FitWarning
 
 getcontext().prec = 28
 ZERO = Decimal(0)
+
+
+@dataclass(frozen=True, slots=True)
+class TableInlineBudget:
+    """Runtime allocation evidence, never part of a resolved resource identity."""
+
+    slot_id: str
+    path: str
+    available_inline: Decimal
+    ceiling: Decimal
+
+
+def _limit_inline_base(base: tuple[Decimal, Decimal | None, Decimal],
+                       budget: TableInlineBudget) -> tuple[Decimal, Decimal, Decimal]:
+    """Cap a track without converting flexible allocation into a fixed track.
+
+    Intrinsic text floors must already be closed by the source at this budget;
+    this function never erases a mandatory or authored minimum.
+    """
+    minimum, target, weight = base
+    if minimum > budget.ceiling:
+        raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", budget.path, budget.slot_id,
+                          "mandatory or authored inline minimum exceeds the declared ceiling")
+    return minimum, min(target, budget.ceiling) if target is not None else budget.ceiling, weight
+
+
+def validate_table_inline_budgets(expected: Mapping[str, TableInlineBudget],
+                                 actual: Mapping[str, TableInlineBudget]) -> None:
+    """Reject a circular parent budget after bounded source allocation."""
+    for slot_id, budget in expected.items():
+        if actual.get(slot_id) != budget:
+            raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", budget.path, slot_id,
+                              "table inline budget depends on its intrinsic allocation")
+    if actual.keys() != expected.keys():
+        slot_id = next(key for key in actual if key not in expected)
+        raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", actual[slot_id].path, slot_id,
+                          "table budget closure changed its active sources")
 
 
 def _d(value: Any) -> Decimal:
@@ -363,11 +401,25 @@ def _cross_position(align: str, start: Decimal, available: Decimal, size: Decima
 
 class _Arranger:
     def __init__(self, profile: ResolvedLayoutProfile, measurements: Mapping[str, Measurement], *,
-                 content_sized: bool = False):
+                 content_sized: bool = False, collect_table_budgets: bool = False):
         self.profile, self.measurements = profile, measurements
         self.content_sized = content_sized
         self.decisions: list[LayoutDecision] = []
         self.fit_warnings: list[FitWarning] = []
+        self.table_inline_budgets: dict[str, TableInlineBudget] = {}
+        self.collect_table_budgets = collect_table_budgets
+
+    def _record_inline_budget(self, child: Mapping[str, Any], path: str,
+                              available_inline: Decimal) -> None:
+        if not self.collect_table_budgets or "maxInlineShare" not in child:
+            return
+        slot_id = str(child["id"])
+        ceiling = available_inline * _d(child["maxInlineShare"])
+        if not ceiling.is_finite() or ceiling <= ZERO:
+            raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", path, slot_id,
+                              "no positive independently allocated inline budget")
+        self.table_inline_budgets[slot_id] = TableInlineBudget(
+            slot_id, path, available_inline, ceiling)
 
     def _warn(self, node: Mapping[str, Any], path: str, *, required_inline: Decimal,
               required_block: Decimal, available_inline: Decimal, available_block: Decimal) -> None:
@@ -449,6 +501,9 @@ class _Arranger:
         row = node["kind"] == "row"; main = inline_size if row else block_size
         cross = block_size if row else inline_size; gap = _gap(self.profile, node, path)
         children = _active_children(node, self.measurements)
+        available_inline = inline_size - gap * max(0, len(children) - 1) if row else inline_size
+        for index, child in children:
+            self._record_inline_budget(child, f"{path}/children/{index}", available_inline)
         measured = [_measure_node(child, f"{path}/children/{i}", self.measurements, self.profile) for i, child in children]
         if not row:
             # A flow child wraps at the inline extent the column gives it, so its block allocation is its line stack
@@ -540,10 +595,14 @@ class _Arranger:
         for size in row_sizes: row_starts.append(cursor); cursor+=size+gap
         for i,child in _active_children(node, self.measurements):
             cell=child["cell"]; c=cell["column"]-1; r=cell["row"]-1; cs=cell.get("columnSpan",1); rs=cell.get("rowSpan",1)
+            self._record_inline_budget(child, f"{path}/children/{i}",
+                                       sum(col_sizes[c:c+cs], ZERO) + gap * (cs - 1))
             self.arrange(child,f"{path}/children/{i}",Rect(col_starts[c],row_starts[r],sum(col_sizes[c:c+cs],ZERO)+gap*(cs-1),sum(row_sizes[r:r+rs],ZERO)+gap*(rs-1)))
 
     def _flow(self, node: Mapping[str, Any], path: str, rect: Rect) -> None:
         inline, block, inline_size, block_size = self._content(node,path,rect); gap=_gap(self.profile,node,path)
+        for index, child in _active_children(node, self.measurements):
+            self._record_inline_budget(child, f"{path}/children/{index}", inline_size)
         lines = _flow_lines(node, path, self.measurements, self.profile, inline_size,
                             lambda child, child_path, width:
                             _natural_child_block(child, child_path, width, self.measurements, self.profile)
@@ -584,6 +643,8 @@ class _Arranger:
         inline, block, inline_size, block_size = self._content(node, path, rect)
         content = Rect(inline, block, inline_size, block_size)
         children = _active_children(node, self.measurements)
+        for index, child in children:
+            self._record_inline_budget(child, f"{path}/children/{index}", inline_size)
         indexed = {str(child["id"]): (index, child) for index, child in children}
         bounds: dict[str, Rect] = {}
 
@@ -708,6 +769,46 @@ class _Arranger:
                 break
             if not progressed:
                 raise LayoutError("E_LAYOUT_CONSTRAINT_CYCLE", path, sorted(pending)[0])
+
+
+def resolve_table_inline_budgets(profile: ResolvedLayoutProfile, *,
+                                 viewport_inline: int | float | Decimal,
+                                 viewport_block: int | float | Decimal,
+                                 measurements: Mapping[str, Measurement],
+                                 content_sized: bool = False) -> Mapping[str, TableInlineBudget]:
+    """Probe parent/cell budgets with capped table inline demand neutralized.
+
+    The ordinary arranger remains the only implementation of padding, active
+    children, flexible tracks, spans and Flow. The source owner then closes
+    mandatory and bounded measurements; its final arrangement must reproduce
+    these budgets via ``validate_table_inline_budgets``. This probe alone does
+    not prove source feasibility or enforce the cap on completed placements.
+    """
+    capped: list[str] = []
+
+    def visit(node: Mapping[str, Any]) -> None:
+        if "maxInlineShare" in node:
+            capped.append(str(node["id"]))
+        for _, child in _active_children(node, measurements) if "children" in node else ():
+            visit(child)
+
+    root = profile.profile["root"]
+    visit(root)
+    if not capped:
+        return MappingProxyType({})
+    viewport = Rect(ZERO, ZERO, _d(viewport_inline), _d(viewport_block))
+    if viewport.inline_size <= ZERO or viewport.block_size <= ZERO:
+        raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY", "/viewport")
+    neutral = dict(measurements)
+    for slot_id in capped:
+        try:
+            neutral[slot_id] = replace(neutral[slot_id], min_inline=ZERO,
+                                       preferred_inline=ZERO, max_inline=ZERO)
+        except KeyError as error:
+            raise LayoutError("E_LAYOUT_MEASUREMENT_REQUIRED", "/root", slot_id) from error
+    arranger = _Arranger(profile, neutral, content_sized=content_sized, collect_table_budgets=True)
+    arranger.arrange(root, "/root", viewport)
+    return MappingProxyType(dict(arranger.table_inline_budgets))
 
 
 def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float | Decimal, viewport_block: int | float | Decimal, measurements: Mapping[str, Measurement], content_sized: bool = False) -> LayoutManifest:
