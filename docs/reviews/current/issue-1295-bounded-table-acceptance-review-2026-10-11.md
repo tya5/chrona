@@ -33,9 +33,15 @@ unchanged. The sole failure is L2+L3=85.6s against the unchanged60s budget;
 semantic agreement is not a green gate. CI must pass the strict gate, with
 no local timing waiver or baseline refresh.
 
-Public current-head artifact and intentional resource-identity/output changes
-still require batch review. Older46-materializer success is not proof of this
-head. A baseline gate label that already overflowed is not fitting-copy
+Public head `49cfb0ef`, run38124948692 artifact11696806849, verified ZIP
+SHA256 `54ee9326181efa4187ef92938402a32319a226c2e19f82b973b3a9ed61087050`:
+101 paths, no additions/removals, all46 Scene/SVG pairs byte-identical;
+only diagnostic inventory and coverage reports change. Strict CI schema gate
+passes (20.58s). Conformance fails solely on eight unclassified exact-Decimal
+sums. The reviewed function+explicit-Decimal-seed classification now passes
+with97 focused tests (4.87s), including rejection of unseeded/float-seeded sums;
+product code and the old golden/output are unchanged. Corrected-head CI and
+snapshot remain required. A baseline gate label that already overflowed is not fitting-copy
 evidence: opt-in ellipsis changes it intentionally. Release remains pending:
 current-head PR checks and review-containing exact-main
 three-OS release. These local rows do not authorize closure.
