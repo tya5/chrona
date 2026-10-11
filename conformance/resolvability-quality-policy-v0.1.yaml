@@ -50,11 +50,6 @@ declaredComputedValues:
     classification: pinned-deliberately
     producer: chrona workspace revision
   - path: src/chrona/usecases/materialize.py
-    function: _reference_payload
-    field: contentIdentity
-    classification: pinned-deliberately
-    producer: chrona identity bytes
-  - path: src/chrona/usecases/materialize.py
     function: copy_context_closure
     field: contentIdentity
     classification: pinned-deliberately

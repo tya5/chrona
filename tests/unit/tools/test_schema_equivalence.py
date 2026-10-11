@@ -50,24 +50,65 @@ def base_schemas() -> dict:
 
 @pytest.fixture(scope="module")
 def committed() -> gate.GateReport:
-    """One L2 plus L3 run over the committed tree; it is also the runtime record."""
-    return gate.run_gate(REPOSITORY, layers=("L2", "L3"))
+    """One semantic L2/L3 run; timing enforcement is covered at the CLI boundary."""
+    documents = gate.tracked_documents(REPOSITORY)
+    expected_invalid = gate.load_expected_invalid(REPOSITORY / gate.EXPECTED_INVALID)
+    l3_paths = ({site.source for site in gate.PROBE_SITES if not site.source.startswith("inline:")}
+                | set(expected_invalid))
+    counts = {"decode": 0, "first_error": 0, "ingress": 0}
+    original_decode = gate._decode
+    original_first_error = gate.SchemaValidators.first_error
+    original_ingress = gate.run_ingress
+
+    def counted_decode(*args, **kwargs):
+        counts["decode"] += 1
+        return original_decode(*args, **kwargs)
+
+    def counted_first_error(self, *args, **kwargs):
+        counts["first_error"] += 1
+        return original_first_error(self, *args, **kwargs)
+
+    def counted_ingress(*args, **kwargs):
+        counts["ingress"] += 1
+        return original_ingress(*args, **kwargs)
+
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(gate, "_decode", counted_decode)
+        patch.setattr(gate.SchemaValidators, "first_error", counted_first_error)
+        patch.setattr(gate, "run_ingress", counted_ingress)
+        report = gate.run_gate(REPOSITORY, layers=("L2", "L3"), documents=documents,
+                               enforce_runtime_budget=False)
+    report._test_work_counts = counts
+    report._test_document_count = len(documents)
+    report._test_l3_document_count = sum(path in documents for path in l3_paths)
+    report._test_schema_count = len(gate.load_schema_dir(REPOSITORY / "schemas"))
+    # The gate also decodes its two YAML control documents: expected-invalid and expected-deltas.
+    report._test_control_document_count = 2
+    return report
+
+
+def _run_gate(*args, **kwargs) -> gate.GateReport:
+    """Semantic unit tests must not inherit the host-dependent CLI time guard."""
+    kwargs.setdefault("enforce_runtime_budget", False)
+    return gate.run_gate(*args, **kwargs)
 
 
 # --- the committed tree -----------------------------------------------------------------------
 
 def test_gate_passes_on_the_committed_tree(committed, base_schemas):
     assert committed.failures == []
-    report = gate.run_gate(REPOSITORY, layers=("L1",), base_schemas=base_schemas)
+    report = _run_gate(REPOSITORY, layers=("L1",), base_schemas=base_schemas)
     assert report.failures == []
     assert {row.status for row in report.l1} == {"equal"}
 
 
-def test_l2_and_l3_stay_inside_the_runtime_budget(committed):
-    elapsed = committed.timings["L2"] + committed.timings["L3"]
-
-    assert elapsed < gate.RUNTIME_BUDGET_SECONDS, f"L2+L3 took {elapsed:.1f}s"
+def test_l2_l3_validation_work_is_linear_in_documents_and_probes(committed):
     assert committed.corpus is not None and len(committed.corpus.records) >= 200
+    counts = committed._test_work_counts
+    assert counts["decode"] == (committed._test_document_count + committed._test_l3_document_count
+                                 + committed._test_schema_count + committed._test_control_document_count)
+    assert counts["first_error"] == len(committed.corpus.records)
+    assert counts["ingress"] == len(committed.probes) + len(committed.invalid)
 
 
 def test_every_live_kind_has_a_document_or_a_probe(committed):
@@ -168,7 +209,7 @@ def test_editing_one_pattern_in_a_copied_schema_fails_l1_with_the_pointer(tmp_pa
     copied = _copy_schemas(tmp_path)
     _edit(copied / PATTERN_SCHEMA, f'"{PATTERN_TEXT}"', '"^examples/[a-z][a-z0-9-]{1}$"')
 
-    report = gate.run_gate(REPOSITORY, layers=("L1",), base_schemas=base_schemas, schemas_dir=copied,
+    report = _run_gate(REPOSITORY, layers=("L1",), base_schemas=base_schemas, schemas_dir=copied,
                            inventory_path=copied / "schema-inventory-v0.1.yaml")
 
     assert not report.passed
@@ -180,7 +221,7 @@ def test_making_a_valid_document_invalid_fails_l2():
     path = "conformance/calendar.yaml"
     content = (REPOSITORY / path).read_bytes() + b"unexpectedTopLevelKey: true\n"
 
-    report = gate.run_gate(REPOSITORY, layers=("L2",), documents={path: content})
+    report = _run_gate(REPOSITORY, layers=("L2",), documents={path: content})
 
     assert not report.passed
     assert any(failure.startswith(f"L2 {path}: valid -> invalid") for failure in report.failures)
@@ -189,7 +230,7 @@ def test_making_a_valid_document_invalid_fails_l2():
 def test_a_new_invalid_document_that_is_not_listed_fails_l2():
     document = b"version: timeline/v0.7\nunexpectedTopLevelKey: true\n"
 
-    report = gate.run_gate(REPOSITORY, layers=("L2",), documents={"docs/new-plan.yaml": document})
+    report = _run_gate(REPOSITORY, layers=("L2",), documents={"docs/new-plan.yaml": document})
 
     assert any("docs/new-plan.yaml" in failure and "not listed in expected-invalid" in failure
                for failure in report.failures)
@@ -201,7 +242,7 @@ def test_a_listed_invalid_document_that_becomes_valid_fails_l2():
     del document["root"]["children"][0]["offsetX"]
     content = yaml.safe_dump(document).encode()
 
-    report = gate.run_gate(REPOSITORY, layers=("L2",), documents={path: content})
+    report = _run_gate(REPOSITORY, layers=("L2",), documents={path: content})
 
     assert any(path in failure for failure in report.failures)
 
@@ -215,9 +256,9 @@ def test_changing_a_diagnostic_message_fails_l3(monkeypatch):
         violation = original(error)
         return dataclasses.replace(violation, message=violation.message + " (reworded)")
 
-    assert gate.run_gate(REPOSITORY, layers=("L3",), documents={}, sites=sites).failures == []
+    assert _run_gate(REPOSITORY, layers=("L3",), documents={}, sites=sites).failures == []
     monkeypatch.setattr(schema_diagnostics, "_explain", reworded)
-    report = gate.run_gate(REPOSITORY, layers=("L3",), documents={}, sites=sites)
+    report = _run_gate(REPOSITORY, layers=("L3",), documents={}, sites=sites)
 
     assert not report.passed
     assert any(failure.startswith("L3 authoring-command|inline:authoring-command-task/baseRevision") and "reworded" in failure
@@ -232,7 +273,7 @@ def test_removing_an_inventory_entry_fails_the_gate(tmp_path, base_schemas):
     assert len(kept) == len(lines) - 1
     inventory.write_text("".join(kept), encoding="utf-8")
 
-    report = gate.run_gate(REPOSITORY, layers=("L1",), base_schemas=base_schemas, schemas_dir=copied,
+    report = _run_gate(REPOSITORY, layers=("L1",), base_schemas=base_schemas, schemas_dir=copied,
                            inventory_path=inventory)
 
     assert not report.passed

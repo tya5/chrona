@@ -187,8 +187,12 @@ def _committed_projects():
     return [path for path in roots if "deadline" in path.read_text(encoding="utf-8")]
 
 
+def pytest_generate_tests(metafunc):
+    if metafunc.function.__name__ == "test_no_committed_project_warns":
+        metafunc.parametrize("path", _committed_projects(), ids=lambda path: str(path.relative_to(REPO)))
+
+
 @pytest.mark.corpus  # PR-path twin: the synthetic cases above; this sweep is evidence that no committed deadline slips
-@pytest.mark.parametrize("path", _committed_projects(), ids=lambda path: str(path.relative_to(REPO)))
 def test_no_committed_project_warns(path):
     project = load_yaml(path)
     result = schedule(project)

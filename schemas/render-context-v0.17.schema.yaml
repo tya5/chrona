@@ -147,11 +147,25 @@ $defs:
         then: {not: {required: [identity]}}
   fontMetrics:
     description: "Complete identity-pinned measured assets and optional target-local raster font assets."
+    examples:
+      - algorithm: declared-metrics-v3
+        missingFont: diagnose
+        assets:
+          - family: Acme Sans
+            weight: 400
+            metrics:
+              locator: {provider: context, address: font_metrics/acme-regular.json}
+              contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      - {algorithm: declared-metrics-v3, missingFont: diagnose, fontSet: chrona.noto-sans}
     type: object
-    required: [algorithm, assets, missingFont]
+    required: [algorithm, missingFont]
+    oneOf:
+      - {description: "The measured assets, listed.", required: [assets]}
+      - {description: "A packaged font set, which stands for its asset list (#1345).", required: [fontSet]}
     additionalProperties: false
     properties:
       algorithm: {description: "Metrics algorithm required for exact font-pair resolution.", const: declared-metrics-v3}
+      fontSet: {description: "Name of a packaged font set that stands for its asset list (#1345): chrona.noto-sans (Noto Sans regular and bold, Noto Sans Mono) or chrona.noto-sans+jp (those and Noto Sans JP regular and bold from chrona-fonts-noto-cjk). Used instead of `assets`; installed fonts remain a fallback behind it (#1281).", enum: [chrona.noto-sans, chrona.noto-sans+jp]}
       missingFont: {description: "Draft-only substitution is rejected for immutable Contexts by closure policy.", enum: [diagnose, substitute]}
       assets:
         description: "One exact metrics/font pair for every selectable family and weight."

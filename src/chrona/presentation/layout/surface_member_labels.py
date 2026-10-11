@@ -205,6 +205,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
     if contract.labels.enabled or attached_labels:
         for review_row in context.review_rows:
             for item in review_row.items:
+                if not getattr(item, "temporal_paint", True):
+                    continue
                 layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
                 lane = lane_owner(review_row, item) if projection.lane_membership is not None else None
                 instance_id = layout_id if projection.rows else item.object_id
@@ -290,6 +292,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 subjects=(DiagnosticSubject.project_object(folded.item.object_id, folded.item.title),)))
     for review_row in context.review_rows:
         for item in review_row.items:
+            if not getattr(item, "temporal_paint", True):
+                continue
             layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
             instance_id = layout_id if projection.rows else item.object_id
             if not projection.rows and item.source_kind != "combined":

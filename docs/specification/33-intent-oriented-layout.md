@@ -42,6 +42,22 @@ An override key names one existing node ID. An override may replace declared pro
 of that node but cannot change its ID, kind, or insert executable content. Unknown IDs,
 base cycles, kind changes, null deletion, and multiple bases diagnose.
 
+`extends` resolves when the Render Context closure is read (#1342), the way a derived Theme does: the base is an ordinary
+pinned reference that any Store the reader reads can hold (the example's own, a shared design Store or the packaged
+`chrona.resources` store), its `contentIdentity` is verified on read, bases may chain, and the closure resource is the
+flattened standalone profile whose identity is that of the effective value. Every top-level member the derived profile states
+(for example `viewDefaults`, `relationRouting`) replaces the base's; the rest is inherited. Editing a base therefore moves the
+derived profile's identity and the Scene with no Context edit, while the derived profile's `extends` pin is re-pinned inside
+the design that owns both.
+
+Store-backed chain resolution and cycle detection belong to ingress. A chain
+edge is identified by Store provider/identity, address and revision token;
+reusing a resource id or address at a different revision is not a cycle.
+After reading and verifying the complete base chain, ingress passes a
+standalone base to declarative Layout composition. That composition validates
+the declarations and applies stable-node overrides/top-level replacements;
+it does not resolve Store references or reject a completed base by resource id.
+
 Whole Layout Profiles are the reusable composition unit. Theme resources are the
 reusable value unit. Render Context binds separate immutable Theme and Layout resource
 references to a Project, View, optional Detail/Summary/Actual inputs, viewport, locale,
@@ -188,6 +204,20 @@ bounds, baseline, typography and explicit slot owner directly into Scene.
 
 `facet` and `repeat` are not M24 layout operators. View may expose a typed repeated
 source, which Layout can arrange with `grid` or `flow`; Layout cannot partition facts.
+
+
+### `viewDefaults`: the design members of a View (#1341)
+
+A Layout profile may declare `viewDefaults`, a View body fragment (`visibility`, `axis`, `deadlines`, `shading`,
+`timePresentation`, `annotationPresentation`, `backgroundDecoration`, `progressFill`, and the design halves of `comparison`,
+`rows` and `window`; see Specification 06 section 9.2). The View closure overlays it under the View before validation: a member
+the View declares wins as a whole, an omitted member takes the profile's.
+Split members merge by design sub-member, creating an omitted member from
+those sub-members only; explicit declarations win and missing required
+connection fields remain View validation errors (Specification 06 section 9.2).
+Layout reads the merged View only; it never sees which
+half a member came from. The members are validated as View members after the merge, so a malformed default is an ordinary View
+error. `viewDefaults` is optional; a profile without it changes nothing.
 
 ## 4. Logical axes and writing mode
 
@@ -752,6 +782,50 @@ slots, not self-derived full-canvas textures or overlays. Both table-timeline
 and dependency-network obey the same rule. Scene carries the completed warning;
 the shared report producer formats it with stable surface/source identity and
 `sourceRef: /body/environment/viewport`. Fitting surfaces emit none.
+
+**Auto-block readability limit and paging decision (#1299).**
+
+Optional `reviewSurface.maxBlockSize` reuses the nonnegative distance/Theme-token
+grammar and required-token resolution. Omission disables this advisory; zero
+is valid. After completing an auto-block surface, Layout emits exactly one
+`W_LAYOUT_AUTO_BLOCK_SIZE` when the completed canvas block size strictly
+exceeds the resolved limit. Equality and fitting surfaces emit none. Its typed
+facts are surface ID, emitted row count, actual block size, declared limit and
+`sourceRef: /reviewSurface/maxBlockSize`; Scene and reports transport those facts.
+This advisory does not resize, clip, reroute or reject the surface. Finite
+declared block requests retain the separate viewport diagnostic above.
+
+The bundled default selects a dedicated standalone Layout with the existing
+default geometry and limit 3600 (four 900-unit reference frames). Catalogue
+Editorial resources remain unchanged. The new default Layout identity is an
+intentional provenance migration, not a claim of byte-identical default Scene.
+Existing profiles omitting the property keep their behavior; add the optional
+property in place under Spec 56 section 3.2.
+
+Advice names available selection/grouping controls and distinguishes paging
+as a future option. Paging is deferred, opt-in only for an auto surface above
+its declared limit: preserve whole row/lane units, repeat continued group
+headers, share one temporal window and inline scale, and represent cross-page
+relations with explicit continuations rather than deleting Core dependencies.
+This issue adds no paging syntax or page-splitting implementation.
+
+**Render progress side channel (#1299).**
+
+An optional typed presentation observer receives schedule, layout, routing and
+output phase events. CLI alone enables/formats it on stderr when stderr is a
+terminal or `--progress` is given; a nonterminal without the flag adds no bytes.
+It is ephemeral, outside resource/closure/cache identity and serialized Scene,
+and never influences geometry, routing order, budgets or artifacts. Progress
+sink I/O failure detaches that sink without rejecting rendering. Core has no
+terminal or observer dependency; use cases report phases around existing work.
+
+For each Layout routing pass, report `0/N` then `k/N` in existing routing order,
+where N counts selected semantic relation declarations, not physical row/facet
+instances, and k advances after all instances of a declaration complete or are
+omitted. Separately name rehearsal passes; do not present their repeated work
+as a monotonic final-route count. Zero selected relations performs no search.
+Quiet/progress artifact and byte-characterization tests isolate this side
+channel from the independently declared default-height policy migration.
 
 ### 13.1 Content-coherent table-timeline allocation (#468)
 

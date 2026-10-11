@@ -90,6 +90,22 @@ def first_supporting_visual_profile(target_kind: str, required: frozenset[str]) 
     return None
 
 
+def preferred_target_visual_profile(identifier: str, target_kind: str) -> str:
+    """Select a registered same-version peer, never a name-derived profile."""
+    if identifier == BASELINE_PROFILE:
+        return identifier
+    families = ({"svg": SVG_PROFILE, "png": PNG_PROFILE},
+                {"svg": SVG_ICON_PROFILE, "png": PNG_ICON_PROFILE})
+    for family in families:
+        if identifier in family.values():
+            selected = family.get(target_kind, BASELINE_PROFILE)
+            resolve_visual_profile(selected, target_kind)
+            return selected
+    # Preserve an unknown-profile failure; do not disguise it as a fallback.
+    resolve_visual_profile(identifier, target_kind)
+    return identifier
+
+
 def validate_surface_visual_profile(surface: SceneSurface, profile: VisualProfile) -> None:
     """Reject a required completed treatment before adapter invocation."""
     paints = ((surface.canvas_paint, "/body/roles/background"),

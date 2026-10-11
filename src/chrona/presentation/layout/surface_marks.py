@@ -13,7 +13,7 @@ from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation, 
 from chrona.presentation.layout.surface_groups import (
     GroupHeaderExtentUpdate, replace_group_header_extent,
 )
-from chrona.presentation.layout.surface_quality import GroupPlacement, MarkPlacement, ShapePlacement
+from chrona.presentation.layout.surface_quality import GroupPlacement, MarkPlacement, ShapePlacement, TemporalEndpointPlacement
 from chrona.presentation.layout.mark_geometry import (
     CompletedWindowMark, MarkFacetAbsence, complete_mark_window_geometry, compose_item_marks,
 )
@@ -115,6 +115,7 @@ class SurfaceMarksBatch:
     visible_group_header_overflows: tuple[tuple[str, Rect, float], ...]
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
     window_marks: tuple[CompletedWindowMark, ...] = ()
+    temporal_endpoints: tuple[TemporalEndpointPlacement, ...] = ()
 
 
 def progress_fill_bounds(host: Rect, fraction: float,
@@ -211,6 +212,7 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             diagnostic_provenance.append(outside)
     absences: list[MarkFacetAbsence] = []
     marks: list[MarkPlacement] = []
+    temporal_endpoints: list[TemporalEndpointPlacement] = []
     track_by_id = {item.instance_id: item for item in tracks}
     allocation = getattr(base, "mark_band_allocation", None)
     if allocation is not None:
@@ -232,6 +234,27 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             visibility = prepared_visibility(
                 item, kind=occurrence_kind, container_id=occurrence_container,
                 source_kind=source_kind, as_of=contract.time.as_of)
+            if not getattr(item, "temporal_paint", True):
+                if source_kind in {"primary", "combined"}:
+                    start = item.planned.get("start")
+                    end = item.planned.get("end")
+                    if not isinstance(start, date) or not isinstance(end, date):
+                        raise LayoutError("E_PRESENTATION_PLACEMENT_REQUIRED", "/projection/items")
+                    facet = (next((facet for facet in visibility.facets
+                                   if facet.source.facet == "planned"), None)
+                             if visibility is not None else None)
+                    if visibility is not None and facet is None:
+                        raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/items",
+                                          detail="stage=unpainted-port; reason=unaccounted-facet")
+                    block, size = frame.role_bounds("planned")
+                    centre = block + size / 2
+                    temporal_endpoints.append(TemporalEndpointPlacement(
+                        instance_id, item.object_id,
+                        (coordinate_for_date(start, scale), centre)
+                        if facet is None or facet.start_port_visible else None,
+                        (coordinate_for_date(end, scale), centre)
+                        if facet is None or facet.end_port_visible else None))
+                continue
             composition = compose_item_marks(
                 item=item, instance_id=instance_id, source_kind=source_kind, frame=frame,
                 as_of=contract.time.as_of, theme_tokens=request.theme_tokens,
@@ -371,4 +394,4 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
     return SurfaceMarksBatch(tuple(marks), tuple(progress_shapes), tuple(summary_shapes), groups,
                              tuple(updates), tuple(diagnostics), tuple(absences),
                              tuple(visible_header_overflows), tuple(diagnostic_provenance),
-                             tuple(window_marks))
+                             tuple(window_marks), tuple(temporal_endpoints))

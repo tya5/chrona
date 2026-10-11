@@ -255,6 +255,26 @@ are required for a renderable Scene in v0.1. The `layoutMetrics` revision identi
 declared metrics dataset or algorithm profile; its acquisition and payload format remain
 outside this document, but a renderer must not substitute installed-font metrics.
 
+A Render Context's `environment.fontMetrics` states its measured faces either as an explicit `assets` list or as
+`fontSet`, the name of a packaged font set (#1345): `chrona.noto-sans` (Noto Sans regular and bold and Noto Sans Mono,
+the packaged default) or `chrona.noto-sans+jp` (those and Noto Sans JP regular and bold, from `chrona-fonts-noto-cjk`).
+A set expands to exactly its identity-pinned asset list before validation, so a Context naming a set is the Context that
+lists those assets; it states one or the other, never both. The sets are the declared closure; installed fonts stay a
+fallback behind it (#1281), not part of it.
+
+**Shared designs (#1342).** A Render Context's `view`, `theme`, `colorScheme`, `layout`, `summaryProfile`, `detailProfile` and
+`iconCatalogs` references may name a shared design instead of a file of the Context's own example. A design is held in a
+read-only Store: the packaged store (`store: {provider: package, identity: chrona.resources}`), or a second local Store that
+the caller declares (`stores: [{identity, root}]` in an example materializer manifest, an extra entry in the Store config of
+`render-review`). The same reference resolves the same bytes in `materialize` and `render-review`; nothing is copied between
+projects. *Pinning rule:* a Context pins a shared design by Store identity and revision token only. `contentIdentity` is
+optional on a reference into a shared Store (a Store config entry says `integrity: optional`; a `package` reference and a
+manifest `stores` entry never require it): it is computed on read, recorded in the Scene's provenance, and verified when
+stated. Editing a shared Theme, Scheme or Layout therefore re-renders every referencing Context with no Context edit, and
+the Scenes (not the SVG, unless the design changed what is drawn) record the new content identities. A Store the reader was
+not given is `E_STORE_CONFIG_REQUIRED`; a manifest Store root that is not a directory is `E_MATERIALIZER_STORE`. The draft
+`render` command has no Context and keeps copying a preset into the project.
+
 The `target.capabilities` list is a sorted, duplicate-free declaration. A Scene Builder
 uses it to diagnose distinctions the requested output cannot preserve; it does not use
 the target `kind` to infer unrecorded defaults. No target-specific options belong in a

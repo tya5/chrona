@@ -8,6 +8,7 @@ import yaml
 from chrona.app.cli import main
 from chrona.presentation.contracts import ClosureIdentity, PresentationPresetContract, ViewContract, parse_contract
 from tests.support import synthetic_review as sr
+from tests.support.preset_policy import assert_view_copy_except_axis as _assert_view_copy_except_axis
 
 
 ROOT = Path(__file__).parents[2]
@@ -32,24 +33,6 @@ def _assert_packaged_view_contract(path: Path, expected_id: str) -> dict:
     identity = ClosureIdentity("view", expected_id, "builtin", "sha256:" + sha256(raw).hexdigest())
     assert isinstance(parse_contract(identity, document), ViewContract)
     return document
-
-
-def _assert_view_copy_except_axis(packaged: Path, corpus: Path) -> None:
-    """Guard all declarations except published packaged policy migrations."""
-    package_document = yaml.safe_load(packaged.read_bytes())
-    corpus_document = yaml.safe_load(corpus.read_bytes())
-    for document in (package_document, corpus_document):
-        document.pop("version")  # the packaged reference adopts the live View contract
-        document["body"].pop("axis")
-        heading = document["body"].get("heading", {})
-        heading.pop("text", None)
-        if not heading:
-            document["body"].pop("heading", None)
-        for column in document["body"].get("tableColumns", ()):
-            column.pop("endDisplay", None)
-            column.pop("text", None)
-        document["body"].get("rows", {}).get("laneTable", {}).pop("text", None)
-    assert package_document == corpus_document
 
 
 def test_editorial_non_view_corpus_copies_match_and_packaged_view_is_independent():
@@ -155,15 +138,13 @@ def test_readable_default_resources_are_selected_from_the_packaged_authority():
     }
     for name, corpus_path in pairs.items():
         package_bytes = (bundle / name).read_bytes()
-        if name != "view.yaml":
-            assert package_bytes == corpus_path.read_bytes(), name
         declared = yaml.safe_load(package_bytes)
         assert declared["id"] == resources["view" if name == "view.yaml" else "theme"]["id"]
         assert resources["view" if name == "view.yaml" else "theme"]["path"] == \
             f"bundles/editorial-readable-default/{name}"
         if name == "view.yaml":
             _assert_packaged_view_contract(bundle / name, resources["view"]["id"])
-            _assert_view_copy_except_axis(bundle / name, corpus_path)
+            _assert_view_copy_except_axis(bundle / name, corpus_path, first_run=True)
             labels = declared["body"]["visibility"]["labels"]
             assert (labels["placement"], labels["content"], labels["side"]) == ("plot", ["title"], "end")
             assert declared["version"] == "chrona/view/v0.28"
@@ -171,12 +152,23 @@ def test_readable_default_resources_are_selected_from_the_packaged_authority():
             assert [column["id"] for column in declared["body"]["tableColumns"]] == ["Task", "Plan"]
             assert declared["body"]["tableColumns"][1]["endDisplay"] == "inclusive"
             assert declared["body"]["visibility"]["fallback"]["labels"] == ["end", "start", "suppress"]
-            assert declared["body"]["backgroundDecoration"]["rows"] == "alternate"
+            assert declared["body"]["backgroundDecoration"]["rows"] == "rules"
+            assert declared["body"]["grouping"] == {"by": "hierarchy", "depth": "all", "rollup": "header"}
+            assert declared["body"]["hierarchyColumn"] == "Task"
         else:
             body = declared["body"]
-            assert body["values"]["opacity.row-band"]["value"] == 0.12
-            assert body["roles"]["row-band"]["opacity"] == "opacity.row-band"
-            assert body["colorBindings"]["row-band.fill"] == "category:default"
+            expected = yaml.safe_load(corpus_path.read_bytes())
+            migrated = expected["body"]
+            migrated["values"].pop("opacity.row-band")
+            migrated["values"]["timeline-row-height"]["value"] = {
+                "expr": "{timeline-mark-size} + {timeline-row-padding}"}
+            migrated["roles"].pop("row-band")
+            migrated["roles"]["row-rule"] = {"strokeWidth": "stroke-width"}
+            migrated["roles"]["group-band"]["backgroundPaintOrder"] = 8
+            migrated["roles"]["group-header-band"]["backgroundPaintOrder"] = 9
+            migrated["colorBindings"].pop("row-band.fill")
+            migrated["colorBindings"]["row-rule.stroke"] = "neutral"
+            assert declared == expected  # keep every unaffected Theme declaration
     assert resources["view"] == {
         "id": "chrona-preset-editorial-readable-default", "kind": "view",
         "path": "bundles/editorial-readable-default/view.yaml",
@@ -188,7 +180,10 @@ def test_readable_default_resources_are_selected_from_the_packaged_authority():
     assert resources["colorScheme"] == {
         "id": "chrona-builtin-editorial", "kind": "color-scheme", "path": "bundles/editorial/scheme.yaml",
     }
-    assert resources["layout"]["path"] == "bundles/editorial/layout.yaml"
+    assert resources["layout"] == {
+        "id": "chrona-builtin-editorial-readable-default", "kind": "layout-profile",
+        "path": "bundles/editorial-readable-default/layout.yaml",
+    }
     assert resources["detailProfile"]["path"] == "bundles/editorial/detail.yaml"
     assert default["body"]["compatibleColorSchemes"] == [
         {"id": "chrona-builtin-editorial", "kind": "color-scheme", "path": "bundles/editorial/scheme.yaml"}

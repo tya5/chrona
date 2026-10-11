@@ -185,6 +185,18 @@ field as a secondary title; a first-group variant). The text is View content; it
 grammar, ordinal forms and diagnostics are owned by
 [Specification 50](50-constraint-driven-gantt-surface-quality.md) section 3.4.
 
+### 6.1 Draft relation visibility override (#1299)
+
+`chrona render --relations none|semantic` overrides only the effective Draft
+View's `visibility.relations` mode, before validation and resource identity
+freeze. Scalar declarations remain scalar; object declarations retain their
+other options. Without the flag, the original declaration and normalization
+are unchanged. The override neither writes the authored resource nor mutates
+an immutable render-review Context. Scheduling still sees every Core dependency.
+`none` omits semantic relation requests before Layout routing; intentional
+omission is not `W_LAYOUT_RELATION_SUPPRESSED`. The CLI documents the override
+in help and the first-project guide.
+
 ## 7. Temporal Window
 
 A View selects a temporal window independently from scheduling semantics. v0.1 allows
@@ -391,6 +403,26 @@ For a plot `tail` candidate, the same View intent may complete as a direct
 integrated balloon tail or a strict routed connection to a short balloon tip.
 Layout records the topology; View does not declare path coordinates. See
 [the C3 correction](../design/issue-466-c3-routed-tail-correction-2026-09-29.md).
+
+### 9.2 The View as the connector, and the design it takes from the Layout profile (#1341)
+
+A View is the thin connector between a project and a design. What names the project's ids, fields, dates or wording stays in the
+View: `surface`, `selection`, `ordering`, the window's `mode`, `start` and `end`, the grouping key and order, the lane keys, the
+comparison bindings (`baseline`, `scenario`, `actual`, `observationSelection`), periods, figures, markers' `source`, headings and
+captions, table column captions and sources, annotation anchors and text, hierarchy column, icon encodings. How the surface looks
+and is laid out is design, and a Layout profile may supply it as `viewDefaults`, a View body fragment (Specification 33).
+
+Slice 1 moves these members: `visibility`, `axis`, `deadlines`, `shading`, `timePresentation`, `annotationPresentation`,
+`backgroundDecoration`, `progressFill` (whole members), and the design halves of `comparison` (`baselineMarks`,
+`missingActualScope`, `deltaUnit`, `facets`), `rows` (`mode`, `trackAllocation`, `packing`, `laneTable`, `points`, `items`) and
+`window` (`marginDays`). The rule is whole-member replacement: a member the View declares replaces the design's whole member, a
+member it omits takes the design's. The three split members merge one level
+down: an omitted member is created from the profile's design sub-members,
+while declared sub-members win. Connection fields are never supplied by the
+design. Explicitly malformed View members are not repaired; missing required
+connection fields remain ordinary View validation errors. The
+merge happens at ingress, before validation, so the merged View is validated as the View it is; a Layout profile without
+`viewDefaults`, or a View declaring every member, is untouched, which keeps every existing View byte-identical.
 
 ## 10. Diagnostics
 
