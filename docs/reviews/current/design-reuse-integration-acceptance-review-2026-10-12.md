@@ -2,10 +2,10 @@
 
 <!-- chrona:literal-acceptance/v1 -->
 
-Code: `2ecddad0e1a02c468726164a0ef2a76b3b75277a`, based on READY `fa862e40745aa134198dfe070aa347c451dd7ffe`.
+Design-reuse code: `2ecddad0e1a02c468726164a0ef2a76b3b75277a`; integration adopts READY `d53a1df7f773a4e99b7f0445903d8598d2673c81` by ordinary merge.
 This combines PRs #1408, #1415, #1414 and #1417; it is not release acceptance.
-69 focused tests pass (39.26 s), including shared Layout inheritance, thin View defaults and font-set expansion together with unchanged SVG bytes.
-Schema equivalence passes: one additive schema, two declared changed schemas, 35 equal schemas, 739 diagnostic probes; L2+L3 17.7 s.
+Current-READY focused batch:52 tests pass (33.61 s), including shared Layout inheritance, thin View defaults and font-set expansion together with unchanged SVG bytes.
+Schema equivalence passes: one additive schema, two declared changed schemas, 35 equal schemas, 739 diagnostic probes; L2+L3 17.0 s.
 Import direction: 11 packages, 37 inward edges. Reachability: 232 modules, no staged/orphan modules. Authored `examples/**` diff is empty.
 Merge resolutions preserve each approved declaration; conflicts were confined to Spec13 and the expected-delta ledger. No product-code resolution was needed.
 Architecture: ingress resolves immutable Store/revision identities and pins before pure Layout composition; completed Layout defaults feed View admission. Theme role members merge one level; font sets expand before admission. Scene/adapters retain projection/serialization ownership.
@@ -54,4 +54,7 @@ Architecture: ingress resolves immutable Store/revision identities and pins befo
 
 ## Programme-level criteria (optional)
 
-Pending: integrated current-head CI/public artifacts; exact-main three-OS release on the commit containing this review. Keep #1341/#1342 actual adoption and #1345 provenance interpretation explicit; synthetic or old-base evidence does not close them.
+Previous integration CI38155112260 passed with46 unchanged Scene/SVG pairs.
+Current-READY integration checks/artifacts are tracked in [PR1422](https://github.com/tya5/chrona/pull/1422); they remain required, as does exact-main three-OS release containing this review.
+This publishes approved foundation slices, not completed five-design adoption.
+Keep #1341/#1342 adoption and #1345 provenance interpretation explicit; do not close those whole issues from this integration. PR1419's hold remains specific to that PR.
