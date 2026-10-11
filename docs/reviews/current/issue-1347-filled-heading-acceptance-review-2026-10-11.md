@@ -21,6 +21,13 @@ Implementation: `313280e0`. [Current design/architecture/implementation record](
 
 Release pending: final preceding-item READY integration, CI public Scene/SVG delta disclosure/current-head gates and acceptance-containing exact-main three-OS release. Local rows do not authorize closure.
 
+PR1416 integration correction `8062c71e`: combined M1 acceptance/structure67
+PASS6.35s, including filled-heading/inline-size families; glyph/default/placement
+family175 PASS104.67s. Snapshot11698754531 at26337656 independently checks
+actual Title Card SVG: two subject headings wrap, six former heading/body
+collision diagnostics disappear, canvas stays1600×900, no new diagnostics.
+Corrected-head snapshot/CI and exact-main release remain pending.
+
 Current integration `4c92a3ec` adopts merged PR1411 source main `36d8ed8d`
 without conflicts. One Python3.13 M1 batch passes55 tests (6.17s), including
 all21 filled-heading Scene/SVG and inline-size tests.

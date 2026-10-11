@@ -23,6 +23,13 @@
 
 Release pending: final READY integration, current-head PR snapshot/gates and acceptance-containing exact-main three-OS release. No closure is authorized by local rows.
 
+Current PR1416 correction `8062c71e` updates consumers to the approved rule:
+compiled HALCYON and its synthetic twin have no zero-float driving path to
+project finish; typed bus-test float is41 working-days of engineering. Placement,
+lag and twin-equality assertions remain. Complete compile/stroke/hosted-index/
+project-finish family38 PASS19.06s; combined M1 acceptance/structure67 PASS6.35s.
+Current corrected-head PR CI and exact-main release are still pending.
+
 Current integration `4c92a3ec` adopts merged PR1411 source main `36d8ed8d`
 without conflicts. One Python3.13 M1 batch passes55 tests (6.17s), including
 the complete15-test schedule/typed-float contract family. Complete agent-tool
