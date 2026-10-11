@@ -96,12 +96,60 @@ def test_render_draft_returns_the_artifact_and_does_no_io_of_its_own(project, tm
     assert all(isinstance(payload, dict) for payload in warning_payloads(result.rendered))
 
 
+@pytest.mark.parametrize("with_relations", [False, True])
+def test_render_progress_preserves_artifact_scene_and_request_identity(project, with_relations):
+    from dataclasses import replace
+    from chrona.presentation.model.render_progress import RenderProgress, RenderProgressEvent
+
+    if with_relations:
+        project.write_text(PROJECT.replace("relations: []", """relations:
+  - id: design-release
+    type: dependency
+    lag: 0d
+    from: {object: design, endpoint: end}
+    to: {object: release, endpoint: at}
+"""), encoding="utf-8")
+    request = DraftRenderRequest(project=project, target_kind="svg")
+    events = []
+    observed = replace(request, progress=RenderProgress(events.append))
+    assert observed == request
+    quiet = render_draft(request)
+    verbose = render_draft(observed)
+    assert verbose.artifact == quiet.artifact
+    assert verbose.rendered.scene == quiet.rendered.scene
+    assert verbose.rendered.warning_records == quiet.rendered.warning_records
+    assert [event for event in events if event.phase != "routing"] == [
+        RenderProgressEvent("schedule"), RenderProgressEvent("layout"), RenderProgressEvent("output")]
+    routing = [event for event in events if event.phase == "routing"]
+    assert routing == [RenderProgressEvent("routing", k, int(with_relations), "route-label-baseline")
+                       for k in range(int(with_relations) + 1)]
+
+
 def test_render_draft_bytes_equal_the_cli_output_file(project, tmp_path, monkeypatch):
     request = DraftRenderRequest(project=project, target_kind="svg", preset="editorial")
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(sys, "argv", ["chrona", "render", str(project), "--preset", "editorial", "-o", "cli.svg"])
     main()
     assert (tmp_path / "cli.svg").read_bytes() == render_draft(request).artifact.content
+
+
+@pytest.mark.parametrize("preset", ["technical-print", "elevated-light"])
+def test_png_draft_uses_a_target_peer_and_reports_it_outside_scene(project, preset):
+    rendered = render_draft(DraftRenderRequest(project=project, preset=preset, target_kind="png")).rendered
+    assert rendered.artifact.content.startswith(b"\x89PNG\r\n\x1a\n")
+    fallback = rendered.preset_visual_profile_fallback
+    assert fallback is not None
+    assert fallback.preset_id == f"chrona-builtin-{preset}"
+    assert fallback.preferred_profile == "chrona-output/visual/v0.7-svg"
+    assert fallback.selected_profile == "chrona-output/visual/v0.7-png"
+    assert fallback.target_kind == "png"
+    (payload,) = [item for item in warning_payloads(rendered) if item["code"] == fallback.code]
+    assert payload["severity"] == "info"
+    assert payload["selectedProfile"] == fallback.selected_profile
+    assert payload["preferredProfile"] == fallback.preferred_profile
+    assert payload["targetKind"] == "png"
+    assert not any(fallback.code in diagnostic for diagnostic in rendered.scene.diagnostics)
+    assert not any(fallback.code in diagnostic for diagnostic in rendered.surface.diagnostics)
 
 
 def test_render_draft_failures_are_typed_for_the_failure_report(project, tmp_path):

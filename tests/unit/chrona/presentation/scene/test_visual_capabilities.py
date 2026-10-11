@@ -35,6 +35,26 @@ def test_rich_profiles_are_exact_target_contracts():
     assert first_supporting_visual_profile("pdf", frozenset((DROP_SHADOW,))) is None
 
 
+@pytest.mark.parametrize("preferred, target, selected", [
+    (SVG_PROFILE, "png", PNG_PROFILE),
+    (PNG_PROFILE, "svg", SVG_PROFILE),
+    (SVG_ICON_PROFILE, "png", "chrona-output/visual/v0.7-png"),
+    ("chrona-output/visual/v0.7-png", "svg", SVG_ICON_PROFILE),
+    (SVG_ICON_PROFILE, "svg", SVG_ICON_PROFILE),
+    (SVG_ICON_PROFILE, "pdf", BASELINE_PROFILE),
+    (BASELINE_PROFILE, "png", BASELINE_PROFILE),
+])
+def test_preference_uses_only_registered_same_version_target_peers(preferred, target, selected):
+    from chrona.presentation.scene.visual_capabilities import preferred_target_visual_profile
+    assert preferred_target_visual_profile(preferred, target) == selected
+
+
+def test_unknown_preference_is_not_a_suffix_guess_or_silent_baseline():
+    from chrona.presentation.scene.visual_capabilities import preferred_target_visual_profile
+    with pytest.raises(VisualCapabilityError, match="E_VISUAL_CAPABILITY_PROFILE"):
+        preferred_target_visual_profile("chrona-output/visual/v99.9-svg", "png")
+
+
 def test_required_completed_treatment_is_rejected_by_baseline_before_adapter():
     with pytest.raises(VisualCapabilityError, match="E_VISUAL_CAPABILITY_UNSUPPORTED") as error:
         validate_surface_visual_profile(_surface(), resolve_visual_profile(BASELINE_PROFILE, "svg"))

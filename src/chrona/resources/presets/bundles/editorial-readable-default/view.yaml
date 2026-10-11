@@ -9,11 +9,11 @@ body:
       types:
       - span
       - point
-    exclude:
-      objectTypes:
-      - group
   grouping:
-    by: none
+    by: hierarchy
+    depth: all
+    rollup: header
+  hierarchyColumn: Task
   ordering:
     by: plannedStart
     direction: ascending
@@ -71,7 +71,7 @@ body:
       every: 1
       role: grid-minor
   backgroundDecoration:
-    rows: alternate
+    rows: rules
     groups: all
   tableColumns:
   - id: Task

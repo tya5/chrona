@@ -58,6 +58,7 @@ class SelectedFSRelation:
     relation_id: str
     predecessor_object_id: str
     successor_object_id: str
+    ordering_id: str | None = None
 
 
 PackingRule: TypeAlias = str
@@ -180,6 +181,10 @@ def _validate_input(value: LanePackingInput) -> None:
     if len(relation_ids) != len(set(relation_ids)):
         repeated = sorted({item for item in relation_ids if relation_ids.count(item) > 1})
         raise LaneMembershipError(f"E_REVIEW_LANE_DUPLICATE_RELATION: relation ids repeat: {repeated}")
+    if any(relation.ordering_id is not None
+           and (not isinstance(relation.ordering_id, str) or not relation.ordering_id)
+           for relation in value.selected_fs_relations):
+        raise LaneMembershipError("E_REVIEW_LANE_RELATION: relation ordering ids must be non-empty strings")
 
 
 def _make_bundles(value: LanePackingInput) -> tuple[_Bundle, ...]:
@@ -266,9 +271,10 @@ def derive_lane_membership(value: LanePackingInput) -> LaneMembership:
                     for existing in candidate_lane.bundles
                 ):
                     continue
-                candidates.append((relation.relation_id, predecessor.object_id, predecessor.item_id, candidate_lane))
+                candidates.append((relation.ordering_id or relation.relation_id, predecessor.object_id,
+                                   predecessor.item_id, relation.relation_id, candidate_lane))
             if candidates:
-                source_id, _, _, lane = min(candidates, key=lambda candidate: candidate[:3])
+                _, _, _, source_id, lane = min(candidates, key=lambda candidate: (*candidate[:3], candidate[3]))
                 rule = "chain"
 
         if lane is None and "dates" in value.packing:

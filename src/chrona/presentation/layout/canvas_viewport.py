@@ -83,6 +83,37 @@ class CanvasViewportWarning:
             raise ValueError("E_LAYOUT_VIEWPORT_FACT_INVALID: contributors must contain up to five records and a sufficient count")
 
 
+@dataclass(frozen=True)
+class AutoBlockSizeWarning:
+    """Completed Layout facts; advisory only, never a sizing constraint."""
+
+    surface_id: str
+    row_count: int
+    actual_block_size: Decimal
+    limit: Decimal
+
+    code = "W_LAYOUT_AUTO_BLOCK_SIZE"
+    source_ref = "/reviewSurface/maxBlockSize"
+
+    def __post_init__(self) -> None:
+        if (not isinstance(self.surface_id, str) or not self.surface_id
+                or isinstance(self.row_count, bool) or not isinstance(self.row_count, int) or self.row_count < 0
+                or not _is_finite_decimal(self.actual_block_size) or self.actual_block_size < 0
+                or not _is_finite_decimal(self.limit) or self.limit < 0
+                or self.actual_block_size <= self.limit):
+            raise ValueError("E_LAYOUT_VIEWPORT_FACT_INVALID: invalid completed auto-block warning")
+
+
+def auto_block_size_warning(*, surface_id: str, row_count: int, actual: Rect,
+                            declared: DeclaredViewport | None, limit: Decimal | None) -> AutoBlockSizeWarning | None:
+    if declared is None or declared.block_size is not None or limit is None:
+        return None
+    _validate_rect(actual, "actual")
+    if actual.block_size <= limit:
+        return None
+    return AutoBlockSizeWarning(surface_id, row_count, actual.block_size, limit)
+
+
 def canvas_viewport_warning(
     *,
     surface_id: str,

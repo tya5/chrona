@@ -182,6 +182,15 @@ added once. The pre-layout content requirement and row placement use this one
 rule. A table cell's line box is centred in its row using the cell's own role.
 Plot labels are not row-held text under this rule.
 
+The packaged default's `timeline.row.minBlockSize` is a Theme number-token
+expression, `{timeline-mark-size} + {timeline-row-padding}`, not an independent
+fixed pitch. Existing ingress number-expression resolution closes that floor;
+Layout then applies the completed mark/text maximum above, including measured
+wrapped cell lines. With the default34px mark and8px total padding,14px text at
+line-height1.4 gives42px rows;40px text gives64px rows. These are consequences
+of declarations, not preset-specific branches or caps. Custom bound row floors
+remain authoritative; mark size stays bound, avoiding circular derivation.
+
 A declared comparison stack (#1149) reserves its completed outer block extent,
 including span-frame padding, for row requirements and inter-track pitch. An
 oversized stack grows that reservation without resizing its nominal track;

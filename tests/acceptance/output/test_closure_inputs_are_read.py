@@ -9,12 +9,14 @@ that is still dropped is reported, one that starts being read fails so its pin g
 from __future__ import annotations
 
 import tempfile
+from functools import lru_cache
 from importlib.util import find_spec
 from pathlib import Path
 
 import pytest
-import yaml
 
+from chrona.resources import safe_load
+from tests.support.public_evidence import declared_slides
 from tools.materialize_example import _copy_context_closure
 from chrona.presentation.model.closure import resolve_render_context
 from chrona.scheduling.scheduler import ReferenceScheduler
@@ -26,24 +28,32 @@ ROOT = Path(__file__).resolve().parents[3]
 # The other declared contexts keep the rule on the PR path; this instance runs on the
 # main, nightly and manual runs (#657).
 CORPUS_ONLY = frozenset({"halcyon-1/gallery-editorial-lanes"})
-KNOWN = yaml.safe_load((Path(__file__).parent / "known_unused.yaml").read_text(encoding="utf-8")) or {}
+
+
+@lru_cache(maxsize=1)
+def _known():
+    return safe_load((Path(__file__).parent / "known_unused.yaml").read_bytes()) or {}
 
 
 def _slides():
-    for manifest_path in sorted(ROOT.glob("examples/*/manifest.yaml")):
-        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
-        example = manifest_path.parent
-        for slide in manifest.get("slides", ()):
-            identity = f"{example.name}/{slide['id']}"
-            marks = (pytest.mark.skip(reason="requires the optional local CJK font provider")
-                     if example.name == "controller-z-ja" and find_spec("chrona_fonts_noto_cjk") is None else ())
-            if identity in CORPUS_ONLY:
-                marks += (pytest.mark.corpus,)
-            yield pytest.param(identity, example, example / str(slide.get("context", manifest["context"])),
-                               id=identity, marks=marks)
+    for slide in declared_slides(ROOT):
+        if slide.context is None:
+            raise ValueError(f"E_PUBLIC_EVIDENCE_CONTEXT:{slide.key}")
+        example = slide.svg.parent.parent
+        marks = (pytest.mark.skip(reason="requires the optional local CJK font provider")
+                 if example.name == "controller-z-ja" and find_spec("chrona_fonts_noto_cjk") is None else ())
+        if slide.key in CORPUS_ONLY:
+            marks += (pytest.mark.corpus,)
+        yield pytest.param(slide.key, example, slide.context, id=slide.key, marks=marks)
 
 
-@pytest.mark.parametrize("slide,example,context_path", list(_slides()))
+def pytest_generate_tests(metafunc):
+    """Discover closure cases after module import, retaining each slide ID."""
+    names = {"slide", "example", "context_path"}
+    if names <= set(metafunc.fixturenames):
+        metafunc.parametrize("slide,example,context_path", tuple(_slides()))
+
+
 def test_every_declared_closure_input_is_read(slide, example, context_path):
     with tempfile.TemporaryDirectory() as temporary:
         snapshot = Path(temporary) / "snapshot"
@@ -61,7 +71,7 @@ def test_every_declared_closure_input_is_read(slide, example, context_path):
             failure = None
         except RenderFailed as error:
             failure = error
-    expected = KNOWN.get(slide)
+    expected = _known().get(slide)
     if failure is None:
         assert expected is None, f"{slide} now reads every input: remove it from known_unused.yaml"
         return

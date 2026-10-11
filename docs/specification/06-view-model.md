@@ -185,6 +185,18 @@ field as a secondary title; a first-group variant). The text is View content; it
 grammar, ordinal forms and diagnostics are owned by
 [Specification 50](50-constraint-driven-gantt-surface-quality.md) section 3.4.
 
+### 6.1 Draft relation visibility override (#1299)
+
+`chrona render --relations none|semantic` overrides only the effective Draft
+View's `visibility.relations` mode, before validation and resource identity
+freeze. Scalar declarations remain scalar; object declarations retain their
+other options. Without the flag, the original declaration and normalization
+are unchanged. The override neither writes the authored resource nor mutates
+an immutable render-review Context. Scheduling still sees every Core dependency.
+`none` omits semantic relation requests before Layout routing; intentional
+omission is not `W_LAYOUT_RELATION_SUPPRESSED`. The CLI documents the override
+in help and the first-project guide.
+
 ## 7. Temporal Window
 
 A View selects a temporal window independently from scheduling semantics. v0.1 allows

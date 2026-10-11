@@ -5,6 +5,7 @@ from datetime import date
 import pytest
 
 from chrona.presentation.layout import route_search as search
+from chrona.core.relation_identity import relation_identity
 from tests.support import synthetic_review as sr
 
 
@@ -50,11 +51,13 @@ def test_generated_project_obeys_the_surface_candidate_bound(tmp_path, monkeypat
     assert counts["history_predicates"] <= 20 * relation_count * 4096**2
     if relation_count:
         assert counts["generators"] >= relation_count
-    relation_ids = {f"relation:r{index}" for index in range(relation_count)}
-    emitted = {primitive.scene_id.split(":", 2)[0] + ":" + primitive.scene_id.split(":", 2)[1]
-               for primitive in rendered.surface.primitives
-               if primitive.scene_id.startswith("relation:")}
+    relation_ids = {relation_identity(index, relation)
+                    for index, relation in enumerate(source["relations"])}
+    routes = [primitive for primitive in rendered.surface.primitives
+              if primitive.scene_id.startswith("relation:")]
+    emitted = {primitive.source_ref for primitive in routes}
     assert emitted == relation_ids
+    assert len(routes) == relation_count
     assert not [diagnostic for diagnostic in rendered.scene.diagnostics
                 if diagnostic.startswith("W_LAYOUT_RELATION_SUPPRESSED:")]
     print(f"Project R={relation_count}: {dict(counts)}")
