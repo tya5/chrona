@@ -191,9 +191,10 @@ def test_unselected_additions_preserve_the_exact_prepared_grid(obstacle_class, r
 def test_shared_copy_selection_diverges_only_when_its_content_changes():
     index, query, prepared = _prepared_marks()
     clone = index.copy()
-    assert clone._prepared is not index._prepared
+    assert clone._prepared is index._prepared  # query-only, copy-on-write inventory
     assert clone._selection(("mark",), ("timeline",)) is prepared
     clone.add(SurfaceObstacle("zz:new", "mark", "timeline", ObstacleRect(0, 0, 3, 3)))
+    assert clone._prepared is not index._prepared
     assert clone._selection(("mark",), ("timeline",)) is not prepared
     assert index._selection(("mark",), ("timeline",)) is prepared
     for snapshot in (index, clone):

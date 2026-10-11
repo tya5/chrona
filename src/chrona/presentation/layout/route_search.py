@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from heapq import heappop, heappush
 from itertools import count
 from math import hypot, isfinite, nextafter
+from types import MappingProxyType
+from typing import Mapping, cast
 
 from chrona.presentation.layout.obstacles import (
     ObstacleRect,
@@ -35,6 +37,54 @@ SparseGraph = tuple[
 ]
 
 HistoryEntry = tuple[float, float, float, tuple[Point, Point]]
+
+
+@dataclass(frozen=True, slots=True)
+class _VisibilityBase:
+    """Endpoint-independent surface graph, including exact blocked-edge facts."""
+
+    nodes: frozenset[Point]
+    visibility: Mapping[tuple[Point, Point], bool]
+
+
+def _build_visibility_base(
+    rects: tuple[tuple[float, float, float, float], ...], *,
+    grid_offset: float, bounds: tuple[float, float, float, float] | None, clear,
+    previous: _VisibilityBase | None = None, clear_additions=None,
+) -> _VisibilityBase:
+    """Prepare obstacle/boundary nodes once; endpoint overlays do not mutate it."""
+    nodes: set[Point] = set()
+    xs: set[float] = set()
+    ys: set[float] = set()
+    for left, top, right, bottom in rects:
+        xs.update((left - grid_offset, right + grid_offset))
+        ys.update((top - grid_offset, bottom + grid_offset))
+        for x in (left - grid_offset, right + grid_offset):
+            for y in (top - grid_offset, bottom + grid_offset):
+                if bounds is None or (bounds[0] <= x <= bounds[2] and bounds[1] <= y <= bounds[3]):
+                    nodes.add((x, y))
+    if bounds is not None:
+        left, top, right, bottom = bounds
+        xs = {x for x in xs if left <= x <= right} | {left, right}
+        ys = {y for y in ys if top <= y <= bottom} | {top, bottom}
+        for x in xs:
+            nodes.update(((x, top), (x, bottom)))
+        for y in ys:
+            nodes.update(((left, y), (right, y)))
+    by_x: dict[float, list[Point]] = {}
+    by_y: dict[float, list[Point]] = {}
+    for point in sorted(nodes):
+        by_x.setdefault(point[0], []).append(point)
+        by_y.setdefault(point[1], []).append(point)
+    visibility = {}
+    for groups in (by_x.values(), by_y.values()):
+        for group in groups:
+            # Both axis groups are already in lexicographic point order.
+            for a, b in zip(group, group[1:]):
+                old = previous.visibility.get((a, b)) if previous is not None else None
+                visibility[(a, b)] = (clear(a, b) if old is None
+                                      else old and clear_additions(a, b))
+    return _VisibilityBase(frozenset(nodes), MappingProxyType(visibility))
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,6 +176,7 @@ def _build_sparse_graph(
     grid_offset: float,
     bounds: tuple[float, float, float, float] | None,
     clear,
+    visibility_base: _VisibilityBase | None = None,
 ) -> SparseGraph:
     """Build an immutable finite visibility graph and its reverse heuristic."""
     boxes = rects
@@ -176,7 +227,11 @@ def _build_sparse_graph(
             group.sort()
             for (_, first), (_, second) in zip(group, group[1:]):
                 a, b = ordered[first], ordered[second]
-                if clear(a, b):
+                visible = (visibility_base.visibility.get((a, b))
+                           if visibility_base is not None else None)
+                if visible is None:
+                    visible = clear(a, b)
+                if visible:
                     direction = 0 if axis == 0 else 1
                     distance = abs(a[axis] - b[axis])
                     adjacency_lists[first].append((second, direction, distance))
@@ -338,8 +393,20 @@ def orthogonal_route_candidates(
                 for item in items
                 for left, top, right, bottom in (obstacle_envelope(item.geometry),)
             )
+        visibility_base = None
+        if index is not None:
+            scope = index.route_visibility_scope(classes, regions, port_ids)
+            base_key = ("visibility-base-v1", repr((grid_offset, bounds)), scope.port_ids)
+            visibility_base = cast(_VisibilityBase | None, scope.bases.get(base_key))
+            if visibility_base is None:
+                visibility_base = _build_visibility_base(
+                    event_rects, grid_offset=grid_offset, bounds=bounds, clear=clear,
+                    previous=cast(_VisibilityBase | None, scope.previous_bases.get(base_key)),
+                    clear_additions=lambda a, b: scope.clears_additions(ObstacleSegment(a, b)))
+                scope.bases[base_key] = visibility_base
         graph = _build_sparse_graph(
-            start, end, event_rects, grid_offset=grid_offset, bounds=bounds, clear=clear)
+            start, end, event_rects, grid_offset=grid_offset, bounds=bounds, clear=clear,
+            visibility_base=visibility_base)
         if memo is not None and graph_key is not None:
             nodes, edges, heuristic = graph
             records = 1 + 2 * len(nodes) + sum(map(len, edges)) + len(heuristic)
