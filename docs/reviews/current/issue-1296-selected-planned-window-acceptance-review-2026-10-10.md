@@ -2,8 +2,9 @@
 
 # Issue #1296 — selected-planned window acceptance
 
-Prepared implementation: `d0766a07ca2c50aac7044e39bd327792cef3e5c1`, adopting
-ready base `4f4ee94ccc21c8d3c85021a1dc50a931d068e044` via `db0eb546`.
+Padding implementation: `d0766a07ca2c50aac7044e39bd327792cef3e5c1`;
+integration correction: pre-code Spec06 publication `f797c2c1` and
+[architecture/implementation decision](https://github.com/tya5/chrona/issues/1296#issuecomment-6105416153).
 Authority: [current design and plan](https://github.com/tya5/chrona/issues/1296#issuecomment-6094171095).
 Independent architecture/code review found no layer breach. View owns padding;
 Core marks, explicit windows and selected-comparison behavior are unchanged.
@@ -27,14 +28,21 @@ None. Local criteria do not substitute for the required release gate.
 
 ## Verification and release
 
-Model suite: 471 passed (25.42s). Layout allocation/natural geometry/Scene suite:
-86 passed (7.85s). These are focused checks, not a full-suite claim.
-After adopting #1214, window/model/render and coupled-flow tests: 22 passed
-(4.47s). The subsequent bot adoption changes no product or test bytes.
-Prepared WIP has no PR yet; earlier board publications retain priority.
-Ordinary adoption of main `e19005d0` and published #1293/#1294/#1295 WIPs
-preserves the pending formatter/axis/table migrations. Actual-default/model
-and public-diagnostic tests: 17 passed (2.84s). The old test mixed default View
-with Editorial Theme; it is not evidence for the current default.
-Required before closure: fresh current-base corpus count table and PR checks,
-automatic derived publication, and exact-main full release containing this review.
+Combined predecessor integration `73552416` includes #1292/#1293/#1295,
+final #1294 repair `ac14998c` and main `b65df355`. Its new early visibility
+entry exposed a missing diagnostic detail; the failing public test was retained.
+One Layout projection-window validator now runs before early/direct/candidate
+geometry. It keeps the existing code/path and dates/selected IDs/cause;
+normal model padding and completed geometry remain unchanged.
+
+Focused combined suite:90 passed (62.41s): actual library-default Scene/SVG,
+public fault-injection diagnostic, model windows, explicit clipping, inclusive
+date display, bounded tables and default-axis windows. Nine parameterized
+early/direct/candidate cases cover equal, reversed and invalid bounds and
+prove no visibility geometry is built before rejection. Structural checks:
+11 packages/37 inward edges;228 modules reachable, none orphaned.
+
+No active PR or full-release claim. Main `b65df355` is still synchronizing;
+predecessor merges and final trusted READY adoption remain required. Before
+closure, inspect the fresh corpus count table/Scene/SVG, current-head PR gates
+and review-containing exact-main three-OS release. No authored examples edits.

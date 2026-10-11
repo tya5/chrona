@@ -31,6 +31,7 @@ from chrona.presentation.layout.surface_quality import (
 )
 from chrona.presentation.layout.mark_geometry import compose_item_marks
 from chrona.presentation.layout.mark_facet_visibility import admitted_source_selection
+from chrona.presentation.layout.projection_window import require_positive_projection_window
 from chrona.presentation.layout.surface_mark_visibility import (
     ItemMarkVisibilityIndex, MarkOccurrence, MarkOccurrenceKind,
     ensure_request_mark_visibility_index,
@@ -226,14 +227,9 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
     metric_values = getattr(measured_sources, "metric_values", None)
     if not isinstance(metric_values, dict):
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
+    start, end = require_positive_projection_window(projection)
     allocation = allocation if allocation is not None else prepare_surface_slots(request)
     decisions = {item.source: item for item in allocation.decisions}
-    start, end = projection.window
-    if not isinstance(start, date) or not isinstance(end, date) or start >= end:
-        ids = tuple(item.object_id for item in projection.items)
-        raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/window",
-                          detail=f"expected a positive Date window; start={start!r}, end={end!r}; "
-                                 f"selected objects={ids!r}")
     request = ensure_request_mark_visibility_index(request)
     projection = request.projection
     if projection.lane_membership is not None:
