@@ -18,7 +18,18 @@ Implementation: `dbd88829`. [Current design/architecture/implementation record](
 
 ## Programme-level criteria (optional)
 
-**Release pending:** ordinarily adopted trusted READY `0071e5ee`, including #1361/#1389/#1372. Caption, text-extent and strip Scene/SVG integration on this base: **61 passed** (44.89s). Fresh public snapshot, exact-head gates and acceptance-containing exact-main three-OS release must succeed before closure. Local completion is not published release acceptance.
+**Release pending:** ordinary main adoption includes #1361/#1389/#1372 and
+docs-only #1393/#1398. Caption, text-extent and strip Scene/SVG integration on
+trusted READY `0071e5ee`: **61 passed** (44.89s); final caption tests after the
+docs-only `9ee4dbce` adoption: **14 passed** (13.87s). Before publication,
+`9ee4dbce` must itself pass the exact trusted READY gate. Exact-head PR gates
+and acceptance-containing exact-main three-OS release must succeed before
+closure. Local completion is not published release acceptance.
+
+[CI38105775581](https://github.com/tya5/chrona/actions/runs/38105775581),
+head `07431c2a`, produced101 before/after artifact files:46 Scene and46 SVG
+files are all byte-identical; only the generated diagnostics inventory changes.
+The final refreshed head still needs its own snapshot/checks.
 
 ## Architecture conclusion
 
