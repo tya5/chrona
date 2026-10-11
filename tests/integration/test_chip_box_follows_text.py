@@ -106,10 +106,10 @@ def test_default_and_explicit_raw_chip_output_are_byte_identical(tmp_path):
     raw = _render(tmp_path, "raw")
     explicit_raw = _render(tmp_path, "explicit-raw", viewer_fit="raw")
     assert raw.artifact.content == explicit_raw.artifact.content
-    assert sha256(raw.artifact.content).hexdigest() == "51c54350062c2774890471a04b76bd42e2e2775d04d81547523e0e92687049ef"
-    # READY-477e571d resources reproduce 445031fb. #1295 changes only their
-    # View/Layout provenance; every other Scene field and SVG byte is identical.
-    assert sha256(serialize_scene(raw.scene)).hexdigest() == "5e027fbe0416213797bfc27c273a615ae43ced18309317e7d6da1b3439e023bd"
+    # #1296 pads the selected-planned window; removing only that rule reproduces
+    # both old hashes. Raw and explicit-raw bytes remain exactly identical.
+    assert sha256(raw.artifact.content).hexdigest() == "83b5b75f6f548316bc3f3f3f66daf512c007d16adfcb293ed2c31667d59074ec"
+    assert sha256(serialize_scene(raw.scene)).hexdigest() == "9ceb40142549ea31cd56536761d05894be9122f3a7bf4221582d0ea1e6560a66"
     labels = [item for item in raw.surface.primitives if item.kind == "Text" and item.purpose == "member-label"]
     assert labels and any(len(item.text_layout.lines) > 1 for item in labels)
     assert "<tspan" in raw.artifact.content.decode("utf-8")

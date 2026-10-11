@@ -10,7 +10,6 @@ supportingFiles:
   - {path: controller-z/README.md, reason: Controller Z corpus and curriculum documentation}
   - {path: controller-z-ja/README.md, reason: Japanese corpus documentation}
   - {path: halcyon-1/README.md, reason: HALCYON corpus documentation}
-  - {path: orion-asic/README.md, reason: Orion corpus documentation}
   - {path: controller-z/assets/icons-source.json, reason: reproducible Iconify catalog generator source}
   - {path: controller-z/assets/icons.NOTICE, reason: icon source license notice}
   - {path: controller-z/assets/lucide-tabler-icons.json, reason: icon importer regression source}

@@ -19,7 +19,7 @@ def test_repository_coverage_is_deterministic_and_lists_all_registers():
     assert first == render(root)
     assert "| Project | `deadline` |" in first
     assert "examples/halcyon-1/snapshots/baseline-2027-06.yaml" in first
-    assert "examples/orion-asic/extensions/semiconductor-development.yaml" in first
+    assert "examples/halcyon-1/extensions/semiconductor-development.yaml" in first
     assert "## Finite-schema vocabulary" in first
     assert "## Uncovered schema vocabulary" in first
     assert "## Semantic corpus magnitude" in first

@@ -367,6 +367,9 @@ body:
     key-panel-block:
       type: number
       value: 108
+    key-caption-gap:
+      type: number
+      value: 54
     title-panel-width:
       type: number
       value: 700

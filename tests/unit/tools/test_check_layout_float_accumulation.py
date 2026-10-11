@@ -37,3 +37,28 @@ def test_new_decimal_owners_require_an_explicit_decimal_seed(tmp_path, filename,
     for arguments in ("values", "values, 0.0", "values, 0", "values, UNKNOWN"):
         path.write_text(f"def {owner}(values):\n    return sum({arguments})\n", encoding="utf-8")
         assert violations(tmp_path) == (f"{filename}:2:E_LAYOUT_FLOAT_SUM_UNCLASSIFIED",)
+
+
+@pytest.mark.parametrize("expression", [
+    "sum(map(len, edges))",
+    "sum(len(neighbors) for neighbors in edges)",
+])
+def test_checker_accepts_integer_length_counts_in_any_owner(tmp_path, expression):
+    (tmp_path / "unrelated_owner.py").write_text(
+        f"def retained_records(edges):\n    return {expression}\n", encoding="utf-8")
+    assert not violations(tmp_path)
+
+
+@pytest.mark.parametrize("expression", [
+    "sum(map(float, edges))",
+    "sum(map(custom_length, edges))",
+    "sum(map(len, edges), 0.0)",
+    "sum((len(neighbors) for neighbors in edges), start=0.0)",
+    "sum((len(neighbors) for neighbors in edges), 0.0)",
+    "sum(neighbor.width for neighbor in edges)",
+    "sum(len(neighbor) + neighbor.width for neighbor in edges)",
+])
+def test_integer_count_classification_does_not_admit_float_geometry(tmp_path, expression):
+    (tmp_path / "unrelated_owner.py").write_text(
+        f"def geometry(edges):\n    return {expression}\n", encoding="utf-8")
+    assert violations(tmp_path) == ("unrelated_owner.py:2:E_LAYOUT_FLOAT_SUM_UNCLASSIFIED",)
