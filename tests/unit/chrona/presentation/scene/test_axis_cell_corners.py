@@ -211,13 +211,14 @@ def test_role_admission_admits_both_properties_on_the_band_roles_only():
 # --- the other adapters ------------------------------------------------------------------------------------
 
 
-def test_typst_draws_a_radius_and_rejects_a_chamfer_with_the_symbol_failure():
+def test_typst_draws_a_radius_and_a_chamfer_as_its_polygon():
     rounded = _axis_tiers_scene(MONTH, theme=_theme_with(radius=0.25, gap=4))
     cell = _cells(rounded)[1]
 
     assert f"radius: {cell.corner_radius:g}pt" in render_v05_typst(rounded)
-    with pytest.raises(ValueError, match="E_VISUAL_CAPABILITY_UNSUPPORTED"):
-        render_v05_typst(_axis_tiers_scene(MONTH, theme=_theme_with(chamfer=0.25, gap=4)))
+    cut = _axis_tiers_scene(MONTH, theme=_theme_with(chamfer=0.25, gap=4))
+    drawn = render_v05_typst(cut)
+    assert drawn.count("curve.close()") >= len(_cells(cut))
 
 
 def test_tikz_draws_a_radius_as_rounded_corners_and_a_chamfer_as_its_polygon():

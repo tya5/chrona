@@ -658,7 +658,7 @@ def test_legend_milestone_entry_renders_as_the_bound_symbol_at_chart_size():
 
     swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:milestone")
     assert swatch.kind == "Symbol"
-    assert swatch.visual_role == "milestone"
+    assert swatch.visual_role == "planned"  # painted as the chart's planned point, as the milestones are (#499)
     # planned's own markHeight ratio (mark-full = 1) times timeline.mark.blockSize (8).
     assert swatch.bounds[2] == pytest.approx(8.0)
     assert swatch.bounds[3] == pytest.approx(8.0)

@@ -13,20 +13,10 @@ from typing import Mapping
 
 from chrona.resources import safe_load
 from tools.materialize_example import materialize
+from tools.derived_report_inventory import REPORTS
 
 
 ROOT = Path(__file__).resolve().parents[1]
-REPORTS = (
-    "docs/diagnostics/axis-name-tables.md",
-    "docs/diagnostics/declared-value-inventory.md",
-    "docs/diagnostics/inventory.md",
-    "docs/diagnostics/presentation-contrast.md",
-    "docs/diagnostics/presentation-font-identity.md",
-    "docs/diagnostics/vocabulary-inventory.md",
-    "docs/gallery/presentation-coverage.md",
-    "docs/gallery/semantic-realization-coverage.md",
-    "docs/examples/corpus-coverage.md",
-)
 REPORT_COMMANDS = (
     ("tools.axis_name_tables",),
     ("tools.declared_value_inventory",),
