@@ -522,7 +522,8 @@ projects primitives/paint, and adapters never select bounds or layer order.
 `backgroundExtents.groupHeaderBand: text` uses the completed header-content
 inline interval: band start through the last nonsuppressed measured text/run
 end, including the leading `labelInset` or existing tab reservation. It adds
-no trailing or symmetric padding and clamps the interval to the table column.
+no trailing or symmetric padding unless the optional trailing inset below is
+declared, and clamps the interval to the table column.
 The existing text overflow policy and band block extent are unchanged. With
 all runs suppressed the interval contains only its leading inset (zero width
 when that inset is zero); missing horizontal content bounds fail with
@@ -531,6 +532,22 @@ band's block extent, retaining its completed inline interval. Other background
 extents, group-decoration selection and vertical tag cells remain unchanged.
 `text` is not admitted for other background roles. Layout owns the completed
 Rect; Scene and adapters do not measure or fit the band.
+
+**Trailing caption inset (#1368).** `groupHeader.labelInsetEnd` names a
+finite, nonnegative number token in units of `groupHeader`'s font size.
+For `groupHeaderBand: text`, Layout adds that ratio times the header font
+size to the last actually drawn, nonsuppressed text/run end, then applies the
+existing table-column clamp. Leading inset/tab reservation, glyph positions,
+ellipsis policy and measured content bounds are unchanged. The inset belongs
+to band geometry, not to text bounds or the independent header-row strip.
+When no positive-width nonsuppressed text is drawn, retain the existing
+leading-only band extent without adding a trailing inset. Absence or zero
+keeps existing geometry; other band extents do not consume the valid inset.
+Negative or non-number tokens fail with existing `E_THEME_TOKEN_TYPE` at
+`/body/roles/groupHeader/labelInsetEnd`. Vertical tags reject the authored
+horizontal-only property with `E_THEME_ROLE_PROPERTY_UNSUPPORTED` at that
+pointer, consistently with `labelInset`. Folded marks still change only the
+band's block extent. Scene and adapters serialize the completed Rect.
 
 **Horizontal header inset (#1284).** `groupHeader.labelInset` names a finite,
 nonnegative font-size ratio. Layout places plain and role-marked header text
