@@ -11,23 +11,40 @@ product implementation. No product changes or second implementation PR here.
 | On the roadmap, they show its own counts. | Same templates against the roadmap; independent selected/completed membership evidence and actual rendered text. |
 
 Do not edit `examples/**`; permanent adoption is reviewer-owned.
-Design slices, before final implementation planning:
-1. Close item/group membership and ghost/combined deduplication; distinguish
-   selected facts from completed narrative records. Decide whether rail-only
-   notes, unconsumed notes and explicit duplicate narrative occurrences count.
-2. Extend existing derived-figure grammar with shared declared digits,
-   zero-padding, English cardinal and available kanji names. Close zero/range,
-   capitalization, missing-table diagnostics and all three consumer ingresses.
-3. Close the Layout dependency: count-dependent heading measurement can change
-   note suppression. Review finite candidate-count validation (at most N+1
-   complete layouts for N possible records; highest self-consistent result)
-   and explicit no-solution diagnostics, rather than assume convergence or
-   count selected notes as placed. Prove isolation of failed trials and work.
+Selected design; implementation pending. Normative contracts are in
+Specs05/06/33, not duplicated here. Reuse `{figure:<id>}`; no count-only DSL.
+View declares integer sources; Layout defaults offer figure text formats;
+Presentation closes immutable template programs. Placed notes come from typed
+Layout narrative receipts, never Scene IDs or selected-note totals.
+
+Read-only baseline: all three HALCYON Views select26 objects/six groups; the
+current roadmap View also selects26/six. Equal wording cannot prove dependence:
+an independently different synthetic3/2 case is mandatory. These are membership
+probes, not rendered-note acceptance. Own Python3.13 dev/render/CJK venv
+imports this worktree; no product or example changes.
 
 Architecture review: Specs03/05/06/33/44/50/56, #586/#927 and #1341/#1343.
-Core accepts neutral integer facts; Projection owns selection; Presentation
-owns formatting; Layout owns completed counts/measurement/placement. No Scene
-recounting, adapter substitution, Project-specific names or previous-render state.
-Publish selected normative behavior and whole-architecture review before code;
-then finalize slices/files, synthetic suppression/cycle/format tests, disposable
-three-design/roadmap evidence, batch public outputs and exact-main release gates.
+Core accepts neutral integers; Projection owns selection; Presentation owns
+formatting; Layout owns completed counts/measurement/placement. Spec56 requires
+additive schemas/shared shape/vocabulary; #1341 whole-member replacement applies
+to `figureFormats`. Summary metrics retain integers/their own format. Explicit
+caption templates leave old literal braces alone. Unsupported pre-Layout reads
+of placed-note figures fail; they never get guessed values. Scene/adapters only
+project completed text/geometry. No scheduling feedback or previous-render state.
+These boundaries preserve Specs03/05/06/33/44/50 and #586/#927; #1343 supplies
+resolved narrative identity, not a guarantee that Layout actually places it.
+
+Layout validates the single late count over0..N, descending; first consistent
+completion wins, at mostN+1 trials, fresh mutable search state, no leaked trial
+diagnostics. No solution is a typed failure, not selected-count substitution.
+Unused late figures resolve from one ordinary layout. Count-dependent copy
+enters natural measurement before allocation, never post-geometry substitution.
+Architecture risk: retain exact natural/fixed candidate preparation and
+progress/cache isolation in the needed Layout-owned closure. Finalize files
+after inspecting the merged #1343 request pipeline; a callback must not make
+usecases the geometry owner. Tests prove no extra trials without late reads.
+
+Next publication: implementation slices/files after #1343 merges, then pure
+format/membership and Layout suppression/no-fixed-point tests, disposable
+three-design/roadmap materializers, batch public evidence and exact-main
+containing-review release. No second implementation PR before that dependency.

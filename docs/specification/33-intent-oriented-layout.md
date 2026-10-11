@@ -139,6 +139,24 @@ Each node's panel precedes its one completed glyph batch, parents before
 children; Scene never fits the run or changes content allocation.
 
 **Slot headings (#1064, [work record](../planning/active/issue-1065-1064-field-group-indent-and-slot-heading-2026-10-04.md)).**
+
+**Heading count design (#1346; implementation pending).** A slot heading uses
+exactly one of literal `text` or figure `template`; alignment, presence,
+reservation and overflow rules stay unchanged. Literal View overrides win.
+Presentation supplies closed programs; Layout binds before natural measurement.
+Layout records one typed receipt per completed annotation body, full narrative
+rail summary, or unconsumed note occurrence. Marker/index/status/kind fragments
+and suppressed bodies add no notes. Explicit duplicate narratives count
+separately; one annotation's body/summary counts once. N is the possible
+narrative occurrences in the immutable input. Try candidate counts N down to0;
+accept the first completed layout whose receipts equal its candidate. Each
+trial has fresh mutable placement/obstacle/diagnostic state and count-correct
+SourceInputs; rejected trials leak no geometry/cache results or diagnostics.
+At mostN+1 trials, not guessed-count convergence. No consistent count is
+`E_LAYOUT_FIGURE_COUNT_UNSTABLE`, with domain/trial count; never substitute
+selected counts. No late template read means one ordinary composition; unused
+late figures then resolve from its receipts. Scene/adapters do not recount
+or replace text after geometry. Existing resources remain unchanged.
 A slot whose `source` is any enumerated slot source, and an override of such a slot, may
 declare `heading: {text, align, block}`: a caption over the slot. This includes the native title, table,
 timeline, timeline-axis, dependency-network, group-details, milestones and observations owners as well as

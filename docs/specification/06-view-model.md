@@ -283,6 +283,32 @@ or with an empty map, the profile's copy and output remain unchanged.
 
 ### 7.2 Derived figures (#586)
 
+**Reusable heading-count design (#1346; implementation pending).** Heading
+parts additionally admit existing `{figure:<id>}` markers. Slot headings may
+declare `template` instead of literal `text` (Spec33); `slotHeadingText` stays
+literal. Unknown/malformed/scoped references retain existing diagnostics and
+exact pointers. `count` adds global-only `groups` and `placedNotes`. Selected
+items are distinct Primary/combined object identities, not ghost/scenario or
+repeated appearances; groups are distinct nonempty group identities in those
+selected memberships. Placed notes are Spec33 completed narrative occurrences,
+not selected Project notes. This late source is table-timeline-only and read
+only by heading parts/slot captions; other consumers refuse it with
+`E_FIGURE_LAYOUT_SCOPE` at their reference. Unused late figures still resolve.
+
+Optional `figureFormats` maps declared count-figure IDs to closed text formats.
+Layout `viewDefaults.figureFormats` offers whole-member replacement; a View
+map, including `{}`, replaces it. Unknown IDs, non-count figures or unsupported
+options are `E_VIEW_FIGURE_FORMAT_INVALID` at that entry. Omission keeps decimal
+text. Forms: `digits` (`minimumDigits: 1..80`, default1), `english-words`
+(`capitalize`, default false), `kanji`, `kanji-formal`. Zero is `0`, `zero` or
+`〇`; padding never truncates. English uses hyphenated tens, spaces between
+scale groups, no comma or “and”, names through quintillion (0..10^21−1).
+Kanji forms share existing Presentation digit/ten name tables (0..99), not
+a new Core/localization table; ordinal ranges do not change. Outside available
+names is `E_VIEW_FIGURE_FORMAT_RANGE`, with value/form/range, not silent digits.
+Template consumers use the selected format; Summary metrics retain raw integers
+and their own format. Theme's existing text treatment applies afterwards.
+
 A View MAY declare `figures`, an array of derived figures that the Core resolves (Spec 05 §12.2) and a consumer shows by name. Each has a unique `id` (no braces, whitespace or control characters: `E_VIEW_FIGURE_INVALID`; a repeat is `E_VIEW_FIGURE_DUPLICATE`) and one closed `kind`: `daysUntil {from?, to, days?, calendar?}`, `daysIn {period, days?, calendar?}` or `count {source, scope?}`. A fact (`from`, `to`) is exactly one of `asOf`, `{period, side: start | end | last}` or `{object, endpoint: at | start | end}`; `from` defaults to `asOf`. `last` is the period's exclusive end minus one calendar day, not its last working day (Spec 05 §12.2). `days` is `calendar` (the default) or `working`; `calendar` names the Project calendar a working count uses (the Project default when omitted) and is a dead declaration, `E_VIEW_FIGURE_INVALID`, with calendar days. Nothing else is accepted: no expression, no operator, no field name, no other kind or fact.
 
 Every declared figure is resolved after scheduling, whether or not a consumer shows it. A fact that cannot be read refuses the render with all findings (`E_FIGURE_PERIOD_UNKNOWN`, `E_FIGURE_OBJECT_UNKNOWN`, `E_FIGURE_ENDPOINT_UNAVAILABLE`, `E_FIGURE_ASOF_MISSING`, `E_FIGURE_CALENDAR_UNAVAILABLE`; the message names the figure, the fact and what is declared): a figure is never blank, zero or guessed. A Summary Profile metric shows a figure with `source: {figure: <id>}` (Spec 46); a metric naming an id the View does not declare is `E_VIEW_FIGURE_UNKNOWN`. The member is optional and additive in `chrona/view/v0.28`; a View without `figures` renders as before.
