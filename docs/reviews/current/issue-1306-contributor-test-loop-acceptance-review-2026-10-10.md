@@ -4,7 +4,7 @@
 
 Implementation: `c9936062544f8b4ca0f3ed64015674deca10b6b4`, with CI outcome
 correction `137959c2bb624ca77914740ac0bcf71c216b2d30`; ordinarily adopted
-source main `8fa3fe21aa1c6d2c0d1ee6826a833d29dc9f0461` (ready sync pending).
+READY main `477e571d433ffc275fe3131b2b3747758504683c`.
 [Current design, architecture review and plan](https://github.com/tya5/chrona/issues/1306#issuecomment-6094278894).
 Only contributor tooling/tests/CI change; product schemas and rendering stay unchanged.
 
@@ -28,8 +28,14 @@ None. The issue remains open until row 1 and the required release gate are prove
 
 ## Verification
 
-Current adoption: contributor setup/import/timing/conformance-workflow/schema
-batch 55 passed (60.96s), including all four unit/remainder exit combinations.
+Current READY adoption: contributor setup/import/timing and View schema
+78 passed (40.09s). The import hook and main's independent View migration
+helper are both retained. Python3.13 CLI rejection/help/golden-integrity and
+choice-quoting regressions8 passed (0.97s). The old golden is untouched;
+only argparse's choice quoting is compared portably. Envelope, invalid command,
+ordered choices, exit, stderr and files remain exact; malformed wording fails.
+Prior setup/import/timing/conformance-workflow/schema batch55 passed (60.96s),
+including all four unit/remainder exit combinations.
 Both suites execute even after either failure; the combined pytest outcome,
 OS probe, wheel/documented-command checks and finalizer remain authoritative.
 An initial import-spy failure was a local venv missing declared `skia-pathops`;
