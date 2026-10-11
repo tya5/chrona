@@ -1525,7 +1525,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `row-band:performance` | `row-band` | 253.200, 480.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `row-band:pvt` | `row-band` | 253.200, 644.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `row-band:silicon-bringup` | `row-band` | 253.200, 316.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
-| `examples/controller-z/generated/baseline-ghosts.scene.json` | `planned:architecture:snapshot:architecture` | `snapshot` | 476.576, 172.800 | `row-band:architecture` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/baseline-ghosts.scene.json` | `planned:architecture:snapshot:architecture` | `snapshot` | 518.400, 172.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `planned:dvt:snapshot:dvt` | `snapshot` | 1131.819, 552.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `planned:evb-arrival:snapshot:evb-arrival` | `snapshot` | 980.405, 408.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `planned:firmware:snapshot:firmware` | `snapshot` | 553.253, 244.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
