@@ -12,7 +12,7 @@ from chrona.presentation.layout.canvas_viewport import canvas_viewport_warning
 from chrona.presentation.layout.icon_geometry import complete_icon_paths
 from chrona.presentation.layout.mark_geometry import MarkFacetAbsence
 from chrona.presentation.layout.model import (LayoutError, Rect)
-from chrona.presentation.layout.pattern_placement import (PatternedPlacement, complete_pattern_placement)
+from chrona.presentation.layout.pattern_placement import (PatternedPlacement, PatternPathCommand, complete_pattern_placement)
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.surface_backgrounds import (
     BACKGROUND_SEMANTIC_IDS, validate_background_shapes, validate_group_header_strip_order,
@@ -33,6 +33,8 @@ from chrona.presentation.layout.viewer_fit import stamp_surface_fits
 from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject, table_row_subjects, review_row_subjects
+from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
+from chrona.presentation.layout.lane_window_marks import complete_lane_window_handoff
 
 
 @dataclass(frozen=True)
@@ -82,6 +84,7 @@ class SurfaceCompletionContext:
     lane_label_suppressions: list[LaneLabelSuppression]
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
     visible_label_subjects: Mapping[str, tuple[DiagnosticSubject, ...]] = field(default_factory=dict)
+    window_label_absences: tuple[WindowLabelAbsence, ...] = ()
 
 
 def contains_block_interval(*, container_start: Decimal, container_end: Decimal,
@@ -148,13 +151,22 @@ def complete_catalog_patterns(marks: tuple[MarkPlacement, ...],
         role = (shape.source_ref if shape.placement_id.startswith("legend-swatch:")
                 and shape.source_ref in _RECT_PATTERN_THEME_ROLES.values()
                 else _RECT_PATTERN_THEME_ROLES.get(shape.semantic_id))
-        if shape.kind != "Rect" or role is None:
+        cut = (shape.kind == "Symbol" and shape.paint_clip is not None
+               and bool(shape.path_commands)
+               and shape.semantic_id in {"progressFill", "summaryBar"})
+        if (shape.kind != "Rect" and not cut) or role is None:
             continue
         pattern = optional_pattern(role)
         if isinstance(pattern, Mapping) and pattern.get("kind") == "catalog":
+            if cut and shape.pattern_origin is None:
+                raise LayoutError("E_LAYOUT_WINDOW_CLIP", shape.source_ref,
+                                  detail="stage=pattern; reason=missing-original-origin")
             result.append(PatternedPlacement(
                 shape.placement_id,
-                complete_pattern_placement(pattern, shape.bounds, shape.corner_radius),
+                complete_pattern_placement(pattern, shape.bounds, shape.corner_radius,
+                    origin=shape.pattern_origin if cut else None,
+                    cut_contour=tuple(PatternPathCommand(command.kind, command.points)
+                                      for command in shape.path_commands) if cut else ()),
             ))
     for mark in marks:
         role = _RECT_PATTERN_THEME_ROLES.get(mark.semantic_id)
@@ -162,9 +174,16 @@ def complete_catalog_patterns(marks: tuple[MarkPlacement, ...],
             continue
         pattern = optional_pattern(role)
         if isinstance(pattern, Mapping) and pattern.get("kind") == "catalog":
+            cut = mark.paint_clip is not None and bool(mark.path_commands)
+            if cut and mark.pattern_origin is None:
+                raise LayoutError("E_LAYOUT_WINDOW_CLIP", mark.source_ref,
+                                  detail="stage=pattern; reason=missing-original-origin")
             result.append(PatternedPlacement(
                 mark.placement_id,
-                complete_pattern_placement(pattern, mark.bounds, mark.corner_radius),
+                complete_pattern_placement(pattern, mark.bounds, mark.corner_radius,
+                    origin=mark.pattern_origin if cut else None,
+                    cut_contour=tuple(PatternPathCommand(command.kind, command.points)
+                                      for command in mark.path_commands) if cut else ()),
             ))
     return tuple(result)
 
@@ -363,16 +382,30 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                            ((relation.slot_id, Rect(Decimal(str(inline)), Decimal(str(block)), Decimal(0), Decimal(0)))
                             for relation in relations for inline, block in relation.points)))
     suppressed_plot_labels = sum(item.semantic_id == "memberLabel" and item.overflow == "suppressed" for item in text)
+    suppressed_plot_labels += sum(item.semantic_id == "memberLabel" for item in context.window_label_absences)
     completed_icons = tuple(replace(icon, completed_paths=complete_icon_paths(
         icon.payload, (float(icon.bounds.inline), float(icon.bounds.block),
                        float(icon.bounds.inline_size), float(icon.bounds.block_size)), icon.stroke_scale))
         if icon.kind == "vector" else icon for icon in icons)
+    lane_window_absences = ()
     if projection.lane_membership is not None:
+        lane_window_absences, omitted_rows = complete_lane_window_handoff(
+            tuple(marks), projection=projection, as_of=request.surface_content.as_of,
+            visibility_index=request.mark_visibility_index)
         lane_mark_blocks: dict[str, Decimal] = {}
         for mark in marks:
             if mark.lane_row_id is not None:
                 lane_mark_blocks[mark.lane_row_id] = min(
                     lane_mark_blocks.get(mark.lane_row_id, mark.bounds.block), mark.bounds.block)
+        by_track = {track.instance_id: track for track in tracks}
+        for review_row in review_rows:
+            if review_row.row_id not in omitted_rows:
+                continue
+            row_tracks = [by_track.get(f"{review_row.row_id}:{item.item_id or item.object_id}")
+                          for item in review_row.items]
+            if not row_tracks or any(track is None for track in row_tracks):
+                raise LayoutError("E_LAYOUT_LANE_ROW_ANCHOR_INVALID", "/layout/rows")
+            lane_mark_blocks[review_row.row_id] = min(Decimal(str(track.block)) for track in row_tracks)
         if any(row.row_id not in lane_mark_blocks for row in rows):
             raise LayoutError("E_LAYOUT_LANE_ROW_ANCHOR_INVALID", "/layout/rows")
         try:
@@ -423,6 +456,8 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                                                                         lane_emissions, request.theme_tokens),
                                  canvas_overlays=canvas_overlays,
                                  diagnostic_provenance=context.diagnostic_provenance,
-                                 canvas_warning=canvas_warning)
+                                 canvas_warning=canvas_warning,
+                                 window_label_absences=context.window_label_absences,
+                                 lane_window_absences=lane_window_absences)
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))

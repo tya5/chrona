@@ -719,6 +719,7 @@ body:
       iconGap: icon-gap
       horizontalScale: squeeze.label
       labelInset: group-header.inset
+      labelInsetEnd: group-header.inset
     gate:
       strokeWidth: stroke-width
     milestoneSymbol:

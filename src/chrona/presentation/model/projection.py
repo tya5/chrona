@@ -28,6 +28,14 @@ class ObservationState(StrEnum):
     UNAVAILABLE = "unavailable"
 
 
+class WindowMode(StrEnum):
+    """Declared View window policy retained as projection provenance."""
+
+    SELECTED_PLANNED = "selected-planned"
+    SELECTED_COMPARISON = "selected-comparison"
+    EXPLICIT = "explicit"
+
+
 def shared_track_member_key(member: Any, source_index: int) -> tuple[int, int, int]:
     """Return the sole stable semantic traversal order for normalized track members."""
     if getattr(member, "track", "stacked") != "shared":
@@ -190,6 +198,7 @@ class ReviewProjection:
     figures: tuple[tuple[str, int], ...] = ()  # (figure id, days) the Core resolved from the View's `figures` (#586)
     deadlines: tuple[ReviewDeadline, ...] = ()  # the Project deadlines the View's `deadlines` shows, in Project order (#822)
     group_figures: tuple[tuple[str, tuple[tuple[str, int], ...]], ...] = ()
+    window_mode: WindowMode = WindowMode.SELECTED_PLANNED
 
 
 @dataclass(frozen=True)
@@ -304,18 +313,28 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         dates += [v for row in rows for item in row.items for v in (item.actual or {}).values() if isinstance(v, date)]
     start, end = min(dates), max(dates)
     margin = view.window.margin_days
+    if view.window.mode == "selected-planned":
+        # View owns temporal breathing room; schedules remain half-open facts.
+        margin = max(margin, ((end - start).days + 9) // 10, 1)
     if view.window.mode == "explicit":
         start, end = (_date_or_number(value) for value in (view.window.start, view.window.end))
         margin = 0
         if start >= end:
             raise ValueError(f"E_REVIEW_WINDOW: window.start {view.window.start} is not before window.end {view.window.end}")
+    try:
+        window = (date.fromordinal(start.toordinal() - margin),
+                  date.fromordinal(end.toordinal() + margin))
+    except ValueError as error:
+        ids = tuple(item.object_id for item in selected)
+        raise ValueError(f"E_REVIEW_WINDOW: cannot pad selected dates {start}..{end} "
+                         f"by {margin} days within the Date domain; selected objects={ids!r}") from error
     return ReviewProjection(tuple(selected),
-        (date.fromordinal(start.toordinal() - margin), date.fromordinal(end.toordinal() + margin)),
+        window,
         tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows,
         view.comparison.facets, hierarchy, view.surface,
         _dependency_network_projection(project, selected, view),
         frozenset(getattr(analysis, "driving_relations", ()),), folded_points,
-        lane_membership, lane_rows)
+        lane_membership, lane_rows, window_mode=WindowMode(view.window.mode))
 
 
 def _project_lane_rows(rows: tuple[ReviewRowProjection, ...], membership: LaneMembership

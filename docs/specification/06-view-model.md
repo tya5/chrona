@@ -191,10 +191,36 @@ A View selects a temporal window independently from scheduling semantics. v0.1 a
 `{mode: explicit, start: Date, end: Date}`, `{mode: selected-planned, marginDays: N}`,
 or `{mode: selected-comparison, marginDays: N}`. Explicit windows are `[start, end)`
 with both bounds and `start < end`; derived windows use selected minimum start and
-maximum exclusive end plus non-negative margin. An empty eligible set is a diagnostic,
+maximum exclusive end. For `selected-planned`, pad each side by
+`max(marginDays, ceil(elapsedDays / 10), 1)` Date days, where `elapsedDays` is
+the selected maximum exclusive end minus the minimum start (zero for same-date
+points). This general rule strictly contains selected marks and preserves larger
+authored margins; it does not change Core schedules or depend on fonts, viewport
+size or axis units. `selected-comparison` retains its authored non-negative margin.
+If padded bounds cannot be represented in the Date domain, diagnose
+`E_REVIEW_WINDOW` with the selected dates and object identifiers rather than
+wrapping or silently clamping. An empty eligible set is a diagnostic,
 never a current-date default.
 
+Before timeline geometry or visibility-index preparation, Layout validates the
+completed projection's positive Date window. A still-degenerate or invalid
+window reports `E_PRESENTATION_PROJECTION_REQUIRED` at `/projection/window`,
+naming the bounds, selected object identifiers and positive-Date-window cause.
+Early, direct and candidate-preparation entry paths share this validation;
+they must not lose owner-local detail through a generic fallback.
+
 Date-based Views use the Date temporal domain. DateTime View behavior is deferred until a corresponding Core scheduling profile exists. Human-facing inclusive end-date display is a View or renderer concern and MUST NOT alter Core half-open span semantics.
+
+**Explicit-window visibility (#1292).** The projection retains the selected
+window mode as typed provenance; equal dates do not imply equal window policy.
+Only `explicit` selects the bounded mark-visibility contract in Spec 50.
+An intersecting span keeps its original source interval and table row while
+Layout completes its visible part. A wholly disjoint span, or a point outside
+`[start, end)`, keeps its table row but has no plot facet. Snapshot, scenario,
+Actual and missing-Actual facets are evaluated independently without rewriting
+Project dates, observation state, progress fractions or delta facts. A point
+at `start` is included; a point at `end` is excluded. Derived-window selection
+is not changed by this rule.
 
 ### 7.1 Named periods (#582)
 

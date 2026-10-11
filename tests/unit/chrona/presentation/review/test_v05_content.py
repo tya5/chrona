@@ -157,6 +157,12 @@ def test_ungrouped_attached_lane_uses_host_title_not_generated_identity():
 
     table = normalize_v05_table_content(projection, {}, view)
     assert [cell.content for cell in table.cells] == ["Campaign title", "2"]
+    wrapped_view = replace(view, rows=replace(view.rows, lane_table=ViewLaneTable(ViewLaneLabel.LANE, True, "allow")))
+    wrapped = normalize_v05_table_content(projection, {}, wrapped_view)
+    assert all(column.text_wrap == "allow" for column in wrapped.columns)
+    assert wrapped.cells == table.cells
+    assert wrapped.row_levels == table.row_levels
+    assert projection.lane_membership is membership
     group_view = replace(view, rows=replace(view.rows, lane_table=ViewLaneTable(ViewLaneLabel.GROUP, True)))
     assert normalize_v05_table_content(projection, {}, group_view).cells[0].content == ""
 
