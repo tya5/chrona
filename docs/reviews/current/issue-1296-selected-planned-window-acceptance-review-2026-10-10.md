@@ -28,10 +28,11 @@ None. Local criteria do not substitute for the required release gate.
 
 ## Verification and release
 
-Current integration adopts public table `49cfb0ef` and trusted READY main
+Current integration adopts corrected public table `f02bc0bb` and trusted READY main
 `477e571d` by ordinary merge without conflicts. Own-worktree Python3.13:
-43 focused tests pass (3.66s), covering selected-planned Scene/SVG and
-diagnostics, model window modes and shared visibility validation.
+43 focused tests pass in two batches (17 in3.56s;26 in1.03s), covering
+selected-planned Scene/SVG and diagnostics, model window modes and shared
+visibility validation after the bounded-heading/closed-metric correction.
 Earlier own-worktree Python3.11:141 tests pass (133.82s), covering actual default
 Scene/SVG/degenerate diagnostic, selected-planned model, missing-Actual scope,
 lane inventory, bounded packaged tables, explicit windows, date/axis,
