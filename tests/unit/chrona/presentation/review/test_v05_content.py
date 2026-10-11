@@ -434,6 +434,40 @@ def test_critical_relation_mode_uses_only_scheduler_driving_relations():
     assert value.relations[0].target_endpoint == "start"
 
 
+def test_critical_relation_fact_closes_real_scheduler_analysis_through_projection():
+    from chrona.presentation.model.projection import build_review_projection
+    from chrona.scheduling.scheduler import schedule
+
+    project = {
+        "version": "timeline/v0.7", "project": {"id": "critical-input"},
+        "objects": {
+            "start": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-10-01", "end": "2026-10-02"}},
+            "long": {"type": "task", "schedule": {"mode": "scheduled", "amount": "4d"}},
+            "short": {"type": "task", "schedule": {"mode": "scheduled", "amount": "2d"}},
+            "finish": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1d"}},
+        },
+        "relations": [
+            {"id": name, "type": "dependency", "from": {"object": source, "endpoint": "end"},
+             "to": {"object": target, "endpoint": "start"}}
+            for name, source, target in (
+                ("start-long", "start", "long"), ("start-short", "start", "short"),
+                ("long-finish", "long", "finish"), ("short-finish", "short", "finish"))
+        ],
+    }
+    scheduled = schedule(project)
+    assert scheduled.ok and scheduled.analysis is not None
+    assert "relation:1:start-short" in scheduled.analysis.driving_relations
+    assert "short" not in scheduled.analysis.critical
+    view = typed_view({"body": {"tableColumns": (), "visibility": {
+        "relations": {"mode": "semantic"}, "annotations": "none"}}})
+    projection = build_review_projection(project, scheduled.placements, view, None,
+                                         analysis=scheduled.analysis)
+    content = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
+    assert {fact.relation_id: fact.critical for fact in content.relations} == {
+        "start-long": True, "start-short": False, "long-finish": True, "short-finish": False}
+    assert all(fact.semantic_id == "dependency" for fact in content.relations)
+
+
 def test_calendar_closures_come_only_from_project_calendar_exceptions():
     projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)}, None, None, ()),),
                                   (date(2026, 1, 1), date(2026, 1, 5)), (), ())
