@@ -14,6 +14,10 @@ Scene and adapters must receive completed routes, not choose policy.
 Published timing evidence is approximately 3,170 CPU-seconds for 1000/228;
 new-policy timings and output changes remain unverified.
 
+Baseline focused validation: 69 tests pass in 2.31 s (visibility preparation,
+graph memo, path-history/intersection equivalence, routing placement, label
+recovery and diagnostic details), in this worktree's Python 3.13 venv.
+
 Use case: authors choose inexpensive deterministic routing or the existing
 ranked routing, without a project-size threshold. The default change is an
 intentional migration, coordinated with reviewer-owned target declarations.
@@ -36,6 +40,36 @@ No developer changes to `examples/**` or managed artifacts are permitted.
 - Agree a schema-ready preparatory boundary or joint publication so reviewer
   `search: best` declarations precede the default flip. Coordinate with 1427's
   later `unroutable: suppress` declaration without implementing its modes here.
+
+### Whole-architecture findings
+
+- Specification 33 retains required lane labels before routes and one optional
+  lost-name recovery. Specification 50 also retains up to three lane-reservation
+  routing rehearsals. Merely skipping `surface_route_label_plan` recovery does
+  **not** satisfy the new one-pass contract. The selected first-fit phase order
+  must bypass lane rehearsals and place lane member names/deltas after routes,
+  while retaining already completed axis/period/other required text as obstacles.
+  Keep both legacy label/rehearsal rules under `best`; update both specifications
+  together before code. Data-only lane membership, label association/reach and
+  window admission must not change.
+- Specification 33 defines top-level `relationRouting` replacement in derived
+  profiles. Preserve that rule; do not merge individual routing members or
+  silently inherit a discarded base policy. Existing schema-required limits
+  remain required when the object is authored.
+- Specification 50 already preserves exact endpoint-independent base visibility
+  and incremental obstacle additions (#1420); current tests prove ordered graph
+  and reverse-heuristic equality. This is existing shared preparation, not a new
+  unimplemented capability. Endpoint graph assembly and reverse Dijkstra remain
+  distinct costs. No runtime typing-protocol checks were found in the inspected
+  search/routing/obstacle modules; do not claim removing nonexistent work.
+- Specifications 37/49 preserve completed Layout geometry and immutable semantic
+  inputs; neither Scene nor a usecase should own the new shape/port policy.
+  Specification 56 governs optional in-place schema additions and truthful
+  ingress failures. Specification 66 transports producer-owned diagnostic facts.
+- Shape success must reuse full corridor/terminal preparation and final safety,
+  bounds and quality validation, not only a raw segment collision check. Existing
+  node-sharing diagnostics remain necessary when first-fit stops before ranking.
+  Budget exhaustion remains a search disposition, never a no-safe-route proof.
 
 ### Design and evidence order
 
