@@ -236,6 +236,9 @@ the resolved stroke width: it is checked when the Scene paint payload is
 attached, not on an unpainted intermediate primitive. The adapter-ready Scene
 and raw document validation still require the complete terminal contour to be
 inside the supplied clip. No terminal is resized or moved by this validation.
+For an explicitly clipped relation Path, its Scene host bounds are the supplied
+Layout paint-clip bounds; completed route points and terminal contours remain
+the actual geometry. An unclipped Path retains its existing bounds convention.
 
 An adapter applies the supplied paint clip outside the completed primitive's
 effects, so fill, stroke, terminals, shadow and glow remain inside it. It must
