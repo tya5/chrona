@@ -12,6 +12,7 @@ import pytest
 import yaml
 
 from chrona.app.cli import main
+from chrona.core.relation_identity import relation_identity
 from tests.support.preset_checks import MINIMUM_BAND_CONTRAST, band_contrasts as _band_contrasts, primitives as _primitives
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -198,8 +199,12 @@ def test_bundled_default_uses_task_and_planned_date_columns(tmp_path, monkeypatc
     cells = {item["id"]: item["text"] for item in primitives.values()
              if item.get("purpose") == "table-cell"}
     assert columns == {"Task", "Plan"}
+    # Task headers have their own purpose; Plan retains all three group dates.
     assert len([key for key in cells if key.endswith(":Task")]) == 26
-    assert len([key for key in cells if key.endswith(":Plan")]) == 26
+    assert len([key for key in cells if key.endswith(":Plan")]) == 29
+    assert len([item for item in primitives.values()
+                if item.get("purpose") == "group-header"
+                and item["id"].endswith(":Task")]) == 3
     assert all(cells[key].strip() for key in cells if key.endswith(":Plan"))
     assert "Owner" not in columns
     assert "Launch campaign" in {text for key, text in cells.items() if key.endswith(":Task")}
@@ -255,10 +260,14 @@ def test_readable_default_views_render_task_and_plan_columns(tmp_path, monkeypat
     packaged = ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/view.yaml"
     mirror = ROOT / "examples/halcyon-1/views/editorial-readable-default.yaml"
     view = packaged if source == "packaged" else mirror
+    # An independently authored band View needs its matching band-capable Theme;
+    # the new packaged default intentionally declares row rules instead.
+    theme = (() if source == "packaged" else (
+        "--theme", str(ROOT / "examples/halcyon-1/themes/editorial-readable-default.yaml")))
     scene, _ = _render_project(tmp_path, monkeypatch, "halcyon-mirror-default",
                                ROOT / "examples/halcyon-1/project.yaml",
                                ROOT / "examples/halcyon-1/actual.yaml",
-                               "--view", str(view))
+                               "--view", str(view), *theme)
     primitives = _primitives(scene)
     columns = {item["text"] for item in primitives
                if item.get("purpose") == "table-column-label"}
@@ -301,10 +310,15 @@ def test_wallboard_lane_table_keeps_the_bus_test_relation(slide: str) -> None:
     primitives = _primitives(scene)
     lane_labels = [item["text"] for item in primitives
                    if item.get("purpose") == "table-cell" and item["id"].endswith(":Lane")]
-    route_id = ('relation:bustest-integration:review-lane:["generated","bus","pdr"]:'
+    project = yaml.safe_load((ROOT / "examples/halcyon-1/project.yaml").read_bytes())
+    identity = next(relation_identity(index, relation)
+                    for index, relation in enumerate(project["relations"])
+                    if relation["id"] == "bustest-integration")
+    route_id = (f'relation:{identity}:review-lane:["generated","bus","pdr"]:'
                 'bus-test:review-lane:["generated","ait","integration"]:integration')
     assert lane_labels and all(label.strip() and not label.startswith("Lane ") for label in lane_labels)
-    assert [item["id"] for item in primitives if item["id"].startswith("relation:bustest-integration:")] == [route_id]
+    assert [item["id"] for item in primitives
+            if item["id"].startswith("relation:") and item.get("sourceRef") == identity] == [route_id]
     svg_path = ROOT / f"examples/halcyon-1/generated/{slide}.svg"
     svg_ids = {value for element in ET.fromstring(svg_path.read_text(encoding="utf-8")).iter()
                for value in (element.get("id"), element.get("data-scene-id")) if value}

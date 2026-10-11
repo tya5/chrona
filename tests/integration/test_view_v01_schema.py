@@ -9,6 +9,7 @@ import yaml
 
 from chrona.resources import safe_load, schema_resource, validator_for_schema
 from tools.check_example_reachability import reachable_view_paths
+from tests.support.preset_policy import assert_view_copy_except_axis as _assert_view_copy_except_axis
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
@@ -45,23 +46,6 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("path", reachable_view_paths(ROOT))
 
 
-def _assert_view_copy_except_axis(packaged: Path, corpus: Path) -> None:
-    # Published packaged policy migrations are independent of old corpus copies.
-    values = [yaml.safe_load(path.read_bytes()) for path in (packaged, corpus)]
-    for value in values:
-        value.pop("version")
-        value["body"].pop("axis")
-        heading = value["body"].get("heading", {})
-        heading.pop("text", None)
-        if not heading:
-            value["body"].pop("heading", None)
-        for column in value["body"].get("tableColumns", ()):
-            column.pop("endDisplay", None)
-            column.pop("text", None)
-        value["body"].get("rows", {}).get("laneTable", {}).pop("text", None)
-    assert values[0] == values[1]
-
-
 def test_declared_public_v03_view_validates(path: Path):
     value = safe_load(path.read_bytes())
     version = value.get("version")
@@ -96,7 +80,7 @@ def test_lane_resource_migration_inventory_and_editorial_mirror():
     assert default["version"] == "chrona/view/v0.28"
     _assert_view_copy_except_axis(
         ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/view.yaml",
-        ROOT / "examples/halcyon-1/views/editorial-readable-default.yaml")
+        ROOT / "examples/halcyon-1/views/editorial-readable-default.yaml", first_run=True)
 
     package_view = ROOT / "src/chrona/resources/presets/bundles/editorial/view-lanes.yaml"
     corpus_view = ROOT / "examples/halcyon-1/views/editorial-lanes.yaml"
