@@ -12,11 +12,12 @@ from chrona.presentation.scene.contrast_policy import evaluate_scene_contrast
 from chrona.presentation.scene.serialization import scene_document, serialize_scene
 from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
+from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 
 def _parts(*, viewer_fit: str | None = None, radius: float = 0, physical_radius=None,
            stroke: bool = False, solid_fill: bool = True):
-    parts = sr.bundle("executive-light")
+    parts = use_legacy_six_tier_axis(sr.bundle("executive-light"))
     body = parts["theme"]["body"]
     body_view = parts["view"]["body"]
     for key in ("selection", "grouping", "ordering"):
