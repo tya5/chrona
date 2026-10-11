@@ -55,7 +55,7 @@ body:
     - unit: auto
       every: 1
       role: labels
-      typographyRole: axisQuarter
+      typographyRole: axis
       label:
         forms:
           month: short-month-year
@@ -65,6 +65,10 @@ body:
         align: center
         overflow: thin-with-record
         orientation: horizontal
+    - unit: month
+      every: 1
+      role: band
+      typographyRole: axisMonth
     - unit: month
       every: 1
       role: grid-minor

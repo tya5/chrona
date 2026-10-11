@@ -30,8 +30,9 @@ def _applicable(name: str):
     if name == "default":
         return
     yield "bounded axis cells with centred labels", checks.check_bounded_axis_cells
-    if name == "mission-light":
-        yield "start-aligned month labels are inset", checks.check_start_aligned_month_labels
+    # Fixed start-aligned month insets remain covered by the explicit
+    # synthetic fixture in test_packaged_axis_geometry_checks. Packaged
+    # automatic labels now declare center alignment instead.
     if name == "print-mono":
         yield "print-mono separates slips and as-of in greyscale", checks.check_print_mono_greyscale
 
