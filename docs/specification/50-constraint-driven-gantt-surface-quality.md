@@ -140,7 +140,10 @@ candidates are exhausted, a declared `visible-overflow` request may emit the
 first declared near-mark candidate despite a collision or viewport escape,
 with the ordinary overflow warning; it cannot waive the association bound.
 A required request with no valid near-mark candidate fails with
-`E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE`; it never emits detached text. The
+`E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE`; it never emits detached text.
+Layout closes host identity for every row mode, including compound glyphs;
+the host names an emitted primitive, not an abstract multi-part mark. Declared
+lane-emission identities remain authoritative. Scene projects that identity.
 Scene acceptance check pairs each emitted member label to its own completed
 mark through `hostPlacementId`, additionally checking lane/member identity
 when present, never by visual order or nearest distance. No member-label

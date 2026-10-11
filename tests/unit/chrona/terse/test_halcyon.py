@@ -22,7 +22,7 @@ def _compare(twin_bytes: bytes) -> None:
     ours, theirs = schedule_summary(compiled.project), schedule_summary(twin)
     assert len(ours["placements"]) == 29 and len(edges(compiled.project)) == 24
     assert ours["placements"] == theirs["placements"]
-    assert ours["critical"] == theirs["critical"] and ours["critical"]
+    assert ours["critical"] == theirs["critical"] == []  # no zero-float driving path reaches project finish
     assert edges(compiled.project) == edges(twin)
     assert list(compiled.project["calendars"]) == list(twin["calendars"])
     assert compiled.project["calendars"] == twin["calendars"]
