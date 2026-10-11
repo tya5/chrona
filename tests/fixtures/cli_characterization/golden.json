@@ -552,7 +552,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}]}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}, {\"code\": \"W_LAYOUT_LABEL_SUPPRESSED\", \"count\": 3, \"diagnostic\": \"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"message\": \"a label was left out of the picture because it does not fit: 'Payload thermal-vacuum' (/objects/payload-tvac); member-label:payload-tvac:payload-tvac and 2 more\", \"occurrences\": [\"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:bus-test:bus-test\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:cdr:cdr\"], \"severity\": \"warning\", \"sourceRef\": \"/objects/payload-tvac\", \"sourceTitle\": \"Payload thermal-vacuum\"}, {\"code\": \"I_LAYOUT_PLOT_LABELS_SUPPRESSED\", \"count\": 3, \"message\": \"3 plot labels on table-timeline were left out because they do not fit\", \"severity\": \"info\", \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-halcyon-resources-png": {
   "argv": [
@@ -579,7 +579,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}]}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}, {\"code\": \"W_LAYOUT_LABEL_SUPPRESSED\", \"count\": 3, \"diagnostic\": \"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"message\": \"a label was left out of the picture because it does not fit: 'Payload thermal-vacuum' (/objects/payload-tvac); member-label:payload-tvac:payload-tvac and 2 more\", \"occurrences\": [\"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:bus-test:bus-test\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:cdr:cdr\"], \"severity\": \"warning\", \"sourceRef\": \"/objects/payload-tvac\", \"sourceTitle\": \"Payload thermal-vacuum\"}, {\"code\": \"I_LAYOUT_PLOT_LABELS_SUPPRESSED\", \"count\": 3, \"message\": \"3 plot labels on table-timeline were left out because they do not fit\", \"severity\": \"info\", \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-halcyon-view-theme-scheme-layout": {
   "argv": [
@@ -606,7 +606,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}]}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}, {\"code\": \"W_LAYOUT_LABEL_SUPPRESSED\", \"count\": 3, \"diagnostic\": \"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"message\": \"a label was left out of the picture because it does not fit: 'Payload thermal-vacuum' (/objects/payload-tvac); member-label:payload-tvac:payload-tvac and 2 more\", \"occurrences\": [\"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:bus-test:bus-test\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:cdr:cdr\"], \"severity\": \"warning\", \"sourceRef\": \"/objects/payload-tvac\", \"sourceTitle\": \"Payload thermal-vacuum\"}, {\"code\": \"I_LAYOUT_PLOT_LABELS_SUPPRESSED\", \"count\": 3, \"message\": \"3 plot labels on table-timeline were left out because they do not fit\", \"severity\": \"info\", \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-icon-catalog-missing": {
   "argv": [
