@@ -12,13 +12,11 @@ from tests.support import synthetic_review as sr
 from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 
-# #1271 centers four group-header lines (+0.2 px); annotation boxes,
-# leaders, numbering and diagnostics remain unchanged.
-# #1295 changes only packaged View/Layout provenance: the READY-477e571d
-# resources reproduce f26aa795; all Scene fields except provenance and SVG
-# bytes are identical. The SVG characterization below remains unchanged.
-NO_SUPPRESSION_SCENE_SHA256 = "d5752026fac9139ad4b53417e818efc752d9ed88ae14ac391cdce23ea89ee9b3"
-NO_SUPPRESSION_SVG_SHA256 = "9d13fb41f70395a185d500fc1283429140a9ef9f44c6cd005c89950dd25ed43c"
+# #1296 pads the selected-planned window, moving anchors and adding axis buckets.
+# Removing only that rule independently reproduces both preceding byte hashes.
+# All four entries/indexes/leaders remain present; diagnostics remain empty.
+NO_SUPPRESSION_SCENE_SHA256 = "82d6f6c09ac6adb3823da1d083e4344bf753fc53fcce2edd80b2a0427d0fc3c0"
+NO_SUPPRESSION_SVG_SHA256 = "3e9593666a8f1e60d9180ca6f9697e0ff912626fbe565080edbf5a57d9c5c5ce"
 
 
 def _fixture():
