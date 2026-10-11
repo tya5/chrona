@@ -273,6 +273,36 @@ Each reduction removes vertices; blocked reductions retain the safe detour.
 All eligible finite port pairs are compared, with exact rank ties retaining
 the first declared pair. Scene and adapters do not simplify geometry.
 
+**Relation-instance search budget (#1298).** One route-selection call owns
+4096 candidate-frontier expansions, rather than resetting 4096 for every
+port pair. For P declared pairs, divide that allowance evenly: pair i gets
+`4096 // P + int(i < 4096 % P)` in the existing deterministic pair order.
+Blocked pairs do not transfer unused allowance; therefore processing speed,
+cache hits and earlier search success cannot change a later pair's allowance.
+Compare the fully safe, completed, quality-eligible candidates actually found
+within those allowances using the existing rank and tie rule. A pair with
+zero allowance is search-limited, not geometrically impossible. Exhaustion
+retains `E_PRESENTATION_ROUTE_LIMIT` evidence; it never relaxes mark/text,
+terminal, self-overlap, bend or detour checks. With no eligible route, keep
+the existing declared safe fallback/suppression and diagnostic contract.
+
+Surface source exits have at most four cardinal ports; target entries add
+at most one horizontal stub, so P is at most20, independent of comparison
+sibling count. For R completed source/target relation instances and at most
+five composition/rehearsal passes, there are at most100R candidate-generator
+calls and20480R processed frontier expansions. A final over-limit pop per
+pair may discover exhaustion; it does not process that state. Immutable
+history indexes examine only nearby orientation/coordinate intervals, then
+apply the unchanged exact intersection predicate. Each processed state has
+at most four neighbors and at most4096 history segments, giving at most
+`20 * R * 4096**2` exact history predicates across those passes.
+This bounds candidate search, not all rendering by a constant: each pair's
+finite visibility-graph preparation still depends on the selected obstacle
+count M (O(M) nodes/edges and O(M**2) worst-case collision work). Counters and
+benchmarks must distinguish graph preparation from candidate-frontier work.
+Search-limited evidence is not a proof that no route exists; any later
+critical-route completeness policy must retain that distinction.
+
 **Entry obstacles (#1109 R4).** A comparison-host corridor exempts only named,
 physically connected marks of that endpoint. A detached snapshot or actual
 mark remains an obstacle even when it belongs to the same object. Entry stubs
