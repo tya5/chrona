@@ -15,6 +15,9 @@ identifiers.  The command uses Chrona's packaged `chrona-default-draft`
 presentation preset.  The SVG is a Draft review artifact, not immutable
 materializer evidence. The omitted viewport uses the Draft `1600xauto`
 default; use an explicit finite viewport when its minimum size matters.
+Terminal stderr shows render phases and routing counts automatically. Use
+`--progress` to request the same feedback with redirected stderr; JSON stdout
+is unchanged, and a nonterminal without the flag receives no progress lines.
 The output filename also selects the format: `.svg`, `.png`, `.pdf`, `.typ`
 and `.tex` select SVG, PNG, PDF, Typst and TikZ respectively. Without a
 suffix, Draft defaults to SVG. An explicit `--format` must match a recognized
