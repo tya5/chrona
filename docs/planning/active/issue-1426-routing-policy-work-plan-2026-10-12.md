@@ -112,6 +112,24 @@ residual node sharing. Other scope items remain planned, not waived or deferred
 out of this issue. No product implementation is authorized by an unresolved
 budget or approximate-search decision.
 
+## Implementation plan — shape-selection foundation
+
+The first independently testable slice implements the selected shape/port
+contract without switching runtime defaults or adding an ignored public
+declaration. Design-stage conformance passes all 35 checks; L2+L3 is 16.3 s.
+
+| Slice | Owners/files | Verification and publication |
+| --- | --- | --- |
+| Shape-selection foundation | Pure Layout `relation_shapes`; `routing.select_relation_route` explicit internal first-fit option, retaining the legacy default and shared full-route validation. No Scene, profile/schema, resource or generated-output change. | Synthetic order/dedup/bounds/port tests; collision/terminal/quality/self-overlap controls; shape-settled no-graph counter; existing ranked-selection and finite-quota characterization. Publish tested WIP, not a runtime-default or whole-issue release. |
+| Policy wiring and one-pass composition | Schema/shared vocabulary; Layout engine/manifest, surface routes/composer and lane/label coordinators; Specifications 33/50. | Finalize counters/normalization before code; in-place schema deltas, absent/explicit policies, derived replacement, lane/automatic one-pass counters, unchanged best projection. Reviewer target migration precedes the default flip. |
+| Budget and fallback efficiency | Layout search and selection accounting. | Close remaining budget/equivalence decisions and publish their normative design before planning/code; retain all issue scope, never silently drop best optimizations or substitute connectivity for byte identity. |
+| Public acceptance/release | Disposable materializer outputs, benchmark tool and literal review. | Batch all best/default comparisons and per-slide route/bend/length changes; three verified trial inputs and repeat-run Scene/SVG hashes; reviewer acceptance; current-head CI and exact-main three-OS release. |
+
+Shape-foundation acceptance is internal behavior only: existing callers and
+their candidate/quota/rank behavior remain unchanged. New selection still
+passes completed semantic corridors through the existing terminal preparation,
+full-route safety and measured quality gates before returning a route.
+
 ## Literal acceptance (all currently not met for the new policy)
 
 | Criterion copied from the issue | Required evidence |
