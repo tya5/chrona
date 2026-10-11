@@ -59,6 +59,33 @@ def test_direct_inline_keeps_projection_error_precedence_before_index_creation()
         prepare_surface_inline(invalid)
 
 
+@pytest.mark.parametrize("entry", [ensure_request_mark_visibility_index,
+                                   prepare_surface_inline, prepare_surface_natural_candidate])
+@pytest.mark.parametrize("window", [
+    (date(2026, 2, 2), date(2026, 2, 2)),
+    (date(2026, 2, 3), date(2026, 2, 2)),
+    ("invalid", date(2026, 2, 2)),
+])
+def test_every_layout_entry_retains_window_bounds_objects_and_cause(entry, window, monkeypatch):
+    from chrona.presentation.layout import surface_mark_visibility
+
+    request = _axis_request(())
+    invalid = replace(request, projection=replace(request.projection, window=window))
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("invalid projection must be diagnosed before visibility geometry")
+
+    monkeypatch.setattr(surface_mark_visibility, "build_item_mark_visibility_index", forbidden)
+    with pytest.raises(LayoutError) as caught:
+        entry(invalid)
+    assert caught.value.diagnostic_id == "E_PRESENTATION_PROJECTION_REQUIRED"
+    assert caught.value.path == "/projection/window"
+    detail = caught.value.detail
+    assert "positive Date window" in detail
+    assert repr(window[0]) in detail and repr(window[1]) in detail
+    assert all(item.object_id in detail for item in request.projection.items)
+
+
 def test_candidate_natural_prefix_carries_same_prepared_index():
     request = _axis_request(())
 

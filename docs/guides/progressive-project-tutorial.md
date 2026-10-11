@@ -41,8 +41,8 @@ selects it. A prior-plan comparison uses a
 [snapshot reference](../../examples/halcyon-1/snapshots/baseline-2027-06.yaml)
 from [Render Context](../../examples/halcyon-1/contexts/07-replan-baseline.yaml),
 not from an editable Draft Project. An extension is declared in the
-[ORION Project](../../examples/orion-asic/project.yaml) and resolved from a
-[pinned profile package](../../examples/orion-asic/extensions/semiconductor-development.yaml).
+same [HALCYON Project](../../examples/halcyon-1/project.yaml) and resolved from a
+[pinned profile package](../../examples/halcyon-1/extensions/semiconductor-development.yaml).
 The public materializer follows each immutable closure and reproduces its
 committed SVG/Scene bytes:
 
@@ -67,13 +67,13 @@ inputs:
   snapshot: {id: halcyon-1-baseline-2027-06, kind: snapshot-ref, store: {provider: local, identity: halcyon-1-example}, address: snapshots/baseline-2027-06.yaml, revision: {token: example-v1}}
 ```
 
-ORION's Project declares an immutable profile-package resource, rather than
+HALCYON's Project also declares an immutable profile-package resource, rather than
 inventing custom object types at render time:
 
 ```yaml
 extensions:
   - packageId: semiconductor-development
-    resource: {id: semiconductor-development, kind: profile-package, store: {provider: local, identity: orion-asic-example}, address: extensions/semiconductor-development.yaml, revision: {token: example-v1}, contentIdentity: sha256:20d989ebfbc40215e7024e07c74e4db73138e95406c1751a1aa5f787fe05265d}
+    resource: {id: semiconductor-development, kind: profile-package, store: {provider: local, identity: halcyon-1-example}, address: extensions/semiconductor-development.yaml, revision: {token: example-v1}, contentIdentity: sha256:e1f04370772d97c0b9a0891227a9923226483c496798c8d16c1d2849c06bad1c}
 ```
 
 These are excerpts for learning; the linked full sources are the runnable
@@ -84,12 +84,12 @@ unversioned reference.
 ```bash
 chrona materialize examples/halcyon-1/manifest.yaml --slide flight-readiness --output tutorial-scenario
 chrona materialize examples/halcyon-1/manifest.yaml --slide replan-baseline --output tutorial-snapshot
-chrona materialize examples/orion-asic/manifest.yaml --slide gates --output tutorial-extension
+chrona materialize examples/halcyon-1/manifest.yaml --slide gates --output tutorial-extension
 ```
 
 Look at the generated `review.svg`, `review.scene.json`, and `closure.yaml`
 inside each output directory. The scenario Scene records its selected
-scenario, the snapshot slide compares the captured baseline, and ORION shows
-the extension-typed gates. To change those advanced inputs, author a new
+scenario, the snapshot slide compares the captured baseline, and the gates slide shows
+the extension-typed review gates. To change those advanced inputs, author a new
 Project/View/Context closure deliberately; do not edit a materialized
 snapshot as if it were Draft source.

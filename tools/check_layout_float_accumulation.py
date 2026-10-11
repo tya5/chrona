@@ -59,9 +59,18 @@ class _Sums(ast.NodeVisitor):
         if len(node.args) != 1 or node.keywords:
             return False
         value = node.args[0]
+        # Builtin len returns an integer. With sum's implicit integer seed,
+        # these are logical record counts, not accumulated float geometry.
+        if (isinstance(value, ast.Call) and isinstance(value.func, ast.Name)
+                and value.func.id == "map" and len(value.args) == 2 and not value.keywords
+                and isinstance(value.args[0], ast.Name) and value.args[0].id == "len"):
+            return True
         if not isinstance(value, ast.GeneratorExp):
             return False
-        return isinstance(value.elt, (ast.Compare, ast.BoolOp, ast.UnaryOp))
+        term = value.elt
+        return (isinstance(term, (ast.Compare, ast.BoolOp, ast.UnaryOp))
+                or (isinstance(term, ast.Call) and isinstance(term.func, ast.Name)
+                    and term.func.id == "len" and len(term.args) == 1 and not term.keywords))
 
 
 def violations(root: Path = LAYOUT) -> tuple[str, ...]:

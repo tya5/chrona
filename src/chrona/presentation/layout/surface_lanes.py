@@ -34,6 +34,7 @@ from chrona.presentation.layout.surface_mark_visibility import (
 from chrona.presentation.layout.surface_geometry import bounds_from_rect as _bounds
 from chrona.presentation.layout.surface_quality import (
     IconPlacement, LaneEmissionFacet, LaneEmissionPlacement, MarkPlacement, ShapePlacement, TextPlacement,
+    completed_symbol_primitive_ids,
 )
 from chrona.presentation.model.semantic_registry import semantic_binding
 
@@ -332,7 +333,7 @@ def build_lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: l
 def complete_hosted_text_identity(
         text: tuple[TextPlacement, ...], marks: tuple[MarkPlacement, ...],
         lane_emissions: tuple[LaneEmissionPlacement, ...]) -> tuple[TextPlacement, ...]:
-    """Resolve abstract lane-mark hosts to their first emitted glyph part."""
+    """Close every mark host; declared lane-emission identities remain authoritative."""
     emitted_mark_hosts: dict[str, str] = {}
     for emission in lane_emissions:
         if emission.placement_type != "mark":
@@ -343,14 +344,19 @@ def complete_hosted_text_identity(
         previous = emitted_mark_hosts.setdefault(emission.placement_id, host_id)
         if previous != host_id:
             raise LayoutError("E_LAYOUT_HOST_EMISSION_INVALID", emission.placement_id)
-    lane_marks_by_id = {mark.placement_id: mark for mark in marks if mark.lane_row_id is not None}
+    for mark in marks:
+        if mark.lane_row_id is not None:
+            continue  # A declared lane requires its explicit emission handoff.
+        ids = completed_symbol_primitive_ids(mark.placement_id, mark.symbol_parts)
+        emitted_mark_hosts.setdefault(mark.placement_id, ids[0] if ids else mark.placement_id)
+    marks_by_id = {mark.placement_id: mark for mark in marks}
     completed = []
     for placed in text:
         host_id = placed.host_placement_id
-        if host_id not in lane_marks_by_id:
+        if host_id not in marks_by_id:
             completed.append(placed)
             continue
-        mark = lane_marks_by_id[host_id]
+        mark = marks_by_id[host_id]
         emitted_id = emitted_mark_hosts.get(host_id)
         if (emitted_id is None or placed.slot_id != mark.slot_id
                 or placed.paint_order <= mark.paint_order):
