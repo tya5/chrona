@@ -199,7 +199,13 @@ bound to an omitted host are intentionally unpainted, not invalid selectors.
 The same immutable visibility closure supplies this account and final geometry.
 
 Final lane completion validates the original expected/admitted/absent partition
-against that cache before emission. A wholly omitted row retains its allocated
+against that cache before emission. The final mark inventory is restricted to
+typed lane-owned placements, not every mark on the surface: legend swatches and
+other unowned decorations remain outside the lane account. Any placement with
+lane row, member, or source-kind metadata participates in this validation;
+partial ownership, missing marks and duplicate marks cannot escape it. No
+placement-ID prefix or project-specific exception selects this inventory.
+A wholly omitted row retains its allocated
 tracks; its `laneMarkBandBlock` is the minimum completed track block in that
 row, not an invented mark or temporal port. A row with visible marks keeps the
 existing minimum painted-mark block. Missing tracks or an unaccounted missing
