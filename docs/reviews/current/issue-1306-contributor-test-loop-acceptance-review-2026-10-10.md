@@ -7,6 +7,7 @@ Implementation and collection-guard correction: `d12d10f2a92b34511e9717bd5da490b
 [Current design, architecture review and plan](https://github.com/tya5/chrona/issues/1306#issuecomment-6094278894).
 Only contributor tooling/tests/CI change; product schemas and rendering stay unchanged.
 CI launcher/selection guard correction: `ca2a69c22820b01e9ffc8b2c08ee6cc440b002a9`.
+Portable import guard and deferred MCP fixtures: `4d1a5f9e`.
 
 ## Literal issue acceptance
 
@@ -52,3 +53,14 @@ keyword and deselect filters remain rejected; Python module launch is not a filt
 Executable/module launch, chained commands and negative filter spellings plus
 setup/import/timing/quick-smoke guards:81 passed8.06s. No CI failure was bypassed,
 no product rule changed, and the finalizer correctly rejected the failing unit suite.
+
+All three OS jobs of CI38163063134 are terminal failures. macOS additionally
+exposed an eager MCP launch-YAML read; Windows additionally hit the process
+command-line limit while launching the whole-import spy. Both MCP modules now
+read the same YAML in session fixtures, and the unchanged complete spy runs
+through stdin instead of a long command argument. No module is excluded.
+The MCP-floor job runs import/selection guards early, before stdio tests.
+MCP2.0 plus setup/import/selection and MCP/CLI tests:93 passed53.13s;
+after the stdin correction, setup/import/selection guards:44 passed4.67s.
+CI38165240609 was cancelled before replaying known failures. A repaired-head
+CI pass remains required; none of these focused results closes acceptance row1.
