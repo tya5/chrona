@@ -23,14 +23,12 @@
 
 Release pending: final READY integration, current-head PR snapshot/gates and acceptance-containing exact-main three-OS release. No closure is authorized by local rows.
 
-Current preparation `4d6b69c5` ordinarily adopts READY main `21342640`,
-#1294 head `37974787` and #1296 characterization `196b94c5`.
-Python3.11 combined schedule/typed-float and affected render/unknown-command
-checks:27 passed (46.48s). Structural checks:11 packages/37 inward edges,
-228 reachable modules, none orphaned; literal-review check passes.
-The prior Python3.13 integration batch was228 passed/4 failed, not a green
-suite:three render records belonged to #1296 padding; the independent
-argparse wording discrepancy is tracked under #1306. None is masked here.
+Current preparation adopts public #1296 `da7e3068`, #1295 `49cfb0ef` and
+READY main `477e571d` by ordinary merges. The sole conflict was the stale
+#1296 evidence paragraph; its current published record is retained unchanged.
+Own Python3.13 schedule/typed-float contracts15 pass (2.00s). Earlier broad
+integration tests are evidence for their named revisions, not current release
+acceptance; the independent Python argparse wording is tracked under #1306.
 
 After ordinary `9ee4dbce` adoption, CLI assertions3, schedule characterization23 and explicit-unit contracts10 pass. Scheduler/hash-seed batch23 passes (56.60s), including eight seeds per command. Broader scheduler, point/calendar/property, usecase, projection and MCP consumers:322 passed (61.20s). Only four successful schedule golden records change; baseline/current raw comparison proves placements, diagnostics, warnings, files and exit codes unchanged. HALCYON's longer unit-bearing stdout uses the existing stream digest policy.
 
