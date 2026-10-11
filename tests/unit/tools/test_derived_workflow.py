@@ -400,7 +400,7 @@ def test_pr_readiness_accepts_only_a_main_base() -> None:
         result = subprocess.run([workflow_bash(), "-c", guard], capture_output=True, text=True,
                                 env={**os.environ, "EVENT_NAME": "pull_request", "PR_BASE_REF": ref,
                                      "PREVIEW": "success", "CONFORMANCE": "success",
-                                     "PR_KIND": "docs"})
+                                     "PR_KIND": "code", "PYTEST": "success", "NEWEST": "success"})
         assert (result.returncode == 0) == (expected == 0), (ref, result.stderr)
     assert 'git ls-remote origin "refs/heads/$PR_BASE_REF"' in script
 

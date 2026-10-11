@@ -13,6 +13,17 @@ from chrona.presentation.contracts import ClosureIdentity, IconCatalogContract, 
 from chrona.usecases.failure_report import StableFailure
 
 
+DEFAULT_PRESET_ID = "chrona-default-draft"
+"""The bundled look `chrona render` uses without `--preset`; it is also a catalogue entry, so it can be listed and copied (#1305)."""
+
+
+class _PlainDumper(yaml.SafeDumper):
+    """A dumper that never writes anchors or aliases: every repeated mapping is written in full."""
+
+    def ignore_aliases(self, data: object) -> bool:
+        return True
+
+
 def _safe(address: object) -> str:
     """Return a catalogue address the shared Store-address guard accepts (the schema's `storeAddress`), else refuse (#731)."""
     try:
@@ -162,5 +173,5 @@ def copy_builtin_preset(identifier: str, destination: Path) -> Path:
     if isinstance(entry.get("visualProfile"), dict):
         preset["body"]["visualProfile"] = {"preferred": str(entry["visualProfile"]["preferred"])}
     preset_target = destination / "preset.yaml"
-    preset_target.write_text(yaml.safe_dump(preset, sort_keys=False), encoding="utf-8")
+    preset_target.write_text(yaml.dump(preset, Dumper=_PlainDumper, sort_keys=False), encoding="utf-8")
     return preset_target
