@@ -96,6 +96,23 @@ def test_render_draft_returns_the_artifact_and_does_no_io_of_its_own(project, tm
     assert all(isinstance(payload, dict) for payload in warning_payloads(result.rendered))
 
 
+def test_render_progress_preserves_artifact_scene_and_request_identity(project):
+    from dataclasses import replace
+    from chrona.presentation.model.render_progress import RenderProgress, RenderProgressEvent
+
+    request = DraftRenderRequest(project=project, target_kind="svg")
+    events = []
+    observed = replace(request, progress=RenderProgress(events.append))
+    assert observed == request
+    quiet = render_draft(request)
+    verbose = render_draft(observed)
+    assert verbose.artifact == quiet.artifact
+    assert verbose.rendered.scene == quiet.rendered.scene
+    assert verbose.rendered.warning_records == quiet.rendered.warning_records
+    assert events == [RenderProgressEvent("schedule"), RenderProgressEvent("layout"),
+                      RenderProgressEvent("output")]
+
+
 def test_render_draft_bytes_equal_the_cli_output_file(project, tmp_path, monkeypatch):
     request = DraftRenderRequest(project=project, target_kind="svg", preset="editorial")
     monkeypatch.chdir(tmp_path)

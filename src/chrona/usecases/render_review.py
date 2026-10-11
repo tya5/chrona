@@ -43,6 +43,7 @@ from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMe
 from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import PresentationInfo
+from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
 from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_role_consumers import unread_diagnostics as unread_theme_diagnostics
@@ -126,6 +127,7 @@ class RenderRequest:
     asset_resolver: FontAssetResolver | None = None
     draft_auto_block: bool = False
     draft_font_resolution: DraftFontResolution | None = None
+    progress: RenderProgress | None = field(default=None, compare=False, repr=False)
 
 
 @dataclass(frozen=True)
@@ -265,7 +267,11 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     manifests = {item.package_id: item.profile_input for item in render_closure.profile_packages}
     if manifests:
         ledger.packages()
+    if request.progress is not None:
+        request.progress.phase("schedule")
     projection, scenario_provenance, attachments, deadlines = _project_review(project, view, render_closure, manifests, request.scheduler)
+    if request.progress is not None:
+        request.progress.phase("layout")
     color_scale = resolve_color_scale(view.color_encoding, theme["body"].get("colorScales"),
                                       theme["body"].get("categorySlots"),
                                       color_vision=tuple(theme["body"].get("colorVision", ())),
@@ -508,6 +514,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         font_files=resolution.font_files if resolution is not None else None,
         asset_resolver=request.asset_resolver,
     )
+    if request.progress is not None:
+        request.progress.phase("output")
     try:
         artifact = renderer.render(surface)
     except FontMetricsError as error:
