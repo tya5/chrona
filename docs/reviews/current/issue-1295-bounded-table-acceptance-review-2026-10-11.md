@@ -37,11 +37,29 @@ Public head `49cfb0ef`, run38124948692 artifact11696806849, verified ZIP
 SHA256 `54ee9326181efa4187ef92938402a32319a226c2e19f82b973b3a9ed61087050`:
 101 paths, no additions/removals, all46 Scene/SVG pairs byte-identical;
 only diagnostic inventory and coverage reports change. Strict CI schema gate
-passes (20.58s). Conformance fails solely on eight unclassified exact-Decimal
-sums. The reviewed function+explicit-Decimal-seed classification now passes
+passes (20.58s). Conformance fails on eight unclassified exact-Decimal
+sums. The reviewed function+explicit-Decimal-seed classification locally passes
 with97 focused tests (4.87s), including rejection of unseeded/float-seeded sums;
-product code and the old golden/output are unchanged. Corrected-head CI and
-snapshot remain required. A baseline gate label that already overflowed is not fitting-copy
+that classification changes no product code or golden output.
+All three PR shards are terminal: 37 failing tests, including the checker.
+Additional families are derived-axis/header dependency loss (3), nested
+content-sized heading budgets (26), cramped CLI/agent rendering (3), frozen
+Scene identity checks (3), affix allocation (1), and the precision checker (1).
+Disposition remains open,
+not an accepted baseline refresh. Candidate-local heading measurement now
+reuses closed render metrics instead of deriving them from a one-source
+subset: derived-size/source-sizing/source-measurement batch33 passed (12.22s),
+including an immutable metric-reuse regression. This local fix is not yet
+on the PR head. Corrected-head CI and snapshot remain required.
+Frozen Scene identities are independently dispositioned: render the same three
+synthetic scenarios using exact View/Layout resources from READY477e571d.
+Old Scene hashes48989414/445031fb/f26aa795 are reproduced; current hashes
+52e5f188/5e027fbe/d5752026 differ only in provenance. All three complete Scenes
+are otherwise identical and actual SVG bytes are identical. Only those three
+Scene expectations change; unchanged SVG hashes and semantic assertions remain.
+The three exact characterization tests pass (4.25s); this does not disposition
+the remaining nested-heading, cramped-render or affix failures.
+A baseline gate label that already overflowed is not fitting-copy
 evidence: opt-in ellipsis changes it intentionally. Release remains pending:
 current-head PR checks and review-containing exact-main
 three-OS release. These local rows do not authorize closure.
