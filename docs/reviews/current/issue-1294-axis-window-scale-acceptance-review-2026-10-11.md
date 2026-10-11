@@ -24,6 +24,11 @@ Release pending: trusted READY-base integration, fresh public artifacts/current-
 
 Related focused suite: 156 passed (13.84s), including regular cadence, natural typography, fixed/automatic tier geometry, lane placement, all nine packaged Views, week forms, explicit fixed-month secondary declarations and band containment. After strengthening per-tier reporting and using exact issue titles, the default suite passed again: six tests (4.54s).
 
+Public audit at `52112c77`: all46 manifest materializers succeed; every Scene
+and SVG is byte-identical to its declared public artifact. Focused schema/preset
+migration guards:60 passed (46.08s). The fresh CI artifact and exact-main
+release are still required after final READY-base integration.
+
 ## Architecture conclusion
 
 View declares existing permitted units/forms; Theme owns typography. Layout measures natural interval fit, selects the smallest phase-zero regular stride and first viable declared unit, then applies hard host/plot containment. Omission preserves truthful fit/reason facts. Scene/adapters only project completed placements. Fixed visible-overflow remains explicit; no day/week form or weekend-shading expansion is claimed.
