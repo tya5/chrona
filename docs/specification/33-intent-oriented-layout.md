@@ -70,7 +70,7 @@ swatch and its own label), and may declare `itemMinInlineSize` when `direction:
 inline`, wrapping exactly as a `flow` container wraps its children (#427). A `legend` slot may instead declare `columns` (an integer of at least 1; #1290): the entries
 fill the columns in reading order (entry k in column k mod `columns`, row k div `columns`), each column as wide as its
 widest entry (swatch, gap and label), `gap` apart, every row as tall as the tallest key; `direction` and `itemMinInlineSize`
-are then not used. A declared grid is measured exactly at measurement time (width of its columns, `ceil(count / columns)`
+are then not used. `columnDistribution` (#1392) is `start` (the default, today's packing from the inline start) or `spread`: under `spread` every column has the same width, the slot's inline size less the gaps divided by the column count, so the column starts are evenly spaced and the last column ends within the slot; entries stay start-aligned in their column and no row moves. When that width is below the widest entry of any column the columns stay packed as under `start`. A declared grid is measured exactly at measurement time (width of its columns, `ceil(count / columns)`
 rows), so the slot is allocated its true block and a grid taller than its slot is the ordinary track overflow. Each
 entry's swatch is constructed by the same geometry its role's `primitive_kind`
 already uses for an object mark, relation, or decoration; Layout never derives a
@@ -141,7 +141,7 @@ geometry independently of visible or thinned labels; band-only and rotated tiers
 content starts below the whole axis band and any larger caption line/gap. Without a compatible neighboring
 tier, or when that aligned caption line cannot fit inside its slot, `top` applies and Layout records
 `I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER:<node>`; the baseline is never clamped while claiming tier alignment.
-At `start-column` (#1290) the caption holds the inline-start column of a `legend` slot that declares `columns`: its line starts at the slot's block start and inline start, inside the entries' block extent, and the entries start after its measured width and half the font size (the measurement of the legend slot grows by that inline extent and is at least one line tall); no entry overlaps it. On any other slot, or a legend without `columns`, `top` applies and Layout records `I_LAYOUT_SLOT_HEADING_NO_START_COLUMN:<node>`.
+At `start-column` (#1290) the caption holds the inline-start column of a `legend` slot that declares `columns`: its line starts at the slot's block start and inline start, inside the entries' block extent, and the entries start after its measured width and the caption's `gap` (a distance, a literal or a Theme token; absent means half the font size) (the measurement of the legend slot grows by that inline extent and is at least one line tall); no entry overlaps it. On any other slot, or a legend without `columns`, `top` applies and Layout records `I_LAYOUT_SLOT_HEADING_NO_START_COLUMN:<node>`.
 The slot's content starts below the line and its gap, and below the band when the caption sits in it, so nothing
 lies under the caption; the slot keeps its full bounds. The native owner then lays out its content in that
 reduced viewport: title runs, table/timeline rows, axis tiers, dependency-network geometry and detail-panel
@@ -434,6 +434,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_groups` | Place group-header text and group presentation from completed base extents. |
 | `surface_axis` | Place axis bands/labels and targets; derive calendar overlay intervals from the completed scale. |
 | `surface_marks` | Place tracks/marks/folded points/progress. |
+| `surface_mark_visibility` | Close selected source mark occurrences and window admission once, with typed source/final lane aliases; no membership or Scene geometry repair. |
 | `surface_member_labels` | Build requests and place member/item labels. |
 | `surface_lanes` | Adapt/preflight fixed lanes; emit lane facets and close host identities. |
 | `surface_lane_route_plan` | Plan the route corridors member names must keep clear by rehearsing the name and route phases on private index copies; return corridors only. |
