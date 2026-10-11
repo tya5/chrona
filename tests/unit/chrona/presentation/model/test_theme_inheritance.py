@@ -162,12 +162,52 @@ def test_derived_theme_adds_tokens_roles_bindings_scales_and_kinds_the_base_lack
     assert "subtitle" in effective["body"]["roles"] and "title" in effective["body"]["roles"]  # nothing is removed
 
 
-def test_a_role_the_derived_theme_restates_replaces_the_base_role_as_a_whole(tmp_path: Path):
+def test_a_redeclared_role_replaces_members_and_keeps_omitted_members(tmp_path: Path):
     base = _base(); base["body"]["roles"]["title"] = {"fontSize": "spacing.m", "fontWeight": "w"}
     base["body"]["values"]["w"] = {"type": "fontWeight", "value": "700"}
     source = yaml.safe_dump(base).encode(); (tmp_path / "base.yaml").write_bytes(source)
     derived = _derived(base, source)
-    derived["body"]["roles"] = {"title": {"fontSize": "spacing.m"}}  # restated without fontWeight: the member is gone
+    derived["body"]["values"]["spacing.l"] = {"type": "number", "value": 30}
+    derived["body"]["roles"] = {"title": {"fontSize": "spacing.l"}}
     path = tmp_path / "derived.yaml"; path.write_text(yaml.safe_dump(derived), encoding="utf-8")
 
-    assert resolve_draft_theme(path)["body"]["roles"]["title"] == {"fontSize": "spacing.m"}
+    assert resolve_draft_theme(path)["body"]["roles"]["title"] == {"fontSize": "spacing.l", "fontWeight": "w"}
+
+
+def test_derived_role_adds_a_member_without_mutating_its_inputs():
+    base = _base()
+    base["body"]["values"]["w"] = {"type": "fontWeight", "value": "700"}
+    source = yaml.safe_dump(base).encode()
+    derived = _derived(base, source)
+    derived["body"]["roles"] = {"title": {"fontWeight": "w"}}
+    before_base, before_derived = deepcopy(base), deepcopy(derived)
+
+    effective = _resolve(derived, "derived.yaml", lambda *_: (base, _pin(source), "base.yaml"))
+    expected = deepcopy(base)
+    expected["id"] = "derived"
+    expected["body"]["values"]["spacing.m"]["value"] = 24
+    expected["body"]["roles"]["title"]["fontWeight"] = "w"
+    assert effective == expected
+    assert base == before_base and derived == before_derived
+    effective["body"]["roles"]["title"]["fontWeight"] = "changed"
+    assert base == before_base and derived == before_derived
+
+
+def test_empty_derived_role_does_not_remove_inherited_members():
+    base = _base(); source = yaml.safe_dump(base).encode()
+    derived = _derived(base, source)
+    derived["body"]["roles"] = {"title": {}}
+
+    effective = _resolve(derived, "derived.yaml", lambda *_: (base, _pin(source), "base.yaml"))
+    assert effective["body"]["roles"]["title"] == base["body"]["roles"]["title"]
+
+
+@pytest.mark.parametrize("members", [None, 3, {"fontSize": None}])
+def test_malformed_derived_role_uses_effective_schema_diagnostic(members):
+    base = _base(); source = yaml.safe_dump(base).encode()
+    derived = _derived(base, source)
+    derived["body"]["roles"] = {"title": members}
+
+    with pytest.raises(ThemeInheritanceError) as error:
+        _resolve(derived, "derived.yaml", lambda *_: (base, _pin(source), "base.yaml"))
+    assert error.value.code == "E_THEME_INHERITANCE_EFFECTIVE_SCHEMA"

@@ -130,12 +130,22 @@ def _resolve(value: dict[str, Any], key: str, load_base: BaseLoader,
         replacement = value["body"].get(name, {})
         if not replacement:
             continue
-        # An entry the derived Theme declares replaces the base's whole entry of that name, or is added when the base has
-        # none (#1401). Nothing is removed. The merged Theme is validated below exactly as a non-derived one.
+        # Roles retain omitted members; other maps replace whole entries.
+        # No merge level removes inherited content (#1401).
         target = body.setdefault(name, {})
         if not isinstance(target, dict):
             raise ThemeInheritanceError("E_THEME_INHERITANCE_EFFECTIVE_SCHEMA", f"body.{name} of the base Theme is not a mapping")
-        target.update(deepcopy(replacement))
+        if name == "roles":
+            for role, members in replacement.items():
+                inherited = target.get(role)
+                if isinstance(inherited, dict) and isinstance(members, dict):
+                    inherited.update(deepcopy(members))
+                else:
+                    # New roles and malformed values still reach the effective
+                    # schema, which owns validation and its existing diagnostic.
+                    target[role] = deepcopy(members)
+        else:
+            target.update(deepcopy(replacement))
     effective_schema = "theme-v0.15.schema.yaml"
     problems = tuple(schema_validator(effective_schema).iter_errors(effective))
     if problems:
