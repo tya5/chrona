@@ -439,6 +439,36 @@ def test_missing_actual_summary_counts_due_absences_and_requires_as_of():
     assert "Missing: unknown" in tuple(run.content for run in absent.runs)
 
 
+@pytest.mark.parametrize("mode", ["semantic", "critical"])
+@pytest.mark.parametrize("driving", [False, True])
+@pytest.mark.parametrize("source_critical,target_critical", [(False, False), (True, False), (False, True), (True, True)])
+def test_relation_critical_fact_is_scheduler_membership_not_selected_paint(
+        mode, driving, source_critical, target_critical):
+    items = tuple(
+        ReviewItem(object_id, object_id, "span", {}, None, None,
+                   ("critical",), critical=critical)
+        for object_id, critical in (("a", source_critical), ("b", target_critical))
+    )
+    # A preceding declaration must not renumber the scheduler identity after selection.
+    project = {"relations": (
+        {"id": "preceding", "from": {"object": "x"}, "to": {"object": "y"}},
+        {"id": "selected", "from": {"object": "a"}, "to": {"object": "b"}},
+    )}
+    projection = ReviewProjection(items, (date(2026, 1, 1), date(2026, 1, 3)), (), (),
+                                  driving_relations=frozenset({"relation:1:selected"}) if driving else frozenset())
+    view = typed_view({"body": {"tableColumns": (), "visibility": {
+        "relations": {"mode": mode}, "annotations": "none"}}})
+    content = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
+    selected = [fact for fact in content.relations if fact.relation_id == "selected"]
+    if mode == "critical" and not driving:
+        assert selected == []
+    else:
+        assert len(selected) == 1
+        assert selected[0].critical is (driving and source_critical and target_critical)
+        assert selected[0].semantic_id == ("dependency-critical" if mode == "critical" else "dependency")
+    assert all(not fact.critical for fact in content.relations if fact.relation_id == "preceding")
+
+
 def test_critical_relation_mode_uses_only_scheduler_driving_relations():
     projection = ReviewProjection((
         ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, (), critical=True),
