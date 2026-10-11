@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
+import json
 from typing import Any, Callable, Mapping
 
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, BELOW_PLOT_FALLBACK, as_of_label_typography_role
@@ -127,6 +128,20 @@ def _member_association_outcome(candidate: LabelPlacement | None, association: M
     if candidate is None and overflow != "suppress":
         raise LayoutError("E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE", f"/placement/{placement_id}")
     return candidate
+
+
+def _finish_delta_anchor_diagnostic(request: LabelRequest, candidate: LabelPlacement) -> str | None:
+    """Project the selector's completed obstruction evidence, never re-query geometry."""
+    if request.semantic_id != "finishDelta":
+        return None
+    preferred = next((item for item in candidate.canonical_obstructions if item.side == "end"), None)
+    if preferred is None:
+        return None
+    return "I_LAYOUT_FINISH_DELTA_ANCHOR_FALLBACK:" + json.dumps({
+        "placementId": request.placement_id, "preferredSide": "end", "selectedSide": candidate.side,
+        "blockerPlacementIds": list(preferred.blocker_placement_ids),
+        "outsideBounds": preferred.outside_bounds,
+    }, sort_keys=True, separators=(",", ":"))
 
 
 def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMemberLabelRequests:
@@ -297,7 +312,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     coordinate_for_date(anchor_date, context.scale), track.block,
                     max(1.0, track.block_size), track.block_size)
                 requests.append(LabelRequest(f"variance:{instance_id}", item.object_id,
-                    f"{item.finish_delta:+d}d", anchor, ("above", "below", "end", "start"),
+                    f"{item.finish_delta:+d}d", anchor, ("end", "start", "above", "below"),
                     "summary", f"variance:{instance_id}", CollisionDomain("timeline", "overlay"),
                     request.surface_content.label_overflow, semantic_id="finishDelta",
                     subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
@@ -480,6 +495,11 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                     Decimal(0) if capacity else remaining, "capacity" if capacity else "obstruction",
                     short_sources if capacity else ()))
             continue
+        anchor_diagnostic = _finish_delta_anchor_diagnostic(label_request, candidate)
+        if anchor_diagnostic is not None:
+            diagnostics.append(anchor_diagnostic)
+            if label_request.subjects:
+                diagnostic_provenance.append(DiagnosticProvenance(anchor_diagnostic, label_request.subjects))
         chip_box = candidate.bounds
         if chip is not None:
             if chip_measurement is None:
