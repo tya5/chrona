@@ -47,3 +47,8 @@ correct editable import and clean requirements; quick smoke/guards81 passed6.95s
 Layout/Scene/adapters and domain semantics are untouched by this tooling slice.
 Combined contributor/setup/import/timing/selection/schema-gate/MCP batch:
 328 passed92.16s, including the new design-reuse and first-run test modules.
+Integration CI38170085140 has28 rendering expectation failures; contributor
+guards and MCP pass. Test-only correction `51b4e517` keeps the recorded fresh
+dependency setup and all import/timing/selection guards unchanged. Current-head
+integration and exact-main release gates are still required. The unchanged
+contributor guards35 pass6.91s; isolated CI-snapshot batch287 passes113.25s.

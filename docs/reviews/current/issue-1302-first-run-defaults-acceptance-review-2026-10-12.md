@@ -26,17 +26,22 @@ and exact-main three-OS release remain required. This is not permission to close
 
 ## Programme-level criteria (optional)
 
-Current integration:129 focused cases pass59.52s; two shared-design checks fail
-against stale committed Scene/SVG because canonical relation identities change.
-Those assertions remain intact and must pass against the CI-owned PR snapshot;
-no expected generated files are authored locally. The actual starter/PNG,
-all-valid conformance Theme, all-preset order, hierarchy and pitch cases pass.
-Contributor/import/CI-selection/MCP integration batch328 passes92.16s.
-Catalogue copy guards retain every unaffected declaration. Imports11 packages/
-37 inward edges, Layout floats and literal reviews pass. Named relation IDs
-intentionally migrate to Core canonical identity; default Layout identity
-changes under #1299. The PR must disclose per-slide byte/primitive/diagnostic
-counts before release acceptance.
+CI38170085140 has28 failures across its three shards; conformance, MCP and
+newest-Python reproduction pass. [Correction plan](https://github.com/tya5/chrona/pull/1423#issuecomment-6113256906)
+is implemented in `51b4e517`: canonical Core identity assertions, shared exact
+preset-copy guard, matched historical View/Theme, group-header/date coverage,
+actual SVG row-rule verification and14 approved CLI records. The unrelated
+chip fixture retains its original byte hashes with explicit count:true.
+No product, schema, authored examples or managed-report changes.34 focused
+regressions pass41.92s. Isolated validation on this source with the unaltered
+CI-owned snapshot11713338434:287 affected CLI/shared-design/public-preset/
+readable-default/first-run tests pass113.25s; contributor guards35 pass6.91s.
+Current-head CI and exact-main release remain required.
+[All46 generated Scene/SVG pairs](https://github.com/tya5/chrona/pull/1423#issuecomment-6113213242)
+are reviewed as a batch, with identity-only changes, six declared lane-order
+changes and one identity-seeded wobble change distinguished. The newly
+suppressed launch-campaign label is disclosed, not hidden by corpus edits.
+Contributor guards328 pass92.16s; imports, Layout floats and schema gate pass.
 
 Architecture: Core owns dates/critical facts/identity; View owns hierarchy and
 lane order/count; Theme declares paint and pitch floor; Layout completes text,

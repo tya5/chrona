@@ -19,10 +19,15 @@ Authority: pre-code `c14a86aa`, Specs06 §6.1 and33 §13; [living work record](h
 
 ## Programme-level criteria (optional)
 
-Current integration:129 focused cases pass59.52s; two shared-design assertions
-against stale committed generated evidence remain unchanged and require the
-CI-owned snapshot. Progress/PTY/relations, height-limit, observer and default
-cases pass. Contributor/import/CI-selection/MCP batch328 passes92.16s.
+Integration focused cases:129 pass59.52s; progress/PTY/relations, height-limit,
+observer and default cases pass. [Generated-output review](https://github.com/tya5/chrona/pull/1423#issuecomment-6113213242)
+discloses all46 Scene/SVG pairs and actual route/label/diagnostic changes.
+CI38170085140 is red with28 old-identity/default expectation failures;
+test-only correction `51b4e517` retains geometry/safety assertions and has34
+focused passes41.92s. The isolated CI-snapshot batch has287 passes113.25s,
+including both shared-design checks without generated-file edits.
+Current-head CI and exact-main release remain required.
+Contributor/import/CI-selection/MCP batch328 passes92.16s.
 Imports11 packages/37 inward edges, Layout floats and literal reviews pass.
 Schema gate after design-reuse adoption passes:one additive/one declared
 changed/36 equal schemas,739 probes and four unchanged known-invalid documents.
