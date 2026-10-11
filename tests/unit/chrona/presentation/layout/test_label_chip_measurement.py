@@ -69,6 +69,47 @@ def test_burst_uses_semantic_role_and_preserves_role_paint_with_asymmetric_inset
         float(measured.geometry.outer_bounds.block_size) + 25)
 
 
+@pytest.mark.parametrize("semantic_id,role", CASES)
+def test_ellipse_completion_uses_each_roles_measurement_and_expands_stroke_once(semantic_id, role):
+    measured = measure_label_chip(
+        _theme(role, shape={"kind": "burst", "points": 7, "innerRatio": .8, "fit": "ellipse"},
+               stroke_width=1.5),
+        semantic_id, text_inline=140, text_block=18, font_size=12, padding=(6, 3),
+    )
+    assert measured is not None
+    assert len(measured.geometry.symbol_parts) == 1
+    assert measured.geometry.symbol_parts[0].paint_mode is None
+    assert measured.geometry.outer_bounds.block_size <= (
+        2 ** .5 / float(_inradius_factor(7, .8)) * (18 + 2 * 3) + 1e-8
+    )
+    assert float(measured.footprint.block) == pytest.approx(-15)
+    assert float(measured.footprint.block_size) == pytest.approx(
+        float(measured.geometry.outer_bounds.block_size) + 30)
+
+
+def _inradius_factor(points, ratio):
+    from math import cos, pi, sin, sqrt
+
+    theta = pi / points
+    if ratio <= cos(theta):
+        return ratio
+    return ratio * sin(theta) / sqrt(1 + ratio * ratio - 2 * ratio * cos(theta))
+
+
+@pytest.mark.parametrize("text_inline,text_block,padding", [(0, 12, (0, 2)), (12, 0, (2, 0))])
+def test_ellipse_zero_padded_axis_maps_to_selected_role_diagnostic(text_inline, text_block, padding):
+    role = "period-label-chip"
+    with pytest.raises(LayoutError) as caught:
+        measure_label_chip(
+            _theme(role, shape={"kind": "burst", "points": 5, "innerRatio": .6, "fit": "ellipse"}),
+            "periodLabel", text_inline=text_inline, text_block=text_block,
+            font_size=12, padding=padding,
+        )
+    assert caught.value.diagnostic_id == "E_LAYOUT_CHIP_TEXT_GROUND_INVALID"
+    assert caught.value.path == f"/body/roles/{role}/chipShape"
+    assert caught.value.detail == "reason=invalid-measurement"
+
+
 def _rect_path(left, top, right, bottom):
     return f"M{left} {top}L{right} {top}L{right} {bottom}L{left} {bottom}Z"
 

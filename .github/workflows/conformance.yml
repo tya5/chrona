@@ -207,6 +207,28 @@ jobs:
             fi
             test "$PREVIEW" = success
             test "$CONFORMANCE" = success
+            if [[ "$PR_KIND" != code && "$PR_KIND" != docs ]]; then
+              echo "unknown PR class: $PR_KIND"; exit 1
+            fi
+            if [[ "$PR_KIND" == docs ]]; then
+              test "$PYTEST" = skipped
+              test "$NEWEST" = skipped
+              # Docs cannot change derived evidence: a previously ready base
+              # is sufficient, but stale heads and unknown/conflicting merges
+              # are not. This path never waits for another main sync.
+              metadata="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" \
+                --jq '[.head.sha, .base.ref, (.mergeable | tostring)] | @tsv')"
+              read -r pr_head current_ref mergeable <<< "$metadata"
+              test "$pr_head" = "$PR_HEAD_SHA"
+              test "$current_ref" = main
+              test "$mergeable" = true
+              current="$(gh api --method GET "repos/$GITHUB_REPOSITORY/commits/$PR_BASE_SHA/check-runs" \
+                -f check_name=derived-main -f filter=all -f per_page=100 \
+                --jq '[.check_runs[] | select(.app.slug == "github-actions")] | sort_by([.started_at // .created_at, .id]) | if length == 0 then "" else (last.status + ":" + (last.conclusion // "")) end')"
+              test "$current" = completed:success
+              echo "docs PR accepted on previously ready base $PR_BASE_SHA; no new sync wait"
+              exit 0
+            fi
             if [[ "$PR_KIND" == code ]]; then
               test "$PYTEST" = success
               test "$NEWEST" = success

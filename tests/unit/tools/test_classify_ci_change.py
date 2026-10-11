@@ -1,6 +1,24 @@
 from subprocess import CalledProcessError
 
 from tools.classify_ci_change import classify_diff, classify_paths
+from tools.derived_report_inventory import REPORTS
+
+
+def test_every_bot_owned_report_uses_strict_code_path():
+    from tools.derived_evidence import REPORTS as generator_reports
+    assert generator_reports is REPORTS
+    for path in generator_reports:
+        assert classify_paths(("docs/authored.md", path)) == "code"
+
+
+def test_classifier_runs_without_installed_project_or_optional_dependencies():
+    import subprocess
+    import sys
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[3]
+    result = subprocess.run([sys.executable, "-S", str(root / "tools/classify_ci_change.py"),
+                             "not-a-sha", "b" * 40], cwd=root, capture_output=True, text=True)
+    assert result.returncode == 0 and result.stdout == "code\n"
 
 
 def test_only_documentation_paths_use_fast_path():
