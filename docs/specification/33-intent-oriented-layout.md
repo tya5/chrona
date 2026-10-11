@@ -195,7 +195,11 @@ source, which Layout can arrange with `grid` or `flow`; Layout cannot partition 
 A Layout profile may declare `viewDefaults`, a View body fragment (`visibility`, `axis`, `deadlines`, `shading`,
 `timePresentation`, `annotationPresentation`, `backgroundDecoration`, `progressFill`, and the design halves of `comparison`,
 `rows` and `window`; see Specification 06 section 9.2). The View closure overlays it under the View before validation: a member
-the View declares wins as a whole, an omitted member takes the profile's. Layout reads the merged View only; it never sees which
+the View declares wins as a whole, an omitted member takes the profile's.
+Split members merge by design sub-member, creating an omitted member from
+those sub-members only; explicit declarations win and missing required
+connection fields remain View validation errors (Specification 06 section 9.2).
+Layout reads the merged View only; it never sees which
 half a member came from. The members are validated as View members after the merge, so a malformed default is an ordinary View
 error. `viewDefaults` is optional; a profile without it changes nothing.
 

@@ -404,7 +404,11 @@ Slice 1 moves these members: `visibility`, `axis`, `deadlines`, `shading`, `time
 `backgroundDecoration`, `progressFill` (whole members), and the design halves of `comparison` (`baselineMarks`,
 `missingActualScope`, `deltaUnit`, `facets`), `rows` (`mode`, `trackAllocation`, `packing`, `laneTable`, `points`, `items`) and
 `window` (`marginDays`). The rule is whole-member replacement: a member the View declares replaces the design's whole member, a
-member it omits takes the design's; the three split members merge one level down, only into a member the View declares. The
+member it omits takes the design's. The three split members merge one level
+down: an omitted member is created from the profile's design sub-members,
+while declared sub-members win. Connection fields are never supplied by the
+design. Explicitly malformed View members are not repaired; missing required
+connection fields remain ordinary View validation errors. The
 merge happens at ingress, before validation, so the merged View is validated as the View it is; a Layout profile without
 `viewDefaults`, or a View declaring every member, is untouched, which keeps every existing View byte-identical.
 
