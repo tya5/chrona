@@ -188,7 +188,10 @@ def test_readable_default_resources_are_selected_from_the_packaged_authority():
     assert resources["colorScheme"] == {
         "id": "chrona-builtin-editorial", "kind": "color-scheme", "path": "bundles/editorial/scheme.yaml",
     }
-    assert resources["layout"]["path"] == "bundles/editorial/layout.yaml"
+    assert resources["layout"] == {
+        "id": "chrona-builtin-editorial-readable-default", "kind": "layout-profile",
+        "path": "bundles/editorial-readable-default/layout.yaml",
+    }
     assert resources["detailProfile"]["path"] == "bundles/editorial/detail.yaml"
     assert default["body"]["compatibleColorSchemes"] == [
         {"id": "chrona-builtin-editorial", "kind": "color-scheme", "path": "bundles/editorial/scheme.yaml"}
