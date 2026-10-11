@@ -19,6 +19,13 @@
 
 ## Programme-level criteria (optional)
 
+READY main `42e37d8d`, #1292 `fe734c2e` and #1293 `ff5f0b25` adopted
+by ordinary merges; no conflicts or authored examples changes. Annotation,
+bounded-table Scene/SVG, all packaged presets, explicit-window, default date/
+axis and typed measurement/placement:89 passed (47.96s). Live schema annotation
+checker passes after documenting the existing table-only share conditional;
+its validation tree is unchanged. Final PR/artifact/schema/release gates remain pending.
+
 Latest preparation combines #1292 window closure, #1293 endpoint display and
 final #1294 repair `ac14998c`: explicit-window, packaged/bounded table, default
 date/axis and typed table measurement/placement tests pass:99 (50.64s).
