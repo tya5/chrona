@@ -50,7 +50,7 @@ _FORMS_BY_LEVEL = {
     "quarter": frozenset({"quarter", "year-quarter", "quarter-year"}),
     "month": frozenset({"short-month", "long-month", "numeric-month", "short-month-year",
                         "long-month-year", "numeric-year-month"}),
-    "week": frozenset({"iso-week"}),
+    "week": frozenset({"iso-week", "start-day-month", "start-numeric"}),
     "day": frozenset({"localized-date", "day-month", "day-month-year"}),
 }
 

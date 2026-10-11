@@ -7,7 +7,7 @@ from typing import Any, Callable
 
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.surface_marks import (
-    MARK_GEOMETRY_ROLES,
+    MARK_GEOMETRY_ROLES, progress_fill_bounds,
 )
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
@@ -79,7 +79,11 @@ def swatch_extent(role: str, tokens: Any, mark_block_size: float, legend_size: f
         side = point_size if point_size is not None else float(height_ratio) * mark_block_size
         return side, side, "point"
     if role in MARK_GEOMETRY_ROLES:
-        return fallback_inline, float(tokens.mark_geometry(role)[0]) * mark_block_size, "mark"
+        block = float(tokens.mark_geometry(role)[0]) * mark_block_size
+        # A key without a declared `swatchInlineSize` is a miniature of the bar it names: landscape, as the bars are (#499).
+        # A declared size is the author's and is kept as written.
+        inline = fallback_inline if declared_inline is not None else max(fallback_inline, 2.0 * block)
+        return inline, block, "mark"
     if role in ("asOf", "dependency", "dependency-critical", "deadlineMark"):
         return fallback_inline, text_line_block, "line"
     if area_block is not None:
@@ -220,6 +224,15 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             shapes.append(ShapePlacement(f"legend-swatch:{role}", role, "Rect",
                                          Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),
                                          slot_id=legend.slot_id, corner_radius=corner_radius, paint_order=paint_order))
+            if (role == "actual" and request.surface_content.progress_fill_source == "actual"
+                    and request.theme_tokens.has_role("progress-fill")):
+                # The key of observed progress shows the fill the chart draws for it, full, in its track (#499).
+                inset, fill_radius = request.theme_tokens.progress_track("progress-fill")
+                fill = progress_fill_bounds(shapes[-1].bounds, 1.0, inset)
+                if fill is not None and fill.inline_size > 0:
+                    shapes.append(ShapePlacement(f"legend-swatch:{role}:progress-fill", "progress-fill", "Rect", fill,
+                                                 slot_id=legend.slot_id, paint_order=paint_order + 1,
+                                                 corner_radius=float(fill_radius) * float(min(fill.inline_size, fill.block_size))))
         elif bucket == "line":
             marker_token = request.theme_tokens.optional_token(role, "marker", "marker")
             relations.append(RelationPlacement(f"legend-swatch:{role}", f"legend-swatch:{role}:start",

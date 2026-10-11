@@ -153,6 +153,22 @@ print the canonical identity of one YAML or JSON document
 
 - `path`: local YAML or JSON document path
 
+## chrona import
+
+turn a CSV or TSV table (one row per task, gate or group) into Project YAML; every row error is reported with its row and column in one run, and an existing file is never replaced
+
+`chrona import --actual-output --as-of --calendar --columns --delimiter --output --project-id --title -o`
+
+- `table`: CSV or TSV file (a .tsv suffix selects tabs)
+- `--output, -o`: where to write the Project YAML; an existing file is not replaced
+- `--actual-output`: where to write an Actual Set built from the progress and actual_* columns; an existing file is not replaced
+- `--project-id`: project id (default: the table's file name as a slug)
+- `--title`: project title (default: the project id)
+- `--calendar`: declare a working calendar such as 'standard mon-fri except 2027-04-02'; repeatable; the first is the project default
+- `--as-of`: observation date (YYYY-MM-DD) of the Actual Set
+- `--columns`: YAML mapping of your header names to the column vocabulary
+- `--delimiter`: cell delimiter (default: tab for .tsv, else comma)
+
 ## chrona init
 
 create a new editable project in a new directory
@@ -235,9 +251,9 @@ draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix. 
 - `--locale`: render locale: en-US or ja-JP (default: en-US)
 - `--format`: output target (default: infer from .svg/.png/.pdf/.typ/.tex; SVG without a suffix)
 - `--visual-profile`: exact visual capability profile (default: the preset's preferred profile, else baseline)
-- `--typesetter-engine`: required with --format typst or tikz
-- `--typesetter-version`: required exact engine version with --format typst or tikz
-- `--typesetter-adapter-grammar`: required adapter grammar with --format typst or tikz
+- `--typesetter-engine`: the engine that will compile the output; required with --format typst or tikz: typst (for .typ) or tectonic (for .tex)
+- `--typesetter-version`: the exact engine version you will compile with (for example 0.13.1 for typst); recorded in the result, never looked up on this machine; required with --format typst or tikz
+- `--typesetter-adapter-grammar`: the output grammar: chrona-typst/v0.1 for typst, chrona-tikz/v0.1 for tectonic; required with --format typst or tikz
 - `--output, -o`: where to write the result; an existing file is not replaced
 - `--emit-scene`: write a schema-validated inspection Scene JSON without replacing an existing file
 
@@ -280,9 +296,9 @@ draw a slide from a guided authoring workspace (a draft)
 - `--locale`: render locale: en-US or ja-JP (default: en-US)
 - `--format`: output target (default: infer from .svg/.png/.pdf/.typ/.tex; SVG without a suffix)
 - `--visual-profile`: exact visual capability profile (default: the preset's preferred profile, else baseline)
-- `--typesetter-engine`: required with --format typst or tikz
-- `--typesetter-version`: required exact engine version with --format typst or tikz
-- `--typesetter-adapter-grammar`: required adapter grammar with --format typst or tikz
+- `--typesetter-engine`: the engine that will compile the output; required with --format typst or tikz: typst (for .typ) or tectonic (for .tex)
+- `--typesetter-version`: the exact engine version you will compile with (for example 0.13.1 for typst); recorded in the result, never looked up on this machine; required with --format typst or tikz
+- `--typesetter-adapter-grammar`: the output grammar: chrona-typst/v0.1 for typst, chrona-tikz/v0.1 for tectonic; required with --format typst or tikz
 - `--provenance`: write a JSON record of which inputs the render used
 - `--output, -o`: where to write the result; an existing file is not replaced
 

@@ -51,6 +51,9 @@ SKIP = re.compile(r"^<!-- chrona:doc-check skip: (?P<reason>.+) -->$")
 # workspace and is skipped in the wheel workspace; an unmarked command that names such a path is rejected (#1301).
 REQUIRES_CLONE = re.compile(r"^<!-- chrona:doc-check requires: clone (?P<reason>.+) -->$")
 REQUIRES_PREFIX = "requires: clone "
+# `<!-- chrona:doc-check file: NAME -->` before a fence: the fence body is a file the later commands of the checked
+# document read. It is written into the execution workspace, never executed (#1307).
+FILE = re.compile(r"^<!-- chrona:doc-check file: (?P<name>[A-Za-z0-9._-]+) -->$")
 CLONE_ONLY_ROOTS = ("examples/",)
 # The skill's own commands name `skills/chrona/...`, the copy `chrona skill copy` writes; they run in the clone workspace
 # (the skill is not rewritten for this check) and are skipped in the wheel workspace, which has no such copy.
@@ -105,8 +108,15 @@ def discover(root: Path) -> tuple[DocumentedCommand, ...]:
         lines = path.read_text(encoding="utf-8").splitlines()
         index = 0
         pending_skip: tuple[str, int] | None = None
+        pending_file: int | None = None
         while index < len(lines):
             line = lines[index]
+            if FILE.fullmatch(line) is not None:
+                if pending_skip is not None or pending_file is not None:
+                    raise _error("E_DOCUMENTED_COMMAND_SKIP", relative, index + 1)
+                pending_file = index + 1
+                index += 1
+                continue
             marker = SKIP.fullmatch(line)
             expected = EXPECT_ERROR.fullmatch(line)
             emitted = EXPECT_YAML.fullmatch(line)
@@ -126,6 +136,8 @@ def discover(root: Path) -> tuple[DocumentedCommand, ...]:
             if opening is None:
                 if pending_skip is not None:
                     raise _error("E_DOCUMENTED_COMMAND_SKIP", relative, pending_skip[1])
+                if pending_file is not None:
+                    raise _error("E_DOCUMENTED_COMMAND_SKIP", relative, pending_file)
                 index += 1
                 continue
             fence = opening["fence"]
@@ -135,6 +147,10 @@ def discover(root: Path) -> tuple[DocumentedCommand, ...]:
                 end += 1
             if end >= len(lines):
                 raise _error("E_DOCUMENTED_COMMAND_SHELL", relative, index + 1)
+            if pending_file is not None:  # a file fence: never scanned for commands
+                pending_file = None
+                index = end + 1
+                continue
             if _is_terse_fence(opening["info"]):  # a terse plan is compiled by discover_plans, never scanned for commands
                 pending_skip = None
                 index = end + 1
@@ -148,6 +164,26 @@ def discover(root: Path) -> tuple[DocumentedCommand, ...]:
         if pending_skip is not None:
             raise _error("E_DOCUMENTED_COMMAND_SKIP", relative, pending_skip[1])
     return tuple(result)
+
+
+def discover_files(root: Path) -> tuple[tuple[Path, int, str, str], ...]:
+    """The `file:` fences of the checked documents: (document, line, workspace file name, text)."""
+    found: list[tuple[Path, int, str, str]] = []
+    for path in documents(root):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for index, line in enumerate(lines):
+            marker = FILE.fullmatch(line)
+            if marker is None:
+                continue
+            opening = FENCE.fullmatch(lines[index + 1]) if index + 1 < len(lines) else None
+            if opening is None:
+                raise _error("E_DOCUMENTED_COMMAND_SKIP", path.relative_to(root), index + 1)
+            closing = re.compile(rf"^\s*{re.escape(opening['fence'])}\s*$")
+            end = index + 2
+            while end < len(lines) and closing.fullmatch(lines[end]) is None:
+                end += 1
+            found.append((path.relative_to(root), index + 3, marker["name"], "\n".join(lines[index + 2:end]) + "\n"))
+    return tuple(found)
 
 
 def discover_plans(root: Path) -> tuple[TersePlan, ...]:
@@ -334,7 +370,8 @@ def _installed_chrona() -> tuple[str, ...]:
 
 
 def execute(commands: tuple[DocumentedCommand, ...], root: Path, *, timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
-            executable: tuple[str, ...] | None = None, wheel: bool = False) -> None:
+            executable: tuple[str, ...] | None = None, wheel: bool = False,
+            files: tuple[tuple[Path, int, str, str], ...] = ()) -> None:
     """Run non-skipped documented commands in a disposable workspace.
 
     The default workspace is a clone's: it holds the repository's `examples/` and `skills/`. With `wheel` it is empty, as
@@ -349,6 +386,8 @@ def execute(commands: tuple[DocumentedCommand, ...], root: Path, *, timeout_seco
         skills = root / "skills"
         if skills.is_dir() and not wheel:
             shutil.copytree(skills, workspace / "skills")
+        for _document, _line, name, text in files:
+            (workspace / name).write_text(text, encoding="utf-8")
         environment = {**os.environ, "PYTHONUTF8": "1"}
         for command in commands:
             if command.skip_reason is not None and not (requires_clone(command) and not wheel):
@@ -445,7 +484,7 @@ def main() -> None:
     else:
         write(output, content)
     if args.execute:
-        execute(commands, root, wheel=args.wheel)
+        execute(commands, root, wheel=args.wheel, files=discover_files(root))
 
 
 if __name__ == "__main__":

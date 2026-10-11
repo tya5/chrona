@@ -905,8 +905,17 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         else:
             source = relation.relation_id.removeprefix("relation:").split(":", 1)[0]
         dependency = semantic_binding(relation.semantic_id)
+        bounds = (0, 0, 0, 0)
+        if relation.relation_id.startswith("legend-swatch:") and relation.points:
+            # A legend key's bounds enclose its points (and the half stroke), so bounds-based checks see it (#499).
+            xs, ys = [point[0] for point in relation.points], [point[1] for point in relation.points]
+            try:
+                half = float(value.theme_tokens.number(relation.semantic_id, "strokeWidth")) / 2
+            except Exception:
+                half = 0.0
+            bounds = (min(xs), min(ys) - half, max(xs) - min(xs), max(ys) - min(ys) + 2 * half)
         primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, "relation", dependency.purpose, dependency.scene_role,
-                                         (0, 0, 0, 0), marker_start=relation.marker_start, marker_end=relation.marker_end,
+                                         bounds, marker_start=relation.marker_start, marker_end=relation.marker_end,
                                          points=relation.points, path_commands=relation.path_commands,
                                          paint_order=relation.paint_order, slot_id=relation.slot_id,
                                          from_instance_id=relation.from_instance_id,
