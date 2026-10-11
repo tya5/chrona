@@ -8,7 +8,7 @@ import pytest
 from chrona.presentation.layout.labels import LabelRect, LabelRequest
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacleIndex
 from chrona.presentation.layout.surface_member_labels import SurfaceMemberLabelsBatch
-from chrona.presentation.layout.surface_routes import SurfaceRelationLabelsBatch, SurfaceRoutesBatch
+from chrona.presentation.layout.surface_routes import SurfaceRelationLabelsBatch, SurfaceRoutesBatch, SurfaceRoutesContext
 from chrona.presentation.layout import surface_route_label_plan as plan
 
 
@@ -49,6 +49,8 @@ def _install_trial_owners(monkeypatch, *, recover, relation_ids_same=True,
 
     def compose_routes(context):
         calls["routes"] += 1
+        assert context.progress_pass == ("route-label-baseline" if calls["routes"] == 1
+                                         else "route-label-recovery")
         recovered = context.obstacles.has("recovered-name")
         relation_id = "relation:r" if relation_ids_same or not recovered else "relation:changed"
         suppressed = bool(recovered and retry_route_status == "suppressed")
@@ -72,7 +74,10 @@ def _install_trial_owners(monkeypatch, *, recover, relation_ids_same=True,
 
 def _context():
     return plan.RouteLabelPlanContext(None, (_request(),), (), SurfaceObstacleIndex(),
-        lambda obstacles, _text: SimpleNamespace(obstacles=obstacles))
+        lambda obstacles, _text: SurfaceRoutesContext(
+            request=None, projection=None, review_rows=(), rows=(), groups=(), marks=(),
+            timeline_bounds=(0, 0, 0, 0), layout_manifest=None, metric_values={}, text=(),
+            obstacles=obstacles))
 
 
 def test_retries_only_lost_name_and_returns_winning_trial_without_replaying(monkeypatch):

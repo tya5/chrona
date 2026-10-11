@@ -34,7 +34,6 @@ from chrona.app.cli import main  # noqa: E402
 from tests.support.store_workspace import StoreWorkspace  # noqa: E402
 
 REPO = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
-LAUNCH = (REPO / "skills" / "chrona" / "examples" / "launch.yaml").read_text(encoding="utf-8")
 CYCLE = """\
 version: timeline/v0.7
 project: {id: cyc, title: Cycle}
@@ -49,14 +48,19 @@ SESSION_SECONDS = 180
 
 
 @pytest.fixture
-def workspace(tmp_path: Path) -> Path:
+def workspace(tmp_path: Path, launch_project: str) -> Path:
     root = tmp_path / "ws"
     root.mkdir()
-    (root / "launch.yaml").write_text(LAUNCH, encoding="utf-8")
+    (root / "launch.yaml").write_text(launch_project, encoding="utf-8")
     (root / "cycle.yaml").write_text(CYCLE, encoding="utf-8")
-    (root / "計画 2026.yaml").write_text(LAUNCH, encoding="utf-8")
+    (root / "計画 2026.yaml").write_text(launch_project, encoding="utf-8")
     (root / "broken.yaml").write_text("a: [\n", encoding="utf-8")
     return root
+
+
+@pytest.fixture(scope="session")
+def launch_project() -> str:
+    return (REPO / "skills" / "chrona" / "examples" / "launch.yaml").read_text(encoding="utf-8")
 
 
 def child_environment() -> dict[str, str]:
@@ -192,9 +196,9 @@ def test_status_and_error_flag_over_stdio(workspace):
     assert preset.structured_content["diagnostics"][0]["code"] == "E_BUILTIN_PRESET_UNKNOWN"
 
 
-def test_a_symlink_out_of_the_workspace_and_a_host_path_in_a_message_over_stdio(workspace, tmp_path):
+def test_a_symlink_out_of_the_workspace_and_a_host_path_in_a_message_over_stdio(workspace, tmp_path, launch_project):
     outside = tmp_path / "outside.yaml"
-    outside.write_text(LAUNCH, encoding="utf-8")
+    outside.write_text(launch_project, encoding="utf-8")
     try:
         (workspace / "link.yaml").symlink_to(outside)
     except (OSError, NotImplementedError):

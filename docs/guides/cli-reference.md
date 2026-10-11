@@ -233,7 +233,7 @@ list every builtin preset id and its gallery set
 
 draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix. A draft for review, not reproducible evidence
 
-`chrona render --actual --detail --emit-scene --font-metrics --format --icon-catalog --layout --locale --output --preset --scheme --summary --system-fonts --theme --typesetter-adapter-grammar --typesetter-engine --typesetter-version --view --viewport --visual-profile -o`
+`chrona render --actual --detail --emit-scene --font-metrics --format --icon-catalog --layout --locale --output --preset --progress --relations --scheme --summary --system-fonts --theme --typesetter-adapter-grammar --typesetter-engine --typesetter-version --view --viewport --visual-profile -o`
 
 - `project`: Draft Project YAML path, or a terse .chrona plan
 - `--preset`: Presentation preset YAML path, or a builtin catalogue id (see `chrona preset list`); omit it to use bundled chrona-default-draft; explicit resource flags override its members
@@ -248,6 +248,8 @@ draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix. 
 - `--font-metrics`: declared-metrics-v3 YAML descriptor; paths resolve beside it
 - `--system-fonts`: require the Theme's exact installed face through fontconfig (installed fonts are always usable; this refuses a fallback)
 - `--viewport`: Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600xauto)
+- `--progress`: report render phases and routing counts on stderr (automatic for terminal stderr)
+- `--relations`: override dependency-line visibility on top of the selected preset
 - `--locale`: render locale: en-US or ja-JP (default: en-US)
 - `--format`: output target (default: infer from .svg/.png/.pdf/.typ/.tex; SVG without a suffix)
 - `--visual-profile`: exact visual capability profile (default: the preset's preferred profile, else baseline)

@@ -15,6 +15,7 @@ import pytest
 import yaml
 
 from chrona.presentation.model.closure import resolve_draft_render
+from chrona.core.relation_identity import relation_identity
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, obstacles_intersect
 from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
@@ -353,9 +354,12 @@ def test_controller_executive_draft_no_longer_suppresses_its_member_label_after_
     assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in rendered.scene.diagnostics)
     assert not any(item.startswith("W_LAYOUT_RELATION_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics)
     labels = {item.scene_id for item in rendered.surface.primitives}
+    project = yaml.safe_load((_root() / "examples/controller-z/project.yaml").read_bytes())
+    identities = {relation["id"]: relation_identity(index, relation)
+                  for index, relation in enumerate(project["relations"])}
     assert {
-        "relation-label:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup",
-        "relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance",
+        f"relation-label:{identities['evb-to-bringup']}:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup",
+        f"relation-label:{identities['bringup-to-performance']}:silicon-bringup:silicon-bringup:performance:performance",
     } <= labels
     assert not any(item.startswith("W_LAYOUT_VISIBLE_OVERFLOW") for item in rendered.scene.diagnostics)
 

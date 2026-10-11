@@ -162,6 +162,12 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
     """Name the cause and the subject of one warning record of ``usecases.warning_ledger``."""
     code = str(payload.get("code", ""))
     identity = str(payload.get("diagnostic", ""))
+    if code == "W_LAYOUT_AUTO_BLOCK_SIZE":
+        return WarningText("completed auto canvas exceeds the declared readability limit; "
+                           "use View selection/grouping for a smaller review; paging is a future option",
+                           f"surface {payload.get('surfaceId')} at {payload.get('sourceRef')}: "
+                           f"{payload.get('rowCount')} rows, block size {_number(payload.get('actualBlockSize'))}, "
+                           f"limit {_number(payload.get('maxBlockSize'))}")
     if code in _SURFACE_CAUSES:
         return WarningText(_SURFACE_CAUSES[code], identity.removeprefix(code).removeprefix(":"))
     if code in _FIT_CAUSES:

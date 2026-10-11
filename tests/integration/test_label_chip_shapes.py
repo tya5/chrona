@@ -26,6 +26,8 @@ ACTUAL = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "obse
 
 def _asof_parts(shape=None, *, label="TODAY!", catalog_stroke=False, numeric_spacing=None):
     parts = use_legacy_six_tier_axis(sr.bundle("executive-light"))
+    # Freeze this chip fixture's table, independent of #1302's packaged count:auto.
+    parts["view"]["body"]["rows"]["laneTable"]["count"] = True
     theme = parts["theme"]["body"]
     if numeric_spacing is not None:
         # Exercise a treatment supported by the existing Theme grammar, not a

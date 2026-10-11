@@ -6,7 +6,7 @@ from datetime import date
 from enum import StrEnum
 import math
 import re
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 
 
 from chrona.core.figures import AsOfFact, FigureSpec, GroupStartFact, ObjectFact, PeriodFact
@@ -201,7 +201,7 @@ class ViewLaneTable:
     """Finite aggregate summary intent for generated lane rows."""
 
     label: ViewLaneLabel
-    count: bool = False
+    count: bool | Literal["auto"] = False
     text_wrap: str = "forbid"
 
 
@@ -288,7 +288,7 @@ class ViewGrouping:
     order: tuple[str, ...]
     missing: str | None
     presentation: str | None
-    depth: int | None
+    depth: int | Literal["all"] | None
     rollup: str | None
     order_by: str | None = None
     header: ViewGroupHeader | None = None
@@ -889,7 +889,7 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                              if not isinstance(raw_grouping.get("order"), FrozenDict) else (),
                              str(raw_grouping["missing"]) if "missing" in raw_grouping else None,
                              str(raw_grouping["presentation"]) if "presentation" in raw_grouping else None,
-                             int(raw_grouping["depth"]) if "depth" in raw_grouping else None,
+                             raw_grouping.get("depth"),
                              str(raw_grouping["rollup"]) if "rollup" in raw_grouping else None,
                              str(raw_grouping["order"]["by"]) if isinstance(raw_grouping.get("order"), FrozenDict) else None,
                              _group_header(raw_grouping), _group_tint(raw_grouping))
@@ -951,7 +951,7 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         tuple(body.get("annotations", ())), ViewRows(
             ViewRowMode(str(rows["mode"])), row_items, str(rows.get("points", "attached")),
             ViewTrackAllocation(str(rows["trackAllocation"])) if "trackAllocation" in rows else None,
-            (ViewLaneTable(ViewLaneLabel(str(rows["laneTable"]["label"])), bool(rows["laneTable"].get("count", False)),
+            (ViewLaneTable(ViewLaneLabel(str(rows["laneTable"]["label"])), rows["laneTable"].get("count", False),
                            str(rows["laneTable"].get("text", {}).get("wrap", "forbid")))
              if "laneTable" in rows else None),
             (tuple(str(item) for item in rows.get("packing", ("explicit", "attached")))

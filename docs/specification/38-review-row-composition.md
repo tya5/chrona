@@ -20,6 +20,31 @@ resolve from the selected Actual set. A View using a source absent from the Cont
 diagnoses before projection. No source may mean a branch tip, local working file,
 implicit latest snapshot, or copied schedule payload.
 
+### Dependency identity closure (#1302)
+
+Review relation facts, lane-packing dependencies and network edges use the Core
+`relation_identity(index, declaration)` identity, matching Scheduler driving
+facts. The index is zero-based in the complete Project relation sequence,
+before filtering: `relation:<index>:<declared-id>` for a nonempty authored ID,
+otherwise `relation:<index>`. Empty or omitted IDs never make a valid Project
+unrenderable. An authored ID resembling a generated ID cannot collide with it.
+Projection does not invent a second fallback or mutate the Project. Scene
+instance identities derive from that opaque identity and endpoint occurrences;
+Scene and adapters do not resolve declaration identities themselves.
+Layout carries the canonical declaration identity as `RelationPlacement.source_ref`;
+Scene copies that field to `sourceRef`, never splitting the placement ID. This
+keeps source-keyed duplicate-path checks distinct from instance identity.
+
+Migration: presentation previously required the optional authored ID and used
+it directly. Relation primitive IDs and source-keyed relation diagnostics now
+use the canonical identity even for named declarations; consumers must not
+construct these IDs from the authored name alone. This changes identity, not
+Project scheduling, endpoint meaning or paint intent. Identity is not a priority
+policy: lane predecessor ties and network-edge ordering retain their declared
+relation-name key, with canonical identity used when the name is empty/absent
+and to distinguish equal names. Projection closes this ordering fact separately
+from identity; the lane allocator never reconstructs a name from an opaque ID.
+
 ## 1. Contract
 
 A Review row is a stable View-local presentation composition, not a Project object,
@@ -68,6 +93,44 @@ row items are the complete selection and their declared order is authoritative;
 competing selection/order authorities.
 
 ## 2. Projection semantics
+
+### Hierarchy row appearance (#1302)
+
+`grouping: {by: hierarchy, depth: all, rollup: header}` selects the complete
+finite Project hierarchy. `depth: all` has no presentation-depth cutoff;
+nonnegative integer depths retain their relative-depth cutoff. Core remains
+the only owner of containment, rollup dates and tree validity. View closes
+root selection and preorder, ordering siblings with the declared ordering.
+
+A selected rollup is one ordinary Review row, not an additional field-group
+band. With `rollup: header`, its title in `hierarchyColumn` is `groupHeader`
+content and typography; other declared columns retain their source facts.
+The same table measurement, fitting, indentation and row allocation close it.
+With `rollup: none`, the selected row retains ordinary table content, without
+header emphasis. Both modes suppress the rollup's temporal marks, progress,
+deadline decoration and optional plot/delta labels. They do not hide child
+rows or erase selected relation endpoints. `rollup: bar` retains the existing
+temporal facets and summary-bar overlay, labels and relation-host behavior.
+Non-rollup rows and non-hierarchy grouping are unchanged.
+
+View projects temporal-paint admission on each Review Item, including its
+comparison occurrences. Layout separately closes unpainted temporal endpoint
+ports from the scheduled geometry and existing window admission. Such ports
+carry instance/source identity and original start/end coordinates, not paint,
+host contours or obstacles. A clipped-away endpoint stays unavailable; it
+is never replaced by a window edge or table/row edge. Routes to unpainted
+ports have no fabricated mark-host exemption and pass the same stroke,
+terminal, text, mark, bounds and route-safety checks as other relations.
+Scene emits only completed painted marks and completed routes; adapters do
+not resolve ports, measure header text or delete primitives.
+
+Migration: hierarchy header/none previously leaked ordinary rollup marks and
+plot labels. Their removal is intentional. Flat output is unchanged when
+Theme/Layout resources are held fixed. Header text keeps its table placement
+identity and Project provenance, but has group-header purpose/paint rather
+than table-cell metadata. The packaged default selects all hierarchy depths,
+uses its Task hierarchy column and header rollups, and no longer excludes
+Project groups. No preset-ID or project-specific code branch is permitted.
 
 The projection contains `ReviewRowProjection` values in row order. Each has
 `row_id`, `label`, `group_id`, `table_subject_id`, and ordered `ReviewItemProjection`
@@ -125,6 +188,15 @@ ordering and `rows` declarations. It MUST NOT read Theme, font metrics,
 labels, icons, stroke widths, mark bounds, Actual dates, Scene geometry,
 collision obstacles or the output target. The same Project and View therefore
 produce identical membership under every Theme and renderer.
+
+Generated lane row order preserves resolved View group order. Within a group,
+each lane takes the minimum selected View-row rank among its countable members,
+with lane ID as the stable tie-break. Comparison facets do not add ranks or
+members. Ordering never changes assignments, founder identity or allocation.
+View closes `LaneMembership.lanes` and projected lane rows in the same order;
+Layout's exact membership/row correspondence invariant remains mandatory.
+Layout consumes these already ordered View lane rows. Packaged presets retain
+their declared planned-start ordering rather than being re-sorted by lane ID.
 
 View v0.28 adds `rows.packing`, a duplicate-free subsequence of
 `[explicit, attached, chain, dates]`, defaulting to
@@ -310,8 +382,13 @@ member's title; a multi-member lane shows its group's title, with its first
 member's title appended when that group has multiple multi-member lanes.
 For an ungrouped multi-member lane, the founder member's authored Project
 title is its human heading. Generated lane IDs, founder IDs and explicit lane
-keys are identity, never display-title fallbacks. A View-requested `Items` column remains declared
-intent; public Views with an all-one count SHOULD omit it. This changes
+keys are identity, never display-title fallbacks. `laneTable.count` accepts
+`false` (also the runtime default), `true`, or `auto`. Boolean declarations
+retain their exact meaning. `auto` resolves once from completed immutable
+countable lane membership: show `Items` iff any selected lane has more than
+one member, consistently across the table. Actual/Snapshot/scenario facets
+never increase that count. Packaged lane tables declare `auto`.
+This changes
 display text, not lane identity or membership (#554). A visible delta table
 promise removed during resource migration must be selected in lane-label
 content or explicitly retired.

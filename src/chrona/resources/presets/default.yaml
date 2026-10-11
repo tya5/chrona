@@ -7,7 +7,7 @@ body:
     view: {id: chrona-preset-editorial-readable-default, kind: view, path: bundles/editorial-readable-default/view.yaml}
     theme: {id: chrona-builtin-editorial-readable-default, kind: theme, path: bundles/editorial-readable-default/theme.yaml}
     colorScheme: {id: chrona-builtin-editorial, kind: color-scheme, path: bundles/editorial/scheme.yaml}
-    layout: {id: chrona-builtin-editorial, kind: layout-profile, path: bundles/editorial/layout.yaml}
+    layout: {id: chrona-builtin-editorial-readable-default, kind: layout-profile, path: bundles/editorial-readable-default/layout.yaml}
     detailProfile: {id: chrona-builtin-editorial-detail, kind: review-detail-profile, path: bundles/editorial/detail.yaml}
   compatibleColorSchemes:
     - {id: chrona-builtin-editorial, kind: color-scheme, path: bundles/editorial/scheme.yaml}
