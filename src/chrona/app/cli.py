@@ -37,7 +37,7 @@ from chrona.operational.resources import parse_command, parse_document
 from chrona.usecases.materialize import MaterializationError, materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
 from chrona.usecases.terse_compile import PlanCompilation, compile_plan, input_unreadable, output_exists, position_findings
-from chrona.usecases.preset_library import copy_builtin_preset, list_builtin_presets
+from chrona.usecases.preset_library import DEFAULT_PRESET_ID, copy_builtin_preset, list_builtin_presets
 from chrona.usecases.skill_library import copy_skill
 from chrona.presentation.icons.importer import copy_material_symbols_outline_rounded_catalog, import_iconify, import_theme_assets
 from chrona.presentation.fonts.importer import import_font
@@ -663,7 +663,7 @@ def _run_preset_copy(args: argparse.Namespace) -> None:
 
 
 def _run_preset_list(_args: argparse.Namespace) -> None:
-    print(json.dumps({"status": "ok", "presets": list_builtin_presets()}, ensure_ascii=False))
+    print(json.dumps({"status": "ok", "presets": list_builtin_presets(), "default": DEFAULT_PRESET_ID}, ensure_ascii=False))
 
 
 def _assert_context_format(closure: RenderClosure, format_name: str | None) -> None:

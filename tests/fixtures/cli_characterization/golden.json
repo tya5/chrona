@@ -186,7 +186,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"unknown builtin preset 'no-such-preset'; valid ids: mission-light, control-room-dark, print-mono, executive-light, elevated-light, editorial, technical-print (chrona preset list); a value containing '/' or ending in .yaml is read as a file path\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"unknown builtin preset 'no-such-preset'; valid ids: mission-light, control-room-dark, print-mono, executive-light, elevated-light, editorial, technical-print, chrona-default-draft (chrona preset list); a value containing '/' or ending in .yaml is read as a file path\"}]}\n"
  },
  "preset-list": {
   "argv": [
@@ -196,7 +196,7 @@
   "exit": 0,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"ok\", \"presets\": [{\"id\": \"mission-light\", \"gallerySet\": \"halcyon-mission-brief-appearance\"}, {\"id\": \"control-room-dark\", \"gallerySet\": \"halcyon-mission-brief-appearance\"}, {\"id\": \"print-mono\", \"gallerySet\": \"halcyon-mission-brief-appearance\"}, {\"id\": \"executive-light\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"elevated-light\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"editorial\", \"gallerySet\": \"generated-design-directions\"}, {\"id\": \"technical-print\", \"gallerySet\": \"generated-design-directions\"}]}\n"
+  "stdout": "{\"status\": \"ok\", \"presets\": [{\"id\": \"mission-light\", \"gallerySet\": \"halcyon-mission-brief-appearance\"}, {\"id\": \"control-room-dark\", \"gallerySet\": \"halcyon-mission-brief-appearance\"}, {\"id\": \"print-mono\", \"gallerySet\": \"halcyon-mission-brief-appearance\"}, {\"id\": \"executive-light\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"elevated-light\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"editorial\", \"gallerySet\": \"generated-design-directions\"}, {\"id\": \"technical-print\", \"gallerySet\": \"generated-design-directions\"}, {\"id\": \"chrona-default-draft\", \"gallerySet\": \"bundled-default\"}], \"default\": \"chrona-default-draft\"}\n"
  },
  "render-actual": {
   "argv": [
@@ -245,7 +245,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"unknown builtin preset 'no-such-preset'; valid ids: mission-light, control-room-dark, print-mono, executive-light, elevated-light, editorial, technical-print (chrona preset list); a value containing '/' or ending in .yaml is read as a file path\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"unknown builtin preset 'no-such-preset'; valid ids: mission-light, control-room-dark, print-mono, executive-light, elevated-light, editorial, technical-print, chrona-default-draft (chrona preset list); a value containing '/' or ending in .yaml is read as a file path\"}]}\n"
  },
  "render-bad-viewport-number": {
   "argv": [
@@ -892,7 +892,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"unknown builtin preset 'no-such-preset'; valid ids: mission-light, control-room-dark, print-mono, executive-light, elevated-light, editorial, technical-print (chrona preset list); a value containing '/' or ending in .yaml is read as a file path\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"unknown builtin preset 'no-such-preset'; valid ids: mission-light, control-room-dark, print-mono, executive-light, elevated-light, editorial, technical-print, chrona-default-draft (chrona preset list); a value containing '/' or ending in .yaml is read as a file path\"}]}\n"
  },
  "render-preset-with-scheme-override": {
   "argv": [

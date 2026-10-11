@@ -23,7 +23,7 @@ body:
       value: 0.72
     chip-padding:
       type: number
-      value: 0.45
+      value: 0.05
     opacity.axis-band:
       type: number
       value: 1
@@ -410,6 +410,13 @@ body:
     wobble.fidelity:
       type: fidelity
       value: decorative-optional
+    today-burst:
+      type: chipShape
+      value:
+        kind: burst
+        points: 12
+        innerRatio: 0.72
+        fit: ellipse
   markStack:
     members:
     - - planned
@@ -433,12 +440,18 @@ body:
       chipPadding: chip-padding
       viewerFit: text-follows-box
       cornerRadius: radius-chip
+      chipShape: today-burst
     group-band:
       backgroundTreatment: none
       backgroundPaintOrder: 10
     row-band:
       backgroundTreatment: none
       backgroundPaintOrder: 10
+    group-header-strip:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 11
+      opacity: opacity.group-header-band
+      pattern: dots
     group-header-band:
       backgroundTreatment: fill
       backgroundPaintOrder: 13
@@ -855,6 +868,8 @@ body:
     axis-cell-separator.stroke: category:gridFaint
     group-band.fill: category:default
     row-band.fill: category:default
+    group-header-strip.fill: category:paper
+    group-header-strip.stroke: category:dotsSoft
     group-header-band.fill: category:yellow
     planned.fill: category:bar
     planned.stroke: category:ink
