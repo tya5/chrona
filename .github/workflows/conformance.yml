@@ -176,6 +176,8 @@ jobs:
           cache-dependency-path: pyproject.toml
       - name: Install chrona with the oldest MCP SDK the extra allows
         run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk 'mcp==2.0.0'
+      - name: Verify test-import and CI-selection guards with optional MCP installed
+        run: pytest -q tests/unit/tools/test_corpus_import_policy.py tests/unit/tools/test_ci_corpus_selection.py
       - name: Run the MCP binding and the real stdio end-to-end tests against that floor
         run: pytest -q -p no:cacheprovider tests/mcp tests/cli/test_mcp_command.py
 

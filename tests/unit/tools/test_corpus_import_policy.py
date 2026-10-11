@@ -168,6 +168,8 @@ for module in MODULES:
         # does; import failures and assertion failures still fail this guard.
         pass
 '''.replace("MODULES", repr(IMPORT_MODULES))
-    result = subprocess.run([sys.executable, "-c", script], cwd=ROOT, text=True,
+    # All test-module names exceed Windows' command-line limit. Keep the
+    # complete inventory and pass the spy through stdin on every platform.
+    result = subprocess.run([sys.executable, "-"], input=script, cwd=ROOT, text=True,
                             capture_output=True, check=False)
     assert result.returncode == 0, result.stdout + result.stderr
