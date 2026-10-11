@@ -311,7 +311,10 @@ class SurfaceObstacleIndex:
                                   placement_id=obstacle.placement_id)
         self._by_id[obstacle.placement_id] = obstacle
         self._ordered = None
-        self._prepared = {}
+        # A route/port addition must not discard a mark/text selection's
+        # exact-content grid. Invalidate only inventories that read the item.
+        self._prepared = {key: prepared for key, prepared in self._prepared.items()
+                          if not self._matches_selection(obstacle, *key)}
 
     def copy(self, *, geometry_overrides: Mapping[str, ObstacleGeometry] | None = None) -> "SurfaceObstacleIndex":
         """An independent query snapshot, optionally using completed paint footprints.
@@ -327,6 +330,13 @@ class SurfaceObstacleIndex:
         clone._by_id = (dict(self._by_id) if not geometry_overrides else
                         {key: replace(item, geometry=geometry_overrides[key])
                          if key in geometry_overrides else item for key, item in self._by_id.items()})
+        clone._ordered = self._ordered if not geometry_overrides else None
+        # Each snapshot owns its dictionary; unchanged selections may share
+        # their immutable items and optimization-only query/grid preparation.
+        clone._prepared = {key: prepared for key, prepared in self._prepared.items()
+                           if not geometry_overrides or not any(
+                               self._matches_selection(self._by_id[identity], *key)
+                               for identity in geometry_overrides)}
         clone._route_memo = self._route_memo  # value-keyed results of pure searches, valid for any lineage member
         return clone
 
@@ -373,9 +383,14 @@ class SurfaceObstacleIndex:
         if prepared is None:
             prepared = self._prepared[key] = _PreparedSelection(tuple(
                 item for item in self.all()
-                if (selected_classes is None or item.obstacle_class in selected_classes)
-                and (selected_regions is None or item.region_id in selected_regions)))
+                if self._matches_selection(item, selected_classes, selected_regions)))
         return prepared
+
+    @staticmethod
+    def _matches_selection(item: SurfaceObstacle, classes: frozenset[str] | None,
+                           regions: frozenset[str] | None) -> bool:
+        return ((classes is None or item.obstacle_class in classes)
+                and (regions is None or item.region_id in regions))
 
     def collisions(self, geometry: ObstacleGeometry, *, classes: Iterable[str] | None = None,
                    regions: Iterable[str] | None = None, host_id: str | None = None,
