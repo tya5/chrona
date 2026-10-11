@@ -31,7 +31,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | axis-band | `axis-band-decoration2` | absent | 1.100 | 6 | 0 | — | — | 0 | 0 |
 | axis-band | `axis-band-decoration2` | enabled | 1.100 | 5 | 33 | 1.146 | 1.154 | 0 | 0 |
 | axis-label | `axis-label2` | required | 4.500 | 11 | 37 | 5.727 | 10.019 | 0 | 0 |
-| axis-label | `axis-label3` | required | 4.500 | 10 | 87 | 5.448 | 8.683 | 0 | 0 |
+| axis-label | `axis-label3` | required | 4.500 | 11 | 98 | 5.448 | 8.683 | 0 | 0 |
 | axis-label | `text` | required | 4.500 | 34 | 287 | 8.629 | 10.306 | 0 | 0 |
 | calendar-closed | `calendar-closed` | absent | 1.100 | 1 | 0 | — | — | 0 | 0 |
 | calendar-closed | `calendar-closed` | enabled | 1.100 | 44 | 1880 | 1.050 | 1.414 | 0 | 256 |
@@ -257,6 +257,17 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:2:0` | `axis-label2` | 646.197, 96.425 | `axis-band-rect:0:0` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:2:1` | `axis-label2` | 971.263, 96.425 | `axis-band-rect:0:1` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:2:2` | `axis-label2` | 1211.066, 96.425 | `axis-band-rect:0:2` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:3:0` | `axis-label3` | 499.792, 118.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:3:1` | `axis-label3` | 538.356, 118.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:3:10` | `axis-label3` | 1210.349, 118.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:3:2` | `axis-label3` | 615.505, 118.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:3:3` | `axis-label3` | 690.212, 118.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:3:4` | `axis-label3` | 765.501, 118.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:3:5` | `axis-label3` | 838.181, 118.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:3:6` | `axis-label3` | 912.888, 118.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:3:7` | `axis-label3` | 990.139, 118.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:3:8` | `axis-label3` | 1065.428, 118.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:3:9` | `axis-label3` | 1140.208, 118.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-03` | `calendar-closed` | 507.645, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-04` | `calendar-closed` | 518.303, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-10` | `calendar-closed` | 582.250, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
@@ -7224,4 +7235,4 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 Every independently required decoration role is enabled in committed Scene evidence; group-band, group-header-band or group-header-strip supplies the group concept, and row-band or row-rule supplies the row concept when there are no corpus errors.
 
 
-Findings: 7132; errors: 0; warnings: 307.
+Findings: 7143; errors: 0; warnings: 307.
