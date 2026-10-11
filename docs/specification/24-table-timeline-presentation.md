@@ -115,6 +115,12 @@ normalization. An indivisible overlong unit uses source-preserving ellipsis
 and `W_LAYOUT_TEXT_ELLIPSIZED` naming that text and its measured shortage;
 no abbreviation dictionary or font-size reduction is implied.
 
+When a bounded cell with declared affixes requires ellipsis, retain its prefix
+and suffix verbatim around the longest measured source-core prefix plus `…`.
+If even the complete affixes and ellipsis cannot fit, the mandatory minimum
+is infeasible. Rotated headers reserve their native inline thickness and their
+text advance as block demand, not the column width as horizontal text space.
+
 Bounded column measurement precedes header and row/lane allocation. The header
 prefix reserves its completed multiline requirement; each row includes its
 own tallest completed multiline cell, in the cell's typography role. Heading
