@@ -8,7 +8,7 @@ from importlib.metadata import version
 import math
 from pathlib import Path
 import re
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 
 import jsonschema  # Kept as the closure module's validator seam for snapshot tests.
 import yaml
@@ -226,6 +226,7 @@ def resolve_draft_render(
     system_font_resolver: SystemFontResolver | None = None,
     viewport: tuple[int, int | None] = DEFAULT_DRAFT_VIEWPORT,
     locale: str = "en-US", target_kind: str = "svg", visual_profile: str | None = None, typesetter: TypesetterIdentity | None = None,
+    relations: Literal["none", "semantic"] | None = None,
 ) -> DraftRender:
     """Build a typed, in-memory closure from explicit authoring inputs.
 
@@ -254,6 +255,9 @@ def resolve_draft_render(
         ("review-detail-profile", detail_path or (preset_paths.get("review-detail-profile") if theme_path is None else None)),
     )
     sources = [_load_draft_source(kind, path) for kind, path in paths if path is not None]
+    if relations is not None:
+        sources = [_draft_relation_override(source, relations) if source.identity.kind == "view" else source
+                   for source in sources]
     sources.extend(_load_draft_source(kind, path) for kind, path in optional if path is not None)
     sources.extend(_load_draft_source("icon-catalog", path) for path in selected_catalog_paths)
     resources = _collect_presentation_resources(sources)
@@ -599,6 +603,26 @@ def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
     except ContractError as error:
         raise ClosureError(error.diagnostic_id, error.source_ref, error.detail) from error
     return ClosureResource(kind, identifier, "draft", identity.content_identity, contract)
+
+
+def _draft_relation_override(source: PresentationResourceSource,
+                             mode: Literal["none", "semantic"]) -> PresentationResourceSource:
+    """Change effective View intent before typed validation and identity freeze."""
+    value = source.value
+    body = value.get("body")
+    if not isinstance(body, dict):
+        return source  # The normal ingress validator owns malformed containers.
+    visibility = body.get("visibility", {})
+    if not isinstance(visibility, dict):
+        return source
+    declaration = visibility.get("relations")
+    effective = dict(declaration, mode=mode) if isinstance(declaration, dict) else mode
+    if declaration == effective:
+        return source
+    value = dict(value, body=dict(body, visibility=dict(visibility, relations=effective)))
+    identity = ClosureIdentity(source.identity.kind, source.identity.id, source.identity.revision,
+                               content_identity(value))
+    return PresentationResourceSource(identity, value)
 
 
 def _load_draft_source(kind: str, path: Path) -> PresentationResourceSource:

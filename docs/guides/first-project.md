@@ -18,6 +18,9 @@ default; use an explicit finite viewport when its minimum size matters.
 Terminal stderr shows render phases and routing counts automatically. Use
 `--progress` to request the same feedback with redirected stderr; JSON stdout
 is unchanged, and a nonterminal without the flag receives no progress lines.
+Use `--relations none` to skip dependency lines, or `--relations semantic` to
+show them on top of any preset. Scheduling still includes every dependency;
+the override does not edit your View or saved render-review Context.
 The output filename also selects the format: `.svg`, `.png`, `.pdf`, `.typ`
 and `.tex` select SVG, PNG, PDF, Typst and TikZ respectively. Without a
 suffix, Draft defaults to SVG. An explicit `--format` must match a recognized

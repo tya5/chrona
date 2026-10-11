@@ -14,7 +14,7 @@ from __future__ import annotations
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from chrona.core.ports import RenderArtifact
 from chrona.presentation.contracts import TypesetterIdentity
@@ -54,6 +54,7 @@ class DraftRenderRequest:
     typesetter_engine: str | None = None
     typesetter_version: str | None = None
     typesetter_adapter_grammar: str | None = None
+    relations: Literal["none", "semantic"] | None = None
     progress: RenderProgress | None = field(default=None, compare=False, repr=False)
 
 
@@ -155,6 +156,7 @@ def render_draft(request: DraftRenderRequest) -> DraftRenderResult:
                 system_fonts=request.system_fonts,
                 viewport=parse_viewport(request.viewport), locale=request.locale, target_kind=request.target_kind,
                 visual_profile=request.visual_profile,
+                relations=request.relations,
                 typesetter=typesetter_identity(
                     request.typesetter_engine, request.typesetter_version,
                     request.typesetter_adapter_grammar, request.target_kind,

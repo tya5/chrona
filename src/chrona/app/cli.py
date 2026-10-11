@@ -324,6 +324,8 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--viewport", default=f"{DEFAULT_DRAFT_VIEWPORT[0]}xauto", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600xauto)")
     command.add_argument("--progress", action="store_true",
                          help="report render phases and routing counts on stderr (automatic for terminal stderr)")
+    command.add_argument("--relations", choices=("none", "semantic"),
+                         help="override dependency-line visibility on top of the selected preset")
     command.add_argument("--locale", choices=("en-US", "ja-JP"), default="en-US",
                          help="render locale: en-US or ja-JP (default: en-US)")
     _add_draft_target_arguments(command)
@@ -728,6 +730,7 @@ def _run_draft_render(args: argparse.Namespace) -> None:
         typesetter_engine=args.typesetter_engine, typesetter_version=args.typesetter_version,
         typesetter_adapter_grammar=args.typesetter_adapter_grammar,
         progress=_draft_render_progress(getattr(args, "progress", False)),
+        relations=getattr(args, "relations", None),
     ))
     _write_render_outputs(result.rendered, args)
     _emit_render_result(result.rendered)
