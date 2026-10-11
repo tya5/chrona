@@ -192,11 +192,14 @@ def derived_track_block_size(metrics: Mapping[str, Decimal]) -> Decimal | None:
 def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any], *, font_metrics: Any,
                     required_metrics: tuple[str, ...] = (), table_inline: float | None = None,
                     table_reserved_inline: float = 0.0,
-                    heading_inline: Mapping[str, Decimal] | None = None) -> MeasuredSources:
+                    heading_inline: Mapping[str, Decimal] | None = None,
+                    resolved_metrics: Mapping[str, Decimal] | None = None) -> MeasuredSources:
     """Close immutable source facts at optional independently allocated widths."""
-    metric = resolve_theme_metrics(theme, required_metrics=required_metrics)
+    metric = (dict(resolved_metrics) if resolved_metrics is not None
+              else resolve_theme_metrics(theme, required_metrics=required_metrics))
     typography = ThemeTokenView(theme)
-    derive_axis_metrics(metric, theme, inputs, typography, font_metrics)
+    if resolved_metrics is None:
+        derive_axis_metrics(metric, theme, inputs, typography, font_metrics)
     body_treatment = typography.text_treatment("text")
     body_metrics = metric_for_role(typography, "text", font_metrics)
     body_size = body_treatment.font_size
