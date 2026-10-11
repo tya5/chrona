@@ -8,7 +8,7 @@ Start product changes only after the already-active PR1423 publication lane clea
 | --- | --- | --- |
 | 1. Closed declarations | `schemas/view-v0.28.schema.yaml`, `schemas/layout-profile-v0.10.schema.yaml`, shared schema parts; `contracts/resources.py`, `contracts/view_defaults.py` | Optional additive properties; shared candidate vocabulary; whole-member replacement; invalid declaration/policy tests; strict schema equivalence. |
 | 2. Semantic expansion | Pure Presentation helper called by `review/v05_content.py` | Different Project notes, point/span/any, filtering/folded membership, ghost deduplication, binding/key order, explicit overrides, identity/policy rejection and truthful source refs; immutable inputs. |
-| 3. Output acceptance | Synthetic/test-local fixtures and focused integration tests | All five designs drop their per-id list locally and place HALCYON's three notes identically; another Project places its notes by kind. Compare actual Scene/SVG primitives, geometry, paint and diagnostics; preserve all legacy declaration bytes. |
+| 3. Output acceptance | Synthetic/test-local fixtures and focused integration tests | All five designs drop their per-id list locally and place HALCYON's three notes identically; another Project places its notes by kind. Compare actual Scene/SVG primitives, geometry, paint and diagnostics between explicit and automatic forms. Check the five public SVGs byte-for-byte; disclose corrected natural-host allocation/fit diagnostics separately. |
 
 Reuse ordinary typed annotation intents and existing Layout candidate completion;
 do not add Scene/adapter placement or Project-specific rules. If completion

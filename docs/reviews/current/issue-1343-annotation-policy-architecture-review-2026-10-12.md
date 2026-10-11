@@ -21,3 +21,8 @@ measurement (empty narrative for Project references), shifting status rows by
 one line. Use closed intents for both natural measurement and placement;
 disclose changed legacy natural-host allocation rather than preserve the bug.
 Five-design primitives/diagnostics/SVG identity remains mandatory.
+This compares explicit and automatic rendering under the corrected measurement.
+Against public baseline, target B/Yuya/Marquee retain every primitive and SVG
+byte but gain one truthful natural-host fit warning each; disclose those Scene
+diagnostic changes, not a geometry waiver. Synthetic natural-host golden bytes
+may migrate after direct old/new comparison under the same approved rule.
