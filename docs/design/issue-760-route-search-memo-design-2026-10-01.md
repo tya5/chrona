@@ -115,12 +115,13 @@ that content is unchanged. The memo never stores a pointer to an index.
 
 ## 5. Memory and cost bound
 
-* Entries: at most `ROUTE_MEMO_LIMIT = 4096` results; once full, new results
-  are computed but not stored (deterministic, no eviction order to reason about).
-  A search result is a short point tuple.
-* Interned selection contents: at most 256 distinct ids; beyond it a selection
-  content is not interned and the search runs fresh. Typical use is a handful
-  (one per route class set per mutation epoch of a lineage).
+* Admission follows Spec 50's aggregate retained-record limits (#1298), not
+  merely a count of cache entries: results can include complete sparse graphs,
+  not only short point tuples. A value that does not fit is computed fresh;
+  admitted values are never evicted or charged twice.
+* Interned selection contents have both the existing 256-id ceiling and the
+  aggregate record bound. A selection that cannot fit is not interned and its
+  search runs fresh. Capacity never changes the exact content key or a result.
 * Per query cost: the content tuple is built once per `_PreparedSelection` (which
   `add` already invalidates), so a lookup costs one dict probe plus a `repr` of
   six small values, against a search of 10 to 500 ms.

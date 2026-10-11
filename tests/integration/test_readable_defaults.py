@@ -140,12 +140,16 @@ def test_cli_names_colliding_scale_values(tmp_path, monkeypatch, capsys) -> None
     assert [(item["values"], item["vision"], item["deltaE"]) for item in collisions] == [(["bus", "launch"], "normal", 0.0)]
 
 
-def _assert_automatic_default_keeps_plot_names_and_row_guides(scene: dict, svg: str) -> None:
+def _assert_automatic_default_keeps_plot_names_and_row_guides(
+        scene: dict, svg: str, *, expected_axis_warnings: tuple[str, ...] = ()) -> None:
     surface = scene["surfaces"][0]
     allowed_layout_warnings = {"W_LAYOUT_ACTUAL_INCOMPLETE", "W_LAYOUT_LABEL_SUPPRESSED"}
     assert not [item for item in scene["diagnostics"]
                 if item.startswith("W_LAYOUT_")
-                and item.split(":", 1)[0] not in allowed_layout_warnings]
+                and item.split(":", 1)[0] not in allowed_layout_warnings
+                and item not in expected_axis_warnings]
+    assert tuple(item for item in scene["diagnostics"] if item.startswith(
+        ("W_LAYOUT_AXIS_LABEL_THINNED:", "W_LAYOUT_AXIS_DENSITY:"))) == expected_axis_warnings
     _assert_marks_inside_timeline(surface)
     _assert_as_of_label_outside_axis(surface)
     timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
@@ -183,7 +187,9 @@ def test_bundled_default_uses_task_and_planned_date_columns(tmp_path, monkeypatc
     )
     primitives = {item["id"]: item for item in _primitives(scene)}
     svg = svg_path.read_text(encoding="utf-8")
-    _assert_automatic_default_keeps_plot_names_and_row_guides(scene, svg)
+    _assert_automatic_default_keeps_plot_names_and_row_guides(scene, svg, expected_axis_warnings=(
+        "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:10:label-does-not-fit",
+        "W_LAYOUT_AXIS_DENSITY:axis-tier:2:thinned=1"))
     svg_ids = {value for element in ET.fromstring(svg).iter()
                for value in (element.get("id"), element.get("data-scene-id")) if value}
     columns = {item["text"] for item in primitives.values()
