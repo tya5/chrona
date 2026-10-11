@@ -338,8 +338,10 @@ Source adapters may read View-owned semantic modes and Theme `metrics` bindings.
 not read Layout YAML, resize or move their slot, allocate peer slots, or supply fallback
 coordinates. Every author-tunable source-internal distance is a Theme number token reached
 through a closed semantic metric name. A missing binding or non-number token diagnoses;
-there is no renderer default table. Layout source measurements are collected once, frozen,
-and reused by arrangement and Scene composition so the two passes cannot disagree.
+there is no renderer default table. Source content, typography and font assets are
+collected once and frozen. Width-dependent Layout measurements close against each
+candidate's independently resolved allocation; arrangement and composition reuse
+the final candidate's closure, never an earlier width's lines or baselines.
 
 The initial metric contract is namespaced by source/component (`text.*`, `table.*`,
 `timeline.*`, `axis.*`, `legend.*`, `notes.*`, `icon.*`). The adapter owns the closed key set and

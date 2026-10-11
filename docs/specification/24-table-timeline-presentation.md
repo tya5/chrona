@@ -115,6 +115,12 @@ normalization. An indivisible overlong unit uses source-preserving ellipsis
 and `W_LAYOUT_TEXT_ELLIPSIZED` naming that text and its measured shortage;
 no abbreviation dictionary or font-size reduction is implied.
 
+For heading text with `wrap: allow`, each run's inline advance is reserved
+before fitting. Close every part's lines and the whole heading's baseline stack
+at the independently allocated track width before block allocation. If even the
+measured ellipsis and that reservation cannot fit, fail with
+`E_LAYOUT_TEXT_OVERFLOW`; do not report table infeasibility or enlarge the track.
+
 When a bounded cell with declared affixes requires ellipsis, retain its prefix
 and suffix verbatim around the longest measured source-core prefix plus `…`.
 If even the complete affixes and ellipsis cannot fit, the mandatory minimum
