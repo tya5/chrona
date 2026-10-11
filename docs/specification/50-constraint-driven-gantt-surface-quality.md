@@ -404,6 +404,15 @@ feasibility algorithm, its completeness argument and its input-dependent work
 accounting must be finalized before implementing this exception; the existing
 ordinary-search bounds below do not cover that additional pass.
 
+Completeness must cover non-self-overlapping completed paths, not merely
+minimum-leg walks. A polynomial edge-progression algorithm is not sufficient:
+the finite-grid simple-path variant is NP-complete, while allowing repeated
+vertices changes that problem ([Ahrens 2020, section 4.2 and corollary 4.2](https://d-nb.info/1224966090/34)).
+This is not a complexity proof for Chrona's continuous geometry. Any reduction
+must establish its own geometric completeness and account honestly for path
+history, terminal completion and work; do not promise polynomial protected
+search from the extended-Hanan-grid abstract alone.
+
 **Ordinary candidate search (#1109 R5).** One bounded sparse
 visibility search supplies alternatives for each endpoint pair, rather than
 post-filtering only a single length-plus-bend-penalty winner. Obstacle-offset

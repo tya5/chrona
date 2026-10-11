@@ -40,3 +40,35 @@ def test_exhausted_ordinary_graph_can_miss_a_safe_stroked_dogleg(shift):
         bounds=tuple(value + shift for value in (0.0, 0.0, 30.0, 30.0))))
     assert candidates
     assert not any(safe(path) for path in candidates)
+
+
+@pytest.mark.parametrize("shift", (0.0, -100.0, 1000.0))
+def test_minimum_leg_walk_is_not_a_safe_simple_route(shift):
+    """A walk can satisfy minimum legs by revisiting the source/target.
+
+    On the six-vertex perimeter cycle s-t-r-ur-ul-l-s, the only simple
+    s-t paths are the direct edge and the long way around. Both have a
+    final maximal straight run of length one. The walk around the other
+    way revisits s and t and has every maximal run at least two, but is
+    forbidden by Chrona's self-overlap rule. This is a finite-graph
+    characterization, not a geometric completeness claim.
+
+    Ahrens, Efficient Algorithms for Routing a Net Subject to VLSI Design
+    Rules (2020), section4.2 and corollary4.2 distinguish these problems:
+    https://d-nb.info/1224966090/34
+    """
+    def translated(points):
+        return tuple((x + shift, y + shift) for x, y in points)
+
+    simple_paths = (
+        translated(((0, 0), (1, 0))),
+        translated(((0, 0), (-2, 0), (-2, 2), (2, 2), (2, 0), (1, 0))),
+    )
+    walk = translated(((0, 0), (2, 0), (2, 2), (-2, 2), (-2, 0), (1, 0)))
+
+    def minimum_leg(path):
+        return min(hypot(b[0] - a[0], b[1] - a[1]) for a, b in zip(path, path[1:]))
+
+    assert all(not route_self_overlaps(path) and minimum_leg(path) < 2 for path in simple_paths)
+    assert minimum_leg(walk) >= 2
+    assert route_self_overlaps(walk)
