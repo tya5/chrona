@@ -13,6 +13,7 @@ from chrona.presentation.layout.route_search import RouteSearchFailure
 
 
 ROUTE_GRID_OFFSET = 2.0  # how far a route runs from the edge of an obstacle
+RELATION_SEARCH_EXPANSIONS = 4096  # shared by all pairs of one resolved relation instance
 
 
 def _route_attempt_error(owner: str, **operands: object) -> ValueError:
@@ -375,8 +376,9 @@ def select_relation_route(
     """Measure eligibility, then select by the caller's stable rank when supplied.
 
     The order is the caller's declared deterministic candidate order.
-    Without a rank, the first accepted pair wins. With a rank, all eligible
-    pairs are compared and exact ties keep the first. A search failure is
+    Without a rank, the first accepted pair wins. With a rank, eligible
+    candidates found within deterministic per-pair quotas are compared and
+    exact ties keep the first. A search failure is
     distinguished from unrelated invalid input; endpoint
     labels are never exempted from either corridor or body collisions.
     """
@@ -389,7 +391,8 @@ def select_relation_route(
     chosen = None
     chosen_points = ()
     chosen_attempt = -1
-    for source, target in port_pairs:
+    quota, remainder = divmod(RELATION_SEARCH_EXPANSIONS, len(port_pairs))
+    for pair_index, (source, target) in enumerate(port_pairs):
         blockers = tuple(sorted({item.placement_id for egress in (source, target)
                                  if egress.corridor
                                  for item in obstacles.egress_collisions(
@@ -399,6 +402,11 @@ def select_relation_route(
             attempts.append(RouteAttemptEvidence(source.side, target.side, "egress-collision",
                                                  blocker_ids=blockers))
             continue
+        pair_limit = quota + int(pair_index < remainder)
+        if pair_limit == 0:
+            attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
+                                                 search_failure="E_PRESENTATION_ROUTE_LIMIT"))
+            continue
         port_ids = tuple(
             port_id for host_id, side in ((source_host_id, source.side), (target_host_id, target.side))
             for port_id in (f"port:{host_id or relation_scene_id}:{side}",)
@@ -406,7 +414,8 @@ def select_relation_route(
         )
         measured, points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
             port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
-            max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept)
+            max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
+            limit=pair_limit)
         attempts.append(measured)
         if measured.outcome == "accepted":
             if rank is None:
@@ -422,7 +431,7 @@ def select_relation_route(
 
 
 def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, classes, regions,
-                           max_bends, max_detour_ratio, prepare, accept):
+                           max_bends, max_detour_ratio, prepare, accept, limit):
     """Search alternatives for one pair; only completed, safe paths reach quality selection."""
     from chrona.presentation.layout.route_search import orthogonal_route_candidates
 
@@ -431,7 +440,7 @@ def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, class
     disposition = "bounded-candidates-exhausted"
     try:
         for middle in orthogonal_route_candidates(source.exposed_port, target.exposed_port, obstacles,
-                bounds=bounds, port_ids=port_ids, classes=classes, regions=regions):
+                bounds=bounds, port_ids=port_ids, classes=classes, regions=regions, limit=limit):
             points = []
             for point in (*source.corridor, *middle, *reversed(target.corridor)):
                 if not points or points[-1] != point:
