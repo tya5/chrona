@@ -67,7 +67,7 @@ def test_lane_source_measurement_uses_exact_membership_table_and_lane_count():
     sources = render_usecase._source_inputs(
         {"project": {"title": "test"}}, view, projection, SummaryContent(()), table=table,
         content=SimpleNamespace(group_details=(), milestones=(), observation_columns=(), observation_rows=(),
-                                axis_tiers=()),
+                                axis_tiers=(), notes=()),
     )
 
     assert sources["table"].item_count == sources["timeline"].item_count == 1

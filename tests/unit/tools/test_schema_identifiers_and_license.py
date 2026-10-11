@@ -83,7 +83,8 @@ ID_SITES: dict[tuple[str, str], int] = {
     ("theme-v0.15.schema.yaml", "non-empty-string"): 1,
     ("theme-v0.16.schema.yaml", "non-empty-string"): 2,
     ("view-v0.28.schema.yaml", "figure-identity"): 3,
-    ("view-v0.28.schema.yaml", "non-empty-string"): 17,
+    # Candidate ids now belong to the shared annotationCandidates part (#1343).
+    ("view-v0.28.schema.yaml", "non-empty-string"): 16,
 }
 
 

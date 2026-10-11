@@ -383,6 +383,8 @@ class ViewInput:
     heading: ViewHeading | None = None
     deadlines: str | None = None  # `slipped` or `all`: which Project deadlines the surface draws; None draws none (#822)
     slot_heading_text: FrozenDict | None = None
+    annotation_bindings: tuple[FrozenDict, ...] = ()
+    annotation_placement: FrozenDict | None = None
 
 
 @dataclass(frozen=True)
@@ -948,7 +950,7 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
     return ViewInput(
         selection, grouping, ordering, window, comparison, visibility,
         table_columns,
-        tuple(body.get("annotations", ())), ViewRows(
+        _view_annotations(body), ViewRows(
             ViewRowMode(str(rows["mode"])), row_items, str(rows.get("points", "attached")),
             ViewTrackAllocation(str(rows["trackAllocation"])) if "trackAllocation" in rows else None,
             (ViewLaneTable(ViewLaneLabel(str(rows["laneTable"]["label"])), rows["laneTable"].get("count", False),
@@ -974,7 +976,29 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         figures=figures,
         deadlines=str(body["deadlines"]["show"]) if "deadlines" in body else None,
         heading=_view_heading(body.get("heading")),
-        slot_heading_text=(freeze(body["slotHeadingText"]) if "slotHeadingText" in body else None))
+        slot_heading_text=(freeze(body["slotHeadingText"]) if "slotHeadingText" in body else None),
+        annotation_bindings=tuple(body.get("annotationBindings", ())),
+        annotation_placement=body.get("annotationPlacement"))
+
+
+def annotation_placement_for(policies: Mapping[str, Any] | None, purpose: str,
+                             source_ref: str) -> Mapping[str, Any]:
+    """Resolve one schema-accepted purpose policy; never invent placement intent."""
+    policy = policies.get(purpose) if policies is not None else None
+    if not isinstance(policy, Mapping):
+        raise ContractError("E_PRESENTATION_ANNOTATION_POLICY_MISSING",
+                            f"purpose={purpose!r}; no declared annotationPlacement policy", source_ref)
+    return policy
+
+
+def _view_annotations(body: FrozenDict) -> tuple[FrozenDict, ...]:
+    """Close explicit policy inheritance after schema acceptance, without mutation."""
+    annotations = body.get("annotations", ())
+    policies = body.get("annotationPlacement")
+    return tuple(annotation if "placement" in annotation or "candidates" in annotation
+                 else freeze({**annotation, **annotation_placement_for(
+                     policies, str(annotation["purpose"]), f"/body/annotations/{index}")})
+                 for index, annotation in enumerate(annotations))
 
 
 def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:

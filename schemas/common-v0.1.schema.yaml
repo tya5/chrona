@@ -99,3 +99,126 @@ $defs:
     minLength: 1
     maxLength: 80
     pattern: "^[^\\u0000-\\u001f\\u007f]+$"
+  annotationLegacyPlacement:
+    description: "The old rung spelling: one flush side of the anchor. Kept valid alongside candidates (#466); an annotation uses exactly one spelling."
+    examples: [{side: end, alignment: center}]
+    type: object
+    required: [side, alignment]
+    additionalProperties: false
+    properties:
+      side: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationSide"}
+      alignment: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationAlignment"}
+  annotationCandidates:
+    description: "The declared placement-candidate list: region, search, obstacles and connector (#466). An annotation uses exactly one spelling."
+    type: array
+    minItems: 1
+    items:
+      description: "One declared annotation placement candidate: region, search, obstacles and connector (#466)."
+      examples: [{id: plot-near, region: {kind: plot}, search: {kind: nearest-free, maxPositions: 256, maxInlineEm: 18}, obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}, connector: {kind: tail}}]
+      type: object
+      required: [id, region, search, obstacles, connector]
+      additionalProperties: false
+      properties:
+        id: {description: "Candidate identifier, unique per annotation and stable in diagnostics.", type: string, minLength: 1}
+        region:
+          description: "The area this candidate's box may occupy."
+          examples: [{kind: plot}]
+          type: object
+          required: [kind]
+          additionalProperties: false
+          properties:
+            kind: {description: "Region kind.", enum: [plot, content, slot, intersection]}
+            source: {description: "The named slot source, required only for a slot region.", type: string, minLength: 1}
+            of:
+              description: "The exactly two named simple (non-intersection) regions an intersection region combines."
+              type: array
+              minItems: 2
+              maxItems: 2
+              items:
+                description: "One simple region combined by an intersection."
+                examples: [{kind: plot}]
+                type: object
+                required: [kind]
+                additionalProperties: false
+                properties:
+                  kind: {description: "Region kind.", enum: [plot, content, slot]}
+                  source: {description: "The named slot source, required only for a slot region.", type: string, minLength: 1}
+                allOf:
+                  - description: "A slot region names its source slot."
+                    examples: [{kind: slot, source: annotations}]
+                    if: {properties: {kind: {const: slot}}, required: [kind]}
+                    then: {required: [source]}
+          allOf:
+            - description: "A slot region names its source slot."
+              examples: [{kind: slot, source: annotations}]
+              if: {properties: {kind: {const: slot}}, required: [kind]}
+              then: {required: [source]}
+            - description: "Only an intersection region combines two named regions."
+              examples: [{kind: intersection, of: [{kind: plot}, {kind: slot, source: annotations}]}]
+              if: {properties: {kind: {const: intersection}}, required: [kind]}
+              then: {required: [of]}
+              else: {not: {required: [of]}}
+        search:
+          description: "How positions inside the region are generated and ordered."
+          examples: [{kind: nearest-free, maxPositions: 256, maxInlineEm: 18}]
+          type: object
+          required: [kind]
+          additionalProperties: false
+          properties:
+            kind: {description: "Search strategy.", enum: [row-aligned, adjacent, nearest-free]}
+            side: {description: "The one logical side an adjacent search projects from.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationSide"}
+            maxPositions: {description: "Bounded lattice size examined by a nearest-free search.", type: integer, minimum: 1, maximum: 1024}
+            maxInlineEm: {description: "Positive finite text-width bound for a plot/content search, in em.", type: number, exclusiveMinimum: 0}
+          allOf:
+            - description: "An adjacent search must declare its one logical side."
+              examples: [{kind: adjacent, side: end}]
+              if: {properties: {kind: {const: adjacent}}, required: [kind]}
+              then: {required: [side]}
+            - description: "maxInlineEm bounds only a nearest-free search."
+              examples: [{kind: row-aligned}]
+              if: {properties: {kind: {not: {const: nearest-free}}}, required: [kind]}
+              then: {not: {required: [maxInlineEm]}}
+        obstacles:
+          description: "The nonempty closed set of obstacle-index classes this candidate must avoid."
+          examples: [{classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}]
+          type: object
+          required: [classes]
+          additionalProperties: false
+          properties:
+            classes:
+              description: "One or more obstacle-index classes."
+              type: array
+              minItems: 1
+              uniqueItems: true
+              items: {description: "One shared obstacle-index class.", enum: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+        connector:
+          description: "How the box points at its subject."
+          examples: [{kind: tail}]
+          type: object
+          required: [kind]
+          additionalProperties: false
+          properties:
+            kind: {description: "Connector kind.", enum: [none, leader, tail]}
+  annotationPlacementPolicy:
+    description: "One reusable purpose policy; exactly one existing annotation placement spelling."
+    examples: [{placement: {side: end, alignment: center}}]
+    type: object
+    additionalProperties: false
+    properties:
+      placement: {$ref: "#/$defs/annotationLegacyPlacement"}
+      candidates: {$ref: "#/$defs/annotationCandidates"}
+    oneOf:
+      - description: "A legacy side/alignment policy excludes declared candidates."
+        examples: [{placement: {side: end, alignment: center}}]
+        required: [placement]
+        not: {required: [candidates]}
+      - description: "A declared candidate policy excludes a legacy rung."
+        examples: [{candidates: [{id: rail, region: {kind: slot, source: annotations}, search: {kind: row-aligned}, obstacles: {classes: [mark]}, connector: {kind: leader}}]}]
+        required: [candidates]
+        not: {required: [placement]}
+  annotationPlacementByPurpose:
+    description: "Reusable placement policies keyed by closed annotation purpose; an empty map replaces all offered policies."
+    examples: [{note: {placement: {side: end, alignment: center}}}]
+    type: object
+    propertyNames: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationPurpose"}
+    additionalProperties: {$ref: "#/$defs/annotationPlacementPolicy"}

@@ -5,10 +5,12 @@ The fixtures are synthetic Projects rendered through the packaged bundle; no exa
 from __future__ import annotations
 
 from copy import deepcopy
+from types import SimpleNamespace
 from xml.etree import ElementTree
 
 import pytest
 
+from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
 from tests.support import annotation_kinds as ak
 from tests.support import synthetic_review as sr
 
@@ -78,7 +80,20 @@ def _prims(rendered, prefix: str):
 def _overlap(left, right) -> bool:
     x, y, width, height = left.bounds
     ox, oy, owidth, oheight = right.bounds
-    return x < ox + owidth and ox < x + width and y < oy + oheight and oy < y + height
+    # Neighbouring completed edges can differ by one ULP before serialization.
+    tolerance = float(GEOMETRY_TOLERANCE)
+    return (x < ox + owidth - tolerance and ox < x + width - tolerance
+            and y < oy + oheight - tolerance and oy < y + height - tolerance)
+
+
+def test_overlap_oracle_accepts_roundoff_but_rejects_a_serializable_overlap():
+    left = SimpleNamespace(bounds=(24.0, 626.0, 300.0, 19.6))
+    touching = SimpleNamespace(bounds=(24.0, 645.5999999999999, 300.0, 28.8))
+    overlapping = SimpleNamespace(bounds=(24.0, 645.599, 300.0, 28.8))
+    assert not _overlap(left, touching)
+    assert not _overlap(touching, left)
+    assert _overlap(left, overlapping)
+    assert _overlap(overlapping, left)
 
 
 def _assert_boxes_do_not_overlap(rendered):
