@@ -249,6 +249,45 @@ def test_editing_the_base_layout_moves_the_derived_profile_but_not_the_context(t
     assert second != first
 
 
+def test_shared_layout_inherits_thin_view_defaults_with_a_packaged_font_set(tmp_path: Path) -> None:
+    """The reuse slices compose at real closure ingress, without changing drawn bytes."""
+    project, designs = _workspace(tmp_path)
+    reference = _reference(project)
+    config = load_store_config(str(project / ".chrona" / "store.yaml"))
+    shutil.copy2(project / CONTEXT, _staged_context(project))
+    reader, root = snapshot_reader_for(config, reference)
+    before = render_context_closure(resolve_context_closure(reference, reader), root).artifact.content
+
+    context = _load(project / CONTEXT)
+    view_reference = context["body"]["view"]
+    view_path = snapshot_directory(project / ".chrona" / "store", view_reference["revision"]["token"]) / view_reference["address"]
+    view = _load(view_path)
+    axis = view["body"].pop("axis")
+    _dump(view_path, view)
+    view_reference["contentIdentity"] = _identity(view_path.read_bytes())
+    _dump(project / CONTEXT, context)
+
+    base_path = project / ".chrona" / "store" / "revision-example-v1" / "layouts" / "briefing.yaml"
+    base = _load(base_path)
+    base["viewDefaults"] = {"axis": axis}
+    _dump(base_path, base)
+    _derive(project, designs, base=_local_base(project), overrides={"page": {"padding": base["root"]["padding"]}})
+
+    context = _load(project / CONTEXT)
+    metrics = context["body"]["environment"]["fontMetrics"]
+    assets = metrics.pop("assets")
+    metrics["fontSet"] = "chrona.noto-sans+jp" if any(asset["family"] == "Noto Sans JP" for asset in assets) else "chrona.noto-sans"
+    _dump(project / CONTEXT, context)
+    shutil.copy2(project / CONTEXT, _staged_context(project))
+    context_bytes = (project / CONTEXT).read_bytes()
+    reader, root = snapshot_reader_for(config, reference)
+    closure = resolve_context_closure(reference, reader)
+
+    assert closure.layout_profile.layout_input["viewDefaults"]["axis"] == axis
+    assert render_context_closure(closure, root).artifact.content == before
+    assert (project / CONTEXT).read_bytes() == context_bytes
+
+
 def test_a_derived_layout_that_extends_itself_is_refused(tmp_path: Path) -> None:
     project, designs = _workspace(tmp_path)
     cycle = {"id": "briefing-roomy", "kind": "layout-profile", "store": {"provider": "local", "identity": DESIGN},
