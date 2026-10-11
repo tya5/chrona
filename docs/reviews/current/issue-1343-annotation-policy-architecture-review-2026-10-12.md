@@ -12,7 +12,7 @@ normalized intents preserve truthful Project-anchor diagnostic references.
 Spec56: additive optional properties and shared schema fragments; no version bump.
 Network boundary: the new members follow its existing annotation exclusions;
 accepting ignored intent would violate the completed-placement contract.
-Explicit legacy declarations retain order/geometry; new identity/policy failures
+Explicit legacy declarations retain selection/order/candidates; new identity/policy failures
 apply only to opted-in expansion. No ID-special case or previous-render cache.
 Risk/gate: prove actual five-design Scene/SVG placements and unchanged legacy
 declaration semantics; source-policy equivalence alone is not acceptance.
