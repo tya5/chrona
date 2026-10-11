@@ -93,7 +93,8 @@ def _install_legacy_geometry_replay(monkeypatch):
     import chrona.presentation.layout.surface_backgrounds as backgrounds
     import chrona.presentation.layout.surface_composer as composer
 
-    def old_bounds(*, semantic_id, extent, source_bounds, table_bounds, timeline_bounds, text_bounds=None):
+    def old_bounds(*, semantic_id, extent, source_bounds, table_bounds, timeline_bounds,
+                   text_bounds=None, trailing_inset=Decimal(0)):
         # Frozen pre-#1283 implementation from the 5a7fff0 baseline: calendar validation and the three
         # existing whole-Rect extent choices. Keep this independent of the current implementation.
         if semantic_id in {"calendarClosed", "calendarException"}:
