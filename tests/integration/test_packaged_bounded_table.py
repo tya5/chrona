@@ -1,15 +1,38 @@
 """Packaged table/heading policy and fitting-copy preservation (#1295)."""
 from copy import deepcopy
 from datetime import date
+from hashlib import sha256
+from pathlib import Path
 
 import pytest
 
-from chrona.resources import safe_load
+from chrona.presentation.contracts import ClosureIdentity, ViewContract, parse_contract
+from chrona.resources import safe_load, schema_validator
 from chrona.usecases import preset_library
 from tests.support import synthetic_review as sr
 
 
 PRESETS = tuple(entry["id"] for entry in preset_library._library())
+
+
+def test_all_nine_packaged_views_admit_wrap_in_the_live_contract():
+    root = Path(__file__).resolve().parents[2] / "src/chrona/resources/presets/bundles"
+    paths = sorted(root.glob("*/view.yaml")) + [root / "editorial/view-lanes.yaml"]
+    assert len(paths) == 9
+    for path in paths:
+        raw = path.read_bytes()
+        document = safe_load(raw)
+        assert document["version"] == "chrona/view/v0.28", path
+        schema_validator("view-v0.28.schema.yaml").validate(document)
+        contract = parse_contract(ClosureIdentity("view", document["id"], "builtin",
+                                  "sha256:" + sha256(raw).hexdigest()), document)
+        assert isinstance(contract, ViewContract)
+        body = document["body"]
+        assert body["heading"]["text"] == {"wrap": "allow"}
+        if "laneTable" in body.get("rows", {}):
+            assert body["rows"]["laneTable"]["text"] == {"wrap": "allow"}
+        else:
+            assert all(column["text"] == {"wrap": "allow"} for column in body["tableColumns"])
 
 
 def _parts(identifier):
