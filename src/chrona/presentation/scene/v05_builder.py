@@ -5,7 +5,7 @@ in I27-R2; this seam ensures that it can only receive completed current inputs.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Any, Mapping
 
 from chrona.presentation.layout.dependency_network import compose_dependency_network_surface
@@ -26,6 +26,7 @@ from chrona.presentation.model.semantic_registry import (
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.info_diagnostics import PaintOmission
+from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, PrimitiveProvenance, review_row_subjects
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, ThemeTokenView
 from chrona.presentation.scene.pattern_geometry import pattern_geometry, pattern_kind, project_pattern_placement
@@ -75,6 +76,8 @@ class SceneBuildInput:
     capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
     surface_preparation: SurfacePreRowGeometry | None = None
     declared_viewport: DeclaredViewport | None = None
+    auto_block_limit: Decimal | None = None
+    progress: RenderProgress | None = field(default=None, compare=False, repr=False)
 
 
 _REQUIRED_SOURCES = {
@@ -405,7 +408,9 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
                       fixed_lane_preflight: FixedLanePreflight | None = None,
                       capacity_short_sources: tuple[CapacitySourceEvidence, ...] = (),
                       surface_preparation: SurfacePreRowGeometry | None = None,
-                      declared_viewport: DeclaredViewport | None = None) -> SceneBuildInput:
+                      declared_viewport: DeclaredViewport | None = None,
+                      auto_block_limit: Decimal | None = None,
+                      progress: RenderProgress | None = None) -> SceneBuildInput:
     """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
     if not isinstance(layout_manifest, LayoutManifest):
         raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
@@ -430,7 +435,8 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
     return SceneBuildInput(projection, surface_content, layout_manifest,
                            ThemeTokenView(resolved_theme), font_metrics, measured_sources,
                            dict(capabilities), visual_profile, viewport, icon_assets, visual_requests,
-                           fixed_lane_preflight, capacity_short_sources, surface_preparation, declared_viewport)
+                           fixed_lane_preflight, capacity_short_sources, surface_preparation, declared_viewport,
+                           progress=progress, auto_block_limit=auto_block_limit)
 
 
 def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
@@ -469,6 +475,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             fixed_lane_preflight=value.fixed_lane_preflight,
             capacity_short_sources=value.capacity_short_sources,
             declared_viewport=value.declared_viewport,
+            auto_block_limit=value.auto_block_limit,
+            progress=value.progress,
         ))
         composition = compose_surface_layout(request, prepared=value.surface_preparation)
     except LayoutError as error:
@@ -1218,7 +1226,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                         lane_obstacles=lane_obstacles, lane_clearance=lane_clearance,
                         diagnostic_provenance=placed_surface.diagnostic_provenance,
                         primitive_provenance=tuple(primitive_provenance))
-    surface = replace(surface, canvas_warning=placed_surface.canvas_warning)
+    surface = replace(surface, canvas_warning=placed_surface.canvas_warning,
+                      auto_block_warning=placed_surface.auto_block_warning)
     return project_canvas_overlays(surface, placed_surface.canvas_overlays, value.theme_tokens, value.visual_profile)
 
 
@@ -1244,7 +1253,7 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
             projection=projection, surface_content=value.surface_content,
             layout_manifest=value.layout_manifest, measured_sources=value.measured_sources,
             theme_tokens=value.theme_tokens, font_metrics=value.font_metrics,
-            declared_viewport=value.declared_viewport))
+            declared_viewport=value.declared_viewport, progress=value.progress))
     except LayoutError as error:
         raise SceneBuildError(error.diagnostic_id, error.path) from error
     slots = tuple(SceneSlot(item.node_id, item.source, None,

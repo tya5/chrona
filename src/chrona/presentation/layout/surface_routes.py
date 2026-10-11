@@ -59,6 +59,7 @@ class SurfaceRoutesContext:
     obstacles: SurfaceObstacleIndex
     plot_bounds: tuple[float, float, float, float] | None = None
     temporal_endpoints: tuple[TemporalEndpointPlacement, ...] = ()
+    progress_pass: str = "relations"
 
 
 @dataclass(frozen=True)
@@ -482,7 +483,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             back_route_reason[0] = ""
         return chosen
 
-    for declared_index, relation in routing_order(request.surface_content.relations):
+    ordered_relations = routing_order(request.surface_content.relations)
+    observed_relations = (request.progress.routing(ordered_relations, pass_name=context.progress_pass)
+                          if request.progress is not None else ordered_relations)
+    for declared_index, relation in observed_relations:
         source, target, relation_id = relation.source_object_id, relation.target_object_id, relation.relation_id
         dependency_stroke = relation_stroke(relation)
         marker_start = centred_on_route(marker_geometry(

@@ -12,14 +12,15 @@ library's own typed exceptions (``StableFailure``, ``ClosureError``,
 from __future__ import annotations
 
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from chrona.core.ports import RenderArtifact
 from chrona.presentation.contracts import TypesetterIdentity
 from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, ClosureError, resolve_draft_render
 from chrona.presentation.model.info_diagnostics import PaintOmission, SuppressedPlotLabels
+from chrona.presentation.model.render_progress import RenderProgress
 from chrona.resources import default_preset_resource, default_preset_root
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.diagnostic_messages import collapse_warnings
@@ -53,6 +54,8 @@ class DraftRenderRequest:
     typesetter_engine: str | None = None
     typesetter_version: str | None = None
     typesetter_adapter_grammar: str | None = None
+    relations: Literal["none", "semantic"] | None = None
+    progress: RenderProgress | None = field(default=None, compare=False, repr=False)
 
 
 @dataclass(frozen=True)
@@ -153,6 +156,7 @@ def render_draft(request: DraftRenderRequest) -> DraftRenderResult:
                 system_fonts=request.system_fonts,
                 viewport=parse_viewport(request.viewport), locale=request.locale, target_kind=request.target_kind,
                 visual_profile=request.visual_profile,
+                relations=request.relations,
                 typesetter=typesetter_identity(
                     request.typesetter_engine, request.typesetter_version,
                     request.typesetter_adapter_grammar, request.target_kind,
@@ -174,6 +178,7 @@ def render_draft(request: DraftRenderRequest) -> DraftRenderResult:
             require_all_inputs_read=False, asset_root=closure.asset_root,
             draft_auto_block=closure.auto_block, draft_font_resolution=closure.font_resolution,
             preset_visual_profile_fallback=closure.preset_visual_profile_fallback,
+            progress=request.progress,
         ))
     finally:
         if owned_tempdir is not None:

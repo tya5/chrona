@@ -20,6 +20,7 @@ from chrona.core.source_ranges import attach_ranges
 from chrona.core.validation import load_yaml
 from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, RenderClosure, resolve_guided_draft_render, resolve_render_context
 from chrona.presentation.contracts import TypesetterIdentity
+from chrona.presentation.model.render_progress import RenderProgress, RenderProgressEvent
 from chrona.usecases.draft_render import DraftRenderRequest, parse_viewport, render_draft, typesetter_identity, warning_payloads
 from chrona.usecases.failure_report import FailureReport, StableFailure, diagnostic_record, rejection_report, report_failure
 from chrona.usecases.project_checks import schedule_project_mapping, validate_project_mapping
@@ -321,6 +322,10 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--font-metrics", help="declared-metrics-v3 YAML descriptor; paths resolve beside it")
     command.add_argument("--system-fonts", action="store_true", help="require the Theme's exact installed face through fontconfig (installed fonts are always usable; this refuses a fallback)")
     command.add_argument("--viewport", default=f"{DEFAULT_DRAFT_VIEWPORT[0]}xauto", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600xauto)")
+    command.add_argument("--progress", action="store_true",
+                         help="report render phases and routing counts on stderr (automatic for terminal stderr)")
+    command.add_argument("--relations", choices=("none", "semantic"),
+                         help="override dependency-line visibility on top of the selected preset")
     command.add_argument("--locale", choices=("en-US", "ja-JP"), default="en-US",
                          help="render locale: en-US or ja-JP (default: en-US)")
     _add_draft_target_arguments(command)
@@ -696,6 +701,26 @@ def _assert_context_format(closure: RenderClosure, format_name: str | None) -> N
         raise CliFailure("E_RENDER_FORMAT_CONTEXT", "--format must match the Context target", "cli", "/format", 2)
 
 
+def _draft_render_progress(enabled: bool) -> RenderProgress | None:
+    """CLI owns terminal detection and formatting, never render decisions."""
+    stream = sys.stderr
+    if stream is None:
+        return None
+    if not enabled:
+        try:
+            if not stream.isatty():
+                return None
+        except (OSError, ValueError):
+            return None
+
+    def report(event: RenderProgressEvent) -> None:
+        detail = (f" [{event.pass_name}] {event.completed}/{event.total}"
+                  if event.phase == "routing" else "")
+        print(f"chrona: {event.phase}{detail}", file=stream, flush=True)
+
+    return RenderProgress(report)
+
+
 def _run_draft_render(args: argparse.Namespace) -> None:
     target_kind = _resolve_output_target(args.output, args.format)
     result = render_draft(DraftRenderRequest(
@@ -705,6 +730,8 @@ def _run_draft_render(args: argparse.Namespace) -> None:
         viewport=args.viewport, locale=args.locale, visual_profile=args.visual_profile,
         typesetter_engine=args.typesetter_engine, typesetter_version=args.typesetter_version,
         typesetter_adapter_grammar=args.typesetter_adapter_grammar,
+        progress=_draft_render_progress(getattr(args, "progress", False)),
+        relations=getattr(args, "relations", None),
     ))
     _write_render_outputs(result.rendered, args)
     _emit_render_result(result.rendered)

@@ -12,13 +12,14 @@ from chrona.presentation.layout.pattern_placement import PatternedPlacement, Pat
 from chrona.presentation.layout.obstacles import ObstacleGeometry
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.model.info_diagnostics import PresentationInfo, SuppressedPlotLabels
+from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, axis_label_semantic_ids
 
 if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement.
     from chrona.presentation.layout.canvas_overlays import CanvasOverlays
     from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip
-    from chrona.presentation.layout.canvas_viewport import CanvasViewportWarning, DeclaredViewport
+    from chrona.presentation.layout.canvas_viewport import AutoBlockSizeWarning, CanvasViewportWarning, DeclaredViewport
     from chrona.presentation.layout.surface_mark_visibility import ItemMarkVisibilityIndex
     from chrona.presentation.layout.lane_window_marks import LaneWindowPlacementAbsence
     from chrona.presentation.layout.window_relation_admission import WindowRelationEndpointAbsence
@@ -630,6 +631,8 @@ class SurfaceLayoutRequest:
     capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
     as_of_chip_measurement: MeasuredLabelChip | None = None
     declared_viewport: DeclaredViewport | None = None
+    auto_block_limit: Decimal | None = None
+    progress: RenderProgress | None = field(default=None, compare=False, repr=False)
     mark_visibility_index: ItemMarkVisibilityIndex | None = None
 
 
@@ -764,6 +767,7 @@ class SurfacePlacement:
     canvas_overlays: CanvasOverlays | None = None
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
     canvas_warning: CanvasViewportWarning | None = None
+    auto_block_warning: AutoBlockSizeWarning | None = None
     window_label_absences: tuple[WindowLabelAbsence, ...] = ()
     lane_window_absences: tuple[LaneWindowPlacementAbsence, ...] = ()
 

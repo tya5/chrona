@@ -21,6 +21,10 @@ properties:
     additionalProperties: false
     required: [rowDistribution, backgroundExtents, annotationRouting]
     properties:
+      maxBlockSize:
+        description: "Advisory completed auto-canvas block limit; omission disables the warning and zero is valid."
+        $ref: "#/$defs/distance"
+        examples: [3600, {token: canvas.limit}]
       rowDistribution:
         description: "Distribution of remaining block space after completed row requirements."
         enum: [pack, fill]
