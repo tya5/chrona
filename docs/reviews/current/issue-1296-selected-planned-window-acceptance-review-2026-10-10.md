@@ -28,6 +28,15 @@ None. Local criteria do not substitute for the required release gate.
 
 ## Verification and release
 
+Preparation `af1c55e5` includes READY main `42e37d8d`, window `fe734c2e`,
+date `ff5f0b25` and table `18d622eb`. One old equal-window fixture required
+explicit comparison margin and explicit bounds matching planned padding;
+whole-projection equality and separate zero-margin mode checks remain intact.
+Combined model/default Scene-SVG/window/table/date/axis:57 passed (377.20s,
+loaded host); annotation checker passes. Initial56-pass/1-failure batch is
+not acceptance. New main `39552437` is syncing; its READY adoption and final
+head/artifact/release gates remain required. No authored examples changes.
+
 Combined predecessor integration `73552416` includes #1292/#1293/#1295,
 final #1294 repair `ac14998c` and main `b65df355`. Its new early visibility
 entry exposed a missing diagnostic detail; the failing public test was retained.
