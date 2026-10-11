@@ -6,9 +6,13 @@ def resolve_point_paint_role(role: str, *, gate_declared: bool, legend: bool = F
     """Select the existing gate paint role where point and legend behavior already does so.
 
     A declared gate role substitutes for planned point marks and milestone
-    legend swatches. Every other role, and both cases without a gate role,
-    retain their original name exactly.
+    legend swatches. The milestone key is a miniature of the chart's planned
+    point, so without a gate role it takes the paint of `planned` (filled or
+    hollow exactly as the planned milestones are, #499). Every other role
+    retains its original name exactly.
     """
-    if gate_declared and ((legend and role == "milestone") or (not legend and role == "planned")):
+    if legend and role == "milestone":
+        return "gate" if gate_declared else "planned"
+    if gate_declared and not legend and role == "planned":
         return "gate"
     return role

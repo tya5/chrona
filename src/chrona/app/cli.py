@@ -135,9 +135,9 @@ def _add_draft_target_arguments(command: argparse.ArgumentParser) -> None:
     command.add_argument("--visual-profile", default=None,
                          choices=VISUAL_PROFILES,
                          help="exact visual capability profile (default: the preset's preferred profile, else baseline)")
-    command.add_argument("--typesetter-engine", help="required with --format typst or tikz")
-    command.add_argument("--typesetter-version", help="required exact engine version with --format typst or tikz")
-    command.add_argument("--typesetter-adapter-grammar", help="required adapter grammar with --format typst or tikz")
+    command.add_argument("--typesetter-engine", help="the engine that will compile the output; required with --format typst or tikz: typst (for .typ) or tectonic (for .tex)")
+    command.add_argument("--typesetter-version", help="the exact engine version you will compile with (for example 0.13.1 for typst); recorded in the result, never looked up on this machine; required with --format typst or tikz")
+    command.add_argument("--typesetter-adapter-grammar", help="the output grammar: chrona-typst/v0.1 for typst, chrona-tikz/v0.1 for tectonic; required with --format typst or tikz")
 
 
 _OUTPUT_SUFFIX_TARGETS = {".svg": "svg", ".png": "png", ".pdf": "pdf", ".typ": "typst", ".tex": "tikz"}
@@ -193,7 +193,7 @@ VISUAL_PROFILES = ("chrona-output/visual/v0.5-baseline", "chrona-output/visual/v
 
 # `chrona --help` lists the commands by task. A command missing here lands in "More commands" (a test keeps it empty).
 COMMAND_GROUPS: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("Author a plan", ("init", "compile", "validate", "schedule")),
+    ("Author a plan", ("init", "import", "compile", "validate", "schedule")),
     ("Render a slide", ("render", "preset", "render-workspace", "icon-catalog", "font")),
     ("Keep reviewed history (stores, snapshots, baselines)",
      ("render-review", "render-review-gallery", "materialize", "review", "baseline-compare", "baseline-capture")),
@@ -381,6 +381,19 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("plan", help="terse plan path, or - for standard input")
     command.add_argument("--output", "-o", help="write the Project YAML here and refuse to replace an existing file (default: standard output)")
 
+    command = sub.add_parser("import", help="turn a CSV or TSV table into Project YAML (and an Actual Set)",
+                             description="turn a CSV or TSV table (one row per task, gate or group) into Project YAML; every row error is reported "
+                                         "with its row and column in one run, and an existing file is never replaced")
+    command.add_argument("table", help="CSV or TSV file (a .tsv suffix selects tabs)")
+    command.add_argument("--output", "-o", required=True, help="where to write the Project YAML; an existing file is not replaced")
+    command.add_argument("--actual-output", help="where to write an Actual Set built from the progress and actual_* columns; an existing file is not replaced")
+    command.add_argument("--project-id", help="project id (default: the table's file name as a slug)")
+    command.add_argument("--title", help="project title (default: the project id)")
+    command.add_argument("--calendar", action="append", default=[], metavar="NAME DAYS",
+                         help="declare a working calendar such as 'standard mon-fri except 2027-04-02'; repeatable; the first is the project default")
+    command.add_argument("--as-of", help="observation date (YYYY-MM-DD) of the Actual Set")
+    command.add_argument("--columns", help="YAML mapping of your header names to the column vocabulary")
+    command.add_argument("--delimiter", choices=("comma", "tab", "semicolon"), help="cell delimiter (default: tab for .tsv, else comma)")
     command = sub.add_parser("init", help="create a new editable project in a new directory")
     command.add_argument("directory", nargs="?", default=".")
     command.add_argument("--example", choices=example_ids(),
@@ -578,6 +591,43 @@ def _created(directory: Path) -> list[str]:
 
 def _print_created(directory: Path) -> None:
     print(json.dumps({"status": "ok", "directory": str(directory), "created": _created(directory)}))
+
+
+def _run_import(args: argparse.Namespace) -> None:
+    from chrona.usecases.table_import import ImportDiagnostic, import_table, slug
+    from chrona.storage.publication import publish_exclusive
+
+    def fail(diagnostics: tuple[ImportDiagnostic, ...], status: str, code: int) -> NoReturn:
+        print(json.dumps({"status": status, "diagnostics": [item.as_dict() for item in diagnostics]}, ensure_ascii=False))
+        raise SystemExit(code)
+
+    table = Path(args.table)
+    try:
+        text = table.read_text(encoding="utf-8")
+        mapping = load_yaml(args.columns) if args.columns else {}
+    except (OSError, UnicodeDecodeError) as error:
+        fail((ImportDiagnostic("E_IMPORT_INPUT_IO", f"cannot read the table: {error}", hint="check the path; the file must be UTF-8"),), "failed", 2)
+    if not isinstance(mapping, dict):
+        fail((ImportDiagnostic("E_IMPORT_COLUMNS_INVALID", "--columns must be a YAML mapping of header to column name"),), "failed", 2)
+    delimiter = {"comma": ",", "tab": "\t", "semicolon": ";"}.get(args.delimiter or "", "\t" if table.suffix.lower() == ".tsv" else ",")
+    result = import_table(text, delimiter=delimiter, project_id=args.project_id or slug(table.stem), title=args.title,
+                          calendars=args.calendar, as_of=args.as_of, mapping=mapping, source=args.table)
+    if not result.ok:
+        fail(result.diagnostics, "rejected", 1)
+    targets = [(Path(args.output), result.project_yaml)]
+    if result.actual_yaml is not None:
+        if not args.actual_output:
+            fail((ImportDiagnostic("E_IMPORT_ACTUAL_OUTPUT_REQUIRED", "the table has progress or actual_* values; pass --actual-output to write them",
+                                   hint="or remove those columns"),), "rejected", 1)
+        targets.append((Path(args.actual_output), result.actual_yaml))
+    existing = [str(path) for path, _data in targets if path.exists()]
+    if existing:
+        fail(tuple(ImportDiagnostic("E_IMPORT_OUTPUT_EXISTS", f"{path} already exists and import does not overwrite",
+                                    hint="delete it first, or choose another name") for path in existing), "failed", 2)
+    for path, data in targets:
+        publish_exclusive(path, data)
+    print(json.dumps({"status": "ok", "project": args.output, "actual": args.actual_output if result.actual_yaml else None,
+                      "created": [str(path) for path, _data in targets]}))
 
 
 def _run_init(args: argparse.Namespace) -> None:
@@ -793,6 +843,9 @@ def _run(args: argparse.Namespace) -> None:
         return
     if args.command == "compile":
         _run_compile(args)
+        return
+    if args.command == "import":
+        _run_import(args)
         return
     if args.command == "init":
         _run_init(args)

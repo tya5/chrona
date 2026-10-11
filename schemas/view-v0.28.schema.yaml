@@ -248,10 +248,10 @@ allOf:
                       examples: [{unit: day, every: 1, role: labels, label: {form: localized-date, align: start, overflow: visible-overflow, orientation: horizontal}}]
                       if: {properties: {unit: {const: day}, role: {const: labels}}, required: [unit, role]}
                       then: {properties: {label: {type: object, required: [form, align, overflow, orientation], additionalProperties: false, properties: {form: {const: localized-date}, align: {enum: [start, center]}, overflow: {enum: [visible-overflow, thin-with-record]}, orientation: {description: "Finite orientation of the label text block; Layout selects its completed rotation.", enum: [horizontal, rotate-cw, rotate-ccw]}, nameTable: {description: "Exact built-in axis name-table ID; defaults to Render Context locale.", enum: [en-US, ja-JP]}, secondary: {description: "Optional secondary label of the same interval, drawn in the same cell (#493).", $ref: "#/$defs/axisSecondaryLabel", properties: {form: {const: localized-date}}}}}}}
-                    - description: "Week labels use ISO week numbers."
+                    - description: "Week labels use the ISO week number, or the date of the first day of the week (#1278)."
                       examples: [{unit: week, every: 1, role: labels, label: {form: iso-week, align: start, overflow: visible-overflow, orientation: horizontal}}]
                       if: {properties: {unit: {const: week}, role: {const: labels}}, required: [unit, role]}
-                      then: {properties: {label: {type: object, required: [form, align, overflow, orientation], additionalProperties: false, properties: {form: {const: iso-week}, align: {enum: [start, center]}, overflow: {enum: [visible-overflow, thin-with-record]}, orientation: {description: "Finite orientation of the label text block; Layout selects its completed rotation.", enum: [horizontal, rotate-cw, rotate-ccw]}, nameTable: {description: "Exact built-in axis name-table ID; defaults to Render Context locale.", enum: [en-US, ja-JP]}, secondary: {description: "Optional secondary label of the same interval, drawn in the same cell (#493).", $ref: "#/$defs/axisSecondaryLabel", properties: {form: {const: iso-week}}}}}}}
+                      then: {properties: {label: {type: object, required: [form, align, overflow, orientation], additionalProperties: false, properties: {form: {enum: [iso-week, start-day-month, start-numeric]}, align: {enum: [start, center]}, overflow: {enum: [visible-overflow, thin-with-record]}, orientation: {description: "Finite orientation of the label text block; Layout selects its completed rotation.", enum: [horizontal, rotate-cw, rotate-ccw]}, nameTable: {description: "Exact built-in axis name-table ID; defaults to Render Context locale.", enum: [en-US, ja-JP]}, secondary: {description: "Optional secondary label of the same interval, drawn in the same cell (#493).", $ref: "#/$defs/axisSecondaryLabel", properties: {form: {enum: [iso-week, start-day-month, start-numeric]}}}}}}}
                     - description: "Month labels select one finite month form."
                       examples: [{unit: month, every: 1, role: labels, label: {form: short-month, align: start, overflow: visible-overflow, orientation: horizontal}}]
                       if: {properties: {unit: {const: month}, role: {const: labels}}, required: [unit, role]}
@@ -284,7 +284,7 @@ allOf:
                                 additionalProperties: false
                                 properties:
                                   day: {const: localized-date}
-                                  week: {const: iso-week}
+                                  week: {enum: [iso-week, start-day-month, start-numeric]}
                                   month: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/monthLabelForm"}
                                   quarter: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/quarterLabelForm"}
                                   half: {const: half-year}
