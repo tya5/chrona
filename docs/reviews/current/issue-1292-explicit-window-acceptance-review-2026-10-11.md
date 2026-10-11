@@ -35,3 +35,10 @@ the adopted `6c18b9e1` evidence. Combined with the retained all46 audit, 45
 outputs are unchanged; baseline-ghosts intentionally clips one snapshot and
 adds seven relation paint clips plus its outside-window warning (SVG inspected).
 Final READY-base and release acceptance remain pending.
+Ordinary integration `c934d13b` includes READY main `95b2fddc` and the
+published #1293/#1294 WIPs. The only merge conflict was independent Scene
+and View delta entries in the schema ledger; both were retained. Window/
+paint-clip/caption60 tests pass (30.04s); integrated window/date/axis/typed
+placement83 pass (20.73s). Combined schema-equivalence: PASS, Scene/View
+delta2/equal36,482 documents739 probes,four known invalid unchanged;
+L2+L3=50.9s within60s. Import direction remains11 packages/37 inward edges.
