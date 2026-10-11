@@ -5,7 +5,8 @@
 Published base: READY `133332e2833ede4423e775c1dec789db91c2d5cb`.
 Authority: [issue 1426](https://github.com/tya5/chrona/issues/1426), including
 its revised scope and algorithm review; Specification 50 and the Layout schema.
-Stage: design planning; selected design and implementation plan are not final.
+Stage: first-fit shape/phase design selected; budget and approximate-search
+design slices and the final implementation plan are not complete.
 
 Verified: `select_relation_route` ranks all pairs when given a rank callback;
 the search uses a finite per-pair quota and path-history state. Label recovery
@@ -89,6 +90,27 @@ No developer changes to `examples/**` or managed artifacts are permitted.
 3. Implement only approved contracts; batch disposable public materialization,
    route deltas and the three trial measurements. Retain synthetic PR-path
    tests for every corpus rule. Use CI for the full three-OS release gate.
+
+## Selected first-fit slice and architecture review
+
+Specifications [50](../../specification/50-constraint-driven-gantt-surface-quality.md#33-relations)
+and [33](../../specification/33-intent-oriented-layout.md) now state the exact
+port/shape order, channel derivation and one-pass phase order as
+implementation-pending contracts. The shape proposal is bounded to seven raw
+paths per pair; it owns no best-route or geometric-completeness promise.
+Geometry and acceptance stay in Layout; source ports remain semantic, existing
+connected-host exemptions stay scoped and Scene/adapters project only completed
+results. Required text is not globally deferred: only member-name/delta
+placement moves. The natural row/mark allocation and data-owned lane partition
+remain unchanged. There is no new resource kind or previous-Scene input.
+
+Architecture decision for this independent slice: accept the owner-selected
+first-fit output change, retaining exact best behavior. Risks to verify before
+acceptance: terminal preparation after raw collision admission, row-contact
+routes, mirrored/point/compound endpoints, lane-name suppression, windows and
+residual node sharing. Other scope items remain planned, not waived or deferred
+out of this issue. No product implementation is authorized by an unresolved
+budget or approximate-search decision.
 
 ## Literal acceptance (all currently not met for the new policy)
 

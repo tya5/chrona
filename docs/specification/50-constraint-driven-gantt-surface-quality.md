@@ -355,6 +355,68 @@ Scene projects the completed fact; adapters neither recount nor draw a marker.
 
 ### 3.3 Relations
 
+**Declared search policy (#1426; selected design, implementation pending).**
+Layout Profile `relationRouting.search` is `first-fit` (the new default) or
+`best`. Selection never depends on project size, resource identity or elapsed
+time. `best` retains the existing pair order, per-pair quotas, exact reverse
+bound, canonical path histories, completed-route ranking and bounded label
+recovery below. Merely substituting another admissible lower bound does not
+preserve candidates reached within a finite quota.
+
+For `first-fit`, keep the same eligible semantic ports, connected-host egress
+exemptions and entry-stub construction. Order source sides `end`, `start`,
+`above`, `below`, then target sides `start`, `end`, `above`, `below`; within an
+identical side pair prefer an admitted entry stub, retaining the existing
+order for remaining ties. Do not invent a far-side span exit or a missing
+window endpoint to complete this order. Unknown sides are invalid internal
+placement inputs, not silently assigned an arbitrary preference.
+
+For each pair, before preparing a visibility graph, test this fixed shape
+family between its exposed ports, in order:
+
+1. A straight segment when aligned.
+2. The horizontal-then-vertical L, then the vertical-then-horizontal L.
+3. Horizontal-vertical-horizontal Z/U shapes through the nearest column
+   channel on each side of the exposed ports' inline midpoint.
+4. Vertical-horizontal-vertical Z/U shapes through the nearest completed row
+   gap on each side of their block midpoint.
+
+Column-channel coordinates are selected obstacle-envelope left/right contacts
+expanded by that obstacle's clearance and the existing router grid offset,
+plus the routing bounds' inline edges. Row-gap coordinates are the midpoints
+between consecutive completed row edges, plus the routing bounds' block
+edges. Clip coordinates to the completed routing bounds; for each axis take
+at most one coordinate at or below the midpoint and one at or above it.
+Order by distance to the midpoint, then smaller coordinate; deduplicate equal
+coordinates and duplicate paths. These are finite proposals, not proofs that
+a whole channel is free. Do not build a graph or perform a visibility search
+to find these contacts.
+
+Join source/target host corridors to every proposal. Apply the existing full
+collision queries, repair/reduction, completed terminal/stroke validation,
+primary-mark safety, window containment, self-overlap and measured bend/detour
+acceptance. Select the first fully accepted shape. If none is accepted, search
+that pair within the existing relation-instance quota and stop at its first
+fully accepted candidate; only then try the next pair. Search exhaustion does
+not prove that no geometrically safe route exists. First-fit does not compare
+eligible routes by best's node-approach/bend/length rank; retain honest residual
+node-sharing diagnostics and the existing declared fallback.
+
+First-fit completes one semantic routing pass, without lane reservations or
+lost-name routing recovery. Already completed axis/period/other required text
+remains an obstacle; member names and deltas, including fixed-lane names,
+are placed after routes and avoid them. Their original association, finite
+candidate ladder, overflow/suppression, window and data-only membership rules
+remain authoritative. Relation labels and annotations follow completed routes.
+`best` retains the pre-route lane-name/rehearsal and recovery order below.
+
+Reviewer-owned explicit `best` declarations on approved targets must land
+before or with the default change. Their truthful resource provenance changes
+must be distinguished from route/paint changes, not normalized away.
+Explicit `searchBudget` accounting and approximate fallback-search changes
+are separate unresolved design slices; this section does not authorize an
+ignored budget declaration or an unreviewed change to `best`.
+
 View relation intent becomes `none` or an object with `mode: semantic` and `overflow: suppress | visible-overflow`. Layout Profile adds `relationRouting.maxBends` and `relationRouting.maxDetourRatio` numeric geometry policy.
 
 Layout routes between completed ports through deterministic orthogonal candidates. A route is acceptable when it stays in the timeline, avoids required obstacles, has at most `maxBends`, and its Manhattan length is at most `maxDetourRatio × directDistance`. Eligible candidates use the ranking below. With `visible-overflow`, no acceptable route completes as the deterministic direct path plus `W_LAYOUT_ROUTE_FALLBACK`; explicit suppression creates `W_LAYOUT_RELATION_SUPPRESSED`.
