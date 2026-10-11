@@ -2,6 +2,7 @@ version: chrona/view/v0.27
 kind: view
 id: chrona-preset-editorial
 body:
+  heading: {text: {wrap: allow}}
   surface: table-timeline
   selection:
     include:
@@ -84,12 +85,14 @@ body:
     groups: all
   tableColumns:
   - id: Task
+    text: {wrap: allow}
     source: title
     missing: em-dash
     align: start
     width: {minmax: {min: content, max: {fr: 1}}}
     headerOrientation: horizontal
   - id: Owner
+    text: {wrap: allow}
     source: {field: owner}
     missing: em-dash
     align: start

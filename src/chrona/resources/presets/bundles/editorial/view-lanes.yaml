@@ -2,6 +2,7 @@ version: chrona/view/v0.28
 kind: view
 id: chrona-preset-editorial-lanes
 body:
+  heading: {text: {wrap: allow}}
   surface: table-timeline
   selection:
     include:
@@ -76,7 +77,7 @@ body:
   rows:
     mode: lanes
     packing: [explicit, attached]
-    laneTable: {label: lane, count: true}
+    laneTable: {label: lane, count: true, text: {wrap: allow}}
   markers:
   - kind: asOf
     source: actual
