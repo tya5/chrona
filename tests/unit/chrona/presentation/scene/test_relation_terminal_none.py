@@ -81,15 +81,15 @@ def test_the_legend_key_of_a_none_terminal_is_the_plain_stroke():
     assert swatch.kind == "Path" and swatch.marker_end is None and swatch.paint.stroke is not None
 
 
-def test_svg_emits_no_marker_and_typst_and_tikz_draw_the_plain_path_but_still_reject_a_marker():
+def test_svg_emits_no_marker_and_typst_and_tikz_draw_the_plain_path_and_lower_a_marker_to_a_shape():
     path, _ = _path("none", "none")
     headed, _ = _path("none", "triangle")
     surface = _surface_with(path)
     assert "marker-" not in render_v05_svg(surface)
     assert render_v05_typst(surface) and render_v05_tikz(surface)
+    assert "marker-end" not in render_v05_typst(surface) and "marker-end" not in render_v05_tikz(surface)
     for render in (render_v05_typst, render_v05_tikz):
-        with pytest.raises(ValueError, match="E_VISUAL_CAPABILITY_UNSUPPORTED"):
-            render(_surface_with(headed))
+        assert "marker-end of scene-id" in render(_surface_with(headed))
 
 
 def _surface_with(*paths):

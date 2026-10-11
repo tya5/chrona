@@ -222,7 +222,7 @@ def test_absent_shape_preserves_frozen_pre_feature_scene_and_svg_bytes(tmp_path)
     rendered = _render_asof(tmp_path)
     scene = serialize_scene(rendered.scene)
     assert len(scene) == 22949
-    assert sha256(scene).hexdigest() == "e5f8b0c395e6b891d065e9152f2aa302d51d4f5162e3680edec12d802f2b93ea"
+    assert sha256(scene).hexdigest() == "4898941430be3208a167abae1dd19f5910dd9c34699e2b157e4d150570ebb0b2"  # the Scene provenance pins the Theme bytes: only this hash moved with the preset Theme (#946); the SVG hash below did not
     assert len(rendered.artifact.content) == 6992
     assert sha256(rendered.artifact.content).hexdigest() == "74bf8d570ca05067f0000a3002520bb237113b11ac682e21ae367ec0e82c3e0b"
 
