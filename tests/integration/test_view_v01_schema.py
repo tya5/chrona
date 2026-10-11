@@ -7,7 +7,7 @@ import jsonschema
 import pytest
 import yaml
 
-from chrona.resources import schema_resource, validator_for_schema
+from chrona.resources import safe_load, schema_resource, validator_for_schema
 from tools.check_example_reachability import reachable_view_paths
 
 
@@ -39,6 +39,12 @@ def _validator_v028() -> jsonschema.Draft202012Validator:
     return validator_for_schema(schema)
 
 
+def pytest_generate_tests(metafunc):
+    """Discover manifest-backed Views after module import, retaining pytest's path IDs."""
+    if "path" in metafunc.fixturenames and metafunc.function.__name__ == "test_declared_public_v03_view_validates":
+        metafunc.parametrize("path", reachable_view_paths(ROOT))
+
+
 def _assert_view_copy_except_axis(packaged: Path, corpus: Path) -> None:
     # Published packaged policy migrations are independent of old corpus copies.
     values = [yaml.safe_load(path.read_bytes()) for path in (packaged, corpus)]
@@ -56,9 +62,8 @@ def _assert_view_copy_except_axis(packaged: Path, corpus: Path) -> None:
     assert values[0] == values[1]
 
 
-@pytest.mark.parametrize("path", reachable_view_paths(ROOT))
 def test_declared_public_v03_view_validates(path: Path):
-    value = yaml.safe_load(path.read_text(encoding="utf-8"))
+    value = safe_load(path.read_bytes())
     version = value.get("version")
     validators = {
         "chrona/view/v0.27": _validator,

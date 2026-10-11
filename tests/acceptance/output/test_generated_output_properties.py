@@ -9,20 +9,21 @@ enforced before every defect behind it is fixed; see ``check`` for the rules.
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 from math import isclose, isfinite
 from importlib.util import find_spec
 from pathlib import Path
 from xml.etree import ElementTree
 
 import pytest
-import yaml
 
 from chrona.presentation.model.font_metrics import FontMetricsError, resolve_font_metrics
 from chrona.presentation.model.theme_inheritance import resolve_draft_theme
+from chrona.resources import safe_load
+from tests.support.public_evidence import declared_slides
 
 ROOT = Path(__file__).resolve().parents[3]
 RESOURCES = ROOT / "src/chrona/resources"
-KNOWN = yaml.safe_load((Path(__file__).parent / "known_failures.yaml").read_text(encoding="utf-8")) or {}
 SVG = "{http://www.w3.org/2000/svg}"
 
 MARK_PURPOSES = frozenset({"planned", "actual", "missingActual", "baseline", "milestone"})
@@ -41,22 +42,31 @@ SLOT_PURPOSES = {
 
 
 def _slides():
-    for manifest_path in sorted(ROOT.glob("examples/*/manifest.yaml")):
-        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
-        example = manifest_path.parent
-        for slide in manifest.get("slides", ()):
-            svg = example / str(slide["expectedSvg"])
-            if not svg.is_file():
-                continue
-            identity = f"{example.name}/{slide['id']}"
-            marks = (pytest.mark.skip(reason="requires the optional local CJK font provider")
-                     if example.name == "controller-z-ja" and find_spec("chrona_fonts_noto_cjk") is None else ())
-            yield pytest.param(identity, example / str(slide.get("context", manifest["context"])), svg,
-                               id=identity, marks=marks)
+    cases = []
+    for slide in declared_slides(ROOT):
+        if slide.context is None:
+            raise ValueError(f"E_PUBLIC_EVIDENCE_CONTEXT:{slide.key}")
+        if not slide.svg.is_file():
+            continue
+        marks = (pytest.mark.skip(reason="requires the optional local CJK font provider")
+                 if slide.svg.parent.parent.name == "controller-z-ja" and find_spec("chrona_fonts_noto_cjk") is None else ())
+        cases.append(pytest.param(slide.key, slide.context, slide.svg, id=slide.key, marks=marks))
+    return tuple(cases)
 
 
-SLIDES = list(_slides())
-CASES = pytest.mark.parametrize("slide,context_path,svg_path", SLIDES)
+_slides = lru_cache(maxsize=1)(_slides)
+
+
+@lru_cache(maxsize=1)
+def _known():
+    return safe_load((Path(__file__).parent / "known_failures.yaml").read_bytes()) or {}
+
+
+def pytest_generate_tests(metafunc):
+    """Discover manifest-backed cases after module import, keeping slide node IDs."""
+    names = {"slide", "context_path", "svg_path"}
+    if names <= set(metafunc.fixturenames):
+        metafunc.parametrize("slide,context_path,svg_path", tuple(_slides()))
 
 
 def check(slide: str, request, actual: list | set, message: str) -> None:
@@ -66,7 +76,7 @@ def check(slide: str, request, actual: list | set, message: str) -> None:
     A pinned pair that starts passing fails, so a fix removes its pin in the same change.
     Any pair that is not pinned fails normally.
     """
-    expected = (KNOWN.get(request.node.originalname or request.node.name) or {}).get(slide)
+    expected = (_known().get(request.node.originalname or request.node.name) or {}).get(slide)
     normalized = sorted(actual) if isinstance(actual, set) else actual
     if not normalized:
         assert expected is None, f"{slide} now satisfies this property: remove it from known_failures.yaml"
@@ -79,7 +89,7 @@ def check(slide: str, request, actual: list | set, message: str) -> None:
 
 def _load(svg_path: Path, context_path: Path):
     tree = ElementTree.fromstring(svg_path.read_text(encoding="utf-8"))
-    body = yaml.safe_load(context_path.read_text(encoding="utf-8"))["body"]
+    body = safe_load(context_path.read_bytes())["body"]
     viewport = (float(body["environment"]["viewport"]["inlineSize"]),
                 float(body["environment"]["viewport"]["blockSize"]))
     # A theme reference may address an ordinary v0.11 Theme or a v0.12 Theme that
@@ -144,7 +154,7 @@ def _serialized_canvas(tree, requested: tuple[float, float]) -> tuple[float, flo
 
 
 def _bound(context_path: Path, body: dict, name: str) -> dict:
-    return yaml.safe_load((context_path.parents[1] / body[name]["address"]).read_text(encoding="utf-8"))
+    return safe_load((context_path.parents[1] / body[name]["address"]).read_bytes())
 
 
 def _marks(tree):
@@ -216,7 +226,6 @@ def _contrast(first: str, second: str) -> float:
     return (max(luminance(first), luminance(second)) + 0.05) / (min(luminance(first), luminance(second)) + 0.05)
 
 
-@CASES
 def test_no_text_is_drawn_over_a_mark(slide, context_path, svg_path, request):
     """Text clears every mark unless it is a contrast-safe inside label on its own host."""
     tree, _, metrics = _load(svg_path, context_path)
@@ -243,7 +252,6 @@ def test_no_text_is_drawn_over_a_mark(slide, context_path, svg_path, request):
     check(slide, request, [list(item) for item in collisions], f"{len(collisions)} unsafe text/mark overlaps: {collisions[:5]}")
 
 
-@CASES
 def test_no_text_leaves_the_viewport(slide, context_path, svg_path, request):
     tree, requested, metrics = _load(svg_path, context_path)
     width, height = _serialized_canvas(tree, requested)
@@ -252,11 +260,10 @@ def test_no_text_leaves_the_viewport(slide, context_path, svg_path, request):
     check(slide, request, [list(item) for item in escaped], f"text past the canvas edge: {escaped}")
 
 
-@CASES
 def test_row_index_cells_render_an_ordinal(slide, context_path, svg_path, request):
     """A row number is not a duration; the default formatter must not sign it."""
     tree, _, _ = _load(svg_path, context_path)
-    body = yaml.safe_load(context_path.read_text(encoding="utf-8"))["body"]
+    body = safe_load(context_path.read_bytes())["body"]
     columns = {column["id"] for column in _bound(context_path, body, "view")["body"].get("tableColumns", ())
                if column.get("source") == "rowIndex"}
     if not columns:
@@ -268,11 +275,10 @@ def test_row_index_cells_render_an_ordinal(slide, context_path, svg_path, reques
     check(slide, request, [list(item) for item in wrong], f"row-index cells that are not an ordinal: {wrong[:3]}")
 
 
-@CASES
 def test_point_rows_never_render_a_span_only_state(slide, context_path, svg_path, request):
     """A gate is reached or it is not; it is never "in progress"."""
     tree, _, _ = _load(svg_path, context_path)
-    body = yaml.safe_load(context_path.read_text(encoding="utf-8"))["body"]
+    body = safe_load(context_path.read_bytes())["body"]
     points = {key for key, value in _bound(context_path, body, "project")["objects"].items()
               if value.get("schedule", {}).get("mode") == "fixed"}
     offenders = set()
@@ -284,11 +290,10 @@ def test_point_rows_never_render_a_span_only_state(slide, context_path, svg_path
     check(slide, request, offenders, f"point-kind rows labelled 'in progress': {sorted(offenders)}")
 
 
-@CASES
 def test_every_declared_slot_produces_a_primitive(slide, context_path, svg_path, request):
     """A slot that draws nothing is an authored intent the render silently dropped."""
     tree, _, _ = _load(svg_path, context_path)
-    body = yaml.safe_load(context_path.read_text(encoding="utf-8"))["body"]
+    body = safe_load(context_path.read_bytes())["body"]
     declared = _declared_slots(_bound(context_path, body, "layout"))
     produced = {node.get("data-purpose") for node in tree.iter()}
     empty = sorted(slot for slot in declared & set(SLOT_PURPOSES) if not SLOT_PURPOSES[slot] & produced)

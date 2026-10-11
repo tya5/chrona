@@ -33,7 +33,6 @@ from chrona.usecases.project_checks import ProjectValidation
 from tests.support.warning_preset import copy_warning_preset
 
 REPO = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
-LAUNCH = (REPO / "skills" / "chrona" / "examples" / "launch.yaml").read_text(encoding="utf-8")
 
 SMALL = """\
 version: timeline/v0.7
@@ -55,7 +54,7 @@ relations:
 """
 BAD_SCHEDULE = "version: timeline/v0.7\nobjects: {a: {type: task, title: A, schedule: {mode: scheduled}}}\n"
 FILES = {
-    "small.yaml": SMALL, "launch.yaml": LAUNCH, "cycle.yaml": CYCLE, "bad.yaml": BAD_SCHEDULE,
+    "small.yaml": SMALL, "cycle.yaml": CYCLE, "bad.yaml": BAD_SCHEDULE,
     "broken.yaml": "a: [\n", "not-a-mapping.yaml": "- a\n- b\n", "empty.yaml": "",
     "plans/nested.yaml": SMALL,
 }
@@ -63,10 +62,15 @@ SPECS = {spec.name: spec for spec in tool_specs()}
 VALIDATORS = {name: Draft202012Validator(spec.output_schema, format_checker=FormatChecker()) for name, spec in SPECS.items()}
 
 
+@pytest.fixture(scope="session")
+def launch() -> str:
+    return (REPO / "skills" / "chrona" / "examples" / "launch.yaml").read_text(encoding="utf-8")
+
+
 @pytest.fixture
-def workspace(tmp_path: Path) -> Path:
+def workspace(tmp_path: Path, launch: str) -> Path:
     root = tmp_path / "ws"
-    for name, text in FILES.items():
+    for name, text in {**FILES, "launch.yaml": launch}.items():
         (root / name).parent.mkdir(parents=True, exist_ok=True)
         (root / name).write_text(text, encoding="utf-8")
     return root
@@ -273,9 +277,9 @@ def test_schedule_equals_the_cli_json(scope, monkeypatch, capsys, workspace):
     assert expected["diagnostics"] == got["diagnostics"] == []
 
 
-def test_schedule_carries_a_missed_deadline_as_a_warning_and_still_schedules(workspace, scope):
-    late = LAUNCH.replace("deadline: 2026-12-18", "deadline: 2026-12-01")
-    assert late != LAUNCH
+def test_schedule_carries_a_missed_deadline_as_a_warning_and_still_schedules(workspace, scope, launch):
+    late = launch.replace("deadline: 2026-12-18", "deadline: 2026-12-01")
+    assert late != launch
     (workspace / "late.yaml").write_text(late, encoding="utf-8")
     result = run(scope, "schedule_project", project="late.yaml")
     assert result.structured["status"] == "ok" and result.structured["diagnostics"] == []
@@ -292,8 +296,8 @@ def test_schedule_without_a_missed_deadline_has_an_empty_warnings_list(scope):
     assert run(scope, "schedule_project", project="launch.yaml").structured["warnings"] == []
 
 
-def test_schedule_warnings_equal_the_cli_records(workspace, scope, monkeypatch, capsys):
-    (workspace / "late.yaml").write_text(LAUNCH.replace("deadline: 2026-12-18", "deadline: 2026-12-01"), encoding="utf-8")
+def test_schedule_warnings_equal_the_cli_records(workspace, scope, monkeypatch, capsys, launch):
+    (workspace / "late.yaml").write_text(launch.replace("deadline: 2026-12-18", "deadline: 2026-12-01"), encoding="utf-8")
     rc, out, _ = cli(monkeypatch, capsys, workspace, "schedule", "late.yaml")
     (expected,) = json.loads(out)["warnings"]
     (got,) = run(scope, "schedule_project", project="late.yaml").structured["warnings"]

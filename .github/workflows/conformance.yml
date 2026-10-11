@@ -176,6 +176,8 @@ jobs:
           cache-dependency-path: pyproject.toml
       - name: Install chrona with the oldest MCP SDK the extra allows
         run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk 'mcp==2.0.0'
+      - name: Verify test-import and CI-selection guards with optional MCP installed
+        run: pytest -q tests/unit/tools/test_corpus_import_policy.py tests/unit/tools/test_ci_corpus_selection.py
       - name: Run the MCP binding and the real stdio end-to-end tests against that floor
         run: pytest -q -p no:cacheprovider tests/mcp tests/cli/test_mcp_command.py
 
@@ -282,13 +284,26 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
       - run: pip install -e '.[dev,render,mcp]' -e packages/chrona-fonts-noto-cjk
+      - name: Verify literal contributor setup in a fresh venv
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: python tools/run_contributor_setup.py
       - id: conformance
         continue-on-error: true
         run: python conformance/run_conformance.py
       - id: pytest
         if: ${{ always() }}
         continue-on-error: true
-        run: pytest -n 4
+        shell: bash
+        run: |
+          if [[ '${{ matrix.os }}' == 'ubuntu-latest' ]]; then
+            unit_status=0
+            .venv/bin/python -m pytest tests/unit -n 4 || unit_status=$?
+            remainder_status=0
+            python -m pytest --ignore=tests/unit -n 4 || remainder_status=$?
+            test "$unit_status" = 0 && test "$remainder_status" = 0
+          else
+            python -m pytest -n 4
+          fi
       - id: os_probe
         if: ${{ always() }}
         continue-on-error: true
