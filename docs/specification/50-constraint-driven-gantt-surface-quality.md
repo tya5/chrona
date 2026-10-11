@@ -404,7 +404,7 @@ feasibility algorithm, its completeness argument and its input-dependent work
 accounting must be finalized before implementing this exception; the existing
 ordinary-search bounds below do not cover that additional pass.
 
-**Candidate search (#1109 R5).** One bounded sparse
+**Ordinary candidate search (#1109 R5).** One bounded sparse
 visibility search supplies alternatives for each endpoint pair, rather than
 post-filtering only a single length-plus-bend-penalty winner. Obstacle-offset
 corners and endpoint projections seed the finite graph; exact inventory
@@ -826,7 +826,9 @@ Before Scene construction, `assert_surface_placement` verifies:
 
 1. every completed primitive is inside Layout's completed canvas bounds;
 2. table, axis, label, group header and legend placements satisfy their selected overflow policy and every visible fallback has a structured warning;
-3. every accepted relation route meets its quality limits;
+3. every accepted ordinary relation route meets its quality limits; a protected
+   critical route exceeding them satisfies every hard safety invariant and
+   carries the measured quality-fallback evidence required by section 3.3;
 4. no semantic item has duplicate finish-delta text;
 5. every present slot family has its required placements.
 
