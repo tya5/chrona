@@ -6,7 +6,7 @@ import sys
 import yaml
 
 from chrona.app.cli import main
-from chrona.presentation.contracts import ClosureIdentity, PresentationPresetContract, parse_contract
+from chrona.presentation.contracts import ClosureIdentity, PresentationPresetContract, ViewContract, parse_contract
 
 
 ROOT = Path(__file__).parents[2]
@@ -24,15 +24,32 @@ def test_controller_z_public_preset_names_the_executive_context_resources():
         assert (root / declaration["path"]).is_file()
 
 
-def test_editorial_corpus_copy_is_byte_identical_to_the_packaged_bundle():
-    """#383/#429: the corpus Context cannot reference the wheel-packaged bundle
-    directly (see the design correction), so HALCYON-1 carries a byte-identical
-    copy under its own views/themes/layouts/schemes/profiles. This guards
-    against the two silently drifting apart."""
+def _assert_packaged_view_contract(path: Path, expected_id: str) -> dict:
+    raw = path.read_bytes()
+    document = yaml.safe_load(raw)
+    assert document["id"] == expected_id
+    identity = ClosureIdentity("view", expected_id, "builtin", "sha256:" + sha256(raw).hexdigest())
+    assert isinstance(parse_contract(identity, document), ViewContract)
+    return document
+
+
+def _assert_view_copy_except_axis(packaged: Path, corpus: Path) -> None:
+    """Only the explicitly migrated axis policy may differ in these old copies."""
+    package_document = yaml.safe_load(packaged.read_bytes())
+    corpus_document = yaml.safe_load(corpus.read_bytes())
+    for document in (package_document, corpus_document):
+        document["body"].pop("axis")
+    assert package_document == corpus_document
+
+
+def test_editorial_non_view_corpus_copies_match_and_packaged_view_is_independent():
+    """Packaged Views own general policy; authored corpus Views remain independent.
+
+    The unchanged Theme/Layout/Scheme/profile copies still retain their byte guard.
+    """
     bundle = ROOT / "src/chrona/resources/presets/bundles/editorial"
     corpus = ROOT / "examples/halcyon-1"
     pairs = {
-        "view.yaml": corpus / "views/editorial.yaml",
         "theme.yaml": corpus / "themes/editorial.yaml",
         "layout.yaml": corpus / "layouts/editorial.yaml",
         "scheme.yaml": corpus / "schemes/editorial.yaml",
@@ -42,6 +59,8 @@ def test_editorial_corpus_copy_is_byte_identical_to_the_packaged_bundle():
         bundle_path = bundle / bundle_name
         assert bundle_path.is_file() and corpus_path.is_file()
         assert bundle_path.read_bytes() == corpus_path.read_bytes(), (bundle_name, corpus_path)
+    _assert_packaged_view_contract(bundle / "view.yaml", "chrona-preset-editorial")
+    _assert_view_copy_except_axis(bundle / "view.yaml", corpus / "views/editorial.yaml")
 
 
 def test_packaged_library_schemes_match_the_example_copies_except_project_categories():
@@ -108,7 +127,7 @@ def test_editorial_library_entry_matches_the_bundle_resources():
         assert declared["id"] == member["id"]
 
 
-def test_readable_default_resources_are_mirrored_and_selected_without_mutating_editorial():
+def test_readable_default_resources_are_selected_from_the_packaged_authority():
     corpus = ROOT / "examples/halcyon-1"
     default = yaml.safe_load((ROOT / "src/chrona/resources/presets/default.yaml").read_bytes())
     resources = default["body"]["resources"]
@@ -120,12 +139,15 @@ def test_readable_default_resources_are_mirrored_and_selected_without_mutating_e
     }
     for name, corpus_path in pairs.items():
         package_bytes = (bundle / name).read_bytes()
-        assert package_bytes == corpus_path.read_bytes(), name
+        if name != "view.yaml":
+            assert package_bytes == corpus_path.read_bytes(), name
         declared = yaml.safe_load(package_bytes)
         assert declared["id"] == resources["view" if name == "view.yaml" else "theme"]["id"]
         assert resources["view" if name == "view.yaml" else "theme"]["path"] == \
             f"bundles/editorial-readable-default/{name}"
         if name == "view.yaml":
+            _assert_packaged_view_contract(bundle / name, resources["view"]["id"])
+            _assert_view_copy_except_axis(bundle / name, corpus_path)
             labels = declared["body"]["visibility"]["labels"]
             assert (labels["placement"], labels["content"], labels["side"]) == ("plot", ["title"], "end")
             assert declared["version"] == "chrona/view/v0.28"
@@ -161,10 +183,11 @@ def test_readable_default_resources_are_mirrored_and_selected_without_mutating_e
     assert editorial["members"]["view"]["id"] == "chrona-preset-editorial-lanes"
     assert editorial["members"]["view"]["sourcePath"] == "view-lanes.yaml"
     reference_package = ROOT / "src/chrona/resources/presets/bundles/editorial/view.yaml"
-    reference_corpus = corpus / "views/editorial.yaml"
-    assert reference_package.read_bytes() == reference_corpus.read_bytes()
-    assert yaml.safe_load(reference_package.read_bytes())["id"] == "chrona-preset-editorial"
+    _assert_packaged_view_contract(reference_package, "chrona-preset-editorial")
+    _assert_view_copy_except_axis(reference_package, corpus / "views/editorial.yaml")
     lane_package = ROOT / "src/chrona/resources/presets/bundles/editorial/view-lanes.yaml"
-    assert lane_package.read_bytes() == (corpus / "views/editorial-lanes.yaml").read_bytes()
+    lane_view = _assert_packaged_view_contract(lane_package, editorial["members"]["view"]["id"])
+    assert lane_view["body"]["rows"]["mode"] == "lanes"
+    _assert_view_copy_except_axis(lane_package, corpus / "views/editorial-lanes.yaml")
     assert editorial["members"]["theme"]["sourceRoot"] == "presets/bundles/editorial"
     assert editorial["members"]["theme"]["sourcePath"] == "theme.yaml"

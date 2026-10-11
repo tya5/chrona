@@ -1,7 +1,7 @@
 """Typed horizontal axis-tier geometry exists independently of retained interval labels (#1100)."""
 from dataclasses import replace
 from copy import deepcopy
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 import pytest
@@ -66,6 +66,48 @@ def _axis_request(tiers):
 def _axis_batch(tiers):
     prepared = prepare_surface_base(_axis_request(tiers))
     return compose_axis(prepared.request, prepared)
+
+
+@pytest.mark.parametrize("unit,form,natural_start,natural_end", [
+    ("month", "long-month", date(2026, 1, 1), date(2026, 2, 1)),
+    ("quarter", "year-quarter", date(2026, 1, 1), date(2026, 4, 1)),
+])
+def test_thin_measurement_uses_natural_bucket_before_window_edge_admission(
+        unit, form, natural_start, natural_end):
+    tier = AxisTier(unit, 1, "labels", AxisLabelIntent(
+        form, (), "center", "thin-with-record", "horizontal", "en-US"))
+    request = _axis_request((tier,))
+    clipped_start = natural_end - timedelta(days=2)
+    request = replace(request, projection=replace(
+        request.projection, window=(clipped_start, date(2026, 5, 1))))
+    scale = replace(prepare_surface_base(request).scale, unit_ratio=2.0)
+    measured = measure_axis_tier(request, scale, 0, tier)
+    first = measured.outcomes[0]
+    assert first.start == clipped_start
+    assert (first.natural_start, first.natural_end) == (natural_start, natural_end)
+    assert first.label_fits is True
+    assert first.disposition == "placed"
+    assert first.reason is None
+
+
+@pytest.mark.parametrize("unit", ["month", "auto"])
+def test_thin_measurement_exhaustion_omits_candidates_without_visible_fallback(unit):
+    label = AxisLabelIntent(
+        "long-month" if unit == "month" else None,
+        () if unit == "month" else (("month", "long-month"), ("year", "year")),
+        "center", "thin-with-record", "horizontal", "en-US")
+    tier = AxisTier(unit, 1, "labels", label)
+    request = _axis_request((tier,))
+    scale = replace(prepare_surface_base(request).scale, unit_ratio=0.001)
+    measured = measure_axis_tier(request, scale, 0, tier)
+    assert measured.tier_outcome.selected_unit == ("year" if unit == "auto" else "month")
+    assert measured.outcomes
+    assert all(item.label_fits is False and item.disposition == "thinned"
+               and item.reason == "label-does-not-fit" for item in measured.outcomes)
+    assert sum(item.startswith("W_LAYOUT_AXIS_LABEL_THINNED:")
+               for item in measured.diagnostics) == len(measured.outcomes)
+    assert len(measured.decisions) == len(measured.outcomes)
+    assert any(item.startswith("W_LAYOUT_AXIS_DENSITY:") for item in measured.diagnostics)
 
 
 def test_equal_calendar_band_intervals_in_distinct_lanes_keep_both_label_tiers():

@@ -7,6 +7,7 @@ import pytest
 from chrona.presentation.layout.text import measure_text_width, metric_for_role, paint_text
 from tests.support import annotation_kinds as ak
 from tests.support import synthetic_review as sr
+from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 
 DETAIL = {
@@ -96,7 +97,7 @@ def _rendered_sites(tmp_path_factory, request):
         if hasattr(module, "place_text"):
             patch.setattr(module, "place_text", checked_place_text)
 
-    parts = sr.bundle("executive-light")
+    parts = use_legacy_six_tier_axis(sr.bundle("executive-light"))
     source = ak.project(text="A short synthetic note.")
     ak.with_view_notes(parts, source)
     ak.with_kind_theme(parts)
