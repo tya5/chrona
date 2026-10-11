@@ -20,6 +20,7 @@ class SurfaceGroupPresentation:
     text: tuple[TextPlacement, ...]
     warnings: tuple[FitWarning, ...] = ()
     header_content_bounds: tuple[tuple[str, Rect], ...] = ()
+    header_band_trailing_insets: tuple[tuple[str, Decimal], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -132,9 +133,10 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
     labels.update(dict(request.surface_content.group_headers))
     marked = dict(request.surface_content.group_header_runs)
     if tag_column is not None:
-        if request.theme_tokens.optional_number("groupHeader", "labelInset") is not None:
-            raise LayoutError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", "/body/roles/groupHeader/labelInset",
-                              detail="labelInset is horizontal; vertical groupHeader tags use tabGap")
+        for prop in ("labelInset", "labelInsetEnd"):
+            if request.theme_tokens.optional_number("groupHeader", prop) is not None:
+                raise LayoutError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", f"/body/roles/groupHeader/{prop}",
+                                  detail=f"{prop} is horizontal; vertical groupHeader tags use tabGap")
         if any(group_id in marked for group_id in labels):
             # A vertical tag is one rotated label: runs on one baseline have no meaning there (#1192).
             raise LayoutError("E_LAYOUT_GROUP_HEADER_RUNS_VERTICAL", "/body/grouping/header",
@@ -187,7 +189,21 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                               f"labelInset={label_inset_ratio}; expected a finite nonnegative ratio")
     label_inset = (label_inset_ratio * group_header_treatment.font_size
                    if label_inset_ratio is not None else Decimal(0))
-    text, warnings, content_bounds = [], [], []
+    trailing_ratio = (request.theme_tokens.optional_number("groupHeader", "labelInsetEnd")
+                      if group_header_treatment is not None else None)
+    if trailing_ratio is not None and trailing_ratio < 0:
+        raise ThemeTokenError("E_THEME_TOKEN_TYPE", "/body/roles/groupHeader/labelInsetEnd",
+                              f"labelInsetEnd={trailing_ratio}; expected a finite nonnegative ratio")
+    trailing_inset = (trailing_ratio * group_header_treatment.font_size
+                      if trailing_ratio is not None else Decimal(0))
+    text, warnings, content_bounds, trailing_insets = [], [], [], []
+
+    def retain_header_band_geometry(group: GroupPlacement, start: Decimal,
+                                    placements: tuple[TextPlacement, ...] | list[TextPlacement]) -> None:
+        content_bounds.append((group.group_id, _header_content_extent(group, start, placements)))
+        if trailing_inset and any(item.overflow != "suppressed" and item.bounds.inline_size > 0
+                                  for item in placements):
+            trailing_insets.append((group.group_id, trailing_inset))
     tab = resolve_group_tab(request.theme_tokens) if any(group.header_bounds is not None for group in groups) else None
     for group in groups:
         if group.header_bounds is not None:
@@ -222,7 +238,7 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                     font_metrics=request.font_metrics)
                 text.extend(placed)
                 warnings.extend(run_warnings)
-                content_bounds.append((group.group_id, _header_content_extent(group, start, placed)))
+                retain_header_band_geometry(group, start, placed)
                 continue
             content, disposition = labels[group.group_id], "fit"
             if tab is not None:
@@ -251,8 +267,8 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                 available_inline_start=float(start),
                 available_inline_size=float(size))
             text.append(placed)
-            content_bounds.append((group.group_id, _header_content_extent(group, start, [placed])))
-    return SurfaceGroupPresentation(tuple(text), tuple(warnings), tuple(content_bounds))
+            retain_header_band_geometry(group, start, [placed])
+    return SurfaceGroupPresentation(tuple(text), tuple(warnings), tuple(content_bounds), tuple(trailing_insets))
 
 
 def replace_group_header_extent(groups: tuple[GroupPlacement, ...],
