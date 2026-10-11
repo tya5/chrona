@@ -1246,6 +1246,9 @@ def _review_detail_input(body: FrozenDict) -> ReviewDetailInput:
 
 def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> ResourceContract:
     """Validate an exact schema then construct its frozen, kind-specific contract."""
+    if identity.kind == "render-context":
+        from chrona.presentation.contracts.font_sets import expand_font_set
+        value = expand_font_set(value)  # a named packaged font set is its asset list (#1345)
     frozen = freeze(value)
     body = frozen.get("body", FrozenDict())
     if not isinstance(body, FrozenDict):
