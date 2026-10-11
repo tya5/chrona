@@ -138,6 +138,14 @@ normal result, so read `status`, not only the tool's error flag. The server also
 two resources, `chrona://guide/authoring` and `chrona://guide/diagnostics`, so a client without skill support gets
 the same guidance.
 
+Schedule `analysis.totalFloat[id]` is `{value, unit, calendar}`, not an integer:
+`calendar-days` uses a null calendar; `working-days` names the object's
+effective calendar (its own, otherwise the Project's). Read the value and
+basis together, never assume calendar days from a `d` amount. Critical objects
+belong to a zero-float driving path to the one project finish; an isolated
+fixed date is not critical. [Spec 57](../specification/57-public-schedule-analysis.md)
+owns these rules; the MCP tool does not repeat scheduling analysis.
+
 ### Limits
 
 - Every path is relative to the workspace and must name an existing file inside it: no `..`, no absolute path,

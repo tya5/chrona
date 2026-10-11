@@ -55,7 +55,10 @@ not understate a write, whatever it overwrites); `idempotentHint: true` and `ope
   or `E_UNSATISFIABLE_DEPENDENCIES`; Spec 04 section 16) and computes no dates, so a fixed date that contradicts its
   dependencies is found only by `schedule_project`.
 - `schedule_project {project}`: result `placements` (object id to `{start, end}` or `{at}`, ISO dates, `end`
-  exclusive), `analysis` (`criticalObjectIds` in Project object order, `totalFloat` in calendar days) and `warnings`
+  exclusive), `analysis` (`criticalObjectIds` in Project object order,
+  `totalFloat` records `{value, unit, calendar}` as defined by
+  [Spec 57](57-public-schedule-analysis.md): `calendar-days` with null calendar
+  or `working-days` with the effective object's calendar identifier) and `warnings`
   (a `W_DEADLINE` per object planned after its `deadline`, Spec 04 Section 10; empty when none; the plan is still
   scheduled).
 - `render_draft {project, actual?, preset?, view?, theme?, scheme?, layout?, viewport?, locale?, format?, inline?}`:
