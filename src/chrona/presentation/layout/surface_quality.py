@@ -886,7 +886,9 @@ class SurfacePlacement:
                             (item.label_fits and item.reason is not None)
                             or (not item.label_fits and item.reason != "visible-overflow")):
                         raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
-                    if item.disposition == "thinned" and item.reason != "label-does-not-fit":
+                    if item.disposition == "thinned" and (
+                            (item.label_fits and item.reason not in {"regular-cadence", "phase-unavailable"})
+                            or (not item.label_fits and item.reason != "label-does-not-fit")):
                         raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
                     if item.secondary_disposition is None:
                         secondary_valid = item.secondary_label is None and item.secondary_reason is None
