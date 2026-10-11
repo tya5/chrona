@@ -13,12 +13,12 @@ Core marks, explicit windows and selected-comparison behavior are unchanged.
 ### Issue #1296
 
 - Source: [Issue #1296](https://github.com/tya5/chrona/issues/1296)
-- Observed: 2026-10-10
+- Observed: 2026-10-11
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | Tests: a single span, a single gate, and two gates on the same date each render with the default preset. From the Scene, every object's label is placed (no suppression) and the window strictly contains every mark. | met | [Four synthetic Editorial-default Scene/SVG cases](../../../tests/integration/test_selected_planned_minimum_window.py), including a one-day span: 4 passed (2.64s); labels emitted, marks strictly inside the plot and padded dates verified. | — |
-| 2 | A projection that is still degenerate yields a diagnostic whose message names the window dates and the selected object ids. | met | [Owner-local Layout and Date-boundary tests](../../../tests/unit/chrona/presentation/model/test_selected_planned_window.py) assert dates, selected IDs and cause; existing projection model suite passes. | — |
+| 1 | Tests: a single span, a single gate, and two gates on the same date each render with the default preset. From the Scene, every object's label is placed (no suppression) and the window strictly contains every mark. | met | [Actual library-default Scene/SVG cases](../../../tests/integration/test_selected_planned_minimum_window.py) resolve all four default resources, including a one-day span and issue dates/titles; labels emitted, marks strictly inside plot and padded dates verified. | — |
+| 2 | A projection that is still degenerate yields a diagnostic whose message names the window dates and the selected object ids. | met | [Public render/report fault-injection test](../../../tests/integration/test_selected_planned_minimum_window.py) verifies the real diagnostic message, source path, dates/IDs/cause and absence of generic fallback; [Layout/Date boundaries](../../../tests/unit/chrona/presentation/model/test_selected_planned_window.py) cover model invariants. | — |
 | 3 | Do not edit `examples/**`. | met | [Implementation diff](https://github.com/tya5/chrona/commit/d0766a07ca2c50aac7044e39bd327792cef3e5c1) contains only View projection, Layout validation, Spec06 and synthetic tests. | — |
 
 ## Programme-level criteria (optional)
@@ -32,5 +32,9 @@ Model suite: 471 passed (25.42s). Layout allocation/natural geometry/Scene suite
 After adopting #1214, window/model/render and coupled-flow tests: 22 passed
 (4.47s). The subsequent bot adoption changes no product or test bytes.
 Prepared WIP has no PR yet; earlier board publications retain priority.
+Ordinary adoption of main `e19005d0` and published #1293/#1294/#1295 WIPs
+preserves the pending formatter/axis/table migrations. Actual-default/model
+and public-diagnostic tests: 17 passed (2.84s). The old test mixed default View
+with Editorial Theme; it is not evidence for the current default.
 Required before closure: fresh current-base corpus count table and PR checks,
 automatic derived publication, and exact-main full release containing this review.
