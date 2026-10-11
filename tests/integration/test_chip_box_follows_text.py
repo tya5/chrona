@@ -106,7 +106,7 @@ def test_default_and_explicit_raw_chip_output_are_byte_identical(tmp_path):
     explicit_raw = _render(tmp_path, "explicit-raw", viewer_fit="raw")
     assert raw.artifact.content == explicit_raw.artifact.content
     assert sha256(raw.artifact.content).hexdigest() == "51c54350062c2774890471a04b76bd42e2e2775d04d81547523e0e92687049ef"
-    assert sha256(serialize_scene(raw.scene)).hexdigest() == "3b2b6d88cf8415ea3938f3413a1aa0f5283f18ed0812dacf6039a07ce81cfac5"
+    assert sha256(serialize_scene(raw.scene)).hexdigest() == "445031fb33b78daae640a2c9720a9d66fa76210079eb0da978f6710334807368"
     labels = [item for item in raw.surface.primitives if item.kind == "Text" and item.purpose == "member-label"]
     assert labels and any(len(item.text_layout.lines) > 1 for item in labels)
     assert "<tspan" in raw.artifact.content.decode("utf-8")

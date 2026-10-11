@@ -1203,7 +1203,7 @@ def test_cli_rejects_pdf_rich_profile_before_writing_an_artifact(tmp_path, monke
     assert diagnostic["sourceRef"] == "/body/target/visualProfile"
 
 
-def test_cli_renders_typst_draft_with_an_explicit_descriptor(tmp_path, monkeypatch):
+def test_cli_renders_typst_draft_with_an_explicit_descriptor(tmp_path, monkeypatch, capsys):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     output = tmp_path / "review.typ"
     monkeypatch.setattr(sys, "argv", [
@@ -1216,9 +1216,10 @@ def test_cli_renders_typst_draft_with_an_explicit_descriptor(tmp_path, monkeypat
         "--typesetter-adapter-grammar", "chrona-typst/v0.1", "--output", str(output),
     ])
 
-    with pytest.raises(SystemExit) as error:
-        main()
-    assert error.value.code == 1
+    capsys.readouterr()
+    main()  # the gate symbols and arrowheads of the plan are drawn since #1308: no refusal
+    assert json.loads(capsys.readouterr().out)["status"] == "ok"
+    assert output.read_text(encoding="utf-8").startswith("// chrona-typst/v0.1")
 
 
 def test_cli_schedule_analysis_uses_project_order_and_halcyon_facts(tmp_path, monkeypatch, capsys):

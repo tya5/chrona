@@ -45,7 +45,7 @@ from chrona.usecases.draft_render import DEFAULT_VIEWPORT, DraftRenderRequest, r
 from chrona.usecases.failure_report import (
     FailureReport, StableFailure, collapse_records, diagnostic_record, rejection_report, report_failure,
 )
-from chrona.usecases.preset_library import list_builtin_presets
+from chrona.usecases.preset_library import DEFAULT_PRESET_ID, list_builtin_presets
 from chrona.usecases.project_checks import schedule_project_file, validate_project_file
 
 TOOL_SET_VERSION = "chrona/agent-tools/v0.4"
@@ -53,7 +53,6 @@ COMMAND_TYPES = frozenset({"applyActualIntakeBatch", "captureSnapshot"})
 """The command types the command tools accept in this release (#813); anything else is rejected before a Store is opened."""
 DEFAULT_STORE_CONFIG = ".chrona/store.yaml"
 WRITE_DISABLED = "E_MCP_WRITE_DISABLED"
-DEFAULT_PRESET_ID = "chrona-default-draft"
 MAX_DIAGNOSTICS = 50
 MAX_INLINE_SVG_BYTES = 1024 * 1024
 MAX_INLINE_PNG_BYTES = 1536 * 1024

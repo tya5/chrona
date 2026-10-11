@@ -13,7 +13,7 @@ from tests.support import synthetic_review as sr
 
 # #1271 centers four group-header lines (+0.2 px); annotation boxes,
 # leaders, numbering and diagnostics remain unchanged.
-NO_SUPPRESSION_SCENE_SHA256 = "80a32a819bc06e37eeb23b38575d9d0dfdd6aa15c9b36da50ef3ceba6cc59bb5"
+NO_SUPPRESSION_SCENE_SHA256 = "f26aa7955ae1beabc9c26b2b26a98222ecde177a610ad8c5740d94187a6e9dbc"
 NO_SUPPRESSION_SVG_SHA256 = "9d13fb41f70395a185d500fc1283429140a9ef9f44c6cd005c89950dd25ed43c"
 
 
