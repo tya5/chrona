@@ -97,6 +97,15 @@ insets, hierarchy indents, group tabs, icon/affix reservations, gutters and perm
 column widths; an infeasible mandatory minimum is `E_LAYOUT_TABLE_OVERFLOW`,
 never uniform font/column shrink or a wider table/timeline host.
 
+If natural columns fit, preserve the ordinary column allocation exactly. On
+shortage, reserve every column's measured mandatory minimum and the gutters.
+Non-flexible `content` columns share the budget remaining after flexible minima,
+with equal weights and their natural widths as upper bounds. Allocate the rest
+to `fr`/`fill` columns using their declared weights and mandatory floors, by the
+same bounded flexible-track rule as Specification 33 section 5. If the mandatory
+minima and gutters alone exceed the slot, fail with `E_LAYOUT_TABLE_OVERFLOW`;
+do not proportionally shrink completed columns or their typography.
+
 View `tableColumns[].text` and `heading.text` reuse `{wrap: allow|forbid}`;
 absence means `forbid`. Column intent covers its header and cells. Heading
 intent covers kicker/title/subtitle and the implicit Project title. Layout
