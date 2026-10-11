@@ -275,14 +275,17 @@ ordinary `fitContent`, fixed, `fr`, or `minmax` semantics when absent; the
 explicit table exception to natural content floors is specified in
 [Specification 24](24-table-timeline-presentation.md#21-table-and-row-metrics-480).
 
-Heading sources with View `wrap: allow` use the same independent parent/cell
-budget closure with a full-share ceiling, without admitting `maxInlineShare`
-on heading slots. The normalized source intent selects the heading slots;
+Heading and table sources with View `wrap: allow` use the same independent
+parent/cell budget closure with a full-share ceiling unless the table declares
+`maxInlineShare`. This does not admit that property on heading slots.
+The normalized source intent selects the wrapping slots;
 the engine does not inspect View YAML or Project copy. Neutralize all selected
 width-dependent source demands together while probing, then remeasure each at
 its allocated width before block allocation. A circular budget, an authored
 minimum above the ceiling, or mandatory text that cannot fit is
 `E_LAYOUT_TEXT_OVERFLOW` for a heading, not `E_LAYOUT_TABLE_OVERFLOW`.
+Full-share budgets retain the existing Grid cell-filling allocation; text is
+closed inside that cell rather than shrinking the host to its fitting copy.
 
 Every slot declares `place.inline` and `place.block`. Containers declare `alignItems`
 for the cross axis and `justifyContent` for the main axis. A slot value overrides its

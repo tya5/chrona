@@ -106,9 +106,15 @@ same bounded flexible-track rule as Specification 33 section 5. If the mandatory
 minima and gutters alone exceed the slot, fail with `E_LAYOUT_TABLE_OVERFLOW`;
 do not proportionally shrink completed columns or their typography.
 
-View `tableColumns[].text` and `heading.text` reuse `{wrap: allow|forbid}`;
+View `tableColumns[].text`, `rows.laneTable.text` and `heading.text` reuse `{wrap: allow|forbid}`;
 absence means `forbid`. Column intent covers its header and cells. Heading
 intent covers kicker/title/subtitle and the implicit Project title. Layout
+applies lane-table intent to both derived columns (lane label and optional
+item count), without changing lane membership or source facts. Table wrapping
+also works in an authored fixed/flexible track without `maxInlineShare`;
+the implicit full-share budget closes at the actual allocation, not the
+unbroken natural width. An explicit table share takes precedence.
+Layout
 uses the existing measured word/CJK wrapping mechanism and typography/run
 metrics. Fitting text returns its exact source unchanged, without whitespace
 normalization. An indivisible overlong unit uses source-preserving ellipsis
