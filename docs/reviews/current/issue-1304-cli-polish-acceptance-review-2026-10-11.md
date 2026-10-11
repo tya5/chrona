@@ -1,0 +1,23 @@
+<!-- chrona:literal-acceptance/v1 -->
+
+# Acceptance review — CLI polish: version, usage, grouped help, described reference (#1304)
+
+Implementation: [#1360](https://github.com/tya5/chrona/pull/1360) (merge `e7a2580ea`), checked against `origin/main` `12f8c6eba`. `chrona --version` prints the package, Project format and visual profiles; bare `chrona` prints usage to stderr and exits 2; `--help` groups the commands by task (`COMMAND_GROUPS`); `docs/guides/cli-reference.md` is generated with command and flag descriptions; success results are one JSON object (rule in [Spec 66 section 8](../../specification/66-agent-interface.md)). Plan and decision on scope 5: [Status comment](https://github.com/tya5/chrona/issues/1304).
+
+## Literal issue acceptance
+
+### Issue #1304
+
+- Source: [Issue #1304](https://github.com/tya5/chrona/issues/1304) (body, assignment and Status comments)
+- Observed: 2026-10-11
+
+| # | Literal acceptance criterion | Disposition | Evidence | Successor |
+| ---: | --- | --- | --- | --- |
+| 1 | CLI tests for `--version`, bare `chrona`, and a successful `validate`/`init`/`preset copy`, each asserting the documented output shape. | met | [`test_cli_surface.py`](../../../tests/cli/test_cli_surface.py): `test_version_prints_the_package_project_format_and_visual_profiles` (3 lines, exit 0, empty stderr), `test_a_bare_chrona_prints_usage_to_stderr_and_exits_2_without_json` (stdout empty, stderr starts `usage: chrona`, not JSON), `test_validate_init_and_preset_copy_print_one_json_object_that_says_what_they_did` (`{"status": "ok", "diagnostics": []}`; `init` and `preset copy` give `status`, `directory`, sorted `created`). I also ran `chrona --version` from the tree: `chrona 0.1.0a0`, `project format: timeline/v0.7`, five visual profiles, exit 0. `skill copy` and the store commands are in the rule of Spec 66 section 8 and have their own updated tests ([`test_skill_library.py`](../../../tests/unit/chrona/usecases/test_skill_library.py), [`test_cli.py`](../../../tests/cli/test_cli.py)). Scope 5 says "every command that succeeds"; the rule leaves `compile`, `schedule` and `render` as they were (their result is the artifact or an existing envelope), a choice recorded in the Status comment as an owner item decided on the author's recommendation. | — |
+| 2 | A test that no `--help` text (top level and every subcommand) matches `\bM\d+\b` or `Stage-\d`. | met | [`test_no_help_text_names_a_milestone_or_stage`](../../../tests/cli/test_cli_surface.py) walks the parser recursively (`_walk`, nested subcommands included) and matches `\bM\d+\b` or `Stage-\d` on `format_help()` of each. `test_help_groups_every_command_by_task_and_leaves_none_ungrouped` pins that every command is in exactly one group. | — |
+| 3 | A test that every command and flag in `cli-reference.md` has a non-empty description, and that the file is regenerated (diff-free) by the generator. | met | [`test_every_command_and_flag_in_the_reference_has_a_description`](../../../tests/cli/test_cli_surface.py) (command `description` and flag `help` non-empty for every non-`-h` option, and every generated section has a paragraph before the flag list) and `test_the_reference_file_is_what_the_generator_writes` (the committed [cli-reference.md](../../../docs/guides/cli-reference.md) equals `render_reference(_parser())` byte for byte; this is a real comparison of the file against the generator, not of two runs). The `documented-commands` conformance check also runs `--check` on the file. Limit: the test asserts non-empty text, not that the text is helpful; "user terms" is checked only by the milestone regex of row 2. | — |
+| 4 | Do not edit `examples/**`. | met | [Diff of #1360](https://github.com/tya5/chrona/pull/1360/files): `docs/`, `skills/chrona/SKILL.md`, `src/`, `tests/`, `tools/check_documented_commands.py`; no `examples/**` and no bot-generated file. | — |
+
+## Programme-level criteria (optional)
+
+Scope items 1 to 5 are implemented as written (scope 6 was out of scope). One consumer-visible break was disclosed on the issue: `validate` success changes from `[]` to an object; repository consumers (tests, the CLI golden, one SKILL.md sentence) were updated, and `chrona import` ([#1307](https://github.com/tya5/chrona/issues/1307)) follows the same rule and is in the "Author a plan" group. CI: [full-matrix run 38098834510](https://github.com/tya5/chrona/actions/runs/38098834510) (workflow_dispatch on `2c96d5445`, a descendant of the merge; macOS, Ubuntu, Windows `success`). All four rows are met, so #1304 can close once this review is on `main` and the three-OS run on the commit that publishes it is cited (AGENTS.md). The roadmap milestone M3 is the reviewer's.
