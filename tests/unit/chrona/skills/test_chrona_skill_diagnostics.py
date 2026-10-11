@@ -14,6 +14,7 @@ import yaml
 
 from chrona.usecases.diagnostic_messages import is_bare
 from tests.support.skill_files import EXAMPLE, ROOT, run_cli, skill_documents
+from tests.support.warning_preset import copy_warning_preset
 
 TOKEN = re.compile(r"(?<![A-Z0-9_])[EWI]_[A-Z][A-Z0-9_]*")
 
@@ -185,8 +186,10 @@ def test_existing_output_directories_are_refused_by_init_preset_copy_and_skill_c
 
 def test_a_cramped_viewport_prints_the_warnings_and_note_the_skill_lists_in_stdout_envelope(tmp_path, monkeypatch, capsys):
     plan = _write(tmp_path, "plan.yaml", _project())
+    preset = copy_warning_preset(tmp_path / "warning-look")
 
-    status, out, err = run_cli(monkeypatch, capsys, "render", plan, "--viewport", "300x200", "--output", str(tmp_path / "plan.svg"))
+    status, out, err = run_cli(monkeypatch, capsys, "render", plan, "--preset", str(preset),
+                              "--viewport", "300x200", "--output", str(tmp_path / "plan.svg"))
 
     assert status == 0 and err == ""
     envelope = json.loads(out)
