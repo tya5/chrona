@@ -663,6 +663,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         header_paint = ("tableColumnLabel" if value.theme_tokens.optional_color("tableColumnLabel", "fill") is not None else None)
         emit_semantic_text(f"column:{column.column_id}", "tableColumnLabel", header_paint, table_column_id=column.column_id)
     row_ids = {row.object_id: row.row_id for row in rows} | {row.row_id: row.row_id for row in rows}
+    header_paint = "group-header" if value.theme_tokens.optional_color("group-header", "fill") is not None else "text"
     for cell in value.surface_content.table_cells:
         if f"cell:{cell.object_id}:{cell.column_id}" in layout_text:
             href, link_title = link_for_cell(cell.object_id, cell.column_id)
@@ -673,12 +674,14 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             # Theme binds one; a state-coloured cell keeps its own ink and takes only the role's typography.
             cell_paint = (cell.typography_role if cell.semantic_id == "tableCell" and cell.typography_role not in {"text", "numeric"}
                           and value.theme_tokens.optional_color(cell.typography_role, "fill") is not None else None)
-            emit_semantic_text(f"cell:{cell.object_id}:{cell.column_id}", cell.semantic_id, cell_paint, href=href, link_title=link_title,
-                               table_row_id=row_id, table_column_id=cell.column_id,
+            header_cell = cell.semantic_id == "groupHeader"
+            emit_semantic_text(f"cell:{cell.object_id}:{cell.column_id}", cell.semantic_id,
+                               header_paint if header_cell else cell_paint, href=href, link_title=link_title,
+                               table_row_id=None if header_cell else row_id,
+                               table_column_id=None if header_cell else cell.column_id,
                                project_item=table_subjects.get(cell.object_id))
     # A Theme that binds `group-header.fill` inks the unmarked header text with it (#1244); a marked span keeps its
     # own role ink, and without the binding the header takes the body text ink as before.
-    header_paint = "group-header" if value.theme_tokens.optional_color("group-header", "fill") is not None else "text"
     for group in groups:
         if group.header_bounds is not None and f"group-header:{group.group_id}" in layout_text:
             emit_semantic_text(f"group-header:{group.group_id}", "groupHeader", header_paint)

@@ -288,7 +288,7 @@ class ViewGrouping:
     order: tuple[str, ...]
     missing: str | None
     presentation: str | None
-    depth: int | None
+    depth: int | Literal["all"] | None
     rollup: str | None
     order_by: str | None = None
     header: ViewGroupHeader | None = None
@@ -889,7 +889,7 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                              if not isinstance(raw_grouping.get("order"), FrozenDict) else (),
                              str(raw_grouping["missing"]) if "missing" in raw_grouping else None,
                              str(raw_grouping["presentation"]) if "presentation" in raw_grouping else None,
-                             int(raw_grouping["depth"]) if "depth" in raw_grouping else None,
+                             raw_grouping.get("depth"),
                              str(raw_grouping["rollup"]) if "rollup" in raw_grouping else None,
                              str(raw_grouping["order"]["by"]) if isinstance(raw_grouping.get("order"), FrozenDict) else None,
                              _group_header(raw_grouping), _group_tint(raw_grouping))

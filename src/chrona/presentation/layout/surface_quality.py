@@ -311,6 +311,16 @@ class VisualRequest:
 
 
 @dataclass(frozen=True)
+class TemporalEndpointPlacement:
+    """Unpainted scheduled ports, never a mark host or collision obstacle."""
+
+    instance_id: str
+    source_ref: str
+    start_port: tuple[float, float] | None
+    end_port: tuple[float, float] | None
+
+
+@dataclass(frozen=True)
 class MarkPlacement:
     """Completed mark geometry and ports, independent of Scene primitives."""
 

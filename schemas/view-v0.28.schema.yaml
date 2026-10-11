@@ -83,7 +83,11 @@ allOf:
                     properties: {by: {description: "Order groups by the earliest planned start among their selected items, then by group value.", const: earliestPlannedStart}}
               missing: {description: "Label for missing field values.", type: string, minLength: 1}
               presentation: {description: "Visual treatment for groups.", enum: [band, header]}
-              depth: {description: "Maximum hierarchy depth.", type: integer, minimum: 0}
+              depth:
+                description: "Maximum relative hierarchy depth, or all selected descendants."
+                anyOf:
+                  - {type: integer, minimum: 0}
+                  - {enum: [all]}
               rollup: {description: "Hierarchy rollup presentation.", enum: [bar, header, none]}
               header:
                 description: "Group-header text template; usable only with presentation header and grouping by field or object type."

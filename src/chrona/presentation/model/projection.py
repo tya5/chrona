@@ -78,6 +78,7 @@ class ReviewItem:
     missing_actual_mark: str = "due-end"
     # Position of the object among the Project's `objects` as declared, for `ordering.by: source` (#991).
     source_index: int = 0
+    temporal_paint: bool = True
 
     @property
     def at_delta(self) -> int | None:
@@ -295,6 +296,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         selected = [replace(item, group_id="", group_label="") for item in selected]
     if hierarchy and not explicit:
         selected = _expand_hierarchy_roots(selected, hierarchy_entries, hierarchy_root_ids, view)
+        selected = [replace(item, temporal_paint=not (
+            item.is_rollup and grouping.rollup in {"header", "none"})) for item in selected]
     elif not explicit:
         _order(selected, view)
     snapshots = _snapshot_items(snapshot_project, snapshot_placements, snapshot_analysis)
@@ -507,10 +510,11 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
                         track="shared" if scenario_ghost(item) or snapshot_ghost(item) else item.track),
                 (replace(scenarios[view.comparison.scenario_id][item.object_id],
                          item_id=f"scenario:{view.comparison.scenario_id}:{item.object_id}",
-                         source_kind="scenario", scenario_id=view.comparison.scenario_id, track="shared")
+                         source_kind="scenario", scenario_id=view.comparison.scenario_id, track="shared",
+                         temporal_paint=item.temporal_paint)
                  if scenario_ghost(item) else None),
                 (replace(snapshots[item.object_id], item_id=f"snapshot:{item.object_id}",
-                         source_kind="snapshot", track="shared")
+                         source_kind="snapshot", track="shared", temporal_paint=item.temporal_paint)
                  if snapshot_ghost(item) else None),
             ) if member is not None),
             depth=item.hierarchy_depth if view.grouping is not None and view.grouping.by == "hierarchy" else 0,
@@ -763,7 +767,7 @@ def _expand_hierarchy_roots(items: list[ReviewItem], entries: dict[str, Hierarch
         item = item_by_id.get(object_id)
         if item is not None:
             output.append(replace(item, hierarchy_depth=relative_depth))
-        if relative_depth >= limit:
+        if limit != "all" and relative_depth >= limit:
             return
         child_items = [item_by_id[child] for child in children.get(object_id, ()) if child in item_by_id]
         _order(child_items, view)

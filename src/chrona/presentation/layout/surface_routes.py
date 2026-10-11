@@ -38,7 +38,7 @@ from chrona.presentation.layout.path_geometry import flatten_path, rounded_ortho
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, MarkPlacement, PaintClip, PathCommand, RelationPlacement, RowPlacement, ShapePlacement,
-    SurfaceLayoutRequest, TextPlacement,
+    SurfaceLayoutRequest, TextPlacement, TemporalEndpointPlacement,
 )
 from chrona.presentation.layout.text import metric_for_role, measure_text_width, place_text
 from chrona.presentation.model.semantic_registry import semantic_binding
@@ -58,6 +58,7 @@ class SurfaceRoutesContext:
     text: tuple[TextPlacement, ...]
     obstacles: SurfaceObstacleIndex
     plot_bounds: tuple[float, float, float, float] | None = None
+    temporal_endpoints: tuple[TemporalEndpointPlacement, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -141,6 +142,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     plot_clip = PaintClip(context.plot_bounds) if window_affected and context.plot_bounds is not None else None
     timeline_bounds = context.timeline_bounds
     marks = context.marks
+    unpainted_ports = {endpoint.instance_id: endpoint for endpoint in context.temporal_endpoints}
     rows, groups = context.rows, context.groups
     diagnostics: list[str] = []
     relations: list[RelationPlacement] = []
@@ -160,7 +162,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         for item in review_row.items:
             instance_id = (f"{review_row.row_id}:{item.item_id or item.object_id}"
                            if projection.rows else item.object_id)
-            instance_anchors.setdefault(item.object_id, []).append((instance_id, fallback))
+            endpoint = unpainted_ports.get(instance_id)
+            anchor = (endpoint.end_port or endpoint.start_port) if endpoint is not None else fallback
+            instance_anchors.setdefault(item.object_id, []).append((instance_id, anchor))
             instance_rows[instance_id] = review_row.row_id
             if explicit_window:
                 kind = (MarkOccurrenceKind.LANE_FINAL if projection.lane_membership is not None
@@ -514,6 +518,12 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                                   else source_mark.end_port) if source_mark else source_anchor
                 target_nominal = (target_mark.start_port if relation.target_endpoint in {"start", "at"}
                                   else target_mark.end_port) if target_mark else target_anchor
+                if (source_endpoint := unpainted_ports.get(source_id)) is not None:
+                    source_nominal = (source_endpoint.start_port if relation.source_endpoint in {"start", "at"}
+                                      else source_endpoint.end_port)
+                if (target_endpoint := unpainted_ports.get(target_id)) is not None:
+                    target_nominal = (target_endpoint.start_port if relation.target_endpoint in {"start", "at"}
+                                      else target_endpoint.end_port)
                 source_candidates = (connector_egress_candidates(source_mark, relation.source_endpoint,
                     target_nominal, comparison_clusters.get((source_mark.source_ref,
                         instance_rows[source_id]), ())) if source_mark else

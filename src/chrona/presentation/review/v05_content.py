@@ -84,8 +84,16 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
             return "missingActualCell"
         return "tableCell"
     if projection.rows:
+        def row_cell(row: Any, column: Any, row_index: int) -> TableCellContent:
+            item = next(item for item in row.items if item.item_id == row.table_subject_id)
+            header = (item.is_rollup and row.rollup_presentation == "header"
+                      and column.id == view.hierarchy_column)
+            return TableCellContent(row.row_id, column.id, cell(item, column, row_index),
+                                    "groupHeader" if header else cell_semantic(item, column),
+                                    "groupHeader" if header else cell_typography_role(column),
+                                    *cell_affixes(item, column, row_index))
         cells = tuple(
-            TableCellContent(row.row_id, column.id, cell(item := next(item for item in row.items if item.item_id == row.table_subject_id), column, row_index), cell_semantic(item, column), cell_typography_role(column), *cell_affixes(item, column, row_index))
+            row_cell(row, column, row_index)
             for row_index, row in enumerate(projection.rows, 1) for column in view.table_columns)
         table_cell_objects = tuple(
             (row.row_id, column.id,
