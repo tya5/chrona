@@ -151,8 +151,7 @@ examples/<project>/
 |---|---|
 | `controller-z` | small and complete: every core feature once |
 | `aster-ssd` | calendars and constraints |
-| `halcyon-1` | programme: hierarchy, scenarios, snapshots, the second surface |
-| `orion-asic` | extension: object types and typed fields from a declared profile package |
+| `halcyon-1` | programme: hierarchy, scenarios, snapshots, the second surface, and extension object types and typed fields from a declared profile package |
 
 Shared source resources are stored once at project scope. A declared slide owns a View
 only when its selection differs from its siblings. Reproducible rendered evidence must

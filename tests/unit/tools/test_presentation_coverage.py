@@ -92,4 +92,4 @@ def test_run_local_loader_reuses_only_one_report_operation(tmp_path):
 def test_non_default_integer_vocabulary_names_the_every_slide():
     """#434: a non-default `every` is derived into the report with its slide."""
     content = (Path(__file__).resolve().parents[3] / "docs/gallery/presentation-coverage.md").read_text(encoding="utf-8")
-    assert "| view | `body.axis.tiers[].every` | `2` | orion-asic/gates |" in content
+    assert "| view | `body.axis.tiers[].every` | `2` | halcyon-1/gates |" in content
