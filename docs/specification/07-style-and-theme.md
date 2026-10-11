@@ -277,6 +277,16 @@ Failed or invalid contour completion is `E_LAYOUT_POINT_OUTLINE_INVALID` at
 the concrete role's `strokeWidth` pointer; there is no raw-path fallback.
 
 This authoring form is Theme v0.15; derived Theme inheritance is v0.16.
+
+**Derived Theme members (#1401).** A derived Theme (v0.16) names its pinned base (`extends`: id, path, `sourceContentIdentity`,
+`contentIdentity`) and may declare `values`, `roles`, `colorBindings`, `colorScales`, `annotationKinds` and `metrics`. An entry it
+declares replaces the base's entry of that name as a whole, or is added when the base declares none of that name; nothing is
+removed, and a role the derived Theme restates is replaced as a whole (to add a role member, restate the role with the member).
+The merged result is validated as the Theme it is, by `theme-v0.15`, number references and every role, contrast and
+required-token rule, exactly as for a Theme written without inheritance, so a derived Theme that adds a token or a role resolves
+to the Theme one would write by hand. The pins are unchanged (`E_THEME_INHERITANCE_SOURCE_IDENTITY`,
+`E_THEME_INHERITANCE_BASE_IDENTITY`). Before this rule a derived Theme could only replace entries its base declared
+(`E_THEME_INHERITANCE_OVERRIDE_UNKNOWN`, now retired).
 v0.11/v0.12/v0.13/v0.14 are retired after the first-party migration (#1088;
 Specification 56 §3.2), not silently upgraded. Theme v0.15 admits
 catalog glyph references only on `milestoneSymbol`,
