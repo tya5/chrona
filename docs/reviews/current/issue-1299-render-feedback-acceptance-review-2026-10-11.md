@@ -1,7 +1,7 @@
 <!-- chrona:literal-acceptance/v1 -->
 # Render feedback acceptance (#1299)
 
-Authority: pre-code `c14a86aa`, Specs06 §6.1 and33 §13; [living work record](https://github.com/tya5/chrona/issues/1299#issuecomment-6095558700). Implementation: observer/routing `b3d401fc`/`dc31c097`, CLI `99e111c0`, relation override `d67cdf94`, height policy `8eaa30a3`; ordinary adoption of merged #1293 at this revision.
+Authority: pre-code `c14a86aa`, Specs06 §6.1 and33 §13; [living work record](https://github.com/tya5/chrona/issues/1299#issuecomment-6095558700). Implementation: observer/routing `b3d401fc`/`dc31c097`, CLI `99e111c0`, relation override `d67cdf94`, height policy `8eaa30a3`; current READY7563df4c adoption `85bd7220`, retained default table-bound correction `29d02e9d`.
 
 ## Literal issue acceptance
 
@@ -19,8 +19,21 @@ Authority: pre-code `c14a86aa`, Specs06 §6.1 and33 §13; [living work record](h
 
 ## Programme-level criteria (optional)
 
-Focused combined height/CLI/override/date-display/viewport-transport suite:62 passed (79.15s). Earlier initial failures were four new fixtures using int rather than required Decimal coordinates, and a new network test requesting unsupported auto height; fixed fixtures preserve existing contracts. Network auto remains rejected; finite network requests do not receive this advisory.
+Current own Python3.11 focused suite:107 PASS42.44s, covering progress/PTY,
+height limits, relation override, packaged table bounds and explicit-window
+relation/lane/Scene absences. Merge keeps completed paint/absence geometry and
+separate progress-pass identity; plot bounds retain their positional handoff.
+The standalone default preserves merged table maxInlineShare0.4, adding only
+the declared height limit and truthful Layout ID; the whole-resource equality
+test remains intact. Network auto remains rejected; finite network requests
+do not receive this advisory.
 
 Architecture: CLI owns terminal I/O; Draft overrides View before admission/effective identity freeze; Core dependencies/schedules are unchanged. Layout alone compares completed geometry against resolved declared limits; Scene transports typed facts. No resizing, route changes, clocks, serialization authority or implemented paging. Default Layout provenance intentionally changes; catalogue Editorial and mirrors remain unchanged. Paging follow-up is specified in Spec33.
 
-Local structural checks:11 packages/37 inward edges,215 reachable modules/no orphans; schema annotations and literal-review structure pass. Full schema gate against merged source main f995a181 passes:one additive Layout schema,37 equal,483 documents/739 probes,four known-invalid unchanged,L2+L3=57.5s. Trusted READY9ea350d5 adopted with report-only changes; schema tool proves and retires two merged #1293 delta entries. Batched public artifacts and exact published-main three-OS release remain required. Issue stays open; this review is not release acceptance.
+Current import check:11 packages/37 inward edges. Full schema gate against
+origin/main7563df4c PASS:one additive Layout schema,37 equal,483 documents
+(379 mapped),739 probes (462 rejected/277 accepted), four known-invalid
+unchanged; L2+L3=50.2s against unchanged60s budget. The provided tool proves
+and retires19 merged L1 entries; L2/L3 predecessor records remain intact.
+Authored examples diff is empty. Current PR/public-artifact and containing-review
+exact-main three-OS release remain required; no second active PR is opened.
