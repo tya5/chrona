@@ -5,7 +5,7 @@ from datetime import date
 from decimal import Decimal
 from collections.abc import Mapping
 from math import isfinite
-from typing import Any, Callable
+from typing import Any, Callable, NamedTuple
 
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.surface_marks import (
@@ -29,11 +29,11 @@ from chrona.presentation.layout.annotation_border import NO_BORDER, place_border
 from chrona.presentation.layout.rounded_outline import (
     CORNER_CLEARANCE, clamp_radius, commands_points, resolve_corner_radius, rounded_rect_commands,
 )
-from chrona.presentation.layout.annotation_inline_size import fill_note, fill_target
+from chrona.presentation.layout.annotation_inline_size import FilledNote, fill_note, fill_target
 from chrona.presentation.layout.viewer_fit import fit_text, require_followable_content
 from chrona.presentation.model.theme_tokens import ViewerFitToken
 from chrona.presentation.layout.annotation_kind_frame import (
-    EMPTY_FRAME, complete_kind_heading, measure_kind_frame, place_kind_frame,
+    EMPTY_FRAME, KindFrameMeasure, complete_kind_heading, measure_kind_frame, place_kind_frame,
 )
 from chrona.presentation.layout.annotation_tilt import (
     nearest_boundary_point, rotate_commands, polygon_commands, rotate_shape, rotate_text, rotated_corners, rotated_extent, tilt_for,
@@ -70,6 +70,19 @@ from chrona.presentation.layout.surface_geometry import (
 
 
 ANNOTATION_PAINT_ORDER = 400
+
+
+class _NoteVariant(NamedTuple):
+    """One content/list candidate and its completed filled alternative."""
+
+    content: str
+    lines: tuple[str, ...]
+    measured_width: float
+    frame_size: tuple[float, float]
+    search_size: tuple[float, float]
+    filled: FilledNote | None
+    fill_size: tuple[float, float] | None
+    filled_kind: KindFrameMeasure
 
 
 def _anchor_operand(value: object) -> str:
@@ -647,7 +660,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     # `inlineSize: fill` (#1051): on a row-aligned rung of an annotations slot the note takes the slot's
                     # inline size and wraps in what its chrome leaves; any other rung keeps the content size above.
                     fill_declared = container is not None and container.inline_size == "fill"
-                    def measure_variant(measured_content: str, *, list_entry: bool):
+                    def measure_variant(measured_content: str, *, list_entry: bool) -> _NoteVariant:
                         may_wrap = (wrap == "allow" or (list_entry and has_index_suppression))
                         lines, measured_width, frame_size = measure_note(
                             measured_content, wrap_available, may_wrap)
@@ -674,8 +687,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             if filled_variant is not None and tilt_angle else
                             (filled_variant.frame_inline, filled_variant.frame_block)
                             if filled_variant is not None else None)
-                        return (measured_content, lines, measured_width, frame_size, search_size,
-                                filled_variant, measured_fill_size, filled_kind)
+                        return _NoteVariant(measured_content, lines, measured_width, frame_size, search_size,
+                                            filled_variant, measured_fill_size, filled_kind)
 
                     plot_variant = measure_variant(body_content, list_entry=False)
                     list_variant = (measure_variant(list_content, list_entry=True)
@@ -689,9 +702,9 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         base_insets = (content_top, content_right, content_bottom, content_left)
                         required = 0.0
                         for variant in variants:
-                            dimensions = [(*variant[3], False)]
-                            if variant[5] is not None:
-                                dimensions.append((variant[5].frame_inline, variant[5].frame_block, True))
+                            dimensions = [(*variant.frame_size, False)]
+                            if variant.filled is not None:
+                                dimensions.append((variant.filled.frame_inline, variant.filled.frame_block, True))
                             for dimension in dimensions:
                                 measured_width, measured_height = dimension[:2]
                                 filled_width = len(dimension) == 3 and dimension[2]
