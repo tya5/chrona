@@ -34,8 +34,19 @@ Subsequent `512ae424` adds only #1294's acceptance-review lines, not product cod
 Current READY `42e37d8d` (trusted gate38113860903) adopted at `3cd42db8`.
 Date-range formatter and actual-default integration:22 passed (6.45s).
 The new PR's snapshot and exact-main release are still required.
+PR1406 head `2dde5ba6` snapshot artifact11692772799: all46 Scene/SVG
+byte-identical; only diagnostic source coordinates and four endDisplay coverage
+lines changed. Run38114372657 conformance failed only the missing conditional
+annotation. Added description/valid examples without changing validation;
+live annotation checker passes, annotation/formatter/default integration31
+passed (3.04s). New-head CI and release remain required.
 
 ## Architecture conclusion
+
+READY main `b5b6ca46` adopted at `67fdba18` after its successful derived-main
+check. Live schema annotations pass; formatter, actual default Scene/SVG and
+new legend-grid integration:33 passed (254.54s, loaded host). No authored
+examples changes. Current-head PR snapshot/checks and exact-main release remain required.
 
 View owns the explicit display choice; normalization applies it once before
 Layout measures text. Domain dates, schedules, bars and routes are unchanged.
