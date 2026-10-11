@@ -27,12 +27,13 @@ def _distance(profile: ResolvedLayoutProfile, path: str) -> Decimal:
         raise LayoutError("E_LAYOUT_TOKEN_UNKNOWN", path) from error
 
 
-def _slot_heading(node: Mapping[str, Any]) -> SlotHeading | None:
+def _slot_heading(node: Mapping[str, Any], profile: ResolvedLayoutProfile | None = None, path: str = "") -> SlotHeading | None:
     """The slot's declared caption (#1064); its shape was validated with the profile."""
     declared = node.get("heading")
     if declared is None:
         return None
-    return SlotHeading(str(declared["text"]), str(declared.get("align", "start")), str(declared.get("block", "top")))
+    gap = _distance(profile, f"{path}/heading/gap") if profile is not None and "gap" in declared else None
+    return SlotHeading(str(declared["text"]), str(declared.get("align", "start")), str(declared.get("block", "top")), gap)
 
 
 def _padding(profile: ResolvedLayoutProfile, node: Mapping[str, Any], path: str) -> tuple[Decimal, Decimal, Decimal, Decimal]:
@@ -402,8 +403,9 @@ class _Arranger:
             node.get("direction") if is_slot else None,
             (_distance(self.profile, f"{path}/gap") if is_slot and "gap" in node else None),
             (_distance(self.profile, f"{path}/itemMinInlineSize") if is_slot and "itemMinInlineSize" in node else None),
-            heading=_slot_heading(node) if is_slot else None,
+            heading=_slot_heading(node, self.profile, path) if is_slot else None,
             columns=int(node["columns"]) if is_slot and "columns" in node else None,
+            column_distribution=str(node.get("columnDistribution", "start")) if is_slot else "start",
         ))
         if kind == "slot":
             measure = _slot_measurement(node, self.measurements, path)

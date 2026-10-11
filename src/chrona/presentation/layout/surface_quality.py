@@ -369,6 +369,7 @@ class SlotPlacement:
     gap: Decimal | None = None
     item_min_inline_size: Decimal | None = None
     columns: int | None = None
+    column_distribution: str = "start"
 
 
 @dataclass(frozen=True)

@@ -300,10 +300,15 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
         count = len(entries)
         column_widths = [max((entry_width[index] for index in range(column, count, legend.columns)), default=0.0)
                          for column in range(min(legend.columns, count))]
+        slot_end = float(legend.bounds.inline) + float(legend.bounds.inline_size)
+        if legend.column_distribution == "spread" and len(column_widths) > 1:
+            # `spread` (#1392): equal columns across the slot, each at least the widest entry of any column; when they do not
+            # fit the slot the columns stay packed as under `start`.
+            share = (float(legend.bounds.inline_size) - gap * (len(column_widths) - 1)) / len(column_widths)
+            column_widths = [share] * len(column_widths) if max(column_widths) <= share else column_widths
         starts = [float(legend.bounds.inline)]
         for width in column_widths[:-1]:
             starts.append(starts[-1] + width + gap)
-        slot_end = float(legend.bounds.inline) + float(legend.bounds.inline_size)
         for index, (role, label) in enumerate(entries):
             row, column = divmod(index, legend.columns)
             x = starts[column]
