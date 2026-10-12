@@ -36,7 +36,7 @@ from chrona.presentation.layout.relation_fan_in import (
     NodeApproach, complete_fan_in, same_port_arrivals, target_port_identity, terminal_style,
 )
 from chrona.presentation.layout.relation_routing_order import dependency_routing_order
-from chrona.presentation.layout.relation_fallback import complete_fixed_connector
+from chrona.presentation.layout.relation_fallback import complete_fixed_connector, paired_stub_geometry
 from chrona.presentation.layout.relation_resolution import (
     RelationObstacleDomain, RelationResolutionStage, RelationRouteAttemptOutcome,
     relaxed_domain, search_relation_resolution,
@@ -672,6 +672,50 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     if fixed is not None:
                         selected_pair, points = fixed.selected_pair, fixed.points
                         lane_selection = None
+                if (resolution.terminal_fallback is RelationResolutionStage.STUB
+                        or (resolution.terminal_fallback is RelationResolutionStage.OVERLAP
+                            and selected_pair is None)):
+                    if not relation.source_title or not relation.target_title:
+                        raise LayoutError("E_LAYOUT_ROUTE_ATTEMPT_INVALID", scene_id,
+                                          detail="paired stubs require closed endpoint titles")
+                    stub_choice = None
+                    for pair in first_fit_port_pairs(port_pairs):
+                        geometry = paired_stub_geometry(pair,
+                            source_run=terminal_length(marker_start) + 2 * max(1., dependency_stroke),
+                            target_run=terminal_length(marker_end) + 2 * max(1., dependency_stroke))
+                        outgoing, start, _ = complete_centred_terminals(
+                            geometry.source, marker_start, None, dependency_stroke)
+                        incoming, _, end = complete_centred_terminals(
+                            geometry.target, None, marker_end, dependency_stroke)
+                        if (all(hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 >= dependency_stroke
+                                for path in (outgoing, incoming) for a, b in zip(path, path[1:]))
+                                and clears_primary_marks(outgoing, dependency_stroke, frozenset(pair[0].host_ids))
+                                and clears_primary_marks(incoming, dependency_stroke, frozenset(pair[1].host_ids))):
+                            stub_choice = (pair, outgoing, incoming,
+                                orient_terminal(start, outgoing, pair[0].side, source=True),
+                                orient_terminal(end, incoming, pair[1].side, source=False))
+                            break
+                    if stub_choice is None:
+                        raise LayoutError("E_LAYOUT_ROUTE_ATTEMPT_INVALID", scene_id,
+                                          detail="paired stub endpoint corridors are unavailable")
+                    pair, outgoing, incoming, start, end = stub_choice
+                    source_port_id = f"{source_id}:{relation.source_endpoint}:{pair[0].side}"
+                    target_port_id = target_port(relation, target_id, target_mark, pair[1])
+                    fragments = (
+                        RelationPlacement(f"{scene_id}:stub-source", source_port_id, f"{scene_id}:stub-out",
+                            tuple(outgoing), marker_start=start, label_content=f"-> {relation.target_title}",
+                            semantic_id=relation.semantic_id, source_ref=relation_id,
+                            from_instance_id=source_id, terminal_label=True, fragment_endpoint="source"),
+                        RelationPlacement(f"{scene_id}:stub-target", f"{scene_id}:stub-in", target_port_id,
+                            tuple(incoming), marker_end=end, label_content=f"{relation.source_title} ->",
+                            semantic_id=relation.semantic_id, source_ref=relation_id,
+                            to_instance_id=target_id, terminal_label=True, fragment_endpoint="target"),
+                    )
+                    for fragment in fragments:
+                        declared_order[fragment.relation_id] = declared_index
+                        relations.append(fragment)
+                        register_path(fragment.relation_id, fragment.points, dependency_stroke)
+                    continue
                 fallback = selected_pair is None
                 if fallback:
                     if request.surface_content.relation_overflow == "suppress":
@@ -814,8 +858,8 @@ def place_relation_labels(context: SurfaceRoutesContext,
         text_id = f"relation-label:{placed_relation.relation_id.removeprefix('relation:')}"
         candidate = place_label(relation_label_anchor(placed_relation.points), size,
             ("above", "below", "start", "end"), bounds=timeline_rect, obstacles=obstacles,
-            gap=max(1.0, float(font_size) * 0.25), required=False,
-            overflow=request.surface_content.relation_overflow,
+            gap=max(1.0, float(font_size) * 0.25), required=placed_relation.terminal_label,
+            overflow="visible-overflow" if placed_relation.terminal_label else request.surface_content.relation_overflow,
             search_side_neighborhood=True,
             classes=("mark", "text", "label-visual", "dependency-route"))
         if candidate is None:

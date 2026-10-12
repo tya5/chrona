@@ -8,6 +8,7 @@ from chrona.presentation.layout.relation_fallback import (
     complete_fixed_connector, fixed_connector_candidates, paired_stub_geometry,
 )
 from chrona.presentation.layout.routing import route_self_overlaps
+from chrona.presentation.layout.surface_quality import RelationPlacement
 
 
 PAIR = (ConnectorEgress("end", (0., 0.), (0., 0.), ("source",)),
@@ -81,3 +82,14 @@ def test_diagonal_or_overflowing_corridor_is_rejected_before_preparation():
     for pair, run in ((diagonal, 6.), (huge, 1e308)):
         with pytest.raises(ValueError, match="E_LAYOUT_ROUTE_ATTEMPT_INVALID"):
             fixed_connector_candidates(pair, source_run=run, target_run=9.)
+
+
+def test_completed_fragment_requires_owned_endpoint_geometry_and_terminal_text():
+    fragment = RelationPlacement("relation:r:stub-source", "source:end", "virtual:out",
+        ((0., 0.), (10., 0.)), from_instance_id="source", label_content="-> Target",
+        terminal_label=True, fragment_endpoint="source")
+    assert fragment.from_instance_id == "source" and fragment.to_instance_id is None
+    for changed in ({"to_instance_id": "target"}, {"terminal_label": False},
+                    {"label_content": None}, {"points": ()}, {"fragment_endpoint": "unknown"}):
+        with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+            replace(fragment, **changed)

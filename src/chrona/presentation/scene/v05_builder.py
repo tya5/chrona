@@ -860,8 +860,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                          points=relation.points, path_commands=relation.path_commands,
                                          paint_clip=relation.paint_clip,
                                          paint_order=relation.paint_order, slot_id=relation.slot_id,
-                                         from_instance_id=relation.from_instance_id,
-                                         to_instance_id=relation.to_instance_id,
+                                         from_instance_id=(relation.from_instance_id if relation.fragment_endpoint is None else None),
+                                         to_instance_id=(relation.to_instance_id if relation.fragment_endpoint is None else None),
                                          fan_in=relation.fan_in))
     for placed in placed_surface.shapes:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),

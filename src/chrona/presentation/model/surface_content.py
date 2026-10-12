@@ -71,6 +71,8 @@ class RelationPresentationFact:
     semantic_id: str
     label_content: tuple[str, ...] = ()
     critical: bool = False
+    source_title: str = ""
+    target_title: str = ""
 
 
 @dataclass(frozen=True)

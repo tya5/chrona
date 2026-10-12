@@ -520,6 +520,19 @@ class RelationPlacement:
     window_endpoint_absences: tuple[WindowRelationEndpointAbsence, ...] = ()
     window_suppression_reason: str | None = None
     paint_clip: PaintClip | None = None
+    terminal_label: bool = False
+    fragment_endpoint: Literal["source", "target"] | None = None
+
+    def __post_init__(self) -> None:
+        if (not isinstance(self.terminal_label, bool)
+                or self.fragment_endpoint not in {None, "source", "target"}
+                or (self.fragment_endpoint is not None and (
+                    self.suppressed or not self.terminal_label or not self.label_content or len(self.points) < 2))
+                or (self.fragment_endpoint == "source" and (
+                    not self.from_instance_id or self.to_instance_id is not None))
+                or (self.fragment_endpoint == "target" and (
+                    not self.to_instance_id or self.from_instance_id is not None))):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: inconsistent completed relation fragment")
 
 
 @dataclass(frozen=True)
