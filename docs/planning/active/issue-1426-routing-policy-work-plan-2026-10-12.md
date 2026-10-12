@@ -50,6 +50,10 @@ it with real unchanged-input materializers without a normalization override.
 
 ## Implementation plan
 
+Finalized against the published design correction `17bef2a7`. Product changes
+start only after this plan is published. Removal and budget retention are one
+coherent code slice in PR1428; the batch evidence follows on the same branch.
+
 1. Remove rejected policy: schema/vocabulary/frozen definition and policy site;
    engine/manifest flag; relation_shapes module and shape/policy-only tests;
    selector shape branches, surface summary and phase/entry special cases.
@@ -69,6 +73,6 @@ it with real unchanged-input materializers without a normalization override.
    Inspect current-head CI/artifact and literal acceptance; release on the READY
    tip and close only after exact-main three-OS checks containing the review.
 
-Publish the selected design/architecture correction before finalizing this
-implementation plan, then publish the plan before product changes. No new PR,
+The selected design/architecture correction is published; publish this finalized
+implementation plan before product changes. No new PR,
 force push, authored example repair or hidden compatibility routing path.
