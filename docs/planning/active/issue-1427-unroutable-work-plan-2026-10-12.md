@@ -18,7 +18,8 @@ select synthetic halo coverage, not a contrived public example.
 Unpainted rollup endpoints retain overlap/stub Scene and SVG output without
 inventing a host; fallback and hierarchy controls pass23 tests on this base.
 
-Current slice: critical facts/order and typed mode admission are staged.
+Current slice: implementation and literal review are complete in PR1447;
+final current-head checks, merge and exact-main release remain required.
 Search, port admission, side-entry alternatives, reduction, primary-mark and
 corner validation now use the same stage domain. Finite fixed overlap is
 connected and never searches; paired stub fragments and mandatory ASCII
@@ -32,10 +33,10 @@ search-budget facts still include discarded trials. Paired fragments count as
 one relation. The shared warning mapper serves CLI and MCP without recounting.
 Completed halo geometry now projects below its recovery line and existing text;
 normal/suppressed paths remain untouched. Theme owns surface-ground paint and
-validated width; decoration contrast remains enforced. Final default-relax
-public evidence and the atomic default flip remain incomplete.
-This is not release acceptance. The staged default stays suppress until the
-atomic protection/recovery gate below is satisfied.
+validated width; decoration contrast remains enforced. Default relax and all
+five reviewer protection declarations are staged together in PR1447. Current
+CI38315016163 passes; all46 SVGs remain identical and all527 instances normal.
+This is not exact-main release acceptance.
 
 Latest focused gate: 196 tests pass, including real Scene/SVG halo ordering,
 Theme width controls and decoration contrast. Conformance: 32 checks pass;

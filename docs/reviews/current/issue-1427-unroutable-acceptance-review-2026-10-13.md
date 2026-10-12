@@ -4,7 +4,8 @@ Implementation: [PR1447](https://github.com/tya5/chrona/pull/1447),
 `d4509cd88160847b95a62ae566b840045c1b6bc3`, based on READY `208cf1cc`.
 Authority: [current work plan](../../planning/active/issue-1427-unroutable-work-plan-2026-10-12.md),
 Specs08/33/46/50, and [reviewer release decisions](https://github.com/tya5/chrona/issues/1427#issuecomment-6133101361).
-Release acceptance is pending current-head CI and exact-main three-OS CI.
+Current-head CI [38315016163](https://github.com/tya5/chrona/actions/runs/38315016163)
+passes on `43de3ff4`; exact-main three-OS release is required before closure.
 
 | Literal criterion | State | Evidence |
 | --- | --- | --- |
@@ -35,5 +36,9 @@ suppress; no assertions/skips are removed. Three chip/note byte fixtures change
 only their explicit Layout resource identity (independent predecessor comparison);
 SVG and every other Scene field match. CLI golden changes20 cases only by the
 approved supersession info; unrelated argparse quoting is preserved. Current
-focused gate332 PASS51.08s. Re-run current-head CI and inspect its snapshot before
-merge; earlier green evidence alone is not acceptance.
+focused gate332 PASS51.08s. Current CI is successful, including all three pytest
+shards, conformance, MCP and newest-Python reproduction. Artifact11775888839
+contains45 Scene metadata changes and3 reports: exact primitive identity in
+every changed Scene, zero SVG changes/retirements, contrast errors0. No new
+product changes follow this validation; verify the containing-review head and
+exact-main release before closure.
