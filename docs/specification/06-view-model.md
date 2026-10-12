@@ -307,7 +307,8 @@ scale groups, no comma or “and”, names through quintillion (0..10^21−1).
 Kanji forms share existing Presentation digit/ten name tables (0..99), not
 a new Core/localization table; ordinal ranges do not change. Outside available
 names is `E_VIEW_FIGURE_FORMAT_RANGE`, with value/form/range, not silent digits.
-For a late candidate this is admission rejection, not a fatal error on the
+Each formatted text read retains its figure identity for attribution.
+For a late candidate's placedNotes read this is admission rejection, not a fatal error on the
 possible upper count: a lower representable self-consistent count may exist.
 If no admitted candidate closes, Spec33's failure includes that range evidence.
 Template consumers use the selected format; Summary metrics retain raw integers

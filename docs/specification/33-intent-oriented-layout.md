@@ -162,6 +162,25 @@ rejected whole-count candidate, but retain every executed route/label pass
 fact inside the accepted invocation, including rejected recovery passes (Spec50).
 Reject only typed candidate-admission failures, including unavailable number
 names or count-dependent required fit; retain their evidence on no solution.
+The formatter read records the exact figure identity. A name-range failure
+rejects a candidate only when that identity is a deferred placedNotes figure;
+an unrelated formatted count remains a normal fatal input error. Source inputs
+carry closed figure dependencies into measured-heading fit and intrinsic text
+floor detectors. Those detectors, not a caught error-code whitelist, produce
+typed dependent-fit evidence. Authored fixed/minimum/aspect constraints, budget
+closure failures, missing sources/fonts and unrelated Layout errors propagate.
+Existing caption overflow/ellipsis policy does not acquire a new fit rejection.
+
+The complete count coordinator consumes SurfaceRenderPlanInput and returns the
+accepted prepared plan, projection facts and SurfaceLayoutComposition. It never
+projects Scene or calls Application geometry callbacks. With no active late read,
+it reuses ordinary preparation and composes once, then resolves unused late
+figures from receipts. Ordinary preparation remains before the existing
+unused-input checkpoint; completion remains after it. An active late read
+defers whole candidate planning/completion until after that checkpoint,
+following semantic reference admission. Each trial buffers progress events;
+only the accepted trial publishes them. Resource/metric/placement/index state
+is fresh per trial; accepted executed-pass budget facts remain intact (Spec50).
 Unrelated schema/resource/semantic errors propagate unchanged, not as a count
 cycle. Reuse only pure measurements with complete content/metric keys; mutable
 placement/index/diagnostic state remains isolated between trials.
@@ -524,6 +543,7 @@ These private modules divide Layout implementation only; they do not change auth
 |---|---|
 | `surface_source_inputs` | Assemble source facts and visual advances from closed content and Theme/icon resources. |
 | `surface_render_plan` | Measure sources, close sizing/allocation and prepare native geometry from resolved intent; Application supplies data, not a geometry callback. |
+| `surface_count_closure` | Bind candidate count facts, invoke fresh complete planning/composition, accept typed narrative closure and return the accepted plan/facts/placements; never project Scene. |
 | `surface_base` | Validate closed inputs; compose slots, rows, base group extents, scale and tracks. |
 | `surface_table` | Place table columns, headers and cells. |
 | `surface_groups` | Place group-header text and group presentation from completed base extents. |

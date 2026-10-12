@@ -85,6 +85,24 @@ P1 input contains resolved Projection/semantic content, profile, Theme/font
 resources, viewport policy and capabilities, not Application callbacks. Pure
 measurement reuse requires complete content/metric keys; mutable request/search
 state is fresh. Only new template-bearing resources change text or allocation.
+P3 connection review: Spec33 now fixes the unused-input boundary and typed
+source/figure attribution. Normal preparation stays before that checkpoint and
+completion after it. Active late reads defer their whole count coordinator until
+after the checkpoint. A Layout-owned `surface_count_closure` returns accepted
+plan/projection/composition; Presentation projects that completion once. The
+existing standalone prepared-input API still composes already-measured requests;
+it is not a count fallback and shares the canonical Layout composer.
+Specs05/06 preserve Core integers and literal/closed text identity; Specs33/44
+keep geometry and narrative occurrence ownership; Spec50 keeps every accepted
+invocation pass fact; Spec56 needs no additional schema/version. No dated/project
+policy, renderer inference or external callback enters the coordinator.
+Implementation order: exact formatted-read identity, SourceInput dependency tags
+and owner-issued fit failures; finite Layout coordinator and immutable trial
+evidence/progress isolation; typed Presentation result and Application checkpoint
+connection; synthetic real-layout highest/no-solution/unrelated-error/budget
+tests, then P4. Reject only affected late name reads or intrinsic measured text
+fit, never authored budget constraints or a generic LayoutError/code list.
+
 If producer receipts, required-fit attribution or preparation extraction reveal
 a contract gap, publish its design/spec/whole-architecture correction before
 resuming that slice. Do not substitute selected-note totals or fix corpus YAML.
@@ -150,7 +168,6 @@ identity or missing/suppressed text. Project note-key semantics are not narrowed
 Receipt/admission/legacy-characterization/projection/ownership92 PASS, including
 unchanged characterized Scene/SVG hashes; schema equivalence and structural
 guards PASS. P3 still needs the finite N..0 coordinator, typed dependent-fit
-admission, accepted facts and trial/budget isolation. Before that coordinator's
-code, finalize its connection to the existing unused-input checkpoint and
-required-fit evidence within the Layout-owned preparation/completion boundary;
-publish any contract correction first. No authored examples/resources changed.
+admission, accepted facts and trial/budget isolation. Its checkpoint/attribution
+contract and whole-architecture review above are finalized for pre-code
+publication. No authored examples/resources changed.
