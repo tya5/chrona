@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from decimal import Decimal
+from enum import Enum
 from math import fsum
 from collections.abc import Iterable
 import json
@@ -10,6 +11,15 @@ from typing import Any, Mapping, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from chrona.presentation.layout.surface_quality import FitWarning
+
+
+class RelationUnroutableMode(str, Enum):
+    """Declared Layout resolution, independent of View admission/network policy."""
+
+    RELAX = "relax"
+    OVERLAP = "overlap"
+    STUB = "stub"
+    SUPPRESS = "suppress"
 
 
 class LayoutError(ValueError):
@@ -146,6 +156,8 @@ class LayoutManifest:
     fit_warnings: tuple[FitWarning, ...] = ()
     relation_search: str = "first-fit"
     relation_search_budget: int | None = None
+    # Staged implementation: flip only after recovery and target protection land.
+    relation_unroutable: RelationUnroutableMode = RelationUnroutableMode.SUPPRESS
 
     def canonical_bytes(self, precision: int = 3) -> bytes:
         quantum = Decimal(1).scaleb(-precision)
@@ -193,6 +205,8 @@ class LayoutManifest:
                 **({"entry": self.relation_entry} if self.relation_entry != "side-when-free" else {}),
                 **({"search": self.relation_search} if self.relation_search != "best" else {}),
                 **({"searchBudget": self.relation_search_budget} if self.relation_search_budget is not None else {}),
+                **({"unroutable": self.relation_unroutable.value}
+                   if self.relation_unroutable != RelationUnroutableMode.SUPPRESS else {}),
             },
             "annotationRouting": {
                 "maxBends": self.annotation_max_bends,

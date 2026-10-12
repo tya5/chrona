@@ -9,6 +9,7 @@ from typing import Any, Callable, Literal, Mapping
 
 from chrona.presentation.layout.model import (
     CountDependentHeadingFitError, LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect, RegionFrame, ResolvedLayoutProfile, SlotHeading,
+    RelationUnroutableMode,
 )
 from chrona.presentation.layout.surface_quality import FitWarning
 from chrona.presentation.layout.tracks import resolve_flexible_tracks as _resolve_flexible_tracks
@@ -1013,6 +1014,7 @@ def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float
         relation_max_detour_ratio=float(relation_routing.get("maxDetourRatio", 2.0)),
         relation_entry=str(relation_routing.get("entry", "side-when-free")),
         relation_search=str(relation_routing.get("search", "first-fit")),
+        relation_unroutable=RelationUnroutableMode(relation_routing.get("unroutable", "suppress")),
         relation_search_budget=(int(relation_routing["searchBudget"])
                                 if "searchBudget" in relation_routing else None),
         annotation_max_bends=int(annotation_routing["maxBends"]),
