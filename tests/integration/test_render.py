@@ -40,12 +40,12 @@ def _draft_request(*, project_path: Path | None = None, view_path: Path | None =
                    viewport: tuple[int, int | None] = (1600, 900)) -> RenderRequest:
     root = _root()
     draft = resolve_draft_render(
-        project_path=project_path or root / "examples/controller-z/project.yaml",
-        view_path=view_path or root / "examples/controller-z/views/executive.yaml",
-        theme_path=theme_path or root / "examples/controller-z/themes/executive-light.yaml",
-        scheme_path=scheme_path or root / "examples/controller-z/schemes/executive-light.yaml",
+        project_path=project_path or root / "tests/fixtures/controller-z/project.yaml",
+        view_path=view_path or root / "tests/fixtures/controller-z/views/executive.yaml",
+        theme_path=theme_path or root / "tests/fixtures/controller-z/themes/executive-light.yaml",
+        scheme_path=scheme_path or root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
         layout_path=layout_path or root / "conformance/layout-profile-intent-v0.2.yaml",
-        actual_path=actual_path or root / "examples/controller-z/actual.yaml",
+        actual_path=actual_path or root / "tests/fixtures/controller-z/actual.yaml",
         summary_path=summary_path, detail_path=detail_path, viewport=viewport,
         icon_catalog_paths=icon_catalog_paths,
         visual_profile=visual_profile,
@@ -319,7 +319,7 @@ def test_suppressed_plot_labels_have_one_completed_info_count(capsys, tmp_path):
     legacy_view_path.write_text(yaml.safe_dump(legacy_view, sort_keys=False), encoding="utf-8")
     rendered = render_review(_draft_request(
         project_path=example / "project.yaml", actual_path=example / "actual.yaml",
-        scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
+        scheme_path=root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
         view_path=legacy_view_path, theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
     visible_labels = {item.scene_id for item in rendered.surface.primitives if item.kind == "Text"}
     per_id = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics
@@ -354,7 +354,7 @@ def test_controller_executive_draft_no_longer_suppresses_its_member_label_after_
     assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in rendered.scene.diagnostics)
     assert not any(item.startswith("W_LAYOUT_RELATION_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics)
     labels = {item.scene_id for item in rendered.surface.primitives}
-    project = yaml.safe_load((_root() / "examples/controller-z/project.yaml").read_bytes())
+    project = yaml.safe_load((_root() / "tests/fixtures/controller-z/project.yaml").read_bytes())
     identities = {relation["id"]: relation_identity(index, relation)
                   for index, relation in enumerate(project["relations"])}
     assert {
@@ -412,7 +412,7 @@ def test_elevated_preset_reports_default_profile_omissions_and_rich_svg_paints_t
     inputs = dict(project_path=example / "project.yaml", actual_path=example / "actual.yaml",
                   view_path=preset / "view.yaml", theme_path=preset / "theme.yaml",
                   layout_path=preset / "layout.yaml",
-                  scheme_path=root / "examples/controller-z/schemes/executive-light.yaml")
+                  scheme_path=root / "tests/fixtures/controller-z/schemes/executive-light.yaml")
     baseline = render_review(_draft_request(**inputs))
     omissions = [item for item in baseline.info_diagnostics if item.code == "I_VISUAL_TREATMENT_OMITTED"]
     assert {(item.role, item.treatment, item.paintable_profile) for item in omissions} == {
@@ -454,7 +454,7 @@ def test_planned_mark_shadow_is_supported_but_optional_under_baseline(tmp_path):
     inputs = dict(project_path=example / "project.yaml", actual_path=example / "actual.yaml",
                   view_path=preset / "view.yaml", theme_path=theme_path,
                   layout_path=preset / "layout.yaml",
-                  scheme_path=root / "examples/controller-z/schemes/executive-light.yaml")
+                  scheme_path=root / "tests/fixtures/controller-z/schemes/executive-light.yaml")
     baseline = render_review(_draft_request(**inputs))
     rich = render_review(_draft_request(**inputs, visual_profile="chrona-output/visual/v0.6-svg"))
     assert any(isinstance(item, PaintOmission) and item.role == "planned" and item.treatment == "drop-shadow"
@@ -467,7 +467,7 @@ def test_planned_mark_shadow_is_supported_but_optional_under_baseline(tmp_path):
 
 
 def test_five_line_derived_theme_changes_visible_draft_and_closes_as_ordinary_theme():
-    root = _root() / "examples/aster-ssd"
+    root = _root() / "tests/fixtures/aster-ssd"
     inputs = {"project_path": root / "project.yaml", "view_path": root / "views/01-overview.yaml",
               "scheme_path": root / "schemes/executive-light.yaml", "layout_path": root / "layouts/executive-review.yaml",
               "actual_path": root / "actual.yaml"}
@@ -503,7 +503,7 @@ def test_draft_scene_records_only_real_draft_resource_identities():
 def test_draft_auto_block_resolves_large_public_scale_inputs(tmp_path, row_count):
     """Curriculum-scale rows use finite Layout output rather than renderer sizing."""
     root = _root()
-    project = yaml.safe_load((root / "examples/controller-z/project.yaml").read_text(encoding="utf-8"))
+    project = yaml.safe_load((root / "tests/fixtures/controller-z/project.yaml").read_text(encoding="utf-8"))
     exemplar = project["objects"]["architecture"]
     project["objects"] = {
         f"scale-{index:03}": {**deepcopy(exemplar), "title": f"Scale curriculum item {index:03}"}
@@ -513,7 +513,7 @@ def test_draft_auto_block_resolves_large_public_scale_inputs(tmp_path, row_count
     project["annotations"] = {}
     project_path = tmp_path / f"scale-{row_count}.yaml"
     project_path.write_text(yaml.safe_dump(project, sort_keys=False), encoding="utf-8")
-    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
     view["body"]["visibility"] = {"labels": False, "relations": "none", "annotations": "none"}
     view_path = tmp_path / "scale-view.yaml"
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
@@ -584,7 +584,7 @@ def test_pack_and_fill_row_distribution_preserve_surplus_policy_for_auto_and_fin
 def test_immutable_context_uses_the_same_coherent_content_allocation(tmp_path):
     """Immutable viewport remains finite input; Layout grows its normal-flow hosts."""
     root = _root()
-    request = _draft_request(project_path=root / "examples/controller-z/curriculum/scale-30.yaml",
+    request = _draft_request(project_path=root / "tests/fixtures/controller-z/curriculum/scale-30.yaml",
                              viewport=(1600, 900))
     context = replace(request.closure.context,
                       identity=replace(request.closure.context.identity, revision="snapshot"))
@@ -664,17 +664,17 @@ def test_halcyon_missing_actual_is_due_only_and_tvac_boundary_is_inclusive(tmp_p
 
 def test_draft_visual_ref_reaches_layout_and_scene_icon(tmp_path):
     root = _root()
-    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
     view["body"]["visuals"] = [{"target": {"kind": "title"}, "ref": "chrona:risk", "decorative": False}]
     path = tmp_path / "visual-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
 
-    svg = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
+    svg = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "tests/fixtures/controller-z/icons.yaml",),
                                        visual_profile="chrona-output/visual/v0.7-svg")).artifact.content.decode()
 
     assert 'data-asset-identity=' in svg
     assert 'aria-label="Delivery risk"' in svg
 
-    surface = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
+    surface = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "tests/fixtures/controller-z/icons.yaml",),
                                            visual_profile="chrona-output/visual/v0.7-svg")).surface
     icon = next(item for item in surface.primitives if item.kind == "Icon")
     assert icon.icon_path_geometry == () and icon.icon_paths
@@ -682,12 +682,12 @@ def test_draft_visual_ref_reaches_layout_and_scene_icon(tmp_path):
 
 def test_draft_mark_visual_reaches_the_selected_completed_mark(tmp_path):
     root = _root()
-    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
     view["body"]["visuals"] = [{"target": {"kind": "mark", "object": "firmware", "facet": "planned"},
                                 "ref": "chrona:risk", "decorative": False}]
     path = tmp_path / "mark-visual-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
 
-    rendered = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
+    rendered = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "tests/fixtures/controller-z/icons.yaml",),
                                             visual_profile="chrona-output/visual/v0.7-svg"))
     svg = rendered.artifact.content.decode()
 
@@ -699,12 +699,12 @@ def test_draft_mark_visual_reaches_the_selected_completed_mark(tmp_path):
 
 def test_draft_plot_label_visual_reserves_space_before_candidate_selection(tmp_path):
     root = _root()
-    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
     view["body"]["visuals"] = [{"target": {"kind": "plot-label", "id": "firmware"},
                                 "ref": "chrona:risk", "side": "leading", "decorative": True}]
     path = tmp_path / "plot-visual-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
 
-    rendered = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
+    rendered = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "tests/fixtures/controller-z/icons.yaml",),
                                             visual_profile="chrona-output/visual/v0.7-svg"))
     by_id = {primitive.scene_id: primitive for primitive in rendered.surface.primitives}
     icon = by_id["visual:member-label:firmware:firmware:leading"]
@@ -716,12 +716,12 @@ def test_draft_plot_label_visual_reserves_space_before_candidate_selection(tmp_p
 
 def test_draft_variance_label_visual_reserves_space_before_candidate_selection(tmp_path):
     root = _root()
-    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
     view["body"]["visuals"] = [{"target": {"kind": "variance-label", "object": "firmware"},
                                 "ref": "chrona:risk", "side": "leading", "decorative": True}]
     path = tmp_path / "variance-visual-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
 
-    rendered = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
+    rendered = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "tests/fixtures/controller-z/icons.yaml",),
                                             visual_profile="chrona-output/visual/v0.7-svg"))
     by_id = {primitive.scene_id: primitive for primitive in rendered.surface.primitives}
     icon = by_id["visual:variance:firmware:firmware:leading"]
@@ -732,7 +732,7 @@ def test_draft_variance_label_visual_reserves_space_before_candidate_selection(t
 
 def test_draft_slot_visuals_reserve_their_declared_layout_extents(tmp_path):
     root = _root()
-    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
     view["body"]["visuals"] = [
         {"target": {"kind": "column", "id": "Workstream"}, "ref": "chrona:risk", "decorative": True},
         {"target": {"kind": "cell", "object": "firmware", "column": "Workstream"}, "ref": "chrona:risk", "decorative": True},
@@ -740,7 +740,7 @@ def test_draft_slot_visuals_reserve_their_declared_layout_extents(tmp_path):
     ]
     path = tmp_path / "slot-visual-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
 
-    rendered = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
+    rendered = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "tests/fixtures/controller-z/icons.yaml",),
                                             visual_profile="chrona-output/visual/v0.7-svg"))
     by_id = {primitive.scene_id: primitive for primitive in rendered.surface.primitives}
     for placement_id in ("column:Workstream", "cell:firmware:Workstream", "group-header:fw-team"):
@@ -759,7 +759,7 @@ def test_row_stripes_paint_above_group_bands_across_the_whole_surface(tmp_path):
     layout_path = tmp_path / "layout.yaml"
     layout_path.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
 
-    # examples/controller-z/views/executive.yaml already declares rows: alternate, groups: all.
+    # tests/fixtures/controller-z/views/executive.yaml already declares rows: alternate, groups: all.
     rendered = render_review(_draft_request(layout_path=layout_path))
     primitives = rendered.surface.primitives
     index_by_id = {item.scene_id: index for index, item in enumerate(primitives)}
@@ -796,7 +796,7 @@ def test_row_stripes_paint_above_group_bands_across_the_whole_surface(tmp_path):
 def test_group_band_includes_its_own_header_row_under_all_and_alternate(tmp_path):
     """Issue #481 criterion 2: a group's band includes its own header row."""
     root = _root()
-    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
     for decoration in ("all", "alternate"):
         view["body"]["backgroundDecoration"]["groups"] = decoration
         view_path = tmp_path / f"view-{decoration}.yaml"
@@ -836,7 +836,7 @@ def test_group_band_includes_its_own_header_row_under_all_and_alternate(tmp_path
 def test_group_header_text_uses_the_groupheader_theme_role(tmp_path):
     """Issue #481 criterion 3: group-header text uses the Theme's groupHeader role."""
     root = _root()
-    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    theme = yaml.safe_load((root / "tests/fixtures/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
     theme["body"]["values"]["group-header-test-weight"] = {"type": "fontWeight", "value": 700}
     theme["body"]["roles"]["groupHeader"] = {**theme["body"]["roles"]["groupHeader"],
                                              "fontWeight": "group-header-test-weight"}
@@ -854,7 +854,7 @@ def test_group_header_text_uses_the_groupheader_theme_role(tmp_path):
 def test_group_header_text_requires_a_declared_groupheader_role(tmp_path):
     """A Theme missing the required groupHeader role fails closed, never a silent text-role fallback."""
     root = _root()
-    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    theme = yaml.safe_load((root / "tests/fixtures/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
     del theme["body"]["roles"]["groupHeader"]
     theme_path = tmp_path / "theme.yaml"
     theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
@@ -880,7 +880,7 @@ def test_draft_wallboard_visual_inventory_reaches_completed_slots(tmp_path):
         actual_path=example / "actual.yaml", theme_path=example / "themes/wallboard.yaml",
         scheme_path=example / "schemes/control-room-dark.yaml", layout_path=example / "layouts/wallboard.yaml",
         summary_path=example / "profiles/summary.yaml", detail_path=example / "profiles/detail.yaml",
-        icon_catalog_paths=(root / "examples/controller-z/icons.yaml",), visual_profile="chrona-output/visual/v0.7-svg",
+        icon_catalog_paths=(root / "tests/fixtures/controller-z/icons.yaml",), visual_profile="chrona-output/visual/v0.7-svg",
         viewport=(1920, 1080)))
     by_id = {primitive.scene_id: primitive for primitive in rendered.surface.primitives}
     assert "visual:axis-band-rect:0:0" in by_id
@@ -890,7 +890,7 @@ def test_draft_wallboard_visual_inventory_reaches_completed_slots(tmp_path):
 
 
 def test_draft_project_note_visual_reaches_its_completed_slot(tmp_path):
-    root = _root(); example = root / "examples/controller-z"
+    root = _root(); example = root / "tests/fixtures/controller-z"
     view = yaml.safe_load((example / "views/executive.yaml").read_text(encoding="utf-8"))
     view["body"]["visuals"] = [{"target": {"kind": "note", "id": "evb-risk"}, "ref": "chrona:risk", "decorative": True}]
     path = tmp_path / "note-visual-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
@@ -901,7 +901,7 @@ def test_draft_project_note_visual_reaches_its_completed_slot(tmp_path):
 
 
 def test_draft_detail_visuals_reach_group_and_milestone_slots(tmp_path):
-    root = _root(); example = root / "examples/controller-z"
+    root = _root(); example = root / "tests/fixtures/controller-z"
     view = yaml.safe_load((example / "views/executive.yaml").read_text(encoding="utf-8"))
     view["body"]["visuals"] = [
         {"target": {"kind": "group-detail", "id": "fw-team"}, "ref": "chrona:risk", "decorative": True},
@@ -919,7 +919,7 @@ def test_draft_detail_visuals_reach_group_and_milestone_slots(tmp_path):
 @pytest.mark.parametrize(("overflow", "expected"), (("ellipsize-with-source", "ellipsized"),
                                                         ("clip-optional", "suppressed")))
 def test_detail_panel_unbreakable_overflow_is_completed_in_layout(tmp_path, overflow, expected):
-    root = _root(); example = root / "examples/controller-z"
+    root = _root(); example = root / "tests/fixtures/controller-z"
     layout = yaml.safe_load((example / "layouts/executive-review.yaml").read_text(encoding="utf-8"))
     footer = next(node for node in layout["root"]["children"] if node["id"] == "footer")
     # Exercise native panel overflow in an explicitly allocated row. Flow's
@@ -948,7 +948,7 @@ def test_detail_panel_unbreakable_overflow_is_completed_in_layout(tmp_path, over
 
 
 def test_detail_panels_stack_when_their_declared_inline_slots_overlap(tmp_path):
-    root = _root(); example = root / "examples/controller-z"
+    root = _root(); example = root / "tests/fixtures/controller-z"
     layout = yaml.safe_load((example / "layouts/executive-review.yaml").read_text(encoding="utf-8"))
     footer = next(node for node in layout["root"]["children"] if node["id"] == "footer")
     footer["kind"] = "overlay"
@@ -965,7 +965,7 @@ def test_detail_panels_stack_when_their_declared_inline_slots_overlap(tmp_path):
 
 
 def test_completed_detail_footer_preserves_the_annotation_successor_gap():
-    root = _root(); example = root / "examples/controller-z"
+    root = _root(); example = root / "tests/fixtures/controller-z"
     rendered = render_review(_draft_request(
         view_path=example / "views/annotations.yaml",
         layout_path=example / "layouts/annotations-review.yaml",
@@ -999,7 +999,7 @@ def test_completed_detail_footer_preserves_the_annotation_successor_gap():
 
 def test_unexpanded_detail_footer_leaves_annotation_successor_at_manifest_position(tmp_path):
     """The downstream correction is inert when panel completion adds no extent."""
-    root = _root(); example = root / "examples/controller-z"
+    root = _root(); example = root / "tests/fixtures/controller-z"
     detail = yaml.safe_load((example / "profiles/review-detail.yaml").read_text(encoding="utf-8"))
     detail["body"].pop("groupDetails")
     detail["body"].pop("milestones")
@@ -1027,7 +1027,7 @@ def test_project_notes_advance_by_their_completed_measured_block_extent():
 
 
 def test_draft_annotation_visual_is_measured_before_its_rail_is_allocated(tmp_path):
-    root = _root(); example = root / "examples/controller-z"
+    root = _root(); example = root / "tests/fixtures/controller-z"
     view = yaml.safe_load((example / "views/executive.yaml").read_text(encoding="utf-8"))
     view["body"]["visibility"]["annotations"] = {"mode": "presentation", "marker": "numbered"}
     view["body"]["annotations"] = [{
@@ -1058,7 +1058,7 @@ def test_draft_annotation_visual_is_measured_before_its_rail_is_allocated(tmp_pa
 
 
 def test_detail_profile_and_layout_sources_close_before_scene(tmp_path):
-    root = _root(); example = root / "examples/controller-z"
+    root = _root(); example = root / "tests/fixtures/controller-z"
     layout = yaml.safe_load((example / "layouts/executive-review.yaml").read_text(encoding="utf-8"))
     footer = next(node for node in layout["root"]["children"] if node["id"] == "footer")
     footer["children"] = [node for node in footer["children"] if node.get("source") != "group-details"]
@@ -1079,14 +1079,14 @@ def test_detail_profile_and_layout_sources_close_before_scene(tmp_path):
 
 def test_label_and_mark_visuals_use_distinct_completed_paint_roles(tmp_path):
     root = _root()
-    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
     view["body"]["visuals"] = [
         {"target": {"kind": "title"}, "ref": "chrona:risk", "side": "trailing", "decorative": True},
         {"target": {"kind": "mark", "object": "firmware", "facet": "planned"}, "ref": "chrona:risk", "decorative": True},
     ]
     path = tmp_path / "paint-role-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
 
-    surface = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
+    surface = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "tests/fixtures/controller-z/icons.yaml",),
                                            visual_profile="chrona-output/visual/v0.7-svg")).surface
     by_id = {primitive.scene_id: primitive for primitive in surface.primitives}
     label, mark = by_id["visual:title:trailing"], by_id["visual:planned:firmware:firmware"]
@@ -1096,7 +1096,7 @@ def test_label_and_mark_visuals_use_distinct_completed_paint_roles(tmp_path):
 
 def test_actual_progress_fill_uses_actual_set_progress_and_omits_absent_host(tmp_path):
     root = _root()
-    actual_view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    actual_view = yaml.safe_load((root / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
     actual_view["body"]["progressFill"] = {"source": "actual"}
     view_path = tmp_path / "actual-view.yaml"
     view_path.write_text(yaml.safe_dump(actual_view, sort_keys=False), encoding="utf-8")
@@ -1105,7 +1105,7 @@ def test_actual_progress_fill_uses_actual_set_progress_and_omits_absent_host(tmp
     assert 'data-scene-id="progress-fill:actual:firmware:firmware"' in svg
     assert 'data-purpose="progress-fill"' in svg
 
-    actual = yaml.safe_load((root / "examples/controller-z/actual.yaml").read_text(encoding="utf-8"))
+    actual = yaml.safe_load((root / "tests/fixtures/controller-z/actual.yaml").read_text(encoding="utf-8"))
     actual["body"]["observations"][0]["actual"] = {"progress": 0.5}
     missing_host_path = tmp_path / "missing-host.yaml"
     missing_host_path.write_text(yaml.safe_dump(actual, sort_keys=False), encoding="utf-8")
@@ -1115,7 +1115,7 @@ def test_actual_progress_fill_uses_actual_set_progress_and_omits_absent_host(tmp
 
 def test_open_actual_is_a_layout_completed_continuation_host_with_progress(tmp_path):
     root = _root()
-    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
     view["body"]["progressFill"] = {"source": "actual"}
     view_path = tmp_path / "actual-open-view.yaml"
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
@@ -1135,7 +1135,7 @@ def test_open_actual_is_a_layout_completed_continuation_host_with_progress(tmp_p
 
 def test_open_actual_without_set_as_of_warns_without_fabricating_a_missing_stub(tmp_path):
     root = _root()
-    actual = yaml.safe_load((root / "examples/controller-z/actual.yaml").read_text(encoding="utf-8"))
+    actual = yaml.safe_load((root / "tests/fixtures/controller-z/actual.yaml").read_text(encoding="utf-8"))
     actual["body"].pop("asOf")
     actual_path = tmp_path / "without-as-of.yaml"
     actual_path.write_text(yaml.safe_dump(actual, sort_keys=False), encoding="utf-8")
@@ -1149,12 +1149,12 @@ def test_open_actual_without_set_as_of_warns_without_fabricating_a_missing_stub(
 
 def test_progress_fill_omits_absent_and_zero_planned_progress(tmp_path):
     root = _root()
-    project = yaml.safe_load((root / "examples/controller-z/project.yaml").read_text(encoding="utf-8"))
+    project = yaml.safe_load((root / "tests/fixtures/controller-z/project.yaml").read_text(encoding="utf-8"))
     for item in project["objects"].values():
         item.pop("plannedProgress", None)
     project_path = tmp_path / "without-progress.yaml"
     project_path.write_text(yaml.safe_dump(project, sort_keys=False), encoding="utf-8")
-    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
     view["body"]["progressFill"] = {"source": "planned"}
     view_path = tmp_path / "planned-view.yaml"
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")

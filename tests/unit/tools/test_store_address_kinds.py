@@ -86,7 +86,7 @@ def test_the_retired_layout_version_is_unsupported_and_the_current_one_refuses_a
 
 
 def test_the_retired_context_version_is_unsupported_and_the_current_one_refuses_a_loose_address():
-    context = _document("examples/aster-ssd/contexts/01-overview.yaml", "chrona/render-context/v0.16")
+    context = _document("tests/fixtures/aster-ssd/contexts/01-overview.yaml", "chrona/render-context/v0.16")
     identity = ClosureIdentity("render-context", context["id"], "draft", "sha256:" + "0" * 64)
     with pytest.raises(UnsupportedResourceVersionError) as unsupported:
         parse_contract(identity, deepcopy(context))
@@ -183,7 +183,7 @@ def test_no_committed_or_packaged_document_is_left_on_a_predecessor_version():
 
 
 def test_the_font_locator_of_a_context_keeps_a_package_address():
-    context = _document("examples/aster-ssd/contexts/01-overview.yaml", RENDER_CONTEXT_VERSION)
+    context = _document("tests/fixtures/aster-ssd/contexts/01-overview.yaml", RENDER_CONTEXT_VERSION)
     identity = ClosureIdentity("render-context", context["id"], "draft", "sha256:" + "0" * 64)
     assert parse_contract(identity, context).version == RENDER_CONTEXT_VERSION
     context["body"]["environment"]["fontMetrics"]["assets"][0]["font"]["locator"]["address"] = "fonts/./noto.ttf"

@@ -13,8 +13,9 @@ def test_public_examples_have_only_declared_or_reasoned_files():
     root = _root()
     validate(root)
     paths = {path.relative_to(root).as_posix() for path in reachable_view_paths(root)}
-    assert "examples/aster-ssd/views/01-overview.yaml" in paths
-    assert all("aster-ssd/views/0" not in path or path.endswith("01-overview.yaml") for path in paths)
+    assert "examples/halcyon-1/views/02-programme-board.yaml" in paths
+    frozen, _ = closure(root / "tests/fixtures")
+    assert root / "tests/fixtures/aster-ssd/views/01-overview.yaml" in frozen
 
 
 def test_typed_local_context_reference_cannot_silently_point_at_a_missing_file(tmp_path):

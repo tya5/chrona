@@ -14,7 +14,7 @@ from chrona.usecases.preset_library import copy_builtin_preset
 
 
 ROOT = Path(__file__).resolve().parents[2]
-PROJECT = ROOT / "examples/controller-z/project.yaml"
+PROJECT = ROOT / "tests/fixtures/controller-z/project.yaml"
 CATALOGUE = ROOT / "src/chrona/resources/icons/chrona-target-parts-v2026-10-09.yaml"
 STARTER_GLYPH = "shape: {catalog: 'chrona-starter:pin'}"
 STARTER_PATTERN = "ref: 'chrona-starter:halftone'"

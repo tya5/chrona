@@ -110,10 +110,10 @@ def _guided_files(tmp_path: Path, annotation: dict) -> Path:
     preset_root = tmp_path / "preset"
     preset_root.mkdir()
     resources = {
-        "view.yaml": yaml.safe_load((root / "examples/controller-z/views/annotations.yaml").read_text(encoding="utf-8")),
-        "theme.yaml": yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8")),
-        "scheme.yaml": yaml.safe_load((root / "examples/controller-z/schemes/executive-light.yaml").read_text(encoding="utf-8")),
-        "layout.yaml": yaml.safe_load((root / "examples/controller-z/layouts/annotations-review.yaml").read_text(encoding="utf-8")),
+        "view.yaml": yaml.safe_load((root / "tests/fixtures/controller-z/views/annotations.yaml").read_text(encoding="utf-8")),
+        "theme.yaml": yaml.safe_load((root / "tests/fixtures/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8")),
+        "scheme.yaml": yaml.safe_load((root / "tests/fixtures/controller-z/schemes/executive-light.yaml").read_text(encoding="utf-8")),
+        "layout.yaml": yaml.safe_load((root / "tests/fixtures/controller-z/layouts/annotations-review.yaml").read_text(encoding="utf-8")),
     }
     # The committed controller-z annotation set (View, Layout Profile, Theme, Scheme) renders annotations; the
     # preset View annotates nothing itself, so the guided annotation is the only one in the Scene.

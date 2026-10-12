@@ -235,11 +235,11 @@ def test_importer_records_an_explicit_source_version(tmp_path):
 
 def test_public_lucide_tabler_fixture_is_reproducible_from_the_cli_inputs(tmp_path):
     root = Path(__file__).resolve().parents[5]
-    source = root / "examples/controller-z/assets/lucide-tabler-icons.json"
-    notice = root / "examples/controller-z/assets/lucide-tabler.NOTICE"
+    source = root / "tests/fixtures/controller-z/assets/lucide-tabler-icons.json"
+    notice = root / "tests/fixtures/controller-z/assets/lucide-tabler.NOTICE"
     output = tmp_path / "imported-icons.yaml"
     import_iconify(source, output, set_name="public-icons", license_spdx="MIT", notice_path=notice)
-    assert output.read_bytes() == (root / "examples/controller-z/imported-icons.yaml").read_bytes()
+    assert output.read_bytes() == (root / "tests/fixtures/controller-z/imported-icons.yaml").read_bytes()
 
 
 def test_bundled_material_catalog_matches_the_offline_iconify_utils_conformance_fixture():

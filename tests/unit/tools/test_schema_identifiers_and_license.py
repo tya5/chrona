@@ -189,7 +189,7 @@ COLOR_SCHEME = "color-scheme-v0.2.schema.yaml"
 
 
 def _scheme(license_value: Any) -> dict[str, Any]:
-    document = yaml.safe_load((ROOT / "examples/aster-ssd/schemes/executive-light.yaml").read_bytes())
+    document = yaml.safe_load((ROOT / "tests/fixtures/aster-ssd/schemes/executive-light.yaml").read_bytes())
     document["body"]["provenance"]["license"] = license_value
     return document
 

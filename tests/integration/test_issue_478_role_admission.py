@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def _paths(root: Path) -> dict[str, Path]:
-    example = root / "examples/controller-z"
+    example = root / "tests/fixtures/controller-z"
     return {
         "project_path": example / "project.yaml",
         "view_path": example / "views/executive.yaml",
@@ -64,7 +64,7 @@ def test_draft_closure_admits_note_text_contrast_treatment(tmp_path: Path):
 
 def test_immutable_closure_reports_invalid_scheme_target_at_exact_pointer(tmp_path: Path):
     example = tmp_path / "controller-z"
-    shutil.copytree(ROOT / "examples/controller-z", example)
+    shutil.copytree(ROOT / "tests/fixtures/controller-z", example)
     theme_path = example / "themes/executive-light.yaml"
     theme = yaml.safe_load(theme_path.read_bytes())
     theme["body"]["colorBindings"]["variance-behind.stroke"] = "negative"

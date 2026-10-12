@@ -17,10 +17,10 @@ def _root() -> Path:
 def _paths() -> dict[str, Path]:
     root = _root()
     return {
-        "project_path": root / "examples/controller-z/project.yaml",
-        "view_path": root / "examples/controller-z/views/executive.yaml",
-        "theme_path": root / "examples/controller-z/themes/executive-light.yaml",
-        "scheme_path": root / "examples/controller-z/schemes/executive-light.yaml",
+        "project_path": root / "tests/fixtures/controller-z/project.yaml",
+        "view_path": root / "tests/fixtures/controller-z/views/executive.yaml",
+        "theme_path": root / "tests/fixtures/controller-z/themes/executive-light.yaml",
+        "scheme_path": root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
         "layout_path": root / "conformance/layout-profile-intent-v0.2.yaml",
     }
 
