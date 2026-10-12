@@ -448,6 +448,10 @@ relations, retaining arrivals-before-departures and declaration ties within
 each class. This priority pass may be published independently of protected
 feasibility; it retains declaration-based placement identity/output order and
 does not itself enable the quality exception or establish safe-path completeness.
+The protected feasibility contract below applies only under Layout
+`relationRouting.unroutable: suppress`. Under `relax`, `overlap` and `stub`,
+the published #1427 resolution contract applies to critical relations too;
+critical-first ordering remains, but no safe-path/impossibility promise is made.
 Declared quality limits remain
 preferences for these relations: first select a safe quality-eligible route;
 if none is found, retain a safe completed route even when `maxBends` or
