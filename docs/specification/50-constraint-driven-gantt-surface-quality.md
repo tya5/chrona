@@ -365,6 +365,12 @@ tries finite straight/L/Z/U proposals from completed row gaps and obstacle-edge
 channels before that pair's bounded search; the first fully accepted completed
 route wins. Proposal generation builds no visibility graph. Both paths retain
 terminal, bounds, obstacle, self-overlap, bend and detour validation.
+First-fit fallback uses an obstacle-independent Manhattan/minimum-turn lower
+bound instead of preparing the exact reverse bound. It retains canonical
+prefix histories and existing expansion quotas; it does not collapse different
+path-dependent prefixes using weighted-state dominance. Sparse-graph memo keys
+distinguish bound modes; endpoint-independent visibility preparation may be
+shared. `best` retains its exact reverse bound and candidate order.
 Under `first-fit`, required labels precede routing; member names and finish
 deltas yield to completed routes. Skip lane-route rehearsal and post-route
 label recovery; do not replay composition in Scene or adapters.
