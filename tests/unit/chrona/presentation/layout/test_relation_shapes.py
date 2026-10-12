@@ -109,8 +109,8 @@ def test_shapes_do_not_waive_bend_quality_or_full_route_acceptance(monkeypatch):
     result = _select(max_bends=0)
     assert result.selected_pair is None and not result.settled_by_shape
     assert result.attempts[0].outcome == "quality-rejected"
-    assert counts["graph"] == 1  # negative control: failed shapes really fall back
-    assert counts["reverse"] == 0  # cheap fallback, not the old exact preparation
+    assert counts["graph"] == 2  # cheap fallback, then exact rescue
+    assert counts["reverse"] == 1  # only the rescue prepares the exact bound
     result = _select(accept=lambda points: False)
     assert result.selected_pair is None and not result.settled_by_shape
     assert result.attempts[0].search_failure == "E_LAYOUT_ROUTE_THROUGH_MARK"

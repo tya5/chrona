@@ -68,3 +68,23 @@ def test_ranked_selection_can_be_lost_by_a_lower_bound_only_change(monkeypatch):
     limited = select()
     assert limited.selected_pair is None
     assert limited.attempts[0].search_failure == "E_PRESENTATION_ROUTE_LIMIT"
+
+
+def test_first_fit_rescues_real_exact_route_after_shapes_and_cheap_search_fail(monkeypatch):
+    from chrona.presentation.layout.relation_shapes import RelationShapeChannels
+
+    monkeypatch.setattr(routing, "RELATION_SEARCH_EXPANSIONS", 32)
+    pair = (ConnectorEgress("end", START, START, ()),
+            ConnectorEgress("start", END, END, ()))
+    selected = routing.select_relation_route((pair,), obstacles=_obstacles(),
+        bounds=BOUNDS, source_host_id=None, target_host_id=None,
+        relation_scene_id="relation:rescue", max_bends=4, max_detour_ratio=2.0,
+        search_policy="first-fit", channels=RelationShapeChannels((), ()),
+        accept=lambda points: points == EXPECTED[0],
+        rank=lambda points, left, right: routing.route_quality_metrics(points))
+
+    assert selected.selected_pair == pair
+    assert selected.points == EXPECTED[0]
+    assert selected.search_used and not selected.settled_by_shape
+    assert [attempt.outcome for attempt in selected.attempts] == ["no-route-found", "accepted"]
+    assert selected.attempts[0].search_failure == "E_PRESENTATION_ROUTE_LIMIT"
