@@ -36,6 +36,7 @@ from chrona.presentation.layout.relation_fan_in import (
     NodeApproach, complete_fan_in, same_port_arrivals, target_port_identity, terminal_style,
 )
 from chrona.presentation.layout.relation_routing_order import dependency_routing_order
+from chrona.presentation.layout.relation_resolution import RelationObstacleDomain
 from chrona.presentation.layout.path_geometry import flatten_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
 from chrona.presentation.layout.surface_quality import (
@@ -552,7 +553,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         port_id=target_port(relation, target_id, target_mark, target_entry),
                         paint_id=relation.semantic_id, terminal=completed_end), entry_penalty, bends, length)
 
-                selection = select_relation_route(port_pairs, obstacles=obstacles,
+                domain = RelationObstacleDomain.normal(obstacles)
+                selection = select_relation_route(port_pairs, obstacles=domain.obstacles,
                         bounds=routing_bounds, search_policy=search_policy, channels=channels,
                         search_budget=context.layout_manifest.relation_search_budget,
                         source_host_id=source_mark.placement_id if source_mark else None,

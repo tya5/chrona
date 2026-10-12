@@ -1,11 +1,19 @@
 # Unroutable dependency resolution (#1427)
 
-Design publication; product implementation has not started. Public base:
+Design published in PR1441; implementation is underway on the issue WIP. Public base:
 READY `d1f502c1ebba398686eeaa7866e3a1ef3ef6d7bb`, full release
 [38246924810](https://github.com/tya5/chrona/actions/runs/38246924810) passed.
 Authority: [issue](https://github.com/tya5/chrona/issues/1427) and
 [reviewer decisions](https://github.com/tya5/chrona/issues/1427#issuecomment-6125006829).
 Current [Status](https://github.com/tya5/chrona/issues/1427#issuecomment-6114823479).
+
+Current slice: critical facts/order and typed mode admission are staged; the
+Layout search coordinator and obstacle domains have real-selector tests.
+Production still uses its ordinary domain. Port admission, reduction and
+primary-mark validation must use the same domain before connecting recovery;
+overlap/stubs, halo projection and the final default flip remain incomplete.
+This is not release acceptance. The staged default stays suppress until the
+atomic protection/recovery gate below is satisfied.
 
 ## Literal acceptance
 
