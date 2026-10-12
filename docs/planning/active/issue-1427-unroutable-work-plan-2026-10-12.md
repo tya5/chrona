@@ -47,6 +47,13 @@ v1/v2 `spec-build` Scene/SVG regression passes under both staged suppress and
 candidate relax. Reviewer coordination for target protection and an enabled
 public halo witness is tracked in
 [comment6127633845](https://github.com/tya5/chrona/issues/1427#issuecomment-6127633845).
+The four-mode blocked-plan test now supplies one completed Layout mark spanning
+the plot before shared obstacle registration. That exact mark is projected and
+serialized visibly, unlike the earlier collision-index-only constraint fixture.
+It proves suppress versus marks-stage recovery, overlap and paired-stub output;
+stub fragments still count once. It is intentionally a completed Layout input
+fixture, not a claim that normal lane packing creates overlap, and not a public
+decoration witness.
 
 ## Literal acceptance
 
