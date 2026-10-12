@@ -6,7 +6,9 @@ Implementation [PR1442](https://github.com/tya5/chrona/pull/1442) is merged on
 `1dbad8798335cb25f3208f9356cbac3eea84da58`;
 [head CI38275814117](https://github.com/tya5/chrona/actions/runs/38275814117) passed
 on `e2b80df9`. [Work record](https://github.com/tya5/chrona/issues/1409#issuecomment-6106476083).
-Do not close until the published review's exact-main full release succeeds.
+Closed after [exact-main release38279118426](https://github.com/tya5/chrona/actions/runs/38279118426)
+passed on review-containing `9573049a` (Windows/macOS/Ubuntu, MCP and
+newest-Python public reproduction). Archive follows closure; no new behavior.
 
 ## Literal issue acceptance
 
