@@ -354,7 +354,7 @@ def test_controller_executive_draft_no_longer_suppresses_its_member_label_after_
     assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in rendered.scene.diagnostics)
     assert not any(item.startswith("W_LAYOUT_RELATION_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics)
     labels = {item.scene_id for item in rendered.surface.primitives}
-    project = yaml.safe_load((_root() / "examples/controller-z/project.yaml").read_bytes())
+    project = yaml.safe_load((_root() / "tests/fixtures/controller-z/project.yaml").read_bytes())
     identities = {relation["id"]: relation_identity(index, relation)
                   for index, relation in enumerate(project["relations"])}
     assert {

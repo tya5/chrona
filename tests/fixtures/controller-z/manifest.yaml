@@ -36,3 +36,8 @@ slides:
   context: contexts/material-icons.yaml
   expectedSvg: generated/material-icons.svg
   expectedScene: generated/material-icons.scene.json
+- id: baseline-ghosts
+  evidence: Baseline ghost comparison with retained start-start relation labels and distinct shared-node approaches.
+  context: contexts/baseline-ghosts.yaml
+  expectedSvg: generated/baseline-ghosts.svg
+  expectedScene: generated/baseline-ghosts.scene.json

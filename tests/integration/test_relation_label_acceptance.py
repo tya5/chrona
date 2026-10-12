@@ -21,7 +21,7 @@ def test_controller_baseline_ghosts_emits_start_start_label_without_shared_node_
     )
     rendered = result.rendered
     svg = ET.fromstring(rendered.artifact.content)
-    project = yaml.safe_load((ROOT / "examples/controller-z/project.yaml").read_bytes())
+    project = yaml.safe_load((ROOT / "tests/fixtures/controller-z/project.yaml").read_bytes())
     identities = {relation["id"]: relation_identity(index, relation)
                   for index, relation in enumerate(project["relations"])}
     incoming_id = identities["evb-to-bringup"]
