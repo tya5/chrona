@@ -81,6 +81,26 @@ def _context():
 
 
 @pytest.mark.parametrize("recover", (False, True))
+def test_resolution_facts_describe_only_the_selected_trial(monkeypatch, recover):
+    from chrona.presentation.model.info_diagnostics import RelationResolutionInfo, RelationResolutionStage
+    _install_trial_owners(monkeypatch, recover=recover)
+    original = plan.compose_surface_routes
+    facts = []
+
+    def with_fact(context):
+        routes = original(context)
+        stage = RelationResolutionStage.TEXT if not facts else RelationResolutionStage.MARKS
+        fact = RelationResolutionInfo("table-timeline", "relation:r", stage, False)
+        facts.append(fact)
+        return replace(routes, resolution_info=(fact,))
+
+    monkeypatch.setattr(plan, "compose_surface_routes", with_fact)
+    result = plan.compose_routes_and_member_labels(_context())
+    assert len(facts) == 2
+    assert result.routes.resolution_info == (facts[1 if recover else 0],)
+
+
+@pytest.mark.parametrize("recover", (False, True))
 def test_budget_hit_facts_survive_rejected_and_accepted_recovery(monkeypatch, recover):
     from chrona.presentation.model.info_diagnostics import RelationSearchBudgetHit
     _install_trial_owners(monkeypatch, recover=recover)

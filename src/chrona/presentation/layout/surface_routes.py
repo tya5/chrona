@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from collections import Counter
 from math import hypot
 import json
 import re
@@ -49,7 +50,9 @@ from chrona.presentation.layout.surface_quality import (
 )
 from chrona.presentation.layout.text import metric_for_role, measure_text_width, place_text
 from chrona.presentation.model.semantic_registry import semantic_binding
-from chrona.presentation.model.info_diagnostics import RelationRoutingSummary, RelationSearchBudgetHit
+from chrona.presentation.model.info_diagnostics import (
+    RelationRoutingSummary, RelationSearchBudgetHit, RelationResolutionInfo, RelationResolutionSummary,
+)
 
 
 @dataclass(frozen=True)
@@ -79,6 +82,7 @@ class SurfaceRoutesBatch:
     comparison_clusters: Mapping[tuple[str, str], tuple[MarkPlacement, ...]]
     diagnostics: tuple[str, ...]
     routing_info: tuple[RelationRoutingSummary | RelationSearchBudgetHit, ...] = ()
+    resolution_info: tuple[RelationResolutionInfo | RelationResolutionSummary, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -255,6 +259,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                               classes=route_classes) if search_policy == "first-fit" else None)
     relation_instances = shape_settled = fallback_search = 0
     budget_hits: list[RelationSearchBudgetHit] = []
+    resolution_infos: list[RelationResolutionInfo] = []
     primary_marks = tuple(mark for mark in marks if mark.placement_id.startswith("planned:")
                           and ":snapshot:" not in mark.placement_id and ":scenario:" not in mark.placement_id)
     primary_interiors: dict[tuple[float, frozenset[str] | None], tuple[ObstacleRect, ...]] = {}
@@ -715,6 +720,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         declared_order[fragment.relation_id] = declared_index
                         relations.append(fragment)
                         register_path(fragment.relation_id, fragment.points, dependency_stroke)
+                    resolution_infos.append(RelationResolutionInfo("table-timeline", scene_id,
+                        RelationResolutionStage.STUB, relation.critical))
                     continue
                 fallback = selected_pair is None
                 if fallback:
@@ -797,6 +804,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     if not obstacles.has(obstacle_id):
                         register_port(obstacle_id, port)
                 relations.append(placed)
+                if domain.stage is not RelationResolutionStage.NORMAL:
+                    resolution_infos.append(RelationResolutionInfo("table-timeline", scene_id,
+                        domain.stage, relation.critical))
                 node_segments.setdefault(source_id, []).append(NodeApproach(scene_id, (points[0], points[1])))
                 node_segments.setdefault(target_id, []).append(NodeApproach(scene_id, (points[-2], points[-1]),
                     target_port_id, relation.semantic_id, terminal_style(completed_end)))
@@ -827,12 +837,17 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     relations.sort(key=lambda item: declared_order[item.relation_id])
     completed_relations = complete_fan_in(tuple(relations))
     fallback_ids = {item.relation_id for item in route_fallbacks}
+    stage_counts = Counter(info.stage for info in resolution_infos)
+    completed_resolution_info = (*resolution_infos,
+        *((RelationResolutionSummary("table-timeline", tuple(sorted(stage_counts.items(),
+            key=lambda pair: pair[0].value))),) if stage_counts else ()))
     return SurfaceRoutesBatch(completed_relations,
         tuple(item for item in completed_relations if item.relation_id in fallback_ids),
         {key: tuple(values) for key, values in instance_anchors.items()}, instance_rows,
         comparison_clusters, tuple(diagnostics),
         (*budget_hits, *((RelationRoutingSummary("table-timeline", relation_instances,
-            shape_settled, fallback_search),) if search_policy == "first-fit" else ())))
+            shape_settled, fallback_search),) if search_policy == "first-fit" else ())),
+        completed_resolution_info)
 
 
 def place_relation_labels(context: SurfaceRoutesContext,

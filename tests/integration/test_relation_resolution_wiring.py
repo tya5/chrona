@@ -4,6 +4,7 @@ The injected obstacle is a Layout fixture, not a claim about a painted gallery
 obstacle. Visible-obstacle four-mode release evidence remains a separate gate.
 """
 from datetime import date
+import json
 import xml.etree.ElementTree as ET
 
 import pytest
@@ -57,6 +58,19 @@ def test_completed_search_domains_reach_real_scene_and_svg(
     result = sr.render(tmp_path, source, presentation=parts)
     paths = [p for p in result.surface.primitives if p.source_kind == "relation" and ":link:" in p.scene_id]
     assert bool(paths) is drawn
+    facts = [json.loads(item.split(":", 1)[1]) for item in result.scene.diagnostics
+             if item.startswith("I_LAYOUT_RELATION_RESOLUTION:")]
+    summaries = [json.loads(item.split(":", 1)[1]) for item in result.scene.diagnostics
+                 if item.startswith("I_LAYOUT_RELATION_RESOLUTION_SUMMARY:")]
+    if drawn:
+        stage = ("stub" if mode == "stub" or unavailable_overlap else
+                 "marks" if mode == "relax" and max_bends else "overlap")
+        assert len(facts) == 1
+        assert facts[0]["stage"] == stage
+        assert isinstance(facts[0]["critical"], bool)
+        assert summaries == [{"surfaceId": facts[0]["surfaceId"], "count": 1, "stages": {stage: 1}}]
+    else:
+        assert facts == summaries == []
     assert resolutions
     for resolution in resolutions:
         expected = (

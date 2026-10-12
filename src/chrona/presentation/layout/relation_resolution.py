@@ -1,21 +1,12 @@
 """Layout-owned staged search domains; terminal fallback is a separate completion."""
 from collections.abc import Callable
 from dataclasses import dataclass
-from enum import Enum
 
 from chrona.presentation.layout.model import RelationUnroutableMode
 from chrona.presentation.layout.obstacles import SurfaceObstacleIndex
 from chrona.presentation.layout.ports import ConnectorEgress
 from chrona.presentation.layout.routing import RelationRouteSelection
-
-
-class RelationResolutionStage(str, Enum):
-    NORMAL = "normal"
-    LABEL_VISUALS = "label-visuals"
-    TEXT = "text"
-    MARKS = "marks"
-    OVERLAP = "overlap"
-    STUB = "stub"
+from chrona.presentation.model.info_diagnostics import RelationResolutionStage
 
 
 @dataclass(frozen=True)

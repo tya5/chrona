@@ -1,8 +1,8 @@
 # Unroutable dependency resolution (#1427)
 
 Design published in PR1441; implementation is underway on the issue WIP. Public base:
-READY `d1f502c1ebba398686eeaa7866e3a1ef3ef6d7bb`, full release
-[38246924810](https://github.com/tya5/chrona/actions/runs/38246924810) passed.
+READY `872318db36032cf135f71c605d48d80c36c798f9`, full release
+[38257798618](https://github.com/tya5/chrona/actions/runs/38257798618) passed.
 Authority: [issue](https://github.com/tya5/chrona/issues/1427) and
 [reviewer decisions](https://github.com/tya5/chrona/issues/1427#issuecomment-6125006829).
 Current [Status](https://github.com/tya5/chrona/issues/1427#issuecomment-6114823479).
@@ -15,8 +15,12 @@ terminal labels are connected through completed Layout placements. Scene
 retains its paired-reference invariant and performs projection only.
 Synthetic collision-domain tests prove Scene/SVG recovery and quality-limit
 fallback; search receipts remain separate from completed side-entry choices.
-Halo projection, stage diagnostics, visible-obstacle
-release evidence and the final default flip remain incomplete.
+Typed completion diagnostics now retain critical/stage identity and per-surface
+counts. Only the selected placement trial contributes recovery facts; executed
+search-budget facts still include discarded trials. Paired fragments count as
+one relation. The shared warning mapper serves CLI and MCP without recounting.
+Halo projection, visible-obstacle release evidence and the final default flip
+remain incomplete.
 This is not release acceptance. The staged default stays suppress until the
 atomic protection/recovery gate below is satisfied.
 
