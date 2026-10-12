@@ -22,6 +22,7 @@ from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, ClosureErr
 from chrona.presentation.model.info_diagnostics import (
     PaintOmission, SuppressedPlotLabels, RelationRoutingSummary, RelationSearchBudgetHit,
     RelationResolutionInfo, RelationResolutionSummary,
+    RelationPolicySupersession,
 )
 from chrona.presentation.model.render_progress import RenderProgress
 from chrona.resources import default_preset_resource, default_preset_root
@@ -204,7 +205,11 @@ def warning_payloads(rendered: RenderedReview) -> list[dict[str, Any]]:
                          "message": f"preset {fallback.preset_id} prefers {fallback.preferred_profile}; "
                                     f"selected {fallback.selected_profile} for {fallback.target_kind}"})
     for info in rendered.info_diagnostics:
-        if isinstance(info, (RelationResolutionInfo, RelationResolutionSummary)):
+        if isinstance(info, RelationPolicySupersession):
+            payloads.append({"code": info.code, "severity": "info", **info.payload(),
+                "message": f"Layout relationRouting.unroutable={info.layout_mode} supersedes declared "
+                           f"View visibility.relations.overflow={info.view_overflow} for spatial routing"})
+        elif isinstance(info, (RelationResolutionInfo, RelationResolutionSummary)):
             payloads.append({"code": info.code, "severity": "info", **info.payload(),
                 "message": (f"Relation {info.relation_id} uses {info.stage.value} resolution; "
                             f"critical={info.critical}; not a safety/completeness claim"

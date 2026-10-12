@@ -20,8 +20,9 @@ from tests.support import synthetic_review as sr
     ("suppress", False, 4, False), ("relax", True, 4, False), ("overlap", True, 4, False),
     ("relax", True, 0, False), ("stub", True, 4, False), ("overlap", True, 4, True),
 ))
+@pytest.mark.parametrize("view_overflow", (None, "suppress", "visible-overflow"))
 def test_completed_search_domains_reach_real_scene_and_svg(
-        tmp_path, monkeypatch, mode, drawn, max_bends, unavailable_overlap):
+        tmp_path, monkeypatch, mode, drawn, max_bends, unavailable_overlap, view_overflow):
     source = sr.project({
         "source": sr.span("source", date(2027, 1, 4), 10),
         "target": sr.span("target", date(2027, 2, 1), 10),
@@ -29,6 +30,15 @@ def test_completed_search_domains_reach_real_scene_and_svg(
          "from": {"object": "source", "endpoint": "end"},
          "to": {"object": "target", "endpoint": "start"}}])
     parts = sr.bundle()
+    visibility = parts["view"]["body"]["visibility"]
+    declared = visibility["relations"]
+    if isinstance(declared, str):
+        declared = visibility["relations"] = {"mode": declared}
+    declared.pop("overflow", None)
+    if view_overflow is not None:
+        declared["overflow"] = view_overflow
+    else:
+        visibility["relations"] = declared["mode"]
     parts["layout"]["relationRouting"] = {
         "search": "first-fit", "unroutable": mode, "maxBends": max_bends, "maxDetourRatio": 100,
     }
@@ -59,6 +69,15 @@ def test_completed_search_domains_reach_real_scene_and_svg(
     result = sr.render(tmp_path, source, presentation=parts)
     paths = [p for p in result.surface.primitives if p.source_kind == "relation" and ":link:" in p.scene_id]
     assert bool(paths) is drawn
+    policy_facts = [json.loads(item.split(":", 1)[1]) for item in result.scene.diagnostics
+                    if item.startswith("I_LAYOUT_RELATION_POLICY_SUPERSEDED:")]
+    if view_overflow is not None and not (view_overflow == mode == "suppress"):
+        assert len(policy_facts) == 1
+        assert policy_facts[0]["viewValue"] == view_overflow
+        assert policy_facts[0]["layoutValue"] == mode
+        assert policy_facts[0]["layoutMember"] == "relationRouting.unroutable"
+    else:
+        assert policy_facts == []
     facts = [json.loads(item.split(":", 1)[1]) for item in result.scene.diagnostics
              if item.startswith("I_LAYOUT_RELATION_RESOLUTION:")]
     summaries = [json.loads(item.split(":", 1)[1]) for item in result.scene.diagnostics

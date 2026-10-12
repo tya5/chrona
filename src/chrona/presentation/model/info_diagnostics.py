@@ -197,5 +197,33 @@ class RelationResolutionSummary:
         return self.code + ":" + json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))
 
 
+@dataclass(frozen=True)
+class RelationPolicySupersession:
+    """A declared View overflow is superseded only for spatial Layout routing."""
+
+    surface_id: str
+    view_overflow: str
+    layout_mode: str
+
+    def __post_init__(self) -> None:
+        if (not isinstance(self.surface_id, str) or not self.surface_id
+                or self.view_overflow not in {"suppress", "visible-overflow"}
+                or self.layout_mode not in {"relax", "overlap", "stub", "suppress"}
+                or (self.view_overflow == self.layout_mode == "suppress")):
+            raise _diagnostic_error("relation policy supersession requires a changed declared spatial policy")
+
+    @property
+    def code(self) -> str:
+        return "I_LAYOUT_RELATION_POLICY_SUPERSEDED"
+
+    def payload(self) -> dict[str, object]:
+        return {"surfaceId": self.surface_id, "viewMember": "visibility.relations.overflow",
+                "viewValue": self.view_overflow, "layoutMember": "relationRouting.unroutable",
+                "layoutValue": self.layout_mode}
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))
+
+
 PresentationInfo = (SuppressedPlotLabels | PaintOmission | RelationRoutingSummary | RelationSearchBudgetHit
-                    | RelationResolutionInfo | RelationResolutionSummary)
+                    | RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession)

@@ -6,6 +6,7 @@ import pytest
 
 from chrona.presentation.model.info_diagnostics import (
     RelationResolutionInfo, RelationResolutionStage as Stage, RelationResolutionSummary,
+    RelationPolicySupersession,
 )
 from chrona.usecases.draft_render import warning_payloads
 
@@ -41,3 +42,20 @@ def test_invalid_resolution_info_is_rejected(args):
 def test_invalid_summary_is_rejected(counts):
     with pytest.raises(ValueError, match="E_PRESENTATION_INFO_INVALID"):
         RelationResolutionSummary("s", counts)
+
+
+def test_policy_supersession_names_the_two_declared_members_in_every_adapter():
+    fact = RelationPolicySupersession("s", "visible-overflow", "suppress")
+    assert json.loads(fact.scene_diagnostic().split(":", 1)[1]) == fact.payload()
+    payload, = warning_payloads(SimpleNamespace(warning_records=(), info_diagnostics=(fact,)))
+    assert payload["code"] == "I_LAYOUT_RELATION_POLICY_SUPERSEDED"
+    assert payload["viewMember"] == "visibility.relations.overflow"
+    assert payload["layoutMember"] == "relationRouting.unroutable"
+    assert payload["severity"] == "info"
+
+
+@pytest.mark.parametrize("args", (("", "suppress", "relax"), ("s", "bad", "relax"),
+                                  ("s", "suppress", "bad"), ("s", "suppress", "suppress")))
+def test_invalid_or_agreeing_supersession_is_rejected(args):
+    with pytest.raises(ValueError, match="E_PRESENTATION_INFO_INVALID"):
+        RelationPolicySupersession(*args)

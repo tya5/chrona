@@ -10,7 +10,7 @@ from collections.abc import Callable
 from typing import Any, Mapping
 
 from chrona.presentation.layout.labels import LabelRect, place_label
-from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
+from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum, RelationUnroutableMode
 from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
 from chrona.presentation.layout.window_relation_admission import complete_window_relation_endpoint_absence
 from chrona.presentation.layout.window_relation_geometry import relation_geometry_inside_plot
@@ -53,6 +53,7 @@ from chrona.presentation.layout.text import metric_for_role, measure_text_width,
 from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.presentation.model.info_diagnostics import (
     RelationRoutingSummary, RelationSearchBudgetHit, RelationResolutionInfo, RelationResolutionSummary,
+    RelationPolicySupersession,
 )
 
 
@@ -83,7 +84,7 @@ class SurfaceRoutesBatch:
     comparison_clusters: Mapping[tuple[str, str], tuple[MarkPlacement, ...]]
     diagnostics: tuple[str, ...]
     routing_info: tuple[RelationRoutingSummary | RelationSearchBudgetHit, ...] = ()
-    resolution_info: tuple[RelationResolutionInfo | RelationResolutionSummary, ...] = ()
+    resolution_info: tuple[RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -726,7 +727,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     continue
                 fallback = selected_pair is None
                 if fallback:
-                    if request.surface_content.relation_overflow == "suppress":
+                    if context.layout_manifest.relation_unroutable is RelationUnroutableMode.SUPPRESS:
                         relations.append(RelationPlacement(scene_id,
                             f"{source_id}:{relation.source_endpoint}", f"{target_id}:{relation.target_endpoint}",
                             suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED",
@@ -848,6 +849,12 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     completed_resolution_info = (*resolution_infos,
         *((RelationResolutionSummary("table-timeline", tuple(sorted(stage_counts.items(),
             key=lambda pair: pair[0].value))),) if stage_counts else ()))
+    view_overflow = request.surface_content.relation_overflow
+    layout_mode = context.layout_manifest.relation_unroutable.value
+    if (request.surface_content.relation_overflow_declared
+            and not (view_overflow == layout_mode == "suppress")):
+        completed_resolution_info = (*completed_resolution_info,
+            RelationPolicySupersession("table-timeline", view_overflow, layout_mode))
     return SurfaceRoutesBatch(completed_relations,
         tuple(item for item in completed_relations if item.relation_id in fallback_ids),
         {key: tuple(values) for key, values in instance_anchors.items()}, instance_rows,

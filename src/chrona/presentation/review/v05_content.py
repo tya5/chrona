@@ -383,6 +383,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                show_member_labels=label_placement in {"plot", "legacy"}, label_placement=label_placement, label_content=label_content,
                                label_side=label_side,
                                label_overflow=label_overflow, relation_overflow=relation_overflow,
+                               relation_overflow_declared=isinstance(relation_value, Mapping) and "overflow" in relation_value,
                                group_presentation=group_presentation,
                                axis_tiers=axis_tiers, axis_fiscal_start_month=fiscal_start_month,
                                as_of=as_of, as_of_label=_as_of_label(as_of_marker, as_of, locale),

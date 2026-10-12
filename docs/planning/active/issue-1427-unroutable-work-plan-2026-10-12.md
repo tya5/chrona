@@ -31,6 +31,14 @@ Theme width controls and decoration contrast. Conformance: 32 checks pass;
 three derived reports are stale (contrast, diagnostic inventory and presentation
 coverage). Regenerate these in the disposable release snapshot, not as
 PR-authored report edits. A public recovery halo witness is still needed.
+Legacy View supersession is now typed and projected once per completed surface;
+an agreeing suppress or omitted View declaration remains silent. Explicit Layout
+suppress also overrides legacy visible-overflow. Focused controls: 113 pass.
+The staged suppress public materializer batch passes full Scene/SVG byte identity
+for all 46 contexts, including critical-order integration (zero route deltas).
+Evidence: `python -m tools.routing_performance_evidence --output-dir <empty-dir>
+--jobs 4`; the batch JSON and all actual serialized outputs are retained for PR
+evidence. This does not prove the default-relax acceptance or final protection.
 
 ## Literal acceptance
 
