@@ -215,7 +215,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"count\": 2, \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:design\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'Design' (/objects/design); design and 1 more\", \"occurrences\": [\"W_LAYOUT_ACTUAL_INCOMPLETE:design\", \"W_LAYOUT_ACTUAL_INCOMPLETE:build\"], \"severity\": \"warning\", \"sourceRef\": \"/objects/design\", \"sourceTitle\": \"Design\"}]}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"count\": 2, \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:design\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'Design' (/objects/design); design and 1 more\", \"occurrences\": [\"W_LAYOUT_ACTUAL_INCOMPLETE:design\", \"W_LAYOUT_ACTUAL_INCOMPLETE:build\"], \"severity\": \"warning\", \"sourceRef\": \"/objects/design\", \"sourceTitle\": \"Design\"}, {\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-actual-missing": {
   "argv": [
@@ -340,7 +340,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_DEADLINE\", \"daysLate\": 3, \"deadline\": \"2026-10-05\", \"diagnostic\": \"W_DEADLINE:{\\\"sourceRef\\\":\\\"/objects/qa/deadline\\\"}\", \"endpoint\": \"end\", \"finish\": \"2026-10-08\", \"message\": \"qa finishes 2026-10-08, 3 days after its deadline 2026-10-05\", \"object\": \"qa\", \"severity\": \"warning\", \"sourceRef\": \"/objects/qa/deadline\"}, {\"code\": \"W_DEADLINE\", \"daysLate\": 2, \"deadline\": \"2026-10-08\", \"diagnostic\": \"W_DEADLINE:{\\\"sourceRef\\\":\\\"/objects/launch/deadline\\\"}\", \"endpoint\": \"at\", \"finish\": \"2026-10-10\", \"message\": \"launch finishes 2026-10-10, 2 days after its deadline 2026-10-08\", \"object\": \"launch\", \"severity\": \"warning\", \"sourceRef\": \"/objects/launch/deadline\"}]}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_DEADLINE\", \"daysLate\": 3, \"deadline\": \"2026-10-05\", \"diagnostic\": \"W_DEADLINE:{\\\"sourceRef\\\":\\\"/objects/qa/deadline\\\"}\", \"endpoint\": \"end\", \"finish\": \"2026-10-08\", \"message\": \"qa finishes 2026-10-08, 3 days after its deadline 2026-10-05\", \"object\": \"qa\", \"severity\": \"warning\", \"sourceRef\": \"/objects/qa/deadline\"}, {\"code\": \"W_DEADLINE\", \"daysLate\": 2, \"deadline\": \"2026-10-08\", \"diagnostic\": \"W_DEADLINE:{\\\"sourceRef\\\":\\\"/objects/launch/deadline\\\"}\", \"endpoint\": \"at\", \"finish\": \"2026-10-10\", \"message\": \"launch finishes 2026-10-10, 2 days after its deadline 2026-10-08\", \"object\": \"launch\", \"severity\": \"warning\", \"sourceRef\": \"/objects/launch/deadline\"}, {\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"1 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 1, \"severity\": \"info\", \"shapeSettled\": 1, \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-default-no-suffix": {
   "argv": [
@@ -356,7 +356,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": []}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-default-png": {
   "argv": [
@@ -373,7 +373,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": []}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-default-svg": {
   "argv": [
@@ -390,7 +390,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": []}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-emit-scene-exists": {
   "argv": [
@@ -454,7 +454,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": []}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-format-png-no-suffix": {
   "argv": [
@@ -472,7 +472,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": []}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-format-svg-explicit": {
   "argv": [
@@ -491,7 +491,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": []}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-halcyon-default": {
   "argv": [
@@ -510,7 +510,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_AXIS_LABEL_THINNED\", \"diagnostic\": \"W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:10:label-does-not-fit\", \"message\": \"an axis label was dropped because the labels of its tier do not all fit: axis-label:2:10:label-does-not-fit\", \"severity\": \"warning\"}, {\"code\": \"W_LAYOUT_AXIS_DENSITY\", \"diagnostic\": \"W_LAYOUT_AXIS_DENSITY:axis-tier:2:thinned=1\", \"message\": \"an axis tier was thinned because its labels do not all fit: axis-tier:2:thinned=1\", \"severity\": \"warning\"}, {\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}, {\"code\": \"W_LAYOUT_LABEL_SUPPRESSED\", \"diagnostic\": \"W_LAYOUT_LABEL_SUPPRESSED:variance:avionics:avionics\", \"message\": \"a label was left out of the picture because it does not fit: 'Avionics integration' (/objects/avionics); variance:avionics:avionics\", \"severity\": \"warning\", \"sourceRef\": \"/objects/avionics\", \"sourceTitle\": \"Avionics integration\"}]}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_AXIS_LABEL_THINNED\", \"diagnostic\": \"W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:10:label-does-not-fit\", \"message\": \"an axis label was dropped because the labels of its tier do not all fit: axis-label:2:10:label-does-not-fit\", \"severity\": \"warning\"}, {\"code\": \"W_LAYOUT_AXIS_DENSITY\", \"diagnostic\": \"W_LAYOUT_AXIS_DENSITY:axis-tier:2:thinned=1\", \"message\": \"an axis tier was thinned because its labels do not all fit: axis-tier:2:thinned=1\", \"severity\": \"warning\"}, {\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}, {\"code\": \"W_LAYOUT_LABEL_SUPPRESSED\", \"count\": 3, \"diagnostic\": \"W_LAYOUT_LABEL_SUPPRESSED:member-label:eps:eps\", \"message\": \"a label was left out of the picture because it does not fit: 'Power system qualification' (/objects/eps); member-label:eps:eps and 2 more\", \"occurrences\": [\"W_LAYOUT_LABEL_SUPPRESSED:member-label:eps:eps\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:bus-test:bus-test\", \"W_LAYOUT_LABEL_SUPPRESSED:variance:avionics:avionics\"], \"severity\": \"warning\", \"sourceRef\": \"/objects/eps\", \"sourceTitle\": \"Power system qualification\"}, {\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 7, \"message\": \"17 relations on table-timeline settled without search; 7 used fallback search\", \"relationInstances\": 24, \"severity\": \"info\", \"shapeSettled\": 17, \"surfaceId\": \"table-timeline\"}, {\"code\": \"I_LAYOUT_PLOT_LABELS_SUPPRESSED\", \"count\": 2, \"message\": \"2 plot labels on table-timeline were left out because they do not fit\", \"severity\": \"info\", \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-halcyon-emit-scene": {
   "argv": [
@@ -552,7 +552,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}, {\"code\": \"W_LAYOUT_LABEL_SUPPRESSED\", \"count\": 3, \"diagnostic\": \"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"message\": \"a label was left out of the picture because it does not fit: 'Payload thermal-vacuum' (/objects/payload-tvac); member-label:payload-tvac:payload-tvac and 2 more\", \"occurrences\": [\"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:bus-test:bus-test\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:cdr:cdr\"], \"severity\": \"warning\", \"sourceRef\": \"/objects/payload-tvac\", \"sourceTitle\": \"Payload thermal-vacuum\"}, {\"code\": \"I_LAYOUT_PLOT_LABELS_SUPPRESSED\", \"count\": 3, \"message\": \"3 plot labels on table-timeline were left out because they do not fit\", \"severity\": \"info\", \"surfaceId\": \"table-timeline\"}]}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}, {\"code\": \"W_LAYOUT_LABEL_SUPPRESSED\", \"count\": 3, \"diagnostic\": \"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"message\": \"a label was left out of the picture because it does not fit: 'Payload thermal-vacuum' (/objects/payload-tvac); member-label:payload-tvac:payload-tvac and 2 more\", \"occurrences\": [\"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:bus-test:bus-test\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:cdr:cdr\"], \"severity\": \"warning\", \"sourceRef\": \"/objects/payload-tvac\", \"sourceTitle\": \"Payload thermal-vacuum\"}, {\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 1, \"message\": \"10 relations on table-timeline settled without search; 1 used fallback search\", \"relationInstances\": 11, \"severity\": \"info\", \"shapeSettled\": 10, \"surfaceId\": \"table-timeline\"}, {\"code\": \"I_LAYOUT_PLOT_LABELS_SUPPRESSED\", \"count\": 3, \"message\": \"3 plot labels on table-timeline were left out because they do not fit\", \"severity\": \"info\", \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-halcyon-resources-png": {
   "argv": [
@@ -579,7 +579,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}, {\"code\": \"W_LAYOUT_LABEL_SUPPRESSED\", \"count\": 3, \"diagnostic\": \"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"message\": \"a label was left out of the picture because it does not fit: 'Payload thermal-vacuum' (/objects/payload-tvac); member-label:payload-tvac:payload-tvac and 2 more\", \"occurrences\": [\"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:bus-test:bus-test\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:cdr:cdr\"], \"severity\": \"warning\", \"sourceRef\": \"/objects/payload-tvac\", \"sourceTitle\": \"Payload thermal-vacuum\"}, {\"code\": \"I_LAYOUT_PLOT_LABELS_SUPPRESSED\", \"count\": 3, \"message\": \"3 plot labels on table-timeline were left out because they do not fit\", \"severity\": \"info\", \"surfaceId\": \"table-timeline\"}]}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}, {\"code\": \"W_LAYOUT_LABEL_SUPPRESSED\", \"count\": 3, \"diagnostic\": \"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"message\": \"a label was left out of the picture because it does not fit: 'Payload thermal-vacuum' (/objects/payload-tvac); member-label:payload-tvac:payload-tvac and 2 more\", \"occurrences\": [\"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:bus-test:bus-test\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:cdr:cdr\"], \"severity\": \"warning\", \"sourceRef\": \"/objects/payload-tvac\", \"sourceTitle\": \"Payload thermal-vacuum\"}, {\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 1, \"message\": \"10 relations on table-timeline settled without search; 1 used fallback search\", \"relationInstances\": 11, \"severity\": \"info\", \"shapeSettled\": 10, \"surfaceId\": \"table-timeline\"}, {\"code\": \"I_LAYOUT_PLOT_LABELS_SUPPRESSED\", \"count\": 3, \"message\": \"3 plot labels on table-timeline were left out because they do not fit\", \"severity\": \"info\", \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-halcyon-view-theme-scheme-layout": {
   "argv": [
@@ -606,7 +606,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}, {\"code\": \"W_LAYOUT_LABEL_SUPPRESSED\", \"count\": 3, \"diagnostic\": \"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"message\": \"a label was left out of the picture because it does not fit: 'Payload thermal-vacuum' (/objects/payload-tvac); member-label:payload-tvac:payload-tvac and 2 more\", \"occurrences\": [\"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:bus-test:bus-test\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:cdr:cdr\"], \"severity\": \"warning\", \"sourceRef\": \"/objects/payload-tvac\", \"sourceTitle\": \"Payload thermal-vacuum\"}, {\"code\": \"I_LAYOUT_PLOT_LABELS_SUPPRESSED\", \"count\": 3, \"message\": \"3 plot labels on table-timeline were left out because they do not fit\", \"severity\": \"info\", \"surfaceId\": \"table-timeline\"}]}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}, {\"code\": \"W_LAYOUT_LABEL_SUPPRESSED\", \"count\": 3, \"diagnostic\": \"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"message\": \"a label was left out of the picture because it does not fit: 'Payload thermal-vacuum' (/objects/payload-tvac); member-label:payload-tvac:payload-tvac and 2 more\", \"occurrences\": [\"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:bus-test:bus-test\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:cdr:cdr\"], \"severity\": \"warning\", \"sourceRef\": \"/objects/payload-tvac\", \"sourceTitle\": \"Payload thermal-vacuum\"}, {\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 1, \"message\": \"10 relations on table-timeline settled without search; 1 used fallback search\", \"relationInstances\": 11, \"severity\": \"info\", \"shapeSettled\": 10, \"surfaceId\": \"table-timeline\"}, {\"code\": \"I_LAYOUT_PLOT_LABELS_SUPPRESSED\", \"count\": 3, \"message\": \"3 plot labels on table-timeline were left out because they do not fit\", \"severity\": \"info\", \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-icon-catalog-missing": {
   "argv": [
@@ -780,7 +780,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": []}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-preset-builtin-id-png": {
   "argv": [
@@ -799,7 +799,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_PRESET_VISUAL_PROFILE_FALLBACK\", \"message\": \"preset chrona-builtin-technical-print prefers chrona-output/visual/v0.7-svg; selected chrona-output/visual/v0.7-png for png\", \"preferredProfile\": \"chrona-output/visual/v0.7-svg\", \"presetId\": \"chrona-builtin-technical-print\", \"selectedProfile\": \"chrona-output/visual/v0.7-png\", \"severity\": \"info\", \"targetKind\": \"png\"}]}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_PRESET_VISUAL_PROFILE_FALLBACK\", \"message\": \"preset chrona-builtin-technical-print prefers chrona-output/visual/v0.7-svg; selected chrona-output/visual/v0.7-png for png\", \"preferredProfile\": \"chrona-output/visual/v0.7-svg\", \"presetId\": \"chrona-builtin-technical-print\", \"selectedProfile\": \"chrona-output/visual/v0.7-png\", \"severity\": \"info\", \"targetKind\": \"png\"}, {\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-preset-copied-path": {
   "argv": [
@@ -836,7 +836,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": []}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-preset-path-missing": {
   "argv": [
@@ -918,7 +918,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": []}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-reference-error-project": {
   "argv": [
@@ -1036,7 +1036,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": []}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-theme-is-a-view": {
   "argv": [
@@ -1213,7 +1213,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_AXIS_LABEL_THINNED\", \"diagnostic\": \"W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:0:label-does-not-fit\", \"message\": \"an axis label was dropped because the labels of its tier do not all fit: axis-label:2:0:label-does-not-fit\", \"severity\": \"warning\"}, {\"code\": \"W_LAYOUT_AXIS_DENSITY\", \"diagnostic\": \"W_LAYOUT_AXIS_DENSITY:axis-tier:2:thinned=1\", \"message\": \"an axis tier was thinned because its labels do not all fit: axis-tier:2:thinned=1\", \"severity\": \"warning\"}]}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_AXIS_LABEL_THINNED\", \"diagnostic\": \"W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:0:label-does-not-fit\", \"message\": \"an axis label was dropped because the labels of its tier do not all fit: axis-label:2:0:label-does-not-fit\", \"severity\": \"warning\"}, {\"code\": \"W_LAYOUT_AXIS_DENSITY\", \"diagnostic\": \"W_LAYOUT_AXIS_DENSITY:axis-tier:2:thinned=1\", \"message\": \"an axis tier was thinned because its labels do not all fit: axis-tier:2:thinned=1\", \"severity\": \"warning\"}, {\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-viewport-width-only": {
   "argv": [
@@ -1232,7 +1232,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_AXIS_LABEL_THINNED\", \"diagnostic\": \"W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:0:label-does-not-fit\", \"message\": \"an axis label was dropped because the labels of its tier do not all fit: axis-label:2:0:label-does-not-fit\", \"severity\": \"warning\"}, {\"code\": \"W_LAYOUT_AXIS_DENSITY\", \"diagnostic\": \"W_LAYOUT_AXIS_DENSITY:axis-tier:2:thinned=1\", \"message\": \"an axis tier was thinned because its labels do not all fit: axis-tier:2:thinned=1\", \"severity\": \"warning\"}]}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_AXIS_LABEL_THINNED\", \"diagnostic\": \"W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:0:label-does-not-fit\", \"message\": \"an axis label was dropped because the labels of its tier do not all fit: axis-label:2:0:label-does-not-fit\", \"severity\": \"warning\"}, {\"code\": \"W_LAYOUT_AXIS_DENSITY\", \"diagnostic\": \"W_LAYOUT_AXIS_DENSITY:axis-tier:2:thinned=1\", \"message\": \"an axis tier was thinned because its labels do not all fit: axis-tier:2:thinned=1\", \"severity\": \"warning\"}, {\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-visual-profile": {
   "argv": [
@@ -1251,7 +1251,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": []}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-workspace-bad-viewport": {
   "argv": [
