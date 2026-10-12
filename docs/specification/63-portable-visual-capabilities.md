@@ -111,8 +111,21 @@ profile permits deterministic omission only for an unsupported
 Shipped Draft preset-library entries must render a fresh starter project under
 the default Draft target/profile. An unsupported decorative effect may be
 `decorative-optional` only when the flat fallback is a complete visible
-treatment. A preset may not silently select or upgrade the target profile;
-rich-profile output remains explicitly selectable.
+treatment. An explicit Draft profile always wins and retains exact target and
+required-capability validation. Without an explicit profile, a preset's declared
+preference applies when compatible with the requested target. Otherwise the
+closed profile registry chooses its same-version target peer (v0.6 or v0.7
+SVG/PNG), or the baseline when that version has no registered target peer.
+Never infer compatibility from an identifier suffix or upgrade to another
+version. Unknown profiles remain errors, not baseline fallbacks.
+Ordinary and guided Draft ingress report this choice as typed
+`I_PRESET_VISUAL_PROFILE_FALLBACK`, with preset ID, preferred/selected profile
+and target. The fact travels from Draft closure through RenderRequest to the
+rendered result and CLI/MCP envelope; it is not a Layout/Scene diagnostic or
+paint-omission fact. Exact Render Contexts never use this preference rule.
+Baseline fallback does not waive required unsupported-capability failures;
+the existing optional-omission contract remains unchanged. This replaces the
+Draft-only incompatible-preference rejection, not explicit-profile rejection.
 Required unsupported capability fails before serialization with
 `E_VISUAL_CAPABILITY_UNSUPPORTED`, its exact Theme role property or View icon
 binding pointer, and a capability-specific message. Optional omission is performed by the Scene

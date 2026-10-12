@@ -13,6 +13,7 @@ from chrona.presentation.model.surface_content import (
 from chrona.presentation.table_presentation import affix_state
 from chrona.presentation.review.detail import normalize_v05_review_detail_profile
 from chrona.presentation.review.figure_facts import projected_counts
+from chrona.presentation.review.annotation_expansion import expand_annotations
 from chrona.presentation.model.placement_candidates import legacy_candidate_order, parse_candidates
 from chrona.presentation.contracts.resources import ReviewDetailInput, SummaryProfileInput, ViewInput
 from chrona.presentation.group_header_text import GroupHeaderTextError, compose_group_header_runs, compose_group_headers
@@ -84,8 +85,16 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
             return "missingActualCell"
         return "tableCell"
     if projection.rows:
+        def row_cell(row: Any, column: Any, row_index: int) -> TableCellContent:
+            item = next(item for item in row.items if item.item_id == row.table_subject_id)
+            header = (item.is_rollup and row.rollup_presentation == "header"
+                      and column.id == view.hierarchy_column)
+            return TableCellContent(row.row_id, column.id, cell(item, column, row_index),
+                                    "groupHeader" if header else cell_semantic(item, column),
+                                    "groupHeader" if header else cell_typography_role(column),
+                                    *cell_affixes(item, column, row_index))
         cells = tuple(
-            TableCellContent(row.row_id, column.id, cell(item := next(item for item in row.items if item.item_id == row.table_subject_id), column, row_index), cell_semantic(item, column), cell_typography_role(column), *cell_affixes(item, column, row_index))
+            row_cell(row, column, row_index)
             for row_index, row in enumerate(projection.rows, 1) for column in view.table_columns)
         table_cell_objects = tuple(
             (row.row_id, column.id,
@@ -123,7 +132,9 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
         raise ValueError(f"E_REVIEW_LANE_TABLE_PROJECTION: laneMembership={projection.lane_membership is not None}, laneRows={len(projection.lane_rows)}, laneTable={lane_table is not None}")
     columns = (TableColumnContent("Lane", "Lane", "start", TableColumnWidth("content", "content"),
                                   text_wrap=lane_table.text_wrap),)
-    if lane_table.count:
+    show_count = (lane_table.count is True or (lane_table.count == "auto"
+                  and any(len(lane.member_item_ids) > 1 for lane in projection.lane_membership.lanes)))
+    if show_count:
         columns += (TableColumnContent("Items", "Items", "end", TableColumnWidth("content", "content"),
                                        text_wrap=lane_table.text_wrap),)
     entities = project.get("entities", {})
@@ -175,7 +186,7 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
                 if row.group_id in disambiguate_groups:
                     label = f"{label} — {first_title}"
         cells.append(TableCellContent(row.lane_id, "Lane", label, "tableCell"))
-        if lane_table.count:
+        if show_count:
             member_count = len(lane.member_item_ids)
             cells.append(TableCellContent(row.lane_id, "Items", str(member_count), "tableCell", "numeric"))
         levels.append(TableRowLevel((row.lane_id,), bool(row.group_id)))
@@ -273,23 +284,25 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     relation_mode = relation_value.get("mode", "none") if isinstance(relation_value, Mapping) else relation_value
     relation_content = (tuple(str(item) for item in relation_value.get("content", ()))
                         if isinstance(relation_value, Mapping) else ())
-    def relation_fact(relation: Mapping[str, Any], semantic_id: str) -> RelationPresentationFact:
+    def relation_fact(index: int, relation: Mapping[str, Any], semantic_id: str) -> RelationPresentationFact:
         source, target = relation["from"], relation["to"]
         lag = relation.get("lag", "0d")
-        return RelationPresentationFact(str(relation["id"]), str(source["object"]), str(source.get("endpoint", "end")),
+        return RelationPresentationFact(relation_identity(index, relation), str(source["object"]), str(source.get("endpoint", "end")),
                                         str(target["object"]), str(target.get("endpoint", "start")), lag,
                                         str(lag.get("calendar")) if isinstance(lag, Mapping) and lag.get("calendar") is not None else None,
                                         semantic_id, relation_content)
     if relation_mode == "critical":
-        relations = tuple(relation_fact(relation, "dependency-critical")
+        relations = tuple(relation_fact(index, relation, "dependency-critical")
                           for index, relation in enumerate(project.get("relations", ()))
                           if relation_identity(index, relation) in projection.driving_relations)
     elif relation_mode != "none":
-        relations = tuple(relation_fact(relation, "dependency") for relation in project.get("relations", ()))
+        relations = tuple(relation_fact(index, relation, "dependency")
+                          for index, relation in enumerate(project.get("relations", ())))
     else:
         relations = ()
-    raw_annotations = view.annotations if annotation_mode != "none" else ()
     project_notes = project.get("annotations", {})
+    raw_annotations = (expand_annotations(view, project_notes, projection)
+                       if annotation_mode != "none" else ())
     consumed_note_ids: set[str] = set()
 
     def _annotation_text(annotation: Mapping[str, Any]) -> str:
@@ -308,7 +321,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
 
     item_titles = {item.object_id: item.title for item in projection.items}
 
-    def _annotation(index: int, annotation: Mapping[str, Any]) -> AnnotationIntent:
+    def _annotation(index: int, annotation: Mapping[str, Any], anchor_source_ref: str) -> AnnotationIntent:
         anchor = {str(key): ("finish" if key == "endpoint" and value == "end" else str(value)) for key, value in annotation["anchor"].items()}  # `end` aliases `finish` (I662 S4a)
         purpose = str(annotation["purpose"])
         number = index + 1 if annotation_numbered else None
@@ -329,16 +342,17 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
             return AnnotationIntent(str(annotation["id"]), purpose, anchor, "rail", "center",
                                     content, number, (), parse_candidates(declared_candidates),
                                     kind=kind, subject=subject, subject_id=subject_id,
-                                    anchor_source_ref=f"/body/annotations/{index}/anchor")
+                                    anchor_source_ref=anchor_source_ref)
         placement = annotation["placement"]
         return AnnotationIntent(str(annotation["id"]), purpose, anchor,
                                 str(placement["side"]), str(placement["alignment"]),
                                 content, number, annotation_fallback or ("rail",),
                                 legacy_candidate_order(purpose, annotation_fallback)[0],
                                 kind=kind, subject=subject, subject_id=subject_id,
-                                anchor_source_ref=f"/body/annotations/{index}/anchor")
+                                anchor_source_ref=anchor_source_ref)
 
-    annotations = tuple(_annotation(index, annotation) for index, annotation in enumerate(raw_annotations))
+    annotations = tuple(_annotation(index, annotation.value, annotation.anchor_source_ref)
+                        for index, annotation in enumerate(raw_annotations))
     # A selected Project annotation is consumed once: it is presented through
     # its View annotation and no longer duplicated into the notes slot (#466).
     notes = tuple((str(key), str(value.get("text", ""))) for key, value in project_notes.items()

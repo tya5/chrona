@@ -185,6 +185,18 @@ field as a secondary title; a first-group variant). The text is View content; it
 grammar, ordinal forms and diagnostics are owned by
 [Specification 50](50-constraint-driven-gantt-surface-quality.md) section 3.4.
 
+### 6.1 Draft relation visibility override (#1299)
+
+`chrona render --relations none|semantic` overrides only the effective Draft
+View's `visibility.relations` mode, before validation and resource identity
+freeze. Scalar declarations remain scalar; object declarations retain their
+other options. Without the flag, the original declaration and normalization
+are unchanged. The override neither writes the authored resource nor mutates
+an immutable render-review Context. Scheduling still sees every Core dependency.
+`none` omits semantic relation requests before Layout routing; intentional
+omission is not `W_LAYOUT_RELATION_SUPPRESSED`. The CLI documents the override
+in help and the first-project guide.
+
 ## 7. Temporal Window
 
 A View selects a temporal window independently from scheduling semantics. v0.1 allows
@@ -385,12 +397,32 @@ geometry-based recovery is allowed.
 
 View selection, grouping, hierarchy expansion, visibility, and annotation anchoring are semantic inputs, not renderer geometry. An annotation has one source (`text` or a stable Project annotation reference), a typed anchor, and an ordered candidate list. A Project reference inherits narrative text and object identity; View owns facet, endpoint, purpose and placement. The anchor endpoint is `start`, `end`, `finish`, `at` or `body`; `end` is the canonical spelling of a span's end and `finish` its alias, and the two produce the same Scene. A referenced Project note is not duplicated in the notes slot. Each candidate declares a region, search, obstacle classes and connector; Layout evaluates the list against one completed surface obstacle set, records the selected candidate and bounded search count, and owns box and connector geometry. The rail, adjacent sides and plot search are configurations of this one model; legacy named rungs normalize to candidates without changing their output. No View field contains concrete coordinates. `layoutMetrics` is the revision-bound metrics/algorithm artifact declared by Render Context, never a renderer font default.
 
-The **kind** of a presentation annotation is the `kind` of the Project annotation its `projectAnnotation` reference selects (an open string such as `risk` or `note`); it is distinct from `purpose`, the closed placement intent. An annotation that carries its own `text` has no kind. The kind selects an optional Theme header (a label, a title bar, an accent edge; Specification 07) and nothing else: it never changes placement, purpose or the text. The View gains no property for it.
+The **kind** of a presentation annotation is the `kind` of the Project annotation its `projectAnnotation` reference selects (an open string such as `risk` or `note`); it is distinct from `purpose`, the closed placement intent. An annotation that carries its own `text` has no kind. Theme kind decoration does not select placement, purpose or text. The explicit View `annotationBindings` contract in Specification44 may bind a Project kind/temporal shape to an ordinary purpose and facet/endpoint; its purpose policy may come from Layout `viewDefaults.annotationPlacement`. No implicit Theme-driven placement or second source of Project narrative is introduced.
 
 For a plot `tail` candidate, the same View intent may complete as a direct
 integrated balloon tail or a strict routed connection to a short balloon tip.
 Layout records the topology; View does not declare path coordinates. See
 [the C3 correction](../design/issue-466-c3-routed-tail-correction-2026-09-29.md).
+
+### 9.2 The View as the connector, and the design it takes from the Layout profile (#1341)
+
+A View is the thin connector between a project and a design. What names the project's ids, fields, dates or wording stays in the
+View: `surface`, `selection`, `ordering`, the window's `mode`, `start` and `end`, the grouping key and order, the lane keys, the
+comparison bindings (`baseline`, `scenario`, `actual`, `observationSelection`), periods, figures, markers' `source`, headings and
+captions, table column captions and sources, annotation anchors and text, hierarchy column, icon encodings. How the surface looks
+and is laid out is design, and a Layout profile may supply it as `viewDefaults`, a View body fragment (Specification 33).
+
+Slice 1 moves these members: `visibility`, `axis`, `deadlines`, `shading`, `timePresentation`, `annotationPresentation`,
+`backgroundDecoration`, `progressFill` (whole members), and the design halves of `comparison` (`baselineMarks`,
+`missingActualScope`, `deltaUnit`, `facets`), `rows` (`mode`, `trackAllocation`, `packing`, `laneTable`, `points`, `items`) and
+`window` (`marginDays`). The rule is whole-member replacement: a member the View declares replaces the design's whole member, a
+member it omits takes the design's. The three split members merge one level
+down: an omitted member is created from the profile's design sub-members,
+while declared sub-members win. Connection fields are never supplied by the
+design. Explicitly malformed View members are not repaired; missing required
+connection fields remain ordinary View validation errors. The
+merge happens at ingress, before validation, so the merged View is validated as the View it is; a Layout profile without
+`viewDefaults`, or a View declaring every member, is untouched, which keeps every existing View byte-identical.
 
 ## 10. Diagnostics
 

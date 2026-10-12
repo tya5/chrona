@@ -259,9 +259,27 @@ def test_the_adopted_portable_name_sites_use_the_common_definition():
 
 DIGEST = "sha256:" + "0" * 64
 GIT = "git:" + "a" * 40
+ANNOTATION_RAIL = {"id": "rail", "region": {"kind": "slot", "source": "annotations"},
+                   "search": {"kind": "row-aligned"}, "obstacles": {"classes": ["mark"]},
+                   "connector": {"kind": "leader"}}
+ANNOTATION_LEGACY = {"side": "end", "alignment": "center"}
 
 # name -> (accepted, rejected)
 PROBES: dict[str, tuple[list[Any], list[Any]]] = {
+    "annotationLegacyPlacement": ([ANNOTATION_LEGACY, {"side": "above", "alignment": "start"}],
+                                  [{}, {"side": "end"}, {"side": "rail", "alignment": "center"},
+                                   {**ANNOTATION_LEGACY, "extra": True}, None]),
+    "annotationCandidates": ([[ANNOTATION_RAIL]], [[], [{**ANNOTATION_RAIL, "id": ""}],
+                             [{**ANNOTATION_RAIL, "search": {"kind": "adjacent"}}],
+                             [{**ANNOTATION_RAIL, "obstacles": {"classes": []}}], None]),
+    "annotationPlacementPolicy": ([{"placement": ANNOTATION_LEGACY}, {"candidates": [ANNOTATION_RAIL]}],
+                                  [{}, {"placement": ANNOTATION_LEGACY, "candidates": [ANNOTATION_RAIL]},
+                                   {"placement": {}}, {"candidates": []}, {"extra": True}, None]),
+    "annotationPlacementByPurpose": ([{}, {"note": {"placement": ANNOTATION_LEGACY}},
+                                    {"callout": {"candidates": [ANNOTATION_RAIL]}}],
+                                    [{"unknown": {"placement": ANNOTATION_LEGACY}}, {"note": {}},
+                                     {"note": {"placement": ANNOTATION_LEGACY, "candidates": [ANNOTATION_RAIL]}},
+                                     {"note": {"candidates": []}}, [], None]),
     "sha256Identity": ([DIGEST, "sha256:" + "abcdef0123456789" * 4], ["", "sha256:abc", "SHA256:" + "0" * 64, "sha256:" + "A" * 64, "sha256:" + "0" * 65, 5, None]),
     "sha256IdentityOrNull": ([DIGEST, "sha256:" + "abcdef0123456789" * 4, None], ["", "sha256:abc", "SHA256:" + "0" * 64, "sha256:" + "A" * 64, "sha256:" + "0" * 65, 5, [], {}]),
     "isoDate": (["2026-09-30", "0001-01-01"], ["", "2026-9-30", "20260930", "2026/09/30", "2026-09-30T00:00", " 2026-09-30", 20260930, None]),

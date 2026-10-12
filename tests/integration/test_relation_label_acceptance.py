@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 from pathlib import Path
+import yaml
 import xml.etree.ElementTree as ET
 
 from chrona.presentation.layout.obstacles import ObstacleSegment, obstacles_intersect
+from chrona.core.relation_identity import relation_identity
 from chrona.usecases.materialize import materialize
 
 
@@ -19,22 +21,27 @@ def test_controller_baseline_ghosts_emits_start_start_label_without_shared_node_
     )
     rendered = result.rendered
     svg = ET.fromstring(rendered.artifact.content)
+    project = yaml.safe_load((ROOT / "examples/controller-z/project.yaml").read_bytes())
+    identities = {relation["id"]: relation_identity(index, relation)
+                  for index, relation in enumerate(project["relations"])}
+    incoming_id = identities["evb-to-bringup"]
+    outgoing_id = identities["bringup-to-performance"]
 
     label = next(node for node in svg.iter(SVG_NS + "text")
                  if node.attrib.get("data-scene-id", "").startswith(
-                     "relation-label:bringup-to-performance:"))
+                     f"relation-label:{outgoing_id}:"))
     assert label.text == "start->start"
-    assert not any(item == "W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:bringup-to-performance"
+    assert not any(item.startswith(f"W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:{outgoing_id}:")
                    for item in rendered.scene.diagnostics)
 
     primitives = rendered.scene.surfaces[0].primitives
     incoming = next(item for item in primitives
-                    if item.scene_id.startswith("relation:evb-to-bringup:"))
+                    if item.scene_id.startswith(f"relation:{incoming_id}:"))
     outgoing = next(item for item in primitives
-                    if item.scene_id.startswith("relation:bringup-to-performance:"))
+                    if item.scene_id.startswith(f"relation:{outgoing_id}:"))
     assert ":silicon-bringup:silicon-bringup" in incoming.scene_id
     assert outgoing.scene_id.startswith(
-        "relation:bringup-to-performance:silicon-bringup:silicon-bringup:")
+        f"relation:{outgoing_id}:silicon-bringup:silicon-bringup:")
     assert incoming.points and outgoing.points
 
     # The incoming terminal approach and outgoing source approach are distinct

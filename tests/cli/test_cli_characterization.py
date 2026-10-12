@@ -11,7 +11,9 @@ Rules the matrix keeps:
 * every invocation runs in a fresh scratch directory with relative paths, so no
   host path reaches the record (any absolute scratch path is replaced by ``<tmp>``);
 * the OS wording of an ``OSError`` (``[Errno 2] ...`` against ``[WinError 2] ...``)
-  is replaced by ``<os error>``, because it is the only OS-dependent text;
+  is replaced by ``<os error>``;
+* the unknown-command comparison ignores only argparse's choice quoting across
+  Python versions; the diagnostic envelope, command and ordered choices stay exact;
 * a rendered artifact is described by what it is (well-formed SVG root, PNG
   signature, Scene JSON keys), not by its bytes, so a legitimate presentation change
   does not rewrite the golden file; ``CHRONA_CHARACTERIZATION_RAW=<file>`` records
@@ -461,6 +463,40 @@ def _load_golden() -> dict[str, dict[str, object]]:
     return json.loads(GOLDEN.read_text(encoding="utf-8"))
 
 
+def _portable_unknown_command(record: dict[str, object]) -> dict[str, object]:
+    """Ignore only argparse's Python-version-dependent choice quoting (#1306)."""
+    payload = json.loads(record["stdout"])
+    assert record["stdout"] == json.dumps(payload, ensure_ascii=False) + "\n"
+    diagnostic, = payload["diagnostics"]
+    message = diagnostic["message"]
+    match = re.fullmatch(r"(argument COMMAND: invalid choice: '[^']+' \(choose from )(.*)\)", message)
+    assert match is not None, message
+    choices = match[2].split(", ")
+    assert choices and all(re.fullmatch(r"'[a-z][a-z-]*'|[a-z][a-z-]*", item) for item in choices)
+    diagnostic["message"] = match[1] + ", ".join(item.strip("'") for item in choices) + ")"
+    return {**record, "stdout": json.dumps(payload, ensure_ascii=False) + "\n"}
+
+
+def test_unknown_command_comparison_preserves_choices_and_error_contract():
+    record = _load_golden()["unknown-command"]
+    portable = _portable_unknown_command(record)
+    assert _portable_unknown_command(portable) == portable
+    payload = json.loads(portable["stdout"])
+    payload["diagnostics"][0]["message"] = payload["diagnostics"][0]["message"].replace("validate, ", "")
+    assert _portable_unknown_command({**record, "stdout": json.dumps(payload) + "\n"}) != portable
+    payload["diagnostics"][0]["code"] = "E_OTHER"
+    assert _portable_unknown_command({**record, "stdout": json.dumps(payload) + "\n"}) != portable
+
+
+@pytest.mark.parametrize("message", ["unknown command", "argument COMMAND: invalid choice: 'frobnicate' (choose from 'validate)"])
+def test_unknown_command_comparison_rejects_unrecognised_wording(message):
+    record = _load_golden()["unknown-command"]
+    payload = json.loads(record["stdout"])
+    payload["diagnostics"][0]["message"] = message
+    with pytest.raises(AssertionError):
+        _portable_unknown_command({**record, "stdout": json.dumps(payload) + "\n"})
+
+
 def test_case_ids_are_unique():
     ids = [case.id for case in CASES]
     assert len(ids) == len(set(ids))
@@ -477,7 +513,11 @@ def test_cli_output_is_unchanged(case: Case):
     if target:
         with open(target, "a", encoding="utf-8") as stream:
             stream.write(json.dumps({"id": case.id, **raw}, sort_keys=True, ensure_ascii=False) + "\n")
-    assert golden == _load_golden()[case.id]
+    expected = _load_golden()[case.id]
+    if case.id == "unknown-command":
+        assert _portable_unknown_command(golden) == _portable_unknown_command(expected)
+    else:
+        assert golden == expected
 
 
 def test_golden_holds_no_host_path():

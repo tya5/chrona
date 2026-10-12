@@ -397,7 +397,8 @@ def test_cli_halcyon_default_draft_has_coherent_slots_and_auto_axis(tmp_path, mo
                 if item.code == "E_SCENE_TEXT_INTERSECTION"]
 
 
-def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize("with_actual", [False, True])
+def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_path, monkeypatch, capsys, with_actual):
     destination = tmp_path / "first-plan"
     output = destination / "plan.svg"
     scene_path = destination / "plan.scene.json"
@@ -405,16 +406,37 @@ def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_pat
     monkeypatch.setattr(sys, "argv", ["chrona", "init", str(destination)])
     main()
     capsys.readouterr()  # the success result of the setup command (#1304)
+    observed = yaml.safe_load((destination / "actual.yaml").read_text(encoding="utf-8"))["body"]
+    assert len(observed["observations"]) == 1
+    observation = observed["observations"][0]
+    assert observation["projectObjectId"] == "design"
+    assert observation["actual"]["openUntil"] == "asOf"
+    assert observation["actual"]["progress"] == 0.6
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(destination / "project.yaml"), "--actual", str(destination / "actual.yaml"),
+        "chrona", "render", str(destination / "project.yaml"),
+        *(["--actual", str(destination / "actual.yaml")] if with_actual else []),
         "--viewport", "1600xauto", "--output", str(output), "--emit-scene", str(scene_path),
     ])
     main()
+
+    envelope = json.loads(capsys.readouterr().out)
+    assert envelope["status"] == "ok"
+    assert envelope["warnings"] == []
 
     svg_bytes = output.read_bytes()
     assert svg_bytes.startswith(b"<svg")
     surface = json.loads(scene_path.read_text(encoding="utf-8"))["surfaces"][0]
     svg = ET.fromstring(svg_bytes)
+    fills = [item for item in surface["primitives"] if item.get("purpose") == "progress-fill"]
+    assert bool(fills) == with_actual
+    if with_actual:
+        assert all(item["sourceRef"] == "design" for item in fills)
+        assert all(item["bounds"]["inlineSize"] > 0 for item in fills)
+        svg_ids = {value for element in svg.iter()
+                   for value in (element.get("id"), element.get("data-scene-id")) if value}
+        assert all(item["id"] in svg_ids for item in fills)
+    assert any(item["id"].startswith("row-rule:") for item in surface["primitives"])
+    assert not any(item["id"].startswith("row-band:") for item in surface["primitives"])
     canvas = surface["canvasBounds"]
     assert 0 < canvas["blockSize"] < 900  # The synthetic Draft closure seed is not an output minimum.
     assert float(svg.attrib["width"].removesuffix("px")) == pytest.approx(canvas["inlineSize"], abs=0.01)
@@ -909,6 +931,45 @@ def test_cli_guided_draft_infers_png_and_rejects_mismatch(tmp_path, monkeypatch,
         main()
     assert failed.value.code == 2 and not mismatch.exists()
     assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_RENDER_OUTPUT_FORMAT_MISMATCH"
+
+
+@pytest.mark.parametrize("preset", ["technical-print", "elevated-light"])
+def test_cli_png_preset_falls_back_but_never_overrides_an_explicit_profile(tmp_path, monkeypatch, capsys, preset):
+    starter = tmp_path / "starter"
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(starter)])
+    main()
+    capsys.readouterr()
+    output = tmp_path / "review.png"
+    argv = ["chrona", "render", str(starter / "project.yaml"), "--preset", preset, "--output", str(output)]
+    monkeypatch.setattr(sys, "argv", argv)
+    main()
+    assert output.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+    envelope = json.loads(capsys.readouterr().out)
+    assert envelope["status"] == "ok"
+    (fallback,) = [item for item in envelope["warnings"] if item["code"] == "I_PRESET_VISUAL_PROFILE_FALLBACK"]
+    assert fallback["severity"] == "info" and fallback["targetKind"] == "png"
+    output.unlink()
+    monkeypatch.setattr(sys, "argv", [*argv, "--visual-profile", "chrona-output/visual/v0.7-svg"])
+    with pytest.raises(SystemExit):
+        main()
+    assert not output.exists()
+    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_VISUAL_CAPABILITY_PROFILE"
+
+
+def test_guided_workspace_png_reports_its_declared_profile_fallback(tmp_path, monkeypatch, capsys):
+    workspace = _guided_workspace(tmp_path)
+    preset_path = tmp_path / "preset" / "starter.yaml"
+    preset = yaml.safe_load(preset_path.read_text(encoding="utf-8"))
+    preset["body"]["visualProfile"] = {"preferred": "chrona-output/visual/v0.7-svg"}
+    preset_path.write_text(yaml.safe_dump(preset, sort_keys=False), encoding="utf-8")
+    output = tmp_path / "guided.png"
+    monkeypatch.setattr(sys, "argv", ["chrona", "render-workspace", str(workspace), "--output", str(output)])
+    main()
+    assert output.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+    (fallback,) = [item for item in json.loads(capsys.readouterr().out)["warnings"]
+                   if item["code"] == "I_PRESET_VISUAL_PROFILE_FALLBACK"]
+    assert fallback["presetId"] == "starter"
+    assert fallback["selectedProfile"] == "chrona-output/visual/v0.7-png"
 
 
 def test_cli_renders_the_plan_only_example_without_an_actual_set(tmp_path, monkeypatch):

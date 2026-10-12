@@ -6,7 +6,7 @@ from datetime import date
 from enum import StrEnum
 import math
 import re
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 
 
 from chrona.core.figures import AsOfFact, FigureSpec, GroupStartFact, ObjectFact, PeriodFact
@@ -201,7 +201,7 @@ class ViewLaneTable:
     """Finite aggregate summary intent for generated lane rows."""
 
     label: ViewLaneLabel
-    count: bool = False
+    count: bool | Literal["auto"] = False
     text_wrap: str = "forbid"
 
 
@@ -288,7 +288,7 @@ class ViewGrouping:
     order: tuple[str, ...]
     missing: str | None
     presentation: str | None
-    depth: int | None
+    depth: int | Literal["all"] | None
     rollup: str | None
     order_by: str | None = None
     header: ViewGroupHeader | None = None
@@ -383,6 +383,8 @@ class ViewInput:
     heading: ViewHeading | None = None
     deadlines: str | None = None  # `slipped` or `all`: which Project deadlines the surface draws; None draws none (#822)
     slot_heading_text: FrozenDict | None = None
+    annotation_bindings: tuple[FrozenDict, ...] = ()
+    annotation_placement: FrozenDict | None = None
 
 
 @dataclass(frozen=True)
@@ -889,7 +891,7 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                              if not isinstance(raw_grouping.get("order"), FrozenDict) else (),
                              str(raw_grouping["missing"]) if "missing" in raw_grouping else None,
                              str(raw_grouping["presentation"]) if "presentation" in raw_grouping else None,
-                             int(raw_grouping["depth"]) if "depth" in raw_grouping else None,
+                             raw_grouping.get("depth"),
                              str(raw_grouping["rollup"]) if "rollup" in raw_grouping else None,
                              str(raw_grouping["order"]["by"]) if isinstance(raw_grouping.get("order"), FrozenDict) else None,
                              _group_header(raw_grouping), _group_tint(raw_grouping))
@@ -948,10 +950,10 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
     return ViewInput(
         selection, grouping, ordering, window, comparison, visibility,
         table_columns,
-        tuple(body.get("annotations", ())), ViewRows(
+        _view_annotations(body), ViewRows(
             ViewRowMode(str(rows["mode"])), row_items, str(rows.get("points", "attached")),
             ViewTrackAllocation(str(rows["trackAllocation"])) if "trackAllocation" in rows else None,
-            (ViewLaneTable(ViewLaneLabel(str(rows["laneTable"]["label"])), bool(rows["laneTable"].get("count", False)),
+            (ViewLaneTable(ViewLaneLabel(str(rows["laneTable"]["label"])), rows["laneTable"].get("count", False),
                            str(rows["laneTable"].get("text", {}).get("wrap", "forbid")))
              if "laneTable" in rows else None),
             (tuple(str(item) for item in rows.get("packing", ("explicit", "attached")))
@@ -974,7 +976,29 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         figures=figures,
         deadlines=str(body["deadlines"]["show"]) if "deadlines" in body else None,
         heading=_view_heading(body.get("heading")),
-        slot_heading_text=(freeze(body["slotHeadingText"]) if "slotHeadingText" in body else None))
+        slot_heading_text=(freeze(body["slotHeadingText"]) if "slotHeadingText" in body else None),
+        annotation_bindings=tuple(body.get("annotationBindings", ())),
+        annotation_placement=body.get("annotationPlacement"))
+
+
+def annotation_placement_for(policies: Mapping[str, Any] | None, purpose: str,
+                             source_ref: str) -> Mapping[str, Any]:
+    """Resolve one schema-accepted purpose policy; never invent placement intent."""
+    policy = policies.get(purpose) if policies is not None else None
+    if not isinstance(policy, Mapping):
+        raise ContractError("E_PRESENTATION_ANNOTATION_POLICY_MISSING",
+                            f"purpose={purpose!r}; no declared annotationPlacement policy", source_ref)
+    return policy
+
+
+def _view_annotations(body: FrozenDict) -> tuple[FrozenDict, ...]:
+    """Close explicit policy inheritance after schema acceptance, without mutation."""
+    annotations = body.get("annotations", ())
+    policies = body.get("annotationPlacement")
+    return tuple(annotation if "placement" in annotation or "candidates" in annotation
+                 else freeze({**annotation, **annotation_placement_for(
+                     policies, str(annotation["purpose"]), f"/body/annotations/{index}")})
+                 for index, annotation in enumerate(annotations))
 
 
 def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
@@ -1246,6 +1270,9 @@ def _review_detail_input(body: FrozenDict) -> ReviewDetailInput:
 
 def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> ResourceContract:
     """Validate an exact schema then construct its frozen, kind-specific contract."""
+    if identity.kind == "render-context":
+        from chrona.presentation.contracts.font_sets import expand_font_set
+        value = expand_font_set(value)  # a named packaged font set is its asset list (#1345)
     frozen = freeze(value)
     body = frozen.get("body", FrozenDict())
     if not isinstance(body, FrozenDict):

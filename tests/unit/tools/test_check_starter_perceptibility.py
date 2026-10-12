@@ -49,12 +49,15 @@ def test_closed_day_chart_and_key_paint_are_perceptible_and_match_svg():
     assert chart
     assert key
     row_bands = [item for item in primitives if item.get("visualRole") == "row-band"]
-    assert row_bands
-    assert all(item["paintOrder"] > max(band["paintOrder"] for band in row_bands) for item in chart)
+    assert not row_bands  # Spec32: the bundled default declares rules, not faint bands.
+    row_rules = [item for item in primitives if item.get("visualRole") == "row-rule"]
+    assert row_rules
 
     svg_root = ElementTree.fromstring(rendered.artifact.content)
     svg_primitives = {node.attrib.get("data-scene-id"): node.attrib for node in svg_root.iter()
                       if node.attrib.get("data-scene-id")}
+    for rule in row_rules:
+        assert svg_primitives[rule["id"]]["stroke"].upper() == rule["paint"]["stroke"].upper()
     for primitive in (*chart, key):
         paint = primitive["paint"]
         assert "stroke" not in paint or paint["stroke"] is None

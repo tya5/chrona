@@ -44,6 +44,8 @@ from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMe
 from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import PresentationInfo
+from chrona.presentation.model.preset_target import PresetVisualProfileFallback
+from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
 from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_role_consumers import unread_diagnostics as unread_theme_diagnostics
@@ -62,6 +64,7 @@ from chrona.presentation.model.surface_content import HeadingContent, SummaryCon
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.presentation.review.figure_facts import projected_counts
+from chrona.presentation.review.annotation_expansion import AnnotationExpansionError
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, header_lines, heading_text
 from chrona.presentation.figure_text import FigureTextError, resolve_figure_text
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve, measure_as_of_chip
@@ -127,6 +130,8 @@ class RenderRequest:
     asset_resolver: FontAssetResolver | None = None
     draft_auto_block: bool = False
     draft_font_resolution: DraftFontResolution | None = None
+    preset_visual_profile_fallback: PresetVisualProfileFallback | None = None
+    progress: RenderProgress | None = field(default=None, compare=False, repr=False)
 
 
 @dataclass(frozen=True)
@@ -146,6 +151,7 @@ class RenderedReview:
     attachment_warnings: tuple[AttachmentWarning, ...] = ()
     deadline_warnings: tuple[Diagnostic, ...] = ()
     warning_records: tuple[RenderWarning, ...] = ()
+    preset_visual_profile_fallback: PresetVisualProfileFallback | None = None
 
 
 @dataclass(frozen=True)
@@ -225,6 +231,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
         return _render_review(request)
     except ColorScaleError as error:
         raise RenderFailed(error.code, error.detail, "presentation", error.source_ref) from error
+    except AnnotationExpansionError as error:
+        raise RenderFailed(error.diagnostic_id, error.detail, "presentation", error.source_ref) from error
     except (LayoutError, ThemeTokenError, ScenePaintError) as error:
         message = error_message(error.diagnostic_id, getattr(error, "detail", None))
         node = getattr(error, "node_id", None)  # a Layout finding names the offending token or node here
@@ -266,7 +274,11 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     manifests = {item.package_id: item.profile_input for item in render_closure.profile_packages}
     if manifests:
         ledger.packages()
+    if request.progress is not None:
+        request.progress.phase("schedule")
     projection, scenario_provenance, attachments, deadlines = _project_review(project, view, render_closure, manifests, request.scheduler)
+    if request.progress is not None:
+        request.progress.phase("layout")
     color_scale = resolve_color_scale(view.color_encoding, theme["body"].get("colorScales"),
                                       theme["body"].get("categorySlots"),
                                       color_vision=tuple(theme["body"].get("colorVision", ())),
@@ -335,7 +347,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                        if view.surface == "table-timeline" else None)
     source_inputs = _source_inputs(project, view, projection, summary,
                                    annotation_input=_annotation_source_input(
-                                       view, visual_requests, icon_assets, theme),
+                                       view, selected_content, visual_requests, icon_assets, theme),
                                    table=table_content, content=selected_content,
                                    # A dependency network draws its own title line and ignores `heading` (#991).
                                    heading=(heading_content if view.surface == "table-timeline" else None),
@@ -423,6 +435,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             capacity_short_sources=short_sources,
             as_of_chip_measurement=as_of_chip_measurement,
             declared_viewport=declared_viewport,
+            auto_block_limit=resolved_layout.distances.get("/reviewSurface/maxBlockSize"),
+            progress=request.progress,
         )
 
     if view.surface == "table-timeline":
@@ -479,7 +493,9 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         fixed_lane_preflight=fixed_lane_preflight,
         capacity_short_sources=capacity_short_sources,
         surface_preparation=surface_preparation,
+        auto_block_limit=resolved_layout.distances.get("/reviewSurface/maxBlockSize"),
         declared_viewport=declared_viewport,
+        progress=request.progress,
     )
 
     unused = ledger.unused()
@@ -521,6 +537,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         font_files=resolution.font_files if resolution is not None else None,
         asset_resolver=request.asset_resolver,
     )
+    if request.progress is not None:
+        request.progress.phase("output")
     try:
         artifact = renderer.render(surface)
     except FontMetricsError as error:
@@ -539,6 +557,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         contrast_warnings=contrast_warnings,
         surface_provenance=surface.diagnostic_provenance,
         canvas_warning=surface.canvas_warning,
+        auto_block_warning=surface.auto_block_warning,
     )
     # Surface diagnostics are already in the preliminary Scene. Append only
     # the post-composition families, preserving duplicates and their order.
@@ -546,7 +565,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     scene = replace(scene, diagnostics=(*scene.diagnostics, *(item.identity for item in appended)))
     return RenderedReview(artifact, surface, scene, frozenset(ledger.read), scenario_provenance,
                           glyph_warnings, perceptibility_warnings, contrast_warnings,
-                          surface.info_diagnostics, collisions, attachments, deadlines, warning_records)
+                          surface.info_diagnostics, collisions, attachments, deadlines, warning_records,
+                          preset_visual_profile_fallback=request.preset_visual_profile_fallback)
 
 
 def _below_plot_reserve(view: Any, *, actual_set: Any, projection: Any, theme_tokens: Any,
@@ -1019,7 +1039,7 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
                    tuple(row.label for row in rows) or tuple(item.title for item in projection.items))
     span_days = max(1, (projection.window[1] - projection.window[0]).days)
     network = getattr(projection, "network", None)
-    notes = tuple(str(item.get("text", "")) for item in project.get("annotations", {}).values())
+    notes = tuple(text for _, text in content.notes)
     sources = {
         "title": _title_source(project, heading),
         "table": SourceInput(
@@ -1088,26 +1108,25 @@ def _title_source(project: dict[str, Any], heading: HeadingContent | None) -> So
                        text_wrap=heading.text_wrap if heading is not None else "forbid")
 
 
-def _annotation_source_input(view: ViewInput, visual_requests: tuple[VisualRequest, ...],
+def _annotation_source_input(view: ViewInput, content: SurfaceContentInput,
+                             visual_requests: tuple[VisualRequest, ...],
                              icon_assets: dict[str, Any], theme: Mapping[str, Any]) -> SourceInput | None:
     """Build annotation measurements from the same closed visuals Layout composes."""
     visible = view.visibility.annotations
     mode = visible.get("mode", "none") if isinstance(visible, Mapping) else visible
     if mode == "none":
         return None
-    numbered = ((isinstance(visible, Mapping) and visible.get("marker") == "numbered")
-                or view.annotation_presentation == "numbered")
     tokens = ThemeTokenView(theme)
     runs = []
-    for index, annotation in enumerate(view.annotations):
-        annotation_id = str(annotation.get("id", ""))
-        prefix = f"{index + 1}. " if numbered else ""
+    for annotation in content.annotations:
+        annotation_id = annotation.annotation_id
+        prefix = f"{annotation.number}. " if annotation.number is not None else ""
         advances = resolve_label_visual_advances(
             f"annotation-text:{annotation_id}", "annotation", visual_requests=visual_requests,
             icon_assets=icon_assets, theme_tokens=tokens,
         )
         inline_advance = sum((Decimal(str(width + gap)) for _, _, width, gap in advances), Decimal(0))
-        runs.append(SourceTextRun(prefix + str(annotation.get("text", "")), "annotation",
+        runs.append(SourceTextRun(prefix + annotation.content, "annotation",
                                   f"annotation-text:{annotation_id}", inline_advance))
     return SourceInput(runs=tuple(runs), typography_role="annotation")
 
