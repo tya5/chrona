@@ -431,7 +431,7 @@ A fact is exactly one of: the Actual Set as-of; a named period's `start`, `end` 
 | `daysIn` a period | Calendar days: `end - start`. Working days: the working days `d` with `start <= d < end`; a period with none is 0. |
 | `count` a declared source | The injected integer count for that source (Spec 06 §7.2). Zero is a value; an absent bundle or unavailable source yields `E_FIGURE_COUNT_UNAVAILABLE` at the declaration's `/source`. Core does not infer state or count projection objects. |
 
-**Heading count design (#1346; implementation pending).** The neutral count
+**Heading count (#1346).** The neutral count
 bundle additionally admits `groups` and `placedNotes`. Projection supplies
 selected groups; Layout supplies completed narrative occurrences (Spec33).
 Core reads integers only: it never inspects groups, geometry, text or Scene.

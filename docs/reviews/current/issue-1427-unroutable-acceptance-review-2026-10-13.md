@@ -4,16 +4,19 @@ Implementation: [PR1447](https://github.com/tya5/chrona/pull/1447),
 `d4509cd88160847b95a62ae566b840045c1b6bc3`, based on READY `208cf1cc`.
 Authority: [current work plan](../../planning/active/issue-1427-unroutable-work-plan-2026-10-12.md),
 Specs08/33/46/50, and [reviewer release decisions](https://github.com/tya5/chrona/issues/1427#issuecomment-6133101361).
-Current-head CI [38315016163](https://github.com/tya5/chrona/actions/runs/38315016163)
-passes on `43de3ff4`; exact-main three-OS release is required before closure.
+Final-head CI [38316006172](https://github.com/tya5/chrona/actions/runs/38316006172)
+passes on `ac63f6af`; PR1447 merged at `56924bd3`, synced READY `8ce44cb0`.
+Exact-main [38317097402](https://github.com/tya5/chrona/actions/runs/38317097402)
+passes all three OS full pytest/conformance/wheel gates, MCP and newest-Python
+public reproduction. All literal rows below are met with this release evidence.
 
 | Literal criterion | State | Evidence |
 | --- | --- | --- |
-| Under `suppress`, every example is byte-identical. The reviewer declares `suppress` on the five approved design targets before the default flips, in the same coordination as #1426's `search: best`. | Locally verified; release pending | Published pre-flip suppress batch:46 full Scene/SVG pairs identical against READY587ff01d. Reviewer `e442bcf5` is integrated as `4dd83d5e` before the atomic flip. Final protected SVGs are identical; Scene changes only the intentionally changed Layout resource contentIdentity, not paint or geometry. Resource provenance is disclosed, not normalized away. |
-| Under the default `relax`, the trial's v2 launch plan draws `spec-build`, and every relation of every example slide is drawn. Count the stage used per slide in the PR. | Locally verified; release pending | Actual supplied launch regression passes. All46 materializers complete;527 projected instances are normal, zero added/removed/changed paths, zero recoveries. [Per-slide counts](https://github.com/tya5/chrona/pull/1447#issuecomment-6133177789); declared window absence remains separate. |
-| A test per mode on a synthetic plan where one relation is fully blocked. | Locally verified; release pending | `test_unroutable_visible_obstacle.py` paints its completed blocking mark in real Scene/SVG for suppress/relax/overlap/stub. `test_relation_resolution_wiring.py` also checks budget, domain, terminal and fixed-fallback wiring. |
-| Halo paint order: the line lies below text in the Scene. The halo is a decoration under the contrast policy. | Locally verified; release pending | Wiring tests assert completed halo/path/text order and SVG projection; `test_contrast_policy.py` verifies decoration classification. Spec46's approved synthetic coverage is explicitly reported only until public use; unrelated missing roles and emitted-paint evaluation remain checked. |
-| Do not edit `examples/**`. | Verified for dev-authored scope | Only the reviewer-authored five protection declarations are included, explicitly authorized for the atomic release. No other example edits. |
+| Under `suppress`, every example is byte-identical. The reviewer declares `suppress` on the five approved design targets before the default flips, in the same coordination as #1426's `search: best`. | Met | Published pre-flip suppress batch:46 full Scene/SVG pairs identical against READY587ff01d. Reviewer `e442bcf5` is integrated as `4dd83d5e` before the atomic flip. Final protected SVGs are identical; Scene changes only the intentionally changed Layout resource contentIdentity, not paint or geometry. Resource provenance is disclosed, not normalized away. |
+| Under the default `relax`, the trial's v2 launch plan draws `spec-build`, and every relation of every example slide is drawn. Count the stage used per slide in the PR. | Met | Actual supplied launch regression passes. All46 materializers complete;527 projected instances are normal, zero added/removed/changed paths, zero recoveries. [Per-slide counts](https://github.com/tya5/chrona/pull/1447#issuecomment-6133177789); declared window absence remains separate. |
+| A test per mode on a synthetic plan where one relation is fully blocked. | Met | `test_unroutable_visible_obstacle.py` paints its completed blocking mark in real Scene/SVG for suppress/relax/overlap/stub. `test_relation_resolution_wiring.py` also checks budget, domain, terminal and fixed-fallback wiring. |
+| Halo paint order: the line lies below text in the Scene. The halo is a decoration under the contrast policy. | Met | Wiring tests assert completed halo/path/text order and SVG projection; `test_contrast_policy.py` verifies decoration classification. Spec46's approved synthetic coverage is explicitly reported only until public use; unrelated missing roles and emitted-paint evaluation remain checked. |
+| Do not edit `examples/**`. | Met under explicit owner disposition | Only the reviewer-authored five protection declarations are included, explicitly authorized for the atomic release. No other example edits. |
 
 Verification: focused suites57,32 and24 pass; schema-equivalence against
 `origin/main` passes. Earlier broad Layout owner suite2662 passes. Final46-context
@@ -41,4 +44,6 @@ shards, conformance, MCP and newest-Python reproduction. Artifact11775888839
 contains45 Scene metadata changes and3 reports: exact primitive identity in
 every changed Scene, zero SVG changes/retirements, contrast errors0. No new
 product changes follow this validation; verify the containing-review head and
-exact-main release before closure.
+exact-main release before closure. Final artifact11776194813 matches the reviewed
+corrected snapshot across every generated byte:45 Scene metadata changes,3 reports,
+zero SVG changes/retirements. Exact-main38317097402 now supplies that release gate.

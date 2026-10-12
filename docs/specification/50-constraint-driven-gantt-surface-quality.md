@@ -466,10 +466,10 @@ progress-pass name. Preserve facts from every executed rehearsal/recovery,
 including a rejected trial, in execution order; do not sum them into a shared
 surface budget or replace them with final-pass-only evidence. Scene projects
 these facts and CLI/MCP expose severity `info`. No Scene schema, geometry or
-resource identity input is added. Until #1427 lands, an absent accepted route
-uses the existing suppression/fallback contract and diagnostics.
+resource identity input is added. An absent accepted route follows the
+declared unroutable resolution below.
 
-**Declared unroutable resolution (#1427; implementation pending).**
+**Declared unroutable resolution (#1427).**
 For table-timeline spatial routing, Layout Profile `relationRouting.unroutable`
 selects `relax` (default), `overlap`, `stub`, or `suppress`. View still owns
 relation selection/admission; its `visibility.relations.overflow` continues to

@@ -1,6 +1,7 @@
 # Completed Scene Paint
 
-**Status:** Design complete — #332 implementation pending.  
+**Status:** Implemented (#332).
+
 **Owns:** the typed, renderer-neutral paint value carried by a completed Scene
 and the one-way conversion from resolved Theme/Scheme policy.
 

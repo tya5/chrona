@@ -140,7 +140,7 @@ children; Scene never fits the run or changes content allocation.
 
 **Slot headings (#1064, [work record](../planning/active/issue-1065-1064-field-group-indent-and-slot-heading-2026-10-04.md)).**
 
-**Heading count design (#1346; implementation pending).** A slot heading uses
+**Heading counts (#1346).** A slot heading uses
 exactly one of literal `text` or figure `template`; alignment, presence,
 reservation and overflow rules stay unchanged. Literal View overrides win.
 Presentation supplies closed programs; Layout binds before natural measurement.
