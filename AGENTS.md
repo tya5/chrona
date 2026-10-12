@@ -162,6 +162,9 @@ plus a re-run of CI), so spend cycles on code, not paperwork:
    units. Confirm the remote commit and CI/PR state. Close an issue only after
    its literal acceptance table and required release evidence are complete;
    leave reviewer-maintained boards open unless their owner directs otherwise.
+   When closing an issue referenced by normative specifications, update
+   `docs/reviews/closed-issue-specification-ledger.md`; the offline docs test
+   rejects `implementation pending` in a paragraph naming a ledgered issue.
 
 If implementation exposes a missing rule, conflicting contract, or layer
 breach, pause that slice. Update the current design, review it against the

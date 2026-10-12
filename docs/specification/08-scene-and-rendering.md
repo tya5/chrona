@@ -22,8 +22,8 @@ Project + Schedule + View Context
 
 Scene is a derived artifact. It is not the source of truth for dates, dependencies, comparison alignment, object identity, or layout intent. Editing a rendered SVG or an interactive canvas does not, by itself, edit a Project or View.
 
-Unroutable dependency recovery (#1427; implementation pending) is completed in
-Layout, not Scene. Scene projects staged relation facts, paired connector/text
+Unroutable dependency recovery (#1427) is completed in Layout, not Scene.
+Scene projects staged relation facts, paired connector/text
 placements and halo paths without measuring, routing or counting fragments.
 Recovered lines and their Theme-ground halos paint below text; the halo is a
 decoration under the completed contrast policy. Spec50 §3.3 owns resolution.
