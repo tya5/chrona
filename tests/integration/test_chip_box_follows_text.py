@@ -18,6 +18,7 @@ from tests.support.legacy_axis import use_legacy_six_tier_axis
 def _parts(*, viewer_fit: str | None = None, radius: float = 0, physical_radius=None,
            stroke: bool = False, solid_fill: bool = True):
     parts = use_legacy_six_tier_axis(sr.bundle("executive-light"))
+    parts["layout"].setdefault("relationRouting", {"maxBends": 4, "maxDetourRatio": 2})["unroutable"] = "suppress"
     body = parts["theme"]["body"]
     body_view = parts["view"]["body"]
     for key in ("selection", "grouping", "ordering"):
@@ -110,7 +111,8 @@ def test_default_and_explicit_raw_chip_output_are_byte_identical(tmp_path):
     # both old hashes. Raw and explicit-raw bytes remain exactly identical.
     assert sha256(raw.artifact.content).hexdigest() == "83b5b75f6f548316bc3f3f3f66daf512c007d16adfcb293ed2c31667d59074ec"
     # First-fit adds its completed routing receipt; SVG bytes do not change.
-    assert sha256(serialize_scene(raw.scene)).hexdigest() == "83b5e857e57cc3b0260ae669e0f8eb2c9f61351581d92ae062e0aa35825236b7"
+    # Explicit suppress changes only the verified Layout resource identity.
+    assert sha256(serialize_scene(raw.scene)).hexdigest() == "a9a685df90327fc55450aa9956418d575e8f0cc8829bafa50afb69ec2dd5935b"
     labels = [item for item in raw.surface.primitives if item.kind == "Text" and item.purpose == "member-label"]
     assert labels and any(len(item.text_layout.lines) > 1 for item in labels)
     assert "<tspan" in raw.artifact.content.decode("utf-8")

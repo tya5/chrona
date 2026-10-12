@@ -40,10 +40,11 @@ def _project(spans, relation):
                                  "to": {"object": target, "endpoint": "start"}}])
 
 
-def _parts(entry: str | None = None):
+def _parts(entry: str | None = None, *, unroutable="suppress"):
     parts = sr.bundle()
     # These regression fixtures exercise the ranked policy's lane rehearsal.
     parts["layout"].setdefault("relationRouting", {"maxBends": 4, "maxDetourRatio": 2})["search"] = "best"
+    parts["layout"]["relationRouting"]["unroutable"] = unroutable
     parts["view"] = sr.lane_view(parts["view"])
     if entry is not None:  # #1030: pin the relation entry policy where a fixture's premise depends on the order
         routing = parts["layout"].setdefault("relationRouting", {"maxBends": 4, "maxDetourRatio": 2})
@@ -51,10 +52,10 @@ def _parts(entry: str | None = None):
     return parts
 
 
-def _render(tmp_path, source, monkeypatch, *, plan: bool, entry: str | None = None):
+def _render(tmp_path, source, monkeypatch, *, plan: bool, entry: str | None = None, unroutable="suppress"):
     if not plan:
         monkeypatch.setattr(composer, "plan_lane_route_reservations", lambda context: lane_plan.LaneRoutePlan())
-    return sr.render(tmp_path, source, presentation=_parts(entry))
+    return sr.render(tmp_path, source, presentation=_parts(entry, unroutable=unroutable))
 
 
 def _suppressed(rendered) -> list[str]:
@@ -93,6 +94,18 @@ def test_the_wall_loses_its_route_to_member_names_today(tmp_path, monkeypatch):
     assert all(attempt["bends"] > attempt["maxBends"] or attempt["length"] > attempt["directLength"] * attempt["maxDetourRatio"]
                for attempt in cause["attempts"])
     assert len(_names(rendered)) == len(WALL)
+
+
+def test_relax_prefers_normal_corridor_repair_before_crossing_names(tmp_path, monkeypatch):
+    rendered = _render(tmp_path, _project(WALL, WALL_RELATION), monkeypatch,
+                       plan=True, unroutable="relax")
+    assert len(_routes(rendered)) == 1 and not _suppressed(rendered)
+    assert set(_names(rendered)) == set(WALL)
+    assert not any(d.startswith("I_LAYOUT_RELATION_RESOLUTION:")
+                   for d in rendered.scene.diagnostics)
+    for start, end in zip(_routes(rendered)[0].points, _routes(rendered)[0].points[1:]):
+        assert all(not _segment_hits_box(start, end, tuple(name.text_layout.bounds))
+                   for name in _names(rendered).values())
 
 
 def test_the_planned_corridor_draws_the_route_and_keeps_every_name_associated(tmp_path, monkeypatch):

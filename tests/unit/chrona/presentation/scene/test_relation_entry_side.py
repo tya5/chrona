@@ -10,6 +10,7 @@ from decimal import Decimal
 import pytest
 
 from chrona.presentation.layout.sources import MeasuredSources, SourceInput
+from chrona.presentation.layout.model import RelationUnroutableMode
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
 
@@ -36,8 +37,10 @@ def _route(items, rows, relation, entry, *, max_bends=4, window=None, distributi
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
                                    "timeline.mark.blockSize": Decimal(8)})
     manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"), relation_entry=entry, row_distribution=distribution,
-                       relation_max_bends=max_bends, relation_max_detour_ratio=max_detour, relation_search=search)
-    value = build_surface_input(projection=projection, surface_content=surface_content(relations=(relation,)),
+                       relation_max_bends=max_bends, relation_max_detour_ratio=max_detour, relation_search=search,
+                       relation_unroutable=RelationUnroutableMode.SUPPRESS)
+    value = build_surface_input(projection=projection, surface_content=surface_content(
+                              relations=(relation,), relation_overflow_declared=True),
                               layout_manifest=manifest, resolved_theme=_theme(), font_metrics=_Font(),
                               measured_sources=measurement, capabilities={"svg": True})
     surface = compose_review_surface(value)
@@ -45,8 +48,9 @@ def _route(items, rows, relation, entry, *, max_bends=4, window=None, distributi
     assert len(paths) <= 1 if allow_suppressed else len(paths) == 1
     marks = {p.scene_id: p for p in surface.primitives if p.scene_id.startswith("planned:")}
     if diagnostics:
-        return paths[0].points if paths else (), marks, surface.diagnostics
-    return paths[0].points, marks
+        return paths[0].points if paths else (), marks, (
+            *surface.diagnostics, *(info.scene_diagnostic() for info in surface.info_diagnostics))
+    return paths[0].points if paths else (), marks
 
 
 def _rows(*groups):
@@ -116,9 +120,9 @@ def test_no_room_between_the_start_and_the_timeline_edge_keeps_the_order():
     edge = _item("b", D(2026, 2, 1), D(2026, 2, 6))
     source = _item("a", D(2026, 1, 20), D(2026, 1, 25))
     window = (D(2026, 2, 1), D(2026, 2, 6))
-    first, _ = _route((source, edge), _rows((source,), (edge,)), DEP, "any", window=window)
-    second, _ = _route((source, edge), _rows((source,), (edge,)), DEP, "side-when-free", window=window)
-    assert first == second
+    first, _ = _route((source, edge), _rows((source,), (edge,)), DEP, "any", window=window, allow_suppressed=True)
+    second, _ = _route((source, edge), _rows((source,), (edge,)), DEP, "side-when-free", window=window, allow_suppressed=True)
+    assert first == second == ()  # Layout suppress does not invoke legacy visible overflow.
 
 
 def test_a_narrow_gap_requires_extra_bends_for_the_declared_stub_and_obeys_max_bends():

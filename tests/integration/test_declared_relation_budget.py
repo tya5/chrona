@@ -45,7 +45,8 @@ def test_budget_stop_without_admitted_route_preserves_current_suppression(tmp_pa
     parts = sr.bundle()
     # Distinct rows require a bend; the first admitted seed exhausts the
     # declared ceiling and fails the author's zero-bend quality requirement.
-    parts["layout"]["relationRouting"] = {"maxBends": 0, "maxDetourRatio": 2, "searchBudget": 1}
+    parts["layout"]["relationRouting"] = {"maxBends": 0, "maxDetourRatio": 2, "searchBudget": 1,
+                                            "unroutable": "suppress"}
     parts["view"]["body"]["visibility"]["relations"]["overflow"] = "suppress"
     rendered = sr.render(tmp_path, sr.chain_project(groups=1, per_group=2), presentation=parts)
     facts = [item for item in rendered.info_diagnostics if isinstance(item, RelationSearchBudgetHit)]
