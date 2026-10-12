@@ -149,7 +149,13 @@ def test_host_face_without_tabular_digits_uses_proportional_mode_with_warning_on
     ])
     main()
     assert output.read_bytes().startswith(b"<svg")
-    assert '"code":"W_FONT_TABULAR_UNAVAILABLE"' in scene_path.read_text()
+    emitted = json.loads(scene_path.read_text(encoding="utf-8"))
+    assert emitted["fontWarnings"] == scene_document(rendered.scene)["fontWarnings"]
+    emitted_warning = next(item for item in emitted["fontWarnings"]
+                           if item["code"] == "W_FONT_TABULAR_UNAVAILABLE"
+                           and item["role"] == "numeric" and item["family"] == family)
+    assert emitted_warning["requestedSpacing"] == "tabular"
+    assert emitted_warning["effectiveSpacing"] == "proportional"
     output_stream = capsys.readouterr()
     assert output_stream.err == ""
     envelope = json.loads(output_stream.out)
