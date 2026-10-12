@@ -1,12 +1,12 @@
 # Revision stability completion (#1300)
 
-Baseline: READY `8ce44cb0` (PR1447 and derived-main38316872809 succeeded),
+Baseline: READY `87afea92` (PR1448 and derived-main38319961337 succeeded),
 independent inspection/delta/critical-priority
 slices release-verified by [38290538367](https://github.com/tya5/chrona/actions/runs/38290538367).
 Authority: [issue](https://github.com/tya5/chrona/issues/1300),
 [selected hint contract](https://github.com/tya5/chrona/issues/1300#issuecomment-6133101982),
 Specs08/33/50/56/66 and the current acceptance review. #1427's atomic release
-is merged and reconciled. Its exact-main release38317097402 is pending.
+is merged and reconciled. Its exact-main release38317097402 succeeded.
 The selected hint design does not authorize the unresolved critical slice.
 
 ## Literal acceptance
@@ -110,7 +110,7 @@ Critical completeness remains unresolved and hints do not satisfy that criterion
 | --- | --- |
 | H1: explicit input and closure | Context v0.17 schema and mirror, contracts/resources.py, model/closure.py, usecases/materialize.py, render_review.py, draft_render.py, app/cli.py; optional pin, exact bytes/hash, same Project ID, supported Scene validation, ledger and materializer round-trip. Focused closure, Draft, CLI and materializer tests; schema equivalence. Publish after normative design. |
 | H2: Layout hint reuse, with H1 in one product PR | New Layout hint geometry/identity values and reanchor module; surface_routes.py shares its prepare_route/common candidate gates; model/info_diagnostics.py projects typed counters. Uniquely recover semantic coordinates; offer compatible current pairs in first-fit order before ordinary selection. Preserve boundary choice, shape family and interior channels, normal-domain only. Test painted/unpainted hosts, centred terminals, ambiguity, changed obstacles, degeneracy, explicit windows, all recovery modes, best/no-hint bytes and actual v1/v2 Scene/SVG shape. |
-| S: unconditional stability | relation_routing_order.py and routing/label owners only after corridor-local rule is completed/reviewed. Synthetic shift and unrelated-append controls without hints. No independent-criterion waiver. |
+| S: unconditional stability | First strengthen tests/integration/test_revision_delta_anchor_stability.py with no-hint, explicit-suppress controls: nonempty suppressed identities, unchanged delta sides under uniform date shift/unrelated append, and unrelated relation-order permutations. Hold completed endpoint/corridor geometry fixed and inspect actual Scene/SVG. Product changes in routing/label owners require the corridor-local rule to be completed/reviewed first. No independent-criterion waiver. |
 | C: protected critical feasibility | routing.py/route_search.py/common validators after reviewer domain selection and completeness/work-accounting proof; quality-overrun and impossible diagnostic controls. Not authorized yet. |
 | Release | One batched public materializer comparison per product boundary, primitive/diagnostic deltas disclosed with no authored examples changes. CI full three-OS/conformance/wheel/MCP/newest-Python gate; literal acceptance review keeps original S/C rows open until met. |
 
@@ -130,7 +130,7 @@ candidate validation are shared seams, not duplicated geometry pipelines.
 H1/H2 local evidence: optional neutral pin/schema, immutable closure capture, common
 Scene ingress/project validation, read-ledger and Draft flag are implemented.
 Focused closure/contract/Draft/ingress tests pass; schema-equivalence against
-READY8ce44cb0 passes without changing historical verdicts. Real Store and execution
+READY87afea92 passes without changing historical verdicts. Real Store and execution
 overlay round-trips preserve exact artifact bytes; corrupt hash and wrong Project
 fail through stable diagnostics. H2 carries neutral geometry through preparation,
 count closure and final Layout; ordered reanchored proposals use the common
@@ -140,6 +140,19 @@ without search; best retains byte-identical Scene/SVG and receipts.100 focused
 tests pass; public46-context no-hint reproduction passes. Exact-head CI/full
 release is still required. Original unconditional stability/critical criteria
 remain unfinished; do not close the issue for completing hints alone.
+
+S evidence design: the existing default-relax test can pass with an empty
+suppression set. Use a synthetic completed blocker, not a corpus edit or forced
+routing result, and retain at least one drawn control. Compare source-keyed
+suppressed identities rather than unrelated diagnostic counts. Apply any date
+shift to both planned and actual dates. Assert the blocker is actually painted.
+This is a test-only implementation boundary, not a new routing contract.
+Architecture review finds no demonstrated processing-order defect: dependency
+routes and ports are excluded from normal mark/text/label obstacles. Global
+shape-channel contacts still need investigation before claiming corridor-local
+independence. If stronger evidence fails, stop S and publish a normative design
+correction before product code; passing fixtures alone do not prove the general
+rule or discharge the separate critical feasibility criterion.
 
 1. Complete selected contracts and architecture review here; update normative
    Context/Scene/routing specifications and publish before product changes.

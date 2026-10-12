@@ -2,8 +2,6 @@
 from __future__ import annotations
 
 from chrona.presentation.layout.relation_hints import HintProposal, propose_hint
-from chrona.presentation.model.info_diagnostics import RelationHintReceipt, RelationHintSummary
-
 from dataclasses import dataclass, replace
 from collections import Counter
 from math import hypot
@@ -56,7 +54,7 @@ from chrona.presentation.layout.text import metric_for_role, measure_text_width,
 from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.presentation.model.info_diagnostics import (
     RelationRoutingSummary, RelationSearchBudgetHit, RelationResolutionInfo, RelationResolutionSummary,
-    RelationPolicySupersession,
+    RelationPolicySupersession, RelationHintReceipt, RelationHintSummary,
 )
 
 
@@ -86,7 +84,7 @@ class SurfaceRoutesBatch:
     instance_rows: Mapping[str, str]
     comparison_clusters: Mapping[tuple[str, str], tuple[MarkPlacement, ...]]
     diagnostics: tuple[str, ...]
-    routing_info: tuple[RelationRoutingSummary | RelationSearchBudgetHit, ...] = ()
+    routing_info: tuple[RelationRoutingSummary | RelationSearchBudgetHit | RelationHintReceipt | RelationHintSummary, ...] = ()
     resolution_info: tuple[RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession, ...] = ()
 
 
