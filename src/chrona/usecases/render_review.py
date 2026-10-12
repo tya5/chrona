@@ -69,7 +69,8 @@ from chrona.presentation.scene.contrast_policy import (
 from chrona.presentation.scene.perceptibility import ScenePerceptibilityFinding, evaluate_scene_perceptibility
 from chrona.presentation.scene.paint import ScenePaintError
 from chrona.presentation.scene.serialization import scene_document
-from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
+from chrona.presentation.scene.v05_builder import SceneBuildError
+from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
 from chrona.presentation.scene.visual_capabilities import (
     VisualCapabilityError,
     resolve_visual_profile,
@@ -335,7 +336,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                             if surface_preparation is not None else None)
     if render_closure.detail_profile is not None:
         ledger.detail()
-    scene_input = build_scene_input(
+    scene_input = build_surface_input(
         projection=projection, surface_content=surface_content, layout_manifest=manifest,
         resolved_theme=theme, font_metrics=font_metrics, measured_sources=measured,
         capabilities={name: True for name in render_closure.context.target.capabilities},

@@ -97,5 +97,13 @@ Focused render/caption batch88 PASS; allocation/auto-capacity batch80 PASS with
 four ownership-spy/table migration failures subsequently fixed (8 PASS);
 new replay/isolation/font-precedence and ownership tests7 PASS. Import direction
 11 packages/37 inward edges;237 reachable modules, no orphan; value inventory PASS.
-P1 is not accepted yet: completed-placement Scene input/factory migration and
-original-output characterization remain. No count behavior/schema/example edits.
+P1 projection reduction is complete: internal factories now use the Presentation
+`surface_pipeline` coordinator. It validates intent, invokes Layout once after
+the existing unused-input checkpoint, and passes a mandatory completed composition
+to Scene. Scene carries no font/measurement/preparation/search/progress state and
+cannot replay Layout. This staged connection preserves diagnostic ordering.
+Scene/ownership64 PASS; projection/relation/provenance/replay29 PASS; migrated
+axis/lane/texture/terminal148 PASS; real integration113 PASS plus one stale spy
+subsequently corrected (19 focused PASS). All46 actual public Scene/SVG pairs are
+byte-identical; disposable evidence `/tmp/chrona-1346-p1-materializers-LoMmYO`.
+No count behavior/schema/example edits. Next: P2 facts, forms and closed programs.

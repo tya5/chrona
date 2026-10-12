@@ -123,7 +123,7 @@ def test_width_changed_lane_candidate_reuses_one_selection_index_for_preflight_a
     from chrona.presentation.layout import surface_mark_visibility
     from chrona.presentation.layout.lane_projection import close_lane_projection
     from chrona.presentation.model.projection import build_review_projection
-    from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
+    from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
     from tests.unit.chrona.presentation.scene.test_relation_ghost_endpoints import (
         MODES, PLACED, PROJECT, SNAPSHOT,
     )
@@ -169,7 +169,7 @@ def test_width_changed_lane_candidate_reuses_one_selection_index_for_preflight_a
     assert current.inline.request.mark_visibility_index is initial_index
     assert preflight.mark_visibility_index is initial_index
     assert len(selected) == expected_occurrences
-    value = build_scene_input(
+    value = build_surface_input(
         projection=projection, surface_content=candidate.surface_content, layout_manifest=manifest,
         resolved_theme=_theme(), font_metrics=candidate.font_metrics,
         measured_sources=candidate.measured_sources, capabilities={"svg": True},

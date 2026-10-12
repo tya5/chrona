@@ -162,7 +162,7 @@ def test_real_owners_recover_centered_name_by_rerouting_a_vertical_dependency(mo
     from chrona.presentation.layout.sources import MeasuredSources, SourceInput
     from chrona.presentation.layout.surface_geometry import bounds_from_rect
     from chrona.presentation.layout.surface_quality import CollisionDomain
-    from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
+    from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
     from tests.unit.chrona.presentation.scene.test_v05_builder import (
         _Font, _manifest, _title_measurement, surface_content,
     )
@@ -194,7 +194,7 @@ def test_real_owners_recover_centered_name_by_rerouting_a_vertical_dependency(mo
         relation_max_detour_ratio=6)
     content = surface_content(relations=project["relations"], show_member_labels=False,
         label_placement="plot", label_content=(), label_side="inside", label_overflow="suppress")
-    scene_input = build_scene_input(projection=projection, surface_content=content, layout_manifest=manifest,
+    scene_input = build_surface_input(projection=projection, surface_content=content, layout_manifest=manifest,
         resolved_theme=fixture._theme_with_route_fixture_geometry(), font_metrics=_Font(),
         measured_sources=measured, capabilities={"svg": True})
     captured = {}

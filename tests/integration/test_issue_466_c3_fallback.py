@@ -13,7 +13,7 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "
 
 
 def test_crowded_halcyon_plot_selects_declared_rail_with_named_diagnostic(tmp_path, monkeypatch):
-    import chrona.presentation.scene.v05_builder as builder
+    import chrona.presentation.surface_pipeline as builder
 
     example = ROOT / "examples/halcyon-1"
     view = yaml.safe_load((example / "views/02-programme-board.yaml").read_text(encoding="utf-8"))
