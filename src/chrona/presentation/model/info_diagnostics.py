@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 
 
 def _shown(value: object) -> str:
@@ -72,4 +73,35 @@ class PaintOmission:
                 f"profile={self.visual_profile};paintable={suggested}")
 
 
-PresentationInfo = SuppressedPlotLabels | PaintOmission
+@dataclass(frozen=True)
+class RelationSearchBudgetHit:
+    """A completed Layout instance/pass exhausted its declared additional ceiling."""
+
+    surface_id: str
+    relation_id: str
+    pass_name: str
+    budget: int
+    expansions: int
+
+    def __post_init__(self) -> None:
+        if (any(not isinstance(value, str) or not value for value in (
+                self.surface_id, self.relation_id, self.pass_name))
+                or any(isinstance(value, bool) or not isinstance(value, int) or value < 1
+                       for value in (self.budget, self.expansions))
+                or self.expansions != self.budget):
+            raise _diagnostic_error("RelationSearchBudgetHit requires instance/pass identity and exact exhausted count")
+
+    @property
+    def code(self) -> str:
+        return "I_LAYOUT_RELATION_SEARCH_BUDGET"
+
+    def payload(self) -> dict[str, object]:
+        return {"surfaceId": self.surface_id, "relationId": self.relation_id,
+                "pass": self.pass_name,
+                "budget": self.budget, "expansions": self.expansions}
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))
+
+
+PresentationInfo = SuppressedPlotLabels | PaintOmission | RelationSearchBudgetHit

@@ -285,7 +285,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
             tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot),
             temporal_endpoints=mark_batch.temporal_endpoints)))
     surface_obstacles = route_label_plan.obstacles
-    routes_batch = route_label_plan.routes
+    routes_batch = replace(route_label_plan.routes,
+        routing_info=(*lane_route_plan.routing_info, *route_label_plan.routes.routing_info))
     relations = list(routes_batch.relations)
     visible_route_fallbacks = list(routes_batch.visible_route_fallbacks)
     instance_anchors = dict(routes_batch.instance_anchors)
@@ -387,6 +388,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         text_visual_warnings=text_visual_warnings, visible_label_overflows=visible_label_overflows,
         visible_route_fallbacks=visible_route_fallbacks, visible_group_header_overflows=visible_group_header_overflows,
         lane_label_suppressions=lane_label_suppressions,
+        routing_info=routes_batch.routing_info,
         diagnostic_provenance=tuple(diagnostic_provenance),
         window_label_absences=member_label_requests.window_absences,
         visible_label_subjects=visible_label_subjects))

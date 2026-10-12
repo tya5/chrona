@@ -30,7 +30,7 @@ from chrona.presentation.layout.frame_glyph import complete_frame_glyphs
 from chrona.presentation.layout.region_frame import complete_region_frames
 from chrona.presentation.layout.surface_visuals import place_axis_band_visuals
 from chrona.presentation.layout.viewer_fit import stamp_surface_fits
-from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
+from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels, RelationSearchBudgetHit
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject, table_row_subjects, review_row_subjects
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
@@ -85,6 +85,7 @@ class SurfaceCompletionContext:
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
     visible_label_subjects: Mapping[str, tuple[DiagnosticSubject, ...]] = field(default_factory=dict)
     window_label_absences: tuple[WindowLabelAbsence, ...] = ()
+    routing_info: tuple[RelationSearchBudgetHit, ...] = ()
 
 
 def contains_block_interval(*, container_start: Decimal, container_end: Decimal,
@@ -448,8 +449,9 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                                  axis_tier_outcomes=tuple(axis_tier_outcomes),
                                  diagnostics=tuple(diagnostics), icons=completed_icons,
                                  canvas_bounds=canvas, fit_warnings=tuple(fit_warnings),
-                                 info_diagnostics=((SuppressedPlotLabels("table-timeline", suppressed_plot_labels),)
-                                                   if suppressed_plot_labels else ()),
+                                 info_diagnostics=(*context.routing_info,
+                                     *((SuppressedPlotLabels("table-timeline", suppressed_plot_labels),)
+                                       if suppressed_plot_labels else ())),
                                  lane_emissions=lane_emissions, patterns=patterns,
                                  lane_label_suppressions=tuple(lane_label_suppressions),
                                  aligned_strokes=complete_aligned_strokes(tuple(marks), tuple(shapes),

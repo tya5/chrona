@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Mapping
+from collections.abc import Mapping, Sequence
+from types import MappingProxyType
+from typing import Any
 
 from chrona.presentation.model.semantic_registry import (
     ContrastClass,
@@ -65,6 +67,63 @@ _SIBLING_INK_ROLES = frozenset({"annotation-kind-stamp"})
 
 class SceneContrastPolicyError(ValueError):
     """Stable diagnostic for an incomplete completed-Scene policy input."""
+
+
+@dataclass(frozen=True)
+class _PreparedPrimitives(Sequence):
+    """Private per-evaluation classification; original positions and raw facts stay intact."""
+
+    values: tuple[Any, ...]
+    categories: Mapping[str, tuple[tuple[int, Mapping[str, Any]], ...]]
+    first_ids: Mapping[str, tuple[int, Mapping[str, Any]]]
+
+    def __len__(self):
+        return len(self.values)
+
+    def __getitem__(self, index):
+        return self.values[index]
+
+
+def _prepare_primitives(primitives: Sequence[Any]) -> _PreparedPrimitives:
+    if isinstance(primitives, _PreparedPrimitives):
+        return primitives
+    categories = {name: [] for name in ("hosts", "sparse", "artwork", "notes", "overlays")}
+    first_ids = {}
+    for position, primitive in enumerate(primitives):
+        if not isinstance(primitive, Mapping):
+            continue  # the original evaluation loop still rejects it at its original position
+        item = (position, primitive)
+        identifier, kind, role = primitive.get("id"), primitive.get("kind"), primitive.get("visualRole")
+        if isinstance(identifier, str):
+            first_ids.setdefault(identifier, item)
+        # Keep malformed discriminators in the shortlist so existing query-time
+        # validation/failure order is not replaced by eager validation here.
+        if not isinstance(kind, str) or kind in {"Rect", "Symbol"}:
+            categories["hosts"].append(item)
+        if role == "annotation-note-box":
+            categories["notes"].append(item)
+        if kind == "Symbol" and is_annotation_artwork_role(role):
+            categories["artwork"].append(item)
+        paint = primitive.get("paint")
+        if ((kind == "Symbol" and is_frame_glyph_role(role))
+                or (role == "canvas-texture" and isinstance(paint, Mapping) and paint.get("fill") is None)):
+            categories["sparse"].append(item)
+        if not isinstance(role, str) or role in {"canvas-overlay", "canvas-overlay-gradient"}:
+            categories["overlays"].append(item)
+    return _PreparedPrimitives(tuple(primitives),
+        MappingProxyType({key: tuple(values) for key, values in categories.items()}), MappingProxyType(first_ids))
+
+
+def _candidate_entries(primitives: Sequence[Any], category: str):
+    return (primitives.categories[category] if isinstance(primitives, _PreparedPrimitives)
+            else enumerate(primitives))
+
+
+def _first_id(primitives: Sequence[Any], identifier: str):
+    if isinstance(primitives, _PreparedPrimitives):
+        return primitives.first_ids.get(identifier)
+    return next(((position, item) for position, item in enumerate(primitives)
+                 if isinstance(item, Mapping) and item.get("id") == identifier), None)
 
 
 @dataclass(frozen=True)
@@ -133,6 +192,7 @@ def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity:
         ground = _ground(canvas, scene_path)
         primitives = raw_surface.get("primitives")
         _require(isinstance(primitives, list), f"missing primitives at {scene_path}")
+        primitives = _prepare_primitives(primitives)
         if any(isinstance(item, Mapping) and (
                 item.get("visualRole") in {"canvas-overlay", "canvas-overlay-gradient"}
                 or (item.get("visualRole") == "canvas-texture" and isinstance(item.get("paint"), Mapping)
@@ -162,7 +222,7 @@ def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity:
     )))
 
 
-def _mark_figures(primitives: list[Any]) -> dict[int, tuple[tuple[int, Mapping[str, Any]], ...]]:
+def _mark_figures(primitives: Sequence[Any]) -> dict[int, tuple[tuple[int, Mapping[str, Any]], ...]]:
     """Recognize completed mark placements, not arbitrary same-source paint layers."""
     groups: dict[str, list[tuple[int, int, Mapping[str, Any]]]] = {}
     for index, primitive in enumerate(primitives):
@@ -196,7 +256,7 @@ def _mark_figures(primitives: list[Any]) -> dict[int, tuple[tuple[int, Mapping[s
 
 
 def _figure_findings(scene_path: str, parts: tuple[tuple[int, Mapping[str, Any]], ...],
-                     canvas: str | None, primitives: list[Any], *, catalog_patterns: bool,
+                     canvas: str | None, primitives: Sequence[Any], *, catalog_patterns: bool,
                      cones: tuple[ConeGround, ...], severities: Mapping[str, str]
                      ) -> tuple[SceneContrastFinding, ...]:
     """Observe one mark's visible ink against external grounds, never its siblings."""
@@ -233,7 +293,7 @@ def _figure_findings(scene_path: str, parts: tuple[tuple[int, Mapping[str, Any]]
 
 
 def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: str | None,
-                        primitives: list[Any], index: int, *,
+                        primitives: Sequence[Any], index: int, *,
                         catalog_patterns: bool = False,
                         cones: tuple[ConeGround, ...] = (),
                         severities: Mapping[str, str] = None) -> tuple[SceneContrastFinding, ...]:
@@ -403,7 +463,7 @@ def _failure(code: str, severity_class: str, policy_class: str, severities: Mapp
 def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: Any,
                       paint: Mapping[str, Any], opacity: float, floor: float,
                       disposition: str, code: str, purpose: str, role: str, primitive_id: str,
-                      canvas: str | None, primitives: list[Any], index: int,
+                      canvas: str | None, primitives: Sequence[Any], index: int,
                       catalog_patterns: bool = True,
                       cones: tuple[ConeGround, ...] = (),
                       severity_class: str = LEGIBILITY_CLASS,
@@ -472,14 +532,14 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
     return tuple(findings)
 
 
-def _has_later_overlay(primitives: list[Any], subject: Mapping[str, Any], index: int) -> bool:
+def _has_later_overlay(primitives: Sequence[Any], subject: Mapping[str, Any], index: int) -> bool:
     key = (subject.get("paintOrder", 0), index)
     return any(isinstance(item, Mapping) and item.get("visualRole") in {
         "canvas-overlay", "canvas-overlay-gradient"} and (item.get("paintOrder", 0), position) > key
-        for position, item in enumerate(primitives))
+        for position, item in _candidate_entries(primitives, "overlays"))
 
 
-def effective_surface_paint_pairs(subject: Mapping[str, Any], primitives: list[Any], index: int,
+def effective_surface_paint_pairs(subject: Mapping[str, Any], primitives: Sequence[Any], index: int,
                                    canvas: Mapping[str, Any], channel: str = "fill") -> tuple:
     """Shared quality observation of opt-in surface treatments, using real host grounds."""
     paint = subject.get("paint")
@@ -501,7 +561,7 @@ def effective_surface_paint_pairs(subject: Mapping[str, Any], primitives: list[A
                                     grounds=[option for group in groups for option in group], sample=sample)
 
 
-def _cone_overlay(cones: tuple[ConeGround, ...], primitives: list[Any], index: int,
+def _cone_overlay(cones: tuple[ConeGround, ...], primitives: Sequence[Any], index: int,
                   host_id: str | None) -> tuple[ConeGround, ...]:
     """The cones painted after a primitive's host and before the primitive: the ones that tint its ground.
 
@@ -511,8 +571,8 @@ def _cone_overlay(cones: tuple[ConeGround, ...], primitives: list[Any], index: i
         return ()
     primitive = primitives[index]
     key = (primitive.get("paintOrder", 0), index)
-    host_key = next(((item.get("paintOrder", 0), position) for position, item in enumerate(primitives)
-                     if isinstance(item, Mapping) and item.get("id") == host_id), None) if host_id else None
+    host = _first_id(primitives, host_id) if host_id else None
+    host_key = (host[1].get("paintOrder", 0), host[0]) if host is not None else None
     return tuple(cone for cone in cones if cone.key < key and (host_key is None or cone.key > host_key))
 
 
@@ -540,7 +600,7 @@ def _under_cone(overlay: tuple[ConeGround, ...], primitive: Mapping[str, Any], g
     return tuple(blended) if wholly_inside else ((ground, kind, ground_id), *blended)
 
 
-def _host_ink(primitives: list[Any], host_id: str | None, catalog_patterns: bool = False) -> tuple[str, str] | None:
+def _host_ink(primitives: Sequence[Any], host_id: str | None, catalog_patterns: bool = False) -> tuple[str, str] | None:
     """Return the ink of the textured ground a host is, with its family, else nothing.
 
     A canvas texture (family `texture`) and a Rect with a completed catalogue pattern (family `pattern-host`,
@@ -548,9 +608,9 @@ def _host_ink(primitives: list[Any], host_id: str | None, catalog_patterns: bool
     """
     if host_id is None:
         return None
-    for primitive in primitives:
-        if not isinstance(primitive, Mapping) or primitive.get("id") != host_id:
-            continue
+    found = _first_id(primitives, host_id)
+    if found is not None:
+        primitive = found[1]
         paint = primitive.get("paint")
         stroke = paint.get("stroke") if isinstance(paint, Mapping) else None
         if not is_hex_color(stroke):
@@ -565,7 +625,7 @@ def _host_ink(primitives: list[Any], host_id: str | None, catalog_patterns: bool
     return None
 
 
-def _note_box_ground(primitive: Mapping[str, Any], primitives: list[Any], index: int,
+def _note_box_ground(primitive: Mapping[str, Any], primitives: Sequence[Any], index: int,
                      sample: tuple[float | None, float | None]
                      ) -> tuple[str | None, str | None, bool, str]:
     """Resolve note prose only against its earlier, same-source opaque note box."""
@@ -575,7 +635,7 @@ def _note_box_ground(primitive: Mapping[str, Any], primitives: list[Any], index:
     x, y = sample
     order = primitive.get("paintOrder", 0)
     candidates: list[tuple[int, int, Mapping[str, Any]]] = []
-    for prior_index, prior in enumerate(primitives):
+    for prior_index, prior in _candidate_entries(primitives, "notes"):
         if (not isinstance(prior, Mapping) or prior.get("visualRole") != "annotation-note-box"
                 or prior.get("sourceRef") != source_ref or prior.get("kind") not in {"Rect", "Symbol"}):
             continue
@@ -620,13 +680,13 @@ def _sample_point(primitive: Mapping[str, Any], channel: str) -> tuple[float | N
     return inline + width / 2, block + height / 2
 
 
-def _host_under(subject: Mapping[str, Any], primitives: list[Any], index: int,
+def _host_under(subject: Mapping[str, Any], primitives: Sequence[Any], index: int,
                 sample: tuple[float, float]) -> tuple[int, Mapping[str, Any], bool] | None:
     """The topmost Rect or Symbol with a fill, painted before `subject`, that covers the sample point."""
     x, y = sample
     order = subject.get("paintOrder", 0)
     candidates: list[tuple[int, int, Mapping[str, Any], bool]] = []
-    for prior_index, prior in enumerate(primitives):
+    for prior_index, prior in _candidate_entries(primitives, "hosts"):
         # A Rect is an ordinary painted ground. A Symbol is also accepted: a multi-part
         # glyph gate (#464) paints several sibling Symbol primitives over the same
         # bounds, and a later part's true ground is the earlier part beneath it, not
@@ -683,7 +743,7 @@ def _host_under(subject: Mapping[str, Any], primitives: list[Any], index: int,
 _Ground = tuple[str, str, "str | None"]
 
 
-def _grounds_for(primitive: Mapping[str, Any], primitives: list[Any], index: int, canvas: str | None,
+def _grounds_for(primitive: Mapping[str, Any], primitives: Sequence[Any], index: int, canvas: str | None,
                  sample: tuple[float | None, float | None], *, cones: tuple[ConeGround, ...],
                  catalog_patterns: bool, decoration: bool
                  ) -> tuple[str | None, list[list[_Ground]] | None, bool]:
@@ -713,7 +773,7 @@ def _grounds_for(primitive: Mapping[str, Any], primitives: list[Any], index: int
 
 
 def _with_artwork_ink(host_id: str | None, groups: list[list[_Ground]], label: Mapping[str, Any],
-                      primitives: list[Any], index: int) -> tuple[str | None, list[list[_Ground]] | None, bool]:
+                      primitives: Sequence[Any], index: int) -> tuple[str | None, list[list[_Ground]] | None, bool]:
     """Add the ink of the vector artwork the label touches as one more ground (#848), or fail closed on it.
 
     The artwork behind an annotation is a few sibling Symbol parts over the note box. A part's ink is a ground
@@ -738,7 +798,7 @@ def _with_artwork_ink(host_id: str | None, groups: list[list[_Ground]], label: M
     return host_id, [*groups, grounds], False
 
 
-def _artwork_ink(label: Mapping[str, Any], primitives: list[Any], index: int
+def _artwork_ink(label: Mapping[str, Any], primitives: Sequence[Any], index: int
                  ) -> tuple[list[tuple[str, str, float]], str | None]:
     """The (part id, ink colour, opacity) of each earlier same-source artwork part that touches the label.
 
@@ -753,7 +813,7 @@ def _artwork_ink(label: Mapping[str, Any], primitives: list[Any], index: int
         return [], None
     order = label.get("paintOrder", 0)
     selected: list[Mapping[str, Any]] = []
-    for prior_index, prior in enumerate(primitives):
+    for prior_index, prior in _candidate_entries(primitives, "artwork"):
         if (not isinstance(prior, Mapping) or not is_annotation_artwork_role(prior.get("visualRole")) or prior.get("kind") != "Symbol"
                 or prior.get("sourceRef") != source_ref):
             continue
@@ -764,7 +824,7 @@ def _artwork_ink(label: Mapping[str, Any], primitives: list[Any], index: int
     return selected_symbol_ink(selected, rect, unreadable_identity="annotation-artwork")
 
 
-def _grounds_under(subject: Mapping[str, Any], primitives: list[Any], index: int, canvas: str | None,
+def _grounds_under(subject: Mapping[str, Any], primitives: Sequence[Any], index: int, canvas: str | None,
                    sample: tuple[float | None, float | None], *, label: Mapping[str, Any],
                    cones: tuple[ConeGround, ...], catalog_patterns: bool, ink: bool, composite: bool
                    ) -> tuple[str | None, list[list[_Ground]] | None, bool]:
@@ -833,7 +893,7 @@ def _grounds_under(subject: Mapping[str, Any], primitives: list[Any], index: int
 
 def _sparse_ground_layers(groups: list[list[_Ground]], host_id: str | None,
                           label: Mapping[str, Any],
-                          primitives: list[Any], subject_index: int,
+                          primitives: Sequence[Any], subject_index: int,
                           cones: tuple[ConeGround, ...]
                           ) -> tuple[list[list[_Ground]], str | None]:
     """Interleave sparse frame/pattern ink and cones between host and subject.
@@ -854,15 +914,15 @@ def _sparse_ground_layers(groups: list[list[_Ground]], host_id: str | None,
 
     host_key = (-1, -1)
     if host_id is not None:
-        host_key = next(((item.get("paintOrder", 0), position)
-                         for position, item in enumerate(primitives)
-                         if isinstance(item, Mapping) and item.get("id") == host_id), host_key)
+        host = _first_id(primitives, host_id)
+        if host is not None:
+            host_key = (host[1].get("paintOrder", 0), host[0])
     actual_upper = primitives[subject_index]
     upper_order = actual_upper.get("paintOrder", 0)
     subject_key = (upper_order, subject_index)
     candidates: list[tuple[tuple[int, int], int, Mapping[str, Any]]] = []
     x, y, width, height = bounds
-    for part_index, part in enumerate(primitives):
+    for part_index, part in _candidate_entries(primitives, "sparse"):
         patterned_ink = (isinstance(part, Mapping) and part.get("visualRole") == "canvas-texture"
                          and isinstance(part.get("paint"), Mapping) and part["paint"].get("fill") is None)
         if (not isinstance(part, Mapping) or not patterned_ink and (
@@ -929,7 +989,7 @@ def _translucent(own_kind: str, under_kind: str) -> str:
     return f"{prefix}-over-{under_kind}"
 
 
-def _tinted(groups: list[list[_Ground]], label: Mapping[str, Any], primitives: list[Any], index: int,
+def _tinted(groups: list[list[_Ground]], label: Mapping[str, Any], primitives: Sequence[Any], index: int,
             host_id: str | None, cones: tuple[ConeGround, ...]) -> list[list[_Ground]]:
     """Each ground with the cones painted after its host and before the primitive composited over it (#890)."""
     overlay = _cone_overlay(cones, primitives, index, host_id)
