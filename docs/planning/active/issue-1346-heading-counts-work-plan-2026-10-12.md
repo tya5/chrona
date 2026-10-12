@@ -1,7 +1,7 @@
 # Reusable heading counts (#1346)
 
-Published baseline: READY `8653aa28b8d4f1f7dff31f12dcdba6a4cc59a7fa`
-(`derived-main`38197643651 SUCCESS). The WIP adopts it by ordinary merge;
+Published baseline: READY `67dfd2d3bb108aa159e2c5e2e406235b8f0e794d`
+(`derived-main`38216591192 SUCCESS). The WIP adopts it by ordinary merge;
 all1343 foundation work is merged/released.1346 implementation is on its WIP;
 not merged or release-accepted.
 [Issue and current work record](https://github.com/tya5/chrona/issues/1346#issuecomment-6112367414).
@@ -117,8 +117,8 @@ Exact read dependencies admit only dependent name-range/intrinsic-fit rejection.
 Unused-input ordering, fresh trial state, accepted progress and all executed
 routing-pass facts are verified; unrelated failures propagate.
 
-Integrated source base: `2b1883e7` (PR1431, default still best; derived READY
-pending). Completion retains both routing-summary/budget facts and narrative
+Integrated READY base: `67dfd2d3` (PR1431, default still best).
+Completion retains both routing-summary/budget facts and narrative
 receipts. Real4→3 closure isolation is tested under best and first-fit.
 Integrated count/policy/budget/ownership/tool batch55 PASS; S0 L1/L2/L3 PASS.
 The composer remains orchestration-sized; no acceptance assertion was relaxed.
@@ -132,8 +132,7 @@ Integrated46 full Scene/SVG pairs are byte-identical, with zero route deltas:
 `/tmp/chrona-1346-integrated-materializers-p7Gtzt/materializer-evidence.json`.
 Import direction, reachability (244 modules/no orphan) and value inventory pass.
 
-Next: reconcile the final READY main tip,
-one coherent implementation PR/current-head CI, then literal acceptance review
+Next: one coherent implementation PR/current-head CI, then literal acceptance review
 and exact-main three-OS release gate. No authored examples/resources or managed
 outputs changed. #1430 is parked awaiting reviewer-owned target declarations;
 1346 resumes at this independent coordination boundary.
