@@ -5,7 +5,8 @@ from chrona.presentation.layout.model import RelationUnroutableMode as Mode
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.ports import ConnectorEgress
 from chrona.presentation.layout.relation_resolution import (
-    RelationResolutionStage as Stage, relaxed_domain, search_relation_resolution,
+    RelationResolutionStage as Stage, RelationRouteAttemptOutcome,
+    relaxed_domain, search_relation_resolution,
 )
 from chrona.presentation.layout.relation_shapes import shape_channels
 from chrona.presentation.layout.routing import select_relation_route
@@ -90,3 +91,16 @@ def test_terminal_or_untyped_stage_is_not_a_search_domain(stage):
 def test_untyped_mode_is_rejected_not_treated_as_relax():
     with pytest.raises(ValueError):
         _resolve("relax", SurfaceObstacleIndex())
+
+
+def test_side_entry_completion_keeps_search_receipt_without_forging_acceptance():
+    result = _resolve(Mode.RELAX, SurfaceObstacleIndex(), reject=True, budget=1)
+    receipt = result.attempts[0].search_receipt
+    assert receipt.selected_pair is None and receipt.budget_hit
+    outcome = RelationRouteAttemptOutcome(receipt, PAIR,
+        ((10., 50.), (90., 50.)), used_back_route=True)
+    assert outcome.search_receipt is receipt and outcome.selected_pair == PAIR
+    with pytest.raises(ValueError, match="E_LAYOUT_ROUTE_ATTEMPT_INVALID"):
+        RelationRouteAttemptOutcome(receipt, PAIR, outcome.points)
+    with pytest.raises(ValueError, match="E_LAYOUT_ROUTE_ATTEMPT_INVALID"):
+        RelationRouteAttemptOutcome(receipt, None, (), used_back_route=True)

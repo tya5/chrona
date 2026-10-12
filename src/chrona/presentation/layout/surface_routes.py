@@ -36,7 +36,10 @@ from chrona.presentation.layout.relation_fan_in import (
     NodeApproach, complete_fan_in, same_port_arrivals, target_port_identity, terminal_style,
 )
 from chrona.presentation.layout.relation_routing_order import dependency_routing_order
-from chrona.presentation.layout.relation_resolution import RelationObstacleDomain
+from chrona.presentation.layout.relation_resolution import (
+    RelationObstacleDomain, RelationResolutionStage, RelationRouteAttemptOutcome,
+    relaxed_domain, search_relation_resolution,
+)
 from chrona.presentation.layout.path_geometry import flatten_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
 from chrona.presentation.layout.surface_quality import (
@@ -253,21 +256,24 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     budget_hits: list[RelationSearchBudgetHit] = []
     primary_marks = tuple(mark for mark in marks if mark.placement_id.startswith("planned:")
                           and ":snapshot:" not in mark.placement_id and ":scenario:" not in mark.placement_id)
-    primary_interiors: dict[float, tuple[ObstacleRect, ...]] = {}
+    primary_interiors: dict[tuple[float, frozenset[str] | None], tuple[ObstacleRect, ...]] = {}
 
-    def clears_primary_marks(points: tuple[tuple[float, float], ...], width: float) -> bool:
+    def clears_primary_marks(points: tuple[tuple[float, float], ...], width: float,
+                             required_ids: frozenset[str] | None = None) -> bool:
         """Reject positive-length crossings of any planned mark's stroked interior."""
-        if width not in primary_interiors:
+        key = (width, required_ids)
+        if key not in primary_interiors:
             inset = width / 2
-            primary_interiors[width] = tuple(ObstacleRect(
+            primary_interiors[key] = tuple(ObstacleRect(
                 float(mark.bounds.inline) + inset, float(mark.bounds.block) + inset,
                 float(mark.bounds.inline + mark.bounds.inline_size) - inset,
                 float(mark.bounds.block + mark.bounds.block_size) - inset)
                 for mark in primary_marks if float(mark.bounds.inline_size) > width
-                and float(mark.bounds.block_size) > width)
+                and float(mark.bounds.block_size) > width
+                and (required_ids is None or mark.placement_id in required_ids))
         return all(segment_length_inside_rect(ObstacleSegment(left, right), rect) <= 1e-9
                    for left, right in zip(points, points[1:]) if left != right
-                   for rect in primary_interiors[width])
+                   for rect in primary_interiors[key])
 
     def relation_stroke(relation) -> float:
         return float(request.theme_tokens.number(semantic_binding(relation.semantic_id).theme_role, "strokeWidth"))
@@ -287,24 +293,26 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 theme.number(semantic_binding(semantic_id).theme_role, "strokeWidth"))))
                 + float(theme.number(semantic_binding(semantic_id).theme_role, "strokeWidth")))
 
-    def entry_stub_free(egress: ConnectorEgress) -> bool:
+    def entry_stub_free(egress: ConnectorEgress, domain: RelationObstacleDomain | None = None) -> bool:
         """The stub lies in the timeline and crosses no mark, text or label (host marks exempt)."""
         end = egress.exposed_port[0]
         if end < timeline_bounds[0] or end > timeline_bounds[0] + timeline_bounds[2]:
             return False
-        return not obstacles.egress_collisions(ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
+        index = domain.obstacles if domain is not None else obstacles
+        return not index.egress_collisions(ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
             classes=route_classes, regions=("timeline", "group-header"))
 
-    def entry_candidates(mark, endpoint, toward, cluster, relation, *, entry):
+    def entry_candidates(mark, endpoint, toward, cluster, relation, *, entry,
+                         domain: RelationObstacleDomain | None = None):
         preferred = entry_stub_length(relation.semantic_id) if entry in {"side", "side-when-free"} else 0.0
         candidates = connector_egress_candidates(mark, endpoint, toward, cluster, entry=entry,
-            stub_length=preferred, stub_free=entry_stub_free)
+            stub_length=preferred, stub_free=lambda egress: entry_stub_free(egress, domain))
         minimum = entry_minimum(relation.semantic_id)
         if preferred > minimum and not any(item.stub for item in candidates):
             # Preserve full-radius geometry whenever free. A tighter corridor may
             # still retain the entire head; path completion clips only the turn.
             candidates = connector_egress_candidates(mark, endpoint, toward, cluster, entry=entry,
-                stub_length=minimum, stub_free=entry_stub_free)
+                stub_length=minimum, stub_free=lambda egress: entry_stub_free(egress, domain))
         return candidates
 
     def enters_along(relation, points) -> bool:
@@ -320,11 +328,14 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     window_rejected = [False]
 
     def prepare_route(points, width, hosts, source_side, target_side, *,
-                      start_minimum=0.0, end_minimum=0.0):
+                      start_minimum=0.0, end_minimum=0.0,
+                      domain: RelationObstacleDomain | None = None):
+        index = domain.obstacles if domain is not None else obstacles
+        required_ids = domain.required_primary_mark_ids if domain is not None else None
         def clear(path):
             return terminal_runs_preserved(tuple(points), path,
                 start_minimum=start_minimum or None, end_minimum=end_minimum or None
-                ) and clears_primary_marks(path, width) and all(not obstacles.egress_collisions(
+                ) and clears_primary_marks(path, width, required_ids) and all(not index.egress_collisions(
                 ObstacleSegment(a, b), host_ids=hosts, classes=route_classes,
                 regions=("timeline", "group-header")) for a, b in zip(path, path[1:]) if a != b)
         reduced = remove_substroke_jogs(tuple(points), width, accept=clear)
@@ -391,7 +402,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
 
     back_route_reason = [""]
 
-    def back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal):
+    def back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal,
+                   domain: RelationObstacleDomain | None = None):
         """`entry: side` (#1060): a target the source does not approach from the entry side is entered through the
         gap between the rows. Returns (egress pair, points) or None when it does not fit; the order then falls back,
         and `back_route_reason` names why (reported with the fallback diagnostic)."""
@@ -413,7 +425,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         gap_y = target_edges[0] if below else target_edges[1]
         far = (-1e9 if starts else 1e9, float(bounds.block))
         stub = next((item for item in entry_candidates(target_mark, endpoint, far,
-            comparison_clusters.get((target_mark.source_ref, instance_rows[target_id]), ()), relation, entry="side")
+            comparison_clusters.get((target_mark.source_ref, instance_rows[target_id]), ()), relation,
+            entry="side", domain=domain)
             if item.exposed_port != item.semantic_port and item.side == ("start" if starts else "end")), None)
         if stub is None:
             return fail("entry-stub-blocked")
@@ -437,7 +450,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             end_minimum = hypot(stub.exposed_port[0] - stub.semantic_port[0],
                                 stub.exposed_port[1] - stub.semantic_port[1])
             points = prepare_route(raw, width, hosts, source_exit.side, stub.side,
-                start_minimum=start_minimum, end_minimum=end_minimum)
+                start_minimum=start_minimum, end_minimum=end_minimum, domain=domain)
             if points is None:
                 fail("terminal-axis-blocked")
                 continue
@@ -459,14 +472,16 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         and route_top <= p[1] <= route_bottom) for p in points):
                 fail("entry-stub-blocked")
                 continue
+            index = domain.obstacles if domain is not None else obstacles
+            required_ids = domain.required_primary_mark_ids if domain is not None else None
             blockers = tuple(hit for left_, right_ in zip(points, points[1:]) if left_ != right_
-                for hit in obstacles.egress_collisions(ObstacleSegment(left_, right_), host_ids=hosts,
+                for hit in index.egress_collisions(ObstacleSegment(left_, right_), host_ids=hosts,
                     classes=route_classes, regions=("timeline", "group-header")))
             if blockers:
                 fail("blocked:" + ",".join(sorted({item.obstacle_class + "=" + item.placement_id
                                                   for item in blockers}))[:200])
                 continue
-            if not clears_primary_marks(points, width):
+            if not clears_primary_marks(points, width, required_ids):
                 fail("primary-mark-blocked")
                 continue
             if search_policy == "first-fit":
@@ -553,9 +568,29 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         port_id=target_port(relation, target_id, target_mark, target_entry),
                         paint_id=relation.semantic_id, terminal=completed_end), entry_penalty, bends, length)
 
-                domain = RelationObstacleDomain.normal(obstacles)
-                selection = select_relation_route(port_pairs, obstacles=domain.obstacles,
-                        bounds=routing_bounds, search_policy=search_policy, channels=channels,
+                normal_domain = RelationObstacleDomain.normal(obstacles)
+                attempted_domains: dict[RelationResolutionStage, RelationObstacleDomain] = {}
+                endpoint_hosts = frozenset(host for pair in port_pairs for egress in pair for host in egress.host_ids)
+
+                def attempt_route(domain: RelationObstacleDomain) -> RelationRouteAttemptOutcome:
+                    attempted_domains[domain.stage] = domain
+                    back_route_reason[0] = ""
+                    pairs = port_pairs
+                    candidate_channels = channels
+                    if domain.stage is not RelationResolutionStage.NORMAL:
+                        entries = (entry_candidates(target_mark, relation.target_endpoint,
+                            source_nominal, comparison_clusters.get((target_mark.source_ref,
+                                instance_rows[target_id]), ()), relation,
+                            entry=context.layout_manifest.relation_entry, domain=domain) if target_mark else
+                            (ConnectorEgress(relation.target_endpoint, target_nominal, target_nominal, ()),))
+                        pairs = tuple((left, right) for left in source_candidates for right in entries)
+                        if context.layout_manifest.relation_entry in {"side-when-free", "side"}:
+                            pairs = stub_pairs_first(pairs)
+                        candidate_channels = (shape_channels(domain.obstacles, bounds=routing_bounds,
+                            row_edges=tuple(row_edges.values()), classes=route_classes)
+                            if search_policy == "first-fit" else None)
+                    selection = select_relation_route(pairs, obstacles=domain.obstacles,
+                        bounds=routing_bounds, search_policy=search_policy, channels=candidate_channels,
                         search_budget=context.layout_manifest.relation_search_budget,
                         source_host_id=source_mark.placement_id if source_mark else None,
                         target_host_id=target_mark.placement_id if target_mark else None,
@@ -566,36 +601,52 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                             start_minimum=hypot(source_exit.exposed_port[0] - source_exit.semantic_port[0],
                                                 source_exit.exposed_port[1] - source_exit.semantic_port[1]),
                             end_minimum=hypot(target_entry.exposed_port[0] - target_entry.semantic_port[0],
-                                              target_entry.exposed_port[1] - target_entry.semantic_port[1])),
-                        accept=lambda candidate: clears_primary_marks(candidate, dependency_stroke)
+                                              target_entry.exposed_port[1] - target_entry.semantic_port[1]),
+                            domain=domain),
+                        accept=lambda candidate: clears_primary_marks(candidate, dependency_stroke,
+                            domain.required_primary_mark_ids)
                             and terminal_segments_fit(candidate, dependency_stroke), rank=candidate_rank)
+                    pair, route = selection.selected_pair, selection.points
+                    used_back_route = False
+                    if (context.layout_manifest.relation_entry == "side" and target_mark is not None
+                            and not (pair is not None and enters_along(relation, route))):
+                        backed = back_route(relation, source_mark, target_mark, source_id, target_id,
+                                            source_nominal, domain=domain)
+                        if backed is not None:
+                            if search_policy == "first-fit":
+                                pair, route = backed
+                                used_back_route = True
+                            else:
+                                back_rank = candidate_rank(backed[1], *backed[0])
+                                forward_rank = candidate_rank(route, *pair) if pair is not None else None
+                                if forward_rank is None or back_rank < forward_rank:
+                                    pair, route = backed
+                                    used_back_route = True
+                                elif back_rank[0] and not forward_rank[0]:
+                                    back_route_reason[0] = "node-approach-conflict"
+                    return RelationRouteAttemptOutcome(selection, pair, route,
+                                                       used_back_route, back_route_reason[0])
+
+                resolution = search_relation_resolution(context.layout_manifest.relation_unroutable,
+                    obstacles=obstacles, endpoint_host_ids=endpoint_hosts, attempt=attempt_route)
+                receipt = resolution.accepted or (resolution.attempts[-1] if resolution.attempts else None)
+                domain = attempted_domains[receipt.stage] if receipt is not None else normal_domain
+                outcome = receipt.selection if receipt is not None else None
+                selected_pair, points = (outcome.selected_pair, outcome.points) if outcome is not None else (None, ())
+                back_route_reason[0] = outcome.entry_fallback_reason if outcome is not None else ""
+                lane_selection = (outcome.search_receipt if outcome is not None and not outcome.used_back_route
+                                  and projection.lane_membership is not None else None)
                 relation_instances += 1
-                shape_settled += int(selection.settled_by_shape and not selection.search_used)
-                fallback_search += int(selection.search_used)
-                if selection.budget_hit:
-                    budget_hits.append(RelationSearchBudgetHit("table-timeline", scene_id,
-                        context.progress_pass, selection.search_budget,
-                        selection.search_expansions))
-                selected_pair, points = selection.selected_pair, selection.points
-                if projection.lane_membership is not None:
-                    lane_selection = selection
-                if (context.layout_manifest.relation_entry == "side" and target_mark is not None
-                        and not (selected_pair is not None and enters_along(relation, points))):
-                    # #1060/#1084: the forward side entry did not give a horizontal entry; try the back-route
-                    backed = back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal)
-                    if backed is not None:
-                        if search_policy == "first-fit":
-                            selected_pair, points = backed
-                            lane_selection = None
-                        else:
-                            back_rank = candidate_rank(backed[1], *backed[0])
-                            forward_rank = (candidate_rank(points, *selected_pair)
-                                            if selected_pair is not None else None)
-                            if forward_rank is None or back_rank < forward_rank:
-                                selected_pair, points = backed
-                                lane_selection = None
-                            elif back_rank[0] and not forward_rank[0]:
-                                back_route_reason[0] = "node-approach-conflict"
+                searched = any(item.search_receipt.search_used for item in resolution.attempts)
+                fallback_search += int(searched)
+                shape_settled += int(receipt is not None and receipt.search_receipt.settled_by_shape and not searched)
+                for item in resolution.attempts:
+                    selection = item.search_receipt
+                    if selection.budget_hit:
+                        pass_name = (context.progress_pass if item.stage is RelationResolutionStage.NORMAL else
+                                     f"{context.progress_pass}:{item.stage.value}")
+                        budget_hits.append(RelationSearchBudgetHit("table-timeline", scene_id,
+                            pass_name, selection.search_budget, selection.search_expansions))
                 fallback = selected_pair is None
                 if fallback:
                     if request.surface_content.relation_overflow == "suppress":
@@ -646,7 +697,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     tuple(points), marker_start, marker_end, dependency_stroke)
                 completed_start = orient_terminal(completed_start, points, source_egress.side, source=True)
                 completed_end = orient_terminal(completed_end, points, target_egress.side, source=False)
-                arc_blocked = corner_arc_blocker(obstacles, frozenset((*source_egress.host_ids, *target_egress.host_ids)),
+                arc_blocked = corner_arc_blocker(domain.obstacles, frozenset((*source_egress.host_ids, *target_egress.host_ids)),
                                                  dependency_stroke, route_classes)
 
                 placed = RelationPlacement(scene_id, source_port_id, target_port_id, tuple(points),
@@ -654,7 +705,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     path_commands=(rounded_orthogonal_path(tuple(points), radius,
                         start_run=terminal_run(marker_start),
                         end_run=terminal_run(marker_end),
-                        blocked=lambda arc: arc_blocked(arc) or not clears_primary_marks(arc, dependency_stroke))
+                        blocked=lambda arc: arc_blocked(arc) or not clears_primary_marks(arc, dependency_stroke,
+                            domain.required_primary_mark_ids))
                         if radius > 0 and not fallback else ()),
                     marker_start=completed_start, marker_end=completed_end,
                     label_content=relation_label_content(relation), source_ref=relation_id,

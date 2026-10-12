@@ -5,6 +5,7 @@ from enum import Enum
 
 from chrona.presentation.layout.model import RelationUnroutableMode
 from chrona.presentation.layout.obstacles import SurfaceObstacleIndex
+from chrona.presentation.layout.ports import ConnectorEgress
 from chrona.presentation.layout.routing import RelationRouteSelection
 
 
@@ -55,9 +56,36 @@ def relaxed_domain(obstacles: SurfaceObstacleIndex, stage: RelationResolutionSta
 
 
 @dataclass(frozen=True)
+class RelationRouteAttemptOutcome:
+    """One search plus its completed side-entry alternative, without forged search evidence."""
+
+    search_receipt: RelationRouteSelection
+    selected_pair: tuple[ConnectorEgress, ConnectorEgress] | None
+    points: tuple[tuple[float, float], ...]
+    used_back_route: bool = False
+    entry_fallback_reason: str = ""
+
+    def __post_init__(self) -> None:
+        if ((self.selected_pair is None) != (not self.points)
+                or (self.selected_pair is not None and len(self.points) < 2)
+                or not isinstance(self.used_back_route, bool)
+                or not isinstance(self.entry_fallback_reason, str)
+                or (self.used_back_route and self.selected_pair is None)
+                or (not self.used_back_route and (
+                    self.selected_pair != self.search_receipt.selected_pair
+                    or self.points != self.search_receipt.points))):
+            raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID: completed side-entry outcome")
+
+
+@dataclass(frozen=True)
 class StagedRouteAttempt:
     stage: RelationResolutionStage
-    selection: RelationRouteSelection
+    selection: RelationRouteSelection | RelationRouteAttemptOutcome
+
+    @property
+    def search_receipt(self) -> RelationRouteSelection:
+        return (self.selection.search_receipt
+                if isinstance(self.selection, RelationRouteAttemptOutcome) else self.selection)
 
 
 @dataclass(frozen=True)
@@ -76,7 +104,8 @@ class RelationSearchResolution:
 def search_relation_resolution(mode: RelationUnroutableMode, *,
                               obstacles: SurfaceObstacleIndex,
                               endpoint_host_ids: frozenset[str],
-                              attempt: Callable[[RelationObstacleDomain], RelationRouteSelection],
+                              attempt: Callable[[RelationObstacleDomain],
+                                                RelationRouteSelection | RelationRouteAttemptOutcome],
                               ) -> RelationSearchResolution:
     """Invoke one Layout attempt owner; it creates a fresh budget each call.
 

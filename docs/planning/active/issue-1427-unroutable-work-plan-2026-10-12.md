@@ -7,11 +7,12 @@ Authority: [issue](https://github.com/tya5/chrona/issues/1427) and
 [reviewer decisions](https://github.com/tya5/chrona/issues/1427#issuecomment-6125006829).
 Current [Status](https://github.com/tya5/chrona/issues/1427#issuecomment-6114823479).
 
-Current slice: critical facts/order and typed mode admission are staged; the
-Layout search coordinator and obstacle domains have real-selector tests.
-Production still uses its ordinary domain. Port admission, reduction and
-primary-mark validation must use the same domain before connecting recovery;
-overlap/stubs, halo projection and the final default flip remain incomplete.
+Current slice: critical facts/order and typed mode admission are staged.
+Search, port admission, side-entry alternatives, reduction, primary-mark and
+corner validation now use the same stage domain. Synthetic collision-domain
+tests prove actual Scene/SVG recovery; search receipts remain separate from
+completed side-entry choices. Overlap/stubs, halo projection, stage diagnostics,
+visible-obstacle release evidence and the final default flip remain incomplete.
 This is not release acceptance. The staged default stays suppress until the
 atomic protection/recovery gate below is satisfied.
 
