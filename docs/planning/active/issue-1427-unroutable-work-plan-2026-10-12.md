@@ -39,6 +39,14 @@ for all 46 contexts, including critical-order integration (zero route deltas).
 Evidence: `python -m tools.routing_performance_evidence --output-dir <empty-dir>
 --jobs 4`; the batch JSON and all actual serialized outputs are retained for PR
 evidence. This does not prove the default-relax acceptance or final protection.
+Isolated relax-default candidate (only engine/model defaults changed): all46
+materializers complete; zero route additions/removals/geometry changes, zero
+spatial suppressions and zero recovery stages. The45 changed Scene/SVG pairs
+carry policy/provenance/migration diagnostics, not routing changes. Actual launch
+v1/v2 `spec-build` Scene/SVG regression passes under both staged suppress and
+candidate relax. Reviewer coordination for target protection and an enabled
+public halo witness is tracked in
+[comment6127633845](https://github.com/tya5/chrona/issues/1427#issuecomment-6127633845).
 
 ## Literal acceptance
 
