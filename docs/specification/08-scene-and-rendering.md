@@ -103,6 +103,15 @@ A Scene contains:
 
 A Scene MAY be serialized as a cache or inspection artifact, but that serialization is not the canonical Project format.
 
+The CLI's optional `--emit-scene` sibling is a readable inspection representation
+(#1300): after canonical typed/schema validation, each complete
+`surfaces[*].primitives` entry occupies one JSON line, with surrounding structure
+indented. Parsing yields exactly the canonical document, including list order and
+numeric/text values. This CLI-only formatting MUST NOT change canonical Scene
+serialization/cache identity, target artifacts, geometry, paint, or the normal
+machine result envelope. Existing exclusive creation and serialization failures
+remain authoritative; there is no compatibility formatting mode.
+
 ### 3.2.1 CLI output filename and target identity
 
 For `render` and `render-workspace`, the CLI MUST resolve one target before

@@ -3,6 +3,7 @@ from copy import deepcopy
 from dataclasses import replace
 from datetime import date
 from decimal import Decimal
+import json
 
 import pytest
 
@@ -209,8 +210,18 @@ def test_actual_finish_delta_text_and_detached_snapshot_ghost_are_real_scene_con
     variance = next(item for item in surface.primitives if item.scene_id == "variance:a:a")
     assert variance.kind == "Text" and variance.text == "+1d"
     actual = next(item for item in surface.primitives if item.scene_id == "actual:a:a")
-    assert abs((variance.bounds[0] + variance.bounds[2])
-               - (actual.bounds[0] + actual.bounds[2])) < 3
+    # The end slot is occupied, so the approved canonical ladder takes start
+    # on the actual bar's line, rather than retaining the old end-edge alignment.
+    assert actual.bounds[0] - (variance.bounds[0] + variance.bounds[2]) == pytest.approx(3.5)
+    assert variance.bounds[1] + variance.bounds[3] / 2 == pytest.approx(
+        actual.bounds[1] + actual.bounds[3] / 2)
+    fallback, = [json.loads(item.split(":", 1)[1]) for item in surface.diagnostics
+                 if item.startswith("I_LAYOUT_FINISH_DELTA_ANCHOR_FALLBACK:")
+                 and json.loads(item.split(":", 1)[1])["placementId"] == variance.scene_id]
+    assert (fallback["preferredSide"], fallback["selectedSide"], fallback["outsideBounds"]) == (
+        "end", "start", False)
+    assert "member-label:a:a" in fallback["blockerPlacementIds"]
+    assert path.scene_id + ":segment:0" in fallback["blockerPlacementIds"]
     ghost = next(item for item in surface.primitives if item.scene_id == "planned:b:snapshot:b")
     target = next(item for item in surface.primitives if item.scene_id == "planned:b:b")
     stub_tip = float(target.bounds[0]) - 11
