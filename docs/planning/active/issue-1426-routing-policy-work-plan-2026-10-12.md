@@ -49,8 +49,13 @@ or skipping inspection. Exact findings/payload comparisons cover all public
 manifest-declared Scenes and synthetic dict/UserDict/proxy inputs; the affected
 contrast/ground/pattern suite has 265 PASS (13.72 s). This internal hot-path
 slice was planned on issue comment 6115452760; it changes no public contract.
-Re-measure before interpreting its performance effect; profiled timings are
-not CPU-budget evidence.
+The subsequent internal plan (6115533053) prepares stable per-surface primitive
+candidate categories and first-id lookup once, retaining original indices,
+all exact query-time predicates and failure order. No global cache or input
+mutation. Cached-versus-uncached full public findings/payloads, malformed ink,
+paint-order ties, duplicate ids, nested mapping types and preparation counters
+pass: 272 focused tests, 10.74 s; Scene delivery/import/reachability checks pass.
+The measured CLI results below replace the initial wiring measurements.
 
 ## Selected first-fit slice and architecture review
 
@@ -102,18 +107,18 @@ merged #1343 schema deltas were retired by the equivalence tool. Vocabulary
 report is stale by the one new declared site; CI regenerates it, not a manual
 patch. No authored examples or managed outputs change; full pytest is CI-owned.
 
-Initial three-input wiring measurements (CPU=user+system, not wall time):
+Current three-input measurements (CPU=user+system, not wall time):
 
 | Objects/relations | CPU seconds, runs 1/2 | Peak RSS MiB, runs 1/2 | Shape/search counts |
 | --- | --- | --- | --- |
-| 19/10, public `routing_revision/project-v1.yaml` | 1.13 / 1.10 | 75.9 / 75.0 | 9 / 1 |
-| 200/46, `routing_scale_project(200)` | 6.825 / 6.876 | 100.2 / 100.5 | 43 / 3 |
-| 1000/228, `routing_scale_project(1000)` | 120.334 / 117.964 | 171.5 / 176.2 | 210 / 18 |
+| 19/10, public `routing_revision/project-v1.yaml` | 0.91 / 1.08 | 73.0 / 76.6 | 9 / 1 |
+| 200/46, `routing_scale_project(200)` | 4.033 / 4.164 | 100.5 / 100.3 | 43 / 3 |
+| 1000/228, `routing_scale_project(1000)` | 53.388 / 53.324 | 197.5 / 196.7 | 210 / 18 |
 
-All six renders succeed; Scene/SVG hashes match within each pair. The 1000
-result improves on the published approximately 3,170 s baseline, but remains
-above 60 s. This is not final acceptance: finish efficiency and public-output
-review, then remeasure. Keep all issue scope and release gates open.
+All six renders succeed; Scene/SVG hashes match within each pair and the prior
+wiring outputs. Both 1000 runs meet 60 s versus the published approximately
+3,170 s baseline. This is not whole-issue acceptance: explicit budget/search
+scope, public-output review, target migration and CI release remain required.
 
 ## Policy-wiring design review
 
