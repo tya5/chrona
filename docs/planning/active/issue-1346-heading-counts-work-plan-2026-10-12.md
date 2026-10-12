@@ -202,6 +202,16 @@ rejected whole-trial facts/progress are absent.45 focused policy/real-layout/
 budget/attribution/ownership tests PASS. Final original public materializers
 were batched once:46/46 full Scene/SVG pairs byte-identical, zero route deltas;
 evidence `/tmp/chrona-1346-final-materializers-XoBMIR/materializer-evidence.json`.
-Import/reachability/value guards PASS. P4 remains: three-design HALCYON/roadmap
-literal rendered evidence, final-head CI and exact-main release acceptance.
+Import/reachability/value guards PASS. P4 rendered evidence passes for Title Card,
+Marquee and Sunday on actual HALCYON and roadmap Contexts. HALCYON template text
+matches the original Scene and actual SVG; roadmap counts independently resolve
+to26 items/6 groups/3 completed notes. Three additional immutable-roadmap View
+controls resolve3 items/2 groups and change the corresponding rendered text.
+`tools/heading_count_reuse_evidence.py` reproduces this in disposable stores,
+sharing Theme/Layout/Scheme resources without editing authored examples.
+Evidence: `/tmp/chrona-1346-reuse-evidence-iXvAKS/heading-reuse-evidence.json`
+and `/tmp/chrona-1346-reuse-control-Pr5wkX/heading-reuse-evidence.json`.
+Tool tests7 PASS; combined ownership batch11 PASS; structural guards PASS.
+Final-head CI, PR review and exact-main release acceptance remain outstanding.
+Park after publishing this evidence: board #454 now prioritizes #1430, then #1427.
 No authored examples/resources changed.
