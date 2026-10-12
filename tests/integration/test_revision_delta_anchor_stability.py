@@ -1,8 +1,11 @@
 """#1300: actual Scene/SVG revision evidence from project-independent fixtures."""
 from datetime import date, timedelta
+from dataclasses import replace
 import xml.etree.ElementTree as ET
 import yaml
+import pytest
 
+from chrona.presentation.layout import surface_composer
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
 from tests.support import synthetic_review as sr
 
@@ -62,6 +65,39 @@ def _suppressed_relations(rendered):
     return {item for item in rendered.scene.diagnostics if item.startswith("W_LAYOUT_RELATION_SUPPRESSED:")}
 
 
+def _render_explicit_suppress_case(directory, monkeypatch, *, shift=0, append=False):
+    directory.mkdir()
+    move = timedelta(days=shift)
+    source = sr.with_calendar(sr.project({
+        "source": sr.span("source", date(2027, 1, 4) + move, 2),
+        "target": sr.span("target", date(2027, 2, 1) + move, 2),
+        "blocker": sr.span("blocker", date(2027, 1, 5) + move, 2),
+    }, [{"id": "link", "type": "dependency", "lag": "0d",
+         "from": {"object": "source", "endpoint": "end"},
+         "to": {"object": "target", "endpoint": "start"}}]))
+    if append:
+        source["objects"]["unrelated"] = sr.span("unrelated", date(2027, 1, 20) + move, 2)
+    parts = sr.bundle()
+    parts["view"]["body"]["rows"] = {"mode": "automatic"}
+    parts["layout"]["relationRouting"] = {
+        "search": "first-fit", "unroutable": "suppress", "maxBends": 4, "maxDetourRatio": 100,
+    }
+    compose = surface_composer.compose_surface_marks
+    fixture_bounds = []
+
+    def completed_blocker(base, **kwargs):
+        batch = compose(base, **kwargs)
+        fixture_bounds.append(base.timeline.bounds)
+        return replace(batch, marks=tuple(
+            replace(mark, bounds=base.timeline.bounds, corner_radius=0)
+            if mark.source_ref == "blocker" else mark for mark in batch.marks))
+
+    with monkeypatch.context() as patch:
+        patch.setattr(surface_composer, "compose_surface_marks", completed_blocker)
+        rendered = sr.render(directory, source, presentation=parts)
+    return rendered, fixture_bounds[-1]
+
+
 def test_default_preset_delta_anchors_and_route_class_survive_translation_and_unrelated_append(tmp_path):
     baseline = _render(tmp_path / "baseline")
     shifted = _render(tmp_path / "shifted", shift=7)
@@ -73,3 +109,27 @@ def test_default_preset_delta_anchors_and_route_class_survive_translation_and_un
         assert not [item for item in rendered.scene.diagnostics if item.startswith("E_")]
     assert _anchor_sides(baseline) == _anchor_sides(shifted) == _anchor_sides(appended)
     assert _suppressed_relations(baseline) == _suppressed_relations(shifted) == _suppressed_relations(appended)
+
+
+def test_explicit_suppression_identity_survives_uniform_shift_and_unrelated_append(tmp_path, monkeypatch):
+    cases = (
+        _render_explicit_suppress_case(tmp_path / "baseline", monkeypatch),
+        _render_explicit_suppress_case(tmp_path / "shifted", monkeypatch, shift=7),
+        _render_explicit_suppress_case(tmp_path / "appended", monkeypatch, append=True),
+    )
+    identities = []
+    for rendered, bounds in cases:
+        blocker, = [item for item in rendered.surface.primitives
+                    if item.source_ref == "blocker" and item.kind.value == "Rect"]
+        assert blocker.bounds == tuple(float(value) for value in (
+            bounds.inline, bounds.block, bounds.inline_size, bounds.block_size))
+        svg = ET.fromstring(rendered.artifact.content)
+        elements = {element.get("data-scene-id", element.get("id")): element for element in svg.iter()}
+        assert blocker.scene_id in elements
+        assert float(elements[blocker.scene_id].get("width")) == pytest.approx(blocker.bounds[2])
+        assert float(elements[blocker.scene_id].get("height")) == pytest.approx(blocker.bounds[3])
+        warnings = _suppressed_relations(rendered)
+        assert warnings  # Non-vacuous witness; compare route identities, not summary/count payloads.
+        assert not [item for item in rendered.scene.diagnostics if item.startswith("E_")]
+        identities.append({warning.split(":", 1)[1] for warning in warnings})
+    assert identities[0] == identities[1] == identities[2]
