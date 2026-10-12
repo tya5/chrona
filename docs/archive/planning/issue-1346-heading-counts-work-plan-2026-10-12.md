@@ -1,9 +1,10 @@
 # Reusable heading counts (#1346)
 
-Published baseline: READY `f0e431991e91e5f0e30512b587ebef44daea31ff`
-(`derived-main`38224427442 SUCCESS). The WIP adopts it by ordinary merge;
-all1343 foundation work is merged/released.1346 implementation is on its WIP;
-not merged or release-accepted.
+Completed and closed. Implementation PR1432 and acceptance PR1434 are merged.
+Exact-main `146c24a0b64f1b0305d589423bb05cd59934a489` passed
+[release CI38236213189](https://github.com/tya5/chrona/actions/runs/38236213189).
+See the [literal acceptance review](../reviews/issue-1346-heading-counts-acceptance-review-2026-10-12.md).
+Design baseline: READY `f0e431991e91e5f0e30512b587ebef44daea31ff`.
 [Issue and current work record](https://github.com/tya5/chrona/issues/1346#issuecomment-6112367414).
 #1343 closes selected note identity/content.1426 additionally closes
 per-instance/per-pass budget evidence; preserve it through the count closure.
@@ -14,7 +15,7 @@ per-instance/per-pass budget evidence; preserve it through the count closure.
 | On the roadmap, they show its own counts. | Same templates against the roadmap; independent selected/completed membership evidence and actual rendered text. |
 
 Do not edit `examples/**`; permanent adoption is reviewer-owned.
-Selected design; implementation underway. Normative contracts are in
+Implemented design. Normative contracts are in
 Specs05/06/33, not duplicated here. Reuse `{figure:<id>}`; no count-only DSL.
 View declares integer sources; Layout defaults offer figure text formats;
 Presentation closes immutable template programs. Placed notes come from typed
@@ -70,9 +71,8 @@ generic LayoutError catch or public schema-version bump.
 
 ## Final implementation plan
 
-Design/architecture clarification published at `b52bbf34`. Publish this plan
-before product changes. One implementation PR; independently testable commits
-on the same WIP, followed by one session acceptance-document publication.
+Design/architecture clarification was published at `b52bbf34` before product
+changes. The following slices landed in PR1432, followed by acceptance PR1434.
 
 | Slice | Owned files/interfaces | Focused acceptance and publication |
 | --- | --- | --- |
@@ -109,7 +109,7 @@ resuming that slice. Do not substitute selected-note totals or fix corpus YAML.
 
 ## Current implementation
 
-P1–P3 are implemented on WIP, not yet release-accepted. Layout owns source
+P1–P4 are merged and release-accepted. Layout owns source
 preparation, allocation, binding and finite N..0 count closure; Scene projects
 only accepted completed geometry. Typed completed narrative receipts distinguish
 bodies/full summaries/unconsumed notes from suppressed or index fragments.
@@ -135,11 +135,9 @@ Integrated46 full Scene/SVG pairs are byte-identical, with zero route deltas:
 `/tmp/chrona-1346-integrated-materializers-p7Gtzt/materializer-evidence.json`.
 Import direction, reachability (244 modules/no orphan) and value inventory pass.
 
-PR1432 head `c3bcd13f` passed CI38219663492. Reviewer PR1433 now advances main
-with five explicit best declarations; its only Scene change is truthful Layout
-resource identity. Reconciliation passes127 focused count/policy/budget/schema
-tests. Follow the READY tip and rerun current-base PR CI before landing; do not
-reuse old-base green as release acceptance. Then publish the concise literal
-review and complete exact-main three-OS release. No authored examples/resources
-or managed outputs are edited by this implementation. #1430 target declarations
-are merged; its default flip follows this already-active issue's landing.
+Final PR1432 head `8a654848` passed current-base CI38225129233 and merged at
+`c1095342`. Reconciliation passed127 focused count/policy/budget/schema tests.
+Acceptance PR1434 merged at `3a0a75a9`; PR1436 corrected a corpus assertion
+without changing public artifacts. Exact-main CI38236213189 passed on
+`146c24a0`, and the issue closed after literal acceptance review. No authored
+examples/resources or managed outputs were edited by this implementation.
