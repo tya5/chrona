@@ -67,5 +67,23 @@ Spec56 additive/shared definitions and1341 whole-member defaults remain intact.
 No source-id substring tests, Scene recount, post-measurement substitution,
 generic LayoutError catch or public schema-version bump.
 
-Next publication: finalize the implementation slices and owned interfaces
-against this published clarification, then publish the plan before code.
+## Final implementation plan
+
+Design/architecture clarification published at `b52bbf34`. Publish this plan
+before product changes. One implementation PR; independently testable commits
+on the same WIP, followed by one session acceptance-document publication.
+
+| Slice | Owned files/interfaces | Focused acceptance and publication |
+| --- | --- | --- |
+| P1 — Layout preparation ownership | New `layout/surface_render_plan.py`: typed resolved intent/resources in, measured/allocated/completed surface out. Extract preparation from `usecases/render_review.py`; reuse `surface_preparation`, `source_sizing`, `sources` and engine candidate rules. `scene/v05_builder.py` consumes the completed placement, with no second composition; migrate all internal factory callers through one explicit preparation entry. | No count behavior yet. Natural/fixed/fill/auto sizing, cap/overflow and exact error order unchanged; Scene ownership guards, existing preparation/heading/slot/network tests and original Scene/SVG characterization. Publish structural commit; no retained fallback/callback geometry owner. |
+| P2 — Facts, forms and closed programs | `core/figures.py`: neutral optional groups/placedNotes facts. `review/figure_facts.py`: distinct Primary/combined items and nonempty selected groups, ghosts excluded. `contracts/resources.py`, `contracts/view_defaults.py`, `heading_text.py`, `figure_text.py`, `review/v05_content.py`: immutable reference/program and format admission. Share existing kanji tables with `group_header_text.py`; add a pure cardinal formatter. View/Layout schemas and shared definitions admit optional formats and caption template; no Project/Scene schema or version change. | Digits/padding/English/kanji/zero/boundaries, invalid IDs/non-count/scoped references and exact pointers; raw Summary values and literal captions unchanged. Defaults whole replacement including empty map; override/absent-slot validation. Defer only declared Layout figures and refuse all unsupported early consumers. Publish facts/format/program commit. |
+| P3 — Narrative receipts and count closure | `surface_annotations.py`, `surface_content.py`, `surface_quality.py`, `surface_completion.py`: immutable occurrence receipts emitted by body/full-summary/unconsumed-note producers, one occurrence once. New Layout count coordinator binds source inputs before measurement and composes N..0 with fresh placement/index/diagnostic state. Accepted output carries final count facts and placement; Application only assembles that result for Scene. | Marker/status/kind-only and suppressed bodies do not count; explicit duplicate narratives do. No late reads: one ordinary layout, unused late facts still resolve. At mostN+1 trials; stable/highest solution, no solution, zero, kanji upper rejection/lower success. Typed range/count-dependent heading-fit rejection carries dependency/source evidence; unrelated Layout/font/schema errors propagate unchanged, never an error-code whitelist. Verify budget facts retained inside the accepted invocation and discarded whole-candidate state cannot leak. Publish closure commit. |
+| P4 — Literal acceptance and release | Synthetic tests plus disposable Title Card/Marquee/Sunday template conversions; original repository examples untouched. Test helpers/read-only developer evidence, schema-equivalence expected-delta retirement and diagnostics inventories via the CI snapshot. | Render actual Scene and serialized SVG text on HALCYON and roadmap, including selected/group/placed-note facts. Add distinct3/2 synthetic data so equal26/6 corpora cannot mask constants. Batch all46 original public materializers once after structural integration; byte identity without new declarations. Final-head CI uses shared snapshot; exact-main three-OS pytest/conformance/wheel/smoke/newest-Python evidence and literal review before closure. |
+
+P1 input contains resolved Projection/semantic content, profile, Theme/font
+resources, viewport policy and capabilities, not Application callbacks. Pure
+measurement reuse requires complete content/metric keys; mutable request/search
+state is fresh. Only new template-bearing resources change text or allocation.
+If producer receipts, required-fit attribution or preparation extraction reveal
+a contract gap, publish its design/spec/whole-architecture correction before
+resuming that slice. Do not substitute selected-note totals or fix corpus YAML.
