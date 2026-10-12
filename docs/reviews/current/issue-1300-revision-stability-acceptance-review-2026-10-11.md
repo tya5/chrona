@@ -3,10 +3,11 @@
 # Issue1300 — revision stability acceptance
 
 Partial implementation only; no full-issue or release acceptance.
-WIP baseline READY9573049a; reconciled integration `ef85d5cc`.
+Current feature base READY87afea92; final release pending for H1/H2.
 [Current work/design record](https://github.com/tya5/chrona/issues/1300#issuecomment-6095643389).
 Inspection, delta anchors and critical-first facts/order are independent of
-the unimplemented protected feasibility pass and previous-Scene hints.
+the unimplemented protected feasibility pass. H1/H2 previous-Scene reuse is
+locally verified, not a substitute for either original unfinished criterion.
 
 ## Literal issue acceptance
 
@@ -23,23 +24,30 @@ the unimplemented protected feasibility pass and previous-Scene hints.
 | 4 | `--emit-scene` output diffs line by line (one primitive per line), and its parsed content is unchanged. | met | [Formatter controls](../../../tests/unit/chrona/app/test_scene_inspection.py) and [actual CLI controls](../../../tests/cli/test_cli_scene_inspection.py) pass. Canonical/cache serialization and normal machine envelope stay unchanged. Current-head CI/release pending. | — |
 | 5 | Do not edit `examples/**`. | met | [Published WIP scope](https://github.com/tya5/chrona/tree/wip/issue-1300-readable-inspection) contains implementation/tests/specification changes, not authored example edits. | — |
 
-## Programme-level criteria (optional)
+## Additional mandatory hint acceptance
 
-No new closing criteria; [hint contract clarification](https://github.com/tya5/chrona/issues/1300#issuecomment-6123808805) remains pending.
+[Selected contract](https://github.com/tya5/chrona/issues/1300#issuecomment-6133101982)
+supplements, and replaces none of, the original criteria.
+
+| Literal acceptance | Disposition | Evidence |
+| --- | --- | --- |
+| The trial's v1 → v2 revision rendered with v1's Scene as hints keeps `spec-build` drawn with the same shape. | locally met; release pending | Actual trial test verifies translated point sequence, accepted/no-search receipt and emitted SVG. |
+| A counter shows that only changed or new relations are searched. | locally met; release pending | Same-input10/10 routes accepted without search; changed-obstacle/validator failures fall through to search; typed per-instance dispositions partition the summary. Finite ordinary proposals are not falsely counted as search. |
+| Without a hint, output is identical to without the feature. | locally met; release pending | All46 public contexts reproduce; best with a valid pin has identical Scene/SVG/receipts. No-hint rendering emits no hint diagnostics; immutable Context pin identity remains truthful. |
 
 ## Verification and architecture
 
-Latest own-venv inspection/delta/priority/content/actual-launch suite:144 PASS3.69s.
-One public46-context materializer batch completed: zero relation paths added,
-removed or changed;20 Scene/SVG pairs byte-identical.26 Scenes add anchor
-diagnostics; only3 SVGs change: aster overview1 delta, gallery-image-notes11
-deltas plus one note (box/text), and gates1 delta. The note relocation follows
-changed label obstacles, not a new annotation rule. Expose these side effects
-in the eventual PR; do not refresh examples to hide them.
-Evidence: `python -m tools.routing_performance_evidence --output-dir <empty-dir>
---jobs 4`; actual outputs retained in the issue work record.
+Independent inspection/delta/priority release208cf1cc/38290538367 succeeded;
+atomic recovery release8ce44cb0/38317097402 succeeded. H1 focused70 tests pass;
+H2 focused100 tests pass. Own-venv `tools/regenerate_public_examples.py --check
+--jobs 4` passes46 slides. The real immutable public materializer stages/reads
+neutral artifact bytes exactly, preserves the prior file and emits hint receipts.
+Schema equivalence passes; no historical verdicts or authored examples change.
 
 Core critical facts stay in Presentation; Layout owns label obstruction/anchor
 decisions and routing order; CLI only formats already-validated Scene data.
 Protected quality/completeness is not enabled. Unsafe-mode supersession follows
-published #1427, not an unapproved hint or compatibility policy.
+published #1427. The [port correction](../../design/issue-1300-scene-hint-port-correction-2026-10-13.md)
+does not infer missing historical egress IDs: current legal pairs are tried in
+declared first-fit order through shared safety/quality validators. Scene/adapters
+only project; no extra Scene schema field, heuristic cache or duplicate validator.
