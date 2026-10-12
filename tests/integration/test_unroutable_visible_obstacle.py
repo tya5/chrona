@@ -11,7 +11,32 @@ import xml.etree.ElementTree as ET
 import pytest
 
 from chrona.presentation.layout import surface_composer
+from chrona.resources import default_preset_resource, default_preset_root, safe_load
+from tests.integration.test_first_run_hierarchy import _source as hierarchy_source
 from tests.support import synthetic_review as sr
+
+
+@pytest.mark.parametrize("mode", ("overlap", "stub"))
+def test_unpainted_rollup_keeps_temporal_endpoint_without_a_fake_host(tmp_path, mode):
+    preset = safe_load(default_preset_resource().read_bytes())
+    parts = sr.bundle()
+    for kind in ("view", "theme", "layout"):
+        parts[kind] = safe_load(default_preset_root().joinpath(
+            preset["body"]["resources"][kind]["path"]).read_bytes())
+    parts["layout"]["relationRouting"] = {
+        "search": "first-fit", "unroutable": mode, "maxBends": 4, "maxDetourRatio": 100,
+    }
+    rendered = sr.render(tmp_path, hierarchy_source(), presentation=parts)
+    assert not any(p.scene_id.startswith("planned:root:") for p in rendered.surface.primitives)
+    paths = [p for p in rendered.surface.primitives if p.source_kind == "relation"]
+    assert len(paths) == (2 if mode == "stub" else 1)
+    svg_ids = {e.get("data-scene-id", e.get("id"))
+               for e in ET.fromstring(rendered.artifact.content).iter()}
+    assert all(p.scene_id in svg_ids for p in paths)
+    facts = [json.loads(d.split(":", 1)[1]) for d in rendered.scene.diagnostics
+             if d.startswith("I_LAYOUT_RELATION_RESOLUTION:")]
+    assert len(facts) == 1 and facts[0]["stage"] == mode
+    assert not any(d.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for d in rendered.scene.diagnostics)
 
 
 @pytest.mark.parametrize("mode", ("suppress", "relax", "overlap", "stub"))
