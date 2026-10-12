@@ -685,6 +685,13 @@ ignores accepted route strokes, and leaves required and annotation placement
 unchanged. Relation labels retain their completed longest-segment anchor and
 canonical side order before this bounded fallback. See the [#466 side-search correction](../design/issue-466-general-placement-side-search-correction-2026-09-26.md).
 
+The generic label selector retains typed canonical-slot obstruction evidence
+with its completed selection; it does not infer semantic roles or Project
+identity. The member-label owner applies the standalone finish-delta side
+rule and reports the actual blocking placement identities (Spec 50). Scene
+and adapters project that completed decision without placing or diagnosing
+the label again. This changes no member-name or relation-label side policy.
+
 Member-label collision queries use completed span paint footprints, including
 half the resolved stroke width outside semantic bounds. This reuses the lane
 facet footprint without changing relation ports or body obstacles. Query

@@ -2,8 +2,9 @@
 
 # Issue1386 — coalescing evaluation
 
-Evaluation complete; no workflow implementation selected. Closing awaits
-publication of this review and its exact-main release checks.
+Closed as not planned after publication on `872318db` and successful
+[exact-main release38257798618](https://github.com/tya5/chrona/actions/runs/38257798618).
+No workflow implementation selected.
 
 ## Literal issue acceptance
 
