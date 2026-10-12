@@ -39,7 +39,7 @@ def test_empty_view_copy_map_is_byte_identical(tmp_path):
 
 def test_surface_pipeline_reuses_the_completed_native_preparation_once(tmp_path, monkeypatch):
     from chrona.presentation.layout import surface_render_plan as use_case
-    from chrona.presentation import surface_pipeline as v05_builder
+    from chrona.presentation.layout import surface_count_closure as v05_builder
 
     prepare = use_case.prepare_surface_content
     compose = v05_builder.compose_surface_layout

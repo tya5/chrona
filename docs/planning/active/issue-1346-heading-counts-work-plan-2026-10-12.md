@@ -179,5 +179,20 @@ fixed/minimum/aspect/budget-closure failures remain ordinary errors.58 focused
 fit/budget tests and129 combined source/format/real-heading/projection/ownership
 tests PASS; structural guards PASS. The implementation ownership table names
 only existing modules; register the coordinator when its real module is added,
-not as a placeholder. Finite coordinator/connection/trial tests remain next.
+not as a placeholder. The real finite coordinator and pipeline connection are
+now implemented. Layout admits active closed reads, tries N..0 with fresh
+preparation/composition, and returns accepted plan/projection/composition;
+Presentation projects Scene once. Normal preparation/admission stays before the
+unused-input checkpoint; active late planning runs after it. Untargeted heading
+parts, absent optional captions and literal overrides do not activate trials;
+unused late figures resolve from one ordinary completion. Only accepted progress
+is replayed. Real requests/visibility indexes differ between rejected/accepted
+trials.31 combined policy/real-pipeline/receipt/projection/ownership tests PASS;
+real STATUS REPORTS :03 and4→3 closure rendered in Scene/SVG.8 algorithm tests
+cover highest/no-solution/bounded range rejection/unrelated errors. Existing
+caption/derived/native/group-tab batch111 PASS with one stale composer spy,
+subsequently migrated without weakening assertions (8 focused PASS). Schema
+equivalence L1/L2/L3 and structural guards PASS;241 reachable modules.
+P3 acceptance still needs targeted checkpoint, actual lower-range/fit and
+accepted-pass budget evidence, followed by P4 three-design/public/release gates.
 No authored examples/resources changed.

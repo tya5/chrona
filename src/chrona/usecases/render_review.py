@@ -23,6 +23,7 @@ from chrona.presentation.scene.viewer_fit import viewer_fit_fallbacks
 from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.surface_count_closure import inspect_count_reads
 from chrona.presentation.layout.surface_render_plan import (
     SurfaceRenderPlanInput, SlotHeadingCopyError, SurfacePlanFontError, prepare_surface_render_plan,
 )
@@ -70,7 +71,7 @@ from chrona.presentation.scene.perceptibility import ScenePerceptibilityFinding,
 from chrona.presentation.scene.paint import ScenePaintError
 from chrona.presentation.scene.serialization import scene_document
 from chrona.presentation.scene.v05_builder import SceneBuildError
-from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
+from chrona.presentation.surface_pipeline import build_surface_input, compose_resolved_review_surface
 from chrona.presentation.scene.visual_capabilities import (
     VisualCapabilityError,
     resolve_visual_profile,
@@ -317,7 +318,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     heading_content = (compose_heading(view, project, actual_observations, environment.locale)
                        if view.surface == "table-timeline" else None)
     try:
-        plan = prepare_surface_render_plan(SurfaceRenderPlanInput(
+        count_input = inspect_count_reads(SurfaceRenderPlanInput(
             project=project, view=view, projection=projection, content=selected_content,
             summary=summary, table=table_content, profile=layout, theme=theme,
             font_metrics=font_metrics, heading=heading_content, actual=actual_observations,
@@ -326,33 +327,27 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             content_sized=request.draft_auto_block, locale=environment.locale,
             capabilities={name: True for name in render_closure.context.target.capabilities},
             icon_assets=icon_assets, visual_requests=visual_requests, progress=request.progress))
+        plan = prepare_surface_render_plan(count_input.value) if not count_input.active else None
     except SurfacePlanFontError as error:
         raise _font_failure(error.failure) from error.failure
     except SlotHeadingCopyError as error:
         raise RenderFailed(error.diagnostic_id, error.detail, "view", error.path) from error
     except FigureTextReadError as error:
         raise RenderFailed(error.failure.code, error.failure.detail, error.component, error.path) from error
-    manifest, measured, surface_content = plan.manifest, plan.measured, plan.content
-    surface_preparation = plan.preparation
-    fixed_lane_preflight = (surface_preparation.inline.request.fixed_lane_preflight
-                            if surface_preparation is not None else None)
     if render_closure.detail_profile is not None:
         ledger.detail()
-    scene_input = build_surface_input(
-        projection=projection, surface_content=surface_content, layout_manifest=manifest,
-        resolved_theme=theme, font_metrics=font_metrics, measured_sources=measured,
-        capabilities={name: True for name in render_closure.context.target.capabilities},
-        visual_profile=visual_profile,
-        viewport=plan.viewport,
-        icon_assets=icon_assets,
-        visual_requests=visual_requests,
-        fixed_lane_preflight=fixed_lane_preflight,
-        capacity_short_sources=plan.capacity_short_sources,
-        surface_preparation=surface_preparation,
-        auto_block_limit=plan.profile.distances.get("/reviewSurface/maxBlockSize"),
-        declared_viewport=plan.declared_viewport,
-        progress=request.progress,
-    )
+    scene_input = None
+    if plan is not None:
+        scene_input = build_surface_input(
+            projection=projection, surface_content=plan.content, layout_manifest=plan.manifest,
+            resolved_theme=theme, font_metrics=font_metrics, measured_sources=plan.measured,
+            capabilities={name: True for name in render_closure.context.target.capabilities},
+            visual_profile=visual_profile, viewport=plan.viewport,
+            icon_assets=icon_assets, visual_requests=visual_requests,
+            fixed_lane_preflight=(plan.preparation.inline.request.fixed_lane_preflight if plan.preparation else None),
+            capacity_short_sources=plan.capacity_short_sources, surface_preparation=plan.preparation,
+            auto_block_limit=plan.profile.distances.get("/reviewSurface/maxBlockSize"),
+            declared_viewport=plan.declared_viewport, progress=request.progress)
 
     unused = ledger.unused()
     if request.require_all_inputs_read and unused:
@@ -360,7 +355,16 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                            "closure inputs loaded but never read: " + ", ".join(unused), "closure")
 
     try:
-        surface = compose_review_surface(scene_input)
+        rendered = compose_resolved_review_surface(count_input, visual_profile=visual_profile,
+                                                   initial=plan, admitted=scene_input)
+        surface, projection, plan = rendered.surface, rendered.projection, rendered.plan
+        surface_content = plan.content
+    except SurfacePlanFontError as error:
+        raise _font_failure(error.failure) from error.failure
+    except SlotHeadingCopyError as error:
+        raise RenderFailed(error.diagnostic_id, error.detail, "view", error.path) from error
+    except FigureTextReadError as error:
+        raise RenderFailed(error.failure.code, error.failure.detail, error.component, error.path) from error
     except SceneBuildError as error:
         detail = error.detail or visual_capability_message(error.diagnostic_id)
         raise RenderFailed(error.diagnostic_id, detail,

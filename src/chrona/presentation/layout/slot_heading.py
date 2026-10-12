@@ -16,7 +16,7 @@ from decimal import Decimal
 from typing import Any, TYPE_CHECKING
 
 from chrona.presentation.count_text import CountTextError
-from chrona.presentation.figure_text import FigureTextError, FigureTextReadError, compile_figure_text
+from chrona.presentation.figure_text import FigureTextError, FigureTextProgram, FigureTextReadError, compile_figure_text
 from chrona.presentation.layout.model import LayoutDecision, LayoutError, Measurement, Rect, ResolvedLayoutProfile
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, SlotPlacement, TextPlacement
@@ -91,16 +91,18 @@ def headed_slot_ids(resolved_layout: ResolvedLayoutProfile) -> frozenset[str]:
     return frozenset(found)
 
 
-def bind_slot_heading_templates(resolved_layout: ResolvedLayoutProfile, *, content: Any,
-                                view: Any, figures: Mapping[str, int], measured: MeasuredSources) -> Any:
-    """Validate every caption program, then bind only present non-overridden reads.
+@dataclass(frozen=True)
+class SlotHeadingProgram:
+    node_id: str
+    source: str
+    program: FigureTextProgram
+    pointer: str
 
-    The authored profile and its identity stay unchanged. Completed copy enters
-    the same Layout content channel as literal View overrides, before caption
-    measurement and source sizing. Absent optional captions do not read names.
-    """
-    declared = {item.figure_id: item for item in view.figures}
-    copies = dict(content.slot_heading_text)
+
+def compile_slot_heading_programs(root: Mapping[str, Any], figures: Any) -> tuple[SlotHeadingProgram, ...]:
+    """Close all caption references without reading values or performing geometry."""
+    declared = {item.figure_id: item for item in figures}
+    programs = []
 
     def visit(node: Mapping[str, Any], path: str) -> None:
         heading = node.get("heading")
@@ -114,16 +116,27 @@ def bind_slot_heading_templates(resolved_layout: ResolvedLayoutProfile, *, conte
                         raise FigureTextError("E_VIEW_FIGURE_UNKNOWN", f"caption names undeclared figure {identifier!r}")
                     if target.scope != "global":
                         raise FigureTextError("E_FIGURE_SCOPE_UNAVAILABLE", f"caption has no current group for figure {identifier!r}")
-                node_id, source = str(node["id"]), str(node["source"])
-                if (node_id not in copies and source in measured.measurements
-                        and source_has_content(content, source, measured_inputs=measured.inputs)):
-                    copies[node_id] = program.bind(figures, view.figure_formats)
-            except (CountTextError, FigureTextError) as error:
+                programs.append(SlotHeadingProgram(str(node["id"]), str(node["source"]), program, pointer))
+            except FigureTextError as error:
                 raise FigureTextReadError(error, pointer, "layout-profile") from error
         for index, child in enumerate(node.get("children", ())):
             visit(child, f"{path}/children/{index}")
 
-    visit(resolved_layout.profile["root"], "/root")
+    visit(root, "/root")
+    return tuple(programs)
+
+
+def bind_slot_heading_templates(resolved_layout: ResolvedLayoutProfile, *, content: Any,
+                                view: Any, figures: Mapping[str, int], measured: MeasuredSources) -> Any:
+    """Bind present caption reads before sizing; keep profile identity and literal overrides."""
+    copies = dict(content.slot_heading_text)
+    for item in compile_slot_heading_programs(resolved_layout.profile["root"], view.figures):
+        if (item.node_id not in copies and item.source in measured.measurements
+                and source_has_content(content, item.source, measured_inputs=measured.inputs)):
+            try:
+                copies[item.node_id] = item.program.bind(figures, view.figure_formats)
+            except (CountTextError, FigureTextError) as error:
+                raise FigureTextReadError(error, item.pointer, "layout-profile") from error
     return replace(content, slot_heading_text=tuple(sorted(copies.items())))
 
 

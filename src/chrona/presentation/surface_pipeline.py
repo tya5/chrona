@@ -11,6 +11,8 @@ from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.layout.model import LayoutError, LayoutManifest
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.surface_composer import compose_surface_layout
+from chrona.presentation.layout.surface_count_closure import CountReadInput, CountTrial, complete_surface_render_plan
+from chrona.presentation.layout.surface_render_plan import PreparedSurfaceRenderPlan
 from chrona.presentation.layout.surface_preparation import SurfacePreRowGeometry
 from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
@@ -105,6 +107,38 @@ def compose_review_surface(value: PreparedSurfaceInput) -> SceneSurface:
     completed = SceneBuildInput(value.projection, value.surface_content, value.layout_manifest,
         value.theme_tokens, value.capabilities, placement, value.visual_profile, value.viewport)
     return project_review_surface(completed)
+
+
+@dataclass(frozen=True)
+class SurfaceRenderResult:
+    surface: SceneSurface
+    plan: PreparedSurfaceRenderPlan
+    projection: Any
+    trials: tuple[CountTrial, ...]
+
+
+def compose_resolved_review_surface(seed: CountReadInput, *, visual_profile: VisualProfile | None = None,
+                                    initial: PreparedSurfaceRenderPlan | None = None,
+                                    admitted: PreparedSurfaceInput | None = None) -> SurfaceRenderResult:
+    """Project one accepted Layout completion; never measure or implement count trials here."""
+    completed = complete_surface_render_plan(seed, initial=initial)
+    plan, value = completed.plan, seed.value
+    if admitted is None:
+        admitted = build_surface_input(
+            projection=completed.projection, surface_content=plan.content, layout_manifest=plan.manifest,
+            resolved_theme=value.theme, font_metrics=value.font_metrics, measured_sources=plan.measured,
+            capabilities=value.capabilities, visual_profile=visual_profile, viewport=plan.viewport,
+            icon_assets=value.icon_assets, visual_requests=value.visual_requests,
+            surface_preparation=plan.preparation,
+            fixed_lane_preflight=(plan.preparation.inline.request.fixed_lane_preflight if plan.preparation else None),
+            capacity_short_sources=plan.capacity_short_sources, declared_viewport=plan.declared_viewport,
+            auto_block_limit=plan.profile.distances.get("/reviewSurface/maxBlockSize"), progress=value.progress)
+    elif admitted.layout_manifest is not plan.manifest:
+        raise ValueError("admitted ordinary plan does not match accepted completion")
+    scene_input = SceneBuildInput(completed.projection, plan.content, plan.manifest,
+        admitted.theme_tokens, admitted.capabilities, completed.composition, visual_profile, plan.viewport)
+    surface = project_review_surface(scene_input)
+    return SurfaceRenderResult(surface, plan, completed.projection, completed.trials)
 
 
 def _complete_table_timeline(value: PreparedSurfaceInput):
