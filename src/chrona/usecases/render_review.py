@@ -15,6 +15,8 @@ from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Mapping
 
+from chrona.usecases.previous_scene import decode_previous_scene
+
 from chrona.core.diagnostics import Diagnostic
 from chrona.usecases.diagnostic_messages import error_message
 from chrona.usecases.warning_ledger import RenderWarning, collect_render_warnings
@@ -189,6 +191,8 @@ class ClosureReadLedger:
 
     def __init__(self, closure: RenderClosure):
         self._declared = {item.kind for item in closure.resources}
+        if closure.previous_scene_bytes is not None:
+            self._declared.add("previous-scene")
         self.read: set[str] = set()
 
     def required(self) -> None:
@@ -234,6 +238,11 @@ def render_review(request: RenderRequest) -> RenderedReview:
 def _render_review(request: RenderRequest) -> RenderedReview:
     """Render one closure, in the one order the pipeline has."""
     render_closure, ledger = request.closure, ClosureReadLedger(request.closure)
+    previous_scene = None
+    if render_closure.previous_scene_bytes is not None:
+        previous_scene = decode_previous_scene(render_closure.previous_scene_bytes,
+                                               render_closure.project.identity.id)
+        ledger.read.add("previous-scene")
     project, view, layout = (render_closure.project.scheduler_input, render_closure.view.view,
                              render_closure.layout_profile.layout_input)
     theme = render_closure.resolved_theme.resolved_input

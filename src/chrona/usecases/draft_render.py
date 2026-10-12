@@ -60,6 +60,7 @@ class DraftRenderRequest:
     typesetter_adapter_grammar: str | None = None
     relations: Literal["none", "semantic"] | None = None
     progress: RenderProgress | None = field(default=None, compare=False, repr=False)
+    previous_scene: str | Path | None = None
 
 
 @dataclass(frozen=True)
@@ -148,6 +149,7 @@ def render_draft(request: DraftRenderRequest) -> DraftRenderResult:
         try:
             closure = resolve_draft_render(
                 project_path=Path(request.project),
+                previous_scene_path=_optional_path(request.previous_scene),
                 preset_path=preset_path if preset_path is not None else Path(str(default)),
                 preset_root=None if preset_path is not None else Path(str(default_preset_root())),
                 view_path=_optional_path(request.view), theme_path=_optional_path(request.theme),

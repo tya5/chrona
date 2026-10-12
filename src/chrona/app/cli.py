@@ -332,6 +332,7 @@ def _parser() -> JsonArgumentParser:
     _add_draft_target_arguments(command)
     command.add_argument("--output", "-o", required=True)
     command.add_argument("--emit-scene", help="write a schema-validated inspection Scene JSON without replacing an existing file")
+    command.add_argument("--previous-scene", help="revalidate routes from this previous Scene under first-fit")
 
     icon = sub.add_parser("icon-catalog", help="build an icon catalog from icon files")
     icon_sub = icon.add_subparsers(dest="icon_command", required=True, parser_class=JsonArgumentParser)
@@ -733,6 +734,7 @@ def _run_draft_render(args: argparse.Namespace) -> None:
         typesetter_adapter_grammar=args.typesetter_adapter_grammar,
         progress=_draft_render_progress(getattr(args, "progress", False)),
         relations=getattr(args, "relations", None),
+        previous_scene=getattr(args, "previous_scene", None),
     ))
     _write_render_outputs(result.rendered, args)
     _emit_render_result(result.rendered)

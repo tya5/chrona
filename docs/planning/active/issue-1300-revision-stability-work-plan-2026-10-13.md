@@ -123,6 +123,14 @@ hint admission shortcut. Explicit-window endpoint absence is not a searched
 instance. Best and absent-input paths emit no new hint diagnostic. Decoder and
 candidate validation are shared seams, not duplicated geometry pipelines.
 
+H1 WIP evidence: optional neutral pin/schema, immutable closure capture, common
+Scene ingress/project validation, read-ledger and Draft flag are implemented.
+Focused closure/contract/Draft/ingress tests pass; schema-equivalence against
+READY8ce44cb0 passes without changing historical verdicts. Real Store and execution
+overlay round-trips preserve exact artifact bytes; corrupt hash and wrong Project
+fail through stable diagnostics. H2 has not connected decoded evidence to Layout:
+do not present this input-only WIP as reusable routing or release it as that feature.
+
 1. Complete selected contracts and architecture review here; update normative
    Context/Scene/routing specifications and publish before product changes.
 2. Finalize implementation slices with owned files, migrations and focused tests:

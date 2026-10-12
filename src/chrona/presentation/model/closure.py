@@ -20,6 +20,7 @@ from chrona.presentation.scene.visual_capabilities import preferred_target_visua
 from chrona.presentation.model.preset_target import PresetVisualProfileFallback
 from chrona.presentation.icons import IconNormalizationError, IconPathCommand, NormalizedIconPath, NormalizedVectorIcon, validate_png
 from chrona.presentation.contracts import (
+    ArtifactPin,
     ActualSetContract, AuthoringWorkspaceContract, ClosureIdentity, ContractError, SchemaContractError, IconCatalogContract, IconEntry, IconPath, LayoutProfileContract,
     PresentationPresetContract,
     ProfilePackageContract, ProjectContract, RenderContextContract,
@@ -90,6 +91,7 @@ class RenderClosure:
     resolved_theme: ResolvedThemeContract
     icon_assets: tuple[IconAsset, ...] = ()
     guided_provenance: "GuidedAuthoringProvenance | None" = None
+    previous_scene_bytes: bytes | None = None
 
     def resource(self, kind: str) -> ClosureResource | None:
         return next((item for item in self.resources if item.kind == kind), None)
@@ -233,6 +235,7 @@ def resolve_draft_render(
     viewport: tuple[int, int | None] = DEFAULT_DRAFT_VIEWPORT,
     locale: str = "en-US", target_kind: str = "svg", visual_profile: str | None = None, typesetter: TypesetterIdentity | None = None,
     relations: Literal["none", "semantic"] | None = None,
+    previous_scene_path: Path | None = None,
 ) -> DraftRender:
     """Build a typed, in-memory closure from explicit authoring inputs.
 
@@ -275,7 +278,9 @@ def resolve_draft_render(
                                                                             _draft_view(resources), _draft_theme_refs(resources)),
                                         font_metrics=(safe_load(font_metrics_path.read_bytes()) if font_metrics_path else None),
                                         font_asset_root=(font_metrics_path.parent.resolve() if font_metrics_path else None),
-                                        system_fonts=system_fonts, system_font_resolver=system_font_resolver)
+                                        system_fonts=system_fonts, system_font_resolver=system_font_resolver,
+                                        previous_scene_bytes=(previous_scene_path.read_bytes()
+                                                              if previous_scene_path is not None else None))
     return replace(draft, preset_visual_profile_fallback=profile_fallback)
 
 
@@ -453,6 +458,7 @@ def _draft_render_from_resources(
     font_asset_root: Path | None = None,
     system_fonts: bool = False,
     system_font_resolver: SystemFontResolver | None = None,
+    previous_scene_bytes: bytes | None = None,
 ) -> DraftRender:
     by_kind = {item.kind: item for item in resources}
 
@@ -495,6 +501,11 @@ def _draft_render_from_resources(
             "colorScheme": _draft_reference(by_kind["color-scheme"]),
             "layout": _draft_reference(by_kind["layout-profile"]),
             "inputs": {
+                **({"previousScene": {
+                    "store": {"provider": "local", "identity": "draft"},
+                    "address": "previous.scene.json", "revision": {"token": "draft"},
+                    "contentIdentity": f"sha256:{sha256(previous_scene_bytes).hexdigest()}",
+                }} if previous_scene_bytes is not None else {}),
                 **({"actual": _draft_reference(by_kind["actual-set"])} if "actual-set" in by_kind else {}),
                 **({"summaryProfile": _draft_reference(by_kind["summary-profile"])} if "summary-profile" in by_kind else {}),
                 **({"detailProfile": _draft_reference(by_kind["review-detail-profile"])} if "review-detail-profile" in by_kind else {}),
@@ -523,7 +534,8 @@ def _draft_render_from_resources(
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA", detail=error.detail) from error
     if not isinstance(context, RenderContextContract):  # defensive contract boundary
         raise _closure_kind_error("draft render context", "RenderContextContract", context)
-    return DraftRender(RenderClosure(context, tuple(resources), resolved_theme, icon_assets, provenance),
+    return DraftRender(RenderClosure(context, tuple(resources), resolved_theme, icon_assets, provenance,
+                                    previous_scene_bytes),
                        font_asset_root or asset_root, auto_block=viewport[1] is None, font_resolution=resolution)
 
 
@@ -802,7 +814,22 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
                                         _theme_container_image_references(value))
     else:
         icon_assets = ()
-    return RenderClosure(context_contract, tuple(resources), resolved_theme, icon_assets)
+    previous_scene_bytes = (_read_previous_scene(context_contract.previous_scene, reader)
+                            if context_contract.previous_scene is not None else None)
+    return RenderClosure(context_contract, tuple(resources), resolved_theme, icon_assets,
+                         previous_scene_bytes=previous_scene_bytes)
+
+
+def _read_previous_scene(pin: ArtifactPin, reader: SnapshotReader) -> bytes:
+    try:
+        payload = reader.read(pin.as_reader_reference())
+    except SnapshotReadError as error:
+        raise ClosureError(error.diagnostic_id, "/body/inputs/previousScene", error.detail) from error
+    # Injected readers cannot bypass integrity at the closure seam.
+    if f"sha256:{sha256(payload).hexdigest()}" != pin.content_identity:
+        raise ClosureError("E_CONTENT_IDENTITY", "/body/inputs/previousScene",
+                           "previous Scene bytes do not match their declared identity")
+    return payload
 
 
 def _validate_icon_catalog_set(resources: tuple[ClosureResource, ...]) -> None:
