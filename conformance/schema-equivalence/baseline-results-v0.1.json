@@ -25,6 +25,12 @@
     "message": "unexpected property 'panels'",
     "pointer": "/",
     "rule": "additionalProperties"
+   },
+   "tests/fixtures/controller-z/profiles/summary.yaml": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "unexpected property 'panels'",
+    "pointer": "/",
+    "rule": "additionalProperties"
    }
   },
   "probes": {

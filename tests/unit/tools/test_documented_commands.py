@@ -131,12 +131,12 @@ CLONE_MARK = "<!-- chrona:doc-check requires: clone the Project is in examples/ 
 
 
 def test_a_command_naming_an_unshipped_examples_path_fails_unless_it_is_marked(tmp_path):
-    bare = discover(_document_root(tmp_path, "```sh\nchrona render tests/fixtures/aster-ssd/project.yaml --output t.svg\n```\n"))
+    bare = discover(_document_root(tmp_path, "```sh\nchrona render examples/missing-project/project.yaml --output t.svg\n```\n"))
     with pytest.raises(DocumentedCommandError, match="E_DOCUMENTED_COMMAND_UNSHIPPED_PATH") as error:
         check_documented_commands.check_shipped(bare)
-    assert "README.md:2:tests/fixtures/aster-ssd/project.yaml" in str(error.value)
+    assert "README.md:2:examples/missing-project/project.yaml" in str(error.value)
 
-    marked = discover(_document_root(tmp_path, CLONE_MARK + "```sh\nchrona render tests/fixtures/aster-ssd/project.yaml --output t.svg\n```\n"))
+    marked = discover(_document_root(tmp_path, CLONE_MARK + "```sh\nchrona render examples/missing-project/project.yaml --output t.svg\n```\n"))
     check_documented_commands.check_shipped(marked)
     assert check_documented_commands.requires_clone(marked[0])
     # an option value counts too

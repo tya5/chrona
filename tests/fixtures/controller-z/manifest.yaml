@@ -3,6 +3,11 @@ id: controller-z
 role: regression-corpus
 context: contexts/executive.yaml
 slides:
+- id: capabilities
+  evidence: Frozen capabilities serialization and table-layout regression inputs.
+  context: contexts/capabilities.yaml
+  expectedSvg: generated/capabilities.svg
+  expectedScene: generated/capabilities.scene.json
 - id: executive
   evidence: Executive review with actuals, inside labels, and fallback labels.
   expectedSvg: generated/executive.svg

@@ -29,7 +29,8 @@ def _relation_paths(node) -> list[dict]:
 @pytest.mark.corpus
 @pytest.mark.parametrize(("example", "slide", "relations"), GHOST_SLIDES)
 def test_a_slide_with_ghosts_draws_each_relation_once_between_plan_marks(tmp_path, example, slide, relations):
-    materialize(ROOT / "examples" / example / "manifest.yaml", slide, tmp_path / slide, write=False)
+    inputs = ROOT / ("tests/fixtures" if example == "controller-z" else "examples")
+    materialize(inputs / example / "manifest.yaml", slide, tmp_path / slide, write=False)
     paths = _relation_paths(json.loads((tmp_path / slide / "review.scene.json").read_text(encoding="utf-8")))
 
     assert len(paths) == relations
