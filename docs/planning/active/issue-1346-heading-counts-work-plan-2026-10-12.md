@@ -1,10 +1,11 @@
 # Reusable heading counts (#1346)
 
-Public foundation: PR1425 source `8574785a9fc9a629b45069d9dab62f21c8649e7d`;
-trusted derived READY/release pending. Last READY `8a16dca1`.
+Published baseline: READY `8653aa28b8d4f1f7dff31f12dcdba6a4cc59a7fa`
+(`derived-main`38197643651 SUCCESS). The WIP adopts it by ordinary merge;
+all1343 foundation work is merged/released.1346 product work has not started.
 [Issue and current work record](https://github.com/tya5/chrona/issues/1346#issuecomment-6112367414).
-#1343 closes selected note identity/content and is merged. No product changes
-or second implementation PR here; final code publication adopts its READY tip.
+#1343 closes selected note identity/content.1426 additionally closes
+per-instance/per-pass budget evidence; preserve it through the count closure.
 
 | Literal acceptance | Evidence required |
 | --- | --- |
@@ -48,7 +49,23 @@ usecases the geometry owner. Tests prove no extra trials without late reads.
 Candidate-admission/range/fit rejection must be typed; unrelated invalid inputs
 retain their original diagnostics. Test upper counts outside kanji names with
 a valid lower completion, and errors unrelated to the count closure.
-Next publication: implementation slices/files against the merged foundation, then pure
-format/membership and Layout suppression/no-fixed-point tests, disposable
-three-design/roadmap materializers, batch public evidence and exact-main
-containing-review release. No second implementation PR before that dependency.
+Selected preparation boundary: a typed Layout planning entry owns source
+measurement, sizing, allocation and completed candidate composition. Move the
+existing application preparation block there before adding count trials;
+Application supplies resolved intent/resources, never a geometry callback.
+Scene receives the accepted placement and does not compose it again. Migrate
+internal factory callers; no legacy fallback path is retained.
+
+Whole-architecture re-review on8653aa28: Specs03/05 keep scheduling/date facts
+independent; Specs06/44 own selected memberships and immutable narrative intent;
+Spec33 owns allocation and completed narrative receipts; Spec50 budget facts
+are invocation-local. A rejected whole-layout count candidate exposes no
+diagnostics; inside the accepted invocation, retain all executed label/route
+pass facts, including its rejected recovery. New number names are used only
+when text reads a format, not to validate a raw Summary/unused count value.
+Spec56 additive/shared definitions and1341 whole-member defaults remain intact.
+No source-id substring tests, Scene recount, post-measurement substitution,
+generic LayoutError catch or public schema-version bump.
+
+Next publication: finalize the implementation slices and owned interfaces
+against this published clarification, then publish the plan before code.

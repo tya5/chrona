@@ -157,6 +157,9 @@ At mostN+1 trials, not guessed-count convergence. No consistent count is
 selected counts. No late template read means one ordinary composition; unused
 late figures then resolve from its receipts. Scene/adapters do not recount
 or replace text after geometry. Existing resources remain unchanged.
+Route-budget facts are local to a complete Layout invocation: discard a
+rejected whole-count candidate, but retain every executed route/label pass
+fact inside the accepted invocation, including rejected recovery passes (Spec50).
 Reject only typed candidate-admission failures, including unavailable number
 names or count-dependent required fit; retain their evidence on no solution.
 Unrelated schema/resource/semantic errors propagate unchanged, not as a count

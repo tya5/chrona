@@ -311,7 +311,9 @@ For a late candidate this is admission rejection, not a fatal error on the
 possible upper count: a lower representable self-consistent count may exist.
 If no admitted candidate closes, Spec33's failure includes that range evidence.
 Template consumers use the selected format; Summary metrics retain raw integers
-and their own format. Theme's existing text treatment applies afterwards.
+and their own format. Validate every format declaration's shape and target
+eagerly, but require number names only when a template reads it; an unused
+count remains a raw integer. Theme's existing text treatment applies afterwards.
 
 A View MAY declare `figures`, an array of derived figures that the Core resolves (Spec 05 §12.2) and a consumer shows by name. Each has a unique `id` (no braces, whitespace or control characters: `E_VIEW_FIGURE_INVALID`; a repeat is `E_VIEW_FIGURE_DUPLICATE`) and one closed `kind`: `daysUntil {from?, to, days?, calendar?}`, `daysIn {period, days?, calendar?}` or `count {source, scope?}`. A fact (`from`, `to`) is exactly one of `asOf`, `{period, side: start | end | last}` or `{object, endpoint: at | start | end}`; `from` defaults to `asOf`. `last` is the period's exclusive end minus one calendar day, not its last working day (Spec 05 §12.2). `days` is `calendar` (the default) or `working`; `calendar` names the Project calendar a working count uses (the Project default when omitted) and is a dead declaration, `E_VIEW_FIGURE_INVALID`, with calendar days. Nothing else is accepted: no expression, no operator, no field name, no other kind or fact.
 
