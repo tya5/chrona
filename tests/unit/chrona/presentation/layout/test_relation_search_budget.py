@@ -141,6 +141,71 @@ def test_shape_completion_does_not_consume_explicit_budget(monkeypatch):
     assert selected.search_expansions == 0 and not selected.budget_hit
 
 
+@pytest.mark.parametrize("budget", (1, 2, 3))
+def test_exact_rescue_shares_the_fast_phase_budget_and_cannot_restart_it(monkeypatch, budget):
+    seen = []
+    monkeypatch.setattr(routing, "relation_shape_candidates", lambda *args, **kwargs: ())
+
+    def candidates(start, end, *args, **kwargs):
+        exact = kwargs.get("exact_bound", True)
+        seen.append((exact, kwargs["budget"]))
+        kwargs["budget"].charge()
+        if exact:
+            yield (start, end)
+
+    monkeypatch.setattr(search, "orthogonal_route_candidates", candidates)
+    selected = _select((_pair(),), search_policy="first-fit", search_budget=budget)
+    assert [exact for exact, _ in seen] == ([False] if budget == 1 else [False, True])
+    assert all(counter is seen[0][1] for _, counter in seen)
+    assert selected.search_expansions == min(budget, 2)
+    assert selected.budget_hit == (budget <= 2)
+    assert (selected.selected_pair is not None) == (budget >= 2)
+
+
+def test_successful_cheap_search_never_runs_exact_rescue(monkeypatch):
+    seen = []
+    original = search.orthogonal_route_candidates
+    monkeypatch.setattr(routing, "relation_shape_candidates", lambda *args, **kwargs: ())
+
+    def candidates(*args, **kwargs):
+        seen.append(kwargs.get("exact_bound", True))
+        yield from original(*args, **kwargs)
+
+    monkeypatch.setattr(search, "orthogonal_route_candidates", candidates)
+    selected = _select((_pair(),), search_policy="first-fit")
+    assert selected.selected_pair == _pair()
+    assert selected.search_used and not selected.settled_by_shape
+    assert seen == [False]
+
+
+def test_exact_rescue_preserves_original_pair_order_and_tie_ranking(monkeypatch):
+    phases = []
+    source, target = _pair()
+    first = ConnectorEgress("below", source.semantic_port, source.exposed_port, ())
+    pairs = ((first, target), (source, target))
+
+    def candidate(left, right, **kwargs):
+        if kwargs.get("candidate_paths") is not None:
+            return routing.RouteAttemptEvidence(left.side, right.side, "no-route-found",
+                                               search_failure="E_CONNECTOR_UNROUTABLE"), ()
+        exact = kwargs["exact_bound"]
+        phases.append((exact, left.side, kwargs["limit"]))
+        if not exact:
+            return routing.RouteAttemptEvidence(left.side, right.side, "no-route-found",
+                                               search_failure="E_PRESENTATION_ROUTE_LIMIT"), ()
+        points = (left.semantic_port, right.semantic_port)
+        return routing.route_quality_attempt(left.side, right.side, points,
+            max_bends=8, max_detour_ratio=4), points
+
+    monkeypatch.setattr(routing, "_select_pair_candidate", candidate)
+    selected = _select(pairs, search_policy="first-fit")
+    assert phases == [(False, "end", 2048), (False, "below", 2048),
+                      (True, "below", 2048), (True, "end", 2048)]
+    assert selected.selected_pair == pairs[0]
+    assert [attempt.outcome for attempt in selected.attempts] == [
+        "no-route-found", "no-route-found", "accepted", "eligible-not-selected"]
+
+
 def test_frontier_accounting_and_graph_cache_hits_charge_equally():
     obstacles = SurfaceObstacleIndex()
     obstacles.add(SurfaceObstacle("obstacle", "mark", "timeline", ObstacleRect(4, -1, 6, 1)))

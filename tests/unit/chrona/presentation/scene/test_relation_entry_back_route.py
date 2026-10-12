@@ -11,10 +11,10 @@ from tests.unit.chrona.presentation.scene.test_relation_route_invariant import g
 
 
 def run(source, target, relation=DEP, *, entry="side", rows=None, max_bends=4, max_detour=6.0,
-        window=(D(2026, 1, 25), D(2026, 2, 25))):
+        window=(D(2026, 1, 25), D(2026, 2, 25)), search="first-fit"):
     first, second = (source, target) if rows is None else rows
     return _route((source, target), _rows((first,), (second,)), relation, entry, distribution="pack",
-                  max_bends=max_bends, max_detour=max_detour, window=window, diagnostics=True)
+                  max_bends=max_bends, max_detour=max_detour, window=window, diagnostics=True, search=search)
 
 
 def enters_from_side(points, *, start=True) -> bool:
@@ -57,8 +57,8 @@ def test_searched_and_back_route_candidates_both_keep_the_minimal_legal_bends():
     from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, segment_length_inside_rect
 
     target = _item("b", D(2026, 2, 5), D(2026, 2, 16))
-    points, marks, diagnostics = run(A, target, max_detour=6.0)
-    canonical, _, _ = run(A, target, max_detour=2.0)
+    points, marks, diagnostics = run(A, target, max_detour=6.0, search="best")
+    canonical, _, _ = run(A, target, max_detour=2.0, search="best")
     assert enters_from_side(points) and not reverses(points)
     assert _bends(points) == _bends(canonical) == 3
     length = sum(abs(a[0] - b[0]) + abs(a[1] - b[1]) for a, b in zip(points, points[1:]))

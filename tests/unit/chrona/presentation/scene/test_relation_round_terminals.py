@@ -29,7 +29,7 @@ def _item(oid, start, end, track="stacked"):
 
 
 def _compose(items, rows, relation, source_shape, target_shape, *, head=6, entry="any", radius=None, window=None,
-             mark_size=8):
+             mark_size=8, search="first-fit"):
     theme = _theme()
     for name, shape in (("src", source_shape), ("dst", target_shape)):
         theme["body"]["values"][name] = {"type": "marker", "value": {"shape": shape, "headLength": head,
@@ -45,7 +45,7 @@ def _compose(items, rows, relation, source_shape, target_shape, *, head=6, entry
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
                                    "timeline.mark.blockSize": Decimal(mark_size),
                                    **({"timeline.relation.cornerRadius": Decimal(radius)} if radius else {})})
-    manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"), relation_entry=entry)
+    manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"), relation_entry=entry, relation_search=search)
     value = build_surface_input(projection=projection, surface_content=surface_content(relations=(relation,)),
                               layout_manifest=manifest, resolved_theme=theme, font_metrics=_Font(),
                               measured_sources=measurement, capabilities={"svg": True})
@@ -94,8 +94,9 @@ def _start_port(mark):
 
 
 @pytest.mark.parametrize("shape", SHAPES)
-def test_round_terminals_are_centred_on_the_span_edges_at_mid_height_and_touch_the_line(shape):
-    path, marks = _compose((A, B), _rows((A,), (B,)), DEP, shape, shape)
+@pytest.mark.parametrize("search", ("first-fit", "best"))
+def test_round_terminals_are_centred_on_the_span_edges_at_mid_height_and_touch_the_line(shape, search):
+    path, marks = _compose((A, B), _rows((A,), (B,)), DEP, shape, shape, search=search)
     source_centre, target_centre = _centre(path, "source"), _centre(path, "target")
     assert source_centre == pytest.approx(_end_port(marks["planned:a:a"]))
     assert target_centre == pytest.approx(_start_port(marks["planned:b:b"]))
@@ -121,7 +122,7 @@ def _mark(marks, oid):
 @pytest.mark.parametrize("exit_name", sorted(EXITS))
 def test_the_centre_rule_holds_whichever_side_the_route_leaves_from(exit_name):
     items, rows = EXITS[exit_name]
-    path, marks = _compose(items, rows(), DEP, "circle", "dot")
+    path, marks = _compose(items, rows(), DEP, "circle", "dot", search="best")
     direction = _unit(path.points[0], path.points[1])
     assert ("horizontal" if direction[1] == 0 else "downward" if direction[1] > 0 else "upward") == exit_name
     assert _centre(path, "source") == pytest.approx(_end_port(_mark(marks, "a")))
@@ -160,7 +161,7 @@ def test_gate_to_bar_near_drop_has_a_vertical_start_and_centred_source_circle(mo
     monkeypatch.setattr(routes, "connector_egress_candidates", below_gate)
     monkeypatch.setattr(routing, "place_relation_route", near_drop)
     path, marks = _compose((source, target), _rows((source,), (target,)), relation,
-                          "circle", "triangle", entry="any", radius=4, mark_size=24,
+                          "circle", "triangle", entry="any", radius=4, mark_size=24, search="best",
                           window=(D(2026, 1, 1), D(2026, 1, 1) + timedelta(days=600)))
     assert path.points[0][0] == pytest.approx(path.points[1][0])
     mark = _mark(marks, "a")

@@ -14,7 +14,7 @@ def test_budget_hit_facts_survive_all_real_passes_and_project_to_scene_cli(tmp_p
     parts = sr.bundle()
     if lane:
         parts["view"] = sr.lane_view(parts["view"])
-    parts["layout"]["relationRouting"] = {"maxBends": 4, "maxDetourRatio": 2, "searchBudget": 1}
+    parts["layout"]["relationRouting"] = {"maxBends": 4, "maxDetourRatio": 2, "searchBudget": 1, "search": "best"}
     original_routes = surface_routes.compose_surface_routes
     seen = []
     def observe(context):

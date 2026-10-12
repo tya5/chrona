@@ -158,16 +158,18 @@ def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():
 
         finish, end = render("finish"), render("end")
     scene = serialize_scene(finish.scene)
-    # Stroke-aware corridor candidates preserve the planned arrow and recover
-    # the actual arrow without changing endpoint-alias identity.
-    for identifier in ("bringup-risk", "firmware-slip"):
+    # The one-pass policy preserves the feasible leader and the truthful
+    # fallback, independently of endpoint-alias spelling.
+    for identifier in ("bringup-risk",):
         assert f"annotation-leader:{identifier}".encode() in scene
         assert not any(item.scene_id == f"annotation-summary:{identifier}"
                        for item in finish.surface.primitives)
         for prefix in ("annotation-box", "annotation-text", "note-index"):
             assert any(item.scene_id == f"{prefix}:{identifier}"
                        for item in finish.surface.primitives)
-    assert b"W_LAYOUT_ANNOTATION_SUPPRESSED" not in scene
+    assert b"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" in scene
+    assert any(item.scene_id == "annotation-summary:firmware-slip" for item in finish.surface.primitives)
+    assert not any(item.scene_id == "annotation-leader:firmware-slip" for item in finish.surface.primitives)
     assert serialize_scene(end.scene) == scene
     assert end.artifact.content == finish.artifact.content
 

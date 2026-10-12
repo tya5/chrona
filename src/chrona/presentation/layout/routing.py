@@ -406,8 +406,9 @@ def select_relation_route(
     distinguished from unrelated invalid input; endpoint
     labels are never exempted from either corridor or body collisions.
     Explicit first-fit sorts admitted ports and tries finite shapes before
-    that pair's search, ignoring rank after full acceptance. The internal
-    default keeps existing callers unchanged until policy wiring is released.
+    that pair's cheap search, ignoring rank after full acceptance. Only if
+    that whole phase fails, the original ranked best phase rescues the relation
+    within the same explicit budget. The internal default preserves callers.
     """
     if not port_pairs or not relation_scene_id:
         raise _route_attempt_error("route candidate set", relation_scene_id=relation_scene_id,
@@ -415,8 +416,9 @@ def select_relation_route(
                                    max_bends=max_bends, max_detour_ratio=max_detour_ratio)
     if search_policy not in {"best", "first-fit"}:
         raise _route_attempt_error("search policy", search_policy=search_policy)
+    phases = (("best", port_pairs),)
     if search_policy == "first-fit":
-        port_pairs = first_fit_port_pairs(port_pairs)
+        phases = (("first-fit", first_fit_port_pairs(port_pairs)), ("best", port_pairs))
         if channels is None:
             channels = shape_channels(obstacles, bounds=bounds, classes=classes, regions=regions,
                                       grid_offset=ROUTE_GRID_OFFSET)
@@ -433,57 +435,60 @@ def select_relation_route(
             settled_by_shape=shaped, search_used=search_used,
             search_budget=search_budget, search_expansions=budget.expansions if budget is not None else 0)
 
-    quota, remainder = divmod(RELATION_SEARCH_EXPANSIONS, len(port_pairs))
-    for pair_index, (source, target) in enumerate(port_pairs):
-        blockers = tuple(sorted({item.placement_id for egress in (source, target)
-                                 if egress.corridor
-                                 for item in obstacles.egress_collisions(
-                                     ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
-                                     classes=classes, regions=regions)}))
-        if blockers:
-            attempts.append(RouteAttemptEvidence(source.side, target.side, "egress-collision",
-                                                 blocker_ids=blockers))
-            continue
-        pair_limit = quota + int(pair_index < remainder)
-        port_ids = tuple(
-            port_id for host_id, side in ((source_host_id, source.side), (target_host_id, target.side))
-            for port_id in (f"port:{host_id or relation_scene_id}:{side}",)
-            if obstacles.has(port_id)
-        )
-        if search_policy == "first-fit":
-            shapes = (candidate for candidate in relation_shape_candidates(
-                source.exposed_port, target.exposed_port, bounds=bounds, channels=channels)
-                if all(not obstacles.collisions(ObstacleSegment(a, b), port_ids=port_ids,
-                    classes=classes, regions=regions) for a, b in zip(candidate, candidate[1:])))
-            shaped, shaped_points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
-                port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
-                max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
-                limit=pair_limit, candidate_paths=shapes)
-            if shaped.outcome == "accepted":
-                return result((source, target), shaped_points, (*attempts, shaped), shaped=True)
-        if pair_limit == 0:
-            attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
-                                                 search_failure="E_PRESENTATION_ROUTE_LIMIT"))
-            continue
-        search_used = True
-        measured, points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
-            port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
-            max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
-            limit=pair_limit, exact_bound=search_policy == "best",
-            **({"budget": budget} if budget is not None else {}))
-        attempts.append(measured)
-        if measured.outcome == "accepted":
-            if rank is None or search_policy == "first-fit":
-                return result((source, target), points, attempts)
-            score = rank(tuple(points), source, target)
-            if best is None or score < best:
-                if chosen_attempt >= 0:
-                    attempts[chosen_attempt] = replace(attempts[chosen_attempt], outcome="eligible-not-selected")
-                best, chosen, chosen_points, chosen_attempt = score, (source, target), tuple(points), len(attempts) - 1
-            else:
-                attempts[-1] = replace(measured, outcome="eligible-not-selected")
+    for phase, phase_pairs in phases:
         if budget is not None and budget.hit:
             break
+        quota, remainder = divmod(RELATION_SEARCH_EXPANSIONS, len(phase_pairs))
+        for pair_index, (source, target) in enumerate(phase_pairs):
+            blockers = tuple(sorted({item.placement_id for egress in (source, target)
+                                     if egress.corridor
+                                     for item in obstacles.egress_collisions(
+                                         ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
+                                         classes=classes, regions=regions)}))
+            if blockers:
+                attempts.append(RouteAttemptEvidence(source.side, target.side, "egress-collision",
+                                                     blocker_ids=blockers))
+                continue
+            pair_limit = quota + int(pair_index < remainder)
+            port_ids = tuple(
+                port_id for host_id, side in ((source_host_id, source.side), (target_host_id, target.side))
+                for port_id in (f"port:{host_id or relation_scene_id}:{side}",)
+                if obstacles.has(port_id)
+            )
+            if phase == "first-fit":
+                shapes = (candidate for candidate in relation_shape_candidates(
+                    source.exposed_port, target.exposed_port, bounds=bounds, channels=channels)
+                    if all(not obstacles.collisions(ObstacleSegment(a, b), port_ids=port_ids,
+                        classes=classes, regions=regions) for a, b in zip(candidate, candidate[1:])))
+                shaped, shaped_points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
+                    port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
+                    max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
+                    limit=pair_limit, candidate_paths=shapes)
+                if shaped.outcome == "accepted":
+                    return result((source, target), shaped_points, (*attempts, shaped), shaped=True)
+            if pair_limit == 0:
+                attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
+                                                     search_failure="E_PRESENTATION_ROUTE_LIMIT"))
+                continue
+            search_used = True
+            measured, points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
+                port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
+                max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
+                limit=pair_limit, exact_bound=phase == "best",
+                **({"budget": budget} if budget is not None else {}))
+            attempts.append(measured)
+            if measured.outcome == "accepted":
+                if rank is None or phase == "first-fit":
+                    return result((source, target), points, attempts)
+                score = rank(tuple(points), source, target)
+                if best is None or score < best:
+                    if chosen_attempt >= 0:
+                        attempts[chosen_attempt] = replace(attempts[chosen_attempt], outcome="eligible-not-selected")
+                    best, chosen, chosen_points, chosen_attempt = score, (source, target), tuple(points), len(attempts) - 1
+                else:
+                    attempts[-1] = replace(measured, outcome="eligible-not-selected")
+            if budget is not None and budget.hit:
+                break
     return result(chosen, chosen_points, attempts)
 
 

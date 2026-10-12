@@ -371,15 +371,20 @@ prefix histories and existing expansion quotas; it does not collapse different
 path-dependent prefixes using weighted-state dominance. Sparse-graph memo keys
 distinguish bound modes; endpoint-independent visibility preparation may be
 shared. `best` retains its exact reverse bound and candidate order.
+If all first-fit shapes and cheap searches fail, Layout performs one ranked
+`best` rescue for that relation, using the original admitted pair order and
+the same completed-route validators. An accepted fast route never invokes
+rescue. Rescue does not replay surface composition or label recovery. Both
+phases share the explicit `searchBudget`; an exhausted ceiling stops rescue.
+The routing summary counts the relation once, not once per search phase.
 Under `first-fit`, required labels precede routing; member names and finish
 deltas yield to completed routes. Skip lane-route rehearsal and post-route
 label recovery; do not replay composition in Scene or adapters.
 
-Migration: the first additive release keeps omitted `search` equal to `best`.
-After the reviewer declares `best` on the five approved HALCYON targets and that
-change is on main, a coordinated release changes omission to `first-fit`.
-An explicit `best` retains its output across the flip. This temporary default
-is not final acceptance of #1430. No authored example is edited by dev A.
+Omitted `search` means `first-fit`. Authors requiring legacy ranked output
+declare `best`; its canonical manifest representation and output remain
+unchanged. The five approved HALCYON targets explicitly declare `best` before
+this default changes. No authored example is edited by dev A.
 
 **Explicit search budget (#1426).**
 Optional `relationRouting.searchBudget` is a positive integer, an additional
@@ -471,8 +476,11 @@ All eligible finite port pairs are compared, with exact rank ties retaining
 the first declared pair. Scene and adapters do not simplify geometry.
 
 **Relation-instance search budget (#1298).** One route-selection call owns
-4096 candidate-frontier expansions, rather than resetting 4096 for every
-port pair. For P declared pairs, divide that allowance evenly: pair i gets
+4096 candidate-frontier expansions per search phase, rather than resetting
+4096 for every port pair. `best` has one phase; first-fit has a cheap phase and
+an exact rescue only after failure, at most8192 expansions in its single
+composition pass. The optional explicit ceiling remains shared across both
+phases. For P declared pairs, divide each phase's allowance evenly: pair i gets
 `4096 // P + int(i < 4096 % P)` in the existing deterministic pair order.
 Blocked pairs do not transfer unused allowance; therefore processing speed,
 cache hits and earlier search success cannot change a later pair's allowance.
@@ -486,8 +494,10 @@ the existing declared safe fallback/suppression and diagnostic contract.
 Surface source exits have at most four cardinal ports; target entries add
 at most one horizontal stub, so P is at most20, independent of comparison
 sibling count. For R completed source/target relation instances and at most
-five composition/rehearsal passes, there are at most100R candidate-generator
-calls and20480R processed frontier expansions. A final over-limit pop per
+five best composition/rehearsal passes, there are at most100R candidate-generator
+calls and20480R processed frontier expansions. First-fit's single composition
+pass, including rescue, has at most40R calls and8192R processed expansions;
+therefore the same surface-wide bounds remain sufficient. A final over-limit pop per
 pair may discover exhaustion; it does not process that state. Immutable
 history indexes examine only nearby orientation/coordinate intervals, then
 apply the unchanged exact intersection predicate. Each processed state has

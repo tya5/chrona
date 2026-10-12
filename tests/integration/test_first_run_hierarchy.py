@@ -1,6 +1,7 @@
 """Hierarchy rows close content, paint admission and truthful temporal ports."""
 from copy import deepcopy
 from datetime import date
+from math import hypot
 from xml.etree import ElementTree
 
 import pytest
@@ -92,9 +93,18 @@ def test_rollup_modes_preserve_relation_date_ports_without_fake_painted_hosts(tm
     route = next(item for item in rendered.surface.primitives
                  if item.source_kind == "relation" and item.from_instance_id == "root:root")
     last_child = next(item for item in rendered.surface.primitives if item.scene_id == "planned:b:b")
-    assert route.points[0][0] == pytest.approx(last_child.bounds[0] + last_child.bounds[2])
+    # The round source marker is centred at the temporal port; its painted
+    # tangent, not its centre, is the first completed line point.
+    start, following = route.points[:2]
+    dx, dy = following[0] - start[0], following[1] - start[1]
+    marker = route.marker_start
+    assert marker is not None
+    offset = marker.head_length - marker.attachment_offset - marker.head_length / 2
+    centre = (start[0] - dx / hypot(dx, dy) * offset,
+              start[1] - dy / hypot(dx, dy) * offset)
+    assert centre[0] == pytest.approx(last_child.bounds[0] + last_child.bounds[2])
     root_row = next(row for row in rendered.surface.rows if row.row_id == "root")
-    assert root_row.bounds[1] <= route.points[0][1] <= root_row.bounds[1] + root_row.bounds[3]
+    assert root_row.bounds[1] <= centre[1] <= root_row.bounds[1] + root_row.bounds[3]
     assert not any("E_SCENE_RELATION_THROUGH_MARK" in code for code in rendered.surface.diagnostics)
 
 

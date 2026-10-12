@@ -37,7 +37,7 @@ def test_declared_policy_controls_real_pass_order_and_info_projection(tmp_path, 
     rendered = sr.render(tmp_path, sr.chain_project(groups=1, per_group=3), presentation=parts)
     infos = [item for item in rendered.info_diagnostics if isinstance(item, RelationRoutingSummary)]
     payloads = [item for item in warning_payloads(rendered) if item["code"] == "I_LAYOUT_RELATION_ROUTING"]
-    if policy in {None, "best"}:
+    if policy == "best":
         assert infos == payloads == []
         if lane:
             assert calls[0][0] == "lane-rehearsal"

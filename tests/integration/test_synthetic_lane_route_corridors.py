@@ -42,6 +42,8 @@ def _project(spans, relation):
 
 def _parts(entry: str | None = None):
     parts = sr.bundle()
+    # These regression fixtures exercise the ranked policy's lane rehearsal.
+    parts["layout"].setdefault("relationRouting", {"maxBends": 4, "maxDetourRatio": 2})["search"] = "best"
     parts["view"] = sr.lane_view(parts["view"])
     if entry is not None:  # #1030: pin the relation entry policy where a fixture's premise depends on the order
         routing = parts["layout"].setdefault("relationRouting", {"maxBends": 4, "maxDetourRatio": 2})

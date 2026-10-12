@@ -27,7 +27,7 @@ def test_unchanged_routes_have_zero_delta():
     assert not any(route_delta(value, value).values())
 
 
-@pytest.mark.parametrize('policy', ('best', 'first-fit'))
+@pytest.mark.parametrize('policy', ('default', 'best', 'first-fit'))
 def test_characterization_pins_only_normalization_and_accepts_only_evidence_mismatch(tmp_path, monkeypatch, policy):
     project = tmp_path / 'synthetic'
     project.mkdir()
@@ -43,7 +43,8 @@ def test_characterization_pins_only_normalization_and_accepts_only_evidence_mism
     original = evidence.engine.LayoutManifest
     def materializer(manifest_path, slide_id, output, *, write):
         assert not write and manifest_path == manifest and slide_id == 'synthetic'
-        assert evidence.engine.LayoutManifest(relation_search='ignored') == {'relation_search': policy}
+        selected = 'ignored' if policy == 'default' else policy
+        assert evidence.engine.LayoutManifest(relation_search='ignored') == {'relation_search': selected}
         output.mkdir(parents=True)
         (output / 'review.svg').write_bytes(svg)
         (output / 'review.scene.json').write_bytes(serialized)
