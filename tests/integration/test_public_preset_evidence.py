@@ -15,7 +15,7 @@ ROOT = Path(__file__).parents[2]
 
 
 def test_controller_z_public_preset_names_the_executive_context_resources():
-    root = ROOT / "examples/controller-z"
+    root = ROOT / "tests/fixtures/controller-z"
     preset = yaml.safe_load((root / "executive-light.preset.yaml").read_bytes())
     contract = parse_contract(ClosureIdentity("presentation-preset", preset["id"], "evidence", "sha256:" + sha256(yaml.safe_dump(preset, sort_keys=True).encode()).hexdigest()), preset)
     assert isinstance(contract, PresentationPresetContract)
@@ -72,8 +72,8 @@ def test_packaged_library_schemes_match_the_example_copies_except_project_catego
         "mission-light": "examples/halcyon-1/schemes/mission-light.yaml",
         "control-room-dark": "examples/halcyon-1/schemes/control-room-dark.yaml",
         "print-mono": "examples/halcyon-1/schemes/print-mono.yaml",
-        "executive-light": "examples/controller-z/schemes/executive-light.yaml",
-        "elevated-light": "examples/controller-z/schemes/executive-light.yaml",
+        "executive-light": "tests/fixtures/controller-z/schemes/executive-light.yaml",
+        "elevated-light": "tests/fixtures/controller-z/schemes/executive-light.yaml",
     }
     project_categories = {"bus", "payload", "ait", "ground", "launch", "ops", "factory-team", "fw-team", "validation-team"}
     library = yaml.safe_load((ROOT / "src/chrona/resources/presets/library.yaml").read_bytes())

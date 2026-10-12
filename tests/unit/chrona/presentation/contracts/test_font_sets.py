@@ -13,7 +13,7 @@ from chrona.resources import safe_load
 ROOT = Path(__file__).resolve().parents[5]
 DEFAULTS = ROOT / "src/chrona/resources/fonts/default-font-metrics.yaml"
 SEVEN = ROOT / "examples/halcyon-1/contexts/19-gallery-text-compression.yaml"
-BASIC = ROOT / "examples/aster-ssd/contexts/01-overview.yaml"
+BASIC = ROOT / "tests/fixtures/aster-ssd/contexts/01-overview.yaml"
 
 
 def _load(path: Path) -> dict:

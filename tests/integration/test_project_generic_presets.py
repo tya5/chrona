@@ -27,7 +27,7 @@ def _project_values(path: Path) -> set[str]:
 
 
 def test_no_bundle_file_names_an_example_projects_group_values():
-    values = _project_values(ROOT / "examples/halcyon-1/project.yaml") | _project_values(ROOT / "examples/controller-z/project.yaml")
+    values = _project_values(ROOT / "examples/halcyon-1/project.yaml") | _project_values(ROOT / "tests/fixtures/controller-z/project.yaml")
     for path in BUNDLES.glob("*/*.yaml"):
         text = path.read_text(encoding="utf-8")
         tokens = {token.strip(" :,[]{}'\"") for line in text.splitlines() for token in line.replace(".", " ").split()}
@@ -66,5 +66,5 @@ def test_each_preset_renders_halcyon_and_the_starter(tmp_path, monkeypatch, pres
 
 
 def test_elevated_light_paints_its_gradient_without_a_flag(tmp_path, monkeypatch):
-    _, svg = _render(tmp_path, monkeypatch, "elevated-light", ROOT / "examples/controller-z/project.yaml")
+    _, svg = _render(tmp_path, monkeypatch, "elevated-light", ROOT / "tests/fixtures/controller-z/project.yaml")
     assert b"<linearGradient" in svg

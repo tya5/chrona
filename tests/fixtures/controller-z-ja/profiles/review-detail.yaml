@@ -1,0 +1,37 @@
+version: chrona/review-detail-profile/v0.1
+id: controller-z-ja-review-detail
+body:
+  legend:
+    - {role: planned, label: 計画}
+    - {role: actual, label: 実績}
+  groupDetails:
+    - groupId: fw-team
+      label: ファームウェア
+      description: アーキテクチャ、ファームウェア提供、シリコン立ち上げ。
+    - groupId: validation-team
+      label: システム検証
+      description: ハードウェア準備、性能、認定の証跡。
+    - groupId: factory-team
+      label: プロダクトエンジニアリング
+      description: 量産検証とリリース準備状況。
+  milestones: [evb-arrival, ga]
+  observations:
+    columns:
+      - {id: area, label: 領域}
+      - {id: observation, label: 観測結果}
+      - {id: disposition, label: 対応}
+    rows:
+      - id: example-readiness
+        source: synthetic-example-record-CZ-001
+        emphasis: attention
+        cells:
+          area: 統合
+          observation: 証跡を確認中。
+          disposition: 要レビュー
+      - id: example-release
+        source: synthetic-example-record-CZ-002
+        emphasis: normal
+        cells:
+          area: リリース
+          observation: 判定基準を記録済み。
+          disposition: 記録済み

@@ -141,7 +141,7 @@ def test_missing_or_nonstring_version_is_not_reported_as_unsupported_version(ver
 
 
 def test_presentation_collector_continues_after_unsupported_version_to_report_sibling_schema_errors():
-    view = yaml.safe_load((ROOT / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((ROOT / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
     theme = _theme()
     theme["id"] = "stale-theme"
     theme["version"] = "chrona/theme/v0.10"
@@ -166,8 +166,8 @@ def _source(kind, value):
 
 
 def test_presentation_collector_reports_all_independent_resource_schema_errors_in_declaration_order():
-    view = yaml.safe_load((ROOT / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
-    theme = yaml.safe_load((ROOT / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((ROOT / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    theme = yaml.safe_load((ROOT / "tests/fixtures/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
     view["body"]["surface"] = "table-timelinez"
     view["body"]["tableColumns"][0]["missing"] = "em-dashz"
     theme["body"]["values"]["text-weight"]["type"] = "fontWeightz"
@@ -312,7 +312,7 @@ def test_v16_table_intent_contract_rejects_ambiguous_hierarchy_column():
     with pytest.raises(ContractError, match="E_VIEW_HIERARCHY_COLUMN_UNKNOWN"):
         _view_contract(automatic)
 
-    flat = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
+    flat = yaml.safe_load((ROOT / "tests/fixtures/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
     flat["body"]["hierarchyColumn"] = flat["body"]["tableColumns"][0]["id"]
     with pytest.raises(ContractError, match="E_VIEW_HIERARCHY_COLUMN_UNEXPECTED"):
         _view_contract(flat)
@@ -326,7 +326,7 @@ def test_v16_table_intent_contract_rejects_duplicate_columns_and_keeps_explicit_
     with pytest.raises(ContractError, match="E_VIEW_TABLE_COLUMN_DUPLICATE"):
         _view_contract(value)
 
-    explicit = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
+    explicit = yaml.safe_load((ROOT / "tests/fixtures/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
     body = explicit["body"]
     for name in ("selection", "grouping", "ordering"):
         body.pop(name)
@@ -403,7 +403,7 @@ def test_v18_detaches_closed_orientation_intent_for_layout():
          lambda value: value["body"]["values"]["arrow"].update({"value": "circle"})),
         ("render-context", "examples/halcyon-1/contexts/01-mission-brief.yaml",
          lambda value: value["body"]["environment"].update({"locale": "en-GB"})),
-        ("view", "examples/aster-ssd/views/01-overview.yaml",
+        ("view", "tests/fixtures/aster-ssd/views/01-overview.yaml",
          lambda value: value["body"].update({"annotations": [{"id": "note", "purpose": "note", "anchor": {"kind": "object", "id": "firmware", "endpoint": "body"}, "placement": {"side": "above", "alignment": "center"}, "text": "missing facet"}]})),
     ),
 )
@@ -418,10 +418,10 @@ def test_declared_vocabulary_is_rejected_at_its_resource_boundary(kind, path, mu
 @pytest.mark.parametrize(
     ("kind", "path", "mutate", "expected_pointer"),
     (
-        ("view", "examples/aster-ssd/views/01-overview.yaml",
+        ("view", "tests/fixtures/aster-ssd/views/01-overview.yaml",
          lambda value: value["body"]["tableColumns"][0].update({"source": {"comparisonFacet": "invalid"}}),
          "/body/tableColumns/0/source"),
-        ("theme", "examples/aster-ssd/themes/executive-light.yaml",
+        ("theme", "tests/fixtures/aster-ssd/themes/executive-light.yaml",
          lambda value: value["body"]["colorBindings"].update({"text.fill": "invalid"}),
          "/body/colorBindings/text.fill"),
         ("layout-profile", "examples/halcyon-1/layouts/briefing.yaml",
@@ -500,7 +500,7 @@ def test_resource_contracts_have_no_generic_document_or_body_escape_hatch():
 
 
 def test_live_closed_resources_become_named_presentation_records():
-    view = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((ROOT / "tests/fixtures/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
     summary = yaml.safe_load((ROOT / "examples/halcyon-1/profiles/summary.yaml").read_text(encoding="utf-8"))
     view_contract = parse_contract(ClosureIdentity("view", view["id"], "r", "sha256:" + "a" * 64), view)
     summary_contract = parse_contract(ClosureIdentity("summary-profile", summary["id"], "r", "sha256:" + "a" * 64), summary)
@@ -616,7 +616,7 @@ def test_view_contract_errors_name_the_column_or_id_at_fault():
     value["body"]["hierarchyColumn"] = "missing"
     assert "'missing'" in _detail_of(value)
 
-    flat = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
+    flat = yaml.safe_load((ROOT / "tests/fixtures/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
     flat["body"]["hierarchyColumn"] = flat["body"]["tableColumns"][0]["id"]
     assert repr(flat["body"]["hierarchyColumn"]) in _detail_of(flat)
 

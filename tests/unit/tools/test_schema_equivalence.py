@@ -148,6 +148,15 @@ def test_expected_invalid_list_equals_the_baseline_invalid_documents():
     assert all(entry["reason"].strip() for entry in listed.values())
 
 
+def test_frozen_invalid_summary_keeps_its_predecessor_diagnostic():
+    baseline = gate.load_baseline(REPOSITORY / gate.BASELINE)
+    invalid = baseline["diagnostics"]["invalidDocuments"]
+    frozen = "tests/fixtures/controller-z/profiles/summary.yaml"
+    # This is a historical receipt-key mapping, not an example file read.
+    predecessor_key = frozen.replace("tests/fixtures/", "examples/", 1)
+    assert invalid[frozen] == invalid[predecessor_key]
+
+
 def test_the_gate_reads_no_production_loader():
     source = (REPOSITORY / "tools" / "schema_equivalence.py").read_text(encoding="utf-8")
     imports = re.findall(r"^\s*(?:from|import)\s+(chrona[\w.]*)", source, flags=re.MULTILINE)

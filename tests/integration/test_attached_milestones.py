@@ -121,7 +121,7 @@ def test_lane_packing_without_attached_restores_independent_membership(tmp_path,
 
 
 def test_committed_example_has_two_intermediate_gates_with_visible_lane_facts(tmp_path, monkeypatch):
-    example = ROOT / "examples/attached-milestones"
+    example = ROOT / "tests/fixtures/attached-milestones"
     project = yaml.safe_load((example / "project.yaml").read_text(encoding="utf-8"))
     host = project["objects"]["campaign"]["schedule"]
     gates = ("readiness", "range-clearance")

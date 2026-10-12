@@ -1,0 +1,76 @@
+version: chrona/view/v0.27
+kind: view
+id: controller-z-plan-only
+body:
+  surface: table-timeline
+  selection:
+    include:
+      ids:
+      - architecture
+      - firmware
+      - evb-arrival
+      types:
+      - span
+      - point
+  grouping:
+    by: none
+    missing: ungrouped
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: selected-planned
+    marginDays: 7
+  comparison:
+    baseline: primary
+    actual: optional
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+  visibility:
+    labels: true
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations: none
+  axis:
+    tiers:
+    - unit: quarter
+      every: 1
+      role: band
+    - unit: quarter
+      every: 1
+      role: grid-major
+    - unit: quarter
+      every: 1
+      role: labels
+      label:
+        form: year-quarter
+        align: center
+        overflow: thin-with-record
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: labels
+      label:
+        form: short-month
+        align: start
+        overflow: thin-with-record
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: grid-minor
+  backgroundDecoration:
+    rows: none
+    groups: all
+  tableColumns:
+  - id: Work item
+    source: title
+    missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
+  rows:
+    mode: automatic
