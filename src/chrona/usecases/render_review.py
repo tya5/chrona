@@ -57,6 +57,7 @@ from chrona.presentation.review.figure_facts import projected_counts
 from chrona.presentation.review.annotation_expansion import AnnotationExpansionError
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, header_lines, heading_text
 from chrona.presentation.figure_text import FigureTextError, resolve_figure_text
+from chrona.presentation.heading_text import HeadingBindError
 from chrona.presentation.review.v05_content import (
     compose_heading, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
 from chrona.presentation.scene.model import (
@@ -330,6 +331,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         raise _font_failure(error.failure) from error.failure
     except SlotHeadingCopyError as error:
         raise RenderFailed(error.diagnostic_id, error.detail, "view", error.path) from error
+    except HeadingBindError as error:
+        raise RenderFailed(error.failure.code, error.failure.detail, "view", error.path) from error
     manifest, measured, surface_content = plan.manifest, plan.measured, plan.content
     surface_preparation = plan.preparation
     fixed_lane_preflight = (surface_preparation.inline.request.fixed_lane_preflight

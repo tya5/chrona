@@ -13,7 +13,7 @@ def test_a_fact_the_project_lacks_renders_as_empty_text_and_doubled_braces_are_l
     assert render_heading("{project} · {calendar} {{x}}", {"project": "H"}) == "H ·  {x}"
 
 
-@pytest.mark.parametrize("source", ["{ordinal}", "{title}", "{figure:x}", "{nope}", "{project", "a } b"])
+@pytest.mark.parametrize("source", ["{ordinal}", "{title}", "{nope}", "{project", "a } b"])
 def test_any_other_brace_use_is_the_heading_error(source):
     with pytest.raises(GroupHeaderTextError) as caught:
         validate_heading_template(source)
@@ -25,3 +25,26 @@ def test_the_group_header_grammar_is_unchanged_by_the_shared_parser():
     with pytest.raises(GroupHeaderTextError) as caught:
         parse_template("{project}")
     assert caught.value.code == "E_VIEW_GROUP_HEADER_TEMPLATE"
+
+
+def test_closing_semantic_facts_does_not_reparse_project_text_as_count_syntax():
+    from chrona.presentation.heading_text import close_heading
+    from chrona.presentation.count_text import CountTextFormat
+    facts = {"project": "Project {figure:not-a-reference}"}
+    program = close_heading("{project}: {figure:n} {{kept}}", facts)
+    facts["project"] = "changed"
+    assert program.figure_ids == {"n"}
+    assert program.bind({"n": 3}, {"n": CountTextFormat("english-words")}) == "Project {figure:not-a-reference}: three {kept}"
+
+
+def test_heading_program_binds_typed_range_errors_at_the_exact_text_read():
+    from chrona.presentation.heading_text import HeadingBindError, HeadingTextPrograms, close_heading
+    from chrona.presentation.count_text import CountTextError, CountTextFormat
+    programs = HeadingTextPrograms(close_heading("Title", {}), subtitle=close_heading("{figure:n}", {}))
+    assert programs.figure_ids == {"n"}
+    with pytest.raises(HeadingBindError) as caught:
+        programs.bind({"n": 100}, {"n": CountTextFormat("kanji")})
+    assert caught.value.path == "/body/heading/subtitle"
+    assert isinstance(caught.value.failure, CountTextError)
+    assert caught.value.failure.supported_range == (0, 99)
+    assert programs.bind({"n": 3}, {"n": CountTextFormat("kanji")}) == ("Title", "三", None)

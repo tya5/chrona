@@ -7,6 +7,7 @@ from decimal import Decimal, ROUND_CEILING
 from typing import Any, Mapping
 
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput
+from chrona.presentation.heading_text import HeadingTextPrograms
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve, measure_as_of_chip
 from chrona.presentation.layout.canvas_viewport import DeclaredViewport
 from chrona.presentation.layout.engine import measure_natural_normal_flow_block, resolve_content_block_extent, solve_layout
@@ -39,7 +40,7 @@ class SurfaceRenderPlanInput:
     profile: Mapping[str, Any]
     theme: Mapping[str, Any]
     font_metrics: Any
-    heading: HeadingContent | None
+    heading: HeadingContent | HeadingTextPrograms | None
     actual: Mapping[str, Any] | None
     detail: ReviewDetailInput | None
     viewport_inline: int
@@ -81,6 +82,9 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
     selected_content, summary, table_content = value.content, value.summary, value.table
     theme, font_metrics, layout = value.theme, value.font_metrics, value.profile
     actual_observations, heading_content = value.actual, value.heading
+    if isinstance(heading_content, HeadingTextPrograms):
+        heading_content = HeadingContent(*heading_content.bind(dict(projection.figures), view.figure_formats),
+                                         text_wrap=heading_content.text_wrap)
     visual_requests, icon_assets = value.visual_requests, value.icon_assets
     source_inputs = surface_source_inputs(project, view, projection, summary,
         content=selected_content, table=table_content, heading=heading_content,
@@ -100,8 +104,11 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
     claimed_sources = (_layout_slot_sources(resolved_layout.profile["root"])
                        if resolved_layout is not None else frozenset())
     if view.surface == "dependency-network" and resolved_layout is not None and "title" not in claimed_sources:
-        source_inputs.update(heading_part_sources(
-            compose_heading(view, project, actual_observations, value.locale)))
+        network_heading = compose_heading(view, project, actual_observations, value.locale)
+        if isinstance(network_heading, HeadingTextPrograms):
+            network_heading = HeadingContent(*network_heading.bind(dict(projection.figures), view.figure_formats),
+                                             text_wrap=network_heading.text_wrap)
+        source_inputs.update(heading_part_sources(network_heading))
     try:
         source_inputs["legend"] = legend_source_input(
             selected_content.legend_entries,

@@ -11,11 +11,18 @@ from chrona.resources import schema_validator
 from tests.support import synthetic_review as sr
 
 
-def _view(formats, *, figures=None):
+def _view(formats, *, figures=None, body_extra=None):
     value = sr.bundle("control-room-dark")["view"]
     value["body"]["figures"] = figures if figures is not None else [
         {"id": "n", "kind": "count", "source": "selected"}]
     value["body"]["figureFormats"] = formats
+    value["body"].update(body_extra or {})
+    if value["body"]["surface"] == "dependency-network":
+        value["body"]["rows"] = {"mode": "automatic"}
+        for member in ("tableColumns", "hierarchyColumn", "backgroundDecoration", "axis", "markers", "periods",
+                       "deadlines", "shading", "timePresentation", "annotations", "annotationPresentation",
+                       "annotationBindings", "annotationPlacement", "colorEncoding"):
+            value["body"].pop(member, None)
     return parse_contract(ClosureIdentity("view", value["id"], "r", "sha256:" + "a" * 64), value).view
 
 
@@ -94,3 +101,37 @@ def test_live_view_and_layout_use_the_same_frozen_format_definition():
     layout = schema_validator("layout-profile-v0.10.schema.yaml").schema
     body = view["allOf"][1]["properties"]["body"]
     assert body["properties"]["figureFormats"]["$ref"] == layout["properties"]["viewDefaults"]["properties"]["figureFormats"]["$ref"]
+
+
+@pytest.mark.parametrize("member", ["title", "subtitle", "kicker"])
+@pytest.mark.parametrize("kind,code", [("unknown", "E_VIEW_FIGURE_UNKNOWN"),
+                                      ("scoped", "E_FIGURE_SCOPE_UNAVAILABLE"),
+                                      ("malformed", "E_VIEW_HEADING_TEMPLATE")])
+def test_heading_reference_admission_has_exact_member_pointer(member, kind, code):
+    figures = [{"id": "n", "kind": "count", "source": "selected", "scope": "group"}]
+    text = "{figure:absent}" if kind == "unknown" else "{figure:n}" if kind == "scoped" else "{figure:"
+    with pytest.raises(ContractError) as caught:
+        _view({}, figures=figures, body_extra={"heading": {member: text}})
+    assert caught.value.diagnostic_id == code
+    assert caught.value.source_ref == f"/body/heading/{member}"
+
+
+@pytest.mark.parametrize("member", ["title", "subtitle", "kicker"])
+def test_layout_count_heading_reads_are_admitted_but_not_evaluated_at_ingress(member):
+    view = _view({"n": {"form": "kanji"}}, figures=[{"id": "n", "kind": "count", "source": "placedNotes"}],
+                 body_extra={"heading": {member: "{figure:n}"}})
+    assert getattr(view.heading, member) == "{figure:n}"
+
+
+@pytest.mark.parametrize("consumer,path", [
+    ({"grouping": {"by": "field", "field": "owner", "missing": "Other", "presentation": "header",
+                   "header": {"text": "{figure:n}"}}}, "/body/grouping/header/text"),
+    ({"periods": [{"id": "p", "label": {"placement": "top", "template": "{figure:n}"}}]},
+     "/body/periods/0/label/template"),
+    ({"surface": "dependency-network"}, "/body/figures/0/source"),
+])
+def test_layout_counts_are_rejected_by_unsupported_consumers(consumer, path):
+    with pytest.raises(ContractError) as caught:
+        _view({}, figures=[{"id": "n", "kind": "count", "source": "placedNotes"}], body_extra=consumer)
+    assert caught.value.diagnostic_id == "E_FIGURE_LAYOUT_SCOPE"
+    assert caught.value.source_ref == path

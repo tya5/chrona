@@ -118,6 +118,14 @@ typed immutable View formats validate count targets with escaped pointers.
 New count sources are global-only; explicit empty format maps replace defaults.
 209 focused contract/formatter/defaults/schema-inventory tests PASS. L1 records
 the two intended View deltas; no stale expected entries remained to prune.
-P2 is not accepted yet: heading/caption connections and deferred-fact admission
-remain, followed by P3 narrative receipts/count closure. No authored examples
-or resources changed. WIP schema admission is not a finished rendering feature.
+P2 heading connection implemented: Presentation closes project/date/calendar
+facts as literal program parts; Layout binds figure text before source
+measurement. Semantic text is never reparsed as syntax. Read failures preserve
+typed range evidence and exact heading-member pointers. Unknown/scoped heading
+references and unsupported placedNotes period/group-header/network uses fail
+at ingress.266 focused tests PASS, including actual3-item/2-group Scene/SVG
+text, pre-measurement source capture, empty-map defaults and range-error transport.
+Schema equivalence L1/L2/L3 and import/reachability/value guards PASS.
+P2 is not accepted yet: slot-caption connections and remaining deferred-fact
+admission remain, followed by P3 narrative receipts/count closure. No authored
+examples or resources changed; placedNotes still awaits completed Layout facts.
