@@ -9,7 +9,7 @@ def test_gallery_pages_are_deterministic_and_documentary():
     pages = render(root)
 
     assert pages == render(root)
-    page = pages[Path("docs/gallery/sets/controller-z-executive-status.md")]
+    page = pages[Path("docs/gallery/sets/halcyon-investigating-slip.md")]
     assert "Presentation-reference diff" in page
     assert "Referenced-resource YAML diff" in page
     assert "tools/render_design_gallery.py --root ." in page

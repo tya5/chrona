@@ -1,0 +1,158 @@
+version: chrona/view/v0.27
+kind: view
+id: controller-z-annotations
+body:
+  surface: table-timeline
+  selection:
+    include:
+      types:
+      - span
+      - point
+  grouping:
+    by: field
+    field: owner
+    missing: ungrouped
+    order:
+    - fw-team
+    - validation-team
+    - factory-team
+    presentation: header
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: explicit
+    start: '2026-02-01'
+    end: '2026-07-01'
+  comparison:
+    baseline: primary
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - atDelta
+    - progress
+    - missingActual
+    - unmatchedActual
+  progressFill:
+    source: actual
+  visibility:
+    labels:
+      placement: plot
+      content:
+      - title
+      side: inside
+      overflow: suppress
+    fallback:
+      labels:
+      - inside
+      - above
+      - suppress
+      annotations:
+      - rail
+      - suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations:
+      mode: presentation
+      marker: numbered
+  annotations:
+  - id: architecture-callout
+    purpose: callout
+    anchor:
+      kind: object
+      id: architecture
+      facet: planned
+      endpoint: finish
+    placement:
+      side: end
+      alignment: start
+    text: Architecture baseline approved.
+  - id: evb-highlight
+    purpose: highlight
+    anchor:
+      kind: object
+      id: evb-arrival
+      facet: planned
+      endpoint: at
+    placement:
+      side: above
+      alignment: center
+    text: Board arrival decision.
+  - id: performance-note
+    purpose: note
+    anchor:
+      kind: object
+      id: performance
+      facet: planned
+      endpoint: finish
+    placement:
+      side: end
+      alignment: end
+    text: Performance evidence remains under review.
+  - id: firmware-slip
+    purpose: explanatory-arrow
+    anchor:
+      kind: object
+      id: firmware
+      facet: actual
+      endpoint: finish
+    placement:
+      side: end
+      alignment: start
+    text: Firmware finished late; the EVB gate moved with it.
+  - id: bringup-risk
+    purpose: explanatory-arrow
+    anchor:
+      kind: object
+      id: silicon-bringup
+      facet: planned
+      endpoint: finish
+    placement:
+      side: end
+      alignment: end
+    text: Bring-up finish leaves no reserve before DVT.
+  axis:
+    tiers:
+    - unit: quarter
+      every: 1
+      role: band
+    - unit: quarter
+      every: 1
+      role: grid-major
+    - unit: quarter
+      every: 1
+      role: labels
+      label:
+        form: year-quarter
+        align: center
+        overflow: thin-with-record
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: labels
+      label:
+        form: short-month
+        align: start
+        overflow: thin-with-record
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: grid-minor
+  backgroundDecoration:
+    rows: none
+    groups: all
+  tableColumns:
+  - id: Workstream
+    source: title
+    missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
+  rows:
+    mode: automatic

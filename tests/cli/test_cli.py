@@ -194,7 +194,7 @@ def _warning_multiplicity(emitted, scene_diagnostics):
 
 
 def test_cli_warning_rows_account_for_every_scene_diagnostic_for_attached_milestones(tmp_path, monkeypatch, capsys):
-    example = Path("examples/attached-milestones")
+    example = Path("tests/fixtures/attached-milestones")
     scene_path = tmp_path / "attached.scene.json"
     monkeypatch.setattr(sys, "argv", [
         "chrona", "render", str(example / "project.yaml"), "--actual", str(example / "actual.yaml"),
@@ -878,9 +878,9 @@ def _guided_workspace(tmp_path: Path) -> Path:
     preset_root = tmp_path / "preset"
     preset_root.mkdir()
     resources = {
-        "view.yaml": yaml.safe_load((root / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8")),
-        "theme.yaml": yaml.safe_load((root / "examples/aster-ssd/themes/executive-light.yaml").read_text(encoding="utf-8")),
-        "scheme.yaml": yaml.safe_load((root / "examples/aster-ssd/schemes/executive-light.yaml").read_text(encoding="utf-8")),
+        "view.yaml": yaml.safe_load((root / "tests/fixtures/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8")),
+        "theme.yaml": yaml.safe_load((root / "tests/fixtures/aster-ssd/themes/executive-light.yaml").read_text(encoding="utf-8")),
+        "scheme.yaml": yaml.safe_load((root / "tests/fixtures/aster-ssd/schemes/executive-light.yaml").read_text(encoding="utf-8")),
         "layout.yaml": yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8")),
     }
     resources["view.yaml"]["body"]["selection"] = {"include": {"types": ["span"]}}
@@ -986,11 +986,11 @@ def test_cli_renders_the_plan_only_example_without_an_actual_set(tmp_path, monke
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     output = tmp_path / "plan-only.svg"
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
-        "--view", str(root / "examples/controller-z/views/plan-only.yaml"),
-        "--theme", str(root / "examples/controller-z/themes/executive-light.yaml"),
-        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
-        "--layout", str(root / "examples/controller-z/layouts/executive-review.yaml"),
+        "chrona", "render", str(root / "tests/fixtures/controller-z/project.yaml"),
+        "--view", str(root / "tests/fixtures/controller-z/views/plan-only.yaml"),
+        "--theme", str(root / "tests/fixtures/controller-z/themes/executive-light.yaml"),
+        "--scheme", str(root / "tests/fixtures/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(root / "tests/fixtures/controller-z/layouts/executive-review.yaml"),
         "--output", str(output),
     ])
 
@@ -1014,12 +1014,12 @@ def test_cli_render_accepts_a_declared_local_font_closure(tmp_path, monkeypatch)
     descriptor_path, output = tmp_path / "fonts.yaml", tmp_path / "review.svg"
     descriptor_path.write_text(yaml.safe_dump(descriptor, sort_keys=False), encoding="utf-8")
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
-        "--view", str(root / "examples/controller-z/views/executive.yaml"),
-        "--theme", str(root / "examples/controller-z/themes/executive-light.yaml"),
-        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "chrona", "render", str(root / "tests/fixtures/controller-z/project.yaml"),
+        "--view", str(root / "tests/fixtures/controller-z/views/executive.yaml"),
+        "--theme", str(root / "tests/fixtures/controller-z/themes/executive-light.yaml"),
+        "--scheme", str(root / "tests/fixtures/controller-z/schemes/executive-light.yaml"),
         "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
-        "--actual", str(root / "examples/controller-z/actual.yaml"),
+        "--actual", str(root / "tests/fixtures/controller-z/actual.yaml"),
         "--font-metrics", str(descriptor_path), "--output", str(output),
     ])
     main()
@@ -1037,12 +1037,12 @@ def test_cli_rasterizes_an_imported_context_font_pair(tmp_path, monkeypatch, tar
                            font_directory, family="Noto Sans", weight=400)
     output = tmp_path / f"review.{target_kind}"
     argv = [
-        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
-        "--view", str(root / "examples/controller-z/views/executive.yaml"),
-        "--theme", str(root / "examples/controller-z/themes/executive-light.yaml"),
-        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "chrona", "render", str(root / "tests/fixtures/controller-z/project.yaml"),
+        "--view", str(root / "tests/fixtures/controller-z/views/executive.yaml"),
+        "--theme", str(root / "tests/fixtures/controller-z/themes/executive-light.yaml"),
+        "--scheme", str(root / "tests/fixtures/controller-z/schemes/executive-light.yaml"),
         "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
-        "--actual", str(root / "examples/controller-z/actual.yaml"),
+        "--actual", str(root / "tests/fixtures/controller-z/actual.yaml"),
         "--font-metrics", str(font_directory / "font-metrics.yaml"),
         "--format", target_kind, "--output", str(output),
     ]
@@ -1058,7 +1058,7 @@ def test_cli_rasterizes_an_imported_context_font_pair(tmp_path, monkeypatch, tar
 
 def test_cli_renders_a_bundled_catalog_icon_with_the_explicit_v07_profile(tmp_path, monkeypatch):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
-    view = yaml.safe_load((root / "examples/controller-z/views/icons.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "tests/fixtures/controller-z/views/icons.yaml").read_text(encoding="utf-8"))
     for visual in view["body"]["visuals"]:
         if "ref" in visual:
             visual["ref"] = "material:flag-outline-rounded"
@@ -1068,11 +1068,11 @@ def test_cli_renders_a_bundled_catalog_icon_with_the_explicit_v07_profile(tmp_pa
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
     output = tmp_path / "material-icons.svg"
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
-        "--view", str(view_path), "--theme", str(root / "examples/controller-z/themes/elevated-light.yaml"),
-        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "chrona", "render", str(root / "tests/fixtures/controller-z/project.yaml"),
+        "--view", str(view_path), "--theme", str(root / "tests/fixtures/controller-z/themes/elevated-light.yaml"),
+        "--scheme", str(root / "tests/fixtures/controller-z/schemes/executive-light.yaml"),
         "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
-        "--actual", str(root / "examples/controller-z/actual.yaml"),
+        "--actual", str(root / "tests/fixtures/controller-z/actual.yaml"),
         "--icon-catalog", str(root / "src/chrona/resources/icons/material-symbols-outline-rounded-v2026-09-22.yaml"),
         "--visual-profile", "chrona-output/visual/v0.7-svg", "--output", str(output),
     ])
@@ -1143,15 +1143,15 @@ def test_cli_theme_asset_import_reports_density_pointer_and_keeps_existing_outpu
 
 def test_cli_draft_schema_diagnostic_keeps_the_author_facing_explanation(tmp_path, monkeypatch, capsys):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
-    view = yaml.safe_load((root / "examples/controller-z/views/plan-only.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "tests/fixtures/controller-z/views/plan-only.yaml").read_text(encoding="utf-8"))
     view["body"]["visibility"]["relations"] = "invalid"
     view_path = tmp_path / "invalid-view.yaml"
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
-        "--view", str(view_path), "--theme", str(root / "examples/controller-z/themes/executive-light.yaml"),
-        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
-        "--layout", str(root / "examples/controller-z/layouts/executive-review.yaml"),
+        "chrona", "render", str(root / "tests/fixtures/controller-z/project.yaml"),
+        "--view", str(view_path), "--theme", str(root / "tests/fixtures/controller-z/themes/executive-light.yaml"),
+        "--scheme", str(root / "tests/fixtures/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(root / "tests/fixtures/controller-z/layouts/executive-review.yaml"),
         "--output", str(tmp_path / "ignored.svg"),
     ])
     with pytest.raises(SystemExit) as exited:
@@ -1166,8 +1166,8 @@ def test_cli_draft_schema_diagnostic_keeps_the_author_facing_explanation(tmp_pat
 
 def test_cli_draft_schema_diagnostics_report_all_known_resources_with_provenance(tmp_path, monkeypatch, capsys):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
-    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
-    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    theme = yaml.safe_load((root / "tests/fixtures/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
     view["body"]["surface"] = "table-timelinez"
     view["body"]["tableColumns"][0]["missing"] = "em-dashz"
     theme["body"]["values"]["text-weight"]["type"] = "fontWeightz"
@@ -1175,10 +1175,10 @@ def test_cli_draft_schema_diagnostics_report_all_known_resources_with_provenance
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
     theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
+        "chrona", "render", str(root / "tests/fixtures/controller-z/project.yaml"),
         "--view", str(view_path), "--theme", str(theme_path),
-        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
-        "--layout", str(root / "examples/controller-z/layouts/executive-review.yaml"),
+        "--scheme", str(root / "tests/fixtures/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(root / "tests/fixtures/controller-z/layouts/executive-review.yaml"),
         "--output", str(tmp_path / "ignored.svg"),
     ])
 
@@ -1201,8 +1201,8 @@ def test_cli_draft_schema_diagnostics_report_all_known_resources_with_provenance
 ])
 def test_cli_render_keeps_detector_owned_theme_pointer(tmp_path, monkeypatch, capsys, missing, code, pointer):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
-    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
-    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    theme = yaml.safe_load((root / "tests/fixtures/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
     if missing == "group-header-metric":
         assert view["body"]["grouping"]["presentation"] == "header"
         theme["body"]["metrics"].pop("timeline.groupHeader.blockSize")
@@ -1218,11 +1218,11 @@ def test_cli_render_keeps_detector_owned_theme_pointer(tmp_path, monkeypatch, ca
     theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
     output = tmp_path / "ignored.svg"
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
+        "chrona", "render", str(root / "tests/fixtures/controller-z/project.yaml"),
         "--view", str(view_path), "--theme", str(theme_path),
-        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "--scheme", str(root / "tests/fixtures/controller-z/schemes/executive-light.yaml"),
         "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
-        "--actual", str(root / "examples/controller-z/actual.yaml"),
+        "--actual", str(root / "tests/fixtures/controller-z/actual.yaml"),
         "--output", str(output),
     ])
 
@@ -1237,17 +1237,17 @@ def test_cli_render_keeps_detector_owned_theme_pointer(tmp_path, monkeypatch, ca
 
 def test_cli_baseline_rejection_keeps_visual_capability_pointer_and_message(tmp_path, monkeypatch, capsys):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
-    required_theme = yaml.safe_load((root / "examples/controller-z/themes/elevated-light.yaml").read_text(encoding="utf-8"))
+    required_theme = yaml.safe_load((root / "tests/fixtures/controller-z/themes/elevated-light.yaml").read_text(encoding="utf-8"))
     required_theme["body"]["values"]["elevated.fidelity"]["value"] = "required"
     theme_path = tmp_path / "required-elevated.yaml"
     theme_path.write_text(yaml.safe_dump(required_theme), encoding="utf-8")
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
-        "--view", str(root / "examples/controller-z/views/executive.yaml"),
+        "chrona", "render", str(root / "tests/fixtures/controller-z/project.yaml"),
+        "--view", str(root / "tests/fixtures/controller-z/views/executive.yaml"),
         "--theme", str(theme_path),
-        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "--scheme", str(root / "tests/fixtures/controller-z/schemes/executive-light.yaml"),
         "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
-        "--actual", str(root / "examples/controller-z/actual.yaml"),
+        "--actual", str(root / "tests/fixtures/controller-z/actual.yaml"),
         "--visual-profile", "chrona-output/visual/v0.5-baseline", "--output", str(tmp_path / "ignored.svg"),
     ])
     with pytest.raises(SystemExit) as exited:
@@ -1265,12 +1265,12 @@ def test_cli_rejects_pdf_rich_profile_before_writing_an_artifact(tmp_path, monke
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     output = tmp_path / "forbidden.pdf"
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
-        "--view", str(root / "examples/controller-z/views/executive.yaml"),
-        "--theme", str(root / "examples/controller-z/themes/elevated-light.yaml"),
-        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "chrona", "render", str(root / "tests/fixtures/controller-z/project.yaml"),
+        "--view", str(root / "tests/fixtures/controller-z/views/executive.yaml"),
+        "--theme", str(root / "tests/fixtures/controller-z/themes/elevated-light.yaml"),
+        "--scheme", str(root / "tests/fixtures/controller-z/schemes/executive-light.yaml"),
         "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
-        "--actual", str(root / "examples/controller-z/actual.yaml"),
+        "--actual", str(root / "tests/fixtures/controller-z/actual.yaml"),
         "--format", "pdf", "--visual-profile", "chrona-output/visual/v0.6-svg", "--output", str(output),
     ])
     with pytest.raises(SystemExit) as exited:
@@ -1285,11 +1285,11 @@ def test_cli_renders_typst_draft_with_an_explicit_descriptor(tmp_path, monkeypat
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     output = tmp_path / "review.typ"
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
-        "--view", str(root / "examples/controller-z/views/plan-only.yaml"),
-        "--theme", str(root / "examples/controller-z/themes/executive-light.yaml"),
-        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
-        "--layout", str(root / "examples/controller-z/layouts/executive-review.yaml"),
+        "chrona", "render", str(root / "tests/fixtures/controller-z/project.yaml"),
+        "--view", str(root / "tests/fixtures/controller-z/views/plan-only.yaml"),
+        "--theme", str(root / "tests/fixtures/controller-z/themes/executive-light.yaml"),
+        "--scheme", str(root / "tests/fixtures/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(root / "tests/fixtures/controller-z/layouts/executive-review.yaml"),
         "--format", "typst", "--typesetter-engine", "typst", "--typesetter-version", "0.13.1",
         "--typesetter-adapter-grammar", "chrona-typst/v0.1", "--output", str(output),
     ])
@@ -1579,11 +1579,11 @@ def test_cli_does_not_expose_the_legacy_raw_path_propose_set_command(monkeypatch
 def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypatch, capsys):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     token = "snapshot-render"
-    project = yaml.safe_load((root / "examples/controller-z/project.yaml").read_text(encoding="utf-8"))
-    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
-    actual = yaml.safe_load((root / "examples/controller-z/actual.yaml").read_text(encoding="utf-8"))
-    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
-    scheme_path = root / "examples/controller-z/schemes/executive-light.yaml"
+    project = yaml.safe_load((root / "tests/fixtures/controller-z/project.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "tests/fixtures/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    actual = yaml.safe_load((root / "tests/fixtures/controller-z/actual.yaml").read_text(encoding="utf-8"))
+    theme = yaml.safe_load((root / "tests/fixtures/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    scheme_path = root / "tests/fixtures/controller-z/schemes/executive-light.yaml"
     scheme_payload = scheme_path.read_bytes()
     scheme = yaml.safe_load(scheme_payload)
     layout = yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8"))
@@ -1665,12 +1665,12 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
 
     draft_output = tmp_path / "draft.svg"
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
-        "--view", str(root / "examples/controller-z/views/executive.yaml"),
-        "--theme", str(root / "examples/controller-z/themes/executive-light.yaml"),
-        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "chrona", "render", str(root / "tests/fixtures/controller-z/project.yaml"),
+        "--view", str(root / "tests/fixtures/controller-z/views/executive.yaml"),
+        "--theme", str(root / "tests/fixtures/controller-z/themes/executive-light.yaml"),
+        "--scheme", str(root / "tests/fixtures/controller-z/schemes/executive-light.yaml"),
         "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
-        "--actual", str(root / "examples/controller-z/actual.yaml"),
+        "--actual", str(root / "tests/fixtures/controller-z/actual.yaml"),
         "--viewport", "1600x900", "--output", str(draft_output),
     ])
     main()
@@ -1762,12 +1762,12 @@ def test_cli_draft_render_writes_declared_binary_format(tmp_path, monkeypatch, f
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     output = tmp_path / f"review.{format_name}"
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
-        "--view", str(root / "examples/controller-z/views/executive.yaml"),
-        "--theme", str(root / "examples/controller-z/themes/executive-light.yaml"),
-        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "chrona", "render", str(root / "tests/fixtures/controller-z/project.yaml"),
+        "--view", str(root / "tests/fixtures/controller-z/views/executive.yaml"),
+        "--theme", str(root / "tests/fixtures/controller-z/themes/executive-light.yaml"),
+        "--scheme", str(root / "tests/fixtures/controller-z/schemes/executive-light.yaml"),
         "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
-        "--actual", str(root / "examples/controller-z/actual.yaml"),
+        "--actual", str(root / "tests/fixtures/controller-z/actual.yaml"),
         "--format", format_name, "--output", str(output),
     ])
     main()

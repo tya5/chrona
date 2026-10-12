@@ -1,0 +1,102 @@
+version: chrona/view/v0.28
+kind: view
+id: controller-z-ja-axis-secondary
+body:
+  surface: table-timeline
+  selection:
+    include:
+      types:
+      - span
+      - point
+  grouping:
+    by: field
+    field: owner
+    missing: ungrouped
+    order:
+    - fw-team
+    - validation-team
+    - factory-team
+    presentation: header
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: explicit
+    start: '2026-02-01'
+    end: '2026-07-01'
+  comparison:
+    baseline: primary
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - atDelta
+    - progress
+    - missingActual
+    - unmatchedActual
+  progressFill:
+    source: actual
+  visibility:
+    labels:
+      placement: plot
+      content:
+      - title
+      side: inside
+      overflow: suppress
+    fallback:
+      labels:
+      - inside
+      - above
+      - suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations: none
+  axis:
+    tiers:
+    - unit: half
+      every: 1
+      role: band
+    - unit: half
+      every: 1
+      role: grid-major
+    - unit: half
+      every: 1
+      role: labels
+      label:
+        form: half-year
+        align: center
+        overflow: visible-overflow
+        orientation: horizontal
+    # The month cell holds two labels (#493): the Japanese month, and beneath it the English one in a smaller,
+    # upper-cased text role. Both come from the same interval through their own name tables.
+    - unit: month
+      every: 1
+      role: labels
+      label:
+        form: short-month
+        nameTable: ja-JP
+        align: center
+        overflow: thin-with-record
+        orientation: horizontal
+        secondary:
+          form: short-month
+          nameTable: en-US
+          typographyRole: axisSecondary
+          placement: stacked
+  backgroundDecoration:
+    rows: none
+    groups: all
+  tableColumns:
+  - id: 作業ストリーム
+    source: title
+    missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
+  rows:
+    mode: automatic

@@ -71,7 +71,7 @@ def _theme_variant(source: Path, destination: Path, *, family: str, size: int,
 
 def test_same_lane_view_under_two_themes_reaches_identical_scene_membership(tmp_path, monkeypatch):
     root = _root()
-    example = root / "examples/controller-z"
+    example = root / "tests/fixtures/controller-z"
     view = yaml.safe_load((example / "views/icons.yaml").read_text(encoding="utf-8"))
     view["version"] = "chrona/view/v0.28"
     view_body = view["body"]

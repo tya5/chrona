@@ -40,9 +40,9 @@ def _workspace() -> dict:
 
 def _resources() -> dict:
     return {
-        "views/review.yaml": _resource("examples/aster-ssd/views/01-overview.yaml"),
-        "themes/theme.yaml": _resource("examples/aster-ssd/themes/executive-light.yaml"),
-        "schemes/scheme.yaml": _resource("examples/aster-ssd/schemes/executive-light.yaml"),
+        "views/review.yaml": _resource("tests/fixtures/aster-ssd/views/01-overview.yaml"),
+        "themes/theme.yaml": _resource("tests/fixtures/aster-ssd/themes/executive-light.yaml"),
+        "schemes/scheme.yaml": _resource("tests/fixtures/aster-ssd/schemes/executive-light.yaml"),
         "layouts/layout.yaml": _resource("examples/halcyon-1/layouts/wallboard.yaml"),
     }
 

@@ -59,7 +59,7 @@ def test_declared_examples_reproduce_by_public_cli(tmp_path):
 def test_public_svg_renders_axis_table_independently_of_context_locale(tmp_path, context_locale, table_id, form, expected):
     _require_cjk_provider()
     example = tmp_path / "controller-z-ja"
-    shutil.copytree(ROOT / "examples/controller-z-ja", example)
+    shutil.copytree(ROOT / "tests/fixtures/controller-z-ja", example)
     context_path = example / "contexts/executive.yaml"
     context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
     context["body"]["environment"]["locale"] = context_locale
@@ -133,7 +133,7 @@ def test_context_font_assets_resolve_from_context_revision_not_theme_revision(tm
 
 def test_derived_theme_materializer_copies_pinned_base_and_rejects_tampering(tmp_path):
     example = tmp_path / "aster-ssd"
-    shutil.copytree(ROOT / "examples/aster-ssd", example)
+    shutil.copytree(ROOT / "tests/fixtures/aster-ssd", example)
     base_path = example / "themes/executive-light.yaml"
     base_source = base_path.read_bytes()
     base = yaml.safe_load(base_source)
@@ -171,7 +171,7 @@ def test_derived_theme_materializer_copies_pinned_base_and_rejects_tampering(tmp
 
 
 def test_controller_executive_public_evidence_exercises_inside_and_fallback_labels(tmp_path):
-    materialize(ROOT / "examples/controller-z/manifest.yaml", "executive", tmp_path / "controller", write=False)
+    materialize(ROOT / "tests/fixtures/controller-z/manifest.yaml", "executive", tmp_path / "controller", write=False)
     artifact = (tmp_path / "controller/review.svg").read_text(encoding="utf-8")
     assert 'data-scene-id="member-label:firmware:firmware"' in artifact
     assert 'data-scene-id="member-label:dvt:dvt"' in artifact and 'opacity="1" fill="#000000">DVT Qualification' in artifact
@@ -179,7 +179,7 @@ def test_controller_executive_public_evidence_exercises_inside_and_fallback_labe
 
 
 def test_controller_annotation_evidence_realizes_each_purpose_through_layout_completed_primitives(tmp_path):
-    example = ROOT / "examples/controller-z"
+    example = ROOT / "tests/fixtures/controller-z"
     materialize(example / "manifest.yaml", "annotations", tmp_path / "annotations", write=False)
     artifact = (tmp_path / "annotations/review.svg").read_text(encoding="utf-8")
     for identifier in ("architecture-callout", "evb-highlight", "performance-note", "bringup-risk"):
@@ -209,7 +209,7 @@ def test_controller_annotation_evidence_realizes_each_purpose_through_layout_com
 
 def test_controller_japanese_public_evidence_uses_the_explicit_cjk_provider(tmp_path):
     _require_cjk_provider()
-    materialize(ROOT / "examples/controller-z-ja/manifest.yaml", "executive", tmp_path / "controller-z-ja", write=False)
+    materialize(ROOT / "tests/fixtures/controller-z-ja/manifest.yaml", "executive", tmp_path / "controller-z-ja", write=False)
     artifact = (tmp_path / "controller-z-ja/review.svg").read_text(encoding="utf-8")
     assert "コントローラZ — シリコン立ち上げから量産まで" in artifact
     assert "量産検証（PVT）および工場工程バリデーション" in artifact
@@ -217,7 +217,7 @@ def test_controller_japanese_public_evidence_uses_the_explicit_cjk_provider(tmp_
 
 def test_controller_japanese_detail_panels_are_completed_native_blocks(tmp_path):
     _require_cjk_provider()
-    materialize(ROOT / "examples/controller-z-ja/manifest.yaml", "executive", tmp_path / "controller-z-ja", write=False)
+    materialize(ROOT / "tests/fixtures/controller-z-ja/manifest.yaml", "executive", tmp_path / "controller-z-ja", write=False)
     scene = json.loads((tmp_path / "controller-z-ja/review.scene.json").read_text(encoding="utf-8"))
     surface = scene["surfaces"][0]
     slots = {item["id"]: item["bounds"] for item in surface["slots"]}
@@ -240,7 +240,7 @@ def test_controller_japanese_detail_panels_are_completed_native_blocks(tmp_path)
 
 
 def test_controller_elevated_public_evidence_uses_only_portable_completed_treatments(tmp_path):
-    materialize(ROOT / "examples/controller-z/manifest.yaml", "elevated", tmp_path / "elevated", write=False)
+    materialize(ROOT / "tests/fixtures/controller-z/manifest.yaml", "elevated", tmp_path / "elevated", write=False)
     artifact = (tmp_path / "elevated/review.svg").read_text(encoding="utf-8")
     assert '<linearGradient id="gradient-' in artifact and '<feDropShadow ' in artifact
     assert 'fill="url(#gradient-' in artifact and 'filter="url(#shadow-' in artifact
@@ -323,7 +323,7 @@ def test_replan_baseline_records_the_nonfitting_partial_quarter_label(tmp_path):
 
 def test_materializer_detects_changed_expected_svg(tmp_path):
     copied_example = tmp_path / "controller-z"
-    shutil.copytree(ROOT / "examples/controller-z", copied_example)
+    shutil.copytree(ROOT / "tests/fixtures/controller-z", copied_example)
     manifest = copied_example / "manifest.yaml"
     expected = copied_example / "generated/executive.svg"
     original = expected.read_bytes()
@@ -337,7 +337,7 @@ def test_materializer_detects_changed_expected_svg(tmp_path):
 
 def test_materializer_requires_declared_regression_role_and_slide_evidence(tmp_path):
     copied_example = tmp_path / "controller-z"
-    shutil.copytree(ROOT / "examples/controller-z", copied_example)
+    shutil.copytree(ROOT / "tests/fixtures/controller-z", copied_example)
     manifest_path = copied_example / "manifest.yaml"
     manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
     manifest.pop("role")
@@ -345,14 +345,14 @@ def test_materializer_requires_declared_regression_role_and_slide_evidence(tmp_p
     with pytest.raises(ValueError, match="E_MATERIALIZER_MANIFEST"):
         materialize(manifest_path, "executive", tmp_path / "missing-role", write=False)
     manifest["role"] = "regression-corpus"
-    manifest["slides"][0].pop("evidence")
+    next(slide for slide in manifest["slides"] if slide["id"] == "executive").pop("evidence")
     manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False))
     with pytest.raises(ValueError, match="E_MATERIALIZER_SLIDE"):
         materialize(manifest_path, "executive", tmp_path / "missing-evidence", write=False)
 
 
 def test_materializer_preserves_authored_context_bytes_and_font_locator_identity(tmp_path):
-    example = ROOT / "examples/aster-ssd"
+    example = ROOT / "tests/fixtures/aster-ssd"
     context_path = example / "contexts/01-overview.yaml"
     snapshot = tmp_path / "snapshot"
     snapshot.mkdir()
@@ -369,7 +369,7 @@ def test_materializer_preserves_authored_context_bytes_and_font_locator_identity
 
 
 def test_materialized_overlay_requires_complete_reference_and_asset_identity(tmp_path):
-    example = ROOT / "examples/aster-ssd"
+    example = ROOT / "tests/fixtures/aster-ssd"
     context_path = example / "contexts/01-overview.yaml"
     builder = _OverlayBuilder(tmp_path)
     reference, revision = copy_context_closure(example, context_path, tmp_path / "snapshot",
@@ -396,7 +396,7 @@ def test_materialized_overlay_requires_complete_reference_and_asset_identity(tmp
 
 
 def test_package_icon_catalog_is_staged_outside_revision_paths_and_served_by_authored_key(tmp_path):
-    example = ROOT / "examples/controller-z"
+    example = ROOT / "tests/fixtures/controller-z"
     context_path = example / "contexts/material-icons.yaml"
     raw_context = context_path.read_bytes()
     authored = yaml.safe_load(raw_context)
@@ -439,7 +439,7 @@ def test_materialized_overlay_separates_same_address_providers_and_rechecks_unpi
 
 def test_baseline_capture_materializes_a_context_through_its_windows_safe_token(tmp_path):
     example = tmp_path / "controller-z"
-    shutil.copytree(ROOT / "examples/controller-z", example)
+    shutil.copytree(ROOT / "tests/fixtures/controller-z", example)
     project_path = example / "project.yaml"
     project_payload = project_path.read_bytes()
     project = yaml.safe_load(project_payload)
@@ -542,7 +542,7 @@ def test_materializer_uses_each_declared_halcyon_slide_context(tmp_path):
 
 def test_materializer_copies_only_declared_icon_assets(tmp_path):
     copied = tmp_path / "controller-z"
-    shutil.copytree(ROOT / "examples/controller-z", copied)
+    shutil.copytree(ROOT / "tests/fixtures/controller-z", copied)
     context_path = copied / "contexts/executive.yaml"
     context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
     context["body"]["inputs"]["iconCatalogs"] = [{"id": "controller-z-icons", "kind": "icon-catalog", "store": context["body"]["project"]["store"],
@@ -555,7 +555,7 @@ def test_materializer_copies_only_declared_icon_assets(tmp_path):
 
 
 def test_public_icon_evidence_is_bounded_and_decodes_its_purpose_built_raster(tmp_path):
-    example = ROOT / "examples/controller-z"
+    example = ROOT / "tests/fixtures/controller-z"
     raster = example / "assets/programme-mark.png"
     assert raster.stat().st_size <= 1024
     with Image.open(raster) as image:
@@ -568,7 +568,7 @@ def test_public_icon_evidence_is_bounded_and_decodes_its_purpose_built_raster(tm
 
 
 def test_public_material_icon_evidence_closes_the_packaged_catalog_and_small_text_slots(tmp_path):
-    example = ROOT / "examples/controller-z"
+    example = ROOT / "tests/fixtures/controller-z"
     context = yaml.safe_load((example / "contexts/material-icons.yaml").read_text(encoding="utf-8"))
     reference = context["body"]["inputs"]["iconCatalogs"][0]
     assert reference["store"] == {"provider": "package", "identity": "chrona.resources"}
@@ -584,7 +584,7 @@ def test_public_material_icon_evidence_closes_the_packaged_catalog_and_small_tex
 
 
 def test_successor_view_rejects_removed_icon_bindings(tmp_path):
-    copied = tmp_path / "controller-z"; shutil.copytree(ROOT / "examples/controller-z", copied)
+    copied = tmp_path / "controller-z"; shutil.copytree(ROOT / "tests/fixtures/controller-z", copied)
     view_path = copied / "views/executive.yaml"; view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
     view["body"]["iconBindings"] = []
     view_path.write_text(yaml.safe_dump(view, sort_keys=False))
@@ -638,7 +638,7 @@ def test_materializer_rejects_draft_substitution_before_evidence_emission(tmp_pa
 
 def test_svg_materializer_closes_declared_local_metrics_without_copying_unused_font_bytes(tmp_path):
     copied_example = tmp_path / "local-font"
-    shutil.copytree(ROOT / "examples/controller-z", copied_example)
+    shutil.copytree(ROOT / "tests/fixtures/controller-z", copied_example)
     source = ROOT / "src/chrona/resources"
     font_target = copied_example / "assets/font.ttf"
     metrics_target = copied_example / "assets/metrics.json"
@@ -665,7 +665,7 @@ def test_svg_materializer_closes_declared_local_metrics_without_copying_unused_f
 
 def test_materialized_context_font_pair_reaches_the_default_png_adapter(tmp_path):
     copied_example = tmp_path / "local-raster-font"
-    shutil.copytree(ROOT / "examples/controller-z", copied_example)
+    shutil.copytree(ROOT / "tests/fixtures/controller-z", copied_example)
     source = ROOT / "src/chrona/resources"
     font_target = copied_example / "assets/font.ttf"
     metrics_target = copied_example / "assets/metrics.json"

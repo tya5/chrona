@@ -27,9 +27,9 @@ def _root() -> Path:
 def _render(kind: str):
     root = _root()
     draft = resolve_draft_render(
-        project_path=root / "examples/controller-z/project.yaml", view_path=root / "examples/controller-z/views/executive.yaml",
-        theme_path=root / "examples/controller-z/themes/executive-light.yaml", scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
-        layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "examples/controller-z/actual.yaml", target_kind=kind,
+        project_path=root / "tests/fixtures/controller-z/project.yaml", view_path=root / "tests/fixtures/controller-z/views/executive.yaml",
+        theme_path=root / "tests/fixtures/controller-z/themes/executive-light.yaml", scheme_path=root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
+        layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "tests/fixtures/controller-z/actual.yaml", target_kind=kind,
     )
     context = draft.closure.context
     return render_review(RenderRequest(
@@ -52,9 +52,9 @@ def _fixture_system_resolver(root: Path):
 def test_draft_system_font_png_receives_the_measured_file_without_scene_path_provenance():
     root = _root()
     draft = resolve_draft_render(
-        project_path=root / "examples/controller-z/project.yaml", view_path=root / "examples/controller-z/views/executive.yaml",
-        theme_path=root / "examples/controller-z/themes/executive-light.yaml", scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
-        layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "examples/controller-z/actual.yaml",
+        project_path=root / "tests/fixtures/controller-z/project.yaml", view_path=root / "tests/fixtures/controller-z/views/executive.yaml",
+        theme_path=root / "tests/fixtures/controller-z/themes/executive-light.yaml", scheme_path=root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
+        layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "tests/fixtures/controller-z/actual.yaml",
         target_kind="png", system_fonts=True, system_font_resolver=_fixture_system_resolver(root),
     )
     context = draft.closure.context
@@ -75,16 +75,16 @@ def test_real_hiragino_collection_paints_png_from_selected_face_on_macos(tmp_pat
     if platform.system() != "Darwin" or not shutil.which("fc-match"):
         pytest.skip("Hiragino collection and fontconfig are macOS host evidence")
     root = _root()
-    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text())
+    theme = yaml.safe_load((root / "tests/fixtures/controller-z/themes/executive-light.yaml").read_text())
     theme["body"]["values"]["editorial"]["value"] = "Hiragino Sans"
     theme_path = tmp_path / "hiragino.yaml"
     theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
     draft = resolve_draft_render(
-        project_path=root / "examples/controller-z/project.yaml",
-        view_path=root / "examples/controller-z/views/executive.yaml", theme_path=theme_path,
-        scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
+        project_path=root / "tests/fixtures/controller-z/project.yaml",
+        view_path=root / "tests/fixtures/controller-z/views/executive.yaml", theme_path=theme_path,
+        scheme_path=root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
         layout_path=root / "conformance/layout-profile-intent-v0.2.yaml",
-        actual_path=root / "examples/controller-z/actual.yaml", target_kind="png", system_fonts=True,
+        actual_path=root / "tests/fixtures/controller-z/actual.yaml", target_kind="png", system_fonts=True,
     )
     assert draft.font_resolution is not None
     assert draft.font_resolution.faces[0].path.suffix == ".ttc"
@@ -168,9 +168,9 @@ def test_a_font_resolution_may_render_an_immutable_context():
     # #1281: installed and declared fonts are one normal source on every path, immutable Contexts included.
     root = _root()
     draft = resolve_draft_render(
-        project_path=root / "examples/controller-z/project.yaml", view_path=root / "examples/controller-z/views/executive.yaml",
-        theme_path=root / "examples/controller-z/themes/executive-light.yaml", scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
-        layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "examples/controller-z/actual.yaml",
+        project_path=root / "tests/fixtures/controller-z/project.yaml", view_path=root / "tests/fixtures/controller-z/views/executive.yaml",
+        theme_path=root / "tests/fixtures/controller-z/themes/executive-light.yaml", scheme_path=root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
+        layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "tests/fixtures/controller-z/actual.yaml",
         system_fonts=True, system_font_resolver=_fixture_system_resolver(root),
     )
     immutable_context = replace(draft.closure.context, identity=replace(draft.closure.context.identity, revision="immutable"))
@@ -185,9 +185,9 @@ def test_a_font_resolution_may_render_an_immutable_context():
 def _completed_surface():
     root = _root()
     draft = resolve_draft_render(
-        project_path=root / "examples/controller-z/project.yaml", view_path=root / "examples/controller-z/views/executive.yaml",
-        theme_path=root / "examples/controller-z/themes/executive-light.yaml", scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
-        layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "examples/controller-z/actual.yaml",
+        project_path=root / "tests/fixtures/controller-z/project.yaml", view_path=root / "tests/fixtures/controller-z/views/executive.yaml",
+        theme_path=root / "tests/fixtures/controller-z/themes/executive-light.yaml", scheme_path=root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
+        layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "tests/fixtures/controller-z/actual.yaml",
     )
     context = draft.closure.context
     rendered = render_review(RenderRequest(
@@ -207,7 +207,7 @@ def test_export_targets_are_pinned_and_repeatable(kind, media_type, prefix):
 
 def test_declared_cjk_font_closure_reaches_svg_png_and_pdf_without_host_fonts(tmp_path):
     root = _root()
-    example = root / "examples/controller-z-ja"
+    example = root / "tests/fixtures/controller-z-ja"
     cjk_provider = pytest.importorskip(
         "chrona_fonts_noto_cjk", reason="requires the optional local CJK font provider",
     )
@@ -238,16 +238,16 @@ def test_declared_cjk_font_closure_reaches_svg_png_and_pdf_without_host_fonts(tm
 
 def test_public_render_diagnoses_a_glyph_absent_from_declared_metrics(tmp_path):
     root = _root()
-    project = yaml.safe_load((root / "examples/controller-z/project.yaml").read_text(encoding="utf-8"))
+    project = yaml.safe_load((root / "tests/fixtures/controller-z/project.yaml").read_text(encoding="utf-8"))
     project["project"]["title"] = "Known \U0010ffff"
     project_path = tmp_path / "project-missing-glyph.yaml"
     project_path.write_text(yaml.safe_dump(project, allow_unicode=True, sort_keys=False), encoding="utf-8")
     draft = resolve_draft_render(
-        project_path=project_path, view_path=root / "examples/controller-z/views/executive.yaml",
-        theme_path=root / "examples/controller-z/themes/executive-light.yaml",
-        scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
+        project_path=project_path, view_path=root / "tests/fixtures/controller-z/views/executive.yaml",
+        theme_path=root / "tests/fixtures/controller-z/themes/executive-light.yaml",
+        scheme_path=root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
         layout_path=root / "conformance/layout-profile-intent-v0.2.yaml",
-        actual_path=root / "examples/controller-z/actual.yaml",
+        actual_path=root / "tests/fixtures/controller-z/actual.yaml",
     )
     with pytest.raises(RenderFailed, match="E_FONT_GLYPH_UNAVAILABLE") as error:
         render_review(RenderRequest(draft.closure, draft.asset_root, ReferenceScheduler(), asset_root=draft.asset_root))
@@ -264,9 +264,9 @@ def test_svg_accepts_metrics_only_but_png_names_missing_declared_font_bytes(tmp_
 
     def draft(kind: str):
         return resolve_draft_render(
-            project_path=root / "examples/controller-z/project.yaml", view_path=root / "examples/controller-z/views/executive.yaml",
-            theme_path=root / "examples/controller-z/themes/executive-light.yaml", scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
-            layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "examples/controller-z/actual.yaml",
+            project_path=root / "tests/fixtures/controller-z/project.yaml", view_path=root / "tests/fixtures/controller-z/views/executive.yaml",
+            theme_path=root / "tests/fixtures/controller-z/themes/executive-light.yaml", scheme_path=root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
+            layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "tests/fixtures/controller-z/actual.yaml",
             target_kind=kind, font_metrics_path=descriptor_path,
         )
 
@@ -332,16 +332,16 @@ def test_typeset_adapters_are_completed_scene_only():
 
 def test_public_png_profile_preserves_optional_rich_treatment_in_pixels(tmp_path):
     root = _root()
-    theme = yaml.safe_load((root / "examples/controller-z/themes/elevated-light.yaml").read_text(encoding="utf-8"))
+    theme = yaml.safe_load((root / "tests/fixtures/controller-z/themes/elevated-light.yaml").read_text(encoding="utf-8"))
     theme["body"]["values"]["elevated.fidelity"]["value"] = "decorative-optional"
     theme_path = tmp_path / "optional-elevated.yaml"
     theme_path.write_text(yaml.safe_dump(theme, sort_keys=False))
 
     def render(profile: str):
         draft = resolve_draft_render(
-            project_path=root / "examples/controller-z/project.yaml", view_path=root / "examples/controller-z/views/executive.yaml",
-            theme_path=theme_path, scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
-            layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "examples/controller-z/actual.yaml",
+            project_path=root / "tests/fixtures/controller-z/project.yaml", view_path=root / "tests/fixtures/controller-z/views/executive.yaml",
+            theme_path=theme_path, scheme_path=root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
+            layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "tests/fixtures/controller-z/actual.yaml",
             target_kind="png", visual_profile=profile,
         )
         context = draft.closure.context

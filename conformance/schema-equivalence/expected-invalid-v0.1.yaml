@@ -4,6 +4,11 @@
 # The mapping is derived independently of the loader: a schema's `version` constant selects the file.
 version: chrona/schema-equivalence-expected-invalid/v0.1
 documents:
+  - path: tests/fixtures/controller-z/profiles/summary.yaml
+    schema: summary-profile-v0.2.schema.yaml
+    reason: >-
+      Frozen byte-identical copy of the known-invalid Controller Z summary below:
+      it has root panels and no required body. Relocation preserves its rejection.
   - path: conformance/implementation-delivery-roadmap-v0.1.yaml
     schema: project-v0.7.schema.yaml
     reason: >-
