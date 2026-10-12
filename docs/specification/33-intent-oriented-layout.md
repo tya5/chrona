@@ -605,15 +605,6 @@ annotations. This finite monotone phase order prioritizes visible semantic
 connections without allowing label/route overlap or changing declared route
 quality and overflow limits. See the [#466 route-priority correction](../design/issue-466-general-placement-route-priority-correction-2026-09-26.md).
 
-**Declared search phase order (#1426; selected design, implementation pending).**
-Specification 50 section 3.3 owns `relationRouting.search`. Under `first-fit`,
-member names and deltas, including fixed-lane names, resolve after the single
-semantic routing pass; other completed required text remains a pre-route
-obstacle. Skip lane-reservation routing rehearsals and the lost-name recovery
-below. Preserve all existing label association, window admission, finite
-ladders and source-keyed suppression rules. Under `best`, retain both the
-recovery below and the fixed-lane pre-route exception without changes.
-
 If this order suppresses a post-route member name, Layout may make one private
 feasibility retry: place only the lost-name requests using their unchanged
 declared ladders, then route and place the remaining labels. Select that

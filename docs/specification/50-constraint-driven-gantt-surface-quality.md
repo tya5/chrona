@@ -355,105 +355,26 @@ Scene projects the completed fact; adapters neither recount nor draw a marker.
 
 ### 3.3 Relations
 
-**Declared search policy (#1426; selected design, implementation pending).**
-Layout Profile `relationRouting.search` is `first-fit` (the new default) or
-`best`. Selection never depends on project size, resource identity or elapsed
-time. `best` retains the existing pair order, per-pair quotas, exact reverse
-bound, canonical path histories, completed-route ranking and bounded label
-recovery below. Merely substituting another admissible lower bound does not
-preserve candidates reached within a finite quota.
+**Single routing policy (#1426; selected correction, implementation pending).**
+Retain the existing pair order, exact reverse bound, canonical path histories,
+per-pair quotas, completed-route ranking and bounded label recovery. There is
+no `relationRouting.search` declaration, shape-first selection, approximate
+search or project-size switch. Performance improvements preserve output;
+explicit budget exhaustion is the only new search stop below.
 
-For `first-fit`, keep the same eligible semantic ports, connected-host egress
-exemptions and entry-stub construction. Order source sides `end`, `start`,
-`above`, `below`, then target sides `start`, `end`, `above`, `below`; within an
-identical side pair prefer an admitted entry stub, retaining the existing
-order for remaining ties. Do not invent a far-side span exit or a missing
-window endpoint to complete this order. Unknown sides are invalid internal
-placement inputs, not silently assigned an arbitrary preference.
-
-For each pair, before preparing a visibility graph, test this fixed shape
-family between its exposed ports, in order:
-
-1. A straight segment when aligned.
-2. The horizontal-then-vertical L, then the vertical-then-horizontal L.
-3. Horizontal-vertical-horizontal Z/U shapes through the nearest column
-   channel on each side of the exposed ports' inline midpoint.
-4. Vertical-horizontal-vertical Z/U shapes through the nearest completed row
-   gap on each side of their block midpoint.
-
-Column-channel coordinates are selected obstacle-envelope left/right contacts
-expanded by that obstacle's clearance and the existing router grid offset,
-plus the routing bounds' inline edges. Row-gap coordinates are the midpoints
-between consecutive completed row edges, plus the routing bounds' block
-edges. Clip coordinates to the completed routing bounds; for each axis take
-at most one coordinate at or below the midpoint and one at or above it.
-Order by distance to the midpoint, then smaller coordinate; deduplicate equal
-coordinates and duplicate paths. These are finite proposals, not proofs that
-a whole channel is free. Do not build a graph or perform a visibility search
-to find these contacts.
-
-Join source/target host corridors to every proposal. Apply the existing full
-collision queries, repair/reduction, completed terminal/stroke validation,
-primary-mark safety, window containment, self-overlap and measured bend/detour
-acceptance. Select the first fully accepted shape. If none is accepted, search
-that pair within the existing relation-instance quota and stop at its first
-fully accepted candidate; only then try the next pair. Search exhaustion does
-not prove that no geometrically safe route exists. First-fit does not compare
-eligible routes by best's node-approach/bend/length rank; retain honest residual
-node-sharing diagnostics and the existing declared fallback.
-
-First-fit completes one semantic routing pass, without lane reservations or
-lost-name routing recovery. Already completed axis/period/other required text
-remains an obstacle; member names and deltas, including fixed-lane names,
-are placed after routes and avoid them. Their original association, finite
-candidate ladder, overflow/suppression, window and data-only membership rules
-remain authoritative. Relation labels and annotations follow completed routes.
-`best` retains the pre-route lane-name/rehearsal and recovery order below.
-
-Reviewer-owned explicit `best` declarations on approved targets must land
-before or with the default change. Their truthful resource provenance changes
-must be distinguished from route/paint changes, not normalized away.
-The optional in-place schema member uses the shared `relationSearchPolicy`
-vocabulary. Layout normalization supplies the absent-member default; a schema
-`default` annotation alone is not runtime behavior. A derived profile's stated
-`relationRouting` replaces that whole base member (Spec 33); existing required
-limits remain required. Invalid policy values fail `E_LAYOUT_SCHEMA` at the
-declaration, not during routing.
-
-For `entry: side`, the existing finite row-gap back-route completion remains
-available after ordinary selection fails to side-enter. First-fit tries its
-admitted source egresses in the same physical preference order and takes the
-first fully legal back-route, without all-egress ranking or another visibility
-search; best keeps existing rank comparison. Neither policy shortens mandatory
-terminal corridors or makes primary marks passable to achieve side entry.
-
-Layout emits one typed `RelationRoutingSummary` per first-fit table-timeline
-surface, projected as `I_LAYOUT_RELATION_ROUTING:` plus canonical JSON with
-`surfaceId`, `relationInstances`, `shapeSettled` and `fallbackSearch`.
-`relationInstances` counts actual selection invocations, excluding outside-window
-endpoint omissions. `shapeSettled` counts invocations completed by a shape
-without ever invoking search. `fallbackSearch` counts invocations that entered
-search, even if a later pair's shape ultimately wins; the counts are disjoint.
-Blocked egress-only invocations belong to neither count. Emit the summary even
-when all counts are zero. Best without an explicit new budget emits no summary,
-preserving existing diagnostic bytes. Scene projects the typed fact without
-recounting paths; CLI/MCP expose its fields with severity `info`, not a warning
-or evidence that all relations were drawn.
 **Explicit search budget (#1426; selected design, implementation pending).**
 Optional `relationRouting.searchBudget` is a positive integer, an additional
 ceiling on processed candidate expansions per resolved relation instance per
 routing pass. It does not increase or replace the existing per-pair quotas
 below. Omission preserves those quotas, search order and diagnostic bytes.
 Never reset the explicit ceiling per port pair; create a fresh counter for
-each documented rehearsal, reference, baseline or recovery pass. Shapes and
-blocked egress consume no expansions. Count each admitted Manhattan seed and
+each documented rehearsal, reference, baseline or recovery pass. Blocked egress consumes no expansions. Count each admitted Manhattan seed and
 each non-stale frontier state processed by the existing candidate iterator;
 do not count graph preparation, memo lookup or an unprocessed over-limit pop.
 Graph reuse does not waive candidate-expansion accounting.
 
 On reaching the ceiling, stop further pair selection and retain the best fully
-accepted completed route already found (the first accepted route under
-first-fit), or retain the existing unroutable outcome when none was accepted.
+accepted completed route already found, or retain the existing unroutable outcome when none was accepted.
 Do not relax terminal, obstacle, self-overlap or quality checks. Exhaustion
 means "no acceptable route within budget", never "no safe route exists";
 #1427's selected unroutable mode subsequently handles an absent route.
@@ -461,14 +382,14 @@ Reaching the ceiling while accepting a candidate still records the stop.
 
 Layout emits typed `RelationSearchBudgetHit` facts as
 `I_LAYOUT_RELATION_SEARCH_BUDGET:` plus canonical JSON containing `surfaceId`,
-`relationId` (the resolved relation scene id), `pass`, `search`, `budget` and
+`relationId` (the resolved relation scene id), `pass`, `budget` and
 `expansions`. Here `expansions == budget`; `pass` is the existing deterministic
 progress-pass name. Preserve facts from every executed rehearsal/recovery,
 including a rejected trial, in execution order; do not sum them into a shared
 surface budget or replace them with final-pass-only evidence. Scene projects
 these facts and CLI/MCP expose severity `info`. No Scene schema, geometry or
-resource identity input is added. Approximate fallback-search changes remain
-unresolved and do not authorize an unreviewed change to `best`.
+resource identity input is added. Until #1427 lands, an absent accepted route
+uses the existing suppression/fallback contract and diagnostics.
 
 View relation intent becomes `none` or an object with `mode: semantic` and `overflow: suppress | visible-overflow`. Layout Profile adds `relationRouting.maxBends` and `relationRouting.maxDetourRatio` numeric geometry policy.
 

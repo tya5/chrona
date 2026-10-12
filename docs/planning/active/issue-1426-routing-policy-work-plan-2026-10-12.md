@@ -1,278 +1,74 @@
-# Issue 1426 — declared routing policy
+# Issue 1426 — single-policy routing performance and budget
 
 ## Baseline and design plan
 
-Published base: READY `96244e3d056bc93feefb88a468c604c33e1266ec`, including
-reviewer PR1419 and its successful derived gate. Initial characterization used
-READY `133332e2833ede4423e775c1dec789db91c2d5cb`; current publication follows
-the updated base without developer edits to reviewer YAML or managed outputs.
-Authority: [issue 1426](https://github.com/tya5/chrona/issues/1426), including
-its revised scope and algorithm review; Specification 50 and the Layout schema.
-Stage: shape/phase and policy wiring implemented and locally verified on WIP.
-Explicit budget selection/wiring is implemented; approximate-search
-disposition and public acceptance remain incomplete.
+READY base: `96244e3d056bc93feefb88a468c604c33e1266ec`.
+Authority: [updated issue](https://github.com/tya5/chrona/issues/1426) and
+[owner/reviewer decision](https://github.com/tya5/chrona/issues/1426#issuecomment-6116338205).
+PR1428 currently has the earlier implementation at `a9c1769d`; its CI38192929175
+passes, but that is not acceptance of the rewritten scope. No authored examples
+or managed outputs may be changed. Keep one routing path and remove the rejected
+declaration, shapes, one-pass phase changes and their diagnostics/tests.
 
-Verified: `select_relation_route` ranks all pairs when given a rank callback;
-the search uses a finite per-pair quota and path-history state. Label recovery
-is conditional, not an unconditional second pass. Layout owns these decisions;
-Scene and adapters must receive completed routes, not choose policy.
-The [finite-quota counterexample](../../../tests/unit/chrona/presentation/layout/test_routing_policy_characterization.py)
-finds three candidates with the exact reverse bound and zero with an admissible
-geometric bound under the same 32-expansion quota. Ranked selection succeeds
-before and fails after that bound-only change. Applying that optimization to
-`best` therefore contradicts its unchanged-output criterion; this is measured
-evidence, not an assumed risk. Selected-design disposition still needs agreement.
+Use cases: speed up unchanged rendering; allow authors an additional local
+expansion ceiling with honest instance/pass exhaustion evidence. Schema and
+resource model: only optional positive-integer Layout `searchBudget`; no search
+enum, resource kind or Scene schema. Omission preserves all current output.
 
-Use case: authors choose inexpensive deterministic routing or the existing
-ranked routing, without a project-size threshold. The default change is an
-intentional migration, coordinated with reviewer-owned target declarations.
-No developer changes to `examples/**` or managed artifacts are permitted.
+## Selected design and whole-architecture review
 
-### Decisions to close before implementation
+Specification50 §3.3 owns the single-policy/budget contract. Preserve the exact
+bound, histories, pair quotas/order/ranking, entry completion and all existing
+label rehearsals/recovery. Layout owns counters and completed geometry; Scene
+projects typed facts, and its independent contrast observer retains exact
+validation/findings while using the runtime ABC and prepared immutable candidates.
+Coordinators preserve executed-pass budget facts, including rejected trials.
+Until1427 lands, absent accepted routes keep current suppression/fallback.
+No abandoned `search` field remains in authored schemas, normalized manifests,
+frozen vocabulary or CLI info. There is no default-flip migration in1426.
 
-- Implement the explicit per-instance/per-pass budget selected by reviewer
-  [6115714566](https://github.com/tya5/chrona/issues/1426#issuecomment-6115714566).
-  Specification 50 owns the accounting and typed stop contract; zero, boolean,
-  null and non-integer declarations are invalid, not unlimited budgets.
-- Preserve `best` candidate/quota/order semantics. Cheaper heuristics and
-  node/direction dominance require equivalence evidence: different visited
-  histories can have different self-overlap-safe continuations. The proposed
-  disposition is pending the reviewer response on the issue.
-- Agree a schema-ready preparatory boundary or joint publication so reviewer
-  `search: best` declarations precede the default flip. Coordinate with 1427's
-  later `unroutable: suppress` declaration without implementing its modes here.
+Review: consistent with Spec33 phase/ownership, Spec50 bounded search versus
+impossibility, Spec56 additive budget normalization and Spec66 producer evidence.
+The earlier finite-quota counterexample justifies retaining the exact algorithm;
+it does not authorize changing closed scope. 1427 no longer reuses removed shapes;
+its View overflow/mode authority and always-drawn edge cases need its own design.
 
-Existing #1420 visibility/incremental preparation is shared; endpoint assembly
-and reverse-bound work remain distinct. No typing-protocol hot checks were
-found in the inspected modules. Verify actual costs before further optimization.
+Measurement audit: previous 53.933/53.795-second results were obtained with
+first-fit active. They do NOT prove the retained policy meets60 seconds. Remeasure
+all three inputs after removal; report any gap rather than relabel the evidence.
+Previous 46/46 counterfactual best Scene/SVG identity is a useful control; replace
+it with real unchanged-input materializers without a normalization override.
 
-Measured next hot path: a 200/46 profile spends 19.42 of 30.44 profiled seconds
-in completed-Scene contrast inspection, versus 1.82 s routing; 5,874,640 typing
-alias checks occur. The local Python implementation delegates those ordinary
-checks to the runtime Mapping ABC. Use that ABC without changing contrast rules
-or skipping inspection. Exact findings/payload comparisons cover all public
-manifest-declared Scenes and synthetic dict/UserDict/proxy inputs; the affected
-contrast/ground/pattern suite has 265 PASS (13.72 s). This internal hot-path
-slice was planned on issue comment 6115452760; it changes no public contract.
-The subsequent internal plan (6115533053) prepares stable per-surface primitive
-candidate categories and first-id lookup once, retaining original indices,
-all exact query-time predicates and failure order. No global cache or input
-mutation. Cached-versus-uncached full public findings/payloads, malformed ink,
-paint-order ties, duplicate ids, nested mapping types and preparation counters
-pass: 272 focused tests, 10.74 s; Scene delivery/import/reachability checks pass.
-The measured CLI results below replace the initial wiring measurements.
+## Literal acceptance
 
-## Selected first-fit slice and architecture review
-
-Specifications [50](../../specification/50-constraint-driven-gantt-surface-quality.md#33-relations)
-and [33](../../specification/33-intent-oriented-layout.md) now state the exact
-port/shape order, channel derivation and one-pass phase order as
-implementation-pending contracts. The shape proposal is bounded to seven raw
-paths per pair; it owns no best-route or geometric-completeness promise.
-Geometry and acceptance stay in Layout; source ports remain semantic, existing
-connected-host exemptions stay scoped and Scene/adapters project only completed
-results. Required text is not globally deferred: only member-name/delta
-placement moves. The natural row/mark allocation and data-owned lane partition
-remain unchanged. There is no new resource kind or previous-Scene input.
-
-Architecture decision for this independent slice: accept the owner-selected
-first-fit output change, retaining exact best behavior. Risks to verify before
-acceptance: terminal preparation after raw collision admission, row-contact
-routes, mirrored/point/compound endpoints, lane-name suppression, windows and
-residual node sharing. Other scope items remain planned, not waived or deferred
-out of this issue. No product implementation is authorized by an unresolved
-budget or approximate-search decision.
-
-## Implementation plan — shape-selection foundation
-
-The first independently testable slice implements the selected shape/port
-contract without switching runtime defaults or adding an ignored public
-declaration. Design-stage conformance passes all 35 checks; L2+L3 is 16.3 s.
-
-| Slice | Owners/files | Verification and publication |
-| --- | --- | --- |
-| Shape-selection foundation | Pure Layout `relation_shapes`; `routing.select_relation_route` explicit internal first-fit option, retaining the legacy default and shared full-route validation. No Scene, profile/schema, resource or generated-output change. | Synthetic order/dedup/bounds/port tests; collision/terminal/quality/self-overlap controls; shape-settled no-graph counter; existing ranked-selection and finite-quota characterization. Publish tested WIP, not a runtime-default or whole-issue release. |
-| Policy wiring and one-pass composition | Schema/shared vocabulary; Layout engine/manifest, surface routes/composer and lane/label coordinators; Specifications 33/50. | Finalize counters/normalization before code; in-place schema deltas, absent/explicit policies, derived replacement, lane/automatic one-pass counters, unchanged best projection. Reviewer target migration precedes the default flip. |
-| Budget and fallback efficiency | Layout search and selection accounting. | Close remaining budget/equivalence decisions and publish their normative design before planning/code; retain all issue scope, never silently drop best optimizations or substitute connectivity for byte identity. |
-| Public acceptance/release | Disposable materializer outputs, benchmark tool and literal review. | Batch all best/default comparisons and per-slide route/bend/length changes; three verified trial inputs and repeat-run Scene/SVG hashes; reviewer acceptance; current-head CI and exact-main three-OS release. |
-
-Shape-foundation acceptance is internal behavior only: existing callers and
-their candidate/quota/rank behavior remain unchanged. New selection still
-passes completed semantic corridors through the existing terminal preparation,
-full-route safety and measured quality gates before returning a route.
-
-Foundation and policy wiring are implemented. Focused routing/terminal/profile,
-shared-schema and actual Scene/SVG/info batch: 412 PASS, 28.56 s. Ranked-route
-oracles explicitly use best, retaining every prior assertion; 18 round-terminal
-combinations additionally cover both policies. No-graph and actual fallback
-controls, foreign-host collisions, terminal refusal and self-overlap rejection
-remain covered. S0/L2/L3, schema/reference, inward import (11/37), reachability
-(236, none orphaned), Scene delivery and float/diff guards pass. Four already
-merged #1343 schema deltas were retired by the equivalence tool. Vocabulary
-report is stale by the one new declared site; CI regenerates it, not a manual
-patch. No authored examples or managed outputs change; full pytest is CI-owned.
-
-Current three-input measurements (CPU=user+system, not wall time):
-
-| Objects/relations | CPU seconds, runs 1/2 | Peak RSS MiB, runs 1/2 | Shape/search counts |
-| --- | --- | --- | --- |
-| 19/10, public `routing_revision/project-v1.yaml` | 0.90 / 1.09 | 72.8 / 75.2 | 9 / 1 |
-| 200/46, `routing_scale_project(200)` | 4.161 / 4.112 | 99.4 / 99.4 | 43 / 3 |
-| 1000/228, `routing_scale_project(1000)` | 53.933 / 53.795 | 199.1 / 202.8 | 210 / 18 |
-
-All six renders succeed; Scene/SVG hashes match within each pair and the prior
-wiring outputs. Both 1000 runs meet 60 s versus the published approximately
-3,170 s baseline. This is not whole-issue acceptance: explicit budget/search
-scope, public-output review, target migration and CI release remain required.
-
-## Policy-wiring design review
-
-Specification 50 closes schema normalization, derived-member replacement,
-entry-side back-route order and the exact typed info summary. Layout Manifest
-retains the effective policy; its legacy `best` canonical payload omits the
-new member. The summary counts actual selection calls, not Scene paths or
-logical Project relations, and separates no-search shape completion from any
-fallback search, including a later shape winner. Existing typed info transport
-requires an explicit CLI projection; diagnostic strings alone would be silently
-absent from that channel. Add no paint or Scene-schema fields. Profile wiring
-is additive in place; the owner-selected absent default intentionally changes
-routing and label phase order, while declared best preserves old behavior.
-Review against Spec 33 inheritance/phase authority, Spec 50 safety, Spec 56
-vocabulary/normalization and Spec 66 producer-owned evidence is consistent.
-Approximate-search disposition remains unresolved. The subsequent budget
-slice adds no ignored public declaration.
-
-## Budget design and whole-architecture review
-
-Selected authority: Specification 50 §3.3 and reviewer decision A. The optional
-ceiling supplements the legacy quotas rather than changing absent-budget best
-output. Actual expansion receipts belong to the Layout iterator and selection;
-fresh counters belong to resolved instances, not logical Project relations,
-port pairs or the whole render. Pass coordinators retain all typed hit facts,
-including rejected rehearsals, without leaking rejected geometry into Scene.
-The existing deterministic progress-pass identity distinguishes those facts.
-
-Review: consistent with Spec 33's Layout ownership and phase model, Spec 50's
-bounded-search/non-impossibility distinction, Spec 56's additive optional
-schema/normalization rules, and #1300's locality. #1427 consumes an absent route
-through its separate mode; this slice does not implement modes, claim exhaustive
-search or waive current suppression. Scene/CLI project facts only. Migration:
-explicit authors may intentionally select a different route by cutting search
-short; omission preserves declared best behavior. No new resource, Scene
-schema, adapter geometry, cache-dependent allowance or project-specific rule.
-
-### Budget implementation plan
-
-1. Iterator/selection foundation: `route_search` owns an instance-local mutable
-   expansion counter; `routing` creates one only for an explicit ceiling and
-   shares it across pairs. Preserve existing quotas/order when absent, charge
-   seeds and processed non-stale states before work, retain accepted candidates
-   on exhaustion, and return immutable count/stop receipts. Tests cover early
-   iterator close, exact boundaries, graph memo reuse, multiple pairs, accepted
-   best preservation, shape-only zero charge and invalid internal inputs.
-   Publish this independently testable internal slice without an ignored schema
-   member or runtime declaration.
-2. Profile/diagnostic wiring: additive positive-integer schema member, engine
-   normalization and manifest canonicalization (omit when absent); pass ceiling
-   to selection. Add typed budget hit facts with deterministic existing pass
-   names; lane and route/label coordinators preserve all executed trial facts.
-   Scene and CLI transport typed facts only. Test inheritance/replacement,
-   invalid authored values, both policies, all pass outcomes and diagnostic
-   byte identity when absent; run schema-equivalence and ownership checks.
-3. Combine with the issue's public batch, repeat hashes, reviewer target
-   migration and current-head/exact-main CI gates. No issue closure or default
-   flip from foundation tests alone. Approximate-search disposition is separate.
-
-Foundation implemented: expansion counters are charged before seed/frontier
-processing, shared across pairs and frozen into selection receipts. Exhaustion
-stops pair selection without discarding a previously accepted route; shapes
-charge zero. Focused iterator/selection/history/memo tests cover early close,
-exact ceiling, cached graphs, rejected candidates, preserved rank winners and
-nonbinding-budget legacy equality. Public profile/diagnostic wiring now carries
-the positive-integer ceiling through engine/manifest to selection. Typed hits
-include actual per-pass identities and reach Scene/CLI; lane and label
-coordinators retain all executed trial receipts, even rejected trials. Real
-lane/automatic renders cover both policies, and synthetic controls prove
-rejected recovery/reservation facts survive without retaining their geometry.
-Schema equivalence: S0 additive=1/equal=37, L2+L3=15.8 s, PASS.
-Legacy lane-corridor tests explicitly declare best without changing their
-existing assertions: their pre-name/recovery premises do not apply to the
-owner-selected first-fit default. Public output/reviewer and CI gates remain.
-
-Public batch tool: `python -m tools.relation_policy_evidence
---output-dir <empty-directory> --jobs 4`. Separate worker processes run the real
-materializer and preserve Scene/SVG bytes plus signed route metrics. The test
-normalization override selects each policy without rewriting resource bytes or
-identities; it is algorithm characterization, not evidence of authored best
-declarations or their provenance migration. Only the expected committed-output
-comparison mismatch is admitted after actual serialization; render/schema/
-identity errors remain failures. Synthetic controls cover metrics, both policy
-overrides, unchanged inputs and non-comparison errors. Run the batch on the READY
-base following reviewer PR1419, not on its stale pre-sync generated outputs.
-
-Batch on READY96244e3d: all 46 best Scene/SVG pairs byte-identical; first-fit
-adds/removes no routes and adds no error diagnostic. Draft PR1428 contains the
-46-row route/bend/length table for explicit reviewer acceptance. Final-head
-trial measurements above retain exact repeat/prior hashes. PR run38191166676
-found a corpus-import guard failure caused by placing the developer CLI under
-`tests/support`; move it to `tools` and retain the guard/assertions unchanged.
-Inspect every remaining CI check before declaring release acceptance.
-
-CI correction review: all terminal failing checks in run38191166676 were
-inspected (pytest shards 12/15/14; MCP repeats the import guard; derived-ready
-is downstream). Shared annotation-path compaction removes zero legs after
-retrace reduction; obstacle validation remains strict. Label request ownership
-now selects routing phases, keeping Composer below the unchanged size gate.
-Rollup tests verify semantic marker centres rather than the trimmed stroke's
-perimeter. Route-specific bridge/alias fixtures declare best only in disposable
-copies, retaining all existing feature assertions and truthful generated pins.
-Visible Editorial names retain reach/association checks; omitted optional names
-must have exact suppression diagnostics. Both checks pass on actual first-fit
-evidence, not just the committed best Scene.
-
-Focused correction batches: 108 geometry/owner/render tests, 155 CLI/annotation/
-chip tests, 25 info/work-bound tests and 43 bridge/alias/import/owner tests pass.
-CLI golden changes only 20 render stdout records for the selected diagnostics;
-unrelated argparse-version wording was restored. Three Scene snapshots differ
-only by the new routing info: removing that fact reproduces their exact prior
-hashes; all SVG hashes stay fixed. Repeated 46×2 materializers after the fixes
-produce exactly the previous batch records, including 46/46 best byte identity.
-Publish the correction together; current-head CI, remaining scope4 disposition,
-reviewer target declarations/visual acceptance and exact-main release remain.
-
-### Wiring implementation plan
-
-1. Add the shared vocabulary/frozen definition and optional Layout schema
-   member, with finite-vocabulary policy and schema probes. Normalize it in
-   `engine.solve_layout`; carry it in `LayoutManifest`, preserving best's
-   legacy canonical payload. Tests: `test_relation_search_profile.py`, shared
-   vocabulary/schema tests and schema-equivalence against current main.
-2. Pass the policy and completed row-gap channels to `surface_routes`; carry
-   actual search-use evidence from selection, and complete the selected
-   entry-side back-route rule. Tests: shape selection including a later shape
-   after failed search, existing entry/back-route and terminal safety tests.
-3. Partition only member/delta requests after routes under first-fit in
-   `surface_composer`; bypass lane rehearsals and disable lost-name recovery
-   through `surface_route_label_plan`. Best keeps its old path. Test actual
-   routing-call counts in synthetic lane and automatic Scene/SVG renders,
-   with the pre-existing recovery tests as negative controls.
-4. Produce the typed summary in Layout, hand it through `surface_completion`
-   to existing Scene info projection, and add an explicit payload mapping in
-   `draft_render.warning_payloads`. Tests validate count invariants, actual
-   Scene diagnostic JSON and CLI/MCP severity; no adapter geometry/counting.
-
-Publish this approved slice plan before code. Keep the combined code on the
-same issue WIP; no default-flip merge or release acceptance before reviewer
-migration and all remaining budget/search/public-output gates. Focused tests
-and schema/ownership checks precede publication; use CI for full-suite release.
-
-## Literal acceptance — release still pending
-
-| Criterion copied from the issue | Required evidence |
+| Criterion copied from the updated issue | Required evidence |
 | --- | --- |
-| Under `best`, every existing example and route test is byte-identical. The reviewer declares `best` on the five approved design targets before the default changes; land that YAML first or in the same release. | Legacy-versus-best characterization, batch artifact diff and coordinated reviewer publication. |
-| Under `first-fit`, list changed routes per example slide with counts: routes changed, bends ± and length ±. The reviewer accepts or rejects them in the PR. | Per-slide route delta table and explicit PR review. |
-| A counter test shows that under `first-fit` a relation settled by a shape performs no graph build. | Synthetic counter test with a graph-building negative control. |
-| The three trial inputs are re-measured, and the 1000/228 CPU time is reported against the 60 s budget. | Reproducible CPU/RSS measurements for verified inputs, without substituting wall time. |
-| Output is byte-identical across two runs. | Scene/SVG hashes for repeat runs under the declared policy. |
-| Do not edit `examples/**`; the reviewer adds `search: best` to the targets. | Authored diff and reviewer-owned migration evidence. |
+| Every example Scene and SVG is byte-identical without `searchBudget`. | All46 actual public materializers, original declarations and full bytes; current-head CI. |
+| A test: a relation that reaches its budget is reported with its id and pass, and handled by suppression (later by #1427). | Synthetic blocked relation, actual suppression and typed Scene/CLI receipt; retain best accepted candidates on budget stop. |
+| The three trial inputs are re-measured. The 1000/228 CPU time is reported against the 60 s budget. | 19/10,200/46,1000/228; user+system CPU/RSS and repeat hashes under the retained policy. |
+| Do not edit `examples/**`. | Authored diff clean; bot/disposable outputs only. |
+
+## Implementation plan
+
+1. Remove rejected policy: schema/vocabulary/frozen definition and policy site;
+   engine/manifest flag; relation_shapes module and shape/policy-only tests;
+   selector shape branches, surface summary and phase/entry special cases.
+   Restore related existing oracles/CLI golden from current main, while retaining
+   the independent annotation zero-leg regression fix and tests.
+2. Keep explicit budget: iterator accounting, immutable selection receipts,
+   schema normalization and canonical omission; typed hit info without a search
+   discriminator; all-pass coordinator facts. Replace policy tests with budget
+   declaration/inheritance/invalid/suppression tests. Focused routing, marker,
+   annotation, pass and CLI tests; schema-equivalence and ownership guards.
+3. Simplify the batch CLI to actual unchanged-input materializers, no policy
+   override or two-policy delta table. Verify all46 Scene/SVG pairs and remeasure
+   the three trials. If retained-policy cost misses60, review measured cost and
+   only behavior-preserving corrections within this scope; publish any newly
+   required contract/ownership decision before code.
+4. Publish one coherent correction to the same PR after design and plan publication.
+   Inspect current-head CI/artifact and literal acceptance; release on the READY
+   tip and close only after exact-main three-OS checks containing the review.
+
+Publish the selected design/architecture correction before finalizing this
+implementation plan, then publish the plan before product changes. No new PR,
+force push, authored example repair or hidden compatibility routing path.
