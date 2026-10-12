@@ -134,7 +134,11 @@ Integrated46 full Scene/SVG pairs are byte-identical, with zero route deltas:
 `/tmp/chrona-1346-integrated-materializers-p7Gtzt/materializer-evidence.json`.
 Import direction, reachability (244 modules/no orphan) and value inventory pass.
 
-Next: one coherent implementation PR/current-head CI, then literal acceptance review
-and exact-main three-OS release gate. No authored examples/resources or managed
-outputs changed. #1430 is parked awaiting reviewer-owned target declarations;
-1346 resumes at this independent coordination boundary.
+PR1432 head `c3bcd13f` passed CI38219663492. Reviewer PR1433 now advances main
+with five explicit best declarations; its only Scene change is truthful Layout
+resource identity. Reconciliation passes127 focused count/policy/budget/schema
+tests. Follow the READY tip and rerun current-base PR CI before landing; do not
+reuse old-base green as release acceptance. Then publish the concise literal
+review and complete exact-main three-OS release. No authored examples/resources
+or managed outputs are edited by this implementation. #1430 target declarations
+are merged; its default flip follows this already-active issue's landing.
