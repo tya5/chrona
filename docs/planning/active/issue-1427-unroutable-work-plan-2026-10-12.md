@@ -69,6 +69,13 @@ review it before implementation is finalized.
 
 ## Implementation plan
 
+Halo completion: Theme supplies surface-ground ink and declared/default width;
+Layout closes a separate immutable centreline/curve/clip/order placement.
+Scene emits its decoration path without markers or graph references. Specs08/33
+retain projection-only Scene, Spec46 retains decoration contrast and witness
+coverage. Width/paint validation remains hard; no renderer-side fallback.
+Publish this Spec50 clarification before halo implementation.
+
 Stub completion clarification: admitted endpoints retain independent fragments
 and mandatory terminal text under visible overflow, including plot-edge cases.
 Window endpoint absence still precedes routing. Spec50 owns this selected rule;

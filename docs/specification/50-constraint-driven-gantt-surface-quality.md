@@ -482,6 +482,14 @@ Theme's surface-ground colour through `dependency-halo`, immediately beneath
 the line; line and halo paint below text. The halo is decoration, not a data
 mark or a contrast-floor exemption. Theme resolves paint, Layout resolves
 geometry/order, Scene projects, adapters serialize without inferred routing.
+The halo copies the completed centreline and curve commands, without terminal
+markers or graph endpoint references. Theme resolves its colour from
+`background.fill`. Its stroke width is `dependency-halo.strokeWidth` when
+declared, otherwise three times the selected dependency role's stroke width;
+it must exceed that line's width. Layout closes these dimensions, uses the
+line's clip, and orders the halo immediately below its line (which remains
+below text). Every non-normal completed recovery receives this treatment,
+including each fragment of a paired stub; counts still refer to instances.
 
 The reviewer declares explicit suppress on the five approved targets before
 the default flips. An explicit resource edit retains truthful identity changes;
