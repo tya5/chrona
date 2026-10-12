@@ -23,6 +23,7 @@ reviewSurface:
     maxBends: 4
     maxDetourRatio: 2
 relationRouting:
+  search: best
   maxBends: 4
   maxDetourRatio: 4
   entry: side
