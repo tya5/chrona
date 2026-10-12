@@ -99,15 +99,20 @@ def compose_routes_and_member_labels(context: RouteLabelPlanContext) -> RouteLab
     lost_ids = {item.placement_id for item in lost}
     remaining = tuple(item for item in context.post_route_requests if item.placement_id not in lost_ids)
     retry = _trial(context, lost, remaining, progress_pass="route-label-recovery")
+    facts = (*baseline.routes.routing_info, *retry.routes.routing_info)
+
+    def with_facts(plan):
+        return replace(plan, routes=replace(plan.routes, routing_info=facts))
+
     retry_lost_ids = {item.placement_id for item in _lost_requests(context.post_route_requests, retry.members)}
     if not retry_lost_ids < lost_ids:
-        return baseline
+        return with_facts(baseline)
     baseline_relations = _relation_status(baseline.routes)
     retry_relations = _relation_status(retry.routes)
     if baseline_relations.keys() != retry_relations.keys():
-        return baseline
+        return with_facts(baseline)
     if any(retry_relations[key] > baseline_relations[key] for key in baseline_relations):
-        return baseline
+        return with_facts(baseline)
     if not _relation_labels_preserved(baseline.relation_labels, retry.relation_labels):
-        return baseline
-    return retry
+        return with_facts(baseline)
+    return with_facts(retry)

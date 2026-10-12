@@ -17,6 +17,7 @@ from chrona.presentation.layout.surface_routes import (
     SurfaceRoutesBatch, SurfaceRoutesContext, compose_surface_routes,
 )
 from chrona.presentation.model.semantic_registry import semantic_binding
+from chrona.presentation.model.info_diagnostics import RelationRoutingSummary, RelationSearchBudgetHit
 
 
 @dataclass(frozen=True)
@@ -34,6 +35,7 @@ class LaneRoutePlan:
 
     reservations: tuple[SurfaceObstacle, ...] = ()
     protected: tuple[str, ...] = ()
+    routing_info: tuple[RelationRoutingSummary | RelationSearchBudgetHit, ...] = ()
 
 
 def _degraded(routes: SurfaceRoutesBatch) -> frozenset[str]:
@@ -82,19 +84,26 @@ def plan_lane_route_reservations(context: LaneRoutePlanContext) -> LaneRoutePlan
             or not any(item.semantic_id == "memberLabel" for item in context.requests)):
         return LaneRoutePlan()
     names, routes = _rehearse(context, ())
+    facts = list(routes.routing_info)
+
+    def finish(reservations=(), protected=()):
+        return LaneRoutePlan(reservations, protected, tuple(facts))
+
     lost = _degraded(routes)
     if not lost:
-        return LaneRoutePlan()
+        return finish()
     reference = compose_surface_routes(replace(
         context.routes_for(context.obstacles.copy(), context.base_text), progress_pass="lane-reference"))
+    facts.extend(reference.routing_info)
     unplaced = _degraded(reference)
     rescued = tuple(item for item in reference.relations if item.relation_id in lost
                     and item.relation_id not in unplaced)
     if not rescued:
-        return LaneRoutePlan()
+        return finish()
     reservations = tuple(obstacle for item in rescued for obstacle in _corridor(item, context))
     rehearsed_names, rehearsed_routes = _rehearse(
         context, reservations, progress_pass="lane-reservation-rehearsal")
+    facts.extend(rehearsed_routes.routing_info)
     if _degraded(rehearsed_routes) < lost and _suppressed_names(rehearsed_names) <= _suppressed_names(names):
-        return LaneRoutePlan(reservations, tuple(sorted(item.relation_id for item in rescued)))
-    return LaneRoutePlan()
+        return finish(reservations, tuple(sorted(item.relation_id for item in rescued)))
+    return finish()

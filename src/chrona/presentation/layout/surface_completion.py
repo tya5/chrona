@@ -30,7 +30,7 @@ from chrona.presentation.layout.frame_glyph import complete_frame_glyphs
 from chrona.presentation.layout.region_frame import complete_region_frames
 from chrona.presentation.layout.surface_visuals import place_axis_band_visuals
 from chrona.presentation.layout.viewer_fit import stamp_surface_fits
-from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels, RelationRoutingSummary
+from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels, RelationRoutingSummary, RelationSearchBudgetHit
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject, table_row_subjects, review_row_subjects
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
@@ -85,7 +85,7 @@ class SurfaceCompletionContext:
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
     visible_label_subjects: Mapping[str, tuple[DiagnosticSubject, ...]] = field(default_factory=dict)
     window_label_absences: tuple[WindowLabelAbsence, ...] = ()
-    routing_info: tuple[RelationRoutingSummary, ...] = ()
+    routing_info: tuple[RelationRoutingSummary | RelationSearchBudgetHit, ...] = ()
 
 
 def contains_block_interval(*, container_start: Decimal, container_end: Decimal,

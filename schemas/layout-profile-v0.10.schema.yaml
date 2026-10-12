@@ -122,6 +122,7 @@ properties:
       search:
         description: "Table-timeline dependency routing policy. Absent means first-fit; best retains legacy ranked routing and label recovery."
         $ref: "urn:chrona:vocabulary-v0.1#/$defs/relationSearchPolicy"
+      searchBudget: {description: "Additional expansion ceiling per resolved relation instance per routing pass; shared across port pairs, without increasing legacy pair quotas. Omitted means no additional ceiling.", type: integer, minimum: 1}
       maxBends: {description: "Maximum bends allowed in one relation route.", type: integer, minimum: 0, maximum: 64}
       maxDetourRatio: {description: "Maximum route detour relative to direct distance.", type: number, minimum: 1, maximum: 100}
       entry: {description: "Which side a relation enters a span start (or the mirrored end): side-when-free tries the horizontal entry at mid-height first when the source lies on that side and a stub of arrowhead plus clearance is free; any keeps the nearest-port order; side adds, for a target the source does not approach from the entry side (an abutting or overlapping chain), a back-route through the row gap and gives gates the same horizontal entry, and reports I_LAYOUT_RELATION_ENTRY_FALLBACK when a relation still does not enter along the bar. Absent means side-when-free (#1030, #1060).", enum: [any, side-when-free, side]}

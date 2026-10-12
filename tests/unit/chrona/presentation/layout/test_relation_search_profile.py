@@ -52,6 +52,7 @@ def test_null_is_not_an_absent_policy():
 
 def test_derived_routing_member_is_whole_replacement_not_a_policy_merge():
     base = _profile("best")
+    base["relationRouting"]["searchBudget"] = 3
     derived = deepcopy(base)
     derived.pop("root")
     derived.pop("relationRouting")
@@ -62,6 +63,27 @@ def test_derived_routing_member_is_whole_replacement_not_a_policy_merge():
     derived["overrides"] = {"page": {"padding": deepcopy(base["root"]["padding"])}}
     before = deepcopy((base, derived))
     assert solved(compose_layout_profile(derived, base)).relation_search == "best"
+    assert solved(compose_layout_profile(derived, base)).relation_search_budget == 3
     assert (base, derived) == before
     derived["relationRouting"] = {"maxBends": 4, "maxDetourRatio": 2}
     assert solved(compose_layout_profile(derived, base)).relation_search == "first-fit"
+    assert solved(compose_layout_profile(derived, base)).relation_search_budget is None
+
+
+@pytest.mark.parametrize("policy", ("first-fit", "best"))
+def test_explicit_budget_reaches_the_manifest_without_changing_policy(policy):
+    value = _profile(policy)
+    value["relationRouting"]["searchBudget"] = 7
+    manifest = solved(value)
+    assert manifest.relation_search_budget == 7
+    assert json.loads(manifest.canonical_bytes())["relationRouting"]["searchBudget"] == 7
+    assert manifest.relation_search == policy
+
+
+@pytest.mark.parametrize("budget", (0, -1, True, None, 1.5, "2", []))
+def test_invalid_budget_is_rejected_at_the_schema_boundary(budget):
+    value = _profile("best")
+    value["relationRouting"]["searchBudget"] = budget
+    with pytest.raises(LayoutError) as error:
+        resolve_layout_profile(value, available_sources=SOURCES, theme=THEME)
+    assert (error.value.diagnostic_id, error.value.path) == ("E_LAYOUT_SCHEMA", "/relationRouting/searchBudget")

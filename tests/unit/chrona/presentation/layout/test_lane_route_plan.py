@@ -42,3 +42,34 @@ def test_a_copy_is_independent_of_the_index_it_came_from():
 
 def test_an_empty_plan_reserves_nothing():
     assert LaneRoutePlan().reservations == () and LaneRoutePlan().protected == ()
+
+
+def test_budget_hit_facts_survive_rejected_lane_reservation_rehearsal(monkeypatch):
+    from types import SimpleNamespace
+    from chrona.presentation.layout import surface_lane_route_plan as plan
+    from chrona.presentation.layout.surface_routes import SurfaceRoutesContext, SurfaceRoutesBatch
+    from chrona.presentation.layout.surface_member_labels import SurfaceMemberLabelsBatch
+    from chrona.presentation.model.info_diagnostics import RelationSearchBudgetHit
+    names = SurfaceMemberLabelsBatch((), (), (), (), (), (), (), frozenset())
+    facts = []
+    def batch(pass_name, suppressed):
+        fact = RelationSearchBudgetHit("table-timeline", "relation:r", pass_name, "best", 2, 2)
+        facts.append(fact)
+        return SurfaceRoutesBatch((SimpleNamespace(relation_id="relation:r", suppressed=suppressed),),
+                                  (), {}, {}, {}, (), (fact,))
+    def rehearse(context, reservations, progress_pass="lane-rehearsal"):
+        return names, batch(progress_pass, True)
+    monkeypatch.setattr(plan, "_rehearse", rehearse)
+    monkeypatch.setattr(plan, "compose_surface_routes", lambda context: batch(context.progress_pass, False))
+    monkeypatch.setattr(plan, "_corridor", lambda item, context: ())
+    context = plan.LaneRoutePlanContext(
+        SimpleNamespace(request=SimpleNamespace(surface_content=SimpleNamespace(relations=(1,))),
+                        projection=SimpleNamespace(lane_membership=object())),
+        (SimpleNamespace(semantic_id="memberLabel"),), (), SurfaceObstacleIndex(),
+        lambda obstacles, text: SurfaceRoutesContext(None, None, (), (), (), (),
+            (0, 0, 0, 0), None, {}, text, obstacles))
+    result = plan.plan_lane_route_reservations(context)
+    assert result.reservations == result.protected == ()
+    assert result.routing_info == tuple(facts)
+    assert [fact.pass_name for fact in facts] == [
+        "lane-rehearsal", "lane-reference", "lane-reservation-rehearsal"]

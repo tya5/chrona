@@ -273,6 +273,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
 
     pre_route, post_route = member_label_requests.pre_route, member_label_requests.post_route
     first_fit = layout_manifest.relation_search == "first-fit"
+    lane_routing_info = ()
     if first_fit:
         deferred = tuple(item for item in pre_route if item.semantic_id in {"memberLabel", "finishDelta"})
         pre_route = tuple(item for item in pre_route if item.semantic_id not in {"memberLabel", "finishDelta"})
@@ -284,6 +285,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
                 tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot),
                 temporal_endpoints=mark_batch.temporal_endpoints)))
         surface_obstacles.extend(lane_route_plan.reservations)
+        lane_routing_info = lane_route_plan.routing_info
     place_label_phase(pre_route)
 
     route_label_plan = compose_routes_and_member_labels(RouteLabelPlanContext(
@@ -292,7 +294,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
             tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot),
             temporal_endpoints=mark_batch.temporal_endpoints), allow_recovery=not first_fit))
     surface_obstacles = route_label_plan.obstacles
-    routes_batch = route_label_plan.routes
+    routes_batch = replace(route_label_plan.routes,
+        routing_info=(*lane_routing_info, *route_label_plan.routes.routing_info))
     relations = list(routes_batch.relations)
     visible_route_fallbacks = list(routes_batch.visible_route_fallbacks)
     instance_anchors = dict(routes_batch.instance_anchors)

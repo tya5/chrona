@@ -6,7 +6,7 @@ Published base: READY `133332e2833ede4423e775c1dec789db91c2d5cb`.
 Authority: [issue 1426](https://github.com/tya5/chrona/issues/1426), including
 its revised scope and algorithm review; Specification 50 and the Layout schema.
 Stage: shape/phase and policy wiring implemented and locally verified on WIP.
-Explicit budget design is selected; implementation, approximate-search
+Explicit budget selection/wiring is implemented; approximate-search
 disposition and public acceptance remain incomplete.
 
 Verified: `select_relation_route` ranks all pairs when given a rank callback;
@@ -185,8 +185,16 @@ processing, shared across pairs and frozen into selection receipts. Exhaustion
 stops pair selection without discarding a previously accepted route; shapes
 charge zero. Focused iterator/selection/history/memo tests cover early close,
 exact ceiling, cached graphs, rejected candidates, preserved rank winners and
-nonbinding-budget legacy equality. Public profile/diagnostic wiring is next;
-there is not yet an authored `searchBudget` property.
+nonbinding-budget legacy equality. Public profile/diagnostic wiring now carries
+the positive-integer ceiling through engine/manifest to selection. Typed hits
+include actual per-pass identities and reach Scene/CLI; lane and label
+coordinators retain all executed trial receipts, even rejected trials. Real
+lane/automatic renders cover both policies, and synthetic controls prove
+rejected recovery/reservation facts survive without retaining their geometry.
+Schema equivalence: S0 additive=1/equal=37, L2+L3=15.8 s, PASS.
+Legacy lane-corridor tests explicitly declare best without changing their
+existing assertions: their pre-name/recovery premises do not apply to the
+owner-selected first-fit default. Public output/reviewer and CI gates remain.
 
 ### Wiring implementation plan
 

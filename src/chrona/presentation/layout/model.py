@@ -133,6 +133,7 @@ class LayoutManifest:
     member_names: Mapping[str, Any] = field(default_factory=dict)
     fit_warnings: tuple[FitWarning, ...] = ()
     relation_search: str = "first-fit"
+    relation_search_budget: int | None = None
 
     def canonical_bytes(self, precision: int = 3) -> bytes:
         quantum = Decimal(1).scaleb(-precision)
@@ -178,6 +179,7 @@ class LayoutManifest:
                 "maxDetourRatio": self.relation_max_detour_ratio,
                 **({"entry": self.relation_entry} if self.relation_entry != "side-when-free" else {}),
                 **({"search": self.relation_search} if self.relation_search != "best" else {}),
+                **({"searchBudget": self.relation_search_budget} if self.relation_search_budget is not None else {}),
             },
             "annotationRouting": {
                 "maxBends": self.annotation_max_bends,

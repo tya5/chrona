@@ -80,6 +80,24 @@ def _context():
             obstacles=obstacles))
 
 
+@pytest.mark.parametrize("recover", (False, True))
+def test_budget_hit_facts_survive_rejected_and_accepted_recovery(monkeypatch, recover):
+    from chrona.presentation.model.info_diagnostics import RelationSearchBudgetHit
+    _install_trial_owners(monkeypatch, recover=recover)
+    original = plan.compose_surface_routes
+    facts = []
+    def with_fact(context):
+        routes = original(context)
+        fact = RelationSearchBudgetHit("table-timeline", "relation:r", context.progress_pass, "best", 1, 1)
+        facts.append(fact)
+        return replace(routes, routing_info=(fact,))
+    monkeypatch.setattr(plan, "compose_surface_routes", with_fact)
+    result = plan.compose_routes_and_member_labels(_context())
+    assert len(facts) == 2
+    assert result.routes.routing_info == tuple(facts)
+    assert result.members.text[0].overflow == ("fit" if recover else "suppressed")
+
+
 def test_retries_only_lost_name_and_returns_winning_trial_without_replaying(monkeypatch):
     calls = _install_trial_owners(monkeypatch, recover=True)
 
