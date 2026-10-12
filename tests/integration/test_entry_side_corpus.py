@@ -56,7 +56,7 @@ def test_target_b_with_entry_side_enters_from_the_side_or_says_why(tmp_path):
     copy = tmp_path / "halcyon-1"
     shutil.copytree(ROOT / "examples/halcyon-1", copy)
     layout = copy / "layouts/target-b.yaml"
-    assert "entry: side}" in layout.read_text(encoding="utf-8")
+    assert yaml.safe_load(layout.read_bytes())["relationRouting"]["entry"] == "side"
     materialize(copy / "manifest.yaml", "target-b", tmp_path / "out", write=True)
     scene = json.loads((tmp_path / "out/review.scene.json").read_text(encoding="utf-8"))
     paths = {path["sourceRef"]: path["points"] for path in _relation_paths(scene)}
