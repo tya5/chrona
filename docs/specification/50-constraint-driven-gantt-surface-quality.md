@@ -449,6 +449,16 @@ Layout measures and places these with the existing terminal/text primitives;
 it does not present the pair as a connected safe route. Both fragments belong
 to one resolved relation instance and are counted once. Terminal labels must
 not silently disappear; their declared visible-overflow treatment is inspectable.
+Stub geometry also uses visible overflow: once both semantic endpoints are
+admitted, insufficient plot-edge clearance must not silently erase a fragment
+or its terminal. Layout completes each endpoint independently against its own
+hosts, preserving temporal anchors and terminal fit, and expands the completed
+canvas when necessary. It does not clip a stub as though it were a full route.
+Scene source fragments carry only the actual source-instance reference; target
+fragments carry only the actual target-instance reference. Shared relation
+provenance and terminal text retain the linkage without falsely declaring
+either fragment a connected source-to-target route. These are ordinary
+completed path/text primitives, not a new Scene schema or scheduling edge.
 Finite fallback is not evidence of safety, completeness or a clean route.
 
 All three non-suppress modes retain the relation's visible representation.

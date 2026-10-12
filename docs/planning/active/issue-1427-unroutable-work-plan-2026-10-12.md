@@ -63,6 +63,15 @@ review it before implementation is finalized.
 
 ## Implementation plan
 
+Stub completion clarification: admitted endpoints retain independent fragments
+and mandatory terminal text under visible overflow, including plot-edge cases.
+Window endpoint absence still precedes routing. Spec50 owns this selected rule;
+Specs08/33 retain completed path/text projection and canvas ownership, while
+Spec66's temporal selection remains unchanged. Partial instance references
+prevent a fragment being described as a full connected edge. Publish this
+clarification before connecting stub geometry/text; no adapter inference or
+new author syntax is needed.
+
 One implementation PR after this design publication; independently tested commits.
 
 | Slice | Owners/files | Gate |
