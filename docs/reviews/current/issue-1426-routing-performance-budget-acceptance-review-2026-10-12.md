@@ -26,6 +26,12 @@ containing this review. Keep the issue open.
 | 3 | The three trial inputs are re-measured. The 1000/228 CPU time is reported against the 60 s budget. | met | [Measurement report](https://github.com/tya5/chrona/issues/1426#issuecomment-6116658178):19/10 CPU1.48/1.66s;200/46 CPU32.056357/31.160932s;1000/228 first CPU813.344333s, wall964.490813s, RSS216743936 bytes, exit0. Second1000 repeat is pending. | — |
 | 4 | Do not edit `examples/**`. | met | [Reviewed diff](https://github.com/tya5/chrona/pull/1428/files): authored examples/resources unchanged; CI produces the disposable managed snapshot. | — |
 
+## Programme-level criteria (optional)
+
+The measured1000/228 time is13.56x60s: **M2's time target is not met**.
+Earlier53s results were first-fit, not retained-policy evidence. Reporting the
+literal measurement criterion does not prove the programme-level performance target.
+
 ## Architecture and release disposition
 
 Exact bound, histories, quotas, candidate order/ranking and label passes remain
@@ -33,7 +39,3 @@ unchanged. Layout owns the per-instance/per-pass counter and completed facts;
 Scene/CLI project them. Contrast inspection reuses private immutable classifications,
 not layout geometry. No abandoned policy declaration or approximate search remains.
 The independent annotation compaction fix retains the same46 public artifacts.
-
-The measured1000/228 time is13.56x60s: **M2's time target is not met**.
-Earlier53s results were first-fit, not retained-policy evidence. Reporting the
-literal measurement criterion does not prove the programme-level performance target.
