@@ -158,6 +158,28 @@ explicit authors may intentionally select a different route by cutting search
 short; omission preserves declared best behavior. No new resource, Scene
 schema, adapter geometry, cache-dependent allowance or project-specific rule.
 
+### Budget implementation plan
+
+1. Iterator/selection foundation: `route_search` owns an instance-local mutable
+   expansion counter; `routing` creates one only for an explicit ceiling and
+   shares it across pairs. Preserve existing quotas/order when absent, charge
+   seeds and processed non-stale states before work, retain accepted candidates
+   on exhaustion, and return immutable count/stop receipts. Tests cover early
+   iterator close, exact boundaries, graph memo reuse, multiple pairs, accepted
+   best preservation, shape-only zero charge and invalid internal inputs.
+   Publish this independently testable internal slice without an ignored schema
+   member or runtime declaration.
+2. Profile/diagnostic wiring: additive positive-integer schema member, engine
+   normalization and manifest canonicalization (omit when absent); pass ceiling
+   to selection. Add typed budget hit facts with deterministic existing pass
+   names; lane and route/label coordinators preserve all executed trial facts.
+   Scene and CLI transport typed facts only. Test inheritance/replacement,
+   invalid authored values, both policies, all pass outcomes and diagnostic
+   byte identity when absent; run schema-equivalence and ownership checks.
+3. Combine with the issue's public batch, repeat hashes, reviewer target
+   migration and current-head/exact-main CI gates. No issue closure or default
+   flip from foundation tests alone. Approximate-search disposition is separate.
+
 ### Wiring implementation plan
 
 1. Add the shared vocabulary/frozen definition and optional Layout schema
