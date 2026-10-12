@@ -9,7 +9,7 @@ from math import hypot, isfinite
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.obstacles import ObstacleSegment, SurfaceObstacleIndex
 from chrona.presentation.layout.ports import ConnectorEgress
-from chrona.presentation.layout.route_search import RouteSearchFailure
+from chrona.presentation.layout.route_search import RelationExpansionBudget, RouteSearchFailure
 
 
 ROUTE_GRID_OFFSET = 2.0  # how far a route runs from the edge of an obstacle
@@ -348,9 +348,23 @@ class RelationRouteSelection:
     selected_pair: tuple[ConnectorEgress, ConnectorEgress] | None
     points: tuple[tuple[float, float], ...]
     attempts: tuple[RouteAttemptEvidence, ...]
+    search_budget: int | None = None
+    search_expansions: int = 0
+
+    @property
+    def budget_hit(self) -> bool:
+        return self.search_budget is not None and self.search_expansions == self.search_budget
 
     def __post_init__(self) -> None:
         accepted = tuple(item for item in self.attempts if item.outcome == "accepted")
+        if (isinstance(self.search_expansions, bool) or not isinstance(self.search_expansions, int)
+                or self.search_expansions < 0
+                or (self.search_budget is None and self.search_expansions != 0)
+                or (self.search_budget is not None and (
+                    isinstance(self.search_budget, bool) or not isinstance(self.search_budget, int)
+                    or self.search_budget < 1 or self.search_expansions > self.search_budget))):
+            raise _route_attempt_error("search budget receipt", budget=self.search_budget,
+                                       expansions=self.search_expansions)
         if (not self.attempts or len(accepted) > 1
                 or (self.selected_pair is None) != (not accepted)
                 or (self.selected_pair is None and self.points)
@@ -372,6 +386,7 @@ def select_relation_route(
     prepare: Callable[[tuple[tuple[float, float], ...], ConnectorEgress, ConnectorEgress],
                       tuple[tuple[float, float], ...] | None] | None = None,
     rank: Callable[[tuple[tuple[float, float], ...], ConnectorEgress, ConnectorEgress], tuple] | None = None,
+    search_budget: int | None = None,
 ) -> RelationRouteSelection:
     """Measure eligibility, then select by the caller's stable rank when supplied.
 
@@ -391,6 +406,12 @@ def select_relation_route(
     chosen = None
     chosen_points = ()
     chosen_attempt = -1
+    budget = RelationExpansionBudget(search_budget) if search_budget is not None else None
+
+    def result(pair, points, evidence):
+        return RelationRouteSelection(pair, tuple(points), tuple(evidence),
+            search_budget=search_budget, search_expansions=budget.expansions if budget is not None else 0)
+
     quota, remainder = divmod(RELATION_SEARCH_EXPANSIONS, len(port_pairs))
     for pair_index, (source, target) in enumerate(port_pairs):
         blockers = tuple(sorted({item.placement_id for egress in (source, target)
@@ -415,11 +436,11 @@ def select_relation_route(
         measured, points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
             port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
             max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
-            limit=pair_limit)
+            limit=pair_limit, **({"budget": budget} if budget is not None else {}))
         attempts.append(measured)
         if measured.outcome == "accepted":
             if rank is None:
-                return RelationRouteSelection((source, target), tuple(points), tuple(attempts))
+                return result((source, target), points, attempts)
             score = rank(tuple(points), source, target)
             if best is None or score < best:
                 if chosen_attempt >= 0:
@@ -427,11 +448,13 @@ def select_relation_route(
                 best, chosen, chosen_points, chosen_attempt = score, (source, target), tuple(points), len(attempts) - 1
             else:
                 attempts[-1] = replace(measured, outcome="eligible-not-selected")
-    return RelationRouteSelection(chosen, chosen_points, tuple(attempts))
+        if budget is not None and budget.hit:
+            break
+    return result(chosen, chosen_points, attempts)
 
 
 def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, classes, regions,
-                           max_bends, max_detour_ratio, prepare, accept, limit):
+                           max_bends, max_detour_ratio, prepare, accept, limit, budget=None):
     """Search alternatives for one pair; only completed, safe paths reach quality selection."""
     from chrona.presentation.layout.route_search import orthogonal_route_candidates
 
@@ -439,8 +462,10 @@ def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, class
     failure = "E_CONNECTOR_UNROUTABLE"
     disposition = "bounded-candidates-exhausted"
     try:
-        for middle in orthogonal_route_candidates(source.exposed_port, target.exposed_port, obstacles,
-                bounds=bounds, port_ids=port_ids, classes=classes, regions=regions, limit=limit):
+        candidates = orthogonal_route_candidates(source.exposed_port, target.exposed_port, obstacles,
+            bounds=bounds, port_ids=port_ids, classes=classes, regions=regions, limit=limit,
+            **({"budget": budget} if budget is not None else {}))
+        for middle in candidates:
             points = []
             for point in (*source.corridor, *middle, *reversed(target.corridor)):
                 if not points or points[-1] != point:

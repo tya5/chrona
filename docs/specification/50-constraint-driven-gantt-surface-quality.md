@@ -355,6 +355,42 @@ Scene projects the completed fact; adapters neither recount nor draw a marker.
 
 ### 3.3 Relations
 
+**Single routing policy (#1426).**
+Retain the existing pair order, exact reverse bound, canonical path histories,
+per-pair quotas, completed-route ranking and bounded label recovery. There is
+no `relationRouting.search` declaration, shape-first selection, approximate
+search or project-size switch. Performance improvements preserve output;
+explicit budget exhaustion is the only new search stop below.
+
+**Explicit search budget (#1426).**
+Optional `relationRouting.searchBudget` is a positive integer, an additional
+ceiling on processed candidate expansions per resolved relation instance per
+routing pass. It does not increase or replace the existing per-pair quotas
+below. Omission preserves those quotas, search order and diagnostic bytes.
+Never reset the explicit ceiling per port pair; create a fresh counter for
+each documented rehearsal, reference, baseline or recovery pass. Blocked egress consumes no expansions. Count each admitted Manhattan seed and
+each non-stale frontier state processed by the existing candidate iterator;
+do not count graph preparation, memo lookup or an unprocessed over-limit pop.
+Graph reuse does not waive candidate-expansion accounting.
+
+On reaching the ceiling, stop further pair selection and retain the best fully
+accepted completed route already found, or retain the existing unroutable outcome when none was accepted.
+Do not relax terminal, obstacle, self-overlap or quality checks. Exhaustion
+means "no acceptable route within budget", never "no safe route exists";
+#1427's selected unroutable mode subsequently handles an absent route.
+Reaching the ceiling while accepting a candidate still records the stop.
+
+Layout emits typed `RelationSearchBudgetHit` facts as
+`I_LAYOUT_RELATION_SEARCH_BUDGET:` plus canonical JSON containing `surfaceId`,
+`relationId` (the resolved relation scene id), `pass`, `budget` and
+`expansions`. Here `expansions == budget`; `pass` is the existing deterministic
+progress-pass name. Preserve facts from every executed rehearsal/recovery,
+including a rejected trial, in execution order; do not sum them into a shared
+surface budget or replace them with final-pass-only evidence. Scene projects
+these facts and CLI/MCP expose severity `info`. No Scene schema, geometry or
+resource identity input is added. Until #1427 lands, an absent accepted route
+uses the existing suppression/fallback contract and diagnostics.
+
 View relation intent becomes `none` or an object with `mode: semantic` and `overflow: suppress | visible-overflow`. Layout Profile adds `relationRouting.maxBends` and `relationRouting.maxDetourRatio` numeric geometry policy.
 
 Layout routes between completed ports through deterministic orthogonal candidates. A route is acceptable when it stays in the timeline, avoids required obstacles, has at most `maxBends`, and its Manhattan length is at most `maxDetourRatio × directDistance`. Eligible candidates use the ranking below. With `visible-overflow`, no acceptable route completes as the deterministic direct path plus `W_LAYOUT_ROUTE_FALLBACK`; explicit suppression creates `W_LAYOUT_RELATION_SUPPRESSED`.

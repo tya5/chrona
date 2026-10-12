@@ -42,6 +42,7 @@ from chrona.presentation.layout.surface_quality import (
 )
 from chrona.presentation.layout.text import metric_for_role, measure_text_width, place_text
 from chrona.presentation.model.semantic_registry import semantic_binding
+from chrona.presentation.model.info_diagnostics import RelationSearchBudgetHit
 
 
 @dataclass(frozen=True)
@@ -70,6 +71,7 @@ class SurfaceRoutesBatch:
     instance_rows: Mapping[str, str]
     comparison_clusters: Mapping[tuple[str, str], tuple[MarkPlacement, ...]]
     diagnostics: tuple[str, ...]
+    routing_info: tuple[RelationSearchBudgetHit, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -237,6 +239,11 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         *(float(group.header_bounds.block + group.header_bounds.block_size)
           for group in groups if group.header_bounds is not None)))
     route_classes = ("mark", "text", "label-visual")
+    routing_bounds = ((plot_clip.bounds[0], plot_clip.bounds[1],
+                       plot_clip.bounds[0] + plot_clip.bounds[2], plot_clip.bounds[1] + plot_clip.bounds[3])
+                      if plot_clip is not None else
+                      (timeline_bounds[0], route_top, timeline_bounds[0] + timeline_bounds[2], route_bottom))
+    budget_hits: list[RelationSearchBudgetHit] = []
     primary_marks = tuple(mark for mark in marks if mark.placement_id.startswith("planned:")
                           and ":snapshot:" not in mark.placement_id and ":scenario:" not in mark.placement_id)
     primary_interiors: dict[float, tuple[ObstacleRect, ...]] = {}
@@ -554,10 +561,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         paint_id=relation.semantic_id, terminal=completed_end), entry_penalty, bends, length)
 
                 selection = select_relation_route(port_pairs, obstacles=obstacles,
-                        bounds=((plot_clip.bounds[0], plot_clip.bounds[1],
-                                 plot_clip.bounds[0] + plot_clip.bounds[2], plot_clip.bounds[1] + plot_clip.bounds[3])
-                                if plot_clip is not None else
-                                (timeline_bounds[0], route_top, timeline_bounds[0] + timeline_bounds[2], route_bottom)),
+                        bounds=routing_bounds,
+                        search_budget=context.layout_manifest.relation_search_budget,
                         source_host_id=source_mark.placement_id if source_mark else None,
                         target_host_id=target_mark.placement_id if target_mark else None,
                         relation_scene_id=scene_id, max_bends=context.layout_manifest.relation_max_bends,
@@ -570,6 +575,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                                               target_entry.exposed_port[1] - target_entry.semantic_port[1])),
                         accept=lambda candidate: clears_primary_marks(candidate, dependency_stroke)
                             and terminal_segments_fit(candidate, dependency_stroke), rank=candidate_rank)
+                if selection.budget_hit:
+                    budget_hits.append(RelationSearchBudgetHit("table-timeline", scene_id,
+                        context.progress_pass, selection.search_budget,
+                        selection.search_expansions))
                 selected_pair, points = selection.selected_pair, selection.points
                 if projection.lane_membership is not None:
                     lane_selection = selection
@@ -698,7 +707,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     return SurfaceRoutesBatch(completed_relations,
         tuple(item for item in completed_relations if item.relation_id in fallback_ids),
         {key: tuple(values) for key, values in instance_anchors.items()}, instance_rows,
-        comparison_clusters, tuple(diagnostics))
+        comparison_clusters, tuple(diagnostics), tuple(budget_hits))
 
 
 def place_relation_labels(context: SurfaceRoutesContext,

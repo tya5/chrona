@@ -26,12 +26,12 @@ calendars:
       - {date: '2027-10-09', working: false}
       - {date: '2027-10-16', working: false}
 entities:
-  bus: {type: team, title: Spacecraft bus}
-  payload: {type: team, title: Imaging payload}
-  ait: {type: team, title: 'Assembly, integration and test'}
-  ground: {type: team, title: Ground segment}
-  launch: {type: team, title: Launch and range}
-  ops: {type: team, title: Mission operations}
+  bus: {type: team, title: Spacecraft bus, fields: {titleJa: 機体}}
+  payload: {type: team, title: Imaging payload, fields: {titleJa: 観測器}}
+  ait: {type: team, title: 'Assembly, integration and test', fields: {titleJa: 組立試験}}
+  ground: {type: team, title: Ground segment, fields: {titleJa: 地上系}}
+  launch: {type: team, title: Launch and range, fields: {titleJa: 打上げ}}
+  ops: {type: team, title: Mission operations, fields: {titleJa: 運用}}
 objects:
   pdr:
     type: PDR

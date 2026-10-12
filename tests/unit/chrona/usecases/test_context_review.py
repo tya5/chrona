@@ -18,7 +18,7 @@ store:
   identity: halcyon-1-example
 address: contexts/01-mission-brief.yaml
 revision:
-  token: example-v5
+  token: example-v6
 """
 KEY = ("local", "halcyon-1-example")
 

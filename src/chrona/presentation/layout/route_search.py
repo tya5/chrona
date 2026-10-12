@@ -28,6 +28,28 @@ class RouteSearchFailure(ValueError):
         self.detail = detail
 
 
+@dataclass(slots=True)
+class RelationExpansionBudget:
+    """One resolved instance's additional ceiling, shared across pair iterators."""
+
+    limit: int
+    expansions: int = field(default=0, init=False)
+
+    def __post_init__(self) -> None:
+        if isinstance(self.limit, bool) or not isinstance(self.limit, int) or self.limit < 1:
+            raise ValueError("E_LAYOUT_ROUTE_SEARCH_INPUT: budget must be a positive integer.")
+
+    @property
+    def hit(self) -> bool:
+        return self.expansions == self.limit
+
+    def charge(self) -> None:
+        if self.hit:
+            raise RouteSearchFailure("E_PRESENTATION_ROUTE_LIMIT",
+                                     detail="The relation's explicit expansion budget was reached.")
+        self.expansions += 1
+
+
 Point = tuple[float, float]
 Path = tuple[Point, ...]
 Edge = tuple[int, int, float]
@@ -314,6 +336,7 @@ def orthogonal_route_candidates(
     classes: tuple[str, ...] | None = None,
     regions: tuple[str, ...] | None = None,
     initial_direction: int = -1,
+    budget: RelationExpansionBudget | None = None,
 ) -> Iterator[Path]:
     """Yield deterministic orthogonal paths from a finite sparse event graph.
 
@@ -400,10 +423,15 @@ def orthogonal_route_candidates(
                         detail="The candidate limit was reached while yielding clear Manhattan seed routes.",
                     )
                 seeded.add(candidate)
+                if budget is not None:
+                    budget.charge()
                 yield candidate
         if start == end:
             return
 
+    if budget is not None and budget.hit:
+        raise RouteSearchFailure("E_PRESENTATION_ROUTE_LIMIT",
+                                 detail="The relation's explicit expansion budget was reached.")
     memo_scope = index.route_memo_scope(classes, regions, port_ids) if index is not None else None
     graph_key = None
     memo = None
@@ -507,6 +535,8 @@ def orthogonal_route_candidates(
                 "E_PRESENTATION_ROUTE_LIMIT",
                 detail="The route-search expansion limit was reached before the candidate frontier was exhausted.",
             )
+        if budget is not None:
+            budget.charge()
         if node == target:
             points: list[Point] = []
             for point in (ordered[index_] for index_ in path):

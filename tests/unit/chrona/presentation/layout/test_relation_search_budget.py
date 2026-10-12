@@ -10,13 +10,14 @@ from chrona.presentation.layout.obstacles import (
 from chrona.presentation.layout.ports import ConnectorEgress
 
 
-def _select(pairs, obstacles=None, *, accept=None):
+def _select(pairs, obstacles=None, *, accept=None, **kwargs):
     return routing.select_relation_route(
         pairs, obstacles=obstacles or SurfaceObstacleIndex(),
         bounds=(-2, -3, 12, 3), source_host_id=None, target_host_id=None,
         relation_scene_id="relation:synthetic", max_bends=8, max_detour_ratio=4,
         rank=lambda points, source, target: (0,),
         accept=accept,
+        **kwargs,
     )
 
 
@@ -72,6 +73,83 @@ def test_zero_allowance_is_search_limited_not_geometrically_impossible(monkeypat
     assert limits == [1, 1]
     assert selected.attempts[-1].search_failure == "E_PRESENTATION_ROUTE_LIMIT"
     assert selected.attempts[-1].outcome == "no-route-found"
+
+
+@pytest.mark.parametrize("invalid", (0, -1, True, 1.5, "2"))
+def test_explicit_budget_rejects_invalid_internal_values(invalid):
+    with pytest.raises(ValueError, match="E_LAYOUT_ROUTE_SEARCH_INPUT"):
+        _select((_pair(),), search_budget=invalid)
+
+
+def test_budget_charges_seed_before_yield_and_retains_accepted_route(monkeypatch):
+    calls = []
+    original = search.orthogonal_route_candidates
+
+    def observed(*args, **kwargs):
+        calls.append(kwargs["budget"])
+        yield from original(*args, **kwargs)
+
+    monkeypatch.setattr(search, "orthogonal_route_candidates", observed)
+    selected = _select((_pair(),) * 3, search_budget=1)
+    assert selected.selected_pair == _pair()
+    assert selected.points == ((0, 0), (10, 0))
+    assert selected.budget_hit and selected.search_expansions == 1
+    assert len(selected.attempts) == len(calls) == 1
+
+
+def test_shared_budget_is_not_reset_per_pair_and_preserves_best_found():
+    selected = _select((_pair(),) * 4, search_budget=2)
+    assert selected.budget_hit and selected.search_expansions == 2
+    assert [item.outcome for item in selected.attempts] == ["accepted", "eligible-not-selected"]
+    assert selected.selected_pair == _pair()
+
+
+def test_nonbinding_budget_preserves_legacy_best_candidate_and_attempt_bytes():
+    legacy = _select((_pair(),) * 3)
+    explicit = _select((_pair(),) * 3, search_budget=10000)
+    assert (explicit.selected_pair, explicit.points, explicit.attempts) == (
+        legacy.selected_pair, legacy.points, legacy.attempts)
+    assert explicit.search_expansions == 3 and not explicit.budget_hit
+
+
+def test_each_selection_has_a_fresh_budget_and_immutable_receipt():
+    first = _select((_pair(),) * 3, search_budget=1)
+    second = _select((_pair(),) * 3, search_budget=1)
+    assert first == second
+    from dataclasses import FrozenInstanceError
+    with pytest.raises(FrozenInstanceError):
+        first.search_expansions = 0
+
+
+def test_budget_exhaustion_without_accepted_route_is_limited_not_impossible():
+    selected = _select((_pair(),) * 3, accept=lambda points: False,
+                       search_budget=1)
+    assert selected.selected_pair is None
+    assert selected.budget_hit and selected.search_expansions == 1
+    assert len(selected.attempts) == 1
+    assert selected.attempts[0].search_failure == "E_PRESENTATION_ROUTE_LIMIT"
+
+
+def test_frontier_accounting_and_graph_cache_hits_charge_equally():
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("obstacle", "mark", "timeline", ObstacleRect(4, -1, 6, 1)))
+    receipts = []
+    for _ in range(2):
+        budget = search.RelationExpansionBudget(8)
+        with pytest.raises(search.RouteSearchFailure, match="E_PRESENTATION_ROUTE_LIMIT"):
+            list(search.orthogonal_route_candidates((0, 0), (10, 0), obstacles,
+                bounds=(-2, -3, 12, 3), budget=budget))
+        receipts.append((budget.expansions, budget.hit))
+    assert receipts == [(8, True), (8, True)]
+
+
+def test_early_iterator_close_has_no_hidden_or_deferred_charge():
+    budget = search.RelationExpansionBudget(2)
+    candidates = search.orthogonal_route_candidates((0, 0), (10, 0), (), budget=budget)
+    assert next(candidates) == ((0, 0), (10, 0))
+    assert budget.expansions == 1
+    candidates.close()
+    assert budget.expansions == 1 and not budget.hit
 
 
 @pytest.mark.parametrize("relation_count", (0, 10, 50, 200))
