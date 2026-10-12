@@ -1,12 +1,13 @@
 # Revision stability completion (#1300)
 
-Baseline: READY `208cf1cc`, independent inspection/delta/critical-priority
+Baseline: READY `8ce44cb0` (PR1447 and derived-main38316872809 succeeded),
+independent inspection/delta/critical-priority
 slices release-verified by [38290538367](https://github.com/tya5/chrona/actions/runs/38290538367).
 Authority: [issue](https://github.com/tya5/chrona/issues/1300),
 [selected hint contract](https://github.com/tya5/chrona/issues/1300#issuecomment-6133101982),
 Specs08/33/50/56/66 and the current acceptance review. #1427's atomic release
-is PR1447; reconcile its published implementation before touching shared routing.
-This is the design plan, not approval to implement a guessed hint contract.
+is merged and reconciled. Its exact-main release38317097402 is pending.
+The selected hint design does not authorize the unresolved critical slice.
 
 ## Literal acceptance
 
@@ -45,12 +46,17 @@ Scene input against whole closure/Store/Scene/window/contrast contracts.
 resource: `{store, address, revision, contentIdentity}` with a mandatory exact
 SHA-256. Scene has no payload resource ID; do not invent one or introduce a
 wrapper resource merely to satisfy ordinary resource-reference parsing.
+Add the optional field in place to Context v0.17: omission preserves behavior;
+a closed inputs object alone does not require a version bump.
 The existing SnapshotReader verifies immutable bytes and safe Store addresses;
 materialization stages this pin separately from typed semantic resources.
 Closure captures bytes/identity. The render use case validates the Scene schema
 and same-project provenance before passing neutral geometry evidence to Layout.
 Malformed, missing or identity-mismatched inputs fail at ingress; unsupported
 route geometry or ambiguous matching is a measured hint miss, never a guess.
+Validate supported Scene v0.6/v0.7 documents; v0.6 lacks endpoint identities and
+therefore cannot yield a reusable route. Exactly one primary Project provenance
+entry must match the current stable Project ID, not its revision/content hash.
 The Context identity already binds the pin for caching/provenance; no extra
 Scene metadata is emitted merely to make future hints readable. Omitting the
 pin preserves prior output. A draft `--previous-scene` adapter captures the
@@ -82,7 +88,40 @@ painted/unpainted ports, marker families, shift/obstruction/new-relation cases,
 best/no-hint byte controls and the actual trial. Critical feasibility remains
 separate and unapproved pending [domain selection](https://github.com/tya5/chrona/issues/1300#issuecomment-6133315743).
 Publish normative Context/CLI/routing contracts and final file-level slices
-before hint implementation; this record does not authorize that code yet.
+before hint implementation.
+
+### Architecture review and implementation plan
+
+Specs08/13/33/50 (routing and closure)/56/66, the Store reader and actual Scene
+v0.7 serialization were checked against the selected contract. The public Scene
+already carries primary Project ID and unrounded route points/endpoint IDs;
+it does not carry selected port IDs. Unique reconstruction is therefore required,
+not an assumed deserializer field. Artifact pins need a distinct contract/closure
+value and explicit read-ledger entry, not a fake ResourceReference. Context pin
+identity is sufficient for immutable cache/provenance; best validates the input
+but consumes neither geometry nor hint counters. No persistent cache is added.
+Critical completeness remains unresolved and hints do not satisfy that criterion.
+
+| Slice / publication boundary | Owned files and acceptance evidence |
+| --- | --- |
+| H1: explicit input and closure | Context v0.17 schema and mirror, contracts/resources.py, model/closure.py, usecases/materialize.py, render_review.py, draft_render.py, app/cli.py; optional pin, exact bytes/hash, same Project ID, supported Scene validation, ledger and materializer round-trip. Focused closure, Draft, CLI and materializer tests; schema equivalence. Publish after normative design. |
+| H2: Layout hint reuse, with H1 in one product PR | New Layout hint geometry/identity values and reanchor module; surface_routes.py shares its prepare_route/common candidate gates; model/info_diagnostics.py projects typed counters. Preserve port sides, shape family and interior channels, normal-domain only. Test painted/unpainted hosts, centred terminals, ambiguity, changed obstacles, degeneracy, explicit windows, all recovery modes, best/no-hint bytes and actual v1/v2 Scene/SVG shape. |
+| S: unconditional stability | relation_routing_order.py and routing/label owners only after corridor-local rule is completed/reviewed. Synthetic shift and unrelated-append controls without hints. No independent-criterion waiver. |
+| C: protected critical feasibility | routing.py/route_search.py/common validators after reviewer domain selection and completeness/work-accounting proof; quality-overrun and impossible diagnostic controls. Not authorized yet. |
+| Release | One batched public materializer comparison per product boundary, primitive/diagnostic deltas disclosed with no authored examples changes. CI full three-OS/conformance/wheel/MCP/newest-Python gate; literal acceptance review keeps original S/C rows open until met. |
+
+H1/H2 counters cover admitted instances exactly once: accepted, invalidated by
+current validation, unusable evidence, or absent key; record actual search entry
+separately, and retain frontier-expansion receipts. Valid v0.6 input is unusable;
+otherwise an absent exact key is absent, ambiguous/unsupported matched evidence
+is unusable, a rejected reconstructible candidate is invalidated, and a passing
+one is accepted. Every nonaccepted instance enters ordinary selection; count
+actual search only when an iterator runs, not when a finite proposal wins.
+A usable route is tried only
+in the normal domain before first-fit proposals. Unsafe prior recovery is not a
+hint admission shortcut. Explicit-window endpoint absence is not a searched
+instance. Best and absent-input paths emit no new hint diagnostic. Decoder and
+candidate validation are shared seams, not duplicated geometry pipelines.
 
 1. Complete selected contracts and architecture review here; update normative
    Context/Scene/routing specifications and publish before product changes.
