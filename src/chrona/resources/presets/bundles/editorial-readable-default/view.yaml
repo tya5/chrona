@@ -60,6 +60,8 @@ body:
       typographyRole: axisQuarter
       label:
         forms:
+          day: localized-date
+          week: start-day-month
           month: short-month-year
           quarter: year-quarter
           half: half-year
