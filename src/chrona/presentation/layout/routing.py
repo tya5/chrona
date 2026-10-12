@@ -469,7 +469,8 @@ def select_relation_route(
         measured, points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
             port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
             max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
-            limit=pair_limit, **({"budget": budget} if budget is not None else {}))
+            limit=pair_limit, exact_bound=search_policy == "best",
+            **({"budget": budget} if budget is not None else {}))
         attempts.append(measured)
         if measured.outcome == "accepted":
             if rank is None or search_policy == "first-fit":
@@ -488,7 +489,7 @@ def select_relation_route(
 
 def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, classes, regions,
                            max_bends, max_detour_ratio, prepare, accept, limit, candidate_paths=None,
-                           budget=None):
+                           budget=None, exact_bound=True):
     """Search alternatives for one pair; only completed, safe paths reach quality selection."""
     from chrona.presentation.layout.route_search import orthogonal_route_candidates
 
@@ -498,7 +499,8 @@ def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, class
     try:
         candidates = (orthogonal_route_candidates(source.exposed_port, target.exposed_port, obstacles,
             bounds=bounds, port_ids=port_ids, classes=classes, regions=regions, limit=limit,
-            **({"budget": budget} if budget is not None else {}))
+            **({"budget": budget} if budget is not None else {}),
+            **({"exact_bound": False} if not exact_bound else {}))
             if candidate_paths is None else candidate_paths)
         for middle in candidates:
             points = []

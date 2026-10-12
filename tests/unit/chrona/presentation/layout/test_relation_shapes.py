@@ -97,14 +97,20 @@ def test_completed_terminal_preparation_can_reject_a_raw_shape_and_choose_the_ne
 def test_shapes_do_not_waive_bend_quality_or_full_route_acceptance(monkeypatch):
     counts = Counter()
     original = search._build_sparse_graph
+    reverse = search._reverse_bounds
     def build(*args, **kwargs):
         counts["graph"] += 1
         return original(*args, **kwargs)
     monkeypatch.setattr(search, "_build_sparse_graph", build)
+    def exact_reverse(*args):
+        counts["reverse"] += 1
+        return reverse(*args)
+    monkeypatch.setattr(search, "_reverse_bounds", exact_reverse)
     result = _select(max_bends=0)
     assert result.selected_pair is None and not result.settled_by_shape
     assert result.attempts[0].outcome == "quality-rejected"
     assert counts["graph"] == 1  # negative control: failed shapes really fall back
+    assert counts["reverse"] == 0  # cheap fallback, not the old exact preparation
     result = _select(accept=lambda points: False)
     assert result.selected_pair is None and not result.settled_by_shape
     assert result.attempts[0].search_failure == "E_LAYOUT_ROUTE_THROUGH_MARK"
