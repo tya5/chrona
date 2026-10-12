@@ -2,8 +2,8 @@
 
 # Issue 1346 — reusable count headings
 
-Rendered acceptance and implementation CI are met. Release remains pending
-the exact-main three-OS CI containing this review; the issue remains open.
+Accepted and closed. Exact-main release CI passed on
+`146c24a0b64f1b0305d589423bb05cd59934a489`, containing the published review.
 
 ## Literal issue acceptance
 
@@ -40,8 +40,11 @@ No additional closing criteria.
   `/tmp/chrona-1346-integrated-materializers-p7Gtzt/materializer-evidence.json`.
 - Post1433 count/policy/budget/ownership/schema probes: 127 focused tests pass.
   Shared definitions, schema annotations/precision guards and S0 pass.
-- Review publication and exact-main three-OS release run: pending. Cite the
-  terminal run in the issue closing comment after this review lands.
+- Review publication: [PR1434](https://github.com/tya5/chrona/pull/1434).
+- Exact-main release: [CI38236213189](https://github.com/tya5/chrona/actions/runs/38236213189)
+  passed all three OS pytest/conformance/wheel/smoke checks, MCP floor and
+  newest-Python reproduction. [Issue1346](https://github.com/tya5/chrona/issues/1346)
+  closed after the literal acceptance audit on 2026-10-12.
 
 ## Architecture conclusion
 
