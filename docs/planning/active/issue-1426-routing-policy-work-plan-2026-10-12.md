@@ -5,8 +5,8 @@
 READY base: `96244e3d056bc93feefb88a468c604c33e1266ec`.
 Authority: [updated issue](https://github.com/tya5/chrona/issues/1426) and
 [owner/reviewer decision](https://github.com/tya5/chrona/issues/1426#issuecomment-6116338205).
-PR1428 currently has the earlier implementation at `a9c1769d`; its CI38192929175
-passes, but that is not acceptance of the rewritten scope. No authored examples
+PR1428 is merged at `2ba414f2` with the revised implementation at `152d1964`;
+current-head CI38194676311 passes all checks. No authored examples
 or managed outputs may be changed. Keep one routing path and remove the rejected
 declaration, shapes, one-pass phase changes and their diagnostics/tests.
 
@@ -85,8 +85,20 @@ returns46/46 full Scene/SVG byte identity (no normalization override). Schema
 equivalence passes: one additive Layout schema,37 equal; required stale1343
 delta retirement is unchanged. Structure/schema/vocabulary guards:190 PASS.
 19/10 repeats: CPU1.48/1.66s, hashes identical.200/46: CPU32.056357/31.160932s,
-hashes identical.1000/228 repeats and retained-policy profiling are running;
-the60-second target is NOT yet proven. Local disposable evidence:
+hashes identical.1000/228: CPU813.344333/810.766526s,
+wall964.490813/954.721488s, RSS216743936/233078784 bytes, both exit0;
+full Scene/SVG repeat hashes are identical. The60-second target is
+NOT met. Retained200 profiling identifies sparse graph construction, not
+contrast, as the remaining dominant cost. Local disposable evidence:
 `/tmp/chrona-1426-single-policy-762vaN`,
 `/tmp/chrona-1426-single-policy-small-QsTq4u`,
 `/tmp/chrona-1426-single-policy-scale-2Oi1fo`.
+
+CI artifact11722837924 independently verifies46 unchanged pairs and only the
+diagnostic code-site inventory diff. Derived-sync38195708622 passed and published
+READY `7c962d65f29c10d53b0156563d0a0f2e8f29c403`; the current documentation
+branch adopts that base by ordinary merge. Release review:
+[literal acceptance](../../reviews/current/issue-1426-routing-performance-budget-acceptance-review-2026-10-12.md).
+Repeat evidence is complete. Publish the review in the session documentation batch;
+close only after containing-review exact-main full release. M2 performance is
+not completed by the narrower measurement/reporting criterion.

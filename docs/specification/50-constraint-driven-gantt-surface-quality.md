@@ -355,14 +355,14 @@ Scene projects the completed fact; adapters neither recount nor draw a marker.
 
 ### 3.3 Relations
 
-**Single routing policy (#1426; selected correction, implementation pending).**
+**Single routing policy (#1426).**
 Retain the existing pair order, exact reverse bound, canonical path histories,
 per-pair quotas, completed-route ranking and bounded label recovery. There is
 no `relationRouting.search` declaration, shape-first selection, approximate
 search or project-size switch. Performance improvements preserve output;
 explicit budget exhaustion is the only new search stop below.
 
-**Explicit search budget (#1426; selected design, implementation pending).**
+**Explicit search budget (#1426).**
 Optional `relationRouting.searchBudget` is a positive integer, an additional
 ceiling on processed candidate expansions per resolved relation instance per
 routing pass. It does not increase or replace the existing per-pair quotas
