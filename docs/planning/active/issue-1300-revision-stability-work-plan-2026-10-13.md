@@ -39,6 +39,51 @@ Scene input against whole closure/Store/Scene/window/contrast contracts.
 
 ## Publication and implementation sequence
 
+### Selected hint input and ownership
+
+`inputs.previousScene` is an optional pinned artifact, not a presentation
+resource: `{store, address, revision, contentIdentity}` with a mandatory exact
+SHA-256. Scene has no payload resource ID; do not invent one or introduce a
+wrapper resource merely to satisfy ordinary resource-reference parsing.
+The existing SnapshotReader verifies immutable bytes and safe Store addresses;
+materialization stages this pin separately from typed semantic resources.
+Closure captures bytes/identity. The render use case validates the Scene schema
+and same-project provenance before passing neutral geometry evidence to Layout.
+Malformed, missing or identity-mismatched inputs fail at ingress; unsupported
+route geometry or ambiguous matching is a measured hint miss, never a guess.
+The Context identity already binds the pin for caching/provenance; no extra
+Scene metadata is emitted merely to make future hints readable. Omitting the
+pin preserves prior output. A draft `--previous-scene` adapter captures the
+same pinned bytes without writing the input or bypassing validation.
+
+Match the existing surface/sourceRef/fromInstanceId/toInstanceId identities;
+skip decoration and paired-stub fragments. Scene v0.7 supplies unrounded points
+and endpoint identities. Layout enumerates old legal ports and uniquely inverts
+marker trimming. Painted host geometry supplies anchor evidence; compatible
+Theme terminal semantics supplies the centred flag for unpainted rollup ports
+(`circle`, `open-circle`, `dot` only). Unknown or incompatible evidence misses.
+
+Reanchoring preserves port sides and shape family: apply a shared translation
+when both endpoint corridors translate equally; otherwise replace endpoint
+corridors and adjust their adjacent orthogonal joins while preserving interior
+channel coordinates. Degeneration, ambiguity or any failed current validator
+rejects the proposal. Hinted and searched candidates share preparation, normal
+safety, quality, terminal and window checks. First-fit tests hints before its
+ordinary candidates; best ignores them and retains its existing receipts.
+Counters distinguish accepted hints, unusable/invalidated hints, absent keys
+and actual search, with concrete reasons; do not equate endpoint-only changes
+with every possible change to routing inputs or claim completeness from reuse.
+
+Architecture review: artifact integrity belongs to closure/use cases, candidate
+geometry to Layout, completed data to Scene/adapters, terminal style to Theme.
+No Scene routing/measurement, duplicate validator, hidden persistent cache or
+project-specific rule is added. Test schema/staging/read-ledger/cache parity,
+painted/unpainted ports, marker families, shift/obstruction/new-relation cases,
+best/no-hint byte controls and the actual trial. Critical feasibility remains
+separate and unapproved pending [domain selection](https://github.com/tya5/chrona/issues/1300#issuecomment-6133315743).
+Publish normative Context/CLI/routing contracts and final file-level slices
+before hint implementation; this record does not authorize that code yet.
+
 1. Complete selected contracts and architecture review here; update normative
    Context/Scene/routing specifications and publish before product changes.
 2. Finalize implementation slices with owned files, migrations and focused tests:
