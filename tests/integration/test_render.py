@@ -68,7 +68,7 @@ def test_draft_render_is_deterministic():
 
 
 def test_fixed_lane_preflight_and_final_composition_share_the_completed_scale(monkeypatch):
-    import chrona.presentation.surface_pipeline as builder
+    import chrona.presentation.layout.surface_count_closure as builder
 
     root = _root()
     example = root / "examples/halcyon-1"
@@ -124,7 +124,7 @@ def test_fixed_lane_preflight_and_final_composition_share_the_completed_scale(mo
 
 
 def test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic(monkeypatch, tmp_path):
-    import chrona.presentation.surface_pipeline as builder
+    import chrona.presentation.layout.surface_count_closure as builder
 
     root = _root()
     example = root / "examples/halcyon-1"

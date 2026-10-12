@@ -455,8 +455,10 @@ $defs:
     type: object
     additionalProperties: false
     oneOf:
-      - required: [text]
-      - required: [template]
+      - description: "Literal caption copy, without a template declaration."
+        required: [text]
+      - description: "Explicit figure template, without literal caption copy."
+        required: [template]
     properties:
       text: {$ref: "urn:chrona:common-v0.1#/$defs/literalCaption"}
       template: {description: "Closed {figure:id} caption template, bound by Layout before measurement; {{ and }} escape literal braces.", $ref: "urn:chrona:common-v0.1#/$defs/literalCaption"}

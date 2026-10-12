@@ -266,6 +266,16 @@ ANNOTATION_LEGACY = {"side": "end", "alignment": "center"}
 
 # name -> (accepted, rejected)
 PROBES: dict[str, tuple[list[Any], list[Any]]] = {
+    "countTextFormat": ([{"form": "digits"}, {"form": "digits", "minimumDigits": 80},
+                         {"form": "english-words", "capitalize": True},
+                         {"form": "kanji"}, {"form": "kanji-formal"}],
+                        [{}, {"form": "unknown"}, {"form": "digits", "minimumDigits": 0},
+                         {"form": "digits", "minimumDigits": 81}, {"form": "digits", "capitalize": True},
+                         {"form": "kanji", "minimumDigits": 2}, None]),
+    "figureFormats": ([{}, {"notes": {"form": "digits", "minimumDigits": 2}},
+                       {"Count / total": {"form": "digits"}}],
+                      [None, [], {"": {"form": "digits"}}, {"notes": {}},
+                       {"notes": {"form": "english-words", "minimumDigits": 2}}]),
     "annotationLegacyPlacement": ([ANNOTATION_LEGACY, {"side": "above", "alignment": "start"}],
                                   [{}, {"side": "end"}, {"side": "rail", "alignment": "center"},
                                    {**ANNOTATION_LEGACY, "extra": True}, None]),

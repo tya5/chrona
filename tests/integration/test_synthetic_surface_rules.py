@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 
 import chrona.presentation.layout.surface_member_labels as member_labelling
-import chrona.presentation.surface_pipeline as builder
+import chrona.presentation.layout.surface_count_closure as builder
 from tests.support import synthetic_review as sr
 
 
