@@ -41,6 +41,17 @@ Existing #1420 visibility/incremental preparation is shared; endpoint assembly
 and reverse-bound work remain distinct. No typing-protocol hot checks were
 found in the inspected modules. Verify actual costs before further optimization.
 
+Measured next hot path: a 200/46 profile spends 19.42 of 30.44 profiled seconds
+in completed-Scene contrast inspection, versus 1.82 s routing; 5,874,640 typing
+alias checks occur. The local Python implementation delegates those ordinary
+checks to the runtime Mapping ABC. Use that ABC without changing contrast rules
+or skipping inspection. Exact findings/payload comparisons cover all public
+manifest-declared Scenes and synthetic dict/UserDict/proxy inputs; the affected
+contrast/ground/pattern suite has 265 PASS (13.72 s). This internal hot-path
+slice was planned on issue comment 6115452760; it changes no public contract.
+Re-measure before interpreting its performance effect; profiled timings are
+not CPU-budget evidence.
+
 ## Selected first-fit slice and architecture review
 
 Specifications [50](../../specification/50-constraint-driven-gantt-surface-quality.md#33-relations)
@@ -147,7 +158,7 @@ same issue WIP; no default-flip merge or release acceptance before reviewer
 migration and all remaining budget/search/public-output gates. Focused tests
 and schema/ownership checks precede publication; use CI for full-suite release.
 
-## Literal acceptance (all currently not met for the new policy)
+## Literal acceptance — release still pending
 
 | Criterion copied from the issue | Required evidence |
 | --- | --- |
