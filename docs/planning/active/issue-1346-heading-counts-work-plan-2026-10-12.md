@@ -109,109 +109,31 @@ resuming that slice. Do not substitute selected-note totals or fix corpus YAML.
 
 ## Current implementation
 
-P1 allocation/source preparation is extracted; Application supplies typed data
-instead of measurement/allocation callbacks. Source and native-header spies now
-target the Layout owner, with unchanged assertions; ownership table/guards agree.
-Focused render/caption batch88 PASS; allocation/auto-capacity batch80 PASS with
-four ownership-spy/table migration failures subsequently fixed (8 PASS);
-new replay/isolation/font-precedence and ownership tests7 PASS. Import direction
-11 packages/37 inward edges;237 reachable modules, no orphan; value inventory PASS.
-P1 projection reduction is complete: internal factories now use the Presentation
-`surface_pipeline` coordinator. It validates intent, invokes Layout once after
-the existing unused-input checkpoint, and passes a mandatory completed composition
-to Scene. Scene carries no font/measurement/preparation/search/progress state and
-cannot replay Layout. This staged connection preserves diagnostic ordering.
-Scene/ownership64 PASS; projection/relation/provenance/replay29 PASS; migrated
-axis/lane/texture/terminal148 PASS; real integration113 PASS plus one stale spy
-subsequently corrected (19 focused PASS). All46 actual public Scene/SVG pairs are
-byte-identical; disposable evidence `/tmp/chrona-1346-p1-materializers-LoMmYO`.
-P2 foundation implemented: neutral optional groups/placedNotes facts; distinct
-Primary/combined identity/group producer; shared kanji names without changing
-ordinal ranges; pure digits/padding/English/kanji forms and frozen caption
-programs. Name range errors are typed; unused formats do not require names and
-unavailable late facts remain unavailable, not zero.178 focused tests PASS;
-240 modules reachable/no orphan; import direction/value inventory PASS.
-P2 ingress implemented: View/Layout share frozen count-format definitions;
-typed immutable View formats validate count targets with escaped pointers.
-New count sources are global-only; explicit empty format maps replace defaults.
-209 focused contract/formatter/defaults/schema-inventory tests PASS. L1 records
-the two intended View deltas; no stale expected entries remained to prune.
-P2 heading connection implemented: Presentation closes project/date/calendar
-facts as literal program parts; Layout binds figure text before source
-measurement. Semantic text is never reparsed as syntax. Read failures preserve
-typed range evidence and exact heading-member pointers. Unknown/scoped heading
-references and unsupported placedNotes period/group-header/network uses fail
-at ingress.266 focused tests PASS, including actual3-item/2-group Scene/SVG
-text, pre-measurement source capture, empty-map defaults and range-error transport.
-Schema equivalence L1/L2/L3 and import/reachability/value guards PASS.
-P2 slot-caption connection implemented: exactly one literal text or explicit
-template; Layout-bound copy enters the existing caption measurement/placement
-channel without mutating the authored profile or its hash. Literal overrides
-win without reparsing; all references are validated even for absent optional
-slots, but absent/overridden captions do not read number names. A shared typed
-text-read carrier preserves heading/caption source pointers and range evidence.
-Existing caption/adapters107 PASS; focused caption/reference/ownership90 PASS;
-new caption/count/preparation/projection59 PASS. Template/literal twins match
-actual primitives, slots and SVG, including start-column width reservation.
-Schema equivalence L1/L2/L3 PASS with five intentional caption declaration sites;
-import/reachability/value guards PASS. No authored examples/resources changed.
-P2 deferred admission implemented: only declared placedNotes figures skip the
-pre-Layout Core call, never receive a zero placeholder, and fail at exact
-Summary/annotation-kind reference pointers when read early. Missing dates/state
-facts retain normal errors. P2 code is complete on WIP; issue acceptance/release
-remains pending. Derived figures/kind headings98 PASS; admission5 PASS.
-P3 producers now return immutable typed narrative receipts for completed bodies,
-full rail summaries and unconsumed notes. Explicit repeated references are
-distinct; a suppressed body adds no receipt, its completed full summary adds one;
-indexes/status/kind fragments add none. Completion rejects duplicate occurrence
-identity or missing/suppressed text. Project note-key semantics are not narrowed.
-Receipt/admission/legacy-characterization/projection/ownership92 PASS, including
-unchanged characterized Scene/SVG hashes; schema equivalence and structural
-guards PASS. P3 still needs the finite N..0 coordinator, typed dependent-fit
-admission, accepted facts and trial/budget isolation. Its checkpoint/attribution
-contract and whole-architecture review were published at `d84f1322` before
-admission-attribution code. Typed attribution is implemented: formatted errors
-retain the actual figure read; closed per-part references become immutable
-SourceTextRun dependencies without reparsing semantic text. Measured intrinsic
-floors retain dependencies only when no constant peer or authored minimum drives
-the floor. Measured-run/intrinsic-floor detectors issue dependent-fit failures;
-fixed/minimum/aspect/budget-closure failures remain ordinary errors.58 focused
-fit/budget tests and129 combined source/format/real-heading/projection/ownership
-tests PASS; structural guards PASS. The implementation ownership table names
-only existing modules; register the coordinator when its real module is added,
-not as a placeholder. The real finite coordinator and pipeline connection are
-now implemented. Layout admits active closed reads, tries N..0 with fresh
-preparation/composition, and returns accepted plan/projection/composition;
-Presentation projects Scene once. Normal preparation/admission stays before the
-unused-input checkpoint; active late planning runs after it. Untargeted heading
-parts, absent optional captions and literal overrides do not activate trials;
-unused late figures resolve from one ordinary completion. Only accepted progress
-is replayed. Real requests/visibility indexes differ between rejected/accepted
-trials.31 combined policy/real-pipeline/receipt/projection/ownership tests PASS;
-real STATUS REPORTS :03 and4→3 closure rendered in Scene/SVG.8 algorithm tests
-cover highest/no-solution/bounded range rejection/unrelated errors. Existing
-caption/derived/native/group-tab batch111 PASS with one stale composer spy,
-subsequently migrated without weakening assertions (8 focused PASS). Schema
-equivalence L1/L2/L3 and structural guards PASS;241 reachable modules.
-P3 targeted verification is complete on WIP: normal preparation precedes the
-unused checkpoint, active late planning follows it, and rejection prevents any
-completion. Real Layout rejects kanji100 and accepts99 completed narratives;
-real declared-metric fit rejects10 and accepts9. A4→3 actual suppression trial
-preserves every accepted invocation routing-pass budget fact exactly once;
-rejected whole-trial facts/progress are absent.45 focused policy/real-layout/
-budget/attribution/ownership tests PASS. Final original public materializers
-were batched once:46/46 full Scene/SVG pairs byte-identical, zero route deltas;
-evidence `/tmp/chrona-1346-final-materializers-XoBMIR/materializer-evidence.json`.
-Import/reachability/value guards PASS. P4 rendered evidence passes for Title Card,
-Marquee and Sunday on actual HALCYON and roadmap Contexts. HALCYON template text
-matches the original Scene and actual SVG; roadmap counts independently resolve
-to26 items/6 groups/3 completed notes. Three additional immutable-roadmap View
-controls resolve3 items/2 groups and change the corresponding rendered text.
-`tools/heading_count_reuse_evidence.py` reproduces this in disposable stores,
-sharing Theme/Layout/Scheme resources without editing authored examples.
-Evidence: `/tmp/chrona-1346-reuse-evidence-iXvAKS/heading-reuse-evidence.json`
-and `/tmp/chrona-1346-reuse-control-Pr5wkX/heading-reuse-evidence.json`.
-Tool tests7 PASS; combined ownership batch11 PASS; structural guards PASS.
-Final-head CI, PR review and exact-main release acceptance remain outstanding.
-Park after publishing this evidence: board #454 now prioritizes #1430, then #1427.
-No authored examples/resources changed.
+P1–P3 are implemented on WIP, not yet release-accepted. Layout owns source
+preparation, allocation, binding and finite N..0 count closure; Scene projects
+only accepted completed geometry. Typed completed narrative receipts distinguish
+bodies/full summaries/unconsumed notes from suppressed or index fragments.
+Exact read dependencies admit only dependent name-range/intrinsic-fit rejection.
+Unused-input ordering, fresh trial state, accepted progress and all executed
+routing-pass facts are verified; unrelated failures propagate.
+
+Integrated source base: `2b1883e7` (PR1431, default still best; derived READY
+pending). Completion retains both routing-summary/budget facts and narrative
+receipts. Real4→3 closure isolation is tested under best and first-fit.
+Integrated count/policy/budget/ownership/tool batch55 PASS; S0 L1/L2/L3 PASS.
+The composer remains orchestration-sized; no acceptance assertion was relaxed.
+
+P4 local literal evidence passes for Title Card, Marquee and Sunday on actual
+HALCYON/roadmap Contexts, with independent3-item/2-group controls that change
+Scene/SVG text. `tools/heading_count_reuse_evidence.py` reproduces disposable
+stores sharing design Theme/Layout/Scheme. Previous evidence:
+`/tmp/chrona-1346-reuse-evidence-iXvAKS/heading-reuse-evidence.json` and
+`/tmp/chrona-1346-reuse-control-Pr5wkX/heading-reuse-evidence.json`.
+Original46 full Scene/SVG pairs matched before integration; integrated batch
+evidence is required before publication.
+
+Next: integrated public byte/reuse batch, reconcile the final READY main tip,
+one coherent implementation PR/current-head CI, then literal acceptance review
+and exact-main three-OS release gate. No authored examples/resources or managed
+outputs changed. #1430 is parked awaiting reviewer-owned target declarations;
+1346 resumes at this independent coordination boundary.

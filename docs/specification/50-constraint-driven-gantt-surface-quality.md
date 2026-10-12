@@ -355,23 +355,44 @@ Scene projects the completed fact; adapters neither recount nor draw a marker.
 
 ### 3.3 Relations
 
-**Single routing policy (#1426).**
-Retain the existing pair order, exact reverse bound, canonical path histories,
-per-pair quotas, completed-route ranking and bounded label recovery. There is
-no `relationRouting.search` declaration, shape-first selection, approximate
-search or project-size switch. Performance improvements preserve output;
-explicit budget exhaustion is the only new search stop below.
+**Declared routing policy (#1430).**
+`relationRouting.search` selects `first-fit` or `best`, never by project size.
+`best` retains the existing pair order, exact reverse bound, canonical path
+histories, per-pair quotas, completed-route ranking and bounded label recovery.
+`first-fit` orders admitted source sides end/start/above/below and target sides
+start/end/above/below, retaining stable full/minimum-stub ties. For each pair it
+tries finite straight/L/Z/U proposals from completed row gaps and obstacle-edge
+channels before that pair's bounded search; the first fully accepted completed
+route wins. Proposal generation builds no visibility graph. Both paths retain
+terminal, bounds, obstacle, self-overlap, bend and detour validation.
+First-fit fallback uses an obstacle-independent Manhattan/minimum-turn lower
+bound instead of preparing the exact reverse bound. It retains canonical
+prefix histories and existing expansion quotas; it does not collapse different
+path-dependent prefixes using weighted-state dominance. Sparse-graph memo keys
+distinguish bound modes; endpoint-independent visibility preparation may be
+shared. `best` retains its exact reverse bound and candidate order.
+Under `first-fit`, required labels precede routing; member names and finish
+deltas yield to completed routes. Skip lane-route rehearsal and post-route
+label recovery; do not replay composition in Scene or adapters.
+
+Migration: the first additive release keeps omitted `search` equal to `best`.
+After the reviewer declares `best` on the five approved HALCYON targets and that
+change is on main, a coordinated release changes omission to `first-fit`.
+An explicit `best` retains its output across the flip. This temporary default
+is not final acceptance of #1430. No authored example is edited by dev A.
 
 **Explicit search budget (#1426).**
 Optional `relationRouting.searchBudget` is a positive integer, an additional
-ceiling on processed candidate expansions per resolved relation instance per
+ceiling on processed candidate expansions under either policy per resolved relation instance per
 routing pass. It does not increase or replace the existing per-pair quotas
 below. Omission preserves those quotas, search order and diagnostic bytes.
 Never reset the explicit ceiling per port pair; create a fresh counter for
 each documented rehearsal, reference, baseline or recovery pass. Blocked egress consumes no expansions. Count each admitted Manhattan seed and
 each non-stale frontier state processed by the existing candidate iterator;
 do not count graph preparation, memo lookup or an unprocessed over-limit pop.
-Graph reuse does not waive candidate-expansion accounting.
+Graph reuse does not waive candidate-expansion accounting. Finite shape
+proposals do not consume frontier expansions. Exhausting a declared budget
+stops subsequent pair selection under either policy.
 
 On reaching the ceiling, stop further pair selection and retain the best fully
 accepted completed route already found, or retain the existing unroutable outcome when none was accepted.

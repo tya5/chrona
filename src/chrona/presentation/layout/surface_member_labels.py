@@ -65,6 +65,14 @@ class SurfaceMemberLabelRequests:
     post_route: tuple[LabelRequest, ...]
     window_absences: tuple[WindowLabelAbsence, ...] = ()
 
+    def routing_phases(self, *, first_fit: bool) -> tuple[tuple[LabelRequest, ...], tuple[LabelRequest, ...]]:
+        """Required geometry precedes routes; first-fit names/deltas yield to them."""
+        if not first_fit:
+            return self.pre_route, self.post_route
+        deferred = tuple(item for item in self.pre_route if item.semantic_id in {"memberLabel", "finishDelta"})
+        required = tuple(item for item in self.pre_route if item.semantic_id not in {"memberLabel", "finishDelta"})
+        return required, (*deferred, *self.post_route)
+
 
 @dataclass(frozen=True)
 class SurfaceMemberLabelsBatch:

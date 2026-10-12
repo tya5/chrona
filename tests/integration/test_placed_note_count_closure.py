@@ -75,17 +75,18 @@ def test_unclaimed_heading_part_is_not_an_active_late_read(tmp_path, monkeypatch
     assert len(completed[0].trials) == 1 and completed[0].trials[0].outcome == "ordinary"
 
 
-def test_mismatched_trial_is_discarded_and_progress_is_published_only_for_accepted_trial(tmp_path, monkeypatch):
+@pytest.mark.parametrize("search", ["best", "first-fit"])
+def test_mismatched_trial_is_discarded_and_progress_is_published_only_for_accepted_trial(tmp_path, monkeypatch, search):
     from chrona.presentation.layout import surface_annotations, surface_count_closure as closure
     from chrona.presentation.layout import surface_lane_route_plan as lane_plan, surface_route_label_plan as label_plan, surface_routes
-    from chrona.presentation.model.info_diagnostics import RelationSearchBudgetHit
+    from chrona.presentation.model.info_diagnostics import RelationRoutingSummary, RelationSearchBudgetHit
     completed = _capture(monkeypatch)
     source, parts = _fixture()
     source["relations"] = [{"id": f"r{index}", "type": "dependency", "lag": "0d",
         "from": {"object": f"gate-{index}", "endpoint": "at"},
         "to": {"object": f"gate-{index + 1}", "endpoint": "at"}} for index in range(3)]
     _late(parts)
-    parts["layout"]["relationRouting"] = {"maxBends": 4, "maxDetourRatio": 2, "searchBudget": 1}
+    parts["layout"]["relationRouting"] = {"maxBends": 4, "maxDetourRatio": 2, "searchBudget": 1, "search": search}
     parts["view"]["body"]["heading"] = {"title": "{figure:notes} completed notes"}
     sr.with_note_rail(parts, width=300)
     visibility = parts["view"]["body"]["visibility"]
@@ -124,7 +125,10 @@ def test_mismatched_trial_is_discarded_and_progress_is_published_only_for_accept
     assert requests[0].mark_visibility_index is not None
     assert requests[0].mark_visibility_index is not requests[1].mark_visibility_index
     assert [e.completed for e in events if e.pass_name == "count-trial"] == [3]
-    facts = [item for item in rendered.info_diagnostics if isinstance(item, RelationSearchBudgetHit)]
+    facts = [item for item in rendered.info_diagnostics
+             if isinstance(item, (RelationSearchBudgetHit, RelationRoutingSummary))]
+    assert any(isinstance(item, RelationSearchBudgetHit if search == "best" else RelationRoutingSummary)
+               for item in facts)
     assert routed[4] and routed[3]
     assert facts == routed[3]  # all executed accepted-pass facts, not both whole-layout trials
     assert len(facts) < len(routed[4]) + len(routed[3])

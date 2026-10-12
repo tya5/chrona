@@ -1,4 +1,4 @@
-"""Declared additional budget, without a routing-policy switch."""
+"""Declared budget and the coordinated routing-policy rollout."""
 import json
 from copy import deepcopy
 
@@ -46,9 +46,19 @@ def test_budget_does_not_remove_required_limits():
     assert (error.value.diagnostic_id, error.value.path) == ("E_LAYOUT_SCHEMA", "/relationRouting")
 
 
-def test_removed_search_member_is_not_a_hidden_compatibility_path():
+@pytest.mark.parametrize("policy", ("best", "first-fit"))
+def test_declared_search_reaches_manifest_without_changing_budget(policy):
     value = _profile()
-    value["relationRouting"] = {"maxBends": 4, "maxDetourRatio": 2, "search": "best"}
+    value["relationRouting"] = {"maxBends": 4, "maxDetourRatio": 2, "search": policy, "searchBudget": 7}
+    manifest = solved(value)
+    assert manifest.relation_search == policy
+    assert manifest.relation_search_budget == 7
+
+
+@pytest.mark.parametrize("policy", ("auto", None, True, 1, "fast"))
+def test_invalid_search_member_is_rejected(policy):
+    value = _profile()
+    value["relationRouting"] = {"maxBends": 4, "maxDetourRatio": 2, "search": policy}
     with pytest.raises(LayoutError) as error:
         resolve_layout_profile(value, available_sources=SOURCES, theme=THEME)
     assert error.value.diagnostic_id == "E_LAYOUT_SCHEMA"

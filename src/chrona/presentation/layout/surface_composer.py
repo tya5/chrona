@@ -12,16 +12,12 @@ from chrona.presentation.layout.surface_visuals import (place_mark_visuals, plac
 from chrona.presentation.layout.surface_member_labels import (
     SurfaceMemberLabelContext, SurfaceMemberLabelsBatch, build_member_label_requests, place_member_labels,
 )
-from chrona.presentation.layout.surface_routes import (
-    SurfaceRoutesContext,
-)
+from chrona.presentation.layout.surface_routes import SurfaceRoutesContext
 from chrona.presentation.layout.surface_route_label_plan import (
     RouteLabelPlanContext, compose_routes_and_member_labels,
 )
 from chrona.presentation.layout.surface_lane_route_plan import LaneRoutePlanContext, plan_lane_route_reservations
-from chrona.presentation.layout.surface_base import (
-    prepare_surface_base,
-)
+from chrona.presentation.layout.surface_base import prepare_surface_base
 from chrona.presentation.layout.surface_content import (
     complete_footer_band, compose_detail_panel_blocks, place_notes, place_summary,
     validate_detail_panel_placement,
@@ -33,18 +29,14 @@ from chrona.presentation.layout.surface_completion import (
     SurfaceCompletionContext, SurfaceLayoutComposition, complete_surface_layout,
 )
 from chrona.presentation.layout.surface_annotations import SurfaceAnnotationContext, place_annotations
-from chrona.presentation.layout.surface_table import (
-    compose_table,
-)
+from chrona.presentation.layout.surface_table import compose_table
 from chrona.presentation.layout.surface_heading import place_surface_headings
 from chrona.presentation.layout.surface_groups import (compose_group_presentation, translate_group_header_text)
 from chrona.presentation.layout.surface_backgrounds import (
     compose_calendar_backgrounds, compose_group_header_strips, compose_group_tabs,
     compose_row_group_backgrounds, replace_group_header_band,
 )
-from chrona.presentation.layout.surface_axis import (
-    complete_axis_plot,
-)
+from chrona.presentation.layout.surface_axis import complete_axis_plot
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT_FALLBACK
 from chrona.presentation.layout.as_of_cone import complete_as_of_cone
 from chrona.presentation.layout.surface_deadlines import compose_deadline_marks
@@ -271,22 +263,27 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     def place_label_phase(requests: tuple[LabelRequest, ...]) -> None:
         accept_member_label_batch(place_member_labels(member_label_context, requests, surface_obstacles))
 
-    lane_route_plan = plan_lane_route_reservations(LaneRoutePlanContext(
-        member_label_context, member_label_requests.pre_route, tuple(text), surface_obstacles,
-        lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
-            tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot),
-            temporal_endpoints=mark_batch.temporal_endpoints)))
-    surface_obstacles.extend(lane_route_plan.reservations)
-    place_label_phase(member_label_requests.pre_route)
+    first_fit = layout_manifest.relation_search == "first-fit"
+    pre_route, post_route = member_label_requests.routing_phases(first_fit=first_fit)
+    lane_routing_info = ()
+    if not first_fit:
+        lane_route_plan = plan_lane_route_reservations(LaneRoutePlanContext(
+            member_label_context, pre_route, tuple(text), surface_obstacles,
+            lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
+                tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot),
+                temporal_endpoints=mark_batch.temporal_endpoints)))
+        surface_obstacles.extend(lane_route_plan.reservations)
+        lane_routing_info = lane_route_plan.routing_info
+    place_label_phase(pre_route)
 
     route_label_plan = compose_routes_and_member_labels(RouteLabelPlanContext(
-        member_label_context, member_label_requests.post_route, tuple(text), surface_obstacles,
+        member_label_context, post_route, tuple(text), surface_obstacles,
         lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
             tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot),
-            temporal_endpoints=mark_batch.temporal_endpoints)))
+            temporal_endpoints=mark_batch.temporal_endpoints), allow_recovery=not first_fit))
     surface_obstacles = route_label_plan.obstacles
     routes_batch = replace(route_label_plan.routes,
-        routing_info=(*lane_route_plan.routing_info, *route_label_plan.routes.routing_info))
+        routing_info=(*lane_routing_info, *route_label_plan.routes.routing_info))
     relations = list(routes_batch.relations)
     visible_route_fallbacks = list(routes_batch.visible_route_fallbacks)
     instance_anchors = dict(routes_batch.instance_anchors)

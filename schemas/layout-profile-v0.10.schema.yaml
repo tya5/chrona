@@ -120,6 +120,9 @@ properties:
     additionalProperties: false
     required: [maxBends, maxDetourRatio]
     properties:
+      search:
+        description: "Table-timeline dependency routing policy. During the coordinated rollout, absent means best; first-fit is explicit until the approved targets declare best."
+        $ref: "urn:chrona:vocabulary-v0.1#/$defs/relationSearchPolicy"
       searchBudget: {description: "Additional expansion ceiling per resolved relation instance per routing pass; shared across port pairs, without increasing legacy pair quotas. Omitted means no additional ceiling.", type: integer, minimum: 1}
       maxBends: {description: "Maximum bends allowed in one relation route.", type: integer, minimum: 0, maximum: 64}
       maxDetourRatio: {description: "Maximum route detour relative to direct distance.", type: number, minimum: 1, maximum: 100}
