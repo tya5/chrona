@@ -332,6 +332,13 @@ unrelated missing required decoration remains a coverage error. Synthetic
 tests cover each concept member and the optional layered strip; no claim that
 an unused optional role already has a committed corpus witness is made.
 
+**Recovery-halo coverage (#1427).** If no public Scene enables `dependency-halo`,
+its coverage is explicitly supplied by the synthetic blocked-relation mode,
+completed halo paint-order and decoration-contrast tests. The corpus report names
+this disposition rather than claiming a public witness. Once any public Scene
+enables the role, its public evidence takes over automatically. This exception
+does not waive contrast evaluation of emitted halos or any other missing role.
+
 Never governed by the policy, whatever its value: a malformed paint (`E_SCENE_CONTRAST_PAINT`), an invalid
 treatment (`E_SCENE_STATE_TEXT_CONTRAST_TREATMENT`) and a malformed Scene document: they are structural, not
 contrast constraints. A mark or text on a translucent host is judged on the host composited over its own ground

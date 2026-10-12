@@ -12,7 +12,9 @@ inspection/delta/critical-priority slices and their macOS test repair. Normal me
 critical facts and1427 endpoint titles/mode ownership. Focused integration80
 PASS10.81s; imports11/37,249 reachable modules/no orphan and Layout floats pass.
 Fresh actual suppress comparison against this public base:46/46 full Scene/SVG
-pairs identical. Reviewer protection/public halo witness remain release gates.
+pairs identical. Reviewer protection commit `e442bcf5` is approved for the
+atomic default flip. [Release decisions](https://github.com/tya5/chrona/issues/1427#issuecomment-6133101361)
+select synthetic halo coverage, not a contrived public example.
 Unpainted rollup endpoints retain overlap/stub Scene and SVG output without
 inventing a host; fallback and hierarchy controls pass23 tests on this base.
 
@@ -30,8 +32,8 @@ search-budget facts still include discarded trials. Paired fragments count as
 one relation. The shared warning mapper serves CLI and MCP without recounting.
 Completed halo geometry now projects below its recovery line and existing text;
 normal/suppressed paths remain untouched. Theme owns surface-ground paint and
-validated width; decoration contrast remains enforced. Visible-obstacle release
-evidence, public byte controls and the final default flip remain incomplete.
+validated width; decoration contrast remains enforced. Final default-relax
+public evidence and the atomic default flip remain incomplete.
 This is not release acceptance. The staged default stays suppress until the
 atomic protection/recovery gate below is satisfied.
 
@@ -39,7 +41,8 @@ Latest focused gate: 196 tests pass, including real Scene/SVG halo ordering,
 Theme width controls and decoration contrast. Conformance: 32 checks pass;
 three derived reports are stale (contrast, diagnostic inventory and presentation
 coverage). Regenerate these in the disposable release snapshot, not as
-PR-authored report edits. A public recovery halo witness is still needed.
+PR-authored report edits. Spec46 now permits only absent `dependency-halo` to
+use explicit synthetic coverage; actual public use supersedes it automatically.
 Legacy View supersession is now typed and projected once per completed surface;
 an agreeing suppress or omitted View declaration remains silent. Explicit Layout
 suppress also overrides legacy visible-overflow. Focused controls: 113 pass.
@@ -56,7 +59,7 @@ v1/v2 `spec-build` Scene/SVG regression passes under both staged suppress and
 candidate relax. Reviewer coordination for target protection and an enabled
 public halo witness is tracked in
 [comment6127633845](https://github.com/tya5/chrona/issues/1427#issuecomment-6127633845).
-The four-mode blocked-plan test now supplies one completed Layout mark spanning
+The four-mode blocked-plan test supplies one completed Layout mark spanning
 the plot before shared obstacle registration. That exact mark is projected and
 serialized visibly, unlike the earlier collision-index-only constraint fixture.
 It proves suppress versus marks-stage recovery, overlap and paired-stub output;
@@ -151,6 +154,16 @@ Measure critical-order predecessor effects independently. If that approved
 integration changes legacy artifacts, review/publish it before fixing the
 #1427 suppress reference base; do not conceal it with a mode-specific ordering
 compatibility branch or claim byte identity against a different base.
+
+Release completion: cherry-pick reviewer protection `e442bcf5`; add a single
+named `dependency-halo` coverage disposition in the report, listing synthetic
+mode/order/contrast tests only when the role is absent. Test automatic public
+takeover, unchanged missing-other-role errors and emitted-halo contrast. Then
+flip engine/model defaults to relax and run one current-base46-context batch.
+Architecture review: coverage belongs to repository evidence tooling, not
+Layout/Scene/Theme policy; geometry and actual paint evaluation remain unchanged.
+Specs08/33/46/50 and the five target protections remain consistent. Publish
+this decision before code; source examples changes are reviewer-authored only.
 
 Reviewer protection precedes the default flip. If a contract gap appears, update
 this record/specification, repeat whole-architecture review and publish before
