@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 
 
 def _shown(value: object) -> str:
@@ -72,4 +73,30 @@ class PaintOmission:
                 f"profile={self.visual_profile};paintable={suggested}")
 
 
-PresentationInfo = SuppressedPlotLabels | PaintOmission
+@dataclass(frozen=True)
+class RelationRoutingSummary:
+    """Disjoint completed first-fit counts from the Layout selection producer."""
+
+    surface_id: str
+    relation_instances: int
+    shape_settled: int
+    fallback_search: int
+
+    def __post_init__(self) -> None:
+        counts = (self.relation_instances, self.shape_settled, self.fallback_search)
+        if (not isinstance(self.surface_id, str) or not self.surface_id
+                or any(not isinstance(value, int) or isinstance(value, bool) or value < 0 for value in counts)
+                or self.shape_settled + self.fallback_search > self.relation_instances):
+            raise _diagnostic_error("RelationRoutingSummary requires a surface id and disjoint nonnegative integer counts")
+
+    @property
+    def code(self) -> str:
+        return "I_LAYOUT_RELATION_ROUTING"
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps({"surfaceId": self.surface_id,
+            "relationInstances": self.relation_instances, "shapeSettled": self.shape_settled,
+            "fallbackSearch": self.fallback_search}, sort_keys=True, separators=(",", ":"))
+
+
+PresentationInfo = SuppressedPlotLabels | PaintOmission | RelationRoutingSummary

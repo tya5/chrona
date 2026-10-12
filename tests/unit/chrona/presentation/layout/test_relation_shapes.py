@@ -127,6 +127,19 @@ def test_prepared_self_overlapping_shape_is_not_admitted():
     assert result.attempts[0].search_failure == "E_LAYOUT_ROUTE_SELF_OVERLAP"
 
 
+def test_later_shape_winner_retains_evidence_of_earlier_search(monkeypatch):
+    searches = []
+    def candidate(start, end, *args, **kwargs):
+        searches.append((start, end))
+        yield (start, (end[0], start[1]), end)
+    monkeypatch.setattr(search, "orthogonal_route_candidates", candidate)
+    source = _port("end", (0, 0))
+    result = _select(pairs=((source, _port("start", (5, 5))), (source, _port("end", (10, 10)))),
+                     accept=lambda points: points[-1] == (10, 10))
+    assert searches == [((0, 0), (5, 5))]
+    assert result.settled_by_shape and result.search_used
+
+
 @pytest.mark.parametrize("channels", [((True,), ()), ((float("nan"),), ()), ((2, 1), ()), ((1, 1), ())])
 def test_channel_invariants_reject_nonfinite_duplicate_unsorted_and_boolean_coordinates(channels):
     with pytest.raises(ValueError, match="E_LAYOUT_ROUTE_ATTEMPT_INVALID"):

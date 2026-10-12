@@ -172,7 +172,7 @@ def test_real_owners_recover_centered_name_by_rerouting_a_vertical_dependency(mo
     )
     project, _placed, _actual, _view, projection = fixture._project()
     manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"),
-        relation_entry="side-when-free", row_distribution="fill", relation_max_bends=4,
+        relation_entry="side-when-free", relation_search="best", row_distribution="fill", relation_max_bends=4,
         relation_max_detour_ratio=6)
     content = surface_content(relations=project["relations"], show_member_labels=False,
         label_placement="plot", label_content=(), label_side="inside", label_overflow="suppress")

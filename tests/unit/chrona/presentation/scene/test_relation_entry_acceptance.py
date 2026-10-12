@@ -77,7 +77,7 @@ def _theme_with_route_fixture_geometry(*, target_marker="triangle"):
 
 
 def _compose(*, mirrored=False, baseline_ghost=False, entry="side-when-free", target_marker="triangle",
-             ghost_finish=11, corner_radius=0, head_length=10):
+             ghost_finish=11, corner_radius=0, head_length=10, search="best"):
     project, placed, actual, view, projection = _project(mirrored=mirrored, baseline_ghost=baseline_ghost,
                                                      ghost_finish=ghost_finish)
     metrics = {
@@ -88,7 +88,7 @@ def _compose(*, mirrored=False, baseline_ghost=False, entry="side-when-free", ta
     }
     measured = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, metrics)
     manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"),
-        relation_entry=entry, row_distribution="pack", relation_max_bends=4, relation_max_detour_ratio=2)
+        relation_entry=entry, relation_search=search, row_distribution="pack", relation_max_bends=4, relation_max_detour_ratio=2)
     content = surface_content(relations=project["relations"], show_member_labels=True, label_placement="plot",
         label_content=("title",), label_side="end", label_overflow="visible-overflow")
     theme = _theme_with_route_fixture_geometry(target_marker=target_marker)

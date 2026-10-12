@@ -19,7 +19,7 @@ from typing import Any, Literal
 from chrona.core.ports import RenderArtifact
 from chrona.presentation.contracts import TypesetterIdentity
 from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, ClosureError, resolve_draft_render
-from chrona.presentation.model.info_diagnostics import PaintOmission, SuppressedPlotLabels
+from chrona.presentation.model.info_diagnostics import PaintOmission, SuppressedPlotLabels, RelationRoutingSummary
 from chrona.presentation.model.render_progress import RenderProgress
 from chrona.resources import default_preset_resource, default_preset_root
 from chrona.scheduling.scheduler import ReferenceScheduler
@@ -201,7 +201,13 @@ def warning_payloads(rendered: RenderedReview) -> list[dict[str, Any]]:
                          "message": f"preset {fallback.preset_id} prefers {fallback.preferred_profile}; "
                                     f"selected {fallback.selected_profile} for {fallback.target_kind}"})
     for info in rendered.info_diagnostics:
-        if isinstance(info, SuppressedPlotLabels):
+        if isinstance(info, RelationRoutingSummary):
+            payloads.append({"code": info.code, "severity": "info", "surfaceId": info.surface_id,
+                "relationInstances": info.relation_instances, "shapeSettled": info.shape_settled,
+                "fallbackSearch": info.fallback_search,
+                "message": f"{info.shape_settled} relations on {info.surface_id} settled without search; "
+                           f"{info.fallback_search} used fallback search"})
+        elif isinstance(info, SuppressedPlotLabels):
             payloads.append({"code": info.code, "severity": "info", "surfaceId": info.surface_id,
                              "count": info.count,
                              "message": f"{info.count} plot labels on {info.surface_id} were left out because "

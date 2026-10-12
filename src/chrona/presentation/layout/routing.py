@@ -352,10 +352,11 @@ class RelationRouteSelection:
     points: tuple[tuple[float, float], ...]
     attempts: tuple[RouteAttemptEvidence, ...]
     settled_by_shape: bool = False
+    search_used: bool = False
 
     def __post_init__(self) -> None:
         accepted = tuple(item for item in self.attempts if item.outcome == "accepted")
-        if (not isinstance(self.settled_by_shape, bool)
+        if (not isinstance(self.settled_by_shape, bool) or not isinstance(self.search_used, bool)
                 or (self.settled_by_shape and self.selected_pair is None)
                 or not self.attempts or len(accepted) > 1
                 or (self.selected_pair is None) != (not accepted)
@@ -409,6 +410,7 @@ def select_relation_route(
     chosen = None
     chosen_points = ()
     chosen_attempt = -1
+    search_used = False
     quota, remainder = divmod(RELATION_SEARCH_EXPANSIONS, len(port_pairs))
     for pair_index, (source, target) in enumerate(port_pairs):
         blockers = tuple(sorted({item.placement_id for egress in (source, target)
@@ -437,11 +439,12 @@ def select_relation_route(
                 limit=pair_limit, candidate_paths=shapes)
             if shaped.outcome == "accepted":
                 return RelationRouteSelection((source, target), tuple(shaped_points), (*attempts, shaped),
-                                              settled_by_shape=True)
+                                              settled_by_shape=True, search_used=search_used)
         if pair_limit == 0:
             attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
                                                  search_failure="E_PRESENTATION_ROUTE_LIMIT"))
             continue
+        search_used = True
         measured, points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
             port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
             max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
@@ -449,7 +452,7 @@ def select_relation_route(
         attempts.append(measured)
         if measured.outcome == "accepted":
             if rank is None or search_policy == "first-fit":
-                return RelationRouteSelection((source, target), tuple(points), tuple(attempts))
+                return RelationRouteSelection((source, target), tuple(points), tuple(attempts), search_used=search_used)
             score = rank(tuple(points), source, target)
             if best is None or score < best:
                 if chosen_attempt >= 0:
@@ -457,7 +460,7 @@ def select_relation_route(
                 best, chosen, chosen_points, chosen_attempt = score, (source, target), tuple(points), len(attempts) - 1
             else:
                 attempts[-1] = replace(measured, outcome="eligible-not-selected")
-    return RelationRouteSelection(chosen, chosen_points, tuple(attempts))
+    return RelationRouteSelection(chosen, chosen_points, tuple(attempts), search_used=search_used)
 
 
 def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, classes, regions,

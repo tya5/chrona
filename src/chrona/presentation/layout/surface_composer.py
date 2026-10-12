@@ -271,19 +271,26 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     def place_label_phase(requests: tuple[LabelRequest, ...]) -> None:
         accept_member_label_batch(place_member_labels(member_label_context, requests, surface_obstacles))
 
-    lane_route_plan = plan_lane_route_reservations(LaneRoutePlanContext(
-        member_label_context, member_label_requests.pre_route, tuple(text), surface_obstacles,
-        lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
-            tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot),
-            temporal_endpoints=mark_batch.temporal_endpoints)))
-    surface_obstacles.extend(lane_route_plan.reservations)
-    place_label_phase(member_label_requests.pre_route)
+    pre_route, post_route = member_label_requests.pre_route, member_label_requests.post_route
+    first_fit = layout_manifest.relation_search == "first-fit"
+    if first_fit:
+        deferred = tuple(item for item in pre_route if item.semantic_id in {"memberLabel", "finishDelta"})
+        pre_route = tuple(item for item in pre_route if item.semantic_id not in {"memberLabel", "finishDelta"})
+        post_route = (*deferred, *post_route)
+    else:
+        lane_route_plan = plan_lane_route_reservations(LaneRoutePlanContext(
+            member_label_context, pre_route, tuple(text), surface_obstacles,
+            lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
+                tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot),
+                temporal_endpoints=mark_batch.temporal_endpoints)))
+        surface_obstacles.extend(lane_route_plan.reservations)
+    place_label_phase(pre_route)
 
     route_label_plan = compose_routes_and_member_labels(RouteLabelPlanContext(
-        member_label_context, member_label_requests.post_route, tuple(text), surface_obstacles,
+        member_label_context, post_route, tuple(text), surface_obstacles,
         lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
             tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot),
-            temporal_endpoints=mark_batch.temporal_endpoints)))
+            temporal_endpoints=mark_batch.temporal_endpoints), allow_recovery=not first_fit))
     surface_obstacles = route_label_plan.obstacles
     routes_batch = route_label_plan.routes
     relations = list(routes_batch.relations)
@@ -387,6 +394,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         text_visual_warnings=text_visual_warnings, visible_label_overflows=visible_label_overflows,
         visible_route_fallbacks=visible_route_fallbacks, visible_group_header_overflows=visible_group_header_overflows,
         lane_label_suppressions=lane_label_suppressions,
+        routing_info=routes_batch.routing_info,
         diagnostic_provenance=tuple(diagnostic_provenance),
         window_label_absences=member_label_requests.window_absences,
         visible_label_subjects=visible_label_subjects))
