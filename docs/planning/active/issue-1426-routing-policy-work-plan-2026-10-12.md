@@ -6,7 +6,8 @@ Published base: READY `133332e2833ede4423e775c1dec789db91c2d5cb`.
 Authority: [issue 1426](https://github.com/tya5/chrona/issues/1426), including
 its revised scope and algorithm review; Specification 50 and the Layout schema.
 Stage: shape/phase and policy wiring implemented and locally verified on WIP.
-Budget/approximate-search design and public acceptance remain incomplete.
+Explicit budget design is selected; implementation, approximate-search
+disposition and public acceptance remain incomplete.
 
 Verified: `select_relation_route` ranks all pairs when given a rank callback;
 the search uses a finite per-pair quota and path-history state. Label recovery
@@ -26,9 +27,10 @@ No developer changes to `examples/**` or managed artifacts are permitted.
 
 ### Decisions to close before implementation
 
-- Define expansion accounting across pairs and label recovery, exhaustion
-  diagnostics, zero/invalid budgets, and counters without claiming that a
-  bounded search proves geometric impossibility.
+- Implement the explicit per-instance/per-pass budget selected by reviewer
+  [6115714566](https://github.com/tya5/chrona/issues/1426#issuecomment-6115714566).
+  Specification 50 owns the accounting and typed stop contract; zero, boolean,
+  null and non-integer declarations are invalid, not unlimited budgets.
 - Preserve `best` candidate/quota/order semantics. Cheaper heuristics and
   node/direction dominance require equivalence evidence: different visited
   histories can have different self-overlap-safe continuations. The proposed
@@ -134,8 +136,27 @@ is additive in place; the owner-selected absent default intentionally changes
 routing and label phase order, while declared best preserves old behavior.
 Review against Spec 33 inheritance/phase authority, Spec 50 safety, Spec 56
 vocabulary/normalization and Spec 66 producer-owned evidence is consistent.
-Budget and approximate-search contracts remain unresolved; no ignored public
-budget member is added by this slice.
+Approximate-search disposition remains unresolved. The subsequent budget
+slice adds no ignored public declaration.
+
+## Budget design and whole-architecture review
+
+Selected authority: Specification 50 §3.3 and reviewer decision A. The optional
+ceiling supplements the legacy quotas rather than changing absent-budget best
+output. Actual expansion receipts belong to the Layout iterator and selection;
+fresh counters belong to resolved instances, not logical Project relations,
+port pairs or the whole render. Pass coordinators retain all typed hit facts,
+including rejected rehearsals, without leaking rejected geometry into Scene.
+The existing deterministic progress-pass identity distinguishes those facts.
+
+Review: consistent with Spec 33's Layout ownership and phase model, Spec 50's
+bounded-search/non-impossibility distinction, Spec 56's additive optional
+schema/normalization rules, and #1300's locality. #1427 consumes an absent route
+through its separate mode; this slice does not implement modes, claim exhaustive
+search or waive current suppression. Scene/CLI project facts only. Migration:
+explicit authors may intentionally select a different route by cutting search
+short; omission preserves declared best behavior. No new resource, Scene
+schema, adapter geometry, cache-dependent allowance or project-specific rule.
 
 ### Wiring implementation plan
 

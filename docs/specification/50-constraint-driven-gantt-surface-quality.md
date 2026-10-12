@@ -439,9 +439,36 @@ when all counts are zero. Best without an explicit new budget emits no summary,
 preserving existing diagnostic bytes. Scene projects the typed fact without
 recounting paths; CLI/MCP expose its fields with severity `info`, not a warning
 or evidence that all relations were drawn.
-Explicit `searchBudget` accounting and approximate fallback-search changes
-are separate unresolved design slices; this section does not authorize an
-ignored budget declaration or an unreviewed change to `best`.
+**Explicit search budget (#1426; selected design, implementation pending).**
+Optional `relationRouting.searchBudget` is a positive integer, an additional
+ceiling on processed candidate expansions per resolved relation instance per
+routing pass. It does not increase or replace the existing per-pair quotas
+below. Omission preserves those quotas, search order and diagnostic bytes.
+Never reset the explicit ceiling per port pair; create a fresh counter for
+each documented rehearsal, reference, baseline or recovery pass. Shapes and
+blocked egress consume no expansions. Count each admitted Manhattan seed and
+each non-stale frontier state processed by the existing candidate iterator;
+do not count graph preparation, memo lookup or an unprocessed over-limit pop.
+Graph reuse does not waive candidate-expansion accounting.
+
+On reaching the ceiling, stop further pair selection and retain the best fully
+accepted completed route already found (the first accepted route under
+first-fit), or retain the existing unroutable outcome when none was accepted.
+Do not relax terminal, obstacle, self-overlap or quality checks. Exhaustion
+means "no acceptable route within budget", never "no safe route exists";
+#1427's selected unroutable mode subsequently handles an absent route.
+Reaching the ceiling while accepting a candidate still records the stop.
+
+Layout emits typed `RelationSearchBudgetHit` facts as
+`I_LAYOUT_RELATION_SEARCH_BUDGET:` plus canonical JSON containing `surfaceId`,
+`relationId` (the resolved relation scene id), `pass`, `search`, `budget` and
+`expansions`. Here `expansions == budget`; `pass` is the existing deterministic
+progress-pass name. Preserve facts from every executed rehearsal/recovery,
+including a rejected trial, in execution order; do not sum them into a shared
+surface budget or replace them with final-pass-only evidence. Scene projects
+these facts and CLI/MCP expose severity `info`. No Scene schema, geometry or
+resource identity input is added. Approximate fallback-search changes remain
+unresolved and do not authorize an unreviewed change to `best`.
 
 View relation intent becomes `none` or an object with `mode: semantic` and `overflow: suppress | visible-overflow`. Layout Profile adds `relationRouting.maxBends` and `relationRouting.maxDetourRatio` numeric geometry policy.
 
