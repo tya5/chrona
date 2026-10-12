@@ -1,5 +1,5 @@
 """Default axis readability over increasing windows, without corpus edits (#1294)."""
-from datetime import date
+from datetime import date, timedelta
 from itertools import combinations
 from xml.etree import ElementTree
 
@@ -56,6 +56,23 @@ def test_default_axis_is_readable_from_one_month_to_ten_years(tmp_path, end):
     rendered = sr.render(tmp_path, sr.project({"work": sr.span("work", start, (finish - start).days)}),
                          presentation=parts)
     _assert_readable(rendered)
+
+
+@pytest.mark.parametrize("days", (1, 2, 7, 14, 31, 90, 365, 1826, 3652))
+def test_default_axis_refines_truthfully_from_one_day_to_ten_years(tmp_path, days):
+    start = date(2027, 1, 4)
+    end = start + timedelta(days=days)
+    parts = _default_parts()
+    parts["view"]["body"]["window"] = {
+        "mode": "explicit", "start": start.isoformat(), "end": end.isoformat()}
+    tier_index = next(index for index, tier in enumerate(parts["view"]["body"]["axis"]["tiers"])
+                      if tier["unit"] == "auto")
+    rendered = sr.render(tmp_path, sr.project({"work": sr.span("work", start, days)}), presentation=parts)
+    _assert_readable(rendered)
+    labels = [p for p in rendered.surface.primitives if p.scene_id.startswith(f"axis-label:{tier_index}:")]
+    assert (len(labels) == 1) if days == 1 else (len(labels) >= 2)
+    assert rendered.surface.scale_manifest.domain_start == start
+    assert rendered.surface.scale_manifest.domain_end == end
 
 
 def test_reported_five_year_project_has_no_axis_label_intersections(tmp_path):
