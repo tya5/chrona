@@ -345,7 +345,7 @@ def test_materializer_requires_declared_regression_role_and_slide_evidence(tmp_p
     with pytest.raises(ValueError, match="E_MATERIALIZER_MANIFEST"):
         materialize(manifest_path, "executive", tmp_path / "missing-role", write=False)
     manifest["role"] = "regression-corpus"
-    manifest["slides"][0].pop("evidence")
+    next(slide for slide in manifest["slides"] if slide["id"] == "executive").pop("evidence")
     manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False))
     with pytest.raises(ValueError, match="E_MATERIALIZER_SLIDE"):
         materialize(manifest_path, "executive", tmp_path / "missing-evidence", write=False)
