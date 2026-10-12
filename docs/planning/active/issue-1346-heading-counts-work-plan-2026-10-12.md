@@ -87,3 +87,15 @@ state is fresh. Only new template-bearing resources change text or allocation.
 If producer receipts, required-fit attribution or preparation extraction reveal
 a contract gap, publish its design/spec/whole-architecture correction before
 resuming that slice. Do not substitute selected-note totals or fix corpus YAML.
+
+## Current implementation
+
+P1 allocation/source preparation is extracted; Application supplies typed data
+instead of measurement/allocation callbacks. Source and native-header spies now
+target the Layout owner, with unchanged assertions; ownership table/guards agree.
+Focused render/caption batch88 PASS; allocation/auto-capacity batch80 PASS with
+four ownership-spy/table migration failures subsequently fixed (8 PASS);
+new replay/isolation/font-precedence and ownership tests7 PASS. Import direction
+11 packages/37 inward edges;237 reachable modules, no orphan; value inventory PASS.
+P1 is not accepted yet: completed-placement Scene input/factory migration and
+original-output characterization remain. No count behavior/schema/example edits.

@@ -11,7 +11,6 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass, field, replace
 from datetime import date
-from decimal import Decimal, ROUND_CEILING
 from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Mapping
@@ -23,22 +22,13 @@ from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, Prim
 from chrona.presentation.scene.viewer_fit import viewer_fit_fallbacks
 from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
-from chrona.presentation.layout.engine import (measure_natural_normal_flow_block,
-                                               resolve_content_block_extent, solve_layout)
-from chrona.presentation.layout.canvas_viewport import DeclaredViewport
-from chrona.presentation.layout.model import LayoutError, LayoutManifest, ResolvedLayoutProfile
+from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.surface_render_plan import (
+    SurfaceRenderPlanInput, SlotHeadingCopyError, SurfacePlanFontError, prepare_surface_render_plan,
+)
 from chrona.presentation.layout.group_header_runs import validate_group_header_roles
 from chrona.presentation.layout.presentation import validate_label_text_role, validate_table_text_roles
-from chrona.presentation.layout.profile import resolve_layout_profile
-from chrona.presentation.layout.slot_heading import headed_slot_ids, reserve_slot_heading_blocks
-from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources, resolve_theme_metrics
-from chrona.presentation.layout.source_sizing import SourceSizingSession
-from chrona.presentation.layout.surface_legend import LegendArrangement, legend_arrangement, legend_source_input
-from chrona.presentation.layout.label_visual_measurement import resolve_label_visual_advances
-from chrona.presentation.layout.surface_composer import prepare_surface_content, prepare_surface_natural_candidate
-from chrona.presentation.layout.surface_content import detail_source_inputs
-from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest, VisualRequest
-from chrona.presentation.model.presentation_contract import normalize_presentation_input
+from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
 from chrona.presentation.model.font_resources import FontAssetResolver
@@ -60,14 +50,13 @@ from chrona.presentation.model.axis_color_scale import (
     AxisBandScaleError, resolve_axis_band_scales, validate_axis_band_fill_targets,
 )
 from chrona.presentation.model.projection import ReviewDeadline, ReviewPeriod, build_review_projection
-from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, SurfaceContentInput, TableContent
-from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
+from chrona.presentation.model.surface_content import SurfaceContentInput
+from chrona.presentation.contracts.resources import ViewInput
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.presentation.review.figure_facts import projected_counts
 from chrona.presentation.review.annotation_expansion import AnnotationExpansionError
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, header_lines, heading_text
 from chrona.presentation.figure_text import FigureTextError, resolve_figure_text
-from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve, measure_as_of_chip
 from chrona.presentation.review.v05_content import (
     compose_heading, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
 from chrona.presentation.scene.model import (
@@ -240,25 +229,6 @@ def render_review(request: RenderRequest) -> RenderedReview:
                            "presentation", error.path or "/") from error
 
 
-def admit_v05_detail_content(content: SurfaceContentInput, *, detail: ReviewDetailInput | None,
-                             layout_manifest: LayoutManifest) -> SurfaceContentInput:
-    """Validate Detail panel availability after solve and return the already-normalized content unchanged."""
-    available = {item.source for item in layout_manifest.decisions if item.source}
-    required = {item.source for item in layout_manifest.decisions
-                if item.source and item.kind == "slot" and item.priority == "required"}
-    declared = {
-        "group-details": bool(detail and detail.group_details),
-        "milestones": bool(detail and detail.milestones),
-        "observations": bool(detail and detail.observations is not None),
-    }
-    for source in ("group-details", "milestones", "observations"):
-        if declared[source] and source not in available:
-            raise ReviewDetailError(f"E_DETAIL_SLOT_REQUIRED: Detail content source {source!r} requires a declared Layout slot")
-        if not declared[source] and source in required:
-            raise ReviewDetailError(f"E_LAYOUT_SOURCE_UNAVAILABLE: required Layout source {source!r} has no Detail content declaration")
-    return content
-
-
 def _render_review(request: RenderRequest) -> RenderedReview:
     """Render one closure, in the one order the pipeline has."""
     render_closure, ledger = request.closure, ClosureReadLedger(request.closure)
@@ -345,141 +315,24 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     selected_content = _complete_annotation_headers(selected_content, theme, projection)
     heading_content = (compose_heading(view, project, actual_observations, environment.locale)
                        if view.surface == "table-timeline" else None)
-    source_inputs = _source_inputs(project, view, projection, summary,
-                                   annotation_input=_annotation_source_input(
-                                       view, selected_content, visual_requests, icon_assets, theme),
-                                   table=table_content, content=selected_content,
-                                   # A dependency network draws its own title line and ignores `heading` (#991).
-                                   heading=(heading_content if view.surface == "table-timeline" else None),
-                                   view_heading=heading_content or HeadingContent(
-                                       str(project.get("project", {}).get("title", ""))))
-    required_metrics = (("timeline.groupHeader.blockSize",)
-                        if view.grouping is not None and view.grouping.presentation == "header" else ())
-    # The legend slot is measured as the legend Layout will draw: the same entries, the same
-    # swatch geometry, and the legend slot's own declared arrangement (#497). That needs the
-    # resolved Layout Profile, so it is resolved first (it needs only the source names). A Layout
-    # Profile error is still reported after any measurement error, as before.
-    layout_error: LayoutError | None = None
     try:
-        resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
-    except LayoutError as error:
-        resolved_layout, layout_error = None, error
-    claimed_sources = (_layout_slot_sources(resolved_layout.profile["root"])
-                       if resolved_layout is not None else frozenset())
-    if view.surface == "dependency-network" and resolved_layout is not None and "title" not in claimed_sources:
-        source_inputs.update(_heading_part_sources(
-            compose_heading(view, project, actual_observations, environment.locale)))
-    try:
-        source_inputs["legend"] = legend_source_input(
-            selected_content.legend_entries,
-            tokens=ThemeTokenView(theme),
-            mark_block_size=float(resolve_theme_metrics(theme)["timeline.mark.blockSize"]),
-            font_metrics=font_metrics,
-            arrangement=legend_arrangement(resolved_layout) if resolved_layout is not None else LegendArrangement())
-        measurement_inputs = {source: value for source, value in source_inputs.items()
-                              if (not source.startswith("heading.") or source in claimed_sources)
-                              and (source != "title" or "title" in claimed_sources)}
-        measured = measure_sources(measurement_inputs, theme, font_metrics=font_metrics,
-                                   required_metrics=required_metrics)
-        # Omitted content remains available for notices, without demanding unused
-        # typography or influencing the legacy aggregate measurements.
-        measured = replace(measured, inputs=source_inputs)
-    except FontMetricsError as error:
-        raise _font_failure(error) from error
-    if layout_error is not None:
-        raise layout_error
-    _check_slot_heading_text(view, resolved_layout)
-    # A declared slot heading is part of its content-sized slot's measurement (#1064).
-    measured = reserve_slot_heading_blocks(measured, resolved_layout, ThemeTokenView(theme), content=selected_content,
-                                           font_metrics=font_metrics)
-    viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
-    declared_viewport = DeclaredViewport(
-        Decimal(environment.viewport_inline),
-        None if request.draft_auto_block else Decimal(environment.viewport_block))
-    measurements = _slot_measurements(resolved_layout.profile["root"], measured)
-    source_sizing = SourceSizingSession(resolved_layout, measured, theme=theme,
-                                       font_metrics=font_metrics, content=selected_content)
-
-    def sizing_context(block: int | Decimal):
-        return source_sizing.context(viewport_inline=viewport["inlineSize"], viewport_block=block,
-                                     measurements=measurements, content_sized=request.draft_auto_block)
-
-    natural_block_floor = max(1, int(measure_natural_normal_flow_block(
-        resolved_layout, viewport_inline=viewport["inlineSize"], measurements=measurements,
-        sizing=sizing_context(viewport["blockSize"]) if source_sizing.active else None,
-    ).to_integral_value(rounding=ROUND_CEILING))) if request.draft_auto_block else viewport["blockSize"]
-    capacity_short_sources = ()
-    # An as-of chip placed `below-plot` (#1063) needs its block under the last row, so the timeline asks for it too.
-    try:
-        as_of_chip_measurement = measure_as_of_chip(selected_content, window=projection.window,
-            theme_tokens=ThemeTokenView(theme), font_metrics=font_metrics,
-            visual_requests=visual_requests, icon_assets=icon_assets)
-    except FontMetricsError as error:
-        raise _font_failure(error) from error
-    foot_reserve = Decimal(str(_below_plot_reserve(view, actual_set=actual_observations, projection=projection,
-        theme_tokens=ThemeTokenView(theme), chip_measurement=as_of_chip_measurement)))
-
-    def candidate_request(candidate: LayoutManifest, *, short_sources=()) -> SurfaceLayoutRequest:
-        content = admit_v05_detail_content(
-            selected_content,
+        plan = prepare_surface_render_plan(SurfaceRenderPlanInput(
+            project=project, view=view, projection=projection, content=selected_content,
+            summary=summary, table=table_content, profile=layout, theme=theme,
+            font_metrics=font_metrics, heading=heading_content, actual=actual_observations,
             detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
-            layout_manifest=candidate,
-        )
-        return SurfaceLayoutRequest(
-            projection=projection, presentation_contract=normalize_presentation_input(content),
-            surface_content=content, layout_manifest=candidate,
-            measured_sources=source_sizing.close_manifest(candidate),
-            theme_tokens=ThemeTokenView(theme), font_metrics=font_metrics,
+            viewport_inline=environment.viewport_inline, viewport_block=environment.viewport_block,
+            content_sized=request.draft_auto_block, locale=environment.locale,
             capabilities={name: True for name in render_closure.context.target.capabilities},
-            icon_assets=icon_assets, visual_requests=visual_requests,
-            capacity_short_sources=short_sources,
-            as_of_chip_measurement=as_of_chip_measurement,
-            declared_viewport=declared_viewport,
-            auto_block_limit=resolved_layout.distances.get("/reviewSurface/maxBlockSize"),
-            progress=request.progress,
-        )
-
-    if view.surface == "table-timeline":
-        def candidate_demand(candidate: LayoutManifest) -> Mapping[str, Decimal]:
-            natural = prepare_surface_natural_candidate(candidate_request(candidate))
-            return {"timeline": natural.required_timeline_block(foot_reserve=foot_reserve)}
-
-        block_resolution = resolve_content_block_extent(
-            resolved_layout, viewport_inline=viewport["inlineSize"],
-            minimum_block=natural_block_floor if request.draft_auto_block else viewport["blockSize"],
-            measurements=measurements,
-            required_blocks=candidate_demand,
-            content_sized=request.draft_auto_block,
-            sizing=sizing_context if source_sizing.active else None,
-        )
-        viewport["blockSize"] = block_resolution.extent
-        capacity_short_sources = tuple(CapacitySourceEvidence(
-            item.source_id, item.required_block, item.allocated_block)
-            for item in block_resolution.short_sources)
-    elif request.draft_auto_block:
-        raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/projection/surface",
-                          detail=f"surface={view.surface}")
-    manifest = solve_layout(
-        resolved_layout, viewport_inline=viewport["inlineSize"],
-        viewport_block=viewport["blockSize"], measurements=measurements,
-        content_sized=request.draft_auto_block,
-        sizing=sizing_context(viewport["blockSize"]) if source_sizing.active else None,
-    )
-    measured = source_sizing.close_manifest(manifest)
-
-    fixed_lane_preflight = None
-    surface_preparation = None
-    if view.surface == "table-timeline":
-        natural = prepare_surface_natural_candidate(candidate_request(manifest, short_sources=capacity_short_sources))
-        surface_preparation = prepare_surface_content(natural.inline.request, natural=natural)
-        surface_content = surface_preparation.inline.request.surface_content
-        fixed_lane_preflight = surface_preparation.inline.request.fixed_lane_preflight
-    else:
-        surface_content = admit_v05_detail_content(
-            selected_content,
-            detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
-            layout_manifest=manifest,
-        )
+            icon_assets=icon_assets, visual_requests=visual_requests, progress=request.progress))
+    except SurfacePlanFontError as error:
+        raise _font_failure(error.failure) from error.failure
+    except SlotHeadingCopyError as error:
+        raise RenderFailed(error.diagnostic_id, error.detail, "view", error.path) from error
+    manifest, measured, surface_content = plan.manifest, plan.measured, plan.content
+    surface_preparation = plan.preparation
+    fixed_lane_preflight = (surface_preparation.inline.request.fixed_lane_preflight
+                            if surface_preparation is not None else None)
     if render_closure.detail_profile is not None:
         ledger.detail()
     scene_input = build_scene_input(
@@ -487,14 +340,14 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         resolved_theme=theme, font_metrics=font_metrics, measured_sources=measured,
         capabilities={name: True for name in render_closure.context.target.capabilities},
         visual_profile=visual_profile,
-        viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])),
+        viewport=plan.viewport,
         icon_assets=icon_assets,
         visual_requests=visual_requests,
         fixed_lane_preflight=fixed_lane_preflight,
-        capacity_short_sources=capacity_short_sources,
+        capacity_short_sources=plan.capacity_short_sources,
         surface_preparation=surface_preparation,
-        auto_block_limit=resolved_layout.distances.get("/reviewSurface/maxBlockSize"),
-        declared_viewport=declared_viewport,
+        auto_block_limit=plan.profile.distances.get("/reviewSurface/maxBlockSize"),
+        declared_viewport=plan.declared_viewport,
         progress=request.progress,
     )
 
@@ -567,20 +420,6 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                           glyph_warnings, perceptibility_warnings, contrast_warnings,
                           surface.info_diagnostics, collisions, attachments, deadlines, warning_records,
                           preset_visual_profile_fallback=request.preset_visual_profile_fallback)
-
-
-def _below_plot_reserve(view: Any, *, actual_set: Any, projection: Any, theme_tokens: Any,
-                        chip_measurement: Any = None) -> float:
-    """The block extent a `below-plot` as-of chip needs under the plot; 0 without such a marker in the window."""
-    marker = next((item for item in view.markers if item.get("kind") == "asOf" and item.get("source") == "actual"
-                   and item.get("placement") == BELOW_PLOT and item.get("label")), None)
-    body = actual_set.get("body") if actual_set is not None else None
-    as_of_value = body.get("asOf") if isinstance(body, dict) else None
-    if marker is None or not isinstance(as_of_value, str):
-        return 0.0
-    start, end = projection.window
-    return (below_plot_reserve(theme_tokens, chip_measurement=chip_measurement)
-            if start <= date.fromisoformat(as_of_value) < end else 0.0)
 
 
 def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection: Any,
@@ -829,20 +668,6 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
     return projection, tuple(provenance), attachment_warnings(project, result.placements), deadline_warnings(project, result.placements)
 
 
-def _check_slot_heading_text(view: ViewInput, resolved_layout: ResolvedLayoutProfile) -> None:
-    """Admit View copy against the resolved profile, never mutate Layout declarations."""
-    if not view.slot_heading_text:
-        return
-    valid = headed_slot_ids(resolved_layout)
-    for node_id in sorted(view.slot_heading_text):
-        if node_id not in valid:
-            escaped = node_id.replace("~", "~0").replace("/", "~1")
-            raise RenderFailed("E_VIEW_SLOT_HEADING_TARGET",
-                               f"slotHeadingText target {node_id!r} is not a headed slot; valid headed slots: "
-                               + (", ".join(sorted(valid)) or "none"),
-                               "view", f"/body/slotHeadingText/{escaped}")
-
-
 def _complete_annotation_headers(content: SurfaceContentInput, theme: Mapping[str, Any],
                                  projection: Any) -> SurfaceContentInput:
     """Compose kind text with explicit View facts before source measurement or Layout."""
@@ -1016,131 +841,3 @@ def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_roo
 def _font_failure(error: FontMetricsError) -> RenderFailed:
     return RenderFailed(error.diagnostic_id, error.detail or "declared font metrics are unavailable",
                         "presentation", "/body/environment/fontMetrics")
-
-
-def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
-                   summary: SummaryContent, annotation_input: SourceInput | None = None, *,
-                   content: SurfaceContentInput,
-                   table: TableContent | None = None,
-                   heading: HeadingContent | None = None,
-                   view_heading: HeadingContent | None = None) -> dict[str, SourceInput]:
-    """Declare what each slot will hold, for measurement before layout.
-
-    The `legend` entry is a placeholder: Layout measures the legend from the entries it
-    draws and the legend slot's own arrangement (`legend_source_input`).
-    """
-    lane_mode = view.rows.mode is ViewRowMode.LANES
-    rows = projection.lane_rows if lane_mode else projection.rows or ()
-    row_count = len(rows) or len(projection.items)
-    if lane_mode and (not rows or table is None):
-        raise LayoutError("E_LAYOUT_LANE_TABLE_ENVELOPE", "/body/rows/laneTable")
-    table_lines = (tuple(cell.content for cell in table.cells if cell.column_id == "Lane")
-                   if lane_mode and table is not None else
-                   tuple(row.label for row in rows) or tuple(item.title for item in projection.items))
-    span_days = max(1, (projection.window[1] - projection.window[0]).days)
-    network = getattr(projection, "network", None)
-    notes = tuple(text for _, text in content.notes)
-    sources = {
-        "title": _title_source(project, heading),
-        "table": SourceInput(
-            table_lines,
-            row_count, len(view.table_columns) or 1, table=table),
-        "timeline": SourceInput(item_count=row_count, span_days=span_days),
-        "timeline-axis": SourceInput(span_days=span_days, typography_role="axis",
-                                     axis_tiers=content.axis_tiers),
-        "network": SourceInput(
-            runs=tuple(SourceTextRun(node.title, "text", node.object_id)
-                       for node in network.nodes) if network is not None else (),
-            typography_role="text"),
-        "summary": _summary_source(summary),
-        "legend": SourceInput(("legend",), typography_role="legend"),
-        "notes": SourceInput(notes or ("notes",), typography_role="annotation"),
-    }
-    if view_heading is not None:
-        sources.update(_heading_part_sources(view_heading))
-    sources.update(detail_source_inputs(content))
-    if annotation_input is not None:
-        sources["annotations"] = annotation_input
-    return sources
-
-
-def _layout_slot_sources(node: Mapping[str, Any]) -> frozenset[str]:
-    own = frozenset((node["source"],)) if node.get("kind") == "slot" else frozenset()
-    return own.union(*(_layout_slot_sources(child) for child in node.get("children", ())))
-
-
-def _heading_part_sources(heading: HeadingContent) -> dict[str, SourceInput]:
-    sources = {}
-    for part, text, role in (("title", heading.title, "heading"),
-                             ("kicker", heading.kicker, "kicker"),
-                             ("subtitle", heading.subtitle, "subtitle")):
-        source_ref = f"heading.{part}"
-        sources[source_ref] = SourceInput(
-            lines=(text,) if text else (), typography_role=role,
-            runs=(SourceTextRun(text, role, source_ref),) if text else (),
-            content_present=bool(text), run_flow="block", text_wrap=heading.text_wrap)
-    return sources
-
-
-def _summary_source(summary: SummaryContent) -> SourceInput:
-    """Retain panel grouping only when an arrangement opts into grouped flow."""
-    if not any(panel.arrangement == "inline" for panel in summary.panels):
-        return SourceInput(runs=tuple(SourceTextRun(run.content, run.typography_role) for run in summary.runs))
-    return SourceInput(runs=tuple(SourceTextRun(run.content, run.typography_role, run.placement_id)
-                                  for run in summary.runs), summary=summary)
-
-
-def _title_source(project: dict[str, Any], heading: HeadingContent | None) -> SourceInput:
-    """The title slot's content: one `heading` line, plus a `subtitle` line when the View declares one (#991)."""
-    title = heading.title if heading is not None else project["project"].get("title", "Chrona")
-    subtitle = heading.subtitle if heading is not None else None
-    if heading is not None and heading.kicker is not None:
-        runs = (SourceTextRun(heading.kicker, "kicker", "kicker"), SourceTextRun(title, "heading", "title"))
-        if subtitle is not None:
-            runs += (SourceTextRun(subtitle, "subtitle", "subtitle"),)
-        return SourceInput(tuple(run.content for run in runs), typography_role="heading", runs=runs,
-                           run_flow="block", text_wrap=heading.text_wrap)
-    if subtitle is None:
-        return SourceInput((title,), typography_role="heading",
-                           text_wrap=heading.text_wrap if heading is not None else "forbid")
-    return SourceInput((title, subtitle), typography_role="heading",
-                       runs=(SourceTextRun(title, "heading"), SourceTextRun(subtitle, "subtitle")),
-                       text_wrap=heading.text_wrap if heading is not None else "forbid")
-
-
-def _annotation_source_input(view: ViewInput, content: SurfaceContentInput,
-                             visual_requests: tuple[VisualRequest, ...],
-                             icon_assets: dict[str, Any], theme: Mapping[str, Any]) -> SourceInput | None:
-    """Build annotation measurements from the same closed visuals Layout composes."""
-    visible = view.visibility.annotations
-    mode = visible.get("mode", "none") if isinstance(visible, Mapping) else visible
-    if mode == "none":
-        return None
-    tokens = ThemeTokenView(theme)
-    runs = []
-    for annotation in content.annotations:
-        annotation_id = annotation.annotation_id
-        prefix = f"{annotation.number}. " if annotation.number is not None else ""
-        advances = resolve_label_visual_advances(
-            f"annotation-text:{annotation_id}", "annotation", visual_requests=visual_requests,
-            icon_assets=icon_assets, theme_tokens=tokens,
-        )
-        inline_advance = sum((Decimal(str(width + gap)) for _, _, width, gap in advances), Decimal(0))
-        runs.append(SourceTextRun(prefix + annotation.content, "annotation",
-                                  f"annotation-text:{annotation_id}", inline_advance))
-    return SourceInput(runs=tuple(runs), typography_role="annotation")
-
-
-def _slot_measurements(root: Mapping[str, Any], measured: Any) -> dict[str, Any]:
-    measurements: dict[str, Any] = {}
-
-    def bind(node: Mapping[str, Any]) -> None:
-        if node["kind"] == "slot":
-            source = node["source"]
-            if source in measured.measurements:
-                measurements[node["id"]] = measured.measurements[source]
-        for child in node.get("children", ()):
-            bind(child)
-
-    bind(root)
-    return measurements

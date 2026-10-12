@@ -72,7 +72,7 @@ def _timeline_parts():
 ])
 def test_all_timeline_and_detail_native_slots_emit_owned_captions_in_scene_and_svg(
         tmp_path, monkeypatch, emphasis, paint_role):
-    usecase = import_module("chrona.usecases.render_review")
+    usecase = import_module("chrona.presentation.layout.surface_render_plan")
     detail_layout = import_module("chrona.presentation.layout.surface_content")
     natural_calls = []
     completed_calls = []
