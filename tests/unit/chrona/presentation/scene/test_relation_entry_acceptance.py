@@ -77,7 +77,7 @@ def _theme_with_route_fixture_geometry(*, target_marker="triangle"):
 
 
 def _compose(*, mirrored=False, baseline_ghost=False, entry="side-when-free", target_marker="triangle",
-             ghost_finish=11, corner_radius=0, head_length=10):
+             ghost_finish=11, corner_radius=0, head_length=10, search="first-fit"):
     project, placed, actual, view, projection = _project(mirrored=mirrored, baseline_ghost=baseline_ghost,
                                                      ghost_finish=ghost_finish)
     metrics = {
@@ -88,7 +88,8 @@ def _compose(*, mirrored=False, baseline_ghost=False, entry="side-when-free", ta
     }
     measured = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, metrics)
     manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"),
-        relation_entry=entry, row_distribution="pack", relation_max_bends=4, relation_max_detour_ratio=2)
+        relation_entry=entry, row_distribution="pack", relation_max_bends=4, relation_max_detour_ratio=2,
+        relation_search=search)
     content = surface_content(relations=project["relations"], show_member_labels=True, label_placement="plot",
         label_content=("title",), label_side="end", label_overflow="visible-overflow")
     theme = _theme_with_route_fixture_geometry(target_marker=target_marker)
@@ -184,7 +185,7 @@ def test_nearest_stub_exit_can_be_rejected_before_the_other_exit_enters_horizont
 
     monkeypatch.setattr(surface_routes, "select_relation_route", capture)
     monkeypatch.setattr(routing, "_select_pair_candidate", capture_nearest)
-    current = _compose()
+    current = _compose(search="best")
     points = _relation_path(current).points
     assert _bends(points) == 4
     assert points[-2][1] == points[-1][1] and points[-2][0] < points[-1][0]
@@ -197,7 +198,7 @@ def test_nearest_stub_exit_can_be_rejected_before_the_other_exit_enters_horizont
 
     with monkeypatch.context() as old:
         _prior_source_first(old)
-        prior = _relation_path(_compose()).points
+        prior = _relation_path(_compose(search="best")).points
     assert _bends(prior) == 2
     assert prior[-2][0] == prior[-1][0], "the previous source-first rule takes the vertical target entry"
 
@@ -233,13 +234,13 @@ def test_actual_finish_delta_text_and_detached_snapshot_ghost_are_real_scene_con
 
 
 def test_the_mirrored_end_entry_keeps_the_full_horizontal_stub_and_old_order_does_not(monkeypatch):
-    current = _compose(mirrored=True)
+    current = _compose(mirrored=True, search="best")
     points = _relation_path(current).points
     assert points[-2][1] == points[-1][1] and points[-2][0] > points[-1][0]
     assert points[-2][0] - points[-1][0] >= 11
 
     _prior_source_first(monkeypatch)
-    prior = _relation_path(_compose(mirrored=True)).points
+    prior = _relation_path(_compose(mirrored=True, search="best")).points
     assert prior[-2][0] == prior[-1][0], "prior order drops vertically onto the target end"
 
 
@@ -264,7 +265,7 @@ def test_gate_bottom_back_route_avoids_arrival_without_false_node_conflict(monke
     original = node_approach.build_surface_input
 
     def side_entry(*args, **kwargs):
-        kwargs["layout_manifest"] = replace(kwargs["layout_manifest"], relation_entry="side")
+        kwargs["layout_manifest"] = replace(kwargs["layout_manifest"], relation_entry="side", relation_search="best")
         theme = deepcopy(kwargs["resolved_theme"])
         theme["body"]["values"]["dependency-marker"]["value"].update(headLength=6, headWidth=6)
         theme["body"]["values"]["no-source"] = {"type": "marker", "value": {
