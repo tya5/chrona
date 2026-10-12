@@ -9,6 +9,7 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 
 from chrona.presentation.layout.routing import route_quality_metrics
+from chrona.presentation.model.info_diagnostics import RelationResolutionStage
 from chrona.resources import safe_load
 from chrona.usecases.materialize import MaterializationError, materialize
 from tools.derived_evidence import manifest_targets
@@ -37,6 +38,46 @@ def route_delta(before, after):
             'bendsDelta': new_bends - old_bends, 'lengthDelta': new_length - old_length}
 
 
+def resolution_counts(scene):
+    """Count final instances, not halo primitives, fragments or search passes."""
+    receipts = [json.loads(value.split(':', 1)[1]) for value in scene.get('diagnostics', ())
+                if value.startswith('I_LAYOUT_RELATION_RESOLUTION:')]
+    summaries = [json.loads(value.split(':', 1)[1]) for value in scene.get('diagnostics', ())
+                 if value.startswith('I_LAYOUT_RELATION_RESOLUTION_SUMMARY:')]
+    result = []
+    for surface in scene['surfaces']:
+        surface_id = surface['id']
+        facts = [item for item in receipts if item['surfaceId'] == surface_id]
+        identifiers = {item['id'] for item in surface['primitives']
+                       if item.get('sourceKind') == 'relation' and item['kind'] == 'Path'}
+        counts = {stage.value: 0 for stage in RelationResolutionStage}
+        covered = set()
+        seen = set()
+        for fact in facts:
+            stage = RelationResolutionStage(fact['stage'])
+            relation_id = fact['relationId']
+            if stage is RelationResolutionStage.NORMAL or relation_id in seen:
+                raise ValueError('invalid or duplicate completed recovery receipt')
+            seen.add(relation_id)
+            paths = ({relation_id + ':stub-source', relation_id + ':stub-target'}
+                     if stage is RelationResolutionStage.STUB else {relation_id})
+            if not paths <= identifiers:
+                raise ValueError('recovery receipt has no complete projected relation')
+            covered.update(paths)
+            counts[stage.value] += 1
+        actual = {stage: count for stage, count in counts.items() if count}
+        reported = [item for item in summaries if item['surfaceId'] == surface_id]
+        expected = [{'surfaceId': surface_id, 'count': len(facts), 'stages': actual}] if facts else []
+        if reported != expected:
+            raise ValueError('completed recovery summary disagrees with instance receipts')
+        counts['normal'] = len(identifiers - covered)
+        result.append({'surfaceId': surface_id, 'relationInstances': sum(counts.values()),
+                       'stages': counts})
+    if any(item['surfaceId'] not in {s['id'] for s in scene['surfaces']} for item in (*receipts, *summaries)):
+        raise ValueError('recovery receipt has no projected surface')
+    return result
+
+
 def characterize(task):
     manifest_path, slide_id, root = task
     manifest = safe_load(manifest_path.read_bytes())
@@ -61,6 +102,7 @@ def characterize(task):
             'sceneIdentical': scene_bytes == expected_bytes, 'svgIdentical': svg == expected_svg,
             'sceneSha256': sha256(scene_bytes).hexdigest(), 'svgSha256': sha256(svg).hexdigest(),
             'expectedMismatch': mismatch, **route_delta(baseline, scene),
+            'resolutionCounts': resolution_counts(scene),
             'newDiagnostics': sorted(set(scene['diagnostics']) - set(baseline['diagnostics'])),
             'removedDiagnostics': sorted(set(baseline['diagnostics']) - set(scene['diagnostics']))}
 

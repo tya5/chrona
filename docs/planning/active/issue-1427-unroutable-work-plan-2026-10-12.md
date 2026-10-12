@@ -54,6 +54,10 @@ It proves suppress versus marks-stage recovery, overlap and paired-stub output;
 stub fragments still count once. It is intentionally a completed Layout input
 fixture, not a claim that normal lane packing creates overlap, and not a public
 decoration witness.
+The batched materializer report now includes per-surface final stage counts,
+validated against projected paths and summary receipts. Halos are excluded;
+paired stubs count once. Reusing the46 actual relax-candidate artifacts gives
+527 projected relation instances and zero recoveries; no redundant render.
 
 ## Literal acceptance
 
