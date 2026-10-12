@@ -150,7 +150,21 @@ A version bump is reserved for an incompatible contract change: removing,
 renaming, or retyping an existing field; changing an existing field's default
 behavior; adding a required field; or another change that makes an existing
 resource invalid or changes its behavior. When a bump is required, batch the
-pending incompatible changes into that version. Do not silently upgrade a
+pending incompatible changes into that version. Do not describe a behavior
+change as behavior-preserving widening.
+
+**Explicit routing-default exceptions (#1430/#1427).** The owner selected
+in-place `relationRouting.search` and `relationRouting.unroutable` additions
+with deliberate default flips, despite the general behavior-preservation
+rule above. These are authorized runtime-policy incompatibilities, not an
+implicit waiver for other schema changes: retain the current Layout schema,
+record S0 admission deltas, publish the new default and migration effects,
+and preserve approved targets through reviewer-owned `best` / `suppress`
+declarations before each flip. Explicit policy controls prove prior output;
+omitted policy selects the new runtime default. Truthful resource identity
+changes remain visible. All other changes retain the ordinary version rule.
+
+Do not silently upgrade a
 stale resource; the unsupported-version behavior in §3.1 remains in force.
 
 Theme v0.15/v0.16 (#1088) retires the content-box `edge` token and role member.
