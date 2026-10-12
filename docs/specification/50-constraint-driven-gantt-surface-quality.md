@@ -455,6 +455,13 @@ never execute a recovery stage. Each attempted stage has fresh per-instance/pass
 search state and budget; first-fit cheap/exact phases share that stage's ceiling.
 No surface replay or reset of a ceiling within one stage is permitted.
 
+Under `best`, successful non-normal recovery in a lane rehearsal is still
+degraded for the existing corridor planner. If moving optional names can restore
+a normal route without suppressing any shown name, prefer that normal completion
+before unsafe recovery. The reference and reservation trials retain their own
+budgets and common validators. `first-fit` still skips this rehearsal; explicit
+`overlap` and `stub` intentionally select their fixed completion policies.
+
 If all relax searches fail, attempt the preferred fixed overlap shape, then
 paired terminal stubs when full-route endpoint egress cannot be completed.
 `overlap` goes directly to fixed end-side/start-side orthogonal L/Z geometry,

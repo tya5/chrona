@@ -116,6 +116,14 @@ review it before implementation is finalized.
 
 ## Implementation plan
 
+CI exposed a real best-policy rehearsal gap: a text-crossing recovered route was
+treated as healthy and bypassed existing safe corridor repair. Spec50 now counts
+non-normal recovery as degraded for that planner, preserving normal-route
+preference without a new search policy or Scene responsibility. Publish this
+correction before changing the predicate; add an explicit-relax repair control.
+Old suppress/window/quality tests pin their intended policy; actual default CLI
+diagnostics are characterized separately. No blanket assertion weakening.
+
 Halo completion: Theme supplies surface-ground ink and declared/default width;
 Layout closes a separate immutable centreline/curve/clip/order placement.
 Scene emits its decoration path without markers or graph references. Specs08/33
