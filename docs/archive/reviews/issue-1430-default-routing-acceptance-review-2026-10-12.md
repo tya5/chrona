@@ -2,8 +2,8 @@
 
 # Issue 1430 — default relation routing
 
-Implementation and rendered acceptance are verified. Release remains pending
-exact-main three-OS CI containing this review; the issue remains open.
+Accepted and closed. Exact-main `b70eee1b068c68994a96726991216d54ed3b68f4`
+contains the published review and passed all required release checks.
 
 ## Literal issue acceptance
 
@@ -23,6 +23,10 @@ exact-main three-OS CI containing this review; the issue remains open.
 
 ## Programme-level criteria (optional)
 
+- Release: [CI38243245996](https://github.com/tya5/chrona/actions/runs/38243245996)
+  passed all three OS full pytest/conformance/wheel/smoke, MCP floor and
+  newest-Python reproduction. Acceptance review PR1437 and byte-preserving
+  corpus repair PR1438 are included in the exact-main SHA above.
 - Reviewer rescue requirement: all 46 slides have `Removed = 0`, including
   `m0-gate → presets`; [current delta evidence](https://github.com/tya5/chrona/issues/1430#issuecomment-6121188747).
   [Real cheap-failure/exact-success regression](../../../tests/unit/chrona/presentation/layout/test_routing_policy_characterization.py)
