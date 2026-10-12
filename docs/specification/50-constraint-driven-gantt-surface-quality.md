@@ -444,7 +444,9 @@ paired terminal stubs when full-route endpoint egress cannot be completed.
 `overlap` goes directly to fixed end-side/start-side orthogonal L/Z geometry,
 ignoring non-host obstacles and quality limits; it uses the same terminal
 fallback if endpoint egress fails. `stub` completes an independent short
-connector at each endpoint with `→ <target title>` / `<source title> →` text.
+connector at each endpoint with `-> <target title>` / `<source title> ->` text.
+Use these ASCII direction tokens rather than requiring a Unicode arrow glyph
+in every author's font stack; endpoint titles retain their normal font policy.
 Layout measures and places these with the existing terminal/text primitives;
 it does not present the pair as a connected safe route. Both fragments belong
 to one resolved relation instance and are counted once. Terminal labels must

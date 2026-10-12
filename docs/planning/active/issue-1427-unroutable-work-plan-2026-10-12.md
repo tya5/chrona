@@ -71,6 +71,10 @@ Spec66's temporal selection remains unchanged. Partial instance references
 prevent a fragment being described as a full connected edge. Publish this
 clarification before connecting stub geometry/text; no adapter inference or
 new author syntax is needed.
+Terminal direction tokens are ASCII `->`: actual stub wiring exposed a missing
+U+2192 glyph in the bundled font stack. The ordinary font contract stays hard;
+do not add a renderer substitute, bypass glyph validation or silently change
+the author's font stack. Endpoint titles still use normal text measurement.
 
 One implementation PR after this design publication; independently tested commits.
 
