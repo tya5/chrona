@@ -196,6 +196,17 @@ Legacy lane-corridor tests explicitly declare best without changing their
 existing assertions: their pre-name/recovery premises do not apply to the
 owner-selected first-fit default. Public output/reviewer and CI gates remain.
 
+Public batch tool: `python -m tests.support.relation_policy_evidence
+--output-dir <empty-directory> --jobs 4`. Separate worker processes run the real
+materializer and preserve Scene/SVG bytes plus signed route metrics. The test
+normalization override selects each policy without rewriting resource bytes or
+identities; it is algorithm characterization, not evidence of authored best
+declarations or their provenance migration. Only the expected committed-output
+comparison mismatch is admitted after actual serialization; render/schema/
+identity errors remain failures. Synthetic controls cover metrics, both policy
+overrides, unchanged inputs and non-comparison errors. Run the batch on the READY
+base following reviewer PR1419, not on its stale pre-sync generated outputs.
+
 ### Wiring implementation plan
 
 1. Add the shared vocabulary/frozen definition and optional Layout schema
