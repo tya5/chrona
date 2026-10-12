@@ -14,18 +14,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from chrona.presentation.count_text import CountTextError, CountTextFormat
-from chrona.presentation.figure_text import FigureTextError, FigureTextProgram
+from chrona.presentation.figure_text import FigureTextError, FigureTextProgram, FigureTextReadError
 from chrona.presentation.group_header_text import GroupHeaderTextError, HeaderTemplate, parse_template
 
 PLACEHOLDERS = ("project", "asOf", "calendar")
 CODE = "E_VIEW_HEADING_TEMPLATE"
-
-
-class HeadingBindError(ValueError):
-    """Carry a typed figure failure and the exact text read, not a generic Layout error."""
-    def __init__(self, failure: CountTextError | FigureTextError, path: str):
-        super().__init__(str(failure))
-        self.failure, self.path = failure, path
 
 
 @dataclass(frozen=True)
@@ -48,7 +41,7 @@ class HeadingTextPrograms:
             try:
                 values[member] = program.bind(figures, formats) if program is not None else None
             except (CountTextError, FigureTextError) as error:
-                raise HeadingBindError(error, f"/body/heading/{member}") from error
+                raise FigureTextReadError(error, f"/body/heading/{member}") from error
         return values["title"], values["subtitle"], values["kicker"]
 
 
@@ -80,4 +73,4 @@ def render_heading(source: str, facts: Mapping[str, str], *, figures: Mapping[st
 
 
 __all__ = ["CODE", "GroupHeaderTextError", "PLACEHOLDERS", "close_heading", "heading_figure_ids",
-           "HeadingBindError", "HeadingTextPrograms", "render_heading", "validate_heading_template"]
+           "HeadingTextPrograms", "render_heading", "validate_heading_template"]

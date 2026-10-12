@@ -107,7 +107,8 @@ def _slot_heading(node: Mapping[str, Any], profile: ResolvedLayoutProfile | None
     if declared is None:
         return None
     gap = _distance(profile, f"{path}/heading/gap") if profile is not None and "gap" in declared else None
-    return SlotHeading(str(declared["text"]), str(declared.get("align", "start")), str(declared.get("block", "top")), gap)
+    return SlotHeading(declared.get("text"), str(declared.get("align", "start")), str(declared.get("block", "top")),
+                       gap, template=declared.get("template"))
 
 
 def _padding(profile: ResolvedLayoutProfile, node: Mapping[str, Any], path: str) -> tuple[Decimal, Decimal, Decimal, Decimal]:

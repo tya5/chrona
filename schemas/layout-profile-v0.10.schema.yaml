@@ -451,9 +451,12 @@ $defs:
     examples: [{text: Notes, align: start, block: header-row}]
     type: object
     additionalProperties: false
-    required: [text]
+    oneOf:
+      - required: [text]
+      - required: [template]
     properties:
       text: {$ref: "urn:chrona:common-v0.1#/$defs/literalCaption"}
+      template: {description: "Closed {figure:id} caption template, bound by Layout before measurement; {{ and }} escape literal braces.", $ref: "urn:chrona:common-v0.1#/$defs/literalCaption"}
       align: {description: "Inline position of the caption within the slot; absent means start.", enum: [start, center, end]}
       block: {description: "Block position: top; header-row centres in the neighboring axis band; axis-tier aligns to its uppermost horizontal labels tier's completed baseline; start-column puts the caption in the inline-start column of a legend slot that declares `columns`, beside its entries (#1290). An absent or incompatible target falls back to top with a record; absent means top.", enum: [top, header-row, axis-tier, start-column]}
       gap: {description: "Distance between a start-column caption and the entries beside it (#1392); absent keeps half the caption font size. Meaningful only with block start-column.", $ref: "#/$defs/distance"}

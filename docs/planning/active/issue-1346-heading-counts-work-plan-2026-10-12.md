@@ -126,6 +126,16 @@ references and unsupported placedNotes period/group-header/network uses fail
 at ingress.266 focused tests PASS, including actual3-item/2-group Scene/SVG
 text, pre-measurement source capture, empty-map defaults and range-error transport.
 Schema equivalence L1/L2/L3 and import/reachability/value guards PASS.
-P2 is not accepted yet: slot-caption connections and remaining deferred-fact
-admission remain, followed by P3 narrative receipts/count closure. No authored
-examples or resources changed; placedNotes still awaits completed Layout facts.
+P2 slot-caption connection implemented: exactly one literal text or explicit
+template; Layout-bound copy enters the existing caption measurement/placement
+channel without mutating the authored profile or its hash. Literal overrides
+win without reparsing; all references are validated even for absent optional
+slots, but absent/overridden captions do not read number names. A shared typed
+text-read carrier preserves heading/caption source pointers and range evidence.
+Existing caption/adapters107 PASS; focused caption/reference/ownership90 PASS;
+new caption/count/preparation/projection59 PASS. Template/literal twins match
+actual primitives, slots and SVG, including start-column width reservation.
+Schema equivalence L1/L2/L3 PASS with five intentional caption declaration sites;
+import/reachability/value guards PASS. No authored examples/resources changed.
+P2 is not accepted yet: remaining deferred-fact admission precedes P3 typed
+narrative receipts/count closure. placedNotes awaits completed Layout facts.

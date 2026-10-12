@@ -38,11 +38,12 @@ def test_closing_semantic_facts_does_not_reparse_project_text_as_count_syntax():
 
 
 def test_heading_program_binds_typed_range_errors_at_the_exact_text_read():
-    from chrona.presentation.heading_text import HeadingBindError, HeadingTextPrograms, close_heading
+    from chrona.presentation.heading_text import HeadingTextPrograms, close_heading
+    from chrona.presentation.figure_text import FigureTextReadError
     from chrona.presentation.count_text import CountTextError, CountTextFormat
     programs = HeadingTextPrograms(close_heading("Title", {}), subtitle=close_heading("{figure:n}", {}))
     assert programs.figure_ids == {"n"}
-    with pytest.raises(HeadingBindError) as caught:
+    with pytest.raises(FigureTextReadError) as caught:
         programs.bind({"n": 100}, {"n": CountTextFormat("kanji")})
     assert caught.value.path == "/body/heading/subtitle"
     assert isinstance(caught.value.failure, CountTextError)

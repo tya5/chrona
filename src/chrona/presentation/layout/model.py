@@ -89,10 +89,11 @@ SLOT_HEADING_BLOCKS = ("top", "header-row", "axis-tier", "start-column")
 class SlotHeading:
     """A slot's declared caption (#1064): copy and placement intent; Layout completes the text and the reserve."""
 
-    text: str
+    text: str | None
     align: str = "start"
     block: str = "top"
     gap: Decimal | None = None  # a `start-column` caption's declared gap to the entries (#1392); None keeps half the font size
+    template: str | None = None
 
 
 @dataclass(frozen=True)
@@ -165,7 +166,8 @@ class LayoutManifest:
                     frame["paint"] = item.frame.paint
                 value["frame"] = frame
             if item.heading is not None:
-                value["heading"] = {"align": item.heading.align, "block": item.heading.block, "text": item.heading.text}
+                copy = {"text": item.heading.text} if item.heading.text is not None else {"template": item.heading.template}
+                value["heading"] = {"align": item.heading.align, "block": item.heading.block, **copy}
             return value
 
         payload = {

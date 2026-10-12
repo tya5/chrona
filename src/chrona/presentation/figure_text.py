@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from chrona.presentation.count_text import CountTextFormat, format_count
+from chrona.presentation.count_text import CountTextError, CountTextFormat, format_count
 from chrona.presentation.group_header_text import GroupHeaderTextError, HeaderTemplate, parse_template
 
 
@@ -19,6 +19,13 @@ class FigureTextError(ValueError):
         super().__init__(f"{code}:{detail}")
         self.code = code
         self.detail = detail
+
+
+class FigureTextReadError(ValueError):
+    """A typed text-read failure with its resource component and exact reference."""
+    def __init__(self, failure: CountTextError | FigureTextError, path: str, component: str = "view"):
+        super().__init__(str(failure))
+        self.failure, self.path, self.component = failure, path, component
 
 
 _FIGURE_MARKER = "{figure:"
@@ -83,4 +90,4 @@ def resolve_figure_text(source: str, figures: Mapping[str, int], *, strict: bool
     return _bind(_template(source), figures, formats)
 
 
-__all__ = ["FigureTextError", "FigureTextProgram", "compile_figure_text", "figure_ids", "resolve_figure_text"]
+__all__ = ["FigureTextError", "FigureTextReadError", "FigureTextProgram", "compile_figure_text", "figure_ids", "resolve_figure_text"]

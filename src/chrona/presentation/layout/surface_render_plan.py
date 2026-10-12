@@ -13,7 +13,7 @@ from chrona.presentation.layout.canvas_viewport import DeclaredViewport
 from chrona.presentation.layout.engine import measure_natural_normal_flow_block, resolve_content_block_extent, solve_layout
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, ResolvedLayoutProfile
 from chrona.presentation.layout.profile import resolve_layout_profile
-from chrona.presentation.layout.slot_heading import headed_slot_ids, reserve_slot_heading_blocks
+from chrona.presentation.layout.slot_heading import bind_slot_heading_templates, headed_slot_ids, reserve_slot_heading_blocks
 from chrona.presentation.layout.sources import MeasuredSources, resolve_theme_metrics, measure_sources
 from chrona.presentation.layout.source_sizing import SourceSizingSession
 from chrona.presentation.layout.surface_legend import LegendArrangement, legend_arrangement, legend_source_input
@@ -129,6 +129,8 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
     if layout_error is not None:
         raise layout_error
     _check_slot_heading_text(view, resolved_layout)
+    selected_content = bind_slot_heading_templates(resolved_layout, content=selected_content, view=view,
+                                                  figures=dict(projection.figures), measured=measured)
     # A declared slot heading is part of its content-sized slot's measurement (#1064).
     measured = reserve_slot_heading_blocks(measured, resolved_layout, ThemeTokenView(theme), content=selected_content,
                                            font_metrics=font_metrics)
