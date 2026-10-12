@@ -406,11 +406,15 @@ this default changes. No authored example is edited by dev A.
 `first-fit` may try one uniquely reconstructed prior route before its ordinary
 normal-domain proposals. Match surface, source identity and both endpoint instance
 identities exactly; decoration paths and paired stubs are not route hints. Recover
-the semantic port pair from old host geometry and terminal semantics only when
-unique. Unsupported geometry or incompatible terminal evidence is a hint miss.
+the semantic endpoint coordinates from old host geometry and terminal semantics
+only when unique. Scene does not record selected egress-side IDs; a tangent is
+not proof of that identity. Preserve the point/body boundary choice when uniquely
+identified, then try currently admitted egress pairs in existing first-fit order.
+The first fully accepted compatible proposal wins before ordinary proposals or
+search. Unsupported geometry or incompatible terminal evidence is a hint miss.
 No nearest-point guess or serialized Scene mutation is permitted.
 
-Reanchoring preserves port sides, shape family and interior channel coordinates:
+Reanchoring preserves semantic endpoints, shape family and interior channels:
 translate the whole route for equal endpoint-corridor translations; otherwise
 replace endpoint corridors and their adjacent orthogonal joins. Reject ambiguous
 or degenerate results. Hints use the same completed-candidate preparation and

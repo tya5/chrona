@@ -69,7 +69,7 @@ marker trimming. Painted host geometry supplies anchor evidence; compatible
 Theme terminal semantics supplies the centred flag for unpainted rollup ports
 (`circle`, `open-circle`, `dot` only). Unknown or incompatible evidence misses.
 
-Reanchoring preserves port sides and shape family: apply a shared translation
+Reanchoring preserves semantic endpoint/boundary choice and shape family: apply a shared translation
 when both endpoint corridors translate equally; otherwise replace endpoint
 corridors and adjust their adjacent orthogonal joins while preserving interior
 channel coordinates. Degeneration, ambiguity or any failed current validator
@@ -95,8 +95,12 @@ before hint implementation.
 Specs08/13/33/50 (routing and closure)/56/66, the Store reader and actual Scene
 v0.7 serialization were checked against the selected contract. The public Scene
 already carries primary Project ID and unrounded route points/endpoint IDs;
-it does not carry selected port IDs. Unique reconstruction is therefore required,
-not an assumed deserializer field. Artifact pins need a distinct contract/closure
+it does not carry selected egress-side IDs. Uniquely reconstruct semantic endpoint
+coordinates, not historical egress identity; a tangent alone cannot prove a side.
+Try compatible current egress pairs in existing first-fit order through the common
+validator, rather than rejecting a valid prior path for multiple current choices.
+See the [port correction](../../design/issue-1300-scene-hint-port-correction-2026-10-13.md).
+Artifact pins need a distinct contract/closure
 value and explicit read-ledger entry, not a fake ResourceReference. Context pin
 identity is sufficient for immutable cache/provenance; best validates the input
 but consumes neither geometry nor hint counters. No persistent cache is added.
@@ -105,7 +109,7 @@ Critical completeness remains unresolved and hints do not satisfy that criterion
 | Slice / publication boundary | Owned files and acceptance evidence |
 | --- | --- |
 | H1: explicit input and closure | Context v0.17 schema and mirror, contracts/resources.py, model/closure.py, usecases/materialize.py, render_review.py, draft_render.py, app/cli.py; optional pin, exact bytes/hash, same Project ID, supported Scene validation, ledger and materializer round-trip. Focused closure, Draft, CLI and materializer tests; schema equivalence. Publish after normative design. |
-| H2: Layout hint reuse, with H1 in one product PR | New Layout hint geometry/identity values and reanchor module; surface_routes.py shares its prepare_route/common candidate gates; model/info_diagnostics.py projects typed counters. Preserve port sides, shape family and interior channels, normal-domain only. Test painted/unpainted hosts, centred terminals, ambiguity, changed obstacles, degeneracy, explicit windows, all recovery modes, best/no-hint bytes and actual v1/v2 Scene/SVG shape. |
+| H2: Layout hint reuse, with H1 in one product PR | New Layout hint geometry/identity values and reanchor module; surface_routes.py shares its prepare_route/common candidate gates; model/info_diagnostics.py projects typed counters. Uniquely recover semantic coordinates; offer compatible current pairs in first-fit order before ordinary selection. Preserve boundary choice, shape family and interior channels, normal-domain only. Test painted/unpainted hosts, centred terminals, ambiguity, changed obstacles, degeneracy, explicit windows, all recovery modes, best/no-hint bytes and actual v1/v2 Scene/SVG shape. |
 | S: unconditional stability | relation_routing_order.py and routing/label owners only after corridor-local rule is completed/reviewed. Synthetic shift and unrelated-append controls without hints. No independent-criterion waiver. |
 | C: protected critical feasibility | routing.py/route_search.py/common validators after reviewer domain selection and completeness/work-accounting proof; quality-overrun and impossible diagnostic controls. Not authorized yet. |
 | Release | One batched public materializer comparison per product boundary, primitive/diagnostic deltas disclosed with no authored examples changes. CI full three-OS/conformance/wheel/MCP/newest-Python gate; literal acceptance review keeps original S/C rows open until met. |
