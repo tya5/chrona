@@ -42,6 +42,8 @@ def test_generated_project_obeys_the_surface_candidate_bound(tmp_path, monkeypat
          "to": {"object": "target", "endpoint": "start"}}
         for index in range(relation_count)])
     parts = sr.bundle()
+    # This oracle measures legacy best's actual search, including rehearsals.
+    parts["layout"].setdefault("relationRouting", {"maxBends": 4, "maxDetourRatio": 2})["search"] = "best"
     parts["view"] = sr.lane_view(parts["view"])
     rendered = sr.render(tmp_path, source, presentation=parts)
     # One source/target instance per declared relation, including all lane

@@ -69,3 +69,12 @@ def test_sparse_priority_uses_the_completed_stroke_envelope() -> None:
             assert paths[0] == expected
             assert not any(index.collisions(ObstacleSegment(a, b))
                            for a, b in zip(expected, expected[1:]))
+def test_collinear_retrace_and_duplicates_never_create_zero_length_legs():
+    from chrona.presentation.layout.annotation_topology import _compact_path, _sparse_elbows
+    assert _compact_path(((0, 0), (5, 0), (0, 0), (0, 3))) == ((0, 0), (0, 3))
+    assert _compact_path(((0, 0), (0, 0), (0, 3))) == ((0, 0), (0, 3))
+    for start, end in (((0, 0), (0, 3)), ((0, 0), (3, 0)), ((0, 0), (3, 3))):
+        candidates = _sparse_elbows(start, end, SurfaceObstacleIndex(), bounds=(-5, -5, 5, 5))
+        assert candidates
+        assert all(path[0] == start and path[-1] == end
+                   and all(a != b for a, b in zip(path, path[1:])) for path in candidates)

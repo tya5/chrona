@@ -1,4 +1,4 @@
-"""Disposable public-materializer policy characterization; never edits examples.
+"""Developer CLI for disposable public-materializer policy characterization.
 
 The normalization override isolates routing behavior with unchanged resource
 bytes/identities. This is NOT evidence of authored best declarations or their

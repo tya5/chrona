@@ -49,14 +49,22 @@ def test_slide_16_routes_are_mark_safe_and_every_omission_is_diagnosed() -> None
 
 
 def test_slide_16_names_stay_within_the_default_reach_of_their_marks() -> None:
-    _, surface = _surface()
+    scene, surface = _surface()
     primitives = {item["id"]: item for item in surface["primitives"]}
     checked = 0
+    suppressed = 0
     for member in surface["laneMembers"]:
         emitted = [primitives[name] for name in member["emittedPrimitiveIds"]]
-        label = next(item for item in emitted if item.get("purpose") == "member-label")
+        labels = [item for item in emitted if item.get("purpose") == "member-label"]
+        if not labels:
+            identifier = f'member-label:{member["rowId"]}:{member["memberId"]}'
+            assert f"W_LAYOUT_LABEL_SUPPRESSED:{identifier}" in scene["diagnostics"]
+            suppressed += 1
+            continue
+        assert len(labels) == 1
+        label = labels[0]
         marks = [_rect(item) for item in emitted if item.get("purpose") in {"planned", "actual"}]
         reach = DEFAULT_REACH_EM * label["textLayout"]["fontSize"]
         assert marks and min(_gap(_rect(label), mark) for mark in marks) <= reach, member["memberId"]
         checked += 1
-    assert checked == len(surface["laneMembers"]) > 0
+    assert checked > 0 and checked + suppressed == len(surface["laneMembers"])

@@ -8,7 +8,7 @@ from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.surface_quality import TextPlacement
 from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.layout.model import LayoutError, Rect
-from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
+from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels, RelationRoutingSummary
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.projection import WindowMode
 from tests.unit.chrona.presentation.layout.test_surface_window_marks import _compose
@@ -41,7 +41,8 @@ def test_outside_names_are_non_spatial_absences_and_title_intent_loses_only_outs
     assert len(labels) == 1 and labels[0].content == "across"
     assert all(item.source_ref not in {"before", "after"} for item in labels)
     spatial = sum(item.overflow == "suppressed" for item in labels)
-    assert placement.info_diagnostics == (SuppressedPlotLabels("table-timeline", 2 + spatial),)
+    assert placement.info_diagnostics == (RelationRoutingSummary("table-timeline", 0, 0, 0),
+                                         SuppressedPlotLabels("table-timeline", 2 + spatial))
     assert placement.lane_label_suppressions == ()
     assert all(absence.diagnostic in placement.diagnostics for absence in placement.window_label_absences)
     assert all(not hasattr(absence, "bounds") for absence in placement.window_label_absences)
@@ -52,7 +53,8 @@ def test_delta_only_outside_labels_are_absences_without_measured_text_or_fake_an
     placement = compose_surface_layout(_request(content=("finishDelta",))).placement
     assert {item.source_ref for item in placement.window_label_absences} == {"before", "across", "after"}
     assert not any(item.semantic_id == "memberLabel" for item in placement.text)
-    assert placement.info_diagnostics == (SuppressedPlotLabels("table-timeline", 3),)
+    assert placement.info_diagnostics == (RelationRoutingSummary("table-timeline", 0, 0, 0),
+                                         SuppressedPlotLabels("table-timeline", 3))
 
 
 def test_containing_explicit_window_keeps_derived_label_geometry_and_intent():
@@ -72,7 +74,8 @@ def test_standalone_delta_absences_do_not_enlarge_member_name_count():
     members = sum(item.semantic_id == "memberLabel" for item in placement.window_label_absences)
     spatial = sum(item.semantic_id == "memberLabel" and item.overflow == "suppressed"
                   for item in placement.text)
-    assert placement.info_diagnostics == (SuppressedPlotLabels("table-timeline", members + spatial),)
+    assert placement.info_diagnostics == (RelationRoutingSummary("table-timeline", 0, 0, 0),
+                                         SuppressedPlotLabels("table-timeline", members + spatial))
 
 
 def test_attached_label_on_outside_host_has_no_spatial_overflow_fallback():

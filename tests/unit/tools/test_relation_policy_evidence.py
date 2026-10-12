@@ -1,11 +1,10 @@
 import json
-from pathlib import Path
 
 import pytest
 
 from chrona.usecases.materialize import MaterializationError
-from tests.support import relation_policy_evidence as evidence
-from tests.support.relation_policy_evidence import route_delta
+from tools import relation_policy_evidence as evidence
+from tools.relation_policy_evidence import route_delta
 
 
 def scene(*paths):

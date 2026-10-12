@@ -116,9 +116,9 @@ Current three-input measurements (CPU=user+system, not wall time):
 
 | Objects/relations | CPU seconds, runs 1/2 | Peak RSS MiB, runs 1/2 | Shape/search counts |
 | --- | --- | --- | --- |
-| 19/10, public `routing_revision/project-v1.yaml` | 0.91 / 1.08 | 73.0 / 76.6 | 9 / 1 |
-| 200/46, `routing_scale_project(200)` | 4.033 / 4.164 | 100.5 / 100.3 | 43 / 3 |
-| 1000/228, `routing_scale_project(1000)` | 53.388 / 53.324 | 197.5 / 196.7 | 210 / 18 |
+| 19/10, public `routing_revision/project-v1.yaml` | 0.90 / 1.09 | 72.8 / 75.2 | 9 / 1 |
+| 200/46, `routing_scale_project(200)` | 4.161 / 4.112 | 99.4 / 99.4 | 43 / 3 |
+| 1000/228, `routing_scale_project(1000)` | 53.933 / 53.795 | 199.1 / 202.8 | 210 / 18 |
 
 All six renders succeed; Scene/SVG hashes match within each pair and the prior
 wiring outputs. Both 1000 runs meet 60 s versus the published approximately
@@ -199,7 +199,7 @@ Legacy lane-corridor tests explicitly declare best without changing their
 existing assertions: their pre-name/recovery premises do not apply to the
 owner-selected first-fit default. Public output/reviewer and CI gates remain.
 
-Public batch tool: `python -m tests.support.relation_policy_evidence
+Public batch tool: `python -m tools.relation_policy_evidence
 --output-dir <empty-directory> --jobs 4`. Separate worker processes run the real
 materializer and preserve Scene/SVG bytes plus signed route metrics. The test
 normalization override selects each policy without rewriting resource bytes or
@@ -209,6 +209,36 @@ comparison mismatch is admitted after actual serialization; render/schema/
 identity errors remain failures. Synthetic controls cover metrics, both policy
 overrides, unchanged inputs and non-comparison errors. Run the batch on the READY
 base following reviewer PR1419, not on its stale pre-sync generated outputs.
+
+Batch on READY96244e3d: all 46 best Scene/SVG pairs byte-identical; first-fit
+adds/removes no routes and adds no error diagnostic. Draft PR1428 contains the
+46-row route/bend/length table for explicit reviewer acceptance. Final-head
+trial measurements above retain exact repeat/prior hashes. PR run38191166676
+found a corpus-import guard failure caused by placing the developer CLI under
+`tests/support`; move it to `tools` and retain the guard/assertions unchanged.
+Inspect every remaining CI check before declaring release acceptance.
+
+CI correction review: all terminal failing checks in run38191166676 were
+inspected (pytest shards 12/15/14; MCP repeats the import guard; derived-ready
+is downstream). Shared annotation-path compaction removes zero legs after
+retrace reduction; obstacle validation remains strict. Label request ownership
+now selects routing phases, keeping Composer below the unchanged size gate.
+Rollup tests verify semantic marker centres rather than the trimmed stroke's
+perimeter. Route-specific bridge/alias fixtures declare best only in disposable
+copies, retaining all existing feature assertions and truthful generated pins.
+Visible Editorial names retain reach/association checks; omitted optional names
+must have exact suppression diagnostics. Both checks pass on actual first-fit
+evidence, not just the committed best Scene.
+
+Focused correction batches: 108 geometry/owner/render tests, 155 CLI/annotation/
+chip tests, 25 info/work-bound tests and 43 bridge/alias/import/owner tests pass.
+CLI golden changes only 20 render stdout records for the selected diagnostics;
+unrelated argparse-version wording was restored. Three Scene snapshots differ
+only by the new routing info: removing that fact reproduces their exact prior
+hashes; all SVG hashes stay fixed. Repeated 46×2 materializers after the fixes
+produce exactly the previous batch records, including 46/46 best byte identity.
+Publish the correction together; current-head CI, remaining scope4 disposition,
+reviewer target declarations/visual acceptance and exact-main release remain.
 
 ### Wiring implementation plan
 

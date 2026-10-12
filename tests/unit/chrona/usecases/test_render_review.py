@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import tempfile
 import json
+import shutil
 from dataclasses import replace
 from datetime import date
 from decimal import Decimal
@@ -134,8 +135,15 @@ def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():
     # I662 S4a: `end` is the span-end's canonical anchor spelling and `finish` its alias; the endpoint text reaches Layout ids
     # and port choice, so the two spellings must give the same Scene bytes and the same SVG. The controller-z annotations
     # context anchors four annotations to a span finish (three planned, one actual explanatory arrow, suppressed since #1074) and one to a point.
-    example = ROOT / "examples/controller-z"
     with tempfile.TemporaryDirectory() as temporary:
+        # Freeze the route-specific bridge premise under declared best; alias
+        # equality is independent of the new default's different route choices.
+        example = (Path(temporary) / "example").resolve()
+        shutil.copytree(ROOT / "examples/controller-z", example)
+        layout_path = example / "layouts/annotations-review.yaml"
+        layout = yaml.safe_load(layout_path.read_bytes())
+        layout.setdefault("relationRouting", {"maxBends": 4, "maxDetourRatio": 2})["search"] = "best"
+        layout_path.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
         snapshot = Path(temporary) / "snapshot"
         snapshot.mkdir()
         reference, _ = _copy_context_closure(example.resolve(), example / "contexts/annotations.yaml", snapshot)

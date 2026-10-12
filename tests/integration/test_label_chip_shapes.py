@@ -226,8 +226,8 @@ def test_absent_shape_preserves_characterized_scene_and_svg_bytes(tmp_path):
     # Keep actual current bytes frozen, without provenance/geometry normalization.
     rendered = _render_asof(tmp_path)
     scene = serialize_scene(rendered.scene)
-    assert len(scene) == 26405
-    assert sha256(scene).hexdigest() == "0afd521d979f285cbc06a090223bf4038b266139f6a9a4e01625241cecf46ac3"
+    assert len(scene) == 26532
+    assert sha256(scene).hexdigest() == "84afcfa59fce4404c36f4a26c28fb0fc1230224293532d4a1672e13892221f13"
     assert len(rendered.artifact.content) == 8173
     assert sha256(rendered.artifact.content).hexdigest() == "3f700aae2dd6cc1e5d42370babe2805a2231ec2c8a643eb07dc1317cc4cc7437"
 

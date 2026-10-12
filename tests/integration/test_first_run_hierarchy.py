@@ -92,9 +92,18 @@ def test_rollup_modes_preserve_relation_date_ports_without_fake_painted_hosts(tm
     route = next(item for item in rendered.surface.primitives
                  if item.source_kind == "relation" and item.from_instance_id == "root:root")
     last_child = next(item for item in rendered.surface.primitives if item.scene_id == "planned:b:b")
-    assert route.points[0][0] == pytest.approx(last_child.bounds[0] + last_child.bounds[2])
+    # A centred source marker occupies the original date port. The completed
+    # stroke starts at its perimeter, not at the semantic marker centre.
+    from math import hypot
+    marker = route.marker_start
+    a, b = route.points[:2]
+    length = hypot(b[0] - a[0], b[1] - a[1])
+    behind = marker.head_length / 2 - marker.attachment_offset
+    centre = (a[0] - (b[0] - a[0]) / length * behind,
+              a[1] - (b[1] - a[1]) / length * behind)
+    assert centre[0] == pytest.approx(last_child.bounds[0] + last_child.bounds[2])
     root_row = next(row for row in rendered.surface.rows if row.row_id == "root")
-    assert root_row.bounds[1] <= route.points[0][1] <= root_row.bounds[1] + root_row.bounds[3]
+    assert root_row.bounds[1] <= centre[1] <= root_row.bounds[1] + root_row.bounds[3]
     assert not any("E_SCENE_RELATION_THROUGH_MARK" in code for code in rendered.surface.diagnostics)
 
 

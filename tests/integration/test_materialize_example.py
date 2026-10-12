@@ -179,8 +179,15 @@ def test_controller_executive_public_evidence_exercises_inside_and_fallback_labe
 
 
 def test_controller_annotation_evidence_realizes_each_purpose_through_layout_completed_primitives(tmp_path):
-    example = ROOT / "examples/controller-z"
-    materialize(example / "manifest.yaml", "annotations", tmp_path / "annotations", write=False)
+    # This bridge/corridor oracle depends on best's characterized relation
+    # placements; author the policy only in a disposable copy, never the corpus.
+    example = tmp_path / "controller"
+    shutil.copytree(ROOT / "examples/controller-z", example)
+    layout_path = example / "layouts/annotations-review.yaml"
+    layout = yaml.safe_load(layout_path.read_bytes())
+    layout.setdefault("relationRouting", {"maxBends": 4, "maxDetourRatio": 2})["search"] = "best"
+    layout_path.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
+    materialize(example / "manifest.yaml", "annotations", tmp_path / "annotations", write=True)
     artifact = (tmp_path / "annotations/review.svg").read_text(encoding="utf-8")
     for identifier in ("architecture-callout", "evb-highlight", "performance-note", "bringup-risk", "firmware-slip"):
         assert f'data-scene-id="annotation-box:{identifier}"' in artifact

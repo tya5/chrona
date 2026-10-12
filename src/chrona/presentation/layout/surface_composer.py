@@ -271,14 +271,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     def place_label_phase(requests: tuple[LabelRequest, ...]) -> None:
         accept_member_label_batch(place_member_labels(member_label_context, requests, surface_obstacles))
 
-    pre_route, post_route = member_label_requests.pre_route, member_label_requests.post_route
     first_fit = layout_manifest.relation_search == "first-fit"
+    pre_route, post_route = member_label_requests.routing_phases(first_fit=first_fit)
     lane_routing_info = ()
-    if first_fit:
-        deferred = tuple(item for item in pre_route if item.semantic_id in {"memberLabel", "finishDelta"})
-        pre_route = tuple(item for item in pre_route if item.semantic_id not in {"memberLabel", "finishDelta"})
-        post_route = (*deferred, *post_route)
-    else:
+    if not first_fit:
         lane_route_plan = plan_lane_route_reservations(LaneRoutePlanContext(
             member_label_context, pre_route, tuple(text), surface_obstacles,
             lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
