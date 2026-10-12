@@ -2,8 +2,10 @@
 
 # Issue1409 — short-window default axis
 
-Release pending. Implementation [PR1442](https://github.com/tya5/chrona/pull/1442),
-head `e2b80df9`; [work record](https://github.com/tya5/chrona/issues/1409#issuecomment-6106476083).
+Implementation [PR1442](https://github.com/tya5/chrona/pull/1442) is merged on
+`1dbad8798335cb25f3208f9356cbac3eea84da58`;
+[head CI38275814117](https://github.com/tya5/chrona/actions/runs/38275814117) passed
+on `e2b80df9`. [Work record](https://github.com/tya5/chrona/issues/1409#issuecomment-6106476083).
 Do not close until the published review's exact-main full release succeeds.
 
 ## Literal issue acceptance
@@ -28,5 +30,10 @@ Only the default's auto forms add existing day/week forms. View admission,
 Theme typography, Layout density/geometry and Scene/adapter ownership stay
 unchanged. No new schema, padding, fabricated labels or compatibility branch.
 
-Current-head CI and exact-main release evidence must be finalized before
-publishing release acceptance; local passes do not replace the full matrix.
+Commands: `python -m pytest -q` on the default-window and packaged-policy tests,
+plus `test_axis_regular_cadence.py`, `test_presentation_axis.py` and
+`test_axis_placement.py`; `python -m tools.routing_performance_evidence
+--output-dir <empty-dir> --jobs 4`.
+The PR CI passed all three pytest shards, conformance, MCP floor and
+newest-Python materializer reproduction. Exact-main release of the commit
+publishing this review remains mandatory; local/PR passes do not replace it.
