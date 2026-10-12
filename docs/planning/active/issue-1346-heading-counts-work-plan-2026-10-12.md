@@ -1,7 +1,7 @@
 # Reusable heading counts (#1346)
 
-Published baseline: READY `67dfd2d3bb108aa159e2c5e2e406235b8f0e794d`
-(`derived-main`38216591192 SUCCESS). The WIP adopts it by ordinary merge;
+Published baseline: READY `f0e431991e91e5f0e30512b587ebef44daea31ff`
+(`derived-main`38224427442 SUCCESS). The WIP adopts it by ordinary merge;
 all1343 foundation work is merged/released.1346 implementation is on its WIP;
 not merged or release-accepted.
 [Issue and current work record](https://github.com/tya5/chrona/issues/1346#issuecomment-6112367414).
@@ -117,7 +117,8 @@ Exact read dependencies admit only dependent name-range/intrinsic-fit rejection.
 Unused-input ordering, fresh trial state, accepted progress and all executed
 routing-pass facts are verified; unrelated failures propagate.
 
-Integrated READY base: `67dfd2d3` (PR1431, default still best).
+Integrated READY base: `f0e43199` (PR1431/1433, default still best;
+the five approved designs explicitly declare best).
 Completion retains both routing-summary/budget facts and narrative
 receipts. Real4→3 closure isolation is tested under best and first-fit.
 Integrated count/policy/budget/ownership/tool batch55 PASS; S0 L1/L2/L3 PASS.
