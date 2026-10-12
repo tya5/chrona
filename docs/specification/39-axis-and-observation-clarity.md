@@ -29,6 +29,14 @@ on YAML/JSON key order. If none is viable, keep the coarsest declared unit's
 candidate identities as omitted outcomes, not visible labels. No new form,
 unit, band, text abbreviation or font-size reduction is invented.
 
+The bundled default's auto tier admits `day: localized-date` and
+`week: start-day-month` as well as its month-to-year forms (#1409). This uses
+the same density selection for short and long windows. Explicit fixed-unit
+tiers never refine without `unit: auto`; the window is never widened to gain
+labels. A one-day window has one truthful day label, not duplicate periods or
+invented boundary labels. The two-label short-window acceptance applies when
+the window spans at least two units of its finest admitted tier.
+
 Window clipping does not participate in unit or cadence selection. After that
 selection, Layout applies completed logical-interval, painted-host and plot
 containment (Specification 50, #1291). An edge or host that cannot contain a

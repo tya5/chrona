@@ -28,7 +28,8 @@ def _assert_axis_policy(document: dict, *, source: str) -> None:
             "role": "labels",
             "typographyRole": "axis" if document["id"] == "chrona-preset-technical-print" else "axisQuarter",
             "label": {
-                "forms": EXPECTED_FORMS,
+                "forms": ({"day": "localized-date", "week": "start-day-month", **EXPECTED_FORMS}
+                          if document["id"] == "chrona-preset-editorial-readable-default" else EXPECTED_FORMS),
                 "align": "center",
                 "overflow": "thin-with-record",
                 "orientation": "horizontal",
@@ -84,5 +85,7 @@ def test_every_builtin_preset_resolves_to_the_declared_auto_axis_policy():
         contract, source = _resolved_builtin_view(entry)
         _assert_axis_policy(source, source=entry["id"])
         axis = contract.view.axis
-        assert axis["tiers"][2]["label"]["forms"] == EXPECTED_FORMS
+        expected = ({"day": "localized-date", "week": "start-day-month", **EXPECTED_FORMS}
+                    if source["id"] == "chrona-preset-editorial-readable-default" else EXPECTED_FORMS)
+        assert axis["tiers"][2]["label"]["forms"] == expected
         assert axis["tiers"][2]["label"]["overflow"] == "thin-with-record"
