@@ -157,7 +157,7 @@ class LayoutManifest:
     relation_search: str = "first-fit"
     relation_search_budget: int | None = None
     # Staged implementation: flip only after recovery and target protection land.
-    relation_unroutable: RelationUnroutableMode = RelationUnroutableMode.SUPPRESS
+    relation_unroutable: RelationUnroutableMode = RelationUnroutableMode.RELAX
 
     def canonical_bytes(self, precision: int = 3) -> bytes:
         quantum = Decimal(1).scaleb(-precision)

@@ -59,7 +59,7 @@ def test_invalid_resolution_modes_are_rejected_before_geometry(mode):
         _resolve(_profile(mode))
 
 
-def test_staging_retains_legacy_suppress_until_the_atomic_default_flip():
+def test_omitted_mode_closes_as_relax_after_the_atomic_default_flip():
     manifest = _manifest(_profile())
-    assert manifest.relation_unroutable is RelationUnroutableMode.SUPPRESS
-    assert "unroutable" not in json.loads(manifest.canonical_bytes())["relationRouting"]
+    assert manifest.relation_unroutable is RelationUnroutableMode.RELAX
+    assert json.loads(manifest.canonical_bytes())["relationRouting"]["unroutable"] == "relax"
