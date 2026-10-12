@@ -4,7 +4,10 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Any, Mapping
 
+from dataclasses import replace
+
 from chrona.presentation.contracts.resources import ViewInput, ViewRowMode
+from chrona.presentation.heading_text import HeadingTextPrograms
 from chrona.presentation.layout.label_visual_measurement import resolve_label_visual_advances
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun
@@ -79,6 +82,24 @@ def heading_part_sources(heading: HeadingContent) -> dict[str, SourceInput]:
             runs=(SourceTextRun(text, role, source_ref),) if text else (),
             content_present=bool(text), run_flow="block", text_wrap=heading.text_wrap)
     return sources
+
+
+def bind_heading_dependencies(inputs: dict[str, SourceInput], programs: HeadingTextPrograms) -> dict[str, SourceInput]:
+    """Attach closed per-part references, never derive them from formatted/project text."""
+    aliases = {"title": "title", "kicker": "kicker", "subtitle": "subtitle",
+               "heading.title": "title", "heading.kicker": "kicker", "heading.subtitle": "subtitle"}
+    result = dict(inputs)
+    for source in ("title", "heading.title", "heading.kicker", "heading.subtitle"):
+        value = result.get(source)
+        if value is None:
+            continue
+        runs = []
+        for run in value.text_runs():
+            part = aliases.get(run.source_ref, aliases[source])
+            program = getattr(programs, part)
+            runs.append(replace(run, figure_dependencies=program.figure_ids if program is not None else frozenset()))
+        result[source] = replace(value, runs=tuple(runs))
+    return result
 
 
 def _summary_source(summary: SummaryContent) -> SourceInput:

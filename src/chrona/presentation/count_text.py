@@ -16,10 +16,12 @@ _SCALES = ("", "thousand", "million", "billion", "trillion", "quadrillion", "qui
 class CountTextError(ValueError):
     """A typed declaration/value/name-range error, without a fallback form."""
     def __init__(self, code: str, detail: str, *, value: int | None = None,
-                 form: str | None = None, supported_range: tuple[int, int] | None = None):
+                 form: str | None = None, supported_range: tuple[int, int] | None = None,
+                 figure_id: str | None = None):
         super().__init__(f"{code}:{detail}")
         self.code, self.detail = code, detail
         self.value, self.form, self.supported_range = value, form, supported_range
+        self.figure_id = figure_id
 
 
 @dataclass(frozen=True)

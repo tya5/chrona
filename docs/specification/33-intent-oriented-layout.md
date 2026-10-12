@@ -543,7 +543,6 @@ These private modules divide Layout implementation only; they do not change auth
 |---|---|
 | `surface_source_inputs` | Assemble source facts and visual advances from closed content and Theme/icon resources. |
 | `surface_render_plan` | Measure sources, close sizing/allocation and prepare native geometry from resolved intent; Application supplies data, not a geometry callback. |
-| `surface_count_closure` | Bind candidate count facts, invoke fresh complete planning/composition, accept typed narrative closure and return the accepted plan/facts/placements; never project Scene. |
 | `surface_base` | Validate closed inputs; compose slots, rows, base group extents, scale and tracks. |
 | `surface_table` | Place table columns, headers and cells. |
 | `surface_groups` | Place group-header text and group presentation from completed base extents. |

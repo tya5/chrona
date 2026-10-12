@@ -19,7 +19,7 @@ from chrona.presentation.layout.source_sizing import SourceSizingSession
 from chrona.presentation.layout.surface_legend import LegendArrangement, legend_arrangement, legend_source_input
 from chrona.presentation.layout.surface_preparation import SurfacePreRowGeometry, prepare_surface_content, prepare_surface_natural_candidate
 from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest, VisualRequest
-from chrona.presentation.layout.surface_source_inputs import surface_source_inputs, heading_part_sources
+from chrona.presentation.layout.surface_source_inputs import bind_heading_dependencies, surface_source_inputs, heading_part_sources
 from chrona.presentation.model.font_metrics import FontMetricsError
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.render_progress import RenderProgress
@@ -90,6 +90,8 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         content=selected_content, table=table_content, heading=heading_content,
         view_heading=heading_content or HeadingContent(str(project.get("project", {}).get("title", ""))),
         visual_requests=visual_requests, icon_assets=icon_assets, theme=theme)
+    if isinstance(value.heading, HeadingTextPrograms):
+        source_inputs = bind_heading_dependencies(source_inputs, value.heading)
     required_metrics = (("timeline.groupHeader.blockSize",)
                         if view.grouping is not None and view.grouping.presentation == "header" else ())
     # The legend slot is measured as the legend Layout will draw: the same entries, the same

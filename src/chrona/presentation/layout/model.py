@@ -23,6 +23,16 @@ class LayoutError(ValueError):
         self.detail = detail
 
 
+class CountDependentHeadingFitError(LayoutError):
+    """An owner-detected intrinsic text fit failure with closed figure dependencies."""
+
+    def __init__(self, path: str, source_id: str | None, detail: str, figure_ids: frozenset[str]):
+        if not figure_ids:
+            raise ValueError("dependent text fit requires declared figure dependencies")
+        super().__init__("E_LAYOUT_TEXT_OVERFLOW", path, source_id, detail)
+        self.figure_ids = figure_ids
+
+
 def geometry_sum(values: Iterable[float]) -> float:
     """Correctly round one Layout-owned float geometry accumulation.
 
@@ -57,6 +67,7 @@ class Measurement:
     max_block: Decimal
     first_baseline: Decimal | None = None
     last_baseline: Decimal | None = None
+    figure_dependencies: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)

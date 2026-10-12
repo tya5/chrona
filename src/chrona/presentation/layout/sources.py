@@ -7,7 +7,7 @@ from typing import Any, Mapping
 
 from chrona.presentation.layout.axis_lanes import derived_axis_block_size
 from chrona.presentation.layout.group_tags import header_child_lead
-from chrona.presentation.layout.model import LayoutError, Measurement
+from chrona.presentation.layout.model import CountDependentHeadingFitError, LayoutError, Measurement
 from chrona.presentation.layout.presentation import (
     header_group_cell_indent, measure_table_columns, place_table_columns, table_cell_indent, table_content_inline_size, table_text_measurer,
 )
@@ -27,6 +27,7 @@ class SourceTextRun:
     typography_role: str
     source_ref: str | None = None
     inline_advance: Decimal = Decimal(0)
+    figure_dependencies: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -234,6 +235,7 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                              else "proportional"))))
         measured_runs = []
         heading_minima: list[Decimal] = []
+        heading_floor_references: list[tuple[Decimal, frozenset[str]]] = []
         heading_shortage = False
         for run in runs:
             treatment = typography.text_treatment(run.typography_role)
@@ -259,11 +261,15 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                     letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
                     numeric_spacing=treatment.numeric_spacing))) + run.inline_advance
                 heading_minima.append(min(width, ellipse))
+                heading_floor_references.append((min(width, ellipse), run.figure_dependencies))
                 fit = fit_text_lines(run.content, available_inline=float(heading_budget - run.inline_advance),
                                      font_size=float(run_size), font_metrics=run_metrics, wrap="allow",
                                      letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
                                      numeric_spacing=treatment.numeric_spacing)
                 if fit is None:
+                    if run.figure_dependencies:
+                        raise CountDependentHeadingFitError(f"/sources/{source}", run.source_ref,
+                            "mandatory ellipsis and inline reservation cannot fit", run.figure_dependencies)
                     raise LayoutError("E_LAYOUT_TEXT_OVERFLOW", f"/sources/{source}", run.source_ref,
                                       "mandatory ellipsis and inline reservation cannot fit")
                 if fit.content != run.content:
@@ -369,6 +375,13 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             if heading_shortage:
                 mandatory = max(heading_minima, default=Decimal(0))
                 minimum_inline = (max(mandatory, minimum_inline) if value.min_inline is not None else mandatory)
+        floor_dependencies = frozenset()
+        if value.min_inline is None and source in {"title", "heading.title", "heading.kicker", "heading.subtitle"}:
+            floors = (heading_floor_references if heading_shortage else
+                      [(run.inline_size, original.figure_dependencies) for run, original in zip(measured_runs, runs)])
+            driving = [refs for size, refs in floors if size == minimum_inline]
+            if driving and all(driving) and (heading_shortage or minimum_inline > average_advance):
+                floor_dependencies = frozenset().union(*driving)
         result[source] = Measurement(
             minimum_inline, preferred_inline, preferred_inline * 2,
             min(preferred_block, minimum_text_block), preferred_block, preferred_block * 2,
@@ -376,6 +389,7 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
              stack.baselines[0] if stack else Decimal(str(first_metrics.baseline(0, float(font_size), float(line_height))))),
             (summary_flow.runs[-1].baseline if summary_flow and summary_flow.runs else
              stack.baselines[-1] if stack else Decimal(str(first_metrics.baseline(0, float(font_size), float(line_height))))),
+            figure_dependencies=floor_dependencies,
         )
         if heading_budget is not None and measured_runs and any(run.lines for run in measured_runs):
             last = measured_runs[-1]

@@ -169,5 +169,15 @@ Receipt/admission/legacy-characterization/projection/ownership92 PASS, including
 unchanged characterized Scene/SVG hashes; schema equivalence and structural
 guards PASS. P3 still needs the finite N..0 coordinator, typed dependent-fit
 admission, accepted facts and trial/budget isolation. Its checkpoint/attribution
-contract and whole-architecture review above are finalized for pre-code
-publication. No authored examples/resources changed.
+contract and whole-architecture review were published at `d84f1322` before
+admission-attribution code. Typed attribution is implemented: formatted errors
+retain the actual figure read; closed per-part references become immutable
+SourceTextRun dependencies without reparsing semantic text. Measured intrinsic
+floors retain dependencies only when no constant peer or authored minimum drives
+the floor. Measured-run/intrinsic-floor detectors issue dependent-fit failures;
+fixed/minimum/aspect/budget-closure failures remain ordinary errors.58 focused
+fit/budget tests and129 combined source/format/real-heading/projection/ownership
+tests PASS; structural guards PASS. The implementation ownership table names
+only existing modules; register the coordinator when its real module is added,
+not as a placeholder. Finite coordinator/connection/trial tests remain next.
+No authored examples/resources changed.

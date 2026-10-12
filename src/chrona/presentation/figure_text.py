@@ -77,8 +77,12 @@ def _bind(template: HeaderTemplate, figures: Mapping[str, int],
             raise FigureTextError("E_VIEW_FIGURE_UNKNOWN",
                 f"no resolved figure {figure_id!r} (known figures: {known})")
         text_format = (formats or {}).get(figure_id)
-        parts.append(format_count(figures[figure_id], text_format) if text_format is not None
-                     else str(figures[figure_id]))
+        try:
+            parts.append(format_count(figures[figure_id], text_format) if text_format is not None
+                         else str(figures[figure_id]))
+        except CountTextError as error:
+            raise CountTextError(error.code, f"figure={figure_id}; {error.detail}", value=error.value, form=error.form,
+                                 supported_range=error.supported_range, figure_id=figure_id) from error
     return "".join(parts)
 
 
