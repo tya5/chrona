@@ -3,7 +3,7 @@
 # Issue1300 — revision stability acceptance
 
 Partial implementation only; no full-issue or release acceptance.
-Current feature base READY87afea92; final release pending for H1/H2.
+Current feature base READY165587e6; final release pending for H1/H2.
 [Current work/design record](https://github.com/tya5/chrona/issues/1300#issuecomment-6095643389).
 Inspection, delta anchors and critical-first facts/order are independent of
 the unimplemented protected feasibility pass. H1/H2 previous-Scene reuse is
