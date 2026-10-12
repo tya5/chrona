@@ -106,4 +106,12 @@ Scene/ownership64 PASS; projection/relation/provenance/replay29 PASS; migrated
 axis/lane/texture/terminal148 PASS; real integration113 PASS plus one stale spy
 subsequently corrected (19 focused PASS). All46 actual public Scene/SVG pairs are
 byte-identical; disposable evidence `/tmp/chrona-1346-p1-materializers-LoMmYO`.
-No count behavior/schema/example edits. Next: P2 facts, forms and closed programs.
+P2 foundation implemented: neutral optional groups/placedNotes facts; distinct
+Primary/combined identity/group producer; shared kanji names without changing
+ordinal ranges; pure digits/padding/English/kanji forms and frozen caption
+programs. Name range errors are typed; unused formats do not require names and
+unavailable late facts remain unavailable, not zero.178 focused tests PASS;
+240 modules reachable/no orphan; import direction/value inventory PASS.
+P2 is not accepted yet: contract/schema/defaults and heading/caption connection
+remain, followed by P3 narrative receipts/count closure. No authored examples
+or resources changed; no new authoring syntax has been admitted yet.

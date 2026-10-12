@@ -1,5 +1,5 @@
 """Projection-owned figure count facts are gathered from selected ReviewItems (#927)."""
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, replace
 
 import pytest
 
@@ -52,6 +52,8 @@ def test_projected_counts_cover_each_closed_count_source_and_signed_delta_state(
         3,  # knownFinishVariance includes positive, negative and zero deltas
         1,  # behind: positive finish deltas
         1,  # ahead: negative finish deltas
+        0,  # no nonempty selected group identities
+        None,  # placed narrative is unavailable before Layout, not zero
     )
     assert counts.selected == 6
     assert counts.behind == 1
@@ -69,7 +71,17 @@ def test_zero_primary_selection_yields_zero_counts(primary_and_non_primary_items
     ghosts_only = [item for item in primary_and_non_primary_items if item.source_kind != "primary"]
     counts = projected_counts(ghosts_only, as_of_available=True)
 
-    assert tuple(counts.value(source) for source in COUNT_SOURCES) == (0,) * len(COUNT_SOURCES)
+    assert tuple(counts.value(source) for source in COUNT_SOURCES) == (0,) * (len(COUNT_SOURCES) - 1) + (None,)
+
+
+def test_selected_identities_and_groups_are_distinct_while_ghosts_do_not_count():
+    first = replace(_item("first"), group_id="a")
+    combined = replace(_item("second", source_kind="combined"), group_id="b")
+    third = _item("third")
+    ghost = replace(_item("ghost", source_kind="snapshot"), group_id="ghost")
+    counts = projected_counts((first, first, combined, combined, third, ghost), as_of_available=False)
+    assert counts.selected == 3 and counts.groups == 2
+    assert counts.placed_notes is None
 
 
 def test_count_bundle_is_frozen_and_does_not_retain_or_follow_input_sequence(primary_and_non_primary_items):
