@@ -71,6 +71,8 @@ class RelationPresentationFact:
     semantic_id: str
     label_content: tuple[str, ...] = ()
     critical: bool = False
+    source_title: str = ""
+    target_title: str = ""
 
 
 @dataclass(frozen=True)
@@ -268,6 +270,7 @@ class SurfaceContentInput:
     slot_heading_text: tuple[tuple[str, str], ...] = ()
     # Completed Scheme colours keyed by neutral axis-band placement identity (#490).
     axis_band_paints: tuple[tuple[str, str], ...] = ()
+    relation_overflow_declared: bool = False
 
 
 @dataclass(frozen=True)

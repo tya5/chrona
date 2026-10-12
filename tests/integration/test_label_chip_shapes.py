@@ -26,6 +26,8 @@ ACTUAL = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "obse
 
 def _asof_parts(shape=None, *, label="TODAY!", catalog_stroke=False, numeric_spacing=None):
     parts = use_legacy_six_tier_axis(sr.bundle("executive-light"))
+    # This chip byte control pins its unrelated routing policy.
+    parts["layout"].setdefault("relationRouting", {"maxBends": 4, "maxDetourRatio": 2})["unroutable"] = "suppress"
     # Freeze this chip fixture's table, independent of #1302's packaged count:auto.
     parts["view"]["body"]["rows"]["laneTable"]["count"] = True
     theme = parts["theme"]["body"]
@@ -228,7 +230,8 @@ def test_absent_shape_preserves_characterized_scene_and_svg_bytes(tmp_path):
     scene = serialize_scene(rendered.scene)
     # First-fit adds its completed routing receipt; SVG bytes do not change.
     assert len(scene) == 26532
-    assert sha256(scene).hexdigest() == "84afcfa59fce4404c36f4a26c28fb0fc1230224293532d4a1672e13892221f13"
+    # Explicit suppress changes only the verified Layout resource identity.
+    assert sha256(scene).hexdigest() == "d857e86d6360750db435b67ff9d4d66eed00dd0188dd864766028a08b2e55517"
     assert len(rendered.artifact.content) == 8173
     assert sha256(rendered.artifact.content).hexdigest() == "3f700aae2dd6cc1e5d42370babe2805a2231ec2c8a643eb07dc1317cc4cc7437"
 

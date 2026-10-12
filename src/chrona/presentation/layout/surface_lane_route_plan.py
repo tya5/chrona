@@ -17,7 +17,9 @@ from chrona.presentation.layout.surface_routes import (
     SurfaceRoutesBatch, SurfaceRoutesContext, compose_surface_routes,
 )
 from chrona.presentation.model.semantic_registry import semantic_binding
-from chrona.presentation.model.info_diagnostics import RelationRoutingSummary, RelationSearchBudgetHit
+from chrona.presentation.model.info_diagnostics import (
+    RelationResolutionInfo, RelationRoutingSummary, RelationSearchBudgetHit,
+)
 
 
 @dataclass(frozen=True)
@@ -39,9 +41,10 @@ class LaneRoutePlan:
 
 
 def _degraded(routes: SurfaceRoutesBatch) -> frozenset[str]:
-    """Relations that are suppressed or completed only as the visible direct fallback."""
+    """Lost or recovered relations for which normal corridor repair may win."""
     return frozenset(item.relation_id for item in routes.relations if item.suppressed) | frozenset(
-        item.relation_id for item in routes.visible_route_fallbacks)
+        item.relation_id for item in routes.visible_route_fallbacks) | frozenset(
+        item.relation_id for item in routes.resolution_info if isinstance(item, RelationResolutionInfo))
 
 
 def _rehearse(context: LaneRoutePlanContext,

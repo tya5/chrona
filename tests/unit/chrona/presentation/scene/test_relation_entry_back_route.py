@@ -111,8 +111,16 @@ def test_a_back_leg_through_a_marked_row_falls_back_with_a_diagnostic():
 
 
 @pytest.mark.parametrize("kwargs", [{"max_bends": 2}, {"max_detour": 0.5}], ids=["max-bends", "max-detour"])
-def test_a_back_route_over_the_limits_falls_back_with_a_diagnostic(kwargs):
-    points, _, diagnostics = run(A, _item("b", D(2026, 2, 8), D(2026, 2, 16)), **kwargs)
+def test_over_quality_back_route_uses_an_alternative_or_declared_suppression(kwargs):
+    target = _item("b", D(2026, 2, 8), D(2026, 2, 16))
+    if "max_detour" in kwargs:
+        points, _, diagnostics = _route((A, target), _rows((A,), (target,)), DEP, "side",
+            distribution="pack", max_detour=kwargs["max_detour"],
+            window=(D(2026, 1, 25), D(2026, 2, 25)), diagnostics=True, allow_suppressed=True)
+        assert not points
+        assert any(d.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for d in diagnostics)
+        return
+    points, _, diagnostics = run(A, target, **kwargs)
     assert not reverses(points)
     assert fell_back(diagnostics)
 
@@ -155,7 +163,7 @@ def test_the_fallback_diagnostic_names_its_reason_1084():
     _, _, blocked = _route((A, blocker, target), _rows((A,), (blocker,), (target,)), DEP, "side", distribution="pack",
                            max_detour=2.0, window=(D(2026, 1, 25), D(2026, 2, 25)), diagnostics=True,
                            allow_suppressed=True)
-    assert any(item.startswith("I_LAYOUT_RELATION_MARK_BLOCKED:") for item in blocked)
+    assert any(item.startswith("I_LAYOUT_RELATION_POLICY_SUPERSEDED:") for item in blocked)
     assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in blocked)
 
 
