@@ -2,7 +2,10 @@
 
 ## Baseline and design plan
 
-Published base: READY `133332e2833ede4423e775c1dec789db91c2d5cb`.
+Published base: READY `96244e3d056bc93feefb88a468c604c33e1266ec`, including
+reviewer PR1419 and its successful derived gate. Initial characterization used
+READY `133332e2833ede4423e775c1dec789db91c2d5cb`; current publication follows
+the updated base without developer edits to reviewer YAML or managed outputs.
 Authority: [issue 1426](https://github.com/tya5/chrona/issues/1426), including
 its revised scope and algorithm review; Specification 50 and the Layout schema.
 Stage: shape/phase and policy wiring implemented and locally verified on WIP.
