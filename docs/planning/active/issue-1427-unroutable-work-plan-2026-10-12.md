@@ -9,10 +9,12 @@ Current [Status](https://github.com/tya5/chrona/issues/1427#issuecomment-6114823
 
 Current slice: critical facts/order and typed mode admission are staged.
 Search, port admission, side-entry alternatives, reduction, primary-mark and
-corner validation now use the same stage domain. Synthetic collision-domain
-tests prove actual Scene/SVG recovery; search receipts remain separate from
-completed side-entry choices. Overlap/stubs, halo projection, stage diagnostics,
-visible-obstacle release evidence and the final default flip remain incomplete.
+corner validation now use the same stage domain. Finite fixed overlap is
+connected and never searches; paired stub geometry is independently tested.
+Synthetic collision-domain tests prove Scene/SVG recovery and quality-limit
+fallback; search receipts remain separate from completed side-entry choices.
+Stub fragments/terminal text, halo projection, stage diagnostics, visible-obstacle
+release evidence and the final default flip remain incomplete.
 This is not release acceptance. The staged default stays suppress until the
 atomic protection/recovery gate below is satisfied.
 

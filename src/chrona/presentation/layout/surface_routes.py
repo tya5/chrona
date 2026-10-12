@@ -36,6 +36,7 @@ from chrona.presentation.layout.relation_fan_in import (
     NodeApproach, complete_fan_in, same_port_arrivals, target_port_identity, terminal_style,
 )
 from chrona.presentation.layout.relation_routing_order import dependency_routing_order
+from chrona.presentation.layout.relation_fallback import complete_fixed_connector
 from chrona.presentation.layout.relation_resolution import (
     RelationObstacleDomain, RelationResolutionStage, RelationRouteAttemptOutcome,
     relaxed_domain, search_relation_resolution,
@@ -647,6 +648,30 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                                      f"{context.progress_pass}:{item.stage.value}")
                         budget_hits.append(RelationSearchBudgetHit("table-timeline", scene_id,
                             pass_name, selection.search_budget, selection.search_expansions))
+                if resolution.terminal_fallback is RelationResolutionStage.OVERLAP:
+                    host_domain = relaxed_domain(obstacles, RelationResolutionStage.MARKS, endpoint_hosts)
+                    domain = RelationObstacleDomain(RelationResolutionStage.OVERLAP,
+                        host_domain.obstacles, host_domain.required_primary_mark_ids)
+                    entries = (entry_candidates(target_mark, relation.target_endpoint, source_nominal,
+                        comparison_clusters.get((target_mark.source_ref, instance_rows[target_id]), ()),
+                        relation, entry="side", domain=domain) if target_mark else
+                        (ConnectorEgress(relation.target_endpoint, target_nominal, target_nominal, ()),))
+                    fixed_pairs = tuple((left, right) for left in source_candidates for right in entries)
+                    source_run = dependency_stroke + terminal_length(marker_start)
+                    target_run = dependency_stroke + terminal_length(marker_end)
+                    fixed = complete_fixed_connector(fixed_pairs, source_run=source_run, target_run=target_run,
+                        prepare=lambda candidate, source_exit, target_entry: prepare_route(candidate,
+                            dependency_stroke, (*source_exit.host_ids, *target_entry.host_ids),
+                            source_exit.side, target_entry.side, domain=domain,
+                            start_minimum=hypot(source_exit.exposed_port[0] - source_exit.semantic_port[0],
+                                                source_exit.exposed_port[1] - source_exit.semantic_port[1]) + source_run,
+                            end_minimum=hypot(target_entry.exposed_port[0] - target_entry.semantic_port[0],
+                                              target_entry.exposed_port[1] - target_entry.semantic_port[1]) + target_run),
+                        accept=lambda candidate: not route_self_overlaps(candidate)
+                            and terminal_segments_fit(candidate, dependency_stroke))
+                    if fixed is not None:
+                        selected_pair, points = fixed.selected_pair, fixed.points
+                        lane_selection = None
                 fallback = selected_pair is None
                 if fallback:
                     if request.surface_content.relation_overflow == "suppress":
@@ -689,7 +714,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 source_egress, target_egress = selected_pair
                 source_port_id = f"{source_id}:{relation.source_endpoint}:{source_egress.side}"
                 target_port_id = target_port(relation, target_id, target_mark, target_egress)
-                radius = float(context.metric_values.get("timeline.relation.cornerRadius", 0))
+                radius = (0.0 if domain.stage is RelationResolutionStage.OVERLAP else
+                          float(context.metric_values.get("timeline.relation.cornerRadius", 0)))
                 # Entry eligibility concerns the complete semantic corridor,
                 # including the part subsequently occupied by a round head.
                 side_entry_satisfied = enters_along(relation, points)
