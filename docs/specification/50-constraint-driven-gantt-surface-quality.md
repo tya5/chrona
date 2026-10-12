@@ -455,16 +455,36 @@ never execute a recovery stage. Each attempted stage has fresh per-instance/pass
 search state and budget; first-fit cheap/exact phases share that stage's ceiling.
 No surface replay or reset of a ceiling within one stage is permitted.
 
+Under `best`, successful non-normal recovery in a lane rehearsal is still
+degraded for the existing corridor planner. If moving optional names can restore
+a normal route without suppressing any shown name, prefer that normal completion
+before unsafe recovery. The reference and reservation trials retain their own
+budgets and common validators. `first-fit` still skips this rehearsal; explicit
+`overlap` and `stub` intentionally select their fixed completion policies.
+
 If all relax searches fail, attempt the preferred fixed overlap shape, then
 paired terminal stubs when full-route endpoint egress cannot be completed.
 `overlap` goes directly to fixed end-side/start-side orthogonal L/Z geometry,
 ignoring non-host obstacles and quality limits; it uses the same terminal
 fallback if endpoint egress fails. `stub` completes an independent short
-connector at each endpoint with `→ <target title>` / `<source title> →` text.
+connector at each endpoint with `-> <target title>` / `<source title> ->` text.
+Use these ASCII direction tokens rather than requiring a Unicode arrow glyph
+in every author's font stack; endpoint titles retain their normal font policy.
 Layout measures and places these with the existing terminal/text primitives;
 it does not present the pair as a connected safe route. Both fragments belong
 to one resolved relation instance and are counted once. Terminal labels must
 not silently disappear; their declared visible-overflow treatment is inspectable.
+Stub geometry also uses visible overflow: once both semantic endpoints are
+admitted, insufficient plot-edge clearance must not silently erase a fragment
+or its terminal. Layout completes each endpoint independently against its own
+hosts, preserving temporal anchors and terminal fit, and expands the completed
+canvas when necessary. It does not clip a stub as though it were a full route.
+Scene fragments omit paired graph-instance references: the existing Scene
+contract requires both references or neither, and neither fragment is a full
+connected edge. Layout retains each actual endpoint in its typed fragment
+placement. Shared relation provenance and terminal text retain the linkage
+without falsely declaring a connected source-to-target route. These are ordinary
+completed path/text primitives, not a new Scene schema or scheduling edge.
 Finite fallback is not evidence of safety, completeness or a clean route.
 
 All three non-suppress modes retain the relation's visible representation.
@@ -485,6 +505,14 @@ Theme's surface-ground colour through `dependency-halo`, immediately beneath
 the line; line and halo paint below text. The halo is decoration, not a data
 mark or a contrast-floor exemption. Theme resolves paint, Layout resolves
 geometry/order, Scene projects, adapters serialize without inferred routing.
+The halo copies the completed centreline and curve commands, without terminal
+markers or graph endpoint references. Theme resolves its colour from
+`background.fill`. Its stroke width is `dependency-halo.strokeWidth` when
+declared, otherwise three times the selected dependency role's stroke width;
+it must exceed that line's width. Layout closes these dimensions, uses the
+line's clip, and orders the halo immediately below its line (which remains
+below text). Every non-normal completed recovery receives this treatment,
+including each fragment of a paired stub; counts still refer to instances.
 
 The reviewer declares explicit suppress on the five approved targets before
 the default flips. An explicit resource edit retains truthful identity changes;

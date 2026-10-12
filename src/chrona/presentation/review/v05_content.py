@@ -286,6 +286,10 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     relation_content = (tuple(str(item) for item in relation_value.get("content", ()))
                         if isinstance(relation_value, Mapping) else ())
     critical_objects = frozenset(item.object_id for item in projection.items if item.critical)
+    endpoint_titles = {item.object_id: item.title for item in projection.items}
+    endpoint_titles.update({identity: str(value.get("title", identity))
+                           for identity, value in project.get("objects", {}).items()
+                           if identity not in endpoint_titles})
     def relation_fact(index: int, relation: Mapping[str, Any], semantic_id: str) -> RelationPresentationFact:
         source, target = relation["from"], relation["to"]
         lag = relation.get("lag", "0d")
@@ -294,7 +298,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         return RelationPresentationFact(relation_identity(index, relation), str(source["object"]), str(source.get("endpoint", "end")),
                                         str(target["object"]), str(target.get("endpoint", "start")), lag,
                                         str(lag.get("calendar")) if isinstance(lag, Mapping) and lag.get("calendar") is not None else None,
-                                        semantic_id, relation_content, critical=critical)
+                                        semantic_id, relation_content, critical=critical,
+                                        source_title=str(endpoint_titles.get(source["object"], source["object"])),
+                                        target_title=str(endpoint_titles.get(target["object"], target["object"])))
     if relation_mode == "critical":
         relations = tuple(relation_fact(index, relation, "dependency-critical")
                           for index, relation in enumerate(project.get("relations", ()))
@@ -377,6 +383,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                show_member_labels=label_placement in {"plot", "legacy"}, label_placement=label_placement, label_content=label_content,
                                label_side=label_side,
                                label_overflow=label_overflow, relation_overflow=relation_overflow,
+                               relation_overflow_declared=isinstance(relation_value, Mapping) and "overflow" in relation_value,
                                group_presentation=group_presentation,
                                axis_tiers=axis_tiers, axis_fiscal_start_month=fiscal_start_month,
                                as_of=as_of, as_of_label=_as_of_label(as_of_marker, as_of, locale),

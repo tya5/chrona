@@ -27,6 +27,16 @@ OUTPUT = Path("docs/diagnostics/presentation-contrast.md")
 
 OPT_IN = Path("conformance/contrast-opt-in.yaml")
 
+# Spec46: optional recovery has no truthful public witness until it is used.
+# This is coverage evidence, never an exemption from emitted-paint evaluation.
+SYNTHETIC_DECORATION_COVERAGE = {
+    "dependency-halo": (
+        "tests/integration/test_unroutable_visible_obstacle.py",
+        "tests/integration/test_relation_resolution_wiring.py",
+        "tests/unit/chrona/presentation/scene/test_contrast_policy.py",
+    ),
+}
+
 
 def load_opt_in(root: Path = ROOT) -> frozenset[str]:
     """The Theme ids the repository holds to the contrast floors (#1126); none when the registry is absent."""
@@ -118,7 +128,11 @@ def report_document(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
         {"row-band", "row-rule"},
     )
     concept_members = frozenset().union(*coverage_concepts)
-    required_singly = decoration_roles - concept_members
+    synthetic_coverage = [{"role": role, "tests": list(tests)}
+                          for role, tests in sorted(SYNTHETIC_DECORATION_COVERAGE.items())
+                          if role in decoration_roles and role not in corpus_roles]
+    required_singly = decoration_roles - concept_members - {
+        item["role"] for item in synthetic_coverage}
     witnesses = sorted(scene for scene, roles in by_scene.items() if roles == decoration_roles)
     corpus_errors = [] if (required_singly <= corpus_roles
                           and all(group & corpus_roles for group in coverage_concepts)) else [
@@ -136,7 +150,8 @@ def report_document(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
                      "errorCount": entry["errors"]} for theme, entry in sorted(free.items())]
     return {"version": "chrona/presentation-contrast/v1", "rows": rows, "notOptedIn": not_opted_in,
             "findings": ordered,
-            "witnessScenes": witnesses, "corpusErrors": corpus_errors,
+            "witnessScenes": witnesses, "syntheticCoverage": synthetic_coverage,
+            "corpusErrors": corpus_errors,
             "errorCount": sum(item["finding"]["severity"] == "error" for item in ordered) + len(corpus_errors),
             # A decoration below its floor is a warning (#995): counted and listed, never a failure.
             "warningCount": sum(item["finding"]["severity"] == "warning" for item in ordered),
@@ -183,10 +198,13 @@ def render_markdown(report: Mapping[str, Any]) -> str:
                   *(f"| `{row['theme']}` | {row['sceneCount']} | {row['warningCount']} | {row['errorCount']} |"
                     for row in report.get("notOptedIn", ()))))
     lines.extend(("", "## Decoration corpus witness", "",
-                  "Every independently required decoration role is enabled in committed Scene evidence; "
+                  "Every independently required decoration role has committed Scene or explicit synthetic evidence; "
                   "group-band, group-header-band or group-header-strip supplies the group concept, and row-band or row-rule supplies "
                   "the row concept when there are no corpus errors.", "",
                   *(f"- `{scene}`" for scene in report["witnessScenes"]),
+                  *(f"- Synthetic `{item['role']}` (no public use): "
+                    + ", ".join(f"`{test}`" for test in item["tests"])
+                    for item in report["syntheticCoverage"]),
                   *(f"- ERROR `{code}`" for code in report["corpusErrors"]),
                   "", f"Findings: {report['findingCount']}; errors: {report['errorCount']}; "
                       f"warnings: {report['warningCount']}.", ""))

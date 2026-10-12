@@ -17,7 +17,8 @@ from tests.support.legacy_axis import use_legacy_six_tier_axis
 # All four entries/indexes/leaders remain present; first-fit adds a routing receipt.
 # #1343 closes natural measurements from resolved annotation/unconsumed-note
 # content. Slot metadata changes; every visible SVG byte remains identical.
-NO_SUPPRESSION_SCENE_SHA256 = "31d97854aa0fea7de000fdfb274c2b332b87eaf13fcae40c2e385e6beb39675b"
+# Explicit suppress changes only the independently verified Layout identity.
+NO_SUPPRESSION_SCENE_SHA256 = "0a9c4ae45bbc6c0b4e957b9b1bbf675a71d985cf62d81d16d26d064d7d0ff497"
 NO_SUPPRESSION_SVG_SHA256 = "3e9593666a8f1e60d9180ca6f9697e0ff912626fbe565080edbf5a57d9c5c5ce"
 
 
@@ -30,6 +31,7 @@ def _fixture():
         for index in range(4)
     })
     parts = use_legacy_six_tier_axis(sr.bundle())
+    parts["layout"].setdefault("relationRouting", {"maxBends": 4, "maxDetourRatio": 2})["unroutable"] = "suppress"
     parts["view"] = sr.lane_view(parts["view"])
     sr.add_notes(
         source, parts["view"], [f"gate-{index}" for index in range(4)],

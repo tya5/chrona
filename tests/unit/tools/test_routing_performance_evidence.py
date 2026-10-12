@@ -8,7 +8,7 @@ from tools.routing_performance_evidence import route_delta
 
 
 def scene(*paths):
-    return {'surfaces': [{'primitives': [
+    return {'surfaces': [{'id': 'surface', 'primitives': [
         {'id': identifier, 'kind': 'Path', 'sourceKind': 'relation', 'points': points}
         for identifier, points in paths]}]}
 
@@ -25,6 +25,34 @@ def test_route_deltas_include_changed_added_removed_and_signed_metrics():
 def test_unchanged_routes_have_zero_delta():
     value = scene(('relation:synthetic', [(0, 0), (3, 0)]))
     assert not any(route_delta(value, value).values())
+
+
+def test_resolution_counts_ignore_halos_and_count_paired_stubs_once():
+    value = scene(('normal', [(0, 0), (3, 0)]),
+                  ('r:stub-source', [(0, 0), (1, 0)]), ('r:stub-target', [(2, 0), (3, 0)]))
+    value['surfaces'][0]['id'] = 'surface'
+    value['surfaces'][0]['primitives'].append({
+        'id': 'normal:halo', 'kind': 'Path', 'sourceKind': 'decoration', 'points': [(0, 0), (3, 0)]})
+    value['diagnostics'] = [
+        'I_LAYOUT_RELATION_RESOLUTION:' + json.dumps({
+            'surfaceId': 'surface', 'relationId': 'r', 'stage': 'stub', 'critical': True}),
+        'I_LAYOUT_RELATION_RESOLUTION_SUMMARY:' + json.dumps({
+            'surfaceId': 'surface', 'count': 1, 'stages': {'stub': 1}})]
+    result, = evidence.resolution_counts(value)
+    assert result['relationInstances'] == 2
+    assert result['stages']['normal'] == result['stages']['stub'] == 1
+    value['surfaces'][0]['primitives'].pop(2)
+    with pytest.raises(ValueError, match='no complete projected relation'):
+        evidence.resolution_counts(value)
+
+
+def test_resolution_summary_cannot_inflate_the_completed_count():
+    value = scene(('r', [(0, 0), (3, 0)]))
+    value['surfaces'][0]['id'] = 'surface'
+    value['diagnostics'] = ['I_LAYOUT_RELATION_RESOLUTION_SUMMARY:' + json.dumps({
+        'surfaceId': 'surface', 'count': 1, 'stages': {'overlap': 1}})]
+    with pytest.raises(ValueError, match='summary disagrees'):
+        evidence.resolution_counts(value)
 
 
 def test_characterization_uses_real_materializer_and_records_only_evidence_mismatch(tmp_path, monkeypatch):

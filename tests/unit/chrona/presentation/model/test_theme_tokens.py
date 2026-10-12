@@ -25,6 +25,28 @@ def test_typed_view_reads_current_resolved_theme_roles_only():
     assert tokens.text_treatment("text").font_size == Decimal(14)
 
 
+@pytest.mark.parametrize("declared,expected", ((None, 6), (8, 8)))
+def test_dependency_halo_width_is_theme_owned(declared, expected):
+    theme = _theme()
+    theme["body"]["values"]["stroke"] = {"type": "number", "value": 2}
+    theme["body"]["roles"]["dependency"] = {"strokeWidth": "stroke"}
+    if declared is not None:
+        theme["body"]["values"]["halo"] = {"type": "number", "value": declared}
+        theme["body"]["roles"]["dependency-halo"] = {"strokeWidth": "halo"}
+    assert ThemeTokenView(theme).dependency_halo_width("dependency") == expected
+
+
+@pytest.mark.parametrize("width", (-1, 0, 1, 2))
+def test_dependency_halo_must_be_wider_than_its_line(width):
+    theme = _theme()
+    theme["body"]["values"].update({
+        "stroke": {"type": "number", "value": 2}, "halo": {"type": "number", "value": width}})
+    theme["body"]["roles"].update({
+        "dependency": {"strokeWidth": "stroke"}, "dependency-halo": {"strokeWidth": "halo"}})
+    with pytest.raises(ThemeTokenError, match="E_THEME_VALUE_TYPE"):
+        ThemeTokenView(theme).dependency_halo_width("dependency")
+
+
 def test_has_binding_checks_exact_role_property_without_resolving_or_falling_back():
     theme = _theme()
     theme["body"]["roles"]["gate"] = {"stroke": "missing-color"}
