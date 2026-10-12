@@ -17,7 +17,7 @@ from chrona.presentation.layout.surface_routes import (
     SurfaceRoutesBatch, SurfaceRoutesContext, compose_surface_routes,
 )
 from chrona.presentation.model.semantic_registry import semantic_binding
-from chrona.presentation.model.info_diagnostics import RelationSearchBudgetHit
+from chrona.presentation.model.info_diagnostics import RelationRoutingSummary, RelationSearchBudgetHit
 
 
 @dataclass(frozen=True)
@@ -35,7 +35,7 @@ class LaneRoutePlan:
 
     reservations: tuple[SurfaceObstacle, ...] = ()
     protected: tuple[str, ...] = ()
-    routing_info: tuple[RelationSearchBudgetHit, ...] = ()
+    routing_info: tuple[RelationRoutingSummary | RelationSearchBudgetHit, ...] = ()
 
 
 def _degraded(routes: SurfaceRoutesBatch) -> frozenset[str]:

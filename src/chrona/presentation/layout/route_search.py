@@ -225,8 +225,9 @@ def _build_sparse_graph(
     bounds: tuple[float, float, float, float] | None,
     clear,
     visibility_base: _VisibilityBase | None = None,
+    exact_bound: bool = True,
 ) -> SparseGraph:
-    """Build an immutable finite visibility graph and its reverse heuristic."""
+    """Build immutable visibility geometry, optionally with an exact reverse bound."""
     boxes = rects
     x_events: set[float] = {start[0], end[0]}
     y_events: set[float] = {start[1], end[1]}
@@ -295,6 +296,11 @@ def _build_sparse_graph(
         neighbors.sort(key=lambda entry: (ordered[entry[0]], entry[1], entry[2]))
     adjacency = tuple(tuple(neighbors) for neighbors in adjacency_lists)
 
+    return ordered, adjacency, _reverse_bounds(adjacency, target) if exact_bound else ()
+
+
+def _reverse_bounds(adjacency, target):
+    """Exact lexicographic bounds; first-fit graph preparation omits this work."""
     # Reverse Dijkstra over directed-node states supplies an admissible
     # lexicographic lower bound without discarding path-dependent histories.
     reverse: dict[tuple[int, int], list[tuple[tuple[int, int], int, float]]] = {}
@@ -320,7 +326,7 @@ def _build_sparse_graph(
             if candidate < remaining.get(predecessor, (float("inf"), float("inf"))):
                 remaining[predecessor] = candidate
                 heappush(reverse_queue, (candidate[0], candidate[1], predecessor))
-    return ordered, adjacency, tuple(sorted(remaining.items()))
+    return tuple(sorted(remaining.items()))
 
 
 def orthogonal_route_candidates(
@@ -337,6 +343,7 @@ def orthogonal_route_candidates(
     regions: tuple[str, ...] | None = None,
     initial_direction: int = -1,
     budget: RelationExpansionBudget | None = None,
+    exact_bound: bool = True,
 ) -> Iterator[Path]:
     """Yield deterministic orthogonal paths from a finite sparse event graph.
 
@@ -345,13 +352,17 @@ def orthogonal_route_candidates(
     is shared by the whole iterator; if a consumer asks for another candidate
     after the limit is reached, ``RouteSearchFailure`` reports that the bounded
     frontier was not exhausted.
+    First-fit may request an obstacle-independent Manhattan/minimum-turn bound
+    with ``exact_bound=False``; canonical prefix histories remain distinct.
     """
     if (len(start) != 2 or len(end) != 2
             or not all(isfinite(value) for value in (*start, *end))
             or not isfinite(grid_offset) or grid_offset < 0
             or (bend_penalty is not None and (not isfinite(bend_penalty) or bend_penalty < 0))
             or isinstance(limit, bool) or not isinstance(limit, int) or limit < 1
-            or initial_direction not in {-1, 0, 1}):
+            or initial_direction not in {-1, 0, 1}
+            or not isinstance(exact_bound, bool)
+            or (not exact_bound and bend_penalty is not None)):
         raise ValueError(
             "E_LAYOUT_ROUTE_SEARCH_INPUT: start/end must be finite 2D points; grid_offset and bend_penalty "
             "must be finite and non-negative; limit must be a positive integer; initial_direction must be -1, 0, or 1."
@@ -442,6 +453,8 @@ def orthogonal_route_candidates(
             frozenset(port_ids), None if classes is None else frozenset(classes),
             None if regions is None else frozenset(regions),
         )
+        if not exact_bound:
+            graph_key = (*graph_key, "manhattan-minimum-turn-v1")
         graph = memo.results.get(graph_key)
     else:
         graph = None
@@ -467,7 +480,7 @@ def orthogonal_route_candidates(
                 scope.bases[base_key] = visibility_base
         graph = _build_sparse_graph(
             start, end, event_rects, grid_offset=grid_offset, bounds=bounds, clear=clear,
-            visibility_base=visibility_base)
+            visibility_base=visibility_base, **({"exact_bound": False} if not exact_bound else {}))
         if memo is not None and graph_key is not None:
             nodes, edges, heuristic = graph
             records = 1 + 2 * len(nodes) + sum(map(len, edges)) + len(heuristic)
@@ -489,6 +502,13 @@ def orthogonal_route_candidates(
     def lower_bound(node: int, direction: int) -> tuple[int, float]:
         if node == target:
             return (0, 0.0)
+        if not exact_bound:
+            x, y = ordered[node]
+            horizontal, vertical = x != end[0], y != end[1]
+            turns = int((horizontal and vertical)
+                        or (horizontal and direction == 1)
+                        or (vertical and direction == 0))
+            return turns, abs(x - end[0]) + abs(y - end[1])
         if direction in (0, 1):
             return remaining.get((node, direction), (float("inf"), float("inf")))
         # The initial state has no incoming direction, so its first edge costs
@@ -558,7 +578,7 @@ def orthogonal_route_candidates(
         for neighbor, next_direction, distance in adjacency[node]:
             if neighbor in path:
                 continue
-            if bend_penalty is None and (neighbor, next_direction) not in remaining:
+            if exact_bound and bend_penalty is None and (neighbor, next_direction) not in remaining:
                 continue
             segment = (ordered[node], ordered[neighbor])
             if history.intersects(segment):

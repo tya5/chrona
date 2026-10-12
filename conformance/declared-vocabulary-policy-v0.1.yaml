@@ -1,5 +1,10 @@
 version: chrona/declared-vocabulary-policy/v0.1
 vocabularies:
+  - schema: schemas/layout-profile-v0.10.schema.yaml
+    pointer: /properties/relationRouting/properties/search
+    owner: chrona.presentation.layout.routing.select_relation_route
+    disposition: finite
+    accepted: [first-fit, best]
   - schema: schemas/theme-v0.15.schema.yaml
     pointer: /properties/body/properties/values/additionalProperties/allOf/1/then/properties/value/properties/shape
     owner: chrona.presentation.layout.relation_terminals.marker_geometry
