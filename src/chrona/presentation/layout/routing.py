@@ -9,7 +9,7 @@ from math import hypot, isfinite
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.obstacles import ObstacleSegment, SurfaceObstacleIndex
 from chrona.presentation.layout.ports import ConnectorEgress
-from chrona.presentation.layout.route_search import RouteSearchFailure
+from chrona.presentation.layout.route_search import RelationExpansionBudget, RouteSearchFailure
 from chrona.presentation.layout.relation_shapes import (
     RelationShapeChannels, first_fit_port_pairs, relation_shape_candidates, shape_channels,
 )
@@ -353,9 +353,23 @@ class RelationRouteSelection:
     attempts: tuple[RouteAttemptEvidence, ...]
     settled_by_shape: bool = False
     search_used: bool = False
+    search_budget: int | None = None
+    search_expansions: int = 0
+
+    @property
+    def budget_hit(self) -> bool:
+        return self.search_budget is not None and self.search_expansions == self.search_budget
 
     def __post_init__(self) -> None:
         accepted = tuple(item for item in self.attempts if item.outcome == "accepted")
+        if (isinstance(self.search_expansions, bool) or not isinstance(self.search_expansions, int)
+                or self.search_expansions < 0
+                or (self.search_budget is None and self.search_expansions != 0)
+                or (self.search_budget is not None and (
+                    isinstance(self.search_budget, bool) or not isinstance(self.search_budget, int)
+                    or self.search_budget < 1 or self.search_expansions > self.search_budget))):
+            raise _route_attempt_error("search budget receipt", budget=self.search_budget,
+                                       expansions=self.search_expansions)
         if (not isinstance(self.settled_by_shape, bool) or not isinstance(self.search_used, bool)
                 or (self.settled_by_shape and self.selected_pair is None)
                 or not self.attempts or len(accepted) > 1
@@ -381,6 +395,7 @@ def select_relation_route(
     rank: Callable[[tuple[tuple[float, float], ...], ConnectorEgress, ConnectorEgress], tuple] | None = None,
     search_policy: str = "best",
     channels: RelationShapeChannels | None = None,
+    search_budget: int | None = None,
 ) -> RelationRouteSelection:
     """Measure eligibility, then select by the caller's stable rank when supplied.
 
@@ -411,6 +426,13 @@ def select_relation_route(
     chosen_points = ()
     chosen_attempt = -1
     search_used = False
+    budget = RelationExpansionBudget(search_budget) if search_budget is not None else None
+
+    def result(pair, points, evidence, *, shaped=False):
+        return RelationRouteSelection(pair, tuple(points), tuple(evidence),
+            settled_by_shape=shaped, search_used=search_used,
+            search_budget=search_budget, search_expansions=budget.expansions if budget is not None else 0)
+
     quota, remainder = divmod(RELATION_SEARCH_EXPANSIONS, len(port_pairs))
     for pair_index, (source, target) in enumerate(port_pairs):
         blockers = tuple(sorted({item.placement_id for egress in (source, target)
@@ -438,8 +460,7 @@ def select_relation_route(
                 max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
                 limit=pair_limit, candidate_paths=shapes)
             if shaped.outcome == "accepted":
-                return RelationRouteSelection((source, target), tuple(shaped_points), (*attempts, shaped),
-                                              settled_by_shape=True, search_used=search_used)
+                return result((source, target), shaped_points, (*attempts, shaped), shaped=True)
         if pair_limit == 0:
             attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
                                                  search_failure="E_PRESENTATION_ROUTE_LIMIT"))
@@ -448,11 +469,11 @@ def select_relation_route(
         measured, points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
             port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
             max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
-            limit=pair_limit)
+            limit=pair_limit, **({"budget": budget} if budget is not None else {}))
         attempts.append(measured)
         if measured.outcome == "accepted":
             if rank is None or search_policy == "first-fit":
-                return RelationRouteSelection((source, target), tuple(points), tuple(attempts), search_used=search_used)
+                return result((source, target), points, attempts)
             score = rank(tuple(points), source, target)
             if best is None or score < best:
                 if chosen_attempt >= 0:
@@ -460,11 +481,14 @@ def select_relation_route(
                 best, chosen, chosen_points, chosen_attempt = score, (source, target), tuple(points), len(attempts) - 1
             else:
                 attempts[-1] = replace(measured, outcome="eligible-not-selected")
-    return RelationRouteSelection(chosen, chosen_points, tuple(attempts), search_used=search_used)
+        if budget is not None and budget.hit:
+            break
+    return result(chosen, chosen_points, attempts)
 
 
 def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, classes, regions,
-                           max_bends, max_detour_ratio, prepare, accept, limit, candidate_paths=None):
+                           max_bends, max_detour_ratio, prepare, accept, limit, candidate_paths=None,
+                           budget=None):
     """Search alternatives for one pair; only completed, safe paths reach quality selection."""
     from chrona.presentation.layout.route_search import orthogonal_route_candidates
 
@@ -473,7 +497,8 @@ def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, class
     disposition = "bounded-candidates-exhausted"
     try:
         candidates = (orthogonal_route_candidates(source.exposed_port, target.exposed_port, obstacles,
-            bounds=bounds, port_ids=port_ids, classes=classes, regions=regions, limit=limit)
+            bounds=bounds, port_ids=port_ids, classes=classes, regions=regions, limit=limit,
+            **({"budget": budget} if budget is not None else {}))
             if candidate_paths is None else candidate_paths)
         for middle in candidates:
             points = []

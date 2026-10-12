@@ -180,6 +180,14 @@ schema, adapter geometry, cache-dependent allowance or project-specific rule.
    migration and current-head/exact-main CI gates. No issue closure or default
    flip from foundation tests alone. Approximate-search disposition is separate.
 
+Foundation implemented: expansion counters are charged before seed/frontier
+processing, shared across pairs and frozen into selection receipts. Exhaustion
+stops pair selection without discarding a previously accepted route; shapes
+charge zero. Focused iterator/selection/history/memo tests cover early close,
+exact ceiling, cached graphs, rejected candidates, preserved rank winners and
+nonbinding-budget legacy equality. Public profile/diagnostic wiring is next;
+there is not yet an authored `searchBudget` property.
+
 ### Wiring implementation plan
 
 1. Add the shared vocabulary/frozen definition and optional Layout schema
