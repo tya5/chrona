@@ -1,12 +1,14 @@
 """Developer CLI for disposable public-materializer policy characterization.
 
-The normalization override isolates routing behavior with unchanged resource
+The default case uses the real materializer without a normalization override.
+Explicit-policy normalization isolates routing behavior with unchanged resource
 bytes/identities. This is NOT evidence of authored best declarations or their
 provenance migration; those must be reviewed separately on the publication PR.
 """
 from __future__ import annotations
 
 import argparse
+from contextlib import nullcontext
 from concurrent.futures import ProcessPoolExecutor
 from hashlib import sha256
 import json
@@ -54,7 +56,9 @@ def characterize(task):
         return original(*args, **kwargs)
     output = root / policy / manifest_path.parent.name / slide_id
     mismatch = False
-    with patch.object(engine, 'LayoutManifest', side_effect=selected):
+    context = (nullcontext() if policy == 'default' else
+               patch.object(engine, 'LayoutManifest', side_effect=selected))
+    with context:
         try:
             materialize(manifest_path, slide_id, output, write=False)
         except MaterializationError as error:
@@ -82,7 +86,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output-dir', type=Path, required=True)
     parser.add_argument('--jobs', type=int, default=4)
-    parser.add_argument('--policies', nargs='+', choices=('best', 'first-fit'), default=('best', 'first-fit'),
+    parser.add_argument('--policies', nargs='+', choices=('default', 'best', 'first-fit'), default=('default', 'best'),
                         help='Use first-fit only when unchanged-input best evidence is already batched separately.')
     args = parser.parse_args()
     if args.jobs < 1:

@@ -144,7 +144,7 @@ class LayoutManifest:
     background_extents: Mapping[str, str] = field(default_factory=dict)
     member_names: Mapping[str, Any] = field(default_factory=dict)
     fit_warnings: tuple[FitWarning, ...] = ()
-    relation_search: str = "best"
+    relation_search: str = "first-fit"
     relation_search_budget: int | None = None
 
     def canonical_bytes(self, precision: int = 3) -> bytes:

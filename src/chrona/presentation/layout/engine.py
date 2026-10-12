@@ -1012,7 +1012,7 @@ def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float
         relation_max_bends=int(relation_routing.get("maxBends", 4)),
         relation_max_detour_ratio=float(relation_routing.get("maxDetourRatio", 2.0)),
         relation_entry=str(relation_routing.get("entry", "side-when-free")),
-        relation_search=str(relation_routing.get("search", "best")),
+        relation_search=str(relation_routing.get("search", "first-fit")),
         relation_search_budget=(int(relation_routing["searchBudget"])
                                 if "searchBudget" in relation_routing else None),
         annotation_max_bends=int(annotation_routing["maxBends"]),

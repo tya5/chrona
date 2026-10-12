@@ -375,11 +375,10 @@ Under `first-fit`, required labels precede routing; member names and finish
 deltas yield to completed routes. Skip lane-route rehearsal and post-route
 label recovery; do not replay composition in Scene or adapters.
 
-Migration: the first additive release keeps omitted `search` equal to `best`.
-After the reviewer declares `best` on the five approved HALCYON targets and that
-change is on main, a coordinated release changes omission to `first-fit`.
-An explicit `best` retains its output across the flip. This temporary default
-is not final acceptance of #1430. No authored example is edited by dev A.
+Omitted `search` means `first-fit`. Authors requiring legacy ranked output
+declare `best`; its canonical manifest representation and output remain
+unchanged. The five approved HALCYON targets explicitly declare `best` before
+this default changes. No authored example is edited by dev A.
 
 **Explicit search budget (#1426).**
 Optional `relationRouting.searchBudget` is a positive integer, an additional

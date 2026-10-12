@@ -16,9 +16,19 @@ def _profile(budget=None):
     return value
 
 
-def test_omitted_budget_preserves_manifest_bytes():
+def test_omitted_search_is_first_fit_without_an_implicit_budget():
     manifest = solved(_profile())
     assert manifest.relation_search_budget is None
+    assert manifest.relation_search == "first-fit"
+    assert json.loads(manifest.canonical_bytes())["relationRouting"] == {
+        "maxBends": 4, "maxDetourRatio": 2.0, "search": "first-fit"}
+
+
+def test_explicit_best_keeps_legacy_canonical_representation():
+    value = _profile()
+    value["relationRouting"] = {"maxBends": 4, "maxDetourRatio": 2, "search": "best"}
+    manifest = solved(value)
+    assert manifest.relation_search == "best"
     assert json.loads(manifest.canonical_bytes())["relationRouting"] == {
         "maxBends": 4, "maxDetourRatio": 2.0}
 
