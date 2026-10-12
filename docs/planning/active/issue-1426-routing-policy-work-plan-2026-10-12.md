@@ -85,8 +85,9 @@ returns46/46 full Scene/SVG byte identity (no normalization override). Schema
 equivalence passes: one additive Layout schema,37 equal; required stale1343
 delta retirement is unchanged. Structure/schema/vocabulary guards:190 PASS.
 19/10 repeats: CPU1.48/1.66s, hashes identical.200/46: CPU32.056357/31.160932s,
-hashes identical.1000/228 first run: CPU813.344333s, wall964.490813s,
-RSS216743936 bytes, exit0; second repeat is running. The60-second target is
+hashes identical.1000/228: CPU813.344333/810.766526s,
+wall964.490813/954.721488s, RSS216743936/233078784 bytes, both exit0;
+full Scene/SVG repeat hashes are identical. The60-second target is
 NOT met. Retained200 profiling identifies sparse graph construction, not
 contrast, as the remaining dominant cost. Local disposable evidence:
 `/tmp/chrona-1426-single-policy-762vaN`,
@@ -98,6 +99,6 @@ diagnostic code-site inventory diff. Derived-sync38195708622 passed and publishe
 READY `7c962d65f29c10d53b0156563d0a0f2e8f29c403`; the current documentation
 branch adopts that base by ordinary merge. Release review:
 [literal acceptance](../../reviews/current/issue-1426-routing-performance-budget-acceptance-review-2026-10-12.md).
-Finish repeat evidence and publish the review in the session documentation batch;
+Repeat evidence is complete. Publish the review in the session documentation batch;
 close only after containing-review exact-main full release. M2 performance is
 not completed by the narrower measurement/reporting criterion.
