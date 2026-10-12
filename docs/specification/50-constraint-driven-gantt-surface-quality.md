@@ -417,9 +417,76 @@ these facts and CLI/MCP expose severity `info`. No Scene schema, geometry or
 resource identity input is added. Until #1427 lands, an absent accepted route
 uses the existing suppression/fallback contract and diagnostics.
 
-View relation intent becomes `none` or an object with `mode: semantic` and `overflow: suppress | visible-overflow`. Layout Profile adds `relationRouting.maxBends` and `relationRouting.maxDetourRatio` numeric geometry policy.
+**Declared unroutable resolution (#1427; implementation pending).**
+For table-timeline spatial routing, Layout Profile `relationRouting.unroutable`
+selects `relax` (default), `overlap`, `stub`, or `suppress`. View still owns
+relation selection/admission; its `visibility.relations.overflow` continues to
+govern non-spatial admission and the dependency-network surface. The field
+continues to validate. When Layout changes its effective spatial meaning, one
+info diagnostic identifies the old View value and superseding Layout member;
+an agreeing suppress declaration has no migration notice or byte change.
 
-Layout routes between completed ports through deterministic orthogonal candidates. A route is acceptable when it stays in the timeline, avoids required obstacles, has at most `maxBends`, and its Manhattan length is at most `maxDetourRatio × directDistance`. Eligible candidates use the ranking below. With `visible-overflow`, no acceptable route completes as the deterministic direct path plus `W_LAYOUT_ROUTE_FALLBACK`; explicit suppression creates `W_LAYOUT_RELATION_SUPPRESSED`.
+`suppress` retains ordinary selection and its suppression outcome without
+recovery, halo or stage diagnostics. A legacy View visible-overflow value does
+not override explicit Layout suppress; its supersession is diagnosed.
+Under `relax`, normal routing is attempted first. On failure, rerun the declared
+`search` policy with successively relaxed obstacle classes: (1) label visuals
+and relation labels, (2) all text, (3) non-endpoint-host marks. Each stage includes
+the preceding relaxation and preserves endpoint-host egress. Filter both search
+and completed-route validators consistently; a post-search primary-mark guard
+must not reintroduce an intentionally relaxed obstacle. Successful normal routes
+never execute a recovery stage. Each attempted stage has fresh per-instance/pass
+search state and budget; first-fit cheap/exact phases share that stage's ceiling.
+No surface replay or reset of a ceiling within one stage is permitted.
+
+If all relax searches fail, attempt the preferred fixed overlap shape, then
+paired terminal stubs when full-route endpoint egress cannot be completed.
+`overlap` goes directly to fixed end-side/start-side orthogonal L/Z geometry,
+ignoring non-host obstacles and quality limits; it uses the same terminal
+fallback if endpoint egress fails. `stub` completes an independent short
+connector at each endpoint with `→ <target title>` / `<source title> →` text.
+Layout measures and places these with the existing terminal/text primitives;
+it does not present the pair as a connected safe route. Both fragments belong
+to one resolved relation instance and are counted once. Terminal labels must
+not silently disappear; their declared visible-overflow treatment is inspectable.
+Finite fallback is not evidence of safety, completeness or a clean route.
+
+All three non-suppress modes retain the relation's visible representation.
+Explicit-window endpoint absence is a separate, unchanged admission outcome,
+not a failed obstacle search to be repaired by extending the selected window.
+Scheduling-derived critical relations retain critical-first attempt order.
+They use the same declared resolution mode: under relax/overlap/stub the
+always-represented policy supersedes critical-only safe-route suppression.
+Under suppress, #1300's protected-safe-route obligation remains separate.
+
+Layout emits a typed per-instance stage/critical receipt and per-surface count
+for relaxed, overlapped or stubbed relations. Counts describe completed
+instances, not search phases or fragments. Scene/CLI/MCP project these as info.
+No unsafe recovery is reported as `W_LAYOUT_RELATION_SUPPRESSED`; retained
+window-admission diagnostics remain distinct from this resolution policy.
+Recovered paths that cross obstacles carry completed halo geometry, in the
+Theme's surface-ground colour through `dependency-halo`, immediately beneath
+the line; line and halo paint below text. The halo is decoration, not a data
+mark or a contrast-floor exemption. Theme resolves paint, Layout resolves
+geometry/order, Scene projects, adapters serialize without inferred routing.
+
+The reviewer declares explicit suppress on the five approved targets before
+the default flips. An explicit resource edit retains truthful identity changes;
+policy-only suppress controls preserve legacy full Scene/SVG bytes. Dev A does
+not edit authored examples. Schema admission is additive via shared vocabulary
+in place; omission implements the runtime default, not a schema annotation.
+
+View relation intent is `none` or an object with `mode: semantic` and
+`overflow: suppress | visible-overflow`. Layout Profile also owns
+`relationRouting.maxBends` and `relationRouting.maxDetourRatio` geometry policy.
+
+Normal Layout routing uses completed ports and deterministic orthogonal candidates.
+A normal route stays in the timeline, avoids required obstacles, has at most
+`maxBends`, and has Manhattan length at most `maxDetourRatio × directDistance`.
+Eligible candidates use the ranking below. The declared resolution mode owns
+table-timeline failure; network View visible-overflow retains its deterministic
+direct fallback and `W_LAYOUT_ROUTE_FALLBACK`. Explicit suppression records
+`W_LAYOUT_RELATION_SUPPRESSED`.
 
 **Candidate search (#1109 R5).** One bounded sparse
 visibility search supplies alternatives for each endpoint pair, rather than

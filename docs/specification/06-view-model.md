@@ -187,6 +187,12 @@ grammar, ordinal forms and diagnostics are owned by
 
 ### 6.1 Draft relation visibility override (#1299)
 
+For table-timeline spatial resolution, the design's Layout
+`relationRouting.unroutable` supersedes View relation overflow (#1427;
+implementation pending). View still owns admission/selection, and overflow
+retains its network meaning. A differing effective value produces a migration
+info; equal suppress values preserve legacy output. See Spec50 §3.3.
+
 `chrona render --relations none|semantic` overrides only the effective Draft
 View's `visibility.relations` mode, before validation and resource identity
 freeze. Scalar declarations remain scalar; object declarations retain their
