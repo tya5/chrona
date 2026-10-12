@@ -7,6 +7,13 @@ Authority: [issue](https://github.com/tya5/chrona/issues/1427) and
 [reviewer decisions](https://github.com/tya5/chrona/issues/1427#issuecomment-6125006829).
 Current [Status](https://github.com/tya5/chrona/issues/1427#issuecomment-6114823479).
 
+Current implementation base: READY `587ff01d`, including published1300
+inspection/delta/critical-priority slices. Normal merge preserves shared
+critical facts and1427 endpoint titles/mode ownership. Focused integration80
+PASS10.81s; imports11/37,249 reachable modules/no orphan and Layout floats pass.
+Fresh actual suppress comparison against this public base:46/46 full Scene/SVG
+pairs identical. Reviewer protection/public halo witness remain release gates.
+
 Current slice: critical facts/order and typed mode admission are staged.
 Search, port admission, side-entry alternatives, reduction, primary-mark and
 corner validation now use the same stage domain. Finite fixed overlap is
