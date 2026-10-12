@@ -1,9 +1,9 @@
 """Normalized presentation content inputs."""
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from dataclasses import dataclass, field
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec
 from chrona.presentation.model.placement_candidates import PlacementCandidate
@@ -23,6 +23,7 @@ class HeadingContent:
     title: str
     subtitle: str | None = None
     kicker: str | None = None
+    text_wrap: Literal["allow", "forbid"] = "forbid"
 
 
 @dataclass(frozen=True)
@@ -93,6 +94,7 @@ class TableColumnContent:
     align: str
     width: TableColumnWidth
     header_orientation: str = "horizontal"
+    text_wrap: Literal["allow", "forbid"] = "forbid"
 
 
 @dataclass(frozen=True)
@@ -154,7 +156,7 @@ class AnnotationIntent:
     # Presentation-composed kind text; Layout measures these strings without figure substitution.
     kind_header_lines: tuple[str, ...] | None = None
     kind_heading_text: str | None = None
-    # Canonical View anchor pointer retained for Layout failures only; never enters
+    # Canonical declared View/Project anchor pointer for Layout failures only; never enters
     # placement equality, hashing, repr or Scene output.
     anchor_source_ref: str = field(default="/", kw_only=True, compare=False, hash=False, repr=False)
 
@@ -261,7 +263,7 @@ class SurfaceContentInput:
     # Required plot-label text of each point drawn on the row of the span it
     # attaches to (#486): title, planned date and finish delta, never dropped.
     attached_labels: tuple[tuple[str, str], ...] = ()
-    # View-selected literal caption copy, keyed by an already headed Layout slot node.
+    # View literal overrides plus Layout-bound template copy, keyed by a headed slot node.
     slot_heading_text: tuple[tuple[str, str], ...] = ()
     # Completed Scheme colours keyed by neutral axis-band placement identity (#490).
     axis_band_paints: tuple[tuple[str, str], ...] = ()
@@ -307,7 +309,7 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
 
 
 def display_value(value: Any, missing: str | Mapping[str, Any], formatter: str | BooleanPresencePresentation = "text", *,
-                  locale: str = "en-US", zero: str = "signed") -> str:
+                  locale: str = "en-US", zero: str = "signed", end_display: str = "exclusive") -> str:
     """Format a normalized table value according to its declared View contract."""
     if value is None:
         if isinstance(missing, Mapping):
@@ -329,6 +331,10 @@ def display_value(value: Any, missing: str | Mapping[str, Any], formatter: str |
     if formatter == "dateRange" and isinstance(value, dict):
         start, end = value.get("start"), value.get("end", value.get("finish"))
         if isinstance(start, date) and isinstance(end, date):
+            if end_display == "inclusive" and start < end:
+                end -= timedelta(days=1)
+                if start == end:
+                    return _format_compact_date(start, include_year=False, locale=locale)
             return _format_date_range(start, end, locale=locale)
         if isinstance(start, date) and end is None:
             return f"{_format_compact_date(start, include_year=True, locale=locale)} –"

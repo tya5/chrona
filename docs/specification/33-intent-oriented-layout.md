@@ -42,6 +42,22 @@ An override key names one existing node ID. An override may replace declared pro
 of that node but cannot change its ID, kind, or insert executable content. Unknown IDs,
 base cycles, kind changes, null deletion, and multiple bases diagnose.
 
+`extends` resolves when the Render Context closure is read (#1342), the way a derived Theme does: the base is an ordinary
+pinned reference that any Store the reader reads can hold (the example's own, a shared design Store or the packaged
+`chrona.resources` store), its `contentIdentity` is verified on read, bases may chain, and the closure resource is the
+flattened standalone profile whose identity is that of the effective value. Every top-level member the derived profile states
+(for example `viewDefaults`, `relationRouting`) replaces the base's; the rest is inherited. Editing a base therefore moves the
+derived profile's identity and the Scene with no Context edit, while the derived profile's `extends` pin is re-pinned inside
+the design that owns both.
+
+Store-backed chain resolution and cycle detection belong to ingress. A chain
+edge is identified by Store provider/identity, address and revision token;
+reusing a resource id or address at a different revision is not a cycle.
+After reading and verifying the complete base chain, ingress passes a
+standalone base to declarative Layout composition. That composition validates
+the declarations and applies stable-node overrides/top-level replacements;
+it does not resolve Store references or reject a completed base by resource id.
+
 Whole Layout Profiles are the reusable composition unit. Theme resources are the
 reusable value unit. Render Context binds separate immutable Theme and Layout resource
 references to a Project, View, optional Detail/Summary/Actual inputs, viewport, locale,
@@ -70,7 +86,7 @@ swatch and its own label), and may declare `itemMinInlineSize` when `direction:
 inline`, wrapping exactly as a `flow` container wraps its children (#427). A `legend` slot may instead declare `columns` (an integer of at least 1; #1290): the entries
 fill the columns in reading order (entry k in column k mod `columns`, row k div `columns`), each column as wide as its
 widest entry (swatch, gap and label), `gap` apart, every row as tall as the tallest key; `direction` and `itemMinInlineSize`
-are then not used. A declared grid is measured exactly at measurement time (width of its columns, `ceil(count / columns)`
+are then not used. `columnDistribution` (#1392) is `start` (the default, today's packing from the inline start) or `spread`: under `spread` every column has the same width, the slot's inline size less the gaps divided by the column count, so the column starts are evenly spaced and the last column ends within the slot; entries stay start-aligned in their column and no row moves. When that width is below the widest entry of any column the columns stay packed as under `start`. A declared grid is measured exactly at measurement time (width of its columns, `ceil(count / columns)`
 rows), so the slot is allocated its true block and a grid taller than its slot is the ordinary track overflow. Each
 entry's swatch is constructed by the same geometry its role's `primitive_kind`
 already uses for an object mark, relation, or decoration; Layout never derives a
@@ -123,6 +139,51 @@ Each node's panel precedes its one completed glyph batch, parents before
 children; Scene never fits the run or changes content allocation.
 
 **Slot headings (#1064, [work record](../planning/active/issue-1065-1064-field-group-indent-and-slot-heading-2026-10-04.md)).**
+
+**Heading count design (#1346; implementation pending).** A slot heading uses
+exactly one of literal `text` or figure `template`; alignment, presence,
+reservation and overflow rules stay unchanged. Literal View overrides win.
+Presentation supplies closed programs; Layout binds before natural measurement.
+Layout records one typed receipt per completed annotation body, full narrative
+rail summary, or unconsumed note occurrence. Marker/index/status/kind fragments
+and suppressed bodies add no notes. Explicit duplicate narratives count
+separately; one annotation's body/summary counts once. N is the possible
+narrative occurrences in the immutable input. Try candidate counts N down to0;
+accept the first completed layout whose receipts equal its candidate. Each
+trial has fresh mutable placement/obstacle/diagnostic state and count-correct
+SourceInputs; rejected trials leak no placement/index state or diagnostics.
+At mostN+1 trials, not guessed-count convergence. No consistent count is
+`E_LAYOUT_FIGURE_COUNT_UNSTABLE`, with domain/trial count; never substitute
+selected counts. No late template read means one ordinary composition; unused
+late figures then resolve from its receipts. Scene/adapters do not recount
+or replace text after geometry. Existing resources remain unchanged.
+Route-budget facts are local to a complete Layout invocation: discard a
+rejected whole-count candidate, but retain every executed route/label pass
+fact inside the accepted invocation, including rejected recovery passes (Spec50).
+Reject only typed candidate-admission failures, including unavailable number
+names or count-dependent required fit; retain their evidence on no solution.
+The formatter read records the exact figure identity. A name-range failure
+rejects a candidate only when that identity is a deferred placedNotes figure;
+an unrelated formatted count remains a normal fatal input error. Source inputs
+carry closed figure dependencies into measured-heading fit and intrinsic text
+floor detectors. Those detectors, not a caught error-code whitelist, produce
+typed dependent-fit evidence. Authored fixed/minimum/aspect constraints, budget
+closure failures, missing sources/fonts and unrelated Layout errors propagate.
+Existing caption overflow/ellipsis policy does not acquire a new fit rejection.
+
+The complete count coordinator consumes SurfaceRenderPlanInput and returns the
+accepted prepared plan, projection facts and SurfaceLayoutComposition. It never
+projects Scene or calls Application geometry callbacks. With no active late read,
+it reuses ordinary preparation and composes once, then resolves unused late
+figures from receipts. Ordinary preparation remains before the existing
+unused-input checkpoint; completion remains after it. An active late read
+defers whole candidate planning/completion until after that checkpoint,
+following semantic reference admission. Each trial buffers progress events;
+only the accepted trial publishes them. Resource/metric/placement/index state
+is fresh per trial; accepted executed-pass budget facts remain intact (Spec50).
+Unrelated schema/resource/semantic errors propagate unchanged, not as a count
+cycle. Reuse only pure measurements with complete content/metric keys; mutable
+placement/index/diagnostic state remains isolated between trials.
 A slot whose `source` is any enumerated slot source, and an override of such a slot, may
 declare `heading: {text, align, block}`: a caption over the slot. This includes the native title, table,
 timeline, timeline-axis, dependency-network, group-details, milestones and observations owners as well as
@@ -141,7 +202,7 @@ geometry independently of visible or thinned labels; band-only and rotated tiers
 content starts below the whole axis band and any larger caption line/gap. Without a compatible neighboring
 tier, or when that aligned caption line cannot fit inside its slot, `top` applies and Layout records
 `I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER:<node>`; the baseline is never clamped while claiming tier alignment.
-At `start-column` (#1290) the caption holds the inline-start column of a `legend` slot that declares `columns`: its line starts at the slot's block start and inline start, inside the entries' block extent, and the entries start after its measured width and half the font size (the measurement of the legend slot grows by that inline extent and is at least one line tall); no entry overlaps it. On any other slot, or a legend without `columns`, `top` applies and Layout records `I_LAYOUT_SLOT_HEADING_NO_START_COLUMN:<node>`.
+At `start-column` (#1290) the caption holds the inline-start column of a `legend` slot that declares `columns`: its line starts at the slot's block start and inline start, inside the entries' block extent, and the entries start after its measured width and the caption's `gap` (a distance, a literal or a Theme token; absent means half the font size) (the measurement of the legend slot grows by that inline extent and is at least one line tall); no entry overlaps it. On any other slot, or a legend without `columns`, `top` applies and Layout records `I_LAYOUT_SLOT_HEADING_NO_START_COLUMN:<node>`.
 The slot's content starts below the line and its gap, and below the band when the caption sits in it, so nothing
 lies under the caption; the slot keeps its full bounds. The native owner then lays out its content in that
 reduced viewport: title runs, table/timeline rows, axis tiers, dependency-network geometry and detail-panel
@@ -188,6 +249,20 @@ bounds, baseline, typography and explicit slot owner directly into Scene.
 
 `facet` and `repeat` are not M24 layout operators. View may expose a typed repeated
 source, which Layout can arrange with `grid` or `flow`; Layout cannot partition facts.
+
+
+### `viewDefaults`: the design members of a View (#1341)
+
+A Layout profile may declare `viewDefaults`, a View body fragment (`visibility`, `axis`, `deadlines`, `shading`,
+`timePresentation`, `annotationPresentation`, `backgroundDecoration`, `progressFill`, and the design halves of `comparison`,
+`rows` and `window`; see Specification 06 section 9.2). The View closure overlays it under the View before validation: a member
+the View declares wins as a whole, an omitted member takes the profile's.
+Split members merge by design sub-member, creating an omitted member from
+those sub-members only; explicit declarations win and missing required
+connection fields remain View validation errors (Specification 06 section 9.2).
+Layout reads the merged View only; it never sees which
+half a member came from. The members are validated as View members after the merge, so a malformed default is an ordinary View
+error. `viewDefaults` is optional; a profile without it changes nothing.
 
 ## 4. Logical axes and writing mode
 
@@ -256,6 +331,41 @@ an absent maximum means unbounded within the declared viewport.
 
 ## 6. Placement, overflow, and distribution
 
+A `source: table` slot may declare finite `maxInlineShare` in `(0, 1]`
+(#1295). Its strict ceiling is that share of the independently resolved parent
+inner inline budget, after inline padding. A row subtracts its active-child
+inline gaps; a column's block gaps and overlay gaps are not inline deductions.
+A flow uses its parent inner inline budget before line selection. In a grid,
+the budget is the independently resolved spanned cell width, including only
+the gaps internal to that span. Resolve the ceiling before intrinsic floors
+and flexible allocation; redistribute a capped flexible share to the remaining
+tracks under Section 5, never enlarge the parent to honour the table's text.
+
+The budget must be finite and determined without that table's uncapped
+intrinsic width. A content-sized ancestor or intrinsic grid track is not itself
+proof of such a budget. An unresolved/circular budget, or an authored fixed
+size or non-content minimum above the ceiling, is `E_LAYOUT_TABLE_OVERFLOW`.
+The property is invalid on another source or a container. It does not change
+ordinary `fitContent`, fixed, `fr`, or `minmax` semantics when absent; the
+explicit table exception to natural content floors is specified in
+[Specification 24](24-table-timeline-presentation.md#21-table-and-row-metrics-480).
+
+Heading and table sources with View `wrap: allow` use the same independent
+parent/cell budget closure with a full-share ceiling unless the table declares
+`maxInlineShare`. This does not admit that property on heading slots.
+The normalized source intent selects the wrapping slots;
+the engine does not inspect View YAML or Project copy. A fitting heading retains
+its natural intrinsic demand, including inside a content-sized host. Select
+heading closure only on inline shortage in its natural allocation, using native
+measurement and ancestor inner extents; unrelated sibling or block overflow
+does not activate it. Neutralize all selected
+width-dependent source demands together while probing, then remeasure each at
+its allocated width before block allocation. A circular budget, an authored
+minimum above the ceiling, or mandatory text that cannot fit is
+`E_LAYOUT_TEXT_OVERFLOW` for a heading, not `E_LAYOUT_TABLE_OVERFLOW`.
+Full-share budgets retain the existing Grid cell-filling allocation; text is
+closed inside that cell rather than shrinking the host to its fitting copy.
+
 Every slot declares `place.inline` and `place.block`. Containers declare `alignItems`
 for the cross axis and `justifyContent` for the main axis. A slot value overrides its
 container's item alignment on that axis.
@@ -319,8 +429,10 @@ Source adapters may read View-owned semantic modes and Theme `metrics` bindings.
 not read Layout YAML, resize or move their slot, allocate peer slots, or supply fallback
 coordinates. Every author-tunable source-internal distance is a Theme number token reached
 through a closed semantic metric name. A missing binding or non-number token diagnoses;
-there is no renderer default table. Layout source measurements are collected once, frozen,
-and reused by arrangement and Scene composition so the two passes cannot disagree.
+there is no renderer default table. Source content, typography and font assets are
+collected once and frozen. Width-dependent Layout measurements close against each
+candidate's independently resolved allocation; arrangement and composition reuse
+the final candidate's closure, never an earlier width's lines or baselines.
 
 The initial metric contract is namespaced by source/component (`text.*`, `table.*`,
 `timeline.*`, `axis.*`, `legend.*`, `notes.*`, `icon.*`). The adapter owns the closed key set and
@@ -429,11 +541,15 @@ These private modules divide Layout implementation only; they do not change auth
 
 | Module | Layout responsibility |
 |---|---|
+| `surface_source_inputs` | Assemble source facts and visual advances from closed content and Theme/icon resources. |
+| `surface_render_plan` | Measure sources, close sizing/allocation and prepare native geometry from resolved intent; Application supplies data, not a geometry callback. |
+| `surface_count_closure` | Close count-bound planning/composition and accepted facts; read closed programs and typed narrative receipts, never project Scene. |
 | `surface_base` | Validate closed inputs; compose slots, rows, base group extents, scale and tracks. |
 | `surface_table` | Place table columns, headers and cells. |
 | `surface_groups` | Place group-header text and group presentation from completed base extents. |
 | `surface_axis` | Place axis bands/labels and targets; derive calendar overlay intervals from the completed scale. |
 | `surface_marks` | Place tracks/marks/folded points/progress. |
+| `surface_mark_visibility` | Close selected source mark occurrences and window admission once, with typed source/final lane aliases; no membership or Scene geometry repair. |
 | `surface_member_labels` | Build requests and place member/item labels. |
 | `surface_lanes` | Adapt/preflight fixed lanes; emit lane facets and close host identities. |
 | `surface_lane_route_plan` | Plan the route corridors member names must keep clear by rehearsing the name and route phases on private index copies; return corridors only. |
@@ -707,6 +823,50 @@ slots, not self-derived full-canvas textures or overlays. Both table-timeline
 and dependency-network obey the same rule. Scene carries the completed warning;
 the shared report producer formats it with stable surface/source identity and
 `sourceRef: /body/environment/viewport`. Fitting surfaces emit none.
+
+**Auto-block readability limit and paging decision (#1299).**
+
+Optional `reviewSurface.maxBlockSize` reuses the nonnegative distance/Theme-token
+grammar and required-token resolution. Omission disables this advisory; zero
+is valid. After completing an auto-block surface, Layout emits exactly one
+`W_LAYOUT_AUTO_BLOCK_SIZE` when the completed canvas block size strictly
+exceeds the resolved limit. Equality and fitting surfaces emit none. Its typed
+facts are surface ID, emitted row count, actual block size, declared limit and
+`sourceRef: /reviewSurface/maxBlockSize`; Scene and reports transport those facts.
+This advisory does not resize, clip, reroute or reject the surface. Finite
+declared block requests retain the separate viewport diagnostic above.
+
+The bundled default selects a dedicated standalone Layout with the existing
+default geometry and limit 3600 (four 900-unit reference frames). Catalogue
+Editorial resources remain unchanged. The new default Layout identity is an
+intentional provenance migration, not a claim of byte-identical default Scene.
+Existing profiles omitting the property keep their behavior; add the optional
+property in place under Spec 56 section 3.2.
+
+Advice names available selection/grouping controls and distinguishes paging
+as a future option. Paging is deferred, opt-in only for an auto surface above
+its declared limit: preserve whole row/lane units, repeat continued group
+headers, share one temporal window and inline scale, and represent cross-page
+relations with explicit continuations rather than deleting Core dependencies.
+This issue adds no paging syntax or page-splitting implementation.
+
+**Render progress side channel (#1299).**
+
+An optional typed presentation observer receives schedule, layout, routing and
+output phase events. CLI alone enables/formats it on stderr when stderr is a
+terminal or `--progress` is given; a nonterminal without the flag adds no bytes.
+It is ephemeral, outside resource/closure/cache identity and serialized Scene,
+and never influences geometry, routing order, budgets or artifacts. Progress
+sink I/O failure detaches that sink without rejecting rendering. Core has no
+terminal or observer dependency; use cases report phases around existing work.
+
+For each Layout routing pass, report `0/N` then `k/N` in existing routing order,
+where N counts selected semantic relation declarations, not physical row/facet
+instances, and k advances after all instances of a declaration complete or are
+omitted. Separately name rehearsal passes; do not present their repeated work
+as a monotonic final-route count. Zero selected relations performs no search.
+Quiet/progress artifact and byte-characterization tests isolate this side
+channel from the independently declared default-height policy migration.
 
 ### 13.1 Content-coherent table-timeline allocation (#468)
 

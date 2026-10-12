@@ -16,6 +16,18 @@ HARD_CLASSES = ("mark", "text", "label-visual", "annotation-box", "port", "rule"
 BRIDGE_CLASSES = ("dependency-route", "leader-route")
 
 
+def _compact_path(raw: tuple[tuple[float, float], ...]) -> tuple[tuple[float, float], ...]:
+    """Collapse collinear proposals without leaving a zero leg after a retrace."""
+    points: list[tuple[float, float]] = []
+    for point in raw:
+        while len(points) >= 2 and ((points[-2][0] == points[-1][0] == point[0])
+                                   or (points[-2][1] == points[-1][1] == point[1])):
+            points.pop()
+        if not points or points[-1] != point:
+            points.append(point)
+    return tuple(points)
+
+
 def _topology_search_error(**operands: object) -> ValueError:
     fields = []
     for name, value in operands.items():
@@ -140,16 +152,7 @@ def route_strict_bounded(start: tuple[float, float], end: tuple[float, float],
     seen = set()
 
     def add(points: tuple[tuple[float, float], ...]) -> None:
-        compact = []
-        for point in points:
-            if compact and compact[-1] == point:
-                continue
-            if len(compact) >= 2 and ((compact[-2][0] == compact[-1][0] == point[0])
-                                      or (compact[-2][1] == compact[-1][1] == point[1])):
-                compact[-1] = point
-            else:
-                compact.append(point)
-        path = tuple(compact)
+        path = _compact_path(points)
         if (len(path) >= 2 and path[0] == start and path[-1] == end and path not in seen
                 and len(candidates) <= limit):
             seen.add(path)
@@ -213,16 +216,7 @@ def _sparse_elbows(start: tuple[float, float], end: tuple[float, float],
     seen = set()
 
     def include(raw: tuple[tuple[float, float], ...]) -> None:
-        normalized: list[tuple[float, float]] = []
-        for point in raw:
-            if normalized and point == normalized[-1]:
-                continue
-            if len(normalized) >= 2 and ((normalized[-2][0] == normalized[-1][0] == point[0])
-                                         or (normalized[-2][1] == normalized[-1][1] == point[1])):
-                normalized[-1] = point
-            else:
-                normalized.append(point)
-        path = tuple(normalized)
+        path = _compact_path(raw)
         if len(path) >= 2 and path[0] != path[-1] and path not in seen:
             seen.add(path)
             paths.append(path)

@@ -1,0 +1,49 @@
+# Development profile package: review-gate profiles and typed fields for a hardware programme.
+# contentIdentity frames this document with the contentIdentity field omitted (Specification 62 correction).
+version: chrona/profile/v0.3
+packageId: semiconductor-development
+contentIdentity: sha256:d2685b7c5b890118b55e24d8f6fd6582f82e28e9b23a67e297e5e4f26846c6b1
+requires:
+  projectFormat: timeline/v0.7
+profiles:
+  PDR:
+    extends: milestone
+    fields:
+      approval:
+        type: enum
+        enumValues:
+        - pending
+        - approved
+        - rejected
+        required: true
+  CDR:
+    extends: milestone
+    fields:
+      approval:
+        type: enum
+        enumValues:
+        - pending
+        - approved
+        - rejected
+        required: true
+  PSR:
+    extends: milestone
+    fields:
+      approval:
+        type: enum
+        enumValues:
+        - pending
+        - approved
+        - rejected
+        required: true
+fields:
+  model:
+    type: string
+    required: true
+    cardinality: one
+  customerReview:
+    type: boolean
+    cardinality: one
+  lot:
+    type: string
+    cardinality: many

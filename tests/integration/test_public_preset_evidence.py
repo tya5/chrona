@@ -7,6 +7,8 @@ import yaml
 
 from chrona.app.cli import main
 from chrona.presentation.contracts import ClosureIdentity, PresentationPresetContract, ViewContract, parse_contract
+from tests.support import synthetic_review as sr
+from tests.support.preset_policy import assert_view_copy_except_axis as _assert_view_copy_except_axis
 
 
 ROOT = Path(__file__).parents[2]
@@ -33,19 +35,10 @@ def _assert_packaged_view_contract(path: Path, expected_id: str) -> dict:
     return document
 
 
-def _assert_view_copy_except_axis(packaged: Path, corpus: Path) -> None:
-    """Only the explicitly migrated axis policy may differ in these old copies."""
-    package_document = yaml.safe_load(packaged.read_bytes())
-    corpus_document = yaml.safe_load(corpus.read_bytes())
-    for document in (package_document, corpus_document):
-        document["body"].pop("axis")
-    assert package_document == corpus_document
-
-
 def test_editorial_non_view_corpus_copies_match_and_packaged_view_is_independent():
     """Packaged Views own general policy; authored corpus Views remain independent.
 
-    The unchanged Theme/Layout/Scheme/profile copies still retain their byte guard.
+    Theme/Scheme/profile retain byte guards; Layout permits only its declared cap.
     """
     bundle = ROOT / "src/chrona/resources/presets/bundles/editorial"
     corpus = ROOT / "examples/halcyon-1"
@@ -58,7 +51,13 @@ def test_editorial_non_view_corpus_copies_match_and_packaged_view_is_independent
     for bundle_name, corpus_path in pairs.items():
         bundle_path = bundle / bundle_name
         assert bundle_path.is_file() and corpus_path.is_file()
-        assert bundle_path.read_bytes() == corpus_path.read_bytes(), (bundle_name, corpus_path)
+        if bundle_name == "layout.yaml":
+            packaged_layout = yaml.safe_load(bundle_path.read_bytes())
+            corpus_layout = yaml.safe_load(corpus_path.read_bytes())
+            assert sr.find_node(packaged_layout, "table").pop("maxInlineShare") == 0.4
+            assert packaged_layout == corpus_layout
+        else:
+            assert bundle_path.read_bytes() == corpus_path.read_bytes(), (bundle_name, corpus_path)
     _assert_packaged_view_contract(bundle / "view.yaml", "chrona-preset-editorial")
     _assert_view_copy_except_axis(bundle / "view.yaml", corpus / "views/editorial.yaml")
 
@@ -119,7 +118,7 @@ def test_legend_swatch_marks_are_never_checked_against_the_timeline_bottom(tmp_p
 def test_editorial_library_entry_matches_the_bundle_resources():
     library = yaml.safe_load((ROOT / "src/chrona/resources/presets/library.yaml").read_bytes())
     entry = next(item for item in library["entries"] if item["id"] == "editorial")
-    assert entry["gallerySet"] == "generated-design-directions"
+    assert "gallerySet" not in entry  # no gallery set shows Editorial (#1403)
     bundle = ROOT / "src/chrona/resources/presets/bundles/editorial"
     for name, member in entry["members"].items():
         assert member["sourceRoot"] == "presets/bundles/editorial"
@@ -139,27 +138,37 @@ def test_readable_default_resources_are_selected_from_the_packaged_authority():
     }
     for name, corpus_path in pairs.items():
         package_bytes = (bundle / name).read_bytes()
-        if name != "view.yaml":
-            assert package_bytes == corpus_path.read_bytes(), name
         declared = yaml.safe_load(package_bytes)
         assert declared["id"] == resources["view" if name == "view.yaml" else "theme"]["id"]
         assert resources["view" if name == "view.yaml" else "theme"]["path"] == \
             f"bundles/editorial-readable-default/{name}"
         if name == "view.yaml":
             _assert_packaged_view_contract(bundle / name, resources["view"]["id"])
-            _assert_view_copy_except_axis(bundle / name, corpus_path)
+            _assert_view_copy_except_axis(bundle / name, corpus_path, first_run=True)
             labels = declared["body"]["visibility"]["labels"]
             assert (labels["placement"], labels["content"], labels["side"]) == ("plot", ["title"], "end")
             assert declared["version"] == "chrona/view/v0.28"
             assert declared["body"]["rows"] == {"mode": "automatic"}
             assert [column["id"] for column in declared["body"]["tableColumns"]] == ["Task", "Plan"]
+            assert declared["body"]["tableColumns"][1]["endDisplay"] == "inclusive"
             assert declared["body"]["visibility"]["fallback"]["labels"] == ["end", "start", "suppress"]
-            assert declared["body"]["backgroundDecoration"]["rows"] == "alternate"
+            assert declared["body"]["backgroundDecoration"]["rows"] == "rules"
+            assert declared["body"]["grouping"] == {"by": "hierarchy", "depth": "all", "rollup": "header"}
+            assert declared["body"]["hierarchyColumn"] == "Task"
         else:
             body = declared["body"]
-            assert body["values"]["opacity.row-band"]["value"] == 0.12
-            assert body["roles"]["row-band"]["opacity"] == "opacity.row-band"
-            assert body["colorBindings"]["row-band.fill"] == "category:default"
+            expected = yaml.safe_load(corpus_path.read_bytes())
+            migrated = expected["body"]
+            migrated["values"].pop("opacity.row-band")
+            migrated["values"]["timeline-row-height"]["value"] = {
+                "expr": "{timeline-mark-size} + {timeline-row-padding}"}
+            migrated["roles"].pop("row-band")
+            migrated["roles"]["row-rule"] = {"strokeWidth": "stroke-width"}
+            migrated["roles"]["group-band"]["backgroundPaintOrder"] = 8
+            migrated["roles"]["group-header-band"]["backgroundPaintOrder"] = 9
+            migrated["colorBindings"].pop("row-band.fill")
+            migrated["colorBindings"]["row-rule.stroke"] = "neutral"
+            assert declared == expected  # keep every unaffected Theme declaration
     assert resources["view"] == {
         "id": "chrona-preset-editorial-readable-default", "kind": "view",
         "path": "bundles/editorial-readable-default/view.yaml",
@@ -171,14 +180,17 @@ def test_readable_default_resources_are_selected_from_the_packaged_authority():
     assert resources["colorScheme"] == {
         "id": "chrona-builtin-editorial", "kind": "color-scheme", "path": "bundles/editorial/scheme.yaml",
     }
-    assert resources["layout"]["path"] == "bundles/editorial/layout.yaml"
+    assert resources["layout"] == {
+        "id": "chrona-builtin-editorial-readable-default", "kind": "layout-profile",
+        "path": "bundles/editorial-readable-default/layout.yaml",
+    }
     assert resources["detailProfile"]["path"] == "bundles/editorial/detail.yaml"
     assert default["body"]["compatibleColorSchemes"] == [
         {"id": "chrona-builtin-editorial", "kind": "color-scheme", "path": "bundles/editorial/scheme.yaml"}
     ]
     library = yaml.safe_load((ROOT / "src/chrona/resources/presets/library.yaml").read_bytes())
     editorial = next(item for item in library["entries"] if item["id"] == "editorial")
-    assert editorial["gallerySet"] == "generated-design-directions"
+    assert "gallerySet" not in editorial  # no gallery set shows Editorial (#1403)
     assert editorial["members"]["view"]["sourceRoot"] == "presets/bundles/editorial"
     assert editorial["members"]["view"]["id"] == "chrona-preset-editorial-lanes"
     assert editorial["members"]["view"]["sourcePath"] == "view-lanes.yaml"

@@ -10,8 +10,8 @@ body:
       identity: halcyon-1-example
     address: project.yaml
     revision:
-      token: example-v4
-    contentIdentity: sha256:c5587b3a835de585f4220ffa98ebcb1e534c950ffd81ecc7323cd359206caaec
+      token: example-v6
+    contentIdentity: sha256:a7655341aa66ba27d29de8d313fba12f7145ad3e3f9d63ebc4ecf8770dc9c7e8
   view:
     id: halcyon-22-yuya
     kind: view

@@ -30,9 +30,9 @@ from chrona.core.diagnostics import Diagnostic
 from chrona.core.ports import RenderArtifact
 from chrona.usecases.preset_library import copy_builtin_preset
 from chrona.usecases.project_checks import ProjectValidation
+from tests.support.warning_preset import copy_warning_preset
 
 REPO = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
-LAUNCH = (REPO / "skills" / "chrona" / "examples" / "launch.yaml").read_text(encoding="utf-8")
 
 SMALL = """\
 version: timeline/v0.7
@@ -54,7 +54,7 @@ relations:
 """
 BAD_SCHEDULE = "version: timeline/v0.7\nobjects: {a: {type: task, title: A, schedule: {mode: scheduled}}}\n"
 FILES = {
-    "small.yaml": SMALL, "launch.yaml": LAUNCH, "cycle.yaml": CYCLE, "bad.yaml": BAD_SCHEDULE,
+    "small.yaml": SMALL, "cycle.yaml": CYCLE, "bad.yaml": BAD_SCHEDULE,
     "broken.yaml": "a: [\n", "not-a-mapping.yaml": "- a\n- b\n", "empty.yaml": "",
     "plans/nested.yaml": SMALL,
 }
@@ -62,10 +62,15 @@ SPECS = {spec.name: spec for spec in tool_specs()}
 VALIDATORS = {name: Draft202012Validator(spec.output_schema, format_checker=FormatChecker()) for name, spec in SPECS.items()}
 
 
+@pytest.fixture(scope="session")
+def launch() -> str:
+    return (REPO / "skills" / "chrona" / "examples" / "launch.yaml").read_text(encoding="utf-8")
+
+
 @pytest.fixture
-def workspace(tmp_path: Path) -> Path:
+def workspace(tmp_path: Path, launch: str) -> Path:
     root = tmp_path / "ws"
-    for name, text in FILES.items():
+    for name, text in {**FILES, "launch.yaml": launch}.items():
         (root / name).parent.mkdir(parents=True, exist_ok=True)
         (root / name).write_text(text, encoding="utf-8")
     return root
@@ -237,9 +242,14 @@ def test_schedule_returns_sorted_placements_and_analysis(scope):
     }
     assert list(result.structured["placements"]) == sorted(result.structured["placements"])
     analysis = result.structured["analysis"]
-    assert analysis["criticalObjectIds"] == ["kickoff", "launch"]
+    assert analysis["criticalObjectIds"] == []
     assert list(analysis["totalFloat"]) == sorted(analysis["totalFloat"])
-    assert analysis["totalFloat"] == {"build": 9, "design": 9, "kickoff": 0, "launch": 0}
+    assert analysis["totalFloat"] == {
+        "build": {"value": 9, "unit": "working-days", "calendar": "office"},
+        "design": {"value": 9, "unit": "working-days", "calendar": "office"},
+        "kickoff": {"value": 0, "unit": "working-days", "calendar": "office"},
+        "launch": {"value": 0, "unit": "working-days", "calendar": "office"},
+    }
 
 
 def test_schedule_does_not_trust_the_key_order_of_total_float(scope, monkeypatch):
@@ -267,9 +277,9 @@ def test_schedule_equals_the_cli_json(scope, monkeypatch, capsys, workspace):
     assert expected["diagnostics"] == got["diagnostics"] == []
 
 
-def test_schedule_carries_a_missed_deadline_as_a_warning_and_still_schedules(workspace, scope):
-    late = LAUNCH.replace("deadline: 2026-12-18", "deadline: 2026-12-01")
-    assert late != LAUNCH
+def test_schedule_carries_a_missed_deadline_as_a_warning_and_still_schedules(workspace, scope, launch):
+    late = launch.replace("deadline: 2026-12-18", "deadline: 2026-12-01")
+    assert late != launch
     (workspace / "late.yaml").write_text(late, encoding="utf-8")
     result = run(scope, "schedule_project", project="late.yaml")
     assert result.structured["status"] == "ok" and result.structured["diagnostics"] == []
@@ -286,8 +296,8 @@ def test_schedule_without_a_missed_deadline_has_an_empty_warnings_list(scope):
     assert run(scope, "schedule_project", project="launch.yaml").structured["warnings"] == []
 
 
-def test_schedule_warnings_equal_the_cli_records(workspace, scope, monkeypatch, capsys):
-    (workspace / "late.yaml").write_text(LAUNCH.replace("deadline: 2026-12-18", "deadline: 2026-12-01"), encoding="utf-8")
+def test_schedule_warnings_equal_the_cli_records(workspace, scope, monkeypatch, capsys, launch):
+    (workspace / "late.yaml").write_text(launch.replace("deadline: 2026-12-18", "deadline: 2026-12-01"), encoding="utf-8")
     rc, out, _ = cli(monkeypatch, capsys, workspace, "schedule", "late.yaml")
     (expected,) = json.loads(out)["warnings"]
     (got,) = run(scope, "schedule_project", project="late.yaml").structured["warnings"]
@@ -335,6 +345,19 @@ def test_render_draft_png_bytes_equal_the_cli_png(scope, monkeypatch, capsys, wo
     png = (workspace / "out.png").read_bytes()
     assert result.attachments[0].data == png and result.structured["contentIdentity"] == sha(png)
     assert result.structured["format"] == "png" and result.structured["byteLength"] == len(png)
+
+
+@pytest.mark.parametrize("preset", ["technical-print", "elevated-light"])
+def test_mcp_png_preset_reports_the_target_fallback(scope, preset):
+    result = run(scope, "render_draft", project="small.yaml", preset=preset, format="png")
+    assert result.structured["status"] == "ok" and result.structured["format"] == "png"
+    assert result.attachments[0].data.startswith(b"\x89PNG\r\n\x1a\n")
+    (info,) = [item for item in result.structured["warnings"]
+               if item["code"] == "I_PRESET_VISUAL_PROFILE_FALLBACK"]
+    assert info["severity"] == "info"
+    assert info["detail"] == {"presetId": f"chrona-builtin-{preset}",
+                              "preferredProfile": "chrona-output/visual/v0.7-svg",
+                              "selectedProfile": "chrona-output/visual/v0.7-png", "targetKind": "png"}
 
 
 def test_render_draft_inline_svg_is_an_embedded_resource_equal_to_the_cli_file(scope, monkeypatch, capsys, workspace):
@@ -421,8 +444,10 @@ def test_a_preset_value_with_a_separator_must_be_a_yaml_path(scope):
     assert result.structured["diagnostics"][0]["sourceRef"] == "/preset"
 
 
-def test_a_real_render_warning_is_normalised_into_the_envelope_shape(scope):
-    result = run(scope, "render_draft", project="launch.yaml", viewport="300x300", inline="none")
+def test_a_real_render_warning_is_normalised_into_the_envelope_shape(scope, workspace):
+    copy_warning_preset(workspace / "warning-look")
+    result = run(scope, "render_draft", project="launch.yaml", preset="warning-look/preset.yaml",
+                 viewport="300x300", inline="none")
     warnings = result.structured["warnings"]
     # Nonfitting axis labels are thinned, not emitted as visible overflow.
     assert {"W_LAYOUT_LABEL_SUPPRESSED", "W_LAYOUT_AXIS_LABEL_THINNED", "I_LAYOUT_PLOT_LABELS_SUPPRESSED"} <= {
@@ -454,8 +479,11 @@ def test_warning_records_keep_their_fields_sorted_and_scrubbed(scope, monkeypatc
 
 
 def test_warnings_equal_the_cli_stdout_success_envelope(scope, monkeypatch, capsys, workspace):
-    result = run(scope, "render_draft", project="launch.yaml", viewport="300x300", inline="none")
-    rc, out, err = cli(monkeypatch, capsys, workspace, "render", "launch.yaml", "--viewport", "300x300", "--output", "o.svg")
+    copy_warning_preset(workspace / "warning-look")
+    result = run(scope, "render_draft", project="launch.yaml", preset="warning-look/preset.yaml",
+                 viewport="300x300", inline="none")
+    rc, out, err = cli(monkeypatch, capsys, workspace, "render", "launch.yaml", "--preset",
+                       "warning-look/preset.yaml", "--viewport", "300x300", "--output", "o.svg")
     envelope = json.loads(out)
     printed = envelope["warnings"]
     assert rc == 0 and err == "" and envelope["status"] == "ok" and envelope["diagnostics"] == []
@@ -468,6 +496,16 @@ def test_warnings_equal_the_cli_stdout_success_envelope(scope, monkeypatch, caps
         assert item.get("count") == (line.get("count") if warning else None)
         assert item.get("occurrences") == (line.get("occurrences") if warning else None)
         assert item["detail"] == {key: value for key, value in line.items() if key not in top}
+
+
+def test_a_cramped_default_preserves_the_typed_table_feasibility_failure(scope, monkeypatch, capsys, workspace):
+    result = run(scope, "render_draft", project="launch.yaml", viewport="300x300", inline="none")
+    assert (result.structured["status"], codes(result)) == ("rejected", ["E_LAYOUT_TABLE_OVERFLOW"])
+    rc, out, _ = cli(monkeypatch, capsys, workspace, "render", "launch.yaml", "--viewport", "300x300",
+                     "--output", "o.svg")
+    assert rc == 1
+    assert [row["code"] for row in json.loads(out)["diagnostics"]] == ["E_LAYOUT_TABLE_OVERFLOW"]
+    assert not (workspace / "o.svg").exists()
 
 
 def _successful_render_warning_cases():

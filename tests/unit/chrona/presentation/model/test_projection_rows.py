@@ -11,7 +11,7 @@ from chrona.presentation.contracts.resources import (
     ViewComparison, ViewGrouping, ViewInput, ViewLaneKeys, ViewOrdering, ViewRow, ViewRowItem, ViewRows, ViewSelection,
     ViewVisibility, ViewWindow, freeze,
 )
-from chrona.scheduling.scheduler import ScheduleAnalysis
+from chrona.scheduling.scheduler import ScheduleAnalysis, TotalFloat
 from chrona.scheduling.scheduler import schedule
 
 
@@ -175,6 +175,27 @@ def test_lane_projection_keeps_attached_point_unassigned_until_packing():
     assert projection.lane_membership.assignment_for("host").lane_id != projection.lane_membership.assignment_for("gate").lane_id
 
 
+@pytest.mark.parametrize("by, direction, expected", [
+    ("plannedStart", "ascending", ("z", "a")),
+    ("plannedStart", "descending", ("a", "z")),
+    ("id", "ascending", ("a", "z")),
+])
+def test_lane_row_order_follows_view_without_changing_assignments(by, direction, expected):
+    project = {"objects": {key: {"title": key, "fields": {}} for key in ("a", "z")}, "relations": []}
+    placements = {"a": {"start": date(2026, 1, 10), "end": date(2026, 1, 12)},
+                  "z": {"start": date(2026, 1, 1), "end": date(2026, 1, 3)}}
+    view = ViewInput(None, None, ViewOrdering(by, direction, "id"), ViewWindow("selected-planned", None, None, 0),
+        ViewComparison(None, "optional", None, None, ()), ViewVisibility(False, "none", "none"), (), (),
+        ViewRows("lanes", (), packing=("explicit", "attached")), None, (), None, None, None)
+    projected = build_review_projection(project, placements, view, None)
+    assert tuple(row.items[0].object_id for row in projected.lane_rows) == expected
+    assert tuple(row.lane_id for row in projected.lane_rows) == tuple(lane.lane_id for lane in projected.lane_membership.lanes)
+    baseline = build_review_projection(project, placements, replace(view, ordering=ViewOrdering("id", "ascending", "id")), None)
+    assert projected.lane_membership.assignments == baseline.lane_membership.assignments
+    assert {lane.lane_id: lane.member_item_ids for lane in projected.lane_membership.lanes} == {
+        lane.lane_id: lane.member_item_ids for lane in baseline.lane_membership.lanes}
+
+
 def test_lane_projection_derives_chain_and_attachment_without_actual_or_geometry():
     project = {"objects": {
         "structure": {"title": "Structure", "fields": {"team": "bus"}},
@@ -217,6 +238,88 @@ def test_lane_projection_derives_chain_and_attachment_without_actual_or_geometry
     gate_row = next(row for row in projection.lane_rows if any(item.object_id == "gate" for item in row.items))
     gate = next(item for item in gate_row.items if item.object_id == "gate")
     assert (gate_row.group_id, gate.group_id, gate.attached_to) == ("bus", "bus", "avionics")
+
+
+@pytest.mark.parametrize("surface", ("table-timeline", "dependency-network"))
+def test_selected_dependency_identity_keeps_its_full_project_index(surface):
+    from tests.support import synthetic_review as sr
+
+    source = sr.with_calendar(sr.project({
+        "x": sr.span("x", date(2026, 2, 2), 3),
+        "a": sr.span("a", date(2026, 2, 2), 3),
+        "b": sr.span("b", date(2026, 2, 9), 3),
+    }, [
+        {"id": "outside", "type": "dependency", "from": {"object": "x", "endpoint": "end"},
+         "to": {"object": "b", "endpoint": "start"}, "lag": "0d"},
+        {"type": "dependency", "from": {"object": "a", "endpoint": "end"},
+         "to": {"object": "b", "endpoint": "start"}, "lag": "0d"},
+        {"id": "relation:1", "type": "dependency", "from": {"object": "a", "endpoint": "end"},
+         "to": {"object": "b", "endpoint": "start"}, "lag": "0d"},
+    ]))
+    view = typed_view({"body": {
+        "selection": {"include": {"ids": ["a", "b"]}},
+        "rows": {"mode": "lanes" if surface == "table-timeline" else "automatic"},
+        "window": {"mode": "selected-planned"}, "comparison": {"actual": "optional"},
+    }})
+    view = replace(view, surface=surface, rows=replace(view.rows, packing=("chain",)))
+    result = schedule(source)
+    assert result.ok
+    projection = build_review_projection(source, result.placements, view, None)
+
+    if surface == "table-timeline":
+        membership = projection.lane_membership
+        assert membership.assignment_for("a").lane_id == membership.assignment_for("b").lane_id
+        assert membership.assignment_for("b").rule == "chain"
+        assert membership.assignment_for("b").source_id == "relation:1"
+    else:
+        assert tuple(edge.relation_id for edge in projection.network.edges) == (
+            "relation:1", "relation:2:relation:1")
+
+
+@pytest.mark.parametrize("declared_id", (None, "", "r", "relation:0"))
+def test_a_valid_project_with_optional_relation_id_renders_through_real_ingress(tmp_path, declared_id):
+    from xml.etree import ElementTree
+    from chrona.core.validation import validate_project
+    from tests.support import synthetic_review as sr
+
+    relation = {"type": "dependency", "from": {"object": "a", "endpoint": "end"},
+                "to": {"object": "b", "endpoint": "start"}, "lag": "0d"}
+    if declared_id is not None:
+        relation["id"] = declared_id
+    source = sr.with_calendar(sr.project({"a": sr.span("a", date(2026, 2, 2), 3),
+                                         "b": sr.span("b", date(2026, 2, 9), 3)}, [relation]))
+    assert validate_project(source) == []
+    rendered = sr.render(tmp_path, source)
+    assert ElementTree.fromstring(rendered.artifact.content).tag.endswith("svg")
+    assert rendered.surface.primitives
+
+
+def test_distinct_relation_sources_remain_opaque_in_scene_and_svg(tmp_path):
+    from xml.etree import ElementTree
+    from chrona.core.relation_identity import relation_identity
+    from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
+    from chrona.presentation.scene.serialization import scene_document
+    from tests.support import synthetic_review as sr
+
+    relations = [
+        {"id": name, "type": "dependency", "from": {"object": left, "endpoint": "end"},
+         "to": {"object": right, "endpoint": "start"}, "lag": "0d"}
+        for name, left, right in (("first:part", "a", "b"), ("second:part", "b", "c"))
+    ]
+    source = sr.with_calendar(sr.project({
+        key: sr.span(key, date(2026, 2, 2 + index * 7), 3)
+        for index, key in enumerate(("a", "b", "c"))
+    }, relations))
+    rendered = sr.render(tmp_path, source)
+    expected = {relation_identity(index, declaration) for index, declaration in enumerate(relations)}
+    paths = [item for item in rendered.surface.primitives
+             if item.source_kind == "relation" and item.scene_id.startswith("relation:")]
+    assert len(paths) == 2
+    assert {item.source_ref for item in paths} == expected
+    svg = ElementTree.fromstring(rendered.artifact.content)
+    assert expected <= {item.get("data-source-ref") for item in svg.iter()}
+    assert not [finding for finding in evaluate_scene_perceptibility(scene_document(rendered.scene))
+                if finding.code == "E_SCENE_RELATION_PATH_DUPLICATE"]
 
 
 def test_lane_projection_object_key_wins_over_field_and_unknown_target_fails():
@@ -312,8 +415,8 @@ def test_projection_carries_current_and_snapshot_analysis_without_crossing_them(
         "rows": {"mode": "explicit", "items": [{"id": "r", "depth": 0, "items": [
             {"id": "old", "source": {"kind": "snapshot", "object": "task"}},
             {"id": "now", "source": {"kind": "primary", "object": "task"}}]}]}}}
-    current_analysis = ScheduleAnalysis({}, {"task": 3}, frozenset(), {"task": date(2026, 2, 2)})
-    snapshot_analysis = ScheduleAnalysis({}, {"task": 0}, frozenset({"task"}), {"task": date(2026, 1, 2)})
+    current_analysis = ScheduleAnalysis({}, {"task": TotalFloat(3, None)}, frozenset(), date(2026, 2, 2))
+    snapshot_analysis = ScheduleAnalysis({}, {"task": TotalFloat(0, None)}, frozenset({"task"}), date(2026, 1, 2))
     projection = build_review_projection(project, {"task": {"start": date(2026, 2, 1), "end": date(2026, 2, 2)}},
         typed_view(view), None, snapshot_project=historic,
         snapshot_placements={"task": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}},

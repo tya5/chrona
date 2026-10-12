@@ -1,0 +1,153 @@
+version: chrona/view/v0.28
+kind: view
+id: halcyon-26-gates
+body:
+  surface: table-timeline
+  heading:
+    title: "{project} · Review gates by model"
+  selection:
+    include:
+      ids:
+      - pdr
+      - structure
+      - avionics
+      - eps
+      - bus-test
+      - cdr
+      - optics
+      - detector
+      - payload-tvac
+      - payload-delivery
+      - psr
+      types:
+      - span
+      - point
+  grouping:
+    by: field
+    field: owner
+    missing: other
+    order:
+    - bus
+    - payload
+    - ait
+    presentation: header
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: explicit
+    start: '2027-02-15'
+    end: '2027-10-04'
+  comparison:
+    baseline: scenario
+    scenario: payload-fast-track
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - atDelta
+    - progress
+    - missingActual
+    - unmatchedActual
+  progressFill:
+    source: actual
+  colorEncoding:
+    scale: model
+    target: planned
+    source:
+      field: model
+    domain:
+    - EM
+    - QM
+    - FM
+  visibility:
+    labels:
+      placement: table
+      content:
+      - title
+      side: auto
+      overflow: suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+      content:
+      - lag
+    annotations:
+      mode: presentation
+      marker: numbered
+  axis:
+    tiers:
+    - unit: quarter
+      every: 1
+      role: band
+    - unit: quarter
+      every: 1
+      role: grid-major
+    - unit: quarter
+      every: 1
+      role: labels
+      label:
+        form: year-quarter
+        align: center
+        overflow: visible-overflow
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: labels
+      label:
+        form: short-month
+        align: start
+        overflow: thin-with-record
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: grid-minor
+    - unit: week
+      every: 2
+      role: grid-minor
+  markers:
+  - kind: asOf
+    source: actual
+    label: as of
+    date: {form: localized-date}
+  shading:
+    nonWorking: false
+    exceptions: true
+  backgroundDecoration:
+    rows: none
+    groups: all
+  tableColumns:
+  - id: Work package
+    source: title
+    missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
+  - id: Model
+    source:
+      field: model
+    missing: em-dash
+    align: start
+    width: content
+    headerOrientation: horizontal
+  - id: Approval
+    source:
+      field: approval
+    missing: blank
+    align: start
+    width: content
+    headerOrientation: horizontal
+  - id: Δ
+    source:
+      facet: finishDelta
+    format: signedDays
+    missing: em-dash
+    align: end
+    width: content
+    headerOrientation: horizontal
+  rows:
+    mode: automatic

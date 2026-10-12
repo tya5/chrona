@@ -67,7 +67,7 @@ def _check_frame(frame: Any, pointer: str) -> None:
                           detail="expected a non-negative distance or a {token: id} reference")
 
 
-_HEADING_KEYS = frozenset({"text", "align", "block"})
+_HEADING_KEYS = frozenset({"text", "template", "align", "block", "gap"})
 
 
 def _check_heading(heading: Any, pointer: str) -> None:
@@ -77,22 +77,31 @@ def _check_heading(heading: Any, pointer: str) -> None:
     for key in heading:
         if key not in _HEADING_KEYS:
             raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/{key}", detail=f"unexpected property '{key}'")
-    text = heading.get("text")
-    if text is None:
-        raise LayoutError("E_LAYOUT_SCHEMA", pointer, detail="missing required property 'text'")
+    members = tuple(member for member in ("text", "template") if member in heading)
+    if len(members) != 1:
+        raise LayoutError("E_LAYOUT_SCHEMA", pointer, detail="expected exactly one of text or template")
+    member = members[0]
+    text = heading[member]
     if (not isinstance(text, str) or not 1 <= len(text) <= 80
             or any(ord(char) < 32 or ord(char) == 127 for char in text)):
-        raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/text",
+        raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/{member}",
                           detail="expected one to eighty characters with no control character")
     for key, allowed in (("align", SLOT_HEADING_ALIGNS), ("block", SLOT_HEADING_BLOCKS)):
         if key in heading and heading[key] not in allowed:
             raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/{key}", detail=f"expected one of {list(allowed)}")
 
 
-def _check_frames(profile: Mapping[str, Any]) -> None:
+def _check_node_declarations(profile: Mapping[str, Any]) -> None:
     def visit(node: Any, path: str) -> None:
         if not isinstance(node, Mapping):
             return
+        if "maxInlineShare" in node:
+            value = node["maxInlineShare"]
+            if (node.get("kind") != "slot" or node.get("source") != "table"
+                    or isinstance(value, bool) or not isinstance(value, (int, float))
+                    or not Decimal(str(value)).is_finite() or not 0 < value <= 1):
+                raise LayoutError("E_LAYOUT_SCHEMA", f"{path}/maxInlineShare",
+                                  detail="expected a finite share in (0, 1] on a table slot")
         if "frame" in node:
             _check_frame(node["frame"], f"{path}/frame")
         if "heading" in node:
@@ -114,7 +123,7 @@ def _validate_schema(profile: Mapping[str, Any]) -> None:
     schema = LAYOUT_SCHEMAS.get(profile.get("version"))
     if schema is None:
         raise LayoutError("E_LAYOUT_SCHEMA", "/version")
-    _check_frames(profile)
+    _check_node_declarations(profile)
     errors = tuple(schema_validator(schema).iter_errors(profile))
     if errors:
         identity = profile.get("id")
@@ -159,6 +168,17 @@ def _merge_base(profile: Mapping[str, Any], bases: Mapping[str, LayoutBase], sta
     if base is None or base.revision != reference["revision"]["token"] or base.content_identity != reference["contentIdentity"]:
         raise LayoutError("E_LAYOUT_REFERENCE_UNKNOWN", "/extends", base_id)
     resolved = _merge_base(base.profile, bases, stack + (base_id,))
+    return compose_layout_profile(profile, resolved)
+
+
+def compose_layout_profile(profile: Mapping[str, Any], base: Mapping[str, Any]) -> dict[str, Any]:
+    """Apply declarations to a completed base; no Store or chain resolution."""
+    _validate_schema(profile)
+    _validate_schema(base)
+    if "root" not in base:
+        raise LayoutError("E_LAYOUT_REFERENCE_UNKNOWN", "/extends",
+                          detail="Layout composition requires a standalone base.")
+    resolved = deepcopy(dict(base))
     index, _ = _nodes(resolved["root"])
     for node_id, override in profile["overrides"].items():
         target = index.get(node_id)
@@ -167,12 +187,15 @@ def _merge_base(profile: Mapping[str, Any], bases: Mapping[str, LayoutBase], sta
         if "id" in override or "kind" in override:
             raise LayoutError("E_LAYOUT_OVERRIDE_KIND", f"/overrides/{node_id}", node_id)
         target.update(deepcopy(override))
-    resolved["id"] = profile["id"]
-    resolved["flowDirection"] = profile["flowDirection"]
-    resolved["dependencyNetworkFlowDirection"] = profile["dependencyNetworkFlowDirection"]
-    resolved["requiredThemeTokens"] = deepcopy(profile["requiredThemeTokens"])
-    resolved["reviewSurface"] = deepcopy(profile["reviewSurface"])
+    for key, value in profile.items():  # every member the derived profile states replaces the base's (#1342)
+        if key not in ("extends", "overrides"):
+            resolved[key] = deepcopy(value)
     return resolved
+
+
+def flatten_layout_profile(profile: Mapping[str, Any], bases: Mapping[str, LayoutBase]) -> dict[str, Any]:
+    """The standalone profile a derived (`extends` plus `overrides`) profile stands for, given its resolved bases."""
+    return _merge_base(profile, bases, (str(profile.get("id", "")),))
 
 
 def _distance(value: Any, theme_values: Mapping[str, Any], path: str, literals: list[str], used_tokens: set[str]) -> Decimal:
@@ -221,6 +244,7 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
                 collect_tokens(child)
 
     collect_tokens(profile["root"])
+    collect_tokens(profile["reviewSurface"].get("maxBlockSize"))
     declared = tuple(profile["requiredThemeTokens"])
     if tuple(sorted(declared)) != declared:
         raise LayoutError("E_LAYOUT_TOKEN_REQUIREMENTS", "/requiredThemeTokens")
@@ -230,6 +254,9 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
     extraneous = sorted(set(declared) - used_tokens)
     if extraneous:
         raise LayoutError("E_LAYOUT_TOKEN_REQUIREMENT_EXTRANEOUS", "/requiredThemeTokens", extraneous[0])
+    if "maxBlockSize" in profile["reviewSurface"]:
+        path = "/reviewSurface/maxBlockSize"
+        distances[path] = _distance(profile["reviewSurface"]["maxBlockSize"], theme_values, path, literals, used_tokens)
 
     def size_distances(spec: Any, path: str) -> None:
         if not isinstance(spec, dict):
@@ -268,6 +295,9 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
                     key = f"{path}/{name}/{side}"; distances[key] = _distance(side_value, theme_values, key, literals, used_tokens)
             else:
                 key = f"{path}/{name}"; distances[key] = _distance(value, theme_values, key, literals, used_tokens)
+        if isinstance(node.get("heading"), dict) and "gap" in node["heading"]:
+            key = f"{path}/heading/gap"
+            distances[key] = _distance(node["heading"]["gap"], theme_values, key, literals, used_tokens)
         if "inset" in node.get("frame", {}):
             key = f"{path}/frame/inset"
             distances[key] = _distance(node["frame"]["inset"], theme_values, key, literals, used_tokens)

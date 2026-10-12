@@ -182,17 +182,19 @@ def test_controller_annotation_evidence_realizes_each_purpose_through_layout_com
     example = ROOT / "tests/fixtures/controller-z"
     materialize(example / "manifest.yaml", "annotations", tmp_path / "annotations", write=False)
     artifact = (tmp_path / "annotations/review.svg").read_text(encoding="utf-8")
-    for identifier in ("architecture-callout", "evb-highlight", "performance-note", "bringup-risk", "firmware-slip"):
+    for identifier in ("architecture-callout", "evb-highlight", "performance-note", "bringup-risk"):
         assert f'data-scene-id="annotation-box:{identifier}"' in artifact
         assert f'data-scene-id="annotation-text:{identifier}"' in artifact
-    for identifier in ("architecture-callout", "performance-note", "bringup-risk", "firmware-slip"):
+    for identifier in ("architecture-callout", "performance-note", "bringup-risk"):
         assert f'data-scene-id="annotation-leader:{identifier}"' in artifact
     # Completed stroke envelopes provide safe corridors for both arrows.
-    assert 'data-scene-id="annotation-summary:firmware-slip"' not in artifact
+    # The one-pass default retains an infeasible callout as a truthful summary.
+    assert 'data-scene-id="annotation-summary:firmware-slip"' in artifact
+    assert 'data-scene-id="annotation-box:firmware-slip"' not in artifact
     assert 'data-scene-id="annotation-summary:bringup-risk"' not in artifact
-    assert "callout not shown on plot" not in artifact
+    assert "callout not shown on plot" in artifact
     scene_text = (tmp_path / "annotations/review.scene.json").read_text(encoding="utf-8")
-    assert "W_LAYOUT_ANNOTATION_SUPPRESSED" not in scene_text
+    assert "W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" in scene_text
     assert 'data-scene-id="annotation-leader:evb-highlight"' not in artifact
     leader = re.search(r'data-scene-id="annotation-leader:bringup-risk"[^>]* d="([^"]+)"', artifact)
     assert leader is not None and leader.group(1).count("L") >= 5
@@ -278,24 +280,24 @@ def test_halcyon_overlay_briefing_materializes_guide_and_barrier_anchored_slots(
     assert slots["timeline"]["blockSize"] >= 900.0
 
 
-def test_orion_gates_measures_the_colour_scale_legend_before_layout(tmp_path):
+def test_halcyon_gates_measures_the_colour_scale_legend_before_layout(tmp_path):
     """Scale legend rows are part of the legend slot's measured size, so they stay on the canvas."""
-    materialize(ROOT / "examples/orion-asic/manifest.yaml", "gates", tmp_path / "gates", write=False)
+    materialize(ROOT / "examples/halcyon-1/manifest.yaml", "gates", tmp_path / "gates", write=False)
     svg = (tmp_path / "gates/review.svg").read_text(encoding="utf-8")
-    context = yaml.safe_load((ROOT / "examples/orion-asic/contexts/gates.yaml").read_text(encoding="utf-8"))
+    context = yaml.safe_load((ROOT / "examples/halcyon-1/contexts/26-gates.yaml").read_text(encoding="utf-8"))
     block = float(context["body"]["environment"]["viewport"]["blockSize"])
     baselines = [float(match) for match in re.findall(r'data-purpose="legend-label"[^>]* y="([0-9.]+)"', svg)]
     assert len(baselines) == 5 and max(baselines) < block
-    assert 'data-scene-id="legend:scale:revision:B0"' in svg
+    assert 'data-scene-id="legend:scale:model:FM"' in svg
     assert 'data-purpose="progress-fill"' in svg
     scene = json.loads((tmp_path / "gates/review.scene.json").read_text(encoding="utf-8"))
-    assert "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:3:0:label-does-not-fit" in scene["diagnostics"]
-    assert "W_LAYOUT_AXIS_DENSITY:axis-tier:3:thinned=1" in scene["diagnostics"]
-    assert not any(diagnostic.startswith("W_LAYOUT_AXIS_LABEL_THINNED:axis-label:3:") and diagnostic != "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:3:0:label-does-not-fit"
+    assert not any(diagnostic.startswith(("W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT", "W_THEME_ROLE_UNREAD"))
                    for diagnostic in scene["diagnostics"])
-    axis_labels = {primitive["id"] for primitive in scene["surfaces"][0]["primitives"] if primitive.get("purpose") == "axis-label"}
-    # Only the one clipped candidate is thinned; every other month label in the tier is placed.
-    assert "axis-label:3:2" in axis_labels and "axis-label:3:4" in axis_labels
+    primitives = {primitive["id"]: primitive for primitive in scene["surfaces"][0]["primitives"]}
+    # The compared scenario's negative lag (-3wd) starts payload TVAC before the current plan does.
+    ghost = primitives["planned:payload-tvac:scenario:payload-fast-track:payload-tvac"]["bounds"]
+    planned = primitives["planned:payload-tvac:payload-tvac"]["bounds"]
+    assert ghost["inline"] < planned["inline"]
 
 
 def test_replan_baseline_records_the_nonfitting_partial_quarter_label(tmp_path):
@@ -494,7 +496,7 @@ def test_halcyon_current_project_pin_rejects_changed_source_bytes(tmp_path):
         copy_context_closure(copied_example, context_path, tmp_path / "snapshot")
 
 
-HALCYON_PROJECT_REVISION = "example-v4"
+HALCYON_PROJECT_REVISION = "example-v6"
 
 
 def test_every_halcyon_context_pins_current_project_without_repinning_theme():
@@ -524,7 +526,8 @@ def test_halcyon_avionics_bustest_lag_is_the_authored_two_workdays():
     assert result.placements["avionics"]["end"].isoformat() == "2027-04-27"
     assert result.placements["bus-test"]["start"].isoformat() == "2027-04-29"
     assert result.placements["bus-test"]["end"].isoformat() == "2027-05-13"
-    assert result.analysis.total_float["bus-test"] == 41
+    total_float = result.analysis.total_float["bus-test"]
+    assert (total_float.value, total_float.unit, total_float.calendar) == (41, "working-days", "engineering")
 
 def test_materializer_uses_each_declared_halcyon_slide_context(tmp_path):
     example = ROOT / "examples/halcyon-1"

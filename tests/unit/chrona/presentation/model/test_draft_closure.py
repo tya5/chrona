@@ -345,6 +345,9 @@ def test_preset_preferred_visual_profile_applies_unless_a_flag_is_given(preset_w
     assert explicit.closure.context.target.visual_profile == "chrona-output/visual/v0.5-baseline"
     default = resolve_draft_render(project_path=root / "project.yaml", preset_path=root / "executive-light.preset.yaml")
     assert default.closure.context.target.visual_profile == "chrona-output/visual/v0.5-baseline"
-    with pytest.raises(ClosureError) as error:
-        resolve_draft_render(project_path=root / "project.yaml", preset_path=preset, preset_root=root, target_kind="png")
-    assert error.value.diagnostic_id == "E_PRESET_VISUAL_PROFILE_TARGET"
+    png = resolve_draft_render(project_path=root / "project.yaml", preset_path=preset, preset_root=root, target_kind="png")
+    assert png.closure.context.target.visual_profile == "chrona-output/visual/v0.7-png"
+    assert png.preset_visual_profile_fallback.preferred_profile == "chrona-output/visual/v0.7-svg"
+    assert png.preset_visual_profile_fallback.selected_profile == "chrona-output/visual/v0.7-png"
+    assert preferred.preset_visual_profile_fallback is None
+    assert explicit.preset_visual_profile_fallback is None

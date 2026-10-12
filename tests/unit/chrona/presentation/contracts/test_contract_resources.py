@@ -248,6 +248,49 @@ def test_v028_slot_heading_text_is_detached_immutable_optional_caption_mapping()
     assert _view_contract(value).view.slot_heading_text == {}
 
 
+@pytest.mark.parametrize("wrap", ("allow", "forbid", None))
+@pytest.mark.parametrize("site", ("heading", "laneTable", "column"))
+def test_view_text_wrap_is_typed_once_with_runtime_defaults(wrap, site):
+    value = sr.bundle("control-room-dark")["view"]
+    value["body"]["heading"] = {"title": "{project}"}
+    value["body"]["rows"]["laneTable"] = {"label": "group", "count": True}
+    if site == "column":
+        value["body"]["rows"] = {"mode": "automatic"}
+        value["body"]["tableColumns"] = [{"id": "Task", "source": "title",
+            "missing": "em-dash", "align": "start", "width": "content",
+            "headerOrientation": "horizontal"}]
+    targets = (value["body"]["heading"],) if site == "heading" else (
+        value["body"]["rows"]["laneTable"],) if site == "laneTable" else value["body"]["tableColumns"]
+    for target in targets:
+        target.pop("text", None)
+        if wrap is not None:
+            target["text"] = {"wrap": wrap}
+    view = _view_contract(value).view
+    expected = wrap or "forbid"
+    typed = (view.heading,) if site == "heading" else (view.rows.lane_table,) if site == "laneTable" else view.table_columns
+    assert all(item.text_wrap == expected for item in typed)
+
+
+@pytest.mark.parametrize("site", ("heading", "laneTable", "column"))
+@pytest.mark.parametrize("text", ({}, {"wrap": "auto"}, {"wrap": "allow", "extra": True},
+                                  {"wrap": True}, None, "allow"))
+def test_view_text_wrap_sites_share_the_closed_schema(site, text):
+    value = sr.bundle("control-room-dark")["view"]
+    value["body"]["heading"] = {"title": "{project}"}
+    value["body"]["rows"]["laneTable"] = {"label": "group"}
+    if site == "column":
+        value["body"]["rows"] = {"mode": "automatic"}
+        value["body"]["tableColumns"] = [{"id": "Task", "source": "title",
+            "missing": "em-dash", "align": "start", "width": "content",
+            "headerOrientation": "horizontal"}]
+    target = (value["body"]["heading"] if site == "heading" else
+              value["body"]["rows"]["laneTable"] if site == "laneTable" else
+              value["body"]["tableColumns"][0])
+    target["text"] = text
+    with pytest.raises(SchemaContractError, match="E_RESOURCE_SCHEMA"):
+        _view_contract(value)
+
+
 @pytest.mark.parametrize("captions", ({"": "Notes"}, {"notes": ""}, {"notes": None}, {"notes": 7}, {"notes": "bad\ncaption"}))
 def test_v028_slot_heading_text_schema_rejects_invalid_keys_or_caption_values(captions):
     value = sr.bundle("control-room-dark")["view"]

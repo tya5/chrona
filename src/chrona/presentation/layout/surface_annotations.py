@@ -5,7 +5,7 @@ from datetime import date
 from decimal import Decimal
 from collections.abc import Mapping
 from math import isfinite
-from typing import Any, Callable
+from typing import Any, Callable, NamedTuple
 
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.surface_marks import (
@@ -29,10 +29,12 @@ from chrona.presentation.layout.annotation_border import NO_BORDER, place_border
 from chrona.presentation.layout.rounded_outline import (
     CORNER_CLEARANCE, clamp_radius, commands_points, resolve_corner_radius, rounded_rect_commands,
 )
-from chrona.presentation.layout.annotation_inline_size import fill_note, fill_target
+from chrona.presentation.layout.annotation_inline_size import FilledNote, fill_note, fill_target
 from chrona.presentation.layout.viewer_fit import fit_text, require_followable_content
 from chrona.presentation.model.theme_tokens import ViewerFitToken
-from chrona.presentation.layout.annotation_kind_frame import EMPTY_FRAME, measure_kind_frame, place_kind_frame
+from chrona.presentation.layout.annotation_kind_frame import (
+    EMPTY_FRAME, KindFrameMeasure, complete_kind_heading, measure_kind_frame, place_kind_frame,
+)
 from chrona.presentation.layout.annotation_tilt import (
     nearest_boundary_point, rotate_commands, polygon_commands, rotate_shape, rotate_text, rotated_corners, rotated_extent, tilt_for,
 )
@@ -57,7 +59,7 @@ from chrona.presentation.layout.routing import (
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
     IconPlacement, LayoutImageFill, ShapePlacement, SurfaceLayoutRequest,
-    SlotPlacement, TextPlacement, annotation_presentation,
+    NarrativeReceipt, SlotPlacement, TextPlacement, annotation_presentation,
 )
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.image_slice_geometry import image_slice_tiles
@@ -68,6 +70,19 @@ from chrona.presentation.layout.surface_geometry import (
 
 
 ANNOTATION_PAINT_ORDER = 400
+
+
+class _NoteVariant(NamedTuple):
+    """One content/list candidate and its completed filled alternative."""
+
+    content: str
+    lines: tuple[str, ...]
+    measured_width: float
+    frame_size: tuple[float, float]
+    search_size: tuple[float, float]
+    filled: FilledNote | None
+    fill_size: tuple[float, float] | None
+    filled_kind: KindFrameMeasure
 
 
 def _anchor_operand(value: object) -> str:
@@ -203,6 +218,7 @@ class SurfaceAnnotationBatch:
     suppressed_index_ids: frozenset[str]
     suppressed_callout_ids: frozenset[str]
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
+    narrative_receipts: tuple[NarrativeReceipt, ...] = ()
 
 
 def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBatch:
@@ -269,6 +285,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
     metric_for, surface_obstacles = context.metric_for, context.surface_obstacles
     register_rect, register_port = context.register_rect, context.register_port
     text: list[TextPlacement] = []
+    narrative_receipts: list[NarrativeReceipt] = []
     shapes: list[ShapePlacement] = []
     relations: list[RelationPlacement] = []
     candidate_icons: list[IconPlacement] = []
@@ -615,8 +632,12 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         content_top, content_right, content_bottom, content_left = (
                             max(value, clearance) for value in (content_top, content_right, content_bottom, content_left))
 
-                    def measure_note(measured_content: str, wrap_bound: float, may_wrap: bool
+                    def measure_note(measured_content: str, wrap_bound: float, may_wrap: bool, *, wrap_heading: bool = False
                                      ) -> tuple[tuple[str, ...], float, tuple[float, float]]:
+                        frame = (complete_kind_heading(
+                            kind_measure, available_inline=wrap_bound + annotation_leading + annotation_trailing,
+                            may_wrap=may_wrap, theme_tokens=request.theme_tokens, metric_for=metric_for)
+                            if wrap_heading else kind_measure)
                         lines = (wrap_text(measured_content, available_inline=wrap_bound, font_size=size, font_metrics=annotation_metrics,
                                            letter_spacing=float(annotation_treatment.letter_spacing),
                                            text_transform=annotation_treatment.transform)
@@ -627,9 +648,9 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                      for line in lines)
                         body_inline = annotation_leading + widest + annotation_trailing
                         return lines, widest, (
-                            max(body_inline, kind_measure.header_inline) + kind_measure.inline_insets
+                            max(body_inline, frame.header_inline) + frame.inline_insets
                             + content_left + content_right,
-                            max(size * line_height * len(lines) + kind_measure.header_block, kind_measure.stamp_block)
+                            max(size * line_height * len(lines) + frame.header_block, frame.stamp_block)
                             + content_top + content_bottom)
 
                     # A tilted note is searched and registered through the axis-aligned bounds of its rotated
@@ -641,16 +662,17 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     # `inlineSize: fill` (#1051): on a row-aligned rung of an annotations slot the note takes the slot's
                     # inline size and wraps in what its chrome leaves; any other rung keeps the content size above.
                     fill_declared = container is not None and container.inline_size == "fill"
-                    def measure_variant(measured_content: str, *, list_entry: bool):
+                    def measure_variant(measured_content: str, *, list_entry: bool) -> _NoteVariant:
                         may_wrap = (wrap == "allow" or (list_entry and has_index_suppression))
                         lines, measured_width, frame_size = measure_note(
                             measured_content, wrap_available, may_wrap)
                         search_size = (rotated_extent(*frame_size, tilt_angle) if tilt_angle else frame_size)
                         filled_variant = None
+                        filled_kind = kind_measure
                         if fill_declared and annotation_slot is not None:
                             fill_may_wrap = (wrap_declared != "forbid" or plot_wrap_em is not None or list_entry)
                             filled_variant = fill_note(
-                                lambda bound: measure_note(measured_content, bound, fill_may_wrap),
+                                lambda bound: measure_note(measured_content, bound, fill_may_wrap, wrap_heading=True),
                                 target=fill_target(float(annotation_slot.bounds.inline_size),
                                                    max_inline_em=(float(container.max_inline_em)
                                                                   if container.max_inline_em is not None else None),
@@ -658,13 +680,17 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                 chrome=(annotation_leading + annotation_trailing + kind_measure.inline_insets
                                         + content_left + content_right),
                                 tilt_degrees=tilt_angle)
+                            filled_kind = complete_kind_heading(
+                                kind_measure,
+                                available_inline=filled_variant.wrap_inline + annotation_leading + annotation_trailing,
+                                may_wrap=fill_may_wrap, theme_tokens=request.theme_tokens, metric_for=metric_for)
                         measured_fill_size = (
                             rotated_extent(filled_variant.frame_inline, filled_variant.frame_block, tilt_angle)
                             if filled_variant is not None and tilt_angle else
                             (filled_variant.frame_inline, filled_variant.frame_block)
                             if filled_variant is not None else None)
-                        return (measured_content, lines, measured_width, frame_size, search_size,
-                                filled_variant, measured_fill_size)
+                        return _NoteVariant(measured_content, lines, measured_width, frame_size, search_size,
+                                            filled_variant, measured_fill_size, filled_kind)
 
                     plot_variant = measure_variant(body_content, list_entry=False)
                     list_variant = (measure_variant(list_content, list_entry=True)
@@ -678,9 +704,9 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         base_insets = (content_top, content_right, content_bottom, content_left)
                         required = 0.0
                         for variant in variants:
-                            dimensions = [(*variant[3], False)]
-                            if variant[5] is not None:
-                                dimensions.append((variant[5].frame_inline, variant[5].frame_block, True))
+                            dimensions = [(*variant.frame_size, False)]
+                            if variant.filled is not None:
+                                dimensions.append((variant.filled.frame_inline, variant.filled.frame_block, True))
                             for dimension in dimensions:
                                 measured_width, measured_height = dimension[:2]
                                 filled_width = len(dimension) == 3 and dimension[2]
@@ -700,15 +726,15 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             list_variant = (measure_variant(list_content, list_entry=True)
                                             if has_index_suppression else plot_variant)
                     (content, annotation_lines, text_width, frame_size, annotation_size,
-                     filled, fill_size) = plot_variant
+                     filled, fill_size, filled_kind) = plot_variant
 
                     def use_variant(candidate: Any | None) -> None:
                         nonlocal content, annotation_lines, text_width, frame_width, frame_height
-                        nonlocal annotation_size, filled, fill_size
+                        nonlocal annotation_size, filled, fill_size, filled_kind
                         variant = (list_variant if has_index_suppression and candidate is not None
                                    and _is_annotation_list_candidate(candidate) else plot_variant)
                         (content, annotation_lines, text_width, frame_size, annotation_size,
-                         filled, fill_size) = variant
+                         filled, fill_size, filled_kind) = variant
                         frame_width, frame_height = frame_size
 
                     used_fill = False
@@ -849,7 +875,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                         text_transform=annotation_treatment.transform)
                                     for line in summary_lines)
                                 summary_height = size * line_height * len(summary_lines)
-                                complete_list_record(
+                                summary_placement, _ = complete_list_record(
                                     annotation=annotation, resolved=resolved,
                                     placement_id=f"annotation-summary:{annotation_id}",
                                     content=summary_content, lines=summary_lines,
@@ -857,6 +883,9 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                     typography_role=annotation_text_role,
                                     presentation=presentation,
                                     anchor_y=anchor_bounds.y + anchor_bounds.height / 2)
+                                if annotation.content and summary_placement.overflow != "suppressed":
+                                    narrative_receipts.append(NarrativeReceipt(
+                                        "annotation", annotation_id, summary_placement.placement_id, "summary"))
                             continue
                         if "suppress" in ladder:
                             placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
@@ -928,6 +957,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         # The note sits in its slot at the slot's width (#1051): the wrapped lines and frame are the
                         # filled ones, and a trailing visual stands at the box's end edge.
                         annotation_lines, frame_width, frame_height = filled.lines, filled.frame_inline, filled.frame_block
+                        kind_measure = filled_kind
                         text_width = (frame_width - annotation_leading - annotation_trailing - kind_measure.inline_insets
                                       - content_left - content_right)
                     elif fill_declared:
@@ -1077,6 +1107,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             if tilt_angle:
                 placed_annotation = rotate_text(placed_annotation, tilt_center, tilt_angle)
             text.append(placed_annotation)
+            if annotation.content and placed_annotation.overflow != "suppressed":
+                narrative_receipts.append(NarrativeReceipt("annotation", annotation_id, placed_annotation.placement_id))
             register_rect(placed_annotation.placement_id, "text", "annotations", placed_annotation.bounds)
             if annotation_slot is not None and annotation.number is not None and status_in_list:
                 rail_records.append(placed_annotation)
@@ -1240,7 +1272,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
         tuple(text), tuple(shapes), tuple(relations), tuple(candidate_icons), tuple(placement_decisions),
         tuple(diagnostics), tuple(visible_label_overflows), tuple(visible_route_fallbacks),
         frozenset(handled_candidate_visuals), frozenset(discovered_index_suppressions),
-        frozenset(discovered_callout_suppressions), tuple(diagnostic_provenance))
+        frozenset(discovered_callout_suppressions), tuple(diagnostic_provenance), tuple(narrative_receipts))
 
 
 def comparison_marks(projection: Any) -> tuple[ComparisonMark, ...]:

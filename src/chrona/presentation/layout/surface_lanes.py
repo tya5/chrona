@@ -18,6 +18,7 @@ from chrona.presentation.layout.surface_marks import resolve_mark_geometries, re
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.lane_projection import (
     LaneProjectionClosure, LaneProjectionInstance, close_lane_projection,
+    lane_instance_owners as _lane_instance_owners,
 )
 from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
 from chrona.presentation.layout.lane_label_intent import measure_lane_member_labels
@@ -27,9 +28,13 @@ from chrona.presentation.layout.lane_mark_facets import (
     _mark_facets, _overlay_compound_facets, _with_mark_visuals,
 )
 from chrona.presentation.layout.obstacles import ObstacleRect
+from chrona.presentation.layout.surface_mark_visibility import (
+    ItemMarkVisibilityIndex, ensure_item_mark_visibility_index,
+)
 from chrona.presentation.layout.surface_geometry import bounds_from_rect as _bounds
 from chrona.presentation.layout.surface_quality import (
     IconPlacement, LaneEmissionFacet, LaneEmissionPlacement, MarkPlacement, ShapePlacement, TextPlacement,
+    completed_symbol_primitive_ids,
 )
 from chrona.presentation.model.semantic_registry import semantic_binding
 
@@ -104,29 +109,6 @@ def lane_owner(review_row: Any, item: Any) -> tuple[str, str] | None:
     return review_row.row_id, matches[0]
 
 
-def _lane_instance_owners(projection: Any, closure: LaneProjectionClosure) -> dict[LaneProjectionInstance, tuple[str, str]]:
-    """Join original Review occurrences to final lanes without decoding IDs."""
-    lane_rows = {row.lane_id: row for row in projection.lane_rows}
-    source_rows = {row.row_id: row for row in projection.rows}
-    owners: dict[LaneProjectionInstance, tuple[str, str]] = {}
-    for instance in closure.instances:
-        row = source_rows.get(instance.row_id)
-        if row is None or not row.items:
-            raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/rows")
-        member_id = row.items[0].item_id or row.items[0].object_id
-        assignment = projection.lane_membership.assignment_for(member_id)
-        lane_row = lane_rows.get(assignment.lane_id)
-        if lane_row is None or not any(
-            candidate_member_id == member_id
-            and (item.item_id or item.object_id, item.object_id, item.source_kind)
-            == (instance.item_id, instance.object_id, instance.source_kind)
-            for item, candidate_member_id in zip(lane_row.items, lane_row.member_item_ids, strict=True)
-        ):
-            raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/laneRows")
-        owners[instance] = (lane_row.lane_id, instance.item_id)
-    return owners
-
-
 def resolved_lane_visual_requests(projection: Any, visual_requests: tuple[Any, ...],
                                   *, as_of: date | None) -> tuple[Any, ...]:
     """Bind View selectors once to the final lane occurrence identities."""
@@ -151,11 +133,15 @@ def resolved_lane_visual_requests(projection: Any, visual_requests: tuple[Any, .
 def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
                                 surface_content: Any, theme_tokens: Any,
                                 metric_values: dict[str, Decimal], icon_assets: Mapping[str, Any],
-                                visual_requests: tuple[Any, ...], font_metrics: Any) -> FixedLanePreflight:
+                                visual_requests: tuple[Any, ...], font_metrics: Any,
+                                mark_visibility_index: ItemMarkVisibilityIndex | None = None
+                                ) -> FixedLanePreflight:
     """Close fixed-lane tracks before final allocation from fixed View rows and Layout inputs."""
     membership = getattr(projection, "lane_membership", None)
     if membership is None:
         raise LayoutError("E_LAYOUT_LANE_PREFLIGHT_INVALID", "/projection/laneRows")
+    mark_visibility_index = ensure_item_mark_visibility_index(
+        projection, as_of=surface_content.as_of, index=mark_visibility_index)
     start, end = projection.window
     rows = review_rows(projection)
     frame = lane_inline_frame_for_manifest(layout_manifest, window=(start, end))
@@ -174,6 +160,7 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
         mark_band_allocation=mark_band_allocation,
         icon_assets=icon_assets, visual_requests=visual_requests,
         progress_fill_source=surface_content.progress_fill_source,
+        mark_visibility_index=mark_visibility_index,
     )
     provisional_footprints = compose_lane_item_footprints(scale=provisional_scale, **footprint_inputs)
     point_facets = []
@@ -186,13 +173,15 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
     footprints = (provisional_footprints if scale is provisional_scale else
                   compose_lane_item_footprints(scale=scale, **footprint_inputs))
     subtracks = assign_lane_subtracks(membership, footprints, mark_band_size=mark_band_size,
-                                     reserved_band_bounds=mark_band_allocation.outer_bounds)
+                                     reserved_band_bounds=mark_band_allocation.outer_bounds,
+                                     mark_visibility_index=mark_visibility_index)
     resolved_visuals = resolved_lane_visual_requests(
         projection, visual_requests, as_of=surface_content.as_of)
     measured_labels = measure_lane_member_labels(
         projection, surface_content, timeline_inline_size=float(frame.timeline_inline_size),
         theme_tokens=theme_tokens, font_metrics=font_metrics,
-        visual_requests=resolved_visuals, icon_assets=dict(icon_assets))
+        visual_requests=resolved_visuals, icon_assets=dict(icon_assets),
+        mark_visibility_index=mark_visibility_index)
     row_padding = float(metric_values["timeline.row.paddingBlock"])
     lane_requirements = (lane_label_row_requirements(
         measured_labels, scale, subtracks, footprints,
@@ -215,7 +204,7 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
     return FixedLanePreflight(subtracks, frame, required, surface_content.as_of, scale,
                               measured_labels, resolved_visuals,
                               tuple(zip((row.row_id for row in rows), requirements, strict=True)),
-                              mark_band_allocation)
+                              mark_band_allocation, mark_visibility_index)
 
 
 def build_lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: list[MarkPlacement],
@@ -344,7 +333,7 @@ def build_lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: l
 def complete_hosted_text_identity(
         text: tuple[TextPlacement, ...], marks: tuple[MarkPlacement, ...],
         lane_emissions: tuple[LaneEmissionPlacement, ...]) -> tuple[TextPlacement, ...]:
-    """Resolve abstract lane-mark hosts to their first emitted glyph part."""
+    """Close every mark host; declared lane-emission identities remain authoritative."""
     emitted_mark_hosts: dict[str, str] = {}
     for emission in lane_emissions:
         if emission.placement_type != "mark":
@@ -355,14 +344,19 @@ def complete_hosted_text_identity(
         previous = emitted_mark_hosts.setdefault(emission.placement_id, host_id)
         if previous != host_id:
             raise LayoutError("E_LAYOUT_HOST_EMISSION_INVALID", emission.placement_id)
-    lane_marks_by_id = {mark.placement_id: mark for mark in marks if mark.lane_row_id is not None}
+    for mark in marks:
+        if mark.lane_row_id is not None:
+            continue  # A declared lane requires its explicit emission handoff.
+        ids = completed_symbol_primitive_ids(mark.placement_id, mark.symbol_parts)
+        emitted_mark_hosts.setdefault(mark.placement_id, ids[0] if ids else mark.placement_id)
+    marks_by_id = {mark.placement_id: mark for mark in marks}
     completed = []
     for placed in text:
         host_id = placed.host_placement_id
-        if host_id not in lane_marks_by_id:
+        if host_id not in marks_by_id:
             completed.append(placed)
             continue
-        mark = lane_marks_by_id[host_id]
+        mark = marks_by_id[host_id]
         emitted_id = emitted_mark_hosts.get(host_id)
         if (emitted_id is None or placed.slot_id != mark.slot_id
                 or placed.paint_order <= mark.paint_order):

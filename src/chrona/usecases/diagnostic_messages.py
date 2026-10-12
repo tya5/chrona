@@ -81,6 +81,7 @@ def error_message(code: str, message: str | None) -> str:
 # severity and cause are one finding that happened more than once, and collapse into one row (design D1).
 
 _SURFACE_CAUSES: Mapping[str, str] = {
+    "W_LAYOUT_OUTSIDE_WINDOW": "objects outside the explicit window were clipped or left out of the plot; their source data is unchanged",
     "W_LAYOUT_MARK_STACK_OVERFLOW": "a comparison stack exceeds its nominal track; row space was expanded",
     "W_LAYOUT_LABEL_SUPPRESSED": "a label was left out of the picture because it does not fit",
     "W_THEME_ROLE_UNREAD": "a Theme role or colour binding is declared but no registered role, group colour or document of the render reads it",
@@ -161,6 +162,12 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
     """Name the cause and the subject of one warning record of ``usecases.warning_ledger``."""
     code = str(payload.get("code", ""))
     identity = str(payload.get("diagnostic", ""))
+    if code == "W_LAYOUT_AUTO_BLOCK_SIZE":
+        return WarningText("completed auto canvas exceeds the declared readability limit; "
+                           "use View selection/grouping for a smaller review; paging is a future option",
+                           f"surface {payload.get('surfaceId')} at {payload.get('sourceRef')}: "
+                           f"{payload.get('rowCount')} rows, block size {_number(payload.get('actualBlockSize'))}, "
+                           f"limit {_number(payload.get('maxBlockSize'))}")
     if code in _SURFACE_CAUSES:
         return WarningText(_SURFACE_CAUSES[code], identity.removeprefix(code).removeprefix(":"))
     if code in _FIT_CAUSES:

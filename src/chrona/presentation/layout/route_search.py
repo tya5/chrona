@@ -2,9 +2,14 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
+from collections import OrderedDict
+from bisect import bisect_left, bisect_right
+from dataclasses import dataclass, field
 from heapq import heappop, heappush
 from itertools import count
-from math import hypot, isfinite
+from math import hypot, isfinite, nextafter
+from types import MappingProxyType
+from typing import Mapping, cast
 
 from chrona.presentation.layout.obstacles import (
     ObstacleRect,
@@ -23,6 +28,28 @@ class RouteSearchFailure(ValueError):
         self.detail = detail
 
 
+@dataclass(slots=True)
+class RelationExpansionBudget:
+    """One resolved instance's additional ceiling, shared across pair iterators."""
+
+    limit: int
+    expansions: int = field(default=0, init=False)
+
+    def __post_init__(self) -> None:
+        if isinstance(self.limit, bool) or not isinstance(self.limit, int) or self.limit < 1:
+            raise ValueError("E_LAYOUT_ROUTE_SEARCH_INPUT: budget must be a positive integer.")
+
+    @property
+    def hit(self) -> bool:
+        return self.expansions == self.limit
+
+    def charge(self) -> None:
+        if self.hit:
+            raise RouteSearchFailure("E_PRESENTATION_ROUTE_LIMIT",
+                                     detail="The relation's explicit expansion budget was reached.")
+        self.expansions += 1
+
+
 Point = tuple[float, float]
 Path = tuple[Point, ...]
 Edge = tuple[int, int, float]
@@ -31,6 +58,123 @@ SparseGraph = tuple[
     tuple[tuple[Edge, ...], ...],
     tuple[tuple[tuple[int, int], tuple[int, float]], ...],
 ]
+
+HistoryEntry = tuple[float, float, float, tuple[Point, Point]]
+_PROJECTION_LINE_LIMIT = 16
+
+
+def _build_projection_line(axis: int, coordinate: float, events: tuple[float, ...], clear
+                           ) -> Mapping[tuple[Point, Point], bool]:
+    """Exact visibility on one base-event line, before endpoint splits."""
+    points = tuple((value, coordinate) if axis == 0 else (coordinate, value) for value in events)
+    return MappingProxyType({(a, b): clear(a, b) for a, b in zip(points, points[1:])})
+
+
+@dataclass(frozen=True, slots=True)
+class _VisibilityBase:
+    """Endpoint-independent surface graph, including exact blocked-edge facts."""
+
+    nodes: frozenset[Point]
+    visibility: Mapping[tuple[Point, Point], bool]
+    x_events: tuple[float, ...]
+    y_events: tuple[float, ...]
+    _projection_lines: OrderedDict[tuple[int, str], Mapping[tuple[Point, Point], bool]] = field(
+        default_factory=OrderedDict, compare=False, repr=False)
+
+    def projection_line(self, axis: int, coordinate: float, clear) -> Mapping[tuple[Point, Point], bool]:
+        """A bounded pure-fact working set; eviction cannot affect route choice."""
+        key = (axis, repr(coordinate))
+        known = self._projection_lines.get(key)
+        if known is not None:
+            self._projection_lines.move_to_end(key)
+            return known
+        prepared = _build_projection_line(axis, coordinate, self.x_events if axis == 0 else self.y_events, clear)
+        if len(self._projection_lines) >= _PROJECTION_LINE_LIMIT:
+            self._projection_lines.popitem(last=False)
+        self._projection_lines[key] = prepared
+        return prepared
+
+
+def _build_visibility_base(
+    rects: tuple[tuple[float, float, float, float], ...], *,
+    grid_offset: float, bounds: tuple[float, float, float, float] | None, clear,
+    previous: _VisibilityBase | None = None, clear_additions=None,
+) -> _VisibilityBase:
+    """Prepare obstacle/boundary nodes once; endpoint overlays do not mutate it."""
+    nodes: set[Point] = set()
+    xs: set[float] = set()
+    ys: set[float] = set()
+    for left, top, right, bottom in rects:
+        xs.update((left - grid_offset, right + grid_offset))
+        ys.update((top - grid_offset, bottom + grid_offset))
+        for x in (left - grid_offset, right + grid_offset):
+            for y in (top - grid_offset, bottom + grid_offset):
+                if bounds is None or (bounds[0] <= x <= bounds[2] and bounds[1] <= y <= bounds[3]):
+                    nodes.add((x, y))
+    if bounds is not None:
+        left, top, right, bottom = bounds
+        xs = {x for x in xs if left <= x <= right} | {left, right}
+        ys = {y for y in ys if top <= y <= bottom} | {top, bottom}
+        for x in xs:
+            nodes.update(((x, top), (x, bottom)))
+        for y in ys:
+            nodes.update(((left, y), (right, y)))
+    by_x: dict[float, list[Point]] = {}
+    by_y: dict[float, list[Point]] = {}
+    for point in sorted(nodes):
+        by_x.setdefault(point[0], []).append(point)
+        by_y.setdefault(point[1], []).append(point)
+    visibility = {}
+    for groups in (by_x.values(), by_y.values()):
+        for group in groups:
+            # Both axis groups are already in lexicographic point order.
+            for a, b in zip(group, group[1:]):
+                old = previous.visibility.get((a, b)) if previous is not None else None
+                visibility[(a, b)] = (clear(a, b) if old is None
+                                      else old and clear_additions(a, b))
+    return _VisibilityBase(frozenset(nodes), MappingProxyType(visibility), tuple(sorted(xs)), tuple(sorted(ys)))
+
+
+@dataclass(frozen=True, slots=True)
+class _HistoryIndex:
+    """Branch-local completed prefix; the current terminal is not indexed.
+
+    Coordinates select nearby lines, intervals reject distant segments, and
+    the existing exact predicate alone decides intersection. Immutable tuples
+    let straight extensions reuse a prefix without changing sibling branches.
+    """
+
+    horizontal: tuple[HistoryEntry, ...] = ()
+    vertical: tuple[HistoryEntry, ...] = ()
+
+    def add(self, segment: tuple[Point, Point]) -> _HistoryIndex:
+        a, b = segment
+        horizontal = a[1] == b[1]
+        axis = 0 if horizontal else 1
+        entry = (a[1 - axis], min(a[axis], b[axis]),
+                 max(a[axis], b[axis]), segment)
+        entries = self.horizontal if horizontal else self.vertical
+        position = bisect_right(entries, entry)
+        updated = (*entries[:position], entry, *entries[position:])
+        return (type(self)(updated, self.vertical) if horizontal
+                else type(self)(self.horizontal, updated))
+
+    def intersects(self, segment: tuple[Point, Point]) -> bool:
+        a, b = segment
+        for entries, axis in ((self.horizontal, 0), (self.vertical, 1)):
+            # Round the broad phase outwards; never discard an exact hit at
+            # a floating-point boundary. This does not relax the oracle.
+            line_low = nextafter(min(a[1 - axis], b[1 - axis]) - 1e-9, -float("inf"))
+            line_high = nextafter(max(a[1 - axis], b[1 - axis]) + 1e-9, float("inf"))
+            low = nextafter(min(a[axis], b[axis]) - 1e-9, -float("inf"))
+            high = nextafter(max(a[axis], b[axis]) + 1e-9, float("inf"))
+            first = bisect_left(entries, line_low, key=lambda entry: entry[0])
+            last = bisect_right(entries, line_high, key=lambda entry: entry[0])
+            for index in range(first, last):
+                _, start, end, previous = entries[index]
+                if end >= low and start <= high and _history_segments_intersect(segment, previous):
+                    return True
+        return False
 
 
 def _history_segments_intersect(
@@ -80,8 +224,10 @@ def _build_sparse_graph(
     grid_offset: float,
     bounds: tuple[float, float, float, float] | None,
     clear,
+    visibility_base: _VisibilityBase | None = None,
+    exact_bound: bool = True,
 ) -> SparseGraph:
-    """Build an immutable finite visibility graph and its reverse heuristic."""
+    """Build immutable visibility geometry, optionally with an exact reverse bound."""
     boxes = rects
     x_events: set[float] = {start[0], end[0]}
     y_events: set[float] = {start[1], end[1]}
@@ -128,9 +274,20 @@ def _build_sparse_graph(
     for groups, axis in ((by_x.values(), 1), (by_y.values(), 0)):
         for group in groups:
             group.sort()
+            coordinate = ordered[group[0][1]][1 - axis]
+            endpoint_line = coordinate in (start[1 - axis], end[1 - axis])
+            projection_visibility = None
             for (_, first), (_, second) in zip(group, group[1:]):
                 a, b = ordered[first], ordered[second]
-                if clear(a, b):
+                visible = (visibility_base.visibility.get((a, b))
+                           if visibility_base is not None else None)
+                if visible is None and visibility_base is not None and endpoint_line:
+                    if projection_visibility is None:
+                        projection_visibility = visibility_base.projection_line(axis, coordinate, clear)
+                    visible = projection_visibility.get((a, b))
+                if visible is None:
+                    visible = clear(a, b)
+                if visible:
                     direction = 0 if axis == 0 else 1
                     distance = abs(a[axis] - b[axis])
                     adjacency_lists[first].append((second, direction, distance))
@@ -139,6 +296,11 @@ def _build_sparse_graph(
         neighbors.sort(key=lambda entry: (ordered[entry[0]], entry[1], entry[2]))
     adjacency = tuple(tuple(neighbors) for neighbors in adjacency_lists)
 
+    return ordered, adjacency, _reverse_bounds(adjacency, target) if exact_bound else ()
+
+
+def _reverse_bounds(adjacency, target):
+    """Exact lexicographic bounds; first-fit graph preparation omits this work."""
     # Reverse Dijkstra over directed-node states supplies an admissible
     # lexicographic lower bound without discarding path-dependent histories.
     reverse: dict[tuple[int, int], list[tuple[tuple[int, int], int, float]]] = {}
@@ -164,7 +326,7 @@ def _build_sparse_graph(
             if candidate < remaining.get(predecessor, (float("inf"), float("inf"))):
                 remaining[predecessor] = candidate
                 heappush(reverse_queue, (candidate[0], candidate[1], predecessor))
-    return ordered, adjacency, tuple(sorted(remaining.items()))
+    return tuple(sorted(remaining.items()))
 
 
 def orthogonal_route_candidates(
@@ -180,6 +342,8 @@ def orthogonal_route_candidates(
     classes: tuple[str, ...] | None = None,
     regions: tuple[str, ...] | None = None,
     initial_direction: int = -1,
+    budget: RelationExpansionBudget | None = None,
+    exact_bound: bool = True,
 ) -> Iterator[Path]:
     """Yield deterministic orthogonal paths from a finite sparse event graph.
 
@@ -188,13 +352,17 @@ def orthogonal_route_candidates(
     is shared by the whole iterator; if a consumer asks for another candidate
     after the limit is reached, ``RouteSearchFailure`` reports that the bounded
     frontier was not exhausted.
+    First-fit may request an obstacle-independent Manhattan/minimum-turn bound
+    with ``exact_bound=False``; canonical prefix histories remain distinct.
     """
     if (len(start) != 2 or len(end) != 2
             or not all(isfinite(value) for value in (*start, *end))
             or not isfinite(grid_offset) or grid_offset < 0
             or (bend_penalty is not None and (not isfinite(bend_penalty) or bend_penalty < 0))
             or isinstance(limit, bool) or not isinstance(limit, int) or limit < 1
-            or initial_direction not in {-1, 0, 1}):
+            or initial_direction not in {-1, 0, 1}
+            or not isinstance(exact_bound, bool)
+            or (not exact_bound and bend_penalty is not None)):
         raise ValueError(
             "E_LAYOUT_ROUTE_SEARCH_INPUT: start/end must be finite 2D points; grid_offset and bend_penalty "
             "must be finite and non-negative; limit must be a positive integer; initial_direction must be -1, 0, or 1."
@@ -266,10 +434,15 @@ def orthogonal_route_candidates(
                         detail="The candidate limit was reached while yielding clear Manhattan seed routes.",
                     )
                 seeded.add(candidate)
+                if budget is not None:
+                    budget.charge()
                 yield candidate
         if start == end:
             return
 
+    if budget is not None and budget.hit:
+        raise RouteSearchFailure("E_PRESENTATION_ROUTE_LIMIT",
+                                 detail="The relation's explicit expansion budget was reached.")
     memo_scope = index.route_memo_scope(classes, regions, port_ids) if index is not None else None
     graph_key = None
     memo = None
@@ -280,6 +453,8 @@ def orthogonal_route_candidates(
             frozenset(port_ids), None if classes is None else frozenset(classes),
             None if regions is None else frozenset(regions),
         )
+        if not exact_bound:
+            graph_key = (*graph_key, "manhattan-minimum-turn-v1")
         graph = memo.results.get(graph_key)
     else:
         graph = None
@@ -292,10 +467,24 @@ def orthogonal_route_candidates(
                 for item in items
                 for left, top, right, bottom in (obstacle_envelope(item.geometry),)
             )
+        visibility_base = None
+        if index is not None:
+            scope = index.route_visibility_scope(classes, regions, port_ids)
+            base_key = ("visibility-base-v1", repr((grid_offset, bounds)), scope.port_ids)
+            visibility_base = cast(_VisibilityBase | None, scope.bases.get(base_key))
+            if visibility_base is None:
+                visibility_base = _build_visibility_base(
+                    event_rects, grid_offset=grid_offset, bounds=bounds, clear=clear,
+                    previous=cast(_VisibilityBase | None, scope.previous_bases.get(base_key)),
+                    clear_additions=lambda a, b: scope.clears_additions(ObstacleSegment(a, b)))
+                scope.bases[base_key] = visibility_base
         graph = _build_sparse_graph(
-            start, end, event_rects, grid_offset=grid_offset, bounds=bounds, clear=clear)
+            start, end, event_rects, grid_offset=grid_offset, bounds=bounds, clear=clear,
+            visibility_base=visibility_base, **({"exact_bound": False} if not exact_bound else {}))
         if memo is not None and graph_key is not None:
-            memo.store(graph_key, graph)
+            nodes, edges, heuristic = graph
+            records = 1 + 2 * len(nodes) + sum(map(len, edges)) + len(heuristic)
+            memo.store(graph_key, graph, record_count=records)
     ordered, adjacency, remaining_items = graph
     node_id = {point: number for number, point in enumerate(ordered)}
     source, target = node_id[start], node_id[end]
@@ -305,7 +494,7 @@ def orthogonal_route_candidates(
     # Completed-route callbacks are path-dependent. Only the same canonical
     # prefix can dominate another constrained label; a cheaper different path
     # may fail terminal preparation or whole-route acceptance later.
-    initial = (source, initial_direction, 0, 0.0, (source,))
+    initial = (source, initial_direction, 0, 0.0, (source,), _HistoryIndex())
     histories = {(source,): 0.0}
     weighted_best: dict[tuple[int, int], float] = {(source, initial_direction): 0.0}
     queue: list[tuple[float, ...] | tuple] = []
@@ -313,6 +502,13 @@ def orthogonal_route_candidates(
     def lower_bound(node: int, direction: int) -> tuple[int, float]:
         if node == target:
             return (0, 0.0)
+        if not exact_bound:
+            x, y = ordered[node]
+            horizontal, vertical = x != end[0], y != end[1]
+            turns = int((horizontal and vertical)
+                        or (horizontal and direction == 1)
+                        or (vertical and direction == 0))
+            return turns, abs(x - end[0]) + abs(y - end[1])
         if direction in (0, 1):
             return remaining.get((node, direction), (float("inf"), float("inf")))
         # The initial state has no incoming direction, so its first edge costs
@@ -324,8 +520,8 @@ def orthogonal_route_candidates(
         ]
         return min(candidates, default=(float("inf"), float("inf")))
 
-    def priority(state: tuple[int, int, int, float, tuple[int, ...]]):
-        node, direction, bends, length, path = state
+    def priority(state: tuple[int, int, int, float, tuple[int, ...], _HistoryIndex]):
+        node, direction, bends, length, path, history = state
         if bend_penalty is None:
             lower_bends, lower_length = lower_bound(node, direction)
             return (bends + lower_bends, length + lower_length,
@@ -346,7 +542,7 @@ def orthogonal_route_candidates(
     while queue:
         entry = heappop(queue)
         state = entry[-1]
-        node, direction, bends, length, path = state
+        node, direction, bends, length, path, history = state
         key = (node, direction)
         if bend_penalty is None:
             if length != histories.get(path):
@@ -359,6 +555,8 @@ def orthogonal_route_candidates(
                 "E_PRESENTATION_ROUTE_LIMIT",
                 detail="The route-search expansion limit was reached before the candidate frontier was exhausted.",
             )
+        if budget is not None:
+            budget.charge()
         if node == target:
             points: list[Point] = []
             for point in (ordered[index_] for index_ in path):
@@ -380,12 +578,10 @@ def orthogonal_route_candidates(
         for neighbor, next_direction, distance in adjacency[node]:
             if neighbor in path:
                 continue
-            if bend_penalty is None and (neighbor, next_direction) not in remaining:
+            if exact_bound and bend_penalty is None and (neighbor, next_direction) not in remaining:
                 continue
             segment = (ordered[node], ordered[neighbor])
-            if any(_history_segments_intersect(segment,
-                    (ordered[path[index_]], ordered[path[index_ + 1]]))
-                    for index_ in range(len(path) - 2)):
+            if history.intersects(segment):
                 continue
             next_bends = bends + int(direction not in (-1, next_direction))
             next_length = length + distance
@@ -406,7 +602,10 @@ def orthogonal_route_candidates(
                 if previous_score is not None and score >= previous_score:
                     continue
                 weighted_best[next_key] = score
-            child = (neighbor, next_direction, next_bends, next_length, next_path)
+            next_history = history
+            if len(path) > 1 and len(next_path) > len(path):
+                next_history = history.add((ordered[path[-2]], ordered[node]))
+            child = (neighbor, next_direction, next_bends, next_length, next_path, next_history)
             heappush(queue, priority(child))
     if not yielded:
         raise RouteSearchFailure(

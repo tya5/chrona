@@ -1,25 +1,17 @@
-"""Validated v0.5 Scene construction input boundary.
-
-This module is intentionally renderer-neutral.  Primitive composition follows
-in I27-R2; this seam ensures that it can only receive completed current inputs.
-"""
+"""Renderer-neutral projection of accepted, completed Layout geometry and paint intent."""
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from typing import Any, Mapping
 
-from chrona.presentation.layout.dependency_network import compose_dependency_network_surface
-from chrona.presentation.layout.canvas_viewport import DeclaredViewport
-from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
-from chrona.presentation.layout.model import LayoutError, LayoutManifest
+from chrona.presentation.layout.dependency_network import DependencyNetworkLayout
+from chrona.presentation.layout.surface_quality import completed_symbol_primitive_ids
+from chrona.presentation.layout.surface_completion import SurfaceLayoutComposition
+from chrona.presentation.layout.model import LayoutManifest
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
-from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
-from chrona.presentation.layout.surface_composer import SurfacePreRowGeometry, compose_surface_layout
-from chrona.presentation.layout.surface_quality import AlignedStrokePlacement, CapacitySourceEvidence, SurfaceLayoutRequest
-from chrona.presentation.layout.sources import MeasuredSources
+from chrona.presentation.layout.surface_quality import AlignedStrokePlacement
 from chrona.presentation.layout.pattern_placement import PatternedPlacement
 from chrona.presentation.model.surface_content import SurfaceContentInput
-from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, ContrastClass, PrimitiveKind, contrast_binding, contrast_bindings,
     inside_member_label_semantic, semantic_binding)
@@ -39,6 +31,7 @@ from chrona.presentation.scene.paint import (
     is_ink_only_surface_pattern, resolve_cone_paint, resolve_scene_paint, resolve_surface_pattern_admission,
 )
 from chrona.presentation.scene.surface_overlays import project_canvas_overlays
+from chrona.presentation.scene.window_absences import project_lane_window_absences
 from chrona.presentation.scene.stroke_wobble import (
     MAX_OUTLINE_POINTS, WobbleLimitError, complete_path_wobble, complete_rect_wobble,
 )
@@ -57,29 +50,22 @@ class SceneBuildError(ValueError):
 
 @dataclass(frozen=True)
 class SceneBuildInput:
-    """Closed current-runtime inputs for one v0.5 Scene construction."""
-
+    """Paint intent and completed geometry; no request, measurement or routing state."""
     projection: Any
     surface_content: SurfaceContentInput
     layout_manifest: LayoutManifest
     theme_tokens: ThemeTokenView
-    font_metrics: Any
-    measured_sources: MeasuredSources
     capabilities: Mapping[str, bool]
+    completion: SurfaceLayoutComposition | DependencyNetworkLayout
     visual_profile: VisualProfile | None = None
     viewport: tuple[float, float] = (0.0, 0.0)
-    icon_assets: dict[str, Any] | None = None
-    visual_requests: tuple[Any, ...] = ()
-    fixed_lane_preflight: FixedLanePreflight | None = None
-    capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
-    surface_preparation: SurfacePreRowGeometry | None = None
-    declared_viewport: DeclaredViewport | None = None
 
+    def __post_init__(self):
+        surface = getattr(self.projection, "surface", "table-timeline")
+        expected = SurfaceLayoutComposition if surface == "table-timeline" else DependencyNetworkLayout
+        if not isinstance(self.completion, expected):
+            raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/surfacePlacement")
 
-_REQUIRED_SOURCES = {
-    "table-timeline": frozenset(("table", "timeline", "timeline-axis")),
-    "dependency-network": frozenset(("network",)),
-}
 
 
 def _scene_transform(text_transform: str) -> str:
@@ -134,8 +120,8 @@ def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose
     """Emit one milestone's Symbol primitive(s): one for a built-in shape, several sibling
 
     primitives (one per painted part, ascending paint order) for a Theme-bound glyph.
-    Geometry and paint intents arrive completed by Layout. Scene assigns
-    primitive identity and delegates each part's paint conversion.
+    Geometry, identity and paint intents arrive completed by Layout. Scene
+    projects each part and delegates its paint conversion.
     """
     base_paint_order = shared.pop("paint_order", 0)
     # Parts stack in ascending paint order, except where the whole glyph is one layer (a note's artwork, #848).
@@ -143,8 +129,8 @@ def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose
     if primitive_ids is not None and len(primitive_ids) != len(completed_parts):
         raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", scene_id,
                               "typed lane handoff part count differs from Layout geometry")
-    return [ScenePrimitive((primitive_ids[index] if primitive_ids is not None else
-                            f"{scene_id}:part{index}" if part.paint_mode is not None else scene_id),
+    emitted_ids = primitive_ids if primitive_ids is not None else completed_symbol_primitive_ids(scene_id, completed_parts)
+    return [ScenePrimitive(emitted_ids[index],
                            PrimitiveKind.SYMBOL, source_ref, source_kind, purpose, visual_role,
                            bounds, symbol=SymbolGeometry(part.commands), paint_order=base_paint_order + index * order_step,
                            glyph_paint_mode=part.paint_mode, glyph_paint_color=part.paint_color,
@@ -156,6 +142,16 @@ def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose
                                                else None),
                            glyph_line_cap=part.line_cap, glyph_line_join=part.line_join, **shared)
             for index, part in enumerate(completed_parts)]
+
+
+def _completed_host_primitive(scene_id: str, source_ref: str, source_kind: str,
+                              purpose: str, visual_role: str, bounds: tuple[float, float, float, float],
+                              placement: Any, **shared: Any) -> ScenePrimitive:
+    """Project Layout's native rectangle or completed cut outline without inference."""
+    return ScenePrimitive(scene_id, PrimitiveKind.SYMBOL if placement.path_commands else PrimitiveKind.RECT,
+                          source_ref, source_kind, purpose, visual_role, bounds,
+                          symbol=SymbolGeometry(placement.path_commands) if placement.path_commands else None,
+                          paint_clip=placement.paint_clip, **shared)
 
 
 def _attach_completed_patterns(primitives: tuple[ScenePrimitive, ...],
@@ -383,46 +379,7 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
     return result, resolution.omissions
 
 
-def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
-                      layout_manifest: LayoutManifest, resolved_theme: Mapping[str, Any],
-                      font_metrics: Any, measured_sources: MeasuredSources,
-                      capabilities: Mapping[str, bool],
-                      visual_profile: VisualProfile | None = None,
-                      viewport: tuple[float, float] = (0.0, 0.0),
-                      icon_assets: dict[str, Any] | None = None,
-                      visual_requests: tuple[Any, ...] = (),
-                      fixed_lane_preflight: FixedLanePreflight | None = None,
-                      capacity_short_sources: tuple[CapacitySourceEvidence, ...] = (),
-                      surface_preparation: SurfacePreRowGeometry | None = None,
-                      declared_viewport: DeclaredViewport | None = None) -> SceneBuildInput:
-    """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
-    if not isinstance(layout_manifest, LayoutManifest):
-        raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
-    if not isinstance(measured_sources, MeasuredSources):
-        raise SceneBuildError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
-    surface = getattr(projection, "surface", "table-timeline")
-    if surface not in _REQUIRED_SOURCES:
-        raise SceneBuildError("E_PRESENTATION_SURFACE_UNSUPPORTED", "/projection/surface")
-    required_sources = {decision.source for decision in layout_manifest.decisions
-                        if decision.source and decision.priority in {None, "required"}}
-    missing = sorted(_REQUIRED_SOURCES[surface] - required_sources)
-    if missing:
-        raise SceneBuildError("E_PRESENTATION_PRIMITIVE_MISSING", "/layoutManifest/sources/" + missing[0])
-    if surface == "dependency-network":
-        table_sources = {"table", "timeline", "timeline-axis"}
-        if required_sources & table_sources:
-            raise SceneBuildError("E_PRESENTATION_SURFACE_SLOT_SET", "/layoutManifest/sources")
-    if not all(isinstance(name, str) and isinstance(enabled, bool) for name, enabled in capabilities.items()):
-        raise SceneBuildError("E_PRESENTATION_CAPABILITY_SCHEMA", "/capabilities")
-    if fixed_lane_preflight is not None and not isinstance(fixed_lane_preflight, FixedLanePreflight):
-        raise SceneBuildError("E_LAYOUT_LANE_PREFLIGHT_INVALID", "/layoutManifest")
-    return SceneBuildInput(projection, surface_content, layout_manifest,
-                           ThemeTokenView(resolved_theme), font_metrics, measured_sources,
-                           dict(capabilities), visual_profile, viewport, icon_assets, visual_requests,
-                           fixed_lane_preflight, capacity_short_sources, surface_preparation, declared_viewport)
-
-
-def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
+def project_review_surface(value: SceneBuildInput) -> SceneSurface:
     """Dispatch a typed surface intent to an adapter of completed Layout output."""
     surface = getattr(value.projection, "surface", "table-timeline")
     if surface == "table-timeline":
@@ -441,27 +398,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
 def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     """Build the core, fully measured table/timeline surface from the frozen closure."""
     projection = value.projection
-    if not hasattr(projection, "items") or not hasattr(projection, "window"):
-        raise SceneBuildError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection")
-    metric = value.measured_sources.metric_values
-    if "text.body.size" not in metric or "text.body.lineHeight" not in metric:
-        raise SceneBuildError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues")
-    try:
-        request = (value.surface_preparation.inline.request if value.surface_preparation is not None
-                   else SurfaceLayoutRequest(
-            projection=projection, presentation_contract=normalize_presentation_input(value.surface_content),
-            surface_content=value.surface_content, layout_manifest=value.layout_manifest,
-            measured_sources=value.measured_sources, theme_tokens=value.theme_tokens,
-            font_metrics=value.font_metrics,
-            capabilities=dict(value.capabilities), icon_assets=value.icon_assets or {},
-            visual_requests=value.visual_requests,
-            fixed_lane_preflight=value.fixed_lane_preflight,
-            capacity_short_sources=value.capacity_short_sources,
-            declared_viewport=value.declared_viewport,
-        ))
-        composition = compose_surface_layout(request, prepared=value.surface_preparation)
-    except LayoutError as error:
-        raise SceneBuildError(error.diagnostic_id, error.path, error.detail) from error
+    composition = value.completion
     placed_surface = composition.placement
     slots = tuple(SceneSlot(item.slot_id, item.source_ref, item.scale_id,
                             (float(item.bounds.inline), float(item.bounds.block),
@@ -652,6 +589,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         header_paint = ("tableColumnLabel" if value.theme_tokens.optional_color("tableColumnLabel", "fill") is not None else None)
         emit_semantic_text(f"column:{column.column_id}", "tableColumnLabel", header_paint, table_column_id=column.column_id)
     row_ids = {row.object_id: row.row_id for row in rows} | {row.row_id: row.row_id for row in rows}
+    header_paint = "group-header" if value.theme_tokens.optional_color("group-header", "fill") is not None else "text"
     for cell in value.surface_content.table_cells:
         if f"cell:{cell.object_id}:{cell.column_id}" in layout_text:
             href, link_title = link_for_cell(cell.object_id, cell.column_id)
@@ -662,12 +600,14 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             # Theme binds one; a state-coloured cell keeps its own ink and takes only the role's typography.
             cell_paint = (cell.typography_role if cell.semantic_id == "tableCell" and cell.typography_role not in {"text", "numeric"}
                           and value.theme_tokens.optional_color(cell.typography_role, "fill") is not None else None)
-            emit_semantic_text(f"cell:{cell.object_id}:{cell.column_id}", cell.semantic_id, cell_paint, href=href, link_title=link_title,
-                               table_row_id=row_id, table_column_id=cell.column_id,
+            header_cell = cell.semantic_id == "groupHeader"
+            emit_semantic_text(f"cell:{cell.object_id}:{cell.column_id}", cell.semantic_id,
+                               header_paint if header_cell else cell_paint, href=href, link_title=link_title,
+                               table_row_id=None if header_cell else row_id,
+                               table_column_id=None if header_cell else cell.column_id,
                                project_item=table_subjects.get(cell.object_id))
     # A Theme that binds `group-header.fill` inks the unmarked header text with it (#1244); a marked span keeps its
     # own role ink, and without the binding the header takes the body text ink as before.
-    header_paint = "group-header" if value.theme_tokens.optional_color("group-header", "fill") is not None else "text"
     for group in groups:
         if group.header_bounds is not None and f"group-header:{group.group_id}" in layout_text:
             emit_semantic_text(f"group-header:{group.group_id}", "groupHeader", header_paint)
@@ -729,8 +669,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                                     paint_order=planned_mark.paint_order, end_treatment=planned_mark.end_treatment))
                 record_project_primitives(planned_ids or (planned_id,), item)
             else:
-                primitives.append(ScenePrimitive(planned_id, PrimitiveKind.RECT, item.object_id, "object", planned_binding.purpose, planned_role,
-                                                 bounds,
+                primitives.append(_completed_host_primitive(planned_id, item.object_id, "object", planned_binding.purpose, planned_role,
+                                                 bounds, planned_mark,
                                                  corner_radius=planned_mark.corner_radius,
                                                  href=href, link_title=link_title, slot_id=planned_mark.slot_id,
                                                  paint_order=planned_mark.paint_order, end_treatment=planned_mark.end_treatment))
@@ -749,11 +689,12 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                                         bounds, actual_mark.symbol_parts,
                                                         primitive_ids=actual_ids,
                                                         corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
+                                                        paint_clip=actual_mark.paint_clip,
                                                         paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
                     record_project_primitives(actual_ids or (actual_id,), item)
                 else:
-                    primitives.append(ScenePrimitive(actual_id, PrimitiveKind.RECT, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
-                                                     bounds, corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
+                    primitives.append(_completed_host_primitive(actual_id, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
+                                                     bounds, actual_mark, corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
                                                      paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
                     record_project_primitives((actual_id,), item)
             else:
@@ -771,8 +712,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             bounds = (float(missing_mark.bounds.inline), float(missing_mark.bounds.block),
                       float(missing_mark.bounds.inline_size), float(missing_mark.bounds.block_size))
             missing_binding = semantic_binding("missingActual")
-            primitives.append(ScenePrimitive(missing_id, PrimitiveKind.RECT, item.object_id, "object", missing_binding.purpose, missing_binding.scene_role,
-                                             bounds, corner_radius=missing_mark.corner_radius, slot_id=missing_mark.slot_id,
+            primitives.append(_completed_host_primitive(missing_id, item.object_id, "object", missing_binding.purpose, missing_binding.scene_role,
+                                             bounds, missing_mark, corner_radius=missing_mark.corner_radius, slot_id=missing_mark.slot_id,
                                              paint_order=missing_mark.paint_order, end_treatment=missing_mark.end_treatment))
             record_project_primitives((missing_id,), item)
         label_id = f"member-label:{instance_id}"
@@ -903,9 +844,9 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         if relation.relation_id.startswith("legend-swatch:"):
             source = relation.relation_id.removeprefix("legend-swatch:")
         else:
-            source = relation.relation_id.removeprefix("relation:").split(":", 1)[0]
+            source = relation.source_ref
         dependency = semantic_binding(relation.semantic_id)
-        bounds = (0, 0, 0, 0)
+        bounds = relation.paint_clip.bounds if relation.paint_clip is not None else (0, 0, 0, 0)
         if relation.relation_id.startswith("legend-swatch:") and relation.points:
             # A legend key's bounds enclose its points (and the half stroke), so bounds-based checks see it (#499).
             xs, ys = [point[0] for point in relation.points], [point[1] for point in relation.points]
@@ -917,6 +858,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, "relation", dependency.purpose, dependency.scene_role,
                                          bounds, marker_start=relation.marker_start, marker_end=relation.marker_end,
                                          points=relation.points, path_commands=relation.path_commands,
+                                         paint_clip=relation.paint_clip,
                                          paint_order=relation.paint_order, slot_id=relation.slot_id,
                                          from_instance_id=relation.from_instance_id,
                                          to_instance_id=relation.to_instance_id,
@@ -932,8 +874,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                              slot_id=placed.slot_id, corner_radius=placed.corner_radius or None))
         elif placed.placement_id.startswith("progress-fill:"):
             progress = semantic_binding("progressFill")
-            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "object",
-                                             progress.purpose, progress.scene_role, bounds, slot_id=placed.slot_id,
+            primitives.append(_completed_host_primitive(placed.placement_id, placed.source_ref, "object",
+                                             progress.purpose, progress.scene_role, bounds, placed, slot_id=placed.slot_id,
                                              paint_order=placed.paint_order, clip_source_id=placed.clip_host_id,
                                              corner_radius=placed.corner_radius or None))
             if placed.subjects:
@@ -967,8 +909,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                     primitive_provenance.append(PrimitiveProvenance(placed.placement_id, placed.subjects))
         elif placed.placement_id.startswith("summary-bar:"):
             summary_bar = semantic_binding("summaryBar")
-            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "summary",
-                                             summary_bar.purpose, summary_bar.scene_role, bounds,
+            primitives.append(_completed_host_primitive(placed.placement_id, placed.source_ref, "summary",
+                                             summary_bar.purpose, summary_bar.scene_role, bounds, placed,
                                              paint_order=placed.paint_order))
         elif placed.semantic_id == "annotationArtwork":
             artwork = semantic_binding("annotationArtwork")
@@ -1081,8 +1023,10 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         source = relation.source_ref
         leader = semantic_binding(relation.semantic_id)
         purpose, role, layer = leader.purpose, leader.scene_role, "annotation"
-        primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, layer, purpose, role, (0, 0, 0, 0),
+        bounds = relation.paint_clip.bounds if relation.paint_clip is not None else (0, 0, 0, 0)
+        primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, layer, purpose, role, bounds,
                                          points=relation.points, path_commands=relation.path_commands,
+                                         paint_clip=relation.paint_clip,
                                          marker_end=relation.marker_end,
                                          paint_order=relation.paint_order))
         record_annotation_primitives((relation.relation_id,), relation.source_ref)
@@ -1156,7 +1100,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         missing = next((item.scene_id for item in completed_primitives
                         if requires_lane_member_provenance(item.kind, item.purpose)
                         and item.scene_id not in owner_by_primitive), None)
-        if not owner_by_primitive or unexpected is not None or missing is not None:
+        if ((not owner_by_primitive and not placed_surface.lane_window_absences)
+                or unexpected is not None or missing is not None):
             mismatch = unexpected or missing or "lane-emission-inventory"
             raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", mismatch,
                                   f"Scene lane emission differs from typed Layout handoff: {mismatch}")
@@ -1170,6 +1115,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         for primitive_id, owner in owner_by_primitive.items():
             emitted_by_member.setdefault(owner, []).append(primitive_id)
         primary_purposes = {"planned", "snapshot"}
+        absences_by_member = project_lane_window_absences(placed_surface.lane_window_absences)
         member_values = []
         for row in projection.lane_rows:
             for member_id in dict.fromkeys(row.member_item_ids):
@@ -1177,7 +1123,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 primary_ids = tuple(identifier for identifier in identifiers
                                      if primitive_by_id[identifier].purpose in primary_purposes)
                 try:
-                    member_values.append(SceneLaneMember(row.lane_id, member_id, identifiers, primary_ids))
+                    member_values.append(SceneLaneMember(row.lane_id, member_id, identifiers, primary_ids,
+                                                         tuple(absences_by_member.get((row.lane_id, member_id), ()))))
                 except ValueError as error:
                     raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", member_id,
                                           f"invalid lane member inventory row={row.lane_id}; "
@@ -1197,7 +1144,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                         lane_obstacles=lane_obstacles, lane_clearance=lane_clearance,
                         diagnostic_provenance=placed_surface.diagnostic_provenance,
                         primitive_provenance=tuple(primitive_provenance))
-    surface = replace(surface, canvas_warning=placed_surface.canvas_warning)
+    surface = replace(surface, canvas_warning=placed_surface.canvas_warning,
+                      auto_block_warning=placed_surface.auto_block_warning)
     return project_canvas_overlays(surface, placed_surface.canvas_overlays, value.theme_tokens, value.visual_profile)
 
 
@@ -1214,18 +1162,9 @@ def _attach_completed_strokes(primitives: tuple[ScenePrimitive, ...],
 def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
     """Project completed network placements; never measure, rank, or route here."""
     projection = value.projection
-    network = getattr(projection, "network", None)
-    if network is None:
-        raise SceneBuildError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/network")
+    network = projection.network
     decisions = tuple(item for item in value.layout_manifest.decisions if item.kind == "slot" and item.source)
-    try:
-        placed = compose_dependency_network_surface(SurfaceLayoutRequest(
-            projection=projection, surface_content=value.surface_content,
-            layout_manifest=value.layout_manifest, measured_sources=value.measured_sources,
-            theme_tokens=value.theme_tokens, font_metrics=value.font_metrics,
-            declared_viewport=value.declared_viewport))
-    except LayoutError as error:
-        raise SceneBuildError(error.diagnostic_id, error.path) from error
+    placed = value.completion
     slots = tuple(SceneSlot(item.node_id, item.source, None,
                             (float(item.bounds.inline), float(item.bounds.block),
                              float(item.bounds.inline_size), float(item.bounds.block_size)),

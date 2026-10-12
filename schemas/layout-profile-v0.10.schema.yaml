@@ -15,12 +15,57 @@ properties:
     type: array
     uniqueItems: true
     items: {$ref: "#/$defs/id"}
+  viewDefaults:
+    description: "The View members this Layout profile supplies by default, as a View body fragment (#1341): the design half of a View. A member the View declares replaces the design's whole member; a member it omits takes the design's. Each member is validated as the View member it becomes, after the merge. `comparison`, `rows` and `window` merge one level down and only into a member the View declares."
+    type: object
+    additionalProperties: false
+    properties:
+      visibility: {description: "Default View `visibility` (labels, relations, annotations, links, fallback)."}
+      axis: {description: "Default View `axis` (the tier set)."}
+      deadlines: {description: "Default View `deadlines` (show)."}
+      shading: {description: "Default View `shading` (non-working days, exceptions)."}
+      timePresentation: {description: "Default View `timePresentation` (as-of marker form, calendar-closed presentation)."}
+      annotationPlacement: {$ref: "urn:chrona:common-v0.1#/$defs/annotationPlacementByPurpose"}
+      figureFormats: {$ref: "urn:chrona:common-v0.1#/$defs/figureFormats"}
+      annotationPresentation: {description: "Default View `annotationPresentation`."}
+      backgroundDecoration: {description: "Default View `backgroundDecoration` (rows, groups)."}
+      progressFill: {description: "Default View `progressFill` (source)."}
+      comparison:
+        description: "Design half of the View `comparison` member: policy for how a comparison is shown."
+        type: object
+        additionalProperties: false
+        properties:
+          baselineMarks: {description: "Default View `comparison.baselineMarks`."}
+          missingActualScope: {description: "Default View `comparison.missingActualScope`."}
+          deltaUnit: {description: "Default View `comparison.deltaUnit`."}
+          facets: {description: "Default View `comparison.facets`."}
+      rows:
+        description: "Design half of the View `rows` member: the row structure."
+        type: object
+        additionalProperties: false
+        properties:
+          mode: {description: "Default View `rows.mode`."}
+          trackAllocation: {description: "Default View `rows.trackAllocation`."}
+          packing: {description: "Default View `rows.packing`."}
+          laneTable: {description: "Default View `rows.laneTable`."}
+          points: {description: "Default View `rows.points`."}
+          items: {description: "Default View `rows.items`."}
+      window:
+        description: "Design half of the View `window` member."
+        type: object
+        additionalProperties: false
+        properties:
+          marginDays: {description: "Default View `window.marginDays`."}
   reviewSurface:
     type: object
     description: "Finite arrangement policies for the table--timeline review surface."
     additionalProperties: false
     required: [rowDistribution, backgroundExtents, annotationRouting]
     properties:
+      maxBlockSize:
+        description: "Advisory completed auto-canvas block limit; omission disables the warning and zero is valid."
+        $ref: "#/$defs/distance"
+        examples: [3600, {token: canvas.limit}]
       rowDistribution:
         description: "Distribution of remaining block space after completed row requirements."
         enum: [pack, fill]
@@ -75,6 +120,10 @@ properties:
     additionalProperties: false
     required: [maxBends, maxDetourRatio]
     properties:
+      search:
+        description: "Table-timeline dependency routing policy. Absent means first-fit; best opts into the legacy ranked search."
+        $ref: "urn:chrona:vocabulary-v0.1#/$defs/relationSearchPolicy"
+      searchBudget: {description: "Additional expansion ceiling per resolved relation instance per routing pass; shared across port pairs, without increasing legacy pair quotas. Omitted means no additional ceiling.", type: integer, minimum: 1}
       maxBends: {description: "Maximum bends allowed in one relation route.", type: integer, minimum: 0, maximum: 64}
       maxDetourRatio: {description: "Maximum route detour relative to direct distance.", type: number, minimum: 1, maximum: 100}
       entry: {description: "Which side a relation enters a span start (or the mirrored end): side-when-free tries the horizontal entry at mid-height first when the source lies on that side and a stub of arrowhead plus clearance is free; any keeps the nearest-port order; side adds, for a target the source does not approach from the entry side (an abutting or overlapping chain), a back-route through the row gap and gives gates the same horizontal entry, and reports I_LAYOUT_RELATION_ENTRY_FALLBACK when a relation still does not enter along the bar. Absent means side-when-free (#1030, #1060).", enum: [any, side-when-free, side]}
@@ -109,7 +158,7 @@ $defs:
         additionalProperties: false
         required: [provider, identity]
         properties:
-          provider: {description: "Store provider implementation.", enum: [git, local, content]}
+          provider: {description: "Store provider implementation.", enum: [git, local, content, package]}
           identity: {description: "Stable Store identity.", type: string, minLength: 1}
           locator: {description: "Optional provider-specific Store locator.", type: string, minLength: 1}
       address: {description: "Strict Store-relative profile address (the `storeAddress` definition of the common part).", examples: ["layouts/briefing.yaml"], minLength: 1, $ref: "urn:chrona:common-v0.1#/$defs/storeAddress"}
@@ -384,18 +433,38 @@ $defs:
       gap: {description: "Space between a legend slot's own entries, and between a swatch and its label; meaningful only when source is legend. Absent means today's fixed label-derived spacing (#427).", $ref: "#/$defs/distance"}
       itemMinInlineSize: {description: "Wrap threshold for a legend slot's own entries when direction is inline, reusing the flow container's wrapping semantics; meaningless and ignored otherwise (#427).", $ref: "#/$defs/distance"}
       columns: {description: "Declared column count of a legend slot's entries (#1290): entries fill the columns in reading order (entry k in column k mod columns), each column as wide as its widest entry, `gap` apart; `direction` and `itemMinInlineSize` are then not used. Meaningful only when source is legend; absent keeps the flow or stack.", type: integer, minimum: 1, examples: [3]}
+      maxInlineShare: {$ref: "#/$defs/tableMaxInlineShare"}
+      columnDistribution: {description: "How a legend slot that declares `columns` shares its inline size among the columns (#1392): start (default) packs each column as wide as its widest entry, `gap` apart, from the inline start; spread gives every column the same width across the slot (never less than the widest entry of any column) so the column starts are evenly spaced and the last column ends within the slot, and stays packed when the equal width does not fit. Meaningful only when source is legend and columns is declared.", enum: [start, spread]}
       frame: {description: "Optional region frame: Layout completes one panel Rect behind this node; absent paint uses Theme role region-frame, otherwise region-frame-<paint> (#889, #1165).", $ref: "#/$defs/frame"}
       heading: {description: "Optional caption of this slot (#1064, #1100); available to every enumerated slot source.", $ref: "#/$defs/slotHeading"}
+    allOf:
+      - description: "Only a table slot may declare a maximum inline share."
+        examples:
+          - {source: table, maxInlineShare: 0.4}
+        if: {required: [maxInlineShare]}
+        then: {properties: {source: {const: table}}}
+  tableMaxInlineShare:
+    description: "Strict table inline ceiling as a share of the independently resolved parent inner inline budget (#1295); only a table slot may declare it. Absent preserves ordinary intrinsic sizing."
+    type: number
+    exclusiveMinimum: 0
+    maximum: 1
+    examples: [0.4]
   slotHeading:
     description: "A slot's caption: literal presentation copy and where it sits. Layout completes one Text in the Theme text role slot-heading (the text role when the Theme declares none) and starts the slot's content below it."
     examples: [{text: Notes, align: start, block: header-row}]
     type: object
     additionalProperties: false
-    required: [text]
+    oneOf:
+      - description: "Literal caption copy, without a template declaration."
+        required: [text]
+      - description: "Explicit figure template, without literal caption copy."
+        required: [template]
     properties:
       text: {$ref: "urn:chrona:common-v0.1#/$defs/literalCaption"}
+      template: {description: "Closed {figure:id} caption template, bound by Layout before measurement; {{ and }} escape literal braces.", $ref: "urn:chrona:common-v0.1#/$defs/literalCaption"}
       align: {description: "Inline position of the caption within the slot; absent means start.", enum: [start, center, end]}
       block: {description: "Block position: top; header-row centres in the neighboring axis band; axis-tier aligns to its uppermost horizontal labels tier's completed baseline; start-column puts the caption in the inline-start column of a legend slot that declares `columns`, beside its entries (#1290). An absent or incompatible target falls back to top with a record; absent means top.", enum: [top, header-row, axis-tier, start-column]}
+      gap: {description: "Distance between a start-column caption and the entries beside it (#1392); absent keeps half the caption font size. Meaningful only with block start-column.", $ref: "#/$defs/distance"}
   frame:
     type: object
     description: "Region frame declaration. The panel is drawn at the node's completed bounds deflated by inset and half the stroke; it never moves or clips content. Optional paint selects region-frame-<paint>; absent paint selects region-frame."
@@ -420,5 +489,6 @@ $defs:
       itemMinInlineSize: {$ref: "#/$defs/distance"}
       priority: {description: "Replacement allocation priority.", enum: [required, preferred, optional]}
       overflow: {description: "Replacement overflow behavior.", enum: [visible-overflow, ellipsize-with-source, clip-optional]}
+      maxInlineShare: {$ref: "#/$defs/tableMaxInlineShare"}
       frame: {description: "Replacement region frame (replaces the whole declaration): Layout completes one panel Rect behind this node; absent paint uses Theme role region-frame, otherwise region-frame-<paint> (#889, #1165).", $ref: "#/$defs/frame"}
       heading: {description: "Replacement slot caption (replaces the whole declaration; #1064).", $ref: "#/$defs/slotHeading"}

@@ -1,13 +1,24 @@
 # HALCYON-1 example
 
-The **programme** register of the corpus: scale, hierarchy, comparison modes and the
-second surface, on one spacecraft programme.
+The **programme** register of the corpus: scale, hierarchy, comparison modes, the
+second surface and extension-typed objects, on one spacecraft programme.
 
 - `project.yaml` owns 29 objects on two calendars, three `group` objects with `rollup`
   schedules (`spacecraft-ait`, `ground-segment`, `mission-closeout`) whose children carry
   `parent` and `wbsCode`, `plannedProgress`, a `link`, a `deadline` on the pre-ship
-  review, and one scenario. The scenario changes a duration, removes a dependency and
+  review, and two scenarios. `tvac-slip` changes a duration, removes a dependency and
   adds a re-wired one, and clears the deadline it would otherwise miss.
+  `payload-fast-track` replaces the detector-to-payload-TVAC dependency with one
+  carrying a negative lag (`-3wd`): payload TVAC starts three working days before
+  detector calibration ends.
+- `project.yaml` declares `extensions[0].resource`, a pinned reference to
+  `extensions/semiconductor-development.yaml`, a `chrona/profile/v0.3` package that
+  defines the `PDR`, `CDR` and `PSR` review-gate profiles, the `approval` enum field they
+  require, and the package-wide `model`, `customerReview` and `lot` fields. The package's
+  own `contentIdentity` frames the document with that field omitted; the Project's
+  reference pins the exact file bytes, which the closure verifies. The `pdr`, `cdr` and
+  `psr` gates use the package types directly (`type: PDR`), and every work item carries
+  a `model` (`EM`, `QM` or `FM`).
 - `actual.yaml` records span observations, point observations for gates that were held
   (`cdr`, `payload-delivery`), an in-flight observation with partial progress, and two
   unmatched external records.
@@ -24,6 +35,12 @@ second surface, on one spacecraft programme.
   colour scale and progress fill, a grouped campaign, a scenario comparison, the
   dependency-network surface, and a hierarchy-grouped readiness review with critical
   relations and float.
-- `themes/`, `schemes/` and `layouts/` supply three appearances and four compositions.
+- `views/26-gates.yaml` shows the typed review gates on the bus and payload chain with
+  `Model` and `Approval` columns, encodes `model` as a colour scale (`colorEncoding` over
+  `EM`, `QM`, `FM`, slots in `schemes/gates-light.yaml`, mapping in
+  `themes/gates-light.yaml`) and compares against `payload-fast-track` with
+  `comparison.baseline: scenario`, so the negative lag shows as the earlier scenario bar.
+  It was folded in from the retired `orion-asic` example.
+- `themes/`, `schemes/` and `layouts/` supply the appearances and compositions.
 - `contexts/<slide>.yaml` are the immutable bindings; `generated/<slide>.svg` is the
   materializer evidence declared by `manifest.yaml`.

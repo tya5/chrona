@@ -3137,66 +3137,6 @@
   },
   {
    "error": null,
-   "path": "examples/orion-asic/actual.yaml",
-   "schema": "actual-set-v0.3.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/orion-asic/contexts/gates.yaml",
-   "schema": "render-context-v0.16.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/orion-asic/extensions/semiconductor-development.yaml",
-   "schema": "profile-v0.3.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/orion-asic/generated/gates.scene.json",
-   "schema": "scene-v0.6.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/orion-asic/layouts/orion-review.yaml",
-   "schema": "layout-profile-v0.9.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/orion-asic/profiles/review-detail.yaml",
-   "schema": "review-detail-profile-v0.1.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/orion-asic/project.yaml",
-   "schema": "project-v0.7.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/orion-asic/schemes/orion-light.yaml",
-   "schema": "color-scheme-v0.2.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/orion-asic/themes/orion-light.yaml",
-   "schema": "theme-v0.11.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/orion-asic/views/gates.yaml",
-   "schema": "view-v0.27.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
    "path": "src/chrona/resources/axis-name-tables-v0.1.yaml",
    "schema": "axis-name-tables-v0.1.schema.yaml",
    "valid": true

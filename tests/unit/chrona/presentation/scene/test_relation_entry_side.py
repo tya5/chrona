@@ -11,7 +11,7 @@ import pytest
 
 from chrona.presentation.layout.sources import MeasuredSources, SourceInput
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
-from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
+from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
 
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
     _Font, _manifest, _theme, _title_measurement, surface_content,
@@ -26,7 +26,7 @@ def _item(oid, start, end, track="stacked"):
 
 
 def _route(items, rows, relation, entry, *, max_bends=4, window=None, distribution="fill", max_detour=2.0, diagnostics=False,
-           allow_suppressed=False):
+           allow_suppressed=False, search="first-fit"):
     """Return (points, plan marks) of the single relation path for one declared entry policy."""
     all_items = tuple(items)
     window = window or (min(i.planned["start"] for i in all_items), max(i.planned["end"] for i in all_items))
@@ -36,8 +36,8 @@ def _route(items, rows, relation, entry, *, max_bends=4, window=None, distributi
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
                                    "timeline.mark.blockSize": Decimal(8)})
     manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"), relation_entry=entry, row_distribution=distribution,
-                       relation_max_bends=max_bends, relation_max_detour_ratio=max_detour)
-    value = build_scene_input(projection=projection, surface_content=surface_content(relations=(relation,)),
+                       relation_max_bends=max_bends, relation_max_detour_ratio=max_detour, relation_search=search)
+    value = build_surface_input(projection=projection, surface_content=surface_content(relations=(relation,)),
                               layout_manifest=manifest, resolved_theme=_theme(), font_metrics=_Font(),
                               measured_sources=measurement, capabilities={"svg": True})
     surface = compose_review_surface(value)
@@ -75,8 +75,8 @@ def test_a_source_on_the_left_with_free_space_enters_the_start_horizontally_at_m
 
 
 def test_any_can_choose_the_same_minimal_bend_side_route_without_entry_preference():
-    any_points, _ = _route((A, B), _rows((A,), (B,)), DEP, "any")
-    side_points, _ = _route((A, B), _rows((A,), (B,)), DEP, "side-when-free")
+    any_points, _ = _route((A, B), _rows((A,), (B,)), DEP, "any", search="best")
+    side_points, _ = _route((A, B), _rows((A,), (B,)), DEP, "side-when-free", search="best")
     assert _horizontal_last(any_points)
     assert _bends(any_points) == 1
     assert any_points == side_points
@@ -126,13 +126,14 @@ def test_a_narrow_gap_requires_extra_bends_for_the_declared_stub_and_obeys_max_b
     # declared stub must come round its tip; an unconstrained horizontal last leg may be shorter than the stub.
     near = _item("b", D(2026, 2, 9), D(2026, 2, 20))
     window = (D(2026, 1, 1), D(2027, 2, 1))
-    drop, _ = _route((A, near), _rows((A,), (near,)), DEP, "any", window=window)
-    side, _ = _route((A, near), _rows((A,), (near,)), DEP, "side-when-free", window=window)
+    drop, _ = _route((A, near), _rows((A,), (near,)), DEP, "any", window=window, search="best")
+    side, _ = _route((A, near), _rows((A,), (near,)), DEP, "side-when-free", window=window, search="best")
     assert _horizontal_last(side) and _horizontal_last(drop)
     assert abs(side[-1][0] - side[-2][0]) >= 11  # head 10 + clearance 1
     assert abs(drop[-1][0] - drop[-2][0]) < 11
     assert _bends(side) == 3 and _bends(drop) == 1
     # Below the bends the stub route needs it is not taken: the relation is still routed, by the remaining order.
-    limited, _ = _route((A, near), _rows((A,), (near,)), DEP, "side-when-free", max_bends=_bends(side) - 1, window=window)
+    limited, _ = _route((A, near), _rows((A,), (near,)), DEP, "side-when-free", max_bends=_bends(side) - 1,
+                        window=window, search="best")
     assert _bends(limited) < _bends(side)
     assert limited == drop

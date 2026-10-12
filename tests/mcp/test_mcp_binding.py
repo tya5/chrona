@@ -28,7 +28,6 @@ from chrona.usecases.failure_report import StableFailure  # noqa: E402
 from tests.support.store_workspace import StoreWorkspace  # noqa: E402
 
 REPO = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
-PROJECT = (REPO / "skills" / "chrona" / "examples" / "launch.yaml").read_text(encoding="utf-8")
 CYCLE = """\
 version: timeline/v0.7
 project: {id: cyc, title: Cycle}
@@ -42,12 +41,17 @@ relations:
 
 
 @pytest.fixture
-def workspace(tmp_path: Path) -> Path:
+def workspace(tmp_path: Path, launch_project: str) -> Path:
     root = tmp_path / "ws"
     root.mkdir()
-    (root / "launch.yaml").write_text(PROJECT, encoding="utf-8")
+    (root / "launch.yaml").write_text(launch_project, encoding="utf-8")
     (root / "cycle.yaml").write_text(CYCLE, encoding="utf-8")
     return root
+
+
+@pytest.fixture(scope="session")
+def launch_project() -> str:
+    return (REPO / "skills" / "chrona" / "examples" / "launch.yaml").read_text(encoding="utf-8")
 
 
 def run(workspace: Path, scenario, *, allow_write: bool = False):
@@ -288,7 +292,7 @@ def test_render_review_on_a_read_only_server_returns_the_svg_as_an_embedded_reso
     root = initialize_project(tmp_path / "corpus", example="halcyon-1")
     (root / "ctx.yaml").write_text(
         "id: halcyon-1-01-mission-brief\nkind: render-context\nstore: {provider: local, identity: halcyon-1-example}\n"
-        "address: contexts/01-mission-brief.yaml\nrevision: {token: example-v4}\n", encoding="utf-8")
+        "address: contexts/01-mission-brief.yaml\nrevision: {token: example-v6}\n", encoding="utf-8")
 
     result = run(root, lambda client: client.call_tool("render_review", {"contextReference": "ctx.yaml"}))
 

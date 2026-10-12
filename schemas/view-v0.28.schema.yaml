@@ -83,7 +83,11 @@ allOf:
                     properties: {by: {description: "Order groups by the earliest planned start among their selected items, then by group value.", const: earliestPlannedStart}}
               missing: {description: "Label for missing field values.", type: string, minLength: 1}
               presentation: {description: "Visual treatment for groups.", enum: [band, header]}
-              depth: {description: "Maximum hierarchy depth.", type: integer, minimum: 0}
+              depth:
+                description: "Maximum relative hierarchy depth, or all selected descendants."
+                anyOf:
+                  - {type: integer, minimum: 0}
+                  - {enum: [all]}
               rollup: {description: "Hierarchy rollup presentation.", enum: [bar, header, none]}
               header:
                 description: "Group-header text template; usable only with presentation header and grouping by field or object type."
@@ -343,8 +347,11 @@ allOf:
                 - $ref: "#/$defs/figureDaysUntil"
                 - $ref: "#/$defs/figureDaysIn"
                 - $ref: "#/$defs/figureCount"
+          figureFormats:
+            description: "Optional count figure text formats; targets must name declared count figures. Raw Summary values are unchanged."
+            $ref: "urn:chrona:common-v0.1#/$defs/figureFormats"
           heading:
-            description: "The optional kicker above the title, the title, and optional subtitle lines of a table-timeline surface (a dependency network ignores it), each a template of literal text and the placeholders {project} (the Project title), {asOf} (the Actual Set's as-of date in dateForm) and {calendar} (the Project's default calendar title, else its id); {{ and }} are literal braces. Absent, the title is the Project title and there is no kicker or subtitle."
+            description: "The optional kicker above the title, the title, and optional subtitle lines of a table-timeline surface (a dependency network ignores it), each a template of literal text and the placeholders {project} (the Project title), {asOf} (the Actual Set's as-of date in dateForm) , {calendar} (the Project's default calendar title, else its id), and {figure:id} (a declared global figure, bound before Layout measurement); {{ and }} are literal braces. Absent, the title is the Project title and there is no kicker or subtitle."
             examples: [{kicker: "Episode {asOf}", title: "{project}", subtitle: "Every work package by owning team, as of {asOf}, calendar {calendar}"}]
             type: object
             minProperties: 1
@@ -354,6 +361,7 @@ allOf:
               title: {description: "The title template; a Project without a title shows `Chrona`.", type: string, minLength: 1, examples: ["{project} programme board"]}
               subtitle: {description: "The subtitle template, drawn under the title in the Theme's `subtitle` typography role.", type: string, minLength: 1, examples: ["as of {asOf}"]}
               dateForm: {description: "The form of {asOf}; absent is the localized date.", enum: [localized-date, day-month, day-month-year]}
+              text: {$ref: "#/$defs/presentationIntent/properties/text"}
           slotHeadingText:
             description: "Optional literal caption replacements keyed by resolved Layout slot node ID. Each target must already declare a heading; only its text is replaced."
             type: object
@@ -404,8 +412,20 @@ allOf:
               type: object
               required: [id, source, missing, align, width, headerOrientation]
               additionalProperties: false
+              allOf:
+                - description: "An explicit endpoint display is valid only for a dateRange column."
+                  examples:
+                    - {format: dateRange, endDisplay: inclusive}
+                    - {format: dateRange, endDisplay: exclusive}
+                  if: {required: [endDisplay]}
+                  then:
+                    required: [format]
+                    properties: {format: {const: dateRange}}
               properties:
                 id: {type: string, minLength: 1}
+                endDisplay:
+                  description: "Display-only dateRange endpoint: inclusive shows end minus one calendar day for positive spans; absent/exclusive preserves the stored exclusive end."
+                  enum: [inclusive, exclusive]
                 source:
                   oneOf:
                     - {enum: [id, title, objectType, entity, rowIndex, wbsCode, path, totalFloat]}
@@ -468,6 +488,7 @@ allOf:
                 zero:
                   description: "How a zero value of a `signedNumber` or `signedDays` column reads: `signed` (the default) keeps the sign (`+0`, `+0d`), `plain` draws it without one (`0`, `0d`); non-zero values keep their sign either way (#1289). An `onTime` affix still wraps the text."
                   enum: [signed, plain]
+                text: {$ref: "#/$defs/presentationIntent/properties/text"}
                 affixes:
                   description: "Per-state text affixes (#588) wrapped around the formatted cell text: slip, onTime and ahead for a signed format (a value above, at and below zero), missing for an absent value. Absent, the cell is the formatted text."
                   examples: [{slip: {suffix: "!"}, missing: {suffix: "?"}}]
@@ -501,6 +522,24 @@ allOf:
                               oneOf:
                                 - {enum: [content, fill]}
                                 - {$ref: "urn:chrona:common-v0.1#/$defs/fractionalTrack"}
+          annotationBindings:
+            description: "Ordered finite Project-kind/temporal-shape bindings to ordinary annotation intent (#1343)."
+            examples: [[{kind: note, temporalKind: point, purpose: note, facet: planned, endpoint: at}]]
+            type: array
+            items:
+              description: "First matching semantic binding; no Project identifiers or geometric policy."
+              examples: [{kind: note, temporalKind: point, purpose: note, facet: planned, endpoint: at}]
+              type: object
+              required: [kind, temporalKind, purpose, facet, endpoint]
+              additionalProperties: false
+              properties:
+                kind: {description: "Exact Project annotation kind.", type: string, minLength: 1}
+                temporalKind: {description: "Resolved planned temporal shape, independent of paint or Actual.", enum: [point, span, any]}
+                purpose: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationPurpose"}
+                facet: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/plannedActualFacet"}
+                endpoint: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/anchorEndpoint"}
+          annotationPlacement:
+            $ref: "urn:chrona:common-v0.1#/$defs/annotationPlacementByPurpose"
           annotations:
             type: array
             items:
@@ -517,120 +556,16 @@ allOf:
                   properties:
                     kind: {const: object}
                     id: {type: string, minLength: 1}
-                    facet: {enum: [planned, actual]}
+                    facet: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/plannedActualFacet"}
                     endpoint: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/anchorEndpoint"}
                     rowId: {type: string, minLength: 1}
                     itemId: {type: string, minLength: 1}
                     date: {$ref: "urn:chrona:common-v0.1#/$defs/isoDate"}
-                placement:
-                  description: "The old rung spelling: one flush side of the anchor. Kept valid alongside candidates (#466); an annotation uses exactly one spelling."
-                  type: object
-                  required: [side, alignment]
-                  additionalProperties: false
-                  properties:
-                    side: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationSide"}
-                    alignment: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationAlignment"}
-                candidates:
-                  description: "The declared placement-candidate list: region, search, obstacles and connector (#466). An annotation uses exactly one spelling."
-                  type: array
-                  minItems: 1
-                  items:
-                    description: "One declared annotation placement candidate: region, search, obstacles and connector (#466)."
-                    examples: [{id: plot-near, region: {kind: plot}, search: {kind: nearest-free, maxPositions: 256, maxInlineEm: 18}, obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}, connector: {kind: tail}}]
-                    type: object
-                    required: [id, region, search, obstacles, connector]
-                    additionalProperties: false
-                    properties:
-                      id: {description: "Candidate identifier, unique per annotation and stable in diagnostics.", type: string, minLength: 1}
-                      region:
-                        description: "The area this candidate's box may occupy."
-                        examples: [{kind: plot}]
-                        type: object
-                        required: [kind]
-                        additionalProperties: false
-                        properties:
-                          kind: {description: "Region kind.", enum: [plot, content, slot, intersection]}
-                          source: {description: "The named slot source, required only for a slot region.", type: string, minLength: 1}
-                          of:
-                            description: "The exactly two named simple (non-intersection) regions an intersection region combines."
-                            type: array
-                            minItems: 2
-                            maxItems: 2
-                            items:
-                              description: "One simple region combined by an intersection."
-                              examples: [{kind: plot}]
-                              type: object
-                              required: [kind]
-                              additionalProperties: false
-                              properties:
-                                kind: {description: "Region kind.", enum: [plot, content, slot]}
-                                source: {description: "The named slot source, required only for a slot region.", type: string, minLength: 1}
-                              allOf:
-                                - description: "A slot region names its source slot."
-                                  examples: [{kind: slot, source: annotations}]
-                                  if: {properties: {kind: {const: slot}}, required: [kind]}
-                                  then: {required: [source]}
-                        allOf:
-                          - description: "A slot region names its source slot."
-                            examples: [{kind: slot, source: annotations}]
-                            if: {properties: {kind: {const: slot}}, required: [kind]}
-                            then: {required: [source]}
-                          - description: "Only an intersection region combines two named regions."
-                            examples: [{kind: intersection, of: [{kind: plot}, {kind: slot, source: annotations}]}]
-                            if: {properties: {kind: {const: intersection}}, required: [kind]}
-                            then: {required: [of]}
-                            else: {not: {required: [of]}}
-                      search:
-                        description: "How positions inside the region are generated and ordered."
-                        examples: [{kind: nearest-free, maxPositions: 256, maxInlineEm: 18}]
-                        type: object
-                        required: [kind]
-                        additionalProperties: false
-                        properties:
-                          kind: {description: "Search strategy.", enum: [row-aligned, adjacent, nearest-free]}
-                          side: {description: "The one logical side an adjacent search projects from.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationSide"}
-                          maxPositions: {description: "Bounded lattice size examined by a nearest-free search.", type: integer, minimum: 1, maximum: 1024}
-                          maxInlineEm: {description: "Positive finite text-width bound for a plot/content search, in em.", type: number, exclusiveMinimum: 0}
-                        allOf:
-                          - description: "An adjacent search must declare its one logical side."
-                            examples: [{kind: adjacent, side: end}]
-                            if: {properties: {kind: {const: adjacent}}, required: [kind]}
-                            then: {required: [side]}
-                          - description: "maxInlineEm bounds only a nearest-free search."
-                            examples: [{kind: row-aligned}]
-                            if: {properties: {kind: {not: {const: nearest-free}}}, required: [kind]}
-                            then: {not: {required: [maxInlineEm]}}
-                      obstacles:
-                        description: "The nonempty closed set of obstacle-index classes this candidate must avoid."
-                        examples: [{classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}]
-                        type: object
-                        required: [classes]
-                        additionalProperties: false
-                        properties:
-                          classes:
-                            description: "One or more obstacle-index classes."
-                            type: array
-                            minItems: 1
-                            uniqueItems: true
-                            items: {description: "One shared obstacle-index class.", enum: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
-                      connector:
-                        description: "How the box points at its subject."
-                        examples: [{kind: tail}]
-                        type: object
-                        required: [kind]
-                        additionalProperties: false
-                        properties:
-                          kind: {description: "Connector kind.", enum: [none, leader, tail]}
+                placement: {$ref: "urn:chrona:common-v0.1#/$defs/annotationLegacyPlacement"}
+                candidates: {$ref: "urn:chrona:common-v0.1#/$defs/annotationCandidates"}
                 text: {description: "View-local annotation text.", type: string}
                 projectAnnotation: {description: "A stable Project annotation identifier this View annotation selects text from (#466); consumed once, never duplicated into the notes slot.", type: string, minLength: 1}
               allOf:
-                - description: "An annotation uses exactly one placement spelling: the old rung, or the declared candidate list."
-                  examples: [{id: note-1, purpose: note, anchor: {kind: object, id: window, facet: planned, endpoint: at}, placement: {side: end, alignment: start}, text: "Window closes."}]
-                  oneOf:
-                    - required: [placement]
-                      not: {required: [candidates]}
-                    - required: [candidates]
-                      not: {required: [placement]}
                 - description: "An annotation uses exactly one text source: View-local text, or a selected Project annotation."
                   examples: [{id: note-1, purpose: note, anchor: {kind: object, id: window, facet: planned, endpoint: at}, placement: {side: end, alignment: start}, text: "Window closes."}]
                   oneOf:
@@ -686,7 +621,8 @@ allOf:
                 additionalProperties: false
                 properties:
                   label: {enum: [group, lane]}
-                  count: {type: boolean, default: false}
+                  count: {anyOf: [{type: boolean}, {enum: [auto]}], default: false, description: "auto shows Items only when completed countable lane membership includes a multi-member lane."}
+                  text: {$ref: "#/$defs/presentationIntent/properties/text"}
               points: {description: "Automatic-row point policy; attached (the default) draws a point that attachesTo a selected span on that span's row.", enum: [attached, own-row, group-header, predecessor]}
               items:
                 type: array
@@ -800,6 +736,30 @@ allOf:
                   - {required: [timePresentation]}
                   - {required: [annotations]}
                   - {required: [annotationPresentation]}
+                  - {required: [annotationBindings]}
+                  - {required: [annotationPlacement]}
+          - description: "Explicit annotations inherit purpose policy only when the effective View offers annotationPlacement; otherwise legacy placement requirements are unchanged."
+            examples: [{annotationPlacement: {note: {placement: {side: end, alignment: center}}}, annotations: [{id: note-1, purpose: note, anchor: {kind: object, id: task, facet: planned, endpoint: end}, text: Note}]}]
+            if: {required: [annotationPlacement]}
+            then:
+              properties:
+                annotations:
+                  items:
+                    oneOf:
+                      - required: [placement]
+                        not: {required: [candidates]}
+                      - required: [candidates]
+                        not: {required: [placement]}
+                      - not: {anyOf: [{required: [placement]}, {required: [candidates]}]}
+            else:
+              properties:
+                annotations:
+                  items:
+                    oneOf:
+                      - required: [placement]
+                        not: {required: [candidates]}
+                      - required: [candidates]
+                        not: {required: [placement]}
 $defs:
   axisBandFillScale:
     description: "Optional Theme colour scale used to fill a fixed-unit band tier."
@@ -904,7 +864,7 @@ $defs:
     properties:
       id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", $ref: "#/$defs/figureIdentity"}
       kind: {description: "Select an already-projected integer count, without inferring dates or state.", const: count}
-      source: {description: "Closed selected-item/state/known-variance or observed behind/ahead count; missingActual requires an explicit as-of.", enum: [selected, recorded, dueUnobserved, notYetDue, unavailable, missingActual, knownFinishVariance, behind, ahead]}
+      source: {description: "Closed selected-item/state/known-variance, selected-group or completed Layout narrative count; missingActual requires an explicit as-of. groups and placedNotes are global-only.", enum: [selected, recorded, dueUnobserved, notYetDue, unavailable, missingActual, knownFinishVariance, behind, ahead, groups, placedNotes]}
       scope: {description: "Resolve once globally (default), or once for each current View group; group results are shown by group headers only.", enum: [global, group]}
   visual:
     description: "One direct or data-encoded icon request for an admitted occurrence."
@@ -971,7 +931,7 @@ $defs:
       - {description: "Table cell label.", examples: [{kind: cell, object: firmware, column: Workstream}], type: object, required: [kind, object, column], additionalProperties: false, properties: {kind: {description: "Target kind.", const: cell}, object: {description: "Object identifier.", type: string, minLength: 1}, column: {description: "Column identifier.", type: string, minLength: 1}}}
       - {description: "Axis label.", examples: [{kind: axis-label, level: month, index: 0}], type: object, required: [kind, level, index], additionalProperties: false, properties: {kind: {description: "Target kind.", const: axis-label}, level: {description: "Axis level identifier.", type: string, minLength: 1}, index: {description: "Zero-based axis occurrence.", type: integer, minimum: 0}}}
       - {description: "Axis band label.", examples: [{kind: axis-band, level: month, index: 0}], type: object, required: [kind, level, index], additionalProperties: false, properties: {kind: {description: "Target kind.", const: axis-band}, level: {description: "Axis level identifier.", type: string, minLength: 1}, index: {description: "Zero-based band occurrence.", type: integer, minimum: 0}}}
-      - {description: "Planned or actual semantic mark.", examples: [{kind: mark, object: firmware, facet: planned}], type: object, required: [kind, object, facet], additionalProperties: false, properties: {kind: {description: "Target kind.", const: mark}, object: {description: "Object identifier.", type: string, minLength: 1}, facet: {description: "Mark facet.", enum: [planned, actual]}}}
+      - {description: "Planned or actual semantic mark.", examples: [{kind: mark, object: firmware, facet: planned}], type: object, required: [kind, object, facet], additionalProperties: false, properties: {kind: {description: "Target kind.", const: mark}, object: {description: "Object identifier.", type: string, minLength: 1}, facet: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/plannedActualFacet"}}}
       - {description: "Variance label.", examples: [{kind: variance-label, object: firmware}], type: object, required: [kind, object], additionalProperties: false, properties: {kind: {description: "Target kind.", const: variance-label}, object: {description: "Object identifier.", type: string, minLength: 1}}}
   presentationIntent:
     type: object

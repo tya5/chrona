@@ -30,6 +30,12 @@ from chrona.presentation.layout.surface_quality import (
     GroupPlacement, RowPlacement, ScalePlacement, SlotPlacement, SurfaceLayoutRequest,
 )
 from chrona.presentation.layout.mark_geometry import compose_item_marks
+from chrona.presentation.layout.mark_facet_visibility import admitted_source_selection
+from chrona.presentation.layout.projection_window import require_positive_projection_window
+from chrona.presentation.layout.surface_mark_visibility import (
+    ItemMarkVisibilityIndex, MarkOccurrence, MarkOccurrenceKind,
+    ensure_request_mark_visibility_index,
+)
 from chrona.presentation.layout.lane_mark_facets import _mark_facets
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS
 
@@ -89,7 +95,8 @@ def prepare_surface_slots(request: SurfaceLayoutRequest) -> SurfaceSlotAllocatio
         SlotPlacement(source, source, item.bounds, item.priority or "required",
                       item.overflow or "visible-overflow",
                       "primary" if source in {"timeline", "timeline-axis"} else None,
-                      item.direction or "block", item.gap, item.item_min_inline_size, item.columns)
+                      item.direction or "block", item.gap, item.item_min_inline_size, item.columns,
+                      item.column_distribution)
         for source, item in sorted(decisions.items())
     )
     by_source = {slot.source_ref: slot for slot in slots}
@@ -156,17 +163,32 @@ def _provisional_point_facets(*, projection: Any, rows: tuple[Any, ...], scale: 
                               as_of: date | None, theme_tokens: Any, slot_id: str,
                               mark_block_size: float,
                               role_geometries: Mapping[str, MarkGeometry],
-                              mark_band_allocation: MarkBandAllocation | None = None) -> tuple[PointMarkFootprint, ...]:
+                              mark_band_allocation: MarkBandAllocation | None = None,
+                              mark_visibility_index: ItemMarkVisibilityIndex | None = None,
+                              ) -> tuple[PointMarkFootprint, ...]:
     """Measure visible point-mark horizontal footprints for completed base scale."""
     frame = MarkBandFrame.zero_origin(scale, mark_block_size, role_geometries, mark_band_allocation)
     result: list[PointMarkFootprint] = []
 
     def include(item: Any, instance_id: str, source_kind: str, row_id: str,
-                *, emit_missing_actual: bool = True) -> None:
+                *, emit_missing_actual: bool = True,
+                occurrence_kind: MarkOccurrenceKind | None = None,
+                container_id: str | None = None) -> None:
+        kind = (occurrence_kind if occurrence_kind is not None else
+                MarkOccurrenceKind.LANE_SOURCE if projection.lane_membership is not None else
+                MarkOccurrenceKind.ROW if projection.rows else MarkOccurrenceKind.AUTO)
+        visibility = (mark_visibility_index.lookup(
+            MarkOccurrence(
+                kind, (container_id if container_id is not None else
+                       row_id if projection.rows else item.object_id),
+                item.item_id or item.object_id, item.object_id, source_kind,
+            ), projection=projection, as_of=as_of,
+        ) if mark_visibility_index is not None else None)
         composition = compose_item_marks(
             item=item, instance_id=instance_id, source_kind=source_kind, frame=frame,
             as_of=as_of, theme_tokens=theme_tokens, slot_id=slot_id,
             emit_missing_actual=emit_missing_actual, emit_diagnostics=False,
+            selection=admitted_source_selection(visibility) if visibility is not None else None,
         )
         instance = LaneProjectionInstance(row_id, item.item_id or item.object_id,
                                           item.object_id, item.source_kind)
@@ -191,7 +213,9 @@ def _provisional_point_facets(*, projection: Any, rows: tuple[Any, ...], scale: 
     for folded in getattr(projection, "folded_points", ()):
         for item in folded.all_items:
             include(item, folded_instance_id(folded, item), item.source_kind,
-                    f"folded:{folded.group_id}", emit_missing_actual=False)
+                    f"folded:{folded.group_id}", emit_missing_actual=False,
+                    occurrence_kind=MarkOccurrenceKind.FOLDED,
+                    container_id=folded.group_id)
     return tuple(result)
 
 
@@ -204,11 +228,11 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
     metric_values = getattr(measured_sources, "metric_values", None)
     if not isinstance(metric_values, dict):
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
+    start, end = require_positive_projection_window(projection)
     allocation = allocation if allocation is not None else prepare_surface_slots(request)
     decisions = {item.source: item for item in allocation.decisions}
-    start, end = projection.window
-    if not isinstance(start, date) or not isinstance(end, date) or start >= end:
-        raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/window")
+    request = ensure_request_mark_visibility_index(request)
+    projection = request.projection
     if projection.lane_membership is not None:
         preflight = request.fixed_lane_preflight
         if (preflight is None or preflight.as_of != request.surface_content.as_of
@@ -253,22 +277,34 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
             slot_id=timeline.slot_id, mark_block_size=mark_block_size,
             role_geometries=role_geometries,
             mark_band_allocation=mark_band_allocation,
+            mark_visibility_index=request.mark_visibility_index,
         )
         scale = inset_scale_for_point_facets(provisional_scale, point_facets)
     row_padding = float(metric_values["timeline.row.paddingBlock"])
     text_line_block = table_text_line_block(
         request.theme_tokens, (cell.typography_role for cell in request.surface_content.table_cells))
+    bounded_table = getattr(measured_sources, "bounded_tables", {}).get("table")
+    row_text_blocks = dict(bounded_table.row_text_blocks) if bounded_table is not None else None
     if projection.lane_membership is not None:
         assert request.fixed_lane_preflight is not None
         requirement_by_row = dict(request.fixed_lane_preflight.row_requirements)
         requirements = tuple(requirement_by_row[row.row_id] for row in review_row_values)
+        if row_text_blocks is not None:
+            requirements = tuple(max(required, max(float(row_text_blocks.get(row.row_id, 0)),
+                                                   float(row_text_blocks.get(row.table_subject_id, 0)))
+                                     + row_padding)
+                                 for row, required in zip(review_row_values, requirements, strict=True))
         natural_block = request.fixed_lane_preflight.natural_block_requirement
+        if row_text_blocks is not None:
+            natural_block += sum((Decimal(str(required)) - Decimal(str(requirement_by_row[row.row_id]))
+                                  for row, required in zip(review_row_values, requirements, strict=True)), Decimal(0))
     else:
         requirements = required_row_block_extents(
             review_rows=review_row_values, row_minimum=float(metric_values["timeline.row.minBlockSize"]),
             row_padding=row_padding, mark_block_size=mark_block_size,
             role_geometries=role_geometries, text_line_block=text_line_block,
             mark_band_allocation=mark_band_allocation,
+            row_text_blocks=row_text_blocks,
         )
         headers = sum(bool(row.group_id) and bool(group_header_size)
                       and (index == 0 or review_row_values[index - 1].group_id != row.group_id)

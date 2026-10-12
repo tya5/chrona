@@ -1,0 +1,37 @@
+version: chrona/review-detail-profile/v0.1
+id: halcyon-gates-detail
+body:
+  legend:
+    - {role: planned, label: Planned}
+    - {role: actual, label: Actual}
+  groupDetails:
+    - groupId: bus
+      label: Spacecraft bus
+      description: Structure, avionics and power on the EM and QM, gated by PDR and CDR.
+    - groupId: payload
+      label: Imaging payload
+      description: Optics, detector and payload TVAC; the flight payload is delivered to AIT.
+    - groupId: ait
+      label: Assembly, integration and test
+      description: The FM pre-ship review closes the chain.
+  milestones: [cdr, psr]
+  observations:
+    columns:
+      - {id: area, label: Area}
+      - {id: observation, label: Observation}
+      - {id: disposition, label: Disposition}
+    rows:
+      - id: psr-approval
+        source: synthetic-example-record-HG-001
+        emphasis: attention
+        cells:
+          area: PSR
+          observation: FM approval pending system TVAC close-out.
+          disposition: Review
+      - id: payload-fast-track
+        source: synthetic-example-record-HG-002
+        emphasis: normal
+        cells:
+          area: Payload
+          observation: Fast-track starts TVAC 3 wd before calibration ends.
+          disposition: Recorded

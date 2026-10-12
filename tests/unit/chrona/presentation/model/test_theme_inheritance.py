@@ -1,3 +1,4 @@
+from copy import deepcopy
 from pathlib import Path
 from hashlib import sha256
 import yaml
@@ -41,7 +42,6 @@ def test_derived_theme_replaces_existing_whole_entries_and_has_canonical_base_pi
     (lambda value: value["body"]["extends"].update(path="../base.yaml"), "E_THEME_INHERITANCE_SCHEMA"),
     (lambda value: value["body"]["extends"].update(sourceContentIdentity="sha256:" + "0" * 64), "E_THEME_INHERITANCE_SOURCE_IDENTITY"),
     (lambda value: value["body"]["extends"].update(contentIdentity="sha256:" + "0" * 64), "E_THEME_INHERITANCE_BASE_IDENTITY"),
-    (lambda value: value["body"]["values"].update(new={"type": "number", "value": 1}), "E_THEME_INHERITANCE_OVERRIDE_UNKNOWN"),
     (lambda value: value["body"]["values"].update({"spacing.m": {"type": "number", "value": []}}), "E_THEME_INHERITANCE_EFFECTIVE_SCHEMA"),
 ])
 def test_derived_theme_rejects_invalid_pins_and_overrides(tmp_path: Path, mutate, code: str):
@@ -112,7 +112,6 @@ def test_draft_theme_distinguishes_missing_and_wrong_kind_base(tmp_path: Path):
     (lambda value: value["body"]["extends"].update(path="../base.yaml"), "derived Theme does not satisfy"),
     (lambda value: value["body"]["extends"].update(sourceContentIdentity="sha256:" + "0" * 64), "sha256:" + "0" * 64),
     (lambda value: value["body"]["extends"].update(contentIdentity="sha256:" + "0" * 64), "sha256:" + "0" * 64),
-    (lambda value: value["body"]["values"].update(new={"type": "number", "value": 1}), "['new']"),
     (lambda value: value["body"]["values"].update({"spacing.m": {"type": "number", "value": []}}), "resolved Theme does not satisfy"),
 ])
 def test_every_inheritance_failure_says_what_it_found(tmp_path: Path, mutate, needle: str):
@@ -136,3 +135,79 @@ def test_cycle_missing_base_and_wrong_kind_name_the_themes(tmp_path: Path):
     path.write_text(yaml.safe_dump(_derived(wrong, wrong_raw)), encoding="utf-8")
     with pytest.raises(ThemeInheritanceError) as kind: resolve_draft_theme(path)
     assert "color-scheme" in kind.value.detail and "'base'" in kind.value.detail
+
+
+def test_derived_theme_adds_tokens_roles_bindings_scales_and_kinds_the_base_lacks_and_equals_the_hand_merged_theme(tmp_path: Path):
+    """#1401: addition is as allowed as replacement; the resolved Theme is the non-derived Theme written by hand."""
+    base = _base(); source = yaml.safe_dump(base).encode(); (tmp_path / "base.yaml").write_bytes(source)
+    added = {
+        "values": {"spacing.l": {"type": "number", "value": 20}, "spacing.m": {"type": "number", "value": 24}},
+        "roles": {"subtitle": {"fontSize": "spacing.l"}},
+        "colorBindings": {"subtitle.fill": "text"},
+        "colorScales": {"phase": {"slots": {"design": "surface"}}},
+        "annotationKinds": {"risk": {"label": "Risk"}},
+        "metrics": {"text.body.size": "spacing.m"},
+    }
+    derived = _derived(base, source)
+    derived["body"].update(deepcopy(added))
+    path = tmp_path / "derived.yaml"; path.write_text(yaml.safe_dump(derived), encoding="utf-8")
+
+    effective = resolve_draft_theme(path)
+
+    by_hand = deepcopy(base)
+    by_hand["id"] = "derived"
+    for name, entries in added.items():
+        by_hand["body"].setdefault(name, {}).update(deepcopy(entries))
+    assert effective == by_hand
+    assert "subtitle" in effective["body"]["roles"] and "title" in effective["body"]["roles"]  # nothing is removed
+
+
+def test_a_redeclared_role_replaces_members_and_keeps_omitted_members(tmp_path: Path):
+    base = _base(); base["body"]["roles"]["title"] = {"fontSize": "spacing.m", "fontWeight": "w"}
+    base["body"]["values"]["w"] = {"type": "fontWeight", "value": "700"}
+    source = yaml.safe_dump(base).encode(); (tmp_path / "base.yaml").write_bytes(source)
+    derived = _derived(base, source)
+    derived["body"]["values"]["spacing.l"] = {"type": "number", "value": 30}
+    derived["body"]["roles"] = {"title": {"fontSize": "spacing.l"}}
+    path = tmp_path / "derived.yaml"; path.write_text(yaml.safe_dump(derived), encoding="utf-8")
+
+    assert resolve_draft_theme(path)["body"]["roles"]["title"] == {"fontSize": "spacing.l", "fontWeight": "w"}
+
+
+def test_derived_role_adds_a_member_without_mutating_its_inputs():
+    base = _base()
+    base["body"]["values"]["w"] = {"type": "fontWeight", "value": "700"}
+    source = yaml.safe_dump(base).encode()
+    derived = _derived(base, source)
+    derived["body"]["roles"] = {"title": {"fontWeight": "w"}}
+    before_base, before_derived = deepcopy(base), deepcopy(derived)
+
+    effective = _resolve(derived, "derived.yaml", lambda *_: (base, _pin(source), "base.yaml"))
+    expected = deepcopy(base)
+    expected["id"] = "derived"
+    expected["body"]["values"]["spacing.m"]["value"] = 24
+    expected["body"]["roles"]["title"]["fontWeight"] = "w"
+    assert effective == expected
+    assert base == before_base and derived == before_derived
+    effective["body"]["roles"]["title"]["fontWeight"] = "changed"
+    assert base == before_base and derived == before_derived
+
+
+def test_empty_derived_role_does_not_remove_inherited_members():
+    base = _base(); source = yaml.safe_dump(base).encode()
+    derived = _derived(base, source)
+    derived["body"]["roles"] = {"title": {}}
+
+    effective = _resolve(derived, "derived.yaml", lambda *_: (base, _pin(source), "base.yaml"))
+    assert effective["body"]["roles"]["title"] == base["body"]["roles"]["title"]
+
+
+@pytest.mark.parametrize("members", [None, 3, {"fontSize": None}])
+def test_malformed_derived_role_uses_effective_schema_diagnostic(members):
+    base = _base(); source = yaml.safe_dump(base).encode()
+    derived = _derived(base, source)
+    derived["body"]["roles"] = {"title": members}
+
+    with pytest.raises(ThemeInheritanceError) as error:
+        _resolve(derived, "derived.yaml", lambda *_: (base, _pin(source), "base.yaml"))
+    assert error.value.code == "E_THEME_INHERITANCE_EFFECTIVE_SCHEMA"

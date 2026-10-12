@@ -43,6 +43,18 @@ Layout returns only completed placements. Scene accepts `SurfacePlacement` and i
 
 For every table column, Layout measures the header and all selected normalized cell strings. A `visible-overflow` table slot retains measured unbroken bounds and completes visible natural geometry even when it escapes the allocated slot; Layout expands the completed canvas where needed. Layout MUST NOT uniformly shrink columns below those bounds.
 
+An explicitly declared table `maxInlineShare` or normalized table `text.wrap: allow` is the strict opt-in exception
+(Specifications 24 section 2.1 and 33 section 6): bounded measured
+wrap/ellipsis requirements replace unbroken intrinsic content floors before
+allocation. Neither visible-overflow nor natural source measurement may widen
+that table beyond its ceiling. Missing finite parent budget or infeasible
+mandatory geometry is `E_LAYOUT_TABLE_OVERFLOW`. Wrap without an explicit share
+uses the independent full-share budget and closes at the actual allocated width.
+Without either declaration,
+the unbroken natural-geometry contract above remains unchanged. All fitted
+text, multiline row/header demand and source-linked ellipsis evidence are
+completed by Layout, never inferred or repaired by Scene/adapters.
+
 For `ellipsize-with-source`, Layout allocates deterministic widths, produces ellipsized `TextPlacement` values, and retains full source text/provenance. Every text a composer ellipsizes also produces a `W_LAYOUT_TEXT_ELLIPSIZED` fit warning with the natural and available inline sizes (the legend, #497); a committed Scene with an ellipsized `legend:*` text and no such diagnostic fails `tools/check_legend_truncation.py`. `visible-overflow` produces `W_LAYOUT_VISIBLE_OVERFLOW` with required/available facts. Non-intersection is required only for an author-selected policy that requests it; a visible fallback may deliberately overlap rather than remove content.
 
 ### 3.2 Labels and delta
@@ -128,7 +140,10 @@ candidates are exhausted, a declared `visible-overflow` request may emit the
 first declared near-mark candidate despite a collision or viewport escape,
 with the ordinary overflow warning; it cannot waive the association bound.
 A required request with no valid near-mark candidate fails with
-`E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE`; it never emits detached text. The
+`E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE`; it never emits detached text.
+Layout closes host identity for every row mode, including compound glyphs;
+the host names an emitted primitive, not an abstract multi-part mark. Declared
+lane-emission identities remain authoritative. Scene projects that identity.
 Scene acceptance check pairs each emitted member label to its own completed
 mark through `hostPlacementId`, additionally checking lane/member identity
 when present, never by visual order or nearest distance. No member-label
@@ -179,6 +194,131 @@ and routes use the same completed inset scale in lane preflight and final
 composition. Layout diagnoses a non-positive usable range as
 `E_LAYOUT_MARK_OVERFLOW` rather than letting an adapter clip the point.
 
+**Explicit-window visibility closure (#1292).** Before point-inset measurement
+or lane-footprint preflight, Layout derives one immutable visibility result per
+instance and source facet from the projection's explicit-window provenance.
+The same result drives automatic, lane and folded final composition; it does
+not alter data-only lane membership. Disjoint spans and out-of-window points
+are omitted, not mapped beyond the plot. Point insets include only admitted
+facets and retain their existing complete symbol/icon/stroke geometry.
+
+Window omission does not remove an expected source mark from the lane closure.
+Layout records a typed outside-window absence against that exact expected
+instance/facet and validates that every expected mark is either completed or
+accounted for by such an absence, never both. An absent in-window mark remains
+an error. A lane member with all its facets omitted retains its table row and
+data-only membership; its preflight footprint may be empty only when this
+complete typed absence account proves why. It retains ordinary track allocation
+and does not acquire a fake mark, port, obstacle, or minimum footprint. Visuals
+bound to an omitted host are intentionally unpainted, not invalid selectors.
+The same immutable visibility closure supplies this account and final geometry.
+
+Final lane completion validates the original expected/admitted/absent partition
+against that cache before emission. The final mark inventory is restricted to
+typed lane-owned placements, not every mark on the surface: legend swatches and
+other unowned decorations remain outside the lane account. Any placement with
+lane row, member, or source-kind metadata participates in this validation;
+partial ownership, missing marks and duplicate marks cannot escape it. No
+placement-ID prefix or project-specific exception selects this inventory.
+A wholly omitted row retains its allocated
+tracks; its `laneMarkBandBlock` is the minimum completed track block in that
+row, not an invented mark or temporal port. A row with visible marks keeps the
+existing minimum painted-mark block. Missing tracks or an unaccounted missing
+mark remain errors; Scene never chooses this row geometry.
+
+Intersecting spans retain original dates alongside the visible interval.
+Progress is computed over the original span, then intersected with the visible
+host; applying its fraction to an already shortened host is forbidden. Delta
+facts remain original. Summary and missing-Actual geometry use the same
+closure, not separate date-coordinate fallbacks.
+
+A complete Actual interval must satisfy `start < finish` (Specs 03 and 06).
+Before explicit-window intersection, a nonpositive source interval fails closed
+with `E_LAYOUT_WINDOW_CLIP`, source/facet identity, `stage: visibility` and
+`reason: nonpositive-source-interval`; it is neither omitted nor converted to
+a point. Incomplete and open observations retain their existing policy. This
+guard does not change derived-window behavior or validate Actual ingestion.
+
+Only original temporal endpoints that remain visible provide dependency ports:
+span starts are in `[start, end)`, span exclusive ends in `(start, end]`, and
+points in `[start, end)`. A window cut does not invent a temporal endpoint at
+its edge. A relation lacking a required visible endpoint is suppressed with
+`W_LAYOUT_RELATION_SUPPRESSED` and typed outside-window cause/source facts;
+raw relation-anchor fallback is forbidden. Surviving route paint must remain
+inside the completed plot.
+
+The same original-endpoint eligibility gates a `finishDelta` label candidate:
+span terminals use `(start, end]`, point anchors use `[start, end)`. An outside
+anchor suppresses the label through the existing source-associated suppression
+path, without changing its delta fact or falling back to raw coordinates.
+
+Layout normalizes window label admission once, before lane text measurement,
+and final placement consumes the same decision. For a combined title and
+`finishDelta` label, endpoint admission applies only to the delta component:
+retain the title when its completed host is visible, but omit the inadmissible
+delta text. A delta-only candidate is wholly suppressed. Its original anchor
+selection remains Actual finish when available, otherwise the selected Plan
+end or point; neither the clipped edge nor an as-of substitute is an endpoint.
+An omitted label host suppresses its whole hosted label, including attached
+or folded labels, regardless of the ordinary overflow policy.
+
+Such a temporal suppression is a non-spatial typed Layout absence, keyed by
+label placement identity, original source occurrence, host/anchor facet,
+semantic label role and reason `outside-window`, with source subjects. It is
+checked against the immutable visibility closure and normalized label intent;
+it cannot coexist with a placed or spatially suppressed label of that identity.
+Do not fabricate an anchor, measured box, `TextPlacement` or collision obstacle.
+Emit the existing source-associated `W_LAYOUT_LABEL_SUPPRESSED` for a wholly
+suppressed label; removing only a delta component does not count as suppression
+of the remaining title. Member-name absences count once in
+`I_LAYOUT_PLOT_LABELS_SUPPRESSED`; other label roles do not enlarge that count.
+Temporal absences are distinct from lane capacity/obstruction evidence.
+Contained and derived-window label decisions preserve their existing intent,
+measurement, placement and serialized output.
+
+Layout aggregates clipped or omitted object-backed facets into one
+`W_LAYOUT_OUTSIDE_WINDOW` per surface, with deterministic deduplicated object
+subjects and source refs (Spec 66); per-facet reasons remain typed internal
+evidence. Unchanged contained facets and derived-window paths retain existing
+Scene output and produce no outside-window warning. Neither Scene nor an
+adapter chooses visibility, remeasures geometry, or changes the viewport to
+accommodate omitted geometry.
+
+For a partially visible span, Layout intersects its original filled contour
+with the visible host and completes a closed inward V notch at each cut edge.
+With pre-notch visible-host inline size `W`, block size `H`, and that span's
+temporal cut count `C` (one or two), notch depth is `min(H / 4, W / (4 * C))`.
+Its mouth is flush with and centered on the cut edge, opens `H / 2` in the
+block direction, and points inward by that inline depth. This general,
+dimension-relative rule has no pixel minimum or project-specific tuning. The
+uncut edge retains its original rounding. A window cut is not Actual's open-end
+treatment and does not change the source interval or endpoint identity.
+Original progress is intersected with this completed host contour, including
+its notches, rather than repainting a rectangular track over the cue.
+Unavailable, non-finite or failed contour operations fail closed with
+`E_LAYOUT_WINDOW_CLIP`, carrying bounded source/facet identity and operation
+stage/reason, never backend exception text or a rectangular fallback.
+
+Layout supplies a completed optional plot paint clip for cut geometry and
+surviving relation paint that needs boundary containment (Spec 46). Filled
+contours, points, terminal geometry and primitive bounds are completed inside
+the plot before Scene projection; the paint clip additionally contains stroke
+and effects. Date-admitted points retain full glyph/icon geometry through
+existing painted-footprint insets, not a substituted span contour. A required
+glyph that cannot fit retains the existing mark-overflow failure.
+Relations keep their original ports and complete terminal contours; if no
+route can contain the whole geometry, suppress it with
+`W_LAYOUT_RELATION_SUPPRESSED` and reason `plot-containment`. Do not move a port
+or truncate a terminal to force acceptance. The paint clip contains stroke
+and effects around otherwise contained terminal geometry.
+Contained and derived-window marks acquire no new clip or contour metadata.
+
+An already-admitted patterned Rect consumer may project the completed cut
+contour as a Symbol. Layout preserves the original uncut repeat origin while
+completing the visible region and contour clip; pattern observation tests actual
+contour ink, not its rectangular envelope. This does not extend Theme pattern
+admission to additional roles (Spec 07).
+
 The timeline as-of label is a constrained exception to generic
 visible-overflow behavior. Layout measures its text and any declared chip
 footprint, then tries the plot top margin beside the as-of rule followed by
@@ -214,6 +354,68 @@ Scene projects the completed fact; adapters neither recount nor draw a marker.
 `finishDelta` has exactly one text representation per item. When selected in `labels.content`, no second standalone variance text is emitted. Its semantic role remains derived from the signed value.
 
 ### 3.3 Relations
+
+**Declared routing policy (#1430).**
+`relationRouting.search` selects `first-fit` or `best`, never by project size.
+`best` retains the existing pair order, exact reverse bound, canonical path
+histories, per-pair quotas, completed-route ranking and bounded label recovery.
+`first-fit` orders admitted source sides end/start/above/below and target sides
+start/end/above/below, retaining stable full/minimum-stub ties. For each pair it
+tries finite straight/L/Z/U proposals from completed row gaps and obstacle-edge
+channels before that pair's bounded search; the first fully accepted completed
+route wins. Proposal generation builds no visibility graph. Both paths retain
+terminal, bounds, obstacle, self-overlap, bend and detour validation.
+First-fit fallback uses an obstacle-independent Manhattan/minimum-turn lower
+bound instead of preparing the exact reverse bound. It retains canonical
+prefix histories and existing expansion quotas; it does not collapse different
+path-dependent prefixes using weighted-state dominance. Sparse-graph memo keys
+distinguish bound modes; endpoint-independent visibility preparation may be
+shared. `best` retains its exact reverse bound and candidate order.
+If all first-fit shapes and cheap searches fail, Layout performs one ranked
+`best` rescue for that relation, using the original admitted pair order and
+the same completed-route validators. An accepted fast route never invokes
+rescue. Rescue does not replay surface composition or label recovery. Both
+phases share the explicit `searchBudget`; an exhausted ceiling stops rescue.
+The routing summary counts the relation once, not once per search phase.
+Under `first-fit`, required labels precede routing; member names and finish
+deltas yield to completed routes. Skip lane-route rehearsal and post-route
+label recovery; do not replay composition in Scene or adapters.
+
+Omitted `search` means `first-fit`. Authors requiring legacy ranked output
+declare `best`; its canonical manifest representation and output remain
+unchanged. The five approved HALCYON targets explicitly declare `best` before
+this default changes. No authored example is edited by dev A.
+
+**Explicit search budget (#1426).**
+Optional `relationRouting.searchBudget` is a positive integer, an additional
+ceiling on processed candidate expansions under either policy per resolved relation instance per
+routing pass. It does not increase or replace the existing per-pair quotas
+below. Omission preserves those quotas, search order and diagnostic bytes.
+Never reset the explicit ceiling per port pair; create a fresh counter for
+each documented rehearsal, reference, baseline or recovery pass. Blocked egress consumes no expansions. Count each admitted Manhattan seed and
+each non-stale frontier state processed by the existing candidate iterator;
+do not count graph preparation, memo lookup or an unprocessed over-limit pop.
+Graph reuse does not waive candidate-expansion accounting. Finite shape
+proposals do not consume frontier expansions. Exhausting a declared budget
+stops subsequent pair selection under either policy.
+
+On reaching the ceiling, stop further pair selection and retain the best fully
+accepted completed route already found, or retain the existing unroutable outcome when none was accepted.
+Do not relax terminal, obstacle, self-overlap or quality checks. Exhaustion
+means "no acceptable route within budget", never "no safe route exists";
+#1427's selected unroutable mode subsequently handles an absent route.
+Reaching the ceiling while accepting a candidate still records the stop.
+
+Layout emits typed `RelationSearchBudgetHit` facts as
+`I_LAYOUT_RELATION_SEARCH_BUDGET:` plus canonical JSON containing `surfaceId`,
+`relationId` (the resolved relation scene id), `pass`, `budget` and
+`expansions`. Here `expansions == budget`; `pass` is the existing deterministic
+progress-pass name. Preserve facts from every executed rehearsal/recovery,
+including a rejected trial, in execution order; do not sum them into a shared
+surface budget or replace them with final-pass-only evidence. Scene projects
+these facts and CLI/MCP expose severity `info`. No Scene schema, geometry or
+resource identity input is added. Until #1427 lands, an absent accepted route
+uses the existing suppression/fallback contract and diagnostics.
 
 View relation intent becomes `none` or an object with `mode: semantic` and `overflow: suppress | visible-overflow`. Layout Profile adds `relationRouting.maxBends` and `relationRouting.maxDetourRatio` numeric geometry policy.
 
@@ -272,6 +474,85 @@ obstacle/mark safety. Arbitrary original terminal-leg lengths are not minima.
 Each reduction removes vertices; blocked reductions retain the safe detour.
 All eligible finite port pairs are compared, with exact rank ties retaining
 the first declared pair. Scene and adapters do not simplify geometry.
+
+**Relation-instance search budget (#1298).** One route-selection call owns
+4096 candidate-frontier expansions per search phase, rather than resetting
+4096 for every port pair. `best` has one phase; first-fit has a cheap phase and
+an exact rescue only after failure, at most8192 expansions in its single
+composition pass. The optional explicit ceiling remains shared across both
+phases. For P declared pairs, divide each phase's allowance evenly: pair i gets
+`4096 // P + int(i < 4096 % P)` in the existing deterministic pair order.
+Blocked pairs do not transfer unused allowance; therefore processing speed,
+cache hits and earlier search success cannot change a later pair's allowance.
+Compare the fully safe, completed, quality-eligible candidates actually found
+within those allowances using the existing rank and tie rule. A pair with
+zero allowance is search-limited, not geometrically impossible. Exhaustion
+retains `E_PRESENTATION_ROUTE_LIMIT` evidence; it never relaxes mark/text,
+terminal, self-overlap, bend or detour checks. With no eligible route, keep
+the existing declared safe fallback/suppression and diagnostic contract.
+
+Surface source exits have at most four cardinal ports; target entries add
+at most one horizontal stub, so P is at most20, independent of comparison
+sibling count. For R completed source/target relation instances and at most
+five best composition/rehearsal passes, there are at most100R candidate-generator
+calls and20480R processed frontier expansions. First-fit's single composition
+pass, including rescue, has at most40R calls and8192R processed expansions;
+therefore the same surface-wide bounds remain sufficient. A final over-limit pop per
+pair may discover exhaustion; it does not process that state. Immutable
+history indexes examine only nearby orientation/coordinate intervals, then
+apply the unchanged exact intersection predicate. Each processed state has
+at most four neighbors and at most4096 history segments, giving at most
+`20 * R * 4096**2` exact history predicates across those passes.
+This bounds candidate search, not all rendering by a constant: each pair's
+finite visibility-graph preparation still depends on the selected obstacle
+count M (O(M) nodes/edges and O(M**2) worst-case collision work). Counters and
+benchmarks must distinguish graph preparation from candidate-frontier work.
+Search-limited evidence is not a proof that no route exists; any later
+critical-route completeness policy must retain that distinction.
+
+**Retained search memo capacity (#1298).** The obstacle-index lineage admits
+at most4096 logical records of cached payloads and, separately,4096 records
+of interned selection contents (also at most256 content IDs). A selection
+costs one container plus one record per obstacle; a completed route costs one
+container plus one per point; a stored failure costs one. An immutable sparse
+graph costs one container plus two records per node (point and adjacency), one
+per directed edge and one per reverse-heuristic entry. Existing keys consume
+no additional capacity. Admission is non-evicting; oversized/full-capacity
+values run fresh while admitted hits remain usable. Exact keys, route order,
+frontier quotas, failure semantics and safety checks are unchanged. This bounds
+retained records, not platform-dependent bytes or the input-sized active graph,
+frontier and obstacle data. Graph preparation counters distinguish rebuilds
+from candidate-frontier work.
+
+**Surface visibility preparation (#1420).** A live prepared obstacle selection
+owns an input-sized, endpoint-independent visibility base: obstacle-offset
+corners, boundary events and exact visibility of consecutive collinear base
+nodes. Reuse it for the same selected content, bounds, grid offset and selected
+port exemptions, including equal-content copies. Excluded ports/routes do not
+invalidate it. This active geometry is separate from the4096-record retained
+search memo and is released with its owning selection, not a global cache.
+Endpoint projections still form the identical per-query sparse graph. Reuse
+only exact base edges; new or split edges use the unchanged collision oracle.
+Reverse heuristics and frontier state remain endpoint-specific. Thus reuse
+must preserve ordered nodes, adjacency, candidate order and exhaustion, not
+only connectivity. Counters report visibility-base builds separately from
+endpoint graph assemblies and reverse/frontier work. With fixed surface
+bounds/offset and no selected port exemptions, base builds are bounded by
+the number of distinct selected obstacle contents, not endpoint candidates.
+Selected additions require an updated base; overridden or removed geometry
+cannot reuse an old visibility proof. Incremental preparation may reuse an
+unchanged edge only after checking it against every newly selected obstacle.
+No recovery trial may reuse routes if pre-route labels change the selected
+obstacle content or completed endpoint inputs.
+
+The same base may retain a bounded working set of endpoint projection-line
+visibility facts. A line uses the base's event coordinates; only an identical
+consecutive edge may reuse a fact, and an endpoint-split edge is checked anew.
+Changing selected content, bounds, offset or selected exemptions invalidates
+these facts. Cache admission/eviction never changes graph membership, neighbor
+order, heuristic or candidate allowance. Projection-line preparation counters
+remain separate from base builds and endpoint assemblies; its active retained
+geometry must remain O(M), not grow with all endpoint pairs or render history.
 
 **Entry obstacles (#1109 R4).** A comparison-host corridor exempts only named,
 physically connected marks of that endpoint. A detached snapshot or actual

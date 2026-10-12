@@ -9,6 +9,7 @@ from enum import StrEnum
 from typing import Any
 
 from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
+from chrona.core.relation_identity import relation_identity
 from chrona.presentation.contracts.resources import ViewInput
 from chrona.presentation.review.lane_membership import (
     LaneItem, LaneMembership, LanePackingInput, PlannedPoint, PlannedSpan,
@@ -26,6 +27,14 @@ class ObservationState(StrEnum):
     DUE_UNOBSERVED = "due-unobserved"
     NOT_YET_DUE = "not-yet-due"
     UNAVAILABLE = "unavailable"
+
+
+class WindowMode(StrEnum):
+    """Declared View window policy retained as projection provenance."""
+
+    SELECTED_PLANNED = "selected-planned"
+    SELECTED_COMPARISON = "selected-comparison"
+    EXPLICIT = "explicit"
 
 
 def shared_track_member_key(member: Any, source_index: int) -> tuple[int, int, int]:
@@ -69,6 +78,7 @@ class ReviewItem:
     missing_actual_mark: str = "due-end"
     # Position of the object among the Project's `objects` as declared, for `ordering.by: source` (#991).
     source_index: int = 0
+    temporal_paint: bool = True
 
     @property
     def at_delta(self) -> int | None:
@@ -190,6 +200,7 @@ class ReviewProjection:
     figures: tuple[tuple[str, int], ...] = ()  # (figure id, days) the Core resolved from the View's `figures` (#586)
     deadlines: tuple[ReviewDeadline, ...] = ()  # the Project deadlines the View's `deadlines` shows, in Project order (#822)
     group_figures: tuple[tuple[str, tuple[tuple[str, int], ...]], ...] = ()
+    window_mode: WindowMode = WindowMode.SELECTED_PLANNED
 
 
 @dataclass(frozen=True)
@@ -258,7 +269,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         actual = _actual(latest.get(object_id))
         observation_state = _observation_state(planned, latest.get(object_id), as_of)
         finish_delta = _finish_delta(planned, actual)
-        total_float = analysis.total_float.get(object_id) if analysis is not None else None
+        float_value = analysis.total_float.get(object_id) if analysis is not None else None
+        total_float = float_value.value if float_value is not None else None
         critical = object_id in analysis.critical if analysis is not None else False
         link = _object_link(project["objects"][object_id].get("link"))
         entry = hierarchy_entries.get(object_id)
@@ -284,6 +296,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         selected = [replace(item, group_id="", group_label="") for item in selected]
     if hierarchy and not explicit:
         selected = _expand_hierarchy_roots(selected, hierarchy_entries, hierarchy_root_ids, view)
+        selected = [replace(item, temporal_paint=not (
+            item.is_rollup and grouping.rollup in {"header", "none"})) for item in selected]
     elif not explicit:
         _order(selected, view)
     snapshots = _snapshot_items(snapshot_project, snapshot_placements, snapshot_analysis)
@@ -297,24 +311,38 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     rows, folded_points = _compose_rows(view, selected, snapshots, scenario_items, project)
     lane_membership = _project_lane_membership(project, rows, view) if view.rows.mode == "lanes" else None
     lane_rows = _project_lane_rows(rows, lane_membership) if lane_membership is not None else ()
+    if lane_membership is not None:
+        lanes_by_id = {lane.lane_id: lane for lane in lane_membership.lanes}
+        lane_membership = replace(lane_membership,
+                                  lanes=tuple(lanes_by_id[row.lane_id] for row in lane_rows))
     dates = [v for row in rows for item in row.items for v in item.planned.values()]
     dates += [v for point in folded_points for v in point.item.planned.values()]
     if view.window.mode == "selected-comparison":
         dates += [v for row in rows for item in row.items for v in (item.actual or {}).values() if isinstance(v, date)]
     start, end = min(dates), max(dates)
     margin = view.window.margin_days
+    if view.window.mode == "selected-planned":
+        # View owns temporal breathing room; schedules remain half-open facts.
+        margin = max(margin, ((end - start).days + 9) // 10, 1)
     if view.window.mode == "explicit":
         start, end = (_date_or_number(value) for value in (view.window.start, view.window.end))
         margin = 0
         if start >= end:
             raise ValueError(f"E_REVIEW_WINDOW: window.start {view.window.start} is not before window.end {view.window.end}")
+    try:
+        window = (date.fromordinal(start.toordinal() - margin),
+                  date.fromordinal(end.toordinal() + margin))
+    except ValueError as error:
+        ids = tuple(item.object_id for item in selected)
+        raise ValueError(f"E_REVIEW_WINDOW: cannot pad selected dates {start}..{end} "
+                         f"by {margin} days within the Date domain; selected objects={ids!r}") from error
     return ReviewProjection(tuple(selected),
-        (date.fromordinal(start.toordinal() - margin), date.fromordinal(end.toordinal() + margin)),
+        window,
         tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows,
         view.comparison.facets, hierarchy, view.surface,
         _dependency_network_projection(project, selected, view),
         frozenset(getattr(analysis, "driving_relations", ()),), folded_points,
-        lane_membership, lane_rows)
+        lane_membership, lane_rows, window_mode=WindowMode(view.window.mode))
 
 
 def _project_lane_rows(rows: tuple[ReviewRowProjection, ...], membership: LaneMembership
@@ -353,7 +381,11 @@ def _project_lane_rows(rows: tuple[ReviewRowProjection, ...], membership: LaneMe
                 member_item_ids.append(member_id)
         output.append(ReviewLaneRowProjection(lane.lane_id, lane.group_id,
                                               tuple(members), tuple(member_item_ids)))
-    return tuple(output)
+    row_ranks = {member_id: rank for rank, member_id in enumerate(source_rows)}
+    group_ranks = {group_id: rank for rank, group_id in enumerate(dict.fromkeys(row.group_id for row in rows))}
+    return tuple(sorted(output, key=lambda lane: (
+        group_ranks[lane.group_id],
+        min(row_ranks[member_id] for member_id in lane.member_item_ids), lane.lane_id)))
 
 
 def _project_lane_membership(project: dict[str, Any], rows: tuple[ReviewRowProjection, ...],
@@ -385,9 +417,10 @@ def _project_lane_membership(project: dict[str, Any], rows: tuple[ReviewRowProje
         if key is not None and (not isinstance(key, str) or not key):
             raise ValueError(f"E_REVIEW_LANE_KEY: the lane key of object {item.object_id!r} must be a non-empty string, got {key!r}")
         items.append(LaneItem(item.item_id, item.object_id, group_id, planned, key, attached_host))
-    relations = tuple(SelectedFSRelation(str(relation["id"]), str(relation["from"]["object"]),
-                                         str(relation["to"]["object"]))
-                      for relation in project.get("relations", ())
+    relations = tuple(SelectedFSRelation(relation_identity(index, relation), str(relation["from"]["object"]),
+                                         str(relation["to"]["object"]),
+                                         relation.get("id") or relation_identity(index, relation))
+                      for index, relation in enumerate(project.get("relations", ()))
                       if relation.get("type") == "dependency"
                       and relation.get("from", {}).get("endpoint") == "end"
                       and relation.get("to", {}).get("endpoint") == "start"
@@ -406,16 +439,19 @@ def _dependency_network_projection(project: dict[str, Any], selected: list[Revie
                                         _network_order_key(item, view), item.critical, item.source_kind)
                   for item in selected)
     edges = []
-    for relation in project.get("relations", ()):
+    for index, relation in enumerate(project.get("relations", ())):
         source = relation.get("from", {})
         target = relation.get("to", {})
         source_id, target_id = source.get("object"), target.get("object")
         if source_id not in selected_ids or target_id not in selected_ids:
             continue
-        edges.append(DependencyNetworkEdge(str(relation["id"]), str(source_id), str(target_id),
+        identity = relation_identity(index, relation)
+        edge = DependencyNetworkEdge(identity, str(source_id), str(target_id),
                                            str(source.get("endpoint", "end")), str(target.get("endpoint", "start")),
-                                           all(item.critical for item in selected if item.object_id in {source_id, target_id})))
-    return DependencyNetworkProjection(nodes, tuple(sorted(edges, key=lambda item: item.relation_id)))
+                                           all(item.critical for item in selected if item.object_id in {source_id, target_id}))
+        edges.append((relation.get("id") or identity, edge))
+    return DependencyNetworkProjection(nodes, tuple(edge for _, edge in sorted(
+        edges, key=lambda item: (item[0], item[1].relation_id))))
 
 
 def _network_order_key(item: ReviewItem, view: ViewInput) -> tuple[Any, ...]:
@@ -474,10 +510,11 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
                         track="shared" if scenario_ghost(item) or snapshot_ghost(item) else item.track),
                 (replace(scenarios[view.comparison.scenario_id][item.object_id],
                          item_id=f"scenario:{view.comparison.scenario_id}:{item.object_id}",
-                         source_kind="scenario", scenario_id=view.comparison.scenario_id, track="shared")
+                         source_kind="scenario", scenario_id=view.comparison.scenario_id, track="shared",
+                         temporal_paint=item.temporal_paint)
                  if scenario_ghost(item) else None),
                 (replace(snapshots[item.object_id], item_id=f"snapshot:{item.object_id}",
-                         source_kind="snapshot", track="shared")
+                         source_kind="snapshot", track="shared", temporal_paint=item.temporal_paint)
                  if snapshot_ghost(item) else None),
             ) if member is not None),
             depth=item.hierarchy_depth if view.grouping is not None and view.grouping.by == "hierarchy" else 0,
@@ -631,7 +668,8 @@ def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[s
     result: dict[str, ReviewItem] = {}
     for object_id, planned in placements.items():
         source_type = "point" if "at" in planned else "span"
-        total_float = analysis.total_float.get(object_id) if analysis is not None else None
+        float_value = analysis.total_float.get(object_id) if analysis is not None else None
+        total_float = float_value.value if float_value is not None else None
         critical = object_id in analysis.critical if analysis is not None else False
         result[object_id] = ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
@@ -729,7 +767,7 @@ def _expand_hierarchy_roots(items: list[ReviewItem], entries: dict[str, Hierarch
         item = item_by_id.get(object_id)
         if item is not None:
             output.append(replace(item, hierarchy_depth=relative_depth))
-        if relative_depth >= limit:
+        if limit != "all" and relative_depth >= limit:
             return
         child_items = [item_by_id[child] for child in children.get(object_id, ()) if child in item_by_id]
         _order(child_items, view)

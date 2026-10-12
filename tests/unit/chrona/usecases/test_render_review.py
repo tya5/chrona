@@ -14,6 +14,8 @@ import jsonschema
 import yaml
 
 import chrona.usecases.render_review as render_usecase
+from chrona.presentation.layout import surface_render_plan
+from chrona.presentation.layout.surface_source_inputs import _source_inputs
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, obstacles_intersect
 from chrona.presentation.layout.surface_routes import _lane_fallback_clears_required_labels
@@ -64,10 +66,10 @@ def test_lane_source_measurement_uses_exact_membership_table_and_lane_count():
                           TableColumnContent("Items", "Items", "end", TableColumnWidth("content", "content"))),
                          (TableCellContent("lane:g:a", "Lane", "Avionics", "tableCell"),
                           TableCellContent("lane:g:a", "Items", "2", "tableCell", "numeric")), (), None, ())
-    sources = render_usecase._source_inputs(
+    sources = _source_inputs(
         {"project": {"title": "test"}}, view, projection, SummaryContent(()), table=table,
         content=SimpleNamespace(group_details=(), milestones=(), observation_columns=(), observation_rows=(),
-                                axis_tiers=()),
+                                axis_tiers=(), notes=()),
     )
 
     assert sources["table"].item_count == sources["timeline"].item_count == 1
@@ -156,16 +158,18 @@ def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():
 
         finish, end = render("finish"), render("end")
     scene = serialize_scene(finish.scene)
-    # Stroke-aware corridor candidates preserve the planned arrow and recover
-    # the actual arrow without changing endpoint-alias identity.
-    for identifier in ("bringup-risk", "firmware-slip"):
+    # The one-pass policy preserves the feasible leader and the truthful
+    # fallback, independently of endpoint-alias spelling.
+    for identifier in ("bringup-risk",):
         assert f"annotation-leader:{identifier}".encode() in scene
         assert not any(item.scene_id == f"annotation-summary:{identifier}"
                        for item in finish.surface.primitives)
         for prefix in ("annotation-box", "annotation-text", "note-index"):
             assert any(item.scene_id == f"{prefix}:{identifier}"
                        for item in finish.surface.primitives)
-    assert b"W_LAYOUT_ANNOTATION_SUPPRESSED" not in scene
+    assert b"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" in scene
+    assert any(item.scene_id == "annotation-summary:firmware-slip" for item in finish.surface.primitives)
+    assert not any(item.scene_id == "annotation-leader:firmware-slip" for item in finish.surface.primitives)
     assert serialize_scene(end.scene) == scene
     assert end.artifact.content == finish.artifact.content
 
@@ -398,14 +402,14 @@ def test_lane_scene_membership_is_theme_independent_for_same_project_and_view():
 
 def test_hidden_lane_layout_budgets_overlapping_authored_members_before_final_allocation(monkeypatch):
     completed = []
-    original = render_usecase.prepare_surface_content
+    original = surface_render_plan.prepare_surface_content
 
     def capture(layout_request, *, natural=None):
         result = original(layout_request, natural=natural)
         completed.append(result)
         return result
 
-    monkeypatch.setattr(render_usecase, "prepare_surface_content", capture)
+    monkeypatch.setattr(surface_render_plan, "prepare_surface_content", capture)
     with tempfile.TemporaryDirectory() as temporary:
         closure, snapshot = _closure(Path(temporary))
         value = yaml.safe_load((EXAMPLE / "views/02-programme-board.yaml").read_text(encoding="utf-8"))

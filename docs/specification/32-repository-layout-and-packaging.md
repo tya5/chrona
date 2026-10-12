@@ -63,6 +63,20 @@ and conformance may validate them but MUST NOT own a duplicate. Tests MUST insta
 built wheel into an isolated environment and prove schema, preset, and font-metric
 lookup without a repository tree.
 
+### 4.1 First-run resources
+
+The minimal `init` template describes observations, not future placeholders:
+its started Design observation carries `openUntil` equal to Actual `asOf` and
+the declared progress; not-started Build and future Release have no observation.
+This changes the template only, not Actual admission or missing-data semantics.
+The packaged default uses the existing `backgroundDecoration.rows: rules`
+policy rather than alternate faint bands. Its Theme supplies a neutral stroked
+`row-rule`, with group and group-header backgrounds below the rule's paint
+order. The ordinary decoration visibility checks remain enabled. Layout owns
+the rules' completed geometry; Scene and adapters use their existing projection.
+Custom presets and authored projects are unchanged. First-run acceptance checks
+the actual CLI warning envelope, Scene progress fill and serialized SVG.
+
 ## 5. Python package boundaries
 
 The final package boundaries are:
@@ -151,8 +165,7 @@ examples/<project>/
 |---|---|
 | `controller-z` | small and complete: every core feature once |
 | `aster-ssd` | calendars and constraints |
-| `halcyon-1` | programme: hierarchy, scenarios, snapshots, the second surface |
-| `orion-asic` | extension: object types and typed fields from a declared profile package |
+| `halcyon-1` | programme: hierarchy, scenarios, snapshots, the second surface, and extension object types and typed fields from a declared profile package |
 
 Shared source resources are stored once at project scope. A declared slide owns a View
 only when its selection differs from its siblings. Reproducible rendered evidence must

@@ -37,9 +37,9 @@ def test_empty_view_copy_map_is_byte_identical(tmp_path):
     assert selected.surface.primitives == plain.surface.primitives
 
 
-def test_use_case_hands_the_same_completed_preparation_to_scene_once(tmp_path, monkeypatch):
-    import chrona.usecases.render_review as use_case
-    from chrona.presentation.scene import v05_builder
+def test_surface_pipeline_reuses_the_completed_native_preparation_once(tmp_path, monkeypatch):
+    from chrona.presentation.layout import surface_render_plan as use_case
+    from chrona.presentation.layout import surface_count_closure as v05_builder
 
     prepare = use_case.prepare_surface_content
     compose = v05_builder.compose_surface_layout

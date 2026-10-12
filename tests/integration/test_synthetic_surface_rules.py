@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 
 import chrona.presentation.layout.surface_member_labels as member_labelling
-import chrona.presentation.scene.v05_builder as builder
+import chrona.presentation.layout.surface_count_closure as builder
 from tests.support import synthetic_review as sr
 
 
@@ -84,6 +84,9 @@ def test_a_fixed_host_that_fits_reports_no_row_density(tmp_path):
 def test_fill_lanes_count_every_packed_name_as_shown_or_suppressed(tmp_path):
     parts = _parts(distribution="fill")
     source = sr.bunched_project()
+    # This density proof intentionally fixes the plot, independent of derived
+    # selected-planned padding (whose label improvement has its own tests).
+    parts["view"]["body"]["window"] = {"mode": "explicit", "start": "2026-01-05", "end": "2026-03-01"}
     sr.add_notes(source, parts["view"], ["g0-t2", "g1-t3", "g2-t1"],
                  [sr.candidate("plot-near", connector="leader"), sr.candidate("plot-no-tail", connector="none")])
     rendered = sr.render(tmp_path, source, presentation=parts)
@@ -206,6 +209,8 @@ def _slipped(tmp_path, *, member_names=None, monkeypatch=None, own_marks=None):
                   {"id": f"o-{key}", "sequence": index, "projectObjectId": key, "actual": value}
                   for index, (key, value) in enumerate(observed.items(), start=1)]}}
     parts = sr.bundle()
+    # Hold the geometry constant for the own-actual-mark mutation proof.
+    parts["view"]["body"]["window"] = {"mode": "explicit", "start": "2026-02-02", "end": "2026-03-01"}
     labels = parts["view"]["body"]["visibility"]["labels"]
     labels.update(side="end", overflow="suppress")
     if member_names is not None:

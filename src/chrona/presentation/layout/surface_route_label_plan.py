@@ -1,7 +1,7 @@
 """Coordinates one bounded route/name recovery; reads completed marks, label requests and a clean obstacle index."""
 from __future__ import annotations
 
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, replace
 from typing import Callable
 
 from chrona.presentation.layout.labels import LabelRequest
@@ -23,6 +23,7 @@ class RouteLabelPlanContext:
     base_text: tuple[TextPlacement, ...]
     clean_obstacles: SurfaceObstacleIndex
     routes_for: Callable[[SurfaceObstacleIndex, tuple[TextPlacement, ...]], SurfaceRoutesContext]
+    allow_recovery: bool = True
 
 
 @dataclass(frozen=True)
@@ -65,11 +66,13 @@ def _relation_status(routes: SurfaceRoutesBatch) -> dict[str, int]:
 
 
 def _trial(context: RouteLabelPlanContext, pre_requests: tuple[LabelRequest, ...],
-           post_requests: tuple[LabelRequest, ...]) -> RouteLabelPlan:
+           post_requests: tuple[LabelRequest, ...], *,
+           progress_pass: str = "route-label-baseline") -> RouteLabelPlan:
     obstacles = context.clean_obstacles.copy()
     pre = (place_member_labels(context.member_labels, pre_requests, obstacles)
            if pre_requests else _empty_members())
-    route_context = context.routes_for(obstacles, (*context.base_text, *pre.text))
+    route_context = replace(context.routes_for(obstacles, (*context.base_text, *pre.text)),
+                            progress_pass=progress_pass)
     routes = compose_surface_routes(route_context)
     post = (place_member_labels(context.member_labels, post_requests, obstacles)
             if post_requests else _empty_members())
@@ -87,22 +90,29 @@ def _relation_labels_preserved(baseline: SurfaceRelationLabelsBatch,
 def compose_routes_and_member_labels(context: RouteLabelPlanContext) -> RouteLabelPlan:
     """Complete routes and labels; retry once only to recover post-route member names."""
     baseline = _trial(context, (), context.post_route_requests)
+    if not context.allow_recovery:
+        return baseline
     lost = _lost_requests(context.post_route_requests, baseline.members)
     if not lost:
         return baseline
 
     lost_ids = {item.placement_id for item in lost}
     remaining = tuple(item for item in context.post_route_requests if item.placement_id not in lost_ids)
-    retry = _trial(context, lost, remaining)
+    retry = _trial(context, lost, remaining, progress_pass="route-label-recovery")
+    facts = (*baseline.routes.routing_info, *retry.routes.routing_info)
+
+    def with_facts(plan):
+        return replace(plan, routes=replace(plan.routes, routing_info=facts))
+
     retry_lost_ids = {item.placement_id for item in _lost_requests(context.post_route_requests, retry.members)}
     if not retry_lost_ids < lost_ids:
-        return baseline
+        return with_facts(baseline)
     baseline_relations = _relation_status(baseline.routes)
     retry_relations = _relation_status(retry.routes)
     if baseline_relations.keys() != retry_relations.keys():
-        return baseline
+        return with_facts(baseline)
     if any(retry_relations[key] > baseline_relations[key] for key in baseline_relations):
-        return baseline
+        return with_facts(baseline)
     if not _relation_labels_preserved(baseline.relation_labels, retry.relation_labels):
-        return baseline
-    return retry
+        return with_facts(baseline)
+    return with_facts(retry)

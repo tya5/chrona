@@ -5,12 +5,13 @@ from decimal import Decimal
 
 import pytest
 
-from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
 )
 from chrona.presentation.layout.ports import (
-    coincident_endpoint_port_ids, connector_boundary_ports, connector_egress_candidates,
+    coincident_endpoint_port_ids, connector_boundary_port, connector_boundary_ports,
+    connector_egress_candidates,
 )
 from chrona.presentation.layout.surface_quality import MarkPlacement
 
@@ -27,6 +28,35 @@ def test_span_start_finish_are_fixed_completed_ports() -> None:
     assert connector_boundary_ports(mark, "end", (0, 0)) == (("end", (18, 24)),)
 
 
+@pytest.mark.parametrize(("endpoint", "start", "finish", "expected"), [
+    ("start", None, (18, 24), ()),
+    ("finish", (10, 24), None, ()),
+    ("end", (10, 24), None, ()),
+    ("finish", None, (18, 24), (("end", (18, 24)),)),
+    ("start", (10, 24), None, (("start", (10, 24)),)),
+])
+def test_temporally_unavailable_span_endpoint_has_no_boundary_candidate(
+        endpoint, start, finish, expected):
+    mark = MarkPlacement("actual:item", "item", Rect(Decimal(10), Decimal(20), Decimal(8), Decimal(8)),
+                         start, finish)
+    assert connector_boundary_ports(mark, endpoint, (0, 0)) == expected
+    candidates = connector_egress_candidates(mark, endpoint, (0, 0), ())
+    if not expected:
+        assert candidates == ()
+    else:
+        semantic = expected[0][1]
+        assert candidates and all(candidate.semantic_port == semantic for candidate in candidates)
+
+
+def test_direct_temporal_port_helper_raises_bounded_anchor_diagnostic_when_absent():
+    mark = MarkPlacement("actual:item", "item", Rect(Decimal(10), Decimal(20), Decimal(8), Decimal(8)),
+                         None, (18, 24))
+    with pytest.raises(LayoutError) as caught:
+        connector_boundary_port(mark, "start", (0, 0))
+    assert caught.value.diagnostic_id == "E_PRESENTATION_ANCHOR_MISSING"
+    assert caught.value.path == "/layout/connectorPort"
+
+
 def test_point_ports_are_finite_deterministic_and_not_center() -> None:
     mark = _mark("point")
     candidates = connector_boundary_ports(mark, "at", (30, 40))
@@ -39,6 +69,40 @@ def test_point_ports_are_finite_deterministic_and_not_center() -> None:
 
 def test_body_port_uses_same_finite_boundary_policy() -> None:
     assert connector_boundary_ports(_mark("span"), "body", (14, 0))[0] == ("above", (14, 20))
+
+
+@pytest.mark.parametrize("shape", ("span", "point"))
+@pytest.mark.parametrize("endpoint", ("start", "finish", "end", "at", "body"))
+@pytest.mark.parametrize("entry", ("any", "side", "side-when-free"))
+@pytest.mark.parametrize("toward", ((-20, 24), (50, 24)))
+@pytest.mark.parametrize("sibling_count", (0, 10, 50))
+def test_surface_port_product_is_bounded_independently_of_comparison_siblings(
+        shape, endpoint, entry, toward, sibling_count) -> None:
+    """#1298: four source exits × (four target exits + one stub) <= 20.
+
+    Overlapping comparison instances alter the exposed outline, not the
+    number of candidate ports. Surface source exits never request a stub.
+    """
+    mark = _mark(shape)
+    siblings = tuple(MarkPlacement(
+        f"planned:comparison:{index}", "item", mark.bounds,
+        mark.start_port, mark.end_port, mark_shape=shape,
+    ) for index in range(sibling_count))
+    source = connector_egress_candidates(mark, endpoint, toward, siblings)
+    target = connector_egress_candidates(
+        mark, endpoint, toward, siblings, entry=entry,
+        stub_length=4, stub_free=lambda candidate: True,
+    )
+    assert 1 <= len(source) <= 4
+    assert 1 <= len(target) <= 5
+    assert len(source) * len(target) <= 20
+    assert sum(candidate.stub for candidate in target) <= 1
+    assert not any(candidate.stub for candidate in source)
+    assert len(source) == len(connector_egress_candidates(mark, endpoint, toward, ()))
+    assert len(target) == len(connector_egress_candidates(
+        mark, endpoint, toward, (), entry=entry,
+        stub_length=4, stub_free=lambda candidate: True,
+    ))
 
 
 def test_overlapping_comparison_sibling_exposes_temporal_endpoint_without_moving_it() -> None:

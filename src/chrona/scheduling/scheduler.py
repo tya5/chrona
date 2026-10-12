@@ -26,13 +26,25 @@ class ScheduleResult:
 
 
 @dataclass(frozen=True)
+class TotalFloat:
+    """One completed float distance and its Scheduler-owned calendar basis."""
+
+    value: int
+    calendar: str | None
+
+    @property
+    def unit(self) -> str:
+        return "working-days" if self.calendar is not None else "calendar-days"
+
+
+@dataclass(frozen=True)
 class ScheduleAnalysis:
     """Immutable backward-pass evidence derived from one successful schedule."""
 
     latest_placements: dict[str, dict[str, date]]
-    total_float: dict[str, int]
+    total_float: dict[str, TotalFloat]
     critical: frozenset[str]
-    component_targets: dict[str, date]
+    project_finish: date | None
     driving_relations: frozenset[str] = frozenset()
 
 
@@ -319,15 +331,12 @@ def _analyze_criticality(project: dict[str, Any], placements: dict[str, dict[str
     objects = project["objects"]
     eligible = {object_id for object_id, item in objects.items()
                 if object_id in placements and item["schedule"]["mode"] != "rollup"}
-    components = _dependency_components(project, eligible)
-    latest: dict[str, dict[str, date]] = {}
-    component_targets: dict[str, date] = {}
-    for component in components:
-        target = max(_placement_finish(placements[object_id]) for object_id in component)
-        component_key = min(component)
-        component_targets[component_key] = target
-        for object_id in component:
-            latest[object_id] = _latest_at_target(object_id, objects[object_id], placements[object_id], target, project, calendars)
+    project_finish = max((_placement_finish(placements[object_id]) for object_id in eligible), default=None)
+    if project_finish is None:
+        return ScheduleAnalysis({}, {}, frozenset(), None)
+    latest = {object_id: _latest_at_target(object_id, objects[object_id], placements[object_id],
+                                          project_finish, project, calendars)
+              for object_id in eligible}
 
     # Each reverse dependency converts the target's current latest endpoint
     # into an upper bound for the source endpoint.  Dates only decrease, so a
@@ -350,19 +359,20 @@ def _analyze_criticality(project: dict[str, Any], placements: dict[str, dict[str
 
     # Every mapping the analysis carries is keyed in the canonical Project object order (Spec 57), never in the
     # iteration order of a set, which follows the hash seed (#789).
-    total_float: dict[str, int] = {}
+    total_float: dict[str, TotalFloat] = {}
     for object_id in (object_id for object_id in objects if object_id in eligible):
         early, late = _placement_start(placements[object_id]), _placement_start(latest[object_id])
-        total_float[object_id] = _calendar_distance(early, late, _object_calendar(objects[object_id], project, calendars))
+        total_float[object_id] = TotalFloat(
+            _calendar_distance(early, late, _object_calendar(objects[object_id], project, calendars)),
+            _object_calendar_id(objects[object_id], project))
     driving_relations = frozenset(
         relation_identity(index, relation)
         for index, relation in enumerate(project.get("relations", ()))
         if _is_driving_relation(relation, placements, project, calendars)
     )
     latest = {object_id: latest[object_id] for object_id in objects if object_id in latest}
-    return ScheduleAnalysis(latest, total_float,
-                            frozenset(object_id for object_id, value in total_float.items() if value == 0),
-                            component_targets, driving_relations)
+    critical = _critical_path_objects(project, placements, total_float, driving_relations, project_finish)
+    return ScheduleAnalysis(latest, total_float, critical, project_finish, driving_relations)
 
 
 def _is_driving_relation(relation: dict[str, Any], placements: dict[str, dict[str, date]],
@@ -382,26 +392,30 @@ def _is_driving_relation(relation: dict[str, Any], placements: dict[str, dict[st
     return advance(source_value, amount_value, _relation_calendar(relation, project, calendars)) == target_value
 
 
-def _dependency_components(project: dict[str, Any], eligible: set[str]) -> tuple[frozenset[str], ...]:
-    neighbours = {object_id: set() for object_id in eligible}
-    for relation in project.get("relations", ()):
+def _critical_path_objects(project: dict[str, Any], placements: dict[str, dict[str, date]],
+                           total_float: dict[str, TotalFloat], driving: frozenset[str],
+                           project_finish: date) -> frozenset[str]:
+    """Close zero-float driving paths, not merely immovable dates (Spec 57)."""
+    zero = {object_id for object_id, value in total_float.items() if value.value == 0}
+    terminals = {object_id for object_id in zero
+                 if _placement_finish(placements[object_id]) == project_finish}
+    predecessors: dict[str, list[str]] = {}
+    for index, relation in enumerate(project.get("relations", ())):
         source, target = relation["from"]["object"], relation["to"]["object"]
-        if source in eligible and target in eligible:
-            neighbours[source].add(target)
-            neighbours[target].add(source)
-    output: list[frozenset[str]] = []
-    unseen = set(eligible)
-    while unseen:
-        start, component, pending = min(unseen), set(), [min(unseen)]
-        while pending:
-            current = pending.pop()
-            if current in component:
-                continue
-            component.add(current)
-            pending.extend(neighbours[current] - component)
-        unseen -= component
-        output.append(frozenset(component))
-    return tuple(output)
+        if source in zero and target in zero and relation_identity(index, relation) in driving:
+            predecessors.setdefault(target, []).append(source)
+    critical = {object_id for object_id in terminals
+                if project["objects"][object_id]["schedule"]["mode"] not in {"fixed-point", "fixed-span"}
+                and not project["objects"][object_id]["schedule"].get("anchor")}
+    visited, pending = set(terminals), list(terminals)
+    while pending:
+        target = pending.pop()
+        for source in predecessors.get(target, ()):
+            critical.update((source, target))
+            if source not in visited:
+                visited.add(source)
+                pending.append(source)
+    return frozenset(critical)
 
 
 def _placement_start(value: dict[str, date]) -> date:
@@ -413,8 +427,11 @@ def _placement_finish(value: dict[str, date]) -> date:
 
 
 def _object_calendar(item: dict[str, Any], project: dict[str, Any], calendars: dict[str, Calendar]) -> Calendar | None:
-    calendar_id = item.get("calendar") or project.get("project", {}).get("calendar")
-    return calendars.get(calendar_id)
+    return calendars.get(_object_calendar_id(item, project))
+
+
+def _object_calendar_id(item: dict[str, Any], project: dict[str, Any]) -> str | None:
+    return item.get("calendar") or project.get("project", {}).get("calendar")
 
 
 def _relation_calendar(relation: dict[str, Any], project: dict[str, Any], calendars: dict[str, Calendar]) -> Calendar | None:

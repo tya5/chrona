@@ -137,6 +137,30 @@ def test_lane_table_content_uses_exact_membership_and_no_member_table_subject():
     assert table.row_levels[0].keys == (lane_id,)
 
 
+@pytest.mark.parametrize("policy, member_count, expected", [
+    (False, 1, False), (True, 1, True), ("auto", 1, False), ("auto", 2, True),
+])
+def test_lane_table_count_policy_uses_countable_membership(policy, member_count, expected):
+    members = tuple(ReviewItem(key, key.upper(), "span",
+                              {"start": date(2026, 1, 1), "end": date(2026, 1, 3)},
+                              None, None, (), item_id=key) for key in ("a", "b")[:member_count])
+    ids = tuple(item.object_id for item in members)
+    membership = LaneMembership((Lane("lane", "", ids),),
+                                tuple(LaneAssignment(key, "lane", "", "single", key) for key in ids))
+    # A comparison facet is another occurrence of a countable member, not another item.
+    facets = (*members, replace(members[0], item_id="snapshot:a", source_kind="snapshot"))
+    projection = ReviewProjection(members, (date(2026, 1, 1), date(2026, 1, 3)), (), (),
+        lane_membership=membership,
+        lane_rows=(ReviewLaneRowProjection("lane", "", facets, (*ids, "a")),))
+    view = replace(typed_view({"body": {"tableColumns": (), "visibility": {}}}),
+                   rows=ViewRows("lanes", (), lane_table=ViewLaneTable(ViewLaneLabel.LANE, policy)))
+    table = normalize_v05_table_content(projection, {}, view)
+    assert ("Items" in [column.column_id for column in table.columns]) == expected
+    count_cells = [cell.content for cell in table.cells if cell.column_id == "Items"]
+    assert count_cells == ([str(member_count)] if expected else [])
+    assert projection.lane_membership is membership
+
+
 def test_ungrouped_attached_lane_uses_host_title_not_generated_identity():
     host = ReviewItem("host", "Campaign title", "span", {}, None, None, (), item_id="host")
     gate = ReviewItem("gate", "Readiness title", "point", {}, None, None, (),
@@ -157,6 +181,12 @@ def test_ungrouped_attached_lane_uses_host_title_not_generated_identity():
 
     table = normalize_v05_table_content(projection, {}, view)
     assert [cell.content for cell in table.cells] == ["Campaign title", "2"]
+    wrapped_view = replace(view, rows=replace(view.rows, lane_table=ViewLaneTable(ViewLaneLabel.LANE, True, "allow")))
+    wrapped = normalize_v05_table_content(projection, {}, wrapped_view)
+    assert all(column.text_wrap == "allow" for column in wrapped.columns)
+    assert wrapped.cells == table.cells
+    assert wrapped.row_levels == table.row_levels
+    assert projection.lane_membership is membership
     group_view = replace(view, rows=replace(view.rows, lane_table=ViewLaneTable(ViewLaneLabel.GROUP, True)))
     assert normalize_v05_table_content(projection, {}, group_view).cells[0].content == ""
 
@@ -295,8 +325,37 @@ def test_optional_content_is_selected_only_from_current_project_and_view():
     view = {"body": {"tableColumns": ({"id": "Name", "source": "title", "missing": "blank"},), "visibility": {"relations": "semantic", "annotations": "none"}}}
     value = normalize_v05_surface_content(projection, project, typed_view(view), summary=EMPTY_SUMMARY)
     assert value.table_cells == (TableCellContent("a", "Name", "A", "tableCell"),)
-    assert value.relations[0].relation_id == "r"
+    assert value.relations[0].relation_id == "relation:0:r"
     assert value.notes == (("n", "note"),)
+
+
+@pytest.mark.parametrize("mode", ("semantic", "critical"))
+def test_relation_identity_is_closed_before_filtering_and_cannot_alias_an_authored_name(mode):
+    from copy import deepcopy
+
+    projection = ReviewProjection((
+        ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()),
+        ReviewItem("b", "B", "span", {"start": date(2026, 1, 2), "end": date(2026, 1, 3)}, None, None, ()),
+    ), (date(2026, 1, 1), date(2026, 1, 3)), (), (),
+        driving_relations=frozenset({"relation:2:r", "relation:3:relation:0"}))
+    relations = []
+    for declared in (None, "", "r", "relation:0", "r"):
+        relation = {"from": {"object": "a"}, "to": {"object": "b"}}
+        if declared is not None:
+            relation["id"] = declared
+        relations.append(relation)
+    project = {"relations": relations}
+    before = deepcopy(project)
+    view = typed_view({"body": {"tableColumns": (), "visibility": {"relations": mode}}})
+
+    content = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
+
+    expected = ("relation:0", "relation:1", "relation:2:r", "relation:3:relation:0", "relation:4:r")
+    if mode == "critical":
+        expected = expected[2:4]
+    assert tuple(item.relation_id for item in content.relations) == expected
+    assert all(item.source_object_id == "a" and item.target_object_id == "b" for item in content.relations)
+    assert project == before
 
 
 def test_view_annotation_ladder_normalizes_to_typed_candidates() -> None:
@@ -392,7 +451,7 @@ def test_critical_relation_mode_uses_only_scheduler_driving_relations():
     ), "annotations": {}}
     view = {"body": {"tableColumns": (), "visibility": {"relations": "critical", "annotations": "none"}}}
     value = normalize_v05_surface_content(projection, project, typed_view(view), summary=EMPTY_SUMMARY)
-    assert value.relations[0].relation_id == "critical"
+    assert value.relations[0].relation_id == "relation:0:critical"
     assert value.relations[0].semantic_id == "dependency-critical"
     assert value.relations[0].source_endpoint == "end"
     assert value.relations[0].target_endpoint == "start"

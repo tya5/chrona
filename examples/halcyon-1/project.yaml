@@ -3,6 +3,15 @@ project:
   id: halcyon-1
   title: HALCYON-1
   calendar: engineering
+extensions:
+  - packageId: semiconductor-development
+    resource:
+      id: semiconductor-development
+      kind: profile-package
+      store: {provider: local, identity: halcyon-1-example}
+      address: extensions/semiconductor-development.yaml
+      revision: {token: example-v1}
+      contentIdentity: sha256:e1f04370772d97c0b9a0891227a9923226483c496798c8d16c1d2849c06bad1c
 calendars:
   engineering:
     working_days: [mon, tue, wed, thu, fri]
@@ -17,136 +26,136 @@ calendars:
       - {date: '2027-10-09', working: false}
       - {date: '2027-10-16', working: false}
 entities:
-  bus: {type: team, title: Spacecraft bus}
-  payload: {type: team, title: Imaging payload}
-  ait: {type: team, title: 'Assembly, integration and test'}
-  ground: {type: team, title: Ground segment}
-  launch: {type: team, title: Launch and range}
-  ops: {type: team, title: Mission operations}
+  bus: {type: team, title: Spacecraft bus, fields: {titleJa: 機体}}
+  payload: {type: team, title: Imaging payload, fields: {titleJa: 観測器}}
+  ait: {type: team, title: 'Assembly, integration and test', fields: {titleJa: 組立試験}}
+  ground: {type: team, title: Ground segment, fields: {titleJa: 地上系}}
+  launch: {type: team, title: Launch and range, fields: {titleJa: 打上げ}}
+  ops: {type: team, title: Mission operations, fields: {titleJa: 運用}}
 objects:
   pdr:
-    type: gate
+    type: PDR
     title: Preliminary design review
-    fields: {owner: bus, team: Programme, phase: Design, review: PDR}
+    fields: {owner: bus, team: Programme, phase: Design, review: PDR, model: EM, approval: approved}
     schedule: {mode: fixed-point, at: '2027-03-05'}
   structure:
     type: task
     title: Primary structure fabrication
-    fields: {owner: bus, team: Spacecraft bus, phase: Build}
+    fields: {owner: bus, team: Spacecraft bus, phase: Build, model: EM}
     schedule: {mode: scheduled, amount: 20wd}
   avionics:
     type: task
     title: Avionics integration
-    fields: {owner: bus, team: Spacecraft bus, phase: Build}
+    fields: {owner: bus, team: Spacecraft bus, phase: Build, model: EM}
     schedule: {mode: scheduled, amount: 15wd}
   eps:
     type: task
     title: Power system qualification
-    fields: {owner: bus, team: Spacecraft bus, phase: Qualify}
+    fields: {owner: bus, team: Spacecraft bus, phase: Qualify, model: QM}
     schedule: {mode: scheduled, amount: 12wd, anchor: {start: '2027-03-22'}}
   bus-test:
     type: task
     title: Bus functional test
-    fields: {owner: bus, team: Spacecraft bus, phase: Qualify}
+    fields: {owner: bus, team: Spacecraft bus, phase: Qualify, model: QM}
     schedule: {mode: scheduled, amount: 10wd}
   cdr:
-    type: gate
+    type: CDR
     title: Critical design review
-    fields: {owner: bus, team: Programme, phase: Design, review: CDR}
+    fields: {owner: bus, team: Programme, phase: Design, review: CDR, model: QM, approval: approved}
     schedule: {mode: fixed-point, at: '2027-05-07'}
   optics:
     type: task
     title: Imager optics alignment
-    fields: {owner: payload, team: Imaging payload, phase: Build}
+    fields: {owner: payload, team: Imaging payload, phase: Build, model: EM}
     schedule: {mode: scheduled, amount: 18wd, anchor: {start: '2027-03-08'}}
   detector:
     type: task
     title: Detector calibration
-    fields: {owner: payload, team: Imaging payload, phase: Qualify}
+    fields: {owner: payload, team: Imaging payload, phase: Qualify, model: QM}
     schedule: {mode: scheduled, amount: 10wd}
   payload-tvac:
     type: task
     title: Payload thermal-vacuum
-    fields: {owner: payload, team: Imaging payload, phase: Qualify}
+    fields: {owner: payload, team: Imaging payload, phase: Qualify, model: QM}
     schedule: {mode: scheduled, amount: 8d}
   payload-delivery:
     type: gate
     title: Payload delivered
-    fields: {owner: payload, team: Imaging payload, phase: Qualify, review: PDD}
+    fields: {owner: payload, team: Imaging payload, phase: Qualify, review: PDD, model: FM}
     schedule: {mode: fixed-point, at: '2027-07-02'}
   integration:
     parent: spacecraft-ait
     wbsCode: '4.1'
     type: task
     title: Spacecraft integration
-    fields: {owner: ait, team: AIT, phase: Integrate}
+    fields: {owner: ait, team: AIT, phase: Integrate, model: FM}
     schedule: {mode: scheduled, amount: 15wd}
   vibration:
     parent: spacecraft-ait
     wbsCode: '4.2'
     type: task
     title: Vibration and shock
-    fields: {owner: ait, team: AIT, phase: Verify}
+    fields: {owner: ait, team: AIT, phase: Verify, model: FM}
     schedule: {mode: scheduled, amount: 5wd}
   tvac:
     parent: spacecraft-ait
     wbsCode: '4.3'
     type: task
     title: System thermal-vacuum
-    fields: {owner: ait, team: AIT, phase: Verify}
+    fields: {owner: ait, team: AIT, phase: Verify, model: FM}
     schedule: {mode: scheduled, amount: 14d}
   emc:
     parent: spacecraft-ait
     wbsCode: '4.4'
     type: task
     title: EMC and RF compatibility
-    fields: {owner: ait, team: AIT, phase: Verify}
+    fields: {owner: ait, team: AIT, phase: Verify, model: FM}
     schedule: {mode: scheduled, amount: 5wd, constraints: {end: {max: '2027-09-08'}}}
   psr:
     parent: spacecraft-ait
     wbsCode: '4.5'
-    type: gate
+    type: PSR
     title: Pre-ship review
     deadline: '2027-09-17'
-    fields: {owner: ait, team: Programme, phase: Verify, review: PSR}
+    fields: {owner: ait, team: Programme, phase: Verify, review: PSR, model: FM, approval: pending}
     schedule: {mode: fixed-point, at: '2027-09-10'}
   mcs:
     parent: ground-segment
     wbsCode: '5.1'
     type: task
     title: Mission control software
-    fields: {owner: ground, team: Ground segment, phase: Build}
+    fields: {owner: ground, team: Ground segment, phase: Build, model: FM}
     schedule: {mode: scheduled, amount: 45wd, anchor: {start: '2027-03-08'}}
   station:
     parent: ground-segment
     wbsCode: '5.2'
     type: task
     title: Ground station upgrade
-    fields: {owner: ground, team: Ground segment, phase: Build}
+    fields: {owner: ground, team: Ground segment, phase: Build, model: FM}
     schedule: {mode: scheduled, amount: 30wd, anchor: {start: '2027-04-19'}}
   comms-test:
     parent: ground-segment
     wbsCode: '5.3'
     type: task
     title: End-to-end link test
-    fields: {owner: ground, team: Ground segment, phase: Verify}
+    fields: {owner: ground, team: Ground segment, phase: Verify, model: FM}
     schedule: {mode: scheduled, amount: 5wd}
   launch-contract:
     type: gate
     title: Launch services confirmed
-    fields: {owner: launch, team: Launch and range, phase: Design, review: LSA}
+    fields: {owner: launch, team: Launch and range, phase: Design, review: LSA, model: FM}
     schedule: {mode: fixed-point, at: '2027-04-16'}
   shipment:
     type: task
     title: Ship to range
-    fields: {owner: launch, team: Launch and range, phase: Campaign}
+    fields: {owner: launch, team: Launch and range, phase: Campaign, model: FM}
     schedule: {mode: scheduled, amount: 4wd}
   campaign:
     type: task
     title: Launch campaign
     calendar: range
     plannedProgress: 0.6
-    fields: {owner: launch, team: Launch and range, phase: Campaign}
+    fields: {owner: launch, team: Launch and range, phase: Campaign, model: FM}
     schedule: {mode: scheduled, amount: 15wd}
   spacecraft-ait:
     type: group
@@ -173,7 +182,7 @@ objects:
     wbsCode: '6.1'
     plannedProgress: 0
     link: {href: https://example.test/halcyon-1/reviews/frr, title: Open FRR evidence}
-    fields: {owner: launch, team: Programme, phase: Campaign, review: FRR}
+    fields: {owner: launch, team: Programme, phase: Campaign, review: FRR, model: FM}
     schedule: {mode: fixed-point, at: '2027-10-15'}
   launch:
     type: gate
@@ -181,14 +190,14 @@ objects:
     parent: mission-closeout
     wbsCode: '6.2'
     plannedProgress: 0
-    fields: {owner: launch, team: Launch and range, phase: Campaign, review: L0}
+    fields: {owner: launch, team: Launch and range, phase: Campaign, review: L0, model: FM}
     schedule: {mode: fixed-point, at: '2027-10-22'}
   rehearsals:
     parent: ground-segment
     wbsCode: '5.4'
     type: task
     title: Operations rehearsals
-    fields: {owner: ops, team: Mission operations, phase: Verify}
+    fields: {owner: ops, team: Mission operations, phase: Verify, model: FM}
     schedule: {mode: scheduled, amount: 10wd, anchor: {start: '2027-08-30'}}
   leop:
     type: task
@@ -196,7 +205,7 @@ objects:
     parent: mission-closeout
     wbsCode: '6.3'
     plannedProgress: 0
-    fields: {owner: ops, team: Mission operations, phase: Operate}
+    fields: {owner: ops, team: Mission operations, phase: Operate, model: FM}
     schedule: {mode: scheduled, amount: 21d}
   first-light:
     type: gate
@@ -204,7 +213,7 @@ objects:
     parent: mission-closeout
     wbsCode: '6.4'
     plannedProgress: 0
-    fields: {owner: ops, team: Mission operations, phase: Operate, review: FL}
+    fields: {owner: ops, team: Mission operations, phase: Operate, review: FL, model: FM}
     schedule: {mode: fixed-point, at: '2027-11-19'}
 relations:
   - {id: pdr-structure, type: dependency, from: {object: pdr, endpoint: at}, to: {object: structure, endpoint: start}, lag: 1wd}
@@ -261,3 +270,9 @@ scenarios:
       remove: [vibration-tvac]
       add:
         - {id: vibration-tvac-overlap, type: dependency, from: {object: vibration, endpoint: start}, to: {object: tvac, endpoint: start}, lag: 3wd}
+  payload-fast-track:
+    title: Payload TVAC fast-tracked
+    relations:
+      remove: [detector-tvac]
+      add:
+        - {id: detector-tvac-fast-track, type: dependency, from: {object: detector, endpoint: end}, to: {object: payload-tvac, endpoint: start}, lag: -3wd}

@@ -203,22 +203,46 @@ _UNSET = object()
 class _RouteMemo:
     """Search results keyed by the exact content a search read; bounded, never evicting."""
 
-    __slots__ = ("results", "contents")
+    __slots__ = ("results", "contents", "result_records", "content_records")
 
     def __init__(self) -> None:
         self.results: dict[tuple, object] = {}
         self.contents: dict[tuple[str, ...], int] = {}
+        self.result_records = 0
+        self.content_records = 0
 
     def content_id(self, content: tuple[str, ...]) -> int | None:
         """A small id equal exactly when the contents are equal; None once the bound is reached."""
         known = self.contents.get(content)
-        if known is None and len(self.contents) < _ROUTE_MEMO_CONTENT_LIMIT:
+        records = 1 + len(content)
+        if (known is None and len(self.contents) < _ROUTE_MEMO_CONTENT_LIMIT
+                and self.content_records + records <= ROUTE_MEMO_LIMIT):
             known = self.contents[content] = len(self.contents)
+            self.content_records += records
         return known
 
-    def store(self, key: tuple, value: object) -> None:
-        if len(self.results) < ROUTE_MEMO_LIMIT:
+    def store(self, key: tuple, value: object, *, record_count: int = 1) -> None:
+        """Admit a pure payload only when its retained records fit; never evict."""
+        if key not in self.results and self.result_records + record_count <= ROUTE_MEMO_LIMIT:
             self.results[key] = value
+            self.result_records += record_count
+
+
+@dataclass(frozen=True)
+class RouteVisibilityScope:
+    """One active selection and the monotone delta from its previous base."""
+
+    bases: dict[tuple, object]
+    port_ids: frozenset[str]
+    previous_bases: dict[tuple, object]
+    additions: tuple[SurfaceObstacle, ...]
+
+    def clears_additions(self, geometry: ObstacleGeometry) -> bool:
+        box = obstacle_envelope(geometry)
+        return not any(item.placement_id not in self.port_ids
+                       and _envelopes_overlap(box, obstacle_envelope(item.geometry), item.clearance)
+                       and _intersects(geometry, item.geometry, item.clearance)
+                       for item in self.additions)
 
 
 class _PreparedSelection:
@@ -229,9 +253,11 @@ class _PreparedSelection:
     and candidates are always visited in ascending (sorted `placement_id`) position.
     """
 
-    __slots__ = ("items", "envelopes", "clearances", "max_clearance", "queries", "_grid", "content_id")
+    __slots__ = ("items", "envelopes", "clearances", "max_clearance", "queries", "_grid", "content_id",
+                 "visibility_bases", "previous_visibility_bases", "visibility_additions")
 
-    def __init__(self, items: tuple[SurfaceObstacle, ...]) -> None:
+    def __init__(self, items: tuple[SurfaceObstacle, ...], *,
+                 previous: _PreparedSelection | None = None, added: SurfaceObstacle | None = None) -> None:
         self.items = items
         self.envelopes = tuple(obstacle_envelope(item.geometry) for item in items)
         self.clearances = tuple(item.clearance for item in items)
@@ -239,6 +265,18 @@ class _PreparedSelection:
         self.queries = 0
         self._grid: tuple | None = None
         self.content_id: int | None | object = _UNSET  # computed on first route-memo use
+        # Input-sized active geometry, separate from the bounded result memo.
+        self.visibility_bases: dict[tuple, object] = {}
+        # Keep at most one previous base generation, never a snapshot chain.
+        self.previous_visibility_bases: dict[tuple, object] = {}
+        self.visibility_additions: tuple[SurfaceObstacle, ...] = ()
+        if previous is not None and added is not None:
+            if previous.visibility_bases:
+                self.previous_visibility_bases = previous.visibility_bases
+                self.visibility_additions = (added,)
+            elif previous.previous_visibility_bases:
+                self.previous_visibility_bases = previous.previous_visibility_bases
+                self.visibility_additions = (*previous.visibility_additions, added)
 
     def candidates(self, box: tuple[float, float, float, float], clearance: float) -> Iterable[int]:
         """Ascending positions that may overlap `box` widened by `clearance`; a superset."""
@@ -304,7 +342,14 @@ class SurfaceObstacleIndex:
                                   placement_id=obstacle.placement_id)
         self._by_id[obstacle.placement_id] = obstacle
         self._ordered = None
-        self._prepared = {}
+        # A route/port addition must not discard a mark/text selection's
+        # exact-content grid. Invalidate only inventories that read the item.
+        self._prepared = {
+            key: (_PreparedSelection(tuple(sorted((*prepared.items, obstacle),
+                                                  key=lambda item: item.placement_id)),
+                                     previous=prepared, added=obstacle)
+                  if self._matches_selection(obstacle, *key) else prepared)
+            for key, prepared in self._prepared.items()}
 
     def copy(self, *, geometry_overrides: Mapping[str, ObstacleGeometry] | None = None) -> "SurfaceObstacleIndex":
         """An independent query snapshot, optionally using completed paint footprints.
@@ -320,6 +365,14 @@ class SurfaceObstacleIndex:
         clone._by_id = (dict(self._by_id) if not geometry_overrides else
                         {key: replace(item, geometry=geometry_overrides[key])
                          if key in geometry_overrides else item for key, item in self._by_id.items()})
+        clone._ordered = self._ordered if not geometry_overrides else None
+        # Query preparation is shared even when a filter is first read after
+        # the copy. add() replaces this dictionary instead of mutating it;
+        # overrides detach and retain only unaffected immutable selections.
+        clone._prepared = (self._prepared if not geometry_overrides else {
+            key: prepared for key, prepared in self._prepared.items()
+            if not any(self._matches_selection(self._by_id[identity], *key)
+                       for identity in geometry_overrides)})
         clone._route_memo = self._route_memo  # value-keyed results of pure searches, valid for any lineage member
         return clone
 
@@ -340,6 +393,20 @@ class SurfaceObstacleIndex:
             prepared.content_id = self._route_memo.content_id(tuple(repr(item) for item in prepared.items))
         content_id = prepared.content_id
         return None if content_id is None else (self._route_memo, content_id)
+
+    def route_visibility_scope(self, classes: Iterable[str] | None, regions: Iterable[str] | None,
+                               port_ids: Iterable[str]) -> RouteVisibilityScope:
+        """Active geometry store and only exemptions read by this selection.
+
+        Callers validate ports against the current snapshot before consulting
+        geometry. An excluded port changes neither selected content nor edges.
+        """
+        prepared = self._selection(classes, regions)
+        ports = frozenset(port_ids)
+        selected_ports = frozenset(item.placement_id for item in prepared.items
+                                   if item.placement_id in ports)
+        return RouteVisibilityScope(prepared.visibility_bases, selected_ports,
+                                    prepared.previous_visibility_bases, prepared.visibility_additions)
 
     def extend(self, obstacles: Iterable[SurfaceObstacle]) -> None:
         for obstacle in obstacles:
@@ -366,9 +433,14 @@ class SurfaceObstacleIndex:
         if prepared is None:
             prepared = self._prepared[key] = _PreparedSelection(tuple(
                 item for item in self.all()
-                if (selected_classes is None or item.obstacle_class in selected_classes)
-                and (selected_regions is None or item.region_id in selected_regions)))
+                if self._matches_selection(item, selected_classes, selected_regions)))
         return prepared
+
+    @staticmethod
+    def _matches_selection(item: SurfaceObstacle, classes: frozenset[str] | None,
+                           regions: frozenset[str] | None) -> bool:
+        return ((classes is None or item.obstacle_class in classes)
+                and (regions is None or item.region_id in regions))
 
     def collisions(self, geometry: ObstacleGeometry, *, classes: Iterable[str] | None = None,
                    regions: Iterable[str] | None = None, host_id: str | None = None,

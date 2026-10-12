@@ -15,7 +15,7 @@ from chrona.presentation.layout.surface_visuals import (
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text, wrap_text
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, FitWarning, SlotPlacement, SurfaceLayoutRequest,
-    TextPlacement, intersects,
+    NarrativeReceipt, TextPlacement, intersects,
 )
 from chrona.presentation.layout.surface_geometry import (
     GEOMETRY_TOLERANCE,
@@ -24,8 +24,12 @@ from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
 
 
 @dataclass(frozen=True)
-class SurfaceLayoutComposition:
-    """Completed common surface geometry and the semantic rows it was derived from."""
+class NotesPlacementBatch:
+    """Completed unconsumed note occurrences and their producer receipts."""
+
+    slot: SlotPlacement
+    text: tuple[TextPlacement, ...]
+    narrative_receipts: tuple[NarrativeReceipt, ...]
 
 
 
@@ -276,9 +280,10 @@ def validate_detail_panel_placement(text: list[Any], slots: tuple[SlotPlacement,
                 raise LayoutError("E_LAYOUT_DETAIL_PANEL_OVERLAP", f"{group.placement_id}:{milestone.placement_id}")
 
 
-def place_notes(request: SurfaceLayoutRequest, notes: SlotPlacement, body_size: float) -> tuple[SlotPlacement, tuple[TextPlacement, ...]]:
+def place_notes(request: SurfaceLayoutRequest, notes: SlotPlacement, body_size: float) -> NotesPlacementBatch:
     """Place the note lines and return the notes slot with its completed extent."""
     text: list[TextPlacement] = []
+    receipts: list[NarrativeReceipt] = []
     cursor = notes.bounds.block
     for index, (source, content) in enumerate(request.surface_content.notes):
         placed = place_text(placement_id=f"note:{source}", source_ref=source, content=content,
@@ -289,11 +294,13 @@ def place_notes(request: SurfaceLayoutRequest, notes: SlotPlacement, body_size: 
                             available_inline_start=float(notes.bounds.inline),
                             available_inline_size=float(notes.bounds.inline_size))
         text.append(placed)
+        if content and placed.overflow != "suppressed":
+            receipts.append(NarrativeReceipt("note", source, placed.placement_id, occurrence_index=index))
         cursor = placed.bounds.block + placed.bounds.block_size
     final_size = max(notes.bounds.block_size, cursor - notes.bounds.block)
     replacement = replace(notes, bounds=Rect(notes.bounds.inline, notes.bounds.block,
                                               notes.bounds.inline_size, final_size))
-    return replacement, tuple(text)
+    return NotesPlacementBatch(replacement, tuple(text), tuple(receipts))
 
 
 def place_summary(request: SurfaceLayoutRequest, summary_slot: SlotPlacement) -> tuple[TextPlacement, ...]:

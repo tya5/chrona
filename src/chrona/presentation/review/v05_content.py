@@ -13,10 +13,12 @@ from chrona.presentation.model.surface_content import (
 from chrona.presentation.table_presentation import affix_state
 from chrona.presentation.review.detail import normalize_v05_review_detail_profile
 from chrona.presentation.review.figure_facts import projected_counts
+from chrona.presentation.review.annotation_expansion import expand_annotations
 from chrona.presentation.model.placement_candidates import legacy_candidate_order, parse_candidates
 from chrona.presentation.contracts.resources import ReviewDetailInput, SummaryProfileInput, ViewInput
-from chrona.presentation.group_header_text import GroupHeaderTextError, compose_group_header_runs, compose_group_headers
-from chrona.presentation.heading_text import render_heading
+from chrona.presentation.group_header_text import GroupHeaderTextError, HeaderTemplate, compose_group_header_runs, compose_group_headers
+from chrona.presentation.figure_text import FigureTextProgram
+from chrona.presentation.heading_text import HeadingTextPrograms, close_heading
 from chrona.presentation.model.color_scale import ResolvedColorScale
 from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec, AxisBandScaleError
@@ -47,7 +49,8 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
     if getattr(view.rows.mode, "value", view.rows.mode) == "lanes":
         return _lane_table_content(projection, project, view)
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
-    columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width), column.header_orientation)
+    columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width), column.header_orientation,
+                                       text_wrap=column.text_wrap)
                     for column in view.table_columns)
     as_of = date.fromisoformat(str(actual_body["asOf"])) if isinstance(actual_body.get("asOf"), str) else None
     def cell_parts(item: Any, column: Any, row_index: int) -> tuple[str, str, str]:
@@ -61,7 +64,8 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         if value is None and missing == "in-progress" and _is_actual_source(column.source):
             core = _missing_actual_display(item, as_of)
         else:
-            core = display_value(value, missing, column.format, locale=locale, zero=column.zero)
+            core = display_value(value, missing, column.format, locale=locale, zero=column.zero,
+                                 end_display=column.end_display)
         affix = column.affixes.for_state(affix_state(value, column.format)) if column.affixes is not None else None
         return (affix.prefix, core, affix.suffix) if affix is not None else ("", core, "")
 
@@ -82,8 +86,16 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
             return "missingActualCell"
         return "tableCell"
     if projection.rows:
+        def row_cell(row: Any, column: Any, row_index: int) -> TableCellContent:
+            item = next(item for item in row.items if item.item_id == row.table_subject_id)
+            header = (item.is_rollup and row.rollup_presentation == "header"
+                      and column.id == view.hierarchy_column)
+            return TableCellContent(row.row_id, column.id, cell(item, column, row_index),
+                                    "groupHeader" if header else cell_semantic(item, column),
+                                    "groupHeader" if header else cell_typography_role(column),
+                                    *cell_affixes(item, column, row_index))
         cells = tuple(
-            TableCellContent(row.row_id, column.id, cell(item := next(item for item in row.items if item.item_id == row.table_subject_id), column, row_index), cell_semantic(item, column), cell_typography_role(column), *cell_affixes(item, column, row_index))
+            row_cell(row, column, row_index)
             for row_index, row in enumerate(projection.rows, 1) for column in view.table_columns)
         table_cell_objects = tuple(
             (row.row_id, column.id,
@@ -119,9 +131,13 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
     lane_table = view.rows.lane_table
     if projection.lane_membership is None or not projection.lane_rows or lane_table is None:
         raise ValueError(f"E_REVIEW_LANE_TABLE_PROJECTION: laneMembership={projection.lane_membership is not None}, laneRows={len(projection.lane_rows)}, laneTable={lane_table is not None}")
-    columns = (TableColumnContent("Lane", "Lane", "start", TableColumnWidth("content", "content")),)
-    if lane_table.count:
-        columns += (TableColumnContent("Items", "Items", "end", TableColumnWidth("content", "content")),)
+    columns = (TableColumnContent("Lane", "Lane", "start", TableColumnWidth("content", "content"),
+                                  text_wrap=lane_table.text_wrap),)
+    show_count = (lane_table.count is True or (lane_table.count == "auto"
+                  and any(len(lane.member_item_ids) > 1 for lane in projection.lane_membership.lanes)))
+    if show_count:
+        columns += (TableColumnContent("Items", "Items", "end", TableColumnWidth("content", "content"),
+                                       text_wrap=lane_table.text_wrap),)
     entities = project.get("entities", {})
     cells = []
     levels = []
@@ -171,7 +187,7 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
                 if row.group_id in disambiguate_groups:
                     label = f"{label} — {first_title}"
         cells.append(TableCellContent(row.lane_id, "Lane", label, "tableCell"))
-        if lane_table.count:
+        if show_count:
             member_count = len(lane.member_item_ids)
             cells.append(TableCellContent(row.lane_id, "Items", str(member_count), "tableCell", "numeric"))
         levels.append(TableRowLevel((row.lane_id,), bool(row.group_id)))
@@ -269,23 +285,25 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     relation_mode = relation_value.get("mode", "none") if isinstance(relation_value, Mapping) else relation_value
     relation_content = (tuple(str(item) for item in relation_value.get("content", ()))
                         if isinstance(relation_value, Mapping) else ())
-    def relation_fact(relation: Mapping[str, Any], semantic_id: str) -> RelationPresentationFact:
+    def relation_fact(index: int, relation: Mapping[str, Any], semantic_id: str) -> RelationPresentationFact:
         source, target = relation["from"], relation["to"]
         lag = relation.get("lag", "0d")
-        return RelationPresentationFact(str(relation["id"]), str(source["object"]), str(source.get("endpoint", "end")),
+        return RelationPresentationFact(relation_identity(index, relation), str(source["object"]), str(source.get("endpoint", "end")),
                                         str(target["object"]), str(target.get("endpoint", "start")), lag,
                                         str(lag.get("calendar")) if isinstance(lag, Mapping) and lag.get("calendar") is not None else None,
                                         semantic_id, relation_content)
     if relation_mode == "critical":
-        relations = tuple(relation_fact(relation, "dependency-critical")
+        relations = tuple(relation_fact(index, relation, "dependency-critical")
                           for index, relation in enumerate(project.get("relations", ()))
                           if relation_identity(index, relation) in projection.driving_relations)
     elif relation_mode != "none":
-        relations = tuple(relation_fact(relation, "dependency") for relation in project.get("relations", ()))
+        relations = tuple(relation_fact(index, relation, "dependency")
+                          for index, relation in enumerate(project.get("relations", ())))
     else:
         relations = ()
-    raw_annotations = view.annotations if annotation_mode != "none" else ()
     project_notes = project.get("annotations", {})
+    raw_annotations = (expand_annotations(view, project_notes, projection)
+                       if annotation_mode != "none" else ())
     consumed_note_ids: set[str] = set()
 
     def _annotation_text(annotation: Mapping[str, Any]) -> str:
@@ -304,7 +322,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
 
     item_titles = {item.object_id: item.title for item in projection.items}
 
-    def _annotation(index: int, annotation: Mapping[str, Any]) -> AnnotationIntent:
+    def _annotation(index: int, annotation: Mapping[str, Any], anchor_source_ref: str) -> AnnotationIntent:
         anchor = {str(key): ("finish" if key == "endpoint" and value == "end" else str(value)) for key, value in annotation["anchor"].items()}  # `end` aliases `finish` (I662 S4a)
         purpose = str(annotation["purpose"])
         number = index + 1 if annotation_numbered else None
@@ -325,16 +343,17 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
             return AnnotationIntent(str(annotation["id"]), purpose, anchor, "rail", "center",
                                     content, number, (), parse_candidates(declared_candidates),
                                     kind=kind, subject=subject, subject_id=subject_id,
-                                    anchor_source_ref=f"/body/annotations/{index}/anchor")
+                                    anchor_source_ref=anchor_source_ref)
         placement = annotation["placement"]
         return AnnotationIntent(str(annotation["id"]), purpose, anchor,
                                 str(placement["side"]), str(placement["alignment"]),
                                 content, number, annotation_fallback or ("rail",),
                                 legacy_candidate_order(purpose, annotation_fallback)[0],
                                 kind=kind, subject=subject, subject_id=subject_id,
-                                anchor_source_ref=f"/body/annotations/{index}/anchor")
+                                anchor_source_ref=anchor_source_ref)
 
-    annotations = tuple(_annotation(index, annotation) for index, annotation in enumerate(raw_annotations))
+    annotations = tuple(_annotation(index, annotation.value, annotation.anchor_source_ref)
+                        for index, annotation in enumerate(raw_annotations))
     # A selected Project annotation is consumed once: it is presented through
     # its View annotation and no longer duplicated into the notes slot (#466).
     notes = tuple((str(key), str(value.get("text", ""))) for key, value in project_notes.items()
@@ -488,13 +507,14 @@ def _heading_calendar_name(project: Mapping[str, Any]) -> str:
 
 
 def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Mapping[str, Any] | None,
-                    locale: str) -> HeadingContent:
+                    locale: str) -> HeadingContent | HeadingTextPrograms:
     """Compose the optional kicker, title and subtitle a table-timeline surface draws (#991, #1189).
 
     Without a declared `heading` the title is the Project title and there is no kicker or subtitle, as before.
     A declared template reads the Project title, the Actual Set's as-of date in the declared form and
     the Project's default calendar name (its declared `title`, else its id); a fact the Project lacks renders
-    as empty text.
+    as empty text. Figure-bearing headings return immutable programs; Layout
+    binds their declared integers and text forms before source measurement.
     """
     project_body = project.get("project", {})
     project_title = str(project_body.get("title", "Chrona")) if isinstance(project_body, Mapping) else "Chrona"
@@ -512,12 +532,14 @@ def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Map
             "monthNumeric": f"{as_of.month:02d}", "day": as_of.day, "dayNumeric": f"{as_of.day:02d}",
         })
     facts = {"project": project_title, "asOf": as_of_text, "calendar": _heading_calendar_name(project)}
-    title = render_heading(heading.title, facts) if heading.title is not None else project_title
-    return HeadingContent(
-        title=title,
-        subtitle=render_heading(heading.subtitle, facts) if heading.subtitle is not None else None,
-        kicker=render_heading(heading.kicker, facts) if heading.kicker is not None else None,
+    programs = HeadingTextPrograms(
+        title=(close_heading(heading.title, facts) if heading.title is not None
+               else FigureTextProgram(HeaderTemplate((("text", project_title),)))),
+        subtitle=close_heading(heading.subtitle, facts) if heading.subtitle is not None else None,
+        kicker=close_heading(heading.kicker, facts) if heading.kicker is not None else None,
+        text_wrap=heading.text_wrap,
     )
+    return programs if programs.figure_ids else HeadingContent(*programs.bind({}, {}), text_wrap=programs.text_wrap)
 
 
 def normalize_axis_tiers(view: Any, *, locale: str) -> tuple[AxisTier, ...]:

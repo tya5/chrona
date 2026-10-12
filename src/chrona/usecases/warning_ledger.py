@@ -60,6 +60,7 @@ def collect_render_warnings(
     contrast_warnings: Iterable[Any] = (),
     surface_provenance: Iterable[DiagnosticProvenance] = (),
     canvas_warning: Any | None = None,
+    auto_block_warning: Any | None = None,
 ) -> tuple[RenderWarning, ...]:
     """Keep warning multiplicity and stable source identities across transports."""
     records = []
@@ -94,6 +95,11 @@ def collect_render_warnings(
                                requiredInline=item.required_inline, requiredBlock=item.required_block,
                                availableInline=item.available_inline, availableBlock=item.available_block),
                                      getattr(item, "subjects", ())))
+    if auto_block_warning is not None:
+        item = auto_block_warning
+        records.append(_record(item.code, {"surfaceId": item.surface_id, "sourceRef": item.source_ref},
+                               surfaceId=item.surface_id, sourceRef=item.source_ref, rowCount=item.row_count,
+                               actualBlockSize=_json_number(item.actual_block_size), maxBlockSize=_json_number(item.limit)))
     if canvas_warning is not None:
         # The viewport declaration is a request fact, not an allocation: keep it
         # separate from the existing fit-warning dimensions and identity.

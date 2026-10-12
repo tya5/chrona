@@ -15,7 +15,7 @@ from chrona.presentation.scene.model import (
 )
 from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
 from chrona.presentation.scene.serialization import scene_document
-from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
+from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
 
 from tests.unit.chrona.presentation.scene.test_relation_entry_side import D, _item
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
@@ -59,7 +59,7 @@ def _surface(items, relations, *, target_shape="triangle", target_head=10, targe
     manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"),
                        relation_entry="side", row_distribution="pack",
                        relation_max_bends=6, relation_max_detour_ratio=6.0)
-    value = build_scene_input(
+    value = build_surface_input(
         projection=projection, surface_content=surface_content(relations=relations),
         layout_manifest=manifest, resolved_theme=theme, font_metrics=_Font(),
         measured_sources=measured, capabilities={"svg": True},

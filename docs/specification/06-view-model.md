@@ -185,16 +185,54 @@ field as a secondary title; a first-group variant). The text is View content; it
 grammar, ordinal forms and diagnostics are owned by
 [Specification 50](50-constraint-driven-gantt-surface-quality.md) section 3.4.
 
+### 6.1 Draft relation visibility override (#1299)
+
+`chrona render --relations none|semantic` overrides only the effective Draft
+View's `visibility.relations` mode, before validation and resource identity
+freeze. Scalar declarations remain scalar; object declarations retain their
+other options. Without the flag, the original declaration and normalization
+are unchanged. The override neither writes the authored resource nor mutates
+an immutable render-review Context. Scheduling still sees every Core dependency.
+`none` omits semantic relation requests before Layout routing; intentional
+omission is not `W_LAYOUT_RELATION_SUPPRESSED`. The CLI documents the override
+in help and the first-project guide.
+
 ## 7. Temporal Window
 
 A View selects a temporal window independently from scheduling semantics. v0.1 allows
 `{mode: explicit, start: Date, end: Date}`, `{mode: selected-planned, marginDays: N}`,
 or `{mode: selected-comparison, marginDays: N}`. Explicit windows are `[start, end)`
 with both bounds and `start < end`; derived windows use selected minimum start and
-maximum exclusive end plus non-negative margin. An empty eligible set is a diagnostic,
+maximum exclusive end. For `selected-planned`, pad each side by
+`max(marginDays, ceil(elapsedDays / 10), 1)` Date days, where `elapsedDays` is
+the selected maximum exclusive end minus the minimum start (zero for same-date
+points). This general rule strictly contains selected marks and preserves larger
+authored margins; it does not change Core schedules or depend on fonts, viewport
+size or axis units. `selected-comparison` retains its authored non-negative margin.
+If padded bounds cannot be represented in the Date domain, diagnose
+`E_REVIEW_WINDOW` with the selected dates and object identifiers rather than
+wrapping or silently clamping. An empty eligible set is a diagnostic,
 never a current-date default.
 
+Before timeline geometry or visibility-index preparation, Layout validates the
+completed projection's positive Date window. A still-degenerate or invalid
+window reports `E_PRESENTATION_PROJECTION_REQUIRED` at `/projection/window`,
+naming the bounds, selected object identifiers and positive-Date-window cause.
+Early, direct and candidate-preparation entry paths share this validation;
+they must not lose owner-local detail through a generic fallback.
+
 Date-based Views use the Date temporal domain. DateTime View behavior is deferred until a corresponding Core scheduling profile exists. Human-facing inclusive end-date display is a View or renderer concern and MUST NOT alter Core half-open span semantics.
+
+**Explicit-window visibility (#1292).** The projection retains the selected
+window mode as typed provenance; equal dates do not imply equal window policy.
+Only `explicit` selects the bounded mark-visibility contract in Spec 50.
+An intersecting span keeps its original source interval and table row while
+Layout completes its visible part. A wholly disjoint span, or a point outside
+`[start, end)`, keeps its table row but has no plot facet. Snapshot, scenario,
+Actual and missing-Actual facets are evaluated independently without rewriting
+Project dates, observation state, progress fractions or delta facts. A point
+at `start` is included; a point at `end` is excluded. Derived-window selection
+is not changed by this rule.
 
 ### 7.1 Named periods (#582)
 
@@ -244,6 +282,39 @@ slot still draws nothing. Without this optional v0.28 member,
 or with an empty map, the profile's copy and output remain unchanged.
 
 ### 7.2 Derived figures (#586)
+
+**Reusable heading-count design (#1346; implementation pending).** Heading
+parts additionally admit existing `{figure:<id>}` markers. Slot headings may
+declare `template` instead of literal `text` (Spec33); `slotHeadingText` stays
+literal. Unknown/malformed/scoped references retain existing diagnostics and
+exact pointers. `count` adds global-only `groups` and `placedNotes`. Selected
+items are distinct Primary/combined object identities, not ghost/scenario or
+repeated appearances; groups are distinct nonempty group identities in those
+selected memberships. Placed notes are Spec33 completed narrative occurrences,
+not selected Project notes. This late source is table-timeline-only and read
+only by heading parts/slot captions; other consumers refuse it with
+`E_FIGURE_LAYOUT_SCOPE` at their reference. Unused late figures still resolve.
+
+Optional `figureFormats` maps declared count-figure IDs to closed text formats.
+Layout `viewDefaults.figureFormats` offers whole-member replacement; a View
+map, including `{}`, replaces it. Malformed shapes/options retain the schema
+diagnostic. Unknown IDs or non-count targets are `E_VIEW_FIGURE_FORMAT_INVALID`
+at that entry. Omission keeps decimal
+text. Forms: `digits` (`minimumDigits: 1..80`, default1), `english-words`
+(`capitalize`, default false), `kanji`, `kanji-formal`. Zero is `0`, `zero` or
+`〇`; padding never truncates. English uses hyphenated tens, spaces between
+scale groups, no comma or “and”, names through quintillion (0..10^21−1).
+Kanji forms share existing Presentation digit/ten name tables (0..99), not
+a new Core/localization table; ordinal ranges do not change. Outside available
+names is `E_VIEW_FIGURE_FORMAT_RANGE`, with value/form/range, not silent digits.
+Each formatted text read retains its figure identity for attribution.
+For a late candidate's placedNotes read this is admission rejection, not a fatal error on the
+possible upper count: a lower representable self-consistent count may exist.
+If no admitted candidate closes, Spec33's failure includes that range evidence.
+Template consumers use the selected format; Summary metrics retain raw integers
+and their own format. Validate every format declaration's shape and target
+eagerly, but require number names only when a template reads it; an unused
+count remains a raw integer. Theme's existing text treatment applies afterwards.
 
 A View MAY declare `figures`, an array of derived figures that the Core resolves (Spec 05 §12.2) and a consumer shows by name. Each has a unique `id` (no braces, whitespace or control characters: `E_VIEW_FIGURE_INVALID`; a repeat is `E_VIEW_FIGURE_DUPLICATE`) and one closed `kind`: `daysUntil {from?, to, days?, calendar?}`, `daysIn {period, days?, calendar?}` or `count {source, scope?}`. A fact (`from`, `to`) is exactly one of `asOf`, `{period, side: start | end | last}` or `{object, endpoint: at | start | end}`; `from` defaults to `asOf`. `last` is the period's exclusive end minus one calendar day, not its last working day (Spec 05 §12.2). `days` is `calendar` (the default) or `working`; `calendar` names the Project calendar a working count uses (the Project default when omitted) and is a dead declaration, `E_VIEW_FIGURE_INVALID`, with calendar days. Nothing else is accepted: no expression, no operator, no field name, no other kind or fact.
 
@@ -359,12 +430,32 @@ geometry-based recovery is allowed.
 
 View selection, grouping, hierarchy expansion, visibility, and annotation anchoring are semantic inputs, not renderer geometry. An annotation has one source (`text` or a stable Project annotation reference), a typed anchor, and an ordered candidate list. A Project reference inherits narrative text and object identity; View owns facet, endpoint, purpose and placement. The anchor endpoint is `start`, `end`, `finish`, `at` or `body`; `end` is the canonical spelling of a span's end and `finish` its alias, and the two produce the same Scene. A referenced Project note is not duplicated in the notes slot. Each candidate declares a region, search, obstacle classes and connector; Layout evaluates the list against one completed surface obstacle set, records the selected candidate and bounded search count, and owns box and connector geometry. The rail, adjacent sides and plot search are configurations of this one model; legacy named rungs normalize to candidates without changing their output. No View field contains concrete coordinates. `layoutMetrics` is the revision-bound metrics/algorithm artifact declared by Render Context, never a renderer font default.
 
-The **kind** of a presentation annotation is the `kind` of the Project annotation its `projectAnnotation` reference selects (an open string such as `risk` or `note`); it is distinct from `purpose`, the closed placement intent. An annotation that carries its own `text` has no kind. The kind selects an optional Theme header (a label, a title bar, an accent edge; Specification 07) and nothing else: it never changes placement, purpose or the text. The View gains no property for it.
+The **kind** of a presentation annotation is the `kind` of the Project annotation its `projectAnnotation` reference selects (an open string such as `risk` or `note`); it is distinct from `purpose`, the closed placement intent. An annotation that carries its own `text` has no kind. Theme kind decoration does not select placement, purpose or text. The explicit View `annotationBindings` contract in Specification44 may bind a Project kind/temporal shape to an ordinary purpose and facet/endpoint; its purpose policy may come from Layout `viewDefaults.annotationPlacement`. No implicit Theme-driven placement or second source of Project narrative is introduced.
 
 For a plot `tail` candidate, the same View intent may complete as a direct
 integrated balloon tail or a strict routed connection to a short balloon tip.
 Layout records the topology; View does not declare path coordinates. See
 [the C3 correction](../design/issue-466-c3-routed-tail-correction-2026-09-29.md).
+
+### 9.2 The View as the connector, and the design it takes from the Layout profile (#1341)
+
+A View is the thin connector between a project and a design. What names the project's ids, fields, dates or wording stays in the
+View: `surface`, `selection`, `ordering`, the window's `mode`, `start` and `end`, the grouping key and order, the lane keys, the
+comparison bindings (`baseline`, `scenario`, `actual`, `observationSelection`), periods, figures, markers' `source`, headings and
+captions, table column captions and sources, annotation anchors and text, hierarchy column, icon encodings. How the surface looks
+and is laid out is design, and a Layout profile may supply it as `viewDefaults`, a View body fragment (Specification 33).
+
+Slice 1 moves these members: `visibility`, `axis`, `deadlines`, `shading`, `timePresentation`, `annotationPresentation`,
+`backgroundDecoration`, `progressFill` (whole members), and the design halves of `comparison` (`baselineMarks`,
+`missingActualScope`, `deltaUnit`, `facets`), `rows` (`mode`, `trackAllocation`, `packing`, `laneTable`, `points`, `items`) and
+`window` (`marginDays`). The rule is whole-member replacement: a member the View declares replaces the design's whole member, a
+member it omits takes the design's. The three split members merge one level
+down: an omitted member is created from the profile's design sub-members,
+while declared sub-members win. Connection fields are never supplied by the
+design. Explicitly malformed View members are not repaired; missing required
+connection fields remain ordinary View validation errors. The
+merge happens at ingress, before validation, so the merged View is validated as the View it is; a Layout profile without
+`viewDefaults`, or a View declaring every member, is untouched, which keeps every existing View byte-identical.
 
 ## 10. Diagnostics
 

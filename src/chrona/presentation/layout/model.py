@@ -23,6 +23,16 @@ class LayoutError(ValueError):
         self.detail = detail
 
 
+class CountDependentHeadingFitError(LayoutError):
+    """An owner-detected intrinsic text fit failure with closed figure dependencies."""
+
+    def __init__(self, path: str, source_id: str | None, detail: str, figure_ids: frozenset[str]):
+        if not figure_ids:
+            raise ValueError("dependent text fit requires declared figure dependencies")
+        super().__init__("E_LAYOUT_TEXT_OVERFLOW", path, source_id, detail)
+        self.figure_ids = figure_ids
+
+
 def geometry_sum(values: Iterable[float]) -> float:
     """Correctly round one Layout-owned float geometry accumulation.
 
@@ -57,6 +67,7 @@ class Measurement:
     max_block: Decimal
     first_baseline: Decimal | None = None
     last_baseline: Decimal | None = None
+    figure_dependencies: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -89,9 +100,11 @@ SLOT_HEADING_BLOCKS = ("top", "header-row", "axis-tier", "start-column")
 class SlotHeading:
     """A slot's declared caption (#1064): copy and placement intent; Layout completes the text and the reserve."""
 
-    text: str
+    text: str | None
     align: str = "start"
     block: str = "top"
+    gap: Decimal | None = None  # a `start-column` caption's declared gap to the entries (#1392); None keeps half the font size
+    template: str | None = None
 
 
 @dataclass(frozen=True)
@@ -110,6 +123,7 @@ class LayoutDecision:
     frame: RegionFrame | None = None
     heading: SlotHeading | None = None
     columns: int | None = None
+    column_distribution: str = "start"
 
 
 @dataclass(frozen=True)
@@ -130,6 +144,8 @@ class LayoutManifest:
     background_extents: Mapping[str, str] = field(default_factory=dict)
     member_names: Mapping[str, Any] = field(default_factory=dict)
     fit_warnings: tuple[FitWarning, ...] = ()
+    relation_search: str = "first-fit"
+    relation_search_budget: int | None = None
 
     def canonical_bytes(self, precision: int = 3) -> bytes:
         quantum = Decimal(1).scaleb(-precision)
@@ -162,7 +178,8 @@ class LayoutManifest:
                     frame["paint"] = item.frame.paint
                 value["frame"] = frame
             if item.heading is not None:
-                value["heading"] = {"align": item.heading.align, "block": item.heading.block, "text": item.heading.text}
+                copy = {"text": item.heading.text} if item.heading.text is not None else {"template": item.heading.template}
+                value["heading"] = {"align": item.heading.align, "block": item.heading.block, **copy}
             return value
 
         payload = {
@@ -174,6 +191,8 @@ class LayoutManifest:
                 "maxBends": self.relation_max_bends,
                 "maxDetourRatio": self.relation_max_detour_ratio,
                 **({"entry": self.relation_entry} if self.relation_entry != "side-when-free" else {}),
+                **({"search": self.relation_search} if self.relation_search != "best" else {}),
+                **({"searchBudget": self.relation_search_budget} if self.relation_search_budget is not None else {}),
             },
             "annotationRouting": {
                 "maxBends": self.annotation_max_bends,

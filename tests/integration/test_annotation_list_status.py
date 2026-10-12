@@ -12,10 +12,13 @@ from tests.support import synthetic_review as sr
 from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 
-# #1271 centers four group-header lines (+0.2 px); annotation boxes,
-# leaders, numbering and diagnostics remain unchanged.
-NO_SUPPRESSION_SCENE_SHA256 = "f26aa7955ae1beabc9c26b2b26a98222ecde177a610ad8c5740d94187a6e9dbc"
-NO_SUPPRESSION_SVG_SHA256 = "9d13fb41f70395a185d500fc1283429140a9ef9f44c6cd005c89950dd25ed43c"
+# #1296 pads the selected-planned window, moving anchors and adding axis buckets.
+# Removing only that rule independently reproduces both preceding byte hashes.
+# All four entries/indexes/leaders remain present; first-fit adds a routing receipt.
+# #1343 closes natural measurements from resolved annotation/unconsumed-note
+# content. Slot metadata changes; every visible SVG byte remains identical.
+NO_SUPPRESSION_SCENE_SHA256 = "31d97854aa0fea7de000fdfb274c2b332b87eaf13fcae40c2e385e6beb39675b"
+NO_SUPPRESSION_SVG_SHA256 = "3e9593666a8f1e60d9180ca6f9697e0ff912626fbe565080edbf5a57d9c5c5ce"
 
 
 def _fixture():
@@ -69,7 +72,7 @@ def test_unsuppressed_scene_and_svg_match_the_characterized_bytes(tmp_path):
     source, parts = _fixture()
     rendered = sr.render(tmp_path, source, presentation=parts, viewport=(2400, 1400))
 
-    assert rendered.scene.diagnostics == ()
+    assert rendered.scene.diagnostics == ('I_LAYOUT_RELATION_ROUTING:{"fallbackSearch":0,"relationInstances":0,"shapeSettled":0,"surfaceId":"table-timeline"}',)
     ids = _by_id(rendered)
     assert {f"note-index:note-{index}" for index in range(4)} <= ids.keys()
     assert {f"annotation-leader:note-{index}" for index in range(4)} <= ids.keys()

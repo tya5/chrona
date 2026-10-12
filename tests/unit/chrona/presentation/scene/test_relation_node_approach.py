@@ -9,7 +9,7 @@ import pytest
 
 from chrona.presentation.layout.sources import MeasuredSources, SourceInput
 from chrona.presentation.model.projection import ReviewProjection, ReviewRowProjection
-from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
+from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
 
 from tests.unit.chrona.presentation.scene.test_relation_entry_side import D, _item, _manifest, _rows
 from tests.unit.chrona.presentation.scene.test_relation_route_invariant import gate
@@ -36,7 +36,7 @@ def _compose(items, rows, relations, *, window, max_bends=4):
         relation_max_bends=max_bends,
         relation_max_detour_ratio=6.0,
     )
-    value = build_scene_input(
+    value = build_surface_input(
         projection=projection,
         surface_content=surface_content(relations=tuple(relations)),
         layout_manifest=manifest,

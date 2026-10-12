@@ -6,8 +6,10 @@ already-resolved integer values. Callers own fact collection and resolution.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 
-from chrona.presentation.group_header_text import GroupHeaderTextError, parse_template
+from chrona.presentation.count_text import CountTextError, CountTextFormat, format_count
+from chrona.presentation.group_header_text import GroupHeaderTextError, HeaderTemplate, parse_template
 
 
 class FigureTextError(ValueError):
@@ -17,6 +19,13 @@ class FigureTextError(ValueError):
         super().__init__(f"{code}:{detail}")
         self.code = code
         self.detail = detail
+
+
+class FigureTextReadError(ValueError):
+    """A typed text-read failure with its resource component and exact reference."""
+    def __init__(self, failure: CountTextError | FigureTextError, path: str, component: str = "view"):
+        super().__init__(str(failure))
+        self.failure, self.path, self.component = failure, path, component
 
 
 _FIGURE_MARKER = "{figure:"
@@ -37,11 +46,26 @@ def figure_ids(source: str, *, strict: bool = False) -> frozenset[str]:
     return _template(source).figure_ids
 
 
-def resolve_figure_text(source: str, figures: Mapping[str, int], *, strict: bool = False) -> str:
-    """Substitute closed figure markers; preserve marker-free source verbatim."""
-    if not strict and _FIGURE_MARKER not in source:
-        return source
-    template = _template(source)
+@dataclass(frozen=True)
+class FigureTextProgram:
+    """A closed caption program; facts/format ranges are bound only at a text read."""
+    template: HeaderTemplate
+
+    @property
+    def figure_ids(self) -> frozenset[str]:
+        return self.template.figure_ids
+
+    def bind(self, figures: Mapping[str, int],
+             formats: Mapping[str, CountTextFormat] | None = None) -> str:
+        return _bind(self.template, figures, formats)
+
+
+def compile_figure_text(source: str) -> FigureTextProgram:
+    return FigureTextProgram(_template(source))
+
+
+def _bind(template: HeaderTemplate, figures: Mapping[str, int],
+          formats: Mapping[str, CountTextFormat] | None = None) -> str:
     parts: list[str] = []
     known = ", ".join(sorted(figures)) if figures else "none"
     for kind, value in template.parts:
@@ -50,12 +74,24 @@ def resolve_figure_text(source: str, figures: Mapping[str, int], *, strict: bool
             continue
         figure_id = value[len("figure:"):]
         if figure_id not in figures:
-            raise FigureTextError(
-                "E_VIEW_FIGURE_UNKNOWN",
-                f"no resolved figure {figure_id!r} (known figures: {known})",
-            )
-        parts.append(str(figures[figure_id]))
+            raise FigureTextError("E_VIEW_FIGURE_UNKNOWN",
+                f"no resolved figure {figure_id!r} (known figures: {known})")
+        text_format = (formats or {}).get(figure_id)
+        try:
+            parts.append(format_count(figures[figure_id], text_format) if text_format is not None
+                         else str(figures[figure_id]))
+        except CountTextError as error:
+            raise CountTextError(error.code, f"figure={figure_id}; {error.detail}", value=error.value, form=error.form,
+                                 supported_range=error.supported_range, figure_id=figure_id) from error
     return "".join(parts)
 
 
-__all__ = ["FigureTextError", "figure_ids", "resolve_figure_text"]
+def resolve_figure_text(source: str, figures: Mapping[str, int], *, strict: bool = False,
+                        formats: Mapping[str, CountTextFormat] | None = None) -> str:
+    """Substitute closed figure markers; preserve marker-free source verbatim."""
+    if not strict and _FIGURE_MARKER not in source:
+        return source
+    return _bind(_template(source), figures, formats)
+
+
+__all__ = ["FigureTextError", "FigureTextReadError", "FigureTextProgram", "compile_figure_text", "figure_ids", "resolve_figure_text"]

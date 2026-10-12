@@ -4,7 +4,7 @@ flowDirection: horizontal
 dependencyNetworkFlowDirection: horizontal
 requiredThemeTokens: [countdown.width, frame.stripe.width, legend-block, legend-gap, legend-item-min, note-rail-width, spacing.l, spacing.m, spacing.none, spacing.s]
 reviewSurface: {rowDistribution: fill, backgroundExtents: {rowBand: table, groupBand: both, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
-relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side}
+relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side, search: best}
 root:
   id: page
   kind: column
