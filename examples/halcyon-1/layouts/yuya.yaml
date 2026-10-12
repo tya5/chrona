@@ -24,6 +24,7 @@ reviewSurface:
     maxDetourRatio: 2
 relationRouting:
   search: best
+  unroutable: suppress
   maxBends: 4
   maxDetourRatio: 4
   entry: side
