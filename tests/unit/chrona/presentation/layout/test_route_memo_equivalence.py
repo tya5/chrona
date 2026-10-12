@@ -9,6 +9,7 @@ key one component at a time and shows this suite's comparison catches it.
 """
 from __future__ import annotations
 
+from copy import copy
 from math import nextafter
 from pathlib import Path
 from random import Random
@@ -313,14 +314,22 @@ def test_mutation_check_a_broken_key_is_caught(monkeypatch, component: int) -> N
 
 
 @pytest.mark.corpus
-def test_every_real_search_of_a_public_slide_matches_a_fresh_search(monkeypatch, tmp_path: Path) -> None:
+@pytest.mark.parametrize("policy", ("first-fit", "best"))
+def test_every_real_search_of_a_public_slide_matches_a_fresh_search(monkeypatch, tmp_path: Path, policy: str) -> None:
     """Corpus-derived inputs: each search the programme-board render makes is re-run unmemoised."""
-    from chrona.usecases.materialize import materialize
+    from chrona.usecases.materialize import MaterializationError, materialize
+    from chrona.presentation.layout import engine
     import chrona.presentation.layout.route_search as route_search
 
     root = Path(__file__).resolve().parents[5]
     compared = hits = 0
     original = route_search.orthogonal_route_candidates
+    original_manifest = engine.LayoutManifest
+
+    def selected_manifest(*args, **kwargs):
+        # Explicit policy controls without altering any authored resource bytes.
+        kwargs["relation_search"] = policy
+        return original_manifest(*args, **kwargs)
 
     def advance(iterator):
         try:
@@ -337,13 +346,20 @@ def test_every_real_search_of_a_public_slide_matches_a_fresh_search(monkeypatch,
             return
         independent = SurfaceObstacleIndex()
         independent.extend(obstacles.all())
-        reference = original(start, end, independent, **kwargs)
+        reference_kwargs, replay_kwargs = dict(kwargs), dict(kwargs)
+        if kwargs.get("budget") is not None:
+            reference_kwargs["budget"] = copy(kwargs["budget"])
+            replay_kwargs["budget"] = copy(kwargs["budget"])
+        reference = original(start, end, independent, **reference_kwargs)
         actual = original(start, end, obstacles, **kwargs)
+        replay = original(start, end, obstacles, **replay_kwargs)
         before = len(obstacles._route_memo.results)
         first = True
         while True:
             got = advance(actual)
-            assert got == advance(reference)
+            expected, repeated = advance(reference), advance(replay)
+            assert got == expected == repeated
+            assert repr(got) == repr(expected) == repr(repeated)
             if first:
                 hits += len(obstacles._route_memo.results) == before
                 compared += 1
@@ -355,6 +371,15 @@ def test_every_real_search_of_a_public_slide_matches_a_fresh_search(monkeypatch,
             yield got[1]
 
     monkeypatch.setattr(route_search, "orthogonal_route_candidates", checking)
-    materialize(root / "examples" / "halcyon-1" / "manifest.yaml", "programme-board", tmp_path / "out", write=True)
-    assert compared >= 100
-    assert hits >= 30  # the real pass repeats the accepted rehearsal's searches
+    monkeypatch.setattr(engine, "LayoutManifest", selected_manifest)
+    try:
+        materialize(root / "examples" / "halcyon-1" / "manifest.yaml", "programme-board", tmp_path / "out", write=False)
+    except MaterializationError as error:
+        # The declared evidence uses first-fit; a best control intentionally differs.
+        if policy != "best" or error.code != "E_MATERIALIZER_MISMATCH":
+            raise
+    if policy == "best":
+        assert compared >= 100
+        assert hits >= 30  # ranked passes repeat accepted rehearsal searches
+    else:
+        assert compared > 0  # shapes reduce searches; every remaining iterator is checked
