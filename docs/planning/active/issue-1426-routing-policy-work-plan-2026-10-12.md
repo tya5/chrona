@@ -94,8 +94,9 @@ contrast, as the remaining dominant cost. Local disposable evidence:
 `/tmp/chrona-1426-single-policy-scale-2Oi1fo`.
 
 CI artifact11722837924 independently verifies46 unchanged pairs and only the
-diagnostic code-site inventory diff. Derived-sync38195708622 is live; source
-merge2ba414f2 is not yet a trusted READY base. Release review:
+diagnostic code-site inventory diff. Derived-sync38195708622 passed and published
+READY `7c962d65f29c10d53b0156563d0a0f2e8f29c403`; the current documentation
+branch adopts that base by ordinary merge. Release review:
 [literal acceptance](../../reviews/current/issue-1426-routing-performance-budget-acceptance-review-2026-10-12.md).
 Finish repeat evidence and publish the review in the session documentation batch;
 close only after containing-review exact-main full release. M2 performance is

@@ -9,6 +9,8 @@ Implementation: [PR1428](https://github.com/tya5/chrona/pull/1428), reviewed hea
 three pytest shards, conformance, newest-Python reproduction, MCP floor and readiness.
 Artifact11722837924 contains46 parsed, unchanged Scene/SVG pairs, no additions
 or retirements; only the diagnostic code-site inventory changes.
+Derived-sync38195708622 published READY `7c962d65` with successful
+`derived-main`; this review adopts it without product changes.
 Release acceptance remains pending repeat completion and exact-main full CI
 containing this review. Keep the issue open.
 
