@@ -2,7 +2,8 @@
 
 Published baseline: READY `8653aa28b8d4f1f7dff31f12dcdba6a4cc59a7fa`
 (`derived-main`38197643651 SUCCESS). The WIP adopts it by ordinary merge;
-all1343 foundation work is merged/released.1346 product work has not started.
+all1343 foundation work is merged/released.1346 implementation is on its WIP;
+not merged or release-accepted.
 [Issue and current work record](https://github.com/tya5/chrona/issues/1346#issuecomment-6112367414).
 #1343 closes selected note identity/content.1426 additionally closes
 per-instance/per-pass budget evidence; preserve it through the count closure.
@@ -13,7 +14,7 @@ per-instance/per-pass budget evidence; preserve it through the count closure.
 | On the roadmap, they show its own counts. | Same templates against the roadmap; independent selected/completed membership evidence and actual rendered text. |
 
 Do not edit `examples/**`; permanent adoption is reviewer-owned.
-Selected design; implementation pending. Normative contracts are in
+Selected design; implementation underway. Normative contracts are in
 Specs05/06/33, not duplicated here. Reuse `{figure:<id>}`; no count-only DSL.
 View declares integer sources; Layout defaults offer figure text formats;
 Presentation closes immutable template programs. Placed notes come from typed
@@ -23,7 +24,7 @@ Read-only baseline: all three HALCYON Views select26 objects/six groups; the
 current roadmap View also selects26/six. Equal wording cannot prove dependence:
 an independently different synthetic3/2 case is mandatory. These are membership
 probes, not rendered-note acceptance. Own Python3.13 dev/render/CJK venv
-imports this worktree; no product or example changes.
+imports this worktree; authored examples remain unchanged.
 
 Architecture review: Specs03/05/06/33/44/50/56, #586/#927 and #1341/#1343.
 Core accepts neutral integers; Projection owns selection; Presentation owns
@@ -112,6 +113,11 @@ ordinal ranges; pure digits/padding/English/kanji forms and frozen caption
 programs. Name range errors are typed; unused formats do not require names and
 unavailable late facts remain unavailable, not zero.178 focused tests PASS;
 240 modules reachable/no orphan; import direction/value inventory PASS.
-P2 is not accepted yet: contract/schema/defaults and heading/caption connection
+P2 ingress implemented: View/Layout share frozen count-format definitions;
+typed immutable View formats validate count targets with escaped pointers.
+New count sources are global-only; explicit empty format maps replace defaults.
+209 focused contract/formatter/defaults/schema-inventory tests PASS. L1 records
+the two intended View deltas; no stale expected entries remained to prune.
+P2 is not accepted yet: heading/caption connections and deferred-fact admission
 remain, followed by P3 narrative receipts/count closure. No authored examples
-or resources changed; no new authoring syntax has been admitted yet.
+or resources changed. WIP schema admission is not a finished rendering feature.

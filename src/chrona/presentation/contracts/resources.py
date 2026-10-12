@@ -11,6 +11,7 @@ from typing import Any, Literal, Mapping
 
 from chrona.core.figures import AsOfFact, FigureSpec, GroupStartFact, ObjectFact, PeriodFact
 from chrona.presentation.figure_text import FigureTextError, figure_ids
+from chrona.presentation.count_text import CountTextFormat
 from chrona.core.store_address import StoreAddressError, check_store_address
 from chrona.resources import schema_validator
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
@@ -385,6 +386,7 @@ class ViewInput:
     slot_heading_text: FrozenDict | None = None
     annotation_bindings: tuple[FrozenDict, ...] = ()
     annotation_placement: FrozenDict | None = None
+    figure_formats: FrozenDict = field(default_factory=FrozenDict)
 
 
 @dataclass(frozen=True)
@@ -978,7 +980,24 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         heading=_view_heading(body.get("heading")),
         slot_heading_text=(freeze(body["slotHeadingText"]) if "slotHeadingText" in body else None),
         annotation_bindings=tuple(body.get("annotationBindings", ())),
-        annotation_placement=body.get("annotationPlacement"))
+        annotation_placement=body.get("annotationPlacement"),
+        figure_formats=_view_figure_formats(body.get("figureFormats", {}), figures))
+
+
+def _view_figure_formats(raw: Mapping[str, Any], figures: tuple[FigureSpec, ...]) -> FrozenDict:
+    """Close formats without evaluating count values or requiring number names."""
+    declared = {item.figure_id: item for item in figures}
+    formats = {}
+    for identifier, value in raw.items():
+        target = declared.get(identifier)
+        if target is None or target.kind != "count":
+            pointer = identifier.replace("~", "~0").replace("/", "~1")
+            raise ContractError("E_VIEW_FIGURE_FORMAT_INVALID",
+                                f"format target {identifier!r} must name a declared count figure",
+                                f"/body/figureFormats/{pointer}")
+        formats[identifier] = CountTextFormat(str(value["form"]),
+                                             value.get("minimumDigits", 1), value.get("capitalize", False))
+    return FrozenDict(formats)
 
 
 def annotation_placement_for(policies: Mapping[str, Any] | None, purpose: str,
@@ -1078,6 +1097,9 @@ def _view_figures(raw: Any) -> tuple[FigureSpec, ...]:
             specs.append(FigureSpec(figure_id, "daysUntil", to=target, origin=origin,
                                     days=days, calendar_id=calendar, path=path, scope=scope))
         elif item["kind"] == "count":
+            if item["source"] in ("groups", "placedNotes") and item.get("scope", "global") != "global":
+                raise ContractError("E_VIEW_FIGURE_INVALID", "groups and placedNotes counts require global scope",
+                                    f"{path}/scope")
             specs.append(FigureSpec(figure_id, "count", source=str(item["source"]),
                                     scope=str(item.get("scope", "global")), path=path))
         else:

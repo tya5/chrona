@@ -26,6 +26,7 @@ properties:
       shading: {description: "Default View `shading` (non-working days, exceptions)."}
       timePresentation: {description: "Default View `timePresentation` (as-of marker form, calendar-closed presentation)."}
       annotationPlacement: {$ref: "urn:chrona:common-v0.1#/$defs/annotationPlacementByPurpose"}
+      figureFormats: {$ref: "urn:chrona:common-v0.1#/$defs/figureFormats"}
       annotationPresentation: {description: "Default View `annotationPresentation`."}
       backgroundDecoration: {description: "Default View `backgroundDecoration` (rows, groups)."}
       progressFill: {description: "Default View `progressFill` (source)."}
