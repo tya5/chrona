@@ -85,6 +85,50 @@ def test_unavailable_upper_number_names_do_not_preclude_a_lower_consistent_candi
     assert len(result.trials) <= 103
 
 
+def test_real_layout_closes_lower_kanji_count_after_upper_range_rejection(seed):
+    from tests.unit.chrona.presentation.layout.test_bounded_table_measurement import Metrics
+    initial, _ = seed
+    value = replace(initial.value,
+        content=replace(initial.value.content, annotations=(), notes=tuple(
+            (f"note-{index}", "Narrative" if index < 99 else "") for index in range(100))),
+        heading=HeadingTextPrograms(close_heading("{figure:notes}", {})), font_metrics=Metrics(),
+        view=replace(initial.value.view, figure_formats={"notes": CountTextFormat("kanji")}))
+    result = closure.complete_surface_render_plan(closure.inspect_count_reads(value))
+    assert [(t.count, t.outcome, t.actual) for t in result.trials] == [(100, "range", None), (99, "accepted", 99)]
+    assert dict(result.projection.figures) == {"notes": 99}
+    assert len(result.composition.placement.narrative_receipts) == 99
+    assert next(t for t in result.composition.placement.text if t.source_ref == "title").content == "九十九"
+
+
+def test_real_measured_heading_fit_rejects_upper_count_and_accepts_lower_count(seed):
+    from copy import deepcopy
+    from chrona.presentation.layout.text import measure_text_width, metric_for_role
+    from chrona.presentation.model.theme_tokens import ThemeTokenView
+    from tests.support import synthetic_review as sr
+    initial, _ = seed
+    value = initial.value
+    tokens = ThemeTokenView(value.theme)
+    treatment = tokens.text_treatment("heading")
+    metrics = metric_for_role(tokens, "heading", value.font_metrics)
+    def width(text):
+        return measure_text_width(text, font_size=float(treatment.font_size), font_metrics=metrics,
+            letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+            numeric_spacing=treatment.numeric_spacing)
+    assert width("9") < width("…")
+    ceiling = (width("9") + width("…")) / 2
+    profile = deepcopy(value.profile)
+    sr.find_node(profile, "title")["inlineSize"] = {"fixed": ceiling}
+    value = replace(value, profile=profile,
+        content=replace(value.content, annotations=(), notes=tuple(
+            (f"note-{index}", "Narrative" if index < 9 else "") for index in range(10))),
+        heading=HeadingTextPrograms(close_heading("{figure:notes}", {}), text_wrap="allow"))
+    result = closure.complete_surface_render_plan(closure.inspect_count_reads(value))
+    assert [(t.count, t.outcome, t.actual) for t in result.trials] == [(10, "text-fit", None), (9, "accepted", 9)]
+    assert result.trials[0].figure_ids == {"notes"}
+    assert dict(result.projection.figures) == {"notes": 9}
+    assert next(t for t in result.composition.placement.text if t.source_ref == "title").content == "9"
+
+
 @pytest.mark.parametrize("code", ["E_LAYOUT_TEXT_OVERFLOW", "E_LAYOUT_TABLE_OVERFLOW", "E_LAYOUT_SCHEMA", "E_LAYOUT_MEASUREMENT_REQUIRED"])
 def test_unrelated_error_is_not_retried_even_if_it_shares_a_fit_code(seed, monkeypatch, code):
     initial, _, _ = _stub_planning(monkeypatch, seed)

@@ -77,9 +77,15 @@ def test_unclaimed_heading_part_is_not_an_active_late_read(tmp_path, monkeypatch
 
 def test_mismatched_trial_is_discarded_and_progress_is_published_only_for_accepted_trial(tmp_path, monkeypatch):
     from chrona.presentation.layout import surface_annotations, surface_count_closure as closure
+    from chrona.presentation.layout import surface_lane_route_plan as lane_plan, surface_route_label_plan as label_plan, surface_routes
+    from chrona.presentation.model.info_diagnostics import RelationSearchBudgetHit
     completed = _capture(monkeypatch)
     source, parts = _fixture()
+    source["relations"] = [{"id": f"r{index}", "type": "dependency", "lag": "0d",
+        "from": {"object": f"gate-{index}", "endpoint": "at"},
+        "to": {"object": f"gate-{index + 1}", "endpoint": "at"}} for index in range(3)]
     _late(parts)
+    parts["layout"]["relationRouting"] = {"maxBends": 4, "maxDetourRatio": 2, "searchBudget": 1}
     parts["view"]["body"]["heading"] = {"title": "{figure:notes} completed notes"}
     sr.with_note_rail(parts, width=300)
     visibility = parts["view"]["body"]["visibility"]
@@ -98,6 +104,14 @@ def test_mismatched_trial_is_discarded_and_progress_is_published_only_for_accept
         request.progress.emit(RenderProgressEvent("layout", dict(request.projection.figures)["notes"], 4, "count-trial"))
         return compose(request, **kwargs)
     monkeypatch.setattr(closure, "compose_surface_layout", observe)
+    routed = {4: [], 3: []}
+    routes = surface_routes.compose_surface_routes
+    def observe_routes(context):
+        batch = routes(context)
+        routed[dict(context.request.projection.figures)["notes"]].extend(batch.routing_info)
+        return batch
+    monkeypatch.setattr(lane_plan, "compose_surface_routes", observe_routes)
+    monkeypatch.setattr(label_plan, "compose_surface_routes", observe_routes)
     events = []
     progress = RenderProgress(events.append)
     request_type = sr.RenderRequest
@@ -110,3 +124,33 @@ def test_mismatched_trial_is_discarded_and_progress_is_published_only_for_accept
     assert requests[0].mark_visibility_index is not None
     assert requests[0].mark_visibility_index is not requests[1].mark_visibility_index
     assert [e.completed for e in events if e.pass_name == "count-trial"] == [3]
+    facts = [item for item in rendered.info_diagnostics if isinstance(item, RelationSearchBudgetHit)]
+    assert routed[4] and routed[3]
+    assert facts == routed[3]  # all executed accepted-pass facts, not both whole-layout trials
+    assert len(facts) < len(routed[4]) + len(routed[3])
+
+
+@pytest.mark.parametrize("late", [False, True])
+def test_unused_checkpoint_precedes_completion_and_defers_only_active_count_planning(tmp_path, monkeypatch, late):
+    from chrona.usecases import render_review as usecase
+    from chrona.usecases.render_review import RenderFailed
+    order = []
+    prepare = usecase.prepare_surface_render_plan
+    def observe(value):
+        order.append("prepare")
+        return prepare(value)
+    monkeypatch.setattr(usecase, "prepare_surface_render_plan", observe)
+    def unused(self):
+        order.append("unused")
+        return ("controlled-unread-resource",)
+    monkeypatch.setattr(usecase.ClosureReadLedger, "unused", unused)
+    def forbidden(*args, **kwargs):
+        raise AssertionError("completion must not occur after unused-input rejection")
+    monkeypatch.setattr(usecase, "compose_resolved_review_surface", forbidden)
+    request_type = sr.RenderRequest
+    monkeypatch.setattr(sr, "RenderRequest", lambda **kwargs: request_type(**kwargs, require_all_inputs_read=True))
+    with pytest.raises(RenderFailed) as caught:
+        _render(tmp_path, heading={"template": "{figure:notes}"} if late else {"text": "Notes"},
+                configure=_late if late else None)
+    assert caught.value.code == "E_CLOSURE_INPUT_UNUSED"
+    assert order == (["unused"] if late else ["prepare", "unused"])

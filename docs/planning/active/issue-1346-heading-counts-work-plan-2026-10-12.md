@@ -193,6 +193,15 @@ cover highest/no-solution/bounded range rejection/unrelated errors. Existing
 caption/derived/native/group-tab batch111 PASS with one stale composer spy,
 subsequently migrated without weakening assertions (8 focused PASS). Schema
 equivalence L1/L2/L3 and structural guards PASS;241 reachable modules.
-P3 acceptance still needs targeted checkpoint, actual lower-range/fit and
-accepted-pass budget evidence, followed by P4 three-design/public/release gates.
+P3 targeted verification is complete on WIP: normal preparation precedes the
+unused checkpoint, active late planning follows it, and rejection prevents any
+completion. Real Layout rejects kanji100 and accepts99 completed narratives;
+real declared-metric fit rejects10 and accepts9. A4→3 actual suppression trial
+preserves every accepted invocation routing-pass budget fact exactly once;
+rejected whole-trial facts/progress are absent.45 focused policy/real-layout/
+budget/attribution/ownership tests PASS. Final original public materializers
+were batched once:46/46 full Scene/SVG pairs byte-identical, zero route deltas;
+evidence `/tmp/chrona-1346-final-materializers-XoBMIR/materializer-evidence.json`.
+Import/reachability/value guards PASS. P4 remains: three-design HALCYON/roadmap
+literal rendered evidence, final-head CI and exact-main release acceptance.
 No authored examples/resources changed.
