@@ -93,12 +93,24 @@ def nearest_rect_perimeters(label: LabelRect, mark: LabelRect) -> tuple[float, t
 
 
 @dataclass(frozen=True)
+class LabelSlotObstruction:
+    """Why an earlier canonical slot could not complete, without invented IDs."""
+
+    side: str
+    blocker_placement_ids: tuple[str, ...] = ()
+    occupied: bool = False
+    outside_bounds: bool = False
+    policy_rejected: bool = False
+
+
+@dataclass(frozen=True)
 class LabelPlacement:
     side: str
     bounds: LabelRect
     visible_overflow: bool = False
     search_count: int = 0
     final_rung: bool = False
+    canonical_obstructions: tuple[LabelSlotObstruction, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -259,30 +271,45 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
             return False
         return True
 
-    def clear(candidate: LabelRect, side: str) -> bool:
+    def collision_details(candidate: LabelRect, side: str) -> tuple[bool, tuple[str, ...]]:
         if index is not None:
-            return not index.collisions(
+            hits = index.collisions(
                 ObstacleRect(candidate.x, candidate.y, candidate.right, candidate.bottom),
                 host_id=inside_host_obstacle_id if side == "inside" else None,
                 rule_host_id=rule_host_obstacle_id, classes=classes)
+            return bool(hits), tuple(sorted(item.placement_id for item in hits))
         active_obstacles = (obstacle for obstacle in blocked
                             if not (side == "inside" and isinstance(obstacle, LabelObstacle)
                                     and obstacle.placement_id == inside_host_obstacle_id))
-        return not any(_intersects(candidate, obstacle.bounds if isinstance(obstacle, LabelObstacle) else obstacle)
-                       for obstacle in active_obstacles)
+        hits = tuple(obstacle for obstacle in active_obstacles
+                     if _intersects(candidate, obstacle.bounds if isinstance(obstacle, LabelObstacle) else obstacle))
+        return bool(hits), tuple(sorted({item.placement_id for item in hits if isinstance(item, LabelObstacle)}))
 
+    def clear(candidate: LabelRect, side: str) -> bool:
+        return not collision_details(candidate, side)[0]
+
+    obstructions: list[LabelSlotObstruction] = []
     for side in sides:
         if (maximum_side_gap is not None and side in {"end", "start"}
                 and gap > maximum_side_gap):
+            obstructions.append(LabelSlotObstruction(side, policy_rejected=True))
             continue
         try:
             candidate = _candidate(anchor, size, side, gap)
         except ValueError as exc:
             if str(exc).split(":", 1)[0] == "E_PRESENTATION_LABEL_UNPLACEABLE":
+                obstructions.append(LabelSlotObstruction(side, policy_rejected=True))
                 continue
             raise
-        if admissible(candidate) and clear(candidate, side):
-            return LabelPlacement(side, candidate)
+        if not admissible(candidate):
+            outside = (candidate.x < bounds.x or candidate.y < bounds.y
+                       or candidate.right > bounds.right or candidate.bottom > bounds.bottom)
+            obstructions.append(LabelSlotObstruction(side, outside_bounds=outside, policy_rejected=not outside))
+            continue
+        occupied, blocker_ids = collision_details(candidate, side)
+        if not occupied:
+            return LabelPlacement(side, candidate, canonical_obstructions=tuple(obstructions))
+        obstructions.append(LabelSlotObstruction(side, blocker_ids, occupied=True))
     if search_side_neighborhood:
         lattice = 8.0
         position_bounds = search_association.position_envelope() if search_association is not None else None
@@ -374,7 +401,8 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
                 if admissible(candidate):
                     count += 1
                     if clear(candidate, side):
-                        return LabelPlacement(side, candidate, search_count=count)
+                        return LabelPlacement(side, candidate, search_count=count,
+                                              canonical_obstructions=tuple(obstructions))
             next_index = tangent_index + 1
             if next_index < len(tangents):
                 next_tangent = tangents[next_index]
@@ -385,7 +413,8 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
         # declared terminal side is used only after all ranked candidates fail.
         for side in ((visible_fallback_side,) if visible_fallback_side is not None else sides):
             try:
-                return LabelPlacement(side, _visible_candidate(anchor, size, side, gap), True)
+                return LabelPlacement(side, _visible_candidate(anchor, size, side, gap), True,
+                                      canonical_obstructions=tuple(obstructions))
             except ValueError as exc:
                 if str(exc).split(":", 1)[0] != "E_PRESENTATION_LABEL_UNPLACEABLE":
                     raise

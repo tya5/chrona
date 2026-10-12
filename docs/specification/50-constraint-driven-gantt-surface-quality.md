@@ -353,6 +353,22 @@ Scene projects the completed fact; adapters neither recount nor draw a marker.
 
 `finishDelta` has exactly one text representation per item. When selected in `labels.content`, no second standalone variance text is emitted. Its semantic role remains derived from the signed value.
 
+A standalone finish-delta label is anchored to the completed actual mark when
+available, otherwise its planned mark. Its canonical side order is `end`,
+`start`, `above`, `below`; a clear canonical end slot always wins before any
+side-neighborhood search. Translating that mark does not choose a different
+side unless the translated slot collides or leaves its allocation. Combined
+member-name/delta labels retain their authored member-name side policy.
+Layout retains the rejected canonical slots' typed obstruction evidence.
+When the canonical end slot is blocked or outside the allocation and a
+fallback position is selected (even on the same side), it emits
+`I_LAYOUT_FINISH_DELTA_ANCHOR_FALLBACK:` followed by JSON containing
+`placementId`, `preferredSide`, `selectedSide`, sorted `blockerPlacementIds`
+and `outsideBounds`. Blockers identify the actual completed mark, text or
+route placements; a bounds failure is not attributed to an imaginary mark.
+The existing overflow/suppression policy and explicit-window endpoint
+admission still apply. No previous-render state is needed.
+
 ### 3.3 Relations
 
 **Declared routing policy (#1430).**
@@ -509,7 +525,61 @@ table-timeline failure; network View visible-overflow retains its deterministic
 direct fallback and `W_LAYOUT_ROUTE_FALLBACK`. Explicit suppression records
 `W_LAYOUT_RELATION_SUPPRESSED`.
 
-**Candidate search (#1109 R5).** One bounded sparse
+**Protected critical relations (#1300).** Scheduler driving-path facts, not
+paint roles or a project-specific rule, identify protected critical relations.
+Presentation carries this as an immutable `RelationPresentationFact.critical`
+boolean: its canonical full-Project declaration identity must be in scheduler
+`driving_relations`, and both endpoint objects must carry scheduler-derived
+critical-path membership. The selected paint semantic neither supplies nor
+overrides this fact. Layout processes critical relations before ordinary
+relations, retaining arrivals-before-departures and declaration ties within
+each class. This priority pass may be published independently of protected
+feasibility; it retains declaration-based placement identity/output order and
+does not itself enable the quality exception or establish safe-path completeness.
+The protected feasibility contract below applies only under Layout
+`relationRouting.unroutable: suppress`. Under `relax`, `overlap` and `stub`,
+the published #1427 resolution contract applies to critical relations too;
+critical-first ordering remains, but no safe-path/impossibility promise is made.
+The feasibility and over-quality rules below are requirements for the unfinished
+protected pass, not an enabled routing algorithm. The independent priority
+slice leaves normal route eligibility unchanged.
+Declared quality limits remain
+preferences for these relations: first select a safe quality-eligible route;
+if none is found, retain a safe completed route even when `maxBends` or
+`maxDetourRatio` is exceeded. Ordinary relations keep their hard quality
+limits. This intentional exception does not waive resolved endpoint admission,
+timeline bounds, required mark/text/label clearance, terminal and stroke
+validity, or self-overlap rejection. A blocked egress or endpoint outside the
+declared window is not repaired by moving the semantic endpoint.
+
+The over-quality selection retains the declared limits and actual completed
+measurements in typed Layout evidence; do not raise the limits or label it a
+quality-eligible attempt. Layout emits
+`I_LAYOUT_CRITICAL_RELATION_QUALITY_FALLBACK:` followed by JSON containing
+`relationId`, `bends`, `maxBends`, `length`, `directLength` and
+`maxDetourRatio`. These are the same completed-route measurements used by the
+ordinary quality predicate (including its zero-direct-length convention).
+Scene projects completed geometry and diagnostics; adapters do not reroute
+or reclassify criticality.
+
+Suppress a protected relation only after establishing that no safe completed
+route exists, and emit `W_LAYOUT_CRITICAL_RELATION_SUPPRESSED` with relation
+identity and the failure evidence. Neither the ordinary sparse graph nor its
+4096-expansion exhaustion proves that geometric impossibility. The protected
+feasibility algorithm, its completeness argument and its input-dependent work
+accounting must be finalized before implementing this exception; the existing
+ordinary-search bounds below do not cover that additional pass.
+
+Completeness must cover non-self-overlapping completed paths, not merely
+minimum-leg walks. A polynomial edge-progression algorithm is not sufficient:
+the finite-grid simple-path variant is NP-complete, while allowing repeated
+vertices changes that problem ([Ahrens 2020, section 4.2 and corollary 4.2](https://d-nb.info/1224966090/34)).
+This is not a complexity proof for Chrona's continuous geometry. Any reduction
+must establish its own geometric completeness and account honestly for path
+history, terminal completion and work; do not promise polynomial protected
+search from the extended-Hanan-grid abstract alone.
+
+**Ordinary candidate search (#1109 R5).** One bounded sparse
 visibility search supplies alternatives for each endpoint pair, rather than
 post-filtering only a single length-plus-bend-penalty winner. Obstacle-offset
 corners and endpoint projections seed the finite graph; exact inventory
@@ -966,7 +1036,9 @@ Before Scene construction, `assert_surface_placement` verifies:
 
 1. every completed primitive is inside Layout's completed canvas bounds;
 2. table, axis, label, group header and legend placements satisfy their selected overflow policy and every visible fallback has a structured warning;
-3. every accepted relation route meets its quality limits;
+3. every accepted ordinary relation route meets its quality limits; a protected
+   critical route exceeding them satisfies every hard safety invariant and
+   carries the measured quality-fallback evidence required by section 3.3;
 4. no semantic item has duplicate finish-delta text;
 5. every present slot family has its required placements.
 
