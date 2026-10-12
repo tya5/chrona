@@ -76,3 +76,17 @@ coherent code slice in PR1428; the batch evidence follows on the same branch.
 The selected design/architecture correction is published; publish this finalized
 implementation plan before product changes. No new PR,
 force push, authored example repair or hidden compatibility routing path.
+
+## Current verification
+
+Rejected policy/shape/phase branches are removed; budget receipts and all executed
+pass facts remain. Real materializers: `python -m tools.routing_performance_evidence`
+returns46/46 full Scene/SVG byte identity (no normalization override). Schema
+equivalence passes: one additive Layout schema,37 equal; required stale1343
+delta retirement is unchanged. Structure/schema/vocabulary guards:190 PASS.
+19/10 repeats: CPU1.48/1.66s, hashes identical.200/46: CPU32.056357/31.160932s,
+hashes identical.1000/228 repeats and retained-policy profiling are running;
+the60-second target is NOT yet proven. Local disposable evidence:
+`/tmp/chrona-1426-single-policy-762vaN`,
+`/tmp/chrona-1426-single-policy-small-QsTq4u`,
+`/tmp/chrona-1426-single-policy-scale-2Oi1fo`.

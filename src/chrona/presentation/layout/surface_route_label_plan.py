@@ -23,7 +23,6 @@ class RouteLabelPlanContext:
     base_text: tuple[TextPlacement, ...]
     clean_obstacles: SurfaceObstacleIndex
     routes_for: Callable[[SurfaceObstacleIndex, tuple[TextPlacement, ...]], SurfaceRoutesContext]
-    allow_recovery: bool = True
 
 
 @dataclass(frozen=True)
@@ -90,8 +89,6 @@ def _relation_labels_preserved(baseline: SurfaceRelationLabelsBatch,
 def compose_routes_and_member_labels(context: RouteLabelPlanContext) -> RouteLabelPlan:
     """Complete routes and labels; retry once only to recover post-route member names."""
     baseline = _trial(context, (), context.post_route_requests)
-    if not context.allow_recovery:
-        return baseline
     lost = _lost_requests(context.post_route_requests, baseline.members)
     if not lost:
         return baseline

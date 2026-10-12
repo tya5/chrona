@@ -1,9 +1,4 @@
-"""Developer CLI for disposable public-materializer policy characterization.
-
-The normalization override isolates routing behavior with unchanged resource
-bytes/identities. This is NOT evidence of authored best declarations or their
-provenance migration; those must be reviewed separately on the publication PR.
-"""
+"""Batch actual public materializers without policy or normalization overrides."""
 from __future__ import annotations
 
 import argparse
@@ -11,10 +6,8 @@ from concurrent.futures import ProcessPoolExecutor
 from hashlib import sha256
 import json
 from pathlib import Path
-from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
-from chrona.presentation.layout import engine
 from chrona.presentation.layout.routing import route_quality_metrics
 from chrona.resources import safe_load
 from chrona.usecases.materialize import MaterializationError, materialize
@@ -45,24 +38,18 @@ def route_delta(before, after):
 
 
 def characterize(task):
-    manifest_path, slide_id, policy, root = task
+    manifest_path, slide_id, root = task
     manifest = safe_load(manifest_path.read_bytes())
     slide = next(item for item in manifest['slides'] if item['id'] == slide_id)
-    original = engine.LayoutManifest
-    def selected(*args, **kwargs):
-        kwargs['relation_search'] = policy
-        return original(*args, **kwargs)
-    output = root / policy / manifest_path.parent.name / slide_id
+    output = root / manifest_path.parent.name / slide_id
     mismatch = False
-    with patch.object(engine, 'LayoutManifest', side_effect=selected):
-        try:
-            materialize(manifest_path, slide_id, output, write=False)
-        except MaterializationError as error:
-            if error.code != 'E_MATERIALIZER_MISMATCH':
-                raise
-            # The real materializer has already serialized both artifacts.
-            # Only comparison with committed evidence is intentionally changed.
-            mismatch = True
+    try:
+        materialize(manifest_path, slide_id, output, write=False)
+    except MaterializationError as error:
+        if error.code != 'E_MATERIALIZER_MISMATCH':
+            raise
+        # Record a real mismatch for inspection; never normalize it away.
+        mismatch = True
     svg = (output / 'review.svg').read_bytes()
     scene_bytes = (output / 'review.scene.json').read_bytes()
     ET.fromstring(svg)
@@ -70,7 +57,7 @@ def characterize(task):
     expected_svg = (manifest_path.parent / slide['expectedSvg']).read_bytes()
     expected_bytes = (manifest_path.parent / slide['expectedScene']).read_bytes()
     baseline = json.loads(expected_bytes)
-    return {'slide': manifest_path.parent.name + '/' + slide_id, 'policy': policy,
+    return {'slide': manifest_path.parent.name + '/' + slide_id,
             'sceneIdentical': scene_bytes == expected_bytes, 'svgIdentical': svg == expected_svg,
             'sceneSha256': sha256(scene_bytes).hexdigest(), 'svgSha256': sha256(svg).hexdigest(),
             'expectedMismatch': mismatch, **route_delta(baseline, scene),
@@ -89,18 +76,17 @@ def main():
     if root.exists() and any(root.iterdir()):
         parser.error('output directory must be empty')
     root.mkdir(parents=True, exist_ok=True)
-    tasks = [(manifest, slide, policy, root) for policy in ('best', 'first-fit')
-             for manifest, slide in manifest_targets()]
+    tasks = [(manifest, slide, root) for manifest, slide in manifest_targets()]
     results = []
     with ProcessPoolExecutor(max_workers=args.jobs) as executor:
         for result in executor.map(characterize, tasks):
             results.append(result)
-            print(result['policy'], result['slide'], 'changed', result['routesChanged'], flush=True)
-    (root / 'policy-evidence.json').write_text(json.dumps(results, indent=2) + '\n', encoding='utf-8')
-    best = [item for item in results if item['policy'] == 'best']
-    print('Best byte-identical:', sum(item['sceneIdentical'] and item['svgIdentical'] for item in best),
-          '/', len(best), flush=True)
+            print(result['slide'], 'changed', result['routesChanged'], flush=True)
+    (root / 'materializer-evidence.json').write_text(json.dumps(results, indent=2) + '\n', encoding='utf-8')
+    print('Byte-identical:', sum(item['sceneIdentical'] and item['svgIdentical'] for item in results),
+          '/', len(results), flush=True)
+    return int(any(not item['sceneIdentical'] or not item['svgIdentical'] for item in results))
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

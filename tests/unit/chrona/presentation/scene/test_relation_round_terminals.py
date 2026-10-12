@@ -29,7 +29,7 @@ def _item(oid, start, end, track="stacked"):
 
 
 def _compose(items, rows, relation, source_shape, target_shape, *, head=6, entry="any", radius=None, window=None,
-             mark_size=8, search="best"):
+             mark_size=8):
     theme = _theme()
     for name, shape in (("src", source_shape), ("dst", target_shape)):
         theme["body"]["values"][name] = {"type": "marker", "value": {"shape": shape, "headLength": head,
@@ -45,8 +45,7 @@ def _compose(items, rows, relation, source_shape, target_shape, *, head=6, entry
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
                                    "timeline.mark.blockSize": Decimal(mark_size),
                                    **({"timeline.relation.cornerRadius": Decimal(radius)} if radius else {})})
-    manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"), relation_entry=entry,
-                       relation_search=search)
+    manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"), relation_entry=entry)
     value = build_scene_input(projection=projection, surface_content=surface_content(relations=(relation,)),
                               layout_manifest=manifest, resolved_theme=theme, font_metrics=_Font(),
                               measured_sources=measurement, capabilities={"svg": True})
@@ -82,15 +81,6 @@ A = _item("a", D(2026, 2, 1), D(2026, 2, 8))
 B = _item("b", D(2026, 2, 12), D(2026, 2, 20))
 DEP = {"id": "dep", "from": {"object": "a", "endpoint": "end"}, "to": {"object": "b", "endpoint": "start"}}
 SHAPES = ["circle", "open-circle", "dot"]
-
-
-@pytest.mark.parametrize("policy", ["first-fit", "best"])
-@pytest.mark.parametrize("source_shape", SHAPES)
-@pytest.mark.parametrize("target_shape", SHAPES)
-def test_both_policies_keep_round_terminals_at_semantic_ports(policy, source_shape, target_shape):
-    path, marks = _compose((A, B), _rows((A,), (B,)), DEP, source_shape, target_shape, search=policy)
-    assert _centre(path, "source") == pytest.approx(_end_port(marks["planned:a:a"]))
-    assert _centre(path, "target") == pytest.approx(_start_port(marks["planned:b:b"]))
 
 
 def _end_port(mark):

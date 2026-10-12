@@ -17,7 +17,7 @@ from tests.support.legacy_axis import use_legacy_six_tier_axis
 # All four entries/indexes/leaders remain present; diagnostics remain empty.
 # #1343 closes natural measurements from resolved annotation/unconsumed-note
 # content. Slot metadata changes; every visible SVG byte remains identical.
-NO_SUPPRESSION_SCENE_SHA256 = "31d97854aa0fea7de000fdfb274c2b332b87eaf13fcae40c2e385e6beb39675b"
+NO_SUPPRESSION_SCENE_SHA256 = "dffcc3c623989fa56fbad64095a51ab379ea281c1720f35f99eafffd4f732b5e"
 NO_SUPPRESSION_SVG_SHA256 = "3e9593666a8f1e60d9180ca6f9697e0ff912626fbe565080edbf5a57d9c5c5ce"
 
 
@@ -72,8 +72,7 @@ def test_unsuppressed_scene_and_svg_match_the_characterized_bytes(tmp_path):
     source, parts = _fixture()
     rendered = sr.render(tmp_path, source, presentation=parts, viewport=(2400, 1400))
 
-    from chrona.presentation.model.info_diagnostics import RelationRoutingSummary
-    assert rendered.scene.diagnostics == (RelationRoutingSummary("table-timeline", 0, 0, 0).scene_diagnostic(),)
+    assert rendered.scene.diagnostics == ()
     ids = _by_id(rendered)
     assert {f"note-index:note-{index}" for index in range(4)} <= ids.keys()
     assert {f"annotation-leader:note-{index}" for index in range(4)} <= ids.keys()

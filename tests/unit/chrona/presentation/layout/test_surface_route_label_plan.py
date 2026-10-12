@@ -88,7 +88,7 @@ def test_budget_hit_facts_survive_rejected_and_accepted_recovery(monkeypatch, re
     facts = []
     def with_fact(context):
         routes = original(context)
-        fact = RelationSearchBudgetHit("table-timeline", "relation:r", context.progress_pass, "best", 1, 1)
+        fact = RelationSearchBudgetHit("table-timeline", "relation:r", context.progress_pass, 1, 1)
         facts.append(fact)
         return replace(routes, routing_info=(fact,))
     monkeypatch.setattr(plan, "compose_surface_routes", with_fact)
@@ -190,7 +190,7 @@ def test_real_owners_recover_centered_name_by_rerouting_a_vertical_dependency(mo
     )
     project, _placed, _actual, _view, projection = fixture._project()
     manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"),
-        relation_entry="side-when-free", relation_search="best", row_distribution="fill", relation_max_bends=4,
+        relation_entry="side-when-free", row_distribution="fill", relation_max_bends=4,
         relation_max_detour_ratio=6)
     content = surface_content(relations=project["relations"], show_member_labels=False,
         label_placement="plot", label_content=(), label_side="inside", label_overflow="suppress")

@@ -109,7 +109,7 @@ def test_default_and_explicit_raw_chip_output_are_byte_identical(tmp_path):
     # #1296 pads the selected-planned window; removing only that rule reproduces
     # both old hashes. Raw and explicit-raw bytes remain exactly identical.
     assert sha256(raw.artifact.content).hexdigest() == "83b5b75f6f548316bc3f3f3f66daf512c007d16adfcb293ed2c31667d59074ec"
-    assert sha256(serialize_scene(raw.scene)).hexdigest() == "83b5e857e57cc3b0260ae669e0f8eb2c9f61351581d92ae062e0aa35825236b7"
+    assert sha256(serialize_scene(raw.scene)).hexdigest() == "9ceb40142549ea31cd56536761d05894be9122f3a7bf4221582d0ea1e6560a66"
     labels = [item for item in raw.surface.primitives if item.kind == "Text" and item.purpose == "member-label"]
     assert labels and any(len(item.text_layout.lines) > 1 for item in labels)
     assert "<tspan" in raw.artifact.content.decode("utf-8")

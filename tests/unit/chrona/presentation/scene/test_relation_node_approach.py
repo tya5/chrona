@@ -32,7 +32,6 @@ def _compose(items, rows, relations, *, window, max_bends=4):
     manifest = replace(
         _manifest("title", "table", "timeline", "timeline-axis"),
         relation_entry="side-when-free",
-        relation_search="best",  # these fixtures characterize ranked node-approach selection
         row_distribution="pack",
         relation_max_bends=max_bends,
         relation_max_detour_ratio=6.0,

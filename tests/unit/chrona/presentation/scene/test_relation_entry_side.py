@@ -26,7 +26,7 @@ def _item(oid, start, end, track="stacked"):
 
 
 def _route(items, rows, relation, entry, *, max_bends=4, window=None, distribution="fill", max_detour=2.0, diagnostics=False,
-           allow_suppressed=False, search="best"):
+           allow_suppressed=False):
     """Return (points, plan marks) of the single relation path for one declared entry policy."""
     all_items = tuple(items)
     window = window or (min(i.planned["start"] for i in all_items), max(i.planned["end"] for i in all_items))
@@ -36,7 +36,7 @@ def _route(items, rows, relation, entry, *, max_bends=4, window=None, distributi
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
                                    "timeline.mark.blockSize": Decimal(8)})
     manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"), relation_entry=entry, row_distribution=distribution,
-                       relation_search=search, relation_max_bends=max_bends, relation_max_detour_ratio=max_detour)
+                       relation_max_bends=max_bends, relation_max_detour_ratio=max_detour)
     value = build_scene_input(projection=projection, surface_content=surface_content(relations=(relation,)),
                               layout_manifest=manifest, resolved_theme=_theme(), font_metrics=_Font(),
                               measured_sources=measurement, capabilities={"svg": True})

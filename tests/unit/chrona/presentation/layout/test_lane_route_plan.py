@@ -53,7 +53,7 @@ def test_budget_hit_facts_survive_rejected_lane_reservation_rehearsal(monkeypatc
     names = SurfaceMemberLabelsBatch((), (), (), (), (), (), (), frozenset())
     facts = []
     def batch(pass_name, suppressed):
-        fact = RelationSearchBudgetHit("table-timeline", "relation:r", pass_name, "best", 2, 2)
+        fact = RelationSearchBudgetHit("table-timeline", "relation:r", pass_name, 2, 2)
         facts.append(fact)
         return SurfaceRoutesBatch((SimpleNamespace(relation_id="relation:r", suppressed=suppressed),),
                                   (), {}, {}, {}, (), (fact,))

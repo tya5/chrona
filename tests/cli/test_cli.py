@@ -421,10 +421,7 @@ def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_pat
 
     envelope = json.loads(capsys.readouterr().out)
     assert envelope["status"] == "ok"
-    assert len(envelope["warnings"]) == 1
-    routing_info = envelope["warnings"][0]
-    assert routing_info["code"] == "I_LAYOUT_RELATION_ROUTING" and routing_info["severity"] == "info"
-    assert routing_info["relationInstances"] == routing_info["shapeSettled"] == routing_info["fallbackSearch"] == 0
+    assert envelope["warnings"] == []
 
     svg_bytes = output.read_bytes()
     assert svg_bytes.startswith(b"<svg")

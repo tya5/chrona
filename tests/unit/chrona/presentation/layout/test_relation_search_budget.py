@@ -121,24 +121,13 @@ def test_each_selection_has_a_fresh_budget_and_immutable_receipt():
         first.search_expansions = 0
 
 
-@pytest.mark.parametrize("policy", ("best", "first-fit"))
-def test_budget_exhaustion_without_accepted_route_is_limited_not_impossible(policy):
+def test_budget_exhaustion_without_accepted_route_is_limited_not_impossible():
     selected = _select((_pair(),) * 3, accept=lambda points: False,
-                       search_budget=1, search_policy=policy)
+                       search_budget=1)
     assert selected.selected_pair is None
     assert selected.budget_hit and selected.search_expansions == 1
     assert len(selected.attempts) == 1
     assert selected.attempts[0].search_failure == "E_PRESENTATION_ROUTE_LIMIT"
-
-
-def test_shape_completion_does_not_consume_explicit_budget(monkeypatch):
-    def forbidden(*args, **kwargs):
-        pytest.fail("A completed shape must not enter candidate search.")
-
-    monkeypatch.setattr(search, "orthogonal_route_candidates", forbidden)
-    selected = _select((_pair(),), search_budget=1, search_policy="first-fit")
-    assert selected.settled_by_shape and not selected.search_used
-    assert selected.search_expansions == 0 and not selected.budget_hit
 
 
 def test_frontier_accounting_and_graph_cache_hits_charge_equally():

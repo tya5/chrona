@@ -3,8 +3,8 @@ import json
 import pytest
 
 from chrona.usecases.materialize import MaterializationError
-from tools import relation_policy_evidence as evidence
-from tools.relation_policy_evidence import route_delta
+from tools import routing_performance_evidence as evidence
+from tools.routing_performance_evidence import route_delta
 
 
 def scene(*paths):
@@ -27,8 +27,7 @@ def test_unchanged_routes_have_zero_delta():
     assert not any(route_delta(value, value).values())
 
 
-@pytest.mark.parametrize('policy', ('best', 'first-fit'))
-def test_characterization_pins_only_normalization_and_accepts_only_evidence_mismatch(tmp_path, monkeypatch, policy):
+def test_characterization_uses_real_materializer_and_records_only_evidence_mismatch(tmp_path, monkeypatch):
     project = tmp_path / 'synthetic'
     project.mkdir()
     manifest = project / 'manifest.yaml'
@@ -39,21 +38,17 @@ def test_characterization_pins_only_normalization_and_accepts_only_evidence_mism
     serialized = json.dumps(value).encode()
     (project / 'before.svg').write_bytes(svg)
     (project / 'before.scene.json').write_bytes(serialized)
-    monkeypatch.setattr(evidence.engine, 'LayoutManifest', lambda **kwargs: kwargs)
-    original = evidence.engine.LayoutManifest
     def materializer(manifest_path, slide_id, output, *, write):
         assert not write and manifest_path == manifest and slide_id == 'synthetic'
-        assert evidence.engine.LayoutManifest(relation_search='ignored') == {'relation_search': policy}
         output.mkdir(parents=True)
         (output / 'review.svg').write_bytes(svg)
         (output / 'review.scene.json').write_bytes(serialized)
         raise MaterializationError('E_MATERIALIZER_MISMATCH')
     monkeypatch.setattr(evidence, 'materialize', materializer)
-    result = evidence.characterize((manifest, 'synthetic', policy, tmp_path / 'output'))
+    result = evidence.characterize((manifest, 'synthetic', tmp_path / 'output'))
     assert result['sceneIdentical'] and result['svgIdentical'] and result['expectedMismatch']
-    assert evidence.engine.LayoutManifest is original
     def broken(*args, **kwargs):
         raise MaterializationError('E_CONTENT_IDENTITY')
     monkeypatch.setattr(evidence, 'materialize', broken)
     with pytest.raises(MaterializationError, match='E_CONTENT_IDENTITY'):
-        evidence.characterize((manifest, 'synthetic', policy, tmp_path / 'broken'))
+        evidence.characterize((manifest, 'synthetic', tmp_path / 'broken'))
