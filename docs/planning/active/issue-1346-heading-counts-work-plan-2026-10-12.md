@@ -123,16 +123,16 @@ receipts. Real4→3 closure isolation is tested under best and first-fit.
 Integrated count/policy/budget/ownership/tool batch55 PASS; S0 L1/L2/L3 PASS.
 The composer remains orchestration-sized; no acceptance assertion was relaxed.
 
-P4 local literal evidence passes for Title Card, Marquee and Sunday on actual
+Integrated P4 local literal evidence passes for Title Card, Marquee and Sunday on actual
 HALCYON/roadmap Contexts, with independent3-item/2-group controls that change
 Scene/SVG text. `tools/heading_count_reuse_evidence.py` reproduces disposable
-stores sharing design Theme/Layout/Scheme. Previous evidence:
-`/tmp/chrona-1346-reuse-evidence-iXvAKS/heading-reuse-evidence.json` and
-`/tmp/chrona-1346-reuse-control-Pr5wkX/heading-reuse-evidence.json`.
-Original46 full Scene/SVG pairs matched before integration; integrated batch
-evidence is required before publication.
+stores sharing design Theme/Layout/Scheme. All9 actual render cases pass:
+`/tmp/chrona-1346-integrated-reuse-NnnSYD/heading-reuse-evidence.json`.
+Integrated46 full Scene/SVG pairs are byte-identical, with zero route deltas:
+`/tmp/chrona-1346-integrated-materializers-p7Gtzt/materializer-evidence.json`.
+Import direction, reachability (244 modules/no orphan) and value inventory pass.
 
-Next: integrated public byte/reuse batch, reconcile the final READY main tip,
+Next: reconcile the final READY main tip,
 one coherent implementation PR/current-head CI, then literal acceptance review
 and exact-main three-OS release gate. No authored examples/resources or managed
 outputs changed. #1430 is parked awaiting reviewer-owned target declarations;
