@@ -1,10 +1,11 @@
 import pytest
 
 from chrona.presentation.layout.labels import (
-    LabelObstacle, LabelPlacement, LabelRect, MemberNameAssociation, nearest_rect_perimeters, place_label, place_member_name,
+    LabelObstacle, LabelPlacement, LabelRect, LabelRequest, MemberNameAssociation, nearest_rect_perimeters, place_label, place_member_name,
 )
+from chrona.presentation.layout.surface_quality import CollisionDomain
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.surface_member_labels import _member_association_outcome
+from chrona.presentation.layout.surface_member_labels import _finish_delta_anchor_diagnostic, _member_association_outcome
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.text import wrap_text
 
@@ -28,6 +29,70 @@ def test_labels_use_declared_finite_candidate_order_and_obstacles():
                          obstacles=[LabelRect(30, 30, 40, 10)], gap=2)
     assert result.side == "end"
     assert result.bounds == LabelRect(62, 41, 30, 8)
+
+
+@pytest.mark.parametrize("offset", (0, 7, 31))
+def test_clear_bar_relative_end_slot_survives_translation_and_unrelated_obstacle(offset):
+    result = place_label(LabelRect(40 + offset, 40, 20, 10), (20, 8),
+                         ("end", "start", "above", "below"),
+                         bounds=LabelRect(offset, 0, 150, 100), gap=2,
+                         obstacles=(LabelObstacle("unrelated", LabelRect(offset, 80, 10, 10)),),
+                         search_side_neighborhood=True)
+    assert result.side == "end"
+    assert result.bounds == LabelRect(62 + offset, 41, 20, 8)
+    assert result.canonical_obstructions == ()
+    assert result.search_count == 0
+
+
+def _delta_request():
+    return LabelRequest("variance:a", "a", "+2d", LabelRect(40, 40, 20, 10),
+                        ("end", "start", "above", "below"), "summary", "variance:a",
+                        CollisionDomain("timeline", "overlay"), "suppress", semantic_id="finishDelta")
+
+
+def test_delta_fallback_reports_exact_sorted_mark_owners_without_requerying():
+    import json
+
+    obstacles = SurfaceObstacleIndex()
+    for identity in ("planned:z", "actual:b"):
+        obstacles.add(SurfaceObstacle(identity, "mark", "timeline", ObstacleRect(62, 40, 82, 50)))
+    result = place_label(_delta_request().anchor, (20, 8), _delta_request().candidates,
+                         bounds=LabelRect(0, 0, 150, 100), obstacles=obstacles, gap=2)
+    assert result.side == "start"
+    evidence = result.canonical_obstructions[0]
+    assert evidence.occupied and not evidence.outside_bounds
+    assert evidence.blocker_placement_ids == ("actual:b", "planned:z")
+    assert json.loads(_finish_delta_anchor_diagnostic(_delta_request(), result).split(":", 1)[1]) == {
+        "placementId": "variance:a", "preferredSide": "end", "selectedSide": "start",
+        "blockerPlacementIds": ["actual:b", "planned:z"], "outsideBounds": False,
+    }
+
+
+def test_delta_bounds_fallback_does_not_invent_a_blocking_mark():
+    import json
+
+    request = _delta_request()
+    result = place_label(request.anchor, (20, 8), request.candidates,
+                         bounds=LabelRect(0, 0, 70, 100), gap=2)
+    assert result.side == "start"
+    evidence = result.canonical_obstructions[0]
+    assert evidence.outside_bounds and not evidence.occupied
+    assert evidence.blocker_placement_ids == ()
+    payload = json.loads(_finish_delta_anchor_diagnostic(request, result).split(":", 1)[1])
+    assert payload["outsideBounds"] and payload["blockerPlacementIds"] == []
+
+
+def test_same_side_displacement_retains_the_preferred_slot_blocker():
+    import json
+
+    request = _delta_request()
+    result = place_label(request.anchor, (20, 8), ("end",),
+                         bounds=LabelRect(0, 0, 150, 100), gap=2,
+                         obstacles=(LabelObstacle("planned:b", LabelRect(62, 41, 20, 4)),),
+                         search_side_neighborhood=True)
+    assert result.side == "end" and result.search_count > 0
+    payload = json.loads(_finish_delta_anchor_diagnostic(request, result).split(":", 1)[1])
+    assert payload["selectedSide"] == "end" and payload["blockerPlacementIds"] == ["planned:b"]
 
 
 def test_inside_retains_measured_text_when_visible_overflow_is_selected():
