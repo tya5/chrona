@@ -19,10 +19,7 @@ from chrona.presentation.scene.capabilities import (
 )
 from chrona.presentation.scene.contrast_policy import evaluate_scene_contrast
 from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
-from chrona.presentation.scene.v05_builder import (
-    build_scene_input,
-    compose_review_surface,
-)
+from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
     BACKGROUND_EXTENTS,
     _axis_tiers_scene,
@@ -67,7 +64,7 @@ def _network(theme: dict):
     measured = MeasuredSources({}, {}, {
         "network.node.minInlineSize": Decimal(60), "network.node.minBlockSize": Decimal(30), "network.rank.gap": Decimal(12),
     }, {"title": (run(None, "Network", "heading", 80, 24, 20),), "network": (run("a", "A", "text", 20, 14, 11),)})
-    value = build_scene_input(projection=projection, surface_content=surface_content(), layout_manifest=manifest,
+    value = build_surface_input(projection=projection, surface_content=surface_content(), layout_manifest=manifest,
                               resolved_theme=theme, font_metrics=object(), measured_sources=measured,
                               capabilities={"svg": True})
     return compose_review_surface(value)

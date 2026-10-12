@@ -23,6 +23,9 @@ DECIMAL_SEEDED_SUM_FUNCTIONS = {
     "surface_base.py": frozenset({"prepare_surface_inline"}),
     "table_measurement.py": frozenset({"measure_bounded_table"}),
     "tracks.py": frozenset({"resolve_flexible_tracks"}),
+    # Extracted source factory preserves the previous Application precision:
+    # every visual advance is Decimal(str(width + gap)), seeded by Decimal(0).
+    "surface_source_inputs.py": frozenset({"_annotation_source_input"}),
 }
 
 

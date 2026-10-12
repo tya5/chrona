@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 from math import hypot, isfinite
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.pattern_placement import PatternedPlacement, PatternPathCommand
@@ -740,6 +740,30 @@ class LaneLabelSuppression:
 
 
 @dataclass(frozen=True)
+class NarrativeReceipt:
+    """One producer-owned completed narrative occurrence, not a Scene identifier census."""
+
+    kind: Literal["annotation", "note"]
+    source_id: str
+    placement_id: str
+    form: Literal["body", "summary"] = "body"
+    occurrence_index: int = 0
+
+    def __post_init__(self) -> None:
+        if (self.kind not in {"annotation", "note"} or self.form not in {"body", "summary"}
+                or (self.kind == "note" and self.form != "body")
+                or not isinstance(self.source_id, str) or (self.kind == "annotation" and not self.source_id)
+                or not isinstance(self.placement_id, str) or not self.placement_id
+                or isinstance(self.occurrence_index, bool) or not isinstance(self.occurrence_index, int)
+                or self.occurrence_index < 0 or (self.kind == "annotation" and self.occurrence_index != 0)):
+            raise ValueError("invalid completed narrative receipt")
+
+    @property
+    def identity(self) -> tuple[str, str, int]:
+        return self.kind, self.source_id, self.occurrence_index
+
+
+@dataclass(frozen=True)
 class SurfacePlacement:
     """The complete geometry handoff from Layout to Scene."""
 
@@ -770,9 +794,17 @@ class SurfacePlacement:
     auto_block_warning: AutoBlockSizeWarning | None = None
     window_label_absences: tuple[WindowLabelAbsence, ...] = ()
     lane_window_absences: tuple[LaneWindowPlacementAbsence, ...] = ()
+    narrative_receipts: tuple[NarrativeReceipt, ...] = ()
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""
+        if any(not isinstance(item, NarrativeReceipt) for item in self.narrative_receipts):
+            raise ValueError("invalid completed narrative receipt type")
+        if self.narrative_receipts:
+            completed_text = {item.placement_id for item in self.text if item.overflow != "suppressed"}
+            if (len({item.identity for item in self.narrative_receipts}) != len(self.narrative_receipts)
+                    or any(item.placement_id not in completed_text for item in self.narrative_receipts)):
+                raise ValueError("duplicate or uncompleted narrative receipt")
         from chrona.presentation.layout.lane_window_marks import LaneWindowPlacementAbsence
         if any(not isinstance(item, LaneWindowPlacementAbsence) for item in self.lane_window_absences):
             raise ValueError("E_LAYOUT_WINDOW_CLIP: invalid completed lane absence")

@@ -27,6 +27,7 @@ def test_checker_accepts_reviewed_decimal_and_count_sums_but_rejects_geometry_su
     ("surface_base.py", "prepare_surface_inline"),
     ("table_measurement.py", "measure_bounded_table"),
     ("tracks.py", "resolve_flexible_tracks"),
+    ("surface_source_inputs.py", "_annotation_source_input"),
 ])
 def test_new_decimal_owners_require_an_explicit_decimal_seed(tmp_path, filename, owner):
     path = tmp_path / filename

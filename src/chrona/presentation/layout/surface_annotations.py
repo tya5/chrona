@@ -59,7 +59,7 @@ from chrona.presentation.layout.routing import (
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
     IconPlacement, LayoutImageFill, ShapePlacement, SurfaceLayoutRequest,
-    SlotPlacement, TextPlacement, annotation_presentation,
+    NarrativeReceipt, SlotPlacement, TextPlacement, annotation_presentation,
 )
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.image_slice_geometry import image_slice_tiles
@@ -218,6 +218,7 @@ class SurfaceAnnotationBatch:
     suppressed_index_ids: frozenset[str]
     suppressed_callout_ids: frozenset[str]
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
+    narrative_receipts: tuple[NarrativeReceipt, ...] = ()
 
 
 def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBatch:
@@ -284,6 +285,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
     metric_for, surface_obstacles = context.metric_for, context.surface_obstacles
     register_rect, register_port = context.register_rect, context.register_port
     text: list[TextPlacement] = []
+    narrative_receipts: list[NarrativeReceipt] = []
     shapes: list[ShapePlacement] = []
     relations: list[RelationPlacement] = []
     candidate_icons: list[IconPlacement] = []
@@ -873,7 +875,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                         text_transform=annotation_treatment.transform)
                                     for line in summary_lines)
                                 summary_height = size * line_height * len(summary_lines)
-                                complete_list_record(
+                                summary_placement, _ = complete_list_record(
                                     annotation=annotation, resolved=resolved,
                                     placement_id=f"annotation-summary:{annotation_id}",
                                     content=summary_content, lines=summary_lines,
@@ -881,6 +883,9 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                     typography_role=annotation_text_role,
                                     presentation=presentation,
                                     anchor_y=anchor_bounds.y + anchor_bounds.height / 2)
+                                if annotation.content and summary_placement.overflow != "suppressed":
+                                    narrative_receipts.append(NarrativeReceipt(
+                                        "annotation", annotation_id, summary_placement.placement_id, "summary"))
                             continue
                         if "suppress" in ladder:
                             placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
@@ -1102,6 +1107,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             if tilt_angle:
                 placed_annotation = rotate_text(placed_annotation, tilt_center, tilt_angle)
             text.append(placed_annotation)
+            if annotation.content and placed_annotation.overflow != "suppressed":
+                narrative_receipts.append(NarrativeReceipt("annotation", annotation_id, placed_annotation.placement_id))
             register_rect(placed_annotation.placement_id, "text", "annotations", placed_annotation.bounds)
             if annotation_slot is not None and annotation.number is not None and status_in_list:
                 rail_records.append(placed_annotation)
@@ -1265,7 +1272,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
         tuple(text), tuple(shapes), tuple(relations), tuple(candidate_icons), tuple(placement_decisions),
         tuple(diagnostics), tuple(visible_label_overflows), tuple(visible_route_fallbacks),
         frozenset(handled_candidate_visuals), frozenset(discovered_index_suppressions),
-        frozenset(discovered_callout_suppressions), tuple(diagnostic_provenance))
+        frozenset(discovered_callout_suppressions), tuple(diagnostic_provenance), tuple(narrative_receipts))
 
 
 def comparison_marks(projection: Any) -> tuple[ComparisonMark, ...]:

@@ -97,7 +97,7 @@ def _composition(*tiers, theme=None):
                                         "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
                                         "timeline.mark.blockSize": Decimal(8)})
     content = base.surface_content(axis_tiers=tiers)
-    value = base.build_scene_input(projection=projection, surface_content=content,
+    value = base.build_surface_input(projection=projection, surface_content=content,
                                    layout_manifest=base._manifest("title", "table", "timeline", "timeline-axis"),
                                    resolved_theme=theme or _theme_with(), font_metrics=base._Font(),
                                    measured_sources=measurement, capabilities={"svg": True})

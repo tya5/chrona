@@ -15,7 +15,9 @@ from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Any, TYPE_CHECKING
 
-from chrona.presentation.layout.model import LayoutDecision, Measurement, Rect, ResolvedLayoutProfile
+from chrona.presentation.count_text import CountTextError
+from chrona.presentation.figure_text import FigureTextError, FigureTextProgram, FigureTextReadError, compile_figure_text
+from chrona.presentation.layout.model import LayoutDecision, LayoutError, Measurement, Rect, ResolvedLayoutProfile
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, SlotPlacement, TextPlacement
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
@@ -59,16 +61,16 @@ def _headed_content_slots(node: Mapping[str, Any]) -> tuple[str, ...]:
     return tuple(found)
 
 
-def _start_column_slots(node: Mapping[str, Any], path: str = "/root") -> dict[str, tuple[str, str, str | None]]:
+def _start_column_slots(node: Mapping[str, Any], path: str = "/root") -> dict[str, tuple[str, str | None, str | None]]:
     """Legend slots that declare `columns` and a `start-column` caption: source -> (node id, caption text, gap key) (#1290).
 
     The gap key is the distance pointer of a declared caption `gap` (#1392), else None."""
-    found: dict[str, tuple[str, str, str | None]] = {}
+    found: dict[str, tuple[str, str | None, str | None]] = {}
     if node.get("kind") == "slot":
         heading = node.get("heading")
         if (isinstance(heading, Mapping) and heading.get("block") == "start-column"
                 and node.get("source") == "legend" and node.get("columns")):
-            found[str(node["source"])] = (str(node["id"]), str(heading["text"]),
+            found[str(node["source"])] = (str(node["id"]), heading.get("text"),
                                           f"{path}/heading/gap" if "gap" in heading else None)
     for index, child in enumerate(node.get("children", ())):
         found.update(_start_column_slots(child, f"{path}/children/{index}"))
@@ -87,6 +89,62 @@ def headed_slot_ids(resolved_layout: ResolvedLayoutProfile) -> frozenset[str]:
 
     visit(resolved_layout.profile["root"])
     return frozenset(found)
+
+
+@dataclass(frozen=True)
+class SlotHeadingProgram:
+    node_id: str
+    source: str
+    program: FigureTextProgram
+    pointer: str
+
+
+def compile_slot_heading_programs(root: Mapping[str, Any], figures: Any) -> tuple[SlotHeadingProgram, ...]:
+    """Close all caption references without reading values or performing geometry."""
+    declared = {item.figure_id: item for item in figures}
+    programs = []
+
+    def visit(node: Mapping[str, Any], path: str) -> None:
+        heading = node.get("heading")
+        if isinstance(heading, Mapping) and "template" in heading:
+            pointer = f"{path}/heading/template"
+            try:
+                program = compile_figure_text(heading["template"])
+                for identifier in sorted(program.figure_ids):
+                    target = declared.get(identifier)
+                    if target is None:
+                        raise FigureTextError("E_VIEW_FIGURE_UNKNOWN", f"caption names undeclared figure {identifier!r}")
+                    if target.scope != "global":
+                        raise FigureTextError("E_FIGURE_SCOPE_UNAVAILABLE", f"caption has no current group for figure {identifier!r}")
+                programs.append(SlotHeadingProgram(str(node["id"]), str(node["source"]), program, pointer))
+            except FigureTextError as error:
+                raise FigureTextReadError(error, pointer, "layout-profile") from error
+        for index, child in enumerate(node.get("children", ())):
+            visit(child, f"{path}/children/{index}")
+
+    visit(root, "/root")
+    return tuple(programs)
+
+
+def bind_slot_heading_templates(resolved_layout: ResolvedLayoutProfile, *, content: Any,
+                                view: Any, figures: Mapping[str, int], measured: MeasuredSources) -> Any:
+    """Bind present caption reads before sizing; keep profile identity and literal overrides."""
+    copies = dict(content.slot_heading_text)
+    for item in compile_slot_heading_programs(resolved_layout.profile["root"], view.figures):
+        if (item.node_id not in copies and item.source in measured.measurements
+                and source_has_content(content, item.source, measured_inputs=measured.inputs)):
+            try:
+                copies[item.node_id] = item.program.bind(figures, view.figure_formats)
+            except (CountTextError, FigureTextError) as error:
+                raise FigureTextReadError(error, item.pointer, "layout-profile") from error
+    return replace(content, slot_heading_text=tuple(sorted(copies.items())))
+
+
+def _caption_text(node_id: str, literal: str | None, copies: Mapping[str, str]) -> str:
+    text = copies.get(node_id, literal)
+    if text is None:
+        raise LayoutError("E_LAYOUT_SCHEMA", detail=f"caption {node_id!r} template must be bound before measurement", node_id=node_id)
+    return text
 
 
 def reserve_slot_heading_blocks(measured: MeasuredSources, resolved_layout: Any, tokens: Any, *,
@@ -116,7 +174,7 @@ def reserve_slot_heading_blocks(measured: MeasuredSources, resolved_layout: Any,
         metrics = metric_for_role(tokens, tokens.slot_heading_role(), font_metrics)
         caption_gap = resolved_layout.distances[gap_key] if gap_key is not None else size * _GAP_EM
         width = Decimal(str(measure_text_width(
-            overrides.get(node_id, text), font_size=float(treatment.font_size), font_metrics=metrics,
+            _caption_text(node_id, text, overrides), font_size=float(treatment.font_size), font_metrics=metrics,
             letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
             numeric_spacing=treatment.numeric_spacing))) + caption_gap
         line = size * Decimal(str(treatment.line_height))
@@ -266,7 +324,7 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
                 diagnostics.append(f"I_LAYOUT_SLOT_HEADING_OMITTED:{decision.node_id}:too-small")
                 continue
             available = float(bounds.inline_size)
-            source_content = copy_overrides.get(decision.node_id, heading.text)
+            source_content = _caption_text(decision.node_id, heading.text, copy_overrides)
             content, disposition = source_content, "fit"
             natural = measure_text_width(content, **shape)
             if natural > available:
@@ -309,7 +367,7 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
             diagnostics.append(f"I_LAYOUT_SLOT_HEADING_OMITTED:{decision.node_id}:too-small")
             continue
         available = float(bounds.inline_size)
-        source_content = copy_overrides.get(decision.node_id, heading.text)
+        source_content = _caption_text(decision.node_id, heading.text, copy_overrides)
         content, disposition = source_content, "fit"
         natural = measure_text_width(content, **shape)
         if natural > available:

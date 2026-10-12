@@ -9,6 +9,10 @@ description: >-
   and a change is a new part version, never an edit. A context that accepts only part of a vocabulary
   declares a named subset definition beside the full one, and a test proves the subset is contained in it.
 $defs:
+  relationSearchPolicy:
+    description: "Layout's declared relation search: shape-first first-fit or legacy ranked best."
+    examples: [first-fit]
+    enum: [first-fit, best]
   visualProfile:
     description: "Exact renderer-neutral visual capability profile."
     examples: ["chrona-output/visual/v0.5-baseline"]
@@ -30,6 +34,10 @@ $defs:
     description: "Author intent for an annotation."
     examples: [callout]
     enum: [callout, highlight, note, explanatory-arrow]
+  plannedActualFacet:
+    description: "A primary temporal facet used by annotation anchors and semantic marks."
+    examples: [planned]
+    enum: [planned, actual]
   annotationSide:
     description: "Logical side of the anchor on which an annotation is placed."
     examples: [above]

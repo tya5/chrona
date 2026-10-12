@@ -12,6 +12,50 @@ def _index():
     return index
 
 
+def test_bound_modes_partition_graph_memo_but_share_visibility_geometry(monkeypatch):
+    original = route_search._reverse_bounds
+    visibility_builder = route_search._build_visibility_base
+    calls = []
+    visibility_calls = []
+    def counted(*args):
+        calls.append(None)
+        return original(*args)
+    monkeypatch.setattr(route_search, "_reverse_bounds", counted)
+    def visibility(*args, **kwargs):
+        visibility_calls.append(None)
+        return visibility_builder(*args, **kwargs)
+    monkeypatch.setattr(route_search, "_build_visibility_base", visibility)
+    index = _index()
+    def path(exact):
+        return next(route_search.orthogonal_route_candidates(
+            (0, 0), (10, 0), index, bounds=(-2, -5, 12, 5), exact_bound=exact))
+    cheap = path(False)
+    assert calls == []
+    assert len(index._route_memo.results) == 1
+    cheap_graph = next(iter(index._route_memo.results.values()))
+    assert cheap_graph[2] == ()
+    exact = path(True)
+    assert len(calls) == 1
+    assert len(index._route_memo.results) == 2
+    exact_graph = next(value for value in index._route_memo.results.values() if value[2])
+    assert cheap_graph[:2] == exact_graph[:2]
+    assert path(False) == cheap and path(True) == exact
+    assert len(calls) == 1  # neither mode borrowed or rebuilt the other's memo
+    assert len(visibility_calls) == 1
+
+
+def test_cheap_bound_keeps_alternative_prefixes_and_budget_accounting():
+    from itertools import islice
+    index = _index()
+    budget = route_search.RelationExpansionBudget(128)
+    paths = list(islice(route_search.orthogonal_route_candidates(
+        (0, 0), (10, 0), index, bounds=(-2, -5, 12, 5),
+        exact_bound=False, budget=budget), 2))
+    assert len(paths) == 2 and paths[0] != paths[1]
+    assert all(path[0] == (0, 0) and path[-1] == (10, 0) for path in paths)
+    assert 0 < budget.expansions <= 128
+
+
 def test_identical_copy_reuses_graph_but_query_parameters_remain_part_of_key(monkeypatch):
     original_builder = route_search._build_sparse_graph
     calls = []

@@ -157,7 +157,7 @@ class AnnotationIntent:
     # Presentation-composed kind text; Layout measures these strings without figure substitution.
     kind_header_lines: tuple[str, ...] | None = None
     kind_heading_text: str | None = None
-    # Canonical View anchor pointer retained for Layout failures only; never enters
+    # Canonical declared View/Project anchor pointer for Layout failures only; never enters
     # placement equality, hashing, repr or Scene output.
     anchor_source_ref: str = field(default="/", kw_only=True, compare=False, hash=False, repr=False)
 
@@ -264,7 +264,7 @@ class SurfaceContentInput:
     # Required plot-label text of each point drawn on the row of the span it
     # attaches to (#486): title, planned date and finish delta, never dropped.
     attached_labels: tuple[tuple[str, str], ...] = ()
-    # View-selected literal caption copy, keyed by an already headed Layout slot node.
+    # View literal overrides plus Layout-bound template copy, keyed by a headed slot node.
     slot_heading_text: tuple[tuple[str, str], ...] = ()
     # Completed Scheme colours keyed by neutral axis-band placement identity (#490).
     axis_band_paints: tuple[tuple[str, str], ...] = ()

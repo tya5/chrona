@@ -182,17 +182,19 @@ def test_controller_annotation_evidence_realizes_each_purpose_through_layout_com
     example = ROOT / "examples/controller-z"
     materialize(example / "manifest.yaml", "annotations", tmp_path / "annotations", write=False)
     artifact = (tmp_path / "annotations/review.svg").read_text(encoding="utf-8")
-    for identifier in ("architecture-callout", "evb-highlight", "performance-note", "bringup-risk", "firmware-slip"):
+    for identifier in ("architecture-callout", "evb-highlight", "performance-note", "bringup-risk"):
         assert f'data-scene-id="annotation-box:{identifier}"' in artifact
         assert f'data-scene-id="annotation-text:{identifier}"' in artifact
-    for identifier in ("architecture-callout", "performance-note", "bringup-risk", "firmware-slip"):
+    for identifier in ("architecture-callout", "performance-note", "bringup-risk"):
         assert f'data-scene-id="annotation-leader:{identifier}"' in artifact
     # Completed stroke envelopes provide safe corridors for both arrows.
-    assert 'data-scene-id="annotation-summary:firmware-slip"' not in artifact
+    # The one-pass default retains an infeasible callout as a truthful summary.
+    assert 'data-scene-id="annotation-summary:firmware-slip"' in artifact
+    assert 'data-scene-id="annotation-box:firmware-slip"' not in artifact
     assert 'data-scene-id="annotation-summary:bringup-risk"' not in artifact
-    assert "callout not shown on plot" not in artifact
+    assert "callout not shown on plot" in artifact
     scene_text = (tmp_path / "annotations/review.scene.json").read_text(encoding="utf-8")
-    assert "W_LAYOUT_ANNOTATION_SUPPRESSED" not in scene_text
+    assert "W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" in scene_text
     assert 'data-scene-id="annotation-leader:evb-highlight"' not in artifact
     leader = re.search(r'data-scene-id="annotation-leader:bringup-risk"[^>]* d="([^"]+)"', artifact)
     assert leader is not None and leader.group(1).count("L") >= 5
@@ -494,7 +496,7 @@ def test_halcyon_current_project_pin_rejects_changed_source_bytes(tmp_path):
         copy_context_closure(copied_example, context_path, tmp_path / "snapshot")
 
 
-HALCYON_PROJECT_REVISION = "example-v5"
+HALCYON_PROJECT_REVISION = "example-v6"
 
 
 def test_every_halcyon_context_pins_current_project_without_repinning_theme():

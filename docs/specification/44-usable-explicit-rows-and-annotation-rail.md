@@ -29,6 +29,63 @@ disposition and existing warnings. Ordinary fitting candidates and numbered
 list order remain unchanged; required peer notes must not share a clamped
 fallback position.
 
+## Reusable Project-note placement (#1343)
+
+The two new declarations are table-timeline intent and follow the existing
+dependency-network exclusion of annotation placement; network Views reject
+them rather than silently ignoring completed-note intent.
+Project annotations remain the authority for narrative text, kind and
+`anchor.object`. An effective View MAY declare
+`annotationBindings`, an ordered finite list of `{kind, temporalKind, purpose,
+facet, endpoint}`. `kind` matches the exact Project kind; `temporalKind` is
+`point`, `span` or `any`, classified from the selected object's resolved
+planned temporal shape, never its painted mark or Actual availability.
+Purpose, facet and endpoint reuse the existing annotation vocabulary.
+Bindings contain no Project IDs, coordinates or executable selectors.
+
+`annotationPlacement` maps purpose to one existing placement spelling:
+`{candidates: [...]}` or `{placement: ...}`. It introduces no alternative
+candidate language. The Layout profile MAY offer this map through
+`viewDefaults.annotationPlacement`; a View's declared map replaces that
+whole member, including an explicitly empty map. Kind-to-purpose and
+facet/endpoint bindings belong to the connector View, not the Layout profile.
+
+When annotations are visible, expansion considers each Project note whose
+anchor object has a selected primary/combined occurrence or folded point.
+Ghosts do not create duplicate notes. The first matching binding wins;
+within each binding, notes sort by their Project annotation key. Unmatched
+kinds and unselected anchors retain the existing unconsumed notes-slot
+behavior. Missing requested facet/endpoint geometry retains the existing
+Layout anchor diagnostic; no fallback facet or guessed coordinate is added.
+
+Explicit `annotations` retain their declared order and existing behavior.
+Any explicit `projectAnnotation` reference overrides automatic expansion of
+that note; multiple explicit occurrences remain explicit author intent.
+Automatic notes follow the explicit list in binding/key order. An automatic
+ID is `<Project annotation key>-<purpose>`. A collision with another final ID
+rejects as `E_PRESENTATION_ANNOTATION_IDENTITY`, with both source references;
+it never silently replaces an unrelated explicit annotation. Automatic notes
+consume Project narrative once and do not duplicate it in the notes slot.
+An explicit annotation without candidates/placement MAY inherit its purpose
+policy; declared candidates/placement replace that policy without merging.
+An unresolved policy rejects as `E_PRESENTATION_ANNOTATION_POLICY_MISSING`.
+
+Pure Presentation normalization closes selection, identity, narrative and
+typed anchor intent without mutating Project or resource inputs. Generated
+anchor diagnostics reference `/annotations/<escaped key>/anchor` in the
+Project, not an invented View-list index. Layout receives the resulting
+ordinary typed annotation intents and owns measurement, candidate search,
+obstacles, box and connector geometry. Scene/adapters remain projection.
+Both natural slot measurement and placement consume this same closed intent:
+annotation SourceInput includes resolved narrative/numbering/visual advances,
+and notes SourceInput includes only unconsumed notes. Neither re-reads the raw
+View list or counts consumed Project notes. This corrects the existing
+prefix-only measurement of Project-referenced annotations. Legacy naturally
+sized annotation/notes hosts may change allocation; fixed five-design note
+placement and serialized SVG remain acceptance gates. Existing explicit
+selection/identity/candidates are not changed or kept behind a compatibility
+measurement path.
+
 ## Boundary with slide vocabulary
 
 This specification deliberately excludes overlay tracks, group headers, calendar bands/as-of markers, legend swatches, and configurable label formats. Those are additive Review vocabulary owned by #42.

@@ -15,6 +15,7 @@ from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 import re
 from typing import Any
+from chrona.presentation.number_names import kanji_number
 
 ORDINAL_FORMS = ("arabic", "zero-padded", "roman", "kanji", "kanji-formal")
 PLACEHOLDERS = ("ordinal", "title", "secondary")
@@ -24,8 +25,6 @@ ROLE_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9_-]*")
 
 _ROMAN = ((1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"), (90, "XC"),
           (50, "L"), (40, "XL"), (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I"))
-_KANJI = {"digits": "〇一二三四五六七八九", "ten": "十"}
-_KANJI_FORMAL = {"digits": "〇壱弐参肆伍陸漆捌玖", "ten": "拾"}
 _RANGES = {"roman": (1, 3999), "kanji": (1, 99), "kanji-formal": (1, 99)}
 
 
@@ -146,10 +145,7 @@ def format_ordinal(position: int, form: str, *, group_count: int) -> str:
                 out.append(numeral)
                 remaining -= value
         return "".join(out)
-    table = _KANJI if form == "kanji" else _KANJI_FORMAL
-    tens, ones = divmod(position, 10)
-    prefix = "" if tens == 0 else table["ten"] if tens == 1 else table["digits"][tens] + table["ten"]
-    return prefix + (table["digits"][ones] if ones else "")
+    return kanji_number(position, formal=form == "kanji-formal")
 
 
 def _field_text(value: str, *, ordinal: str, title: str, secondary: str | None,

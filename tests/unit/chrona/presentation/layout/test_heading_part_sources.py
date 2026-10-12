@@ -9,7 +9,7 @@ from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measu
 from chrona.presentation.layout.surface_quality import SlotPlacement
 from chrona.presentation.model.surface_content import HeadingContent, SummaryContent
 from chrona.presentation.model.theme_tokens import TextTreatment
-from chrona.usecases.render_review import _source_inputs
+from chrona.presentation.layout.surface_source_inputs import _source_inputs
 from tests.unit.chrona.presentation.layout.test_sources import theme
 
 
@@ -28,7 +28,7 @@ def _source_map(*, surface="table-timeline", legacy_heading=None, view_heading=N
     projection = SimpleNamespace(lane_rows=(), rows=(SimpleNamespace(label="Row"),), items=(),
                                  window=(date(2026, 1, 1), date(2026, 1, 2)), network=None)
     content = SimpleNamespace(axis_tiers=(), group_details=(), milestones=(),
-                               observation_rows=(), observation_columns=())
+                               observation_rows=(), observation_columns=(), notes=())
     return _source_inputs(
         {"project": {"title": "Project title"}, "annotations": {}}, view, projection,
         SummaryContent(()), content=content,

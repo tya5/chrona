@@ -217,8 +217,10 @@ body:
     - ops
     presentation: header
     header:
-      text: '{ordinal}'
+      text: '{ordinal}・{secondary}'
       ordinal: kanji-formal
+      secondary:
+        entityField: titleJa
   ordering:
     by: source
     direction: ascending

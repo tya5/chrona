@@ -26,8 +26,10 @@ def main() -> int:
     root.mkdir(parents=True, exist_ok=True)
     cli = Path(sys.executable).with_name("chrona")
     records = []
-    for size, relation_count in ((200, 46), (1000, 228)):
-        project = routing_scale_project(size)
+    for size, relation_count in ((19, 10), (200, 46), (1000, 228)):
+        project = (yaml.safe_load((Path(__file__).parents[1] / "fixtures" /
+                   "routing_revision" / "project-v1.yaml").read_text())
+                   if size == 19 else routing_scale_project(size))
         assert len(project["objects"]) == size
         assert len(project["relations"]) == relation_count
         source = root / f"scale-{size}.yaml"

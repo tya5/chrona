@@ -178,7 +178,7 @@ def test_the_text_is_bounded_by_the_room_the_tab_and_its_gap_leave_and_the_sourc
 
 
 def test_layout_marks_the_shortened_header_text_ellipsized_and_the_others_fit(tmp_path, monkeypatch):
-    from chrona.presentation.scene import v05_builder
+    from chrona.presentation.layout import surface_count_closure as v05_builder
 
     placed = []
     real = v05_builder.compose_surface_layout

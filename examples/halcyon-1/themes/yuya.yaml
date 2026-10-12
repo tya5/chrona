@@ -388,7 +388,7 @@ body:
       value: vertical
     size.tag:
       type: number
-      value: 14
+      value: 10.5
     seigaiha:
       type: pattern
       value:

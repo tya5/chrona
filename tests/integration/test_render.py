@@ -68,7 +68,7 @@ def test_draft_render_is_deterministic():
 
 
 def test_fixed_lane_preflight_and_final_composition_share_the_completed_scale(monkeypatch):
-    import chrona.presentation.scene.v05_builder as builder
+    import chrona.presentation.layout.surface_count_closure as builder
 
     root = _root()
     example = root / "examples/halcyon-1"
@@ -124,7 +124,7 @@ def test_fixed_lane_preflight_and_final_composition_share_the_completed_scale(mo
 
 
 def test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic(monkeypatch, tmp_path):
-    import chrona.presentation.scene.v05_builder as builder
+    import chrona.presentation.layout.surface_count_closure as builder
 
     root = _root()
     example = root / "examples/halcyon-1"
@@ -400,7 +400,7 @@ def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
         # Recovery can fit every name; the aggregate is absent, not a count of zero.
         assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in halcyon.scene.diagnostics)
     ordinary = render_review(_draft_request())
-    assert not ordinary.info_diagnostics
+    assert not any(item.code == "I_LAYOUT_PLOT_LABELS_SUPPRESSED" for item in ordinary.info_diagnostics)
     assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in ordinary.scene.diagnostics)
 
 

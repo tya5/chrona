@@ -443,7 +443,7 @@ def test_a_filesystem_root_workspace_ends_the_command_before_serving(tmp_path):
 
 CONTEXT_REFERENCE = (
     "id: halcyon-1-01-mission-brief\nkind: render-context\nstore: {provider: local, identity: halcyon-1-example}\n"
-    "address: contexts/01-mission-brief.yaml\nrevision: {token: example-v5}\n")
+    "address: contexts/01-mission-brief.yaml\nrevision: {token: example-v6}\n")
 
 
 def tree(root: Path) -> dict[str, bytes]:
@@ -545,7 +545,7 @@ def test_store_escapes_a_symlink_and_tampered_bytes_are_refused_over_stdio_and_n
     except (OSError, NotImplementedError):
         linked = False
     pinned = root / "pinned.yaml"
-    context_file = root / ".chrona" / "store" / "revision-example-v5" / "contexts" / "01-mission-brief.yaml"
+    context_file = root / ".chrona" / "store" / "revision-example-v6" / "contexts" / "01-mission-brief.yaml"
     pinned.write_text(CONTEXT_REFERENCE + f"contentIdentity: {sha(context_file.read_bytes())}\n", encoding="utf-8")
     context_file.write_bytes(context_file.read_bytes() + b"\n# tampered\n")
     before, outside_before = tree(root), tree(outside)

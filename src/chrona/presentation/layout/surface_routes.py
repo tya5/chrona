@@ -22,6 +22,7 @@ from chrona.presentation.layout.obstacles import (
 from chrona.presentation.layout.ports import (
     ConnectorEgress, connector_egress_candidates, stub_pairs_first,
 )
+from chrona.presentation.layout.relation_shapes import first_fit_port_pairs, shape_channels
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.relation_terminals import (
     centred_on_route, complete_centred_terminals, marker_geometry, orient_terminal, terminal_length, terminal_run,
@@ -43,6 +44,7 @@ from chrona.presentation.layout.surface_quality import (
 )
 from chrona.presentation.layout.text import metric_for_role, measure_text_width, place_text
 from chrona.presentation.model.semantic_registry import semantic_binding
+from chrona.presentation.model.info_diagnostics import RelationRoutingSummary, RelationSearchBudgetHit
 
 
 @dataclass(frozen=True)
@@ -71,6 +73,7 @@ class SurfaceRoutesBatch:
     instance_rows: Mapping[str, str]
     comparison_clusters: Mapping[tuple[str, str], tuple[MarkPlacement, ...]]
     diagnostics: tuple[str, ...]
+    routing_info: tuple[RelationRoutingSummary | RelationSearchBudgetHit, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -238,6 +241,15 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         *(float(group.header_bounds.block + group.header_bounds.block_size)
           for group in groups if group.header_bounds is not None)))
     route_classes = ("mark", "text", "label-visual")
+    search_policy = context.layout_manifest.relation_search
+    routing_bounds = ((plot_clip.bounds[0], plot_clip.bounds[1],
+                       plot_clip.bounds[0] + plot_clip.bounds[2], plot_clip.bounds[1] + plot_clip.bounds[3])
+                      if plot_clip is not None else
+                      (timeline_bounds[0], route_top, timeline_bounds[0] + timeline_bounds[2], route_bottom))
+    channels = (shape_channels(obstacles, bounds=routing_bounds, row_edges=tuple(row_edges.values()),
+                              classes=route_classes) if search_policy == "first-fit" else None)
+    relation_instances = shape_settled = fallback_search = 0
+    budget_hits: list[RelationSearchBudgetHit] = []
     primary_marks = tuple(mark for mark in marks if mark.placement_id.startswith("planned:")
                           and ":snapshot:" not in mark.placement_id and ":scenario:" not in mark.placement_id)
     primary_interiors: dict[float, tuple[ObstacleRect, ...]] = {}
@@ -409,6 +421,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             float(context.metric_values.get("timeline.relation.cornerRadius", 0)))
         exits = connector_egress_candidates(source_mark, relation.source_endpoint, stub.semantic_port,
             comparison_clusters.get((source_mark.source_ref, instance_rows[source_id]), ()))
+        if search_policy == "first-fit":
+            exits = tuple(pair[0] for pair in first_fit_port_pairs(tuple((item, stub) for item in exits)))
         best, chosen = None, None
         for source_exit in exits:
             dx, dy = {"start": (-1, 0), "end": (1, 0), "above": (0, -1), "below": (0, 1)}[source_exit.side]
@@ -454,6 +468,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             if not clears_primary_marks(points, width):
                 fail("primary-mark-blocked")
                 continue
+            if search_policy == "first-fit":
+                back_route_reason[0] = ""
+                return (source_exit, stub), points
             completed, _, completed_end = complete_centred_terminals(points, marker_start, marker_end, width)
             score = (shared_approach(source_id, target_id, completed,
                 port_id=target_port(relation, target_id, target_mark, stub),
@@ -536,10 +553,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         paint_id=relation.semantic_id, terminal=completed_end), entry_penalty, bends, length)
 
                 selection = select_relation_route(port_pairs, obstacles=obstacles,
-                        bounds=((plot_clip.bounds[0], plot_clip.bounds[1],
-                                 plot_clip.bounds[0] + plot_clip.bounds[2], plot_clip.bounds[1] + plot_clip.bounds[3])
-                                if plot_clip is not None else
-                                (timeline_bounds[0], route_top, timeline_bounds[0] + timeline_bounds[2], route_bottom)),
+                        bounds=routing_bounds, search_policy=search_policy, channels=channels,
+                        search_budget=context.layout_manifest.relation_search_budget,
                         source_host_id=source_mark.placement_id if source_mark else None,
                         target_host_id=target_mark.placement_id if target_mark else None,
                         relation_scene_id=scene_id, max_bends=context.layout_manifest.relation_max_bends,
@@ -552,6 +567,13 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                                               target_entry.exposed_port[1] - target_entry.semantic_port[1])),
                         accept=lambda candidate: clears_primary_marks(candidate, dependency_stroke)
                             and terminal_segments_fit(candidate, dependency_stroke), rank=candidate_rank)
+                relation_instances += 1
+                shape_settled += int(selection.settled_by_shape and not selection.search_used)
+                fallback_search += int(selection.search_used)
+                if selection.budget_hit:
+                    budget_hits.append(RelationSearchBudgetHit("table-timeline", scene_id,
+                        context.progress_pass, selection.search_budget,
+                        selection.search_expansions))
                 selected_pair, points = selection.selected_pair, selection.points
                 if projection.lane_membership is not None:
                     lane_selection = selection
@@ -560,14 +582,18 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     # #1060/#1084: the forward side entry did not give a horizontal entry; try the back-route
                     backed = back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal)
                     if backed is not None:
-                        back_rank = candidate_rank(backed[1], *backed[0])
-                        forward_rank = (candidate_rank(points, *selected_pair)
-                                        if selected_pair is not None else None)
-                        if forward_rank is None or back_rank < forward_rank:
+                        if search_policy == "first-fit":
                             selected_pair, points = backed
                             lane_selection = None
-                        elif back_rank[0] and not forward_rank[0]:
-                            back_route_reason[0] = "node-approach-conflict"
+                        else:
+                            back_rank = candidate_rank(backed[1], *backed[0])
+                            forward_rank = (candidate_rank(points, *selected_pair)
+                                            if selected_pair is not None else None)
+                            if forward_rank is None or back_rank < forward_rank:
+                                selected_pair, points = backed
+                                lane_selection = None
+                            elif back_rank[0] and not forward_rank[0]:
+                                back_route_reason[0] = "node-approach-conflict"
                 fallback = selected_pair is None
                 if fallback:
                     if request.surface_content.relation_overflow == "suppress":
@@ -680,7 +706,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     return SurfaceRoutesBatch(completed_relations,
         tuple(item for item in completed_relations if item.relation_id in fallback_ids),
         {key: tuple(values) for key, values in instance_anchors.items()}, instance_rows,
-        comparison_clusters, tuple(diagnostics))
+        comparison_clusters, tuple(diagnostics),
+        (*budget_hits, *((RelationRoutingSummary("table-timeline", relation_instances,
+            shape_settled, fallback_search),) if search_policy == "first-fit" else ())))
 
 
 def place_relation_labels(context: SurfaceRoutesContext,

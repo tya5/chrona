@@ -13,10 +13,12 @@ from chrona.presentation.model.surface_content import (
 from chrona.presentation.table_presentation import affix_state
 from chrona.presentation.review.detail import normalize_v05_review_detail_profile
 from chrona.presentation.review.figure_facts import projected_counts
+from chrona.presentation.review.annotation_expansion import expand_annotations
 from chrona.presentation.model.placement_candidates import legacy_candidate_order, parse_candidates
 from chrona.presentation.contracts.resources import ReviewDetailInput, SummaryProfileInput, ViewInput
-from chrona.presentation.group_header_text import GroupHeaderTextError, compose_group_header_runs, compose_group_headers
-from chrona.presentation.heading_text import render_heading
+from chrona.presentation.group_header_text import GroupHeaderTextError, HeaderTemplate, compose_group_header_runs, compose_group_headers
+from chrona.presentation.figure_text import FigureTextProgram
+from chrona.presentation.heading_text import HeadingTextPrograms, close_heading
 from chrona.presentation.model.color_scale import ResolvedColorScale
 from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec, AxisBandScaleError
@@ -302,8 +304,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                           for index, relation in enumerate(project.get("relations", ())))
     else:
         relations = ()
-    raw_annotations = view.annotations if annotation_mode != "none" else ()
     project_notes = project.get("annotations", {})
+    raw_annotations = (expand_annotations(view, project_notes, projection)
+                       if annotation_mode != "none" else ())
     consumed_note_ids: set[str] = set()
 
     def _annotation_text(annotation: Mapping[str, Any]) -> str:
@@ -322,7 +325,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
 
     item_titles = {item.object_id: item.title for item in projection.items}
 
-    def _annotation(index: int, annotation: Mapping[str, Any]) -> AnnotationIntent:
+    def _annotation(index: int, annotation: Mapping[str, Any], anchor_source_ref: str) -> AnnotationIntent:
         anchor = {str(key): ("finish" if key == "endpoint" and value == "end" else str(value)) for key, value in annotation["anchor"].items()}  # `end` aliases `finish` (I662 S4a)
         purpose = str(annotation["purpose"])
         number = index + 1 if annotation_numbered else None
@@ -343,16 +346,17 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
             return AnnotationIntent(str(annotation["id"]), purpose, anchor, "rail", "center",
                                     content, number, (), parse_candidates(declared_candidates),
                                     kind=kind, subject=subject, subject_id=subject_id,
-                                    anchor_source_ref=f"/body/annotations/{index}/anchor")
+                                    anchor_source_ref=anchor_source_ref)
         placement = annotation["placement"]
         return AnnotationIntent(str(annotation["id"]), purpose, anchor,
                                 str(placement["side"]), str(placement["alignment"]),
                                 content, number, annotation_fallback or ("rail",),
                                 legacy_candidate_order(purpose, annotation_fallback)[0],
                                 kind=kind, subject=subject, subject_id=subject_id,
-                                anchor_source_ref=f"/body/annotations/{index}/anchor")
+                                anchor_source_ref=anchor_source_ref)
 
-    annotations = tuple(_annotation(index, annotation) for index, annotation in enumerate(raw_annotations))
+    annotations = tuple(_annotation(index, annotation.value, annotation.anchor_source_ref)
+                        for index, annotation in enumerate(raw_annotations))
     # A selected Project annotation is consumed once: it is presented through
     # its View annotation and no longer duplicated into the notes slot (#466).
     notes = tuple((str(key), str(value.get("text", ""))) for key, value in project_notes.items()
@@ -506,13 +510,14 @@ def _heading_calendar_name(project: Mapping[str, Any]) -> str:
 
 
 def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Mapping[str, Any] | None,
-                    locale: str) -> HeadingContent:
+                    locale: str) -> HeadingContent | HeadingTextPrograms:
     """Compose the optional kicker, title and subtitle a table-timeline surface draws (#991, #1189).
 
     Without a declared `heading` the title is the Project title and there is no kicker or subtitle, as before.
     A declared template reads the Project title, the Actual Set's as-of date in the declared form and
     the Project's default calendar name (its declared `title`, else its id); a fact the Project lacks renders
-    as empty text.
+    as empty text. Figure-bearing headings return immutable programs; Layout
+    binds their declared integers and text forms before source measurement.
     """
     project_body = project.get("project", {})
     project_title = str(project_body.get("title", "Chrona")) if isinstance(project_body, Mapping) else "Chrona"
@@ -530,13 +535,14 @@ def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Map
             "monthNumeric": f"{as_of.month:02d}", "day": as_of.day, "dayNumeric": f"{as_of.day:02d}",
         })
     facts = {"project": project_title, "asOf": as_of_text, "calendar": _heading_calendar_name(project)}
-    title = render_heading(heading.title, facts) if heading.title is not None else project_title
-    return HeadingContent(
-        title=title,
-        subtitle=render_heading(heading.subtitle, facts) if heading.subtitle is not None else None,
-        kicker=render_heading(heading.kicker, facts) if heading.kicker is not None else None,
+    programs = HeadingTextPrograms(
+        title=(close_heading(heading.title, facts) if heading.title is not None
+               else FigureTextProgram(HeaderTemplate((("text", project_title),)))),
+        subtitle=close_heading(heading.subtitle, facts) if heading.subtitle is not None else None,
+        kicker=close_heading(heading.kicker, facts) if heading.kicker is not None else None,
         text_wrap=heading.text_wrap,
     )
+    return programs if programs.figure_ids else HeadingContent(*programs.bind({}, {}), text_wrap=programs.text_wrap)
 
 
 def normalize_axis_tiers(view: Any, *, locale: str) -> tuple[AxisTier, ...]:

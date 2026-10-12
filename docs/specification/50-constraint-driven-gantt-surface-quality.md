@@ -371,6 +371,68 @@ admission still apply. No previous-render state is needed.
 
 ### 3.3 Relations
 
+**Declared routing policy (#1430).**
+`relationRouting.search` selects `first-fit` or `best`, never by project size.
+`best` retains the existing pair order, exact reverse bound, canonical path
+histories, per-pair quotas, completed-route ranking and bounded label recovery.
+`first-fit` orders admitted source sides end/start/above/below and target sides
+start/end/above/below, retaining stable full/minimum-stub ties. For each pair it
+tries finite straight/L/Z/U proposals from completed row gaps and obstacle-edge
+channels before that pair's bounded search; the first fully accepted completed
+route wins. Proposal generation builds no visibility graph. Both paths retain
+terminal, bounds, obstacle, self-overlap, bend and detour validation.
+First-fit fallback uses an obstacle-independent Manhattan/minimum-turn lower
+bound instead of preparing the exact reverse bound. It retains canonical
+prefix histories and existing expansion quotas; it does not collapse different
+path-dependent prefixes using weighted-state dominance. Sparse-graph memo keys
+distinguish bound modes; endpoint-independent visibility preparation may be
+shared. `best` retains its exact reverse bound and candidate order.
+If all first-fit shapes and cheap searches fail, Layout performs one ranked
+`best` rescue for that relation, using the original admitted pair order and
+the same completed-route validators. An accepted fast route never invokes
+rescue. Rescue does not replay surface composition or label recovery. Both
+phases share the explicit `searchBudget`; an exhausted ceiling stops rescue.
+The routing summary counts the relation once, not once per search phase.
+Under `first-fit`, required labels precede routing; member names and finish
+deltas yield to completed routes. Skip lane-route rehearsal and post-route
+label recovery; do not replay composition in Scene or adapters.
+
+Omitted `search` means `first-fit`. Authors requiring legacy ranked output
+declare `best`; its canonical manifest representation and output remain
+unchanged. The five approved HALCYON targets explicitly declare `best` before
+this default changes. No authored example is edited by dev A.
+
+**Explicit search budget (#1426).**
+Optional `relationRouting.searchBudget` is a positive integer, an additional
+ceiling on processed candidate expansions under either policy per resolved relation instance per
+routing pass. It does not increase or replace the existing per-pair quotas
+below. Omission preserves those quotas, search order and diagnostic bytes.
+Never reset the explicit ceiling per port pair; create a fresh counter for
+each documented rehearsal, reference, baseline or recovery pass. Blocked egress consumes no expansions. Count each admitted Manhattan seed and
+each non-stale frontier state processed by the existing candidate iterator;
+do not count graph preparation, memo lookup or an unprocessed over-limit pop.
+Graph reuse does not waive candidate-expansion accounting. Finite shape
+proposals do not consume frontier expansions. Exhausting a declared budget
+stops subsequent pair selection under either policy.
+
+On reaching the ceiling, stop further pair selection and retain the best fully
+accepted completed route already found, or retain the existing unroutable outcome when none was accepted.
+Do not relax terminal, obstacle, self-overlap or quality checks. Exhaustion
+means "no acceptable route within budget", never "no safe route exists";
+#1427's selected unroutable mode subsequently handles an absent route.
+Reaching the ceiling while accepting a candidate still records the stop.
+
+Layout emits typed `RelationSearchBudgetHit` facts as
+`I_LAYOUT_RELATION_SEARCH_BUDGET:` plus canonical JSON containing `surfaceId`,
+`relationId` (the resolved relation scene id), `pass`, `budget` and
+`expansions`. Here `expansions == budget`; `pass` is the existing deterministic
+progress-pass name. Preserve facts from every executed rehearsal/recovery,
+including a rejected trial, in execution order; do not sum them into a shared
+surface budget or replace them with final-pass-only evidence. Scene projects
+these facts and CLI/MCP expose severity `info`. No Scene schema, geometry or
+resource identity input is added. Until #1427 lands, an absent accepted route
+uses the existing suppression/fallback contract and diagnostics.
+
 View relation intent becomes `none` or an object with `mode: semantic` and `overflow: suppress | visible-overflow`. Layout Profile adds `relationRouting.maxBends` and `relationRouting.maxDetourRatio` numeric geometry policy.
 
 Layout routes between completed ports through deterministic orthogonal candidates. An ordinary route is acceptable when it stays in the timeline, avoids required obstacles, has at most `maxBends`, and its Manhattan length is at most `maxDetourRatio × directDistance`. Eligible candidates use the ranking below. With `visible-overflow`, no acceptable ordinary route completes as the deterministic direct path plus `W_LAYOUT_ROUTE_FALLBACK`; explicit suppression creates `W_LAYOUT_RELATION_SUPPRESSED`.
@@ -477,8 +539,11 @@ All eligible finite port pairs are compared, with exact rank ties retaining
 the first declared pair. Scene and adapters do not simplify geometry.
 
 **Relation-instance search budget (#1298).** One route-selection call owns
-4096 candidate-frontier expansions, rather than resetting 4096 for every
-port pair. For P declared pairs, divide that allowance evenly: pair i gets
+4096 candidate-frontier expansions per search phase, rather than resetting
+4096 for every port pair. `best` has one phase; first-fit has a cheap phase and
+an exact rescue only after failure, at most8192 expansions in its single
+composition pass. The optional explicit ceiling remains shared across both
+phases. For P declared pairs, divide each phase's allowance evenly: pair i gets
 `4096 // P + int(i < 4096 % P)` in the existing deterministic pair order.
 Blocked pairs do not transfer unused allowance; therefore processing speed,
 cache hits and earlier search success cannot change a later pair's allowance.
@@ -492,8 +557,10 @@ the existing declared safe fallback/suppression and diagnostic contract.
 Surface source exits have at most four cardinal ports; target entries add
 at most one horizontal stub, so P is at most20, independent of comparison
 sibling count. For R completed source/target relation instances and at most
-five composition/rehearsal passes, there are at most100R candidate-generator
-calls and20480R processed frontier expansions. A final over-limit pop per
+five best composition/rehearsal passes, there are at most100R candidate-generator
+calls and20480R processed frontier expansions. First-fit's single composition
+pass, including rescue, has at most40R calls and8192R processed expansions;
+therefore the same surface-wide bounds remain sufficient. A final over-limit pop per
 pair may discover exhaustion; it does not process that state. Immutable
 history indexes examine only nearby orientation/coordinate intervals, then
 apply the unchanged exact intersection predicate. Each processed state has

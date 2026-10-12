@@ -8,7 +8,7 @@ from types import MappingProxyType
 from typing import Any, Callable, Literal, Mapping
 
 from chrona.presentation.layout.model import (
-    LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect, RegionFrame, ResolvedLayoutProfile, SlotHeading,
+    CountDependentHeadingFitError, LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect, RegionFrame, ResolvedLayoutProfile, SlotHeading,
 )
 from chrona.presentation.layout.surface_quality import FitWarning
 from chrona.presentation.layout.tracks import resolve_flexible_tracks as _resolve_flexible_tracks
@@ -64,7 +64,7 @@ class LayoutSizingContext:
 
 
 def _limit_inline_base(base: tuple[Decimal, Decimal | None, Decimal],
-                       budget: SourceInlineBudget) -> tuple[Decimal, Decimal, Decimal]:
+                       budget: SourceInlineBudget, figure_dependencies: frozenset[str] = frozenset()) -> tuple[Decimal, Decimal, Decimal]:
     """Cap a track without converting flexible allocation into a fixed track.
 
     Intrinsic text floors must already be closed by the source at this budget;
@@ -72,6 +72,9 @@ def _limit_inline_base(base: tuple[Decimal, Decimal | None, Decimal],
     """
     minimum, target, weight = base
     if minimum > budget.ceiling:
+        if budget.source_kind == "heading" and figure_dependencies:
+            raise CountDependentHeadingFitError(budget.path, budget.slot_id,
+                "intrinsic text minimum exceeds the declared ceiling", figure_dependencies)
         raise LayoutError(budget.failure_code, budget.path, budget.slot_id,
                           "mandatory or authored inline minimum exceeds the declared ceiling")
     return minimum, min(target, budget.ceiling) if target is not None else budget.ceiling, weight
@@ -107,7 +110,8 @@ def _slot_heading(node: Mapping[str, Any], profile: ResolvedLayoutProfile | None
     if declared is None:
         return None
     gap = _distance(profile, f"{path}/heading/gap") if profile is not None and "gap" in declared else None
-    return SlotHeading(str(declared["text"]), str(declared.get("align", "start")), str(declared.get("block", "top")), gap)
+    return SlotHeading(declared.get("text"), str(declared.get("align", "start")), str(declared.get("block", "top")),
+                       gap, template=declared.get("template"))
 
 
 def _padding(profile: ResolvedLayoutProfile, node: Mapping[str, Any], path: str) -> tuple[Decimal, Decimal, Decimal, Decimal]:
@@ -165,7 +169,22 @@ def _spec_base(spec: Any, *, axis: str, measurement: Measurement | None,
                sizing: LayoutSizingContext | None = None) -> tuple[Decimal, Decimal | None, Decimal]:
     base = _unbounded_spec_base(spec, axis=axis, measurement=measurement, profile=profile, path=path)
     budget = sizing.by_path.get(path.removesuffix("/inlineSize")) if sizing and axis == "inline" else None
-    return _limit_inline_base(base, budget) if budget is not None else base
+    dependencies = _intrinsic_floor_dependencies(spec, measurement)
+    return _limit_inline_base(base, budget, dependencies) if budget is not None else base
+
+
+def _intrinsic_floor_dependencies(spec: Any, measurement: Measurement | None) -> frozenset[str]:
+    """Only a measured text floor is dependent; authored fixed/minimum sizes are not."""
+    if measurement is None:
+        return frozenset()
+    if isinstance(spec, str) and spec in {"content", "min-content", "max-content"}:
+        return measurement.figure_dependencies
+    if isinstance(spec, dict):
+        if "fitContent" in spec:
+            return measurement.figure_dependencies
+        if "minmax" in spec:
+            return _intrinsic_floor_dependencies(spec["minmax"]["min"], measurement)
+    return frozenset()
 
 
 def _unbounded_spec_base(spec: Any, *, axis: str, measurement: Measurement | None, profile: ResolvedLayoutProfile, path: str) -> tuple[Decimal, Decimal | None, Decimal]:
@@ -549,6 +568,10 @@ class _Arranger:
                 measure = self.sizing.measurement(node, path, rect.inline_size, measure)
                 budget = self.sizing.by_path.get(path)
                 if budget and (rect.inline_size > budget.ceiling or rect.inline_size < measure.min_inline):
+                    if (budget.source_kind == "heading" and rect.inline_size <= budget.ceiling
+                            and measure.figure_dependencies):
+                        raise CountDependentHeadingFitError(path, node_id,
+                            "completed source does not fit its intrinsic text minimum", measure.figure_dependencies)
                     raise LayoutError(budget.failure_code, path, node_id,
                                       "completed source does not fit its strict inline budget")
             if rect.inline_size < measure.min_inline or rect.block_size < measure.min_block:
@@ -989,6 +1012,9 @@ def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float
         relation_max_bends=int(relation_routing.get("maxBends", 4)),
         relation_max_detour_ratio=float(relation_routing.get("maxDetourRatio", 2.0)),
         relation_entry=str(relation_routing.get("entry", "side-when-free")),
+        relation_search=str(relation_routing.get("search", "first-fit")),
+        relation_search_budget=(int(relation_routing["searchBudget"])
+                                if "searchBudget" in relation_routing else None),
         annotation_max_bends=int(annotation_routing["maxBends"]),
         annotation_max_detour_ratio=float(annotation_routing["maxDetourRatio"]),
         row_distribution=str(profile.profile["reviewSurface"]["rowDistribution"]),
