@@ -14,6 +14,8 @@ import jsonschema
 import yaml
 
 import chrona.usecases.render_review as render_usecase
+from chrona.presentation.layout import surface_render_plan
+from chrona.presentation.layout.surface_source_inputs import _source_inputs
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, obstacles_intersect
 from chrona.presentation.layout.surface_routes import _lane_fallback_clears_required_labels
@@ -64,7 +66,7 @@ def test_lane_source_measurement_uses_exact_membership_table_and_lane_count():
                           TableColumnContent("Items", "Items", "end", TableColumnWidth("content", "content"))),
                          (TableCellContent("lane:g:a", "Lane", "Avionics", "tableCell"),
                           TableCellContent("lane:g:a", "Items", "2", "tableCell", "numeric")), (), None, ())
-    sources = render_usecase._source_inputs(
+    sources = _source_inputs(
         {"project": {"title": "test"}}, view, projection, SummaryContent(()), table=table,
         content=SimpleNamespace(group_details=(), milestones=(), observation_columns=(), observation_rows=(),
                                 axis_tiers=(), notes=()),
@@ -398,14 +400,14 @@ def test_lane_scene_membership_is_theme_independent_for_same_project_and_view():
 
 def test_hidden_lane_layout_budgets_overlapping_authored_members_before_final_allocation(monkeypatch):
     completed = []
-    original = render_usecase.prepare_surface_content
+    original = surface_render_plan.prepare_surface_content
 
     def capture(layout_request, *, natural=None):
         result = original(layout_request, natural=natural)
         completed.append(result)
         return result
 
-    monkeypatch.setattr(render_usecase, "prepare_surface_content", capture)
+    monkeypatch.setattr(surface_render_plan, "prepare_surface_content", capture)
     with tempfile.TemporaryDirectory() as temporary:
         closure, snapshot = _closure(Path(temporary))
         value = yaml.safe_load((EXAMPLE / "views/02-programme-board.yaml").read_text(encoding="utf-8"))

@@ -6,7 +6,7 @@ import pytest
 
 from chrona.presentation.contracts.resources import ViewRowMode
 from chrona.presentation.model.surface_content import AnnotationIntent, SummaryContent
-from chrona.usecases.render_review import _annotation_source_input, _source_inputs
+from chrona.presentation.layout.surface_source_inputs import _annotation_source_input, _source_inputs
 from tests.unit.chrona.presentation.layout.test_sources import theme
 
 

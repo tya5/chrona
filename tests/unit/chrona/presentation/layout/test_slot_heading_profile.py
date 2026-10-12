@@ -93,6 +93,9 @@ def test_the_manifest_names_a_heading_only_when_one_is_declared() -> None:
     ({"text": "Notes", "role": "slot-heading"}, "/root/children/0/heading/role"),
     ({"text": "Notes", "align": "left"}, "/root/children/0/heading/align"),
     ({"text": "Notes", "block": "bottom"}, "/root/children/0/heading/block"),
+    ({"text": "Notes", "template": "{figure:n}"}, "/root/children/0/heading"),
+    ({"template": ""}, "/root/children/0/heading/template"),
+    ({"template": "line\nbreak"}, "/root/children/0/heading/template"),
 ])
 def test_a_malformed_heading_fails_at_its_exact_pointer(heading, pointer) -> None:
     with pytest.raises(LayoutError) as error:
@@ -104,6 +107,13 @@ def test_a_malformed_heading_fails_at_its_exact_pointer(heading, pointer) -> Non
 @pytest.mark.parametrize("source", sorted(SOURCES))
 def test_every_enumerated_source_takes_a_heading(source) -> None:
     resolve_layout_profile(profile(slot("one", source, heading={"text": "Caption"})), available_sources=SOURCES, theme=THEME)
+
+
+def test_explicit_template_is_an_admitted_caption_declaration_not_completed_literal_copy():
+    manifest = solved(profile(slot("notes", "notes", heading={"template": "{figure:n}"})))
+    caption = next(item.heading for item in manifest.decisions if item.node_id == "notes")
+    assert caption.text is None and caption.template == "{figure:n}"
+    assert b'"heading":{"align":"start","block":"top","template":"{figure:n}"}' in manifest.canonical_bytes()
 
 
 def derived(base: dict, overrides: dict) -> tuple[dict, dict]:

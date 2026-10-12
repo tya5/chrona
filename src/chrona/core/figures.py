@@ -32,7 +32,7 @@ from chrona.core.temporal import Calendar
 
 KINDS = ("daysUntil", "daysIn", "count")
 COUNT_SOURCES = ("selected", "recorded", "dueUnobserved", "notYetDue", "unavailable",
-                 "missingActual", "knownFinishVariance", "behind", "ahead")
+                 "missingActual", "knownFinishVariance", "behind", "ahead", "groups", "placedNotes")
 DAY_BASES = ("calendar", "working")
 PERIOD_SIDES = ("start", "end", "last")
 OBJECT_ENDPOINTS = ("at", "start", "end")
@@ -96,10 +96,13 @@ class FigureCounts:
     known_finish_variance: int
     behind: int
     ahead: int
+    groups: int | None = None
+    placed_notes: int | None = None
 
     def value(self, source: str) -> int | None:
         values = (self.selected, self.recorded, self.due_unobserved, self.not_yet_due,
-                  self.unavailable, self.missing_actual, self.known_finish_variance, self.behind, self.ahead)
+                  self.unavailable, self.missing_actual, self.known_finish_variance, self.behind, self.ahead,
+                  self.groups, self.placed_notes)
         return dict(zip(COUNT_SOURCES, values, strict=True))[source]
 
 

@@ -431,6 +431,13 @@ A fact is exactly one of: the Actual Set as-of; a named period's `start`, `end` 
 | `daysIn` a period | Calendar days: `end - start`. Working days: the working days `d` with `start <= d < end`; a period with none is 0. |
 | `count` a declared source | The injected integer count for that source (Spec 06 §7.2). Zero is a value; an absent bundle or unavailable source yields `E_FIGURE_COUNT_UNAVAILABLE` at the declaration's `/source`. Core does not infer state or count projection objects. |
 
+**Heading count design (#1346; implementation pending).** The neutral count
+bundle additionally admits `groups` and `placedNotes`. Projection supplies
+selected groups; Layout supplies completed narrative occurrences (Spec33).
+Core reads integers only: it never inspects groups, geometry, text or Scene.
+Presentation defers `placedNotes` until that fact exists, then uses the same
+integer resolver. An unavailable late fact is not zero; formatting is not Core.
+
 Working days use a Project calendar: the figure's declared calendar, otherwise the Project default (§6), including its exceptions. The `daysUntil` count is the scheduler's working-day convention (§5: an advance counts days strictly after its start), so counting from `d` to `advance(d, k wd)` gives `k`. For example, with a Monday-to-Friday calendar, from Friday 2027-01-01 to Monday 2027-01-04 is 1 working day and from Monday 2027-01-04 to Saturday 2027-01-09 is 4 (a target on a non-working day counts up to the last working day before it), while the working days in the period `[2027-01-04, 2027-01-09)` are 5 (its start day counts, its exclusive end does not). No value is clamped, rounded or made absolute.
 
 A fact that cannot be read is a diagnostic that names the figure, the fact and what is declared, never a blank, a zero or a guess: `E_FIGURE_PERIOD_UNKNOWN` (a period the Project does not declare), `E_FIGURE_OBJECT_UNKNOWN` (an object the schedule does not place), `E_FIGURE_ENDPOINT_UNAVAILABLE` (an endpoint the object's schedule does not offer), `E_FIGURE_ASOF_MISSING` (the as-of, when the Actual Set declares none) and `E_FIGURE_CALENDAR_UNAVAILABLE` (working days with no declared or default calendar). A figure with a diagnostic has no value.

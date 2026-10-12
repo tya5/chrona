@@ -14,7 +14,7 @@ import pytest
 
 from chrona.presentation.layout.sources import MeasuredSources, SourceInput
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
-from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
+from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
 
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
     _Font, _manifest, _theme, _title_measurement, surface_content,
@@ -46,7 +46,7 @@ def _compose(items, rows, relation, source_shape, target_shape, *, head=6, entry
                                    "timeline.mark.blockSize": Decimal(mark_size),
                                    **({"timeline.relation.cornerRadius": Decimal(radius)} if radius else {})})
     manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"), relation_entry=entry)
-    value = build_scene_input(projection=projection, surface_content=surface_content(relations=(relation,)),
+    value = build_surface_input(projection=projection, surface_content=surface_content(relations=(relation,)),
                               layout_manifest=manifest, resolved_theme=theme, font_metrics=_Font(),
                               measured_sources=measurement, capabilities={"svg": True})
     surface = compose_review_surface(value)

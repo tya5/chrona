@@ -17,7 +17,7 @@ from tests.support import synthetic_review as sr
 @pytest.mark.parametrize(("block_size", "draft_auto"), [(80, False), (None, True)])
 def test_lane_render_uses_each_candidate_manifest_and_reuses_final_natural_geometry(
         tmp_path, monkeypatch, block_size, draft_auto):
-    usecase = import_module("chrona.usecases.render_review")
+    usecase = import_module("chrona.presentation.layout.surface_render_plan")
     natural_calls = []
     demand_calls = []
     final_completions = []

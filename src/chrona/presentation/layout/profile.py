@@ -67,7 +67,7 @@ def _check_frame(frame: Any, pointer: str) -> None:
                           detail="expected a non-negative distance or a {token: id} reference")
 
 
-_HEADING_KEYS = frozenset({"text", "align", "block", "gap"})
+_HEADING_KEYS = frozenset({"text", "template", "align", "block", "gap"})
 
 
 def _check_heading(heading: Any, pointer: str) -> None:
@@ -77,12 +77,14 @@ def _check_heading(heading: Any, pointer: str) -> None:
     for key in heading:
         if key not in _HEADING_KEYS:
             raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/{key}", detail=f"unexpected property '{key}'")
-    text = heading.get("text")
-    if text is None:
-        raise LayoutError("E_LAYOUT_SCHEMA", pointer, detail="missing required property 'text'")
+    members = tuple(member for member in ("text", "template") if member in heading)
+    if len(members) != 1:
+        raise LayoutError("E_LAYOUT_SCHEMA", pointer, detail="expected exactly one of text or template")
+    member = members[0]
+    text = heading[member]
     if (not isinstance(text, str) or not 1 <= len(text) <= 80
             or any(ord(char) < 32 or ord(char) == 127 for char in text)):
-        raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/text",
+        raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/{member}",
                           detail="expected one to eighty characters with no control character")
     for key, allowed in (("align", SLOT_HEADING_ALIGNS), ("block", SLOT_HEADING_BLOCKS)):
         if key in heading and heading[key] not in allowed:

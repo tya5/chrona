@@ -17,7 +17,7 @@ from chrona.presentation.layout.surface_routes import corner_arc_blocker
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.renderers.v05_svg import render_v05_svg
 from chrona.presentation.scene.model import ScenePaint
-from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
+from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
 
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
     _Font, _manifest, _theme, _title_measurement, surface_content,
@@ -42,7 +42,7 @@ def _surface(items, rows, relation, radius, entry="any"):
         metrics["timeline.relation.cornerRadius"] = Decimal(radius)
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, metrics)
     manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"), relation_entry=entry)
-    value = build_scene_input(projection=projection, surface_content=surface_content(relations=(relation,)),
+    value = build_surface_input(projection=projection, surface_content=surface_content(relations=(relation,)),
                               layout_manifest=manifest, resolved_theme=_theme(), font_metrics=_Font(),
                               measured_sources=measurement, capabilities={"svg": True})
     return compose_review_surface(value)

@@ -13,7 +13,7 @@ import tests.unit.chrona.presentation.scene.test_relation_node_approach as node_
 from chrona.presentation.contracts.resources import ViewWindow
 from chrona.presentation.layout.sources import MeasuredSources, SourceInput
 from chrona.presentation.model.projection import build_review_projection
-from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
+from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
 
 from tests.unit.chrona.presentation.scene.test_relation_ghost_endpoints import PROJECT as PROJECT_BASE, _view
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
@@ -93,7 +93,7 @@ def _compose(*, mirrored=False, baseline_ghost=False, entry="side-when-free", ta
         label_content=("title",), label_side="end", label_overflow="visible-overflow")
     theme = _theme_with_route_fixture_geometry(target_marker=target_marker)
     theme["body"]["values"]["dependency-marker"]["value"]["headLength"] = head_length
-    value = build_scene_input(projection=projection, surface_content=content, layout_manifest=manifest,
+    value = build_surface_input(projection=projection, surface_content=content, layout_manifest=manifest,
         resolved_theme=theme,
         font_metrics=_Font(), measured_sources=measured,
         capabilities={"svg": True})
@@ -261,7 +261,7 @@ def test_round_target_terminal_keeps_semantic_entry_stub_after_paint_trimming():
 
 @pytest.mark.parametrize("radius", range(7))
 def test_gate_bottom_back_route_avoids_arrival_without_false_node_conflict(monkeypatch, radius):
-    original = node_approach.build_scene_input
+    original = node_approach.build_surface_input
 
     def side_entry(*args, **kwargs):
         kwargs["layout_manifest"] = replace(kwargs["layout_manifest"], relation_entry="side")
@@ -276,7 +276,7 @@ def test_gate_bottom_back_route_avoids_arrival_without_false_node_conflict(monke
             "timeline.relation.cornerRadius": Decimal(radius)})
         return original(*args, **kwargs)
 
-    monkeypatch.setattr(node_approach, "build_scene_input", side_entry)
+    monkeypatch.setattr(node_approach, "build_surface_input", side_entry)
     incoming = {**node_approach.INCOMING, "to": {"object": "g", "endpoint": "start"}}
     paths, marks, diagnostics = node_approach._gate_chain(
         (incoming, node_approach.OUTGOING), gap=-1)

@@ -139,6 +139,51 @@ Each node's panel precedes its one completed glyph batch, parents before
 children; Scene never fits the run or changes content allocation.
 
 **Slot headings (#1064, [work record](../planning/active/issue-1065-1064-field-group-indent-and-slot-heading-2026-10-04.md)).**
+
+**Heading count design (#1346; implementation pending).** A slot heading uses
+exactly one of literal `text` or figure `template`; alignment, presence,
+reservation and overflow rules stay unchanged. Literal View overrides win.
+Presentation supplies closed programs; Layout binds before natural measurement.
+Layout records one typed receipt per completed annotation body, full narrative
+rail summary, or unconsumed note occurrence. Marker/index/status/kind fragments
+and suppressed bodies add no notes. Explicit duplicate narratives count
+separately; one annotation's body/summary counts once. N is the possible
+narrative occurrences in the immutable input. Try candidate counts N down to0;
+accept the first completed layout whose receipts equal its candidate. Each
+trial has fresh mutable placement/obstacle/diagnostic state and count-correct
+SourceInputs; rejected trials leak no placement/index state or diagnostics.
+At mostN+1 trials, not guessed-count convergence. No consistent count is
+`E_LAYOUT_FIGURE_COUNT_UNSTABLE`, with domain/trial count; never substitute
+selected counts. No late template read means one ordinary composition; unused
+late figures then resolve from its receipts. Scene/adapters do not recount
+or replace text after geometry. Existing resources remain unchanged.
+Route-budget facts are local to a complete Layout invocation: discard a
+rejected whole-count candidate, but retain every executed route/label pass
+fact inside the accepted invocation, including rejected recovery passes (Spec50).
+Reject only typed candidate-admission failures, including unavailable number
+names or count-dependent required fit; retain their evidence on no solution.
+The formatter read records the exact figure identity. A name-range failure
+rejects a candidate only when that identity is a deferred placedNotes figure;
+an unrelated formatted count remains a normal fatal input error. Source inputs
+carry closed figure dependencies into measured-heading fit and intrinsic text
+floor detectors. Those detectors, not a caught error-code whitelist, produce
+typed dependent-fit evidence. Authored fixed/minimum/aspect constraints, budget
+closure failures, missing sources/fonts and unrelated Layout errors propagate.
+Existing caption overflow/ellipsis policy does not acquire a new fit rejection.
+
+The complete count coordinator consumes SurfaceRenderPlanInput and returns the
+accepted prepared plan, projection facts and SurfaceLayoutComposition. It never
+projects Scene or calls Application geometry callbacks. With no active late read,
+it reuses ordinary preparation and composes once, then resolves unused late
+figures from receipts. Ordinary preparation remains before the existing
+unused-input checkpoint; completion remains after it. An active late read
+defers whole candidate planning/completion until after that checkpoint,
+following semantic reference admission. Each trial buffers progress events;
+only the accepted trial publishes them. Resource/metric/placement/index state
+is fresh per trial; accepted executed-pass budget facts remain intact (Spec50).
+Unrelated schema/resource/semantic errors propagate unchanged, not as a count
+cycle. Reuse only pure measurements with complete content/metric keys; mutable
+placement/index/diagnostic state remains isolated between trials.
 A slot whose `source` is any enumerated slot source, and an override of such a slot, may
 declare `heading: {text, align, block}`: a caption over the slot. This includes the native title, table,
 timeline, timeline-axis, dependency-network, group-details, milestones and observations owners as well as
@@ -496,6 +541,9 @@ These private modules divide Layout implementation only; they do not change auth
 
 | Module | Layout responsibility |
 |---|---|
+| `surface_source_inputs` | Assemble source facts and visual advances from closed content and Theme/icon resources. |
+| `surface_render_plan` | Measure sources, close sizing/allocation and prepare native geometry from resolved intent; Application supplies data, not a geometry callback. |
+| `surface_count_closure` | Close count-bound planning/composition and accepted facts; read closed programs and typed narrative receipts, never project Scene. |
 | `surface_base` | Validate closed inputs; compose slots, rows, base group extents, scale and tracks. |
 | `surface_table` | Place table columns, headers and cells. |
 | `surface_groups` | Place group-header text and group presentation from completed base extents. |

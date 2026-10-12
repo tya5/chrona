@@ -31,6 +31,8 @@ schemas:
     state: live
     consumers: [src/chrona/resources/__init__.py]
     frozenDefs:
+      figureFormats: "sha256:611a87c7b1db2e492138275a7c56f8703ec153fef3951342ec865bd3496e0900"
+      countTextFormat: "sha256:8515a3cf4ca7c5d277d4ed313267a338bf1693f9bbc9655fdc4325b00feb0222"
       sha256Identity: "sha256:6ed99335d07cf1464ffaf44ded7d8b62f9bcae658d1d25910cfe1bc583cd48ff"
       isoDate: "sha256:69643485a57361c8d27000bb89e1b89497713741d5ad3a3f9bf6e58e857610a6"
       safeRelativePath: "sha256:962cf0b0e245529672544f160dbd569d7ea38ba536d84a3027d3f56cb54be89e"

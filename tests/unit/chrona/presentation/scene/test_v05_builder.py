@@ -17,7 +17,8 @@ from chrona.presentation.model.projection import FoldedPointProjection, Observat
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.model import DecorationDisposition, ScenePrimitive, SceneSurface, SymbolGeometry, TextLayout
-from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
+from chrona.presentation.scene.v05_builder import SceneBuildError
+from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
 
 BACKGROUND_EXTENTS = {"rowBand": "table", "groupBand": "timeline", "groupHeaderBand": "both", "calendarClosed": "timeline"}
 
@@ -55,9 +56,10 @@ def surface_content(table_columns=(), table_cells=(), **overrides):
     return SurfaceContentInput(**value)
 
 
-def test_scene_delegates_common_surface_geometry_to_layout_composer():
+def test_scene_consumes_completed_common_surface_geometry_without_recomposition():
     source = Path(__import__("chrona.presentation.scene.v05_builder", fromlist=["*"]).__file__).read_text(encoding="utf-8")
-    assert "compose_surface_layout(" in source
+    assert "compose_surface_layout(" not in source
+    assert "placed_surface = composition.placement" in source
     assert "place_rows(" not in source
     assert "place_mark_tracks(" not in source
 
@@ -203,7 +205,7 @@ def _title_measurement():
 
 
 def test_scene_input_accepts_only_completed_current_runtime_boundaries():
-    value = build_scene_input(projection={"window": (date(2026, 1, 1), date(2026, 1, 2))},
+    value = build_surface_input(projection={"window": (date(2026, 1, 1), date(2026, 1, 2))},
                               surface_content=surface_content(),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=object(), measured_sources=_measurements(),
@@ -213,7 +215,7 @@ def test_scene_input_accepts_only_completed_current_runtime_boundaries():
 
 def test_scene_input_rejects_a_layout_without_a_required_source():
     with pytest.raises(SceneBuildError, match="E_PRESENTATION_PRIMITIVE_MISSING") as error:
-        build_scene_input(projection={}, surface_content=surface_content(),
+        build_surface_input(projection={}, surface_content=surface_content(),
                           layout_manifest=_manifest("title", "table", "timeline"),
                           resolved_theme=_theme(), font_metrics=object(), measured_sources=_measurements(),
                           capabilities={"svg": True})
@@ -222,13 +224,13 @@ def test_scene_input_rejects_a_layout_without_a_required_source():
 
 def test_scene_input_requires_surface_specific_network_slot_set():
     network = SimpleNamespace(surface="dependency-network")
-    value = build_scene_input(projection=network, surface_content=surface_content(),
+    value = build_surface_input(projection=network, surface_content=surface_content(),
                               layout_manifest=_manifest("title", "network"),
                               resolved_theme=_theme(), font_metrics=object(), measured_sources=_measurements(),
                               capabilities={"svg": True})
     assert value.projection.surface == "dependency-network"
     with pytest.raises(SceneBuildError, match="E_PRESENTATION_SURFACE_SLOT_SET"):
-        build_scene_input(projection=network, surface_content=surface_content(),
+        build_surface_input(projection=network, surface_content=surface_content(),
                           layout_manifest=_manifest("title", "network", "table"),
                           resolved_theme=_theme(), font_metrics=object(), measured_sources=_measurements(),
                           capabilities={"svg": True})
@@ -247,7 +249,7 @@ def test_scene_dispatches_completed_network_layout_through_registry_semantics_on
     measured = MeasuredSources({}, {}, {
         "network.node.minInlineSize": Decimal(60), "network.node.minBlockSize": Decimal(30), "network.rank.gap": Decimal(12),
     }, {"title": (run(None, "Network", "heading", 80, 24, 20),), "network": (run("a", "A", "text", 20, 14, 11),)})
-    value = build_scene_input(projection=projection, surface_content=surface_content(), layout_manifest=manifest,
+    value = build_surface_input(projection=projection, surface_content=surface_content(), layout_manifest=manifest,
                               resolved_theme=_theme(), font_metrics=object(), measured_sources=measured, capabilities={"svg": True})
     surface = compose_review_surface(value)
     assert surface.surface_id == "dependency-network"
@@ -260,7 +262,7 @@ def test_scene_dispatches_completed_network_layout_through_registry_semantics_on
 
 def test_scene_input_requires_frozen_source_measurements():
     with pytest.raises(SceneBuildError, match="E_PRESENTATION_MEASUREMENTS_REQUIRED"):
-        build_scene_input(projection={}, surface_content=surface_content(),
+        build_surface_input(projection={}, surface_content=surface_content(),
                           layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                           resolved_theme=_theme(), font_metrics=object(), measured_sources={}, capabilities={"svg": True})
 
@@ -277,7 +279,7 @@ def test_core_surface_uses_frozen_slots_measurements_and_normalized_cells():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"), "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     manifest = _manifest("title", "table", "timeline", "timeline-axis")
-    value = build_scene_input(projection=projection, surface_content=surface_content((("name", "Name"),), (("a", "name", "A"),)),
+    value = build_surface_input(projection=projection, surface_content=surface_content((("name", "Name"),), (("a", "name", "A"),)),
                               layout_manifest=manifest, resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True})
     surface = compose_review_surface(value)
     assert surface.scale_manifest.domain_start == date(2026, 1, 1)
@@ -294,7 +296,7 @@ def test_scene_completes_pattern_form_before_adapter_invocation():
     themed = _theme()
     themed["body"]["values"]["hatch"] = {"type": "pattern", "value": {"kind": "diagonal-hatch", "tileInlineSize": 6, "tileBlockSize": 6, "angle": 45, "strokeWidth": 1}}
     themed["body"]["roles"]["planned"]["pattern"] = "hatch"
-    value = build_scene_input(projection=ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ()),
+    value = build_surface_input(projection=ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ()),
                               surface_content=surface_content(), layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=themed, font_metrics=_Font(), measured_sources=_measurements(), capabilities={"svg": True})
     from chrona.presentation.scene.v05_builder import _complete_surface_paint
@@ -330,7 +332,7 @@ def test_scene_records_declared_background_absence_without_a_drawable_primitive(
     themed["body"]["roles"]["row-band"] = {
         **themed["body"]["roles"]["row-band"], "backgroundTreatment": "none",
     }
-    value = build_scene_input(projection=ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ()),
+    value = build_surface_input(projection=ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ()),
                               surface_content=surface_content(), layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=themed, font_metrics=_Font(), measured_sources=_measurements(), capabilities={"svg": True})
     from chrona.presentation.scene.v05_builder import _complete_surface_paint
@@ -340,7 +342,7 @@ def test_scene_records_declared_background_absence_without_a_drawable_primitive(
 
 def test_painted_note_box_is_not_an_absent_background_decoration():
     themed = _theme()
-    value = build_scene_input(projection=ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ()),
+    value = build_surface_input(projection=ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ()),
                               surface_content=surface_content(), layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=themed, font_metrics=_Font(), measured_sources=_measurements(), capabilities={"svg": True})
     from chrona.presentation.scene.v05_builder import _complete_surface_paint
@@ -358,7 +360,7 @@ def test_scene_projects_title_links_only_to_selected_current_title_cells():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
-    value = build_scene_input(
+    value = build_surface_input(
         projection=projection,
         surface_content=surface_content((("title", "Title"),), (("a", "title", "A"),),
                                         link_mode="title", title_link_columns=("title",),
@@ -380,7 +382,7 @@ def test_scene_projects_row_links_to_current_marks_but_not_actual_comparison_mar
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
-    value = build_scene_input(
+    value = build_surface_input(
         projection=projection, surface_content=surface_content(link_mode="row"),
         layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"), resolved_theme=_theme(),
         font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True})
@@ -406,7 +408,7 @@ def test_scene_uses_declared_marker_and_projects_an_object_annotation_leader():
     theme = _theme()
     theme["body"]["values"].update({"marker": {"type": "marker", "value": {"shape": "triangle", "headLength": 10, "headWidth": 10, "attachmentOffset": 1}}})
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "marker"}
-    value = build_scene_input(projection=projection, surface_content=surface_content(
+    value = build_surface_input(projection=projection, surface_content=surface_content(
         relations=({"id": "r", "from": {"object": "a"}, "to": {"object": "b"}},),
         annotations=({"id": "note", "purpose": "callout", "anchor": {"kind": "object", "id": "a", "facet": "planned", "endpoint": "finish"},
                       "placement": {"side": "end", "alignment": "center"}, "text": "Check"},)),
@@ -430,7 +432,7 @@ def test_explicit_row_members_keep_fixed_mark_size_labels_and_snapshot_role():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
-    value = build_scene_input(projection=projection,
+    value = build_surface_input(projection=projection,
                               surface_content=surface_content(show_member_labels=True),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
@@ -459,7 +461,7 @@ def test_layout_indents_only_the_named_nonleading_hierarchy_column_and_aligns_ce
         TableColumnContent("index", "#", "end", TableColumnWidth("content", "fr", 1)),
         TableColumnContent("title", "Title", "start", TableColumnWidth("content", "content")),
     )
-    value = build_scene_input(projection=projection,
+    value = build_surface_input(projection=projection,
                               surface_content=surface_content(columns, (("child", "index", "7"), ("child", "title", "Indented title")),
                                                               table_hierarchy_column="title"),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
@@ -483,7 +485,7 @@ def test_scene_projects_layout_completed_rollup_summary_bar():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(9)})
-    value = build_scene_input(projection=projection, surface_content=surface_content(),
+    value = build_surface_input(projection=projection, surface_content=surface_content(),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -505,7 +507,7 @@ def test_scene_projects_selected_inside_label_with_its_host_mark_role():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(20)})
-    value = build_scene_input(
+    value = build_surface_input(
         projection=projection,
         surface_content=surface_content(show_member_labels=True, label_placement="plot", label_content=("title",),
                                         label_side="inside", label_overflow="visible-overflow"),
@@ -526,7 +528,7 @@ def test_scene_anchors_an_explicit_actual_inside_label_to_its_actual_mark():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(48), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(20)})
-    value = build_scene_input(
+    value = build_surface_input(
         projection=projection,
         surface_content=surface_content(show_member_labels=True, label_placement="plot", label_content=("title",),
                                         label_side="inside", label_overflow="visible-overflow"),
@@ -547,7 +549,7 @@ def test_scene_falls_back_from_short_inside_label_to_outside_text_role():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(20)})
-    value = build_scene_input(
+    value = build_surface_input(
         projection=projection,
         surface_content=surface_content(show_member_labels=True, label_placement="plot", label_content=("title",),
                                         label_side="inside", label_fallback=("inside", "above"), label_overflow="visible-overflow"),
@@ -572,7 +574,7 @@ def test_scene_projects_only_accepted_typed_plot_labels_and_relations():
                               tuple(LayoutDecision(source, "slot", rect, source)
                                     for source in ("title", "table", "timeline", "timeline-axis")),
                               relation_max_bends=0, row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
-    value = build_scene_input(
+    value = build_surface_input(
         projection=projection,
         surface_content=surface_content(
             relations=({"id": "depends", "from": {"object": "a"}, "to": {"object": "b"}},),
@@ -600,7 +602,7 @@ def test_same_explicit_row_relation_uses_distinct_mark_ports():
     theme = _theme()
     theme["body"]["values"]["marker"] = {"type": "marker", "value": {"shape": "triangle", "headLength": 10, "headWidth": 10, "attachmentOffset": 1}}
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "marker"}
-    value = build_scene_input(projection=projection,
+    value = build_surface_input(projection=projection,
                               surface_content=surface_content(relations=({"id": "depends", "from": {"object": "a"}, "to": {"object": "b"}},)),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=theme, font_metrics=_Font(), measured_sources=measurement,
@@ -618,7 +620,7 @@ def test_legend_entries_emit_role_derived_swatches():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
-    value = build_scene_input(projection=projection,
+    value = build_surface_input(projection=projection,
                               surface_content=surface_content(legend_entries=(("planned", "Plan"),)),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis", "legend"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
@@ -640,7 +642,7 @@ def _legend_measurement():
 def _legend_surface(entries, theme):
     item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ())
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
-    value = build_scene_input(projection=projection,
+    value = build_surface_input(projection=projection,
                               surface_content=surface_content(legend_entries=entries),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis", "legend"),
                               resolved_theme=theme, font_metrics=_Font(), measured_sources=_legend_measurement(),
@@ -735,7 +737,7 @@ def test_legend_inline_direction_flows_entries_left_to_right():
     )
     manifest = LayoutManifest("review", "sha256:test", "horizontal", "horizontal", rect, decisions,
                               row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
-    value = build_scene_input(projection=projection,
+    value = build_surface_input(projection=projection,
                               surface_content=surface_content(legend_entries=(("planned", "Plan"), ("actual", "Act"))),
                               layout_manifest=manifest, resolved_theme=_theme(), font_metrics=_Font(),
                               measured_sources=_legend_measurement(), capabilities={"svg": True})
@@ -758,7 +760,7 @@ def test_shared_track_overlays_snapshot_planned_and_actual_in_stable_order():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
-    value = build_scene_input(projection=projection, surface_content=surface_content(),
+    value = build_surface_input(projection=projection, surface_content=surface_content(),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -778,7 +780,7 @@ def test_grouped_rows_reserve_and_emit_a_group_header():
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8),
                                    "timeline.groupHeader.blockSize": Decimal(20)})
-    value = build_scene_input(projection=projection, surface_content=surface_content(group_presentation="header"),
+    value = build_surface_input(projection=projection, surface_content=surface_content(group_presentation="header"),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -817,7 +819,7 @@ def test_header_fold_projects_mark_label_route_and_annotation_without_a_point_ta
     theme = _theme()
     theme["body"]["values"]["marker"] = {"type": "marker", "value": {"shape": "triangle", "headLength": 10, "headWidth": 10, "attachmentOffset": 1}}
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "marker"}
-    value = build_scene_input(projection=projection, surface_content=surface_content(
+    value = build_surface_input(projection=projection, surface_content=surface_content(
         table_columns=(("name", "Name"),), table_cells=(("task", "name", "Task"),),
         group_presentation="header", label_placement="plot", label_content=("title",), label_overflow="visible-overflow",
         relations=({"id": "task-gate", "from": {"object": "task"}, "to": {"object": "gate"}},),
@@ -877,7 +879,7 @@ def _glyph_fixture():
         LayoutDecision("timeline", "slot", Rect(Decimal(100), Decimal(60), Decimal(700), Decimal(140)), "timeline"),
         LayoutDecision("axis", "slot", Rect(Decimal(100), Decimal(200), Decimal(700), Decimal(40)), "timeline-axis"),
     ), row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
-    value = build_scene_input(projection=projection, surface_content=surface_content(
+    value = build_surface_input(projection=projection, surface_content=surface_content(
         table_columns=(("name", "Name"),), table_cells=(("task", "name", "Task"),),
         group_presentation="header",
     ), layout_manifest=manifest, resolved_theme=_glyph_theme(), font_metrics=_Font(), measured_sources=measurement,
@@ -947,7 +949,7 @@ def test_declared_actual_cutoff_emits_as_of_marker_only_within_window():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
-    value = build_scene_input(projection=projection,
+    value = build_surface_input(projection=projection,
                               surface_content=surface_content(as_of=date(2026, 1, 5)),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
@@ -964,7 +966,7 @@ def test_project_calendar_closure_emits_background_shading():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
-    value = build_scene_input(projection=projection,
+    value = build_surface_input(projection=projection,
                               surface_content=surface_content(calendar_closed=(date(2026, 1, 3),)),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
@@ -992,7 +994,7 @@ def test_layout_projects_alternate_row_bands_only_into_the_declared_table_region
     })
     theme = _theme()
     theme["body"]["roles"]["row-band"] = {**theme["body"]["roles"]["row-band"], "backgroundTreatment": "outline"}
-    surface = compose_review_surface(build_scene_input(
+    surface = compose_review_surface(build_surface_input(
             projection=projection, surface_content=surface_content(row_decoration="alternate", group_decoration="none"), layout_manifest=manifest,
         resolved_theme=theme, font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True},
     ))
@@ -1018,7 +1020,7 @@ def test_layout_suppresses_a_none_row_band_and_scene_records_its_absence():
     })
     theme = _theme()
     theme["body"]["roles"]["row-band"] = {**theme["body"]["roles"]["row-band"], "backgroundTreatment": "none"}
-    surface = compose_review_surface(build_scene_input(
+    surface = compose_review_surface(build_surface_input(
         projection=projection, surface_content=surface_content(row_decoration="alternate"), layout_manifest=manifest,
         resolved_theme=theme, font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True},
     ))
@@ -1039,7 +1041,7 @@ def test_layout_rejects_calendar_overlay_when_its_paint_order_is_not_later():
         "backgroundTreatment": "fill", "backgroundPaintOrder": 10,
     }
     with pytest.raises(SceneBuildError, match="E_LAYOUT_BACKGROUND_OVERLAP"):
-        compose_review_surface(build_scene_input(
+        compose_review_surface(build_surface_input(
             projection=projection, surface_content=surface_content(calendar_closed=(date(2026, 1, 2),)),
             layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"), resolved_theme=theme,
             font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True},
@@ -1091,7 +1093,7 @@ def test_narrow_calendar_density_retains_only_declared_exception_closures():
         "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8),
         "timeline.calendarClosed.minimumDayWidth": Decimal(500),
     })
-    value = build_scene_input(projection=projection, surface_content=surface_content(
+    value = build_surface_input(projection=projection, surface_content=surface_content(
         calendar_closed=(date(2026, 1, 2), date(2026, 1, 3)), calendar_exceptions=(date(2026, 1, 2),)),
         layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"), resolved_theme=_theme(),
         font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True})
@@ -1106,7 +1108,7 @@ def test_declared_axis_tiers_emit_their_own_band_grid_and_label_primitives():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
-    value = build_scene_input(projection=projection, surface_content=surface_content(axis_tiers=(
+    value = build_surface_input(projection=projection, surface_content=surface_content(axis_tiers=(
                                   AxisTier("quarter", 1, "band"), AxisTier("quarter", 1, "grid-major"),
                                   AxisTier("month", 1, "grid-minor"),
                                   AxisTier("quarter", 1, "labels", AxisLabelIntent("year-quarter", (), "center", "visible-overflow", "horizontal", "en-US")),
@@ -1138,7 +1140,7 @@ def test_a_single_band_tier_keeps_spanning_the_whole_axis_slot():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
-    value = build_scene_input(projection=projection, surface_content=surface_content(axis_tiers=(
+    value = build_surface_input(projection=projection, surface_content=surface_content(axis_tiers=(
                                   AxisTier("quarter", 1, "band"),
                                   AxisTier("quarter", 1, "labels", AxisLabelIntent("year-quarter", (), "center", "visible-overflow", "horizontal", "en-US")),
                               )),
@@ -1158,7 +1160,7 @@ def _axis_tiers_scene(axis_tiers, theme=None):
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
-    value = build_scene_input(projection=projection, surface_content=surface_content(axis_tiers=axis_tiers),
+    value = build_surface_input(projection=projection, surface_content=surface_content(axis_tiers=axis_tiers),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=theme or _theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -1243,7 +1245,7 @@ def test_completed_axis_text_uses_selected_table(table_id, form, expected):
                                    "timeline.mark.blockSize": Decimal(8)})
     content = surface_content(axis_tiers=(AxisTier("month", 1, "labels",
         AxisLabelIntent(form, (), "start", "visible-overflow", "horizontal", table_id)),))
-    value = build_scene_input(projection=projection, surface_content=content,
+    value = build_surface_input(projection=projection, surface_content=content,
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -1261,7 +1263,7 @@ def test_selected_noncanonical_may_form_is_reported_by_layout():
                                    "timeline.mark.blockSize": Decimal(8)})
     content = surface_content(axis_tiers=(AxisTier("month", 1, "labels",
         AxisLabelIntent("long-month", (), "start", "visible-overflow", "horizontal", "en-US")),))
-    value = build_scene_input(projection=projection, surface_content=content,
+    value = build_surface_input(projection=projection, surface_content=content,
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -1281,7 +1283,7 @@ def test_layout_records_auto_candidate_and_completed_axis_label_measurements():
         AxisTier("quarter", 1, "band"),
         AxisTier("auto", 2, "labels", AxisLabelIntent(None, (("month", "short-month"), ("quarter", "year-quarter")), "center", "thin-with-record", "horizontal", "ja-JP")),
     ))
-    value = build_scene_input(projection=projection, surface_content=content,
+    value = build_surface_input(projection=projection, surface_content=content,
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -1321,7 +1323,7 @@ def test_thin_with_record_records_unavailable_phase_after_an_unfit_first_label()
     content = surface_content(axis_tiers=(
         AxisTier("quarter", 1, "labels", AxisLabelIntent("year-quarter", (), "center", "thin-with-record", "horizontal", "ja-JP")),
     ))
-    value = build_scene_input(projection=projection, surface_content=content,
+    value = build_surface_input(projection=projection, surface_content=content,
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_WideQ1Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -1347,7 +1349,7 @@ def test_table_columns_use_measured_non_overlapping_origins():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
-    value = build_scene_input(projection=projection,
+    value = build_surface_input(projection=projection,
                               surface_content=surface_content((("long", "Long heading"), ("short", "B")),
                                                                 (("a", "long", "a deliberately long table value"), ("a", "short", "B"))),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),

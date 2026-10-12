@@ -8,7 +8,7 @@ import pytest
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, segment_length_inside_rect
 from chrona.presentation.layout.sources import MeasuredSources, SourceInput
 from chrona.presentation.model.projection import ReviewProjection
-from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
+from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
 from tests.unit.chrona.presentation.scene.test_relation_entry_side import D, _item, _route, _rows
 from tests.unit.chrona.presentation.scene.test_relation_route_invariant import gate
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
@@ -62,7 +62,7 @@ def test_route_uses_open_side_when_foreign_bar_closes_above_or_below(
     manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"),
                        relation_entry="any", row_distribution="pack",
                        relation_max_detour_ratio=6)
-    value = build_scene_input(
+    value = build_surface_input(
         projection=projection, surface_content=surface_content(relations=(relation,)),
         layout_manifest=manifest, resolved_theme=_theme(), font_metrics=_Font(),
         measured_sources=measurements, capabilities={"svg": True})

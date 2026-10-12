@@ -11,11 +11,12 @@ from typing import Any, Literal, Mapping
 
 from chrona.core.figures import AsOfFact, FigureSpec, GroupStartFact, ObjectFact, PeriodFact
 from chrona.presentation.figure_text import FigureTextError, figure_ids
+from chrona.presentation.count_text import CountTextFormat
 from chrona.core.store_address import StoreAddressError, check_store_address
 from chrona.resources import schema_validator
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
 from chrona.presentation.group_header_text import GroupHeaderTextError, parse_template
-from chrona.presentation.heading_text import validate_heading_template
+from chrona.presentation.heading_text import heading_figure_ids, validate_heading_template
 from chrona.presentation.table_presentation import (
     AFFIX_STATES, SIGNED_FORMATS, BooleanPresencePresentation, CellAffix, ColumnAffixes,
 )
@@ -385,6 +386,7 @@ class ViewInput:
     slot_heading_text: FrozenDict | None = None
     annotation_bindings: tuple[FrozenDict, ...] = ()
     annotation_placement: FrozenDict | None = None
+    figure_formats: FrozenDict = field(default_factory=FrozenDict)
 
 
 @dataclass(frozen=True)
@@ -939,6 +941,10 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)
     figures = _view_figures(body.get("figures", ()))
+    for item in figures:
+        if item.source == "placedNotes" and body["surface"] != "table-timeline":
+            raise ContractError("E_FIGURE_LAYOUT_SCOPE", "placedNotes requires a table-timeline surface",
+                                f"{item.path}/source")
     _validate_header_figures(grouping, figures)
     periods = _view_periods(body.get("periods", ()))
     _validate_period_figures(periods, figures)
@@ -975,10 +981,27 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         periods=periods,
         figures=figures,
         deadlines=str(body["deadlines"]["show"]) if "deadlines" in body else None,
-        heading=_view_heading(body.get("heading")),
+        heading=_view_heading(body.get("heading"), figures),
         slot_heading_text=(freeze(body["slotHeadingText"]) if "slotHeadingText" in body else None),
         annotation_bindings=tuple(body.get("annotationBindings", ())),
-        annotation_placement=body.get("annotationPlacement"))
+        annotation_placement=body.get("annotationPlacement"),
+        figure_formats=_view_figure_formats(body.get("figureFormats", {}), figures))
+
+
+def _view_figure_formats(raw: Mapping[str, Any], figures: tuple[FigureSpec, ...]) -> FrozenDict:
+    """Close formats without evaluating count values or requiring number names."""
+    declared = {item.figure_id: item for item in figures}
+    formats = {}
+    for identifier, value in raw.items():
+        target = declared.get(identifier)
+        if target is None or target.kind != "count":
+            pointer = identifier.replace("~", "~0").replace("/", "~1")
+            raise ContractError("E_VIEW_FIGURE_FORMAT_INVALID",
+                                f"format target {identifier!r} must name a declared count figure",
+                                f"/body/figureFormats/{pointer}")
+        formats[identifier] = CountTextFormat(str(value["form"]),
+                                             value.get("minimumDigits", 1), value.get("capitalize", False))
+    return FrozenDict(formats)
 
 
 def annotation_placement_for(policies: Mapping[str, Any] | None, purpose: str,
@@ -1030,6 +1053,7 @@ def _validate_period_figures(periods: tuple[ViewPeriod, ...], figures: tuple[Fig
         except FigureTextError as error:
             raise ContractError(error.code, error.detail, path) from error
         for figure_id in sorted(references):
+            _reject_layout_figure(figure_id, figures, path)
             if figure_id not in declared:
                 raise ContractError("E_VIEW_FIGURE_UNKNOWN",
                                     f"period label names figure {figure_id}; declared figures: {', '.join(declared) or 'none'}", path)
@@ -1038,14 +1062,20 @@ def _validate_period_figures(periods: tuple[ViewPeriod, ...], figures: tuple[Fig
                                     f"period label has no current group for figure {figure_id}", path)
 
 
+def _reject_layout_figure(identifier: str, figures: tuple[FigureSpec, ...], path: str) -> None:
+    if any(item.figure_id == identifier and item.source == "placedNotes" for item in figures):
+        raise ContractError("E_FIGURE_LAYOUT_SCOPE", "placedNotes is available only to heading parts and slot captions", path)
+
+
 def _validate_header_figures(grouping: ViewGrouping | None, figures: tuple[FigureSpec, ...]) -> None:
     """A header placeholder may only show a figure the View declares (#586)."""
     header = grouping.header if grouping is not None else None
     if header is None:
         return
     declared = tuple(item.figure_id for item in figures)
-    for template in (header.text, header.first):
+    for member, template in (("text", header.text), ("first", header.first)):
         for figure_id in sorted(parse_template(template, allow_roles=True).figure_ids) if template is not None else ():
+            _reject_layout_figure(figure_id, figures, f"/body/grouping/header/{member}")
             if figure_id not in declared:
                 known = ", ".join(declared) if declared else "none"
                 raise ContractError("E_VIEW_GROUP_HEADER_TEMPLATE",
@@ -1078,6 +1108,9 @@ def _view_figures(raw: Any) -> tuple[FigureSpec, ...]:
             specs.append(FigureSpec(figure_id, "daysUntil", to=target, origin=origin,
                                     days=days, calendar_id=calendar, path=path, scope=scope))
         elif item["kind"] == "count":
+            if item["source"] in ("groups", "placedNotes") and item.get("scope", "global") != "global":
+                raise ContractError("E_VIEW_FIGURE_INVALID", "groups and placedNotes counts require global scope",
+                                    f"{path}/scope")
             specs.append(FigureSpec(figure_id, "count", source=str(item["source"]),
                                     scope=str(item.get("scope", "global")), path=path))
         else:
@@ -1108,7 +1141,7 @@ def _group_tint(raw_grouping: Any) -> ViewGroupTint | None:
     return ViewGroupTint(str(raw["scale"]), None if domain == "firstAppearance" else tuple(str(item) for item in domain))
 
 
-def _view_heading(raw: Any) -> ViewHeading | None:
+def _view_heading(raw: Any, figures: tuple[FigureSpec, ...] = ()) -> ViewHeading | None:
     """Type the optional heading templates and reject any unknown placeholder (#991, #1189)."""
     if raw is None:
         return None
@@ -1117,12 +1150,20 @@ def _view_heading(raw: Any) -> ViewHeading | None:
                           str(raw.get("dateForm", "localized-date")),
                           str(raw["kicker"]) if "kicker" in raw else None,
                           str(raw.get("text", {}).get("wrap", "forbid")))
-    try:
-        for template in (heading.kicker, heading.title, heading.subtitle):
-            if template is not None:
+    declared = {item.figure_id: item for item in figures}
+    for member, template in (("kicker", heading.kicker), ("title", heading.title), ("subtitle", heading.subtitle)):
+        if template is not None:
+            path = f"/body/heading/{member}"
+            try:
                 validate_heading_template(template)
-    except GroupHeaderTextError as error:
-        raise ContractError(error.code, error.detail) from error
+                references = heading_figure_ids(template)
+            except GroupHeaderTextError as error:
+                raise ContractError(error.code, error.detail, path) from error
+            for identifier in sorted(references):
+                if identifier not in declared:
+                    raise ContractError("E_VIEW_FIGURE_UNKNOWN", f"heading names undeclared figure {identifier!r}", path)
+                if declared[identifier].scope != "global":
+                    raise ContractError("E_FIGURE_SCOPE_UNAVAILABLE", f"heading has no current group for figure {identifier!r}", path)
     return heading
 
 

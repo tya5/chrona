@@ -13,7 +13,7 @@ from chrona.presentation.layout.surface_visuals import place_text_visuals
 from chrona.presentation.layout import surface_annotations
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.model.projection import ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection
-from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
+from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
     _Font, _manifest, _theme, _title_measurement, surface_content,
 )
@@ -33,7 +33,7 @@ def _surface(item, content, rows=()):
          "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
          "timeline.mark.blockSize": Decimal(8)},
     )
-    value = build_scene_input(projection=projection, surface_content=content,
+    value = build_surface_input(projection=projection, surface_content=content,
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})

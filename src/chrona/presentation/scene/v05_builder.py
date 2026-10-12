@@ -1,32 +1,23 @@
-"""Validated v0.5 Scene construction input boundary.
-
-This module is intentionally renderer-neutral.  Primitive composition follows
-in I27-R2; this seam ensures that it can only receive completed current inputs.
-"""
+"""Renderer-neutral projection of accepted, completed Layout geometry and paint intent."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from typing import Any, Mapping
 
-from chrona.presentation.layout.dependency_network import compose_dependency_network_surface
-from chrona.presentation.layout.canvas_viewport import DeclaredViewport
-from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest, completed_symbol_primitive_ids
-from chrona.presentation.layout.model import LayoutError, LayoutManifest
+from chrona.presentation.layout.dependency_network import DependencyNetworkLayout
+from chrona.presentation.layout.surface_quality import completed_symbol_primitive_ids
+from chrona.presentation.layout.surface_completion import SurfaceLayoutComposition
+from chrona.presentation.layout.model import LayoutManifest
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
-from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
-from chrona.presentation.layout.surface_composer import SurfacePreRowGeometry, compose_surface_layout
-from chrona.presentation.layout.surface_quality import AlignedStrokePlacement, CapacitySourceEvidence, SurfaceLayoutRequest
-from chrona.presentation.layout.sources import MeasuredSources
+from chrona.presentation.layout.surface_quality import AlignedStrokePlacement
 from chrona.presentation.layout.pattern_placement import PatternedPlacement
 from chrona.presentation.model.surface_content import SurfaceContentInput
-from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, ContrastClass, PrimitiveKind, contrast_binding, contrast_bindings,
     inside_member_label_semantic, semantic_binding)
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.info_diagnostics import PaintOmission
-from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, PrimitiveProvenance, review_row_subjects
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, ThemeTokenView
 from chrona.presentation.scene.pattern_geometry import pattern_geometry, pattern_kind, project_pattern_placement
@@ -59,31 +50,22 @@ class SceneBuildError(ValueError):
 
 @dataclass(frozen=True)
 class SceneBuildInput:
-    """Closed current-runtime inputs for one v0.5 Scene construction."""
-
+    """Paint intent and completed geometry; no request, measurement or routing state."""
     projection: Any
     surface_content: SurfaceContentInput
     layout_manifest: LayoutManifest
     theme_tokens: ThemeTokenView
-    font_metrics: Any
-    measured_sources: MeasuredSources
     capabilities: Mapping[str, bool]
+    completion: SurfaceLayoutComposition | DependencyNetworkLayout
     visual_profile: VisualProfile | None = None
     viewport: tuple[float, float] = (0.0, 0.0)
-    icon_assets: dict[str, Any] | None = None
-    visual_requests: tuple[Any, ...] = ()
-    fixed_lane_preflight: FixedLanePreflight | None = None
-    capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
-    surface_preparation: SurfacePreRowGeometry | None = None
-    declared_viewport: DeclaredViewport | None = None
-    auto_block_limit: Decimal | None = None
-    progress: RenderProgress | None = field(default=None, compare=False, repr=False)
 
+    def __post_init__(self):
+        surface = getattr(self.projection, "surface", "table-timeline")
+        expected = SurfaceLayoutComposition if surface == "table-timeline" else DependencyNetworkLayout
+        if not isinstance(self.completion, expected):
+            raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/surfacePlacement")
 
-_REQUIRED_SOURCES = {
-    "table-timeline": frozenset(("table", "timeline", "timeline-axis")),
-    "dependency-network": frozenset(("network",)),
-}
 
 
 def _scene_transform(text_transform: str) -> str:
@@ -397,49 +379,7 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
     return result, resolution.omissions
 
 
-def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
-                      layout_manifest: LayoutManifest, resolved_theme: Mapping[str, Any],
-                      font_metrics: Any, measured_sources: MeasuredSources,
-                      capabilities: Mapping[str, bool],
-                      visual_profile: VisualProfile | None = None,
-                      viewport: tuple[float, float] = (0.0, 0.0),
-                      icon_assets: dict[str, Any] | None = None,
-                      visual_requests: tuple[Any, ...] = (),
-                      fixed_lane_preflight: FixedLanePreflight | None = None,
-                      capacity_short_sources: tuple[CapacitySourceEvidence, ...] = (),
-                      surface_preparation: SurfacePreRowGeometry | None = None,
-                      declared_viewport: DeclaredViewport | None = None,
-                      auto_block_limit: Decimal | None = None,
-                      progress: RenderProgress | None = None) -> SceneBuildInput:
-    """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
-    if not isinstance(layout_manifest, LayoutManifest):
-        raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
-    if not isinstance(measured_sources, MeasuredSources):
-        raise SceneBuildError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
-    surface = getattr(projection, "surface", "table-timeline")
-    if surface not in _REQUIRED_SOURCES:
-        raise SceneBuildError("E_PRESENTATION_SURFACE_UNSUPPORTED", "/projection/surface")
-    required_sources = {decision.source for decision in layout_manifest.decisions
-                        if decision.source and decision.priority in {None, "required"}}
-    missing = sorted(_REQUIRED_SOURCES[surface] - required_sources)
-    if missing:
-        raise SceneBuildError("E_PRESENTATION_PRIMITIVE_MISSING", "/layoutManifest/sources/" + missing[0])
-    if surface == "dependency-network":
-        table_sources = {"table", "timeline", "timeline-axis"}
-        if required_sources & table_sources:
-            raise SceneBuildError("E_PRESENTATION_SURFACE_SLOT_SET", "/layoutManifest/sources")
-    if not all(isinstance(name, str) and isinstance(enabled, bool) for name, enabled in capabilities.items()):
-        raise SceneBuildError("E_PRESENTATION_CAPABILITY_SCHEMA", "/capabilities")
-    if fixed_lane_preflight is not None and not isinstance(fixed_lane_preflight, FixedLanePreflight):
-        raise SceneBuildError("E_LAYOUT_LANE_PREFLIGHT_INVALID", "/layoutManifest")
-    return SceneBuildInput(projection, surface_content, layout_manifest,
-                           ThemeTokenView(resolved_theme), font_metrics, measured_sources,
-                           dict(capabilities), visual_profile, viewport, icon_assets, visual_requests,
-                           fixed_lane_preflight, capacity_short_sources, surface_preparation, declared_viewport,
-                           progress=progress, auto_block_limit=auto_block_limit)
-
-
-def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
+def project_review_surface(value: SceneBuildInput) -> SceneSurface:
     """Dispatch a typed surface intent to an adapter of completed Layout output."""
     surface = getattr(value.projection, "surface", "table-timeline")
     if surface == "table-timeline":
@@ -458,29 +398,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
 def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     """Build the core, fully measured table/timeline surface from the frozen closure."""
     projection = value.projection
-    if not hasattr(projection, "items") or not hasattr(projection, "window"):
-        raise SceneBuildError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection")
-    metric = value.measured_sources.metric_values
-    if "text.body.size" not in metric or "text.body.lineHeight" not in metric:
-        raise SceneBuildError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues")
-    try:
-        request = (value.surface_preparation.inline.request if value.surface_preparation is not None
-                   else SurfaceLayoutRequest(
-            projection=projection, presentation_contract=normalize_presentation_input(value.surface_content),
-            surface_content=value.surface_content, layout_manifest=value.layout_manifest,
-            measured_sources=value.measured_sources, theme_tokens=value.theme_tokens,
-            font_metrics=value.font_metrics,
-            capabilities=dict(value.capabilities), icon_assets=value.icon_assets or {},
-            visual_requests=value.visual_requests,
-            fixed_lane_preflight=value.fixed_lane_preflight,
-            capacity_short_sources=value.capacity_short_sources,
-            declared_viewport=value.declared_viewport,
-            auto_block_limit=value.auto_block_limit,
-            progress=value.progress,
-        ))
-        composition = compose_surface_layout(request, prepared=value.surface_preparation)
-    except LayoutError as error:
-        raise SceneBuildError(error.diagnostic_id, error.path, error.detail) from error
+    composition = value.completion
     placed_surface = composition.placement
     slots = tuple(SceneSlot(item.slot_id, item.source_ref, item.scale_id,
                             (float(item.bounds.inline), float(item.bounds.block),
@@ -1244,18 +1162,9 @@ def _attach_completed_strokes(primitives: tuple[ScenePrimitive, ...],
 def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
     """Project completed network placements; never measure, rank, or route here."""
     projection = value.projection
-    network = getattr(projection, "network", None)
-    if network is None:
-        raise SceneBuildError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/network")
+    network = projection.network
     decisions = tuple(item for item in value.layout_manifest.decisions if item.kind == "slot" and item.source)
-    try:
-        placed = compose_dependency_network_surface(SurfaceLayoutRequest(
-            projection=projection, surface_content=value.surface_content,
-            layout_manifest=value.layout_manifest, measured_sources=value.measured_sources,
-            theme_tokens=value.theme_tokens, font_metrics=value.font_metrics,
-            declared_viewport=value.declared_viewport, progress=value.progress))
-    except LayoutError as error:
-        raise SceneBuildError(error.diagnostic_id, error.path) from error
+    placed = value.completion
     slots = tuple(SceneSlot(item.node_id, item.source, None,
                             (float(item.bounds.inline), float(item.bounds.block),
                              float(item.bounds.inline_size), float(item.bounds.block_size)),

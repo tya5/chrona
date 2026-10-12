@@ -9,7 +9,7 @@ from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measu
 from chrona.presentation.layout.surface_quality import SlotPlacement
 from chrona.presentation.model.surface_content import HeadingContent, SummaryContent
 from chrona.presentation.model.theme_tokens import TextTreatment
-from chrona.usecases.render_review import _source_inputs
+from chrona.presentation.layout.surface_source_inputs import _source_inputs
 from tests.unit.chrona.presentation.layout.test_sources import theme
 
 

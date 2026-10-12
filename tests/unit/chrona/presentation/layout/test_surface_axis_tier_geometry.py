@@ -52,7 +52,7 @@ def _axis_request(tiers):
                                      "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
                                      "timeline.mark.blockSize": Decimal(8)})
     content = base.surface_content(axis_tiers=tiers)
-    value = base.build_scene_input(projection=projection, surface_content=content,
+    value = base.build_surface_input(projection=projection, surface_content=content,
                                    layout_manifest=base._manifest("title", "table", "timeline", "timeline-axis"),
                                    resolved_theme=base._theme(), font_metrics=base._Font(), measured_sources=measured,
                                    capabilities={"svg": True})
@@ -417,9 +417,9 @@ def test_closed_pre_row_geometry_is_reused_without_another_native_preparation(mo
                      layout_manifest=request.layout_manifest, resolved_theme=base._theme(),
                      font_metrics=request.font_metrics, measured_sources=request.measured_sources,
                      capabilities={"svg": True}, viewport=(1000, 1000))
-    expected_scene = base.compose_review_surface(base.build_scene_input(**arguments))
+    expected_scene = base.compose_review_surface(base.build_surface_input(**arguments))
     expected_svg = render_v05_svg(expected_scene)
-    scene_input = base.build_scene_input(**arguments, surface_preparation=prepared)
+    scene_input = base.build_surface_input(**arguments, surface_preparation=prepared)
     assert scene_input.surface_preparation is prepared
 
     def forbidden(*args, **kwargs):
@@ -485,7 +485,7 @@ def test_own_axis_caption_precedes_one_native_axis_solve_and_keeps_full_slot(blo
     assert all(text.bounds.block >= frames[0].axis.bounds.block for text in labels)
     # Exercise Scene projection and the actual adapter before schema admission is widened.
     from chrona.presentation.renderers.v05_svg import render_v05_svg
-    scene = base.compose_review_surface(base.build_scene_input(
+    scene = base.compose_review_surface(base.build_surface_input(
         projection=request.projection, surface_content=request.surface_content,
         layout_manifest=manifest, resolved_theme=theme, font_metrics=request.font_metrics,
         measured_sources=request.measured_sources, capabilities={"svg": True}, viewport=(1000, 1000)))
@@ -919,7 +919,7 @@ def test_native_captions_close_one_shared_row_floor_from_actual_headers_and_axis
     grids = [shape for shape in placed.shapes if shape.placement_id.startswith("axis-grid:")]
     assert grids and all(float(shape.bounds.block) == float(expected) for shape in grids)
     from chrona.presentation.renderers.v05_svg import render_v05_svg
-    scene = base.compose_review_surface(base.build_scene_input(
+    scene = base.compose_review_surface(base.build_surface_input(
         projection=request.projection, surface_content=content, layout_manifest=manifest,
         resolved_theme=theme, font_metrics=request.font_metrics, measured_sources=request.measured_sources,
         capabilities={"svg": True}, viewport=(1000, 1000)))

@@ -347,8 +347,11 @@ allOf:
                 - $ref: "#/$defs/figureDaysUntil"
                 - $ref: "#/$defs/figureDaysIn"
                 - $ref: "#/$defs/figureCount"
+          figureFormats:
+            description: "Optional count figure text formats; targets must name declared count figures. Raw Summary values are unchanged."
+            $ref: "urn:chrona:common-v0.1#/$defs/figureFormats"
           heading:
-            description: "The optional kicker above the title, the title, and optional subtitle lines of a table-timeline surface (a dependency network ignores it), each a template of literal text and the placeholders {project} (the Project title), {asOf} (the Actual Set's as-of date in dateForm) and {calendar} (the Project's default calendar title, else its id); {{ and }} are literal braces. Absent, the title is the Project title and there is no kicker or subtitle."
+            description: "The optional kicker above the title, the title, and optional subtitle lines of a table-timeline surface (a dependency network ignores it), each a template of literal text and the placeholders {project} (the Project title), {asOf} (the Actual Set's as-of date in dateForm) , {calendar} (the Project's default calendar title, else its id), and {figure:id} (a declared global figure, bound before Layout measurement); {{ and }} are literal braces. Absent, the title is the Project title and there is no kicker or subtitle."
             examples: [{kicker: "Episode {asOf}", title: "{project}", subtitle: "Every work package by owning team, as of {asOf}, calendar {calendar}"}]
             type: object
             minProperties: 1
@@ -861,7 +864,7 @@ $defs:
     properties:
       id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", $ref: "#/$defs/figureIdentity"}
       kind: {description: "Select an already-projected integer count, without inferring dates or state.", const: count}
-      source: {description: "Closed selected-item/state/known-variance or observed behind/ahead count; missingActual requires an explicit as-of.", enum: [selected, recorded, dueUnobserved, notYetDue, unavailable, missingActual, knownFinishVariance, behind, ahead]}
+      source: {description: "Closed selected-item/state/known-variance, selected-group or completed Layout narrative count; missingActual requires an explicit as-of. groups and placedNotes are global-only.", enum: [selected, recorded, dueUnobserved, notYetDue, unavailable, missingActual, knownFinishVariance, behind, ahead, groups, placedNotes]}
       scope: {description: "Resolve once globally (default), or once for each current View group; group results are shown by group headers only.", enum: [global, group]}
   visual:
     description: "One direct or data-encoded icon request for an admitted occurrence."

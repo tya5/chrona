@@ -7,6 +7,35 @@ description: >-
   records a digest per definition and a change is a new part version, never an edit. Definitions
   that name an existing inline pattern are byte-exact to it, including the `$` anchor.
 $defs:
+  figureFormats:
+    description: "Closed count text formats keyed by declared View count figure identity. Explicit empty mapping replaces design defaults."
+    type: object
+    propertyNames: {$ref: "#/$defs/identifier"}
+    additionalProperties: {$ref: "#/$defs/countTextFormat"}
+  countTextFormat:
+    description: "A pure count text form; only digits accept minimumDigits and only English accepts capitalize. Number-name ranges are checked when text reads the count."
+    examples: [{form: digits, minimumDigits: 2}, {form: english-words, capitalize: true}, {form: kanji}]
+    oneOf:
+      - description: "Decimal digits with optional zero padding."
+        type: object
+        required: [form]
+        additionalProperties: false
+        properties:
+          form: {description: "Use decimal digits.", const: digits}
+          minimumDigits: {description: "Minimum digit count, including leading zeros.", type: integer, minimum: 1, maximum: 80}
+      - description: "English number words with optional initial capitalization."
+        type: object
+        required: [form]
+        additionalProperties: false
+        properties:
+          form: {description: "Use the English number-name table.", const: english-words}
+          capitalize: {description: "Capitalize the first letter when true.", type: boolean}
+      - description: "Ordinary or formal kanji number names."
+        type: object
+        required: [form]
+        additionalProperties: false
+        properties:
+          form: {description: "Select the kanji number-name table.", enum: [kanji, kanji-formal]}
   sha256Identity:
     description: "SHA-256 identity of one immutable byte payload: the `sha256:` prefix and 64 lowercase hexadecimal digits."
     examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
