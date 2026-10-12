@@ -38,6 +38,7 @@ from chrona.presentation.layout.relation_fan_in import (
 )
 from chrona.presentation.layout.relation_routing_order import dependency_routing_order
 from chrona.presentation.layout.relation_fallback import complete_fixed_connector, paired_stub_geometry
+from chrona.presentation.layout.relation_halo import complete_relation_halo
 from chrona.presentation.layout.relation_resolution import (
     RelationObstacleDomain, RelationResolutionStage, RelationRouteAttemptOutcome,
     relaxed_domain, search_relation_resolution,
@@ -837,6 +838,12 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     relations.sort(key=lambda item: declared_order[item.relation_id])
     completed_relations = complete_fan_in(tuple(relations))
     fallback_ids = {item.relation_id for item in route_fallbacks}
+    recovered_ids = {info.relation_id for info in resolution_infos}
+    completed_relations = tuple(complete_relation_halo(item, request.theme_tokens, context.text)
+                 if item.relation_id in recovered_ids
+                 or (item.fragment_endpoint is not None
+                     and item.relation_id.rsplit(":stub-", 1)[0] in recovered_ids)
+                 else item for item in completed_relations)
     stage_counts = Counter(info.stage for info in resolution_infos)
     completed_resolution_info = (*resolution_infos,
         *((RelationResolutionSummary("table-timeline", tuple(sorted(stage_counts.items(),

@@ -199,6 +199,7 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("milestoneDigestEntry", "label", "milestone-digest-entry", "text", "text", ContrastClass.GROUND_TEXT),
     # Relations.
     _binding("dependency", "line", "dependency", "dependency", "dependency"),
+    _binding("dependencyHalo", "decoration", "dependency-halo", "dependency-halo", "dependency-halo", ContrastClass.DECORATION),
     _binding("dependency-critical", "line", "dependency", "dependency-critical", "dependency-critical"),
     # A relation label is label text: its ink is the text role's, like every other label (#880). Its visual role
     # used to be "annotation", whose fill every Theme binds to a ground colour (it paints annotation boxes), so the

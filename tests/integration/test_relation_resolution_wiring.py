@@ -12,6 +12,7 @@ import pytest
 from chrona.presentation.layout import surface_lane_route_plan, surface_route_label_plan, surface_routes
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacle
 from chrona.presentation.layout.relation_resolution import RelationResolutionStage
+from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding
 from tests.support import synthetic_review as sr
 
 
@@ -87,6 +88,25 @@ def test_completed_search_domains_reach_real_scene_and_svg(
         svg = ET.fromstring(result.artifact.content)
         assert any(element.get("data-scene-id", element.get("id")) == paths[0].scene_id
                    for element in svg.iter())
+        assert contrast_binding("dependency-halo").contrast_class is ContrastClass.DECORATION
+        halos = [p for p in result.surface.primitives if p.visual_role == "dependency-halo"]
+        assert len(halos) == len(paths)
+        for line in paths:
+            halo = next(p for p in halos if p.scene_id == line.scene_id + ":halo")
+            assert halo.points == line.points and halo.path_commands == line.path_commands
+            assert halo.paint_clip == line.paint_clip
+            assert halo.paint_order == line.paint_order - 1
+            assert halo.marker_start is None and halo.marker_end is None
+            assert halo.from_instance_id is None and halo.to_instance_id is None
+            assert halo.paint.stroke == result.surface.canvas_paint.fill
+            assert halo.paint.stroke_width == 3 * line.paint.stroke_width
+            texts = [p for p in result.surface.primitives if p.kind.value == "Text"]
+            assert texts
+            assert all(line.paint_order < p.paint_order for p in texts), [(p.scene_id, p.paint_order)
+                for p in texts if p.paint_order <= line.paint_order]
+            ordered_ids = [element.get("data-scene-id", element.get("id")) for element in svg.iter()]
+            assert ordered_ids.index(halo.scene_id) < ordered_ids.index(line.scene_id)
+            assert all(ordered_ids.index(line.scene_id) < ordered_ids.index(p.scene_id) for p in texts)
         if mode == "stub" or unavailable_overlap:
             assert len(paths) == 2
             outgoing = next(p for p in paths if p.scene_id.endswith(":stub-source"))
@@ -99,4 +119,5 @@ def test_completed_search_domains_reach_real_scene_and_svg(
             text = "".join(svg.itertext()).upper()
             assert "-> TARGET" in text and "SOURCE ->" in text
     else:
+        assert not any(p.visual_role == "dependency-halo" for p in result.surface.primitives)
         assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in result.scene.diagnostics)

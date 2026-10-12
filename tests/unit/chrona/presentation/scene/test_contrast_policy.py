@@ -35,6 +35,16 @@ def test_policy_reports_every_classified_flat_paint_with_its_finite_floor():
     assert by_id["variance"].floor == 4.5
 
 
+def test_recovery_halo_is_decoration_not_a_mark_floor_exemption():
+    halo = _primitive("halo", "dependency-halo", "dependency-halo", None,
+                      kind="Path", stroke="#FFFFFF")
+    halo["points"] = [[10, 15], [30, 15]]
+    finding = next(item for item in evaluate_scene_contrast(_scene(halo)) if item.primitive_id == "halo")
+    assert finding.code == "W_SCENE_DECORATION_CONTRAST"
+    assert finding.severity == "warning"
+    assert finding.floor == 1.10
+
+
 def test_policy_rejects_missing_state_treatment_instead_of_inferring_a_floor():
     finding = evaluate_scene_contrast(_scene(
         _primitive("variance", "variance-on-track", "table-cell", "#000000"),

@@ -21,7 +21,7 @@ from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, PrimitiveProvenance, review_row_subjects
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, ThemeTokenView
 from chrona.presentation.scene.pattern_geometry import pattern_geometry, pattern_kind, project_pattern_placement
-from chrona.presentation.scene.model import DecorationDisposition, ImageFill, ImageTile, SceneColumn, SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, SymbolGeometry, TextLayout, TextRun
+from chrona.presentation.scene.model import DecorationDisposition, ImageFill, ImageTile, SceneColumn, SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, SymbolGeometry, TextLayout, TextRun, ScenePaint
 from chrona.presentation.scene.model import (
     SceneLaneMember, SceneLaneObstacle, SceneLaneRectObstacle, SceneLaneSegmentObstacle,
     requires_lane_member_provenance,
@@ -296,6 +296,10 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
     if primitive.visual_role == "canvas-overlay-gradient":
         if primitive.paint is None or primitive.paint.radial_gradient is None:
             raise SceneBuildError("E_PRESENTATION_PAINT_INVALID", "/body/roles/canvas-overlay-gradient")
+        return primitive, ()
+    if primitive.visual_role == "dependency-halo":
+        if primitive.paint is None:
+            raise SceneBuildError("E_PRESENTATION_PAINT_INVALID", "/body/roles/dependency-halo")
         return primitive, ()
     ink_only_pattern = bool(primitive.pattern and primitive.pattern.primitives
                             and is_ink_only_surface_pattern(tokens, primitive.visual_role))
@@ -846,6 +850,15 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         else:
             source = relation.source_ref
         dependency = semantic_binding(relation.semantic_id)
+        if relation.halo is not None:
+            halo = relation.halo
+            binding = semantic_binding("dependencyHalo")
+            primitives.append(ScenePrimitive(relation.relation_id + ":halo", PrimitiveKind.PATH,
+                source, "decoration", binding.purpose, binding.scene_role, halo.bounds,
+                points=halo.points, path_commands=halo.path_commands, paint_clip=halo.paint_clip,
+                paint_order=halo.paint_order, slot_id=relation.slot_id,
+                paint=ScenePaint(fill=None, stroke=value.theme_tokens.color("background", "fill"),
+                                 stroke_width=halo.stroke_width, dash=(), opacity=1.0)))
         bounds = relation.paint_clip.bounds if relation.paint_clip is not None else (0, 0, 0, 0)
         if relation.relation_id.startswith("legend-swatch:") and relation.points:
             # A legend key's bounds enclose its points (and the half stroke), so bounds-based checks see it (#499).
@@ -1034,6 +1047,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     ownership.update({item.placement_id: item.slot_id for item in placed_surface.marks})
     ownership.update({item.placement_id: item.slot_id for item in placed_surface.shapes})
     ownership.update({item.relation_id: item.slot_id for item in placed_surface.relations})
+    ownership.update({item.relation_id + ":halo": item.slot_id
+                      for item in placed_surface.relations if item.halo is not None})
     ownership.update({item.placement_id: item.slot_id for item in placed_surface.icons})
     for emission in placed_surface.lane_emissions:
         slot_id = ownership.get(emission.placement_id)

@@ -276,6 +276,16 @@ class ThemeTokenView:
         """Whether this resolved Theme declares the exact semantic role."""
         return isinstance(self._body["roles"].get(role), Mapping)
 
+    def dependency_halo_width(self, dependency_role: str) -> Decimal:
+        """Recovery decoration width; ground ink remains background.fill."""
+        line_width = self.number(dependency_role, "strokeWidth")
+        declared = self.optional_number("dependency-halo", "strokeWidth")
+        width = declared if declared is not None else 3 * line_width
+        if line_width <= 0 or width <= line_width:
+            raise ThemeTokenError("E_THEME_VALUE_TYPE", "/body/roles/dependency-halo/strokeWidth",
+                                  "halo width must exceed its dependency line width")
+        return width
+
     def has_binding(self, role: str, property_name: str) -> bool:
         """Whether this exact role declares a property binding.
 

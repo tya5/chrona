@@ -495,6 +495,24 @@ class RelationFanIn:
 
 
 @dataclass(frozen=True)
+class RelationHaloPlacement:
+    """Completed recovery centreline decoration, without edge or marker intent."""
+
+    points: tuple[tuple[float, float], ...]
+    path_commands: tuple[PathCommand, ...]
+    bounds: tuple[float, float, float, float]
+    stroke_width: float
+    paint_order: int
+    paint_clip: PaintClip | None
+
+    def __post_init__(self) -> None:
+        if (len(self.points) < 2 or not isfinite(self.stroke_width) or self.stroke_width <= 0
+                or any(not isfinite(value) for pair in self.points for value in pair)
+                or any(not isfinite(value) for value in self.bounds)):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: incomplete relation halo")
+
+
+@dataclass(frozen=True)
 class RelationPlacement:
     """A completed relation path or an explicit, provenance-preserving suppression."""
 
@@ -522,8 +540,13 @@ class RelationPlacement:
     paint_clip: PaintClip | None = None
     terminal_label: bool = False
     fragment_endpoint: Literal["source", "target"] | None = None
+    halo: RelationHaloPlacement | None = None
 
     def __post_init__(self) -> None:
+        if self.halo is not None and (self.suppressed or self.halo.points != self.points
+                or self.halo.path_commands != self.path_commands or self.halo.paint_clip != self.paint_clip
+                or self.halo.paint_order != self.paint_order - 1):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: inconsistent completed relation halo")
         if (not isinstance(self.terminal_label, bool)
                 or self.fragment_endpoint not in {None, "source", "target"}
                 or (self.fragment_endpoint is not None and (

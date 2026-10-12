@@ -19,10 +19,18 @@ Typed completion diagnostics now retain critical/stage identity and per-surface
 counts. Only the selected placement trial contributes recovery facts; executed
 search-budget facts still include discarded trials. Paired fragments count as
 one relation. The shared warning mapper serves CLI and MCP without recounting.
-Halo projection, visible-obstacle release evidence and the final default flip
-remain incomplete.
+Completed halo geometry now projects below its recovery line and existing text;
+normal/suppressed paths remain untouched. Theme owns surface-ground paint and
+validated width; decoration contrast remains enforced. Visible-obstacle release
+evidence, public byte controls and the final default flip remain incomplete.
 This is not release acceptance. The staged default stays suppress until the
 atomic protection/recovery gate below is satisfied.
+
+Latest focused gate: 196 tests pass, including real Scene/SVG halo ordering,
+Theme width controls and decoration contrast. Conformance: 32 checks pass;
+three derived reports are stale (contrast, diagnostic inventory and presentation
+coverage). Regenerate these in the disposable release snapshot, not as
+PR-authored report edits. A public recovery halo witness is still needed.
 
 ## Literal acceptance
 
