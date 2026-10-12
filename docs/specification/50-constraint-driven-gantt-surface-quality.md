@@ -456,10 +456,11 @@ admitted, insufficient plot-edge clearance must not silently erase a fragment
 or its terminal. Layout completes each endpoint independently against its own
 hosts, preserving temporal anchors and terminal fit, and expands the completed
 canvas when necessary. It does not clip a stub as though it were a full route.
-Scene source fragments carry only the actual source-instance reference; target
-fragments carry only the actual target-instance reference. Shared relation
-provenance and terminal text retain the linkage without falsely declaring
-either fragment a connected source-to-target route. These are ordinary
+Scene fragments omit paired graph-instance references: the existing Scene
+contract requires both references or neither, and neither fragment is a full
+connected edge. Layout retains each actual endpoint in its typed fragment
+placement. Shared relation provenance and terminal text retain the linkage
+without falsely declaring a connected source-to-target route. These are ordinary
 completed path/text primitives, not a new Scene schema or scheduling edge.
 Finite fallback is not evidence of safety, completeness or a clean route.
 
