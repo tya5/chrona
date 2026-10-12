@@ -147,12 +147,21 @@ routing result, and retain at least one drawn control. Compare source-keyed
 suppressed identities rather than unrelated diagnostic counts. Apply any date
 shift to both planned and actual dates. Assert the blocker is actually painted.
 This is a test-only implementation boundary, not a new routing contract.
-Architecture review finds no demonstrated processing-order defect: dependency
-routes and ports are excluded from normal mark/text/label obstacles. Global
-shape-channel contacts still need investigation before claiming corridor-local
-independence. If stronger evidence fails, stop S and publish a normative design
-correction before product code; passing fixtures alone do not prove the general
-rule or discharge the separate critical feasibility criterion.
+Architecture review confirms dependency routes and ports are excluded from normal
+mark/text/label obstacles, but [the real bounded-search reproduction](https://github.com/tya5/chrona/issues/1300#issuecomment-6134916217)
+contradicts general corridor independence: adding an off-row mark introduces
+visibility-graph contacts and changes suppression at the same13 expansions.
+Finite shape proposals and corridor obstacles stay identical. This occurs both
+inside and outside the overall allocation. Positive fixtures are not proof.
+
+S product implementation is paused pending a complete domain design. Specify
+relation-local row/port allocation, event contacts, safety inventory, graph/cache
+identity and quota ownership together; review whether safe paths outside that
+allocation remain admissible. Whole-architecture review must reconcile the
+critical safe-route obligation with the same feasibility domain before claiming
+impossibility. Keep full completed geometry/terminal/window safety; do not use
+quota increases, hints or corpus changes as an independence fix. Publish selected
+normative rules and amend owned files/tests before resuming product code.
 
 1. Complete selected contracts and architecture review here; update normative
    Context/Scene/routing specifications and publish before product changes.
