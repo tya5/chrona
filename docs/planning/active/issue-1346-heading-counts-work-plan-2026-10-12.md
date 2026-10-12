@@ -121,6 +121,8 @@ Integrated READY base: `67dfd2d3` (PR1431, default still best).
 Completion retains both routing-summary/budget facts and narrative
 receipts. Real4→3 closure isolation is tested under best and first-fit.
 Integrated count/policy/budget/ownership/tool batch55 PASS; S0 L1/L2/L3 PASS.
+Core source-fixture inventory and CI import/selection guards54 PASS; expected
+values are explicit and new optional counts retain unavailable diagnostics.
 The composer remains orchestration-sized; no acceptance assertion was relaxed.
 
 Integrated P4 local literal evidence passes for Title Card, Marquee and Sunday on actual

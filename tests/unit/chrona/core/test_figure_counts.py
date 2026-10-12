@@ -16,10 +16,22 @@ COUNTS = FigureCounts(
     known_finish_variance=17,
     behind=18,
     ahead=19,
+    groups=20,
+    placed_notes=21,
 )
 
 
-@pytest.mark.parametrize(("source", "expected"), list(zip(COUNT_SOURCES, range(11, 20), strict=True)))
+SOURCE_VALUES = {"selected": 11, "recorded": 12, "dueUnobserved": 13,
+    "notYetDue": 14, "unavailable": 15, "missingActual": 16,
+    "knownFinishVariance": 17, "behind": 18, "ahead": 19,
+    "groups": 20, "placedNotes": 21}
+
+
+def test_fixture_covers_the_closed_count_source_inventory():
+    assert tuple(SOURCE_VALUES) == COUNT_SOURCES
+
+
+@pytest.mark.parametrize(("source", "expected"), tuple(SOURCE_VALUES.items()))
 def test_each_closed_count_source_resolves_its_injected_value(source, expected):
     result = resolve_figures(
         (FigureSpec("count", "count", source=source, path="/body/figures/0"),),
@@ -89,6 +101,16 @@ def test_count_resolution_uses_injected_facts_without_a_projection_argument():
 def test_count_bundle_is_immutable():
     with pytest.raises(FrozenInstanceError):
         COUNTS.selected = 0
+
+
+@pytest.mark.parametrize("source", ["groups", "placedNotes"])
+def test_optional_count_is_unavailable_until_explicitly_injected(source):
+    counts = FigureCounts(0, 0, 0, 0, 0, 0, 0, 0, 0)
+    result = resolve_figures((FigureSpec("count", "count", source=source, path="/body/figures/0"),),
+        as_of=None, placements={}, periods=(), calendars={}, default_calendar=None, counts=counts)
+    assert result.values == {}
+    assert [(item.id, item.path) for item in result.diagnostics] == [
+        ("E_FIGURE_COUNT_UNAVAILABLE", "/body/figures/0/source")]
 
 
 def test_unknown_count_source_is_rejected():
