@@ -19,6 +19,7 @@ from chrona.presentation.layout.source_sizing import SourceSizingSession
 from chrona.presentation.layout.surface_legend import LegendArrangement, legend_arrangement, legend_source_input
 from chrona.presentation.layout.surface_preparation import SurfacePreRowGeometry, prepare_surface_content, prepare_surface_natural_candidate
 from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest, VisualRequest
+from chrona.presentation.layout.relation_hint_model import PreviousRouteHints
 from chrona.presentation.layout.surface_source_inputs import bind_heading_dependencies, surface_source_inputs, heading_part_sources
 from chrona.presentation.model.font_metrics import FontMetricsError
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
@@ -51,6 +52,7 @@ class SurfaceRenderPlanInput:
     icon_assets: dict[str, Any]
     visual_requests: tuple[VisualRequest, ...]
     progress: RenderProgress | None = None
+    previous_route_hints: PreviousRouteHints | None = None
 
 
 @dataclass(frozen=True)
@@ -181,6 +183,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
             declared_viewport=declared_viewport,
             auto_block_limit=resolved_layout.distances.get("/reviewSurface/maxBlockSize"),
             progress=value.progress,
+            previous_route_hints=value.previous_route_hints,
         )
 
     if view.surface == "table-timeline":

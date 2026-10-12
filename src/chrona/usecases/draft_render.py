@@ -20,6 +20,7 @@ from chrona.core.ports import RenderArtifact
 from chrona.presentation.contracts import TypesetterIdentity
 from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, ClosureError, resolve_draft_render
 from chrona.presentation.model.info_diagnostics import (
+    RelationHintReceipt, RelationHintSummary,
     PaintOmission, SuppressedPlotLabels, RelationRoutingSummary, RelationSearchBudgetHit,
     RelationResolutionInfo, RelationResolutionSummary,
     RelationPolicySupersession,
@@ -207,7 +208,12 @@ def warning_payloads(rendered: RenderedReview) -> list[dict[str, Any]]:
                          "message": f"preset {fallback.preset_id} prefers {fallback.preferred_profile}; "
                                     f"selected {fallback.selected_profile} for {fallback.target_kind}"})
     for info in rendered.info_diagnostics:
-        if isinstance(info, RelationPolicySupersession):
+        if isinstance(info, (RelationHintReceipt, RelationHintSummary)):
+            payloads.append({"code": info.code, "severity": "info", **info.payload(),
+                "message": (f"Prior route {info.relation_id}: {info.disposition} ({info.reason})"
+                            if isinstance(info, RelationHintReceipt) else
+                            f"Previous Scene hints evaluated for {len(info.receipts)} relations")})
+        elif isinstance(info, RelationPolicySupersession):
             payloads.append({"code": info.code, "severity": "info", **info.payload(),
                 "message": f"Layout relationRouting.unroutable={info.layout_mode} supersedes declared "
                            f"View visibility.relations.overflow={info.view_overflow} for spatial routing"})

@@ -241,7 +241,9 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     previous_scene = None
     if render_closure.previous_scene_bytes is not None:
         previous_scene = decode_previous_scene(render_closure.previous_scene_bytes,
-                                               render_closure.project.identity.id)
+            render_closure.project.identity.id,
+            current_theme_identity=next((item.content_identity for item in render_closure.resources
+                                         if item.kind == "theme"), None))
         ledger.read.add("previous-scene")
     project, view, layout = (render_closure.project.scheduler_input, render_closure.view.view,
                              render_closure.layout_profile.layout_input)
@@ -328,6 +330,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                        if view.surface == "table-timeline" else None)
     try:
         count_input = inspect_count_reads(SurfaceRenderPlanInput(
+            previous_route_hints=previous_scene.route_hints if previous_scene is not None else None,
             project=project, view=view, projection=projection, content=selected_content,
             summary=summary, table=table_content, profile=layout, theme=theme,
             font_metrics=font_metrics, heading=heading_content, actual=actual_observations,

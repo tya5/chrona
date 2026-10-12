@@ -3,6 +3,7 @@ from hashlib import sha256
 from pathlib import Path
 
 import pytest
+import yaml
 
 from chrona.presentation.scene.serialization import SceneSerializationError, serialize_scene
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
@@ -13,6 +14,8 @@ from chrona.presentation.model.closure import ClosureError, _read_previous_scene
 from chrona.storage.revision_store import LocalSnapshotReader, snapshot_directory
 from chrona.usecases.materialize import _OverlayBuilder
 from chrona.usecases.failure_report import report_failure
+from chrona.resources import default_preset_resource, default_preset_root
+from chrona.presentation.model.info_diagnostics import RelationHintSummary
 
 
 @pytest.fixture(scope="module")
@@ -103,6 +106,9 @@ def test_draft_captures_prior_bytes_without_modifying_file(tmp_path, previous_by
     result = render_draft(DraftRenderRequest(project, "svg", previous_scene=previous)).rendered
     assert result.scene.provenance.mode == "draft"
     assert previous.read_bytes() == previous_bytes
+    summary = next(item for item in result.info_diagnostics if isinstance(item, RelationHintSummary))
+    assert summary.payload()["actualSearch"] == 0
+    assert summary.payload()["accepted"] == summary.payload()["relationInstances"], summary.payload()
 
 
 def test_draft_refuses_wrong_project_input(tmp_path, previous_bytes):
@@ -114,6 +120,22 @@ def test_draft_refuses_wrong_project_input(tmp_path, previous_bytes):
     previous.write_text(json.dumps(value), encoding="utf-8")
     with pytest.raises(SceneSerializationError, match="current primary Project"):
         render_draft(DraftRenderRequest(project, "svg", previous_scene=previous))
+
+
+def test_best_ignores_valid_prior_geometry_without_output_or_receipt_changes(tmp_path, previous_bytes):
+    project = Path(__file__).resolve().parents[3] / "fixtures/routing_revision/project-v1.yaml"
+    preset = yaml.safe_load(default_preset_resource().read_bytes())
+    layout = yaml.safe_load((default_preset_root() / preset["body"]["resources"]["layout"]["path"]).read_bytes())
+    layout["relationRouting"]["search"] = "best"
+    layout_path = tmp_path / "best.yaml"
+    layout_path.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
+    previous = tmp_path / "prior.scene.json"
+    previous.write_bytes(previous_bytes)
+    baseline = render_draft(DraftRenderRequest(project, "svg", layout=layout_path)).rendered
+    hinted = render_draft(DraftRenderRequest(project, "svg", layout=layout_path, previous_scene=previous)).rendered
+    assert hinted.artifact.content == baseline.artifact.content
+    assert serialize_scene(hinted.scene) == serialize_scene(baseline.scene)
+    assert hinted.info_diagnostics == baseline.info_diagnostics
 
 
 @pytest.mark.parametrize("duplicate", [False, True])
