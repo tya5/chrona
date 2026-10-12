@@ -45,7 +45,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | group-header | `group-gloss` | required | 4.500 | 1 | 3 | 9.402 | 9.402 | 0 | 0 |
 | group-header | `group-header` | required | 4.500 | 1 | 12 | 7.627 | 7.627 | 0 | 0 |
 | group-header | `group-ordinal` | required | 4.500 | 3 | 15 | 6.982 | 7.583 | 0 | 0 |
-| group-header | `text` | required | 4.500 | 33 | 128 | 6.703 | 16.268 | 0 | 0 |
+| group-header | `text` | required | 4.500 | 33 | 151 | 6.703 | 16.268 | 0 | 0 |
 | group-header-band | `group-header-band` | absent | 1.100 | 6 | 0 | — | — | 0 | 0 |
 | group-header-band | `group-header-band` | enabled | 1.100 | 5 | 30 | 1.040 | 1.160 | 0 | 5 |
 | group-header-strip | `group-header-strip` | enabled | 1.100 | 1 | 18 | 1.000 | 1.350 | 0 | 6 |
@@ -5927,18 +5927,41 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `calendar-exception:2027-05-31` | `calendar-exception` | 748.180, 502.787 | `region-frame:board` | flat | `#EFE3C8` | fill | 1.216 | 1.100 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `calendar-exception:2027-07-05` | `calendar-exception` | 849.492, 502.787 | `region-frame:board` | flat | `#EFE3C8` | fill | 1.216 | 1.100 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `calendar-exception:2027-09-06` | `calendar-exception` | 1031.854, 502.787 | `region-frame:board` | flat | `#EFE3C8` | fill | 1.216 | 1.100 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ait:0` | `text` | 55.150, 450.363 | `group-tab:ait` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:bus:0` | `text` | 55.150, 218.950 | `group-tab:bus` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ground:0` | `text` | 55.150, 566.070 | `group-tab:ground` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:launch:0` | `text` | 55.150, 635.494 | `group-tab:launch` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ops:0` | `text` | 55.150, 751.201 | `group-tab:ops` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:payload:0` | `text` | 55.150, 357.798 | `group-tab:payload` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tab:ait` | `group-tab` | 55.150, 491.217 | `region-frame:board` | flat | `#EFE3C8` | fill | 2.001 | 1.100 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tab:bus` | `group-tab` | 55.150, 271.374 | `region-frame:board` | flat | `#EFE3C8` | fill | 2.001 | 1.100 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tab:ground` | `group-tab` | 55.150, 583.782 | `region-frame:board` | flat | `#EFE3C8` | fill | 2.001 | 1.100 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tab:launch` | `group-tab` | 55.150, 676.348 | `region-frame:board` | flat | `#EFE3C8` | fill | 2.001 | 1.100 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tab:ops` | `group-tab` | 55.150, 768.913 | `region-frame:board` | flat | `#EFE3C8` | fill | 2.001 | 1.100 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tab:payload` | `group-tab` | 55.150, 387.081 | `region-frame:board` | flat | `#EFE3C8` | fill | 2.001 | 1.100 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ait:0` | `text` | 52.612, 446.863 | `group-tab:ait` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ait:1` | `text` | 52.612, 457.363 | `group-tab:ait` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ait:2` | `text` | 52.612, 467.863 | `group-tab:ait` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ait:3` | `text` | 52.612, 478.363 | `group-tab:ait` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ait:4` | `text` | 52.612, 488.863 | `group-tab:ait` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ait:5` | `text` | 52.612, 499.363 | `group-tab:ait` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:bus:0` | `text` | 52.612, 215.450 | `group-tab:bus` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:bus:1` | `text` | 52.612, 225.950 | `group-tab:bus` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:bus:2` | `text` | 52.612, 236.450 | `group-tab:bus` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:bus:3` | `text` | 52.612, 246.950 | `group-tab:bus` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ground:0` | `text` | 52.612, 562.570 | `group-tab:ground` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ground:1` | `text` | 52.612, 573.070 | `group-tab:ground` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ground:2` | `text` | 52.612, 583.570 | `group-tab:ground` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ground:3` | `text` | 52.612, 594.070 | `group-tab:ground` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ground:4` | `text` | 52.612, 604.570 | `group-tab:ground` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:launch:0` | `text` | 52.612, 631.994 | `group-tab:launch` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:launch:1` | `text` | 52.612, 642.494 | `group-tab:launch` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:launch:2` | `text` | 52.612, 652.994 | `group-tab:launch` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:launch:3` | `text` | 52.612, 663.494 | `group-tab:launch` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:launch:4` | `text` | 52.612, 673.994 | `group-tab:launch` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ops:0` | `text` | 52.612, 747.701 | `group-tab:ops` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ops:1` | `text` | 52.612, 758.201 | `group-tab:ops` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ops:2` | `text` | 52.612, 768.701 | `group-tab:ops` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:ops:3` | `text` | 52.612, 779.201 | `group-tab:ops` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:payload:0` | `text` | 52.612, 354.298 | `group-tab:payload` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:payload:1` | `text` | 52.612, 364.798 | `group-tab:payload` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:payload:2` | `text` | 52.612, 375.298 | `group-tab:payload` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:payload:3` | `text` | 52.612, 385.798 | `group-tab:payload` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tag:payload:4` | `text` | 52.612, 396.298 | `group-tab:payload` | flat | `#C89A5E` | fill | 6.703 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tab:ait` | `group-tab` | 52.612, 491.217 | `region-frame:board` | flat | `#EFE3C8` | fill | 2.001 | 1.100 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tab:bus` | `group-tab` | 52.612, 271.374 | `region-frame:board` | flat | `#EFE3C8` | fill | 2.001 | 1.100 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tab:ground` | `group-tab` | 52.612, 583.782 | `region-frame:board` | flat | `#EFE3C8` | fill | 2.001 | 1.100 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tab:launch` | `group-tab` | 52.612, 676.348 | `region-frame:board` | flat | `#EFE3C8` | fill | 2.001 | 1.100 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tab:ops` | `group-tab` | 52.612, 768.913 | `region-frame:board` | flat | `#EFE3C8` | fill | 2.001 | 1.100 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `group-tab:payload` | `group-tab` | 52.612, 387.081 | `region-frame:board` | flat | `#EFE3C8` | fill | 2.001 | 1.100 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `legend:actual` | `legend` | 287.356, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `legend:calendar-closed` | `legend` | 654.732, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `legend:calendar-exception` | `legend` | 797.640, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
@@ -6045,46 +6068,46 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:structure:Phase` | `table-cell-secondary` | 330.985, 236.662 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.184 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:tvac:Phase` | `table-cell-secondary` | 332.107, 491.217 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.184 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:vibration:Phase` | `table-cell-secondary` | 332.107, 468.075 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.184 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:avionics:Work package` | `text` | 126.400, 259.803 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:bus-test:Work package` | `text` | 122.819, 306.086 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:campaign:Work package` | `text` | 120.144, 676.348 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:avionics:Work package` | `text` | 121.325, 259.803 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:bus-test:Work package` | `text` | 117.744, 306.086 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:campaign:Work package` | `text` | 115.069, 676.348 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:campaign:Δ finish` | `text` | 442.167, 676.348 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:cdr:Work package` | `text` | 130.444, 329.227 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:cdr:Work package` | `text` | 125.369, 329.227 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:cdr:Δ finish` | `text` | 442.167, 329.227 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:comms-test:Work package` | `text` | 125.956, 606.924 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:detector:Work package` | `text` | 126.719, 375.510 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:emc:Work package` | `text` | 142.787, 514.358 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:comms-test:Work package` | `text` | 120.881, 606.924 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:detector:Work package` | `text` | 121.644, 375.510 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:emc:Work package` | `text` | 137.713, 514.358 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:emc:Δ finish` | `text` | 442.167, 514.358 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:eps:Work package` | `text` | 147.269, 282.945 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:first-light:Work package` | `text` | 95.744, 792.054 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:eps:Work package` | `text` | 142.194, 282.945 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:first-light:Work package` | `text` | 90.669, 792.054 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:first-light:Δ finish` | `text` | 442.167, 792.054 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:frr:Work package` | `text` | 135.181, 699.489 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:frr:Work package` | `text` | 130.106, 699.489 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:frr:Δ finish` | `text` | 442.167, 699.489 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:integration:Work package` | `text` | 133.481, 444.934 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:launch-contract:Work package` | `text` | 146.050, 630.065 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:integration:Work package` | `text` | 128.406, 444.934 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:launch-contract:Work package` | `text` | 140.975, 630.065 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:launch-contract:Δ finish` | `text` | 442.167, 630.065 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:launch:Work package` | `text` | 133.681, 722.630 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:launch:Work package` | `text` | 128.606, 722.630 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:launch:Δ finish` | `text` | 442.167, 722.630 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:leop:Work package` | `text` | 142.469, 768.913 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:leop:Work package` | `text` | 137.394, 768.913 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:leop:Δ finish` | `text` | 442.167, 768.913 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:mcs:Work package` | `text` | 139.712, 560.641 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:optics:Work package` | `text` | 139.269, 352.369 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:payload-delivery:Work package` | `text` | 120.700, 421.793 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:mcs:Work package` | `text` | 134.637, 560.641 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:optics:Work package` | `text` | 134.194, 352.369 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:payload-delivery:Work package` | `text` | 115.625, 421.793 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:payload-delivery:Δ finish` | `text` | 442.167, 421.793 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:payload-tvac:Work package` | `text` | 142.012, 398.651 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:pdr:Work package` | `text` | 143.613, 213.521 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:payload-tvac:Work package` | `text` | 136.938, 398.651 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:pdr:Work package` | `text` | 138.537, 213.521 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:pdr:Δ finish` | `text` | 442.167, 213.521 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:psr:Work package` | `text` | 113.362, 537.500 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:psr:Work package` | `text` | 108.287, 537.500 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:psr:Δ finish` | `text` | 442.167, 537.500 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:rehearsals:Work package` | `text` | 132.450, 745.772 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:rehearsals:Work package` | `text` | 127.375, 745.772 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:rehearsals:Δ finish` | `text` | 442.167, 745.772 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:shipment:Work package` | `text` | 107.100, 653.206 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:shipment:Work package` | `text` | 102.025, 653.206 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:shipment:Δ finish` | `text` | 442.167, 653.206 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:station:Work package` | `text` | 138.050, 583.782 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:structure:Work package` | `text` | 152.850, 236.662 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:tvac:Work package` | `text` | 139.837, 491.217 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:station:Work package` | `text` | 132.975, 583.782 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:structure:Work package` | `text` | 147.775, 236.662 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:tvac:Work package` | `text` | 134.762, 491.217 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:tvac:Δ finish` | `text` | 436.719, 491.217 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:vibration:Work package` | `text` | 126.244, 468.075 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:vibration:Work package` | `text` | 121.169, 468.075 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:comms-test:Δ finish` | `variance-ahead` | 426.867, 606.924 | `region-frame:board` | flat | `#EFE3C8` | fill | 4.637 | 3.000 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:eps:Δ finish` | `variance-ahead` | 430.407, 282.945 | `region-frame:board` | flat | `#EFE3C8` | fill | 4.637 | 3.000 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:station:Δ finish` | `variance-ahead` | 426.867, 583.782 | `region-frame:board` | flat | `#EFE3C8` | fill | 4.637 | 3.000 | info |
@@ -6098,7 +6121,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:structure:Δ finish` | `variance-on-track` | 429.087, 236.662 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.184 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:vibration:Δ finish` | `variance-on-track` | 429.087, 468.075 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.184 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `column:Phase` | `tableColumnLabel` | 334.236, 165.925 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.184 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `column:Work package` | `tableColumnLabel` | 109.297, 165.925 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.184 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `column:Work package` | `tableColumnLabel` | 104.222, 165.925 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.184 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `column:Δ finish` | `tableColumnLabel` | 420.167, 165.925 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.184 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `title` | `heading` | 214.747, 77.540 | `region-frame:plaque` | flat | `#1B1512` | fill | 7.959 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `actual:avionics:avionics` | `actual` | 614.459, 288.591 | `calendar-closed:2027-04-18` | flat | `#16132F` | fill | 10.483 | 3.000 | info |
@@ -7275,4 +7298,4 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 Every independently required decoration role is enabled in committed Scene evidence; group-band, group-header-band or group-header-strip supplies the group concept, and row-band or row-rule supplies the row concept when there are no corpus errors.
 
 
-Findings: 7183; errors: 0; warnings: 307.
+Findings: 7206; errors: 0; warnings: 307.
