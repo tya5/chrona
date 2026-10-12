@@ -1,7 +1,7 @@
 # Unroutable dependency resolution acceptance (#1427)
 
 Implementation: [PR1447](https://github.com/tya5/chrona/pull/1447),
-`0df5b6fbef8eda300ebafbb8cb3935b5716e11dc`, based on READY `208cf1cc`.
+`d4509cd88160847b95a62ae566b840045c1b6bc3`, based on READY `208cf1cc`.
 Authority: [current work plan](../../planning/active/issue-1427-unroutable-work-plan-2026-10-12.md),
 Specs08/33/46/50, and [reviewer release decisions](https://github.com/tya5/chrona/issues/1427#issuecomment-6133101361).
 Release acceptance is pending current-head CI and exact-main three-OS CI.
@@ -25,3 +25,15 @@ receipts; Theme supplies paint; Scene/adapters project completed primitives.
 Search budgets remain instance/pass-local, including rejected passes. Critical
 priority does not create a separate unsafe-mode contract. Coverage disposition
 is repository evidence tooling, not an exception in runtime contrast policy.
+
+CI38312752823 exposed41 failures in the three pytest shards; derived-ready
+failed consequentially. Preview/conformance/MCP/newest-Python passed. Repair:
+Spec50 correction `3ba05ff5` precedes the corridor predicate change; non-normal
+rehearsal recovery now permits existing normal repair first. A relax control
+proves a normal path with all names retained. Old conservative controls declare
+suppress; no assertions/skips are removed. Three chip/note byte fixtures change
+only their explicit Layout resource identity (independent predecessor comparison);
+SVG and every other Scene field match. CLI golden changes20 cases only by the
+approved supersession info; unrelated argparse quoting is preserved. Current
+focused gate332 PASS51.08s. Re-run current-head CI and inspect its snapshot before
+merge; earlier green evidence alone is not acceptance.
