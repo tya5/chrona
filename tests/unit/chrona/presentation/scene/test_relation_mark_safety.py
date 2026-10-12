@@ -123,7 +123,7 @@ def test_diagonal_segments_are_measured_not_silently_ignored():
     assert segment_length_inside_rect(ObstacleSegment((0, 5), (20, 5)), ObstacleRect(5, 5, 15, 15)) == 0
 
 
-def test_unsafe_visible_fallback_is_suppressed_with_a_reason():
+def test_declared_suppress_does_not_attempt_legacy_visible_fallback():
     source, target = _item("a", D(2026, 2, 3), D(2026, 2, 10)), _item("b", D(2026, 2, 20), D(2026, 2, 26))
     relation = {"id": "dep", "from": {"object": "a", "endpoint": "start"},
                 "to": {"object": "b", "endpoint": "start"}}
@@ -131,5 +131,5 @@ def test_unsafe_visible_fallback_is_suppressed_with_a_reason():
         max_bends=0, max_detour=1, window=(D(2026, 1, 25), D(2026, 3, 5)), distribution="pack",
         diagnostics=True, allow_suppressed=True)
     assert not points
-    assert any(line.startswith("I_LAYOUT_RELATION_MARK_BLOCKED:") for line in diagnostics)
+    assert any(line.startswith("I_LAYOUT_RELATION_POLICY_SUPERSEDED:") for line in diagnostics)
     assert any(line.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for line in diagnostics)

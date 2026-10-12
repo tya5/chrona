@@ -7278,7 +7278,8 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 
 ## Decoration corpus witness
 
-Every independently required decoration role is enabled in committed Scene evidence; group-band, group-header-band or group-header-strip supplies the group concept, and row-band or row-rule supplies the row concept when there are no corpus errors.
+Every independently required decoration role has committed Scene or explicit synthetic evidence; group-band, group-header-band or group-header-strip supplies the group concept, and row-band or row-rule supplies the row concept when there are no corpus errors.
 
+- Synthetic `dependency-halo` (no public use): `tests/integration/test_unroutable_visible_obstacle.py`, `tests/integration/test_relation_resolution_wiring.py`, `tests/unit/chrona/presentation/scene/test_contrast_policy.py`
 
 Findings: 7189; errors: 0; warnings: 306.

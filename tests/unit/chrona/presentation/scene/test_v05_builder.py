@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from chrona.presentation.layout.model import LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect
+from chrona.presentation.layout.model import LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect, RelationUnroutableMode
 from chrona.presentation.layout.surface_backgrounds import validate_background_shapes
 from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.surface_quality import PathCommand, ShapePlacement, SurfaceLayoutRequest
@@ -573,7 +573,8 @@ def test_scene_projects_only_accepted_typed_plot_labels_and_relations():
     manifest = LayoutManifest("review", "sha256:test", "horizontal", "horizontal", rect,
                               tuple(LayoutDecision(source, "slot", rect, source)
                                     for source in ("title", "table", "timeline", "timeline-axis")),
-                              relation_max_bends=0, row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
+                              relation_max_bends=0, row_distribution="fill", background_extents=BACKGROUND_EXTENTS,
+                              relation_unroutable=RelationUnroutableMode.SUPPRESS)
     value = build_surface_input(
         projection=projection,
         surface_content=surface_content(

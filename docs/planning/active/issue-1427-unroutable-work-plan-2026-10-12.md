@@ -1,11 +1,76 @@
 # Unroutable dependency resolution (#1427)
 
-Design publication; product implementation has not started. Public base:
-READY `d1f502c1ebba398686eeaa7866e3a1ef3ef6d7bb`, full release
-[38246924810](https://github.com/tya5/chrona/actions/runs/38246924810) passed.
+Design published in PR1441; implementation is underway on the issue WIP. Public base:
+READY `872318db36032cf135f71c605d48d80c36c798f9`, full release
+[38257798618](https://github.com/tya5/chrona/actions/runs/38257798618) passed.
 Authority: [issue](https://github.com/tya5/chrona/issues/1427) and
 [reviewer decisions](https://github.com/tya5/chrona/issues/1427#issuecomment-6125006829).
 Current [Status](https://github.com/tya5/chrona/issues/1427#issuecomment-6114823479).
+
+Current implementation base: READY `208cf1cc`, including published1300
+inspection/delta/critical-priority slices and their macOS test repair. Normal merge preserves shared
+critical facts and1427 endpoint titles/mode ownership. Focused integration80
+PASS10.81s; imports11/37,249 reachable modules/no orphan and Layout floats pass.
+Fresh actual suppress comparison against this public base:46/46 full Scene/SVG
+pairs identical. Reviewer protection commit `e442bcf5` is approved for the
+atomic default flip. [Release decisions](https://github.com/tya5/chrona/issues/1427#issuecomment-6133101361)
+select synthetic halo coverage, not a contrived public example.
+Unpainted rollup endpoints retain overlap/stub Scene and SVG output without
+inventing a host; fallback and hierarchy controls pass23 tests on this base.
+
+Current slice: implementation and literal review are complete in PR1447;
+final current-head checks, merge and exact-main release remain required.
+Search, port admission, side-entry alternatives, reduction, primary-mark and
+corner validation now use the same stage domain. Finite fixed overlap is
+connected and never searches; paired stub fragments and mandatory ASCII
+terminal labels are connected through completed Layout placements. Scene
+retains its paired-reference invariant and performs projection only.
+Synthetic collision-domain tests prove Scene/SVG recovery and quality-limit
+fallback; search receipts remain separate from completed side-entry choices.
+Typed completion diagnostics now retain critical/stage identity and per-surface
+counts. Only the selected placement trial contributes recovery facts; executed
+search-budget facts still include discarded trials. Paired fragments count as
+one relation. The shared warning mapper serves CLI and MCP without recounting.
+Completed halo geometry now projects below its recovery line and existing text;
+normal/suppressed paths remain untouched. Theme owns surface-ground paint and
+validated width; decoration contrast remains enforced. Default relax and all
+five reviewer protection declarations are staged together in PR1447. Current
+CI38315016163 passes; all46 SVGs remain identical and all527 instances normal.
+This is not exact-main release acceptance.
+
+Latest focused gate: 196 tests pass, including real Scene/SVG halo ordering,
+Theme width controls and decoration contrast. Conformance: 32 checks pass;
+three derived reports are stale (contrast, diagnostic inventory and presentation
+coverage). Regenerate these in the disposable release snapshot, not as
+PR-authored report edits. Spec46 now permits only absent `dependency-halo` to
+use explicit synthetic coverage; actual public use supersedes it automatically.
+Legacy View supersession is now typed and projected once per completed surface;
+an agreeing suppress or omitted View declaration remains silent. Explicit Layout
+suppress also overrides legacy visible-overflow. Focused controls: 113 pass.
+The staged suppress public materializer batch passes full Scene/SVG byte identity
+for all 46 contexts, including critical-order integration (zero route deltas).
+Evidence: `python -m tools.routing_performance_evidence --output-dir <empty-dir>
+--jobs 4`; the batch JSON and all actual serialized outputs are retained for PR
+evidence. This does not prove the default-relax acceptance or final protection.
+Isolated relax-default candidate (only engine/model defaults changed): all46
+materializers complete; zero route additions/removals/geometry changes, zero
+spatial suppressions and zero recovery stages. The45 changed Scene/SVG pairs
+carry policy/provenance/migration diagnostics, not routing changes. Actual launch
+v1/v2 `spec-build` Scene/SVG regression passes under both staged suppress and
+candidate relax. Reviewer coordination for target protection and an enabled
+public halo witness is tracked in
+[comment6127633845](https://github.com/tya5/chrona/issues/1427#issuecomment-6127633845).
+The four-mode blocked-plan test supplies one completed Layout mark spanning
+the plot before shared obstacle registration. That exact mark is projected and
+serialized visibly, unlike the earlier collision-index-only constraint fixture.
+It proves suppress versus marks-stage recovery, overlap and paired-stub output;
+stub fragments still count once. It is intentionally a completed Layout input
+fixture, not a claim that normal lane packing creates overlap, and not a public
+decoration witness.
+The batched materializer report now includes per-surface final stage counts,
+validated against projected paths and summary receipts. Halos are excluded;
+paired stubs count once. Reusing the46 actual relax-candidate artifacts gives
+527 projected relation instances and zero recoveries; no redundant render.
 
 ## Literal acceptance
 
@@ -52,6 +117,35 @@ review it before implementation is finalized.
 
 ## Implementation plan
 
+CI exposed a real best-policy rehearsal gap: a text-crossing recovered route was
+treated as healthy and bypassed existing safe corridor repair. Spec50 now counts
+non-normal recovery as degraded for that planner, preserving normal-route
+preference without a new search policy or Scene responsibility. Publish this
+correction before changing the predicate; add an explicit-relax repair control.
+Old suppress/window/quality tests pin their intended policy; actual default CLI
+diagnostics are characterized separately. No blanket assertion weakening.
+
+Halo completion: Theme supplies surface-ground ink and declared/default width;
+Layout closes a separate immutable centreline/curve/clip/order placement.
+Scene emits its decoration path without markers or graph references. Specs08/33
+retain projection-only Scene, Spec46 retains decoration contrast and witness
+coverage. Width/paint validation remains hard; no renderer-side fallback.
+Publish this Spec50 clarification before halo implementation.
+
+Stub completion clarification: admitted endpoints retain independent fragments
+and mandatory terminal text under visible overflow, including plot-edge cases.
+Window endpoint absence still precedes routing. Spec50 owns this selected rule;
+Specs08/33 retain completed path/text projection and canvas ownership, while
+Spec66's temporal selection remains unchanged. Layout retains partial endpoint
+ownership, but Scene fragments omit graph references to preserve its existing
+both-or-neither invariant and avoid describing a full connected edge. Publish this
+clarification before connecting stub geometry/text; no adapter inference or
+new author syntax is needed.
+Terminal direction tokens are ASCII `->`: actual stub wiring exposed a missing
+U+2192 glyph in the bundled font stack. The ordinary font contract stays hard;
+do not add a renderer substitute, bypass glyph validation or silently change
+the author's font stack. Endpoint titles still use normal text measurement.
+
 One implementation PR after this design publication; independently tested commits.
 
 | Slice | Owners/files | Gate |
@@ -69,6 +163,16 @@ Measure critical-order predecessor effects independently. If that approved
 integration changes legacy artifacts, review/publish it before fixing the
 #1427 suppress reference base; do not conceal it with a mode-specific ordering
 compatibility branch or claim byte identity against a different base.
+
+Release completion: cherry-pick reviewer protection `e442bcf5`; add a single
+named `dependency-halo` coverage disposition in the report, listing synthetic
+mode/order/contrast tests only when the role is absent. Test automatic public
+takeover, unchanged missing-other-role errors and emitted-halo contrast. Then
+flip engine/model defaults to relax and run one current-base46-context batch.
+Architecture review: coverage belongs to repository evidence tooling, not
+Layout/Scene/Theme policy; geometry and actual paint evaluation remain unchanged.
+Specs08/33/46/50 and the five target protections remain consistent. Publish
+this decision before code; source examples changes are reviewer-authored only.
 
 Reviewer protection precedes the default flip. If a contract gap appears, update
 this record/specification, repeat whole-architecture review and publish before

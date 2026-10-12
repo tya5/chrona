@@ -9,6 +9,10 @@ description: >-
   and a change is a new part version, never an edit. A context that accepts only part of a vocabulary
   declares a named subset definition beside the full one, and a test proves the subset is contained in it.
 $defs:
+  relationUnroutableMode:
+    description: "Layout-owned table-timeline resolution when ordinary routing cannot complete."
+    examples: [relax]
+    enum: [relax, overlap, stub, suppress]
   relationSearchPolicy:
     description: "Layout's declared relation search: shape-first first-fit or legacy ranked best."
     examples: [first-fit]

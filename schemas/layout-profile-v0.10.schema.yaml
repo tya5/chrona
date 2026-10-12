@@ -120,6 +120,9 @@ properties:
     additionalProperties: false
     required: [maxBends, maxDetourRatio]
     properties:
+      unroutable:
+        description: "Table-timeline resolution mode: relax obstacles in stages, overlap, paired terminal stubs, or legacy suppression."
+        $ref: "urn:chrona:vocabulary-v0.1#/$defs/relationUnroutableMode"
       search:
         description: "Table-timeline dependency routing policy. Absent means first-fit; best opts into the legacy ranked search."
         $ref: "urn:chrona:vocabulary-v0.1#/$defs/relationSearchPolicy"

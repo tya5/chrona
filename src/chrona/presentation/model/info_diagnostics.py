@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 import json
 
 
@@ -131,4 +132,98 @@ class RelationSearchBudgetHit:
         return self.code + ":" + json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))
 
 
-PresentationInfo = SuppressedPlotLabels | PaintOmission | RelationRoutingSummary | RelationSearchBudgetHit
+class RelationResolutionStage(str, Enum):
+    NORMAL = "normal"
+    LABEL_VISUALS = "label-visuals"
+    TEXT = "text"
+    MARKS = "marks"
+    OVERLAP = "overlap"
+    STUB = "stub"
+
+
+@dataclass(frozen=True)
+class RelationResolutionInfo:
+    """One completed instance's recovery, never a discarded search-trial fact."""
+
+    surface_id: str
+    relation_id: str
+    stage: RelationResolutionStage
+    critical: bool
+
+    def __post_init__(self) -> None:
+        if (any(not isinstance(value, str) or not value for value in (self.surface_id, self.relation_id))
+                or not isinstance(self.critical, bool)
+                or not isinstance(self.stage, RelationResolutionStage)
+                or self.stage is RelationResolutionStage.NORMAL):
+            raise _diagnostic_error("relation resolution requires an instance and non-normal typed stage")
+
+    @property
+    def code(self) -> str:
+        return "I_LAYOUT_RELATION_RESOLUTION"
+
+    def payload(self) -> dict[str, object]:
+        return {"surfaceId": self.surface_id, "relationId": self.relation_id,
+                "stage": self.stage.value, "critical": self.critical}
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))
+
+
+@dataclass(frozen=True)
+class RelationResolutionSummary:
+    """Final recovery counts, disjoint by resolved instance rather than fragment."""
+
+    surface_id: str
+    stage_counts: tuple[tuple[RelationResolutionStage, int], ...]
+
+    def __post_init__(self) -> None:
+        if (not isinstance(self.surface_id, str) or not self.surface_id or not self.stage_counts
+                or len({stage for stage, _ in self.stage_counts}) != len(self.stage_counts)
+                or any(not isinstance(stage, RelationResolutionStage)
+                       or stage is RelationResolutionStage.NORMAL
+                       or isinstance(count, bool) or not isinstance(count, int) or count < 1
+                       for stage, count in self.stage_counts)):
+            raise _diagnostic_error("relation resolution summary requires unique positive stage counts")
+
+    @property
+    def code(self) -> str:
+        return "I_LAYOUT_RELATION_RESOLUTION_SUMMARY"
+
+    def payload(self) -> dict[str, object]:
+        return {"surfaceId": self.surface_id, "count": sum(count for _, count in self.stage_counts),
+                "stages": {stage.value: count for stage, count in self.stage_counts}}
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))
+
+
+@dataclass(frozen=True)
+class RelationPolicySupersession:
+    """A declared View overflow is superseded only for spatial Layout routing."""
+
+    surface_id: str
+    view_overflow: str
+    layout_mode: str
+
+    def __post_init__(self) -> None:
+        if (not isinstance(self.surface_id, str) or not self.surface_id
+                or self.view_overflow not in {"suppress", "visible-overflow"}
+                or self.layout_mode not in {"relax", "overlap", "stub", "suppress"}
+                or (self.view_overflow == self.layout_mode == "suppress")):
+            raise _diagnostic_error("relation policy supersession requires a changed declared spatial policy")
+
+    @property
+    def code(self) -> str:
+        return "I_LAYOUT_RELATION_POLICY_SUPERSEDED"
+
+    def payload(self) -> dict[str, object]:
+        return {"surfaceId": self.surface_id, "viewMember": "visibility.relations.overflow",
+                "viewValue": self.view_overflow, "layoutMember": "relationRouting.unroutable",
+                "layoutValue": self.layout_mode}
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))
+
+
+PresentationInfo = (SuppressedPlotLabels | PaintOmission | RelationRoutingSummary | RelationSearchBudgetHit
+                    | RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession)

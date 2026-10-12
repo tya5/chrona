@@ -21,7 +21,7 @@ def test_omitted_search_is_first_fit_without_an_implicit_budget():
     assert manifest.relation_search_budget is None
     assert manifest.relation_search == "first-fit"
     assert json.loads(manifest.canonical_bytes())["relationRouting"] == {
-        "maxBends": 4, "maxDetourRatio": 2.0, "search": "first-fit"}
+        "maxBends": 4, "maxDetourRatio": 2.0, "search": "first-fit", "unroutable": "relax"}
 
 
 def test_explicit_best_keeps_legacy_canonical_representation():
@@ -30,7 +30,7 @@ def test_explicit_best_keeps_legacy_canonical_representation():
     manifest = solved(value)
     assert manifest.relation_search == "best"
     assert json.loads(manifest.canonical_bytes())["relationRouting"] == {
-        "maxBends": 4, "maxDetourRatio": 2.0}
+        "maxBends": 4, "maxDetourRatio": 2.0, "unroutable": "relax"}
 
 
 def test_explicit_budget_reaches_manifest():
