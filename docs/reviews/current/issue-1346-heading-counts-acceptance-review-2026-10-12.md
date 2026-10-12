@@ -14,8 +14,12 @@ the exact-main three-OS CI containing this review; the issue remains open.
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | The three designs produce the same text on HALCYON from the template. | met | Real Title Card, Marquee and Sunday Contexts: template text equals original Scene and serialized SVG text, including `STATUS REPORTS : 03`. Nine-case evidence described below. | — |
-| 2 | On the roadmap, they show its own counts. | met | Same templates and shared design resources: independent memberships resolve 26 items/6 groups/3 placed notes. Same-project 3-item/2-group controls change the rendered copy in all three designs; no copied Theme/Layout/Scheme. | — |
+| 1 | The three designs produce the same text on HALCYON from the template. | met | [Nine-case reproducer](../../../tools/heading_count_reuse_evidence.py): real Title Card, Marquee and Sunday Contexts equal original Scene and SVG text, including `STATUS REPORTS : 03`. | — |
+| 2 | On the roadmap, they show its own counts. | met | [Nine-case reproducer](../../../tools/heading_count_reuse_evidence.py): shared designs resolve 26 items/6 groups/3 placed notes; 3-item/2-group controls change all three rendered copies without copying design resources. | — |
+
+## Programme-level criteria (optional)
+
+No additional closing criteria.
 
 ## Evidence and release gates
 
