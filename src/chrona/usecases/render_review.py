@@ -53,7 +53,7 @@ from chrona.presentation.model.projection import ReviewDeadline, ReviewPeriod, b
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.contracts.resources import ViewInput
 from chrona.presentation.review.detail import ReviewDetailError
-from chrona.presentation.review.figure_facts import projected_counts
+from chrona.presentation.review.figure_facts import deferred_layout_figures, projected_counts
 from chrona.presentation.review.annotation_expansion import AnnotationExpansionError
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, header_lines, heading_text
 from chrona.presentation.figure_text import FigureTextError, FigureTextReadError, resolve_figure_text
@@ -313,7 +313,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     except AxisBandScaleError as error:
         raise RenderFailed(error.code, error.detail, "presentation", error.path) from error
     selected_content = replace(selected_content, axis_band_paints=axis_band_scale.paints)
-    selected_content = _complete_annotation_headers(selected_content, theme, projection)
+    selected_content = _complete_annotation_headers(selected_content, theme, projection, view)
     heading_content = (compose_heading(view, project, actual_observations, environment.locale)
                        if view.surface == "table-timeline" else None)
     try:
@@ -651,10 +651,12 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         snapshot_analysis=snapshot_result.analysis if snapshot_result is not None else None,
     )
     global_figures, group_figures = (), ()
+    late_ids = {item.figure_id for item in deferred_layout_figures(view.figures)}
     figure_diagnostics = []
     try:
         global_figures = _resolved_figures(project, result.placements,
-            replace(view, figures=tuple(item for item in view.figures if item.scope == "global")), actual,
+            replace(view, figures=tuple(item for item in view.figures if item.scope == "global"
+                                       and item.figure_id not in late_ids)), actual,
             counts=projected_counts(projection.items, as_of_available=
                                    ((actual or {}).get("body") or {}).get("asOf") is not None))
     except RenderRejected as error:
@@ -672,11 +674,12 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
 
 
 def _complete_annotation_headers(content: SurfaceContentInput, theme: Mapping[str, Any],
-                                 projection: Any) -> SurfaceContentInput:
+                                 projection: Any, view: ViewInput) -> SurfaceContentInput:
     """Compose kind text with explicit View facts before source measurement or Layout."""
     tokens = ThemeTokenView(theme)
     figures = dict(projection.figures)
     scoped = {figure_id for _, values in projection.group_figures for figure_id, _ in values}
+    late_ids = {item.figure_id for item in deferred_layout_figures(view.figures)}
     annotations = []
     for annotation in content.annotations:
         token = tokens.annotation_kind(annotation.kind)
@@ -689,6 +692,9 @@ def _complete_annotation_headers(content: SurfaceContentInput, theme: Mapping[st
                 if kind != "field" or not value.startswith("figure:"):
                     continue
                 figure_id = value[len("figure:"):]
+                if figure_id in late_ids:
+                    raise RenderFailed("E_FIGURE_LAYOUT_SCOPE", "placedNotes is unavailable before completed Layout",
+                                       "presentation", f"/body/annotationKinds/{escaped_kind}/{field}")
                 if figure_id not in figures:
                     code = "E_FIGURE_SCOPE_UNAVAILABLE" if figure_id in scoped else "E_VIEW_FIGURE_UNKNOWN"
                     raise RenderFailed(code, f"annotation kind {annotation.kind} {field} cannot read global figure "
@@ -710,12 +716,16 @@ def _check_summary_figures(summary: Any, projection: Any, view: ViewInput) -> No
     """A Summary Profile metric naming a figure must name one the View declared, in a format an integer has (#586)."""
     declared = dict(projection.figures)
     kinds = {item.figure_id: item.kind for item in view.figures}
-    for panel in summary.panels if summary is not None else ():
-        for metric in panel.metrics:
+    late_ids = {item.figure_id for item in deferred_layout_figures(view.figures)}
+    for panel_index, panel in enumerate(summary.panels if summary is not None else ()):
+        for metric_index, metric in enumerate(panel.metrics):
             source = getattr(metric, "source", None)
             if not isinstance(source, Mapping) or "figure" not in source:
                 continue
             path = f"/body/panels/{panel.id}/metrics/{metric.id}"
+            if source["figure"] in late_ids:
+                raise RenderFailed("E_FIGURE_LAYOUT_SCOPE", "placedNotes is unavailable to Summary metrics",
+                                   "presentation", f"/body/panels/{panel_index}/metrics/{metric_index}/source/figure")
             if source["figure"] not in declared:
                 scoped = {figure_id for _, values in projection.group_figures for figure_id, _ in values}
                 if source["figure"] in scoped:

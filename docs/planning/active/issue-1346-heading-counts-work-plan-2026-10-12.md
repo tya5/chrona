@@ -137,5 +137,20 @@ new caption/count/preparation/projection59 PASS. Template/literal twins match
 actual primitives, slots and SVG, including start-column width reservation.
 Schema equivalence L1/L2/L3 PASS with five intentional caption declaration sites;
 import/reachability/value guards PASS. No authored examples/resources changed.
-P2 is not accepted yet: remaining deferred-fact admission precedes P3 typed
-narrative receipts/count closure. placedNotes awaits completed Layout facts.
+P2 deferred admission implemented: only declared placedNotes figures skip the
+pre-Layout Core call, never receive a zero placeholder, and fail at exact
+Summary/annotation-kind reference pointers when read early. Missing dates/state
+facts retain normal errors. P2 code is complete on WIP; issue acceptance/release
+remains pending. Derived figures/kind headings98 PASS; admission5 PASS.
+P3 producers now return immutable typed narrative receipts for completed bodies,
+full rail summaries and unconsumed notes. Explicit repeated references are
+distinct; a suppressed body adds no receipt, its completed full summary adds one;
+indexes/status/kind fragments add none. Completion rejects duplicate occurrence
+identity or missing/suppressed text. Project note-key semantics are not narrowed.
+Receipt/admission/legacy-characterization/projection/ownership92 PASS, including
+unchanged characterized Scene/SVG hashes; schema equivalence and structural
+guards PASS. P3 still needs the finite N..0 coordinator, typed dependent-fit
+admission, accepted facts and trial/budget isolation. Before that coordinator's
+code, finalize its connection to the existing unused-input checkpoint and
+required-fit evidence within the Layout-owned preparation/completion boundary;
+publish any contract correction first. No authored examples/resources changed.

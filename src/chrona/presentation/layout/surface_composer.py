@@ -318,10 +318,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
                                        headings.reserved_inline("legend"))
         slots = tuple(legend_slot if slot.source_ref == "legend" else slot for slot in slots)
     notes = by_source.get("notes")
+    narrative_receipts = []
     if notes:
-        notes_slot, notes_text = place_notes(request, content_slot(notes, headings.reserved("notes")), body_size)
-        notes_slot = full_slot(notes, notes_slot, headings.reserved("notes"))
-        text.extend(notes_text)
+        notes_batch = place_notes(request, content_slot(notes, headings.reserved("notes")), body_size)
+        notes_slot = full_slot(notes, notes_batch.slot, headings.reserved("notes"))
+        text.extend(notes_batch.text)
+        narrative_receipts.extend(notes_batch.narrative_receipts)
         slots = tuple(notes_slot if slot.source_ref == "notes" else slot for slot in slots)
     slots = complete_footer_band(provisional_slots=footer_provisional_slots, completed_slots=slots)
     by_source = {slot.source_ref: slot for slot in slots}
@@ -348,6 +350,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         timeline_content, timeline_bounds, mark_by_id, comparison_clusters, instance_rows, metric_for,
         surface_obstacles, register_rect, register_port))
     text.extend(annotation_batch.text)
+    narrative_receipts.extend(annotation_batch.narrative_receipts)
     shapes.extend(annotation_batch.shapes)
     relations.extend(annotation_batch.relations)
     candidate_icons.extend(annotation_batch.icons)
@@ -389,6 +392,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         visible_route_fallbacks=visible_route_fallbacks, visible_group_header_overflows=visible_group_header_overflows,
         lane_label_suppressions=lane_label_suppressions,
         routing_info=routes_batch.routing_info,
+        narrative_receipts=tuple(narrative_receipts),
         diagnostic_provenance=tuple(diagnostic_provenance),
         window_label_absences=member_label_requests.window_absences,
         visible_label_subjects=visible_label_subjects))

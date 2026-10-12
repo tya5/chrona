@@ -21,7 +21,7 @@ from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
 from chrona.presentation.layout.surface_lanes import build_lane_emissions, complete_hosted_text_identity
 from chrona.presentation.layout.surface_quality import (
     AxisTierOutcome, ColumnPlacement, FitWarning, GroupPlacement, IconPlacement, LaneLabelSuppression,
-    MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement, ShapePlacement,
+    MarkPlacement, NarrativeReceipt, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement, ShapePlacement,
     SlotPlacement, SurfaceLayoutRequest, SurfacePlacement, TextPlacement,
 )
 from chrona.presentation.layout.canvas_texture import complete_canvas_texture
@@ -86,6 +86,7 @@ class SurfaceCompletionContext:
     visible_label_subjects: Mapping[str, tuple[DiagnosticSubject, ...]] = field(default_factory=dict)
     window_label_absences: tuple[WindowLabelAbsence, ...] = ()
     routing_info: tuple[RelationSearchBudgetHit, ...] = ()
+    narrative_receipts: tuple[NarrativeReceipt, ...] = ()
 
 
 def contains_block_interval(*, container_start: Decimal, container_end: Decimal,
@@ -463,6 +464,7 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                                      surface_id="table-timeline", row_count=len(rows), actual=canvas,
                                      declared=request.declared_viewport, limit=request.auto_block_limit),
                                  window_label_absences=context.window_label_absences,
-                                 lane_window_absences=lane_window_absences)
+                                 lane_window_absences=lane_window_absences,
+                                 narrative_receipts=context.narrative_receipts)
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))

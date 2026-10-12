@@ -2,8 +2,13 @@
 from collections import Counter
 from collections.abc import Sequence
 
-from chrona.core.figures import FigureCounts
+from chrona.core.figures import FigureCounts, FigureSpec
 from chrona.presentation.model.projection import ObservationState, ReviewItem
+
+
+def deferred_layout_figures(specs: Sequence[FigureSpec]) -> tuple[FigureSpec, ...]:
+    """Only completed narrative counts are late; never defer unavailable date/state facts."""
+    return tuple(item for item in specs if item.kind == "count" and item.source == "placedNotes")
 
 
 def projected_counts(items: Sequence[ReviewItem], *, as_of_available: bool) -> FigureCounts:
