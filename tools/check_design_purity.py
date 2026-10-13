@@ -24,8 +24,9 @@ from chrona.presentation.model.theme_inheritance import (
     is_derived_theme,
     theme_base_reference,
 )
-from chrona.presentation.contracts.resources import RENDER_CONTEXT_VERSIONS
+from chrona.presentation.contracts.resources import RENDER_CONTEXT_VERSIONS, _SCHEMAS
 from chrona.resources import safe_load
+from chrona.usecases import materialize
 
 
 _COLLECTIONS = (
@@ -38,12 +39,9 @@ _PLACEHOLDER = re.compile(
     r")(?:\|[A-Za-z][A-Za-z0-9_-]*)?\}(?!\})"
 )
 _IDENTIFIER_BOUNDARY = r"[\w-]"
-_SUPPORTED_PROJECT_VERSION = "timeline/v0.7"
 _SUPPORTED_DESIGN_VERSIONS = {
-    "theme": frozenset({"chrona/theme/v0.15", "chrona/theme/v0.16"}),
-    "layout-profile": frozenset({"chrona/layout-profile/v0.10"}),
-    "summary-profile": frozenset({"chrona/summary-profile/v0.1"}),
-    "review-detail-profile": frozenset({"chrona/review-detail-profile/v0.1"}),
+    kind: frozenset(version for resource_kind, version in _SCHEMAS if resource_kind == kind)
+    for kind in ("theme", "layout-profile", "summary-profile", "review-detail-profile")
 }
 
 
@@ -93,7 +91,7 @@ def _project_facts(project: object) -> tuple[ProjectFact, ...]:
     project_id = identity.get("id") if isinstance(identity, Mapping) else None
     if not isinstance(project_id, str) or not project_id:
         raise DesignPurityError("E_DESIGN_PURITY_PROJECT: missing Project id")
-    if project.get("version") != _SUPPORTED_PROJECT_VERSION:
+    if not isinstance(project.get("version"), str) or ("project", project["version"]) not in _SCHEMAS:
         raise DesignPurityError(f"E_DESIGN_PURITY_UNSUPPORTED: Project version {project.get('version')!r}")
     facts.append(ProjectFact("identifier", project_id, "/project/id"))
 
@@ -135,14 +133,17 @@ def _connection_identifier(pointer: str) -> bool:
 
 
 def _matches(text: str, facts: tuple[ProjectFact, ...], pointer: str,
-             location: str) -> list[dict[str, str]]:
+             location: str, resource_kind: str | None) -> list[dict[str, str]]:
     result: list[dict[str, str]] = []
     for segment in _literal_segments(text):
         for fact in facts:
             if fact.kind == "identifier":
                 if not _phrase_occurs(fact.value, segment):
                     continue
-                match_class = "typed-connection-identifier" if _connection_identifier(pointer) else "identifier-candidate"
+                typed = (resource_kind == "summary-profile" and location == "value"
+                         and _connection_identifier(pointer) and fact.pointer.startswith("/objects/")
+                         and text == fact.value)
+                match_class = "typed-connection-identifier" if typed else "identifier-candidate"
             else:
                 if not _phrase_occurs(fact.value, segment):
                     continue
@@ -161,6 +162,7 @@ def _matches(text: str, facts: tuple[ProjectFact, ...], pointer: str,
 def _scan_design(resource_name: str, value: object,
                  facts: tuple[ProjectFact, ...]) -> list[dict[str, str]]:
     findings: list[dict[str, str]] = []
+    resource_kind = value.get("kind") if isinstance(value, Mapping) else None
 
     def visit(node: object, pointer: str) -> None:
         if isinstance(node, Mapping):
@@ -168,14 +170,14 @@ def _scan_design(resource_name: str, value: object,
                 child_pointer = _pointer(pointer, key)
                 if isinstance(key, str):
                     findings.extend({"resource": resource_name, **item}
-                                    for item in _matches(key, facts, child_pointer, "key"))
+                                    for item in _matches(key, facts, child_pointer, "key", resource_kind))
                 visit(child, child_pointer)
         elif isinstance(node, Sequence) and not isinstance(node, (str, bytes, bytearray)):
             for index, child in enumerate(node):
                 visit(child, f"{pointer}/{index}")
         elif isinstance(node, str):
             findings.extend({"resource": resource_name, **item}
-                            for item in _matches(node, facts, pointer, "value"))
+                            for item in _matches(node, facts, pointer, "value", resource_kind))
 
     visit(value, "")
     return findings
@@ -204,28 +206,15 @@ def _reference_label(reference: Mapping[str, Any]) -> str:
 
 
 def _read_reference(example: Path, reference: dict[str, Any], stores: Mapping[str, Path] | None) -> bytes:
-    # Kept as a use-case adapter: the materializer owns provider/address and
-    # content-identity admission. Tests may replace these public helpers while
-    # the helper extraction lands independently.
-    from chrona.usecases import materialize
-
-    reader = getattr(materialize, "read_materializer_reference", None)
-    if not callable(reader):
-        raise DesignPurityError("E_DESIGN_PURITY_HELPER: materialize reference reader is unavailable")
     try:
-        return reader(example, reference, stores)
+        return materialize.read_materializer_reference(example, reference, stores)
     except Exception as error:
         raise DesignPurityError(f"E_DESIGN_PURITY_REFERENCE:{_reference_label(reference)}:{error}") from error
 
 
 def _stores(example: Path, declared: object) -> dict[str, Path]:
-    from chrona.usecases import materialize
-
-    roots = getattr(materialize, "materializer_store_roots", None)
-    if not callable(roots):
-        raise DesignPurityError("E_DESIGN_PURITY_HELPER: materializer Store resolver is unavailable")
     try:
-        result = roots(example, declared)
+        result = materialize.materializer_store_roots(example, declared)
     except Exception as error:
         raise DesignPurityError(f"E_DESIGN_PURITY_STORES:{error}") from error
     if not isinstance(result, Mapping):
@@ -254,11 +243,14 @@ def _resource_reference(context: Mapping[str, Any], key: str,
 
 def _validate_design_version(value: Mapping[str, Any], expected: str, label: str) -> None:
     version = value.get("version")
-    if version not in _SUPPORTED_DESIGN_VERSIONS.get(expected, frozenset()):
+    if not isinstance(version, str) or version not in _SUPPORTED_DESIGN_VERSIONS.get(expected, frozenset()):
         raise DesignPurityError(f"E_DESIGN_PURITY_UNSUPPORTED:{label}:{expected}:{version!r}")
     declared_kind = value.get("kind")
-    if declared_kind is not None and declared_kind != expected:
+    if ((expected in {"theme", "summary-profile"} and declared_kind != expected)
+            or (declared_kind is not None and declared_kind != expected)):
         raise DesignPurityError(f"E_DESIGN_PURITY_RESOURCE:{label}: expected {expected}")
+    if not isinstance(value.get("id"), str) or not value["id"]:
+        raise DesignPurityError(f"E_DESIGN_PURITY_IDENTITY:{label}: missing resource id")
 
 
 def _input_reference(context: Mapping[str, Any], key: str,
@@ -274,7 +266,8 @@ def _input_reference(context: Mapping[str, Any], key: str,
     return reference
 
 
-def _scan_context(example: Path, context_path: Path, stores: Mapping[str, Path]) -> list[dict[str, str]]:
+def _scan_context(example: Path, context_path: Path, stores: Mapping[str, Path], *,
+                  errors: list[str] | None = None) -> list[dict[str, str]]:
     context = _load_yaml(context_path.read_bytes(), context_path.as_posix())
     if not isinstance(context, Mapping) or not isinstance(context.get("body"), Mapping):
         raise DesignPurityError(f"E_DESIGN_PURITY_CONTEXT:{context_path}")
@@ -283,23 +276,22 @@ def _scan_context(example: Path, context_path: Path, stores: Mapping[str, Path])
     project_ref = _resource_reference(context, "project", "project")
     project = _load_yaml(_read_reference(example, project_ref, stores), _reference_label(project_ref))
     facts = _project_facts(project)
+    if project["project"]["id"] != project_ref.get("id"):
+        raise DesignPurityError(f"E_DESIGN_PURITY_IDENTITY:{_reference_label(project_ref)}: Project id differs from reference")
     findings: list[dict[str, str]] = []
-    seen: set[tuple[str, str, str]] = set()
-
     def scan_reference(reference: dict[str, Any], expected: str,
-                       stack: tuple[tuple[str, str, str, str], ...] = ()) -> None:
+                       stack: tuple[tuple[str, str, str], ...] = ()) -> None:
         label = _reference_label(reference)
-        key = (*_reference_key(reference), str(reference.get("id", "")))
+        key = _reference_key(reference)
         if key in stack:
             raise DesignPurityError(f"E_DESIGN_PURITY_THEME_CYCLE:{label}")
-        if key in seen:
-            return
-        seen.add(key)
         payload = _read_reference(example, reference, stores)
         value = _load_yaml(payload, label)
         if not isinstance(value, Mapping):
             raise DesignPurityError(f"E_DESIGN_PURITY_RESOURCE:{label}: expected mapping")
         _validate_design_version(value, expected, label)
+        if value["id"] != reference.get("id"):
+            raise DesignPurityError(f"E_DESIGN_PURITY_IDENTITY:{label}: resource id differs from reference")
         findings.extend(_scan_design(label, value, facts))
         if expected == "theme" and is_derived_theme(value):
             try:
@@ -308,19 +300,23 @@ def _scan_context(example: Path, context_path: Path, stores: Mapping[str, Path])
                 raise DesignPurityError(f"E_DESIGN_PURITY_THEME_BASE:{label}:{error}") from error
             scan_reference(base, "theme", (*stack, key))
 
-    theme = _resource_reference(context, "theme", "theme")
-    layout = _resource_reference(context, "layout", "layout-profile")
-    scan_reference(theme, "theme")
-    scan_reference(layout, "layout-profile")
-    for key, kind in (("summaryProfile", "summary-profile"),
-                      ("detailProfile", "review-detail-profile")):
-        profile = _input_reference(context, key, kind)
-        if profile is not None:
-            scan_reference(profile, kind)
-    return findings
+    for key, kind, optional in (("theme", "theme", False), ("layout", "layout-profile", False),
+                                ("summaryProfile", "summary-profile", True),
+                                ("detailProfile", "review-detail-profile", True)):
+        try:
+            reference = (_input_reference(context, key, kind) if optional
+                         else _resource_reference(context, key, kind))
+            if reference is not None:
+                scan_reference(reference, kind)
+        except (DesignPurityError, OSError, ValueError) as error:
+            if errors is None:
+                raise
+            errors.append(f"{context_path}:{error}")
+    return [{**finding, "project": _reference_label(project_ref),
+             "context": context_path.as_posix()} for finding in findings]
 
 
-def _batch(examples_root: Path) -> list[dict[str, str]]:
+def _batch(examples_root: Path, *, errors: list[str] | None = None) -> list[dict[str, str]]:
     if not examples_root.is_dir():
         raise DesignPurityError(f"E_DESIGN_PURITY_EXAMPLES_ROOT:{examples_root}")
     manifests = sorted(examples_root.glob("*/manifest.yaml"))
@@ -329,30 +325,42 @@ def _batch(examples_root: Path) -> list[dict[str, str]]:
     findings: list[dict[str, str]] = []
     for manifest_path in manifests:
         example = manifest_path.parent.resolve()
-        manifest = _load_yaml(manifest_path.read_bytes(), manifest_path.as_posix())
-        if not isinstance(manifest, Mapping) or not isinstance(manifest.get("slides"), list) or not manifest["slides"]:
-            raise DesignPurityError(f"E_DESIGN_PURITY_MANIFEST:{manifest_path}")
-        stores = _stores(example, manifest.get("stores"))
+        try:
+            manifest = _load_yaml(manifest_path.read_bytes(), manifest_path.as_posix())
+            if not isinstance(manifest, Mapping) or not isinstance(manifest.get("slides"), list) or not manifest["slides"]:
+                raise DesignPurityError(f"E_DESIGN_PURITY_MANIFEST:{manifest_path}")
+            stores = _stores(example, manifest.get("stores"))
+        except (DesignPurityError, OSError, ValueError) as error:
+            if errors is None:
+                raise
+            errors.append(f"{manifest_path}:{error}")
+            continue
         default_context = manifest.get("context")
         for slide_index, slide in enumerate(manifest["slides"]):
-            if not isinstance(slide, Mapping):
-                raise DesignPurityError(f"E_DESIGN_PURITY_MANIFEST:{manifest_path}:slides/{slide_index}")
-            context_address = slide.get("context", default_context)
-            if not isinstance(context_address, str) or not context_address:
-                raise DesignPurityError(f"E_DESIGN_PURITY_MANIFEST:{manifest_path}:context")
-            context_path = _inside(example, context_address)
-            if not context_path.is_file():
-                raise DesignPurityError(f"E_DESIGN_PURITY_CONTEXT_MISSING:{context_path}")
-            findings.extend(_scan_context(example, context_path, stores))
+            try:
+                if not isinstance(slide, Mapping):
+                    raise DesignPurityError(f"E_DESIGN_PURITY_MANIFEST:{manifest_path}:slides/{slide_index}")
+                context_address = slide.get("context", default_context)
+                if not isinstance(context_address, str) or not context_address:
+                    raise DesignPurityError(f"E_DESIGN_PURITY_MANIFEST:{manifest_path}:context")
+                context_path = _inside(example, context_address)
+                if not context_path.is_file():
+                    raise DesignPurityError(f"E_DESIGN_PURITY_CONTEXT_MISSING:{context_path}")
+                findings.extend(_scan_context(example, context_path, stores, errors=errors))
+            except (DesignPurityError, OSError, ValueError) as error:
+                if errors is None:
+                    raise
+                errors.append(f"{manifest_path}:slides/{slide_index}:{error}")
     return findings
 
 
-def audit(project: object, resources: Sequence[tuple[str, object]]) -> list[dict[str, str]]:
+def audit(project: object, resources: Sequence[tuple[str, object]], *,
+          project_label: str = "explicit-project") -> list[dict[str, str]]:
     """Return stable candidate findings for explicit Project/design inputs."""
     if not resources:
         raise DesignPurityError("E_DESIGN_PURITY_EMPTY: no design resources were supplied")
     facts = _project_facts(project)
-    findings = [finding for name, resource in resources
+    findings = [{**finding, "project": project_label} for name, resource in resources
                 for finding in _scan_design(name, resource, facts)]
     return _sort_findings(findings)
 
@@ -363,6 +371,7 @@ def _sort_findings(findings: Sequence[dict[str, str]]) -> list[dict[str, str]]:
         item.get("resource", ""), item.get("pointer", ""),
         item.get("project_fact", ""), item.get("match_class", ""),
         item.get("location", ""), item.get("match", ""),
+        item.get("project", ""), item.get("context", ""),
     ))
 
 
@@ -374,16 +383,18 @@ def _explicit(project_path: Path, resource_paths: Sequence[Path]) -> list[dict[s
         value = _load_yaml(path.read_bytes(), path.as_posix())
         if not isinstance(value, Mapping):
             raise DesignPurityError(f"E_DESIGN_PURITY_RESOURCE:{path}: expected mapping")
-        if value.get("kind") in {"project", "view", "render-context"}:
+        if value.get("kind") is not None and value["kind"] not in tuple(_SUPPORTED_DESIGN_VERSIONS):
             raise DesignPurityError(f"E_DESIGN_PURITY_RESOURCE:{path}: connection/non-design kind")
         version = value.get("version")
+        if not isinstance(version, str):
+            raise DesignPurityError(f"E_DESIGN_PURITY_UNSUPPORTED:{path}:{version!r}")
         expected = next((kind for kind, versions in _SUPPORTED_DESIGN_VERSIONS.items()
                          if version in versions), None)
         if expected is None:
             raise DesignPurityError(f"E_DESIGN_PURITY_UNSUPPORTED:{path}:{version!r}")
         _validate_design_version(value, expected, path.as_posix())
         resources.append((path.as_posix(), value))
-    return audit(project, resources)
+    return audit(project, resources, project_label=project_path.as_posix())
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -397,13 +408,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     explicit = args.project is not None or bool(args.resource)
     if explicit == (args.examples_root is not None) or (explicit and (args.project is None or not args.resource)):
         parser.error("choose --examples-root OR both --project and at least one --resource")
+    errors: list[str] = []
     try:
         findings = (_explicit(args.project, args.resource) if explicit
-                    else _sort_findings(_batch(args.examples_root)))
-        errors: list[str] = []
+                    else _sort_findings(_batch(args.examples_root, errors=errors)))
     except (DesignPurityError, OSError, ValueError) as error:
         findings, errors = [], [str(error)]
-    payload = {"errors": sorted(errors), "findings": _sort_findings(findings)}
+    payload = {"errors": sorted(errors), "findings": _sort_findings(findings),
+               "counts": {"findings": len(findings),
+                          "resourcesWithFindings": len({item["resource"] for item in findings}),
+                          "contextsWithFindings": len({item["context"] for item in findings if "context" in item})}}
+    reconfigure = getattr(sys.stdout, "reconfigure", None)
+    if callable(reconfigure):
+        reconfigure(encoding="utf-8")
     sys.stdout.write(json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n")
     if errors:
         return 2

@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import copy
+import io
 
 import pytest
 import yaml
@@ -101,10 +102,17 @@ def test_typed_object_source_is_distinguished_from_collision_candidate():
     typed = [item for item in findings if item["match_class"] == "typed-connection-identifier"]
     assert [(item["pointer"], item["project_fact"]) for item in typed] == [
         ("/body/panels/0/metrics/0/source/object", "identifier:/objects/launch-window"),
-        ("/body/panels/0/metrics/0/source/object", "identifier:/periods/launch-window"),
     ]
+    assert any(item["project_fact"] == "identifier:/periods/launch-window"
+               and item["match_class"] == "identifier-candidate" for item in findings)
     assert any(item["pointer"].endswith("/label") and item["match_class"] == "wording-candidate"
                for item in findings)
+
+
+def test_lookalike_theme_source_is_not_a_typed_project_connection():
+    findings = purity.audit(_project(), [("theme.yaml", _resource({"source": {"object": "launch-window"}}))])
+    assert findings
+    assert all(item["match_class"] != "typed-connection-identifier" for item in findings)
 
 
 def test_empty_or_unsupported_explicit_inputs_fail_closed(tmp_path, capsys):
@@ -125,7 +133,7 @@ def _write(path: Path, content: str) -> Path:
 
 def _reference(kind: str, identity: str, address: str, payload: bytes,
                *, store_identity: str = "example"):
-    return {"id": f"{kind}-id", "kind": kind,
+    return {"id": identity, "kind": kind,
             "store": {"provider": "local", "identity": store_identity},
             "address": address, "revision": {"token": "v1"},
             "contentIdentity": "sha256:" + hashlib.sha256(payload).hexdigest()}
@@ -137,9 +145,9 @@ def test_manifest_uses_slide_context_override_shared_store_and_theme_base(tmp_pa
     shared = example / "shared"
     project_bytes = b"version: timeline/v0.7\nproject: {id: sample, title: Sample Project}\nobjects: {special: {title: Special Milestone}}\n"
     layout_bytes = b"version: chrona/layout-profile/v0.10\nid: layout\nbody: {rows: {mode: compact}}\n"
-    summary_bytes = b"version: chrona/summary-profile/v0.1\nkind: summary-profile\nbody:\n  panels: [{metrics: [{source: {object: special}}]}]\n"
+    summary_bytes = b"version: chrona/summary-profile/v0.1\nkind: summary-profile\nid: summary\nbody:\n  panels: [{metrics: [{source: {object: special}}]}]\n"
     detail_bytes = b"version: chrona/review-detail-profile/v0.1\nid: detail\nbody: {legend: [{label: Special Milestone}]}\n"
-    neutral_summary_bytes = b"version: chrona/summary-profile/v0.1\nkind: summary-profile\nbody:\n  panels: [{id: neutral, metrics: [{id: as-of, source: actual.asOf, format: date}]}]\n"
+    neutral_summary_bytes = b"version: chrona/summary-profile/v0.1\nkind: summary-profile\nid: neutral\nbody:\n  panels: [{id: neutral, metrics: [{id: as-of, source: actual.asOf, format: date}]}]\n"
     base_bytes = b"version: chrona/theme/v0.15\nkind: theme\nid: shared\nbody: {values: {special: {type: number, value: 1}}}\n"
     base_identity = "sha256:" + hashlib.sha256(base_bytes).hexdigest()
     derived = ("version: chrona/theme/v0.16\nkind: theme\nid: derived\nbody:\n  extends:\n    id: shared\n    path: base.yaml\n    sourceContentIdentity: " + base_identity + "\n    contentIdentity: " + base_identity + "\n").encode()
@@ -196,14 +204,11 @@ def test_manifest_uses_slide_context_override_shared_store_and_theme_base(tmp_pa
     assert any(item["resource"] == "local:example/detail.yaml"
                and item["match_class"] == "wording-candidate" for item in findings)
     assert not any(item["resource"] == "local:example/default.yaml" for item in findings)
+    assert {item["project"] for item in findings} == {"local:example/project.yaml"}
+    assert {item["context"] for item in findings} == {str(example / "default.yaml"), str(example / "custom.yaml")}
 
 
-def test_missing_helpers_and_empty_batch_are_errors_not_clean_results(tmp_path, monkeypatch):
-    from chrona.usecases import materialize
-
-    monkeypatch.delattr(materialize, "materializer_store_roots", raising=False)
-    with pytest.raises(purity.DesignPurityError, match="HELPER"):
-        purity._stores(tmp_path, None)
+def test_empty_batch_is_an_error_not_a_clean_result(tmp_path):
     empty = tmp_path / "no-examples"
     empty.mkdir()
     with pytest.raises(purity.DesignPurityError, match="EMPTY"):
@@ -212,10 +217,11 @@ def test_missing_helpers_and_empty_batch_are_errors_not_clean_results(tmp_path, 
 
 def test_cli_report_only_preserves_findings_and_strict_mode_fails(tmp_path, capsys):
     project = _write(tmp_path / "project.yaml", "version: timeline/v0.7\nproject: {id: acme, title: Acme Plan}\n")
-    design = _write(tmp_path / "theme.yaml", "version: chrona/theme/v0.15\nkind: theme\nbody: {label: Acme Plan}\n")
+    design = _write(tmp_path / "theme.yaml", "version: chrona/theme/v0.15\nkind: theme\nid: design\nbody: {label: Acme Plan}\n")
     assert purity.main(["--project", str(project), "--resource", str(design), "--report-only"]) == 0
     report = json.loads(capsys.readouterr().out)
     assert report["errors"] == [] and len(report["findings"]) == 2
+    assert report["counts"] == {"findings": 2, "resourcesWithFindings": 1, "contextsWithFindings": 0}
     assert purity.main(["--project", str(project), "--resource", str(design)]) == 1
     strict = json.loads(capsys.readouterr().out)
     assert strict["findings"] == report["findings"]
@@ -228,3 +234,94 @@ def test_cli_invalid_yaml_and_no_inputs_fail_closed(tmp_path, capsys):
     assert json.loads(capsys.readouterr().out)["errors"]
     assert purity.main(["--examples-root", str(tmp_path / "empty"), "--report-only"]) == 2
     assert json.loads(capsys.readouterr().out)["errors"]
+
+
+@pytest.mark.parametrize(("project_version", "design_version"), [
+    ({"bad": "shape"}, "chrona/theme/v0.15"),
+    ("timeline/v0.7", ["bad-shape"]),
+])
+def test_non_string_versions_are_structured_errors_in_report_mode(tmp_path, capsys,
+                                                                project_version, design_version):
+    project = _write(tmp_path / "project.yaml", yaml.safe_dump({
+        "version": project_version, "project": {"id": "sample"}}))
+    design = _write(tmp_path / "theme.yaml", yaml.safe_dump({
+        "version": design_version, "kind": "theme", "body": {}}))
+    assert purity.main(["--project", str(project), "--resource", str(design), "--report-only"]) == 2
+    assert json.loads(capsys.readouterr().out)["errors"]
+
+
+def _batch_fixture(tmp_path):
+    example = tmp_path / "examples" / "sample"
+    values = {
+        "project": _project(),
+        "theme": _resource({"caption": "Launch Window"}),
+        "layout": {"version": "chrona/layout-profile/v0.10", "id": "layout", "root": {}},
+    }
+    refs = {}
+    for key, value in values.items():
+        path = _write(example / f"{key}.yaml", yaml.safe_dump(value))
+        kind = {"project": "project", "theme": "theme", "layout": "layout-profile"}[key]
+        identifier = value["project"]["id"] if key == "project" else value["id"]
+        refs[key] = _reference(kind, identifier, path.name, path.read_bytes())
+    context = {"version": "chrona/render-context/v0.17", "kind": "render-context", "body": refs}
+    _write(example / "context.yaml", yaml.safe_dump(context))
+    _write(example / "manifest.yaml", yaml.safe_dump({
+        "version": "chrona/example-materializer/v0.1", "id": "sample", "role": "regression-corpus",
+        "context": "context.yaml", "slides": [{"id": "first"}]}))
+    return example, context
+
+
+@pytest.mark.parametrize(("defect", "code"), [
+    ("pin", "E_DESIGN_PURITY_REFERENCE"),
+    ("id", "E_DESIGN_PURITY_IDENTITY"),
+    ("kind", "E_DESIGN_PURITY_RESOURCE"),
+    ("missing-theme-kind", "E_DESIGN_PURITY_RESOURCE"),
+    ("project-id", "E_DESIGN_PURITY_IDENTITY"),
+])
+def test_batch_reference_errors_are_fatal_even_in_report_mode(tmp_path, capsys, defect, code):
+    example, context = _batch_fixture(tmp_path)
+    if defect == "pin":
+        context["body"]["layout"]["contentIdentity"] = "sha256:" + "f" * 64
+    elif defect == "id":
+        context["body"]["layout"]["id"] = "wrong-layout"
+    elif defect == "project-id":
+        context["body"]["project"]["id"] = "wrong-project"
+    else:
+        key = "theme" if defect == "missing-theme-kind" else "layout"
+        path = example / f"{key}.yaml"
+        value = safe_load(path.read_bytes())
+        if defect == "missing-theme-kind":
+            value.pop("kind")
+        else:
+            value["kind"] = "theme"
+        _write(path, yaml.safe_dump(value))
+        context["body"][key]["contentIdentity"] = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+    _write(example / "context.yaml", yaml.safe_dump(context))
+    assert purity.main(["--examples-root", str(tmp_path / "examples"), "--report-only"]) == 2
+    report = json.loads(capsys.readouterr().out)
+    assert any(code in error for error in report["errors"])
+    if defect in {"pin", "id", "kind"}:
+        assert any(item["resource"] == "local:example/theme.yaml" for item in report["findings"])
+
+
+def test_later_context_error_does_not_discard_earlier_findings(tmp_path, capsys):
+    example, _ = _batch_fixture(tmp_path)
+    manifest = safe_load((example / "manifest.yaml").read_bytes())
+    manifest["slides"].append({"id": "missing", "context": "missing.yaml"})
+    _write(example / "manifest.yaml", yaml.safe_dump(manifest))
+    assert purity.main(["--examples-root", str(tmp_path / "examples"), "--report-only"]) == 2
+    report = json.loads(capsys.readouterr().out)
+    assert report["findings"] and report["errors"]
+    assert report["counts"]["findings"] == len(report["findings"])
+
+
+def test_cli_emits_utf8_even_with_a_non_utf8_redirected_stdout(tmp_path, monkeypatch):
+    project = _write(tmp_path / "project.yaml", "version: timeline/v0.7\nproject: {id: sample, title: 設計}\n")
+    design = _write(tmp_path / "theme.yaml", "version: chrona/theme/v0.15\nkind: theme\nid: generic\nbody: {caption: 設計}\n")
+    buffer = io.BytesIO()
+    stream = io.TextIOWrapper(buffer, encoding="ascii")
+    monkeypatch.setattr(purity.sys, "stdout", stream)
+    assert purity.main(["--project", str(project), "--resource", str(design), "--report-only"]) == 0
+    stream.flush()
+    report = json.loads(buffer.getvalue().decode("utf-8"))
+    assert any(item["match"] == "設計" for item in report["findings"])
