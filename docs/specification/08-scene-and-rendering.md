@@ -326,7 +326,7 @@ exists in the Scene slot list only for such a Theme. Its identity is
 `canvas-texture`, purpose and visual role `canvas-texture`, paint order 0, and it
 is the first primitive Scene emits, so it paints below every other primitive
 whatever paint order a band or mark declares. It is an ordinary patterned Rect:
-scene v0.7 carries it, SVG and PNG paint it, Typst and TikZ reject it, and no
+scene v0.7 carries it, SVG, PNG, Typst and TikZ paint it, and no
 Scene field is added. The contrast policy and the perceptibility observation
 `I_SCENE_PAINT_CONTRAST` treat its substrate and ink as the ground of what lies on
 it: a mark or state text is measured against the worse of the two
@@ -385,7 +385,7 @@ its paint order 0, and Scene emits the frames right after
 the canvas texture, a container's frame before its children's, and before every other primitive, so a
 panel paints below bands, rows, gridlines, marks and text whatever paint order those declare. It is an
 ordinary Rect (a catalogue pattern makes the Scene v0.7, as for any patterned Rect): SVG and PNG paint it,
-Typst and TikZ draw a plain one and reject a patterned one, and no Scene field is added. A frame is an
+Typst and TikZ draw both plain and patterned Rects, and no Scene field is added. A frame is an
 allocation, not a plot-height overlay: it follows the node's bounds, and the plot rule of Specification 50
 is unchanged inside it.
 
@@ -856,10 +856,35 @@ appearance except `technical-print` produces, one element per primitive, each pr
 An end marker is lowered by the SVG marker rule to absolute plain commands: the marker box's reference point
 (`head_length - attachment_offset`, `head_width / 2`) sits on the path end, turned to the path direction there (`angle_degrees`
 when the marker fixes one) and scaled by the stroke width unless the marker is in physical units. The adapter adds no Scene
-field. Still refused with `E_VISUAL_CAPABILITY_UNSUPPORTED`, naming each primitive, its role and the feature: `pattern`
-fills, required wobble, aligned stroke clips, small-caps runs, and (TikZ) a compressed text. A render target needs a visual
+field. Rect pattern fills (#1394) serialize the completed repeat tile, original
+phase, tile-center rotation, ink/substrate channels and rounded region clip.
+Native boxes/scopes clip each repeated tile and its host; adapter repetition
+does not select density or alter completed geometry. Legacy stroke tiles and
+catalogue circle/rect/path tiles are supported. Patterned non-Rect primitives
+remain explicitly unsupported; there is no silent solid-fill substitution.
+Still refused with `E_VISUAL_CAPABILITY_UNSUPPORTED`, naming each primitive, its role and the feature: required wobble,
+aligned stroke clips, small-caps runs, and (TikZ) a compressed text. A render target needs a visual
 profile that serves it: a preset that prefers an SVG-only profile (`elevated-light`, `technical-print`) takes
 `--visual-profile chrona-output/visual/v0.5-baseline`.
+
+Compiler verification (#1395) is a tooling/CI boundary, not Scene composition.
+The opt-in compile gate records and checks exact engine versions (Typst0.15.1,
+Tectonic0.17.0), exports default/catalogue presets through existing render
+entry points, and compiles their unmodified source. Export refusals retain
+their explicit capability reasons; compiler failures must not be treated as
+refusals or silently skipped. The report distinguishes typed version, export,
+compiler and missing-artifact failures and retains the compiler logs. Successful
+compilation alone is not font-metric/asset fidelity evidence.
+Absolute Typst placement uses `top + left` alignment with `dx`/`dy`; closed
+outlines close with a straight segment. TikZ serializes colours using xcolor
+values rather than raw CSS hex syntax. Its tracking uses XeTeX/fontspec
+letter spacing, not the pdfTeX/LuaTeX-only letterspace package. These grammar
+corrections preserve the completed Scene geometry and typography intent.
+Typst serializes a completed family list as native alternatives, and text
+lines as literal string content, not executable markup. Font search remains
+compiler setup: the Linux gate supplies existing bundled faces using a private
+Fontconfig configuration; macOS Tectonic does not use that lookup. Missing
+families remain recorded compiler failures, not silent substitutions or passes.
 
 ### 8.2 Interactive canvas and tldraw
 

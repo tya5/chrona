@@ -16,8 +16,8 @@ import pytest
 from chrona.usecases.preset_library import list_builtin_presets
 
 TARGETS = {
-    "typst": ("typ", ["--typesetter-engine", "typst", "--typesetter-version", "0.13.1", "--typesetter-adapter-grammar", "chrona-typst/v0.1"]),
-    "tikz": ("tex", ["--typesetter-engine", "tectonic", "--typesetter-version", "0.15.0", "--typesetter-adapter-grammar", "chrona-tikz/v0.1"]),
+    "typst": ("typ", ["--typesetter-engine", "typst", "--typesetter-version", "0.15.1", "--typesetter-adapter-grammar", "chrona-typst/v0.1"]),
+    "tikz": ("tex", ["--typesetter-engine", "tectonic", "--typesetter-version", "0.17.0", "--typesetter-adapter-grammar", "chrona-tikz/v0.1"]),
 }
 SVG_ONLY = {"elevated-light", "technical-print"}  # their preferred profile is the SVG icon profile
 PRESETS = [None, *(item["id"] for item in list_builtin_presets())]
@@ -53,13 +53,12 @@ def test_every_bundled_appearance_exports_to_the_typeset_targets(starter, preset
     report = json.loads(result.stdout)
     codes = [item["code"] for item in report["diagnostics"]]
 
-    if preset == "technical-print":  # its axis bands are patterned: refused with the primitive and the role named
-        assert codes == ["E_VISUAL_CAPABILITY_UNSUPPORTED"] and result.returncode == 1
-        message = report["diagnostics"][0]["message"]
-        assert "pattern" in message and "axis-band-rect" in message and "role " in message
-        return
     assert "E_VISUAL_CAPABILITY_UNSUPPORTED" not in codes and result.returncode == 0, report
-    assert output.read_text(encoding="utf-8")
+    text = output.read_text(encoding="utf-8")
+    assert text
+    if preset == "technical-print":
+        assert "axis-band-rect" in text
+        assert ("clip: true" if target == "typst" else r"\clip") in text
 
 
 def _kinds(scene: Path) -> dict[str, int]:

@@ -10,7 +10,7 @@
 - Observed: 2026-10-13
 
 The issue has no Acceptance heading; these are its verbatim Needed clauses.
-Implementation evidence is established; exact-main release acceptance is pending.
+Implementation and containing-review exact-main release acceptance are complete.
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
@@ -32,8 +32,8 @@ Implementation evidence is established; exact-main release acceptance is pending
 - [PR1459 run38350914999](https://github.com/tya5/chrona/actions/runs/38350914999)
   succeeded on `f34d8687349411cf3e6e05e6daa66b5c2b858124`.
   PR1459 merged at `604e508543d5c314d33cd81ae504ad9f8de5a794`; synced READY
-  `5e8ac499c3bd35af9d96f1fa98a11671a1a044c9` has containing-main release
-  [38351978805](https://github.com/tya5/chrona/actions/runs/38351978805) pending.
+  `5e8ac499c3bd35af9d96f1fa98a11671a1a044c9` is superseded by corrected
+  containing-review main85e66b4b and successful release38354040480 below.
   Snapshot11790703484: HALCYON02/12/15/19 each adds exactly one
   `legend-swatch:planned:progress-fill` primitive and one SVG node; all existing
   primitives, routes, diagnostics and viewport attributes are unchanged.
@@ -62,5 +62,7 @@ Run in the issue worktree's `.venv`; these are existing author resources:
 
 ## Release disposition
 
-Do not close #1396 until the exact published-main three-OS release containing
-this review succeeds. CI snapshot evidence is not yet main-release evidence.
+Closed after [exact containing-review main85e66b4b release38354040480](https://github.com/tya5/chrona/actions/runs/38354040480)
+succeeded on Windows/macOS/Ubuntu full pytest/conformance/wheel-smoke, MCP
+and newest-Python public reproduction. The intermediate purity-test Windows
+failure is corrected by PR1460; no product behavior was changed for that fix.

@@ -154,7 +154,9 @@ def test_every_adapter_serialises_the_role_size_and_ink_of_the_column_and_the_le
     tikz = V05TikzRenderer().render(rendered.surface).content.decode()
     assert svg.count(f'fill="{ink}"') >= 3 and 'font-size="9"' in svg  # two phase cells and the legend labels
     # The phase cell is 9 pt in the muted ink; a legend label keeps the legend size in the same ink.
-    assert f'size: 9pt, number-width: "proportional", fill: rgb("{ink}"))[Build]' in typst
-    assert f'size: 12pt, number-width: "proportional", fill: rgb("{ink}"))[Planned]' in typst
-    assert f"text={ink}, text opacity=1, font=\\fontsize{{9pt}}" in tikz and "Build}" in tikz
-    assert f"text={ink}, text opacity=1, font=\\fontsize{{12pt}}" in tikz and "Planned}" in tikz
+    assert f'size: 9pt, number-width: "proportional", fill: rgb("{ink}"))[#("Build")]' in typst
+    assert f'size: 12pt, number-width: "proportional", fill: rgb("{ink}"))[#("Planned")]' in typst
+    red, green, blue = (int(ink[index:index + 2], 16) for index in (1, 3, 5))
+    tikz_ink = f"{{rgb,255:red,{red};green,{green};blue,{blue}}}"
+    assert f"text={tikz_ink}, text opacity=1, font=\\fontsize{{9pt}}" in tikz and "Build}" in tikz
+    assert f"text={tikz_ink}, text opacity=1, font=\\fontsize{{12pt}}" in tikz and "Planned}" in tikz

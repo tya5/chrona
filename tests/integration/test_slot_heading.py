@@ -320,9 +320,9 @@ def test_every_adapter_draws_the_caption_as_ordinary_text(tmp_path):
     typst, tikz = render_v05_typst(surface), render_v05_tikz(surface)
     assert ("// scene-id: slot-heading:legend source-ref: legend" in typst
             and "% scene-id: slot-heading:legend source-ref: legend" in tikz)
-    assert 'weight: 700, size: 11pt, tracking: 1.1pt' in typst and "[KEY]]" in typst  # completed size, tracking, text
-    assert r"\fontsize{11pt}{15.4pt}" in tikz and r"\textls[100]{KEY}" in tikz
-    assert 'fill: rgb("#4B5563")' in typst and "text=#4B5563" in tikz  # the muted ink the Theme role binds
+    assert 'weight: 700, size: 11pt, tracking: 1.1pt' in typst and '#("KEY")]]' in typst  # completed size, tracking, literal text
+    assert r"\fontsize{11pt}{15.4pt}" in tikz and r"\addfontfeatures{LetterSpace=10}KEY" in tikz
+    assert 'fill: rgb("#4B5563")' in typst and "text={rgb,255:red,75;green,85;blue,99}" in tikz  # the muted ink the Theme role binds
     assert ">KEY<" in rendered.artifact.content.decode()
     path = tmp_path / "board.svg"
     path.write_bytes(rendered.artifact.content)

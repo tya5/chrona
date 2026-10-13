@@ -218,7 +218,7 @@ def test_typst_draws_a_radius_and_a_chamfer_as_its_polygon():
     assert f"radius: {cell.corner_radius:g}pt" in render_v05_typst(rounded)
     cut = _axis_tiers_scene(MONTH, theme=_theme_with(chamfer=0.25, gap=4))
     drawn = render_v05_typst(cut)
-    assert drawn.count("curve.close()") >= len(_cells(cut))
+    assert drawn.count('curve.close(mode: "straight")') >= len(_cells(cut))
 
 
 def test_tikz_draws_a_radius_as_rounded_corners_and_a_chamfer_as_its_polygon():
