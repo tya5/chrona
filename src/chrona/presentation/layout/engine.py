@@ -1258,13 +1258,18 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
     probe_required = requirements(manifest)
     probe_satisfied = (all(allocated[source] >= required for source, required in probe_required.items())
                        and not _unresolved_normal_flow_warnings(profile, manifest))
-    if not probe_satisfied:
+    coupled = _block_extent_feeds_inline(profile)
+
+    def requested_fallback() -> ContentBlockResolution:
         short_sources = tuple(
             ShortContentSource(source, requested_required[source], requested_allocated[source])
             for source in sorted(requested_required)
             if requested_allocated[source] < requested_required[source]
         )
         return ContentBlockResolution(minimum_block, short_sources)
+
+    if not probe_satisfied and not coupled:
+        return requested_fallback()
     extent = max((_d(minimum_block), *(probe_block - allocated[source] + required
                                     for source, required in probe_required.items())))
     candidate = int(extent.to_integral_value(rounding=ROUND_CEILING))
@@ -1276,18 +1281,23 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
         return (all(source_allocated[source] >= required for source, required in candidate_required.items())
                 and not _unresolved_normal_flow_warnings(profile, manifest))
 
-    # Retain the published Draft-auto search, evaluating every candidate's
-    # own demand. General non-monotone capacity search is tracked in #1214.
+    if coupled:
+        # A failed probe can precede a fitting wrap branch. Verify its native
+        # deficit candidate before falling back; never scan to an unverified
+        # bound or interpret a failed candidate as a global infeasibility proof.
+        if satisfies(candidate):
+            known_fit = candidate
+        elif probe_satisfied and satisfies(int(probe_block)):
+            known_fit = int(probe_block)
+        else:
+            return requested_fallback()
+        return ContentBlockResolution(_first_fitting_extent(satisfies, int(minimum_block), known_fit))
+
+    # Retain the published uncoupled Draft-auto search, evaluating every
+    # candidate's own demand.
     low, high = minimum_block - 1, max(candidate, int(probe_block))
     if callable(required_blocks) and not satisfies(high):
-        return ContentBlockResolution(minimum_block, tuple(
-            ShortContentSource(source, requested_required[source], requested_allocated[source])
-            for source in sorted(requested_required)
-            if requested_allocated[source] < requested_required[source]
-        ))
-    if _block_extent_feeds_inline(profile):
-        # Bisection assumes a monotone predicate; a block-to-inline coupling breaks that (#1214).
-        return ContentBlockResolution(_first_fitting_extent(satisfies, int(minimum_block), high))
+        return requested_fallback()
     while high - low > 1:
         middle = (low + high) // 2
         if satisfies(middle):
