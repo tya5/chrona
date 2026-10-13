@@ -226,6 +226,7 @@ $defs:
       target: {description: "Only planned marks are colour-encoded.", const: planned}
   profileFigureFact:
     description: "One existing figure fact grammar, shared by explicit View figures and profile bindings."
+    examples: [asOf, {period: launch, side: start}, {object: task, endpoint: end}, {group: firstPlannedStart}]
     oneOf:
       - {description: "The Actual Set as-of date.", const: asOf}
       - description: "A named Project period boundary or final covered calendar day."
@@ -246,7 +247,7 @@ $defs:
         type: object
         required: [group]
         additionalProperties: false
-        properties: {group: {const: firstPlannedStart}}
+        properties: {group: {description: "Select the first planned start in the current View group.", const: firstPlannedStart}}
   profileFigureIdentity: {description: "A non-empty identity for a View figure or a profile binding name, preserving the existing identifier grammar.", type: string, minLength: 1}
   profileFigureScope: {description: "Resolve globally (default) or once for each current View group.", enum: [global, group]}
   profileFigureDays: {description: "Count calendar days or working days of the figure's calendar.", enum: [calendar, working]}
@@ -256,13 +257,14 @@ $defs:
     enum: [selected, recorded, dueUnobserved, notYetDue, unavailable, missingActual, knownFinishVariance, behind, ahead, groups, placedNotes]
   profileFigure:
     description: "An existing figure declaration without its View-local id; its binding key supplies that identity."
+    examples: [{kind: daysUntil, to: asOf}, {kind: daysIn, period: launch}, {kind: count, source: selected}]
     oneOf:
       - description: "Signed days from one date fact to another."
         type: object
         required: [kind, to]
         additionalProperties: false
         properties:
-          kind: {const: daysUntil}
+          kind: {description: "Resolve signed days between two date facts.", const: daysUntil}
           scope: {$ref: "#/$defs/profileFigureScope"}
           from: {$ref: "#/$defs/profileFigureFact"}
           to: {$ref: "#/$defs/profileFigureFact"}
@@ -273,7 +275,7 @@ $defs:
         required: [kind, period]
         additionalProperties: false
         properties:
-          kind: {const: daysIn}
+          kind: {description: "Resolve the number of days covered by a named period.", const: daysIn}
           period: {description: "Identifier of a Project period.", type: string, minLength: 1}
           days: {$ref: "#/$defs/profileFigureDays"}
           calendar: {$ref: "#/$defs/profileFigureCalendar"}
@@ -282,11 +284,12 @@ $defs:
         required: [kind, source]
         additionalProperties: false
         properties:
-          kind: {const: count}
+          kind: {description: "Resolve an already-projected integer count.", const: count}
           source: {$ref: "#/$defs/profileFigureCountSource"}
           scope: {$ref: "#/$defs/profileFigureScope"}
   profileBinding:
     description: "One explicit View binding for a declared profile data slot."
+    examples: [{object: launch, facet: planned}, {figure: {kind: daysUntil, to: asOf}}]
     oneOf:
       - description: "A planned facet of one named Project object."
         type: object
