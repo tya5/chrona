@@ -174,6 +174,8 @@ def test_identifier_is_defined_but_no_existing_id_is_tightened_to_it():
 def test_view_figure_kinds_share_one_local_identity_definition():
     view = _schema("view-v0.28.schema.yaml")["$defs"]
     identity = view["figureIdentity"]
+    assert identity["$ref"] == f"{COMMON_ID}#/$defs/profileFigureIdentity"
+    identity = schema_document("common-v0.1.schema.yaml")["$defs"]["profileFigureIdentity"]
     assert {key: value for key, value in identity.items() if key not in {"description", "examples"}} == {
         "type": "string", "minLength": 1,
     }
