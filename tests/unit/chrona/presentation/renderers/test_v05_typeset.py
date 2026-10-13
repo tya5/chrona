@@ -22,7 +22,8 @@ def test_typeset_adapters_project_completed_tracking_without_font_inference():
     typst = render_v05_typst(surface)
     assert "tracking: 3pt" in typst and 'number-width: "proportional"' in typst
     tikz = render_v05_tikz(surface)
-    assert r"\usepackage{letterspace}" in tikz and r"\textls[250]{AB}" in tikz
+    assert r"\usepackage{letterspace}" not in tikz and r"\textls" not in tikz
+    assert r"\addfontfeatures{LetterSpace=25}AB" in tikz
     assert r"\usepackage{fontspec}" in tikz and r"\fontspec[Numbers=Proportional]{Test Sans}" in tikz
 
 
@@ -57,3 +58,24 @@ def test_typeset_adapters_do_not_infer_orientation_or_measure_text() -> None:
     assert "orientation" not in source
     assert "measure_text" not in source
     assert "font_metrics" not in source
+
+
+def test_typst_uses_native_placement_font_list_and_literal_text():
+    surface = _surface()
+    node = surface.primitives[0]
+    layout = replace(node.text_layout, family="Noto Sans, sans-serif", lines=("[*raw*]", "next"))
+    result = render_v05_typst(replace(surface, primitives=(replace(node, text_layout=layout),)))
+    assert '#place(top + left, dx: 1pt, dy:' in result
+    assert 'font: ("Noto Sans", "sans-serif",)' in result
+    assert '#("[*raw*]")#linebreak()#("next")' in result
+    assert 'left:' not in result and 'top:' not in result
+
+
+def test_tikz_projects_native_hex_color_and_multiplies_alpha():
+    node = ScenePrimitive("rect", "Rect", "a", "object", "planned", "planned", (1, 2, 8, 4),
+                          paint=ScenePaint("#1238", "#abcdef80", 2, (), 0.5))
+    result = render_v05_tikz(replace(_surface(), primitives=(node,)))
+    assert 'fill={rgb,255:red,17;green,34;blue,51}' in result
+    assert 'draw={rgb,255:red,171;green,205;blue,239}' in result
+    assert 'fill opacity=0.267' in result and 'draw opacity=0.251' in result
+    assert 'fill=#' not in result

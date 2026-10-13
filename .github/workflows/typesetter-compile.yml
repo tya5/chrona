@@ -1,0 +1,49 @@
+name: typesetter-compile
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+permissions:
+  contents: read
+jobs:
+  compile:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'typesetter-compile') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install project in a virtual environment
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
+      - name: Install checksum-verified native engines
+        run: |
+          mkdir -p "$RUNNER_TEMP/typesetter-tools"
+          cd "$RUNNER_TEMP/typesetter-tools"
+          curl --fail --location --retry 3 --output typst.tar.xz https://github.com/typst/typst/releases/download/v0.15.1/typst-x86_64-unknown-linux-musl.tar.xz
+          echo 'a6d077d0a95eed5a2eba715b2dae06be954f624ccbf85758a03f389ded33118c  typst.tar.xz' | sha256sum --check
+          tar -xf typst.tar.xz
+          curl --fail --location --retry 3 --output tectonic.tar.gz https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic%400.17.0/tectonic-0.17.0-x86_64-unknown-linux-gnu.tar.gz
+          echo '1a715688baf591e650c8aeb160ae934e181685eecbb38b317de30b269ac5d606  tectonic.tar.gz' | sha256sum --check
+          tar -xf tectonic.tar.gz
+      - name: Export and compile original sources
+        run: >-
+          .venv/bin/python tools/check_typesetter_compile.py
+          --typst "$RUNNER_TEMP/typesetter-tools/typst-x86_64-unknown-linux-musl/typst"
+          --tectonic "$RUNNER_TEMP/typesetter-tools/tectonic"
+          --project examples/halcyon-1/project.yaml
+          --actual examples/halcyon-1/actual.yaml
+          --output typesetter-evidence
+      - name: Retain source, diagnostics and rendered PDFs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: typesetter-evidence-${{ github.sha }}
+          path: typesetter-evidence/
+          if-no-files-found: error
+          retention-days: 14

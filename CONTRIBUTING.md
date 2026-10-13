@@ -59,6 +59,22 @@ checking that the rendered result is intended, then rerun the ledger test.
 The CLI is the only documented stable programmatic entry point for the alpha release.
 Internal Python modules may change until a public API is declared.
 
+### Native typesetter checks
+
+Run the opt-in `typesetter-compile` workflow (manual dispatch, or the
+`typesetter-compile` PR label) for the implicit default and every
+builtin preset. It pins Typst 0.15.1 and Tectonic 0.17.0, verifies release archive
+checksums and executable versions, then compiles original exports without
+rewriting them. The retained artifact contains source, logs, PDFs and a typed
+`report.json`; refusals are not successful compiles. Locally use
+`.venv/bin/python tools/check_typesetter_compile.py --help` and a fresh output
+directory. The tool supplies bundled fonts through Typst's font path and a
+private Fontconfig configuration for TeX on Linux. macOS Tectonic uses native
+font discovery instead and may reject the same source when its font families
+are not installed; the tool preserves that failure, rather than installing
+system fonts or claiming portable font closure. Compiler success alone does not
+establish exact font metrics; inspect the PDFs and font warnings too.
+
 ## Repository map
 
 - `docs/specification/`: living normative design

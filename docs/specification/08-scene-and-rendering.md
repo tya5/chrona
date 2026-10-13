@@ -874,6 +874,11 @@ outlines close with a straight segment. TikZ serializes colours using xcolor
 values rather than raw CSS hex syntax. Its tracking uses XeTeX/fontspec
 letter spacing, not the pdfTeX/LuaTeX-only letterspace package. These grammar
 corrections preserve the completed Scene geometry and typography intent.
+Typst serializes a completed family list as native alternatives, and text
+lines as literal string content, not executable markup. Font search remains
+compiler setup: the Linux gate supplies existing bundled faces using a private
+Fontconfig configuration; macOS Tectonic does not use that lookup. Missing
+families remain recorded compiler failures, not silent substitutions or passes.
 
 ### 8.2 Interactive canvas and tldraw
 

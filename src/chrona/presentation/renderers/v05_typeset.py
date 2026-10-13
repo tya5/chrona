@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from math import atan2, cos, degrees, radians, sin
+import re
 
 from chrona.core.ports import RenderArtifact
 from chrona.presentation.scene.model import ScenePrimitive, SceneSurface
@@ -32,6 +33,12 @@ def _typst_string(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
 
 
+def _typst_font(family: str) -> str:
+    """Project the completed CSS-style family list as native font alternatives."""
+    families = [value.strip().strip("\"'") for value in family.split(",") if value.strip()]
+    return "(" + ", ".join(f'"{_typst_string(value)}"' for value in families) + ",)"
+
+
 def _tex_string(value: str) -> str:
     return (value.replace("\\", r"\textbackslash{}").replace("{", r"\{").replace("}", r"\}")
             .replace("#", r"\#").replace("$", r"\$").replace("%", r"\%").replace("&", r"\&")
@@ -60,9 +67,26 @@ def _typst_fill(node: ScenePrimitive) -> str:
     return f'rgb("{color}").transparentize({_number((1 - opacity) * 100)}%)'
 
 
-def _tikz_opacity(node: ScenePrimitive) -> str:
-    opacity = _opacity(node)
-    return "" if opacity == 1 else f", fill opacity={_number(opacity)}, draw opacity={_number(opacity)}"
+def _tikz_hex(value: str) -> str:
+    if not isinstance(value, str) or re.fullmatch(r"#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})", value) is None:
+        raise _error("E_PRESENTATION_PAINT_INVALID", f"TikZ colour={_brief(value)}; expected hexadecimal RGB/RGBA")
+    return "#" + "".join(char * 2 for char in value[1:]) if len(value) in {4, 5} else value
+
+
+def _tikz_color_value(value: str) -> str:
+    """Serialize an admitted hexadecimal colour in native xcolor syntax."""
+    value = _tikz_hex(value)
+    red, green, blue = (int(value[index:index + 2], 16) for index in (1, 3, 5))
+    return f"{{rgb,255:red,{red};green,{green};blue,{blue}}}"
+
+
+def _tikz_color(node: ScenePrimitive, channel: str) -> str:
+    return _tikz_color_value(_color(node, channel))
+
+
+def _tikz_channel_opacity(node: ScenePrimitive, channel: str) -> float:
+    value = _tikz_hex(_color(node, channel))
+    return _opacity(node) * (int(value[7:9], 16) / 255 if len(value) == 9 else 1)
 
 
 def _typst_tracking(layout: object) -> str:
@@ -80,13 +104,13 @@ def _typst_numeric_width(layout: object) -> str:
 
 
 def _tikz_tracked_text(layout: object, text: str) -> str:
-    """Keep TikZ's letterspace request proportional to the completed em value."""
+    """Project completed tracking to XeTeX/fontspec's percentage of an em."""
     spacing, size = getattr(layout, "letter_spacing", 0.0), getattr(layout, "font_size", 0.0)
     if not spacing:
         return text
     if size <= 0:
         raise _error("E_PRESENTATION_PRIMITIVE_INVALID", f"text layout font_size={_brief(size)} with letter_spacing={_brief(spacing)}; expected positive font_size")
-    return f"\\textls[{_number(spacing / size * 1000)}]{{{text}}}"
+    return f"{{\\addfontfeatures{{LetterSpace={_number(spacing / size * 100)}}}{text}}}"
 
 
 def _tikz_numeric_text(layout: object, text: str) -> str:
@@ -121,12 +145,14 @@ def _tikz_rect_paint(node: ScenePrimitive) -> str:
         raise _error("E_PRESENTATION_PAINT_INVALID", _primitive_detail(node, "a Rect with completed fill or stroke paint"))
     values = []
     if paint.fill is not None:
-        values.append(f"fill={paint.fill}")
+        values.append(f"fill={_tikz_color(node, 'fill')}")
+        values.append(f"fill opacity={_number(_tikz_channel_opacity(node, 'fill'))}")
     if paint.stroke is not None:
-        values.append(f"draw={paint.stroke}")
+        values.append(f"draw={_tikz_color(node, 'stroke')}")
+        values.append(f"draw opacity={_number(_tikz_channel_opacity(node, 'stroke'))}")
         if paint.stroke_width is not None:
             values.append(f"line width={_number(paint.stroke_width)}pt")
-    return ", ".join(values) + _tikz_opacity(node)
+    return ", ".join(values)
 
 
 def _segment_points(node: ScenePrimitive) -> list[tuple[float, float]]:
@@ -213,8 +239,8 @@ def _typst_curve(commands: list, *, fill: str | None, stroke: str | None, close:
         else:
             items.append(f"curve.quad({_typst_pt(points[0])}, {_typst_pt(points[1])})")
     if close:
-        items.append("curve.close()")
-    return f"#place(left: 0pt, top: 0pt)[#curve(fill: {fill or 'none'}, stroke: {stroke or 'none'}, {', '.join(items)})]"
+        items.append('curve.close(mode: "straight")')
+    return f"#place(top + left, dx: 0pt, dy: 0pt)[#curve(fill: {fill or 'none'}, stroke: {stroke or 'none'}, {', '.join(items)})]"
 
 
 def _typst_color(node: ScenePrimitive, channel: str) -> str:
@@ -281,20 +307,20 @@ def render_v05_typst(surface: SceneSurface) -> str:
     background = surface.canvas_paint.fill
     if background is None: raise _error("E_PRESENTATION_PAINT_INVALID", "Typst canvasPaint.fill is required as the page background")
     parts = ["// chrona-typst/v0.1", f"#set page(width: {_number(width)}pt, height: {_number(height)}pt, margin: 0pt)",
-             f'#rect(width: {_number(width)}pt, height: {_number(height)}pt, fill: rgb("{background}"))']
+             f'#place(top + left, dx: 0pt, dy: 0pt)[#rect(width: {_number(width)}pt, height: {_number(height)}pt, fill: rgb("{background}"))]']
     for node in (node for _, node in sorted(enumerate(surface.primitives), key=lambda item: (item[1].paint_order, item[0]))):
         x, y, w, h = node.bounds
         parts.append(f"// scene-id: {_typst_string(node.scene_id)} source-ref: {_typst_string(node.source_ref)}")
         if node.kind == "Rect":
             radius = f', radius: {_number(node.corner_radius)}pt' if node.corner_radius else ''
-            parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[#rect(width: {_number(w)}pt, height: {_number(h)}pt{radius}{_typst_rect_paint(node)})]')
+            parts.append(f'#place(top + left, dx: {_number(x)}pt, dy: {_number(y)}pt)[#rect(width: {_number(w)}pt, height: {_number(h)}pt{radius}{_typst_rect_paint(node)})]')
         elif node.kind == "Text":
             if node.text is None or node.text_layout is None or node.baseline is None:
                 raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, "Text payload, textLayout, and baseline"))
             layout = node.text_layout
             parts.append(f"// font-asset: {_typst_string(layout.asset_identity)} baseline: {_number(node.baseline[0])},{_number(node.baseline[1])}")
-            text = "\\n".join(_typst_string(line) for line in layout.lines)
-            rendered = f'#text(font: "{_typst_string(layout.family)}", weight: {layout.weight}, size: {_number(layout.font_size)}pt{_typst_tracking(layout)}{_typst_numeric_width(layout)}, fill: {_typst_fill(node)})[{text}]'
+            text = "#linebreak()".join(f'#("{_typst_string(line)}")' for line in layout.lines)
+            rendered = f'#text(font: {_typst_font(layout.family)}, weight: {layout.weight}, size: {_number(layout.font_size)}pt{_typst_tracking(layout)}{_typst_numeric_width(layout)}, fill: {_typst_fill(node)})[{text}]'
             if layout.horizontal_scale != 1:
                 # Compression is applied in the text's own frame, inside the rotation (#585).
                 rendered = (f'#scale(x: {_number(layout.horizontal_scale * 100)}%, y: 100%, origin: left + top, '
@@ -302,9 +328,9 @@ def render_v05_typst(surface: SceneSurface) -> str:
             if layout.rotation_degrees:
                 rendered = (f'#rotate({_number(layout.rotation_degrees)}deg, origin: top + left, reflow: false)['
                             f'{rendered}]')
-                parts.append(f'#place(left: {_number(node.baseline[0])}pt, top: {_number(node.baseline[1])}pt)[{rendered}]')
+                parts.append(f'#place(top + left, dx: {_number(node.baseline[0])}pt, dy: {_number(node.baseline[1])}pt)[{rendered}]')
             else:
-                parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[{rendered}]')
+                parts.append(f'#place(top + left, dx: {_number(x)}pt, dy: {_number(y)}pt)[{rendered}]')
         elif node.kind == "Symbol":
             if node.symbol is None:
                 raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, "completed Symbol geometry"))
@@ -341,12 +367,10 @@ def render_v05_tikz(surface: SceneSurface) -> str:
     _, _, width, height = surface.canvas_bounds
     parts = ["% chrona-tikz/v0.1", r"\documentclass{article}",
              f"\\usepackage[paperwidth={_number(width)}pt,paperheight={_number(height)}pt,margin=0pt]{{geometry}}",
-             r"\usepackage{tikz}", r"\usepackage{fontspec}", *( [r"\usepackage{letterspace}"]
-                                          if any(node.text_layout is not None and node.text_layout.letter_spacing
-                                                 for node in surface.primitives) else []),
+             r"\usepackage{tikz}", r"\usepackage{fontspec}",
              r"\pagestyle{empty}", r"\begin{document}", r"\noindent",
              r"\begin{tikzpicture}[x=1pt,y=-1pt]",
-             f"\\path[fill={surface.canvas_paint.fill}] (0,0) rectangle ({_number(width)},{_number(height)});"]
+             f"\\path[fill={_tikz_color_value(surface.canvas_paint.fill)}] (0,0) rectangle ({_number(width)},{_number(height)});"]
     for node in (node for _, node in sorted(enumerate(surface.primitives), key=lambda item: (item[1].paint_order, item[0]))):
         x, y, w, h = node.bounds
         parts.append(f"% scene-id: {_tex_string(node.scene_id)} source-ref: {_tex_string(node.source_ref)}")
@@ -363,7 +387,7 @@ def render_v05_tikz(surface: SceneSurface) -> str:
             parts.append(f"% font-asset: {_tex_string(layout.asset_identity)} baseline: {_number(node.baseline[0])},{_number(node.baseline[1])}")
             text = _tikz_tracked_text(layout, r"\\".join(_tex_string(line) for line in layout.lines))
             rotation = f", rotate={_number(layout.rotation_degrees)}" if layout.rotation_degrees else ""
-            parts.append(f"\\node[anchor=base west, align=left{rotation}, text={_color(node, 'fill')}, text opacity={_number(_opacity(node))}, font=\\fontsize{{{_number(layout.font_size)}pt}}{{{_number(layout.font_size * layout.line_height)}pt}}\\selectfont] at ({_number(node.baseline[0])},{_number(node.baseline[1])}) {{{_tikz_numeric_text(layout, text)}}};")
+            parts.append(f"\\node[anchor=base west, align=left{rotation}, text={_tikz_color(node, 'fill')}, text opacity={_number(_tikz_channel_opacity(node, 'fill'))}, font=\\fontsize{{{_number(layout.font_size)}pt}}{{{_number(layout.font_size * layout.line_height)}pt}}\\selectfont] at ({_number(node.baseline[0])},{_number(node.baseline[1])}) {{{_tikz_numeric_text(layout, text)}}};")
         elif node.kind == "Symbol":
             if node.symbol is None:
                 raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, "completed Symbol geometry"))
@@ -378,13 +402,13 @@ def render_v05_tikz(surface: SceneSurface) -> str:
         elif node.kind == "Path":
             width = node.paint.stroke_width if node.paint is not None else None
             line = f", line width={_number(width)}pt" if width is not None else ""
-            parts.append(f"\\draw[draw={_color(node, 'stroke')}, opacity={_number(_opacity(node))}{line}] {_tikz_data(_path_commands(node))};")
+            parts.append(f"\\draw[draw={_tikz_color(node, 'stroke')}, draw opacity={_number(_tikz_channel_opacity(node, 'stroke'))}{line}] {_tikz_data(_path_commands(node))};")
             for which, commands, marker, stroke_width in _markers(node):
                 parts.append(f"% marker-{which} of scene-id: {_tex_string(node.scene_id)}")
                 if marker.paint_mode == "fill":
-                    parts.append(f"\\path[fill={_color(node, 'stroke')}{_tikz_opacity(node)}] {_tikz_data(commands)} -- cycle;")
+                    parts.append(f"\\path[fill={_tikz_color(node, 'stroke')}, fill opacity={_number(_tikz_channel_opacity(node, 'stroke'))}] {_tikz_data(commands)} -- cycle;")
                 else:
-                    parts.append(f"\\draw[draw={_color(node, 'stroke')}, opacity={_number(_opacity(node))}, line width={_number(stroke_width)}pt] {_tikz_data(commands)};")
+                    parts.append(f"\\draw[draw={_tikz_color(node, 'stroke')}, draw opacity={_number(_tikz_channel_opacity(node, 'stroke'))}, line width={_number(stroke_width)}pt] {_tikz_data(commands)};")
         else:
             raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, "a supported Rect, Text, Symbol, or Path primitive"))
     parts.extend((r"\end{tikzpicture}", r"\end{document}"))
