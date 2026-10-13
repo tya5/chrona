@@ -15,6 +15,7 @@ from typing import Any
 import yaml
 
 from chrona.presentation.contracts.resources import RENDER_CONTEXT_VERSIONS
+from chrona.presentation.contracts.font_sets import expand_font_set
 from chrona.presentation.model.closure import resolve_render_context
 from chrona.presentation.model.font_resources import FontResourceError, resolve_font_resource
 from chrona.presentation.model.theme_inheritance import ThemeInheritanceError, is_derived_theme, theme_base_reference
@@ -344,7 +345,9 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
                          overlay_builder: _OverlayBuilder | None = None,
                          stores: Mapping[str, Path] | None = None) -> tuple[dict[str, Any], str]:
     raw_context = context_path.read_bytes()
-    context = safe_load(raw_context)
+    # Normalize resource declarations for copying, not the authored bytes
+    # staged below and used to compute the Context's content identity.
+    context = expand_font_set(safe_load(raw_context))
     if context.get("version") not in RENDER_CONTEXT_VERSIONS or context.get("kind") != "render-context":
         raise _context_error("context", " or ".join(RENDER_CONTEXT_VERSIONS) + " render-context", {"version": context.get("version"), "kind": context.get("kind")})
     body = context["body"]
