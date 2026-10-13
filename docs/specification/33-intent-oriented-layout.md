@@ -491,6 +491,8 @@ is unchanged. This Manifest transport rule does not change adapters' own numeric
 formatting. Scene/adapter numeric conversion cannot feed back into native Layout.
 Nonfinite or unrepresentable library/output conversion must produce a typed
 diagnostic, not an uncaught arithmetic exception or evidence of a capped host.
+`E_LAYOUT_NUMERIC_CONVERSION` identifies the owning conversion field and stage;
+existing authored-schema and source-fit diagnostics retain their own admission.
 Hashes use
 canonical JSON key ordering, never Python `repr` or YAML presentation order.
 The internal Rect/Measurement numeric representation changes, not resource
