@@ -531,6 +531,11 @@ The View may supply `bindings: {<name>: <binding>}`. A binding is either
 name. Existing figure identity rules apply, and collision with an explicit
 View figure is an error at the binding. Semantic findings retain the original
 `/body/bindings/<escaped-name>/figure/...` pointer, not a synthetic array index.
+Binding figure specs are typed at View admission so existing figure consumers
+and format checks can read those identities. The use-case boundary separately
+checks that each binding name is declared by the selected Summary Profile.
+Aliases are not a hidden Summary-only namespace; ordinary consumer scope
+restrictions still apply.
 
 A binding to an undeclared slot is `E_VIEW_BINDING_UNKNOWN` at
 `/body/bindings/<escaped-name>`. A declared but unbound slot omits its metric
