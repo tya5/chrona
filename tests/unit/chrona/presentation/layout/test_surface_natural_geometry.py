@@ -65,7 +65,7 @@ def test_tiny_host_natural_summary_succeeds_before_native_axis_admission(monkeyp
 
     monkeypatch.setattr(surface_preparation, "prepare_surface_inline", tiny_inline)
     natural = prepare_surface_natural_geometry(request)
-    assert natural.axis_summary.max_rect_block_end is not None
+    assert natural.axis_summary.max_rect_block_offset is not None
     with pytest.raises(LayoutError) as caught:
         prepare_surface_content(request)
     assert caught.value.diagnostic_id == "E_PRESENTATION_AXIS_OVERFLOW"

@@ -15,7 +15,7 @@ reviewer-owned design migration is complete. Current implementation authority:
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | Target B and the four other approved designs reproduce byte-identically on HALCYON, with Theme/Layout/profiles containing no HALCYON id or wording, and with Views containing connection members only. | not met | PRs #1455–#1457 preserve all92 public Scene/SVG files; this does not prove migrated-resource purity. The checker reports878 context-qualified lexical candidates, not semantic impurities or a purity certificate. Migration/provenance disposition is requested in [6138676694](https://github.com/tya5/chrona/issues/1341#issuecomment-6138676694). | — |
+| 1 | Target B and the four other approved designs reproduce byte-identically on HALCYON, with Theme/Layout/profiles containing no HALCYON id or wording, and with Views containing connection members only. | deferred | [Owner6143136697](https://github.com/tya5/chrona/issues/1341#issuecomment-6143136697) confirms developer completion and assigns adoption to the reviewer: identical SVG and completed Scene geometry/paint/diagnostics, with truthful provenance changes only. Unchanged current outputs and878 lexical candidates do not prove migrated-resource purity. | [Reviewer adoption work](../../planning/active/issue-1341-design-reuse-completion-work-plan-2026-10-13.md#reviewer-adoption-disposition) |
 | 2 | `examples/chrona-roadmap` renders each design by writing only its own thin View and Context. | deferred | [Owner board454](https://github.com/tya5/chrona/issues/454): “A target-adoption row in an issue is the reviewer's step, not a closing condition for dev.” PR1457 has actual SVG controls; permanent five-design adoption is not claimed completed. | [Reviewer adoption work](../../planning/active/issue-1341-design-reuse-completion-work-plan-2026-10-13.md#reviewer-adoption-disposition) |
 
 ### Issue #1344
@@ -69,10 +69,11 @@ does not measure text or compute geometry. Layout, Scene and adapters retain the
 existing responsibilities. Materialization owns reference/Store/pin admission;
 the tooling audit reuses it without rendering or rewriting resources. Resource
 identity is preserved, not normalized away to satisfy byte wording. No authored
-`examples/**` or board writes occurred. Issue1341 remains open for literal
-row1's byte/purity disposition. Issue1344's selected mechanism is complete;
-its owner-deferred adoption row does not prevent developer closure. The
-disposition is contained in main5599f6b9; [release38362304100](https://github.com/tya5/chrona/actions/runs/38362304100)
+`examples/**` or board writes occurred. Both developer mechanisms are complete.
+[Owner6143136697](https://github.com/tya5/chrona/issues/1341#issuecomment-6143136697)
+explicitly approves closure after release with reviewer-owned adoption deferred;
+neither adoption criterion is claimed met. Main5599f6b9
+[release38362304100](https://github.com/tya5/chrona/actions/runs/38362304100)
 succeeds on all3OS full pytest/conformance/wheel-smoke, MCP and newest public
-reproduction. Issue1344 was deliberately closed with the original narrowed/
-deferred criteria and the same successor plan;1341 remains open for row1.
+reproduction.1344 is closed.1341 awaits only the release containing this updated
+disposition; its successor is the reviewer adoption section linked above.

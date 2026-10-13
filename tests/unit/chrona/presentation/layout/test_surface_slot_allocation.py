@@ -334,6 +334,41 @@ def test_pre_row_host_demand_uses_natural_rows_not_fill_expanded_capacity():
     assert prepare_surface_content(larger).required_timeline_block() == Decimal(40)
 
 
+@pytest.mark.parametrize("orientation", ["horizontal", "rotate-cw", "rotate-ccw"])
+def test_table_prefix_demand_retains_local_geometry_under_large_translation(orientation):
+    from copy import deepcopy
+
+    request = _request()
+    theme = deepcopy(_theme())
+    theme["body"]["roles"]["slot-heading"] = deepcopy(theme["body"]["roles"]["text"])
+    theme["body"]["roles"].pop("axis-rule", None)
+    theme["body"]["roles"].pop("axis-cell-separator", None)
+    content = surface_content(table_columns=(("name", "Name"),),
+                              table_cells=(("a", "name", "Activity"),))
+    content = replace(content, table_columns=tuple(
+        replace(column, header_orientation=orientation) for column in content.table_columns))
+    timeline = next(item for item in request.layout_manifest.decisions if item.source == "timeline")
+    manifest = replace(request.layout_manifest, decisions=tuple(
+        replace(item, heading=SlotHeading("Caption"),
+                bounds=replace(item.bounds, block=timeline.bounds.block))
+        if item.source == "table" else item for item in request.layout_manifest.decisions))
+    request = replace(request, surface_content=content,
+                      presentation_contract=normalize_presentation_input(content),
+                      theme_tokens=ThemeTokenView(theme), layout_manifest=manifest)
+    ordinary = prepare_surface_content(request)
+    offset = Decimal(10) ** 20 / 3
+    translated_manifest = replace(manifest, decisions=tuple(
+        replace(item, bounds=replace(item.bounds, block=item.bounds.block + offset))
+        for item in manifest.decisions))
+    translated = prepare_surface_content(replace(request, layout_manifest=translated_manifest))
+    assert ordinary.table.header_block_extent == translated.table.header_block_extent
+    assert ordinary.prefix_block == translated.prefix_block
+    assert translated.row_viewport.block == translated.inline.timeline.bounds.block + ordinary.prefix_block
+    assert ordinary.row_viewport.block_size == translated.row_viewport.block_size
+    assert ordinary.required_timeline_block(foot_reserve=Decimal(20)) == (
+        translated.required_timeline_block(foot_reserve=Decimal(20)))
+
+
 @pytest.mark.parametrize("headed", [("timeline",), ("table",), ("timeline-axis",),
                                     ("timeline", "table", "timeline-axis")])
 def test_pre_row_host_demand_counts_the_native_prefix_once_from_full_timeline_origin(headed):
@@ -356,7 +391,8 @@ def test_pre_row_host_demand_counts_the_native_prefix_once_from_full_timeline_or
     prefix = prepared.row_viewport.block - full.block
     assert prepared.headings.text
     assert prepared.table.header_text
-    assert prepared.row_viewport.block >= prepared.table.header_end_block
+    assert prepared.row_viewport.block >= (
+        prepared.table.table_slot.bounds.block + prepared.table.header_block_extent)
     assert prepared.required_timeline_block(foot_reserve=Decimal(20)) == (
         max(Decimal(0), prefix) + prepared.inline.natural_block_requirement + 20)
     if "timeline" in headed:
