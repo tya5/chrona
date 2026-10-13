@@ -408,6 +408,7 @@ class SummaryMetric:
     source: str | FrozenDict
     format: str
     scope: str | None
+    declaration_path: str | None = field(default=None, compare=False)
 
 
 @dataclass(frozen=True)
@@ -1349,14 +1350,17 @@ def _validate_view_fallback(raw_fallback: Any) -> None:
 
 def _summary_input(body: FrozenDict) -> SummaryProfileInput:
     panels: list[SummaryPanelInput] = []
-    for panel in body["panels"]:
+    for panel_index, panel in enumerate(body["panels"]):
         declared = panel["metrics"]
         entries = declared.items() if isinstance(declared, FrozenDict) else ((item["id"], item) for item in declared)
         metrics: list[SummaryMetric | tuple[str, str]] = []
-        for metric_id, definition in entries:
+        for metric_index, (metric_id, definition) in enumerate(entries):
             if isinstance(definition, FrozenDict):
+                token = _pointer_token(str(metric_id)) if isinstance(declared, FrozenDict) else str(metric_index)
+                path = f"/body/panels/{panel_index}/metrics/{token}"
                 metrics.append(SummaryMetric(str(metric_id), str(definition.get("label", metric_id)), definition["source"],
-                                             str(definition["format"]), str(definition["scope"]) if "scope" in definition else None))
+                                             str(definition["format"]), str(definition["scope"]) if "scope" in definition else None,
+                                             declaration_path=path))
             else:
                 metrics.append((str(metric_id), str(definition)))
         panels.append(SummaryPanelInput(str(panel["id"]), str(panel["title"]) if "title" in panel else None,

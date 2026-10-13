@@ -7,7 +7,7 @@ from chrona.presentation.contracts.resources import (
     ContractError, LegendEntry, ReviewDetailInput, SummaryMetric, SummaryPanelInput,
     SummaryProfileInput, ViewComparison, ViewInput, ViewProfileBinding, ViewRowMode,
     ViewRows, ViewVisibility, ViewWindow, _view_figures, _view_profile_bindings,
-    freeze,
+    freeze, _summary_input,
 )
 from chrona.presentation.review.profile_connections import ProfileConnectionError, resolve_profile_connections
 
@@ -129,6 +129,16 @@ def test_subtree_scope_is_checked_after_binding_and_only_allows_object_binding()
                                     project_object_ids=frozenset())
     assert error.value.code == "E_PRESENTATION_SUMMARY_SOURCE"
     assert error.value.source_ref == "/body/panels/0/metrics/0/source"
+
+
+def test_map_metric_scope_error_uses_the_authored_escaped_metric_key():
+    summary = _summary_input(freeze({"panels": [{"id": "panel", "metrics": {
+        "metric/a~b": {"source": {"slot": "slot"}, "format": "count", "scope": "subtree"}}}]}))
+    with pytest.raises(ProfileConnectionError) as error:
+        resolve_profile_connections(_view(bindings=(_figure_binding("slot"),)), summary, None,
+                                    project_object_ids=frozenset())
+    assert error.value.source_ref == "/body/panels/0/metrics/metric~1a~0b/source"
+    assert error.value.component == "presentation"
 
 
 def test_unbound_legacy_figure_omission_is_distinct_from_bound_figure_scope_errors():

@@ -31,8 +31,11 @@ class ProfileOmission:
     metric_id: str
     source_kind: str
     source_name: str
-    code: str
     source_ref: str
+
+    @property
+    def code(self) -> str:
+        return "I_SUMMARY_SLOT_UNBOUND" if self.source_kind == "slot" else "I_SUMMARY_FIGURE_UNBOUND"
 
 
 @dataclass(frozen=True)
@@ -95,19 +98,21 @@ def resolve_profile_connections(view: ViewInput, summary: SummaryProfileInput | 
                 effective_metrics.append(metric)
                 continue
             source = metric.source
+            declaration_path = metric.declaration_path or f"/body/panels/{panel_index}/metrics/{metric_index}"
+            source_path = f"{declaration_path}/source"
             slot = _source_slot(source)
             if slot is not None:
                 binding = bindings.get(slot)
                 if binding is None:
                     omissions.append(ProfileOmission(panel_index, metric_index, panel.id, metric.id,
-                                                     "slot", slot, "I_SUMMARY_SLOT_UNBOUND",
-                                                     f"/body/panels/{panel_index}/metrics/{metric_index}/source"))
+                                                     "slot", slot,
+                                                     source_path))
                     effective_metrics.append(metric)
                     continue
                 if metric.scope == "subtree" and binding.object_id is None:
                     raise ProfileConnectionError("E_PRESENTATION_SUMMARY_SOURCE",
                                                  "subtree scope requires a planned-object slot binding",
-                                                 f"/body/panels/{panel_index}/metrics/{metric_index}/source",
+                                                 source_path,
                                                  component="presentation")
                 source = freeze({"object": binding.object_id, "facet": "planned"}
                                 if binding.object_id is not None else {"figure": slot})
@@ -116,8 +121,8 @@ def resolve_profile_connections(view: ViewInput, summary: SummaryProfileInput | 
                 figure_id = source["figure"]
                 if figure_id not in declared_figures:
                     omissions.append(ProfileOmission(panel_index, metric_index, panel.id, metric.id,
-                                                     "figure", figure_id, "I_SUMMARY_FIGURE_UNBOUND",
-                                                     f"/body/panels/{panel_index}/metrics/{metric_index}/source"))
+                                                     "figure", figure_id,
+                                                     source_path))
                     effective_metrics.append(metric)
                     continue
             effective_metrics.append(metric)
