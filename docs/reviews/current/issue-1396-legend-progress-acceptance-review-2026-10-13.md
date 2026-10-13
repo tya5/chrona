@@ -30,7 +30,10 @@ Implementation evidence is established; exact-main release acceptance is pending
   and ready-base36 checker/conformance/literal-review tests passed. CI supplies
   full release coverage, not a duplicate local full suite.
 - [PR1459 run38350914999](https://github.com/tya5/chrona/actions/runs/38350914999)
-  remains pending on `f34d8687349411cf3e6e05e6daa66b5c2b858124`.
+  succeeded on `f34d8687349411cf3e6e05e6daa66b5c2b858124`.
+  PR1459 merged at `604e508543d5c314d33cd81ae504ad9f8de5a794`; synced READY
+  `5e8ac499c3bd35af9d96f1fa98a11671a1a044c9` has containing-main release
+  [38351978805](https://github.com/tya5/chrona/actions/runs/38351978805) pending.
   Snapshot11790703484: HALCYON02/12/15/19 each adds exactly one
   `legend-swatch:planned:progress-fill` primitive and one SVG node; all existing
   primitives, routes, diagnostics and viewport attributes are unchanged.
