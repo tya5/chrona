@@ -9,7 +9,13 @@ from datetime import date
 
 import pytest
 
-from chrona.presentation.contracts.view_defaults import SPLIT_MEMBERS, WHOLE_MEMBERS, merge_view_defaults
+from chrona.presentation.contracts.diagnostics import (
+    PresentationIngressRejected, PresentationResourceSource, collect_presentation_contracts,
+)
+from chrona.presentation.contracts.resources import ClosureIdentity
+from chrona.presentation.contracts.view_defaults import (
+    SPLIT_MEMBERS, WHOLE_MEMBERS, collect_column_style_diagnostics, merge_view_defaults,
+)
 from chrona.resources import schema_validator
 from tests.support import synthetic_review as sr
 
@@ -80,6 +86,180 @@ def test_split_members_merge_one_level_down_and_create_omitted_members():
     assert view["body"]["comparison"] == {"baseline": "snapshot", "deltaUnit": "working-days"}  # the input is not mutated
 
 
+def test_slice_two_presentation_defaults_merge_without_replacing_connections():
+    view = {"version": "chrona/view/v0.28", "kind": "view", "id": "v", "body": {
+        "surface": "table-timeline",
+        "heading": {"title": "View title"},
+        "grouping": {"by": "field", "field": "owner", "missing": "Other",
+                      "header": {"text": "View {title}"}},
+        "colorEncoding": {"source": {"field": "risk"}, "domain": ["high", "low"]},
+    }}
+    defaults = {
+        "heading": {"title": "{project}", "dateForm": "day-month"},
+        "grouping": {"by": "type", "field": "ignored", "presentation": "header",
+                     "header": {"text": "Default {ordinal}: {title}"},
+                     "tint": {"scale": "risk-colors", "domain": ["high", "low"]}},
+        "colorEncoding": {"scale": "risk-colors", "target": "planned",
+                          "source": {"field": "ignored"}, "domain": "firstAppearance"},
+    }
+    before_view, before_defaults = deepcopy(view), deepcopy(defaults)
+
+    merged = merge_view_defaults(view, defaults)
+
+    assert merged["body"]["heading"] == {"title": "View title"}  # whole-member View override
+    assert merged["body"]["grouping"] == {
+        "by": "field", "field": "owner", "missing": "Other",
+        "presentation": "header", "header": {"text": "View {title}"},
+        "tint": {"scale": "risk-colors", "domain": ["high", "low"]},
+    }
+    assert merged["body"]["colorEncoding"] == {
+        "source": {"field": "risk"}, "domain": ["high", "low"],
+        "scale": "risk-colors", "target": "planned",
+    }
+    merged["body"]["grouping"]["tint"]["domain"].append("attached")
+    assert view == before_view and defaults == before_defaults
+
+
+@pytest.mark.parametrize("source", [
+    "id", "title", "objectType", "entity", "rowIndex", "wbsCode", "path", "totalFloat",
+    {"field": "owner"},
+    {"comparisonFacet": "finishDelta"},
+    {"facet": "planned"},
+    {"scenario": "title"},
+])
+def test_named_column_style_is_selected_by_every_source_discriminator(source):
+    discriminator = source if isinstance(source, str) else next(iter(source))
+    column = {"id": f"c-{discriminator}", "source": deepcopy(source)}
+    defaults = {"columnStyles": {discriminator: {"align": "center", "missing": "unknown"}}}
+
+    merged = merge_view_defaults({"body": {"tableColumns": [column]}}, defaults)
+
+    resolved, = merged["body"]["tableColumns"]
+    assert resolved["source"] == source and resolved["id"] == column["id"]
+    assert resolved["align"] == "center" and resolved["missing"] == "unknown"
+
+
+def test_column_style_explicit_name_and_whole_property_overrides_are_pure():
+    view = {"body": {"tableColumns": [
+        {"id": "Task", "source": "title", "style": "compact",
+         "text": {"wrap": "forbid"},
+         "missingBy": {"unavailable": "blank"}},
+    ]}}
+    defaults = {"columnStyles": {
+        "title": {"align": "start", "width": "content"},
+        "compact": {"align": "end", "width": "fill", "endDisplay": "inclusive",
+                    "text": {"wrap": "allow"},
+                    "missingBy": {"inProgress": "em-dash", "unavailable": "unknown"}},
+    }}
+    before_view, before_defaults = deepcopy(view), deepcopy(defaults)
+
+    merged = merge_view_defaults(view, defaults)
+    resolved = merged["body"]["tableColumns"][0]
+
+    assert resolved["style"] == "compact"
+    assert resolved["align"] == "end" and resolved["width"] == "fill"  # explicit style overrides implicit `title`
+    assert resolved["endDisplay"] == "inclusive"
+    assert resolved["text"] == {"wrap": "forbid"}
+    assert resolved["missingBy"] == {"unavailable": "blank"}  # property object replaces as a whole
+    resolved["text"]["wrap"] = "allow"
+    assert view == before_view and defaults == before_defaults
+
+
+def test_malformed_column_style_inputs_are_left_for_view_validation():
+    view = {"body": {"tableColumns": [None, {"id": "x", "source": {"field": "owner"},
+                                                   "align": None}]}}
+    before = deepcopy(view)
+
+    assert merge_view_defaults(view, {"columnStyles": None}) == before
+    assert merge_view_defaults(view, {"columnStyles": {"field": "not-a-style-map"}}) == before
+    assert view == before
+
+
+@pytest.mark.parametrize("style", [[], {"bad": "value"}, None, 42])
+def test_malformed_explicit_style_is_not_repaired_or_used_as_a_mapping_key(style):
+    view = {"body": {"tableColumns": [{"id": "Task", "source": "title", "style": style}]}}
+    before = deepcopy(view)
+    assert merge_view_defaults(view, {"columnStyles": {"title": {"align": "start"}}}) == before
+    assert view == before
+
+
+def test_unknown_explicit_column_style_reports_its_view_pointer():
+    view = {"version": "chrona/view/v0.28", "kind": "view", "id": "v", "body": {
+        "tableColumns": [{"id": "Task", "source": "title", "style": "missing-style"}],
+    }}
+    layout = {"version": "chrona/layout-profile/v0.10", "kind": "layout-profile", "id": "l",
+              "viewDefaults": {"columnStyles": {"title": {"align": "start"}}}}
+    sources = tuple(PresentationResourceSource(
+        ClosureIdentity(kind, value["id"], "draft", "sha256:" + "a" * 64), value,
+    ) for kind, value in (("view", view), ("layout-profile", layout)))
+
+    findings = collect_column_style_diagnostics(sources)
+
+    assert [(item.code, item.resource_kind, item.resource_identity, item.pointer)
+            for item in findings] == [
+        ("E_VIEW_COLUMN_STYLE_UNKNOWN", "view", "v", "/body/tableColumns/0/style")]
+
+
+def test_unknown_column_style_ingress_collects_a_sibling_resource_error(tmp_path):
+    parts = sr.bundle("editorial")
+    parts["view"]["body"]["tableColumns"][0]["style"] = "missing-style"
+    parts["layout"]["viewDefaults"] = {"columnStyles": {"title": {"align": "start"}}}
+    parts["theme"]["body"]["undeclared"] = True
+
+    with pytest.raises(PresentationIngressRejected) as raised:
+        _render(tmp_path, parts)
+
+    findings = raised.value.diagnostics
+    assert any(item.code == "E_VIEW_COLUMN_STYLE_UNKNOWN" and item.resource_kind == "view"
+               and item.pointer == "/body/tableColumns/0/style" for item in findings)
+    assert any(item.code == "E_RESOURCE_SCHEMA" and item.resource_kind == "theme"
+               for item in findings)
+
+
+def test_all_unknown_styles_are_reported_in_column_order_without_exposing_a_view_contract():
+    parts = sr.bundle("editorial")
+    columns = parts["view"]["body"]["tableColumns"]
+    for index, column in enumerate(columns):
+        column["style"] = f"unknown-{index}"
+    sources = tuple(PresentationResourceSource(
+        ClosureIdentity(kind, value["id"], "draft", "sha256:" + "a" * 64), value,
+    ) for kind, value in (("view", parts["view"]), ("layout-profile", parts["layout"])))
+    result = collect_presentation_contracts(sources)
+    assert [item.pointer for item in result.diagnostics if item.code == "E_VIEW_COLUMN_STYLE_UNKNOWN"] == [
+        f"/body/tableColumns/{index}/style" for index in range(len(columns))]
+    assert not any(item.identity.kind == "view" for item in result.contracts)
+
+
+def test_synthetic_full_and_thin_column_style_views_render_identical_svg(tmp_path):
+    full = sr.bundle("editorial")
+    full["view"]["body"].pop("markers", None)  # This fixture has no Actual Set.
+    full["view"]["body"]["tableColumns"].append({
+        "id": "Plan", "source": {"facet": "planned"}, "format": "dateRange",
+        "endDisplay": "inclusive", "missing": "em-dash", "align": "start",
+        "width": "content", "headerOrientation": "horizontal", "text": {"wrap": "allow"},
+    })
+    thin = deepcopy(full)
+    fields = ("format", "missing", "missingBy", "affixes", "zero", "textRole", "align",
+              "headerOrientation", "width", "endDisplay", "text")
+    styles = {}
+    for column in thin["view"]["body"]["tableColumns"]:
+        source = column["source"]
+        name = source if isinstance(source, str) else next(iter(source))
+        styles[name] = {field: deepcopy(column[field]) for field in fields if field in column}
+        for field in fields:
+            column.pop(field, None)
+    thin["layout"]["viewDefaults"] = {"columnStyles": styles}
+
+    assert styles["facet"]["endDisplay"] == "inclusive"
+    assert "text" in styles["title"] and "text" in styles["facet"]
+    full_render = _render(_sub(tmp_path, "styled-full"), full)
+    thin_render = _render(_sub(tmp_path, "styled-thin"), thin)
+    assert full_render.artifact.content == thin_render.artifact.content
+    assert full_render.surface == thin_render.surface  # completed geometry, paint, and diagnostics
+    assert full_render.scene.surfaces == thin_render.scene.surfaces
+    assert full_render.scene.diagnostics == thin_render.scene.diagnostics
+
+
 def test_thin_view_without_rows_renders_the_design_lane_mode(tmp_path):
     full = sr.bundle("executive-light")
     full["view"] = sr.lane_view(full["view"])
@@ -139,7 +319,8 @@ def test_the_merged_view_is_validated_as_the_view_it_is(tmp_path):
 
 def test_the_member_lists_are_the_design_half_of_the_reviewed_classification():
     assert set(WHOLE_MEMBERS) == {"visibility", "axis", "deadlines", "shading", "timePresentation", "annotationPresentation",
-                                  "backgroundDecoration", "progressFill", "annotationPlacement", "figureFormats"}
+                                  "backgroundDecoration", "progressFill", "annotationPlacement", "figureFormats", "heading"}
     assert {name: set(members) for name, members in SPLIT_MEMBERS.items()} == {
         "comparison": {"baselineMarks", "missingActualScope", "deltaUnit", "facets"},
-        "rows": {"mode", "trackAllocation", "packing", "laneTable", "points", "items"}, "window": {"marginDays"}}
+        "rows": {"mode", "trackAllocation", "packing", "laneTable", "points", "items"}, "window": {"marginDays"},
+        "grouping": {"presentation", "header", "tint"}, "colorEncoding": {"scale", "target"}}
