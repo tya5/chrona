@@ -80,3 +80,14 @@ Independent Luna read-only audit confirmed these generator/validator seams.
 | C finite domain | route_search.py optional uncapped enumeration; routing.py protected selection and typed fallback/exhaustion evidence; surface_routes.py critical+suppress gating and diagnostics; model/info_diagnostics.py typed projection if required. Keep ordinary caps untouched. Tests: graph natural exhaustion versus quota, rejected cheapest candidate followed by valid alternative, later quality-eligible pair before safe fallback, quality overrun and genuinely impossible domain, real Scene/SVG diagnostics, critical priority and all other modes. |
 | S evidence | test_revision_launch_trial.py every accepted hint/reanchored shape; test_revision_delta_anchor_stability.py previous Scene shift/append and unchanged delta sides. Reuse actual materializer/decoder tests, best/no-input byte controls. |
 | Publication | One implementation PR with literal acceptance review and batched public evidence. Include completed1402 archive in the next document batch. Full release matrix via CI; preserve authored examples untouched. |
+
+Implementation review correction: an actual zero-bend quality test exposes
+exponential enumeration when no quality-eligible route can exist. A proven
+completed-endpoint Manhattan lower bound may certify that case before
+enumeration: different endpoint x and y require at least one bend. In such a
+pair, retain the first deterministic hard-safe fallback rather than enumerate
+every rejected safe route. Other pairs still must be checked for eligible
+routes; no-route diagnostics still require natural domain exhaustion. This is
+a quality infeasibility proof, never a safety or search-budget waiver. Under
+best, compare eligible results across admitted pairs with the existing rank;
+first-fit retains its declared ordering. Whole-layer ownership is unchanged.

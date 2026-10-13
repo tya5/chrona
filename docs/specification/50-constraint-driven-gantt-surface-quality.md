@@ -622,6 +622,14 @@ history rule ensure termination; the number of histories can be exponential.
 Ordinary work bounds below do not cover this protected pass, and its work must
 not be reported as ordinary quota-bounded work.
 
+A sound completed-endpoint quality lower bound may prove a pair cannot meet
+the declared limits: different x and y coordinates require at least one bend.
+For such a pair, the first deterministic hard-safe candidate is sufficient
+fallback evidence; do not enumerate every safe quality-rejected path. Continue
+checking other admitted pairs for eligible routes. This proof concerns quality
+only: failure to find a safe candidate still requires natural domain exhaustion.
+Best retains its existing cross-pair ranking; first-fit retains candidate order.
+
 If no completed hard-safe route is admitted after natural exhaustion, emit
 `W_LAYOUT_CRITICAL_RELATION_SEARCH_DOMAIN_EXHAUSTED` with relation identity and
 failure evidence, alongside the ordinary suppression diagnostic. This means
