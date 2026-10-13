@@ -60,7 +60,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | legend-swatch | `missing-actual` | required | 3.000 | 7 | 11 | 1.000 | 5.817 | 0 | 2 |
 | legend-swatch | `period-band` | enabled | 1.100 | 1 | 3 | 1.163 | 2.217 | 0 | 0 |
 | legend-swatch | `planned` | required | 3.000 | 39 | 72 | 4.637 | 16.268 | 0 | 0 |
-| legend-swatch | `progress-fill` | required | 3.000 | 25 | 25 | 3.216 | 4.789 | 0 | 0 |
+| legend-swatch | `progress-fill` | required | 3.000 | 29 | 29 | 3.216 | 4.789 | 0 | 0 |
 | legend-swatch | `snapshot` | required | 3.000 | 7 | 7 | 2.594 | 5.817 | 0 | 1 |
 | member-label | `member-label-inside-planned` | required | 4.500 | 19 | 19 | 4.651 | 5.727 | 0 | 0 |
 | member-label | `text` | required | 4.500 | 35 | 309 | 10.019 | 14.573 | 0 | 0 |
@@ -4009,6 +4009,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `legend-swatch:scale:owner:launch` | `planned` | 40.000, 656.700 | `canvas` | canvas | `#0B1220` | stroke | 16.354 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `legend-swatch:scale:owner:ops` | `planned` | 40.000, 682.600 | `canvas` | canvas | `#0B1220` | stroke | 16.354 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `legend-swatch:scale:owner:payload` | `planned` | 40.000, 579.000 | `canvas` | canvas | `#0B1220` | stroke | 16.354 | 3.000 | info |
+| `examples/halcyon-1/generated/02-programme-board.scene.json` | `legend-swatch:planned:progress-fill` | `progress-fill` | 40.000, 475.400 | `legend-swatch:planned` | flat | `#5FA8FF` | stroke | 7.607 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `member-label:review-lane:["generated","ait","integration"]:integration` | `text` | 1542.508, 536.875 | `group:ait` | flat | `#142642` | fill | 13.238 | 4.500 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `member-label:review-lane:["generated","ait","integration"]:psr` | `text` | 1660.557, 558.625 | `group:ait` | flat | `#142642` | fill | 13.238 | 4.500 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `member-label:review-lane:["generated","ait","integration"]:vibration` | `text` | 1359.883, 569.625 | `group:ait` | flat | `#142642` | fill | 13.238 | 4.500 | info |
@@ -4682,6 +4683,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `legend-swatch:scale:owner:launch` | `planned` | 40.000, 590.400 | `canvas` | canvas | `#0B1220` | stroke | 16.354 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `legend-swatch:scale:owner:ops` | `planned` | 40.000, 616.300 | `canvas` | canvas | `#0B1220` | stroke | 16.354 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `legend-swatch:scale:owner:payload` | `planned` | 40.000, 512.700 | `canvas` | canvas | `#0B1220` | stroke | 16.354 | 3.000 | info |
+| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `legend-swatch:planned:progress-fill` | `progress-fill` | 40.000, 409.100 | `legend-swatch:planned` | flat | `#5FA8FF` | stroke | 7.607 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `member-label:review-lane:["generated","ait","integration"]:integration` | `text` | 1541.744, 641.375 | `group:ait` | flat | `#142642` | fill | 13.238 | 4.500 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `member-label:review-lane:["generated","ait","integration"]:psr` | `text` | 1656.521, 663.125 | `group:ait` | flat | `#142642` | fill | 13.238 | 4.500 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `member-label:review-lane:["generated","ait","integration"]:vibration` | `text` | 1359.047, 674.125 | `group:ait` | flat | `#142642` | fill | 13.238 | 4.500 | info |
@@ -4998,6 +5000,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `legend-swatch:scale:owner:launch` | `planned` | 40.000, 590.400 | `canvas` | canvas | `#0B1220` | stroke | 16.354 | 3.000 | info |
 | `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `legend-swatch:scale:owner:ops` | `planned` | 40.000, 616.300 | `canvas` | canvas | `#0B1220` | stroke | 16.354 | 3.000 | info |
 | `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `legend-swatch:scale:owner:payload` | `planned` | 40.000, 512.700 | `canvas` | canvas | `#0B1220` | stroke | 16.354 | 3.000 | info |
+| `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `legend-swatch:planned:progress-fill` | `progress-fill` | 40.000, 409.100 | `legend-swatch:planned` | flat | `#5FA8FF` | stroke | 7.607 | 3.000 | info |
 | `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `missing-actual:launch-contract:launch-contract` | `missing-actual` | 1087.098, 741.000 | `planned:launch-contract:launch-contract` | flat | `#3A1A24` | stroke | 13.556 | 3.000 | info |
 | `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `missing-actual:pdr:pdr` | `missing-actual` | 942.592, 121.000 | `planned:pdr:pdr` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `note-index:station-note` | `note-index` | 1254.407, 659.500 | `group:ground` | flat | `#142642` | fill | 6.157 | 4.500 | info |
@@ -5370,6 +5373,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `legend-swatch:scale:owner:launch` | `planned` | 40.000, 656.700 | `canvas` | canvas | `#0B1220` | stroke | 16.354 | 3.000 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `legend-swatch:scale:owner:ops` | `planned` | 40.000, 682.600 | `canvas` | canvas | `#0B1220` | stroke | 16.354 | 3.000 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `legend-swatch:scale:owner:payload` | `planned` | 40.000, 579.000 | `canvas` | canvas | `#0B1220` | stroke | 16.354 | 3.000 | info |
+| `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `legend-swatch:planned:progress-fill` | `progress-fill` | 40.000, 475.400 | `legend-swatch:planned` | flat | `#5FA8FF` | stroke | 7.607 | 3.000 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `member-label:review-lane:["generated","ait","integration"]:integration` | `text` | 1540.640, 536.875 | `group:ait` | flat | `#142642` | fill | 13.238 | 4.500 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `member-label:review-lane:["generated","ait","integration"]:psr` | `text` | 1659.553, 558.625 | `group:ait` | flat | `#142642` | fill | 13.238 | 4.500 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `member-label:review-lane:["generated","ait","integration"]:vibration` | `text` | 1359.473, 569.625 | `group:ait` | flat | `#142642` | fill | 13.238 | 4.500 | info |
@@ -7282,4 +7286,4 @@ Every independently required decoration role has committed Scene or explicit syn
 
 - Synthetic `dependency-halo` (no public use): `tests/integration/test_unroutable_visible_obstacle.py`, `tests/integration/test_relation_resolution_wiring.py`, `tests/unit/chrona/presentation/scene/test_contrast_policy.py`
 
-Findings: 7189; errors: 0; warnings: 306.
+Findings: 7193; errors: 0; warnings: 306.
