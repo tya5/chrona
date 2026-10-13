@@ -968,8 +968,13 @@ inline `aspectRatio`), a taller extent can widen a flow so that it wraps into
 fewer lines and shrinks a slot, so the requirement is not monotone in the
 extent: Layout must verify a fitting search bound before scanning to it and
 select the first fitting integral extent, never a later branch found by global
-bisection. Absence of a fit requires a native capacity/feasibility proof, not
-failure of a sampled extent (#1214; complete search implementation remains pending).
+bisection. Content-sized coupled search tests the requested minimum, then the
+native demand probe and its source-deficit candidate, even if the probe fails.
+It scans ascending integral extents only after native verification of a fitting
+bound. If neither candidate provides that bound, it retains the requested
+finite allocation and its shortage evidence; this heuristic fallback is not a
+proof that no later extent fits. General complete-search proof is outside the
+accepted scope of #1214; a missed branch in an actual slide requires a new issue.
 
 Candidate natural prefix demand MUST use completed local block offsets from
 the table, axis and caption geometry owners. Their Decimal origins are added
@@ -977,7 +982,9 @@ only when completing the shared row start. Converting an absolute origin to
 float and then subtracting its Decimal value MUST NOT change the measured
 prefix requirement. The same measured shapes supply natural demand and final
 placements; this rule does not authorize a second allocation or text-measurement
-pass. Candidate source admission and complete search remain part of #1214.
+pass. Cross-host demand and coordinates MUST likewise be derived in local
+frames and translated once; large-origin rounding noise is not a separate
+layout policy. Existing Decimal comparisons remain unchanged.
 
 For content-sized allocation, the measured natural per-row and table-timeline
 requirements MUST be established before `rowDistribution: fill` distributes
