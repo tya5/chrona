@@ -1,6 +1,6 @@
 # Revision stability completion (#1300)
 
-Baseline: READY `01255938` (PR1450 and derived-main38325498917 succeeded),
+Baseline: READY `9c1cb8b9` (PR1452 and derived-main38328603097 succeeded),
 independent inspection/delta/critical-priority
 slices release-verified by [38290538367](https://github.com/tya5/chrona/actions/runs/38290538367).
 Authority: [issue](https://github.com/tya5/chrona/issues/1300),
@@ -137,9 +137,10 @@ count closure and final Layout; ordered reanchored proposals use the common
 completed-route validator before ordinary search. The actual v1/v2 Scene/SVG test
 retains spec-build's translated shape without search. Same-input10/10 routes reuse
 without search; best retains byte-identical Scene/SVG and receipts.100 focused
-tests pass; public46-context no-hint reproduction passes. Exact-head CI38324544571
-and synced READY01255938 succeed; preview11780366932 confirms92 public Scene/SVG
-files unchanged. Exact-main three-OS release38325655439 is running. Original unconditional stability/critical criteria
+tests pass; public46-context no-hint reproduction passes. PR1450 exact-head
+CI38324544571 and synced-main01255938 three-OS release38325655439 succeed.
+Preview11780366932 confirms92 public Scene/SVG files byte-identical; only two
+source diagnostic inventories change. Original unconditional stability/critical criteria
 remain unfinished; do not close the issue for completing hints alone.
 
 S evidence design: the existing default-relax test can pass with an empty
@@ -163,6 +164,15 @@ critical safe-route obligation with the same feasibility domain before claiming
 impossibility. Keep full completed geometry/terminal/window safety; do not use
 quota increases, hints or corpus changes as an independence fix. Publish selected
 normative rules and amend owned files/tests before resuming product code.
+
+Verified implementation seams: `surface_routes.compose_surface_routes` consumes
+completed rows, marks and temporal ports; `relation_shapes.shape_channels` and
+`route_search._build_visibility_base`/`_build_sparse_graph` generate event contacts.
+`routing._select_pair_candidate` retains common completed-route acceptance.
+Separate event inventory from full collision validation; cache/visibility identity
+must encode both. `obstacles.route_visibility_scope` and `relation_resolution`
+own cache lineage and recovery domains. These are owners, not a selected domain
+or authorization to change row allocation, port admission, style or safety.
 
 1. Complete selected contracts and architecture review here; update normative
    Context/Scene/routing specifications and publish before product changes.
