@@ -1,8 +1,8 @@
 # Thin-connector design reuse completion (#1341, #1344)
 
-Published code baseline: READYfb54b240. Mainaea06f4b adds the1300 release
-record; its trusted gate/release is pending. Adopt the current READY main before
-product publication. No previous-session local work is assumed.
+Published code baseline: READYaea06f4b; #1300's containing three-OS release is
+still running. Adopt the current READY main before product publication. No
+previous-session local work is assumed.
 
 Authority: [approved classification6100250980](https://github.com/tya5/chrona/issues/1341#issuecomment-6100250980),
 [sign-off6105511858](https://github.com/tya5/chrona/issues/1341#issuecomment-6105511858),
@@ -47,3 +47,33 @@ those slices. Keep optional local tuning separate. Batch public materializers
 and generated diffs once per behavior boundary; focused tests locally, full
 three-OS/conformance/wheel/newest-Python gates in CI. Keep each literal row open
 until actual adoption and required release evidence are published.
+
+## Slice 2 design and implementation boundary
+
+Specification06 §9.2 owns the selected merge contract. Keep existing required
+effective-View fields; ingress supplies named-style presentation before schema
+validation rather than relaxing admission or using schema `default` annotations.
+Do not make standalone View parsing depend on a Layout or make Scene know styles.
+The current `endDisplay` and `text` column properties are presentation under the
+approved general classification, not project connections; include their existing
+grammar in styles. Source-kind names are the live source discriminator, not a
+caption, field name, or field value. This general rule does not special-case the
+three examples in the approved note.
+
+Architecture review: Specs06/33 retain ingress ownership and original resource
+identity (Spec13); Theme still owns referenced roles/scales and Layout still owns
+completed geometry. Spec56 requires new shared definitions, no edits to frozen
+definitions, and in-place optional additions. Shared grammar must retain local
+references correctly when moved; no cross-reference to an unregistered live
+resource schema. Marker/period/direct-visual closure remains a separate audited
+boundary, not an implicit claim that slice1 was complete.
+
+| Unit | Files and acceptance evidence |
+| --- | --- |
+| Presentation closure | `contracts/view_defaults.py`, `contracts/diagnostics.py`: pure copy/overlay plus a separate ingress reference check collecting unknown explicit styles in column order at their original pointers; do not defer this cross-resource check to the View-only parser. Preserve independent sibling findings, malformed-input errors and raw identities. Unit tests cover every source discriminator, missing optional defaults, explicit overrides, multiple unknown styles and immutability. |
+| Shared schema admission | `schemas/common-v0.1.schema.yaml`, live View/Layout schemas, packaged mirrors and inventory: shared column/heading/group presentation grammar with no connection properties admitted in a style. Keep complete effective-column requirements; add optional `style`. Run schema equivalence against current main and schema/reference/conformance controls. |
+| Render acceptance | `tests/integration/test_view_defaults.py` and contract tests: synthetic thin/full Views produce identical SVG and equivalent completed Scene geometry/paint/diagnostics with truthful provenance. Exercise heading whole override, grouping/color split overrides and invalid style diagnostics through actual ingress. Batch public materializers and Scene/SVG diffs in CI; no `examples/**` writes. |
+
+Publish this design/specification boundary before those product changes. The
+slice's PR includes focused results and literal issue rows still open for later
+slices/adoption; full three-OS release remains required before issue closure.

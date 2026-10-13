@@ -463,6 +463,38 @@ connection fields remain ordinary View validation errors. The
 merge happens at ingress, before validation, so the merged View is validated as the View it is; a Layout profile without
 `viewDefaults`, or a View declaring every member, is untouched, which keeps every existing View byte-identical.
 
+**Slice 2 presentation closure (#1341).** `viewDefaults.heading` supplies the
+ordinary heading grammar, including default wording templates and `dateForm`.
+An explicitly declared View heading replaces it as a whole. The split members
+`grouping` and `colorEncoding` follow the same one-level rule as the existing
+splits: only `grouping.presentation`, `header`, `tint`, and
+`colorEncoding.scale`, `target` may be supplied. A declared header or tint
+replaces that nested object whole; grouping keys and color source/domain never
+come from those defaults. Project-specific wording and field selections remain
+View declarations even when a shared presentation grammar can express them.
+
+`viewDefaults.columnStyles` is a named map of column presentation fragments:
+`format`, `missing`, `missingBy`, `affixes`, `zero`, `textRole`, `align`,
+`headerOrientation`, `width`, `endDisplay` and `text`. A View column keeps `id`
+and `source`, and may name `style`. Without an explicit style, it takes a
+declared style named after the source discriminator: a scalar source's spelling
+or an object source's tagged key (`field`, `comparisonFacet`, `facet`,
+`scenario` in the current grammar). This lookup applies uniformly to every
+admitted source kind, only if the profile declares that named style. An
+absent implicit style is a no-op; an unknown explicit style produces
+`E_VIEW_COLUMN_STYLE_UNKNOWN` at `/body/tableColumns/<index>/style`, never a
+fallback to another style. Explicit column presentation properties replace the
+style's corresponding property whole, including nested objects. Styles never
+supply a caption, source or project-dependent matching rule.
+
+Ingress closes styles before validating/parsing the effective View. Existing
+required column properties and semantic constraints still apply; incomplete
+styles do not create implicit runtime defaults or repair malformed declarations.
+Style names are connection declarations, not completed geometry or new resource
+identities. Old resources without these defaults retain their behavior. The
+remaining marker/period/visual and profile-binding slices are not implied by
+this presentation closure.
+
 ## 10. Diagnostics
 
 View evaluation SHOULD report stable diagnostics for unknown Project, Snapshot, Actual, or object references; incompatible temporal domains; duplicate comparison identity; and invalid explicit windows. Exact identifiers and schema are deferred to the View schema and Application Architecture work.
