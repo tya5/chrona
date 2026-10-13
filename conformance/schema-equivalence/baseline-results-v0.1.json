@@ -26,6 +26,36 @@
     "pointer": "/",
     "rule": "additionalProperties"
    },
+   "examples/halcyon-1/views/21-target-b.yaml": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "missing required property 'placement'",
+    "pointer": "/body/periods/0/label",
+    "rule": "required"
+   },
+   "examples/halcyon-1/views/22-yuya.yaml": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "missing required property 'placement'",
+    "pointer": "/body/periods/0/label",
+    "rule": "required"
+   },
+   "examples/halcyon-1/views/23-titlecard.yaml": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "missing required property 'placement'",
+    "pointer": "/body/periods/0/label",
+    "rule": "required"
+   },
+   "examples/halcyon-1/views/24-marquee.yaml": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "missing required property 'placement'",
+    "pointer": "/body/periods/0/label",
+    "rule": "required"
+   },
+   "examples/halcyon-1/views/25-sunday.yaml": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "missing required property 'placement'",
+    "pointer": "/body/periods/0/label",
+    "rule": "required"
+   },
    "tests/fixtures/controller-z/profiles/summary.yaml": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "unexpected property 'panels'",
@@ -3062,6 +3092,51 @@
    "path": "examples/halcyon-1/views/15-gallery-image-notes.yaml",
    "schema": "view-v0.27.schema.yaml",
    "valid": true
+  },
+  {
+   "error": {
+    "pointer": "/body",
+    "rule": "not"
+   },
+   "path": "examples/halcyon-1/views/21-target-b.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": false
+  },
+  {
+   "error": {
+    "pointer": "/body",
+    "rule": "not"
+   },
+   "path": "examples/halcyon-1/views/22-yuya.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": false
+  },
+  {
+   "error": {
+    "pointer": "/body",
+    "rule": "not"
+   },
+   "path": "examples/halcyon-1/views/23-titlecard.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": false
+  },
+  {
+   "error": {
+    "pointer": "/body",
+    "rule": "not"
+   },
+   "path": "examples/halcyon-1/views/24-marquee.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": false
+  },
+  {
+   "error": {
+    "pointer": "/body",
+    "rule": "not"
+   },
+   "path": "examples/halcyon-1/views/25-sunday.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": false
   },
   {
    "error": null,

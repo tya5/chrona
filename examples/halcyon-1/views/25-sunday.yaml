@@ -1,15 +1,11 @@
 version: chrona/view/v0.28
 kind: view
 id: halcyon-25-sunday
+# Thin connector: HALCYON's ids, bindings and wording only. The design, including the heading
+# template, is the sunday Layout profile's `viewDefaults`; the heading counts with the figure declared
+# here, and this project's legend wording names its period.
 body:
   surface: table-timeline
-  heading:
-    kicker: The programme board,
-    title: '{project}'
-    subtitle: "in six panels \xB7 by the Programme Office"
-    dateForm: day-month-year
-  rows:
-    mode: automatic
   window:
     mode: explicit
     start: '2027-03-01'
@@ -17,246 +13,32 @@ body:
   periods:
   - id: launch-window
     label:
-      placement: top
       text: LAUNCH WINDOW
+  figures:
+  - {id: group-count, kind: count, source: groups}
+  wording:
+    legend:
+      period-band: launch window
   comparison:
     baseline: snapshot
-    baselineMarks: ghost-when-changed
-    missingActualScope: in-progress
     actual: required
     observationSelection: latest
-    deltaUnit: calendar-days
-    facets:
-    - planned
-    - actual
-    - finishDelta
-    - missingActual
-    - unmatchedActual
-  visibility:
-    labels:
-      placement: table
-      content:
-      - title
-      - finishDelta
-      side: end
-      overflow: suppress
-    relations:
-      mode: semantic
-      overflow: suppress
-    annotations:
-      mode: presentation
-      marker: none
-  annotations:
-  - id: tvac-note
-    purpose: note
-    anchor:
-      kind: object
-      id: payload-tvac
-      facet: actual
-      endpoint: body
-    projectAnnotation: tvac
-    candidates:
-    - id: plot-near
-      region:
-        kind: plot
-      search:
-        kind: nearest-free
-        maxPositions: 1024
-        maxInlineEm: 12
-      obstacles: &id001
-        classes:
-        - mark
-        - text
-        - label-visual
-        - dependency-route
-        - leader-route
-        - annotation-box
-        - port
-        - rule
-      connector:
-        kind: tail
-    - id: plot-narrow
-      region:
-        kind: plot
-      search:
-        kind: nearest-free
-        maxPositions: 1024
-        maxInlineEm: 8
-      obstacles: *id001
-      connector:
-        kind: tail
-    - id: plot-wide
-      region:
-        kind: plot
-      search:
-        kind: nearest-free
-        maxPositions: 1024
-        maxInlineEm: 16
-      obstacles: *id001
-      connector:
-        kind: tail
-  - id: station-note
-    purpose: note
-    anchor:
-      kind: object
-      id: station
-      facet: planned
-      endpoint: body
-    projectAnnotation: station
-    candidates:
-    - id: plot-near
-      region:
-        kind: plot
-      search:
-        kind: nearest-free
-        maxPositions: 1024
-        maxInlineEm: 12
-      obstacles: *id001
-      connector:
-        kind: tail
-    - id: plot-narrow
-      region:
-        kind: plot
-      search:
-        kind: nearest-free
-        maxPositions: 1024
-        maxInlineEm: 8
-      obstacles: *id001
-      connector:
-        kind: tail
-    - id: plot-wide
-      region:
-        kind: plot
-      search:
-        kind: nearest-free
-        maxPositions: 1024
-        maxInlineEm: 16
-      obstacles: *id001
-      connector:
-        kind: tail
-  - id: window-note
-    purpose: note
-    anchor:
-      kind: object
-      id: launch
-      facet: planned
-      endpoint: at
-    projectAnnotation: window
-    candidates:
-    - id: plot-near
-      region:
-        kind: plot
-      search:
-        kind: nearest-free
-        maxPositions: 1024
-        maxInlineEm: 12
-      obstacles: *id001
-      connector:
-        kind: tail
-    - id: plot-narrow
-      region:
-        kind: plot
-      search:
-        kind: nearest-free
-        maxPositions: 1024
-        maxInlineEm: 8
-      obstacles: *id001
-      connector:
-        kind: tail
-    - id: plot-wide
-      region:
-        kind: plot
-      search:
-        kind: nearest-free
-        maxPositions: 1024
-        maxInlineEm: 16
-      obstacles: *id001
-      connector:
-        kind: tail
-  axis:
-    tiers:
-    - unit: quarter
-      every: 1
-      role: band
-      typographyRole: axisQuarter
-    - unit: quarter
-      every: 1
-      role: grid-major
-    - unit: quarter
-      every: 1
-      role: labels
-      label:
-        form: quarter-year
-        align: center
-        overflow: visible-overflow
-        orientation: horizontal
-      typographyRole: axisQuarter
-    - unit: month
-      every: 1
-      role: band
-      typographyRole: axisMonth
-    - unit: month
-      every: 1
-      role: labels
-      label:
-        form: long-month
-        align: start
-        overflow: visible-overflow
-        orientation: horizontal
-      typographyRole: axisMonth
-    - unit: month
-      every: 1
-      role: grid-minor
+  annotationBindings:
+  - {kind: risk, temporalKind: span, purpose: note, facet: actual, endpoint: body}
+  - {kind: note, temporalKind: span, purpose: note, facet: planned, endpoint: body}
+  - {kind: note, temporalKind: point, purpose: note, facet: planned, endpoint: at}
   markers:
-  - kind: asOf
-    source: actual
-    label: TODAY!
-    placement: below-plot
-    date:
-      form: day-month
-  shading:
-    nonWorking: true
-    exceptions: true
-  backgroundDecoration:
-    rows: none
-    groups: all
+  - source: actual
   hierarchyColumn: What
   tableColumns:
   - id: What
     source: title
-    missing: em-dash
-    align: start
-    width:
-      minmax:
-        min: content
-        max:
-          fr: 1
-    headerOrientation: horizontal
   - id: Phase
     source:
       field: phase
-    textRole: table-cell-secondary
-    missing: em-dash
-    align: start
-    width: content
-    headerOrientation: horizontal
   - id: Late?
     source:
       facet: finishDelta
-    format: signedNumber
-    zero: plain
-    missing: blank
-    missingBy:
-      inProgress:
-        text: '?'
-      dueUnobserved: blank
-      notYetDue: blank
-    align: end
-    width: content
-    headerOrientation: horizontal
-    affixes:
-      slip:
-        suffix: '!'
   selection:
     include:
       types:
@@ -276,10 +58,6 @@ body:
     - ground
     - launch
     - ops
-    presentation: header
-    header:
-      text: "Meanwhile, in the {title}\u2026"
-      first: "In the {title}\u2026"
   ordering:
     by: source
     direction: ascending

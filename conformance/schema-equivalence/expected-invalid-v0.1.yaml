@@ -32,3 +32,23 @@ documents:
       Pre-envelope Summary Profile shape: `panels` sits at the document root and there is no `body`, which
       the current summary-profile schema requires. It is passed to the renderer as a `summary_path` input
       (tests/integration/test_render.py), not validated as a standalone resource document.
+  - path: examples/halcyon-1/views/21-target-b.yaml
+    schema: view-v0.28.schema.yaml
+    reason: &thin-view >-
+      Thin connector View (#1341, Spec 06 §9.2): it declares only the project's connection members, and
+      its Context's Layout profile supplies the design members (`rows`, `visibility`, comparison policy,
+      column presentation, marker and period-label presentation) through `viewDefaults`. Ingress merges
+      the two before validation, so the effective View validates; the file alone lacks those required
+      design members by construction.
+  - path: examples/halcyon-1/views/22-yuya.yaml
+    schema: view-v0.28.schema.yaml
+    reason: *thin-view
+  - path: examples/halcyon-1/views/23-titlecard.yaml
+    schema: view-v0.28.schema.yaml
+    reason: *thin-view
+  - path: examples/halcyon-1/views/24-marquee.yaml
+    schema: view-v0.28.schema.yaml
+    reason: *thin-view
+  - path: examples/halcyon-1/views/25-sunday.yaml
+    schema: view-v0.28.schema.yaml
+    reason: *thin-view
