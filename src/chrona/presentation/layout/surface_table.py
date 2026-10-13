@@ -16,7 +16,7 @@ from chrona.presentation.layout.surface_quality import (
     CollisionDomain, ColumnPlacement, SlotPlacement, SurfaceLayoutRequest, TextPlacement, FitWarning,
 )
 from chrona.presentation.layout.text import (centred_text_baseline, ellipsize_text, ellipsized_text_warning, measure_text_width,
-                                             metric_for_role, place_text)
+                                             metric_for_role, place_text, translate_text_block)
 from chrona.presentation.layout.table_measurement import BoundedTableMeasurement
 
 
@@ -165,10 +165,7 @@ def prepare_table_header_seed(*, request: SurfaceLayoutRequest, table: SlotPlace
     # Complete the measured shape before adding its Decimal host origin. An
     # absolute float baseline loses the small header extent at large origins.
     extent = max((item.bounds.block + item.bounds.block_size for item in header_text), default=None)
-    header_text = [replace(item,
-        bounds=replace(item.bounds, block=table.bounds.block + item.bounds.block),
-        baseline=(item.baseline[0], float(table.bounds.block) + item.baseline[1])
-        if item.baseline is not None else None) for item in header_text]
+    header_text = [translate_text_block(item, table.bounds.block) for item in header_text]
     return SurfaceTableHeaderSeed(table, group_tag_inline_size, table_bounds,
                                   tuple(layout_columns), column_placements,
                                   tuple(header_text), tuple(cell_indents.items()), extent, bounded)

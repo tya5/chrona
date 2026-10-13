@@ -20,7 +20,7 @@ from chrona.presentation.figure_text import FigureTextError, FigureTextProgram, 
 from chrona.presentation.layout.model import LayoutDecision, LayoutError, Measurement, Rect, ResolvedLayoutProfile
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, SlotPlacement, TextPlacement
-from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
+from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text, translate_text_block
 
 if TYPE_CHECKING:
     from chrona.presentation.layout.surface_axis import AxisLabelTierGeometry
@@ -311,7 +311,8 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
             diagnostics.append(f"I_LAYOUT_SLOT_HEADING_OMITTED:{decision.node_id}:no-content")
             continue
         bounds = slot.bounds
-        top, bottom = bounds.block, bounds.block + bounds.block_size
+        origin = bounds.block
+        top, bottom = Decimal(0), bounds.block_size
         line_top, content_start = top, top + line + gap
         aligned_baseline: float | None = None
         start_column = heading.block == "start-column"
@@ -333,7 +334,7 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
                     "W_LAYOUT_TEXT_ELLIPSIZED", f"{SLOT_HEADING_PLACEMENT_PREFIX}{decision.node_id}", source,
                     "slot-heading-text", "ellipsize-with-source", natural, float(line), available, float(line)))
             width = measure_text_width(content, **shape)
-            text.append(place_text(
+            text.append(translate_text_block(place_text(
                 placement_id=f"{SLOT_HEADING_PLACEMENT_PREFIX}{decision.node_id}", source_ref=source,
                 content=content, overflow=disposition, inline=float(bounds.inline),
                 baseline_block=float(top) + float(size), typography_role=role,
@@ -341,26 +342,31 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
                 collision_region=f"slot-heading:{decision.node_id}",
                 collision_domain=CollisionDomain("slot-heading", decision.node_id),
                 source_content=source_content, semantic_id=SLOT_HEADING_SEMANTIC_ID, slot_id=slot.slot_id,
-                available_inline_start=float(bounds.inline), available_inline_size=available))
+                available_inline_start=float(bounds.inline), available_inline_size=available), origin))
             caption_gap = heading.gap if heading.gap is not None else gap
             inline_reserve[source] = min(Decimal(str(width)) + caption_gap, bounds.inline_size)
             continue
         if heading.block in {"header-row", "axis-tier"}:
+            axis_top = axis.bounds.block - origin if axis is not None else Decimal(0)
+            axis_bottom = axis_top + axis.bounds.block_size if axis is not None else Decimal(0)
             beside = (axis is not None and axis.slot_id != slot.slot_id
-                      and axis.bounds.block < bottom and top < axis.bounds.block + axis.bounds.block_size)
+                      and axis_top < bottom and top < axis_bottom)
             if heading.block == "header-row" and beside:
                 band = axis.bounds
-                line_top = min(max(top, band.block + (band.block_size - line) / _TWO), bottom - line)
-                content_start = max(line_top + line + gap, band.block + band.block_size)
+                line_top = min(max(top, axis_top + (band.block_size - line) / _TWO), bottom - line)
+                content_start = max(line_top + line + gap, axis_bottom)
             elif heading.block == "header-row":
                 diagnostics.append(f"I_LAYOUT_SLOT_HEADING_NO_HEADER_ROW:{decision.node_id}")
             else:
                 tier = min(axis_label_tiers, key=lambda item: (item.bounds.block, item.tier_index), default=None)
-                candidate_top = Decimal(str(tier.baseline_block)) - size if tier is not None else None
+                prepared_axis = (prepared or {}).get("timeline-axis")
+                axis_reserve = prepared_axis.reserved("timeline-axis") if prepared_axis is not None else Decimal(0)
+                candidate_baseline = axis_top + axis_reserve + tier.baseline_block_offset if tier is not None else None
+                candidate_top = candidate_baseline - size if candidate_baseline is not None else None
                 if (beside and candidate_top is not None and top <= candidate_top
                         and candidate_top + line <= bottom):
-                    line_top, aligned_baseline = candidate_top, float(tier.baseline_block)
-                    content_start = max(line_top + line + gap, axis.bounds.block + axis.bounds.block_size)
+                    line_top, aligned_baseline = candidate_top, float(candidate_baseline)
+                    content_start = max(line_top + line + gap, axis_bottom)
                 else:
                     diagnostics.append(f"I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER:{decision.node_id}")
         if bounds.inline_size <= 0 or content_start >= bottom:
@@ -378,7 +384,7 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
         width = measure_text_width(content, **shape)
         inline = float(bounds.inline) + {"start": 0.0, "center": max(0.0, (available - width) / 2),
                                          "end": max(0.0, available - width)}[heading.align]
-        text.append(place_text(
+        text.append(translate_text_block(place_text(
             placement_id=f"{SLOT_HEADING_PLACEMENT_PREFIX}{decision.node_id}", source_ref=source,
             content=content, overflow=disposition, inline=inline,
             baseline_block=(aligned_baseline if aligned_baseline is not None else float(line_top) + float(size)),
@@ -387,6 +393,6 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
             collision_region=f"slot-heading:{decision.node_id}",
             collision_domain=CollisionDomain("slot-heading", decision.node_id),
             source_content=source_content, semantic_id=SLOT_HEADING_SEMANTIC_ID, slot_id=slot.slot_id,
-            available_inline_start=float(bounds.inline), available_inline_size=available))
+            available_inline_start=float(bounds.inline), available_inline_size=available), origin))
         reserve[source] = content_start - top
     return SlotHeadings(tuple(text), reserve, tuple(diagnostics), tuple(warnings), inline_reserve)

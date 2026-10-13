@@ -27,7 +27,7 @@ from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, PathCommand, PlacementDecision, ScalePlacement,
     ShapePlacement, SlotPlacement, SurfaceLayoutRequest, TextPlacement,
 )
-from chrona.presentation.layout.text import measured_text_bounds, measure_text_width, metric_for_role, place_text
+from chrona.presentation.layout.text import measured_text_bounds, measure_text_width, metric_for_role, place_text, translate_text_block
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, semantic_binding,
 )
@@ -916,17 +916,12 @@ def _translate_axis_preparation(prepared: SurfaceAxisPreparation, origin: Decima
                 for x, y in command.points)) for command in item.path_commands),
             collision_bounds=(_translate_axis_rect(item.collision_bounds, origin)
                               if item.collision_bounds is not None else None))
-    def text(item: TextPlacement) -> TextPlacement:
-        baseline = item.baseline
-        if baseline is not None:
-            baseline = (baseline[0], baseline[1] + float(origin))
-        return replace(item, bounds=_translate_axis_rect(item.bounds, origin), baseline=baseline)
     placements = prepared.placements
-    visible = tuple((text(item), replace(bounds, y=bounds.y + float(origin)))
+    visible = tuple((translate_text_block(item, origin), replace(bounds, y=bounds.y + float(origin)))
                     for item, bounds in placements.visible_label_overflows)
     translated_placements = replace(placements,
         shapes=tuple(shape(item) for item in placements.shapes),
-        text=tuple(text(item) for item in placements.text),
+        text=tuple(translate_text_block(item, origin) for item in placements.text),
         visible_label_overflows=visible,
         label_tiers=tuple(_translate_axis_label_tier(item, origin) for item in placements.label_tiers))
     ordered = tuple(shape(item) if isinstance(item, ShapePlacement) else item

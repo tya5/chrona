@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from math import isfinite
 from typing import Any, Literal
 
@@ -311,6 +311,13 @@ def _resolved_family(stack: str, font_metrics: Any) -> str:
     if resolved and (len(named) > 1 or (named and named[0].casefold() != str(resolved).casefold())):
         return str(resolved)
     return stack
+
+
+def translate_text_block(placement: TextPlacement, origin: Decimal) -> TextPlacement:
+    """Project a completed local run without repeating font measurement."""
+    baseline = placement.baseline
+    return replace(placement, bounds=replace(placement.bounds, block=origin + placement.bounds.block),
+                   baseline=(baseline[0], float(origin) + baseline[1]) if baseline is not None else None)
 
 
 def place_text(*, placement_id: str, source_ref: str, content: str,

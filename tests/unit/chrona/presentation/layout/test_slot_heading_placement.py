@@ -106,6 +106,28 @@ def test_top_puts_the_line_at_the_slot_start_and_reserves_the_line_and_its_gap()
     assert result.reserved("legend") == 0
 
 
+@pytest.mark.parametrize("block", ["top", "header-row", "axis-tier"])
+def test_caption_keeps_local_reserve_at_large_decimal_origin(block):
+    from dataclasses import replace
+
+    slots = {"annotations": _slot("annotations", 100, 400), "timeline-axis": AXIS}
+    heading = SlotHeading("Notes", block=block)
+    tiers = (_tier(0, 100, 110.0),) if block == "axis-tier" else ()
+    ordinary = complete_slot_headings(request=_request(), slots=slots,
+        decisions={"annotations": _decision("annotations", heading)}, axis_label_tiers=tiers)
+    origin = Decimal(10) ** 30
+    shifted = {key: replace(slot, bounds=replace(slot.bounds, block=slot.bounds.block + origin))
+               for key, slot in slots.items()}
+    shifted_tiers = tuple(replace(tier, bounds=replace(tier.bounds, block=tier.bounds.block + origin),
+                                 baseline_block=tier.baseline_block + origin) for tier in tiers)
+    translated = complete_slot_headings(request=_request(), slots=shifted,
+        decisions={"annotations": _decision("annotations", heading)}, axis_label_tiers=shifted_tiers)
+    assert translated.reserve == ordinary.reserve
+    assert translated.diagnostics == ordinary.diagnostics
+    assert len(translated.text) == len(ordinary.text) == 1
+    assert translated.text[0].bounds.block_size == ordinary.text[0].bounds.block_size
+
+
 def test_header_row_centres_the_line_in_the_band_and_content_starts_below_the_band():
     result = _run([_slot("annotations", 100, 400), AXIS], SlotHeading("Notes", block="header-row"))
 
@@ -236,9 +258,9 @@ def test_heading_targets_include_optional_profile_slots_without_a_manifest_decis
     assert resolved.content_hash == "unchanged" and node["heading"] == {"text": "Notes"}
 
 
-def _tier(index, top, baseline):
+def _tier(index, top, baseline, *, axis_origin=100):
     return AxisLabelTierGeometry(index, Rect(Decimal(100), Decimal(top), Decimal(400), Decimal(20)),
-                                 Decimal(str(baseline)), Decimal(str(baseline)) - Decimal(top))
+                                 Decimal(str(baseline)), Decimal(str(baseline)) - Decimal(axis_origin))
 
 
 def test_axis_tier_caption_uses_completed_upper_baseline_and_reserves_the_whole_band():
@@ -251,7 +273,7 @@ def test_axis_tier_caption_uses_completed_upper_baseline_and_reserves_the_whole_
 
 
 @pytest.mark.parametrize(("axis", "tiers"), [(AXIS, ()), (None, (_tier(0, 100, 110.0),)),
-    (AXIS, (_tier(0, 100, 105.0),)), (_slot("timeline-axis", 600, 50), (_tier(0, 600, 610.0),))])
+    (AXIS, (_tier(0, 100, 105.0),)), (_slot("timeline-axis", 600, 50), (_tier(0, 600, 610.0, axis_origin=600),))])
 def test_incompatible_axis_tier_falls_back_to_top_with_a_record(axis, tiers):
     slots = {"annotations": _slot("annotations", 100, 400)}
     if axis is not None:
