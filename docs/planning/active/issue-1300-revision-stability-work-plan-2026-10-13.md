@@ -54,3 +54,29 @@ in preview11780366932. Additional no-hint characterization tests3 PASS include
 two drawn routes under unrelated declaration reversal. The off-row effect in
 6134916217 is a known property of bounded global-event search, not a defect to
 redesign. These fixtures do not yet prove protected finite-domain feasibility.
+
+## Selected design, architecture review and implementation plan
+
+Spec50 owns the selected domain and hint-based stability rule. Protected
+selection first retains any ordinary accepted result. If ordinary selection
+fails under critical+suppress, reuse admitted pairs, shape proposals and the
+existing sparse graph without an expansion cap/shared budget. Enumerate its
+finite simple canonical histories with the same completion and acceptance
+callbacks. Continue after quality rejection across all pairs; prefer any
+quality-eligible route, otherwise select measured safe fallback deterministically.
+No accepted result means natural domain exhaustion, not continuous impossibility.
+
+Architecture review: scheduler critical facts stay immutable; no View/Theme
+policy inference, closure identity or Scene/adapters geometry change. Existing
+surface callbacks retain windows, terminals, primary marks and full collision
+validation. Exhaustive enumeration changes work accounting, not obstacle
+membership or graph coordinates. Distinct histories are necessary because
+validators inspect completed paths. Finite no-repeat histories terminate but
+may be exponential; ordinary quota receipts must not hide protected work.
+Independent Luna read-only audit confirmed these generator/validator seams.
+
+| Implementation slice | Owned files and focused evidence |
+| --- | --- |
+| C finite domain | route_search.py optional uncapped enumeration; routing.py protected selection and typed fallback/exhaustion evidence; surface_routes.py critical+suppress gating and diagnostics; model/info_diagnostics.py typed projection if required. Keep ordinary caps untouched. Tests: graph natural exhaustion versus quota, rejected cheapest candidate followed by valid alternative, later quality-eligible pair before safe fallback, quality overrun and genuinely impossible domain, real Scene/SVG diagnostics, critical priority and all other modes. |
+| S evidence | test_revision_launch_trial.py every accepted hint/reanchored shape; test_revision_delta_anchor_stability.py previous Scene shift/append and unchanged delta sides. Reuse actual materializer/decoder tests, best/no-input byte controls. |
+| Publication | One implementation PR with literal acceptance review and batched public evidence. Include completed1402 archive in the next document batch. Full release matrix via CI; preserve authored examples untouched. |
