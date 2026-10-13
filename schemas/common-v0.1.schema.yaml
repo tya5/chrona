@@ -7,6 +7,44 @@ description: >-
   records a digest per definition and a change is a new part version, never an edit. Definitions
   that name an existing inline pattern are byte-exact to it, including the `$` anchor.
 $defs:
+  markerPresentation:
+    description: "Optional project-independent markerPresentation properties; existing View occurrences and explicit fields remain authoritative."
+    type: object
+    additionalProperties: false
+    properties:
+      kind: {description: "The current as-of marker form.", const: asOf}
+      label: {description: "The marker label, rendered exactly as written unless a date form is declared.", type: string}
+      placement: {description: "Where the label sits on the plot: the top margin (default), the plot foot (centred on the rule above the last row) or below the plot (centred on the rule under the last row, in a block Layout reserves; with no room it falls back to the foot with a diagnostic).", enum: [top, foot, below-plot], examples: [below-plot]}
+      date:
+        description: "Optional date appended to the label, formatted like an axis localized-date label."
+        type: object
+        required: [form]
+        additionalProperties: false
+        properties:
+          form: {description: "The date form: the localized date (`Aug 20, 2027`), the day and short month (`20 Aug`) or the day, short month and year (`20 Aug 2027`).", enum: [localized-date, day-month, day-month-year]}
+          nameTable: {description: "Exact built-in axis name-table ID; defaults to Render Context locale.", enum: [en-US, ja-JP]}
+  periodLabelPresentation:
+    description: "Optional project-independent periodLabelPresentation properties; existing View occurrences and explicit fields remain authoritative."
+    type: object
+    additionalProperties: false
+    properties:
+      placement: {description: "Where the label sits: at the plot's top edge, at its bottom edge, or centred in the band.", enum: [top, bottom, inside]}
+      overflow: {description: "What happens when no collision-free position exists: suppress the label with a recorded warning, or place it anyway with a recorded overflow. Defaults to visible-overflow.", enum: [suppress, visible-overflow]}
+  visualPresentation:
+    description: "Optional project-independent visualPresentation properties; existing View occurrences and explicit fields remain authoritative."
+    type: object
+    additionalProperties: false
+    properties:
+      ref: {description: "Direct Context-local set:name icon reference.", examples: ["material:flag-outline-rounded"], type: string, pattern: "^[A-Za-z][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
+      side: {description: "Logical slot beside the target text.", enum: [leading, trailing], default: leading}
+      decorative: {description: "Whether the adjacent text already supplies the icon's meaning.", type: boolean, default: true}
+  visualPresentationByKind:
+    description: "Direct icon and presentation defaults keyed only by existing visual target kind, never project selectors."
+    type: object
+    propertyNames:
+      description: "One target kind admitted by the live View visual selector grammar."
+      enum: [title, as-of-label, column, group-header, plot-label, annotation, note, note-index, group-detail, summary, milestone, legend, cell, axis-label, axis-band, mark, variance-label]
+    additionalProperties: {$ref: "#/$defs/visualPresentation"}
   tableMissingText:
     description: "An author-chosen literal for an absent table value: one to eight characters with no control character, drawn exactly as written in the column's text role (#1288). `affixes.missing` still wraps whatever the absent text is, in every absent state."
     examples: [{text: "?"}]

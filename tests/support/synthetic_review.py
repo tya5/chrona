@@ -109,7 +109,8 @@ def render(directory: Path, source: Mapping[str, Any], *, presentation: Mapping[
            actual: Mapping[str, Any] | None = None, viewport: tuple[int, int | None] = (1600, 900),
            icon_catalogs: tuple[Path, ...] = (), summary: Mapping[str, Any] | None = None,
            detail: Mapping[str, Any] | None = None,
-           font_metrics_path: Path | None = None) -> RenderedReview:
+           font_metrics_path: Path | None = None,
+           visual_profile: str = "chrona-output/visual/v0.5-baseline") -> RenderedReview:
     """Render `source` through `presentation` (default: the packaged preset bundle) and return the review.
 
     `summary` is an optional Summary Profile document; the Layout Profile must carry a `summary` slot to show it.
@@ -123,7 +124,8 @@ def render(directory: Path, source: Mapping[str, Any], *, presentation: Mapping[
         actual_path=_write(directory / "actual.yaml", actual) if actual is not None else None,
         summary_path=_write(directory / "summary.yaml", summary) if summary is not None else None,
         detail_path=_write(directory / "detail.yaml", detail) if detail is not None else None,
-        icon_catalog_paths=icon_catalogs, viewport=viewport, font_metrics_path=font_metrics_path)
+        icon_catalog_paths=icon_catalogs, viewport=viewport, font_metrics_path=font_metrics_path,
+        visual_profile=visual_profile)
     return render_review(RenderRequest(
         closure=draft.closure, snapshot_root=draft.asset_root, asset_root=draft.asset_root,
         scheduler=ReferenceScheduler(), renderer=V05SvgRenderer(), draft_auto_block=draft.auto_block))

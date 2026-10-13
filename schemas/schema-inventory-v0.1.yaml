@@ -31,6 +31,10 @@ schemas:
     state: live
     consumers: [src/chrona/resources/__init__.py]
     frozenDefs:
+      markerPresentation: "sha256:a15f2f9e08b892e037e9fd75f72f443b26f26fa09ef2d653a3959701bcfd6791"
+      periodLabelPresentation: "sha256:7bf332f1bcd2dae6c8cee3e438567a540c7e83a87f4cfbfb54e7d19ee02df7e3"
+      visualPresentation: "sha256:9dd63598ad4a0a0fe77a4ecf066ba7a5db17bdf62859155a2e658411105a6351"
+      visualPresentationByKind: "sha256:ae83b3150041dbb54fed2a8d5d350a15fbb2c4c0d7a643a67f9817058a489998"
       tableMissingText: "sha256:4185fdfe4f1f1c64f9847db57679ece4ff4b0a534066acac0ae5576484f7d937"
       tableColumnAffix: "sha256:884dfc97ccaef104aacd8f241a9480623e70357c902b34513854fc3584e16291"
       tableTextWrap: "sha256:38e8dce25aa628b1ad0193730ac911ef673b6dbb4174b4504c296c34ded933fa"

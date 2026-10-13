@@ -1,6 +1,6 @@
 # Thin-connector design reuse completion (#1341, #1344)
 
-Published code baseline: READYaea06f4b; #1300 is closed after its containing
+Published code baseline: READY2347aed5; #1300 is closed after its containing
 three-OS release38339181830 succeeded. Adopt the current READY main before product publication. No
 previous-session local work is assumed.
 
@@ -78,20 +78,34 @@ Publish this design/specification boundary before those product changes. The
 slice's PR includes focused results and literal issue rows still open for later
 slices/adoption; full three-OS release remains required before issue closure.
 
-Slice2 implementation: presentation closure and nine new frozen shared grammar
-definitions are complete locally. Focused contracts/style/render/schema/diagnostic
-batch227 PASS; schema inventory, annotations, references and equivalence against
-READYaea06f4b PASS. Existing accepted schema verdicts/diagnostics are preserved;
-the optional column `style` admission has one explicit L1 delta. Real synthetic
-SVG and completed Scene equality pass; provenance is not erased. Public snapshot
-inspection and release CI remain pending; no whole-issue acceptance claim.
+Slice2 is published in PR1455, source48010710, synced READY2347aed5;
+sync38343026629 succeeded and containing-main release38343299409 is live.
+Exact-head38342278157 passed every check;
+artifact11787143093 confirms92/92 public Scene/SVG identical,0 retirements,
+diagnostic/coverage reports only. Shared-schema probes were corrected without
+waiving any gate (focused407 PASS;35 snapshot conformance checks PASS).
 
-PR1455 snapshot11785869165:92/92 public Scene/SVG identical,0 retirements,
-diagnostic/coverage inventories only. Initial38340937037 failed seven obsolete
-shared-schema probe/location assumptions across all pytest shards; conformance,
-MCP and public reproduction passed, derived-ready failure was consequential.
-Updated definition/subfragment positive/negative parity and nested diagnostic
-paths retain every guard; corrected focused407 PASS and all35 conformance
-checks PASS against the audited CI snapshot. No product contract or
-generated output is weakened to absorb these failures. New exact-head CI and
-containing-main release remain required.
+## Array-entry closure: selected design and implementation
+
+Spec06 §9.2 selects uniform marker/period-label/visual defaults, not id/index
+matching or copying mixed arrays. Missing design fields are fillable; wrong-type
+explicit fields stay errors. No occurrence is synthesized. Overflow and
+side/decorative are presentation under the approved general classification.
+
+Architecture review: ingress owns closure; project selections/order remain in
+View, paint/assets in Theme and completed geometry in Layout. Scene/adapters
+only project. Original identities, explicit overrides and frozen definitions
+remain intact; no new resource kind or placement algorithm.
+
+Implementation: contracts/view_defaults.py fills existing occurrences; live
+View/Layout/common schemas share each property; inventory freezes four new
+definitions. tests/integration/test_view_defaults.py covers marker/period/icon
+actual SVG/Scene equality, no synthesis, order, identity, encoded/direct and
+wrong-type controls. Shared-schema definition/subfragment probes are mandatory.
+Pre-codee9f0e58a and code636b182f/139e7ead are published; focused357 PASS,
+post-merge143 PASS, schema inventory/annotations/references and equivalence PASS
+against READY2347aed5. Normal merges retain both branches' published history;
+only overlapping plan/probe additions needed reconciliation. The stale style
+admission evidence is retired. Public snapshot and release verification remain.
+Batch public materializers/Scene/SVG via CI; no examples edits. Profile bindings,
+purity/adoption and every unresolved literal row remain open.

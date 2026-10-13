@@ -33,6 +33,44 @@ COLUMN_PRESENTATION_MEMBERS = (
     "format", "missing", "missingBy", "affixes", "zero", "textRole", "align",
     "headerOrientation", "width", "endDisplay", "text",
 )
+MARKER_PRESENTATION_MEMBERS = ("kind", "label", "placement", "date")
+PERIOD_LABEL_PRESENTATION_MEMBERS = ("placement", "overflow")
+VISUAL_PRESENTATION_MEMBERS = ("ref", "side", "decorative")
+
+
+def _fill_presentation(target: dict[str, Any], offered: Mapping[str, Any], members: Sequence[str]) -> None:
+    for member in members:
+        if member in offered and member not in target:
+            target[member] = deepcopy(offered[member])
+
+
+def _close_array_presentation(body: dict[str, Any], defaults: Mapping[str, Any]) -> None:
+    """Fill existing occurrences only; never infer a project selection or new occurrence."""
+    offered = defaults.get("markerPresentation")
+    markers = body.get("markers")
+    if isinstance(offered, Mapping) and isinstance(markers, list):
+        for marker in markers:
+            if isinstance(marker, dict):
+                _fill_presentation(marker, offered, MARKER_PRESENTATION_MEMBERS)
+    offered = defaults.get("periodLabelPresentation")
+    periods = body.get("periods")
+    if isinstance(offered, Mapping) and isinstance(periods, list):
+        for period in periods:
+            label = period.get("label") if isinstance(period, Mapping) else None
+            if isinstance(label, dict):
+                _fill_presentation(label, offered, PERIOD_LABEL_PRESENTATION_MEMBERS)
+    offered_by_kind = defaults.get("visualPresentation")
+    visuals = body.get("visuals")
+    if isinstance(offered_by_kind, Mapping) and isinstance(visuals, list):
+        for visual in visuals:
+            if not isinstance(visual, dict):
+                continue
+            target = visual.get("target")
+            kind = target.get("kind") if isinstance(target, Mapping) else None
+            offered = offered_by_kind.get(kind) if isinstance(kind, str) else None
+            if isinstance(offered, Mapping):
+                members = ("side", "decorative") if "encoding" in visual else VISUAL_PRESENTATION_MEMBERS
+                _fill_presentation(visual, offered, members)
 
 
 def _column_source_kind(source: object) -> str | None:
@@ -73,9 +111,8 @@ def merge_view_defaults(view: Mapping[str, Any], defaults: Mapping[str, Any]) ->
             name = column.get("style") if "style" in column else _column_source_kind(column.get("source"))
             style = styles.get(name) if isinstance(name, str) else None
             if isinstance(style, Mapping):
-                for member in COLUMN_PRESENTATION_MEMBERS:
-                    if member in style and member not in column:
-                        column[member] = deepcopy(style[member])
+                _fill_presentation(column, style, COLUMN_PRESENTATION_MEMBERS)
+    _close_array_presentation(body, defaults)
     return merged
 
 

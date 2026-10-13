@@ -263,9 +263,29 @@ ANNOTATION_RAIL = {"id": "rail", "region": {"kind": "slot", "source": "annotatio
                    "search": {"kind": "row-aligned"}, "obstacles": {"classes": ["mark"]},
                    "connector": {"kind": "leader"}}
 ANNOTATION_LEGACY = {"side": "end", "alignment": "center"}
+VISUAL_TARGET_KINDS = (
+    "title", "as-of-label", "column", "group-header", "plot-label", "annotation", "note", "note-index",
+    "group-detail", "summary", "milestone", "legend", "cell", "axis-label", "axis-band", "mark", "variance-label",
+)
 
 # name -> (accepted, rejected)
 PROBES: dict[str, tuple[list[Any], list[Any]]] = {
+    "markerPresentation": ([{}, {"kind": "asOf", "label": "As of", "date": {"form": "day-month", "nameTable": "en-US"}, "placement": "below-plot"},
+                            {"placement": "foot"}],
+                           [None, [], "asOf", {"kind": "unknown"}, {"date": {"form": "iso"}}, {"extra": True}]),
+    "periodLabelPresentation": ([{}, {"placement": "top", "overflow": "suppress"}, {"placement": "inside", "overflow": "visible-overflow"}],
+                                [None, [], {"placement": "middle"}, {"overflow": "hide"}, {"extra": True}]),
+    "visualPresentation": ([{}, {"ref": "material:flag-outline-rounded", "side": "trailing", "decorative": False},
+                             {"side": "leading", "decorative": True}],
+                            [None, [], {"ref": "bad"}, {"side": "above"}, {"decorative": "true"}, {"extra": True}]),
+    "visualPresentationByKind": ([{kind: {"ref": "material:flag-outline-rounded"} for kind in VISUAL_TARGET_KINDS},
+                                   {"title": {"side": "leading"}, "mark": {"decorative": False}}, {}],
+                                  [{"unknown-kind": {"ref": "material:flag-outline-rounded"}},
+                                   {"projectId": {"ref": "material:flag-outline-rounded"}},
+                                   {"project": {"ref": "material:flag-outline-rounded"}},
+                                   {"field": {"ref": "material:flag-outline-rounded"}},
+                                   {"objectType": {"ref": "material:flag-outline-rounded"}},
+                                   {"title": {"ref": "bad"}}, {"title": None}, None]),
     "countTextFormat": ([{"form": "digits"}, {"form": "digits", "minimumDigits": 80},
                          {"form": "english-words", "capitalize": True},
                          {"form": "kanji"}, {"form": "kanji-formal"}],
@@ -438,6 +458,16 @@ def _target_validator(pointer: str) -> Draft202012Validator:
 
 
 SUBDEFINITION_PROBES: dict[str, tuple[list[Any], list[Any]]] = {
+    "markerPresentation/properties/kind": (["asOf"], ["actual", "as-of", None, 3]),
+    "markerPresentation/properties/label": (["As of", "", "  "], [None, 3, {}, []]),
+    "markerPresentation/properties/date": ([{"form": "localized-date"}, {"form": "day-month", "nameTable": "ja-JP"}],
+                                            [{}, {"form": "iso"}, {"form": "day-month", "nameTable": "fr-FR"}, {"form": "localized-date", "extra": True}, None]),
+    "markerPresentation/properties/placement": (["top", "foot", "below-plot"], ["bottom", "below", None, 3]),
+    "periodLabelPresentation/properties/placement": (["top", "bottom", "inside"], ["foot", "center", None, 3]),
+    "periodLabelPresentation/properties/overflow": (["suppress", "visible-overflow"], ["hide", "clip", None, 3]),
+    "visualPresentation/properties/ref": (["material:flag-outline-rounded", "my_set:icon_1"], ["bad", ":icon", "set:", "1set:icon", "set:bad.dot", None, 3]),
+    "visualPresentation/properties/side": (["leading", "trailing"], ["start", "above", None, 3]),
+    "visualPresentation/properties/decorative": ([True, False], ["true", 0, None]),
     "tableColumnPresentation/properties/format": (["text", "signedNumber", "dateRange", {"kind": "presence", "whenTrue": "Y", "whenFalse": "N"}],
                                                     ["count", "signedDay", {"kind": "presence", "whenTrue": "Y"}, {"kind": "other"}, None]),
     "tableColumnPresentation/properties/missing": (["blank", "em-dash", "unknown", "in-progress", {"text": "?"}],
@@ -496,6 +526,13 @@ def test_every_adopted_site_accepts_and_rejects_like_its_definition(name):
 def test_nested_site_probes_cover_every_common_presentation_pointer():
     nested = {definition for name in ADOPTERS for _, definition in _adopted_sites(name) if "/" in definition}
     assert nested == set(SUBDEFINITION_PROBES)
+
+
+def test_visual_presentation_kind_keys_match_the_live_view_target_grammar():
+    view = _schema("view-v0.28.schema.yaml")
+    kinds = tuple(dict.fromkeys(branch["properties"]["kind"]["const"] for branch in view["$defs"]["visualTarget"]["oneOf"]))
+    assert kinds == VISUAL_TARGET_KINDS
+    assert _common_target("visualPresentationByKind/propertyNames")["enum"] == list(VISUAL_TARGET_KINDS)
 
 
 def test_adopted_sites_keep_their_local_extras():
