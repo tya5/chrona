@@ -5,6 +5,70 @@ dependencyNetworkFlowDirection: horizontal
 requiredThemeTokens: [legend-block, legend-gap, legend-item-min, note-rail-width, spacing.frame, spacing.l, spacing.m, spacing.none]
 reviewSurface: {rowDistribution: fill, backgroundExtents: {rowBand: table, groupBand: both, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
 relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side, search: best, unroutable: suppress}
+# The design half of the View (#1341, Spec 06 §9.2). Project-independent: a View connects a project by
+# declaring its selection, window, grouping key/order, column captions/sources, period and marker
+# sources, figures and annotation bindings; any member the View declares replaces the one below.
+# The heading reads the count figures `selected-count` and `group-count`, which the View declares.
+viewDefaults:
+  heading:
+    kicker: The programme board
+    title: "{project}"
+    subtitle: "{figure:selected-count} work packages in {figure:group-count} acts · baseline, plan and what actually happened"
+    dateForm: day-month-year
+  figureFormats:
+    selected-count: {form: english-words, capitalize: true}
+    group-count: {form: english-words}
+  rows: {mode: automatic}
+  comparison:
+    baselineMarks: ghost-when-changed
+    missingActualScope: in-progress
+    deltaUnit: calendar-days
+    facets: [planned, actual, finishDelta, missingActual, unmatchedActual]
+  visibility:
+    labels: {placement: table, content: [title, finishDelta], side: end, overflow: suppress}
+    relations: {mode: semantic, overflow: suppress}
+    annotations: {mode: presentation, marker: none}
+  annotationPlacement:
+    note:
+      candidates:
+        - id: rail
+          region: {kind: slot, source: annotations}
+          search: {kind: row-aligned}
+          obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+          connector: {kind: leader}
+  axis:
+    tiers:
+      - {unit: quarter, every: 1, role: band, typographyRole: axisQuarter}
+      - {unit: quarter, every: 1, role: grid-major}
+      - unit: quarter
+        every: 1
+        role: labels
+        label: {form: quarter-year, align: center, overflow: visible-overflow, orientation: horizontal}
+        typographyRole: axisQuarter
+      - {unit: month, every: 1, role: band, typographyRole: axisMonth}
+      - unit: month
+        every: 1
+        role: labels
+        label: {form: short-month, align: center, overflow: visible-overflow, orientation: horizontal}
+        typographyRole: axisMonth
+      - {unit: month, every: 1, role: grid-minor}
+  markerPresentation: {kind: asOf, label: AS OF, placement: below-plot, date: {form: day-month}}
+  periodLabelPresentation: {placement: top}
+  shading: {nonWorking: true, exceptions: true}
+  backgroundDecoration: {rows: rules, groups: all}
+  columnStyles:
+    title: {missing: em-dash, align: start, width: {minmax: {min: content, max: {fr: 1}}}, headerOrientation: horizontal}
+    field: {textRole: table-cell-secondary, missing: em-dash, align: start, width: content, headerOrientation: horizontal}
+    facet:
+      format: signedDays
+      missing: blank
+      missingBy: {inProgress: em-dash, dueUnobserved: blank, notYetDue: blank}
+      align: end
+      width: content
+      headerOrientation: horizontal
+  grouping:
+    presentation: header
+    header: {text: 'ACT {ordinal|group-ordinal} · {title}', ordinal: roman}
 root:
   id: page
   kind: column

@@ -1,5 +1,6 @@
 from datetime import date
 from copy import deepcopy
+import json
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -9,6 +10,7 @@ import yaml
 
 from chrona.resources import safe_load, schema_resource, validator_for_schema
 from tools.check_example_reachability import reachable_view_paths
+from tools.presentation_coverage import effective_views
 from tests.support.preset_policy import assert_view_copy_except_axis as _assert_view_copy_except_axis
 
 
@@ -21,6 +23,8 @@ def _json_value(value: Any) -> Any:
     if isinstance(value, Mapping):
         return {key: _json_value(item) for key, item in value.items()}
     if isinstance(value, list):
+        return [_json_value(item) for item in value]
+    if isinstance(value, tuple):
         return [_json_value(item) for item in value]
     return value
 
@@ -40,14 +44,41 @@ def _validator_v028() -> jsonschema.Draft202012Validator:
     return validator_for_schema(schema)
 
 
+def _effective_validation_cases() -> tuple[tuple[Path, Mapping[str, Any] | None], ...]:
+    """Validate each distinct declared closure; keep raw checks for uncontextualized Views."""
+    closures = effective_views(ROOT)
+    cases: list[tuple[Path, Mapping[str, Any] | None]] = []
+    for path, views in closures.items():
+        seen: set[str] = set()
+        for view in views:
+            key = json.dumps(_json_value(view), sort_keys=True, separators=(",", ":"))
+            if key not in seen:
+                seen.add(key)
+                cases.append((path, view))
+    covered = set(closures)
+    cases.extend((path, None) for path in reachable_view_paths(ROOT) if path not in covered)
+    return tuple(cases)
+
+
 def pytest_generate_tests(metafunc):
-    """Discover manifest-backed Views after module import, retaining pytest's path IDs."""
+    """Discover public effective Views after module import, retaining pytest path IDs."""
     if "path" in metafunc.fixturenames and metafunc.function.__name__ == "test_declared_public_v03_view_validates":
-        metafunc.parametrize("path", reachable_view_paths(ROOT))
+        cases = _effective_validation_cases()
+        indexes: dict[Path, int] = {}
+        ids = []
+        for path, view in cases:
+            index = indexes.get(path, 0)
+            indexes[path] = index + 1
+            ids.append(f"{path.name}-closure-{index}" if view is not None else path.name)
+        metafunc.parametrize(
+            "path,effective_view",
+            cases,
+            ids=ids,
+        )
 
 
-def test_declared_public_v03_view_validates(path: Path):
-    value = safe_load(path.read_bytes())
+def test_declared_public_v03_view_validates(path: Path, effective_view: Mapping[str, Any] | None):
+    value = effective_view if effective_view is not None else safe_load(path.read_bytes())
     version = value.get("version")
     validators = {
         "chrona/view/v0.27": _validator,

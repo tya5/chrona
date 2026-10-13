@@ -8,6 +8,7 @@ normative specification.
 | Issue | State | Evidence |
 | ---: | --- | --- |
 | #332 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/332) |
+| #1214 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1214), owner-narrowed scope6144755026 and exact-main [release38396884738](https://github.com/tya5/chrona/actions/runs/38396884738) |
 | #1219 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1219), exact-main [release38362304100](https://github.com/tya5/chrona/actions/runs/38362304100) |
 | #1300 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1300), exact-main [release38339181830](https://github.com/tya5/chrona/actions/runs/38339181830) |
 | #1346 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1346) |

@@ -729,7 +729,8 @@ class SchemaValidators:
         return {"pointer": _json_pointer(errors[0].absolute_path) or "/", "rule": str(errors[0].validator)}
 
 
-def run_l2(documents: Mapping[str, bytes], validators: SchemaValidators) -> CorpusResult:
+def run_l2(documents: Mapping[str, bytes], validators: SchemaValidators, *,
+           view_defaults: Mapping[str, tuple[Mapping[str, Any], ...]] | None = None) -> CorpusResult:
     records: list[dict[str, Any]] = []
     parsed: dict[str, Any] = {}
     unmapped: Counter = Counter()
@@ -749,9 +750,28 @@ def run_l2(documents: Mapping[str, bytes], validators: SchemaValidators) -> Corp
             unmapped[version] += 1
             continue
         parsed[path] = value
-        error = validators.first_error(schema, value)
+        defaults = (view_defaults or {}).get(path, ())
+        if defaults:
+            from chrona.presentation.contracts.view_defaults import merge_view_defaults
+            variants = (merge_view_defaults(value, offered) for offered in defaults)
+        else:
+            variants = (value,)
+        # One View can participate in several declared Layout contexts. Every
+        # effective variant must validate; a passing first context is not enough.
+        distinct = []
+        for variant in variants:
+            if variant not in distinct:
+                distinct.append(variant)
+        error = next((error for variant in distinct
+                      if (error := validators.first_error(schema, variant)) is not None), None)
         records.append({"path": path, "schema": schema, "valid": error is None, "error": error})
     return CorpusResult(records, parsed, unmapped, unparseable, len(documents))
+
+
+def _view_defaults(root: Path) -> dict[str, tuple[Mapping[str, Any], ...]]:
+    from tools.presentation_coverage import view_default_contexts
+    return {path.relative_to(root.resolve()).as_posix(): offered
+            for path, offered in view_default_contexts(root).items()}
 
 
 def _record_text(record: Any) -> str:
@@ -1335,7 +1355,7 @@ def run_gate(root: Path, *, layers: Iterable[str] = ("L1", "L2", "L3"), base_rev
 
     if "L2" in wanted:
         started = time.monotonic()
-        result = run_l2(documents, validators)
+        result = run_l2(documents, validators, view_defaults=_view_defaults(root))
         report.corpus = result
         current = {record["path"]: record for record in result.records}
         baseline_records = {record["path"]: record for record in baseline["documents"]}
@@ -1413,7 +1433,7 @@ def record_baseline(root: Path, *, documents: Mapping[str, bytes] | None = None,
     expected_invalid_path = expected_invalid_path or root / EXPECTED_INVALID
     documents = documents if documents is not None else tracked_documents(root)
     validators = SchemaValidators(load_schema_dir(schemas_dir))
-    result = run_l2(documents, validators)
+    result = run_l2(documents, validators, view_defaults=_view_defaults(root))
     invalid_paths = [record["path"] for record in result.records if not record["valid"]]
     sites = tuple(sites)
     paths = {site.source for site in sites if not site.source.startswith("inline:")} | set(invalid_paths)

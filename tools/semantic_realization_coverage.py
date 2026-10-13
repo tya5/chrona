@@ -9,8 +9,9 @@ import tempfile
 from typing import Any, Mapping
 
 from chrona.presentation.model.semantic_realization import RealizationFamily, realization_families, validate_realization_families
+from chrona.presentation.model.semantic_registry import semantic_binding
 from tools.derived_artifact_report import report_stale_artifact
-from tools.presentation_coverage import Slide, discover
+from tools.presentation_coverage import Slide, discover, effective_view
 
 
 class SemanticRealizationCoverageError(ValueError):
@@ -18,7 +19,7 @@ class SemanticRealizationCoverageError(ValueError):
 
 
 def _view(slide: Slide) -> Mapping[str, Any]:
-    return next(document for kind, _path, document in slide.resources if kind == "view")
+    return effective_view(slide)
 
 
 def _primitives(slide: Slide) -> tuple[Mapping[str, Any], ...]:
@@ -41,12 +42,34 @@ def _table_columns(view: Mapping[str, Any], facet: str) -> frozenset[str]:
                      and isinstance(column.get("id"), str))
 
 
-def _annotation_ids(view: Mapping[str, Any]) -> tuple[tuple[str, str], ...]:
+def _annotation_declarations(view: Mapping[str, Any]) -> tuple[tuple[tuple[str, str], ...], tuple[str, ...]]:
     body = view.get("body", {})
-    annotations = body.get("annotations", ()) if isinstance(body, Mapping) else ()
-    return tuple((str(annotation.get("id")), str(annotation.get("purpose")))
-                 for annotation in annotations if isinstance(annotation, Mapping)
-                 and isinstance(annotation.get("id"), str) and isinstance(annotation.get("purpose"), str))
+    if not isinstance(body, Mapping):
+        raise SemanticRealizationCoverageError("E_PRESENTATION_REALIZATION_VIEW")
+    annotations = body.get("annotations", [])
+    bindings = body.get("annotationBindings", [])
+    if not isinstance(annotations, list) or not isinstance(bindings, list):
+        raise SemanticRealizationCoverageError("E_PRESENTATION_REALIZATION_ANNOTATION_SOURCE")
+    by_id: list[tuple[str, str]] = []
+    for index, annotation in enumerate(annotations):
+        if (not isinstance(annotation, Mapping) or not isinstance(annotation.get("id"), str)
+                or not annotation["id"] or not isinstance(annotation.get("purpose"), str)):
+            raise SemanticRealizationCoverageError(f"E_PRESENTATION_REALIZATION_ANNOTATION_SOURCE:annotations[{index}]")
+        by_id.append((annotation["id"], annotation["purpose"]))
+    purposes: list[str] = []
+    for index, binding in enumerate(bindings):
+        if not isinstance(binding, Mapping) or not isinstance(binding.get("purpose"), str):
+            raise SemanticRealizationCoverageError(f"E_PRESENTATION_REALIZATION_ANNOTATION_SOURCE:annotationBindings[{index}]")
+        purposes.append(binding["purpose"])
+    return tuple(by_id), tuple(purposes)
+
+
+_ANNOTATION_BOX_BINDINGS = {
+    "callout": "annotationCalloutBox",
+    "highlight": "annotationHighlightBox",
+    "note": "annotationNoteBox",
+    "explanatory-arrow": "annotationArrowBox",
+}
 
 
 def _evidence(family: RealizationFamily, slides: tuple[Slide, ...]) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
@@ -64,14 +87,21 @@ def _evidence(family: RealizationFamily, slides: tuple[Slide, ...]) -> tuple[tup
                          if item.get("purpose") == family.primitive_purpose
                          and item.get("tableColumnId") in columns and isinstance(item.get("visualRole"), str))
         elif family.selector == "annotation:purpose":
-            annotations = _annotation_ids(view)
+            annotations, binding_purposes = _annotation_declarations(view)
             ids = {identifier for identifier, purpose in annotations if purpose in family.admitted_states}
-            if not ids:
+            bound_states = {purpose for purpose in binding_purposes if purpose in family.admitted_states}
+            if not ids and not bound_states:
                 continue
             states.update(purpose for identifier, purpose in annotations if identifier in ids)
+            states.update(bound_states)
             roles.update(str(item.get("visualRole")) for item in primitives
                          if item.get("sourceRef") in ids and item.get("purpose") == family.primitive_purpose
                          and isinstance(item.get("visualRole"), str))
+            for purpose in bound_states:
+                expected_role = semantic_binding(_ANNOTATION_BOX_BINDINGS[purpose]).scene_role
+                if any(item.get("purpose") == family.primitive_purpose
+                       and item.get("visualRole") == expected_role for item in primitives):
+                    roles.add(expected_role)
         else:
             raise SemanticRealizationCoverageError(f"E_PRESENTATION_REALIZATION_SELECTOR:{family.selector}")
         evidence.add(slide.identifier)

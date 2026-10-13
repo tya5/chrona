@@ -5,6 +5,76 @@ dependencyNetworkFlowDirection: horizontal
 requiredThemeTokens: [countdown.width, frame.stripe.width, legend-block, legend-gap, legend-item-min, note-rail-width, spacing.l, spacing.m, spacing.none, spacing.s]
 reviewSurface: {rowDistribution: fill, backgroundExtents: {rowBand: table, groupBand: both, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
 relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side, search: best, unroutable: suppress}
+# The design half of the View (#1341, Spec 06 §9.2). Project-independent: a View connects a project by
+# declaring its selection, window, grouping key/order, column captions/sources, period and marker
+# sources, figures, slot bindings and annotation bindings; any member the View declares replaces the
+# one below. The heading and the notes heading read the count figures `selected-count`,
+# `group-count` and `note-count`, which the View declares.
+viewDefaults:
+  heading:
+    kicker: 第弐面
+    title: 計画表、{project}
+    subtitle: "PROGRAMME BOARD : SLIDE 02 · {figure:selected-count} WORK PACKAGES · {figure:group-count} SECTIONS · BASELINE / PLAN / ACTUAL"
+    dateForm: day-month-year
+  figureFormats:
+    note-count: {form: digits, minimumDigits: 2}
+  rows: {mode: automatic}
+  comparison:
+    baselineMarks: ghost-when-changed
+    missingActualScope: in-progress
+    deltaUnit: calendar-days
+    facets: [planned, actual, finishDelta, missingActual, unmatchedActual]
+  visibility:
+    labels: {placement: table, content: [title, finishDelta], side: end, overflow: suppress}
+    relations: {mode: semantic, overflow: suppress}
+    annotations: {mode: presentation, marker: none}
+  annotationPlacement:
+    note:
+      candidates:
+        - id: rail
+          region: {kind: slot, source: annotations}
+          search: {kind: row-aligned}
+          obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+          connector: {kind: leader}
+  axis:
+    tiers:
+      - {unit: quarter, every: 1, role: band, typographyRole: axisQuarter}
+      - {unit: quarter, every: 1, role: grid-major}
+      - unit: quarter
+        every: 1
+        role: labels
+        label: {form: year-quarter, nameTable: en-US, align: start, overflow: visible-overflow, orientation: horizontal}
+        typographyRole: axisQuarter
+      - {unit: month, every: 1, role: band, typographyRole: axisMonth}
+      - unit: month
+        every: 1
+        role: labels
+        label:
+          form: short-month
+          nameTable: ja-JP
+          align: start
+          overflow: visible-overflow
+          orientation: horizontal
+          secondary: {form: short-month, nameTable: en-US, typographyRole: axisSecondary, placement: inline}
+        typographyRole: axisMonth
+      - {unit: month, every: 1, role: grid-minor}
+  markerPresentation: {kind: asOf, label: 現在 NOW, placement: below-plot, date: {form: localized-date, nameTable: ja-JP}}
+  periodLabelPresentation: {placement: top}
+  shading: {nonWorking: true, exceptions: true}
+  backgroundDecoration: {rows: rules, groups: all}
+  columnStyles:
+    title: {missing: em-dash, align: start, width: {minmax: {min: content, max: {fr: 1}}}, headerOrientation: horizontal}
+    field: {textRole: table-cell-secondary, missing: em-dash, align: start, width: content, headerOrientation: horizontal}
+    facet:
+      format: signedNumber
+      missing: blank
+      missingBy: {inProgress: em-dash, dueUnobserved: blank, notYetDue: blank}
+      align: end
+      width: content
+      headerOrientation: horizontal
+  grouping:
+    presentation: header
+    header: {text: '{ordinal|group-ordinal}  {title}', ordinal: zero-padded}
 root:
   id: page
   kind: column
@@ -105,7 +175,7 @@ root:
         - id: annotations
           kind: slot
           source: annotations
-          heading: {text: "STATUS REPORTS : 03", align: start, block: header-row}
+          heading: {template: "STATUS REPORTS : {figure:note-count}", align: start, block: header-row}
           inlineSize: {fixed: {token: note-rail-width}}
           blockSize: fill
           place: {inline: stretch, block: stretch, safety: strict}
