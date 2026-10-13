@@ -2,12 +2,16 @@
 
 # Issue1300 — revision stability acceptance
 
-Partial implementation only; no full-issue or release acceptance.
-Current feature base READY165587e6; final release pending for H1/H2.
+Partial issue completion only; H1/H2 is released, not full-issue acceptance.
+[PR1450](https://github.com/tya5/chrona/pull/1450) head239598cc passed
+[CI38324544571](https://github.com/tya5/chrona/actions/runs/38324544571).
+Synced public `01255938758e26af8416200d806c9b6a00b5be55` passed
+[three-OS release38325655439](https://github.com/tya5/chrona/actions/runs/38325655439)
+including full pytest/conformance/wheel, MCP floor and newest-Python reproduction.
 [Current work/design record](https://github.com/tya5/chrona/issues/1300#issuecomment-6095643389).
 Inspection, delta anchors and critical-first facts/order are independent of
 the unimplemented protected feasibility pass. H1/H2 previous-Scene reuse is
-locally verified, not a substitute for either original unfinished criterion.
+release-verified, not a substitute for either original unfinished criterion.
 
 ## Literal issue acceptance
 
@@ -18,10 +22,10 @@ locally verified, not a substitute for either original unfinished criterion.
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | A test pair: a plan and the same plan with every date shifted by the same amount (and, separately, with an unrelated object appended). The set of suppressed relations and each delta label's anchor side are equal between the two Scenes. | not met | [Translation/append controls](../../../tests/integration/test_revision_delta_anchor_stability.py) verify actual delta sides and a nonempty explicit-suppress set with a painted blocker. They do not establish the general relation-local/processing-order contract. | — |
+| 1 | A test pair: a plan and the same plan with every date shifted by the same amount (and, separately, with an unrelated object appended). The set of suppressed relations and each delta label's anchor side are equal between the two Scenes. | not met | [Translation/append controls](../../../tests/integration/test_revision_delta_anchor_stability.py) verify actual delta sides and nonempty suppression. The [real off-row contact reproduction](https://github.com/tya5/chrona/issues/1300#issuecomment-6134916217) contradicts general relation-local stability; positive fixtures do not discharge the contract. | — |
 | 2 | A test where a critical relation has a route: it is never suppressed. Where none exists, the distinct diagnostic is emitted. | not met | [Spec50](../../specification/50-constraint-driven-gantt-surface-quality.md#33-relations) scopes protected feasibility to suppress; completeness, implementation and impossibility evidence remain unfinished. Critical-first priority alone is not proof. | — |
 | 3 | The trial's v1 → v2 pair keeps `spec-build` drawn. | met | [Actual supplied launch pair](../../../tests/integration/test_revision_launch_trial.py) passes through real Scene and SVG under the current default; no spatial suppressions. No protected-search claim. | — |
-| 4 | `--emit-scene` output diffs line by line (one primitive per line), and its parsed content is unchanged. | met | [Formatter controls](../../../tests/unit/chrona/app/test_scene_inspection.py) and [actual CLI controls](../../../tests/cli/test_cli_scene_inspection.py) pass. Canonical/cache serialization and normal machine envelope stay unchanged. Current-head CI/release pending. | — |
+| 4 | `--emit-scene` output diffs line by line (one primitive per line), and its parsed content is unchanged. | met | [Formatter controls](../../../tests/unit/chrona/app/test_scene_inspection.py) and [actual CLI controls](../../../tests/cli/test_cli_scene_inspection.py) pass. Canonical/cache serialization and normal machine envelope stay unchanged; exact-head and synced-main release above succeed. | — |
 | 5 | Do not edit `examples/**`. | met | [Published WIP scope](https://github.com/tya5/chrona/tree/wip/issue-1300-readable-inspection) contains implementation/tests/specification changes, not authored example edits. | — |
 
 ## Additional mandatory hint acceptance
@@ -31,9 +35,9 @@ supplements, and replaces none of, the original criteria.
 
 | Literal acceptance | Disposition | Evidence |
 | --- | --- | --- |
-| The trial's v1 → v2 revision rendered with v1's Scene as hints keeps `spec-build` drawn with the same shape. | locally met; release pending | Actual trial test verifies translated point sequence, accepted/no-search receipt and emitted SVG. |
-| A counter shows that only changed or new relations are searched. | locally met; release pending | Same-input10/10 routes accepted without search; changed-obstacle/validator failures fall through to search; typed per-instance dispositions partition the summary. Finite ordinary proposals are not falsely counted as search. |
-| Without a hint, output is identical to without the feature. | locally met; release pending | All46 public contexts reproduce; best with a valid pin has identical Scene/SVG/receipts. No-hint rendering emits no hint diagnostics; immutable Context pin identity remains truthful. |
+| The trial's v1 → v2 revision rendered with v1's Scene as hints keeps `spec-build` drawn with the same shape. | met | Actual trial test verifies translated point sequence, accepted/no-search receipt and emitted SVG; full release above passes. |
+| A counter shows that only changed or new relations are searched. | met | Same-input10/10 routes accepted without search; changed-obstacle/validator failures fall through to search; typed per-instance dispositions partition the summary. Finite ordinary proposals are not falsely counted as search; full release passes. |
+| Without a hint, output is identical to without the feature. | met | Preview11780366932 verifies92/92 public Scene/SVG files identical; only two source diagnostic inventories change. Best retains identical Scene/SVG/receipts; immutable pin identity remains truthful. Full release reproduces all46 contexts. |
 
 ## Programme-level criteria (optional)
 
@@ -54,7 +58,7 @@ programme-section heading were missing. The classification follows the already
 approved exact-byte pin contract; restore the reference and heading, not the
 validators. Preview11780156269 confirms all92 public Scene/SVG files are
 byte-identical; only two source diagnostic inventories change. Re-run exact-head
-CI after the corrections; the original stability/critical rows remain not met.
+CI after the corrections succeeded; the original stability/critical rows remain not met.
 The queued test-only stability evidence is included in this necessary correction
 push, avoiding a second CI restart/publication cycle. CLI reference execution,
 live classification and23 focused tooling tests pass locally.
