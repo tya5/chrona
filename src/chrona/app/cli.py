@@ -663,8 +663,18 @@ def _run_import(args: argparse.Namespace) -> None:
 
 
 def _run_init(args: argparse.Namespace) -> None:
-    initialize_project(Path(args.directory), example=args.example)
-    _print_created(Path(args.directory))
+    result = initialize_project(Path(args.directory), example=args.example)
+    if not result.deferred_slides:
+        _print_created(result.directory)
+        return
+    print(json.dumps({
+        "status": "ok",
+        "directory": str(result.directory),
+        "created": _created(result.directory),
+        "availableSlides": list(result.available_slides),
+        "deferredSlides": [slide.as_dict() for slide in result.deferred_slides],
+        "diagnostics": [slide.as_diagnostic() for slide in result.deferred_slides],
+    }, ensure_ascii=False))
 
 
 def _mcp_sdk_installed() -> bool:

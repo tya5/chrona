@@ -18,6 +18,17 @@ class FontResourceError(ValueError):
         self.detail = detail
 
 
+class FontProviderUnavailable(FontResourceError):
+    """A named package font provider has no registered entry point."""
+
+    def __init__(self, identity: str):
+        super().__init__(
+            "E_FONT_METRICS_UNAVAILABLE",
+            f"package provider identity={_shown(identity)} must resolve exactly once; found 0 entry points (provider unavailable)",
+        )
+        self.identity = identity
+
+
 class FontAssetResolver(Protocol):
     def resolve_asset(self, locator: dict[str, Any], expected_identity: str | None) -> Path: ...
 
@@ -63,7 +74,9 @@ def _package_root(identity: str):
     if identity == "chrona.resources":
         return files("chrona.resources")
     matches = tuple(entry_points(group="chrona.font-resource-provider", name=identity))
-    if len(matches) != 1:
+    if not matches:
+        raise FontProviderUnavailable(identity)
+    if len(matches) > 1:
         raise FontResourceError("E_FONT_METRICS_UNAVAILABLE", f"package provider identity={_shown(identity)} must resolve exactly once; found {len(matches)} entry points")
     root = matches[0].load()()
     if not hasattr(root, "joinpath"):

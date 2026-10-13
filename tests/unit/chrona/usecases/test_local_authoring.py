@@ -38,7 +38,7 @@ def test_init_creates_only_an_editable_minimal_draft_and_is_non_overwriting(tmp_
 
     initialized = initialize_project(destination)
 
-    assert initialized == destination
+    assert initialized.directory == destination
     assert {path.name for path in destination.iterdir()} == {"README.md", "actual.yaml", "project.yaml"}
     assert not (destination / ".chrona").exists()
     assert not (destination / "manifest.yaml").exists()
@@ -51,7 +51,7 @@ def test_explicit_halcyon_init_is_store_resolvable_without_root_revision_closure
 
     initialized = initialize_project(destination, example="halcyon-1")
 
-    assert initialized == destination
+    assert initialized.directory == destination
     assert (destination / "manifest.yaml").is_file()
     assert (destination / ".chrona" / "store.yaml").is_file()
     assert not tuple(destination.glob("revision-*"))

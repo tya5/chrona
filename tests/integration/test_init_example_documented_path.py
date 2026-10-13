@@ -87,8 +87,8 @@ def test_the_same_example_store_marked_required_refuses_the_unpinned_reference(t
 
 
 def test_example_init_writes_optional_explicitly_and_minimal_init_writes_no_config(tmp_path):
-    example = initialize_project(tmp_path / "example", example="halcyon-1")
-    minimal = initialize_project(tmp_path / "minimal")
+    example = initialize_project(tmp_path / "example", example="halcyon-1").directory
+    minimal = initialize_project(tmp_path / "minimal").directory
 
     config = example / ".chrona" / "store.yaml"
     assert yaml.safe_load(config.read_text(encoding="utf-8"))["stores"][0]["integrity"] == "optional"

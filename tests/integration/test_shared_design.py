@@ -118,7 +118,7 @@ def test_a_shared_store_the_manifest_does_not_declare_is_refused(example: Path, 
 
 def _workspace(tmp_path: Path) -> tuple[Path, dict]:
     """A HALCYON project with its Store config, a `shared-design` Store holding the Theme, Scheme and Layout, and the Context."""
-    project = initialize_project(tmp_path / "project", example="halcyon-1")
+    project = initialize_project(tmp_path / "project", example="halcyon-1").directory
     context = _load(project / CONTEXT)
     store_root = project / ".chrona" / "store"
     designs = tmp_path / "design-store"
