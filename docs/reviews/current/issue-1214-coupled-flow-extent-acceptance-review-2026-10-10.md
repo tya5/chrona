@@ -2,12 +2,13 @@
 
 # Native content allocation acceptance review (#1214)
 
-Observed: 2026-10-13. Issue remains open. Current developer vehicle:
-[PR1463](https://github.com/tya5/chrona/pull/1463), independent numeric source
-`49e69a66987b5938a498a89d3d65899d84a11b36`, based on READY45362a34.
-[Current design plan](https://github.com/tya5/chrona/issues/1214#issuecomment-6141438610)
-and [numeric design/implementation boundary](https://github.com/tya5/chrona/issues/1214#issuecomment-6141643737)
-replace the old one-deficit assumption; Spec33 preserves the original least-fit requirement.
+Observed: 2026-10-13. Issue remains open until public-output and exact-main release gates pass.
+Base: READY `b8cdf5ad2cd35a86c847fd16f9d04021b89fe6b0`.
+[Current work record](https://github.com/tya5/chrona/issues/1214#issuecomment-6141438610).
+[Owner scope decision](https://github.com/tya5/chrona/issues/1214#issuecomment-6144755026)
+accepts the two original synthetic fixtures selecting200 under local-frame rule B
+and unchanged public outputs. General complete-search proof is withdrawn.
+Spec33 is the normative authority; the broader rational-migration WIP is excluded.
 
 ## Literal issue acceptance
 
@@ -18,50 +19,44 @@ replace the old one-deficit assumption; Spec33 preserves the original least-fit 
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | Both synthetic coupled-flow fixtures select200 with native final-manifest verification; global bisection must not skip an earlier fitting branch. | not met | [native fixtures](../../../tests/unit/chrona/presentation/layout/test_coupled_flow_extent.py); Published finite fixtures select200, but content-sized search still returns100; late-wrap and unequal-fr counterexamples remain unresolved. Numeric prerequisites do not complete this row. | — |
-| 2 | Fixed/capped/anchored hosts keep requested finite fallback with shortage evidence from the returned manifest; sampled inline capacity is not proof that a growable host is capped. | not met | [counterexample](https://github.com/tya5/chrona/issues/1214#issuecomment-6143294562); Existing capped/anchored controls pass. Unequal-fr native320 fits despite the resolver returning100; a failed probe still causes an unjustified fallback. Precision28 also produces later fitting branches in separately allocated fixed hosts. | — |
-| 3 | Candidate-dependent caption/header/axis prefix, natural row/label demand and below-plot reserve use the candidate's completed native inputs, never prior-candidate or fill-expanded geometry. | met | [translation controls](../../../tests/unit/chrona/presentation/layout/test_slot_heading_placement.py); Source49e69a66 completes table/axis/caption local geometry, retains typed prefix_block and reuses each candidate's native measurements. Large-origin tests cover rotated headers, mixed axis geometry and top/header-row/axis-tier captions; candidate-demand integration tests pass. | — |
-| 4 | Preserve existing Decimal boundary comparisons, Layout/Scene ownership and finite diagnosed overflow; do not add arbitrary retry caps, duplicate allocators, canvas-only fitting or project-specific branches. | met | [numeric source](https://github.com/tya5/chrona/commit/49e69a66987b5938a498a89d3d65899d84a11b36); Layout owns the correction. Scene/adapters, schemas and authored examples are unchanged; no retry cap, duplicate allocator or additional measurement pass. Existing Decimal context and comparisons remain. Complete search must not claim an ideal affine tail under precision28. | — |
-| 5 | Review synthetic fixed/intrinsic/flex/minmax/spanning/nested/flow/aspect and empty/auto/finite cases; batch actual public artifact effects without editing examples to absorb changes; full exact-main release evidence remains required. | not met | [PR1463](https://github.com/tya5/chrona/pull/1463); Numeric focused batches and exact-head CI38383876348 pass; its public artifacts are inspected below. Full search matrix and containing-main three-OS release remain incomplete. | — |
+| 1 | Both synthetic coupled-flow fixtures select200 with native final-manifest verification; global bisection must not skip an earlier fitting branch. | met | [Original fixtures](../../../tests/unit/chrona/presentation/layout/test_coupled_flow_extent.py) now exercise both finite and auto modes at minimum100; each returns200, no shortage, and native final capacity100. Coupled search scans ascending only to a verified fitting bound. | General proof withdrawn by owner decision6144755026. |
+| 2 | Fixed/capped/anchored hosts keep requested finite fallback with shortage evidence from the returned manifest; sampled inline capacity is not proof that a growable host is capped. | narrowed | [Fixed-host controls](../../../tests/unit/chrona/presentation/layout/test_coupled_flow_extent.py) pass in finite and auto modes with requested100 and timeline80/20 shortage. Failed180 probes in the two original growable fixtures now produce verified240 bounds and first-fit200. Unverified witness failure remains a heuristic fallback, not a global infeasibility claim. | [Owner decision6144755026](https://github.com/tya5/chrona/issues/1214#issuecomment-6144755026) withdrew general-proof requirement; an actual-slide missed branch gets a new issue. |
+| 3 | Candidate-dependent caption/header/axis prefix, natural row/label demand and below-plot reserve use the candidate's completed native inputs, never prior-candidate or fill-expanded geometry. | met | [PR1463](https://github.com/tya5/chrona/pull/1463) supplies local table/axis/caption geometry. Each search candidate invokes the existing native solve and its own sizing/demand callbacks; no prior candidate's geometry is reused. | — |
+| 4 | Preserve existing Decimal boundary comparisons, Layout/Scene ownership and finite diagnosed overflow; do not add arbitrary retry caps, duplicate allocators, canvas-only fitting or project-specific branches. | met | [Correction](../../../src/chrona/presentation/layout/engine.py) confined to Layout engine; existing Decimal comparison operators and allocator unchanged. Scene, adapters, schemas and authored examples untouched. The scan ends at a verified native fit, not a retry cap. | — |
+| 5 | Review synthetic fixed/intrinsic/flex/minmax/spanning/nested/flow/aspect and empty/auto/finite cases; batch actual public artifact effects without editing examples to absorb changes; full exact-main release evidence remains required. | narrowed | [Focused tests](../../../tests/unit/chrona/presentation/layout/test_coupled_flow_extent.py) and supporting engine/content/source/natural geometry/heading/canvas tests113PASS. [Snapshot run38394497838](https://github.com/tya5/chrona/actions/runs/38394497838) preserves all101 declared outputs byte-for-byte; exact containing-main three-OS release remains the mandatory closing gate. | [Owner scope decision6144755026](https://github.com/tya5/chrona/issues/1214#issuecomment-6144755026) withdraws general complete-search matrix proof; exact-main release is still required and cited in the closing comment. |
 
 ## Programme-level criteria (optional)
 
-None; the numeric prerequisite does not replace literal acceptance.
+None; scope disposition comes from the linked explicit owner decision.
 
 ## Evidence and remaining gate
 
-Focused numeric/heading/axis/Scene batches passed136,121 and73 tests before
-the caption-local refinement; the refined caption/native/geometry batch
-passed147 and supporting integration/source tests passed51. These are command
-results, not a claim of distinct test counts or full release acceptance.
-The same measured shape supplies natural demand and translated placement.
-A read-only review found no missing currently emitted axis geometry or metadata
-translation; deferred grid geometry is completed against the final global plot.
+The minimal correction retains the uncoupled auto and finite branches. A coupled
+auto request verifies the native source-deficit candidate even if its demand probe
+fails, then scans in ascending integral order to a verified bound. If no tested
+bound fits, the existing requested allocation/shortage evidence is retained.
+This is explicitly a limited heuristic, not global feasibility proof.
 
-Current numeric-head52636edf snapshot11805185046 from
-[38383876348](https://github.com/tya5/chrona/actions/runs/38383876348)
-preserves46/46 SVG bytes.42 Scene files change558 numeric fields
-only, max delta2.842170943040401e-14; no primitive additions/removals, route,
-identity, string or diagnostic-verdict changes. Two reports change: inventory
-owner locations and9 contrast coordinate cells; verdicts/ratios/hosts are identical.
-Direct tar comparison confirms101 paths,44 changed and no added/retired paths.
-The9 contrast cells cross a display rounding boundary (207.513 to207.512);
-no ratio, threshold, color, host or classification changes. Exact-head CI passes
-all three pytest shards, conformance, MCP, newest reproduction and derived-ready.
+Local-frame rule B is specified in Spec33: cross-host relative geometry is computed
+before one origin translation; Decimal boundary comparisons are unchanged.
+Focused command: own-worktree Python3.13 venv, pytest on coupled-flow extent,
+intent engine, content-flow block allocation, content-resolution diagnostics,
+source sizing, surface natural geometry, slot-heading placement, canvas viewport
+warnings and surface content-phase integration:113PASS in6.83s. A read-only Luna
+review found no actionable layer/regression defect; fixed and aspect-coupled
+fixed-block controls retain requested allocation and original shortage evidence.
+The merged numeric prerequisite PR1463 passed full release
+[38386951262](https://github.com/tya5/chrona/actions/runs/38386951262).
+That earlier release is not acceptance for this new correction.
 
-Prior run38382286950 failed all three pytest shards:4/3/1 failures, all8 from stale private
-fixture Scene bytes; derived-ready failed as their dependent gate.
-Conformance, MCP and newest public reproduction passed. There is no independent
-failure hidden here. The three private manifest fixtures were regenerated as
-one batch:10 Scene files change104 numeric fields (max1.4210854715202004e-14);
-all10 SVGs and all structural/non-numeric fields remain identical.
-All8 previously failing tests pass locally; upper-tier ordering has121 passing
-focused tests. These failures are resolved in successful run38383876348;
-exact-main three-OS acceptance remains pending.
+Public batch: scoped product head68125861, PR1465, snapshot artifact11811294171
+from run38394497838, against READYb8cdf5ad. Direct tar-member comparison finds
+101/101 identical files, including46 SVG and46 Scene JSON files; zero changed,
+added or removed paths. CI preview independently reports Changed paths:0.
+Local conformance passed every check except five literal-review formatting
+violations; those were corrected and the targeted checker passes. CI must
+confirm complete conformance on the final head.
 
-[Numeric contract question6143294562](https://github.com/tya5/chrona/issues/1214#issuecomment-6143294562)
-records a verified schema-valid native rounding counterexample. Its decision
-must precede a complete terminal search proof; do not substitute arbitrary caps,
-sampled failure, an ideal real-arithmetic proof or an unresolved-search waiver.
-No examples or reviewer board edits. The numeric prerequisite is independently
-publishable; complete-search acceptance and issue closure are not claimed.
+Remaining gate: final-head PR CI, then full three-OS release on the exact main
+commit containing this review. The closing comment must cite and verify that
+release; this document does not claim it has run. No examples or board edits.

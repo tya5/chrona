@@ -6,6 +6,8 @@ Fixtures are synthetic (the profile and measurements are in this file); nothing 
 """
 from decimal import Decimal
 
+import pytest
+
 from chrona.presentation.layout.engine import (_block_extent_feeds_inline, _first_fitting_extent,
                                                resolve_content_block_extent, solve_layout)
 from chrona.presentation.layout.model import Measurement
@@ -60,8 +62,8 @@ TWO = {"source-0": m(100, 20), "source-1": m(100, 100)}
 FOUR = {"source-0": m(100, 20), "source-1": m(100, 20), "source-2": m(100, 100), "source-3": m(100, 20)}
 
 
-def test_the_first_extent_that_stretches_the_required_slot_is_selected_with_native_verification():
-    content_sized = False
+@pytest.mark.parametrize("content_sized", [False, True])
+def test_the_first_extent_that_stretches_the_required_slot_is_selected_with_native_verification(content_sized):
     profile = _flow_profile(("timeline", "notes"))
     probe = [solve_layout(profile, viewport_inline=400, viewport_block=extent, measurements=TWO,
                           content_sized=content_sized) for extent in (100, 199, 200)]
@@ -77,33 +79,45 @@ def test_the_first_extent_that_stretches_the_required_slot_is_selected_with_nati
     assert _blocks(final)["timeline"] >= Decimal(80)
 
 
-def test_a_non_monotone_fit_predicate_does_not_let_a_global_bisection_skip_an_earlier_branch():
+@pytest.mark.parametrize("content_sized", [False, True])
+def test_a_non_monotone_fit_predicate_does_not_let_a_global_bisection_skip_an_earlier_branch(content_sized):
     profile = _flow_profile(("table", "legend", "notes", "timeline"))
     allocated = {extent: _blocks(solve_layout(profile, viewport_inline=400, viewport_block=extent,
-                                              measurements=FOUR))["timeline"] for extent in (200, 300, 400)}
+                                              measurements=FOUR, content_sized=content_sized))["timeline"]
+                 for extent in (200, 300, 400)}
     assert allocated == {200: Decimal(100), 300: Decimal(20), 400: Decimal(100)}
 
     resolution = resolve_content_block_extent(
         profile, viewport_inline=400, minimum_block=100, measurements=FOUR,
-        required_blocks={"timeline": Decimal(80)})
+        required_blocks={"timeline": Decimal(80)}, content_sized=content_sized)
 
     assert resolution.extent == 200
+    assert not resolution.short_sources
+    final = solve_layout(profile, viewport_inline=400, viewport_block=resolution.extent,
+                         measurements=FOUR, content_sized=content_sized)
+    assert _blocks(final)["timeline"] >= Decimal(80)
 
 
-def test_the_requested_minimum_is_kept_when_it_already_fits():
+@pytest.mark.parametrize("content_sized", [False, True])
+def test_the_requested_minimum_is_kept_when_it_already_fits(content_sized):
     profile = _flow_profile(("timeline", "notes"))
 
     resolution = resolve_content_block_extent(
-        profile, viewport_inline=400, minimum_block=250, measurements=TWO, required_blocks={"timeline": Decimal(80)})
+        profile, viewport_inline=400, minimum_block=250, measurements=TWO,
+        required_blocks={"timeline": Decimal(80)}, content_sized=content_sized)
 
     assert resolution.extent == 250
 
 
-def test_a_requirement_no_extent_can_meet_keeps_the_requested_finite_fallback_with_its_shortage():
-    profile = _flow_profile(("timeline", "notes"), flow_inline={"fixed": 100}, flow_block={"fixed": 50})
+@pytest.mark.parametrize("content_sized", [False, True])
+@pytest.mark.parametrize("flow_inline", [{"fixed": 100}, {"aspectRatio": 1}])
+def test_a_requirement_no_extent_can_meet_keeps_the_requested_finite_fallback_with_its_shortage(
+        content_sized, flow_inline):
+    profile = _flow_profile(("timeline", "notes"), flow_inline=flow_inline, flow_block={"fixed": 50})
 
     resolution = resolve_content_block_extent(
-        profile, viewport_inline=400, minimum_block=100, measurements=TWO, required_blocks={"timeline": Decimal(80)})
+        profile, viewport_inline=400, minimum_block=100, measurements=TWO,
+        required_blocks={"timeline": Decimal(80)}, content_sized=content_sized)
 
     assert resolution.extent == 100
     assert [(item.source_id, item.required_block) for item in resolution.short_sources] == [("timeline", Decimal(80))]
