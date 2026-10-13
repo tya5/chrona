@@ -1,6 +1,6 @@
 # Thin-connector design reuse completion (#1341, #1344)
 
-Published code baseline: READYaea06f4b; #1300 is closed after its containing
+Published code baseline: READY2347aed5; #1300 is closed after its containing
 three-OS release38339181830 succeeded. Adopt the current READY main before product publication. No
 previous-session local work is assumed.
 
@@ -78,8 +78,9 @@ Publish this design/specification boundary before those product changes. The
 slice's PR includes focused results and literal issue rows still open for later
 slices/adoption; full three-OS release remains required before issue closure.
 
-Slice2 is published in PR1455, source48010710; sync38343026629 and the
-containing-main release are pending. Exact-head38342278157 passed every check;
+Slice2 is published in PR1455, source48010710, synced READY2347aed5;
+sync38343026629 succeeded and containing-main release38343299409 is live.
+Exact-head38342278157 passed every check;
 artifact11787143093 confirms92/92 public Scene/SVG identical,0 retirements,
 diagnostic/coverage reports only. Shared-schema probes were corrected without
 waiving any gate (focused407 PASS;35 snapshot conformance checks PASS).
@@ -102,7 +103,9 @@ definitions. tests/integration/test_view_defaults.py covers marker/period/icon
 actual SVG/Scene equality, no synthesis, order, identity, encoded/direct and
 wrong-type controls. Shared-schema definition/subfragment probes are mandatory.
 Pre-codee9f0e58a and code636b182f/139e7ead are published; focused357 PASS,
-schema inventory/annotations/references and equivalence PASS. Reconcile the
-new READY main, retire stale style admission evidence, and recheck before PR.
+post-merge143 PASS, schema inventory/annotations/references and equivalence PASS
+against READY2347aed5. Normal merges retain both branches' published history;
+only overlapping plan/probe additions needed reconciliation. The stale style
+admission evidence is retired. Public snapshot and release verification remain.
 Batch public materializers/Scene/SVG via CI; no examples edits. Profile bindings,
 purity/adoption and every unresolved literal row remain open.
