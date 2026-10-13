@@ -4,6 +4,12 @@ Baseline: published `12d6f516` (including #1427's exact-main release review).
 The [issue status](https://github.com/tya5/chrona/issues/1446#issuecomment-6134309489)
 selects an offline paragraph-local documentation guard and a closed-issue
 ledger. GitHub state was checked once: #332, #1346, and #1427 are closed.
+Published in [PR1449](https://github.com/tya5/chrona/pull/1449), public
+`165587e634dbcf22f3c67788e1daba4694c9e418`.
+[Exact-main release38323872416](https://github.com/tya5/chrona/actions/runs/38323872416)
+completed successfully on all three OSes, including conformance, full pytest,
+wheel smoke, newest-Python reproduction and MCP floor. Preview11778674738
+has zero changed public paths. Issue1446 closed after that release succeeded.
 
 | Literal acceptance | Result | Evidence |
 | --- | --- | --- |
