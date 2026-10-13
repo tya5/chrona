@@ -1,7 +1,7 @@
 # Thin-connector design reuse completion (#1341, #1344)
 
-Published code baseline: READYaea06f4b; #1300's containing three-OS release is
-still running. Adopt the current READY main before product publication. No
+Published code baseline: READYaea06f4b; #1300 is closed after its containing
+three-OS release38339181830 succeeded. Adopt the current READY main before product publication. No
 previous-session local work is assumed.
 
 Authority: [approved classification6100250980](https://github.com/tya5/chrona/issues/1341#issuecomment-6100250980),
@@ -78,35 +78,31 @@ Publish this design/specification boundary before those product changes. The
 slice's PR includes focused results and literal issue rows still open for later
 slices/adoption; full three-OS release remains required before issue closure.
 
-Slice2 implementation: presentation closure and nine new frozen shared grammar
-definitions are complete locally. Focused contracts/style/render/schema/diagnostic
-batch227 PASS; schema inventory, annotations, references and equivalence against
-READYaea06f4b PASS. Existing accepted schema verdicts/diagnostics are preserved;
-the optional column `style` admission has one explicit L1 delta. Real synthetic
-SVG and completed Scene equality pass; provenance is not erased. Public snapshot
-snapshot11785869165 verifies92/92 public Scene/SVG byte-identical,0 retirements;
-only diagnostic and coverage inventories change. PR1455/head4af12c7d CI is live;
-no whole-issue acceptance claim.
+Slice2 is published in PR1455, source48010710; sync38343026629 and the
+containing-main release are pending. Exact-head38342278157 passed every check;
+artifact11787143093 confirms92/92 public Scene/SVG identical,0 retirements,
+diagnostic/coverage reports only. Shared-schema probes were corrected without
+waiving any gate (focused407 PASS;35 snapshot conformance checks PASS).
 
-## Remaining array-entry closure: design and implementation plan
+## Array-entry closure: selected design and implementation
 
-Spec06 §9.2 selects three uniform, project-independent defaults, not id/index
+Spec06 §9.2 selects uniform marker/period-label/visual defaults, not id/index
 matching or copying mixed arrays. Missing design fields are fillable; wrong-type
-explicit fields stay errors. No marker/label/visual occurrence is synthesized.
-The live-schema audit found period `overflow` and visual `side/decorative` are
-presentation under the approved general rule; leaving them in thin Views would
-not complete the selected end state. No new placement algorithm/resource kind.
+explicit fields stay errors. No occurrence is synthesized. Overflow and
+side/decorative are presentation under the approved general classification.
 
-Architecture review: the same ingress owner completes arrays before View parsing;
-project bindings/ordering remain View-owned, Theme resolves paint/assets, Layout
-completes geometry. Original identities and explicit overrides remain unchanged.
-Shared parts add definitions only; existing schema verdicts/diagnostics must match.
+Architecture review: ingress owns closure; project selections/order remain in
+View, paint/assets in Theme and completed geometry in Layout. Scene/adapters
+only project. Original identities, explicit overrides and frozen definitions
+remain intact; no new resource kind or placement algorithm.
 
-Implementation: `contracts/view_defaults.py` fills existing entries only; the
-live View/Layout/common schemas share each existing presentation property;
-inventory freezes new definitions. Extend `test_view_defaults.py` with thin/full
-marker/period/visual renders, no-synthesis, order/identity, encoded/direct and
-wrong-type controls; run named-period/as-of/visual focused tests and schema
-equivalence. Batch all public materializers/Scene/SVG in the PR snapshot and
-three-OS release. No examples edits; whole-issue rows remain open. Publish this
-boundary before code; land after1455 against the then-current READY main.
+Implementation: contracts/view_defaults.py fills existing occurrences; live
+View/Layout/common schemas share each property; inventory freezes four new
+definitions. tests/integration/test_view_defaults.py covers marker/period/icon
+actual SVG/Scene equality, no synthesis, order, identity, encoded/direct and
+wrong-type controls. Shared-schema definition/subfragment probes are mandatory.
+Pre-codee9f0e58a and code636b182f/139e7ead are published; focused357 PASS,
+schema inventory/annotations/references and equivalence PASS. Reconcile the
+new READY main, retire stale style admission evidence, and recheck before PR.
+Batch public materializers/Scene/SVG via CI; no examples edits. Profile bindings,
+purity/adoption and every unresolved literal row remain open.
