@@ -54,6 +54,41 @@ Renderer adapters serialize primitives only. They do not infer policy, reflow te
 or repair missing geometry. This is the single handoff defined by ADR-0031 and
 specialized by Specification 50.
 
+### 2.3 PDF font-outline translation (#1338)
+
+PDF MUST use the exact resolved font bytes and collection face index, not
+re-resolve a font stack or substitute a TrueType family. The PDF adapter may
+translate CFF/CFF2 outlines into an in-memory TrueType font for ReportLab;
+this is target serialization, not Layout measurement or Scene geometry.
+Mappings and advances for retained characters/glyphs, units per em, naming and required
+horizontal/OS/2 metrics remain those of the selected face. Variable CFF2 uses
+its default axis instance (not weight-axis interpolation), matching the existing
+installed-font measurement path.
+No source font or snapshot is rewritten.
+
+For faces permitting subsetting, select characters from serialized SVG text
+by the resolved family/weight and retain their glyphs plus required layout/glyph
+dependencies; unused mappings may be removed. Missing requested glyphs fail with
+`E_RENDER_FONT_CLOSURE`, never a `.notdef` substitution. Convert cubic curves with
+fontTools cu2qu at a fixed tolerance of 0.001 em before integer-coordinate
+rounding. This represents the resolved face's outlines by quadratic curves,
+not another font's glyphs. Translation MUST be deterministic and disable
+timestamp recalculation. Conversion errors produce `E_RENDER_FONT_CLOSURE`.
+
+Interpret embedding flags under the declared OS/2 version's
+[OpenType rules](https://learn.microsoft.com/en-us/typography/opentype/spec/os2#fstype),
+including legacy versions. Reject invalid permission metadata and effective
+restricted embedding, bitmap-only embedding and no-subsetting declarations. The current
+ReportLab path cannot guarantee full-font embedding for no-subsetting faces;
+it MUST NOT bypass that restriction through global configuration or private
+library state. These failures name the selected family/weight and file, with
+no font-stack fallback. Embedding flags do not replace the user's license rights.
+
+Only CFF-translating renders add the conversion grammar `cff-cu2qu-v1` and
+actual fontTools version to adapter identity; original font content identities
+remain authoritative. Rendering without CFF faces retains its existing
+registration path, adapter identity and byte output.
+
 ### 2.1 M27 public Review SVG binding
 
 For a Render Context whose target is SVG, the public `render-review` application route
