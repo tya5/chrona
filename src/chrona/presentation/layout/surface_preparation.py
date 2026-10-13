@@ -63,16 +63,16 @@ class SurfacePreRowGeometry:
     axis_content: SlotPlacement
     timeline_content: SlotPlacement
     row_viewport: Rect
+    prefix_block: Decimal
 
     def required_timeline_block(self, *, foot_reserve: Decimal = Decimal(0)) -> Decimal:
         """Natural host demand from this candidate's native prefix, before row fill."""
-        return _required_timeline_block(self.inline, self.row_viewport, foot_reserve)
+        return _required_timeline_block(self.inline, self.prefix_block, foot_reserve)
 
 
-def _required_timeline_block(inline: SurfaceInlineGeometry, row_viewport: Rect,
+def _required_timeline_block(inline: SurfaceInlineGeometry, prefix_block: Decimal,
                              foot_reserve: Decimal) -> Decimal:
-    prefix = max(Decimal(0), row_viewport.block - inline.timeline.bounds.block)
-    return prefix + inline.natural_block_requirement + foot_reserve
+    return prefix_block + inline.natural_block_requirement + foot_reserve
 
 
 @dataclass(frozen=True)
@@ -98,9 +98,10 @@ class SurfaceNaturalGeometry:
     axis_content: SlotPlacement
     timeline_content: SlotPlacement
     row_viewport: Rect
+    prefix_block: Decimal
 
     def required_timeline_block(self, *, foot_reserve: Decimal = Decimal(0)) -> Decimal:
-        return _required_timeline_block(self.inline, self.row_viewport, foot_reserve)
+        return _required_timeline_block(self.inline, self.prefix_block, foot_reserve)
 
 
 def _request_with_candidate_lane_preflight(request: SurfaceLayoutRequest) -> SurfaceLayoutRequest:
@@ -158,18 +159,21 @@ def _complete_surface_natural_geometry(prefix: _SurfaceNaturalPrefix) -> Surface
     table_seed = prepare_table_header_seed(
         request=request, table=table_content, review_rows=table_row_indent_intents(inline.review_rows),
         metric_values=inline.metric_values, group_tag_inline_size=inline.group_tag_inline_size)
-    row_start = timeline_content.bounds.block
+    prefix_block = headings.reserved("timeline")
     if any(headings.reserved(source) for source in ("table", "timeline", "timeline-axis")):
-        native_ends = [row_start]
+        native_offsets = [prefix_block]
         if table_seed.header_block_extent is not None:
-            native_ends.append(table_content.bounds.block + table_seed.header_block_extent)
-        if axis_summary.max_rect_block_end is not None:
-            native_ends.append(axis_summary.max_rect_block_end)
-        row_start = max(native_ends)
+            native_offsets.append(inline.table.bounds.block - inline.timeline.bounds.block
+                                  + headings.reserved("table") + table_seed.header_block_extent)
+        if axis_summary.max_rect_block_offset is not None:
+            native_offsets.append(inline.by_source["timeline-axis"].bounds.block - inline.timeline.bounds.block
+                                  + headings.reserved("timeline-axis") + axis_summary.max_rect_block_offset)
+        prefix_block = max(native_offsets)
+    row_start = inline.timeline.bounds.block + prefix_block
     row_viewport = Rect(timeline_content.bounds.inline, row_start, timeline_content.bounds.inline_size,
-                        max(Decimal(0), timeline_content.bounds.block + timeline_content.bounds.block_size - row_start))
+                        max(Decimal(0), inline.timeline.bounds.block_size - prefix_block))
     return SurfaceNaturalGeometry(inline, prefix.axis_frame, prefix.axis_measurement, axis_summary,
-                                  headings, table_seed, prefix.axis_slot, timeline_content, row_viewport)
+                                  headings, table_seed, prefix.axis_slot, timeline_content, row_viewport, prefix_block)
 
 
 def prepare_surface_natural_geometry(request: SurfaceLayoutRequest) -> SurfaceNaturalGeometry:
@@ -190,4 +194,4 @@ def prepare_surface_content(request: SurfaceLayoutRequest, *,
         axis = prepare_surface_axis(natural.inline.request, natural.axis_frame,
                                     measured=natural.axis_measurement)
     return SurfacePreRowGeometry(natural.inline, axis, natural.headings, natural.table,
-                                 natural.axis_content, natural.timeline_content, natural.row_viewport)
+                                 natural.axis_content, natural.timeline_content, natural.row_viewport, natural.prefix_block)

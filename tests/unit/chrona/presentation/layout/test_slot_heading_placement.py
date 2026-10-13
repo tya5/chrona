@@ -237,7 +237,8 @@ def test_heading_targets_include_optional_profile_slots_without_a_manifest_decis
 
 
 def _tier(index, top, baseline):
-    return AxisLabelTierGeometry(index, Rect(Decimal(100), Decimal(top), Decimal(400), Decimal(20)), baseline)
+    return AxisLabelTierGeometry(index, Rect(Decimal(100), Decimal(top), Decimal(400), Decimal(20)),
+                                 Decimal(str(baseline)), Decimal(str(baseline)) - Decimal(top))
 
 
 def test_axis_tier_caption_uses_completed_upper_baseline_and_reserves_the_whole_band():

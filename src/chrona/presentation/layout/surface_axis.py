@@ -51,7 +51,8 @@ class AxisLabelTierGeometry:
 
     tier_index: int
     bounds: Rect
-    baseline_block: float
+    baseline_block: Decimal
+    baseline_block_offset: Decimal
 
 
 def calendar_overlay_intervals(*, closed_days: tuple[date, ...], start: date, end: date,
@@ -86,6 +87,26 @@ class SurfaceAxisFrame:
     timeline: SlotPlacement
     axis: SlotPlacement
     metric_values: Mapping[str, Any]
+
+
+def _axis_frame_at_local_block_origin(frame: SurfaceAxisFrame) -> SurfaceAxisFrame:
+    """Rebase block geometry locally before any float-backed text/path completion."""
+    origin = frame.axis.bounds.block
+    if not origin:
+        return frame
+    def rebase(slot: SlotPlacement) -> SlotPlacement:
+        return replace(slot, bounds=replace(slot.bounds, block=slot.bounds.block - origin))
+    return replace(frame, timeline=rebase(frame.timeline), axis=rebase(frame.axis))
+
+
+def _translate_axis_label_tier(item: AxisLabelTierGeometry, origin: Decimal) -> AxisLabelTierGeometry:
+    return replace(item,
+        bounds=replace(item.bounds, block=item.bounds.block + origin),
+        baseline_block=item.baseline_block + origin)
+
+
+def _translate_axis_rect(rect: Rect, origin: Decimal) -> Rect:
+    return replace(rect, block=rect.block + origin)
 
 
 @dataclass(frozen=True)
@@ -180,7 +201,7 @@ class AxisVerticalSummary:
     """Vertical extent facts for candidate axis labels and native rectangles."""
 
     label_tiers: tuple[AxisLabelTierGeometry, ...]
-    max_rect_block_end: Decimal | None
+    max_rect_block_offset: Decimal | None
 
 
 @dataclass(frozen=True)
@@ -506,6 +527,15 @@ def measure_surface_axis(request: SurfaceLayoutRequest, scale: ScalePlacement) -
 
 def summarize_surface_axis_vertical(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame,
                                    measured: SurfaceAxisMeasurement) -> AxisVerticalSummary:
+    origin = frame.axis.bounds.block
+    local = _axis_frame_at_local_block_origin(frame)
+    summary = _summarize_surface_axis_vertical_local(request, local, measured)
+    tiers = tuple(_translate_axis_label_tier(item, origin) for item in summary.label_tiers)
+    return AxisVerticalSummary(tiers, summary.max_rect_block_offset)
+
+
+def _summarize_surface_axis_vertical_local(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame,
+                                           measured: SurfaceAxisMeasurement) -> AxisVerticalSummary:
     """Summarize the same admitted native geometry without emitting primitives."""
     tokens, axis, scale = request.theme_tokens, frame.axis, frame.scale
     tiers = request.surface_content.axis_tiers
@@ -698,7 +728,7 @@ def _axis_label_tier_geometry(*, axis: SlotPlacement, tier_index: int, tier: Axi
                               measurement: AxisTierMeasurement, lane: AxisLabelLaneGeometry,
                               declared_lanes: Mapping[int, tuple[float, float]]) -> AxisLabelTierGeometry:
     baseline, _ = _label_baselines(
-        axis_block=float(axis.bounds.block), label_lane_offset=lane.offset, lane_size=lane.size,
+        axis_block=0.0, label_lane_offset=lane.offset, lane_size=lane.size,
         tier_index=tier_index, declared_lanes=declared_lanes, axis_size=measurement.axis_size,
         orientation=tier.label.orientation, width=0.0, plan=measurement.secondary,
         block=lane.block, primary=measurement.treatment)
@@ -706,7 +736,7 @@ def _axis_label_tier_geometry(*, axis: SlotPlacement, tier_index: int, tier: Axi
         tier_index,
         Rect(axis.bounds.inline, axis.bounds.block + Decimal(str(lane.offset)),
              axis.bounds.inline_size, Decimal(str(lane.size))),
-        baseline)
+        axis.bounds.block + Decimal(str(baseline)), Decimal(str(baseline)))
 
 
 def _axis_band_semantic_id(tier_index: int, band_ordinal: int) -> str:
@@ -869,6 +899,43 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
 
 def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame, *,
                          measured: SurfaceAxisMeasurement | None = None) -> SurfaceAxisPreparation:
+    origin = frame.axis.bounds.block
+    local_frame = _axis_frame_at_local_block_origin(frame)
+    local = _prepare_surface_axis_local(request, local_frame, measured=measured)
+    return _translate_axis_preparation(local, origin)
+
+
+def _translate_axis_preparation(prepared: SurfaceAxisPreparation, origin: Decimal) -> SurfaceAxisPreparation:
+    if not origin:
+        return prepared
+    def shape(item: ShapePlacement) -> ShapePlacement:
+        return replace(item,
+            bounds=_translate_axis_rect(item.bounds, origin),
+            points=tuple((x, y + float(origin)) for x, y in item.points),
+            path_commands=tuple(replace(command, points=tuple((x, y + float(origin))
+                for x, y in command.points)) for command in item.path_commands),
+            collision_bounds=(_translate_axis_rect(item.collision_bounds, origin)
+                              if item.collision_bounds is not None else None))
+    def text(item: TextPlacement) -> TextPlacement:
+        baseline = item.baseline
+        if baseline is not None:
+            baseline = (baseline[0], baseline[1] + float(origin))
+        return replace(item, bounds=_translate_axis_rect(item.bounds, origin), baseline=baseline)
+    placements = prepared.placements
+    visible = tuple((text(item), replace(bounds, y=bounds.y + float(origin)))
+                    for item, bounds in placements.visible_label_overflows)
+    translated_placements = replace(placements,
+        shapes=tuple(shape(item) for item in placements.shapes),
+        text=tuple(text(item) for item in placements.text),
+        visible_label_overflows=visible,
+        label_tiers=tuple(_translate_axis_label_tier(item, origin) for item in placements.label_tiers))
+    ordered = tuple(shape(item) if isinstance(item, ShapePlacement) else item
+                    for item in prepared.ordered_shapes)
+    return SurfaceAxisPreparation(translated_placements, ordered)
+
+
+def _prepare_surface_axis_local(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame, *,
+                                 measured: SurfaceAxisMeasurement | None = None) -> SurfaceAxisPreparation:
     """Complete native axis text/bands once, before final shared rows are placed."""
     if request.theme_tokens is None or request.font_metrics is None:
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")

@@ -359,7 +359,7 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
                 candidate_top = Decimal(str(tier.baseline_block)) - size if tier is not None else None
                 if (beside and candidate_top is not None and top <= candidate_top
                         and candidate_top + line <= bottom):
-                    line_top, aligned_baseline = candidate_top, tier.baseline_block
+                    line_top, aligned_baseline = candidate_top, float(tier.baseline_block)
                     content_start = max(line_top + line + gap, axis.bounds.block + axis.bounds.block_size)
                 else:
                     diagnostics.append(f"I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER:{decision.node_id}")
