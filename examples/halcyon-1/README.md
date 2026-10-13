@@ -42,5 +42,12 @@ second surface and extension-typed objects, on one spacecraft programme.
   `comparison.baseline: scenario`, so the negative lag shows as the earlier scenario bar.
   It was folded in from the retired `orion-asic` example.
 - `themes/`, `schemes/` and `layouts/` supply the appearances and compositions.
+- The five approved target designs, `target-b`, `yuya`, `titlecard`, `marquee` and `sunday`, are not
+  copied here. They are shared designs in the packaged store (`src/chrona/resources/designs/<design>/`:
+  `theme.yaml`, `scheme.yaml`, `layout.yaml`, `detail.yaml` and, for `titlecard`, `summary.yaml`). Their
+  Contexts (`contexts/21-target-b.yaml` … `contexts/25-sunday.yaml`) reference them with
+  `store: {provider: package, identity: chrona.resources}`, together with the packaged icon catalogs
+  (`icons/chrona-*-v2026-10-09.yaml`). Only their thin Views (`views/21-target-b.yaml` …
+  `views/25-sunday.yaml`) stay here, because a View is the Project's connector.
 - `contexts/<slide>.yaml` are the immutable bindings; `generated/<slide>.svg` is the
   materializer evidence declared by `manifest.yaml`.

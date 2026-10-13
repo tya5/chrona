@@ -76,14 +76,16 @@ def test_two_projects_share_one_authored_design_through_materializer_and_render_
         projects[name] = project
 
     designs_revision = tmp_path / "designs" / "revision-example-v1"
+    # Target B's design is the packaged shared design `designs/target-b/` (design reuse step 2).
+    packaged = ROOT / "src" / "chrona" / "resources" / "designs" / "target-b"
     for folder, source in (
-        ("themes", "themes/target-b.yaml"),
-        ("schemes", "schemes/target-b.yaml"),
-        ("layouts", "layouts/target-b.yaml"),
+        ("themes", "theme.yaml"),
+        ("schemes", "scheme.yaml"),
+        ("layouts", "layout.yaml"),
     ):
         target = designs_revision / folder / "briefing.yaml"
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(sources["halcyon-1"][0] / source, target)
+        shutil.copy2(packaged / source, target)
 
     for project in projects.values():
         manifest_path = project / "manifest.yaml"

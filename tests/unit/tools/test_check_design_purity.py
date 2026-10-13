@@ -326,3 +326,24 @@ def test_cli_emits_utf8_even_with_a_non_utf8_redirected_stdout(tmp_path, monkeyp
     stream.flush()
     report = json.loads(buffer.getvalue().decode("utf-8"))
     assert any(item["match"] == "設計" for item in report["findings"])
+
+
+def test_batch_audit_covers_every_packaged_shared_design_and_finds_nothing_in_them(monkeypatch):
+    """The packaged shared designs (#1342) are audited through the Contexts that reference them, and stay Project-free."""
+    root = Path(__file__).resolve().parents[3]
+    scanned: set[str] = set()
+    scan = purity._scan_design
+
+    def recording(name, value, facts):
+        scanned.add(name)
+        return scan(name, value, facts)
+
+    monkeypatch.setattr(purity, "_scan_design", recording)
+    errors: list[str] = []
+    findings = purity._batch(root / "examples", errors=errors)
+    packaged = {f"package:chrona.resources/{path.relative_to(root / 'src/chrona/resources').as_posix()}"
+                for path in (root / "src/chrona/resources/designs").glob("*/*.yaml")
+                if safe_load(path.read_bytes()).get("kind") != "color-scheme"}
+    assert packaged and not errors
+    assert packaged <= scanned
+    assert not [item for item in findings if item["resource"] in packaged]

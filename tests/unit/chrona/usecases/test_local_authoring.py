@@ -6,7 +6,7 @@ from chrona.usecases.local_authoring import discover_store_configuration, initia
 from chrona.operational.store_config import load_store_config
 from chrona.presentation.model.closure import resolve_render_context
 from chrona.resources import safe_load
-from chrona.storage.revision_store import LocalSnapshotReader
+from chrona.operational.store_reads import PackageAwareReader
 
 
 def test_explicit_store_config_wins_over_discovered_project_config(tmp_path: Path):
@@ -58,7 +58,8 @@ def test_explicit_halcyon_init_is_store_resolvable_without_root_revision_closure
     config = load_store_config(str(destination / ".chrona" / "store.yaml"))
     assert config.integrity == {("local", "halcyon-1-example"): "optional"}  # the example corpus opts out explicitly (#727)
     # The canonical Contexts leave their inner references unpinned by design (ADR-0030); this reader states the opt-out itself.
-    reader = LocalSnapshotReader(config.roots[("local", "halcyon-1-example")], "halcyon-1-example", require_content_identity=False)
+    # The five approved designs are shared designs in the packaged store (#1342): read them as render-review does.
+    reader = PackageAwareReader(config.roots[("local", "halcyon-1-example")], "halcyon-1-example", require_content_identity=False)
     closures = []
     for path in sorted((destination / "contexts").glob("*.yaml")):
         context = safe_load(path.read_bytes())

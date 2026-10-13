@@ -21,6 +21,7 @@ from chrona.presentation.model.font_metrics import FontMetricsError, resolve_fon
 from chrona.presentation.model.theme_inheritance import resolve_draft_theme
 from chrona.resources import safe_load
 from tests.support.public_evidence import declared_slides
+from tests.support.context_references import reference_path
 
 ROOT = Path(__file__).resolve().parents[3]
 RESOURCES = ROOT / "src/chrona/resources"
@@ -95,7 +96,7 @@ def _load(svg_path: Path, context_path: Path):
     # A theme reference may address an ordinary v0.11 Theme or a v0.12 Theme that
     # extends one by inheritance; resolve_draft_theme returns the raw document
     # unchanged in the ordinary case, so this always yields a complete body.
-    theme = resolve_draft_theme(context_path.parents[1] / body["theme"]["address"])
+    theme = resolve_draft_theme(reference_path(context_path.parents[1], body["theme"]))
     stacks = [v["value"] for v in theme["body"]["values"].values() if v.get("type") == "fontFamily"]
     weights = {int(v["value"]) for v in theme["body"]["values"].values() if v.get("type") == "fontWeight"}
     # Key by the SVG text's own family and weight; a Theme may declare several
@@ -154,7 +155,7 @@ def _serialized_canvas(tree, requested: tuple[float, float]) -> tuple[float, flo
 
 
 def _bound(context_path: Path, body: dict, name: str) -> dict:
-    return safe_load((context_path.parents[1] / body[name]["address"]).read_bytes())
+    return safe_load(reference_path(context_path.parents[1], body[name]).read_bytes())
 
 
 def _marks(tree):

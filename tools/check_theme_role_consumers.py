@@ -30,17 +30,26 @@ def _load(path: Path) -> Mapping[str, Any] | None:
     return value if isinstance(value, Mapping) else None
 
 
+def _reference_path(example: Path, reference: object) -> Path | None:
+    """The file a Context reference names: the example's own file, or a design in the packaged store (#1342)."""
+    if not isinstance(reference, Mapping) or not isinstance(reference.get("address"), str):
+        return None
+    store = reference.get("store")
+    if isinstance(store, Mapping) and store.get("provider") == "package":
+        return example.parents[1] / "src/chrona/resources" / reference["address"]
+    return example / reference["address"]
+
+
 def _context_documents(example: Path, context: Mapping[str, Any]) -> tuple[Path | None, list[Any]]:
     body = context.get("body")
     if not isinstance(body, Mapping):
         return None, []
-    theme = body.get("theme")
-    theme_path = example / theme["address"] if isinstance(theme, Mapping) and isinstance(theme.get("address"), str) else None
+    theme_path = _reference_path(example, body.get("theme"))
     documents: list[Any] = []
     inputs = body.get("inputs") if isinstance(body.get("inputs"), Mapping) else {}
     for reference in (body.get("view"), body.get("layout"), inputs.get("detailProfile"), inputs.get("summaryProfile")):
-        if isinstance(reference, Mapping) and isinstance(reference.get("address"), str):
-            document = _load(example / reference["address"])
+        if (path := _reference_path(example, reference)) is not None:
+            document = _load(path)
             if document is not None:
                 documents.append(document)
     return theme_path, documents

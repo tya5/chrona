@@ -10,6 +10,7 @@ from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
 from chrona.presentation.model.theme_inheritance import resolve_draft_theme
 from chrona.presentation.scene.capabilities import theme_role_contract, theme_role_property_consumer
 from chrona.resources import safe_load
+from tests.support.context_references import reference_path
 
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -177,8 +178,8 @@ def test_every_public_authored_theme_resolves_with_its_declared_scheme():
         theme_ref, scheme_ref = body.get("theme", {}), body.get("colorScheme", {})
         if not theme_ref.get("address") or not scheme_ref.get("address"):
             continue
-        theme_path = context_path.parent.parent / theme_ref["address"]
-        scheme_path = context_path.parent.parent / scheme_ref["address"]
+        theme_path = reference_path(context_path.parent.parent, theme_ref)
+        scheme_path = reference_path(context_path.parent.parent, scheme_ref)
         scheme_by_theme[theme_path.resolve()] = scheme_path
         theme = safe_load(theme_path.read_bytes())
         if theme["version"] not in {"chrona/theme/v0.15"}:
@@ -221,6 +222,7 @@ def test_every_public_authored_theme_resolves_with_its_declared_scheme():
 
     authored = {path.resolve() for path in (ROOT / "examples").glob("*/themes/*.yaml")}
     authored |= {path.resolve() for path in (ROOT / "src/chrona/resources/presets/bundles").glob("*/theme.yaml")}
+    authored |= {path.resolve() for path in (ROOT / "src/chrona/resources/designs").glob("*/theme.yaml")}
     assert observed == authored
 
 

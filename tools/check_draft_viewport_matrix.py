@@ -35,18 +35,20 @@ def main() -> int:
             descriptor = Path(directory) / "font-metrics.yaml"
             descriptor.write_text(yaml.safe_dump(context["environment"]["fontMetrics"]), encoding="utf-8")
 
+            def located(item: dict) -> Path:
+                # A packaged reference (a shared design or catalog, #1342) reads the packaged store.
+                return ((ROOT / "src/chrona/resources" / item["address"])
+                        if item.get("store", {}).get("provider") == "package"
+                        and item.get("store", {}).get("identity") == "chrona.resources"
+                        else example / item["address"])
+
             def resource(name: str) -> Path:
-                return example / context[name]["address"]
+                return located(context[name])
 
             def optional(name: str) -> Path | None:
-                return example / inputs[name]["address"] if name in inputs else None
+                return located(inputs[name]) if name in inputs else None
 
-            icon_catalogs = tuple(
-                ((ROOT / "src/chrona/resources" / item["address"])
-                 if item.get("store", {}).get("provider") == "package"
-                 and item.get("store", {}).get("identity") == "chrona.resources"
-                 else example / item["address"])
-                for item in inputs.get("iconCatalogs", ()))
+            icon_catalogs = tuple(located(item) for item in inputs.get("iconCatalogs", ()))
 
             for viewport in VIEWPORTS:
                 identifier = f"{example.name}/{context_path.stem}@{viewport[0]}x{viewport[1]}"

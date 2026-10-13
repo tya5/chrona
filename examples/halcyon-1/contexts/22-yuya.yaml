@@ -25,29 +25,29 @@ body:
     id: yuya
     kind: theme
     store:
-      provider: local
-      identity: halcyon-1-example
-    address: themes/yuya.yaml
+      provider: package
+      identity: chrona.resources
+    address: designs/yuya/theme.yaml
     revision:
-      token: example-v1
+      token: bundled
   colorScheme:
     id: yuya
     kind: color-scheme
     store:
-      provider: local
-      identity: halcyon-1-example
-    address: schemes/yuya.yaml
+      provider: package
+      identity: chrona.resources
+    address: designs/yuya/scheme.yaml
     revision:
-      token: example-v1
+      token: bundled
   layout:
     id: yuya
     kind: layout-profile
     store:
-      provider: local
-      identity: halcyon-1-example
-    address: layouts/yuya.yaml
+      provider: package
+      identity: chrona.resources
+    address: designs/yuya/layout.yaml
     revision:
-      token: example-v1
+      token: bundled
   inputs:
     snapshot:
       id: halcyon-1-baseline-2027-06
@@ -71,38 +71,38 @@ body:
       id: halcyon-yuya-legend
       kind: review-detail-profile
       store:
-        provider: local
-        identity: halcyon-1-example
-      address: profiles/yuya-detail.yaml
+        provider: package
+        identity: chrona.resources
+      address: designs/yuya/detail.yaml
       revision:
-        token: example-v1
+        token: bundled
     iconCatalogs:
     - id: chrona-target-parts-v2026-10-09
       kind: icon-catalog
       store:
-        provider: local
-        identity: halcyon-1-example
-      address: catalogs/chrona-target-parts-v2026-10-09.yaml
+        provider: package
+        identity: chrona.resources
+      address: icons/chrona-target-parts-v2026-10-09.yaml
       revision:
-        token: example-v1
+        token: v2026-10-09
       contentIdentity: sha256:139be42bed11eaa9809ef98bb427eb74f8f0862c3d5c4ccfd9eba2b23185acee
     - id: chrona-annotation-parts-v2026-10-09
       kind: icon-catalog
       store:
-        provider: local
-        identity: halcyon-1-example
-      address: catalogs/chrona-annotation-parts-v2026-10-09.yaml
+        provider: package
+        identity: chrona.resources
+      address: icons/chrona-annotation-parts-v2026-10-09.yaml
       revision:
-        token: example-v1
+        token: v2026-10-09
       contentIdentity: sha256:6cd6591036f927a7df4fe2ee75274bcb38dd90790e4823e9121ff0d2be55f5c9
     - id: chrona-theme-starter-v2026-10-09
       kind: icon-catalog
       store:
-        provider: local
-        identity: halcyon-1-example
-      address: catalogs/chrona-theme-starter-v2026-10-09.yaml
+        provider: package
+        identity: chrona.resources
+      address: icons/chrona-theme-starter-v2026-10-09.yaml
       revision:
-        token: example-v1
+        token: v2026-10-09
       contentIdentity: sha256:2945f6d2767ca0cc2c8a4a6045055c6f1ee944f5097269ee45340904856b0ec0
   environment:
     viewport:

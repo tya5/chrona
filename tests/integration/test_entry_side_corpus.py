@@ -14,6 +14,7 @@ import pytest
 import yaml
 
 from chrona.core.relation_identity import relation_identity
+from tests.support.context_references import reference_path
 from tools.materialize_example import materialize
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -55,7 +56,8 @@ def test_target_b_with_entry_side_enters_from_the_side_or_says_why(tmp_path):
     # the corpus as committed and checks the same property (#1084).
     copy = tmp_path / "halcyon-1"
     shutil.copytree(ROOT / "examples/halcyon-1", copy)
-    layout = copy / "layouts/target-b.yaml"
+    context = yaml.safe_load((copy / "contexts/21-target-b.yaml").read_bytes())
+    layout = reference_path(copy, context["body"]["layout"])  # the packaged shared design (#1342)
     assert yaml.safe_load(layout.read_bytes())["relationRouting"]["entry"] == "side"
     materialize(copy / "manifest.yaml", "target-b", tmp_path / "out", write=True)
     scene = json.loads((tmp_path / "out/review.scene.json").read_text(encoding="utf-8"))

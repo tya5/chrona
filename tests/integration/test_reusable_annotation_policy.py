@@ -13,6 +13,7 @@ from chrona.usecases.failure_report import report_failure
 from chrona.usecases.materialize import materialize
 from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
+from tests.support.context_references import reference_path
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -44,7 +45,7 @@ def test_five_migrated_designs_use_kind_bindings_and_preserve_public_render(tmp_
     dump(target / "manifest.yaml", manifest)
     manifest_path = target / "manifest.yaml"
     context = yaml.safe_load((target / slide["context"]).read_bytes())["body"]
-    view_path, layout_path = (target / context[name]["address"] for name in ("view", "layout"))
+    view_path, layout_path = (reference_path(target, context[name]) for name in ("view", "layout"))
     view = yaml.safe_load(view_path.read_bytes())
     layout = yaml.safe_load(layout_path.read_bytes())
     assert "annotations" not in view["body"]

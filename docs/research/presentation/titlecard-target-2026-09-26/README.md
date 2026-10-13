@@ -63,7 +63,7 @@ Still needed before this target's preset can be assembled: #582 (launch window a
 
 **Signed off by the product owner on 2026-10-10.** The image shows main after the owner's 2026-10-08 review (font, label frame, annotation bar and stripe flush with the panel border, quarter label margin, month boundaries) and after fitting the slide to 1600 × 900 (PR #1272).
 
-The bottom image is the HALCYON-1 slide `titlecard` (`examples/halcyon-1`), rendered from YAML alone: View `views/23-titlecard.yaml`, Theme `themes/titlecard.yaml`, scheme `schemes/titlecard.yaml`, Layout and profiles `layouts/titlecard.yaml`, `profiles/titlecard-detail.yaml` and `profiles/titlecard-countdown.yaml`, and Context `contexts/23-titlecard.yaml`.
+The bottom image is the HALCYON-1 slide `titlecard` (`examples/halcyon-1`), rendered from YAML alone: View `views/23-titlecard.yaml` and Context `contexts/23-titlecard.yaml`; the design (Theme, scheme, Layout and profiles: `theme.yaml`, `scheme.yaml`, `layout.yaml`, `detail.yaml` and the countdown `summary.yaml`) is the packaged shared design `src/chrona/resources/designs/titlecard/` (#1342).
 
 ### Gap table
 
