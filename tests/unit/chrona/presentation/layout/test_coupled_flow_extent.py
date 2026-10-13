@@ -4,7 +4,10 @@ The fit predicate "the required slot is allocated its demand" is monotone while 
 demand. An inline `aspectRatio` couples them, so the first fitting integral extent must be searched, not bisected.
 Fixtures are synthetic (the profile and measurements are in this file); nothing reads `examples/`.
 """
+from copy import deepcopy
 from decimal import Decimal
+
+import pytest
 
 from chrona.presentation.layout.engine import (_block_extent_feeds_inline, _first_fitting_extent,
                                                resolve_content_block_extent, solve_layout)
@@ -58,6 +61,74 @@ def _blocks(manifest):
 
 TWO = {"source-0": m(100, 20), "source-1": m(100, 100)}
 FOUR = {"source-0": m(100, 20), "source-1": m(100, 20), "source-2": m(100, 100), "source-3": m(100, 20)}
+
+
+@pytest.mark.parametrize("sources,measurements", [
+    (("timeline", "notes"), TWO),
+    (("table", "legend", "notes", "timeline"), FOUR),
+])
+def test_content_sized_failed_probe_does_not_hide_the_first_native_fit(sources, measurements):
+    profile = _flow_profile(sources)
+    native = solve_layout(profile, viewport_inline=400, viewport_block=200,
+                          measurements=measurements, content_sized=True)
+    assert _blocks(native)["timeline"] == Decimal(100)
+
+    resolution = resolve_content_block_extent(
+        profile, viewport_inline=400, minimum_block=100, measurements=measurements,
+        required_blocks={"timeline": Decimal(80)}, content_sized=True)
+
+    assert resolution.extent == 200
+    assert not resolution.short_sources
+
+
+@pytest.mark.parametrize("content_sized", [False, True])
+def test_late_aspect_wrap_is_not_misclassified_as_a_capped_host(content_sized):
+    profile = _flow_profile(("timeline", "notes"))
+    measurements = {"source-0": m(1000, 20), "source-1": m(1000, 100)}
+    allocated = {
+        extent: _blocks(solve_layout(profile, viewport_inline=400, viewport_block=extent,
+                                    measurements=measurements, content_sized=content_sized))["timeline"]
+        for extent in (100, 1999, 2000)
+    }
+    assert allocated == {100: Decimal(20), 1999: Decimal(20), 2000: Decimal(100)}
+
+    resolution = resolve_content_block_extent(
+        profile, viewport_inline=400, minimum_block=100, measurements=measurements,
+        required_blocks={"timeline": Decimal(100)}, content_sized=content_sized)
+
+    assert resolution.extent == 2000
+    assert not resolution.short_sources
+
+
+@pytest.mark.parametrize("content_sized", [False, True])
+def test_fractional_host_growth_requires_more_than_one_probe_deficit(content_sized):
+    raw = deepcopy(_flow_profile(("timeline", "notes")).profile)
+    children = raw["root"]["children"][0]["children"]
+    for row, child in enumerate(children, start=1):
+        child["inlineSize"] = "fill"
+        child["cell"] = {"column": 1, "row": row}
+    raw["root"] = {
+        "id": "root", "kind": "grid", "inlineSize": "fill", "blockSize": "fill",
+        "columnTracks": [{"fr": 1}], "rowTracks": [{"fr": 1}, {"fr": 3}],
+        "gap": {"token": "spacing.none"}, "padding": {"token": "spacing.none"},
+        "alignItems": "stretch", "justifyContent": "start", "children": children,
+    }
+    profile = resolve_layout_profile(
+        raw, available_sources=SOURCES,
+        theme={"body": {"values": {"spacing.none": {"type": "number", "value": 0}}}})
+    allocated = {
+        extent: _blocks(solve_layout(profile, viewport_inline=400, viewport_block=extent,
+                                    measurements=TWO, content_sized=content_sized))["timeline"]
+        for extent in (100, 319, 320)
+    }
+    assert allocated == {100: Decimal(25), 319: Decimal("79.75"), 320: Decimal(80)}
+
+    resolution = resolve_content_block_extent(
+        profile, viewport_inline=400, minimum_block=100, measurements=TWO,
+        required_blocks={"timeline": Decimal(80)}, content_sized=content_sized)
+
+    assert resolution.extent == 320
+    assert not resolution.short_sources
 
 
 def test_the_first_extent_that_stretches_the_required_slot_is_selected_with_native_verification():
