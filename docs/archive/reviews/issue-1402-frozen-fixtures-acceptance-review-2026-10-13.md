@@ -25,5 +25,8 @@ is the successor disposition for the original full-removal condition. Catalogue
 consistency validates remaining gallery declarations; neither failing test opens
 retiring inputs. Preserve those findings without widening this issue back into
 the permanent migration. Exact-head CI38317941550 and implementation release
-38320123870 succeeded. Close only after this corrected literal review is published
-and its exact-main release succeeds; do not claim the original isolated run passed.
+38320123870 succeeded. The corrected review is public at `9c1cb8b9`;
+[exact-main release38328723401](https://github.com/tya5/chrona/actions/runs/38328723401)
+succeeded on all three OSes, newest-Python public materializers and MCP floor.
+Issue1402 closed on 2026-10-13 under the approved narrowed gate; the original
+isolated run did not pass. This archived review preserves that disposition.
