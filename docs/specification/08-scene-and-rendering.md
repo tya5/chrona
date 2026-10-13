@@ -861,6 +861,20 @@ fills, required wobble, aligned stroke clips, small-caps runs, and (TikZ) a comp
 profile that serves it: a preset that prefers an SVG-only profile (`elevated-light`, `technical-print`) takes
 `--visual-profile chrona-output/visual/v0.5-baseline`.
 
+Compiler verification (#1395) is a tooling/CI boundary, not Scene composition.
+The opt-in compile gate records and checks exact engine versions (Typst0.15.1,
+Tectonic0.17.0), exports default/catalogue presets through existing render
+entry points, and compiles their unmodified source. Export refusals retain
+their explicit capability reasons; compiler failures must not be treated as
+refusals or silently skipped. The report distinguishes typed version, export,
+compiler and missing-artifact failures and retains the compiler logs. Successful
+compilation alone is not font-metric/asset fidelity evidence.
+Absolute Typst placement uses `top + left` alignment with `dx`/`dy`; closed
+outlines close with a straight segment. TikZ serializes colours using xcolor
+values rather than raw CSS hex syntax. Its tracking uses XeTeX/fontspec
+letter spacing, not the pdfTeX/LuaTeX-only letterspace package. These grammar
+corrections preserve the completed Scene geometry and typography intent.
+
 ### 8.2 Interactive canvas and tldraw
 
 An interactive canvas adapter projects the Scene into the canvas store and preserves a mapping back to `sceneId` and source references. The canvas store is not the Project source of truth. A user interaction becomes a later Application Architecture command that proposes a Project or View change, which must be validated against the relevant specification before a new Scene is built.
