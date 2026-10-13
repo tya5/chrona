@@ -435,8 +435,12 @@ absence remains separate. Every nonaccepted hint enters ordinary selection;
 finite proposals may win without bounded search. Actual-search counts only
 instances entering a search iterator. Receipts count processed expansions, not hint
 validation. A changed obstacle, policy, terminal or host is changed routing input,
-even when endpoint dates stay equal. Reuse proves neither unconditional revision
-stability nor critical feasibility; their original acceptance remains independent.
+even when endpoint dates stay equal. Under first-fit with a previous Scene, a
+revalidated route retains its reanchored shape. Without that input, bounded
+search does not promise revision independence: unrelated obstacles can add
+global event contacts and change which candidate fits the quota. This is a
+known search property, not a promise of corridor-local graph selection. Hint
+reuse is not evidence of protected critical feasibility.
 
 **Explicit search budget (#1426).**
 Optional `relationRouting.searchBudget` is a positive integer, an additional
@@ -583,9 +587,9 @@ The protected feasibility contract below applies only under Layout
 `relationRouting.unroutable: suppress`. Under `relax`, `overlap` and `stub`,
 the published #1427 resolution contract applies to critical relations too;
 critical-first ordering remains, but no safe-path/impossibility promise is made.
-The feasibility and over-quality rules below are requirements for the unfinished
-protected pass, not an enabled routing algorithm. The independent priority
-slice leaves normal route eligibility unchanged.
+Layout first retains an ordinary accepted route, then applies the finite-domain
+protected pass below when needed. Ordinary relations retain normal eligibility
+and bounded work; protected work is accounted separately.
 Declared quality limits remain
 preferences for these relations: first select a safe quality-eligible route;
 if none is found, retain a safe completed route even when `maxBends` or
@@ -605,22 +609,34 @@ ordinary quality predicate (including its zero-direct-length convention).
 Scene projects completed geometry and diagnostics; adapters do not reroute
 or reclassify criticality.
 
-Suppress a protected relation only after establishing that no safe completed
-route exists, and emit `W_LAYOUT_CRITICAL_RELATION_SUPPRESSED` with relation
-identity and the failure evidence. Neither the ordinary sparse graph nor its
-4096-expansion exhaustion proves that geometric impossibility. The protected
-feasibility algorithm, its completeness argument and its input-dependent work
-accounting must be finalized before implementing this exception; the existing
-ordinary-search bounds below do not cover that additional pass.
+The protected domain consists of current admitted egress pairs, finite shape
+proposals and the existing finite sparse port/event graph's simple path
+histories, through unchanged completion and safety validators. It does not
+include every continuous-space path. After ordinary selection fails, exhaust
+that domain without the ordinary per-pair expansion cap or explicit search
+budget. Search all admitted pairs for a quality-eligible completed route before
+selecting the deterministically best measured safe over-quality fallback.
+Do not prune distinct histories merely because a cheaper path reaches the same
+node: completion and safety are path-dependent. The finite graph and no-repeat
+history rule ensure termination; the number of histories can be exponential.
+Ordinary work bounds below do not cover this protected pass, and its work must
+not be reported as ordinary quota-bounded work.
 
-Completeness must cover non-self-overlapping completed paths, not merely
-minimum-leg walks. A polynomial edge-progression algorithm is not sufficient:
-the finite-grid simple-path variant is NP-complete, while allowing repeated
-vertices changes that problem ([Ahrens 2020, section 4.2 and corollary 4.2](https://d-nb.info/1224966090/34)).
-This is not a complexity proof for Chrona's continuous geometry. Any reduction
-must establish its own geometric completeness and account honestly for path
-history, terminal completion and work; do not promise polynomial protected
-search from the extended-Hanan-grid abstract alone.
+A sound completed-endpoint quality lower bound may prove a pair cannot meet
+the declared limits: different x and y coordinates require at least one bend.
+For such a pair, the first deterministic hard-safe candidate is sufficient
+fallback evidence; do not enumerate every safe quality-rejected path. Continue
+checking other admitted pairs for eligible routes. This proof concerns quality
+only: failure to find a safe candidate still requires natural domain exhaustion.
+Best retains its existing cross-pair ranking; first-fit retains candidate order.
+
+If no completed hard-safe route is admitted after natural exhaustion, emit
+`W_LAYOUT_CRITICAL_RELATION_SEARCH_DOMAIN_EXHAUSTED` with relation identity and
+failure evidence, alongside the ordinary suppression diagnostic. This means
+only no hard-safe route within the declared search domain. A quota hit is not
+exhaustion, and neither this diagnostic nor sparse-graph disconnection claims
+continuous-space impossibility. Endpoint absence under the declared window
+remains separate from search-domain exhaustion.
 
 **Ordinary candidate search (#1109 R5).** One bounded sparse
 visibility search supplies alternatives for each endpoint pair, rather than

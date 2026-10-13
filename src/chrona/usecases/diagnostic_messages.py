@@ -88,6 +88,9 @@ _SURFACE_CAUSES: Mapping[str, str] = {
     "W_LAYOUT_ASOF_BELOW_PLOT_FALLBACK": (
         "the as-of chip could not be placed below the plot, so it sits inside the plot foot instead"),
     "W_LAYOUT_RELATION_SUPPRESSED": "a relation line was left out of the picture because no route fits",
+    "W_LAYOUT_CRITICAL_RELATION_SEARCH_DOMAIN_EXHAUSTED": (
+        "a critical relation line was left out because exhaustive checks found no hard-safe route within the "
+        "declared finite port/event search domain; this does not establish impossibility outside that domain"),
     "I_LAYOUT_RELATION_MARK_BLOCKED": "a relation was left out because its fallback would cross a primary mark",
     "I_LAYOUT_RELATION_SEGMENT_TOO_SHORT": "a relation was left out because its fallback would have a segment shorter than its stroke width",
     "E_LAYOUT_ROUTE_THROUGH_MARK": "a relation route crosses a primary mark interior",

@@ -2,7 +2,7 @@
 
 # Issue1300 — revision stability acceptance
 
-Partial issue completion only; H1/H2 is released, not full-issue acceptance.
+H1/H2 is released; selected S/C completion is locally verified, release pending.
 [PR1450](https://github.com/tya5/chrona/pull/1450) head239598cc passed
 [CI38324544571](https://github.com/tya5/chrona/actions/runs/38324544571).
 Synced public `01255938758e26af8416200d806c9b6a00b5be55` passed
@@ -10,8 +10,9 @@ Synced public `01255938758e26af8416200d806c9b6a00b5be55` passed
 including full pytest/conformance/wheel, MCP floor and newest-Python reproduction.
 [Current work/design record](https://github.com/tya5/chrona/issues/1300#issuecomment-6095643389).
 Inspection, delta anchors and critical-first facts/order are independent of
-the unimplemented protected feasibility pass. H1/H2 previous-Scene reuse is
-release-verified, not a substitute for either original unfinished criterion.
+the protected feasibility pass. [Reviewer6136355223](https://github.com/tya5/chrona/issues/1300#issuecomment-6136355223)
+replaces unconditional S with hint-based stability and narrows C to the declared
+finite search domain. Original wording remains below with explicit disposition.
 
 ## Literal issue acceptance
 
@@ -22,16 +23,17 @@ release-verified, not a substitute for either original unfinished criterion.
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | A test pair: a plan and the same plan with every date shifted by the same amount (and, separately, with an unrelated object appended). The set of suppressed relations and each delta label's anchor side are equal between the two Scenes. | not met | [Translation/append controls](../../../tests/integration/test_revision_delta_anchor_stability.py) verify actual delta sides and nonempty suppression. The [real off-row contact reproduction](https://github.com/tya5/chrona/issues/1300#issuecomment-6134916217) contradicts general relation-local stability; positive fixtures do not discharge the contract. | — |
-| 2 | A test where a critical relation has a route: it is never suppressed. Where none exists, the distinct diagnostic is emitted. | not met | [Spec50](../../specification/50-constraint-driven-gantt-surface-quality.md#33-relations) scopes protected feasibility to suppress; completeness, implementation and impossibility evidence remain unfinished. Critical-first priority alone is not proof. | — |
+| 1 | A test pair: a plan and the same plan with every date shifted by the same amount (and, separately, with an unrelated object appended). The set of suppressed relations and each delta label's anchor side are equal between the two Scenes. | deferred | Approved replacement: previous-Scene first-fit retains every revalidated trial route; hinted shift/append controls preserve route geometry, delta sides and suppressed identities. [Hinted trial](../../../tests/integration/test_revision_launch_trial.py) and [shift/append controls](../../../tests/integration/test_revision_delta_anchor_stability.py): six tests pass. No no-hint independence claim. Required release pending. | [Selected S6136355223](https://github.com/tya5/chrona/issues/1300#issuecomment-6136355223) |
+| 2 | A test where a critical relation has a route: it is never suppressed. Where none exists, the distinct diagnostic is emitted. | deferred | Approved finite-domain guarantee under suppress: shared safety validators, uncapped simple-path exhaustion, measured quality fallback and SEARCH_DOMAIN_EXHAUSTED warning. [Finite-domain unit controls](../../../tests/unit/chrona/presentation/layout/test_protected_finite_route_domain.py) and [actual Scene/SVG controls](../../../tests/integration/test_critical_finite_domain_render.py) pass. No continuous-space claim; required release pending. | [Selected C6136355223](https://github.com/tya5/chrona/issues/1300#issuecomment-6136355223) |
 | 3 | The trial's v1 → v2 pair keeps `spec-build` drawn. | met | [Actual supplied launch pair](../../../tests/integration/test_revision_launch_trial.py) passes through real Scene and SVG under the current default; no spatial suppressions. No protected-search claim. | — |
 | 4 | `--emit-scene` output diffs line by line (one primitive per line), and its parsed content is unchanged. | met | [Formatter controls](../../../tests/unit/chrona/app/test_scene_inspection.py) and [actual CLI controls](../../../tests/cli/test_cli_scene_inspection.py) pass. Canonical/cache serialization and normal machine envelope stay unchanged; exact-head and synced-main release above succeed. | — |
 | 5 | Do not edit `examples/**`. | met | [Published WIP scope](https://github.com/tya5/chrona/tree/wip/issue-1300-readable-inspection) contains implementation/tests/specification changes, not authored example edits. | — |
 
 ## Additional mandatory hint acceptance
 
-[Selected contract](https://github.com/tya5/chrona/issues/1300#issuecomment-6133101982)
-supplements, and replaces none of, the original criteria.
+[Selected hint contract](https://github.com/tya5/chrona/issues/1300#issuecomment-6133101982)
+remains intact; the later6136355223 disposition changes the original S/C criteria,
+not these three hint requirements.
 
 | Literal acceptance | Disposition | Evidence |
 | --- | --- | --- |
@@ -44,6 +46,36 @@ supplements, and replaces none of, the original criteria.
 No additional programme gate replaces the original or mandatory hint criteria.
 
 ## Verification and architecture
+
+PR1453 head414e20a6: artifact11784319096 has101 managed paths, no retirements,
+92/92 public Scene/SVG bytes identical, only diagnostic inventory changed
+([audit](https://github.com/tya5/chrona/pull/1453#issuecomment-6136656126)).
+CI38335371719 passed conformance, MCP, newest-Python reproduction and pytest
+shards1/2. Shard3 failed one curated-warning sentence test (3703 passed,
+15 standard skips); derived-ready failed consequentially, not independently.
+The new warning's missing user-facing sentence is corrected in the existing
+use-case message owner with a finite-domain/no-continuous-impossibility test.
+Required current-head checks and exact-main release remain pending.
+
+Counter review correction: protected search is counted only when its iterator
+is entered, not when every egress is blocked or a finite shape settles it.
+Seven finite-domain unit controls and actual-render receipt/summary projection cover this;
+focused correction batch57 PASS. The protected-pass stale specification status
+is removed with this implementation update. This is the existing receipt
+contract, not a new routing policy. Final exact-head CI/artifact evidence must
+include this correction before merging.
+
+Selected S/C implementation: `2cf36485` plus the independently moving endpoint
+join test correction. Focused routing/critical/hints/Scene/SVG suite138 PASS;
+final protected controls8 PASS and strengthened S controls6 PASS. Initial
+zero-bend render test was interrupted after65.53s; the published quality-floor
+design correction replaces exhaustive rejected-safe-path enumeration with a
+sound bound, not a larger quota. Independent Luna review found cross-pair rank
+and first-fit fallback-order defects; both have real regression tests and fixes.
+Local conformance passes every check except stale generated diagnostic inventory;
+CI must regenerate it in the shared snapshot. The46-slide batched materializer
+check passed before the final ordering/diagnostic refinements; exact-head CI
+snapshot must confirm the final bytes. Do not close until that and full release.
 
 Independent inspection/delta/priority release208cf1cc/38290538367 succeeded;
 atomic recovery release8ce44cb0/38317097402 succeeded. H1 focused70 tests pass;
