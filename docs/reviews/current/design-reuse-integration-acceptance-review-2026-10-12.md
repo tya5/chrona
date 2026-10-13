@@ -6,7 +6,7 @@ Design-reuse code: `2ecddad0e1a02c468726164a0ef2a76b3b75277a`; integration adopt
 This combines PRs #1408, #1415, #1414 and #1417. Closure sweep observed
 2026-10-14 on READY `b1974681e0f3c00c54b3390422aee3fab338bb17`.
 PR1404/1405 are also reviewed below. Final exact-main release containing this
-updated review is required before closing1392/1403;1342/1345 remain open.
+updated review is required before closing1392/1403/1269;1342/1345 remain open.
 The later [1341/1344 release review](../../archive/reviews/issue-1341-design-reuse-acceptance-review-2026-10-13.md)
 supersedes this record's1341 disposition. This combined record remains current
 for the still-open1342/1345 items; its historical slice findings are unchanged.
@@ -58,7 +58,7 @@ Architecture: ingress resolves immutable Store/revision identities and pins befo
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | --- | --- | --- | --- | --- |
-| 1 | The existing Contexts can switch to the reference with byte-identical Scenes. | not met | [actual conversion evidence/question](https://github.com/tya5/chrona/issues/1345#issuecomment-6110612395): SVG/drawing content identical, but truthful changed Context provenance changes Scene bytes. No identity falsification. | Owner decision pending |
+| 1 | The existing Contexts can switch to the reference with byte-identical Scenes. | not met | [Conversion question](https://github.com/tya5/chrona/issues/1345#issuecomment-6156429891): truthful Context provenance changes Scene bytes. Additionally, materializer closure copying reads raw `fontMetrics.assets` before fontSet expansion; named-set materialization requires repair and integration evidence. Parsed-contract equality does not cover that path. | Materializer normalization repair; owner provenance decision |
 
 ## Programme-level criteria (optional)
 
@@ -81,7 +81,7 @@ Do not close1342/1345 without their literal evidence or an explicit owner dispos
 | --- | --- | --- | --- | --- |
 | 1 | Scene test: under `spread`, the column starts are evenly spaced and the last column ends within the slot. Under `start`, output is byte-identical. | met | [Legend grid tests](../../../tests/integration/test_legend_grid.py): spread geometry and absent-versus-start SVG byte equality; packaged executive-light path. Included in current33PASS batch. | — |
 | 2 | With a declared caption gap, the first column starts at caption end plus that gap. | met | Same integration test measures the completed caption and column positions; declared and default gap controls pass. Spec33 owns measurement and placement. | — |
-| 3 | Do not edit `examples/**`. The reviewer adopts this in Sunday Strip (slide 25). | met | [PR1404](https://github.com/tya5/chrona/pull/1404), merged3955243; its example diff is empty. Reviewer adoption is separate under board454, not claimed from unchanged corpus evidence. | Reviewer adoption |
+| 3 | Do not edit `examples/**`. The reviewer adopts this in Sunday Strip (slide 25). | met | [PR1404](https://github.com/tya5/chrona/pull/1404), merged3955243; its example diff is empty. [Sunday sign-off](../../research/presentation/sunday-target-2026-09-26/README.md#reproduction-1269) records actual reviewer adoption and owner approval, including the spread key panel. | — |
 
 ### Issue #1403
 
@@ -96,7 +96,19 @@ Do not close1342/1345 without their literal evidence or an explicit owner dispos
 
 ## Closure publication gate
 
-Only1392/1403 are ready for release acceptance;1342/1345 retain the not-met rows
+1392/1403 and the owner-signed-off1269 are ready for release acceptance;
+1342/1345 retain the not-met rows
 above. No new semantics, product code or authored examples in this review update.
 Ingress, Layout geometry and Scene/adapter ownership remain unchanged. Review PR,
 current-head artifact comparison, and exact-main three-OS release are pending.
+
+### Issue #1269
+
+- Source: [issue](https://github.com/tya5/chrona/issues/1269)
+- Observed: 2026-10-14
+
+| # | Literal acceptance criterion | Disposition | Evidence | Successor |
+| --- | --- | --- | --- | --- |
+| 1 | A committed slide (sources only), rendered with no core change and no errors. | met | Existing HALCYON slide25 sources and committed Scene/SVG are included in the green exact-main release38413485532 onb1974681. Reviewer adoption PRs change YAML, not the core. Previously disclosed substrate contrast warnings were explicitly accepted in reviewer PR1390. | — |
+| 2 | A comparison image and a classified gap table in the Sunday research README. | met | [Reviewer PR1470](https://github.com/tya5/chrona/pull/1470), source64c85fba, included unchanged here. The mock/output comparison was visually inspected; the README classifies tuning, delivered general knobs and deliberate font/data/placement differences. | — |
+| 3 | Owner visual sign-off. | met | [Explicit owner acceptance](https://github.com/tya5/chrona/issues/1269#issuecomment-6156439384), 2026-10-14. No new visual policy imposed by this review. | — |
