@@ -1,6 +1,6 @@
 # Revision stability completion (#1300)
 
-Baseline: READY `165587e6` (PR1449 and derived-main38323738228 succeeded),
+Baseline: READY `01255938` (PR1450 and derived-main38325498917 succeeded),
 independent inspection/delta/critical-priority
 slices release-verified by [38290538367](https://github.com/tya5/chrona/actions/runs/38290538367).
 Authority: [issue](https://github.com/tya5/chrona/issues/1300),
@@ -137,8 +137,9 @@ count closure and final Layout; ordered reanchored proposals use the common
 completed-route validator before ordinary search. The actual v1/v2 Scene/SVG test
 retains spec-build's translated shape without search. Same-input10/10 routes reuse
 without search; best retains byte-identical Scene/SVG and receipts.100 focused
-tests pass; public46-context no-hint reproduction passes. Exact-head CI/full
-release is still required. Original unconditional stability/critical criteria
+tests pass; public46-context no-hint reproduction passes. Exact-head CI38324544571
+and synced READY01255938 succeed; preview11780366932 confirms92 public Scene/SVG
+files unchanged. Exact-main three-OS release38325655439 is running. Original unconditional stability/critical criteria
 remain unfinished; do not close the issue for completing hints alone.
 
 S evidence design: the existing default-relax test can pass with an empty
