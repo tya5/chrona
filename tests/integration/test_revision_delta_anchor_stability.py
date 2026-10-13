@@ -133,3 +133,35 @@ def test_explicit_suppression_identity_survives_uniform_shift_and_unrelated_appe
         assert not [item for item in rendered.scene.diagnostics if item.startswith("E_")]
         identities.append({warning.split(":", 1)[1] for warning in warnings})
     assert identities[0] == identities[1] == identities[2]
+
+
+def test_unrelated_relation_order_preserves_completed_routes_and_svg(tmp_path):
+    source = sr.with_calendar(sr.chain_project(groups=2, per_group=2))
+    parts = sr.bundle()
+    parts["view"]["body"]["rows"] = {"mode": "automatic"}
+    parts["view"]["body"]["visibility"]["relations"] = "all"
+    parts["layout"]["relationRouting"] = {
+        "search": "first-fit", "unroutable": "suppress",
+        "maxBends": 4, "maxDetourRatio": 100,
+    }
+    evidence = []
+    for name, relations in (("forward", source["relations"]),
+                            ("reverse", list(reversed(source["relations"])))):
+        directory = tmp_path / name
+        directory.mkdir()
+        rendered = sr.render(directory, {**source, "relations": relations}, presentation=parts)
+        paths = {(item.from_instance_id, item.to_instance_id): item
+                 for item in rendered.surface.primitives if item.source_kind == "relation"}
+        assert len(paths) == 2  # Both unrelated dependencies are genuinely drawn.
+        assert all(source_id and target_id for source_id, target_id in paths)
+        assert not _suppressed_relations(rendered)
+        assert not [item for item in rendered.scene.diagnostics if item.startswith("E_")]
+        svg = ET.fromstring(rendered.artifact.content)
+        elements = {element.get("data-scene-id", element.get("id")): element for element in svg.iter()}
+        assert {item.scene_id for item in paths.values()} <= elements.keys()
+        assert all(elements[item.scene_id].get("d") for item in paths.values())
+        # Array-position resource identities can differ; compare completed geometry
+        # and the adapter's actual path commands by stable endpoint instances.
+        evidence.append({key: (item.points, item.path_commands,
+                               elements[item.scene_id].get("d")) for key, item in paths.items()})
+    assert evidence[0] == evidence[1]

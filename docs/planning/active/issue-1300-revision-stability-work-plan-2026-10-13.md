@@ -165,6 +165,12 @@ impossibility. Keep full completed geometry/terminal/window safety; do not use
 quota increases, hints or corpus changes as an independence fix. Publish selected
 normative rules and amend owned files/tests before resuming product code.
 
+S focused evidence: all three integration controls pass, including reversed
+unrelated relation declarations with two genuinely drawn dependencies. Compare
+completed geometry and actual SVG path commands by endpoint instances, not
+array-position resource IDs. This verifies that fixture only; the off-row
+counterexample and unselected critical domain still prevent general acceptance.
+
 Verified implementation seams: `surface_routes.compose_surface_routes` consumes
 completed rows, marks and temporal ports; `relation_shapes.shape_channels` and
 `route_search._build_visibility_base`/`_build_sparse_graph` generate event contacts.
