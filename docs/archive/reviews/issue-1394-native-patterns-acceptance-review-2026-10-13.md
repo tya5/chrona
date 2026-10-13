@@ -26,6 +26,9 @@ delivery path was introduced; unsupported non-Rect patterns still refuse.
 Layout/Scene own complete tile and region facts. The renderer helper only
 enumerates intersecting cells of that supplied affine lattice. Target adapters
 serialize them with native host/tile clipping. No schema or corpus edits.
-Product authority:d5f6418f; native evidence head:6f2f366a. Verify final current-head
-PR checks and exact-main three-OS release containing this acceptance disposition
-before deliberate issue closure.
+Product authority:d5f6418f; final headff0a86ad native38359033456 verifies18/18
+cases and6 synthetic cases (artifact11793574333); general38359033430 succeeds.
+PR1461 and this disposition are contained in main5599f6b9.
+[Release38362304100](https://github.com/tya5/chrona/actions/runs/38362304100)
+passes all3OS full pytest/conformance/wheel-smoke, MCP and newest-Python public
+reproduction. Issue1394 was deliberately closed after that gate.

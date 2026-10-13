@@ -32,6 +32,7 @@ Flow block intent, source sizing, table/heading inline budget, cross-size
 stretch and flexible-track unit files. All61 earlier direct Flow/cross/aspect
 controls passed before the broader run. Grid cells retain their native track
 allocation; this change does not introduce child-size-based grid allocation.
-All literal rows are met on implementation731a2913 and the containing review
-at85e66b4b. This final row disposition is batched into PR1461; verify that
-publication's containing-main release before deliberate issue closure.
+All literal rows are met. The final disposition is published in PR1461 and
+contained in main5599f6b9. [Release38362304100](https://github.com/tya5/chrona/actions/runs/38362304100)
+passes all3OS full pytest/conformance/wheel-smoke, MCP and newest-Python public
+reproduction. Issue1219 was deliberately closed after that gate;1214 remains open.

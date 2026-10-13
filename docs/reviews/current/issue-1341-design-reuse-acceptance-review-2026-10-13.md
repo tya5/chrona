@@ -71,6 +71,8 @@ the tooling audit reuses it without rendering or rewriting resources. Resource
 identity is preserved, not normalized away to satisfy byte wording. No authored
 `examples/**` or board writes occurred. Issue1341 remains open for literal
 row1's byte/purity disposition. Issue1344's selected mechanism is complete;
-its owner-deferred adoption row does not prevent developer closure after the
-release containing this disposition. Closure must name the original narrowed
-and deferred criteria and link the same successor work plan.
+its owner-deferred adoption row does not prevent developer closure. The
+disposition is contained in main5599f6b9; [release38362304100](https://github.com/tya5/chrona/actions/runs/38362304100)
+succeeds on all3OS full pytest/conformance/wheel-smoke, MCP and newest public
+reproduction. Issue1344 was deliberately closed with the original narrowed/
+deferred criteria and the same successor plan;1341 remains open for row1.

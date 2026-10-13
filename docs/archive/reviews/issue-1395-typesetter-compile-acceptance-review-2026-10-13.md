@@ -21,9 +21,11 @@ SVG/Typst/TikZ pattern output at0/45/90 degrees was compared as one batch.
 Compilation is not exact font
 metric fidelity. Source artifacts were never patched. No authored examples
 or Scene/Layout ownership changes. Product authority:d5f6418f; successful
-native evidence head:6f2f366a. Final current-head PR checks and exact-main
-three-OS release containing this acceptance disposition remain mandatory
-before deliberate issue closure.
+final headff0a86ad native38359033456 verifies18/18 cases and6 synthetic cases
+(artifact11793574333); general38359033430 succeeds. PR1461 and this disposition
+are contained in main5599f6b9. [Release38362304100](https://github.com/tya5/chrona/actions/runs/38362304100)
+passes all3OS full pytest/conformance/wheel-smoke, MCP and newest-Python public
+reproduction. Issue1395 was deliberately closed after that gate.
 
 ## Architecture conclusion
 
