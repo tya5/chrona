@@ -358,7 +358,7 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
             elif heading.block == "header-row":
                 diagnostics.append(f"I_LAYOUT_SLOT_HEADING_NO_HEADER_ROW:{decision.node_id}")
             else:
-                tier = min(axis_label_tiers, key=lambda item: (item.bounds.block, item.tier_index), default=None)
+                tier = min(axis_label_tiers, key=lambda item: (item.block_offset, item.tier_index), default=None)
                 prepared_axis = (prepared or {}).get("timeline-axis")
                 axis_reserve = prepared_axis.reserved("timeline-axis") if prepared_axis is not None else Decimal(0)
                 candidate_baseline = axis_top + axis_reserve + tier.baseline_block_offset if tier is not None else None

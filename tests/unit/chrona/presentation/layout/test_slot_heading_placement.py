@@ -260,7 +260,8 @@ def test_heading_targets_include_optional_profile_slots_without_a_manifest_decis
 
 def _tier(index, top, baseline, *, axis_origin=100):
     return AxisLabelTierGeometry(index, Rect(Decimal(100), Decimal(top), Decimal(400), Decimal(20)),
-                                 Decimal(str(baseline)), Decimal(str(baseline)) - Decimal(axis_origin))
+                                 Decimal(str(baseline)), Decimal(str(baseline)) - Decimal(axis_origin),
+                                 Decimal(top) - Decimal(axis_origin))
 
 
 def test_axis_tier_caption_uses_completed_upper_baseline_and_reserves_the_whole_band():
@@ -270,6 +271,26 @@ def test_axis_tier_caption_uses_completed_upper_baseline_and_reserves_the_whole_
         axis_label_tiers=(_tier(5, 125, 140.0), _tier(2, 100, 113.75)))
     assert result.text[0].baseline[1] == 113.75
     assert result.reserved("annotations") == 50 and result.diagnostics == ()
+
+
+def test_upper_axis_tier_selection_uses_local_order_at_large_origin():
+    from dataclasses import replace
+
+    slots = {"annotations": _slot("annotations", 100, 400),
+             "timeline-axis": _slot("timeline-axis", 100, 60, inline=100, inline_size=400)}
+    tiers = (_tier(5, 100, 110), _tier(2, 140, 154.2))
+    decisions = {"annotations": _decision("annotations", SlotHeading("Notes", block="axis-tier"))}
+    ordinary = complete_slot_headings(request=_request(), slots=slots,
+                                     decisions=decisions, axis_label_tiers=tiers)
+    origin = Decimal(10) ** 30
+    shifted_slots = {key: replace(slot, bounds=replace(slot.bounds, block=slot.bounds.block + origin))
+                     for key, slot in slots.items()}
+    shifted_tiers = tuple(replace(tier, bounds=replace(tier.bounds, block=tier.bounds.block + origin),
+                                 baseline_block=tier.baseline_block + origin) for tier in tiers)
+    translated = complete_slot_headings(request=_request(), slots=shifted_slots,
+                                       decisions=decisions, axis_label_tiers=shifted_tiers)
+    assert ordinary.reserved("annotations") == translated.reserved("annotations") == 60
+    assert ordinary.diagnostics == translated.diagnostics == ()
 
 
 @pytest.mark.parametrize(("axis", "tiers"), [(AXIS, ()), (None, (_tier(0, 100, 110.0),)),

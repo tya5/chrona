@@ -53,6 +53,7 @@ class AxisLabelTierGeometry:
     bounds: Rect
     baseline_block: Decimal
     baseline_block_offset: Decimal
+    block_offset: Decimal
 
 
 def calendar_overlay_intervals(*, closed_days: tuple[date, ...], start: date, end: date,
@@ -736,7 +737,7 @@ def _axis_label_tier_geometry(*, axis: SlotPlacement, tier_index: int, tier: Axi
         tier_index,
         Rect(axis.bounds.inline, axis.bounds.block + Decimal(str(lane.offset)),
              axis.bounds.inline_size, Decimal(str(lane.size))),
-        axis.bounds.block + Decimal(str(baseline)), Decimal(str(baseline)))
+        axis.bounds.block + Decimal(str(baseline)), Decimal(str(baseline)), Decimal(str(lane.offset)))
 
 
 def _axis_band_semantic_id(tier_index: int, band_ordinal: int) -> str:
