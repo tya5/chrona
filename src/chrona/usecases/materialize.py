@@ -189,7 +189,7 @@ def _shared_root(reference: dict[str, Any], stores: Mapping[str, Path] | None) -
     return None
 
 
-def _shared_stores(example: Path, declared: object) -> dict[str, Path]:
+def materializer_store_roots(example: Path, declared: object) -> dict[str, Path]:
     """The manifest's read-only shared-design Stores (`stores: [{identity, root}]`), roots relative to the manifest (#1342)."""
     if declared is None:
         return {}
@@ -216,10 +216,12 @@ def _staged_address(reference: dict[str, Any], stores: Mapping[str, Path] | None
     return f"_store-{reference['store']['identity']}/{address}" if _shared_root(reference, stores) is not None else address
 
 
-def _reference_payload(example: Path, reference: dict[str, Any], stores: Mapping[str, Path] | None = None) -> bytes:
-    address = reference.get("address")
-    if not isinstance(address, str):
-        raise _context_error("reference", "string address", address)
+def read_materializer_reference(example: Path, reference: dict[str, Any],
+                                stores: Mapping[str, Path] | None = None) -> bytes:
+    """Read one admitted reference without staging, rewriting or rendering it."""
+    token, address = reference.get("revision", {}).get("token"), reference.get("address")
+    if not isinstance(token, str) or not isinstance(address, str):
+        raise _context_error("reference", "string revision token and address", {"token": token, "address": address})
     if reference.get("store", {}).get("provider") == "package":
         if reference.get("store", {}).get("identity") != "chrona.resources":
             raise ValueError(f"E_MATERIALIZER_PACKAGE_RESOURCE: {_label(address)} requires store identity chrona.resources, found {_label(reference.get('store', {}).get('identity'))}")
@@ -229,18 +231,17 @@ def _reference_payload(example: Path, reference: dict[str, Any], stores: Mapping
         return payload
     if reference.get("store", {}).get("provider") != "local":
         raise ValueError(f"E_MATERIALIZER_PROVIDER: reference {_label(reference.get('kind'))}:{_label(reference.get('id'))} at {_label(address)} requires local or package provider, found {_label(reference.get('store', {}).get('provider'))}")
-    return _inside(_shared_root(reference, stores) or example, address).read_bytes()
+    payload = _inside(_shared_root(reference, stores) or example, address).read_bytes()
+    if reference.get("contentIdentity") not in (None, _identity(payload)):
+        raise ValueError(f"E_CONTENT_IDENTITY: reference {_label(reference.get('kind'))}:{_label(reference.get('id'))} at {_label(address)}; expected {_label(reference.get('contentIdentity'))}, found {_identity(payload)}")
+    return payload
 
 
 def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *, target_token: str | None = None,
                     theme_stack: tuple[str, ...] = (), overlay: _OverlayBuilder | None = None,
                     stores: Mapping[str, Path] | None = None) -> bytes:
     token, address = reference.get("revision", {}).get("token"), reference.get("address")
-    if not isinstance(token, str) or not isinstance(address, str):
-        raise _context_error("reference", "string revision token and address", {"token": token, "address": address})
-    payload = _reference_payload(example, reference, stores)
-    if reference.get("contentIdentity") not in (None, _identity(payload)):
-        raise ValueError(f"E_CONTENT_IDENTITY: reference {_label(reference.get('kind'))}:{_label(reference.get('id'))} at {_label(address)}; expected {_label(reference.get('contentIdentity'))}, found {_identity(payload)}")
+    payload = read_materializer_reference(example, reference, stores)
     package_reference = reference.get("store", {}).get("provider") == "package"
     if not (overlay is not None and package_reference):
         target = _inside(snapshot_directory(snapshot, target_token or token), _staged_address(reference, stores, address))
@@ -421,7 +422,7 @@ def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool
         overlay_builder = _OverlayBuilder(Path(temporary))
         reference, _ = copy_context_closure(example, context_path, snapshot, decoded_catalogs=decoded_catalogs,
                                             overlay_builder=overlay_builder,
-                                            stores=_shared_stores(example, manifest.get("stores")))
+                                            stores=materializer_store_roots(example, manifest.get("stores")))
         overlay = overlay_builder.finish()
         closure = resolve_render_context(reference, overlay,
                                          decoded_resources=decoded_catalogs)
