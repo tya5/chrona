@@ -22,3 +22,9 @@ the result. No View, Theme, Layout, Scene or adapter ownership changes, font
 substitution, project-specific core rule or new manifest schema. Diagnostic
 declarations are admitted before optional-provider decisions (Specs9/13/15/32/42).
 Python API migration is intentional under Spec32's alpha API policy.
+
+Initial CI artifact11859485614: all101 members retained, all92 Scene/SVG files
+byte-identical; only two diagnostic inventories changed. The font-pin comparison's
+classification anchor is migrated to `_font_copy_plan`, retaining
+`pinned-deliberately` and its identity-byte producer. Repository discovery and
+classification validation have a regression test; generated reports are not hand-edited.
