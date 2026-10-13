@@ -65,8 +65,8 @@ $defs:
       label: {description: "Optional human-readable metric label.", type: string}
       scope: {description: "Optional aggregation scope.", enum: [subtree]}
       source:
-        description: "Built-in, actual, count, scenario, object-facet, or derived-figure metric source."
-        examples: [actual.asOf, {actual: asOf}, {counts: finishDelta}, {scenario: title}, {object: task-1, facet: planned}, {figure: launch-countdown}]
+        description: "Built-in, actual, count, scenario, object-facet, derived-figure, or profile-slot metric source."
+        examples: [actual.asOf, {actual: asOf}, {counts: finishDelta}, {scenario: title}, {object: task-1, facet: planned}, {figure: launch-countdown}, {slot: countdown}]
         oneOf:
           - {description: "Built-in scalar metric.", enum: [actual.asOf, planned.nextPoint, count.selected, count.missingActual, count.knownFinishVariance]}
           - type: object
@@ -96,6 +96,7 @@ $defs:
             required: [figure]
             additionalProperties: false
             properties: {figure: {description: "Identifier of a figure in the View's `figures`.", type: string, minLength: 1}}
+          - {$ref: "urn:chrona:common-v0.1#/$defs/summarySlotSource"}
       format: {description: "Public formatting applied to the metric value.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/summaryMetricFormat"}
     allOf:
       - description: "Subtree scope is available only for a planned facet of one object."
@@ -105,9 +106,11 @@ $defs:
         then:
           properties:
             source:
-              type: object
-              required: [object, facet]
-              additionalProperties: false
-              properties:
-                object: {type: string, minLength: 1}
-                facet: {const: planned}
+              oneOf:
+                - {$ref: "urn:chrona:common-v0.1#/$defs/summarySlotSource"}
+                - type: object
+                  required: [object, facet]
+                  additionalProperties: false
+                  properties:
+                    object: {type: string, minLength: 1}
+                    facet: {const: planned}

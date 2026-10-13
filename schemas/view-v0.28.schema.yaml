@@ -312,6 +312,8 @@ allOf:
                 - $ref: "#/$defs/figureDaysUntil"
                 - $ref: "#/$defs/figureDaysIn"
                 - $ref: "#/$defs/figureCount"
+          bindings: {$ref: "urn:chrona:common-v0.1#/$defs/profileBindings"}
+          wording: {$ref: "urn:chrona:common-v0.1#/$defs/viewWording"}
           figureFormats:
             description: "Optional count figure text formats; targets must name declared count figures. Raw Summary values are unchanged."
             $ref: "urn:chrona:common-v0.1#/$defs/figureFormats"
@@ -671,35 +673,9 @@ $defs:
       typographyRole: {description: "Named Theme text-treatment role measuring and sizing the secondary text; its colour is the tier's.", type: string, minLength: 1}
       placement: {description: "stacked draws it on the line below the main label; inline draws it after the main label on the same baseline.", enum: [stacked, inline]}
   figureFact:
-    description: "One fact a figure reads: the Actual Set as-of, a named period's start, exclusive end or final covered day, an object's placed endpoint, or the current selected group's first planned start."
-    examples: [asOf, {period: launch-window, side: start}, {period: launch-window, side: last}, {object: tvac, endpoint: end}]
-    oneOf:
-      - {description: "The Actual Set as-of date.", const: asOf}
-      - description: "A named Project period's boundary or final covered calendar day."
-        type: object
-        required: [period, side]
-        additionalProperties: false
-        properties:
-          period: {description: "Identifier of a period declared in the Project's `periods`.", type: string, minLength: 1}
-          side: {description: "The period's start, exclusive end, or last covered calendar day (end minus one day).", enum: [start, end, last]}
-      - description: "The completed (placed) date of one endpoint of a Project object."
-        type: object
-        required: [object, endpoint]
-        additionalProperties: false
-        properties:
-          object: {description: "Identifier of a Project object.", type: string, minLength: 1}
-          endpoint: {description: "The endpoint the object's schedule offers: at for a point, start or end for a span.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/dateEndpoint"}
-      - description: "The earliest selected Primary planned start or point of the current group; requires figure scope group."
-        examples: [{group: firstPlannedStart}]
-        type: object
-        required: [group]
-        additionalProperties: false
-        properties:
-          group: {description: "The current group's first planned start or point, gathered by View projection.", const: firstPlannedStart}
+    $ref: "urn:chrona:common-v0.1#/$defs/profileFigureFact"
   figureIdentity:
-    description: "A non-empty identifier local to a declared View figure; preserves the existing string acceptance grammar."
-    type: string
-    minLength: 1
+    $ref: "urn:chrona:common-v0.1#/$defs/profileFigureIdentity"
   figureDaysUntil:
     description: "Signed days from one fact to another; negative once the target has passed."
     examples: [{id: launch-countdown, kind: daysUntil, to: {period: launch-window, side: start}}]
@@ -709,11 +685,11 @@ $defs:
     properties:
       id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", $ref: "#/$defs/figureIdentity"}
       kind: {description: "Days from `from` to `to`.", const: daysUntil}
-      scope: {description: "Resolve once globally (default), or once for each current View group; group results are shown by group headers only.", enum: [global, group]}
+      scope: {description: "Resolve once globally (default), or once for each current View group; group results are shown by group headers only.", $ref: "urn:chrona:common-v0.1#/$defs/profileFigureScope"}
       from: {description: "The starting fact; the as-of when omitted.", $ref: "#/$defs/figureFact"}
       to: {description: "The target fact.", $ref: "#/$defs/figureFact"}
-      days: {description: "Count calendar days (the default) or working days of the figure's calendar.", enum: [calendar, working]}
-      calendar: {description: "Project calendar for working days; the Project default calendar when omitted. Only with days working.", type: string, minLength: 1}
+      days: {description: "Count calendar days (the default) or working days of the figure's calendar.", $ref: "urn:chrona:common-v0.1#/$defs/profileFigureDays"}
+      calendar: {description: "Project calendar for working days; the Project default calendar when omitted. Only with days working.", $ref: "urn:chrona:common-v0.1#/$defs/profileFigureCalendar"}
   figureDaysIn:
     description: "The days a named period covers, its end exclusive."
     examples: [{id: window-length, kind: daysIn, period: launch-window, days: working}]
@@ -724,8 +700,8 @@ $defs:
       id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", $ref: "#/$defs/figureIdentity"}
       kind: {description: "Days covered by `period`.", const: daysIn}
       period: {description: "Identifier of a period declared in the Project's `periods`.", type: string, minLength: 1}
-      days: {description: "Count calendar days (the default) or working days of the figure's calendar.", enum: [calendar, working]}
-      calendar: {description: "Project calendar for working days; the Project default calendar when omitted. Only with days working.", type: string, minLength: 1}
+      days: {description: "Count calendar days (the default) or working days of the figure's calendar.", $ref: "urn:chrona:common-v0.1#/$defs/profileFigureDays"}
+      calendar: {description: "Project calendar for working days; the Project default calendar when omitted. Only with days working.", $ref: "urn:chrona:common-v0.1#/$defs/profileFigureCalendar"}
   figureCount:
     description: "An integer count of selected Primary review facts, globally or in the current group."
     examples: [{id: overdue, kind: count, source: missingActual}, {id: group-late, kind: count, source: behind, scope: group}]
@@ -735,8 +711,8 @@ $defs:
     properties:
       id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", $ref: "#/$defs/figureIdentity"}
       kind: {description: "Select an already-projected integer count, without inferring dates or state.", const: count}
-      source: {description: "Closed selected-item/state/known-variance, selected-group or completed Layout narrative count; missingActual requires an explicit as-of. groups and placedNotes are global-only.", enum: [selected, recorded, dueUnobserved, notYetDue, unavailable, missingActual, knownFinishVariance, behind, ahead, groups, placedNotes]}
-      scope: {description: "Resolve once globally (default), or once for each current View group; group results are shown by group headers only.", enum: [global, group]}
+      source: {description: "Closed selected-item/state/known-variance, selected-group or completed Layout narrative count; missingActual requires an explicit as-of. groups and placedNotes are global-only.", $ref: "urn:chrona:common-v0.1#/$defs/profileFigureCountSource"}
+      scope: {description: "Resolve once globally (default), or once for each current View group; group results are shown by group headers only.", $ref: "urn:chrona:common-v0.1#/$defs/profileFigureScope"}
   visual:
     description: "One direct or data-encoded icon request for an admitted occurrence."
     examples:

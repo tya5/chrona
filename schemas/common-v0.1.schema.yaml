@@ -224,6 +224,111 @@ $defs:
     properties:
       scale: {description: "Named colour scale to apply.", type: string, minLength: 1}
       target: {description: "Only planned marks are colour-encoded.", const: planned}
+  profileFigureFact:
+    description: "One existing figure fact grammar, shared by explicit View figures and profile bindings."
+    oneOf:
+      - {description: "The Actual Set as-of date.", const: asOf}
+      - description: "A named Project period boundary or final covered calendar day."
+        type: object
+        required: [period, side]
+        additionalProperties: false
+        properties:
+          period: {description: "Identifier of a Project period.", type: string, minLength: 1}
+          side: {description: "The period start, exclusive end, or last covered day.", enum: [start, end, last]}
+      - description: "A Project object's completed endpoint."
+        type: object
+        required: [object, endpoint]
+        additionalProperties: false
+        properties:
+          object: {description: "Identifier of a Project object.", type: string, minLength: 1}
+          endpoint: {description: "The endpoint the object's schedule offers.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/dateEndpoint"}
+      - description: "The current selected group's first planned start."
+        type: object
+        required: [group]
+        additionalProperties: false
+        properties: {group: {const: firstPlannedStart}}
+  profileFigureIdentity: {description: "A non-empty identity for a View figure or a profile binding name, preserving the existing identifier grammar.", type: string, minLength: 1}
+  profileFigureScope: {description: "Resolve globally (default) or once for each current View group.", enum: [global, group]}
+  profileFigureDays: {description: "Count calendar days or working days of the figure's calendar.", enum: [calendar, working]}
+  profileFigureCalendar: {description: "Project calendar for working-day calculations.", type: string, minLength: 1}
+  profileFigureCountSource:
+    description: "An existing projected integer count source."
+    enum: [selected, recorded, dueUnobserved, notYetDue, unavailable, missingActual, knownFinishVariance, behind, ahead, groups, placedNotes]
+  profileFigure:
+    description: "An existing figure declaration without its View-local id; its binding key supplies that identity."
+    oneOf:
+      - description: "Signed days from one date fact to another."
+        type: object
+        required: [kind, to]
+        additionalProperties: false
+        properties:
+          kind: {const: daysUntil}
+          scope: {$ref: "#/$defs/profileFigureScope"}
+          from: {$ref: "#/$defs/profileFigureFact"}
+          to: {$ref: "#/$defs/profileFigureFact"}
+          days: {$ref: "#/$defs/profileFigureDays"}
+          calendar: {$ref: "#/$defs/profileFigureCalendar"}
+      - description: "The days a named period covers, with its end exclusive."
+        type: object
+        required: [kind, period]
+        additionalProperties: false
+        properties:
+          kind: {const: daysIn}
+          period: {description: "Identifier of a Project period.", type: string, minLength: 1}
+          days: {$ref: "#/$defs/profileFigureDays"}
+          calendar: {$ref: "#/$defs/profileFigureCalendar"}
+      - description: "An integer count of already-projected facts."
+        type: object
+        required: [kind, source]
+        additionalProperties: false
+        properties:
+          kind: {const: count}
+          source: {$ref: "#/$defs/profileFigureCountSource"}
+          scope: {$ref: "#/$defs/profileFigureScope"}
+  profileBinding:
+    description: "One explicit View binding for a declared profile data slot."
+    oneOf:
+      - description: "A planned facet of one named Project object."
+        type: object
+        required: [object, facet]
+        additionalProperties: false
+        properties:
+          object: {description: "Project object identifier.", $ref: "#/$defs/profileFigureIdentity"}
+          facet: {description: "The supported object-data facet.", const: planned}
+      - description: "An existing View figure declaration whose identity is the binding key."
+        type: object
+        required: [figure]
+        additionalProperties: false
+        properties:
+          figure: {$ref: "#/$defs/profileFigure"}
+  profileBindings:
+    description: "Explicit profile data bindings keyed by Summary Profile slot name."
+    type: object
+    propertyNames: {$ref: "#/$defs/profileFigureIdentity"}
+    additionalProperties: {$ref: "#/$defs/profileBinding"}
+  viewWording:
+    description: "Optional View-owned literal replacements for reusable profile labels."
+    type: object
+    additionalProperties: false
+    properties:
+      legend:
+        description: "Legend labels keyed by Detail Profile legend role."
+        type: object
+        propertyNames: {$ref: "#/$defs/profileFigureIdentity"}
+        additionalProperties: {$ref: "#/$defs/profileLegendLabel"}
+      summary:
+        description: "Summary metric captions keyed by the exact joined panel and metric identifiers."
+        type: object
+        propertyNames: {$ref: "#/$defs/profileFigureIdentity"}
+        additionalProperties: {$ref: "#/$defs/profileSummaryLabel"}
+  profileLegendLabel: {description: "A View override for a Detail Profile legend label, with the same text limits as the existing label.", type: string, minLength: 1, maxLength: 4096}
+  profileSummaryLabel: {description: "A View override for a Summary metric label, with the same unrestricted string grammar as the existing label.", type: string}
+  summarySlotSource:
+    description: "A named Summary Profile data slot supplied explicitly by a View binding."
+    type: object
+    required: [slot]
+    additionalProperties: false
+    properties: {slot: {description: "Declared Summary Profile slot name.", $ref: "#/$defs/profileFigureIdentity"}}
   figureFormats:
     description: "Closed count text formats keyed by declared View count figure identity. Explicit empty mapping replaces design defaults."
     type: object
