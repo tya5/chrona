@@ -137,8 +137,10 @@ count closure and final Layout; ordered reanchored proposals use the common
 completed-route validator before ordinary search. The actual v1/v2 Scene/SVG test
 retains spec-build's translated shape without search. Same-input10/10 routes reuse
 without search; best retains byte-identical Scene/SVG and receipts.100 focused
-tests pass; public46-context no-hint reproduction passes. Exact-head CI/full
-release is still required. Original unconditional stability/critical criteria
+tests pass; public46-context no-hint reproduction passes. PR1450 exact-head
+CI38324544571 and synced-main01255938 three-OS release38325655439 succeed.
+Preview11780366932 confirms92 public Scene/SVG files byte-identical; only two
+source diagnostic inventories change. Original unconditional stability/critical criteria
 remain unfinished; do not close the issue for completing hints alone.
 
 S evidence design: the existing default-relax test can pass with an empty
