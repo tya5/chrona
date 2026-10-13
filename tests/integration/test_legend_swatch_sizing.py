@@ -149,8 +149,10 @@ def test_typst_and_tikz_draw_the_completed_swatch_and_label_positions(tmp_path):
     assert (swatch[2], swatch[3]) == (22, 12) and label[0] - _end(swatch) == pytest.approx(6, abs=0.01)
     typst = V05TypstRenderer().render(rendered.surface).content.decode()
     tikz = V05TikzRenderer().render(rendered.surface).content.decode()
-    assert f"left: {round(swatch[0], 3)}pt, top: {round(swatch[1], 3)}pt)[#rect(width: 22pt, height: 12pt" in typst
-    assert f"left: {round(label[0], 3)}pt" in typst and f"at ({round(label[0], 3)}," in tikz
+    assert (f"dx: {round(swatch[0], 3)}pt, dy: {round(swatch[1], 3)}pt)"
+            f"[#rect(width: 22pt, height: 12pt") in typst
+    assert f"dx: {round(label[0], 3)}pt, dy: {round(label[1], 3)}pt" in typst
+    assert f"at ({round(label[0], 3)}," in tikz
 
 
 def test_the_content_sized_legend_slot_measures_the_swatch_gap(tmp_path):

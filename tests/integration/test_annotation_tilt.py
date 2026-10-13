@@ -229,7 +229,7 @@ def test_tikz_draws_the_rotation_and_typst_draws_the_symbol_box_as_a_curve(tmp_p
     tikz = render_v05_tikz(surface)
     assert "rotate=4" in tikz
     typst = render_v05_typst(surface)  # the tilted box is a closed Symbol outline (#1308)
-    assert "#curve(" in typst and "curve.close()" in typst
+    assert '#curve(' in typst and 'curve.close(mode: "straight")' in typst
 
 
 def test_the_contrast_gate_judges_the_rotated_text_on_its_box(tmp_path):

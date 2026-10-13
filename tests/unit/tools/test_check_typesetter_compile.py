@@ -97,15 +97,16 @@ def test_successful_matrix_retains_sources_pdfs_logs_and_report(tmp_path, monkey
     assert all(environment["PATH"] == "preserved-test-path" for environment in environments)
 
 
-def test_only_the_existing_technical_print_pattern_refusal_is_allowed_and_not_passed(tmp_path, monkeypatch):
+def test_technical_print_pattern_refusal_is_an_export_failure_until_exportable(tmp_path, monkeypatch):
     report, calls, _out, _envs = _matrix(tmp_path, monkeypatch, refusal=True)
 
     refused = [case for case in report["cases"] if case["preset"] == "technical-print"]
-    assert report["status"] == "incomplete"
-    assert len(refused) == 2 and all(case["status"] == "allowed_refusal" for case in refused)
-    assert all(case["error"]["type"] == "allowed_capability_refusal" for case in refused)
-    assert sum(Path(call[call.index("--output") + 1]).suffix in {".typ", ".tex"}
-               for call in calls if "--output" in call) == 6
+    assert report["status"] == "failed"
+    assert len(refused) == 2 and all(case["status"] == "failed" for case in refused)
+    assert all(case["error"]["type"] == "export_error" for case in refused)
+    assert all(not Path(case["source"]).exists() and not Path(case["pdf"]).exists()
+               for case in refused)
+    assert sum("--output" in call for call in calls) == 6
 
 
 def test_unexpected_refusal_and_compiler_error_are_typed_and_matrix_continues(tmp_path, monkeypatch):

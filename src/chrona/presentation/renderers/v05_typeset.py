@@ -6,6 +6,7 @@ import re
 
 from chrona.core.ports import RenderArtifact
 from chrona.presentation.scene.model import ScenePrimitive, SceneSurface
+from chrona.presentation.renderers.pattern_repeat import repeat_cells
 
 
 def _error(code: str, detail: str) -> ValueError:
@@ -236,6 +237,8 @@ def _typst_curve(commands: list, *, fill: str | None, stroke: str | None, close:
             items.append(f"curve.move({_typst_pt(points[0])})")
         elif kind == "line":
             items.append(f"curve.line({_typst_pt(points[0])})")
+        elif kind == "close":
+            items.append('curve.close(mode: "straight")')
         else:
             items.append(f"curve.quad({_typst_pt(points[0])}, {_typst_pt(points[1])})")
     if close:
@@ -254,15 +257,28 @@ def _typst_stroke(node: ScenePrimitive, channel: str = "stroke") -> str:
     return f"(paint: {color}, thickness: {_number(width)}pt)" if width is not None else color
 
 
-def _tikz_data(commands: list) -> str:
+def _tikz_data(commands: list, *, exact_quadratic: bool = False) -> str:
     parts = []
+    current = start = (0.0, 0.0)
     for kind, points in commands:
         if kind == "move":
             parts.append(f"({_number(points[0][0])},{_number(points[0][1])})")
+            current = start = points[0]
         elif kind == "line":
             parts.append(f"-- ({_number(points[0][0])},{_number(points[0][1])})")
+            current = points[0]
+        elif kind == "close":
+            parts.append("-- cycle")
+            current = start
         else:
-            parts.append(f".. controls ({_number(points[0][0])},{_number(points[0][1])}) .. ({_number(points[1][0])},{_number(points[1][1])})")
+            control, end = points
+            if exact_quadratic:
+                first = tuple(current[i] + (control[i] - current[i]) * 2 / 3 for i in (0, 1))
+                second = tuple(end[i] + (control[i] - end[i]) * 2 / 3 for i in (0, 1))
+                parts.append(f".. controls ({_number(first[0])},{_number(first[1])}) and ({_number(second[0])},{_number(second[1])}) .. ({_number(end[0])},{_number(end[1])})")
+            else:
+                parts.append(f".. controls ({_number(control[0])},{_number(control[1])}) .. ({_number(end[0])},{_number(end[1])})")
+            current = end
     return " ".join(parts)
 
 
@@ -278,13 +294,87 @@ def _requires_wobble(surface: SceneSurface) -> bool:
                for node in surface.primitives)
 
 
+def _pattern_tile(node: ScenePrimitive, target: str) -> str:
+    """Serialize one completed tile in its own clipped coordinate frame."""
+    pattern, paint = node.pattern, node.paint
+    parts = []
+
+    def path(commands, fill=None, width=None, cap="butt", join="miter"):
+        if target == "typst":
+            color = _typst_color(node, "stroke")
+            stroke = (f'(paint: {color}, thickness: {_number(width)}pt, cap: "{cap}", join: "{join}")'
+                      if width is not None else None)
+            return _typst_curve(commands, fill=fill, stroke=stroke, close=False)
+        options = []
+        if fill is not None:
+            options.extend((f"fill={fill}", f"fill opacity={_number(_tikz_channel_opacity(node, 'stroke'))}"))
+        if width is not None:
+            options.extend((f"draw={_tikz_color(node, 'stroke')}",
+                            f"draw opacity={_number(_tikz_channel_opacity(node, 'stroke'))}",
+                            f"line width={_number(width)}pt", f"line cap={cap}", f"line join={join}"))
+        return f"\\path[{', '.join(options)}] {_tikz_data(commands, exact_quadratic=True)};"
+
+    if pattern.primitives and paint.fill is not None:
+        if target == "typst":
+            parts.append(f'#place(top + left)[#rect(width: {_number(pattern.tile_inline_size)}pt, height: {_number(pattern.tile_block_size)}pt, fill: {_typst_color(node, "fill")}, stroke: none)]')
+        else:
+            parts.append(f"\\path[fill={_tikz_color(node, 'fill')}, fill opacity={_number(_tikz_channel_opacity(node, 'fill'))}] (0,0) rectangle ({_number(pattern.tile_inline_size)},{_number(pattern.tile_block_size)});")
+    for stroke in pattern.strokes:
+        parts.append(path([("move", (stroke.start,)), ("line", (stroke.end,))], width=stroke.width))
+    for item in pattern.primitives:
+        if item.kind == "circle":
+            channel = item.fill_channel or "ink"
+            color_channel = "fill" if channel == "substrate" else "stroke"
+            if target == "typst":
+                fill = "none" if channel == "none" else _typst_color(node, color_channel)
+                stroke = "none" if item.stroke_width is None else f'(paint: {_typst_color(node, "stroke")}, thickness: {_number(item.stroke_width)}pt)'
+                parts.append(f'#place(top + left, dx: {_number(item.cx-item.radius)}pt, dy: {_number(item.cy-item.radius)}pt)[#circle(radius: {_number(item.radius)}pt, fill: {fill}, stroke: {stroke})]')
+            else:
+                options = ["fill=none"] if channel == "none" else [f"fill={_tikz_color(node, color_channel)}", f"fill opacity={_number(_tikz_channel_opacity(node, color_channel))}"]
+                if item.stroke_width is not None:
+                    options.extend((f"draw={_tikz_color(node, 'stroke')}", f"draw opacity={_number(_tikz_channel_opacity(node, 'stroke'))}", f"line width={_number(item.stroke_width)}pt"))
+                parts.append(f"\\path[{', '.join(options)}] ({_number(item.cx)},{_number(item.cy)}) circle[radius={_number(item.radius)}pt];")
+        elif item.kind == "rect":
+            commands = [("move", ((item.x, item.y),)), ("line", ((item.x+item.inline_size, item.y),)),
+                        ("line", ((item.x+item.inline_size, item.y+item.block_size),)),
+                        ("line", ((item.x, item.y+item.block_size),)), ("close", ())]
+            fill = _typst_color(node, "stroke") if target == "typst" else _tikz_color(node, "stroke")
+            parts.append(path(commands, fill=fill))
+        else:
+            commands = [(command.kind, command.points) for command in item.commands]
+            fill = (_typst_color(node, "stroke") if target == "typst" else _tikz_color(node, "stroke")) if item.paint == "fill" else None
+            parts.append(path(commands, fill=fill, width=item.stroke_width,
+                              cap=item.line_cap or "butt", join=item.line_join or "miter"))
+    return "\n".join(parts)
+
+
+def _pattern_rect(node: ScenePrimitive, target: str) -> str:
+    """Lower a periodic fill without changing Layout's completed geometry."""
+    cells = repeat_cells(node)
+    pattern = node.pattern
+    x, y, w, h = node.bounds
+    tile = _pattern_tile(node, target)
+    tw, th = map(_number, (pattern.tile_inline_size, pattern.tile_block_size))
+    radius = _number(node.corner_radius or 0)
+    if target == "typst":
+        copies = [f'#place(top + left, dx: {_number(cx-x)}pt, dy: {_number(cy-y)}pt)[#rotate({_number(pattern.angle_degrees)}deg, origin: top + left, reflow: false)[#box(width: {tw}pt, height: {th}pt, inset: 0pt, clip: true)[{tile}]]]'
+                  for cx, cy in cells]
+        return f'#place(top + left, dx: {_number(x)}pt, dy: {_number(y)}pt)[#box(width: {_number(w)}pt, height: {_number(h)}pt, radius: {radius}pt, inset: 0pt, clip: true)[' + "\n".join(copies) + "]]"
+    copies = [r"\begin{scope}", f"\\clip[rounded corners={radius}pt] ({_number(x)},{_number(y)}) rectangle ({_number(x+w)},{_number(y+h)});"]
+    for cx, cy in cells:
+        copies.extend((f"\\begin{{scope}}[shift={{({_number(cx)},{_number(cy)})}}, rotate={_number(-pattern.angle_degrees)}]",
+                       f"\\clip (0,0) rectangle ({tw},{th});", tile, r"\end{scope}"))
+    copies.append(r"\end{scope}")
+    return "\n".join(copies)
+
+
 def _unsupported_details(surface: SceneSurface, target: str) -> str:
     reasons = []
     for node in surface.primitives:
         features = []
         if node.paint is not None and node.paint.wobble is not None and node.paint.wobble.fidelity == "required":
             features.append("required wobble")
-        if node.pattern is not None:
+        if node.pattern is not None and node.kind != "Rect":
             features.append("pattern")
         if node.stroke_clip is not None:
             features.append("aligned stroke clip")
@@ -299,7 +389,7 @@ def render_v05_typst(surface: SceneSurface) -> str:
     if any(node.stroke_clip is not None or (node.text_layout is not None and node.text_layout.runs)
            for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "Typst"))
-    if _requires_wobble(surface) or any(node.pattern is not None for node in surface.primitives):
+    if _requires_wobble(surface) or any(node.pattern is not None and node.kind != "Rect" for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "Typst"))
     if surface.canvas_bounds is None:
         raise _error("E_PRESENTATION_RENDER_INPUT", "Typst requires completed canvasBounds")
@@ -312,6 +402,9 @@ def render_v05_typst(surface: SceneSurface) -> str:
         x, y, w, h = node.bounds
         parts.append(f"// scene-id: {_typst_string(node.scene_id)} source-ref: {_typst_string(node.source_ref)}")
         if node.kind == "Rect":
+            if node.pattern is not None:
+                parts.append(_pattern_rect(node, "typst"))
+                continue
             radius = f', radius: {_number(node.corner_radius)}pt' if node.corner_radius else ''
             parts.append(f'#place(top + left, dx: {_number(x)}pt, dy: {_number(y)}pt)[#rect(width: {_number(w)}pt, height: {_number(h)}pt{radius}{_typst_rect_paint(node)})]')
         elif node.kind == "Text":
@@ -360,7 +453,7 @@ def render_v05_tikz(surface: SceneSurface) -> str:
     if any(node.stroke_clip is not None or (node.text_layout is not None and node.text_layout.runs)
            for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "TikZ"))
-    if _requires_wobble(surface) or any(node.pattern is not None for node in surface.primitives):
+    if _requires_wobble(surface) or any(node.pattern is not None and node.kind != "Rect" for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "TikZ"))
     if surface.canvas_bounds is None:
         raise _error("E_PRESENTATION_RENDER_INPUT", "TikZ requires completed canvasBounds")
@@ -375,6 +468,9 @@ def render_v05_tikz(surface: SceneSurface) -> str:
         x, y, w, h = node.bounds
         parts.append(f"% scene-id: {_tex_string(node.scene_id)} source-ref: {_tex_string(node.source_ref)}")
         if node.kind == "Rect":
+            if node.pattern is not None:
+                parts.append(_pattern_rect(node, "tikz"))
+                continue
             rounded = f", rounded corners={_number(node.corner_radius)}pt" if node.corner_radius else ""
             parts.append(f"\\path[{_tikz_rect_paint(node)}{rounded}] ({_number(x)},{_number(y)}) rectangle ({_number(x+w)},{_number(y+h)});")
         elif node.kind == "Text":

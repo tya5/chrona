@@ -326,7 +326,7 @@ exists in the Scene slot list only for such a Theme. Its identity is
 `canvas-texture`, purpose and visual role `canvas-texture`, paint order 0, and it
 is the first primitive Scene emits, so it paints below every other primitive
 whatever paint order a band or mark declares. It is an ordinary patterned Rect:
-scene v0.7 carries it, SVG and PNG paint it, Typst and TikZ reject it, and no
+scene v0.7 carries it, SVG, PNG, Typst and TikZ paint it, and no
 Scene field is added. The contrast policy and the perceptibility observation
 `I_SCENE_PAINT_CONTRAST` treat its substrate and ink as the ground of what lies on
 it: a mark or state text is measured against the worse of the two
@@ -385,7 +385,7 @@ its paint order 0, and Scene emits the frames right after
 the canvas texture, a container's frame before its children's, and before every other primitive, so a
 panel paints below bands, rows, gridlines, marks and text whatever paint order those declare. It is an
 ordinary Rect (a catalogue pattern makes the Scene v0.7, as for any patterned Rect): SVG and PNG paint it,
-Typst and TikZ draw a plain one and reject a patterned one, and no Scene field is added. A frame is an
+Typst and TikZ draw both plain and patterned Rects, and no Scene field is added. A frame is an
 allocation, not a plot-height overlay: it follows the node's bounds, and the plot rule of Specification 50
 is unchanged inside it.
 

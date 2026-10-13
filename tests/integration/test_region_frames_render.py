@@ -368,16 +368,15 @@ def _patterned(directory: Path):
     return _render(directory, parts, icon_catalogs=(CATALOGUE,))
 
 
-def test_a_halftone_panel_carries_a_catalogue_pattern_and_typst_and_tikz_reject_it(tmp_path) -> None:
+def test_a_halftone_panel_carries_a_catalogue_pattern_and_typeset_adapters_draw_it(tmp_path) -> None:
     review = _patterned(tmp_path)
     chart = _frames(review)["region-frame:review"]
 
     assert chart.pattern is not None and chart.pattern.primitives
     assert scene_document(review.scene)["version"] == "chrona/scene/v0.7"
     assert "<pattern " in review.artifact.content.decode()
-    for render in (render_v05_typst, render_v05_tikz):
-        with pytest.raises(ValueError, match="E_VISUAL_CAPABILITY_UNSUPPORTED"):
-            render(review.surface)
+    assert "clip: true" in render_v05_typst(review.surface)
+    assert r"\clip" in render_v05_tikz(review.surface)
     findings = evaluate_scene_contrast(scene_document(review.scene))
     assert not [item for item in findings if item.severity == "error"]
 

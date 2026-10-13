@@ -344,18 +344,22 @@ def test_typst_and_tikz_draw_a_solid_tab_as_a_plain_rect_at_its_place(tmp_path):
     surface = _render(tmp_path, _parts(pattern=False)).scene.surfaces[0]
 
     typst, tikz = render_v05_typst(surface), render_v05_tikz(surface)
-    assert '#place(left: 36pt, top: 141.1pt)[#rect(width: 40pt, height: 20pt, fill: rgb("#FFC857"))]' in typst
+    assert '#place(top + left, dx: 36pt, dy: 141.1pt)[#rect(width: 40pt, height: 20pt, fill: rgb("#FFC857"))]' in typst
     assert "% scene-id: group-tab:bus source-ref: bus" in tikz
-    assert r"\path[fill=#FFC857] (36,141.1) rectangle (76,161.1);" in tikz
-    assert typst.count('fill: rgb("#FFC857"))]') == tikz.count("fill=#FFC857") == len(OWNERS)
+    assert r"\path[fill={rgb,255:red,255;green,200;blue,87}, fill opacity=1] (36,141.1) rectangle (76,161.1);" in tikz
+    assert typst.count('fill: rgb("#FFC857"))]') == tikz.count("fill={rgb,255:red,255;green,200;blue,87}") == len(OWNERS)
 
 
-def test_typst_and_tikz_reject_a_patterned_tab_with_the_existing_capability_error(tmp_path):
+def test_typst_and_tikz_draw_a_patterned_tab_with_completed_tiles_and_clips(tmp_path):
     surface = _render(tmp_path, _parts()).scene.surfaces[0]
 
-    for render in (render_v05_typst, render_v05_tikz):
-        with pytest.raises(ValueError, match="E_VISUAL_CAPABILITY_UNSUPPORTED"):
-            render(surface)
+    typst, tikz = render_v05_typst(surface), render_v05_tikz(surface)
+    assert typst.count("#rotate(") >= len(OWNERS)
+    assert typst.count("clip: true") >= 2 * len(OWNERS)
+    assert "#curve(" in typst
+    assert tikz.count(r"\clip[rounded corners=") >= len(OWNERS)
+    assert tikz.count(r"\clip (0,0) rectangle") >= len(OWNERS)
+    assert r"\path[fill={rgb,255:red,255;green,200;blue,87}" in tikz
 
 
 # --- the Theme schemas -------------------------------------------------------------------------------------

@@ -93,19 +93,6 @@ def _export_command(target: str, executable_python: str, project: Path,
     return command
 
 
-def _allowed_pattern_refusal(preset: str | None, payload: Mapping[str, Any]) -> bool:
-    if payload.get("status") != "rejected":
-        return False
-    diagnostics = payload.get("diagnostics")
-    if preset != "technical-print" or not isinstance(diagnostics, list) or len(diagnostics) != 1:
-        return False
-    item = diagnostics[0]
-    if not isinstance(item, dict) or item.get("code") != "E_VISUAL_CAPABILITY_UNSUPPORTED":
-        return False
-    message = item.get("message")
-    return isinstance(message, str) and all(token in message for token in ("pattern", "axis-band-rect", "role "))
-
-
 def _compile_command(target: str, executable: Path, source: Path, pdf: Path) -> tuple[list[str], Path, Path]:
     if target == "typst":
         fonts = ROOT / "src" / "chrona" / "resources" / "fonts"
@@ -195,12 +182,7 @@ def run_matrix(*, typst: Path, tectonic: Path, output: Path,
                 if expected_exit is None or result.returncode != expected_exit:
                     case["error"] = _error("protocol_error", "render failure status and exit code disagree")
                     continue
-                if _allowed_pattern_refusal(preset, payload):
-                    case["status"] = "allowed_refusal"
-                    case["error"] = {"type": "allowed_capability_refusal",
-                                     "message": payload["diagnostics"][0]["message"]}
-                else:
-                    case["error"] = _error("export_error", f"render export exited {result.returncode}: {payload}")
+                case["error"] = _error("export_error", f"render export exited {result.returncode}: {payload}")
                 continue
             if payload["status"] != "ok":
                 case["error"] = _error("protocol_error", "render export exited successfully without status=ok")
@@ -226,8 +208,7 @@ def run_matrix(*, typst: Path, tectonic: Path, output: Path,
             case["status"] = "compiled"
             case["error"] = None
 
-    statuses = {case["status"] for case in cases}
-    status = "failed" if "failed" in statuses else "incomplete" if "allowed_refusal" in statuses else "complete"
+    status = "failed" if any(case["status"] == "failed" for case in cases) else "complete"
     report = {"status": status, "visual_profile": VISUAL_PROFILE,
               "project": str(project), "actual": str(actual) if actual else None,
               "versions": versions, "case_count": len(cases), "cases": cases}
@@ -247,7 +228,7 @@ def main(argv: list[str] | None = None) -> int:
                         project=args.project, actual=args.actual)
     print(json.dumps({"status": report["status"], "case_count": report["case_count"],
                       "report": str(args.output.resolve() / "report.json")}, ensure_ascii=False))
-    return 0 if report["status"] == "complete" else (2 if report["status"] == "incomplete" else 1)
+    return 0 if report["status"] == "complete" else 1
 
 
 if __name__ == "__main__":
