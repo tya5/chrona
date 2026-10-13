@@ -242,7 +242,13 @@ def test_the_view_table_width_unions_explain_as_their_inlined_twin_did():
 
     def site(schema, pointer):
         registry = schema_registry().with_resource(schema["$id"], Resource.from_contents(schema))
-        return Draft202012Validator({"$ref": f"{schema['$id']}#{pointer}"}, registry=registry)
+        reference = f"{schema['$id']}#{pointer}"
+        if schema is adopted and pointer != base:
+            # The width grammar moved as a whole; nested parity still exercises
+            # its real adopted target rather than an obsolete inline path.
+            width = schema["allOf"][1]["properties"]["body"]["properties"]["tableColumns"]["items"]["properties"]["width"]
+            reference = width["$ref"] + pointer[len(base):]
+        return Draft202012Validator({"$ref": reference}, registry=registry)
 
     adopted, twin = schema_document("view-v0.28.schema.yaml"), dereferenced_schema("view-v0.28.schema.yaml")
     base = "/allOf/1/properties/body/properties/tableColumns/items/properties/width"
