@@ -47,58 +47,27 @@ No additional programme gate replaces the original or mandatory hint criteria.
 
 ## Verification and architecture
 
-PR1453 head414e20a6: artifact11784319096 has101 managed paths, no retirements,
-92/92 public Scene/SVG bytes identical, only diagnostic inventory changed
-([audit](https://github.com/tya5/chrona/pull/1453#issuecomment-6136656126)).
-CI38335371719 passed conformance, MCP, newest-Python reproduction and pytest
-shards1/2. Shard3 failed one curated-warning sentence test (3703 passed,
-15 standard skips); derived-ready failed consequentially, not independently.
-The new warning's missing user-facing sentence is corrected in the existing
-use-case message owner with a finite-domain/no-continuous-impossibility test.
-Required current-head checks and exact-main release remain pending.
+Implementation: [PR1453](https://github.com/tya5/chrona/pull/1453), final
+head9e3d2e73. Current exact-head CI38336753803 and containing exact-main release
+remain required; do not close on an older green head.
 
-Counter review correction: protected search is counted only when its iterator
-is entered, not when every egress is blocked or a finite shape settles it.
-Seven finite-domain unit controls and actual-render receipt/summary projection cover this;
-focused correction batch57 PASS. The protected-pass stale specification status
-is removed with this implementation update. This is the existing receipt
-contract, not a new routing policy. Final exact-head CI/artifact evidence must
-include this correction before merging.
+Focused routing/critical/hint/Scene/SVG batch138 PASS; final counter/message/
+hint batch57 PASS. Real rendered controls cover safe over-quality routes,
+domain exhaustion, actual search receipts and reanchored joins. Independent
+reviews found rank and first-fit-order defects; regression tests cover the fixes.
+The sound endpoint quality floor avoids pointless zero-bend enumeration without
+weakening safety. Uncapped simple-path work can still be exponential.
 
-Selected S/C implementation: `2cf36485` plus the independently moving endpoint
-join test correction. Focused routing/critical/hints/Scene/SVG suite138 PASS;
-final protected controls8 PASS and strengthened S controls6 PASS. Initial
-zero-bend render test was interrupted after65.53s; the published quality-floor
-design correction replaces exhaustive rejected-safe-path enumeration with a
-sound bound, not a larger quota. Independent Luna review found cross-pair rank
-and first-fit fallback-order defects; both have real regression tests and fixes.
-Local conformance passes every check except stale generated diagnostic inventory;
-CI must regenerate it in the shared snapshot. The46-slide batched materializer
-check passed before the final ordering/diagnostic refinements; exact-head CI
-snapshot must confirm the final bytes. Do not close until that and full release.
+Failure disposition: initial CI38335371719 failed one missing curated warning
+sentence, fixed in diagnostic_messages.py with a finite-domain regression.
+Corrected CI38336078901 succeeded. Its artifact11785056823 had101 managed
+paths, no retirements and92/92 identical public Scene/SVG bytes; only the
+generated diagnostic inventory changed. Final-head artifacts must independently
+confirm those bytes after the counter correction. No authored examples change.
 
-Independent inspection/delta/priority release208cf1cc/38290538367 succeeded;
-atomic recovery release8ce44cb0/38317097402 succeeded. H1 focused70 tests pass;
-H2 focused100 tests pass. Own-venv `tools/regenerate_public_examples.py --check
---jobs 4` passes46 slides. The real immutable public materializer stages/reads
-neutral artifact bytes exactly, preserves the prior file and emits hint receipts.
-Schema equivalence passes; no historical verdicts or authored examples change.
-
-PR1450 head a9d884c8 CI38324000103 initially failed three conformance checks:
-the new hash-comparison classification, regenerated CLI reference and required
-programme-section heading were missing. The classification follows the already
-approved exact-byte pin contract; restore the reference and heading, not the
-validators. Preview11780156269 confirms all92 public Scene/SVG files are
-byte-identical; only two source diagnostic inventories change. Re-run exact-head
-CI after the corrections succeeded; the original stability/critical rows remain not met.
-The queued test-only stability evidence is included in this necessary correction
-push, avoiding a second CI restart/publication cycle. CLI reference execution,
-live classification and23 focused tooling tests pass locally.
-
-Core critical facts stay in Presentation; Layout owns label obstruction/anchor
-decisions and routing order; CLI only formats already-validated Scene data.
-Protected quality/completeness is not enabled. Unsafe-mode supersession follows
-published #1427. The [port correction](../../design/issue-1300-scene-hint-port-correction-2026-10-13.md)
-does not infer missing historical egress IDs: current legal pairs are tried in
-declared first-fit order through shared safety/quality validators. Scene/adapters
-only project; no extra Scene schema field, heuristic cache or duplicate validator.
+Architecture: scheduler owns immutable critical facts; ingress owns pinned
+prior-Scene integrity; Layout owns matching, reanchoring, completed safety,
+quality, finite-domain feasibility and truthful counters. Scene/adapters only
+project. Other unroutable modes retain1427; ordinary bounded search and best
+ignoring hints remain unchanged. The [port correction](../../design/issue-1300-scene-hint-port-correction-2026-10-13.md)
+does not infer missing egress IDs or add a duplicate geometry validator.

@@ -5,6 +5,12 @@ Authority: [reviewer decisions6136355223](https://github.com/tya5/chrona/issues/
 These supersede unconditional no-hint stability and continuous-space
 impossibility. No local-graph redesign.
 
+Current status: implementation published in PR1453, head9e3d2e73; focused
+final correction batch57 PASS. Exact-head CI38336753803 and its artifact audit
+are pending, followed by merge and containing exact-main release. The prior
+corrected head passed CI38336078901; it is not the final-head gate. Keep the
+issue open until the selected S/C criteria and release are verified.
+
 ## Design plan
 
 H1/H2 are released (PR1450, public01255938, full release38325655439).
@@ -79,7 +85,7 @@ Independent Luna read-only audit confirmed these generator/validator seams.
 | --- | --- |
 | C finite domain | route_search.py optional uncapped enumeration; routing.py protected selection and typed fallback/exhaustion evidence; surface_routes.py critical+suppress gating and diagnostics; model/info_diagnostics.py typed projection if required. Keep ordinary caps untouched. Tests: graph natural exhaustion versus quota, rejected cheapest candidate followed by valid alternative, later quality-eligible pair before safe fallback, quality overrun and genuinely impossible domain, real Scene/SVG diagnostics, critical priority and all other modes. |
 | S evidence | test_revision_launch_trial.py every accepted hint/reanchored shape; test_revision_delta_anchor_stability.py previous Scene shift/append and unchanged delta sides. Reuse actual materializer/decoder tests, best/no-input byte controls. |
-| Publication | One implementation PR with literal acceptance review and batched public evidence. Include completed1402 archive in the next document batch. Full release matrix via CI; preserve authored examples untouched. |
+| Publication | PR1453 includes the implementation, literal acceptance review and completed1402 archive. Inspect one final-head public-evidence batch; full release matrix via CI; authored examples untouched. Final release records are a separate batched document publication. |
 
 Implementation review correction: an actual zero-bend quality test exposes
 exponential enumeration when no quality-eligible route can exist. A proven
