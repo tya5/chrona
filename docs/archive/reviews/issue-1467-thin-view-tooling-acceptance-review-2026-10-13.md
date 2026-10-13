@@ -6,7 +6,9 @@ Base: READY555916e6; reviewer source6ec0b099 (PR1466).
 [Plan and architecture boundary](https://github.com/tya5/chrona/issues/1467#issuecomment-6145808436).
 Implementation accepted on exact-main `78abc2ea9983bccb283af25b700c62bbb24e39d8`.
 [Full release38403112453](https://github.com/tya5/chrona/actions/runs/38403112453) SUCCESS.
-Issue stays open until the final review publication gate completes.
+Issue closed after the completed review's exact-main publication gate:
+`653145c065437dfd98179b113fc8fa9b5a39a442`,
+[release38407706306](https://github.com/tya5/chrona/actions/runs/38407706306) SUCCESS.
 
 ## Literal issue acceptance
 
@@ -51,5 +53,7 @@ includes the five designs; its report bytes remain identical to the prior baseli
 Full release38403112453 passes all three OS jobs and both independent MCP/newest
 reproduction jobs on that exact main, including the five corpus parameters.
 
-Publication gate: publish this final review, verify its exact-main CI, then close.
-No product, schema or generated output changes belong to this review publication.
+Final publication gate completed: PR1468 merged; all three OS full matrices,
+MCP floor and newest public reproduction passed on exact-main653145c0 in
+release38407706306. All literal criteria met; no remaining issue work.
+This post-closure archive changes no product, schema or generated output.
