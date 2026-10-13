@@ -23,6 +23,10 @@ the actual mark, while `planned` uses the planned mark.  An absent source,
 absent host, or zero fraction produces no submark.  A fraction of one is a
 full-host submark; no alternative fill, estimate, or interpolation is inferred.
 
+When the matching Plan or Actual legend key is declared, it repeats a full
+progress inset using the same progress-fill treatment. The other host's key
+does not gain a progress inset; no separate legend entry is inferred.
+
 ## 2. Layout and Scene boundary
 
 Layout receives the selected fraction and completed host mark bounds.  It
