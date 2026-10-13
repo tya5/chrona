@@ -40,7 +40,7 @@ def _surface_findings(primitives: list[dict[str, Any]]) -> list[str]:
     for role, key in sorted(keys.items()):
         if ":" in role:
             continue
-        if key["kind"] == "Path":
+        if key["kind"] == "Path" and role not in {*MARK_PREFIXES, "milestone"}:
             bounds, points = key["bounds"], key.get("points") or []
             inside = all(math.isfinite(x) and math.isfinite(y)
                          and bounds["inline"] - 1e-6 <= x <= bounds["inline"] + bounds["inlineSize"] + 1e-6

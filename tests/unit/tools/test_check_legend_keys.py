@@ -29,8 +29,9 @@ def test_bar_key_family_and_paint_match(role):
 
 
 @pytest.mark.parametrize("role", ["planned", "actual", "snapshot", "scenario"])
-def test_bar_key_rejects_wrong_shape_family(role):
-    scene = _scene([_rect(f"{role}:host"), _rect(f"legend-swatch:{role}", kind="Symbol")])
+@pytest.mark.parametrize("wrong_kind", ["Symbol", "Path"])
+def test_bar_key_rejects_wrong_shape_family(role, wrong_kind):
+    scene = _scene([_rect(f"{role}:host"), _rect(f"legend-swatch:{role}", kind=wrong_kind)])
     assert any(role in finding and "shape" in finding.lower() for finding in legend_key_findings(scene))
 
 
