@@ -402,6 +402,42 @@ declare `best`; its canonical manifest representation and output remain
 unchanged. The five approved HALCYON targets explicitly declare `best` before
 this default changes. No authored example is edited by dev A.
 
+**Previous-Scene reuse (#1300).** With an explicit previous-Scene input,
+`first-fit` may try one uniquely reconstructed prior route before its ordinary
+normal-domain proposals. Match surface, source identity and both endpoint instance
+identities exactly; decoration paths and paired stubs are not route hints. Recover
+the semantic endpoint coordinates from old host geometry and terminal semantics
+only when unique. Scene does not record selected egress-side IDs; a tangent is
+not proof of that identity. Preserve the point/body boundary choice when uniquely
+identified, then try currently admitted egress pairs in existing first-fit order.
+The first fully accepted compatible proposal wins before ordinary proposals or
+search. Unsupported geometry or incompatible terminal evidence is a hint miss.
+No nearest-point guess or serialized Scene mutation is permitted.
+
+Reanchoring preserves semantic endpoints, shape family and interior channels:
+translate the whole route for equal endpoint-corridor translations; otherwise
+replace endpoint corridors and their adjacent orthogonal joins. Reject ambiguous
+or degenerate results. Hints use the same completed-candidate preparation and
+terminal, corner, window, obstacle, primary-mark, self-overlap and quality checks
+as ordinary normal routes. An unsafe recovered route is not an accepted hint;
+failed hints continue through ordinary search and the declared recovery policy.
+`best` ignores hint geometry and emits no hint diagnostics, preserving its existing
+finite-quota selection and receipts. Omission preserves all prior output bytes.
+
+For a supplied input under `first-fit`, Layout emits typed per-instance hint facts
+and `I_LAYOUT_RELATION_HINT_SUMMARY` with accepted, invalidated, unusable and absent
+counts, plus ordinary-selection and actual-search instance counts. A supported
+document without endpoint evidence counts as unusable; otherwise no exact key is
+absent, an ambiguous/unsupported matched route is unusable, a reconstructible
+candidate failing current validation is invalidated, and a passing one is accepted.
+These categories cover admitted relation instances once; explicit-window endpoint
+absence remains separate. Every nonaccepted hint enters ordinary selection;
+finite proposals may win without bounded search. Actual-search counts only
+instances entering a search iterator. Receipts count processed expansions, not hint
+validation. A changed obstacle, policy, terminal or host is changed routing input,
+even when endpoint dates stay equal. Reuse proves neither unconditional revision
+stability nor critical feasibility; their original acceptance remains independent.
+
 **Explicit search budget (#1426).**
 Optional `relationRouting.searchBudget` is a positive integer, an additional
 ceiling on processed candidate expansions under either policy per resolved relation instance per

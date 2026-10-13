@@ -94,6 +94,26 @@ Store identity, normalized address, immutable revision, and content identity. A 
 verifies all of these values; it does not search a directory to find a matching ID.
 Duplicate `(kind, id)` pairs in an evaluation are invalid.
 
+### Previous Scene artifact input (#1300)
+
+Render Context v0.17 optionally accepts `body.inputs.previousScene`, an immutable
+artifact pin `{store, address, revision, contentIdentity}`. Every member is required;
+`contentIdentity` is the exact SHA-256 of the Scene bytes. This is not a resource
+reference: Scene has no resource ID, so the pin has neither `id` nor `kind`.
+The optional widening preserves omission behavior and requires no Context or
+Scene version migration. Its schema reuses the existing Store/address/revision
+and digest definitions rather than weakening their guards.
+
+Closure resolution captures and verifies the pinned bytes. The render use case
+validates a supported Scene document and exactly one primary `project` provenance
+entry whose stable ID equals the current Project ID; revisions and content hashes
+may differ. Missing, malformed, unsupported-version, wrong-project or mismatched
+inputs fail before output, through existing Store/content/Scene/input diagnostics.
+Valid supported documents lacking usable route evidence produce measured hint
+misses, not ingress errors. The pin participates in closure read accounting,
+materializer overlays and Context identity; it never replaces semantic resources.
+No additional Scene output field or implicit previous-render lookup is introduced.
+
 M28's v0.6 Render Context makes `inputs.snapshot` a typed `snapshot-ref` edge. Its
 nested immutable Project reference is part of the same evaluation closure and may have
 an older revision than the primary Project. The closure records both revisions; it

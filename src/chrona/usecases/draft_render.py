@@ -20,6 +20,7 @@ from chrona.core.ports import RenderArtifact
 from chrona.presentation.contracts import TypesetterIdentity
 from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, ClosureError, resolve_draft_render
 from chrona.presentation.model.info_diagnostics import (
+    RelationHintReceipt, RelationHintSummary,
     PaintOmission, SuppressedPlotLabels, RelationRoutingSummary, RelationSearchBudgetHit,
     RelationResolutionInfo, RelationResolutionSummary,
     RelationPolicySupersession,
@@ -60,6 +61,7 @@ class DraftRenderRequest:
     typesetter_adapter_grammar: str | None = None
     relations: Literal["none", "semantic"] | None = None
     progress: RenderProgress | None = field(default=None, compare=False, repr=False)
+    previous_scene: str | Path | None = None
 
 
 @dataclass(frozen=True)
@@ -148,6 +150,7 @@ def render_draft(request: DraftRenderRequest) -> DraftRenderResult:
         try:
             closure = resolve_draft_render(
                 project_path=Path(request.project),
+                previous_scene_path=_optional_path(request.previous_scene),
                 preset_path=preset_path if preset_path is not None else Path(str(default)),
                 preset_root=None if preset_path is not None else Path(str(default_preset_root())),
                 view_path=_optional_path(request.view), theme_path=_optional_path(request.theme),
@@ -205,7 +208,12 @@ def warning_payloads(rendered: RenderedReview) -> list[dict[str, Any]]:
                          "message": f"preset {fallback.preset_id} prefers {fallback.preferred_profile}; "
                                     f"selected {fallback.selected_profile} for {fallback.target_kind}"})
     for info in rendered.info_diagnostics:
-        if isinstance(info, RelationPolicySupersession):
+        if isinstance(info, (RelationHintReceipt, RelationHintSummary)):
+            payloads.append({"code": info.code, "severity": "info", **info.payload(),
+                "message": (f"Prior route {info.relation_id}: {info.disposition} ({info.reason})"
+                            if isinstance(info, RelationHintReceipt) else
+                            f"Previous Scene hints evaluated for {len(info.receipts)} relations")})
+        elif isinstance(info, RelationPolicySupersession):
             payloads.append({"code": info.code, "severity": "info", **info.payload(),
                 "message": f"Layout relationRouting.unroutable={info.layout_mode} supersedes declared "
                            f"View visibility.relations.overflow={info.view_overflow} for spatial routing"})

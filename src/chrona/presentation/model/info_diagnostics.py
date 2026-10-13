@@ -225,5 +225,58 @@ class RelationPolicySupersession:
         return self.code + ":" + json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))
 
 
+@dataclass(frozen=True)
+class RelationHintReceipt:
+    surface_id: str
+    relation_id: str
+    disposition: str
+    reason: str
+    searched: bool
+
+    def __post_init__(self) -> None:
+        if (any(not isinstance(value, str) or not value for value in (self.surface_id, self.relation_id, self.reason))
+                or self.disposition not in {"accepted", "invalidated", "unusable", "absent"}
+                or not isinstance(self.searched, bool) or (self.disposition == "accepted" and self.searched)):
+            raise _diagnostic_error("hint receipt requires one admitted instance, disposition and honest search count")
+
+    @property
+    def code(self) -> str:
+        return "I_LAYOUT_RELATION_HINT"
+
+    def payload(self) -> dict[str, object]:
+        return {"surfaceId": self.surface_id, "relationId": self.relation_id,
+                "disposition": self.disposition, "reason": self.reason, "searched": self.searched}
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))
+
+
+@dataclass(frozen=True)
+class RelationHintSummary:
+    surface_id: str
+    receipts: tuple[RelationHintReceipt, ...]
+
+    def __post_init__(self) -> None:
+        if (not isinstance(self.surface_id, str) or not self.surface_id
+                or any(item.surface_id != self.surface_id for item in self.receipts)
+                or len({item.relation_id for item in self.receipts}) != len(self.receipts)):
+            raise _diagnostic_error("hint summary requires unique instances on one surface")
+
+    @property
+    def code(self) -> str:
+        return "I_LAYOUT_RELATION_HINT_SUMMARY"
+
+    def payload(self) -> dict[str, object]:
+        counts = {name: sum(item.disposition == name for item in self.receipts)
+                  for name in ("accepted", "invalidated", "unusable", "absent")}
+        return {"surfaceId": self.surface_id, "relationInstances": len(self.receipts), **counts,
+                "ordinarySelection": len(self.receipts) - counts["accepted"],
+                "actualSearch": sum(item.searched for item in self.receipts)}
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))
+
+
 PresentationInfo = (SuppressedPlotLabels | PaintOmission | RelationRoutingSummary | RelationSearchBudgetHit
-                    | RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession)
+                    | RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession
+                    | RelationHintReceipt | RelationHintSummary)

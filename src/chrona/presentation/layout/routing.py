@@ -355,6 +355,8 @@ class RelationRouteSelection:
     search_used: bool = False
     search_budget: int | None = None
     search_expansions: int = 0
+    settled_by_hint: bool = False
+    hint_rejection: str | None = None
 
     @property
     def budget_hit(self) -> bool:
@@ -371,6 +373,8 @@ class RelationRouteSelection:
             raise _route_attempt_error("search budget receipt", budget=self.search_budget,
                                        expansions=self.search_expansions)
         if (not isinstance(self.settled_by_shape, bool) or not isinstance(self.search_used, bool)
+                or not isinstance(self.settled_by_hint, bool)
+                or (self.settled_by_hint and (self.selected_pair is None or self.search_used or self.settled_by_shape))
                 or (self.settled_by_shape and self.selected_pair is None)
                 or not self.attempts or len(accepted) > 1
                 or (self.selected_pair is None) != (not accepted)
@@ -396,6 +400,7 @@ def select_relation_route(
     search_policy: str = "best",
     channels: RelationShapeChannels | None = None,
     search_budget: int | None = None,
+    preferred_routes: tuple[tuple[tuple[ConnectorEgress, ConnectorEgress], tuple[tuple[float, float], ...]], ...] = (),
 ) -> RelationRouteSelection:
     """Measure eligibility, then select by the caller's stable rank when supplied.
 
@@ -428,38 +433,52 @@ def select_relation_route(
     chosen_points = ()
     chosen_attempt = -1
     search_used = False
+    hint_rejection = None
     budget = RelationExpansionBudget(search_budget) if search_budget is not None else None
 
-    def result(pair, points, evidence, *, shaped=False):
+    def result(pair, points, evidence, *, shaped=False, hinted=False):
         return RelationRouteSelection(pair, tuple(points), tuple(evidence),
             settled_by_shape=shaped, search_used=search_used,
-            search_budget=search_budget, search_expansions=budget.expansions if budget is not None else 0)
+            search_budget=search_budget, search_expansions=budget.expansions if budget is not None else 0,
+            settled_by_hint=hinted, hint_rejection=hint_rejection)
+
+    def pair_domain(source, target):
+        blockers = tuple(sorted({item.placement_id for egress in (source, target)
+            if egress.corridor for item in obstacles.egress_collisions(
+                ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
+                classes=classes, regions=regions)}))
+        port_ids = tuple(port_id
+            for host_id, side in ((source_host_id, source.side), (target_host_id, target.side))
+            for port_id in (f"port:{host_id or relation_scene_id}:{side}",) if obstacles.has(port_id))
+        return blockers, port_ids
+
+    for pair, middle in (preferred_routes if search_policy == "first-fit" else ()):
+        blockers, port_ids = pair_domain(*pair)
+        if pair not in port_pairs or blockers:
+            hint_rejection = "egress-collision" if blockers else "unadmitted-port-pair"
+        else:
+            measured, points = _select_pair_candidate(*pair, obstacles=obstacles, bounds=bounds,
+                port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
+                max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
+                limit=0, candidate_paths=(middle,))
+            if measured.outcome == "accepted":
+                return result(pair, points, (measured,), hinted=True)
+            hint_rejection = measured.search_failure or measured.outcome
 
     for phase, phase_pairs in phases:
         if budget is not None and budget.hit:
             break
         quota, remainder = divmod(RELATION_SEARCH_EXPANSIONS, len(phase_pairs))
         for pair_index, (source, target) in enumerate(phase_pairs):
-            blockers = tuple(sorted({item.placement_id for egress in (source, target)
-                                     if egress.corridor
-                                     for item in obstacles.egress_collisions(
-                                         ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
-                                         classes=classes, regions=regions)}))
+            blockers, port_ids = pair_domain(source, target)
             if blockers:
                 attempts.append(RouteAttemptEvidence(source.side, target.side, "egress-collision",
                                                      blocker_ids=blockers))
                 continue
             pair_limit = quota + int(pair_index < remainder)
-            port_ids = tuple(
-                port_id for host_id, side in ((source_host_id, source.side), (target_host_id, target.side))
-                for port_id in (f"port:{host_id or relation_scene_id}:{side}",)
-                if obstacles.has(port_id)
-            )
             if phase == "first-fit":
-                shapes = (candidate for candidate in relation_shape_candidates(
+                shapes = relation_shape_candidates(
                     source.exposed_port, target.exposed_port, bounds=bounds, channels=channels)
-                    if all(not obstacles.collisions(ObstacleSegment(a, b), port_ids=port_ids,
-                        classes=classes, regions=regions) for a, b in zip(candidate, candidate[1:])))
                 shaped, shaped_points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
                     port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
                     max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
@@ -508,6 +527,16 @@ def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, class
             **({"exact_bound": False} if not exact_bound else {}))
             if candidate_paths is None else candidate_paths)
         for middle in candidates:
+            # Both generators and explicit prior proposals obey the same domain.
+            if (any(not (bounds[0] <= x <= bounds[2] and bounds[1] <= y <= bounds[3]) for x, y in middle)
+                    or any(a[0] != b[0] and a[1] != b[1] for a, b in zip(middle, middle[1:]))):
+                failure = "E_CONNECTOR_UNROUTABLE"
+                continue
+            if candidate_paths is not None and any(obstacles.collisions(ObstacleSegment(a, b),
+                    port_ids=port_ids, classes=classes, regions=regions)
+                    for a, b in zip(middle, middle[1:])):
+                failure = "E_LAYOUT_ROUTE_THROUGH_MARK"
+                continue
             points = []
             for point in (*source.corridor, *middle, *reversed(target.corridor)):
                 if not points or points[-1] != point:

@@ -13,6 +13,7 @@ from chrona.presentation.layout.obstacles import ObstacleGeometry
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.model.info_diagnostics import PresentationInfo, SuppressedPlotLabels
 from chrona.presentation.model.render_progress import RenderProgress
+from chrona.presentation.layout.relation_hint_model import PreviousRouteHints
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, axis_label_semantic_ids
 
@@ -670,6 +671,7 @@ class SurfaceLayoutRequest:
     auto_block_limit: Decimal | None = None
     progress: RenderProgress | None = field(default=None, compare=False, repr=False)
     mark_visibility_index: ItemMarkVisibilityIndex | None = None
+    previous_route_hints: PreviousRouteHints | None = None
 
 
 @dataclass(frozen=True)

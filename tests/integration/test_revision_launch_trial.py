@@ -3,8 +3,11 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 
 import yaml
+import pytest
 
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
+from chrona.presentation.scene.serialization import serialize_scene
+from chrona.presentation.model.info_diagnostics import RelationHintReceipt, RelationHintSummary
 
 
 def test_launch_trial_revision_keeps_spec_build_drawn(tmp_path):
@@ -31,6 +34,8 @@ def test_launch_trial_revision_keeps_spec_build_drawn(tmp_path):
     }
     actual_path = tmp_path / "actual.yaml"
     actual_path.write_text(yaml.safe_dump(actual, sort_keys=False), encoding="utf-8")
+    previous_scene = tmp_path / "v1.scene.json"
+    old_spec_points = None
     for revision in (1, 2):
         if revision == 2:
             project["objects"]["spec"]["schedule"]["end"] = "2027-01-20"
@@ -63,3 +68,28 @@ def test_launch_trial_revision_keeps_spec_build_drawn(tmp_path):
                    for element in svg.iter())
         assert not any(diagnostic.startswith("W_LAYOUT_RELATION_SUPPRESSED:")
                        for diagnostic in result.scene.diagnostics)
+        if revision == 1:
+            previous_scene.write_bytes(serialize_scene(result.scene))
+            old_spec_points = routes[0].points
+        else:
+            hinted = render_draft(DraftRenderRequest(path, "svg", actual=actual_path,
+                                                   previous_scene=previous_scene)).rendered
+            hinted_routes = [primitive for primitive in hinted.surface.primitives
+                             if primitive.kind == "Path" and primitive.source_kind == "relation"
+                             and ":spec-build:" in primitive.scene_id]
+            assert len(hinted_routes) == 1
+            receipt = next(info for info in hinted.info_diagnostics
+                           if isinstance(info, RelationHintReceipt) and ":spec-build:" in info.relation_id)
+            assert receipt.disposition == "accepted", receipt
+            assert not receipt.searched
+            points = hinted_routes[0].points
+            assert len(points) == len(old_spec_points)
+            translation = (points[0][0] - old_spec_points[0][0], points[0][1] - old_spec_points[0][1])
+            for old, new in zip(old_spec_points, points):
+                assert new == pytest.approx((old[0] + translation[0], old[1] + translation[1]))
+            svg = ET.fromstring(hinted.artifact.content)
+            assert any(element.get("data-scene-id", element.get("id")) == hinted_routes[0].scene_id
+                       for element in svg.iter())
+            summary = next(info for info in hinted.info_diagnostics if isinstance(info, RelationHintSummary))
+            payload = summary.payload()
+            assert sum(payload[key] for key in ("accepted", "invalidated", "unusable", "absent")) == payload["relationInstances"]

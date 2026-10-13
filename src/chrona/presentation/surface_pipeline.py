@@ -15,6 +15,7 @@ from chrona.presentation.layout.surface_count_closure import CountReadInput, Cou
 from chrona.presentation.layout.surface_render_plan import PreparedSurfaceRenderPlan
 from chrona.presentation.layout.surface_preparation import SurfacePreRowGeometry
 from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest
+from chrona.presentation.layout.relation_hint_model import PreviousRouteHints
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.model.surface_content import SurfaceContentInput
@@ -45,6 +46,7 @@ class PreparedSurfaceInput:
     declared_viewport: DeclaredViewport | None = None
     auto_block_limit: Decimal | None = None
     progress: RenderProgress | None = field(default=None, compare=False, repr=False)
+    previous_route_hints: PreviousRouteHints | None = None
 
 
 _REQUIRED_SOURCES = {
@@ -66,7 +68,8 @@ def build_surface_input(*, projection: Any, surface_content: SurfaceContentInput
                       surface_preparation: SurfacePreRowGeometry | None = None,
                       declared_viewport: DeclaredViewport | None = None,
                       auto_block_limit: Decimal | None = None,
-                      progress: RenderProgress | None = None) -> PreparedSurfaceInput:
+                      progress: RenderProgress | None = None,
+                      previous_route_hints: PreviousRouteHints | None = None) -> PreparedSurfaceInput:
     """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
     if not isinstance(layout_manifest, LayoutManifest):
         raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
@@ -92,7 +95,8 @@ def build_surface_input(*, projection: Any, surface_content: SurfaceContentInput
                            ThemeTokenView(resolved_theme), font_metrics, measured_sources,
                            dict(capabilities), visual_profile, viewport, icon_assets, visual_requests,
                            fixed_lane_preflight, capacity_short_sources, surface_preparation, declared_viewport,
-                           progress=progress, auto_block_limit=auto_block_limit)
+                           progress=progress, auto_block_limit=auto_block_limit,
+                           previous_route_hints=previous_route_hints)
 
 
 def compose_review_surface(value: PreparedSurfaceInput) -> SceneSurface:
@@ -132,7 +136,8 @@ def compose_resolved_review_surface(seed: CountReadInput, *, visual_profile: Vis
             surface_preparation=plan.preparation,
             fixed_lane_preflight=(plan.preparation.inline.request.fixed_lane_preflight if plan.preparation else None),
             capacity_short_sources=plan.capacity_short_sources, declared_viewport=plan.declared_viewport,
-            auto_block_limit=plan.profile.distances.get("/reviewSurface/maxBlockSize"), progress=value.progress)
+            auto_block_limit=plan.profile.distances.get("/reviewSurface/maxBlockSize"), progress=value.progress,
+            previous_route_hints=value.previous_route_hints)
     elif admitted.layout_manifest is not plan.manifest:
         raise ValueError("admitted ordinary plan does not match accepted completion")
     scene_input = SceneBuildInput(completed.projection, plan.content, plan.manifest,
@@ -162,6 +167,7 @@ def _complete_table_timeline(value: PreparedSurfaceInput):
             declared_viewport=value.declared_viewport,
             auto_block_limit=value.auto_block_limit,
             progress=value.progress,
+            previous_route_hints=value.previous_route_hints,
         ))
         composition = compose_surface_layout(request, prepared=value.surface_preparation)
     except LayoutError as error:
@@ -179,7 +185,8 @@ def _complete_network(value: PreparedSurfaceInput):
             projection=projection, surface_content=value.surface_content,
             layout_manifest=value.layout_manifest, measured_sources=value.measured_sources,
             theme_tokens=value.theme_tokens, font_metrics=value.font_metrics,
-            declared_viewport=value.declared_viewport, progress=value.progress))
+            declared_viewport=value.declared_viewport, progress=value.progress,
+            previous_route_hints=value.previous_route_hints))
     except LayoutError as error:
         raise SceneBuildError(error.diagnostic_id, error.path) from error
     return placed

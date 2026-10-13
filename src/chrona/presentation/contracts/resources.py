@@ -679,6 +679,21 @@ class RenderEnvironment:
 
 
 @dataclass(frozen=True)
+class ArtifactPin:
+    """Identity-neutral immutable artifact bytes pinned by Store location and digest."""
+
+    store: Mapping[str, Any]
+    address: str
+    revision_token: str
+    content_identity: str
+
+    def as_reader_reference(self) -> FrozenDict:
+        return freeze({"store": self.store, "address": self.address,
+                       "revision": {"token": self.revision_token},
+                       "contentIdentity": self.content_identity})
+
+
+@dataclass(frozen=True)
 class RenderContextContract(ResourceContract):
     project: ResourceReference
     view: ResourceReference
@@ -692,6 +707,7 @@ class RenderContextContract(ResourceContract):
     icon_catalogs: tuple[ResourceReference, ...]
     environment: RenderEnvironment
     target: RenderTarget
+    previous_scene: ArtifactPin | None = None
 
 
 @dataclass(frozen=True)
@@ -1363,6 +1379,10 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
                               environment["fontMetrics"], int(environment["scenePrecision"]), rasterizer, typesetter),
             RenderTarget(str(target["kind"]), tuple(str(item) for item in target["capabilities"]), str(target["visualProfile"]),
                          str(target["textMode"]) if "textMode" in target else None),
+            (ArtifactPin(inputs["previousScene"]["store"], str(inputs["previousScene"]["address"]),
+                         str(inputs["previousScene"]["revision"]["token"]),
+                         str(inputs["previousScene"]["contentIdentity"]))
+             if "previousScene" in inputs else None),
         )
     if identity.kind == "actual-set":
         return ActualSetContract(identity, version, frozen)

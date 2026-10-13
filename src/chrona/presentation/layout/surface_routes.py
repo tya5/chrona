@@ -1,6 +1,7 @@
 """Owns dependency ports, routes and relation labels; reads completed marks and the shared obstacle index."""
 from __future__ import annotations
 
+from chrona.presentation.layout.relation_hints import HintProposal, propose_hint
 from dataclasses import dataclass, replace
 from collections import Counter
 from math import hypot
@@ -53,7 +54,7 @@ from chrona.presentation.layout.text import metric_for_role, measure_text_width,
 from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.presentation.model.info_diagnostics import (
     RelationRoutingSummary, RelationSearchBudgetHit, RelationResolutionInfo, RelationResolutionSummary,
-    RelationPolicySupersession,
+    RelationPolicySupersession, RelationHintReceipt, RelationHintSummary,
 )
 
 
@@ -83,7 +84,7 @@ class SurfaceRoutesBatch:
     instance_rows: Mapping[str, str]
     comparison_clusters: Mapping[tuple[str, str], tuple[MarkPlacement, ...]]
     diagnostics: tuple[str, ...]
-    routing_info: tuple[RelationRoutingSummary | RelationSearchBudgetHit, ...] = ()
+    routing_info: tuple[RelationRoutingSummary | RelationSearchBudgetHit | RelationHintReceipt | RelationHintSummary, ...] = ()
     resolution_info: tuple[RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession, ...] = ()
 
 
@@ -506,6 +507,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             back_route_reason[0] = ""
         return chosen
 
+    hint_receipts = []
     ordered_relations = dependency_routing_order(request.surface_content.relations)
     observed_relations = (request.progress.routing(ordered_relations, pass_name=context.progress_pass)
                           if request.progress is not None else ordered_relations)
@@ -577,6 +579,19 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         paint_id=relation.semantic_id, terminal=completed_end), entry_penalty, bends, length)
 
                 normal_domain = RelationObstacleDomain.normal(obstacles)
+                hint_proposal = None
+                if request.previous_route_hints is not None and search_policy == "first-fit":
+                    if context.layout_manifest.relation_unroutable.value in {"overlap", "stub"}:
+                        hint_proposal = HintProposal("unusable", "mode-bypasses-normal")
+                    else:
+                        hint_proposal = propose_hint(request.previous_route_hints, surface_id="table-timeline",
+                            source_ref=relation_id, source_id=source_id, target_id=target_id,
+                            source_mark=source_mark, target_mark=target_mark,
+                            source_endpoint=relation.source_endpoint, target_endpoint=relation.target_endpoint,
+                            source_siblings=comparison_clusters.get((source_mark.source_ref, instance_rows[source_id]), ()) if source_mark else (),
+                            target_siblings=comparison_clusters.get((target_mark.source_ref, instance_rows[target_id]), ()) if target_mark else (),
+                            port_pairs=port_pairs, marker_start=marker_start, marker_end=marker_end,
+                            stroke_width=dependency_stroke)
                 attempted_domains: dict[RelationResolutionStage, RelationObstacleDomain] = {}
                 endpoint_hosts = frozenset(host for pair in port_pairs for egress in pair for host in egress.host_ids)
 
@@ -598,6 +613,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                             row_edges=tuple(row_edges.values()), classes=route_classes)
                             if search_policy == "first-fit" else None)
                     selection = select_relation_route(pairs, obstacles=domain.obstacles,
+                        preferred_routes=(tuple((candidate.pair, candidate.middle) for candidate in hint_proposal.candidates)
+                            if hint_proposal is not None and hint_proposal.disposition == "proposed"
+                            and domain.stage is RelationResolutionStage.NORMAL else ()),
                         bounds=routing_bounds, search_policy=search_policy, channels=candidate_channels,
                         search_budget=context.layout_manifest.relation_search_budget,
                         source_host_id=source_mark.placement_id if source_mark else None,
@@ -646,6 +664,16 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                                   and projection.lane_membership is not None else None)
                 relation_instances += 1
                 searched = any(item.search_receipt.search_used for item in resolution.attempts)
+                if hint_proposal is not None:
+                    disposition, reason = hint_proposal.disposition, hint_proposal.reason
+                    if disposition == "proposed":
+                        accepted_hint = (outcome is not None and not outcome.used_back_route
+                            and receipt.stage is RelationResolutionStage.NORMAL
+                            and outcome.search_receipt.settled_by_hint)
+                        disposition = "accepted" if accepted_hint else "invalidated"
+                        reason = ("revalidated" if accepted_hint else next((item.search_receipt.hint_rejection
+                            for item in resolution.attempts if item.search_receipt.hint_rejection), "current-policy"))
+                    hint_receipts.append(RelationHintReceipt("table-timeline", scene_id, disposition, reason, searched))
                 fallback_search += int(searched)
                 shape_settled += int(receipt is not None and receipt.search_receipt.settled_by_shape and not searched)
                 for item in resolution.attempts:
@@ -859,7 +887,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         tuple(item for item in completed_relations if item.relation_id in fallback_ids),
         {key: tuple(values) for key, values in instance_anchors.items()}, instance_rows,
         comparison_clusters, tuple(diagnostics),
-        (*budget_hits, *((RelationRoutingSummary("table-timeline", relation_instances,
+        (*budget_hits, *hint_receipts,
+         *((RelationHintSummary("table-timeline", tuple(hint_receipts)),)
+           if request.previous_route_hints is not None and search_policy == "first-fit" else ()),
+         *((RelationRoutingSummary("table-timeline", relation_instances,
             shape_settled, fallback_search),) if search_policy == "first-fit" else ())),
         completed_resolution_info)
 

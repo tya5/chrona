@@ -11,6 +11,13 @@ when it derives from that validated closure.
 The authored render-context file, every direct or nested resource reference, and every
 declared font asset are authoritative inputs.
 
+The optional previous-Scene artifact pin is an authoritative input too. Copy its
+exact bytes using the complete Store/address/revision/content-identity key, without
+inventing a resource ID/kind or reserializing JSON. Preserve the authored pin in the
+Context and isolate its overlay from canonical Store paths. Rendering validates
+Scene/schema/project provenance after integrity verification; closure read-ledger
+accounting includes this artifact even when `best` does not consume route hints.
+
 For each referenced resource, the materializer MUST:
 
 1. locate the resource only through its declared address and revision token;

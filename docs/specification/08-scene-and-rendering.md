@@ -112,6 +112,13 @@ serialization/cache identity, target artifacts, geometry, paint, or the normal
 machine result envelope. Existing exclusive creation and serialization failures
 remain authoritative; there is no compatibility formatting mode.
 
+Draft `chrona render --previous-scene <file>` captures the file's exact bytes and
+digest as the explicit previous-Scene input defined by Specification 13. It never
+edits that file or bypasses the common schema/project/integrity validation.
+Immutable `render-review` obtains the input only from its Context, not a CLI
+override. Layout alone consumes neutral decoded route evidence; Scene and adapters
+do not reanchor, search or validate routing geometry.
+
 ### 3.2.1 CLI output filename and target identity
 
 For `render` and `render-workspace`, the CLI MUST resolve one target before

@@ -29,6 +29,7 @@ properties:
           snapshot: {description: "Optional pinned Snapshot input.", $ref: "#/$defs/snapshotRef"}
           summaryProfile: {description: "Optional pinned summary profile.", $ref: "#/$defs/reference"}
           detailProfile: {description: "Optional pinned detail profile.", $ref: "#/$defs/reference"}
+          previousScene: {description: "Optional identity-pinned prior Scene artifact; not a resource reference.", $ref: "#/$defs/artifactPin"}
           iconCatalogs:
             type: array
             description: "Optional independently pinned immutable icon catalogs."
@@ -123,6 +124,16 @@ properties:
             environment: {allOf: [{required: [typesetter]}, {not: {required: [rasterizer]}}, {properties: {typesetter: {properties: {engine: {const: tectonic}, adapterGrammar: {const: chrona-tikz/v0.1}}}}}]}
             target: {required: [textMode]}
 $defs:
+  artifactPin:
+    type: object
+    description: "Identity-neutral immutable Store pin for exact Scene artifact bytes."
+    required: [store, address, revision, contentIdentity]
+    additionalProperties: false
+    properties:
+      store: {description: "Named Store that resolves the immutable artifact.", $ref: "urn:chrona:revision-store-resource-ref-v0.2#/properties/store"}
+      address: {description: "Strict Store-relative artifact address.", $ref: "urn:chrona:common-v0.1#/$defs/storeAddress"}
+      revision: {description: "Opaque revision within the named Store.", $ref: "urn:chrona:revision-store-resource-ref-v0.2#/properties/revision"}
+      contentIdentity: {description: "Mandatory SHA-256 identity of the exact artifact bytes.", $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
   sha256:
     description: "SHA-256 identity of one immutable declared byte payload."
     examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
