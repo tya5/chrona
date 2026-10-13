@@ -582,6 +582,15 @@ without failing for them. Reference/identity failures still fail the audit.
 The tool is evidence, not a replacement for cross-project rendering and the
 literal issue acceptance. Existing corpus migration remains reviewer-owned.
 
+Run `python -m tools.check_design_purity --project project.yaml --resource theme.yaml`
+for explicit inputs, or `python -m tools.check_design_purity --examples-root examples --report-only`
+for every manifest's own Project. JSON output keeps findings qualified by
+Project/Context, pointers and match class; summary counts describe findings,
+not a count of certified pure resources. Exit0 means a complete audit (and,
+without report-only, no unresolved findings); exit1 means findings in strict
+mode, and exit2 means an input/reference error. Conformance's
+`design-purity-report` is deliberately reporting, not corpus-purity acceptance.
+
 ## 10. Diagnostics
 
 View evaluation SHOULD report stable diagnostics for unknown Project, Snapshot, Actual, or object references; incompatible temporal domains; duplicate comparison identity; and invalid explicit windows. Exact identifiers and schema are deferred to the View schema and Application Architecture work.

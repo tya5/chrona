@@ -1,6 +1,6 @@
 # Thin-connector design reuse completion (#1341, #1344)
 
-Published code baseline: READY3aafce89; #1300 is closed after its containing
+Published code baseline: READYd9c87d65; #1300 is closed after its containing
 three-OS release38339181830 succeeded. Adopt the current READY main before product publication. No
 previous-session local work is assumed.
 
@@ -171,12 +171,11 @@ legend declarations, unbound omission, unavailable versus missing objects,
 and original View error pointers. Combined focused coverage passed447 tests;
 the17 figure-contract tests also pass with their shared-fragment vocabulary
 assertion, retaining exact schema/Core set equality. Inventory, annotation,
-reference and schema-equivalence gates pass. PR1457 snapshot11789815581
+reference and schema-equivalence gates pass. PR1457 final snapshot11788782848
 independently confirms92/92 Scene/SVG unchanged,0 retirements and only2 reports.
-CI38346616835 passed every check except shard3's one stale inline-identity
-assertion (and consequential derived-ready); its shared-target/nonempty-string
-guard is corrected, with218 schema-owner tests passing. Current-head CI and
-containing-main release remain required before accepting this slice. Purity
+Exact-head CI38347439477 passed all checks;218 schema-owner tests pass with
+shared-target/nonempty-string guards intact. PR1457 merged at99ce7772, synced
+READYd9c87d65; containing-main release38348700557 is live. Purity
 checker, actual corpus adoption and whole-issue acceptance remain unfinished.
 
 ## Purity checker: selected design and implementation plan
@@ -230,6 +229,16 @@ Gate fixtures through the existing pytest matrix; register one report-only
 batch audit in conformance after checking current corpus results. Focused tests
 cover materializer diagnostic parity, shared-Store lookup, discovery, matching
 and exit behavior; CI supplies full three-OS/conformance/public evidence.
-One implementation PR after1457 lands, no examples or generated-report edits.
-Publish these gates before product changes. Keep PR1457 unchanged while its CI
-and public snapshot are reviewed.
+Plan f4ff3234 was published before product changes. One implementation PR on
+current READY main, no examples or generated-report edits.
+
+Purity implementation review:46 focused checker/conformance/materializer tests
+pass, plus4 immutable-materializer integration controls. The actual batch
+conformance command completes with0 reference errors and878 context-qualified
+findings across35 resources/40 contexts with findings; those are not purity
+certificates. Reference payload ids/kinds/pins are checked, and later errors
+remain fatal while retaining earlier findings. Peer-review identity and
+partial-report findings have independent negative tests, including redirected
+non-UTF8 stdout with actual CJK JSON. Version admission
+uses the existing contract registry; no provisional helper fallback or new
+resource kind remains. CI public snapshot and release acceptance are pending.
