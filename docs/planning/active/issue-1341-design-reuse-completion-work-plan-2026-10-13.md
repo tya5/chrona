@@ -84,4 +84,29 @@ batch227 PASS; schema inventory, annotations, references and equivalence against
 READYaea06f4b PASS. Existing accepted schema verdicts/diagnostics are preserved;
 the optional column `style` admission has one explicit L1 delta. Real synthetic
 SVG and completed Scene equality pass; provenance is not erased. Public snapshot
-inspection and release CI remain pending; no whole-issue acceptance claim.
+snapshot11785869165 verifies92/92 public Scene/SVG byte-identical,0 retirements;
+only diagnostic and coverage inventories change. PR1455/head4af12c7d CI is live;
+no whole-issue acceptance claim.
+
+## Remaining array-entry closure: design and implementation plan
+
+Spec06 §9.2 selects three uniform, project-independent defaults, not id/index
+matching or copying mixed arrays. Missing design fields are fillable; wrong-type
+explicit fields stay errors. No marker/label/visual occurrence is synthesized.
+The live-schema audit found period `overflow` and visual `side/decorative` are
+presentation under the approved general rule; leaving them in thin Views would
+not complete the selected end state. No new placement algorithm/resource kind.
+
+Architecture review: the same ingress owner completes arrays before View parsing;
+project bindings/ordering remain View-owned, Theme resolves paint/assets, Layout
+completes geometry. Original identities and explicit overrides remain unchanged.
+Shared parts add definitions only; existing schema verdicts/diagnostics must match.
+
+Implementation: `contracts/view_defaults.py` fills existing entries only; the
+live View/Layout/common schemas share each existing presentation property;
+inventory freezes new definitions. Extend `test_view_defaults.py` with thin/full
+marker/period/visual renders, no-synthesis, order/identity, encoded/direct and
+wrong-type controls; run named-period/as-of/visual focused tests and schema
+equivalence. Batch all public materializers/Scene/SVG in the PR snapshot and
+three-OS release. No examples edits; whole-issue rows remain open. Publish this
+boundary before code; land after1455 against the then-current READY main.

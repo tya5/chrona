@@ -495,6 +495,28 @@ identities. Old resources without these defaults retain their behavior. The
 remaining marker/period/visual and profile-binding slices are not implied by
 this presentation closure.
 
+**Array-entry presentation closure (#1341).** Three optional profile defaults
+complete the design/connection split without copying mixed View arrays:
+`markerPresentation` supplies `kind`, `label`, `placement` and `date` to each
+declared marker; `periodLabelPresentation` supplies `placement` and `overflow`
+to each declared period's label object; `visualPresentation` is a map keyed by
+the live visual target kind, supplying `ref`, `side` and `decorative` to each
+declared visual of that kind. These use the existing property grammars. Defaults
+contain no marker source, period identity, visual selector, encoding or project
+wording. Generic design voice remains allowed. Period overflow is presentation,
+like the existing column endpoint-display and text-wrapping policies.
+
+These defaults neither add nor reorder array entries. An omitted marker array,
+an unlabeled selected period, or an omitted visual remains omitted/undrawn.
+A label object `{}` may take placement from the design; `{source: actual}` may
+take marker form/label from it; a visual with only its target may take a direct
+reference. Missing design properties are intentionally closed before validation,
+not mistaken for already-invalid input. Explicit properties replace the default
+property whole; explicitly wrong-type entries or nested objects are not repaired.
+An encoded visual never takes a default direct `ref`, though it may take default
+side/decorative intent. Required connection fields and all ordinary effective
+View validation remain unchanged. Scene and adapters never see this overlay.
+
 ## 10. Diagnostics
 
 View evaluation SHOULD report stable diagnostics for unknown Project, Snapshot, Actual, or object references; incompatible temporal domains; duplicate comparison identity; and invalid explicit windows. Exact identifiers and schema are deferred to the View schema and Application Architecture work.
