@@ -51,7 +51,11 @@ Developer mechanism gates are below; they do not replace the literal rows.
   878 findings across35 resources and40 contexts with findings.
   PR1458 merged at `a84bc82488fcb350897b5b0854999fbbb17717c8`; synced READY
   `7d927eba5c98f8c8525b1df7afc34b0771bfceb4` has containing-main release
-  [38350852518](https://github.com/tya5/chrona/actions/runs/38350852518) pending.
+  [38350852518](https://github.com/tya5/chrona/actions/runs/38350852518) failed only
+  Windows pytest's native-path expectation in the purity discovery test
+  (11253 passed,52 skipped). The report deliberately uses POSIX paths. Its test
+  expectation is corrected without product changes in the next publication;
+  corrected exact-main three-OS acceptance remains pending.
   The release containing this review must also succeed before closure.
 
 ## Architecture conclusion

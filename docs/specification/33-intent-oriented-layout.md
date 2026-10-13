@@ -936,6 +936,19 @@ decoration does not enlarge the normal-flow minimum. A fixed or capped track
 contributes its declared capacity rather than a promise to absorb more
 content; its shortage follows the visible fallback above.
 
+Flow resolves every child's inline declaration before selecting lines, using
+the same size-specification rules as other containers (#1219). Fixed and
+non-flex intrinsic/bounded targets are used; fill/fr items retain natural
+width rather than distributing a line's remaining width. `itemMinInlineSize`
+is a floor, not permission to enlarge an authored fixed size or fixed minmax
+ceiling: an incompatible floor is `E_LAYOUT_CONSTRAINT_CONTRADICTORY` at the
+child's inline declaration. Existing source-specific ceilings retain their
+typed overflow admission. Natural measurement and arrangement use this same
+completed width. A content-sized ancestor completes its descendant line stack
+at the effective declared/allocated inline extents, regardless of whether the
+wrapped Flow is its direct child. Fixed/capped hosts still retain capacity and
+truthful visible overflow; anchors do not enlarge normal-flow demand.
+
 Explicit finite Draft extents and immutable Context extents remain minimum
 requests and MUST NOT shrink below the requested block extent. If measured
 content requires more space, Layout re-solves the complete normal-flow
