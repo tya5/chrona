@@ -563,9 +563,18 @@ def select_relation_route(
 
     # Exhaust only the declared finite domain; reuse all completed validators.
     protected_expansions = 0
+    protected_search_used = False
     def charge_protected():
         nonlocal protected_expansions
         protected_expansions += 1
+
+    def protected_candidates(source, target, port_ids):
+        from chrona.presentation.layout.route_search import orthogonal_route_candidates
+        nonlocal protected_search_used
+        protected_search_used = True
+        yield from orthogonal_route_candidates(source.exposed_port, target.exposed_port,
+            obstacles, bounds=bounds, port_ids=port_ids, classes=classes, regions=regions,
+            limit=None, on_expansion=charge_protected)
 
     fallback = None
     protected_start = len(attempts)
@@ -581,12 +590,9 @@ def select_relation_route(
             attempts.append(RouteAttemptEvidence(source.side, target.side, "egress-collision", blocker_ids=blockers))
             continue
         from itertools import chain
-        from chrona.presentation.layout.route_search import orthogonal_route_candidates
         shapes = relation_shape_candidates(source.exposed_port, target.exposed_port,
                                            bounds=bounds, channels=protected_channels)
-        candidates = chain(shapes, orthogonal_route_candidates(source.exposed_port, target.exposed_port,
-            obstacles, bounds=bounds, port_ids=port_ids, classes=classes, regions=regions,
-            limit=None, on_expansion=charge_protected))
+        candidates = chain(shapes, protected_candidates(source, target, port_ids))
         quality_impossible = (max_bends < int(source.semantic_port[0] != target.semantic_port[0]
                                              and source.semantic_port[1] != target.semantic_port[1])
                               and (prepare is None or endpoint_preserving_prepare))
@@ -615,14 +621,15 @@ def select_relation_route(
             if fallback is None or (search_policy == "best" and score < fallback[0]):
                 fallback = (score, (source, target), points, measured)
     if protected_chosen is not None:
-        return RelationRouteSelection(protected_chosen[0], protected_chosen[1], tuple(attempts), search_used=True,
+        return RelationRouteSelection(protected_chosen[0], protected_chosen[1], tuple(attempts),
+            search_used=search_used or protected_search_used,
             search_budget=search_budget, search_expansions=budget.expansions if budget is not None else 0,
             hint_rejection=hint_rejection, critical_evidence=CriticalRouteEvidence(
                 protected_expansions, False, attempts=tuple(attempts[protected_start:])))
     evidence = CriticalRouteEvidence(protected_expansions, naturally_exhausted,
         fallback[3] if fallback else None, tuple(attempts[protected_start:]))
     return RelationRouteSelection(fallback[1] if fallback else None, fallback[2] if fallback else (),
-        tuple(attempts), search_used=True, search_budget=search_budget,
+        tuple(attempts), search_used=search_used or protected_search_used, search_budget=search_budget,
         search_expansions=budget.expansions if budget is not None else 0,
         hint_rejection=hint_rejection, critical_evidence=evidence)
 

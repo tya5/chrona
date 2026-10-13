@@ -76,3 +76,16 @@ def test_first_fit_safe_fallback_keeps_first_pair_while_best_retains_rank():
     assert _select(pairs=pairs).selected_pair == pairs[0]
     assert _select(pairs=pairs, search_policy="best",
                    rank=lambda path, source, target: (target.side != "above",)).selected_pair == pairs[1]
+
+
+def test_blocked_egress_domain_is_exhausted_without_entering_search():
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("blocked-exit", "mark", "timeline", ObstacleRect(.5, -.5, 1.5, .5)))
+    obstacles.add(SurfaceObstacle("source-host", "mark", "timeline", ObstacleRect(-1., -.5, 0., .5)))
+    pairs = ((ConnectorEgress("end", (0., 0.), (2., 0.), ("source-host",)),
+              ConnectorEgress("start", (10., 10.), (10., 10.), ())),)
+    selected = _select(pairs=pairs, obstacles=obstacles)
+    assert selected.selected_pair is None
+    assert selected.critical_evidence.exhausted
+    assert selected.critical_evidence.expansions == 0
+    assert not selected.search_used

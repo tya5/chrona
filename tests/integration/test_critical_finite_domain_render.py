@@ -1,6 +1,7 @@
 """Scheduler-derived protection reaches real Scene/SVG without adapter routing."""
 from dataclasses import replace
 from datetime import date
+import json
 import xml.etree.ElementTree as ET
 
 import pytest
@@ -36,6 +37,9 @@ def test_critical_quality_fallback_or_domain_exhaustion_reaches_render(tmp_path,
                 else "I_LAYOUT_CRITICAL_RELATION_QUALITY_FALLBACK:")
     assert any(item.startswith(expected) for item in rendered.scene.diagnostics), rendered.scene.diagnostics
     assert not [item for item in rendered.scene.diagnostics if item.startswith("E_")]
+    summary = next(item for item in rendered.scene.diagnostics if item.startswith("I_LAYOUT_RELATION_ROUTING:"))
+    if blocked:
+        assert json.loads(summary.split(":", 1)[1])["fallbackSearch"] == 0
     routes = [item for item in rendered.surface.primitives if item.source_kind == "relation"]
     assert bool(routes) is not blocked
     svg = ET.fromstring(rendered.artifact.content)
