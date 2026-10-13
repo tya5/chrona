@@ -51,7 +51,7 @@ Still needed before this target's preset can be assembled: #582 (the labelled la
 
 ![Target B mock (top) and chrona output (bottom)](target-b-reproduction-2026-10-06.png)
 
-The top image is the approved target B mock. Its plan bars and as-of chip are redrawn in palette C, which the owner chose on 2026-10-03; everything else is as approved. The bottom image is `examples/halcyon-1/generated/21-target-b.svg` on main (2026-10-06). It is rendered from the HALCYON-1 project with YAML only: View `views/21-target-b.yaml`, Theme `themes/target-b.yaml`, scheme `schemes/target-b.yaml`, Layout and profile `layouts/target-b.yaml` and `profiles/target-b-detail.yaml`, and Context `contexts/21-target-b.yaml`. It is also the README hero image.
+The top image is the approved target B mock. Its plan bars and as-of chip are redrawn in palette C, which the owner chose on 2026-10-03; everything else is as approved. The bottom image is `examples/halcyon-1/generated/21-target-b.svg` on main (2026-10-06). It is rendered from the HALCYON-1 project with YAML only: View `views/21-target-b.yaml` and Context `contexts/21-target-b.yaml`; the design (Theme, scheme, Layout and profile: `theme.yaml`, `scheme.yaml`, `layout.yaml` and `detail.yaml`) is the packaged shared design `src/chrona/resources/designs/target-b/` (#1342). It is also the README hero image.
 
 ### Gap table
 

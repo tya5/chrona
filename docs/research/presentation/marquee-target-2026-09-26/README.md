@@ -58,7 +58,7 @@ Still needed before this target's preset can be assembled: #582 (the opening-nig
 
 ![Marquee mock (top) and chrona output (bottom)](marquee-reproduction-2026-10-10.png)
 
-**Signed off by the product owner on 2026-10-10.** The bottom image is the HALCYON-1 slide `marquee` (`examples/halcyon-1`), rendered from YAML alone: View `views/24-marquee.yaml`, Theme `themes/marquee.yaml`, scheme `schemes/marquee.yaml`, Layout `layouts/marquee.yaml`, profile `profiles/marquee-detail.yaml` and Context `contexts/24-marquee.yaml`.
+**Signed off by the product owner on 2026-10-10.** The bottom image is the HALCYON-1 slide `marquee` (`examples/halcyon-1`), rendered from YAML alone: View `views/24-marquee.yaml` and Context `contexts/24-marquee.yaml`; the design (Theme, scheme, Layout and profile: `theme.yaml`, `scheme.yaml`, `layout.yaml` and `detail.yaml`) is the packaged shared design `src/chrona/resources/designs/marquee/` (#1342).
 
 ### Gap table
 

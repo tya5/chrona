@@ -81,7 +81,7 @@ Still needed before this target's preset can be assembled: #582 (the launch wind
 
 ![Yuya mock (top) and chrona output (bottom)](yuya-reproduction-2026-10-06.png)
 
-The bottom image is the HALCYON-1 slide `yuya` (`examples/halcyon-1`, PR #1123), rendered from YAML alone: View `views/22-yuya.yaml`, Theme `themes/yuya.yaml`, scheme `schemes/yuya.yaml`, Layout and profile `layouts/yuya.yaml` and `profiles/yuya-detail.yaml`, and Context `contexts/22-yuya.yaml`. The owner signed it off visually on 2026-10-06.
+The bottom image is the HALCYON-1 slide `yuya` (`examples/halcyon-1`, PR #1123), rendered from YAML alone: View `views/22-yuya.yaml` and Context `contexts/22-yuya.yaml`; the design (Theme, scheme, Layout and profile: `theme.yaml`, `scheme.yaml`, `layout.yaml` and `detail.yaml`) is the packaged shared design `src/chrona/resources/designs/yuya/` (#1342). The owner signed it off visually on 2026-10-06.
 
 ### Gap table
 

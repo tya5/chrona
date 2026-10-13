@@ -509,7 +509,11 @@ def test_every_halcyon_context_pins_current_project_without_repinning_theme():
         body = yaml.safe_load(path.read_bytes())["body"]
         assert body["project"]["revision"]["token"] == HALCYON_PROJECT_REVISION, path.name
         assert body["project"]["contentIdentity"] == expected_identity, path.name
-        assert body["theme"]["revision"]["token"] == "example-v1", path.name
+        if body["theme"]["store"]["provider"] == "package":
+            # A shared design in the packaged store is pinned by its Store and token only (#1342, Spec 13).
+            assert body["theme"]["revision"]["token"] == "bundled" and "contentIdentity" not in body["theme"], path.name
+        else:
+            assert body["theme"]["revision"]["token"] == "example-v1", path.name
 
 
 def test_halcyon_avionics_bustest_lag_is_the_authored_two_workdays():
