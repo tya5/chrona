@@ -60,6 +60,13 @@ def test_invalid_fan_in_warning_explains_the_group_failure_and_names_its_relatio
     assert text.subject == "relation:one, relation:two"
 
 
+def test_critical_domain_warning_explains_finite_scope_without_continuous_impossibility():
+    text = describe_warning(_sample("W_LAYOUT_CRITICAL_RELATION_SEARCH_DOMAIN_EXHAUSTED"))
+    assert "exhaustive checks" in text.cause
+    assert "finite port/event search domain" in text.cause
+    assert "does not establish impossibility outside that domain" in text.cause
+
+
 def test_a_family_that_carries_its_own_message_keeps_it_and_only_equal_messages_merge():
     one = {"code": "W_NEW_FAMILY", "severity": "warning", "diagnostic": "W_NEW_FAMILY:a", "message": "a is late by 2 days"}
     other = dict(one, diagnostic="W_NEW_FAMILY:b", message="b is late by 5 days")
