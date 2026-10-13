@@ -460,10 +460,44 @@ Resolution uses the following ordered passes:
 9. apply safe alignment/overflow rules and collision policy;
 10. emit the canonical Layout Manifest or stable diagnostics.
 
-Stable node ID breaks otherwise equivalent source-order ties. Decimal calculations use
-the implementation's specified decimal context; manifest coordinates are quantized only
-once at the declared Scene precision. Hashes use canonical JSON key ordering, never
-Python `repr` or YAML presentation order.
+Stable node ID breaks otherwise equivalent source-order ties. Authored finite
+Decimal distances retain their resolved numeric values at the native Layout
+boundary. Finite completed float measurements are admitted through the existing
+`Decimal(str(value))` boundary, not silently reinterpreted as their binary float
+ratios. Resource/Theme resolution and immutable identity calculation are outside
+this correction. Native used lengths and origins MUST use
+exact rational arithmetic through track distribution, nesting, aspect sizing,
+alignment, anchors, source admission and natural-demand closure (#1214; this
+arithmetic correction is not yet implemented). Rounding a track share before
+composing its origin is not allowed: independently derived equivalent relative
+positions must remain equivalent at arbitrarily large finite extents.
+
+Native comparisons retain the existing strict/non-strict operators and equality
+admission against Decimal boundaries, without a new epsilon or tolerance.
+The existing allocator remains authoritative; search may not use an exact
+sidecar while other Layout consumers use rounded rectangles. Source measurement
+owners may use their font/shape libraries' numeric interfaces, but must admit
+their finite completed measurements once and retain the candidate-width facts
+needed to establish measurement validity. A converted library width is not a
+new source ceiling: the owner must validate admission against the exact native
+candidate budget, even if conversion rounds up. Paint-coordinate projection is
+not a source of allocation, admission or natural demand.
+
+Completed output conversion is explicit. Layout Manifest coordinates are
+quantized once at the requested precision, with exact half-even rounding
+independent of ambient Decimal context, including negative values and ties;
+there is no preliminary Decimal approximation. The public decimal-string format
+is unchanged. This Manifest transport rule does not change adapters' own numeric
+formatting. Scene/adapter numeric conversion cannot feed back into native Layout.
+Nonfinite or unrepresentable library/output conversion must produce a typed
+diagnostic, not an uncaught arithmetic exception or evidence of a capped host.
+Hashes use
+canonical JSON key ordering, never Python `repr` or YAML presentation order.
+The internal Rect/Measurement numeric representation changes, not resource
+schemas, immutable resource/metric identities or the public Manifest number
+format. Derived Manifest/Scene content hashes may change. Existing accumulated
+rounding noise is not a compatibility promise; numerical output changes must
+be disclosed and checked with the public materializers before acceptance.
 
 ### 8.1 Accepted prerequisite: one surface obstacle contract
 
