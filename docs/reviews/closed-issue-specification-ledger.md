@@ -10,3 +10,4 @@ normative specification.
 | #332 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/332) |
 | #1346 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1346) |
 | #1427 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1427) |
+| #1446 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1446) |

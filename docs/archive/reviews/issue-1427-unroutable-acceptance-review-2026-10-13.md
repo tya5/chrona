@@ -2,7 +2,7 @@
 
 Implementation: [PR1447](https://github.com/tya5/chrona/pull/1447),
 `d4509cd88160847b95a62ae566b840045c1b6bc3`, based on READY `208cf1cc`.
-Authority: [current work plan](../../planning/active/issue-1427-unroutable-work-plan-2026-10-12.md),
+Authority: [work plan](../planning/issue-1427-unroutable-work-plan-2026-10-12.md),
 Specs08/33/46/50, and [reviewer release decisions](https://github.com/tya5/chrona/issues/1427#issuecomment-6133101361).
 Final-head CI [38316006172](https://github.com/tya5/chrona/actions/runs/38316006172)
 passes on `ac63f6af`; PR1447 merged at `56924bd3`, synced READY `8ce44cb0`.
