@@ -568,6 +568,20 @@ content only. Existing explicit sources and labels remain supported; absent
 bindings or wording do not change their output, except the approved unbound
 Summary figure behavior specified in Specification46.
 
+### 9.4 Design purity audit (#1341)
+
+The design-purity tool audits Theme, Layout and presentation profiles against
+the actual Project referenced by each context. View and Context connections
+are excluded. It reports matched Project identifiers and authored wording
+with resource pointers, including string keys, using complete-token/phrase
+comparison rather than arbitrary substring matching. Generic placeholders are
+allowed; literal Project wording around them is not hidden. Lexical collisions
+require review and do not by themselves prove project dependence or purity.
+Strict mode rejects unresolved findings; report-only mode preserves findings
+without failing for them. Reference/identity failures still fail the audit.
+The tool is evidence, not a replacement for cross-project rendering and the
+literal issue acceptance. Existing corpus migration remains reviewer-owned.
+
 ## 10. Diagnostics
 
 View evaluation SHOULD report stable diagnostics for unknown Project, Snapshot, Actual, or object references; incompatible temporal domains; duplicate comparison identity; and invalid explicit windows. Exact identifiers and schema are deferred to the View schema and Application Architecture work.

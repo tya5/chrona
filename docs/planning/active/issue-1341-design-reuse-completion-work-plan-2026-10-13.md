@@ -174,3 +174,44 @@ assertion, retaining exact schema/Core set equality. Inventory, annotation,
 reference and schema-equivalence gates pass. CI snapshot/release evidence is
 required before accepting this slice. Purity
 checker, actual corpus adoption and whole-issue acceptance remain unfinished.
+
+## Purity checker: selected design and implementation plan
+
+Use cases: audit explicit design files against one Project, or audit each
+manifest context against its own referenced Project. A read-only tool reports
+resource, JSON pointer, matched Project fact and match class. It never rewrites
+resources, guesses a project's identity from filenames, or renders a corpus.
+Context selection and reference reading use the materializer's existing local,
+package and shared-Store rules, including derived Theme bases. Views and
+Contexts are connections, not design audit targets; generated Scene is not an
+authoring authority. Inspect Theme, Layout and presentation profiles (including
+their string keys), not Project extension schemas or font/icon payloads.
+
+Collect ids from the Project identity and named Project collections, and
+authored wording from title/label/description/text fields. Normalize Unicode,
+case and whitespace for wording comparison; match complete phrases and
+identifier tokens, not arbitrary substrings. Mask declared generic template
+placeholders, but never hide a project name embedded in the literal remainder.
+Numbers, booleans and dates are not wording. Exact lexical collisions are
+reported as candidates, not proof of semantic dependency or automatic purity.
+Do not silently whitelist short ids, paint tokens, resource ids or design names.
+Actual connection-member matches are separately identifiable. Strict mode
+refuses unresolved findings; report-only mode still emits every finding.
+
+Architecture review: tooling owns audit/discovery, the materialization use case
+owns Store/reference admission, and original resource bytes/identities are
+unchanged. The checker adds no renderer, selection rule or resource kind.
+Lexical evidence supplements cross-project renders; it cannot replace them or
+waive literal acceptance. Current reviewer-owned examples remain impure, so
+CI gates deterministic synthetic controls and records the real corpus report
+without claiming corpus acceptance; strict corpus gating follows migration.
+
+Implementation unit: `tools/check_design_purity.py`, a small public read-only
+reference/Store helper extracted from `usecases/materialize.py`, tool tests,
+Spec06 and the conformance runner. Test own-Project resolution, slide context
+override, shared Stores, nested Theme bases, identity/path failures, string
+keys, complete ids/phrases, placeholders, CJK, ambiguous collisions and stable
+report ordering. Run the checker once over all examples as a batch. No examples
+edits or generated-report inventory expansion; the report is tool output.
+Publish this design first, then finalize file-level implementation gates before
+code. Keep PR1457 unchanged while its CI and public snapshot are reviewed.
