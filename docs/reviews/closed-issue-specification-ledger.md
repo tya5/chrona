@@ -19,3 +19,4 @@ normative specification.
 | #1396 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1396), exact-main [release38354040480](https://github.com/tya5/chrona/actions/runs/38354040480) |
 | #1427 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1427) |
 | #1446 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1446) |
+| #1467 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1467), all literal criteria met; exact-main [release38407706306](https://github.com/tya5/chrona/actions/runs/38407706306) |
