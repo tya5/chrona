@@ -42,13 +42,15 @@ Developer mechanism gates are below; they do not replace the literal rows.
   succeeded; independently inspected snapshot11788782848 has92/92 identical
   Scene/SVG files,0 retirements and only2 inventory/coverage reports changed.
   Containing-main release [38348700557](https://github.com/tya5/chrona/actions/runs/38348700557)
-  on `d9c87d659652c1035099adc9e9b90610c4231d3b` remains pending.
+  on `d9c87d659652c1035099adc9e9b90610c4231d3b` succeeded.
 - PR1458 exact-head [38349311779](https://github.com/tya5/chrona/actions/runs/38349311779)
-  remains pending. Independently inspected snapshot11790031958 has92/92 identical
+  succeeded. Independently inspected snapshot11790031958 has92/92 identical
   Scene/SVG files,0 additions/retirements and only2 diagnostic inventories changed.
   Focused checker/conformance/materializer tests:46 passed; immutable-materializer
   integration controls:4 passed. Read-only corpus audit:0 reference errors,
   878 findings across35 resources and40 contexts with findings.
+  PR1458 merged at `a84bc82488fcb350897b5b0854999fbbb17717c8`; synced-main release
+  and the release containing this review remain pending.
 
 ## Architecture conclusion
 
