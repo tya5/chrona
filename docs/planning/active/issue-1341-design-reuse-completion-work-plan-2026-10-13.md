@@ -14,7 +14,7 @@ covered by1343. Neither is whole-issue acceptance.
 
 | Requirement | Required evidence |
 | --- | --- |
-| Target B and the four other approved designs reproduce byte-identically on HALCYON, with Theme/Layout/profiles containing no HALCYON id or wording, and with Views containing connection members only. | Actual five-design migration/byte comparison and mechanical purity audit, not synthetic-only evidence. Preserve truthful resource provenance; resolve the identity question before claiming exact Scene bytes. |
+| Target B and the four other approved designs reproduce byte-identically on HALCYON, with Theme/Layout/profiles containing no HALCYON id or wording, and with Views containing connection members only. | Reviewer-owned migration and comparison: identical SVG bytes and completed Scene geometry/paint/diagnostics; truthful contentIdentity/provenance may change. Adoption is deferred under owner6143136697, not claimed met by developer controls. |
 | `examples/chrona-roadmap` renders each design by writing only its own thin View and Context. | Actual five-design roadmap renders using shared resources, without copied design declarations. |
 | HALCYON is unchanged once its period declares the role. | Original1344 wording; owner6097145885 replaces role selection with explicit View bindings. Preserve the original wording and approved disposition in acceptance. |
 | The roadmap renders the Title Card countdown against its own period. | Actual View-bound countdown on roadmap after slot migration. |
@@ -57,9 +57,13 @@ for dev.” The reviewer retains permanent five-design thin-View migration and
 roadmap renders, including the Title Card countdown against its own period.
 That work remains unverified here; it is an explicit successor to the completed
 developer mechanisms, not a claim of adoption. The acceptance table records
-those rows as deferred to this section. Issue1344 may close after its selected
-mechanism and containing-review release pass; issue1341 still needs its separate
-byte-identity/purity disposition6138676694. Never falsify resource provenance.
+both1341 rows as deferred to this section, under the explicit
+[owner answer6143136697](https://github.com/tya5/chrona/issues/1341#issuecomment-6143136697).
+The developer mechanism is complete;1341 may close after the release containing
+this disposition passes.1344 is already closed after its containing release.
+Reviewer migration must preserve identical SVG bytes and completed Scene
+geometry, paint and diagnostics; only truthful Context/resource contentIdentity
+and provenance may change. No identity stripping or claim of corpus purity.
 
 ## Slice 2 design and implementation boundary
 
@@ -218,7 +222,7 @@ Architecture review: tooling owns audit/discovery, the materialization use case
 owns Store/reference admission, and original resource bytes/identities are
 unchanged. The checker adds no renderer, selection rule or resource kind.
 Lexical evidence supplements cross-project renders; it cannot replace them or
-waive literal acceptance. Current reviewer-owned examples remain impure, so
+waive literal acceptance. Current reviewer-owned migration is not verified, so
 CI gates deterministic synthetic controls and records the real corpus report
 without claiming corpus acceptance; strict corpus gating follows migration.
 
@@ -254,4 +258,6 @@ remain fatal while retaining earlier findings. Peer-review identity and
 partial-report findings have independent negative tests, including redirected
 non-UTF8 stdout with actual CJK JSON. Version admission
 uses the existing contract registry; no provisional helper fallback or new
-resource kind remains. CI public snapshot and release acceptance are pending.
+resource kind remains. PR1458's public snapshot preserves92/92 Scene/SVG files;
+the corrected three-OS release38362304100 succeeds. Developer mechanisms are
+complete; permanent adoption remains reviewer-owned under6143136697 above.
