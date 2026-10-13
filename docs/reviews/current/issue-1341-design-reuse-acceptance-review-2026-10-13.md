@@ -49,8 +49,10 @@ Developer mechanism gates are below; they do not replace the literal rows.
   Focused checker/conformance/materializer tests:46 passed; immutable-materializer
   integration controls:4 passed. Read-only corpus audit:0 reference errors,
   878 findings across35 resources and40 contexts with findings.
-  PR1458 merged at `a84bc82488fcb350897b5b0854999fbbb17717c8`; synced-main release
-  and the release containing this review remain pending.
+  PR1458 merged at `a84bc82488fcb350897b5b0854999fbbb17717c8`; synced READY
+  `7d927eba5c98f8c8525b1df7afc34b0771bfceb4` has containing-main release
+  [38350852518](https://github.com/tya5/chrona/actions/runs/38350852518) pending.
+  The release containing this review must also succeed before closure.
 
 ## Architecture conclusion
 
