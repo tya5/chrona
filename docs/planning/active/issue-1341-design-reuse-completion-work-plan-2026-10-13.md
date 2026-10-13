@@ -1,6 +1,6 @@
 # Thin-connector design reuse completion (#1341, #1344)
 
-Published code baseline: READY2347aed5; #1300 is closed after its containing
+Published code baseline: READY3aafce89; #1300 is closed after its containing
 three-OS release38339181830 succeeded. Adopt the current READY main before product publication. No
 previous-session local work is assumed.
 
@@ -79,7 +79,7 @@ slice's PR includes focused results and literal issue rows still open for later
 slices/adoption; full three-OS release remains required before issue closure.
 
 Slice2 is published in PR1455, source48010710, synced READY2347aed5;
-sync38343026629 succeeded and containing-main release38343299409 is live.
+sync38343026629 and containing-main release38343299409 succeeded.
 Exact-head38342278157 passed every check;
 artifact11787143093 confirms92/92 public Scene/SVG identical,0 retirements,
 diagnostic/coverage reports only. Shared-schema probes were corrected without
@@ -106,6 +106,75 @@ Pre-codee9f0e58a and code636b182f/139e7ead are published; focused357 PASS,
 post-merge143 PASS, schema inventory/annotations/references and equivalence PASS
 against READY2347aed5. Normal merges retain both branches' published history;
 only overlapping plan/probe additions needed reconciliation. The stale style
-admission evidence is retired. Public snapshot and release verification remain.
+admission evidence is retired. PR1456 is merged at e94ab055; exact-head
+38343692342 passed every check. Artifact11787772456 independently confirms
+92/92 public Scene/SVG identical,0 retirements,2 expected reports only.
+Containing-main sync38344567701 succeeded at READY3aafce89;
+three-OS release38344844826 succeeded.
 Batch public materializers/Scene/SVG via CI; no examples edits. Profile bindings,
 purity/adoption and every unresolved literal row remain open.
+
+## Profile connections: design, architecture review and implementation plan
+
+Slice3 requires no duplicate implementation:1343 already closes annotation
+policy/bindings. Read-only verification passed29 expansion/integration tests
+and76 content tests; five-design isolated migration controls compare actual
+SVG, completed primitives and diagnostics, including visible note text.
+
+Use cases: bind a shared countdown to each project's period; bind a summary
+metric to a project object; omit an unsupplied metric; replace project-specific
+captions and legend labels without copying design resources. Spec06 §9.3 and
+Spec46 define the selected connection/omission contract. No period-role layer,
+Layout slot registry or new resource kind is needed. Existing explicit sources
+remain supported. The1344 WIP is a source of reviewed tests/omission behavior,
+not a whole-branch merge: its stale orchestration conflicts must be reconciled.
+
+Architecture review: typed contracts admit author declarations; a pure profile
+connection resolver at the use-case boundary checks the selected profiles and
+View, then supplies effective copies before scheduling/fact resolution. Core
+keeps figure arithmetic, projection keeps selected facts, Layout keeps text
+measurement/geometry. Original resource identities and declaration indexes
+remain unchanged; omission must not renumber inline SourceRefs. Theme/heading
+missing-figure errors do not broaden implicitly. Summary scope/format checks
+apply after slot binding. JSON-safe typed info avoids restricting old ids.
+Specs06/13/33/44/46/56 and existing annotation/figure owners stay aligned.
+
+| Implementation unit | Files, tests and publication boundary |
+| --- | --- |
+| Admission and pure connection closure | View/Summary/common schemas and inventory; contracts/resources.py; one profile-binding owner in presentation/review. Add optional View bindings/wording and Summary slot sources in place, share figure/object grammar, preserve existing figure pointers. Test undeclared/colliding slots, malformed bindings, unknown/ambiguous wording, repeated consumers, precedence and immutable identities. Shared definition/subfragment probes and schema equivalence are mandatory. |
+| Render wiring and omission | usecases/render_review.py, review/v05_content.py, model/info_diagnostics.py. Wire effective View/Summary/detail copies consistently through all render-plan paths; reconcile1344 missing Summary figure behavior. Preserve original source identities after omission. Test real SVG/Scene countdown/object/legend captions, unbound/empty panels, missing explicit targets, scope/format failures, inline ids and unchanged legacy sources. |
+| Acceptance publication | Update this record with focused results; one implementation PR for the connected slice, batch public materializers/Scene/SVG and diagnostic changes via CI. Verify synced exact-main three-OS release. Keep actual five-design adoption/provenance and literal whole-issue acceptance open until evidenced/disposed by the owner. |
+
+Selected design and architecture review are published at fee9b716 on
+`wip/issue-1341-profile-connections`; documentation guards passed28 tests.
+Implementation plan: execute the two product units above in order in one
+connected implementation PR, with separate reviewed commits; do not open
+another item's PR. Add pure resolver tests and synthetic real-render tests,
+then run the existing derived-figure, Summary, content, detail and schema-owner
+focused suites together. Mandatory edge controls include raw-pointer escaping,
+slot/figure identity collision, arbitrary legend roles, dotted/ambiguous wording
+keys, subtree-after-binding validation and unbound inline SourceRef stability.
+Compare existing admitted-schema and diagnostic verdicts with current READY
+main; new optional grammar gets explicit positive/negative probes. CI owns the
+public snapshot, all affected materializers and full three-OS release. Publish
+this finalized plan before product edits. No authored examples changes or
+whole-issue completion claim.
+
+Implementation review: the pure resolver and render wiring keep original
+resource identities and original Summary declaration indexes; mapping metrics
+also retain their escaped authored diagnostic pointers. A separate read-only
+review found no layer or consumer-path defect. Shared grammar has positive/
+negative probes, including required figure wrappers and legacy label limits;
+annotation/reference validation passes. Six new actual SVG controls pass,
+including identical SVG/completed primitives against explicit countdown and
+legend declarations, unbound omission, unavailable versus missing objects,
+and original View error pointers. Combined focused coverage passed447 tests;
+the17 figure-contract tests also pass with their shared-fragment vocabulary
+assertion, retaining exact schema/Core set equality. Inventory, annotation,
+reference and schema-equivalence gates pass. PR1457 snapshot11789815581
+independently confirms92/92 Scene/SVG unchanged,0 retirements and only2 reports.
+CI38346616835 passed every check except shard3's one stale inline-identity
+assertion (and consequential derived-ready); its shared-target/nonempty-string
+guard is corrected, with218 schema-owner tests passing. Current-head CI and
+containing-main release remain required before accepting this slice. Purity
+checker, actual corpus adoption and whole-issue acceptance remain unfinished.

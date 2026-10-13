@@ -324,7 +324,7 @@ count remains a raw integer. Theme's existing text treatment applies afterwards.
 
 A View MAY declare `figures`, an array of derived figures that the Core resolves (Spec 05 §12.2) and a consumer shows by name. Each has a unique `id` (no braces, whitespace or control characters: `E_VIEW_FIGURE_INVALID`; a repeat is `E_VIEW_FIGURE_DUPLICATE`) and one closed `kind`: `daysUntil {from?, to, days?, calendar?}`, `daysIn {period, days?, calendar?}` or `count {source, scope?}`. A fact (`from`, `to`) is exactly one of `asOf`, `{period, side: start | end | last}` or `{object, endpoint: at | start | end}`; `from` defaults to `asOf`. `last` is the period's exclusive end minus one calendar day, not its last working day (Spec 05 §12.2). `days` is `calendar` (the default) or `working`; `calendar` names the Project calendar a working count uses (the Project default when omitted) and is a dead declaration, `E_VIEW_FIGURE_INVALID`, with calendar days. Nothing else is accepted: no expression, no operator, no field name, no other kind or fact.
 
-Every declared figure is resolved after scheduling, whether or not a consumer shows it. A fact that cannot be read refuses the render with all findings (`E_FIGURE_PERIOD_UNKNOWN`, `E_FIGURE_OBJECT_UNKNOWN`, `E_FIGURE_ENDPOINT_UNAVAILABLE`, `E_FIGURE_ASOF_MISSING`, `E_FIGURE_CALENDAR_UNAVAILABLE`; the message names the figure, the fact and what is declared): a figure is never blank, zero or guessed. A Summary Profile metric shows a figure with `source: {figure: <id>}` (Spec 46); a metric naming an id the View does not declare is `E_VIEW_FIGURE_UNKNOWN`. The member is optional and additive in `chrona/view/v0.28`; a View without `figures` renders as before.
+Every declared figure is resolved after scheduling, whether or not a consumer shows it. A fact that cannot be read refuses the render with all findings (`E_FIGURE_PERIOD_UNKNOWN`, `E_FIGURE_OBJECT_UNKNOWN`, `E_FIGURE_ENDPOINT_UNAVAILABLE`, `E_FIGURE_ASOF_MISSING`, `E_FIGURE_CALENDAR_UNAVAILABLE`; the message names the figure, the fact and what is declared): a figure is never blank, zero or guessed. A Summary Profile metric shows a figure with `source: {figure: <id>}` (Spec 46); an undeclared Summary figure is omitted with `I_SUMMARY_FIGURE_UNBOUND` under #1344, while other template consumers retain `E_VIEW_FIGURE_UNKNOWN`. The member is optional and additive in `chrona/view/v0.28`; a View without `figures` renders as before except that explicitly approved Summary omission.
 
 A `daysUntil` figure MAY declare `scope: group` (omission or `global` resolves once).
 The additional fact `{group: firstPlannedStart}` requires that scope. View projection gathers
@@ -516,6 +516,57 @@ property whole; explicitly wrong-type entries or nested objects are not repaired
 An encoded visual never takes a default direct `ref`, though it may take default
 side/decorative intent. Required connection fields and all ordinary effective
 View validation remain unchanged. Scene and adapters never see this overlay.
+
+### 9.3 Profile data bindings and wording (#1341, #1344)
+
+A Summary Profile may declare a typed metric `source: {slot: <name>}`.
+These are data slots, not Layout nodes. The selected Summary Profile's slot
+names form the binding namespace; repeated consumers may share a slot.
+There is no `Layout.viewDefaults.slots` member or new resource kind.
+
+The View may supply `bindings: {<name>: <binding>}`. A binding is either
+`{object: <Project object id>, facet: planned}` or
+`{figure: <figure declaration without id>}`. Figure bindings use the existing
+`figures` grammar and Core fact resolution; their figure identity is the slot
+name. Existing figure identity rules apply, and collision with an explicit
+View figure is an error at the binding. Semantic findings retain the original
+`/body/bindings/<escaped-name>/figure/...` pointer, not a synthetic array index.
+Binding figure specs are typed at View admission so existing figure consumers
+and format checks can read those identities. The use-case boundary separately
+checks that each binding name is declared by the selected Summary Profile.
+Aliases are not a hidden Summary-only namespace; ordinary consumer scope
+restrictions still apply.
+
+A binding to an undeclared slot is `E_VIEW_BINDING_UNKNOWN` at
+`/body/bindings/<escaped-name>`. A declared but unbound slot omits its metric
+and emits `I_SUMMARY_SLOT_UNBOUND`; a panel with no remaining metrics is also
+omitted. No fact or target is inferred from the project. A supplied nonexistent
+object is `E_FIGURE_OBJECT_UNKNOWN`; invalid figure facts retain their existing
+errors. A valid object excluded by selection retains the existing unavailable
+data behavior. Subtree scope requires a planned-object binding; figure scope
+and formatting constraints remain unchanged. Admission permits subtree on a
+slot declaration and defers that check until its binding is known; it does not
+relax the existing subtree rule for any other source form. Separately, the
+approved #1344 omission also applies to an undeclared legacy Summary figure
+source, with `I_SUMMARY_FIGURE_UNBOUND` (Specification46). Neither exception
+changes missing-figure errors for heading or Theme templates.
+
+The View may supply `wording.legend: {<role>: <text>}` and
+`wording.summary: {<panel-id>.<metric-id>: <text>}`. These override the selected
+profile's legend label or metric caption, not its identity, order, source,
+format or arrangement. A legend key addresses all entries with that role.
+Summary keys address the exact joined identifiers, without splitting on dots;
+if more than one metric has that joined key, an override is ambiguous.
+An unknown or ambiguous key is `E_VIEW_WORDING_UNKNOWN` or
+`E_VIEW_WORDING_AMBIGUOUS` at its original View pointer. An omitted override
+retains the profile label. No entries or panels are synthesized.
+
+The use-case boundary closes profile connections before fact resolution and
+text measurement, preserving authored resource identities in provenance.
+Layout still owns completed geometry; Scene and adapters receive resolved
+content only. Existing explicit sources and labels remain supported; absent
+bindings or wording do not change their output, except the approved unbound
+Summary figure behavior specified in Specification46.
 
 ## 10. Diagnostics
 

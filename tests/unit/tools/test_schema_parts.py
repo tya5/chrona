@@ -345,6 +345,39 @@ PROBES: dict[str, tuple[list[Any], list[Any]]] = {
     "groupPresentation": (["band", "header"], ["none", "alternate", "Band", None, 3]),
     "colorEncodingPresentation": ([{}, {"scale": "delivery", "target": "planned"}, {"scale": "delivery"}, {"target": "planned"}],
                                   [{"scale": ""}, {"target": "actual"}, {"unknown": True}, {"scale": "delivery", "target": "planned", "extra": True}, None]),
+    "profileFigureFact": (["asOf", {"period": "launch", "side": "start"}, {"period": "launch", "side": "last"},
+                            {"object": "task", "endpoint": "end"}, {"group": "firstPlannedStart"}],
+                           ["today", {"period": "launch"}, {"period": "launch", "side": "middle"},
+                            {"object": "task", "endpoint": "finish"}, {"group": "firstPlannedStart", "extra": True}, None]),
+    "profileFigureIdentity": (["launch-countdown", "Work package / gate", "作業計画", " padded ", "with\nline"], ["", None, 7]),
+    "profileFigureScope": (["global", "group"], ["grouped", "", None]),
+    "profileFigureDays": (["calendar", "working"], ["business", "", None]),
+    "profileFigureCalendar": (["default", "holiday calendar"], ["", None, 5]),
+    "profileFigureCountSource": (["selected", "knownFinishVariance", "placedNotes"], ["count.selected", "unknown", None]),
+    "profileFigure": ([{"kind": "daysUntil", "to": {"period": "launch", "side": "start"}},
+                       {"kind": "daysUntil", "from": "asOf", "to": {"object": "task", "endpoint": "end"}, "days": "working", "calendar": "shop"},
+                       {"kind": "daysIn", "period": "launch", "days": "calendar"},
+                       {"kind": "count", "source": "selected", "scope": "group"}],
+                      [{"id": "not-an-alias", "kind": "daysUntil", "to": "asOf"}, {"kind": "daysUntil"},
+                       {"kind": "daysIn", "period": "launch", "extra": True}, {"kind": "count", "source": "unknown"},
+                       {"kind": "unknown", "to": "asOf"}, None]),
+    "profileBinding": ([{"object": "launch", "facet": "planned"}, {"figure": {"kind": "daysUntil", "to": "asOf"}},
+                        {"figure": {"kind": "count", "source": "selected"}}],
+                       [{"object": "launch"}, {"object": "launch", "facet": "actual"},
+                        {"kind": "daysUntil", "to": "asOf"}, {"figure": {"id": "extra", "kind": "count", "source": "selected"}}, None]),
+    "profileBindings": ([{}, {"countdown": {"figure": {"kind": "daysUntil", "to": {"period": "launch", "side": "start"}}},
+                                "finish": {"object": "launch", "facet": "planned"}}],
+                        [{"countdown": {"kind": "count", "source": "selected"}}, {"": {"object": "x", "facet": "planned"}},
+                         {"x": {"figure": {"id": "x", "kind": "count", "source": "selected"}}}, None]),
+    "viewWording": ([{}, {"legend": {"planned": "Plan"}}, {"summary": {"launch.countdown": "Days"}},
+                      {"legend": {}, "summary": {"part.one.two": ""}}, {"summary": {"x": "line\nallowed"}},
+                      {"legend": {"risk": "x" * 4096}}],
+                     [{"legend": {"planned": ""}}, {"legend": {"planned": "x" * 4097}},
+                      {"extra": {}}, {"legend": "Plan"}, None]),
+    "profileLegendLabel": (["Plan", "x" * 4096], ["", "x" * 4097, None, 5]),
+    "profileSummaryLabel": (["", "x", "line\nallowed", "x" * 8192], [None, 5, {}]),
+    "summarySlotSource": ([{"slot": "countdown"}, {"slot": "Work package / gate"}, {"slot": "with\nline"}],
+                          [{}, {"slot": ""}, {"slot": "countdown", "extra": True}, "countdown", None]),
 }
 
 # Accepted today by the byte-exact `$` anchor, `\d`, or the shape-only date. Not endorsed: a later slice
@@ -373,6 +406,16 @@ def test_definition_accepts_and_rejects_the_probe_values(name):
     accepted, rejected = PROBES[name]
     assert [value for value in accepted if not validator.is_valid(value)] == []
     assert [value for value in rejected if validator.is_valid(value)] == []
+
+
+def test_summary_slot_scope_is_admitted_until_its_binding_kind_is_known():
+    summary = _schema("summary-profile-v0.2.schema.yaml")
+    registry = schema_registry().with_resource(summary["$id"], Resource.from_contents(summary))
+    validator = Draft202012Validator({"$ref": f"{summary['$id']}#/$defs/typedMetric"}, registry=registry)
+    assert validator.is_valid({"source": {"slot": "countdown"}, "format": "signedDays", "scope": "subtree"})
+    assert validator.is_valid({"source": {"object": "launch", "facet": "planned"}, "format": "date", "scope": "subtree"})
+    assert not validator.is_valid({"source": {"figure": "countdown"}, "format": "count", "scope": "subtree"})
+    assert not validator.is_valid({"source": "count.selected", "format": "count", "scope": "subtree"})
 
 
 @pytest.mark.parametrize("name", sorted(ACCEPTED_TODAY))
@@ -409,7 +452,7 @@ ADOPTERS = frozenset({
     "command-request-v0.3.schema.yaml", "example-registry-v0.1.schema.yaml", "icon-catalog-v0.5.schema.yaml",
     "layout-profile-v0.10.schema.yaml", "presentation-materialization-receipt-v0.1.schema.yaml", "presentation-preset-v0.1.schema.yaml",
     "preset-library-v0.2.schema.yaml", "profile-v0.3.schema.yaml", "project-v0.7.schema.yaml",
-    "render-context-v0.17.schema.yaml", "scene-v0.7.schema.yaml", "theme-asset-source-v0.2.schema.yaml",
+    "render-context-v0.17.schema.yaml", "scene-v0.7.schema.yaml", "summary-profile-v0.2.schema.yaml", "theme-asset-source-v0.2.schema.yaml",
     "theme-v0.16.schema.yaml", "view-v0.28.schema.yaml",
 })
 

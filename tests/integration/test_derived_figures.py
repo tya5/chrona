@@ -278,18 +278,97 @@ def test_every_finding_of_several_figures_is_reported_together(tmp_path):
     assert codes == ["E_FIGURE_PERIOD_UNKNOWN", "E_FIGURE_OBJECT_UNKNOWN"]
 
 
-def test_a_metric_naming_an_undeclared_figure_is_refused_with_the_declared_ones(tmp_path):
-    with pytest.raises(RenderFailed) as failure:
-        _render(tmp_path, _parts(COUNTDOWN), _summary(_metric("missing", metric_id="m")))
-    assert failure.value.code == "E_VIEW_FIGURE_UNKNOWN"
-    assert "missing" in failure.value.message and "countdown" in failure.value.message
-    assert failure.value.source_ref == "/body/panels/key/metrics/m"
+def test_an_unsupplied_summary_figure_omits_only_its_metric(tmp_path):
+    rendered = _render(tmp_path, _parts(COUNTDOWN), _summary(
+        _metric("missing", metric_id="missing"), _metric(metric_id="kept")))
+    assert _texts(rendered)["summary:key:kept:value"] == "28"
+    assert not any("missing" in identity for identity in _texts(rendered))
+    assert b"summary:key:kept:value" in rendered.artifact.content
+    assert b"summary:key:missing" not in rendered.artifact.content
+    assert any(item.code == "I_SUMMARY_FIGURE_UNBOUND" for item in rendered.info_diagnostics)
 
 
-def test_a_metric_naming_a_figure_when_the_view_declares_none_says_none(tmp_path):
+def test_an_empty_unbound_summary_panel_is_not_drawn(tmp_path):
+    rendered = _render(tmp_path, _parts(), _summary(_metric("countdown", metric_id="m")))
+    assert _texts(rendered) == {}
+    assert b"summary:key" not in rendered.artifact.content
+    assert any(item.code == "I_SUMMARY_FIGURE_UNBOUND" for item in rendered.info_diagnostics)
+
+
+def test_profile_countdown_binding_and_wording_reach_actual_svg(tmp_path):
+    parts = _parts()
+    parts["view"]["body"]["bindings"] = {"countdown": {
+        "figure": {"kind": "daysUntil", "to": {"period": "window", "side": "start"}}}}
+    parts["view"]["body"]["wording"] = {"summary": {"key.m": "PROJECT DAYS"}}
+    metric = dict(_metric(metric_id="m"), source={"slot": "countdown"})
+    rendered = _render(tmp_path, parts, _summary(metric))
+    assert _texts(rendered)["summary:key:m:value"] == "28"
+    assert _texts(rendered)["summary:key:m:caption"] == "PROJECT DAYS"
+    assert b">PROJECT DAYS<" in rendered.artifact.content
+    assert b"summary:key:m:value" in rendered.artifact.content
+    baseline_dir = tmp_path / "explicit"
+    baseline_dir.mkdir()
+    explicit = _render(baseline_dir, _parts(COUNTDOWN), _summary(_metric(label="PROJECT DAYS")))
+    assert rendered.artifact.content == explicit.artifact.content
+    assert rendered.surface.primitives == explicit.surface.primitives
+
+
+def test_unbound_slot_omits_content_without_project_inference(tmp_path):
+    rendered = _render(tmp_path, _parts(), _summary(dict(_metric(), source={"slot": "countdown"})))
+    assert _texts(rendered) == {}
+    assert b"summary:key" not in rendered.artifact.content
+    assert any(item.code == "I_SUMMARY_SLOT_UNBOUND" for item in rendered.info_diagnostics)
+
+
+def test_object_binding_keeps_selection_unavailability_separate_from_unknown_object(tmp_path):
+    parts = _parts()
+    parts["view"]["body"]["bindings"] = {"milestone": {"object": "launch", "facet": "planned"}}
+    parts["view"]["body"]["selection"] = {"include": {"ids": ["a", "build"]}}
+    metric = dict(_metric(format="date"), source={"slot": "milestone"})
+    rendered = _render(tmp_path, parts, _summary(metric))
+    assert _texts(rendered)["summary:key:m:value"] == "unknown"
+    assert b">unknown<" in rendered.artifact.content
+    parts["view"]["body"]["bindings"]["milestone"]["object"] = "ghost"
     with pytest.raises(RenderFailed) as failure:
-        _render(tmp_path, _parts(), _summary(_metric("countdown", metric_id="m")))
-    assert failure.value.code == "E_VIEW_FIGURE_UNKNOWN" and "declared: none" in failure.value.message
+        _render(tmp_path, parts, _summary(metric))
+    assert failure.value.code == "E_FIGURE_OBJECT_UNKNOWN"
+    assert failure.value.source_ref == "/body/bindings/milestone/object"
+
+
+def test_view_legend_wording_keeps_arbitrary_role_and_key_geometry(tmp_path):
+    parts = _parts(slot=False)
+    parts["layout"]["root"]["children"].insert(1, dict(SLOT, id="legend", source="legend"))
+    parts["view"]["body"]["wording"] = {"legend": {"project-role": "PROJECT WINDOW"}}
+    parts["theme"]["body"]["roles"]["project-role"] = {}
+    parts["theme"]["body"]["colorBindings"]["project-role.fill"] = "text"
+    detail = {"version": "chrona/review-detail-profile/v0.1", "id": "legend",
+              "body": {"legend": [{"role": "project-role", "label": "DEFAULT"}]}}
+    rendered = sr.render(tmp_path, _source(), presentation=parts, detail=detail)
+    assert b">PROJECT WINDOW<" in rendered.artifact.content
+    assert b">DEFAULT<" not in rendered.artifact.content
+    explicit_dir = tmp_path / "explicit"
+    explicit_dir.mkdir()
+    parts["view"]["body"].pop("wording")
+    detail["body"]["legend"][0]["label"] = "PROJECT WINDOW"
+    explicit = sr.render(explicit_dir, _source(), presentation=parts, detail=detail)
+    assert rendered.artifact.content == explicit.artifact.content
+    assert rendered.surface.primitives == explicit.surface.primitives
+
+
+@pytest.mark.parametrize(("member", "value", "code", "pointer"), [
+    ("bindings", {"typo/a~b": {"object": "launch", "facet": "planned"}},
+     "E_VIEW_BINDING_UNKNOWN", "/body/bindings/typo~1a~0b"),
+    ("wording", {"summary": {"typo/a~b": "Caption"}},
+     "E_VIEW_WORDING_UNKNOWN", "/body/wording/summary/typo~1a~0b"),
+])
+def test_profile_connection_errors_keep_the_original_view_pointer(tmp_path, member, value, code, pointer):
+    parts = _parts()
+    parts["view"]["body"][member] = value
+    with pytest.raises(RenderFailed) as failure:
+        _render(tmp_path, parts, _summary(_metric()))
+    assert failure.value.code == code
+    assert failure.value.component == "view"
+    assert failure.value.source_ref == pointer
 
 
 def test_a_figure_cannot_be_formatted_as_a_date(tmp_path):

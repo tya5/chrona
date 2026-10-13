@@ -277,6 +277,31 @@ class RelationHintSummary:
         return self.code + ":" + json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))
 
 
+@dataclass(frozen=True)
+class UnboundSummarySource:
+    """An optional Summary connection omitted before content measurement."""
+
+    panel_id: str
+    metric_id: str
+    source_kind: str
+    source_name: str
+
+    def __post_init__(self) -> None:
+        if (self.source_kind not in {"slot", "figure"}
+                or any(not isinstance(value, str) or not value
+                       for value in (self.panel_id, self.metric_id, self.source_name))):
+            raise _diagnostic_error("UnboundSummarySource requires consumer ids and a slot or figure name")
+
+    @property
+    def code(self) -> str:
+        return "I_SUMMARY_SLOT_UNBOUND" if self.source_kind == "slot" else "I_SUMMARY_FIGURE_UNBOUND"
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps({"panel": self.panel_id,
+            "metric": self.metric_id, self.source_kind: self.source_name},
+            ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
 PresentationInfo = (SuppressedPlotLabels | PaintOmission | RelationRoutingSummary | RelationSearchBudgetHit
                     | RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession
-                    | RelationHintReceipt | RelationHintSummary)
+                    | RelationHintReceipt | RelationHintSummary | UnboundSummarySource)

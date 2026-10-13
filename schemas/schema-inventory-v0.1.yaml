@@ -66,6 +66,19 @@ schemas:
       annotationCandidates: "sha256:2daa0753bf0c453e7f80c7bc8f3d8f78ffd0ae9677ce96ea0b39f8b6ab7bba9e"
       annotationPlacementPolicy: "sha256:5dbd61db1ea073720443ba0076b7d17fd148629de6dee8fed99b339169d358c7"
       annotationPlacementByPurpose: "sha256:3241c3e652f34b517df15f2fd84e25af0e71bbc67542f266e1a9b91731ce9be2"
+      profileFigureFact: "sha256:aed294c179aa09bae72fc688ac6d15872deb0cc2adf4ff0c4fad26a2d2e02823"
+      profileFigureIdentity: "sha256:9ac136edb99a2063b3091602181c8d2022fdccb5b514991319d58544c2e57e95"
+      profileFigureScope: "sha256:54cb50d00c2e293548b9e4c0b2a2cdfde13204d9f3db5155a589b3bd7207c3b2"
+      profileFigureDays: "sha256:42d2203abeb044cfd165671fdfec72788f622df8c6dab2d1d7d8b3505ff2c905"
+      profileFigureCalendar: "sha256:9ac136edb99a2063b3091602181c8d2022fdccb5b514991319d58544c2e57e95"
+      profileFigureCountSource: "sha256:9fbaf895536acb206345207e6f5d1492aa3c317dbeb590fbc0552a7200b33947"
+      profileFigure: "sha256:9239914c0ef5fae70ea224d1c46cd5e1430cec63d99ecd4f539421b071782ea6"
+      profileBinding: "sha256:04325918c7ff85b736bedfbaab5288f3992cda0c138b50e7da40c43cfc4a8789"
+      profileBindings: "sha256:4452c5489b8d4c993c417aa2e0c89cebfc0cb56e18fb6da60debbc4a8c5d43ce"
+      viewWording: "sha256:353408d0fce7cae7030a76d9fc6a1335f0f4dd821af40ba03c60b543320e251b"
+      profileLegendLabel: "sha256:f7be3125a2038a14d7cd75b5ae3a7eeefaaf39698437bbbabfa6eb0163390469"
+      profileSummaryLabel: "sha256:00404e686415370f1711c4d7acfa2905444d3cf23cef2e10c47d445ebe690f96"
+      summarySlotSource: "sha256:9f0c93048c879c5ac3d6d5963ba6f2c5373f46f6696c2af20e294b03f8407e8c"
   - {file: presentation-preset-v0.1.schema.yaml, kind: presentation-preset, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: preset-library-v0.2.schema.yaml, kind: builtin-preset-library, state: live, consumers: [src/chrona/usecases/preset_library.py]}
   - {file: example-registry-v0.1.schema.yaml, kind: example-registry, state: live, consumers: [src/chrona/resources/__init__.py]}

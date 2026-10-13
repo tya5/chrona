@@ -387,6 +387,18 @@ class ViewInput:
     annotation_bindings: tuple[FrozenDict, ...] = ()
     annotation_placement: FrozenDict | None = None
     figure_formats: FrozenDict = field(default_factory=FrozenDict)
+    profile_bindings: tuple[ViewProfileBinding, ...] = ()
+    wording: FrozenDict | None = None
+
+
+@dataclass(frozen=True)
+class ViewProfileBinding:
+    """One View-owned connection from a profile slot to a Project fact or figure."""
+
+    name: str
+    object_id: str | None = None
+    figure: FigureSpec | None = None
+    path: str = ""
 
 
 @dataclass(frozen=True)
@@ -396,6 +408,7 @@ class SummaryMetric:
     source: str | FrozenDict
     format: str
     scope: str | None
+    declaration_path: str | None = field(default=None, compare=False)
 
 
 @dataclass(frozen=True)
@@ -956,7 +969,9 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                           for column in body.get("tableColumns", ()))
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)
-    figures = _view_figures(body.get("figures", ()))
+    explicit_figures = _view_figures(body.get("figures", ()))
+    profile_bindings = _view_profile_bindings(body.get("bindings", FrozenDict()), explicit_figures)
+    figures = explicit_figures + tuple(binding.figure for binding in profile_bindings if binding.figure is not None)
     for item in figures:
         if item.source == "placedNotes" and body["surface"] != "table-timeline":
             raise ContractError("E_FIGURE_LAYOUT_SCOPE", "placedNotes requires a table-timeline surface",
@@ -1001,7 +1016,9 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         slot_heading_text=(freeze(body["slotHeadingText"]) if "slotHeadingText" in body else None),
         annotation_bindings=tuple(body.get("annotationBindings", ())),
         annotation_placement=body.get("annotationPlacement"),
-        figure_formats=_view_figure_formats(body.get("figureFormats", {}), figures))
+        figure_formats=_view_figure_formats(body.get("figureFormats", {}), figures),
+        profile_bindings=profile_bindings,
+        wording=freeze(body["wording"]) if "wording" in body else None)
 
 
 def _view_figure_formats(raw: Mapping[str, Any], figures: tuple[FigureSpec, ...]) -> FrozenDict:
@@ -1107,33 +1124,63 @@ def _view_figures(raw: Any) -> tuple[FigureSpec, ...]:
     specs: list[FigureSpec] = []
     for index, item in enumerate(raw):
         path = f"/body/figures/{index}"
-        figure_id = str(item["id"])
-        if any(char in "{}|" or char.isspace() or not char.isprintable() for char in figure_id):
-            raise ContractError("E_VIEW_FIGURE_INVALID", f"figure id {figure_id!r} may not contain braces, `|`, whitespace or control characters", f"{path}/id")
-        days = str(item.get("days", "calendar"))
-        calendar = str(item["calendar"]) if "calendar" in item else None
-        if calendar is not None and days != "working":
-            raise ContractError("E_VIEW_FIGURE_INVALID", f"figure {figure_id} names a calendar but counts calendar days", f"{path}/calendar")
-        if item["kind"] == "daysUntil":
-            scope = str(item.get("scope", "global"))
-            target = _figure_fact(item["to"])
-            origin = _figure_fact(item["from"]) if "from" in item else AsOfFact()
-            if scope != "group" and any(isinstance(fact, GroupStartFact) for fact in (origin, target)):
-                raise ContractError("E_VIEW_FIGURE_INVALID",
-                                    f"figure {figure_id} reads a current-group fact without scope group", f"{path}/scope")
-            specs.append(FigureSpec(figure_id, "daysUntil", to=target, origin=origin,
-                                    days=days, calendar_id=calendar, path=path, scope=scope))
-        elif item["kind"] == "count":
-            if item["source"] in ("groups", "placedNotes") and item.get("scope", "global") != "global":
-                raise ContractError("E_VIEW_FIGURE_INVALID", "groups and placedNotes counts require global scope",
-                                    f"{path}/scope")
-            specs.append(FigureSpec(figure_id, "count", source=str(item["source"]),
-                                    scope=str(item.get("scope", "global")), path=path))
-        else:
-            specs.append(FigureSpec(figure_id, "daysIn", period_id=str(item["period"]), days=days, calendar_id=calendar, path=path))
+        specs.append(_view_figure(item, path))
     if len({item.figure_id for item in specs}) != len(specs):
         raise ContractError("E_VIEW_FIGURE_DUPLICATE", "two figures share an id", "/body/figures")
     return tuple(specs)
+
+
+def _view_profile_bindings(raw: Mapping[str, Any], explicit_figures: tuple[FigureSpec, ...]) -> tuple[ViewProfileBinding, ...]:
+    """Type profile bindings while retaining their authored JSON pointers."""
+    declared_ids = {figure.figure_id for figure in explicit_figures}
+    bindings: list[ViewProfileBinding] = []
+    for name, declaration in raw.items():
+        pointer = f"/body/bindings/{_pointer_token(str(name))}"
+        if "object" in declaration:
+            bindings.append(ViewProfileBinding(str(name), object_id=str(declaration["object"]), path=pointer))
+            continue
+        figure_path = f"{pointer}/figure"
+        figure = _view_figure(declaration["figure"], figure_path, figure_id=str(name), id_path=pointer)
+        if figure.figure_id in declared_ids:
+            raise ContractError("E_VIEW_BINDING_FIGURE_COLLISION",
+                                f"binding slot {name!r} collides with an explicit View figure id",
+                                pointer)
+        declared_ids.add(figure.figure_id)
+        bindings.append(ViewProfileBinding(str(name), figure=figure, path=pointer))
+    return tuple(bindings)
+
+
+def _pointer_token(value: str) -> str:
+    return value.replace("~", "~0").replace("/", "~1")
+
+
+def _view_figure(item: Mapping[str, Any], path: str, *, figure_id: str | None = None,
+                 id_path: str | None = None) -> FigureSpec:
+    """Parse one existing View figure grammar at its source pointer, optionally slot-named."""
+    figure_id = str(item["id"]) if figure_id is None else figure_id
+    if any(char in "{}|" or char.isspace() or not char.isprintable() for char in figure_id):
+        raise ContractError("E_VIEW_FIGURE_INVALID", f"figure id {figure_id!r} may not contain braces, `|`, whitespace or control characters", id_path or f"{path}/id")
+    days = str(item.get("days", "calendar"))
+    calendar = str(item["calendar"]) if "calendar" in item else None
+    if calendar is not None and days != "working":
+        raise ContractError("E_VIEW_FIGURE_INVALID", f"figure {figure_id} names a calendar but counts calendar days", f"{path}/calendar")
+    if item["kind"] == "daysUntil":
+        scope = str(item.get("scope", "global"))
+        target = _figure_fact(item["to"])
+        origin = _figure_fact(item["from"]) if "from" in item else AsOfFact()
+        if scope != "group" and any(isinstance(fact, GroupStartFact) for fact in (origin, target)):
+            raise ContractError("E_VIEW_FIGURE_INVALID",
+                                f"figure {figure_id} reads a current-group fact without scope group", f"{path}/scope")
+        return FigureSpec(figure_id, "daysUntil", to=target, origin=origin,
+                          days=days, calendar_id=calendar, path=path, scope=scope)
+    if item["kind"] == "count":
+        if item["source"] in ("groups", "placedNotes") and item.get("scope", "global") != "global":
+            raise ContractError("E_VIEW_FIGURE_INVALID", "groups and placedNotes counts require global scope",
+                                f"{path}/scope")
+        return FigureSpec(figure_id, "count", source=str(item["source"]),
+                          scope=str(item.get("scope", "global")), path=path)
+    return FigureSpec(figure_id, "daysIn", period_id=str(item["period"]), days=days,
+                      calendar_id=calendar, path=path)
 
 
 def _figure_fact(raw: Any) -> AsOfFact | PeriodFact | ObjectFact | GroupStartFact:
@@ -1303,14 +1350,17 @@ def _validate_view_fallback(raw_fallback: Any) -> None:
 
 def _summary_input(body: FrozenDict) -> SummaryProfileInput:
     panels: list[SummaryPanelInput] = []
-    for panel in body["panels"]:
+    for panel_index, panel in enumerate(body["panels"]):
         declared = panel["metrics"]
         entries = declared.items() if isinstance(declared, FrozenDict) else ((item["id"], item) for item in declared)
         metrics: list[SummaryMetric | tuple[str, str]] = []
-        for metric_id, definition in entries:
+        for metric_index, (metric_id, definition) in enumerate(entries):
             if isinstance(definition, FrozenDict):
+                token = _pointer_token(str(metric_id)) if isinstance(declared, FrozenDict) else str(metric_index)
+                path = f"/body/panels/{panel_index}/metrics/{token}"
                 metrics.append(SummaryMetric(str(metric_id), str(definition.get("label", metric_id)), definition["source"],
-                                             str(definition["format"]), str(definition["scope"]) if "scope" in definition else None))
+                                             str(definition["format"]), str(definition["scope"]) if "scope" in definition else None,
+                                             declaration_path=path))
             else:
                 metrics.append((str(metric_id), str(definition)))
         panels.append(SummaryPanelInput(str(panel["id"]), str(panel["title"]) if "title" in panel else None,

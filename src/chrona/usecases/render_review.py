@@ -36,7 +36,7 @@ from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
 from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
-from chrona.presentation.model.info_diagnostics import PresentationInfo
+from chrona.presentation.model.info_diagnostics import PresentationInfo, UnboundSummarySource
 from chrona.presentation.model.preset_target import PresetVisualProfileFallback
 from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
@@ -58,6 +58,7 @@ from chrona.presentation.contracts.resources import ViewInput
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.presentation.review.figure_facts import deferred_layout_figures, projected_counts
 from chrona.presentation.review.annotation_expansion import AnnotationExpansionError
+from chrona.presentation.review.profile_connections import ProfileConnectionError, resolve_profile_connections
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, header_lines, heading_text
 from chrona.presentation.figure_text import FigureTextError, FigureTextReadError, resolve_figure_text
 from chrona.presentation.review.v05_content import (
@@ -228,6 +229,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed(error.code, error.detail, "presentation", error.source_ref) from error
     except AnnotationExpansionError as error:
         raise RenderFailed(error.diagnostic_id, error.detail, "presentation", error.source_ref) from error
+    except ProfileConnectionError as error:
+        raise RenderFailed(error.code, error.detail, error.component, error.source_ref) from error
     except (LayoutError, ThemeTokenError, ScenePaintError) as error:
         message = error_message(error.diagnostic_id, getattr(error, "detail", None))
         node = getattr(error, "node_id", None)  # a Layout finding names the offending token or node here
@@ -247,6 +250,16 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         ledger.read.add("previous-scene")
     project, view, layout = (render_closure.project.scheduler_input, render_closure.view.view,
                              render_closure.layout_profile.layout_input)
+    profile_connections = resolve_profile_connections(
+        view, render_closure.summary_profile.summary if render_closure.summary_profile else None,
+        render_closure.detail_profile.detail if render_closure.detail_profile else None,
+        project_object_ids=frozenset(project.get("objects", {})))
+    view = profile_connections.view
+    omitted_metrics = frozenset((item.panel_index, item.metric_index)
+                               for item in profile_connections.omissions)
+    profile_info = tuple(UnboundSummarySource(item.panel_id, item.metric_id,
+                                              item.source_kind, item.source_name)
+                         for item in profile_connections.omissions)
     theme = render_closure.resolved_theme.resolved_input
     try:
         visual_profile = resolve_visual_profile(render_closure.context.target.visual_profile,
@@ -284,15 +297,16 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         theme = effective_draft_numeric_theme(theme, tuple(item.role for item in resolution.tabular_warnings))
     font_metrics = resolution.metrics if resolution is not None else _font_metrics(
         theme, environment.font_metrics, asset_root, request.asset_resolver)
-    _check_summary_figures(render_closure.summary_profile.summary if render_closure.summary_profile else None, projection, view)
-    summary = normalize_summary_content(render_closure.summary_profile.summary if render_closure.summary_profile else None,
+    _check_summary_figures(profile_connections.summary, projection, view, omitted_metrics=omitted_metrics)
+    summary = normalize_summary_content(profile_connections.summary,
                                         projection, render_closure.actual_set.observations_input if render_closure.actual_set else None,
-                                        project)
+                                        project, omitted_metrics=omitted_metrics,
+                                        summary_wording=(view.wording or {}).get("summary", {}))
     if render_closure.summary_profile is not None:
         ledger.summary()
     icon_assets = {item.icon_id: item for item in render_closure.icon_assets}
     visual_requests = tuple(_visual_request(visual, projection, index, render_closure)
-                            for index, visual in enumerate(render_closure.view.view.visuals))
+                            for index, visual in enumerate(view.visuals))
     theme_assets = render_closure.resolved_theme
     if visual_requests or icon_assets or theme_assets.catalog_glyphs or theme_assets.catalog_patterns:
         # A Theme-only annotationContainer.image binding (#465) selects a
@@ -311,7 +325,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         validate_group_header_roles(view.grouping.header.role_pointers(), ThemeTokenView(theme))
     selected_content = normalize_v05_surface_content(
         projection, project, view, actual_set=actual_observations,
-        detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
+        detail=profile_connections.detail,
         summary=summary, locale=environment.locale, color_scale=color_scale, table=table_content,
         group_tints=group_tints, annotation_kind_colors=_annotation_kind_colors(theme),
         annotation_kind_also=_annotation_kind_also(theme))
@@ -334,7 +348,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             project=project, view=view, projection=projection, content=selected_content,
             summary=summary, table=table_content, profile=layout, theme=theme,
             font_metrics=font_metrics, heading=heading_content, actual=actual_observations,
-            detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
+            detail=profile_connections.detail,
             viewport_inline=environment.viewport_inline, viewport_block=environment.viewport_block,
             content_sized=request.draft_auto_block, locale=environment.locale,
             capabilities={name: True for name in render_closure.context.target.capabilities},
@@ -370,6 +384,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         rendered = compose_resolved_review_surface(count_input, visual_profile=visual_profile,
                                                    initial=plan, admitted=scene_input)
         surface, projection, plan = rendered.surface, rendered.projection, rendered.plan
+        if profile_info:
+            surface = replace(surface, info_diagnostics=(*surface.info_diagnostics, *profile_info))
         surface_content = plan.content
     except SurfacePlanFontError as error:
         raise _font_failure(error.failure) from error.failure
@@ -728,13 +744,16 @@ def _complete_annotation_headers(content: SurfaceContentInput, theme: Mapping[st
     return replace(content, annotations=tuple(annotations))
 
 
-def _check_summary_figures(summary: Any, projection: Any, view: ViewInput) -> None:
+def _check_summary_figures(summary: Any, projection: Any, view: ViewInput, *,
+                          omitted_metrics: frozenset[tuple[int, int]] = frozenset()) -> None:
     """A Summary Profile metric naming a figure must name one the View declared, in a format an integer has (#586)."""
     declared = dict(projection.figures)
     kinds = {item.figure_id: item.kind for item in view.figures}
     late_ids = {item.figure_id for item in deferred_layout_figures(view.figures)}
     for panel_index, panel in enumerate(summary.panels if summary is not None else ()):
         for metric_index, metric in enumerate(panel.metrics):
+            if (panel_index, metric_index) in omitted_metrics:
+                continue
             source = getattr(metric, "source", None)
             if not isinstance(source, Mapping) or "figure" not in source:
                 continue
