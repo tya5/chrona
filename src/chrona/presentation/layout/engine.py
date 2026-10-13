@@ -3,20 +3,21 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 from collections import Counter
-from decimal import ROUND_CEILING, Decimal, getcontext
+from decimal import Decimal
 from types import MappingProxyType
 from typing import Any, Callable, Literal, Mapping
 
 from chrona.presentation.layout.model import (
     CountDependentHeadingFitError, LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect, RegionFrame, ResolvedLayoutProfile, SlotHeading,
     RelationUnroutableMode,
+    native_number, projected_number,
 )
+from chrona.presentation.layout.numbers import LayoutNumber
 from chrona.presentation.layout.surface_quality import FitWarning
 from chrona.presentation.layout.tracks import resolve_flexible_tracks as _resolve_flexible_tracks
 
 
-getcontext().prec = 28
-ZERO = Decimal(0)
+ZERO = LayoutNumber(0)
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,6 +29,10 @@ class SourceInlineBudget:
     available_inline: Decimal
     ceiling: Decimal
     source_kind: Literal["table", "heading"] = "table"
+
+    def __post_init__(self) -> None:
+        for name in ("available_inline", "ceiling"):
+            object.__setattr__(self, name, native_number(getattr(self, name), path=self.path, node_id=self.slot_id))
 
     @property
     def failure_code(self) -> str:
@@ -94,13 +99,13 @@ def validate_source_inline_budgets(expected: Mapping[str, SourceInlineBudget],
                           "budget closure changed its active sources")
 
 
-def _d(value: Any) -> Decimal:
-    return Decimal(str(value))
+def _d(value: Any) -> LayoutNumber:
+    return native_number(value)
 
 
 def _distance(profile: ResolvedLayoutProfile, path: str) -> Decimal:
     try:
-        return profile.distances[path]
+        return native_number(profile.distances[path], path=path)
     except KeyError as error:
         raise LayoutError("E_LAYOUT_TOKEN_UNKNOWN", path) from error
 
@@ -191,13 +196,13 @@ def _intrinsic_floor_dependencies(spec: Any, measurement: Measurement | None) ->
 def _unbounded_spec_base(spec: Any, *, axis: str, measurement: Measurement | None, profile: ResolvedLayoutProfile, path: str) -> tuple[Decimal, Decimal | None, Decimal]:
     """Return minimum, preferred/fixed target, and flex weight."""
     if spec == "fill":
-        return ZERO, None, Decimal(1)
+        return ZERO, None, LayoutNumber(1)
     if isinstance(spec, dict) and "fr" in spec:
         return ZERO, None, _d(spec["fr"])
     if isinstance(spec, dict) and "fixed" in spec:
         value = spec["fixed"]
-        # Aspect-derived track sizes are native Decimal geometry, not tokens.
-        fixed = _d(value) if isinstance(value, (int, float, Decimal)) else _distance(profile, path + "/fixed")
+        # Aspect-derived track sizes are native exact geometry, not tokens.
+        fixed = _d(value) if isinstance(value, (int, float, Decimal, LayoutNumber)) else _distance(profile, path + "/fixed")
         return fixed, fixed, ZERO
     if isinstance(spec, dict) and "aspectRatio" in spec:
         return ZERO, None, ZERO
@@ -548,8 +553,8 @@ class _Arranger:
         if not self.collect_inline_budgets or ("maxInlineShare" not in child and not heading
                                               and slot_id not in self.wrapping_table_slots):
             return
-        ceiling = available_inline * (Decimal(1) if heading else _d(child.get("maxInlineShare", 1)))
-        if not ceiling.is_finite() or ceiling <= ZERO:
+        ceiling = available_inline * (LayoutNumber(1) if heading else _d(child.get("maxInlineShare", 1)))
+        if ceiling <= ZERO:
             raise LayoutError("E_LAYOUT_TEXT_OVERFLOW" if heading else "E_LAYOUT_TABLE_OVERFLOW", path, slot_id,
                               "no positive independently allocated inline budget")
         self.source_inline_budgets[slot_id] = SourceInlineBudget(
@@ -559,9 +564,9 @@ class _Arranger:
               required_block: Decimal, available_inline: Decimal, available_block: Decimal) -> None:
         self.fit_warnings.append(FitWarning(
             "W_LAYOUT_VISIBLE_OVERFLOW", str(node["id"]), str(node.get("source") or path),
-            "layout-track", "visible-overflow", float(max(ZERO, required_inline)),
-            float(max(ZERO, required_block)), float(max(ZERO, available_inline)),
-            float(max(ZERO, available_block)),
+            "layout-track", "visible-overflow", projected_number(max(ZERO, required_inline), path=path),
+            projected_number(max(ZERO, required_block), path=path), projected_number(max(ZERO, available_inline), path=path),
+            projected_number(max(ZERO, available_block), path=path),
         ))
 
     def arrange(self, node: Mapping[str, Any], path: str, rect: Rect, references: tuple[str, ...] = ()) -> None:
@@ -848,11 +853,11 @@ class _Arranger:
             origin, extent = (inline, inline_size) if axis == "inline" else (block, block_size)
             at = guide["at"]
             if at == "start": fraction = ZERO
-            elif at == "center": fraction = Decimal("0.5")
-            elif at == "end": fraction = Decimal(1)
+            elif at == "center": fraction = LayoutNumber(1, 2)
+            elif at == "end": fraction = LayoutNumber(1)
             else:
                 numerator, denominator = at.split("/")
-                fraction = Decimal(numerator) / Decimal(denominator)
+                fraction = LayoutNumber(int(numerator), int(denominator))
             guides[guide_id] = (axis, origin + extent * fraction)
 
         barriers = node.get("barriers", {})
@@ -1107,18 +1112,23 @@ class ShortContentSource:
     """A required content source that remains short in the final profile solve."""
 
     source_id: str
-    required_block: Decimal
-    allocated_block: Decimal
+    required_block: LayoutNumber
+    allocated_block: LayoutNumber
 
     def __post_init__(self) -> None:
-        if (not self.source_id or not self.required_block.is_finite()
-                or not self.allocated_block.is_finite()
-                or self.allocated_block >= self.required_block):
+        try:
+            required = LayoutNumber(self.required_block)
+            allocated = LayoutNumber(self.allocated_block)
+        except (TypeError, ValueError):
+            required = allocated = None
+        if (not self.source_id or required is None or allocated is None or allocated >= required):
             raise ValueError(
                 f"E_LAYOUT_CONTENT_SHORTFALL_INVALID: source_id={repr(self.source_id[:160]) if isinstance(self.source_id, str) else type(self.source_id).__name__}, "
                 f"required_block={self.required_block!r}, allocated_block={self.allocated_block!r}; "
                 "expected a non-empty source with finite required and allocated blocks, allocated below required"
             )
+        object.__setattr__(self, "required_block", required)
+        object.__setattr__(self, "allocated_block", allocated)
 
 
 @dataclass(frozen=True)
@@ -1202,7 +1212,9 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
         return {item.source: item.bounds.block_size for item in manifest.decisions if item.source}
 
     def requirements(manifest: LayoutManifest) -> Mapping[str, Decimal]:
-        required = required_blocks(manifest) if callable(required_blocks) else required_blocks
+        raw = required_blocks(manifest) if callable(required_blocks) else required_blocks
+        required = {source: native_number(block, path="/layoutManifest/sources/" + source)
+                    for source, block in raw.items()}
         missing = sorted(set(required) - set(allocations(manifest)))
         if missing:
             raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/layoutManifest/sources/" + missing[0])
@@ -1223,7 +1235,7 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
         probe_required = requirements(manifest)
         extent = max((_d(minimum_block), *(probe_block - allocated[source] + required
                                            for source, required in probe_required.items())))
-        candidate = int(extent.to_integral_value(rounding=ROUND_CEILING))
+        candidate = native_number(extent).ceil()
         final = solve_at(candidate)
         final_allocated = allocations(final)
         final_required = requirements(final)
@@ -1267,7 +1279,7 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
         return ContentBlockResolution(minimum_block, short_sources)
     extent = max((_d(minimum_block), *(probe_block - allocated[source] + required
                                     for source, required in probe_required.items())))
-    candidate = int(extent.to_integral_value(rounding=ROUND_CEILING))
+    candidate = native_number(extent).ceil()
 
     def satisfies(extent: int) -> bool:
         manifest = solve_at(extent)

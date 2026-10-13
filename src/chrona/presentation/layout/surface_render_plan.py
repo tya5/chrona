@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from datetime import date
-from decimal import Decimal, ROUND_CEILING
+from decimal import Decimal
 from typing import Any, Mapping
 
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput
@@ -153,7 +153,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
     natural_block_floor = max(1, int(measure_natural_normal_flow_block(
         resolved_layout, viewport_inline=viewport["inlineSize"], measurements=measurements,
         sizing=sizing_context(viewport["blockSize"]) if source_sizing.active else None,
-    ).to_integral_value(rounding=ROUND_CEILING))) if value.content_sized else viewport["blockSize"]
+    ).ceil())) if value.content_sized else viewport["blockSize"]
     capacity_short_sources = ()
     # An as-of chip placed `below-plot` (#1063) needs its block under the last row, so the timeline asks for it too.
     try:

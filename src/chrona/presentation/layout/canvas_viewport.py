@@ -6,7 +6,8 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from decimal import Decimal
 
-from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.model import LayoutError, Rect, native_number
+from chrona.presentation.layout.numbers import LayoutNumber
 from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
 
 
@@ -27,16 +28,22 @@ class DeclaredViewport:
 class ViewportOverrun:
     """Positive amount beyond each declared edge; zero means no overrun."""
 
-    inline_start: Decimal = Decimal(0)
-    inline_end: Decimal = Decimal(0)
-    block_start: Decimal = Decimal(0)
-    block_end: Decimal = Decimal(0)
+    inline_start: LayoutNumber = LayoutNumber(0)
+    inline_end: LayoutNumber = LayoutNumber(0)
+    block_start: LayoutNumber = LayoutNumber(0)
+    block_end: LayoutNumber = LayoutNumber(0)
 
     def __post_init__(self) -> None:
         for name in ("inline_start", "inline_end", "block_start", "block_end"):
-            value = getattr(self, name)
-            if not _is_finite_decimal(value) or value < 0:
-                raise ValueError(f"E_LAYOUT_VIEWPORT_FACT_INVALID: {name}={value!r}; expected finite non-negative Decimal")
+            try:
+                value = native_number(getattr(self, name), path=f"/canvasViewport/{name}")
+            except LayoutError as error:
+                raise ValueError(
+                    f"E_LAYOUT_VIEWPORT_FACT_INVALID: {name}={getattr(self, name)!r}; expected finite native number"
+                ) from error
+            object.__setattr__(self, name, value)
+            if value < 0:
+                raise ValueError(f"E_LAYOUT_VIEWPORT_FACT_INVALID: {name}={value!r}; expected non-negative native number")
 
 
 @dataclass(frozen=True)
@@ -89,16 +96,21 @@ class AutoBlockSizeWarning:
 
     surface_id: str
     row_count: int
-    actual_block_size: Decimal
+    actual_block_size: LayoutNumber
     limit: Decimal
 
     code = "W_LAYOUT_AUTO_BLOCK_SIZE"
     source_ref = "/reviewSurface/maxBlockSize"
 
     def __post_init__(self) -> None:
+        try:
+            actual = native_number(self.actual_block_size, path="/canvasViewport/actual_block_size")
+        except LayoutError as error:
+            raise ValueError("E_LAYOUT_VIEWPORT_FACT_INVALID: invalid native actual_block_size") from error
+        object.__setattr__(self, "actual_block_size", actual)
         if (not isinstance(self.surface_id, str) or not self.surface_id
                 or isinstance(self.row_count, bool) or not isinstance(self.row_count, int) or self.row_count < 0
-                or not _is_finite_decimal(self.actual_block_size) or self.actual_block_size < 0
+                or self.actual_block_size < 0
                 or not _is_finite_decimal(self.limit) or self.limit < 0
                 or self.actual_block_size <= self.limit):
             raise ValueError("E_LAYOUT_VIEWPORT_FACT_INVALID: invalid completed auto-block warning")
@@ -184,7 +196,7 @@ def _has_overrun(value: ViewportOverrun) -> bool:
     return any(getattr(value, name) > 0 for name in ("inline_start", "inline_end", "block_start", "block_end"))
 
 
-def _maximum_overrun(value: ViewportOverrun) -> Decimal:
+def _maximum_overrun(value: ViewportOverrun) -> LayoutNumber:
     return max(value.inline_start, value.inline_end, value.block_start, value.block_end)
 
 
@@ -201,8 +213,8 @@ def _validate_rect(value: object, name: str) -> None:
         raise ValueError(f"E_LAYOUT_VIEWPORT_FACT_INVALID: {name} must be Rect")
     for field_name in ("inline", "block", "inline_size", "block_size"):
         number = getattr(value, field_name)
-        if not _is_finite_decimal(number):
-            raise ValueError(f"E_LAYOUT_VIEWPORT_FACT_INVALID: {name}.{field_name}={number!r}; expected finite Decimal")
+        if not isinstance(number, LayoutNumber):
+            raise ValueError(f"E_LAYOUT_VIEWPORT_FACT_INVALID: {name}.{field_name}={number!r}; expected native LayoutNumber")
     if value.inline_size < 0 or value.block_size < 0:
         raise ValueError(f"E_LAYOUT_VIEWPORT_FACT_INVALID: {name} has negative extent")
 

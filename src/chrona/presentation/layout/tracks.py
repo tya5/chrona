@@ -3,8 +3,11 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+from chrona.presentation.layout.model import native_number
+from chrona.presentation.layout.numbers import LayoutNumber
 
-ZERO = Decimal(0)
+
+ZERO = LayoutNumber(0)
 
 
 def resolve_flexible_tracks(bases: list[tuple[Decimal, Decimal | None, Decimal]],
@@ -16,6 +19,9 @@ def resolve_flexible_tracks(bases: list[tuple[Decimal, Decimal | None, Decimal]]
     that direction; freezing both prematurely can oversubscribe or lose space.
     An infeasible sum of minima is retained for the caller's typed disposition.
     """
+    bases = [(native_number(minimum), native_number(target) if target is not None else None,
+              native_number(weight)) for minimum, target, weight in bases]
+    available = native_number(available)
     sizes: list[Decimal | None] = [None] * len(bases)
     flexible = [index for index, (_, _, weight) in enumerate(bases) if weight > ZERO]
     for index, (minimum, target, weight) in enumerate(bases):

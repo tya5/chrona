@@ -3,11 +3,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from decimal import Decimal
-from math import isfinite
 from typing import Any, Mapping
 
 from chrona.presentation.layout.group_tags import header_child_lead
-from chrona.presentation.layout.model import LayoutError, Measurement
+from chrona.presentation.layout.model import LayoutError, Measurement, native_number, source_budget_float
+from chrona.presentation.layout.numbers import LayoutNumber
 from chrona.presentation.layout.presentation import (
     TableColumnPlacement, header_group_cell_indent, measure_table_column_minima,
     place_table_columns, table_cell_indent, table_content_inline_size, table_text_measurer,
@@ -40,8 +40,8 @@ class BoundedTableMeasurement:
     row_text_blocks: tuple[tuple[str, Decimal], ...]
     header_block: Decimal
     cell_indents: tuple[tuple[str, float], ...]
-    available_inline: Decimal
-    reserved_inline: Decimal
+    available_inline: LayoutNumber
+    reserved_inline: LayoutNumber
 
 
 def _fit_table_text(content: str, *, available: float, role: str, wrap: str,
@@ -68,19 +68,22 @@ def _fit_table_text(content: str, *, available: float, role: str, wrap: str,
     return fit
 
 
-def measure_bounded_table(table: TableContent, *, available_inline: float | Decimal,
+def measure_bounded_table(table: TableContent, *, available_inline: LayoutNumber | Decimal | float,
                            tokens: Any, font_metrics: Any, metric_values: Mapping[str, Decimal],
-                           original: Measurement, reserved_inline: float = 0.0) -> BoundedTableMeasurement:
+                           original: Measurement,
+                           reserved_inline: LayoutNumber | Decimal | float = 0.0) -> BoundedTableMeasurement:
     """Close actual header/cell lines before row, prefix or source allocation.
 
     ``reserved_inline`` is already measured host chrome (for example group
     tabs), not guessed from the viewport. Original source values are immutable;
     unchanged block demand retains its exact baseline and block measurements.
     """
-    if (not isfinite(available_inline) or not isfinite(reserved_inline)
-            or reserved_inline < 0 or available_inline <= reserved_inline):
+    available_budget = native_number(available_inline, path="/table/availableInline")
+    reserved_budget = native_number(reserved_inline, path="/table/reservedInline")
+    if reserved_budget < 0 or available_budget <= reserved_budget:
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/table", detail="no finite content inline budget")
-    content_inline = float(available_inline) - reserved_inline
+    reserved_float = source_budget_float(reserved_budget, path="/table/reservedInline")
+    content_float = source_budget_float(available_budget - reserved_budget, path="/table/contentInline")
     inset = float(tokens.text_treatment("text").font_size)
     step = metric_values.get("table.indent.inlineSize")
     lead = (header_child_lead(tokens, first_column=bool(table.columns)
@@ -100,7 +103,7 @@ def measure_bounded_table(table: TableContent, *, available_inline: float | Deci
                                          cell_indents=indents, header_role=header_role)
     gutter = float(metric_values.get("table.column.gutter.inlineSize", 0))
     placed = place_table_columns(columns=table.columns, cells=table.cells,
-                                 bounds=(reserved_inline, 0, content_inline, 0), measure_text=measure,
+                                 bounds=(reserved_float, 0, content_float, 0), measure_text=measure,
                                  minimum_inline=inset, gutter=gutter, hierarchy_column=table.hierarchy_column,
                                  cell_indents=indents, header_role=header_role, mandatory_inline=minima)
     widths = {column.column_id: column.inline_size for column in placed}
@@ -145,8 +148,9 @@ def measure_bounded_table(table: TableContent, *, available_inline: float | Deci
     row_floor = metric_values["timeline.row.minBlockSize"]
     extra = header_block - header_floor + sum((max(Decimal(0), block + padding - row_floor)
                                                for block in text_demands), Decimal(0))
-    mandatory = Decimal(str(table_content_inline_size(minima, gutter) + reserved_inline))
-    budget = Decimal(str(available_inline))
+    mandatory = (native_number(table_content_inline_size(minima, gutter), path="/table/mandatoryInline")
+                 + reserved_budget)
+    budget = available_budget
     minimum = max(original.min_inline, mandatory) if original.min_inline <= budget else mandatory
     measurement = replace(original, min_inline=minimum,
                            preferred_inline=max(minimum, min(original.preferred_inline, budget)),
@@ -155,4 +159,4 @@ def measure_bounded_table(table: TableContent, *, available_inline: float | Deci
                            max_block=original.max_block + 2 * extra)
     return BoundedTableMeasurement(measurement, placed, minima, tuple(headers), tuple(cells),
                                     tuple(row_blocks.items()), header_block, tuple(indents.items()),
-                                    budget, Decimal(str(reserved_inline)))
+                                    budget, reserved_budget)

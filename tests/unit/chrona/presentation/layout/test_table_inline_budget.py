@@ -180,7 +180,7 @@ def test_closure_rejects_added_or_removed_active_table_budget():
 
 
 def bounded_measurement(inline, block=10):
-    return Measurement(D(20), D(inline), D(inline), D(block), D(block), D(block))
+    return Measurement(D(20), inline, inline, D(block), D(block), D(block))
 
 
 def solve(resolved, sources, sizing):
@@ -251,7 +251,7 @@ def test_actual_width_source_closure_is_shared_by_natural_and_arranged_block(kin
     def remeasure(slot_id, inline):
         assert slot_id == "table"
         widths.append(inline)
-        lines = (D(1000) / inline).to_integral_value(rounding="ROUND_CEILING")
+        lines = (D(1000) / inline).ceil()
         return bounded_measurement(inline, lines * 10)
 
     sources = {**raw_sources, "table": bounded_measurement(budgets["table"].ceiling)}
@@ -259,7 +259,7 @@ def test_actual_width_source_closure_is_shared_by_natural_and_arranged_block(kin
     result = solve(resolved, sources, sizing)
     table_bounds = bounds(result)["table"]
     assert table_bounds.inline_size <= budgets["table"].ceiling
-    expected = (D(1000) / table_bounds.inline_size).to_integral_value(rounding="ROUND_CEILING") * 10
+    expected = (D(1000) / table_bounds.inline_size).ceil() * 10
     assert table_bounds.block_size >= expected
     natural = measure_natural_normal_flow_block(resolved, viewport_inline=1000,
                                                 measurements=sources, sizing=sizing)

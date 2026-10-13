@@ -1,4 +1,4 @@
-from decimal import ROUND_CEILING, Decimal
+from decimal import Decimal
 from copy import deepcopy
 from pathlib import Path
 
@@ -72,7 +72,7 @@ def test_auto_content_sizing_uses_positive_floor_and_rounds_deterministically():
     required = Decimal("300.2")
     natural_floor = max(1, int(measure_natural_normal_flow_block(
         resolved, viewport_inline=1600, measurements=MEASUREMENTS
-    ).to_integral_value(rounding="ROUND_CEILING")))
+    ).ceil()))
     first = resolve_content_block_extent(resolved, viewport_inline=1600, minimum_block=natural_floor,
                                         measurements=MEASUREMENTS,
                                         required_blocks={"timeline": required}, content_sized=True)
@@ -96,7 +96,7 @@ def test_finite_900_minimum_and_profile_intrinsic_minimum_are_preserved():
     auto_measurements["title"] = m(300, 1400)
     natural_floor = int(measure_natural_normal_flow_block(
         resolved, viewport_inline=1600, measurements=auto_measurements
-    ).to_integral_value(rounding="ROUND_CEILING"))
+    ).ceil())
     auto = resolve_content_block_extent(resolved, viewport_inline=1600, minimum_block=natural_floor,
                                         measurements=auto_measurements,
                                         required_blocks={"timeline": Decimal(300)}, content_sized=True)
@@ -110,7 +110,7 @@ def test_auto_content_requirement_above_900_expands_beyond_intrinsic_floor():
     resolved = profile()
     floor = int(measure_natural_normal_flow_block(
         resolved, viewport_inline=1600, measurements=MEASUREMENTS
-    ).to_integral_value(rounding="ROUND_CEILING"))
+    ).ceil())
     result = resolve_content_block_extent(resolved, viewport_inline=1600, minimum_block=floor,
                                           measurements=MEASUREMENTS,
                                           required_blocks={"timeline": Decimal(850)},
@@ -130,7 +130,7 @@ def test_auto_block_growth_ignores_unrelated_inline_only_overflow():
     )
     floor = max(1, int(measure_natural_normal_flow_block(
         resolved, viewport_inline=1600, measurements=measurements,
-    ).to_integral_value(rounding=ROUND_CEILING)))
+    ).ceil()))
     at_floor = solve_layout(resolved, viewport_inline=1600, viewport_block=floor,
                             measurements=measurements, content_sized=True)
     assert any(warning.placement_id == "title"
@@ -153,7 +153,7 @@ def test_auto_empty_requirement_uses_one_unit_floor_and_unknown_source_fails():
     empty_measurements = {source: m(0, 0, baseline=0) for source in SOURCES}
     natural_floor = int(measure_natural_normal_flow_block(
         resolved, viewport_inline=1600, measurements=empty_measurements
-    ).to_integral_value(rounding="ROUND_CEILING"))
+    ).ceil())
     empty = resolve_content_block_extent(resolved, viewport_inline=1600, minimum_block=max(1, natural_floor),
                                          measurements=empty_measurements, required_blocks={},
                                          content_sized=True)
@@ -336,7 +336,7 @@ def test_content_requirement_does_not_inflate_a_fixed_timeline_host():
 
     auto_floor = int(measure_natural_normal_flow_block(
         resolved, viewport_inline=1600, measurements=MEASUREMENTS
-    ).to_integral_value(rounding="ROUND_CEILING"))
+    ).ceil())
     auto = resolve_content_block_extent(resolved, viewport_inline=1600, minimum_block=auto_floor,
                                         measurements=MEASUREMENTS,
                                         required_blocks={"timeline": Decimal(850)},

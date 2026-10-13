@@ -8,7 +8,8 @@ from typing import Any, Mapping
 
 from chrona.presentation.layout.engine import LayoutSizingContext, resolve_source_inline_budgets
 from chrona.presentation.layout.group_tags import group_tag_column_size, vertical_group_tags
-from chrona.presentation.layout.model import LayoutError, LayoutManifest, ResolvedLayoutProfile
+from chrona.presentation.layout.model import LayoutError, LayoutManifest, ResolvedLayoutProfile, native_number
+from chrona.presentation.layout.numbers import LayoutNumber
 from chrona.presentation.layout.slot_heading import reserve_slot_heading_blocks
 from chrona.presentation.layout.sources import MeasuredSources, measure_sources
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
@@ -49,7 +50,7 @@ class SourceSizingSession:
         self.slot_sources = MappingProxyType(selected)
         self.heading_slots = frozenset(headings)
         self.wrapping_table_slots = frozenset(wrapping_tables)
-        self._cache: dict[tuple[str, Decimal], MeasuredSources] = {}
+        self._cache: dict[tuple[str, LayoutNumber], MeasuredSources] = {}
         self.table_reserved_inline = (group_tag_column_size(self.tokens) if "table" in selected.values() and vertical_group_tags(
             SurfaceLayoutRequest(surface_content=content, theme_tokens=self.tokens)) else 0.0)
 
@@ -64,13 +65,14 @@ class SourceSizingSession:
             measurements=measurements, content_sized=content_sized, heading_slots=self.heading_slots,
             wrapping_table_slots=self.wrapping_table_slots)
 
-        def measure(slot_id: str, width: Decimal):
+        def measure(slot_id: str, width: LayoutNumber):
             source = self.slot_sources[slot_id]
             return self._at_width(source, width).measurements[source]
 
         return LayoutSizingContext(budgets, measure)
 
-    def _at_width(self, source: str, width: Decimal) -> MeasuredSources:
+    def _at_width(self, source: str, width: LayoutNumber) -> MeasuredSources:
+        width = native_number(width, path=f"/sources/{source}/inlineSize")
         key = source, width
         if key in self._cache:
             return self._cache[key]

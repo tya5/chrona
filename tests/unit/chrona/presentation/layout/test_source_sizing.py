@@ -1,8 +1,10 @@
 from dataclasses import replace
 from decimal import Decimal as D
+from fractions import Fraction
 from types import SimpleNamespace
 
 from chrona.presentation.layout.engine import solve_layout
+from chrona.presentation.layout.numbers import LayoutNumber
 from chrona.presentation.layout.source_sizing import SourceSizingSession
 from chrona.presentation.layout.sources import SourceInput, measure_sources
 from tests.unit.chrona.presentation.layout.test_bounded_table_measurement import content, Metrics
@@ -84,8 +86,23 @@ def test_nonterminating_track_width_retains_exact_budget_identity():
     manifest = solve_layout(resolved, viewport_inline=1000, viewport_block=5000, measurements=measurements,
                              sizing=session.context(viewport_inline=1000, viewport_block=5000, measurements=measurements))
     width = next(item.bounds.inline_size for item in manifest.decisions if item.node_id == "table")
-    assert width == D(960) / 7
+    assert width == LayoutNumber(960, 7)
     assert session.close_manifest(manifest).bounded_tables["table"].available_inline == width
+    assert session.close_manifest(manifest).bounded_tables["table"].reserved_inline == LayoutNumber(0)
+
+
+def test_source_width_cache_uses_exact_equivalent_native_keys():
+    resolved = profile(container("column", [slot("copy", share=None, source="title")]))
+    measured = measure_sources(
+        {"title": SourceInput(("words " * 100,), typography_role="heading", text_wrap="allow")},
+        theme(), font_metrics=Metrics())
+    session = SourceSizingSession(resolved, measured, theme=theme(), font_metrics=Metrics(),
+                                  content=SimpleNamespace(group_presentation="none"))
+
+    first = session._at_width("title", LayoutNumber(100))
+    same = session._at_width("title", Fraction(200, 2))
+
+    assert same is first
 
 
 def test_heading_remeasurement_reuses_closed_metrics_without_axis_inputs():

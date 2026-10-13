@@ -1,12 +1,17 @@
 from decimal import Decimal as D
+from fractions import Fraction
 
 import pytest
 
 from chrona.presentation.layout.canvas_viewport import (
+    AutoBlockSizeWarning,
     DeclaredViewport,
+    ViewportOverrun,
+    auto_block_size_warning,
     canvas_viewport_warning,
 )
-from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.model import LayoutError, Rect
+from chrona.presentation.layout.numbers import LayoutNumber
 from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
 
 
@@ -119,6 +124,43 @@ def test_declared_viewport_requires_positive_finite_decimal_sizes(inline, block)
 def test_declared_block_size_is_null_or_positive_finite_decimal(invalid):
     with pytest.raises(ValueError, match="E_LAYOUT_VIEWPORT_DECLARATION_INVALID"):
         DeclaredViewport(D(10), invalid)
+
+
+@pytest.mark.parametrize("invalid", [Fraction(100), 100, 100.0])
+def test_raw_declared_viewport_keeps_its_decimal_only_boundary(invalid):
+    with pytest.raises(ValueError, match="E_LAYOUT_VIEWPORT_DECLARATION_INVALID"):
+        DeclaredViewport(invalid, None)
+
+
+def test_native_completed_geometry_and_overrun_accept_exact_equivalent_values():
+    actual = Rect(Fraction(-1, 3), Fraction(0), LayoutNumber(100) + Fraction(1, 3), D(80))
+    warning = canvas_viewport_warning(
+        surface_id="exact", declared=DeclaredViewport(D(100), D(80)), actual=actual,
+        contributors=(("title", Rect(Fraction(-1, 3), 0, Fraction(4, 3), 4)),),
+    )
+
+    assert warning is not None
+    assert warning.actual.inline == -LayoutNumber(1, 3)
+    assert warning.actual.inline_size == LayoutNumber(301, 3)
+    assert warning.contributors[0].overrun.inline_start == LayoutNumber(1, 3)
+    assert warning.contributors[0].bounds.inline == Rect(Fraction(-2, 6), 0, 1, 1).inline
+    assert ViewportOverrun(inline_start=Fraction(2, 6)) == ViewportOverrun(inline_start=LayoutNumber(1, 3))
+
+
+def test_invalid_rect_numeric_fact_is_rejected_by_rect_owner_before_canvas_validation():
+    with pytest.raises(LayoutError, match="E_LAYOUT_NUMERIC_CONVERSION"):
+        Rect(D("NaN"), 0, 1, 1)
+
+
+def test_auto_block_warning_normalizes_native_actual_size_but_keeps_decimal_limit():
+    warning = auto_block_size_warning(
+        surface_id="auto", row_count=1, actual=Rect(0, 0, 100, Fraction(10, 3)),
+        declared=DeclaredViewport(D(100), None), limit=D(3),
+    )
+    assert warning is not None
+    assert warning.actual_block_size == LayoutNumber(10, 3)
+    with pytest.raises(ValueError, match="E_LAYOUT_VIEWPORT_FACT_INVALID"):
+        AutoBlockSizeWarning("auto", 1, LayoutNumber(10, 3), Fraction(3))
 
 
 def test_malformed_contributor_facts_are_rejected():

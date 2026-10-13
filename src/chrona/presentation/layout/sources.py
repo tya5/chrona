@@ -7,7 +7,8 @@ from typing import Any, Mapping
 
 from chrona.presentation.layout.axis_lanes import derived_axis_block_size
 from chrona.presentation.layout.group_tags import header_child_lead
-from chrona.presentation.layout.model import CountDependentHeadingFitError, LayoutError, Measurement
+from chrona.presentation.layout.model import CountDependentHeadingFitError, LayoutError, Measurement, source_budget_float
+from chrona.presentation.layout.numbers import LayoutNumber
 from chrona.presentation.layout.presentation import (
     header_group_cell_indent, measure_table_columns, place_table_columns, table_cell_indent, table_content_inline_size, table_text_measurer,
 )
@@ -221,8 +222,14 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
         heading_budget = ((heading_inline or {}).get(source)
                           if source in {"title", "heading.title", "heading.kicker", "heading.subtitle"}
                           and value.text_wrap == "allow" else None)
-        if heading_budget is not None and (not heading_budget.is_finite() or heading_budget <= 0):
-            raise LayoutError("E_LAYOUT_TEXT_OVERFLOW", f"/sources/{source}", detail="no finite heading inline budget")
+        if heading_budget is not None:
+            try:
+                heading_budget = LayoutNumber(heading_budget)
+            except (TypeError, ValueError) as error:
+                raise LayoutError("E_LAYOUT_TEXT_OVERFLOW", f"/sources/{source}",
+                                  detail="no finite heading inline budget") from error
+            if heading_budget <= 0:
+                raise LayoutError("E_LAYOUT_TEXT_OVERFLOW", f"/sources/{source}", detail="no finite heading inline budget")
         first_role = runs[0].typography_role if runs else value.typography_role
         first_treatment = typography.text_treatment(first_role)
         first_metrics = metric_for_role(typography, first_role, font_metrics)
@@ -262,7 +269,8 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                     numeric_spacing=treatment.numeric_spacing))) + run.inline_advance
                 heading_minima.append(min(width, ellipse))
                 heading_floor_references.append((min(width, ellipse), run.figure_dependencies))
-                fit = fit_text_lines(run.content, available_inline=float(heading_budget - run.inline_advance),
+                fit = fit_text_lines(run.content, available_inline=source_budget_float(
+                    heading_budget - run.inline_advance, path=f"/sources/{source}", node_id=run.source_ref),
                                      font_size=float(run_size), font_metrics=run_metrics, wrap="allow",
                                      letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
                                      numeric_spacing=treatment.numeric_spacing)

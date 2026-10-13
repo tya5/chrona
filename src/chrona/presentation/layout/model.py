@@ -4,10 +4,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import Enum
-from math import fsum
+from math import fsum, inf, nextafter
 from collections.abc import Iterable
 import json
 from typing import Any, Mapping, TYPE_CHECKING
+
+from chrona.presentation.layout.numbers import LayoutNumber, NumericConversionError, from_source_float
 
 if TYPE_CHECKING:
     from chrona.presentation.layout.surface_quality import FitWarning
@@ -43,6 +45,38 @@ class CountDependentHeadingFitError(LayoutError):
         self.figure_ids = figure_ids
 
 
+def native_number(value: Any, *, path: str = "/layout/number", node_id: str | None = None) -> LayoutNumber:
+    """Admit one resolved numeric fact without changing resource arithmetic."""
+    try:
+        return from_source_float(value) if isinstance(value, float) else LayoutNumber(value)
+    except (TypeError, ValueError) as error:
+        raise LayoutError("E_LAYOUT_NUMERIC_CONVERSION", path, node_id,
+                          f"stage=native-input; {error}") from error
+
+
+def projected_number(value: Any, *, path: str = "/layout/number", node_id: str | None = None,
+                     stage: str = "output") -> float:
+    """Project completed geometry, retaining the owning diagnostic boundary."""
+    number = native_number(value, path=path, node_id=node_id)
+    try:
+        return number.to_float()
+    except NumericConversionError as error:
+        raise LayoutError("E_LAYOUT_NUMERIC_CONVERSION", path, node_id,
+                          f"stage={stage}; {error}") from error
+
+
+def source_budget_float(value: Any, *, path: str, node_id: str | None = None) -> float:
+    """Use the largest adjacent library value that does not enlarge a native ceiling."""
+    budget = native_number(value, path=path, node_id=node_id)
+    result = projected_number(budget, path=path, node_id=node_id, stage="font-interface")
+    if from_source_float(result) > budget:
+        result = nextafter(result, -inf)
+    if not result > -inf or from_source_float(result) > budget:
+        raise LayoutError("E_LAYOUT_NUMERIC_CONVERSION", path, node_id,
+                          "stage=font-interface; converted width exceeds native ceiling")
+    return result
+
+
 def geometry_sum(values: Iterable[float]) -> float:
     """Correctly round one Layout-owned float geometry accumulation.
 
@@ -61,23 +95,34 @@ def geometry_sum(values: Iterable[float]) -> float:
 
 @dataclass(frozen=True)
 class Rect:
-    inline: Decimal
-    block: Decimal
-    inline_size: Decimal
-    block_size: Decimal
+    inline: LayoutNumber
+    block: LayoutNumber
+    inline_size: LayoutNumber
+    block_size: LayoutNumber
+
+    def __post_init__(self) -> None:
+        for name in ("inline", "block", "inline_size", "block_size"):
+            object.__setattr__(self, name, native_number(getattr(self, name), path=f"/geometry/{name}"))
 
 
 @dataclass(frozen=True)
 class Measurement:
-    min_inline: Decimal
-    preferred_inline: Decimal
-    max_inline: Decimal
-    min_block: Decimal
-    preferred_block: Decimal
-    max_block: Decimal
-    first_baseline: Decimal | None = None
-    last_baseline: Decimal | None = None
+    min_inline: LayoutNumber
+    preferred_inline: LayoutNumber
+    max_inline: LayoutNumber
+    min_block: LayoutNumber
+    preferred_block: LayoutNumber
+    max_block: LayoutNumber
+    first_baseline: LayoutNumber | None = None
+    last_baseline: LayoutNumber | None = None
     figure_dependencies: frozenset[str] = frozenset()
+
+    def __post_init__(self) -> None:
+        for name in ("min_inline", "preferred_inline", "max_inline", "min_block", "preferred_block", "max_block",
+                     "first_baseline", "last_baseline"):
+            value = getattr(self, name)
+            if value is not None:
+                object.__setattr__(self, name, native_number(value, path=f"/measurement/{name}"))
 
 
 @dataclass(frozen=True)
@@ -160,10 +205,12 @@ class LayoutManifest:
     relation_unroutable: RelationUnroutableMode = RelationUnroutableMode.RELAX
 
     def canonical_bytes(self, precision: int = 3) -> bytes:
-        quantum = Decimal(1).scaleb(-precision)
-
-        def number(value: Decimal) -> str:
-            return format(value.quantize(quantum), "f")
+        def number(value: LayoutNumber | Decimal) -> str:
+            try:
+                return native_number(value).format_decimal(precision)
+            except NumericConversionError as error:
+                raise LayoutError("E_LAYOUT_NUMERIC_CONVERSION", "/layoutManifest",
+                                  detail=f"stage=manifest; {error}") from error
 
         def rect(value: Rect) -> dict[str, str]:
             return {

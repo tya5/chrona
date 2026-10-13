@@ -162,6 +162,6 @@ def test_natural_heading_height_and_auto_extent_use_allocated_width_closure():
                          measurements=measurements, content_sized=True, sizing=context)
     placed = next(item.bounds for item in final.decisions if item.node_id == "copy")
     assert natural == placed.block_size + 20
-    assert extent.extent == int(natural.to_integral_value(rounding="ROUND_CEILING"))
+    assert extent.extent == natural.ceil()
     assert not extent.short_sources
     assert not final.fit_warnings
