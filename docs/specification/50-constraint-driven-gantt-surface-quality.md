@@ -587,9 +587,9 @@ The protected feasibility contract below applies only under Layout
 `relationRouting.unroutable: suppress`. Under `relax`, `overlap` and `stub`,
 the published #1427 resolution contract applies to critical relations too;
 critical-first ordering remains, but no safe-path/impossibility promise is made.
-The feasibility and over-quality rules below are requirements for the unfinished
-protected pass, not an enabled routing algorithm. The independent priority
-slice leaves normal route eligibility unchanged.
+Layout first retains an ordinary accepted route, then applies the finite-domain
+protected pass below when needed. Ordinary relations retain normal eligibility
+and bounded work; protected work is accounted separately.
 Declared quality limits remain
 preferences for these relations: first select a safe quality-eligible route;
 if none is found, retain a safe completed route even when `maxBends` or

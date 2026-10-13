@@ -57,6 +57,14 @@ The new warning's missing user-facing sentence is corrected in the existing
 use-case message owner with a finite-domain/no-continuous-impossibility test.
 Required current-head checks and exact-main release remain pending.
 
+Counter review correction: protected search is counted only when its iterator
+is entered, not when every egress is blocked or a finite shape settles it.
+Seven finite-domain unit controls and actual blocked-render summary cover this;
+focused correction batch57 PASS. The protected-pass stale specification status
+is removed with this implementation update. This is the existing receipt
+contract, not a new routing policy. Final exact-head CI/artifact evidence must
+include this correction before merging.
+
 Selected S/C implementation: `2cf36485` plus the independently moving endpoint
 join test correction. Focused routing/critical/hints/Scene/SVG suite138 PASS;
 final protected controls8 PASS and strengthened S controls6 PASS. Initial
