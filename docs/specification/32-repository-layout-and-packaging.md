@@ -77,6 +77,38 @@ the rules' completed geometry; Scene and adapters use their existing projection.
 Custom presets and authored projects are unchanged. First-run acceptance checks
 the actual CLI warning envelope, Scene progress fill and serialized SVG.
 
+### 4.2 Installed-wheel corpus initialization (#1356)
+
+`init --example` stages the Contexts declared by the packaged corpus manifest.
+It MUST validate Context/font declarations and verify accessible resource pins
+before treating a missing registered font provider as deferrable. Only zero
+matching provider entry points mean unavailable; duplicate providers, invalid
+roots, unsafe locators, missing available files and bad pins remain hard errors.
+Rendering remains strict; initialization MUST NOT substitute another font.
+Malformed Contexts are rejected by existing schema diagnostics before staging
+or deferral; this intentionally replaces later incidental field-access failures.
+
+Initialization omits affected slides, their unshared Context files and their
+manifest-declared derived outputs from the fresh copied corpus, reporting one
+`W_INIT_EXAMPLE_SLIDE_DEFERRED` warning per omitted slide. The Spec09 envelope
+uses component `initialization`, the original corpus Context path as `sourceRef`,
+empty `revisionRefs`, and details `{slideId, context, providers}`. It explains
+how to obtain the required provider and reinitialize into a new directory.
+If every slide is deferred, initialization rejects with
+`E_INIT_EXAMPLE_UNAVAILABLE`; it MUST NOT advertise an empty usable Store.
+
+A closure is assembled in temporary staging and promoted only after completion;
+deferred closures leave no partial Store members. Only owned fresh-copy paths
+may be removed; retained slides sharing a Context or output keep that path.
+The Store config is published last. Hard failures may leave copied source files
+but never a newly advertised incomplete Store. Nonempty destinations remain
+non-overwritable. Source examples and the minimal starter are unchanged.
+
+The alpha internal API returns `InitializationResult(directory, available_slides,
+deferred_slides)`; callers use its directory explicitly, without Path-compatible
+shims. Successful CLI output keeps its existing bytes when nothing is deferred;
+otherwise it adds available/deferred slide lists and typed warning diagnostics.
+
 ## 5. Python package boundaries
 
 The final package boundaries are:
