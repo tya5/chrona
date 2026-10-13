@@ -59,7 +59,7 @@ Required current-head checks and exact-main release remain pending.
 
 Counter review correction: protected search is counted only when its iterator
 is entered, not when every egress is blocked or a finite shape settles it.
-Seven finite-domain unit controls and actual blocked-render summary cover this;
+Seven finite-domain unit controls and actual-render receipt/summary projection cover this;
 focused correction batch57 PASS. The protected-pass stale specification status
 is removed with this implementation update. This is the existing receipt
 contract, not a new routing policy. Final exact-head CI/artifact evidence must
