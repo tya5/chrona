@@ -1,7 +1,7 @@
 # Thin-connector design reuse completion (#1341, #1344)
 
-Published code baseline: READYaea06f4b; #1300's containing three-OS release is
-still running. Adopt the current READY main before product publication. No
+Published code baseline: READYaea06f4b; #1300 is closed after its containing
+three-OS release38339181830 succeeded. Adopt the current READY main before product publication. No
 previous-session local work is assumed.
 
 Authority: [approved classification6100250980](https://github.com/tya5/chrona/issues/1341#issuecomment-6100250980),
@@ -85,3 +85,13 @@ READYaea06f4b PASS. Existing accepted schema verdicts/diagnostics are preserved;
 the optional column `style` admission has one explicit L1 delta. Real synthetic
 SVG and completed Scene equality pass; provenance is not erased. Public snapshot
 inspection and release CI remain pending; no whole-issue acceptance claim.
+
+PR1455 snapshot11785869165:92/92 public Scene/SVG identical,0 retirements,
+diagnostic/coverage inventories only. Initial38340937037 failed seven obsolete
+shared-schema probe/location assumptions across all pytest shards; conformance,
+MCP and public reproduction passed, derived-ready failure was consequential.
+Updated definition/subfragment positive/negative parity and nested diagnostic
+paths retain every guard; corrected focused407 PASS and all35 conformance
+checks PASS against the audited CI snapshot. No product contract or
+generated output is weakened to absorb these failures. New exact-head CI and
+containing-main release remain required.

@@ -5,11 +5,12 @@ Authority: [reviewer decisions6136355223](https://github.com/tya5/chrona/issues/
 These supersede unconditional no-hint stability and continuous-space
 impossibility. No local-graph redesign.
 
-Current status: PR1453 head9e3d2e73 merged to publice8a53082. Exact-head
+Closed: PR1453 head9e3d2e73 merged to publice8a53082. Exact-head
 CI38336753803 succeeded; final artifact11785377450 has92/92 identical public
 Scene/SVG bytes and only one diagnostic inventory change. Focused final batch57
-PASS. Synced exact-main release and final record publication remain required;
-keep the issue open until those gates verify the selected S/C criteria.
+PASS. Exact-main [release38339181830](https://github.com/tya5/chrona/actions/runs/38339181830)
+succeeded with all five required jobs; issue1300 is closed. The approved S/C
+replacements retain the deferred disposition of the superseded literal rows.
 
 ## Design plan
 
@@ -53,7 +54,7 @@ fixed quota or polynomial bound proves completeness.
    shifted/appended hint controls. Batch generated evidence once.
 4. Focused tests locally; CI full three-OS/conformance/wheel/MCP/newest-Python
    public materializers. Literal acceptance preserves approved dispositions.
-   Close only after review publication and exact-main release.
+   Completed by the exact-main release above and the archived acceptance review.
 
 H1/H2 evidence:100 focused PASS, final40 PASS;92 public Scene/SVG unchanged
 in preview11780366932. Additional no-hint characterization tests3 PASS include
