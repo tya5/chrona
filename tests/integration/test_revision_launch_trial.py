@@ -36,6 +36,7 @@ def test_launch_trial_revision_keeps_spec_build_drawn(tmp_path):
     actual_path.write_text(yaml.safe_dump(actual, sort_keys=False), encoding="utf-8")
     previous_scene = tmp_path / "v1.scene.json"
     old_spec_points = None
+    old_routes = None
     for revision in (1, 2):
         if revision == 2:
             project["objects"]["spec"]["schedule"]["end"] = "2027-01-20"
@@ -71,6 +72,12 @@ def test_launch_trial_revision_keeps_spec_build_drawn(tmp_path):
         if revision == 1:
             previous_scene.write_bytes(serialize_scene(result.scene))
             old_spec_points = routes[0].points
+            old_routes = {
+                route.scene_id: (route.from_instance_id, route.to_instance_id, route.points)
+                for route in result.surface.primitives
+                if route.kind == "Path" and route.source_kind == "relation"
+                and route.from_instance_id and route.to_instance_id
+            }
         else:
             hinted = render_draft(DraftRenderRequest(path, "svg", actual=actual_path,
                                                    previous_scene=previous_scene)).rendered
@@ -78,10 +85,39 @@ def test_launch_trial_revision_keeps_spec_build_drawn(tmp_path):
                              if primitive.kind == "Path" and primitive.source_kind == "relation"
                              and ":spec-build:" in primitive.scene_id]
             assert len(hinted_routes) == 1
-            receipt = next(info for info in hinted.info_diagnostics
-                           if isinstance(info, RelationHintReceipt) and ":spec-build:" in info.relation_id)
+            receipts = [info for info in hinted.info_diagnostics
+                        if isinstance(info, RelationHintReceipt)]
+            current_routes = {
+                route.scene_id: route
+                for route in hinted.surface.primitives
+                if route.kind == "Path" and route.source_kind == "relation"
+                and route.from_instance_id and route.to_instance_id
+            }
+            accepted = {receipt.relation_id: receipt for receipt in receipts
+                        if receipt.disposition == "accepted"}
+            assert accepted
+            assert all(not receipt.searched for receipt in accepted.values())
+            for relation_id, receipt in accepted.items():
+                assert relation_id in current_routes, receipt
+                route = current_routes[relation_id]
+                assert route.scene_id in old_routes, relation_id
+                old_source, old_target, old_points = old_routes[route.scene_id]
+                assert (route.from_instance_id, route.to_instance_id) == (old_source, old_target)
+                # Reanchoring moves endpoints with their marks and adjusts the
+                # first/last elbows. Every interior route point stays pinned.
+                points = route.points
+                assert len(points) == len(old_points), relation_id
+                if len(points) > 2:
+                    assert points[2:-2] == old_points[2:-2], relation_id
+                assert tuple((b[0] == a[0], b[1] == a[1]) for a, b in zip(points, points[1:])) == tuple(
+                    (b[0] == a[0], b[1] == a[1]) for a, b in zip(old_points, old_points[1:])), relation_id
+                svg = ET.fromstring(hinted.artifact.content)
+                elements = {element.get("data-scene-id", element.get("id")): element for element in svg.iter()}
+                assert route.scene_id in elements, relation_id
+                assert elements[route.scene_id].get("d"), relation_id
+            receipt = next(info for info in receipts if ":spec-build:" in info.relation_id)
             assert receipt.disposition == "accepted", receipt
-            assert not receipt.searched
+            assert receipt.relation_id in current_routes
             points = hinted_routes[0].points
             assert len(points) == len(old_spec_points)
             translation = (points[0][0] - old_spec_points[0][0], points[0][1] - old_spec_points[0][1])

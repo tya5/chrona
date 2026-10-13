@@ -1,7 +1,7 @@
 """Bounded sparse candidate search for orthogonal Layout routes."""
 from __future__ import annotations
 
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from collections import OrderedDict
 from bisect import bisect_left, bisect_right
 from dataclasses import dataclass, field
@@ -336,7 +336,7 @@ def orthogonal_route_candidates(
     *,
     grid_offset: float = 2.0,
     bend_penalty: float | None = None,
-    limit: int = 4096,
+    limit: int | None = 4096,
     bounds: tuple[float, float, float, float] | None = None,
     port_ids: tuple[str, ...] = (),
     classes: tuple[str, ...] | None = None,
@@ -344,6 +344,7 @@ def orthogonal_route_candidates(
     initial_direction: int = -1,
     budget: RelationExpansionBudget | None = None,
     exact_bound: bool = True,
+    on_expansion: Callable[[], None] | None = None,
 ) -> Iterator[Path]:
     """Yield deterministic orthogonal paths from a finite sparse event graph.
 
@@ -354,18 +355,23 @@ def orthogonal_route_candidates(
     frontier was not exhausted.
     First-fit may request an obstacle-independent Manhattan/minimum-turn bound
     with ``exact_bound=False``; canonical prefix histories remain distinct.
+    ``limit=None`` exhausts the same finite simple-path domain for protected
+    feasibility. It cannot share an ordinary budget or weighted-node pruning;
+    optional expansion reporting keeps that work separate from quota receipts.
     """
     if (len(start) != 2 or len(end) != 2
             or not all(isfinite(value) for value in (*start, *end))
             or not isfinite(grid_offset) or grid_offset < 0
             or (bend_penalty is not None and (not isfinite(bend_penalty) or bend_penalty < 0))
-            or isinstance(limit, bool) or not isinstance(limit, int) or limit < 1
+            or (limit is not None and (isinstance(limit, bool) or not isinstance(limit, int) or limit < 1))
+            or (limit is None and (budget is not None or bend_penalty is not None))
             or initial_direction not in {-1, 0, 1}
             or not isinstance(exact_bound, bool)
             or (not exact_bound and bend_penalty is not None)):
         raise ValueError(
             "E_LAYOUT_ROUTE_SEARCH_INPUT: start/end must be finite 2D points; grid_offset and bend_penalty "
-            "must be finite and non-negative; limit must be a positive integer; initial_direction must be -1, 0, or 1."
+            "must be finite and non-negative; limit must be positive or None (unbudgeted, unweighted); "
+            "initial_direction must be -1, 0, or 1."
         )
     if bounds is not None:
         if (len(bounds) != 4 or not all(isfinite(value) for value in bounds)
@@ -428,7 +434,7 @@ def orthogonal_route_candidates(
                     path.append(point)
             candidate = tuple(path)
             if candidate not in seeded and all(clear(a, b) for a, b in zip(candidate, candidate[1:])):
-                if len(seeded) >= limit:
+                if limit is not None and len(seeded) >= limit:
                     raise RouteSearchFailure(
                         "E_PRESENTATION_ROUTE_LIMIT",
                         detail="The candidate limit was reached while yielding clear Manhattan seed routes.",
@@ -436,6 +442,8 @@ def orthogonal_route_candidates(
                 seeded.add(candidate)
                 if budget is not None:
                     budget.charge()
+                if on_expansion is not None:
+                    on_expansion()
                 yield candidate
         if start == end:
             return
@@ -550,13 +558,15 @@ def orthogonal_route_candidates(
         elif length + bend_penalty * bends != weighted_best.get(key):
             continue
         expanded += 1
-        if expanded > limit:
+        if limit is not None and expanded > limit:
             raise RouteSearchFailure(
                 "E_PRESENTATION_ROUTE_LIMIT",
                 detail="The route-search expansion limit was reached before the candidate frontier was exhausted.",
             )
         if budget is not None:
             budget.charge()
+        if on_expansion is not None:
+            on_expansion()
         if node == target:
             points: list[Point] = []
             for point in (ordered[index_] for index_ in path):

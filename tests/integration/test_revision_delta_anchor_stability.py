@@ -6,11 +6,13 @@ import yaml
 import pytest
 
 from chrona.presentation.layout import surface_composer
+from chrona.presentation.model.info_diagnostics import RelationHintReceipt
+from chrona.presentation.scene.serialization import serialize_scene
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
 from tests.support import synthetic_review as sr
 
 
-def _render(directory, *, shift=0, append=False):
+def _render(directory, *, shift=0, append=False, previous_scene=None):
     directory.mkdir()
     move = timedelta(days=shift)
     source = sr.with_calendar(sr.project({
@@ -33,7 +35,17 @@ def _render(directory, *, shift=0, append=False):
     project_path, actual_path = directory / "project.yaml", directory / "actual.yaml"
     project_path.write_text(yaml.safe_dump(source, sort_keys=False), encoding="utf-8")
     actual_path.write_text(yaml.safe_dump(actual, sort_keys=False), encoding="utf-8")
-    return render_draft(DraftRenderRequest(project_path, "svg", actual=actual_path)).rendered
+    return render_draft(DraftRenderRequest(project_path, "svg", actual=actual_path,
+                                           previous_scene=previous_scene)).rendered
+
+
+def _relation_routes(rendered):
+    return {
+        (item.source_ref, item.from_instance_id, item.to_instance_id): item
+        for item in rendered.surface.primitives
+        if item.kind == "Path" and item.source_kind == "relation"
+        and item.from_instance_id and item.to_instance_id
+    }
 
 
 def _anchor_sides(rendered):
@@ -109,6 +121,50 @@ def test_default_preset_delta_anchors_and_route_class_survive_translation_and_un
         assert not [item for item in rendered.scene.diagnostics if item.startswith("E_")]
     assert _anchor_sides(baseline) == _anchor_sides(shifted) == _anchor_sides(appended)
     assert _suppressed_relations(baseline) == _suppressed_relations(shifted) == _suppressed_relations(appended)
+
+
+@pytest.mark.parametrize("change", ["shift", "append"])
+def test_previous_scene_keeps_revalidated_routes_and_delta_sides(tmp_path, change):
+    baseline = _render(tmp_path / "baseline")
+    previous = tmp_path / "previous.scene.json"
+    previous.write_bytes(serialize_scene(baseline.scene))
+    kwargs = {"shift": 7} if change == "shift" else {"append": True}
+    revised = _render(tmp_path / "revised", previous_scene=previous, **kwargs)
+
+    before_routes = _relation_routes(baseline)
+    after_routes = _relation_routes(revised)
+    receipts = [item for item in revised.info_diagnostics if isinstance(item, RelationHintReceipt)]
+    accepted = {item.relation_id: item for item in receipts if item.disposition == "accepted"}
+    assert accepted
+    assert all(not item.searched for item in accepted.values())
+    svg = ET.fromstring(revised.artifact.content)
+    elements = {element.get("data-scene-id", element.get("id")): element for element in svg.iter()}
+    for relation_id, receipt in accepted.items():
+        current = next((route for route in after_routes.values() if route.scene_id == relation_id), None)
+        assert current is not None, receipt
+        key = (current.source_ref, current.from_instance_id, current.to_instance_id)
+        assert key in before_routes, receipt
+        prior = before_routes[key]
+        assert len(current.points) == len(prior.points), receipt
+        translation = (current.points[0][0] - prior.points[0][0],
+                       current.points[0][1] - prior.points[0][1])
+        assert current.points[-1] == pytest.approx((prior.points[-1][0] + translation[0],
+                                                    prior.points[-1][1] + translation[1]))
+        for old, new in zip(prior.points, current.points):
+            assert new == pytest.approx((old[0] + translation[0], old[1] + translation[1]))
+        # The saved geometry is reanchored with changed marks. Its turns and
+        # segments remain the same after removing that endpoint translation.
+        if len(current.points) > 2:
+            assert current.points[2:-2] == prior.points[2:-2], receipt
+        assert tuple((b[0] == a[0], b[1] == a[1])
+                     for a, b in zip(current.points, current.points[1:])) == tuple(
+            (b[0] == a[0], b[1] == a[1])
+            for a, b in zip(prior.points, prior.points[1:])), receipt
+        assert current.scene_id in elements
+        assert elements[current.scene_id].get("d")
+
+    assert _anchor_sides(baseline) == _anchor_sides(revised)
+    assert _suppressed_relations(baseline) == _suppressed_relations(revised)
 
 
 def test_explicit_suppression_identity_survives_uniform_shift_and_unrelated_append(tmp_path, monkeypatch):

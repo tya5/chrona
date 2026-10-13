@@ -97,7 +97,7 @@ class RouteAttemptEvidence:
             raise _route_attempt_error("port-pair outcome", source_side=self.source_side,
                                        target_side=self.target_side, outcome=self.outcome)
         if self.search_disposition is not None and self.search_disposition not in {
-                "bounded-candidates-exhausted", "expansion-limit"}:
+                "bounded-candidates-exhausted", "finite-domain-exhausted", "quality-infeasible", "expansion-limit"}:
             raise _route_attempt_error("search disposition", source_side=self.source_side,
                                        target_side=self.target_side,
                                        search_disposition=self.search_disposition,
@@ -345,6 +345,42 @@ def route_quality_attempt(
 
 
 @dataclass(frozen=True)
+class CriticalRouteEvidence:
+    """Protected finite-domain work, separate from ordinary quota receipts."""
+
+    expansions: int
+    exhausted: bool
+    quality_fallback: RouteAttemptEvidence | None = None
+    attempts: tuple[RouteAttemptEvidence, ...] = ()
+
+    def __post_init__(self) -> None:
+        if (isinstance(self.expansions, bool) or not isinstance(self.expansions, int)
+                or self.expansions < 0 or not isinstance(self.exhausted, bool)
+                or (self.quality_fallback is not None
+                    and self.quality_fallback.outcome != "quality-rejected")):
+            raise _route_attempt_error("critical finite-domain evidence")
+
+    def diagnostic(self, relation_id: str) -> str:
+        payload = {"relationId": relation_id, "searchDomain": "finite-port-event",
+                   "expansions": self.expansions}
+        if self.quality_fallback is not None:
+            measured = self.quality_fallback
+            payload.update(bends=measured.bends, maxBends=measured.max_bends,
+                           length=measured.length, directLength=measured.direct_length,
+                           maxDetourRatio=measured.max_detour_ratio)
+            code = "I_LAYOUT_CRITICAL_RELATION_QUALITY_FALLBACK"
+        elif self.exhausted:
+            code = "W_LAYOUT_CRITICAL_RELATION_SEARCH_DOMAIN_EXHAUSTED"
+            payload["failureEvidence"] = [{"sourceSide": item.source_side,
+                "targetSide": item.target_side, "outcome": item.outcome,
+                "blockerIds": item.blocker_ids, "searchFailure": item.search_failure}
+                for item in self.attempts]
+        else:
+            code = "I_LAYOUT_CRITICAL_RELATION_SEARCH"
+        return code + ":" + json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+
+@dataclass(frozen=True)
 class RelationRouteSelection:
     """One deterministic port-pair search and its complete eligibility evidence."""
 
@@ -357,6 +393,7 @@ class RelationRouteSelection:
     search_expansions: int = 0
     settled_by_hint: bool = False
     hint_rejection: str | None = None
+    critical_evidence: CriticalRouteEvidence | None = None
 
     @property
     def budget_hit(self) -> bool:
@@ -364,6 +401,17 @@ class RelationRouteSelection:
 
     def __post_init__(self) -> None:
         accepted = tuple(item for item in self.attempts if item.outcome == "accepted")
+        fallback = self.critical_evidence.quality_fallback if self.critical_evidence is not None else None
+        if (self.critical_evidence is not None and self.critical_evidence.exhausted
+                and fallback is None and self.selected_pair is not None):
+            raise _route_attempt_error("critical domain exhaustion with selected route")
+        if (self.critical_evidence is not None and not self.critical_evidence.exhausted
+                and self.selected_pair is None):
+            raise _route_attempt_error("incomplete critical domain without selected route")
+        if fallback is not None:
+            if accepted or fallback not in self.attempts:
+                raise _route_attempt_error("critical quality fallback receipt")
+            accepted = (fallback,)
         if (isinstance(self.search_expansions, bool) or not isinstance(self.search_expansions, int)
                 or self.search_expansions < 0
                 or (self.search_budget is None and self.search_expansions != 0)
@@ -401,6 +449,8 @@ def select_relation_route(
     channels: RelationShapeChannels | None = None,
     search_budget: int | None = None,
     preferred_routes: tuple[tuple[tuple[ConnectorEgress, ConnectorEgress], tuple[tuple[float, float], ...]], ...] = (),
+    protected: bool = False,
+    endpoint_preserving_prepare: bool = False,
 ) -> RelationRouteSelection:
     """Measure eligibility, then select by the caller's stable rank when supplied.
 
@@ -508,18 +558,84 @@ def select_relation_route(
                     attempts[-1] = replace(measured, outcome="eligible-not-selected")
             if budget is not None and budget.hit:
                 break
-    return result(chosen, chosen_points, attempts)
+    if chosen is not None or not protected:
+        return result(chosen, chosen_points, attempts)
+
+    # Exhaust only the declared finite domain; reuse all completed validators.
+    protected_expansions = 0
+    def charge_protected():
+        nonlocal protected_expansions
+        protected_expansions += 1
+
+    fallback = None
+    protected_start = len(attempts)
+    naturally_exhausted = True
+    protected_best = None
+    protected_chosen = None
+    protected_pairs = first_fit_port_pairs(port_pairs) if search_policy == "first-fit" else port_pairs
+    protected_channels = channels or shape_channels(obstacles, bounds=bounds, classes=classes,
+                                                    regions=regions, grid_offset=ROUTE_GRID_OFFSET)
+    for source, target in protected_pairs:
+        blockers, port_ids = pair_domain(source, target)
+        if blockers:
+            attempts.append(RouteAttemptEvidence(source.side, target.side, "egress-collision", blocker_ids=blockers))
+            continue
+        from itertools import chain
+        from chrona.presentation.layout.route_search import orthogonal_route_candidates
+        shapes = relation_shape_candidates(source.exposed_port, target.exposed_port,
+                                           bounds=bounds, channels=protected_channels)
+        candidates = chain(shapes, orthogonal_route_candidates(source.exposed_port, target.exposed_port,
+            obstacles, bounds=bounds, port_ids=port_ids, classes=classes, regions=regions,
+            limit=None, on_expansion=charge_protected))
+        quality_impossible = (max_bends < int(source.semantic_port[0] != target.semantic_port[0]
+                                             and source.semantic_port[1] != target.semantic_port[1])
+                              and (prepare is None or endpoint_preserving_prepare))
+        measured, points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
+            port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
+            max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
+            limit=None, candidate_paths=candidates, stop_on_safe=quality_impossible)
+        attempts.append(measured)
+        if measured.outcome == "accepted":
+            naturally_exhausted = False
+            if search_policy == "first-fit" or rank is None:
+                protected_chosen = ((source, target), points)
+                break
+            score = rank(points, source, target)
+            if protected_best is None or score < protected_best:
+                if protected_chosen is not None:
+                    attempts[protected_chosen[2]] = replace(attempts[protected_chosen[2]], outcome="eligible-not-selected")
+                protected_best = score
+                protected_chosen = ((source, target), points, len(attempts) - 1)
+            else:
+                attempts[-1] = replace(measured, outcome="eligible-not-selected")
+        if measured.outcome == "quality-rejected":
+            naturally_exhausted &= measured.search_disposition != "quality-infeasible"
+            score = (rank(points, source, target) if search_policy == "best" and rank is not None
+                     else (measured.bends, measured.length))
+            if fallback is None or (search_policy == "best" and score < fallback[0]):
+                fallback = (score, (source, target), points, measured)
+    if protected_chosen is not None:
+        return RelationRouteSelection(protected_chosen[0], protected_chosen[1], tuple(attempts), search_used=True,
+            search_budget=search_budget, search_expansions=budget.expansions if budget is not None else 0,
+            hint_rejection=hint_rejection, critical_evidence=CriticalRouteEvidence(
+                protected_expansions, False, attempts=tuple(attempts[protected_start:])))
+    evidence = CriticalRouteEvidence(protected_expansions, naturally_exhausted,
+        fallback[3] if fallback else None, tuple(attempts[protected_start:]))
+    return RelationRouteSelection(fallback[1] if fallback else None, fallback[2] if fallback else (),
+        tuple(attempts), search_used=True, search_budget=search_budget,
+        search_expansions=budget.expansions if budget is not None else 0,
+        hint_rejection=hint_rejection, critical_evidence=evidence)
 
 
 def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, classes, regions,
                            max_bends, max_detour_ratio, prepare, accept, limit, candidate_paths=None,
-                           budget=None, exact_bound=True):
+                           budget=None, exact_bound=True, stop_on_safe=False):
     """Search alternatives for one pair; only completed, safe paths reach quality selection."""
     from chrona.presentation.layout.route_search import orthogonal_route_candidates
 
     rejected = None
     failure = "E_CONNECTOR_UNROUTABLE"
-    disposition = "bounded-candidates-exhausted"
+    disposition = "finite-domain-exhausted" if limit is None else "bounded-candidates-exhausted"
     try:
         candidates = (orthogonal_route_candidates(source.exposed_port, target.exposed_port, obstacles,
             bounds=bounds, port_ids=port_ids, classes=classes, regions=regions, limit=limit,
@@ -562,6 +678,10 @@ def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, class
                 max_bends=max_bends, max_detour_ratio=max_detour_ratio)
             if measured.outcome == "accepted":
                 return measured, completed
+            if stop_on_safe:
+                if (completed[0] != source.semantic_port or completed[-1] != target.semantic_port):
+                    raise _route_attempt_error("quality lower bound requires preserved endpoints")
+                return replace(measured, search_disposition="quality-infeasible"), completed
             if rejected is None or (measured.bends, measured.length) < (
                     rejected[0].bends, rejected[0].length):
                 rejected = (measured, completed)

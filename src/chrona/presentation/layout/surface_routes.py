@@ -613,6 +613,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                             row_edges=tuple(row_edges.values()), classes=route_classes)
                             if search_policy == "first-fit" else None)
                     selection = select_relation_route(pairs, obstacles=domain.obstacles,
+                        endpoint_preserving_prepare=True,
+                        protected=(relation.critical and context.layout_manifest.relation_unroutable
+                                   is RelationUnroutableMode.SUPPRESS),
                         preferred_routes=(tuple((candidate.pair, candidate.middle) for candidate in hint_proposal.candidates)
                             if hint_proposal is not None and hint_proposal.disposition == "proposed"
                             and domain.stage is RelationResolutionStage.NORMAL else ()),
@@ -754,6 +757,11 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         RelationResolutionStage.STUB, relation.critical))
                     continue
                 fallback = selected_pair is None
+                if (outcome is not None and not outcome.used_back_route
+                        and outcome.search_receipt.critical_evidence is not None
+                        and not window_rejected[0]):
+                    evidence = outcome.search_receipt.critical_evidence
+                    diagnostics.append(evidence.diagnostic(scene_id))
                 if fallback:
                     if context.layout_manifest.relation_unroutable is RelationUnroutableMode.SUPPRESS:
                         relations.append(RelationPlacement(scene_id,
