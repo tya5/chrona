@@ -276,18 +276,11 @@ allOf:
               required: [kind, source, label]
               additionalProperties: false
               properties:
-                kind: {const: asOf}
+                kind: {$ref: "urn:chrona:common-v0.1#/$defs/markerPresentation/properties/kind"}
                 source: {const: actual}
-                label: {description: "The marker label, rendered exactly as written unless a date form is declared.", type: string}
-                date:
-                  description: "Optional date appended to the label, formatted like an axis localized-date label."
-                  type: object
-                  required: [form]
-                  additionalProperties: false
-                  properties:
-                    form: {description: "The date form: the localized date (`Aug 20, 2027`), the day and short month (`20 Aug`) or the day, short month and year (`20 Aug 2027`).", enum: [localized-date, day-month, day-month-year]}
-                    nameTable: {description: "Exact built-in axis name-table ID; defaults to Render Context locale.", enum: [en-US, ja-JP]}
-                placement: {description: "Where the label sits on the plot: the top margin (default), the plot foot (centred on the rule above the last row) or below the plot (centred on the rule under the last row, in a block Layout reserves; with no room it falls back to the foot with a diagnostic).", enum: [top, foot, below-plot], examples: [below-plot]}
+                label: {$ref: "urn:chrona:common-v0.1#/$defs/markerPresentation/properties/label"}
+                date: {$ref: "urn:chrona:common-v0.1#/$defs/markerPresentation/properties/date"}
+                placement: {$ref: "urn:chrona:common-v0.1#/$defs/markerPresentation/properties/placement"}
           periods:
             description: "Named Project periods drawn as bands across the plot, in paint order of declaration; absent selects none."
             type: array
@@ -306,8 +299,8 @@ allOf:
                   required: [placement]
                   additionalProperties: false
                   properties:
-                    placement: {description: "Where the label sits: at the plot's top edge, at its bottom edge, or centred in the band.", enum: [top, bottom, inside]}
-                    overflow: {description: "What happens when no collision-free position exists: suppress the label with a recorded warning, or place it anyway with a recorded overflow. Defaults to visible-overflow.", enum: [suppress, visible-overflow]}
+                    placement: {$ref: "urn:chrona:common-v0.1#/$defs/periodLabelPresentation/properties/placement"}
+                    overflow: {$ref: "urn:chrona:common-v0.1#/$defs/periodLabelPresentation/properties/overflow"}
                     text: {description: "Optional display text of the label, replacing the Project period title for this View only (the Theme role's text transform styles it); absent shows the period title.", $ref: "urn:chrona:common-v0.1#/$defs/literalCaption", examples: [OPENING NIGHT]}
                     template: {description: "Optional closed figure template instead of literal text: {figure:id} reads a global View figure; {{ and }} escape braces. Mutually exclusive with text.", $ref: "urn:chrona:common-v0.1#/$defs/literalCaption", examples: ["WINDOW CLOSES IN {figure:closing} DAYS"]}
           figures:
@@ -755,7 +748,7 @@ $defs:
       target:
         description: "Exact label or mark occurrence receiving the icon."
         $ref: "#/$defs/visualTarget"
-      ref: {description: "Direct Context-local set:name icon reference.", examples: ["material:flag-outline-rounded"], type: string, pattern: "^[A-Za-z][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
+      ref: {$ref: "urn:chrona:common-v0.1#/$defs/visualPresentation/properties/ref"}
       encoding:
         description: "Closed source-field to icon-reference mapping."
         type: object
@@ -768,8 +761,8 @@ $defs:
             type: object
             minProperties: 1
             additionalProperties: {description: "Mapped Context-local icon reference.", examples: ["material:flag-outline-rounded"], type: string, pattern: "^[A-Za-z][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
-      side: {description: "Logical slot beside the target text.", enum: [leading, trailing], default: leading}
-      decorative: {description: "Whether the adjacent text already supplies the icon's meaning.", type: boolean, default: true}
+      side: {$ref: "urn:chrona:common-v0.1#/$defs/visualPresentation/properties/side"}
+      decorative: {$ref: "urn:chrona:common-v0.1#/$defs/visualPresentation/properties/decorative"}
     oneOf:
       - description: "A direct request names one catalog asset."
         examples: [{target: {kind: title}, ref: material:flag-outline-rounded}]

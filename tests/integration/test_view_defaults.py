@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from datetime import date
+from pathlib import Path
 
 import pytest
 
@@ -34,8 +35,8 @@ def _move_design_to_the_layout(parts: dict, members=WHOLE_MEMBERS) -> dict:
     return moved
 
 
-def _render(tmp_path, parts):
-    return sr.render(tmp_path, _source(), presentation=parts)
+def _render(tmp_path, parts, *, source=None, actual=None):
+    return sr.render(tmp_path, source or _source(), presentation=parts, actual=actual)
 
 
 def _sub(tmp_path, name):
@@ -214,6 +215,139 @@ def test_unknown_column_style_ingress_collects_a_sibling_resource_error(tmp_path
                and item.pointer == "/body/tableColumns/0/style" for item in findings)
     assert any(item.code == "E_RESOURCE_SCHEMA" and item.resource_kind == "theme"
                for item in findings)
+
+
+def test_array_presentation_defaults_fill_declared_entries_and_preserve_identity_order_and_encoding():
+    view = {"body": {
+        "markers": [
+            {"source": "actual"},
+            {"source": "actual", "label": "View label", "date": {"form": "day-month-year"}},
+        ],
+        "periods": [
+            {"id": "launch", "label": {}},
+            {"id": "release"},
+        ],
+        "visuals": [
+            {"target": {"kind": "title"}, "side": "leading"},
+            {"target": {"kind": "cell", "object": "a", "column": "Owner"},
+             "encoding": {"field": "owner", "domain": {"a": "chrona:risk"}}},
+        ],
+    }}
+    defaults = {
+        "markerPresentation": {"kind": "asOf", "label": "as of", "placement": "foot",
+                               "date": {"form": "day-month"}},
+        "periodLabelPresentation": {"placement": "inside", "overflow": "suppress"},
+        "visualPresentation": {
+            "title": {"ref": "chrona:risk", "side": "trailing", "decorative": False},
+            "cell": {"ref": "chrona:risk", "side": "trailing", "decorative": True},
+        },
+    }
+    before_view, before_defaults = deepcopy(view), deepcopy(defaults)
+
+    merged = merge_view_defaults(view, defaults)
+    body = merged["body"]
+
+    assert body["markers"] == [
+        {"source": "actual", "kind": "asOf", "label": "as of", "placement": "foot",
+         "date": {"form": "day-month"}},
+        {"source": "actual", "kind": "asOf", "label": "View label", "placement": "foot",
+         "date": {"form": "day-month-year"}},
+    ]
+    assert body["periods"] == [
+        {"id": "launch", "label": {"placement": "inside", "overflow": "suppress"}},
+        {"id": "release"},
+    ]
+    assert body["visuals"] == [
+        {"target": {"kind": "title"}, "ref": "chrona:risk", "side": "leading", "decorative": False},
+        {"target": {"kind": "cell", "object": "a", "column": "Owner"},
+         "encoding": {"field": "owner", "domain": {"a": "chrona:risk"}},
+         "side": "trailing", "decorative": True},
+    ]  # an encoded visual takes design placement, never a direct asset ref
+    body["visuals"][0]["target"]["kind"] = "changed"
+    body["periods"][0]["label"]["placement"] = "top"
+    body["markers"][0]["date"]["form"] = "localized-date"
+    assert view == before_view and defaults == before_defaults
+
+
+def test_array_defaults_do_not_synthesize_entries_or_repair_explicit_wrong_types():
+    omitted = {"body": {}}
+    defaults = {
+        "markerPresentation": {"kind": "asOf", "label": "as of", "placement": "foot",
+                               "date": {"form": "day-month"}},
+        "periodLabelPresentation": {"placement": "inside", "overflow": "suppress"},
+        "visualPresentation": {"title": {"ref": "chrona:risk", "side": "leading", "decorative": True}},
+    }
+
+    assert merge_view_defaults(omitted, defaults) == omitted
+    explicit_bad = {"body": {
+        "markers": [{"source": "actual", "kind": None, "label": 7, "placement": [], "date": "bad"}],
+        "periods": [{"id": "unlabelled"}, {"id": "bad-label", "label": None},
+                    {"id": "bad-placement", "label": {"placement": None}}],
+        "visuals": [{"target": {"kind": "title"}, "ref": None, "side": [], "decorative": 1}],
+    }}
+    before = deepcopy(explicit_bad)
+
+    expected = deepcopy(before)
+    expected["body"]["periods"][2]["label"]["overflow"] = "suppress"
+    assert merge_view_defaults(explicit_bad, defaults) == expected
+    assert expected["body"]["periods"][2]["label"]["placement"] is None
+    assert explicit_bad == before
+
+
+def test_synthetic_thin_marker_and_period_defaults_render_like_full_view(tmp_path):
+    full = sr.bundle("executive-light")
+    full["view"]["body"]["markers"] = [{
+        "kind": "asOf", "source": "actual", "label": "as of", "placement": "foot",
+        "date": {"form": "day-month"},
+    }]
+    full["view"]["body"]["periods"] = [{
+        "id": "launch", "label": {"placement": "top", "overflow": "suppress"},
+    }]
+    thin = deepcopy(full)
+    marker = thin["view"]["body"]["markers"][0]
+    for field in ("kind", "label", "placement", "date"):
+        marker.pop(field)
+    thin["view"]["body"]["periods"][0]["label"] = {}
+    thin["layout"]["viewDefaults"] = {
+        "markerPresentation": {"kind": "asOf", "label": "as of", "placement": "foot",
+                               "date": {"form": "day-month"}},
+        "periodLabelPresentation": {"placement": "top", "overflow": "suppress"},
+    }
+    source = _source()
+    source["periods"] = {"launch": {"title": "Launch window", "start": "2026-02-01", "end": "2026-03-01"}}
+    actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "observed",
+              "body": {"asOf": "2026-02-20", "observations": []}}
+
+    full_render = _render(_sub(tmp_path, "arrays-full"), full, source=source, actual=actual)
+    thin_render = _render(_sub(tmp_path, "arrays-thin"), thin, source=source, actual=actual)
+
+    assert full_render.artifact.content == thin_render.artifact.content
+    assert full_render.surface == thin_render.surface
+    assert full_render.scene.surfaces == thin_render.scene.surfaces
+    assert full_render.scene.diagnostics == thin_render.scene.diagnostics
+
+
+def test_thin_direct_visual_defaults_render_the_same_actual_icon(tmp_path):
+    full = sr.bundle("executive-light")
+    full["view"]["body"]["visuals"] = [{
+        "target": {"kind": "title"}, "ref": "material:flag-outline-rounded", "side": "leading", "decorative": True,
+    }]
+    thin = deepcopy(full)
+    thin["view"]["body"]["visuals"] = [{"target": {"kind": "title"}}]
+    thin["layout"]["viewDefaults"] = {"visualPresentation": {
+        "title": {"ref": "material:flag-outline-rounded", "side": "leading", "decorative": True},
+    }}
+    catalog = Path(__file__).resolve().parents[2] / "src/chrona/resources/icons/material-symbols-outline-rounded-v2026-09-22.yaml"
+    full_render = sr.render(_sub(tmp_path, "visual-full"), _source(), presentation=full, icon_catalogs=(catalog,),
+                            visual_profile="chrona-output/visual/v0.7-svg")
+    thin_render = sr.render(_sub(tmp_path, "visual-thin"), _source(), presentation=thin, icon_catalogs=(catalog,),
+                            visual_profile="chrona-output/visual/v0.7-svg")
+    icons = [item for item in full_render.surface.primitives if item.icon_kind is not None]
+    assert icons and all(item.scene_id.encode() in full_render.artifact.content for item in icons)
+    assert full_render.artifact.content == thin_render.artifact.content
+    assert full_render.surface == thin_render.surface
+    assert full_render.scene.surfaces == thin_render.scene.surfaces
+    assert full_render.scene.diagnostics == thin_render.scene.diagnostics
 
 
 def test_all_unknown_styles_are_reported_in_column_order_without_exposing_a_view_contract():

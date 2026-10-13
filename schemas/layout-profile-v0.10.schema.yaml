@@ -20,6 +20,9 @@ properties:
     type: object
     additionalProperties: false
     properties:
+      markerPresentation: {$ref: "urn:chrona:common-v0.1#/$defs/markerPresentation"}
+      periodLabelPresentation: {$ref: "urn:chrona:common-v0.1#/$defs/periodLabelPresentation"}
+      visualPresentation: {$ref: "urn:chrona:common-v0.1#/$defs/visualPresentationByKind"}
       columnStyles:
         description: "Named project-independent column presentation fragments; explicit View properties win."
         type: object
