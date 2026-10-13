@@ -47,6 +47,16 @@ No additional programme gate replaces the original or mandatory hint criteria.
 
 ## Verification and architecture
 
+PR1453 head414e20a6: artifact11784319096 has101 managed paths, no retirements,
+92/92 public Scene/SVG bytes identical, only diagnostic inventory changed
+([audit](https://github.com/tya5/chrona/pull/1453#issuecomment-6136656126)).
+CI38335371719 passed conformance, MCP, newest-Python reproduction and pytest
+shards1/2. Shard3 failed one curated-warning sentence test (3703 passed,
+15 standard skips); derived-ready failed consequentially, not independently.
+The new warning's missing user-facing sentence is corrected in the existing
+use-case message owner with a finite-domain/no-continuous-impossibility test.
+Required current-head checks and exact-main release remain pending.
+
 Selected S/C implementation: `2cf36485` plus the independently moving endpoint
 join test correction. Focused routing/critical/hints/Scene/SVG suite138 PASS;
 final protected controls8 PASS and strengthened S controls6 PASS. Initial
