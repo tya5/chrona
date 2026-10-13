@@ -213,5 +213,19 @@ override, shared Stores, nested Theme bases, identity/path failures, string
 keys, complete ids/phrases, placeholders, CJK, ambiguous collisions and stable
 report ordering. Run the checker once over all examples as a batch. No examples
 edits or generated-report inventory expansion; the report is tool output.
-Publish this design first, then finalize file-level implementation gates before
-code. Keep PR1457 unchanged while its CI and public snapshot are reviewed.
+Design/specification bb35da87 is published on `wip/issue-1341-purity`.
+Final implementation gates: expose `materializer_store_roots` and
+`read_materializer_reference` by extracting the existing materializer helpers,
+including existing identity admission and diagnostic messages; update existing
+callers/tests rather than retaining a duplicate reader. The tool has explicit
+`--project`/`--resource` mode and manifest batch mode, deterministic JSON
+findings and strict/report-only exit behavior. Traverse only context-design
+references and their derived Theme bases; fail missing/unsupported references
+instead of skipping them. Do not stage fonts, copy snapshots or render slides.
+Gate fixtures through the existing pytest matrix; register one report-only
+batch audit in conformance after checking current corpus results. Focused tests
+cover materializer diagnostic parity, shared-Store lookup, discovery, matching
+and exit behavior; CI supplies full three-OS/conformance/public evidence.
+One implementation PR after1457 lands, no examples or generated-report edits.
+Publish these gates before product changes. Keep PR1457 unchanged while its CI
+and public snapshot are reviewed.
