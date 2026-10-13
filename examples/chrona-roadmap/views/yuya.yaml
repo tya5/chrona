@@ -1,0 +1,67 @@
+version: chrona/view/v0.28
+kind: view
+id: chrona-roadmap-yuya
+# Thin connector: the roadmap's ids, bindings and wording only. The design is the packaged yuya
+# Layout profile's `viewDefaults`. The heading names this project's year and purpose, and the vertical
+# group tag reads the milestone's short `code` field, so both stay here.
+body:
+  surface: table-timeline
+  heading:
+    title: 計画表　{project}
+    subtitle: ROAD TO A RELEASE CANDIDATE · 二〇二六年 · plan as of {asOf}
+    dateForm: day-month-year
+  window:
+    mode: explicit
+    start: '2026-10-01'
+    end: '2026-12-16'
+  periods:
+  - id: rc-window
+    label:
+      text: RC window
+  comparison:
+    baseline: snapshot
+    actual: required
+    observationSelection: latest
+  annotationBindings:
+  - {kind: note, temporalKind: span, purpose: note, facet: planned, endpoint: end}
+  - {kind: risk, temporalKind: span, purpose: note, facet: planned, endpoint: end}
+  markers:
+  - source: actual
+  hierarchyColumn: Work item
+  tableColumns:
+  - id: Work item
+    source: title
+  - id: Lane
+    source:
+      field: lane
+  - id: Δ finish
+    source:
+      facet: finishDelta
+  selection:
+    include:
+      types:
+      - span
+      - point
+    exclude:
+      objectTypes:
+      - group
+  grouping:
+    by: field
+    field: owner
+    missing: ungrouped
+    order:
+    - m0
+    - m1
+    - m2
+    - m3
+    - m4
+    - rc
+    header:
+      text: '{ordinal}・{secondary}'
+      ordinal: kanji-formal
+      secondary:
+        entityField: code
+  ordering:
+    by: source
+    direction: ascending
+    tieBreak: id

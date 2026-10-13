@@ -8,6 +8,10 @@ version: chrona/public-slide-ledger/v0.1
 slides:
   aster-ssd/overview: {axisLabels: 11}
   chrona-roadmap/roadmap: {axisLabels: 14, chips: ['chip:as-of-label']}
+  chrona-roadmap/roadmap-marquee: {axisLabels: 4, chips: ['chip:as-of-label']}
+  chrona-roadmap/roadmap-sunday: {axisLabels: 4, chips: ['chip:as-of-label']}
+  chrona-roadmap/roadmap-titlecard: {axisLabels: 7, chips: ['chip:as-of-label']}
+  chrona-roadmap/roadmap-yuya: {axisLabels: 4, chips: ['chip:as-of-label']}
   controller-z-ja/axis-secondary: {axisLabels: 12}
   controller-z-ja/executive: {axisLabels: 7}
   controller-z/annotation-kinds: {axisLabels: 7, dvtHosted: true}

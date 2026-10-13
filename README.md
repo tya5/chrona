@@ -40,6 +40,16 @@ an as-of marker and a notes rail](examples/chrona-roadmap/generated/roadmap.svg)
 roadmap, in the target B design (View, Theme and Layout YAML only). Each update to the plan or
 to the issue dates re-renders it.</sup>
 
+<p>
+<img width="49%" alt="The chrona roadmap in the Yuya design" src="examples/chrona-roadmap/generated/roadmap-yuya.svg">
+<img width="49%" alt="The chrona roadmap in the Title Card design" src="examples/chrona-roadmap/generated/roadmap-titlecard.svg">
+<img width="49%" alt="The chrona roadmap in the Marquee design" src="examples/chrona-roadmap/generated/roadmap-marquee.svg">
+<img width="49%" alt="The chrona roadmap in the Sunday Strip design" src="examples/chrona-roadmap/generated/roadmap-sunday.svg">
+</p>
+
+<sup>The same roadmap data in four designs (Yuya, Title Card, Marquee, Sunday Strip), no design
+copied: each slide is a thin View and Context that reference the packaged designs.</sup>
+
 ## What is usable today
 
 - deterministic Date / CalendarPeriod / WorkPeriod arithmetic;

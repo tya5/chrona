@@ -8,12 +8,12 @@ calendars:
     working_days: [mon, tue, wed, thu, fri]
     exceptions: []
 entities:
-  m0: {type: team, title: 'M0 · Reach the design targets'}
-  m1: {type: team, title: 'M1 · Basic finish, checked by machine'}
-  m2: {type: team, title: 'M2 · Works at real scale'}
-  m3: {type: team, title: 'M3 · First-run experience'}
-  m4: {type: team, title: 'M4 · More authors'}
-  rc: {type: team, title: 'RC · Release candidate'}
+  m0: {type: team, title: 'M0 · Reach the design targets', fields: {code: M0}}
+  m1: {type: team, title: 'M1 · Basic finish, checked by machine', fields: {code: M1}}
+  m2: {type: team, title: 'M2 · Works at real scale', fields: {code: M2}}
+  m3: {type: team, title: 'M3 · First-run experience', fields: {code: M3}}
+  m4: {type: team, title: 'M4 · More authors', fields: {code: M4}}
+  rc: {type: team, title: 'RC · Release candidate', fields: {code: RC}}
 objects:
   target-b:
     type: task
@@ -145,6 +145,11 @@ objects:
     title: 'Release candidate'
     fields: {owner: rc, lane: owner}
     schedule: {mode: fixed-point, at: '2026-12-14'}
+periods:
+  rc-window:
+    title: Release-candidate window
+    start: {object: m4-gate, endpoint: at}
+    end: '2026-12-15'
 relations:
   - {id: sunday-m0, type: dependency, from: {object: sunday, endpoint: end}, to: {object: m0-gate, endpoint: at}, lag: 0d}
   - {id: flow-legend, type: dependency, from: {object: flow-bugs, endpoint: end}, to: {object: legend-warning, endpoint: start}, lag: 0d}
