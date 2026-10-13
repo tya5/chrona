@@ -54,8 +54,10 @@ Developer mechanism gates are below; they do not replace the literal rows.
   [38350852518](https://github.com/tya5/chrona/actions/runs/38350852518) failed only
   Windows pytest's native-path expectation in the purity discovery test
   (11253 passed,52 skipped). The report deliberately uses POSIX paths. Its test
-  expectation is corrected without product changes in the next publication;
-  corrected exact-main three-OS acceptance remains pending.
+  expectation is corrected without product changes in PR1460. Corrected
+  containing-review exact-main85e66b4b [release38354040480](https://github.com/tya5/chrona/actions/runs/38354040480)
+  succeeds on all3OS full pytest/conformance/wheel-smoke, MCP and newest-Python
+  public reproduction. Literal reviewer-adoption rows remain unproven.
   The release containing this review must also succeed before closure.
 
 ## Architecture conclusion
