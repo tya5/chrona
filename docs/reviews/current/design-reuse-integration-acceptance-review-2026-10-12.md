@@ -5,9 +5,9 @@
 Published implementation: PR1422 (shared designs/font sets), PR1404 (legend),
 PR1405 (preset gallery sets). Closure review published in PR1471 on
 `74f91648cc2e5ed5f1323350b71282878f0ff5fa`; its exact-main release38478676595
-is running. Do not close1392/1403 until that release succeeds. The1342 evidence
+completed successfully;1392/1403 are closed. The1342 evidence
 below is new in the closure follow-up and requires its own containing-review release;
-1345 additionally requires the explicit provenance disposition.
+1345 has an explicit owner-approved provenance disposition.
 The later [1341/1344 release review](../../archive/reviews/issue-1341-design-reuse-acceptance-review-2026-10-13.md)
 is authoritative for those closed issues; previous integration findings are in Git.
 Closure-focused batch:33 tests pass (20.80 s): shared design ingress, legend
@@ -34,7 +34,7 @@ Architecture: ingress resolves immutable Store/revision identities and pins befo
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | --- | --- | --- | --- | --- |
-| 1 | The existing Contexts can switch to the reference with byte-identical Scenes. | not met | [Actual materializer tests](../../../tests/integration/test_font_set_materialize.py) cover basic and JP Contexts, expanded metric identities, unchanged authored staging and SVG, and every Scene field except exactly the true Context hash. Closure copying now uses the existing pure font-set expansion; both cases reproduced `KeyError: assets` before the correction and pass after it. Full Scene bytes still differ truthfully; [owner clarification](https://github.com/tya5/chrona/issues/1345#issuecomment-6156429891) remains required. | Owner provenance decision |
+| 1 | The existing Contexts can switch to the reference with byte-identical Scenes. | met | [Owner interpretation](https://github.com/tya5/chrona/issues/1345#issuecomment-6157049134): identical SVG, completed geometry, paint and diagnostics; only the true Render Context contentIdentity may change. [Actual materializer tests](../../../tests/integration/test_font_set_materialize.py) prove exactly that for basic and JP Contexts, with original authored staging and expanded metric identities. No production identity masking. | — |
 
 ### Issue #1392
 
@@ -61,10 +61,13 @@ Architecture: ingress resolves immutable Store/revision identities and pins befo
 ## Closure publication gate
 
 1392/1403 and the owner-signed-off1269 were reviewed in PR1471. New1342 evidence
-is ready for its follow-up release;1345 retains its not-met row above.
+passed [exact-main release38481430846](https://github.com/tya5/chrona/actions/runs/38481430846)
+on08c6c9dd (three OSes, MCP floor and newest-Python reproduction);1342 is closed.
+1345 now has the owner-approved met row above; publication of that updated
+disposition and its containing-review release remain required before closure.
 PR1471 CI38477609689 succeeded; artifact11857005167 has101 unchanged
 before/after paths and no additions/retirements. Review and reviewer-sign-off source
-are published; the containing-review release is still required. No authored examples
+are published; [containing-review release38478676595](https://github.com/tya5/chrona/actions/runs/38478676595) succeeded. No authored examples
 changed. Layout geometry and Scene/adapter ownership remain unchanged.
 
 Font-set ingress follow-up: [pre-code correction](https://github.com/tya5/chrona/issues/1345#issuecomment-6156512752)
