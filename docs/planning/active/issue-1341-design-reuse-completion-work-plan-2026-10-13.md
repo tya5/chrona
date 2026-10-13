@@ -110,7 +110,7 @@ admission evidence is retired. PR1456 is merged at e94ab055; exact-head
 38343692342 passed every check. Artifact11787772456 independently confirms
 92/92 public Scene/SVG identical,0 retirements,2 expected reports only.
 Containing-main sync38344567701 succeeded at READY3aafce89;
-three-OS release38344844826 is live.
+three-OS release38344844826 succeeded.
 Batch public materializers/Scene/SVG via CI; no examples edits. Profile bindings,
 purity/adoption and every unresolved literal row remain open.
 
@@ -171,6 +171,10 @@ legend declarations, unbound omission, unavailable versus missing objects,
 and original View error pointers. Combined focused coverage passed447 tests;
 the17 figure-contract tests also pass with their shared-fragment vocabulary
 assertion, retaining exact schema/Core set equality. Inventory, annotation,
-reference and schema-equivalence gates pass. CI snapshot/release evidence is
-required before accepting this slice. Purity
+reference and schema-equivalence gates pass. PR1457 snapshot11789815581
+independently confirms92/92 Scene/SVG unchanged,0 retirements and only2 reports.
+CI38346616835 passed every check except shard3's one stale inline-identity
+assertion (and consequential derived-ready); its shared-target/nonempty-string
+guard is corrected, with218 schema-owner tests passing. Current-head CI and
+containing-main release remain required before accepting this slice. Purity
 checker, actual corpus adoption and whole-issue acceptance remain unfinished.
