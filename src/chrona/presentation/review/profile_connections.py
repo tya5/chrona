@@ -13,11 +13,12 @@ from chrona.presentation.contracts.resources import (
 class ProfileConnectionError(ValueError):
     """A cross-resource profile binding or wording failure with its View pointer."""
 
-    def __init__(self, code: str, detail: str, source_ref: str) -> None:
+    def __init__(self, code: str, detail: str, source_ref: str, *, component: str = "view") -> None:
         super().__init__(code)
         self.code = code
         self.detail = detail
         self.source_ref = source_ref
+        self.component = component
 
 
 @dataclass(frozen=True)
@@ -106,7 +107,8 @@ def resolve_profile_connections(view: ViewInput, summary: SummaryProfileInput | 
                 if metric.scope == "subtree" and binding.object_id is None:
                     raise ProfileConnectionError("E_PRESENTATION_SUMMARY_SOURCE",
                                                  "subtree scope requires a planned-object slot binding",
-                                                 f"/body/panels/{panel_index}/metrics/{metric_index}/source")
+                                                 f"/body/panels/{panel_index}/metrics/{metric_index}/source",
+                                                 component="presentation")
                 source = freeze({"object": binding.object_id, "facet": "planned"}
                                 if binding.object_id is not None else {"figure": slot})
                 metric = replace(metric, source=source)

@@ -693,7 +693,9 @@ def _missing_actual_display(item: Any, as_of: date | None) -> str:
 
 def normalize_summary_content(summary: SummaryProfileInput | None, projection: ReviewProjection,
                               actual_set: Mapping[str, Any] | None,
-                              project: Mapping[str, Any] | None = None) -> SummaryContent:
+                              project: Mapping[str, Any] | None = None, *,
+                              omitted_metrics: frozenset[tuple[int, int]] = frozenset(),
+                              summary_wording: Mapping[str, str] | None = None) -> SummaryContent:
     """Resolve summary-profile facts once, before source measurement and Layout."""
     points = sorted(item.planned["at"] for item in projection.items
                     if item.source_type == "point" and isinstance(item.planned.get("at"), date))
@@ -709,6 +711,8 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
     panels: list[SummaryPanel] = []
     grouped_ids = bool(summary and any(panel.arrangement == "inline" for panel in summary.panels))
     for panel_index, panel in enumerate(summary.panels if summary is not None else ()):
+        if all((panel_index, index) in omitted_metrics for index in range(len(panel.metrics))):
+            continue
         inline = panel.arrangement == "inline"
         caption_role = "summary-caption" if inline else "summary"
         caption_semantic = "summaryCaption" if inline else ""
@@ -716,6 +720,8 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
         title_semantic = caption_semantic or ("summaryHeader" if grouped_ids else "")
         runs = [SummaryTextRun(title_id, panel.id, panel.title or panel.id, caption_role, title_semantic)]
         for metric_index, definition in enumerate(panel.metrics):
+            if (panel_index, metric_index) in omitted_metrics:
+                continue
             metric_path = f"summary:/panels/{panel_index}/metrics/{metric_index}"
             if not isinstance(definition, tuple):
                 metric_id, source, formatter = definition.id, definition.source, definition.format
@@ -751,7 +757,7 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
                     else f"{raw:+d}d" if formatter == "signedDays" and isinstance(raw, int)
                     else str(raw)
                 )
-                label = definition.label
+                label = (summary_wording or {}).get(f"{panel.id}.{metric_id}", definition.label)
                 if panel.presentation == "figures":
                     if inline:
                         runs.extend((
@@ -778,9 +784,10 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
                                                caption_semantic or ("summaryMetric" if grouped_ids else "")))
             else:
                 metric_id, literal = definition
+                label = (summary_wording or {}).get(f"{panel.id}.{metric_id}", metric_id)
                 runs.append(SummaryTextRun(f"{metric_path}/text" if grouped_ids else
                                            f"summary:{panel.id}:{metric_id}", panel.id,
-                                           f"{metric_id}: {literal}", caption_role,
+                                           f"{label}: {literal}", caption_role,
                                            caption_semantic or ("summaryMetric" if grouped_ids else "")))
         panels.append(SummaryPanel(panel.id, tuple(runs), panel.arrangement))
     return SummaryContent(tuple(panels))
