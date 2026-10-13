@@ -63,13 +63,32 @@ def test_header_seed_closes_exact_rotated_header_extent_and_hierarchy_indent():
         group_tag_inline_size=16)
     assert dict(seed.cell_indents) == {"row-1": 38.0, "item-1": 38.0}
     assert seed.table_bounds[:2] == (16.0, 0.0)
-    assert seed.header_end_block == max(
+    assert seed.header_block_extent == max(
         item.bounds.block + item.bounds.block_size for item in seed.header_text)
     rotated = next(item for item in seed.header_text if item.placement_id == "column:owner")
     horizontal_extent = next(item for item in seed.header_text if item.placement_id == "column:work")
-    assert seed.header_end_block == max(
+    assert seed.header_block_extent == max(
         rotated.bounds.block + rotated.bounds.block_size,
         horizontal_extent.bounds.block + horizontal_extent.bounds.block_size)
+
+
+def test_header_extent_is_independent_of_large_decimal_block_origin():
+    request = _request_and_content()
+    metrics = {"table.column.gutter.inlineSize": Decimal(8), "table.indent.inlineSize": Decimal(12)}
+    origin = Decimal(10) ** 20 / 3
+    seeds = []
+    for block in (Decimal(0), origin):
+        table = SlotPlacement("table", "table", Rect(Decimal(0), block, Decimal(360), Decimal(200)),
+                              overflow="ellipsize-with-source")
+        seeds.append(surface_table.prepare_table_header_seed(
+            request=request, table=table, review_rows=_row_intents(),
+            metric_values=metrics, group_tag_inline_size=16))
+    ordinary, translated = seeds
+    assert ordinary.header_block_extent == translated.header_block_extent == Decimal(84)
+    for local, placed in zip(ordinary.header_text, translated.header_text, strict=True):
+        assert placed.bounds == replace(local.bounds, block=origin + local.bounds.block)
+        assert placed.content == local.content
+        assert placed.font_asset_identity == local.font_asset_identity
 
 
 def test_compose_table_reuses_a_prepared_content_slot_seed_and_places_cells_on_base_rows(monkeypatch):

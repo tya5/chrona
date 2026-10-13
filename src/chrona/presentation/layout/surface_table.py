@@ -40,7 +40,7 @@ class SurfaceTableHeaderSeed:
     columns: tuple[ColumnPlacement, ...]
     header_text: tuple[TextPlacement, ...]
     cell_indents: tuple[tuple[str, float], ...]
-    header_end_block: Decimal | None
+    header_block_extent: Decimal | None
     bounded_table: BoundedTableMeasurement | None = None
 
 
@@ -138,11 +138,11 @@ def prepare_table_header_seed(*, request: SurfaceLayoutRequest, table: SlotPlace
             text_transform=header_treatment.transform,
             numeric_spacing=header_treatment.numeric_spacing)
         if column.header_orientation == "rotate-cw":
-            baseline = table_bounds[1]
+            baseline = 0.0
         elif column.header_orientation == "rotate-ccw":
-            baseline = table_bounds[1] + header_width
+            baseline = header_width
         else:
-            baseline = table_bounds[1] + header_size
+            baseline = header_size
         header_text.append(place_text(
             placement_id=f"column:{column_id}", source_ref="view:tableColumns", content=resolved,
             inline=_aligned_inline(resolved, column_id, positions[column_id][0], available,
@@ -162,10 +162,16 @@ def prepare_table_header_seed(*, request: SurfaceLayoutRequest, table: SlotPlace
                              Decimal(str(item.inline_size)), Decimal(str(table_bounds[3]))))
         for item, column in zip(layout_columns, columns_intent, strict=True)
     )
-    end = max((item.bounds.block + item.bounds.block_size for item in header_text), default=None)
+    # Complete the measured shape before adding its Decimal host origin. An
+    # absolute float baseline loses the small header extent at large origins.
+    extent = max((item.bounds.block + item.bounds.block_size for item in header_text), default=None)
+    header_text = [replace(item,
+        bounds=replace(item.bounds, block=table.bounds.block + item.bounds.block),
+        baseline=(item.baseline[0], float(table.bounds.block) + item.baseline[1])
+        if item.baseline is not None else None) for item in header_text]
     return SurfaceTableHeaderSeed(table, group_tag_inline_size, table_bounds,
                                   tuple(layout_columns), column_placements,
-                                  tuple(header_text), tuple(cell_indents.items()), end, bounded)
+                                  tuple(header_text), tuple(cell_indents.items()), extent, bounded)
 
 
 def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | None = None) -> SurfaceTablePlacements:

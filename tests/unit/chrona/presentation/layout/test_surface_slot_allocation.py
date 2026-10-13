@@ -356,7 +356,8 @@ def test_pre_row_host_demand_counts_the_native_prefix_once_from_full_timeline_or
     prefix = prepared.row_viewport.block - full.block
     assert prepared.headings.text
     assert prepared.table.header_text
-    assert prepared.row_viewport.block >= prepared.table.header_end_block
+    assert prepared.row_viewport.block >= (
+        prepared.table.table_slot.bounds.block + prepared.table.header_block_extent)
     assert prepared.required_timeline_block(foot_reserve=Decimal(20)) == (
         max(Decimal(0), prefix) + prepared.inline.natural_block_requirement + 20)
     if "timeline" in headed:

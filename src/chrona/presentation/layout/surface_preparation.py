@@ -161,8 +161,8 @@ def _complete_surface_natural_geometry(prefix: _SurfaceNaturalPrefix) -> Surface
     row_start = timeline_content.bounds.block
     if any(headings.reserved(source) for source in ("table", "timeline", "timeline-axis")):
         native_ends = [row_start]
-        if table_seed.header_end_block is not None:
-            native_ends.append(table_seed.header_end_block)
+        if table_seed.header_block_extent is not None:
+            native_ends.append(table_content.bounds.block + table_seed.header_block_extent)
         if axis_summary.max_rect_block_end is not None:
             native_ends.append(axis_summary.max_rect_block_end)
         row_start = max(native_ends)
