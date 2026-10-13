@@ -22,8 +22,8 @@ allOf:
             required: [scale, target, source, domain]
             additionalProperties: false
             properties:
-              scale: {description: "Named colour scale to apply.", type: string, minLength: 1}
-              target: {description: "Only planned marks are colour-encoded.", const: planned}
+              scale: {$ref: "urn:chrona:common-v0.1#/$defs/colorEncodingPresentation/properties/scale"}
+              target: {$ref: "urn:chrona:common-v0.1#/$defs/colorEncodingPresentation/properties/target"}
               source:
                 description: "Project field supplying the encoded value."
                 type: object
@@ -82,43 +82,15 @@ allOf:
                     additionalProperties: false
                     properties: {by: {description: "Order groups by the earliest planned start among their selected items, then by group value.", const: earliestPlannedStart}}
               missing: {description: "Label for missing field values.", type: string, minLength: 1}
-              presentation: {description: "Visual treatment for groups.", enum: [band, header]}
+              presentation: {$ref: "urn:chrona:common-v0.1#/$defs/groupPresentation"}
               depth:
                 description: "Maximum relative hierarchy depth, or all selected descendants."
                 anyOf:
                   - {type: integer, minimum: 0}
                   - {enum: [all]}
               rollup: {description: "Hierarchy rollup presentation.", enum: [bar, header, none]}
-              header:
-                description: "Group-header text template; usable only with presentation header and grouping by field or object type."
-                type: object
-                required: [text]
-                additionalProperties: false
-                properties:
-                  text: {description: "Literal text with the closed placeholders {ordinal}, {title}, {secondary} and {figure:<id>} (a derived figure the View declares); {{ and }} are literal braces. A placeholder may name a Theme text role, {name|role} (role: a letter then letters, digits, underscore or hyphen): its text is one run in that role's typography and ink on the shared baseline, and unmarked text takes the groupHeader role.", examples: ["{ordinal|group-ordinal} {title}"], type: string, minLength: 1}
-                  ordinal: {description: "Form of {ordinal}, the group's 1-based position in display order; arabic when omitted.", enum: [arabic, zero-padded, roman, kanji, kanji-formal]}
-                  first: {description: "Template for the first group in display order, with the same placeholders.", type: string, minLength: 1}
-                  secondary:
-                    description: "Source of {secondary}: a non-empty string in the group entity's fields."
-                    type: object
-                    required: [entityField]
-                    additionalProperties: false
-                    properties: {entityField: {description: "Entity field name.", type: string, minLength: 1}}
-              tint:
-                description: "Per-group band tint: a Theme colour scale over the grouping field's values; usable only when grouping by field."
-                type: object
-                required: [scale]
-                additionalProperties: false
-                properties:
-                  scale: {description: "Named Theme colour scale applied to each group's band and header band.", type: string, minLength: 1}
-                  domain:
-                    description: "Closed set of group values admitted by the scale, or firstAppearance (the default) to derive it from the groups in display order."
-                    oneOf:
-                      - type: array
-                        minItems: 1
-                        uniqueItems: true
-                        items: {description: "One admitted group value.", type: string, minLength: 1}
-                      - {description: "Distinct group values in display order.", const: firstAppearance}
+              header: {$ref: "urn:chrona:common-v0.1#/$defs/groupHeaderPresentation"}
+              tint: {$ref: "urn:chrona:common-v0.1#/$defs/groupTintPresentation"}
             allOf:
               - description: "Field grouping requires its field name and missing-value label."
                 examples: [{by: field, field: status, missing: Unset}]
@@ -350,18 +322,7 @@ allOf:
           figureFormats:
             description: "Optional count figure text formats; targets must name declared count figures. Raw Summary values are unchanged."
             $ref: "urn:chrona:common-v0.1#/$defs/figureFormats"
-          heading:
-            description: "The optional kicker above the title, the title, and optional subtitle lines of a table-timeline surface (a dependency network ignores it), each a template of literal text and the placeholders {project} (the Project title), {asOf} (the Actual Set's as-of date in dateForm) , {calendar} (the Project's default calendar title, else its id), and {figure:id} (a declared global figure, bound before Layout measurement); {{ and }} are literal braces. Absent, the title is the Project title and there is no kicker or subtitle."
-            examples: [{kicker: "Episode {asOf}", title: "{project}", subtitle: "Every work package by owning team, as of {asOf}, calendar {calendar}"}]
-            type: object
-            minProperties: 1
-            additionalProperties: false
-            properties:
-              kicker: {description: "The optional template drawn above the title in the Theme's `kicker` typography role.", type: string, minLength: 1, examples: ["第弐面"]}
-              title: {description: "The title template; a Project without a title shows `Chrona`.", type: string, minLength: 1, examples: ["{project} programme board"]}
-              subtitle: {description: "The subtitle template, drawn under the title in the Theme's `subtitle` typography role.", type: string, minLength: 1, examples: ["as of {asOf}"]}
-              dateForm: {description: "The form of {asOf}; absent is the localized date.", enum: [localized-date, day-month, day-month-year]}
-              text: {$ref: "#/$defs/presentationIntent/properties/text"}
+          heading: {$ref: "urn:chrona:common-v0.1#/$defs/viewHeading"}
           slotHeadingText:
             description: "Optional literal caption replacements keyed by resolved Layout slot node ID. Each target must already declare a heading; only its text is replaced."
             type: object
@@ -423,9 +384,8 @@ allOf:
                     properties: {format: {const: dateRange}}
               properties:
                 id: {type: string, minLength: 1}
-                endDisplay:
-                  description: "Display-only dateRange endpoint: inclusive shows end minus one calendar day for positive spans; absent/exclusive preserves the stored exclusive end."
-                  enum: [inclusive, exclusive]
+                endDisplay: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/endDisplay"}
+                style: {description: "Named Layout column style resolved at ingress; explicit presentation fields win.", type: string, minLength: 1}
                 source:
                   oneOf:
                     - {enum: [id, title, objectType, entity, rowIndex, wbsCode, path, totalFloat]}
@@ -445,83 +405,16 @@ allOf:
                       required: [scenario]
                       additionalProperties: false
                       properties: {scenario: {enum: [id, title]}}
-                format:
-                  description: "Closed scalar formatter or an explicit boolean presence presentation."
-                  oneOf:
-                    - {$ref: "urn:chrona:vocabulary-v0.1#/$defs/tableColumnScalarFormat"}
-                    - {description: "A signed whole number with no unit (`+10`, `+0`, `-3`; #588). The shared vocabulary part is frozen, so this one value is declared here until the part has a new version.", const: signedNumber}
-                    - type: object
-                      required: [kind, whenTrue, whenFalse]
-                      additionalProperties: false
-                      properties:
-                        kind: {const: presence}
-                        whenTrue: {description: "Text rendered for boolean true; an empty string is intentional.", type: string}
-                        whenFalse: {description: "Text rendered for boolean false; an empty string is intentional.", type: string}
-                missing:
-                  description: "The text of an absent value: `blank`, `em-dash`, `unknown`, `in-progress`, or an author-chosen literal `{text}` shown exactly as written (#1288)."
-                  oneOf:
-                    - {enum: [blank, em-dash, unknown, in-progress]}
-                    - {$ref: "#/$defs/missingText"}
-                missingBy:
-                  description: "The text of an absent value by the item's observation state (#991), each taking the values of `missing` that need no actual source; a state not named keeps `missing`. `inProgress` is a span with an actual start and no finish, `dueUnobserved` a due item with no observation, `notYetDue` an item still before its due date, `unavailable` one with no as-of date or due date."
-                  examples: [{inProgress: em-dash, dueUnobserved: blank, notYetDue: blank}]
-                  type: object
-                  minProperties: 1
-                  additionalProperties: false
-                  properties:
-                    inProgress:
-                      oneOf:
-                        - {enum: [blank, em-dash, unknown]}
-                        - {$ref: "#/$defs/missingText"}
-                    dueUnobserved:
-                      oneOf:
-                        - {enum: [blank, em-dash, unknown]}
-                        - {$ref: "#/$defs/missingText"}
-                    notYetDue:
-                      oneOf:
-                        - {enum: [blank, em-dash, unknown]}
-                        - {$ref: "#/$defs/missingText"}
-                    unavailable:
-                      oneOf:
-                        - {enum: [blank, em-dash, unknown]}
-                        - {$ref: "#/$defs/missingText"}
-                zero:
-                  description: "How a zero value of a `signedNumber` or `signedDays` column reads: `signed` (the default) keeps the sign (`+0`, `+0d`), `plain` draws it without one (`0`, `0d`); non-zero values keep their sign either way (#1289). An `onTime` affix still wraps the text."
-                  enum: [signed, plain]
-                text: {$ref: "#/$defs/presentationIntent/properties/text"}
-                affixes:
-                  description: "Per-state text affixes (#588) wrapped around the formatted cell text: slip, onTime and ahead for a signed format (a value above, at and below zero), missing for an absent value. Absent, the cell is the formatted text."
-                  examples: [{slip: {suffix: "!"}, missing: {suffix: "?"}}]
-                  type: object
-                  minProperties: 1
-                  additionalProperties: false
-                  properties:
-                    slip: {$ref: "#/$defs/columnAffix"}
-                    onTime: {$ref: "#/$defs/columnAffix"}
-                    ahead: {$ref: "#/$defs/columnAffix"}
-                    missing: {$ref: "#/$defs/columnAffix"}
-                textRole: {description: "Named Theme text role in which this column's cells are measured and set (#1062): its size, weight, letter spacing and transform, and, when the Theme binds `<role>.fill`, the colour of a plain cell. A state-coloured cell (variance, missing actual) keeps its own ink. Absent, the cells keep `text` (`numeric` for a signed format). A role the Theme does not declare is `E_THEME_ROLE_REQUIRED`.", examples: [table-cell-secondary], type: string, minLength: 1}
-                align: {description: "Inline alignment inside the measured column allocation.", enum: [start, center, end]}
-                headerOrientation: {description: "Finite orientation of this column header; table cells remain horizontal.", enum: [horizontal, rotate-cw, rotate-ccw]}
-                width:
-                  description: "Table subset of the Layout logical size grammar for this measured column."
-                  oneOf:
-                    - {enum: [content, fill]}
-                    - {$ref: "urn:chrona:common-v0.1#/$defs/fractionalTrack"}
-                    - type: object
-                      required: [minmax]
-                      additionalProperties: false
-                      properties:
-                        minmax:
-                          type: object
-                          required: [min, max]
-                          additionalProperties: false
-                          properties:
-                            min: {enum: [content]}
-                            max:
-                              oneOf:
-                                - {enum: [content, fill]}
-                                - {$ref: "urn:chrona:common-v0.1#/$defs/fractionalTrack"}
+                format: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/format"}
+                missing: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/missing"}
+                missingBy: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/missingBy"}
+                zero: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/zero"}
+                text: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/text"}
+                affixes: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/affixes"}
+                textRole: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/textRole"}
+                align: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/align"}
+                headerOrientation: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/headerOrientation"}
+                width: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/width"}
           annotationBindings:
             description: "Ordered finite Project-kind/temporal-shape bindings to ordinary annotation intent (#1343)."
             examples: [[{kind: note, temporalKind: point, purpose: note, facet: planned, endpoint: at}]]
@@ -771,23 +664,8 @@ $defs:
       scale: {description: "Exact Theme colour-scale identifier.", type: string, minLength: 1}
       key: {description: "Derive paint from this tier's alternating parity or interval ordinal.", enum: [alternating, interval]}
       containingTier: {description: "Optional index of the declared coarser fixed-unit band tier whose natural interval contains this one.", type: integer, minimum: 0}
-  missingText:
-    description: "An author-chosen literal for an absent table value: one to eight characters with no control character, drawn exactly as written in the column's text role (#1288). `affixes.missing` still wraps whatever the absent text is, in every absent state."
-    examples: [{text: "?"}]
-    type: object
-    required: [text]
-    additionalProperties: false
-    properties:
-      text: {description: "The literal shown in place of the absent value; no control character.", examples: ["?"], type: string, minLength: 1, maxLength: 8, not: {pattern: "[\\u0000-\\u001f\\u007f]"}}
-  columnAffix:
-    description: "A literal prefix and suffix of one to eight characters wrapped around a table cell's text in one state (#588); at least one is declared."
-    examples: [{suffix: "!"}]
-    type: object
-    minProperties: 1
-    additionalProperties: false
-    properties:
-      prefix: {description: "Literal text before the cell text.", type: string, minLength: 1, maxLength: 8}
-      suffix: {description: "Literal text after the cell text.", type: string, minLength: 1, maxLength: 8}
+  missingText: {$ref: "urn:chrona:common-v0.1#/$defs/tableMissingText"}
+  columnAffix: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnAffix"}
   axisSecondaryLabel:
     description: "A second form of the same axis interval, drawn smaller in the same cell as the tier's main label and fitted by Layout; omitted with a record when it does not fit."
     examples: [{form: short-month, nameTable: en-US, typographyRole: axisSecondary, placement: stacked}]

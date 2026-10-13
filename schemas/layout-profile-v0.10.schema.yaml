@@ -16,10 +16,25 @@ properties:
     uniqueItems: true
     items: {$ref: "#/$defs/id"}
   viewDefaults:
-    description: "The View members this Layout profile supplies by default, as a View body fragment (#1341): the design half of a View. A member the View declares replaces the design's whole member; a member it omits takes the design's. Each member is validated as the View member it becomes, after the merge. `comparison`, `rows` and `window` merge one level down and only into a member the View declares."
+    description: "The View members this Layout profile supplies by default, as a View body fragment (#1341): the design half of a View. A member the View declares replaces the design's whole member; a member it omits takes the design's. Each member is validated as the View member it becomes, after the merge. Split connection/design members merge one level down, creating an omitted member from design fields only."
     type: object
     additionalProperties: false
     properties:
+      columnStyles:
+        description: "Named project-independent column presentation fragments; explicit View properties win."
+        type: object
+        propertyNames: {$ref: "urn:chrona:common-v0.1#/$defs/identifier"}
+        additionalProperties: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation"}
+      heading: {$ref: "urn:chrona:common-v0.1#/$defs/viewHeading"}
+      grouping:
+        description: "Group presentation defaults; keys and ordering remain in the View."
+        type: object
+        additionalProperties: false
+        properties:
+          presentation: {$ref: "urn:chrona:common-v0.1#/$defs/groupPresentation"}
+          header: {$ref: "urn:chrona:common-v0.1#/$defs/groupHeaderPresentation"}
+          tint: {$ref: "urn:chrona:common-v0.1#/$defs/groupTintPresentation"}
+      colorEncoding: {$ref: "urn:chrona:common-v0.1#/$defs/colorEncodingPresentation"}
       visibility: {description: "Default View `visibility` (labels, relations, annotations, links, fallback)."}
       axis: {description: "Default View `axis` (the tier set)."}
       deadlines: {description: "Default View `deadlines` (show)."}

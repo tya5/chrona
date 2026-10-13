@@ -308,6 +308,23 @@ PROBES: dict[str, tuple[list[Any], list[Any]]] = {
     "fractionalTrack": ([{"fr": 1}, {"fr": 0.5}, {"fr": 1000000}], [{}, {"fr": 0}, {"fr": -1}, {"fr": 1000001}, {"fr": "1"}, {"fr": 1, "x": 1}, "1fr", 1]),
     "license": ([{"spdx": "MIT", "notice": "n"}], [{}, {"spdx": "MIT"}, {"notice": "n"}, {"spdx": "", "notice": "n"}, {"spdx": "MIT", "notice": ""}, {"spdx": "MIT", "notice": "n", "x": 1}, "MIT"]),
     "literalCaption": (["Notes", "作業計画", "a" * 80], ["", "a" * 81, "bad\ncaption", "bad\x00caption", 5, None]),
+    "tableMissingText": ([{"text": "?"}, {"text": "No data"}], [{}, {"text": ""}, {"text": "a" * 9}, {"text": "bad\ntext"}, {"text": "?", "extra": True}, "?"]),
+    "tableColumnAffix": ([{"prefix": "("}, {"suffix": "!"}, {"prefix": "(", "suffix": ")"}], [{}, {"prefix": ""}, {"suffix": "a" * 9}, {"prefix": "(", "extra": True}, None]),
+    "tableTextWrap": ([{"wrap": "allow"}, {"wrap": "forbid"}], [{}, {"wrap": "sometimes"}, {"wrap": "allow", "extra": True}, "allow", None]),
+    "tableColumnPresentation": ([{}, {"format": "text"}, {"missing": {"text": "?"}}, {"width": {"fr": 1}}, {"affixes": {"slip": {"suffix": "!"}}}],
+                                [{"unknown": True}, {"format": "count"}, {"missing": {"text": "bad\n"}}, {"width": {"fr": 0}}, {"affixes": {"slip": {}}}, None]),
+    "viewHeading": ([{"title": "{project}"}, {"kicker": "A", "subtitle": "B"}, {"dateForm": "day-month"}],
+                    [{}, {"title": ""}, {"dateForm": "iso"}, {"extra": True}, None]),
+    "groupHeaderPresentation": ([{"text": "{ordinal} {title}"}, {"text": "{title}", "ordinal": "roman"},
+                                 {"text": "{title}", "secondary": {"entityField": "team"}}],
+                                [{}, {"text": ""}, {"text": "{title}", "ordinal": "digits"},
+                                 {"text": "{title}", "secondary": {}}, {"text": "{title}", "extra": True}, None]),
+    "groupTintPresentation": ([{"scale": "team", "domain": "firstAppearance"}, {"scale": "team", "domain": ["alpha", "beta"]}, {"scale": "team"}],
+                               [{}, {"scale": ""}, {"scale": "team", "domain": []}, {"scale": "team", "domain": ["alpha", "alpha"]},
+                                {"scale": "team", "domain": "other"}, {"scale": "team", "extra": True}, None]),
+    "groupPresentation": (["band", "header"], ["none", "alternate", "Band", None, 3]),
+    "colorEncodingPresentation": ([{}, {"scale": "delivery", "target": "planned"}, {"scale": "delivery"}, {"target": "planned"}],
+                                  [{"scale": ""}, {"target": "actual"}, {"unknown": True}, {"scale": "delivery", "target": "planned", "extra": True}, None]),
 }
 
 # Accepted today by the byte-exact `$` anchor, `\d`, or the shape-only date. Not endorsed: a later slice
@@ -379,7 +396,12 @@ ADOPTERS = frozenset({
 
 # Parts published after `common` that reference it: a part may name another part's definition, and each is
 # frozen with that reference in its digest. The parts published before it must still reference nothing.
-PARTS_REFERENCING_COMMON: dict[str, set[str]] = {"revision-store-resource-ref-v0.2.schema.yaml": {"storeAddress"}}
+# `fractionalTrack` is deliberately referenced by absolute self-URN from the new width branches so
+# dereferenced diagnostics retain the same named union branch as other registered-part references.
+PARTS_REFERENCING_COMMON: dict[str, set[str]] = {
+    "common-v0.1.schema.yaml": {"fractionalTrack"},
+    "revision-store-resource-ref-v0.2.schema.yaml": {"storeAddress"},
+}
 
 
 # Adopted sites that add a local rule beside the `$ref`: the registry stores `snapshots/<id>.yaml`, so the id is one segment.
@@ -389,6 +411,54 @@ SEGMENT_SITES = {("command-request-v0.3.schema.yaml", "/allOf/4/then/properties/
 def _adopted_sites(name: str) -> list[tuple[str, str]]:
     return [(_pointer(path), node["$ref"].partition("#/$defs/")[2]) for path, node in _walk(_schema(name))
             if isinstance(node, dict) and isinstance(node.get("$ref"), str) and node["$ref"].startswith(COMMON_ID + "#/$defs/")]
+
+
+def _common_target(pointer: str) -> Any:
+    node: Any = schema_document(COMMON)["$defs"]
+    for raw_token in pointer.split("/"):
+        if raw_token:
+            token = raw_token.replace("~1", "/").replace("~0", "~")
+            node = node[int(token)] if isinstance(node, list) else node[token]
+    return node
+
+
+def _site_probes(pointer: str) -> tuple[list[Any], list[Any]]:
+    parts = pointer.split("/")
+    definition = parts[0]
+    if len(parts) == 1:
+        return PROBES[definition]
+    # Nested adopted fragments are shared members of presentation contracts. Probe the exact member
+    # selected by the JSON Pointer so a site cannot silently drift from that member's contract.
+    assert _common_target(pointer) is not None
+    return SUBDEFINITION_PROBES[pointer]
+
+
+def _target_validator(pointer: str) -> Draft202012Validator:
+    return validator_for_schema({"$ref": f"{COMMON_ID}#/$defs/{pointer}"})
+
+
+SUBDEFINITION_PROBES: dict[str, tuple[list[Any], list[Any]]] = {
+    "tableColumnPresentation/properties/format": (["text", "signedNumber", "dateRange", {"kind": "presence", "whenTrue": "Y", "whenFalse": "N"}],
+                                                    ["count", "signedDay", {"kind": "presence", "whenTrue": "Y"}, {"kind": "other"}, None]),
+    "tableColumnPresentation/properties/missing": (["blank", "em-dash", "unknown", "in-progress", {"text": "?"}],
+                                                    ["", "missing", {"text": "bad\n"}, {"text": "?", "extra": True}, None]),
+    "tableColumnPresentation/properties/missingBy": ([{"inProgress": {"text": "?"}}, {"dueUnobserved": "blank"}, {"unavailable": "unknown"}],
+                                                     [{}, {"unknown": "blank"}, {"inProgress": {}}, {"inProgress": "in-progress"}, {"inProgress": {"text": "x", "extra": True}}, None]),
+    "tableColumnPresentation/properties/zero": (["signed", "plain"], ["none", "Signed", None, 3]),
+    "tableColumnPresentation/properties/text": ([{"wrap": "allow"}, {"wrap": "forbid"}], [{}, {"wrap": "sometimes"}, {"wrap": "allow", "extra": True}, None]),
+    "tableColumnPresentation/properties/affixes": ([{"slip": {"suffix": "!"}}, {"missing": {"prefix": "("}}, {"ahead": {"prefix": "<", "suffix": ">"}}],
+                                                   [{}, {"unknown": {"suffix": "!"}}, {"slip": {}}, {"slip": {"suffix": "a" * 9}}, None]),
+    "tableColumnPresentation/properties/textRole": (["numeric", "table-cell-secondary", "missing"], ["", 3, None]),
+    "tableColumnPresentation/properties/align": (["start", "center", "end"], ["left", "Start", None, 3]),
+    "tableColumnPresentation/properties/headerOrientation": (["horizontal", "rotate-cw", "rotate-ccw"], ["vertical", "rotate", None, 3]),
+    "tableColumnPresentation/properties/width": (["content", "fill", {"fr": 1}, {"minmax": {"min": "content", "max": "fill"}},
+                                                   {"minmax": {"min": "content", "max": {"fr": 2}}}],
+                                                  ["hug", {"fr": 0}, {"fr": 1, "extra": True}, {"minmax": {"min": "fill", "max": "fill"}},
+                                                   {"minmax": {"min": "content", "max": {"fr": 0}}}, None]),
+    "tableColumnPresentation/properties/endDisplay": (["inclusive", "exclusive"], ["start", "exclusiveEnd", None, 3]),
+    "colorEncodingPresentation/properties/scale": (["delivery", "status-scale"], ["", None, 3]),
+    "colorEncodingPresentation/properties/target": (["planned"], ["actual", "all", None, 3]),
+}
 
 
 def test_the_adopting_kinds_are_exactly_the_planned_ones():
@@ -408,7 +478,10 @@ def test_every_adopted_site_accepts_and_rejects_like_its_definition(name):
     sites = _adopted_sites(name)
     assert sites
     for pointer, definition in sites:
-        accepted, rejected = PROBES[definition]
+        accepted, rejected = _site_probes(definition)
+        target = _target_validator(definition)
+        assert [value for value in accepted if not target.is_valid(value)] == [], (name, pointer, "common target rejects positive probe")
+        assert [value for value in rejected if target.is_valid(value)] == [], (name, pointer, "common target accepts negative probe")
         validator = Draft202012Validator({"$ref": f"{schema['$id']}#{pointer}"}, registry=registry)
         if (name, pointer) in SEGMENT_SITES:  # a site that narrows the definition to one segment: the extra rule is its own sibling
             assert [value for value in accepted if "/" not in value and not validator.is_valid(value)] == [], (name, pointer)
@@ -418,6 +491,11 @@ def test_every_adopted_site_accepts_and_rejects_like_its_definition(name):
         assert [value for value in accepted if not validator.is_valid(value)] == [], (name, pointer)
         assert [value for value in rejected if validator.is_valid(value)] == [], (name, pointer)
         assert [value for value in ACCEPTED_TODAY.get(definition, []) if not validator.is_valid(value)] == [], (name, pointer)
+
+
+def test_nested_site_probes_cover_every_common_presentation_pointer():
+    nested = {definition for name in ADOPTERS for _, definition in _adopted_sites(name) if "/" in definition}
+    assert nested == set(SUBDEFINITION_PROBES)
 
 
 def test_adopted_sites_keep_their_local_extras():

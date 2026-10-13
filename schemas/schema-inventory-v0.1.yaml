@@ -31,6 +31,15 @@ schemas:
     state: live
     consumers: [src/chrona/resources/__init__.py]
     frozenDefs:
+      tableMissingText: "sha256:4185fdfe4f1f1c64f9847db57679ece4ff4b0a534066acac0ae5576484f7d937"
+      tableColumnAffix: "sha256:884dfc97ccaef104aacd8f241a9480623e70357c902b34513854fc3584e16291"
+      tableTextWrap: "sha256:38e8dce25aa628b1ad0193730ac911ef673b6dbb4174b4504c296c34ded933fa"
+      tableColumnPresentation: "sha256:d0d04c6397bf11adce0eae952fa4718c82a583e043d10c87721e338e1c26bcff"
+      viewHeading: "sha256:0427c4b8d37d8091a25f631875f18e712663e86f34be4a0604a0468c508e07ac"
+      groupHeaderPresentation: "sha256:62ef5647e4958df074ede5edbd5b391ceba64ef7188104107d0359b4d920484f"
+      groupTintPresentation: "sha256:960a377472b608f544f256ea168bdb5df89642e368b6212e5db24b8c72e55e27"
+      groupPresentation: "sha256:61b58cc43fde669693e6e643515f17be6593930e82aba0087375da55f1d331cb"
+      colorEncodingPresentation: "sha256:49d1c09755c074eee8f23b7f6e14ea11a3185edf7aa291c5900d5880f824bd99"
       figureFormats: "sha256:611a87c7b1db2e492138275a7c56f8703ec153fef3951342ec865bd3496e0900"
       countTextFormat: "sha256:8515a3cf4ca7c5d277d4ed313267a338bf1693f9bbc9655fdc4325b00feb0222"
       sha256Identity: "sha256:6ed99335d07cf1464ffaf44ded7d8b62f9bcae658d1d25910cfe1bc583cd48ff"

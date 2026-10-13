@@ -69,8 +69,9 @@ def collect_presentation_contracts(
     error.  The source order is the declared closure order; schema errors are
     already pointer/rule/message ordered by ``explain_schema_errors``.
     """
-    from chrona.presentation.contracts.view_defaults import apply_view_defaults
+    from chrona.presentation.contracts.view_defaults import apply_view_defaults, collect_column_style_diagnostics
 
+    style_findings = collect_column_style_diagnostics(sources)
     sources = apply_view_defaults(sources)  # a Layout profile's `viewDefaults` under the View (#1341)
     contracts: list[ResourceContract] = []
     diagnostics: list[PresentationDiagnostic] = []
@@ -84,6 +85,10 @@ def collect_presentation_contracts(
 
     schema_error_count = sum(report.error_count for _source, report, _error in schema_reports if report is not None)
     for source, report, version_error in schema_reports:
+        source_style_findings = tuple(item for item in style_findings
+                                      if item.resource_kind == source.identity.kind
+                                      and item.resource_identity == source.identity.id)
+        diagnostics.extend(source_style_findings)
         if version_error is not None:
             diagnostics.append(PresentationDiagnostic(
                 version_error.diagnostic_id, source.identity.kind, source.identity.id,
@@ -96,6 +101,8 @@ def collect_presentation_contracts(
                 "E_RESOURCE_SCHEMA", source.identity.kind, source.identity.id,
                 violation.pointer, violation.rule, violation.message, "schema",
             ) for violation in violations)
+            continue
+        if source_style_findings:
             continue
         try:
             contracts.append(parse_contract(source.identity, source.value))
