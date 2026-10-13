@@ -52,3 +52,26 @@ The reusable parts of this target are extracted as monochrome assets in the pack
 | Inked panel corner | `chrona-target-parts:panel-corner` | in the catalogue; not yet placeable by any Theme role (#587) |
 
 Still needed before this target's preset can be assembled: #582 (the dotted launch window), #583 (the composed caption header), #587 (panels with gutters), #588 (hand wobble, `+10!` and `?` affixes). In-plot speech balloons and the starburst label are not covered by #582 to #588.
+
+## Reproduction (#1269)
+
+![Sunday Strip mock (top) and chrona output (bottom)](sunday-reproduction-2026-10-14.png)
+
+**Signed off by the product owner on 2026-10-14.** The bottom image is the HALCYON-1 slide `sunday` (`examples/halcyon-1`, slide 25), rendered from YAML alone.
+
+### Gap table
+
+Classification: (a) tuned in YAML; (b) a missing general knob, filed and delivered; (c) a deliberate difference.
+
+| Element | Result | Class | Through |
+|---|---|---|---|
+| Inked panels, hand wobble, comic balloons, Ben-Day launch window, hatch, star gates, `+n!` slips, the key panel | matches | a | #1274 |
+| Caption-box group headers that hug their text, with leading and trailing inset, small caps | matches | b | #1283, #1284, #1285, #1336, #1368 |
+| Halftone strip across each caption row | matches | b | #1282, #1367 |
+| Ink edge on the yellow star gates | matches | b | #1287 |
+| `TODAY!` as a flat red burst | matches | b | #1286, #1366 |
+| `?` for a missing actual, `0` for on time | matches | b | #1288, #1289 |
+| Key panel as a 3-column grid with THE KEY at the side, columns spread across the panel | matches | b | #1290, #1392 |
+| Long month names | matches (long-month, small caps) | a | #1322 |
+| Hand-lettered face (Patrick Hand) | Noto Sans | c | font policy (no new packaged fonts) |
+| Balloon wording and positions | from the Project notes and the layout's own placement | c | data, layout |
