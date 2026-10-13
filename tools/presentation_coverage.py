@@ -11,6 +11,7 @@ from typing import Any, Iterable, Mapping
 
 import yaml
 
+from chrona.presentation.contracts.view_defaults import merge_view_defaults
 from tools.derived_artifact_report import report_stale_artifact
 
 
@@ -97,6 +98,51 @@ def discover(root: Path, loader: RunLocalYamlLoader | None = None) -> tuple[Slid
             scene = _inside(example, item.get("expectedScene"))
             result.append(Slide(f"{manifest['id']}/{item['id']}", example, tuple(resources), scene))
     return tuple(result)
+
+
+def _view_context(slide: Slide) -> tuple[Path, Mapping[str, Any], Mapping[str, Any]]:
+    """Return the raw View, its path, and this Slide context's Layout defaults."""
+    resources = {kind: (path, document) for kind, path, document in slide.resources}
+    try:
+        view_path, view = resources["view"]
+        _layout_path, layout = resources["layout-profile"]
+    except KeyError as error:
+        raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_CONTEXT:{slide.identifier}:{error.args[0]}") from error
+    defaults = layout.get("viewDefaults", {})
+    if not isinstance(defaults, Mapping):
+        raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_VIEW_DEFAULTS:{slide.identifier}:{_layout_path}")
+    return view_path, view, defaults
+
+
+def effective_view(slide: Slide) -> Mapping[str, Any]:
+    """Return the production View+Layout-default closure for one declared Slide context."""
+    _path, view, defaults = _view_context(slide)
+    return merge_view_defaults(view, defaults)
+
+
+def _declared_view_contexts(root: Path) -> tuple[tuple[Path, Mapping[str, Any], Mapping[str, Any]], ...]:
+    loader = RunLocalYamlLoader()
+    return tuple(_view_context(slide) for slide in discover(root, loader))
+
+
+def view_default_contexts(root: Path) -> dict[Path, tuple[Mapping[str, Any], ...]]:
+    """Return every declared Layout default context paired with each View path.
+
+    Empty mappings are retained for contexts without defaults. A shared View used
+    by multiple Slides therefore keeps every pairing in manifest order.
+    """
+    contexts: dict[Path, list[Mapping[str, Any]]] = {}
+    for path, _view, defaults in _declared_view_contexts(root):
+        contexts.setdefault(path, []).append(defaults)
+    return {path: tuple(contexts[path]) for path in sorted(contexts)}
+
+
+def effective_views(root: Path) -> dict[Path, tuple[Mapping[str, Any], ...]]:
+    """Return the effective View for every declared context, grouped by View path."""
+    contexts: dict[Path, list[Mapping[str, Any]]] = {}
+    for path, view, defaults in _declared_view_contexts(root):
+        contexts.setdefault(path, []).append(merge_view_defaults(view, defaults))
+    return {path: tuple(contexts[path]) for path in sorted(contexts)}
 
 
 class SchemaDocument(dict):

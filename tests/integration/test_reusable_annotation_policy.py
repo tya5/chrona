@@ -29,51 +29,48 @@ def dump(path, value):
 
 @pytest.mark.parametrize("design", DESIGNS)
 @pytest.mark.corpus
-def test_five_designs_drop_per_id_annotations_with_identical_scene_primitives_and_svg(tmp_path, design):
+def test_five_migrated_designs_use_kind_bindings_and_preserve_public_render(tmp_path, design):
     source = ROOT / "examples/halcyon-1"
     target = tmp_path / "example"
     shutil.copytree(source, target, ignore=shutil.ignore_patterns("generated"))
     (target / "generated").mkdir()
-    manifest = yaml.safe_load((target / "manifest.yaml").read_bytes())
+    manifest = yaml.safe_load((source / "manifest.yaml").read_bytes())
     slide = next(item for item in manifest["slides"] if item["id"] == design)
-    manifest["slides"] = [slide]
+    public_svg = (source / slide["expectedSvg"]).read_bytes()
+    public_scene = json.loads((source / slide["expectedScene"]).read_bytes())
     for field in ("expectedSvg", "expectedScene"):
         shutil.copy2(source / slide[field], target / slide[field])
+    manifest["slides"] = [slide]
     dump(target / "manifest.yaml", manifest)
-    public_svg = (target / slide["expectedSvg"]).read_bytes()
-    public_scene = json.loads((target / slide["expectedScene"]).read_bytes())
-    # Only disposable evidence is regenerated. The approved visible baseline
-    # remains an independent gate; corrected measurement may add fit findings.
-    original = materialize(target / "manifest.yaml", design, tmp_path / "before", write=True).rendered
-    assert original.artifact.content == public_svg
-    current_scene = json.loads((tmp_path / "before/review.scene.json").read_bytes())
-    assert current_scene["surfaces"][0]["primitives"] == public_scene["surfaces"][0]["primitives"]
+    manifest_path = target / "manifest.yaml"
     context = yaml.safe_load((target / slide["context"]).read_bytes())["body"]
     view_path, layout_path = (target / context[name]["address"] for name in ("view", "layout"))
     view = yaml.safe_load(view_path.read_bytes())
     layout = yaml.safe_load(layout_path.read_bytes())
-    declared = view["body"].pop("annotations")
-    assert len(declared) == 3
-    assert all(item["candidates"] == declared[0]["candidates"] for item in declared)
-    point = binding("note", "point", endpoint="at")
-    risk = binding("risk", "span", facet="actual")
-    span = binding("note", "span", endpoint="body" if design == "sunday" else "end")
-    view["body"]["annotationBindings"] = ([point, risk, span] if design in {"target-b", "yuya", "titlecard"}
-                                           else [risk, span, point])
-    layout.setdefault("viewDefaults", {})["annotationPlacement"] = {
-        "note": {"candidates": deepcopy(declared[0]["candidates"])}}
-    dump(view_path, view)
-    dump(layout_path, layout)
-    migrated = materialize(target / "manifest.yaml", design, tmp_path / "after", write=True).rendered
     assert "annotations" not in view["body"]
-    assert migrated.surface.primitives == original.surface.primitives
-    assert migrated.scene.diagnostics == original.scene.diagnostics
-    assert migrated.artifact.content == original.artifact.content
-    notes = [item for item in migrated.surface.primitives if item.scene_id.startswith("annotation-text:")]
+    bindings = view["body"]["annotationBindings"]
+    assert len(bindings) == 3
+    assert {item["kind"] for item in bindings} == {"note", "risk"}
+    assert all("projectAnnotation" not in item and "id" not in item for item in bindings)
+    policies = layout["viewDefaults"]["annotationPlacement"]
+    assert set({item["purpose"] for item in bindings}) <= set(policies)
+    assert policies["note"]["candidates"]
+
+    # Rebuild only under tmp_path; committed SVG and Scene are independent gates.
+    rendered = materialize(manifest_path, design, tmp_path / "generated", write=True).rendered
+    assert rendered.artifact.content == public_svg
+    generated_scene = json.loads((tmp_path / "generated/review.scene.json").read_bytes())
+    assert generated_scene["surfaces"][0]["primitives"] == public_scene["surfaces"][0]["primitives"]
+    notes = [item for item in rendered.surface.primitives if item.scene_id.startswith("annotation-text:")]
     assert len(notes) == 3
-    svg = ElementTree.fromstring(migrated.artifact.content)
-    ids = {node.get("data-scene-id", node.get("id")) for node in svg.iter()}
-    assert {item.scene_id for item in notes} <= ids
+    svg = ElementTree.fromstring(rendered.artifact.content)
+    svg_note_ids = {
+        node.get("data-scene-id", node.get("id"))
+        for node in svg.iter()
+        if node.get("data-scene-id", node.get("id", "")).startswith("annotation-text:")
+    }
+    assert svg_note_ids == {item.scene_id for item in notes}
+    assert len(svg_note_ids) == 3
 
 
 def parts_and_source():

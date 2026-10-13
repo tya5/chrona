@@ -22,6 +22,48 @@ PATTERN_TEXT = "^examples/[a-z][a-z0-9-]*$"
 STORE_CONFIG = "store-config-v0.1.schema.yaml"
 
 
+def _thin_view_validators():
+    schemas = gate.load_schema_dir(SCHEMAS)
+    schemas["view.schema.yaml"] = {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:test:thin-view", "type": "object",
+        "properties": {"version": {"const": "test/view/v1"}, "body": {
+            "type": "object", "required": ["surface", "visibility"],
+            "properties": {"surface": {"const": "table-timeline"},
+                           "visibility": {"type": "object"}},
+        }}, "required": ["version", "body"],
+    }
+    return gate.SchemaValidators(schemas)
+
+
+def test_l2_validates_declared_effective_view_and_keeps_authored_document():
+    raw = {"version": "test/view/v1", "body": {"surface": "table-timeline"}}
+    defaults = {"view.yaml": ({"visibility": {}},)}
+    result = gate.run_l2({"view.yaml": yaml.safe_dump(raw).encode()}, _thin_view_validators(),
+                         view_defaults=defaults)
+    assert result.records[0]["valid"]
+    assert result.parsed["view.yaml"] == raw
+    assert "visibility" not in raw["body"]
+
+
+def test_l2_does_not_repair_missing_connection_fields_from_design_defaults():
+    raw = {"version": "test/view/v1", "body": {}}
+    defaults = {"view.yaml": ({"surface": "table-timeline", "visibility": {}},)}
+    result = gate.run_l2({"view.yaml": yaml.safe_dump(raw).encode()}, _thin_view_validators(),
+                         view_defaults=defaults)
+    assert not result.records[0]["valid"]
+    assert result.records[0]["error"] == {"pointer": "/body", "rule": "required"}
+
+
+def test_l2_rejects_a_bad_second_context_instead_of_accepting_the_first():
+    raw = {"version": "test/view/v1", "body": {"surface": "table-timeline"}}
+    defaults = {"view.yaml": ({"visibility": {}}, {"visibility": None})}
+    result = gate.run_l2({"view.yaml": yaml.safe_dump(raw).encode()}, _thin_view_validators(),
+                         view_defaults=defaults)
+    assert not result.records[0]["valid"]
+    assert result.records[0]["error"] == {"pointer": "/body/visibility", "rule": "type"}
+
+
 def _copy_schemas(tmp_path: Path) -> Path:
     destination = tmp_path / "schemas"
     shutil.copytree(SCHEMAS, destination, ignore=shutil.ignore_patterns("__pycache__"))
@@ -163,9 +205,12 @@ def test_the_gate_reads_no_production_loader():
 
     assert "chrona.resources" not in imports
     assert not re.search(r"\b(schema_document|schema_resource|schema_registry|schema_validator)\(", source)
-    # Production code is reached only by the L3 ingress functions, never by the schema-reading layers.
+    # Schema-reading/validation remains independent. L2 shares only the pure
+    # effective-View input merge, not any production schema loader or validator.
     layers_one_and_two = source.split("# L3: diagnostics through the production ingress functions")[0]
-    assert not re.search(r"^\s*(?:from|import)\s+chrona", layers_one_and_two, flags=re.MULTILINE)
+    normalization_imports = re.findall(r"^\s*(?:from|import)\s+(chrona[\w.]*)",
+                                      layers_one_and_two, flags=re.MULTILINE)
+    assert set(normalization_imports) <= {"chrona.presentation.contracts.view_defaults"}
 
 
 # --- the document-to-schema mapping -----------------------------------------------------------

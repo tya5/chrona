@@ -3,7 +3,11 @@ from pathlib import Path
 import pytest
 
 from tests.support.public_evidence import declared_slides
-from tools.presentation_coverage import PresentationCoverageError, RunLocalYamlLoader, _validate_resource_versions, discover, live_schemas, render, vocabulary, _vocabulary
+from tools.presentation_coverage import (
+    PresentationCoverageError, RunLocalYamlLoader, _validate_resource_versions,
+    discover, effective_view, effective_views, live_schemas, render,
+    view_default_contexts, vocabulary, _vocabulary,
+)
 
 
 def _root() -> Path:
@@ -69,7 +73,8 @@ def test_presentation_coverage_rejects_non_live_resource_versions():
 
 def test_presentation_coverage_is_not_a_renderer_or_svg_reader():
     source = (_root() / "tools/presentation_coverage.py").read_text(encoding="utf-8")
-    assert "chrona." not in source
+    assert "chrona.presentation.contracts.view_defaults" in source
+    assert "renderers" not in source
     assert ".svg" not in source
 
 
@@ -87,6 +92,77 @@ def test_run_local_loader_reuses_only_one_report_operation(tmp_path):
     path.write_text("value: second\n", encoding="utf-8")
     assert first_run.load(path) == {"value": "first"}
     assert RunLocalYamlLoader().load(path) == {"value": "second"}
+
+
+def _write_multicontext_corpus(root: Path, *, invalid_defaults: bool = False) -> Path:
+    example = root / "examples" / "multi-context"
+    for directory in ("contexts", "views", "layouts", "themes", "schemes", "generated"):
+        (example / directory).mkdir(parents=True, exist_ok=True)
+    (example / "manifest.yaml").write_text(
+        "version: chrona/example-materializer/v0.1\nid: multi-context\nrole: regression-corpus\n"
+        "slides:\n"
+        "  - {id: first, context: contexts/first.yaml, expectedScene: generated/first.json}\n"
+        "  - {id: second, context: contexts/second.yaml, expectedScene: generated/second.json}\n"
+        "  - {id: third, context: contexts/third.yaml, expectedScene: generated/third.json}\n",
+        encoding="utf-8")
+    (example / "views/shared.yaml").write_text(
+        "version: chrona/view/v0.28\nkind: view\nid: shared\nbody: {surface: table-timeline}\n",
+        encoding="utf-8")
+    (example / "layouts/first.yaml").write_text(
+        "viewDefaults: {axis: {tiers: [{unit: month}]}}\n", encoding="utf-8")
+    second_defaults = "[]" if invalid_defaults else "{axis: {tiers: [{unit: quarter}]}}"
+    (example / "layouts/second.yaml").write_text(
+        f"viewDefaults: {second_defaults}\n", encoding="utf-8")
+    (example / "layouts/third.yaml").write_text("root: {id: page, kind: column}\n", encoding="utf-8")
+    (example / "themes/theme.yaml").write_text("version: test\n", encoding="utf-8")
+    (example / "schemes/scheme.yaml").write_text("version: test\n", encoding="utf-8")
+    for name, layout in (("first", "first"), ("second", "second"), ("third", "third")):
+        (example / f"contexts/{name}.yaml").write_text(
+            "body:\n"
+            "  view: {kind: view, address: views/shared.yaml}\n"
+            f"  layout: {{kind: layout-profile, address: layouts/{layout}.yaml}}\n"
+            "  theme: {kind: theme, address: themes/theme.yaml}\n"
+            "  colorScheme: {kind: color-scheme, address: schemes/scheme.yaml}\n",
+            encoding="utf-8")
+        (example / f"generated/{name}.json").write_text("{}\n", encoding="utf-8")
+    return example / "views/shared.yaml"
+
+
+def test_effective_view_uses_production_merge_without_replacing_raw_resources(tmp_path):
+    view_path = _write_multicontext_corpus(tmp_path)
+    slide = discover(tmp_path)[0]
+    raw = next(document for kind, _path, document in slide.resources if kind == "view")
+    effective = effective_view(slide)
+    assert "axis" not in raw["body"]
+    assert effective["body"]["axis"]["tiers"][0]["unit"] == "month"
+    assert next(document for kind, _path, document in slide.resources if kind == "view") is raw
+    assert view_path.resolve() == next(path for kind, path, _document in slide.resources if kind == "view")
+
+
+def test_effective_views_and_defaults_retain_every_shared_view_context_in_order(tmp_path):
+    view_path = _write_multicontext_corpus(tmp_path)
+    defaults = view_default_contexts(tmp_path)
+    effective = effective_views(tmp_path)
+    assert tuple(defaults) == (view_path.resolve(),)
+    assert tuple(effective) == (view_path.resolve(),)
+    assert [item.get("axis", {}).get("tiers", [{}])[0].get("unit") for item in defaults[view_path.resolve()]] == ["month", "quarter", None]
+    assert [item["body"].get("axis", {}).get("tiers", [{}])[0].get("unit") for item in effective[view_path.resolve()]] == ["month", "quarter", None]
+
+
+def test_view_context_helpers_do_not_reuse_a_global_yaml_cache(tmp_path):
+    view_path = _write_multicontext_corpus(tmp_path)
+    first = effective_views(tmp_path)[view_path.resolve()]
+    layout_path = view_path.parent.parent / "layouts/first.yaml"
+    layout_path.write_text("viewDefaults: {axis: {tiers: [{unit: year}]}}\n", encoding="utf-8")
+    second = effective_views(tmp_path)[view_path.resolve()]
+    assert first[0]["body"]["axis"]["tiers"][0]["unit"] == "month"
+    assert second[0]["body"]["axis"]["tiers"][0]["unit"] == "year"
+
+
+def test_view_context_helpers_reject_invalid_defaults_in_later_context(tmp_path):
+    _write_multicontext_corpus(tmp_path, invalid_defaults=True)
+    with pytest.raises(PresentationCoverageError, match="E_PRESENTATION_COVERAGE_VIEW_DEFAULTS:multi-context/second"):
+        effective_views(tmp_path)
 
 
 def test_non_default_integer_vocabulary_names_the_every_slide():
