@@ -28,6 +28,27 @@ def assert_detail(error, code, *needles):
         assert needle in detail
 
 
+def test_read_only_reference_uses_declared_shared_store_without_staging(tmp_path):
+    shared = tmp_path / "shared"
+    shared.mkdir()
+    payload = b"kind: theme\nid: neutral\n"
+    (shared / "theme.yaml").write_bytes(payload)
+    roots = m.materializer_store_roots(tmp_path, [{"identity": "design", "root": "shared"}])
+    reference = ref(kind="theme", address="theme.yaml", store_identity="design", content=identity(payload))
+    assert m.read_materializer_reference(tmp_path, reference, roots) == payload
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["shared"]
+    assert sorted(path.name for path in shared.iterdir()) == ["theme.yaml"]
+
+
+def test_read_only_reference_rejects_wrong_local_identity_with_existing_detail(tmp_path):
+    (tmp_path / "resource.yaml").write_bytes(b"actual")
+    reference = ref(address="resource.yaml", content=identity(b"declared"))
+    with pytest.raises(ValueError) as error:
+        m.read_materializer_reference(tmp_path, reference)
+    assert_detail(error.value, "E_CONTENT_IDENTITY", "view-main", "resource.yaml",
+                  identity(b"declared"), identity(b"actual"))
+
+
 def test_overlay_reference_identity_and_lookup_details(tmp_path):
     builder = m._OverlayBuilder(tmp_path)
     item = ref(content=identity(b"expected"))
@@ -98,19 +119,19 @@ def test_reference_provider_package_identity_and_address_details(tmp_path, monke
     assert_detail(bad_path.value, "E_MATERIALIZER_PATH", "../escape")
 
     with pytest.raises(ValueError) as provider:
-        m._reference_payload(tmp_path, ref(provider="remote", store_identity="foreign"))
+        m.read_materializer_reference(tmp_path, ref(provider="remote", store_identity="foreign"))
     assert_detail(provider.value, "E_MATERIALIZER_PROVIDER", "view-main", "views/main.yaml", "remote")
 
     wrong_store = ref(provider="package", store_identity="other.package")
     with pytest.raises(ValueError) as package_store:
-        m._reference_payload(tmp_path, wrong_store)
+        m.read_materializer_reference(tmp_path, wrong_store)
     assert_detail(package_store.value, "E_MATERIALIZER_PACKAGE_RESOURCE", "views/main.yaml", "other.package")
 
     real_package_resource = m._package_resource
     package = ref(provider="package", store_identity="chrona.resources", content=identity(b"declared"))
     monkeypatch.setattr(m, "_package_resource", lambda _: _BytesResource(b"actual"))
     with pytest.raises(ValueError) as package_identity:
-        m._reference_payload(tmp_path, package)
+        m.read_materializer_reference(tmp_path, package)
     assert_detail(package_identity.value, "E_MATERIALIZER_PACKAGE_IDENTITY", "view-main", "views/main.yaml", identity(b"declared"), identity(b"actual"))
 
     monkeypatch.setattr(m, "_package_resource", real_package_resource)

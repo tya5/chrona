@@ -61,6 +61,8 @@ CHECKS = (
     CheckSpec("schema-equivalence", _command("tools/schema_equivalence.py", "--layers", "L2,L3")),
     CheckSpec("example-inventory", _command("tools/example_inventory.py")),
     CheckSpec("example-reachability", _command("tools/check_example_reachability.py")),
+    CheckSpec("design-purity-report", _command("tools/check_design_purity.py", "--examples-root",
+                                               str(REPOSITORY / "examples"), "--report-only")),
     CheckSpec("svg-explicit-fill", _command("tools/check_svg_explicit_fill.py")),
     CheckSpec("scene-perceptibility", _command("tools/check_scene_perceptibility.py")),
     CheckSpec("legend-truncation", _command("tools/check_legend_truncation.py")),
