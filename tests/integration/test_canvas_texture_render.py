@@ -153,12 +153,12 @@ def test_the_serialized_scene_is_v07_and_passes_the_gates_with_the_texture_as_gr
     assert not [item for item in findings if item.severity == "error"]
 
 
-def test_typst_and_tikz_never_receive_a_texture(tmp_path) -> None:
+def test_typst_and_tikz_draw_the_completed_canvas_texture(tmp_path) -> None:
     review = _textured(tmp_path)
 
-    for render in (render_v05_typst, render_v05_tikz):
-        with pytest.raises(ValueError, match="E_VISUAL_CAPABILITY_UNSUPPORTED"):
-            render(review.surface)
+    typst, tikz = render_v05_typst(review.surface), render_v05_tikz(review.surface)
+    assert "scene-id: canvas-texture" in typst and "clip: true" in typst
+    assert "scene-id: canvas-texture" in tikz and r"\clip" in tikz
 
 
 @pytest.mark.parametrize(("role", "code", "pointer"), [
