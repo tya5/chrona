@@ -59,8 +59,9 @@ That work remains unverified here; it is an explicit successor to the completed
 developer mechanisms, not a claim of adoption. The acceptance table records
 both1341 rows as deferred to this section, under the explicit
 [owner answer6143136697](https://github.com/tya5/chrona/issues/1341#issuecomment-6143136697).
-The developer mechanism is complete;1341 may close after the release containing
-this disposition passes.1344 is already closed after its containing release.
+The developer mechanism is complete.1341 and1344 are closed after their
+containing releases;1341's updated disposition is verified on mainaa3ee809 by
+[release38386951262](https://github.com/tya5/chrona/actions/runs/38386951262).
 Reviewer migration must preserve identical SVG bytes and completed Scene
 geometry, paint and diagnostics; only truthful Context/resource contentIdentity
 and provenance may change. No identity stripping or claim of corpus purity.

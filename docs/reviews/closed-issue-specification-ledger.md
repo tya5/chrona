@@ -11,6 +11,7 @@ normative specification.
 | #1219 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1219), exact-main [release38362304100](https://github.com/tya5/chrona/actions/runs/38362304100) |
 | #1300 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1300), exact-main [release38339181830](https://github.com/tya5/chrona/actions/runs/38339181830) |
 | #1346 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1346) |
+| #1341 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1341), owner-deferred adoption6143136697 and exact-main [release38386951262](https://github.com/tya5/chrona/actions/runs/38386951262) |
 | #1344 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1344), owner-deferred adoption and exact-main [release38362304100](https://github.com/tya5/chrona/actions/runs/38362304100) |
 | #1394 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1394), exact-main [release38362304100](https://github.com/tya5/chrona/actions/runs/38362304100) |
 | #1395 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1395), exact-main [release38362304100](https://github.com/tya5/chrona/actions/runs/38362304100) |
