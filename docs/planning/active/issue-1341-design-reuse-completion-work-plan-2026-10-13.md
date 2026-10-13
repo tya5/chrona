@@ -77,3 +77,11 @@ boundary, not an implicit claim that slice1 was complete.
 Publish this design/specification boundary before those product changes. The
 slice's PR includes focused results and literal issue rows still open for later
 slices/adoption; full three-OS release remains required before issue closure.
+
+Slice2 implementation: presentation closure and nine new frozen shared grammar
+definitions are complete locally. Focused contracts/style/render/schema/diagnostic
+batch227 PASS; schema inventory, annotations, references and equivalence against
+READYaea06f4b PASS. Existing accepted schema verdicts/diagnostics are preserved;
+the optional column `style` admission has one explicit L1 delta. Real synthetic
+SVG and completed Scene equality pass; provenance is not erased. Public snapshot
+inspection and release CI remain pending; no whole-issue acceptance claim.
