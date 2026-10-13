@@ -224,9 +224,9 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             shapes.append(ShapePlacement(f"legend-swatch:{role}", role, "Rect",
                                          Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),
                                          slot_id=legend.slot_id, corner_radius=corner_radius, paint_order=paint_order))
-            if (role == "actual" and request.surface_content.progress_fill_source == "actual"
+            if (role in {"planned", "actual"} and role == request.surface_content.progress_fill_source
                     and request.theme_tokens.has_role("progress-fill")):
-                # The key of observed progress shows the fill the chart draws for it, full, in its track (#499).
+                # The selected host's key repeats its progress fill, full, in its track.
                 inset, fill_radius = request.theme_tokens.progress_track("progress-fill")
                 fill = progress_fill_bounds(shapes[-1].bounds, 1.0, inset)
                 if fill is not None and fill.inline_size > 0:

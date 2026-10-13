@@ -50,6 +50,28 @@ def test_the_bundled_default_keys_are_the_ones_the_issue_asked_for(tmp_path):
         assert key["bounds"]["inlineSize"] > 0 and key["bounds"]["blockSize"] > 0
 
 
+def test_planned_progress_has_its_plan_key_not_an_actual_key(tmp_path):
+    example = ROOT / "examples/halcyon-1"
+    document = _scene(tmp_path,
+        "--view", str(example / "views/02-programme-board.yaml"),
+        "--theme", str(example / "themes/wallboard.yaml"),
+        "--scheme", str(example / "schemes/control-room-dark.yaml"),
+        "--layout", str(example / "layouts/wallboard-programme-board.yaml"),
+        "--summary", str(example / "profiles/summary-countdown.yaml"),
+        "--detail", str(example / "profiles/detail.yaml"),
+        "--viewport", "1920x1080", "--visual-profile", "chrona-output/visual/v0.7-svg")
+    items = {item["id"]: item for item in document["surfaces"][0]["primitives"]}
+    fills = [item for identity, item in items.items() if identity.startswith("progress-fill:planned:")]
+    assert fills
+    assert items["legend-swatch:planned:progress-fill"]["paint"] == fills[0]["paint"]
+    assert "legend-swatch:actual:progress-fill" not in items
+    assert legend_key_findings(document) == []
+    broken = deepcopy(document)
+    broken["surfaces"][0]["primitives"] = [item for item in broken["surfaces"][0]["primitives"]
+                                             if item["id"] != "legend-swatch:planned:progress-fill"]
+    assert any("planned" in finding and "progress" in finding for finding in legend_key_findings(broken))
+
+
 def test_the_check_reports_each_kind_of_disagreement(tmp_path):
     document = _scene(tmp_path)
     primitives = {item["id"]: item for item in document["surfaces"][0]["primitives"]}

@@ -60,6 +60,7 @@ def test_scene_perceptibility_runs_once_after_generated_evidence_integrity():
     assert ids.count("scene-perceptibility") == 1
     assert ids.count("starter-perceptibility") == 1
     assert ids.count("legend-truncation") == 1
+    assert ids.count("legend-key-scene-evidence") == 1
     assert ids.count("svg-explicit-fill") == 1
     assert ids.count("presentation-contrast") == 1
     assert ids.count("presentation-font-identity") == 1
