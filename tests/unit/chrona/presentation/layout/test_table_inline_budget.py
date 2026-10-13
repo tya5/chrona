@@ -381,7 +381,8 @@ def test_authored_aspect_size_above_cap_is_not_clamped(kind):
 
 
 @pytest.mark.parametrize("content_sized", [False, True])
-def test_coupled_extent_builds_independent_budgets_for_each_candidate(content_sized):
+@pytest.mark.parametrize("minimum_block", [20, 50])
+def test_coupled_extent_builds_independent_budgets_for_each_candidate(content_sized, minimum_block):
     inner = container("row", [slot(blockSize="fill"),
                               slot("other", share=None, source="timeline", inlineSize="fill", blockSize="fill")],
                       id="inner", inlineSize={"aspectRatio": 2}, blockSize="fill", padding=0, gap=0)
@@ -396,7 +397,14 @@ def test_coupled_extent_builds_independent_budgets_for_each_candidate(content_si
         requested_budgets.append((block, budgets["table"].ceiling))
         return LayoutSizingContext(budgets, lambda slot_id, inline: bounded_measurement(inline, 80))
 
-    extent = resolve_content_block_extent(resolved, viewport_inline=1000, minimum_block=50,
+    # A failed narrow candidate cannot invalidate an independently verified fit.
+    witness = solve_layout(resolved, viewport_inline=1000, viewport_block=80,
+                           measurements=raw_sources, content_sized=content_sized,
+                           sizing=for_extent(D(80)))
+    assert bounds(witness)["table"].inline_size == 64
+    assert bounds(witness)["table"].block_size == 80
+
+    extent = resolve_content_block_extent(resolved, viewport_inline=1000, minimum_block=minimum_block,
                                           measurements=raw_sources, required_blocks={"table": D(80)},
                                           content_sized=content_sized, sizing=for_extent)
     assert extent.extent == 80
