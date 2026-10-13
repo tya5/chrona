@@ -144,5 +144,17 @@ Specs06/13/33/44/46/56 and existing annotation/figure owners stay aligned.
 | Render wiring and omission | usecases/render_review.py, review/v05_content.py, model/info_diagnostics.py. Wire effective View/Summary/detail copies consistently through all render-plan paths; reconcile1344 missing Summary figure behavior. Preserve original source identities after omission. Test real SVG/Scene countdown/object/legend captions, unbound/empty panels, missing explicit targets, scope/format failures, inline ids and unchanged legacy sources. |
 | Acceptance publication | Update this record with focused results; one implementation PR for the connected slice, batch public materializers/Scene/SVG and diagnostic changes via CI. Verify synced exact-main three-OS release. Keep actual five-design adoption/provenance and literal whole-issue acceptance open until evidenced/disposed by the owner. |
 
-Publish this selected design/specification boundary before changing product
-code, then publish the finalized implementation plan as a separate commit.
+Selected design and architecture review are published at fee9b716 on
+`wip/issue-1341-profile-connections`; documentation guards passed28 tests.
+Implementation plan: execute the two product units above in order in one
+connected implementation PR, with separate reviewed commits; do not open
+another item's PR. Add pure resolver tests and synthetic real-render tests,
+then run the existing derived-figure, Summary, content, detail and schema-owner
+focused suites together. Mandatory edge controls include raw-pointer escaping,
+slot/figure identity collision, arbitrary legend roles, dotted/ambiguous wording
+keys, subtree-after-binding validation and unbound inline SourceRef stability.
+Compare existing admitted-schema and diagnostic verdicts with current READY
+main; new optional grammar gets explicit positive/negative probes. CI owns the
+public snapshot, all affected materializers and full three-OS release. Publish
+this finalized plan before product edits. No authored examples changes or
+whole-issue completion claim.
