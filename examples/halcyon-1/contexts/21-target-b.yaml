@@ -25,29 +25,29 @@ body:
     id: target-b
     kind: theme
     store:
-      provider: local
-      identity: halcyon-1-example
-    address: themes/target-b.yaml
+      provider: package
+      identity: chrona.resources
+    address: designs/target-b/theme.yaml
     revision:
-      token: example-v1
+      token: bundled
   colorScheme:
     id: target-b
     kind: color-scheme
     store:
-      provider: local
-      identity: halcyon-1-example
-    address: schemes/target-b.yaml
+      provider: package
+      identity: chrona.resources
+    address: designs/target-b/scheme.yaml
     revision:
-      token: example-v1
+      token: bundled
   layout:
     id: target-b
     kind: layout-profile
     store:
-      provider: local
-      identity: halcyon-1-example
-    address: layouts/target-b.yaml
+      provider: package
+      identity: chrona.resources
+    address: designs/target-b/layout.yaml
     revision:
-      token: example-v1
+      token: bundled
   inputs:
     snapshot:
       id: halcyon-1-baseline-2027-06
@@ -71,11 +71,11 @@ body:
       id: halcyon-target-b-legend
       kind: review-detail-profile
       store:
-        provider: local
-        identity: halcyon-1-example
-      address: profiles/target-b-detail.yaml
+        provider: package
+        identity: chrona.resources
+      address: designs/target-b/detail.yaml
       revision:
-        token: example-v1
+        token: bundled
   environment:
     viewport:
       inlineSize: 1600

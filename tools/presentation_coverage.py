@@ -93,7 +93,9 @@ def discover(root: Path, loader: RunLocalYamlLoader | None = None) -> tuple[Slid
                 ref = body.get(key)
                 if not isinstance(ref, Mapping) or ref.get("kind") != kind:
                     raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_CONTEXT:{item['id']}:{key}")
-                path = _inside(example, ref.get("address"))
+                store = ref.get("store")
+                packaged = isinstance(store, Mapping) and store.get("provider") == "package"  # shared design (#1342)
+                path = _inside(root / "src/chrona/resources" if packaged else example, ref.get("address"))
                 resources.append((kind, path, loader.load(path)))
             scene = _inside(example, item.get("expectedScene"))
             result.append(Slide(f"{manifest['id']}/{item['id']}", example, tuple(resources), scene))

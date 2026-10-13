@@ -25,29 +25,29 @@ body:
     id: titlecard
     kind: theme
     store:
-      provider: local
-      identity: halcyon-1-example
-    address: themes/titlecard.yaml
+      provider: package
+      identity: chrona.resources
+    address: designs/titlecard/theme.yaml
     revision:
-      token: example-v1
+      token: bundled
   colorScheme:
     id: titlecard
     kind: color-scheme
     store:
-      provider: local
-      identity: halcyon-1-example
-    address: schemes/titlecard.yaml
+      provider: package
+      identity: chrona.resources
+    address: designs/titlecard/scheme.yaml
     revision:
-      token: example-v1
+      token: bundled
   layout:
     id: titlecard
     kind: layout-profile
     store:
-      provider: local
-      identity: halcyon-1-example
-    address: layouts/titlecard.yaml
+      provider: package
+      identity: chrona.resources
+    address: designs/titlecard/layout.yaml
     revision:
-      token: example-v1
+      token: bundled
   inputs:
     snapshot:
       id: halcyon-1-baseline-2027-06
@@ -71,29 +71,29 @@ body:
       id: halcyon-titlecard-countdown
       kind: summary-profile
       store:
-        provider: local
-        identity: halcyon-1-example
-      address: profiles/titlecard-countdown.yaml
+        provider: package
+        identity: chrona.resources
+      address: designs/titlecard/summary.yaml
       revision:
-        token: example-v1
+        token: bundled
     detailProfile:
       id: halcyon-titlecard-legend
       kind: review-detail-profile
       store:
-        provider: local
-        identity: halcyon-1-example
-      address: profiles/titlecard-detail.yaml
+        provider: package
+        identity: chrona.resources
+      address: designs/titlecard/detail.yaml
       revision:
-        token: example-v1
+        token: bundled
     iconCatalogs:
     - id: chrona-target-parts-v2026-10-09
       kind: icon-catalog
       store:
-        provider: local
-        identity: halcyon-1-example
-      address: catalogs/chrona-target-parts-v2026-10-09.yaml
+        provider: package
+        identity: chrona.resources
+      address: icons/chrona-target-parts-v2026-10-09.yaml
       revision:
-        token: example-v1
+        token: v2026-10-09
       contentIdentity: sha256:139be42bed11eaa9809ef98bb427eb74f8f0862c3d5c4ccfd9eba2b23185acee
   environment:
     viewport:

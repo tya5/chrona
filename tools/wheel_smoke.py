@@ -82,7 +82,7 @@ def run() -> None:
         root = Path(temporary)
         starter, corpus = root / "my-chrona-project", root / "my-halcyon-example"
         stages, stage_svg = root / "tutorial", root / "tutorial-07.svg"
-        output = corpus / "out"
+        output, shared_output = corpus / "out", corpus / "out-target-b"
         draft = root / "draft-project.yaml"
         default_svg, starter_svg = root / "default.svg", starter / "plan.svg"
         catalog, raster = root / "material.yaml", root / "smoke.png"
@@ -98,6 +98,7 @@ def run() -> None:
             ["init", str(corpus), "--example", "halcyon-1"],
             ["render", str(draft), "--output", str(default_svg)],
             ["materialize", str(corpus / "manifest.yaml"), "--slide", "mission-brief", "--output", str(output)],
+            ["materialize", str(corpus / "manifest.yaml"), "--slide", "target-b", "--output", str(shared_output)],
             ["icon-catalog", "material-default", "--output", str(catalog)],
             ["preset", "copy", "technical-print", "--output", str(asset_preset)],
             ["skill", "copy", "--output", str(skill)],
@@ -123,6 +124,8 @@ def run() -> None:
             raise AssertionError("the onboarding stages are plain Projects: init must not write a Store")
         if not (output / "review.svg").is_file():
             raise AssertionError("documented materialize command did not create its artifact")
+        if not (shared_output / "review.svg").read_bytes().startswith(b"<svg"):
+            raise AssertionError("a slide whose design is in the packaged shared design store did not render from the wheel")
         if not default_svg.read_bytes().startswith(b"<svg"):
             raise AssertionError("no-preset Draft render did not use the bundled default")
         if not starter_svg.read_bytes().startswith(b"<svg"):

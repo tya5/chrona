@@ -57,7 +57,9 @@ tracked as a second source-tree copy. Runtime code MUST load the source package 
 wheel-installed package through `importlib.resources`; runtime modules MUST NOT derive
 the repository root from `__file__`.
 
-Built-in presets and content-addressed font metric tables are runtime resources. Their
+Built-in presets, the shared designs of the packaged store (`designs/<design>/`, one folder per
+design holding its `theme.yaml`, `scheme.yaml`, `layout.yaml` and profiles; Spec 13 "Shared
+designs", #1342) and content-addressed font metric tables are runtime resources. Their
 source authority is `src/chrona/resources/`. Documentation may link to those resources
 and conformance may validate them but MUST NOT own a duplicate. Tests MUST install the
 built wheel into an isolated environment and prove schema, preset, and font-metric
