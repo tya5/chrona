@@ -20,10 +20,10 @@ Spec33 is the normative authority; the broader rational-migration WIP is exclude
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
 | 1 | Both synthetic coupled-flow fixtures select200 with native final-manifest verification; global bisection must not skip an earlier fitting branch. | met | [Original fixtures](../../../tests/unit/chrona/presentation/layout/test_coupled_flow_extent.py) now exercise both finite and auto modes at minimum100; each returns200, no shortage, and native final capacity100. Coupled search scans ascending only to a verified fitting bound. | General proof withdrawn by owner decision6144755026. |
-| 2 | Fixed/capped/anchored hosts keep requested finite fallback with shortage evidence from the returned manifest; sampled inline capacity is not proof that a growable host is capped. | deferred | [Fixed-host controls](../../../tests/unit/chrona/presentation/layout/test_coupled_flow_extent.py) pass in finite and auto modes with requested100 and timeline80/20 shortage. Failed180 probes in the two original growable fixtures now produce verified240 bounds and first-fit200. Unverified witness failure remains a heuristic fallback, not a global infeasibility claim. | [Owner decision6144755026](https://github.com/tya5/chrona/issues/1214#issuecomment-6144755026) withdrew general-proof requirement; an actual-slide missed branch gets a new issue. |
+| 2 | Fixed/capped/anchored hosts keep requested finite fallback with shortage evidence from the returned manifest; sampled inline capacity is not proof that a growable host is capped. | narrowed | [Fixed-host controls](../../../tests/unit/chrona/presentation/layout/test_coupled_flow_extent.py) pass in finite and auto modes with requested100 and timeline80/20 shortage. Failed180 probes in the two original growable fixtures now produce verified240 bounds and first-fit200. Unverified witness failure remains a heuristic fallback, not a global infeasibility claim. | [Owner decision6144755026](https://github.com/tya5/chrona/issues/1214#issuecomment-6144755026) withdrew general-proof requirement; an actual-slide missed branch gets a new issue. |
 | 3 | Candidate-dependent caption/header/axis prefix, natural row/label demand and below-plot reserve use the candidate's completed native inputs, never prior-candidate or fill-expanded geometry. | met | [PR1463](https://github.com/tya5/chrona/pull/1463) supplies local table/axis/caption geometry. Each search candidate invokes the existing native solve and its own sizing/demand callbacks; no prior candidate's geometry is reused. | — |
 | 4 | Preserve existing Decimal boundary comparisons, Layout/Scene ownership and finite diagnosed overflow; do not add arbitrary retry caps, duplicate allocators, canvas-only fitting or project-specific branches. | met | [Correction](../../../src/chrona/presentation/layout/engine.py) confined to Layout engine; existing Decimal comparison operators and allocator unchanged. Scene, adapters, schemas and authored examples untouched. The scan ends at a verified native fit, not a retry cap. | — |
-| 5 | Review synthetic fixed/intrinsic/flex/minmax/spanning/nested/flow/aspect and empty/auto/finite cases; batch actual public artifact effects without editing examples to absorb changes; full exact-main release evidence remains required. | not met | [Focused tests](../../../tests/unit/chrona/presentation/layout/test_coupled_flow_extent.py) and supporting engine/content/source/natural geometry/heading/canvas tests113PASS. Public artifact comparison and exact containing-main three-OS release still pending. | Owner withdrew general complete-search matrix proof6144755026; public-output/release gates remain required. |
+| 5 | Review synthetic fixed/intrinsic/flex/minmax/spanning/nested/flow/aspect and empty/auto/finite cases; batch actual public artifact effects without editing examples to absorb changes; full exact-main release evidence remains required. | narrowed | [Focused tests](../../../tests/unit/chrona/presentation/layout/test_coupled_flow_extent.py) and supporting engine/content/source/natural geometry/heading/canvas tests113PASS. [Snapshot run38394497838](https://github.com/tya5/chrona/actions/runs/38394497838) preserves all101 declared outputs byte-for-byte; exact containing-main three-OS release remains the mandatory closing gate. | [Owner scope decision6144755026](https://github.com/tya5/chrona/issues/1214#issuecomment-6144755026) withdraws general complete-search matrix proof; exact-main release is still required and cited in the closing comment. |
 
 ## Programme-level criteria (optional)
 
@@ -49,6 +49,14 @@ The merged numeric prerequisite PR1463 passed full release
 [38386951262](https://github.com/tya5/chrona/actions/runs/38386951262).
 That earlier release is not acceptance for this new correction.
 
-Remaining evidence: exact scoped head and PR CI, one batched public snapshot
-comparison to the READY base (all declared outputs unchanged), and full three-OS
-release on the exact main commit containing this review. No examples or board edits.
+Public batch: scoped product head68125861, PR1465, snapshot artifact11811294171
+from run38394497838, against READYb8cdf5ad. Direct tar-member comparison finds
+101/101 identical files, including46 SVG and46 Scene JSON files; zero changed,
+added or removed paths. CI preview independently reports Changed paths:0.
+Local conformance passed every check except five literal-review formatting
+violations; those were corrected and the targeted checker passes. CI must
+confirm complete conformance on the final head.
+
+Remaining gate: final-head PR CI, then full three-OS release on the exact main
+commit containing this review. The closing comment must cite and verify that
+release; this document does not claim it has run. No examples or board edits.
