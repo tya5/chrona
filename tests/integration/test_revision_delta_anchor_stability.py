@@ -148,10 +148,22 @@ def test_previous_scene_keeps_revalidated_routes_and_delta_sides(tmp_path, chang
         assert len(current.points) == len(prior.points), receipt
         translation = (current.points[0][0] - prior.points[0][0],
                        current.points[0][1] - prior.points[0][1])
-        assert current.points[-1] == pytest.approx((prior.points[-1][0] + translation[0],
-                                                    prior.points[-1][1] + translation[1]))
-        for old, new in zip(prior.points, current.points):
-            assert new == pytest.approx((old[0] + translation[0], old[1] + translation[1]))
+        if change == "shift":
+            for old, new in zip(prior.points, current.points):
+                assert new == pytest.approx((old[0] + translation[0], old[1] + translation[1]))
+        else:
+            # An appended row can move the target independently. Only the
+            # endpoint-adjacent joins move; saved interior channels stay fixed.
+            expected = list(prior.points)
+            expected[0], expected[-1] = current.points[0], current.points[-1]
+            if len(expected) > 2:
+                x, y = expected[1]
+                expected[1] = ((current.points[0][0], y) if prior.points[1][0] == prior.points[0][0]
+                               else (x, current.points[0][1]))
+                x, y = expected[-2]
+                expected[-2] = ((current.points[-1][0], y) if prior.points[-2][0] == prior.points[-1][0]
+                                else (x, current.points[-1][1]))
+            assert current.points == tuple(expected)
         # The saved geometry is reanchored with changed marks. Its turns and
         # segments remain the same after removing that endpoint translation.
         if len(current.points) > 2:
