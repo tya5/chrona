@@ -115,8 +115,6 @@ def test_background_extent_is_shared_and_text_is_only_group_header_extension():
 
 # (file, pointer) of an `enum` that equals a definition of the part and is NOT the same concept, each with the reason.
 DIFFERENT_CONCEPT: dict[tuple[str, str], str] = {
-    ("view-v0.28.schema.yaml", "/allOf/1/properties/body/properties/tableColumns/items/properties/align"):
-        "inline alignment of a table column's content inside its measured allocation, not an annotation's alignment along a side",
     ("layout-profile-v0.10.schema.yaml", "/$defs/guide/properties/at/oneOf/0"):
         "a named layout guide position along an axis, not an annotation's alignment along a side",
     ("layout-profile-v0.10.schema.yaml", "/$defs/slotHeading/properties/align"):
@@ -469,11 +467,16 @@ def test_value_format_vocabulary_is_the_union_of_its_two_declared_subsets():
 
 
 @pytest.mark.parametrize(("name", "definition"), [(VIEW, "tableColumnScalarFormat"), (SUMMARY, "summaryMetricFormat")])
-def test_each_value_format_site_references_its_subset_and_accepts_exactly_it(name, definition):
-    sites = _sites(name, definition)
+def test_each_value_format_site_accepts_exactly_its_subset(name, definition):
+    sites = _sites(name, definition) if name == SUMMARY else []
+    if name == VIEW:
+        view = _schema(VIEW)
+        sites = [_pointer(path) for path, node in _walk(view)
+                 if path[-2:] == ("properties", "format") and isinstance(node, dict)
+                 and node.get("$ref") == "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/format"]
     assert len(sites) == 1, sites
     validator = _site_validator(name, sites[0])
-    allowed = _defs()[definition]["enum"]
+    allowed = [*TABLE_FORMATS, "signedNumber"] if name == VIEW else _defs()[definition]["enum"]
     assert [value for value in allowed if not validator.is_valid(value)] == []
     for value in ("count", "dateRange", "signedDay", "Text", "", None, 3, {"kind": "presence"}):
         assert validator.is_valid(value) is (isinstance(value, str) and value in allowed), value
@@ -483,6 +486,24 @@ def test_each_value_format_site_references_its_subset_and_accepts_exactly_it(nam
 
 def test_no_site_references_the_full_value_format():
     assert not any(_sites(name, "valueFormat") for name in LIVE if name not in PARTS)
+
+
+def test_view_table_format_is_the_shared_table_presentation_member():
+    from chrona.resources import dereferenced_schema
+
+    view = _schema(VIEW)
+    pointer = next(_pointer(path) for path, node in _walk(view)
+                   if path[-2:] == ("properties", "format") and isinstance(node, dict)
+                   and node.get("$ref") == "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/format")
+    assert pointer.endswith("/tableColumns/items/properties/format")
+    twin = dereferenced_schema(VIEW)
+    format_schema = twin
+    for token in pointer.strip("/").split("/"):
+        token = token.replace("~1", "/").replace("~0", "~")
+        format_schema = format_schema[int(token)] if isinstance(format_schema, list) else format_schema[token]
+    assert format_schema["oneOf"][0]["enum"] == TABLE_FORMATS
+    assert format_schema["oneOf"][1]["const"] == "signedNumber"
+    assert format_schema["oneOf"][2]["properties"]["kind"]["const"] == "presence"
 
 
 def _literals(path: str) -> set[str]:
