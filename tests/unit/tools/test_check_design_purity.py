@@ -205,7 +205,8 @@ def test_manifest_uses_slide_context_override_shared_store_and_theme_base(tmp_pa
                and item["match_class"] == "wording-candidate" for item in findings)
     assert not any(item["resource"] == "local:example/default.yaml" for item in findings)
     assert {item["project"] for item in findings} == {"local:example/project.yaml"}
-    assert {item["context"] for item in findings} == {str(example / "default.yaml"), str(example / "custom.yaml")}
+    assert {item["context"] for item in findings} == {
+        (example / "default.yaml").as_posix(), (example / "custom.yaml").as_posix()}
 
 
 def test_empty_batch_is_an_error_not_a_clean_result(tmp_path):
