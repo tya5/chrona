@@ -3,11 +3,10 @@
 <!-- chrona:literal-acceptance/v1 -->
 
 Published implementation: PR1422 (shared designs/font sets), PR1404 (legend),
-PR1405 (preset gallery sets). Closure review published in PR1471 on
-`74f91648cc2e5ed5f1323350b71282878f0ff5fa`; its exact-main release38478676595
-completed successfully;1392/1403 are closed. The1342 evidence
-below is new in the closure follow-up and requires its own containing-review release;
-1345 has an explicit owner-approved provenance disposition.
+PR1405 (preset gallery sets), and PR1472 (actual two-project evidence/font-set ingress).
+Exact-main releases38478676595 and38481430846 succeeded;1269/1392/1403/1342 are closed.
+1345 has an explicit owner-approved provenance disposition; this updated review's
+publication/release remains required before its closure.
 The later [1341/1344 release review](../../archive/reviews/issue-1341-design-reuse-acceptance-review-2026-10-13.md)
 is authoritative for those closed issues; previous integration findings are in Git.
 Closure-focused batch:33 tests pass (20.80 s): shared design ingress, legend
