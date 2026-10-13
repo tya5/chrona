@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 
 import yaml
 
-from chrona.resources import minimal_template_resource, template_resource
+from chrona.resources import minimal_template_resource, safe_load, template_resource
 from chrona.core.store_address import resolve_store_address
 from chrona.usecases.materialize import UnavailableFontProviders, copy_context_closure
 
@@ -77,7 +77,7 @@ def initialize_project(destination: Path, *, example: str | None = None) -> Init
     # advertised to commands; mutable source paths are never a reader fallback.
     store_root = destination / ".chrona" / "store"
     manifest_path = destination / "manifest.yaml"
-    manifest = yaml.safe_load(manifest_path.read_bytes())
+    manifest = safe_load(manifest_path.read_bytes())
     if not isinstance(manifest, dict) or manifest.get("version") != "chrona/example-materializer/v0.1":
         raise ValueError("E_INIT_EXAMPLE_MANIFEST: invalid example manifest")
     slides = manifest.get("slides")
