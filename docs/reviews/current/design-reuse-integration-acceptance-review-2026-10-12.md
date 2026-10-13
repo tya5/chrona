@@ -4,6 +4,9 @@
 
 Design-reuse code: `2ecddad0e1a02c468726164a0ef2a76b3b75277a`; integration adopts READY `d53a1df7f773a4e99b7f0445903d8598d2673c81` by ordinary merge.
 This combines PRs #1408, #1415, #1414 and #1417; it is not release acceptance.
+The later [1341/1344 release review](../../archive/reviews/issue-1341-design-reuse-acceptance-review-2026-10-13.md)
+supersedes this record's1341 disposition. This combined record remains current
+for the still-open1342/1345 items; its historical slice findings are unchanged.
 Current-READY focused batch:52 tests pass (33.61 s), including shared Layout inheritance, thin View defaults and font-set expansion together with unchanged SVG bytes.
 Schema equivalence passes: one additive schema, two declared changed schemas, 35 equal schemas, 739 diagnostic probes; L2+L3 17.0 s.
 Import direction: 11 packages, 37 inward edges. Reachability: 232 modules, no staged/orphan modules. Authored `examples/**` diff is empty.

@@ -311,6 +311,10 @@ published commit containing its acceptance review.
   issue number without `#`. The `pr-title` check rejects `close|fix|resolve`
   (any tense) followed by `#n` in the title or any commit message unless the PR
   carries the `closes-issue` label.
+  Negation does not disable a closing keyword in a PR body. Before merging a
+  partial PR, run `gh pr view <n> --json closingIssuesReferences` and require an
+  empty list; inspect its body as well as its title and commits. Write “keep
+  issue123 open” instead of a negated closing phrase with a hash reference.
 
 ## Handing off and resuming
 
