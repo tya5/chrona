@@ -1,6 +1,6 @@
 # Thin-connector design reuse completion (#1341, #1344)
 
-Published code baseline: READY2347aed5; #1300 is closed after its containing
+Published code baseline: READY3aafce89; #1300 is closed after its containing
 three-OS release38339181830 succeeded. Adopt the current READY main before product publication. No
 previous-session local work is assumed.
 
@@ -79,7 +79,7 @@ slice's PR includes focused results and literal issue rows still open for later
 slices/adoption; full three-OS release remains required before issue closure.
 
 Slice2 is published in PR1455, source48010710, synced READY2347aed5;
-sync38343026629 succeeded and containing-main release38343299409 is live.
+sync38343026629 and containing-main release38343299409 succeeded.
 Exact-head38342278157 passed every check;
 artifact11787143093 confirms92/92 public Scene/SVG identical,0 retirements,
 diagnostic/coverage reports only. Shared-schema probes were corrected without
@@ -109,7 +109,8 @@ only overlapping plan/probe additions needed reconciliation. The stale style
 admission evidence is retired. PR1456 is merged at e94ab055; exact-head
 38343692342 passed every check. Artifact11787772456 independently confirms
 92/92 public Scene/SVG identical,0 retirements,2 expected reports only.
-Containing-main sync and three-OS release verification remain.
+Containing-main sync38344567701 succeeded at READY3aafce89;
+three-OS release38344844826 is live.
 Batch public materializers/Scene/SVG via CI; no examples edits. Profile bindings,
 purity/adoption and every unresolved literal row remain open.
 
@@ -158,3 +159,18 @@ main; new optional grammar gets explicit positive/negative probes. CI owns the
 public snapshot, all affected materializers and full three-OS release. Publish
 this finalized plan before product edits. No authored examples changes or
 whole-issue completion claim.
+
+Implementation review: the pure resolver and render wiring keep original
+resource identities and original Summary declaration indexes; mapping metrics
+also retain their escaped authored diagnostic pointers. A separate read-only
+review found no layer or consumer-path defect. Shared grammar has positive/
+negative probes, including required figure wrappers and legacy label limits;
+annotation/reference validation passes. Six new actual SVG controls pass,
+including identical SVG/completed primitives against explicit countdown and
+legend declarations, unbound omission, unavailable versus missing objects,
+and original View error pointers. Combined focused coverage passed447 tests;
+the17 figure-contract tests also pass with their shared-fragment vocabulary
+assertion, retaining exact schema/Core set equality. Inventory, annotation,
+reference and schema-equivalence gates pass. CI snapshot/release evidence is
+required before accepting this slice. Purity
+checker, actual corpus adoption and whole-issue acceptance remain unfinished.
