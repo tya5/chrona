@@ -9,6 +9,7 @@
 <rect data-scene-id="legend-swatch:scale:owner:launch" data-source-ref="scale:owner:launch" data-purpose="legend-swatch" x="40" y="651.1" width="11.2" height="11.2" opacity="1" fill="#3A1A24" stroke="#EAF0FA" stroke-width="1"/>
 <rect data-scene-id="legend-swatch:scale:owner:ops" data-source-ref="scale:owner:ops" data-purpose="legend-swatch" x="40" y="677" width="11.2" height="11.2" opacity="1" fill="#2A3314" stroke="#EAF0FA" stroke-width="1"/>
 <rect data-scene-id="legend-swatch:planned" data-source-ref="planned" data-purpose="legend-swatch" x="40" y="470.4" width="20" height="10" opacity="1" fill="#5FA8FF" stroke="#EAF0FA" stroke-width="1"/>
+<rect data-scene-id="legend-swatch:planned:progress-fill" data-source-ref="progress-fill" data-purpose="legend-swatch" x="40" y="470.4" width="20" height="10" opacity="1" fill="#FFC857" stroke="#0B1220" stroke-width="1"/>
 <rect data-scene-id="legend-swatch:actual" data-source-ref="actual" data-purpose="legend-swatch" x="40" y="498.3" width="12" height="6" rx="1.5" ry="1.5" opacity="1" fill="#35D0A0" stroke="#0B1220" stroke-width="1"/>
 <rect data-scene-id="group:bus" data-source-ref="bus" data-purpose="group-decoration" x="936.77" y="86" width="943.23" height="222" opacity="1" fill="#142642"/>
 <rect data-scene-id="group:payload" data-source-ref="payload" data-purpose="group-decoration" x="936.77" y="308" width="943.23" height="152" opacity="1" fill="#142642"/>

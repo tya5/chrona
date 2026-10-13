@@ -11,6 +11,7 @@
 <path data-scene-id="legend-swatch:milestone:part1" data-source-ref="milestone" data-purpose="legend-swatch" d="M41.5 460.1L48.5 460.1L48.5 461.7L41.5 461.7L41.5 460.1" opacity="1" fill="#1B1B1B"/>
 <rect data-scene-id="legend-swatch:planned" data-source-ref="planned" data-purpose="legend-swatch" x="40" y="404.1" width="20" height="10" opacity="1" fill="#5FA8FF" stroke="#EAF0FA" stroke-width="1"/>
 <path data-scene-id="legend-swatch:milestone:part2" data-source-ref="milestone" data-purpose="legend-swatch" d="M42.5 455.9L47.5 455.9L50 460.9L47.5 465.9L42.5 465.9L40 460.9L42.5 455.9" opacity="1" fill="none" stroke="#EAF0FA" stroke-width="1"/>
+<rect data-scene-id="legend-swatch:planned:progress-fill" data-source-ref="progress-fill" data-purpose="legend-swatch" x="40" y="404.1" width="20" height="10" opacity="1" fill="#FFC857" stroke="#0B1220" stroke-width="1"/>
 <rect data-scene-id="legend-swatch:actual" data-source-ref="actual" data-purpose="legend-swatch" x="40" y="432" width="12" height="6" rx="1.5" ry="1.5" opacity="1" fill="#35D0A0" stroke="#0B1220" stroke-width="1"/>
 <rect data-scene-id="group:bus" data-source-ref="bus" data-purpose="group-decoration" x="939.71" y="86" width="940.29" height="279" opacity="1" fill="#142642"/>
 <rect data-scene-id="group:payload" data-source-ref="payload" data-purpose="group-decoration" x="939.71" y="365" width="940.29" height="190" opacity="1" fill="#142642"/>
