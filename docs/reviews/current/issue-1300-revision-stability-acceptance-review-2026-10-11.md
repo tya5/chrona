@@ -48,8 +48,9 @@ No additional programme gate replaces the original or mandatory hint criteria.
 ## Verification and architecture
 
 Implementation: [PR1453](https://github.com/tya5/chrona/pull/1453), final
-head9e3d2e73. Current exact-head CI38336753803 and containing exact-main release
-remain required; do not close on an older green head.
+head9e3d2e73, merged publice8a53082. [Exact-head CI38336753803](https://github.com/tya5/chrona/actions/runs/38336753803)
+succeeded: all three pytest shards, conformance, MCP, newest-Python reproduction
+and derived-ready. Containing exact-main release remains required.
 
 Focused routing/critical/hint/Scene/SVG batch138 PASS; final counter/message/
 hint batch57 PASS. Real rendered controls cover safe over-quality routes,
@@ -60,10 +61,11 @@ weakening safety. Uncapped simple-path work can still be exponential.
 
 Failure disposition: initial CI38335371719 failed one missing curated warning
 sentence, fixed in diagnostic_messages.py with a finite-domain regression.
-Corrected CI38336078901 succeeded. Its artifact11785056823 had101 managed
-paths, no retirements and92/92 identical public Scene/SVG bytes; only the
-generated diagnostic inventory changed. Final-head artifacts must independently
-confirm those bytes after the counter correction. No authored examples change.
+Corrected CI38336078901 and final-head CI38336753803 succeeded. Final artifact
+11785377450 has101 managed paths, no retirements and92/92 identical public
+Scene/SVG bytes; only the generated diagnostic inventory changes
+([final audit](https://github.com/tya5/chrona/pull/1453#issuecomment-6136656126)).
+No authored examples change.
 
 Architecture: scheduler owns immutable critical facts; ingress owns pinned
 prior-Scene integrity; Layout owns matching, reanchoring, completed safety,

@@ -5,11 +5,11 @@ Authority: [reviewer decisions6136355223](https://github.com/tya5/chrona/issues/
 These supersede unconditional no-hint stability and continuous-space
 impossibility. No local-graph redesign.
 
-Current status: implementation published in PR1453, head9e3d2e73; focused
-final correction batch57 PASS. Exact-head CI38336753803 and its artifact audit
-are pending, followed by merge and containing exact-main release. The prior
-corrected head passed CI38336078901; it is not the final-head gate. Keep the
-issue open until the selected S/C criteria and release are verified.
+Current status: PR1453 head9e3d2e73 merged to publice8a53082. Exact-head
+CI38336753803 succeeded; final artifact11785377450 has92/92 identical public
+Scene/SVG bytes and only one diagnostic inventory change. Focused final batch57
+PASS. Synced exact-main release and final record publication remain required;
+keep the issue open until those gates verify the selected S/C criteria.
 
 ## Design plan
 
