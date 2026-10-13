@@ -36,7 +36,7 @@ grammar; no new resource kind or hidden project-specific inference.
 | 4: profile slots, bindings and wording with1344 | Complete exact slot namespaces/source unions, omission versus typo behavior, figure/period binding admission and wording precedence before code. An unbound declared slot is info/undrawn; a View binding to an undeclared profile slot is a pointed error. Reconcile published1344 WIP376454003 against current main; its info_diagnostics.py/render_review.py conflicts are real, not permission failures. |
 | 5: purity and normative closure | Mechanical checker across each example and its own Project; distinguish generic design voice/placeholders from project ids/wording. Update Specs06/07/33/46/56 and shared schema/mirror evidence. Review cross-resource identity and whole architecture, not only the merge helper. |
 
-Release questions: reviewer corpus adoption is required by the literal criteria.
+Release questions: reviewer corpus adoption remains part of the product's literal criteria.
 Real Context/resource changes affect Scene provenance;1345's public identity
 question6110612395 remains unresolved. Never normalize away or falsify identity
 to satisfy byte wording. Clarify the intended migration evidence with reviewer.
@@ -46,7 +46,20 @@ and normative rule; publish file-level implementation slices; implement only
 those slices. Keep optional local tuning separate. Batch public materializers
 and generated diffs once per behavior boundary; focused tests locally, full
 three-OS/conformance/wheel/newest-Python gates in CI. Keep each literal row open
-until actual adoption and required release evidence are published.
+until evidenced or explicitly disposed; board454's owner-deferred adoption
+rows are recorded below rather than incorrectly marked met.
+
+## Reviewer adoption disposition
+
+[Owner board454](https://github.com/tya5/chrona/issues/454) states:
+“A target-adoption row in an issue is the reviewer's step, not a closing condition
+for dev.” The reviewer retains permanent five-design thin-View migration and
+roadmap renders, including the Title Card countdown against its own period.
+That work remains unverified here; it is an explicit successor to the completed
+developer mechanisms, not a claim of adoption. The acceptance table records
+those rows as deferred to this section. Issue1344 may close after its selected
+mechanism and containing-review release pass; issue1341 still needs its separate
+byte-identity/purity disposition6138676694. Never falsify resource provenance.
 
 ## Slice 2 design and implementation boundary
 

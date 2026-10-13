@@ -16,7 +16,7 @@ reviewer-owned design migration is complete. Current implementation authority:
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
 | 1 | Target B and the four other approved designs reproduce byte-identically on HALCYON, with Theme/Layout/profiles containing no HALCYON id or wording, and with Views containing connection members only. | not met | PRs #1455–#1457 preserve all92 public Scene/SVG files; this does not prove migrated-resource purity. The checker reports878 context-qualified lexical candidates, not semantic impurities or a purity certificate. Migration/provenance disposition is requested in [6138676694](https://github.com/tya5/chrona/issues/1341#issuecomment-6138676694). | — |
-| 2 | `examples/chrona-roadmap` renders each design by writing only its own thin View and Context. | not met | [PR1457](https://github.com/tya5/chrona/pull/1457) has actual SVG controls. Permanent five-design roadmap adoption remains reviewer-owned; it is not evidenced by unchanged existing outputs. | — |
+| 2 | `examples/chrona-roadmap` renders each design by writing only its own thin View and Context. | deferred | [Owner board454](https://github.com/tya5/chrona/issues/454): “A target-adoption row in an issue is the reviewer's step, not a closing condition for dev.” PR1457 has actual SVG controls; permanent five-design adoption is not claimed completed. | [Reviewer adoption work](../../planning/active/issue-1341-design-reuse-completion-work-plan-2026-10-13.md#reviewer-adoption-disposition) |
 
 ### Issue #1344
 
@@ -26,7 +26,7 @@ reviewer-owned design migration is complete. Current implementation authority:
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
 | 1 | HALCYON is unchanged once its period declares the role. | narrowed | [Owner6097145885](https://github.com/tya5/chrona/issues/1344#issuecomment-6097145885) replaces Project roles with explicit View connections. PR1457 preserves92/92 public Scene/SVG files without adding period roles. | [Current connection design](../../planning/active/issue-1341-design-reuse-completion-work-plan-2026-10-13.md) |
-| 2 | The roadmap renders the Title Card countdown against its own period. | not met | [PR1457](https://github.com/tya5/chrona/pull/1457) verifies View-bound period selection in synthetic actual SVG. Permanent roadmap/Title Card adoption remains reviewer-owned. | — |
+| 2 | The roadmap renders the Title Card countdown against its own period. | deferred | [Owner board454](https://github.com/tya5/chrona/issues/454) explicitly assigns target adoption to the reviewer and excludes it from dev closing conditions. PR1457 verifies View-bound selection in actual synthetic SVG; permanent roadmap adoption is not claimed completed. | [Reviewer adoption work](../../planning/active/issue-1341-design-reuse-completion-work-plan-2026-10-13.md#reviewer-adoption-disposition) |
 | 3 | A project without the role renders without error. | narrowed | [Owner6097145885](https://github.com/tya5/chrona/issues/1344#issuecomment-6097145885) selects absent binding omission with info instead of roles. PR1457 tests unbound slots/legacy Summary figures, empty-panel omission and errors for explicitly invalid targets. Heading/Theme missing-figure behavior is deliberately unchanged. | [Current connection design](../../planning/active/issue-1341-design-reuse-completion-work-plan-2026-10-13.md) |
 
 ## Programme-level criteria (optional)
@@ -57,7 +57,8 @@ Developer mechanism gates are below; they do not replace the literal rows.
   expectation is corrected without product changes in PR1460. Corrected
   containing-review exact-main85e66b4b [release38354040480](https://github.com/tya5/chrona/actions/runs/38354040480)
   succeeds on all3OS full pytest/conformance/wheel-smoke, MCP and newest-Python
-  public reproduction. Literal reviewer-adoption rows remain unproven.
+  public reproduction. Actual reviewer-adoption rows remain unproven and
+  explicitly deferred under board454's owner disposition.
   The release containing this review must also succeed before closure.
 
 ## Architecture conclusion
@@ -68,5 +69,8 @@ does not measure text or compute geometry. Layout, Scene and adapters retain the
 existing responsibilities. Materialization owns reference/Store/pin admission;
 the tooling audit reuses it without rendering or rewriting resources. Resource
 identity is preserved, not normalized away to satisfy byte wording. No authored
-`examples/**` or board writes occurred. Both issues remain open until release
-evidence and the explicit literal disposition are complete.
+`examples/**` or board writes occurred. Issue1341 remains open for literal
+row1's byte/purity disposition. Issue1344's selected mechanism is complete;
+its owner-deferred adoption row does not prevent developer closure after the
+release containing this disposition. Closure must name the original narrowed
+and deferred criteria and link the same successor work plan.
