@@ -20,7 +20,10 @@ def test_schema_and_core_share_the_closed_kind_and_count_source_sets():
     kinds = tuple(definitions[name]["properties"]["kind"]["const"]
                   for name in ("figureDaysUntil", "figureDaysIn", "figureCount"))
     assert kinds == KINDS
-    assert tuple(definitions["figureCount"]["properties"]["source"]["enum"]) == COUNT_SOURCES
+    source = definitions["figureCount"]["properties"]["source"]
+    common = schema_validator("common-v0.1.schema.yaml").schema
+    assert source["$ref"] == "urn:chrona:common-v0.1#/$defs/profileFigureCountSource"
+    assert tuple(common["$defs"]["profileFigureCountSource"]["enum"]) == COUNT_SOURCES
 
 
 @pytest.mark.parametrize("source", COUNT_SOURCES)
