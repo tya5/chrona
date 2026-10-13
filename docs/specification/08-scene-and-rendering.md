@@ -856,8 +856,14 @@ appearance except `technical-print` produces, one element per primitive, each pr
 An end marker is lowered by the SVG marker rule to absolute plain commands: the marker box's reference point
 (`head_length - attachment_offset`, `head_width / 2`) sits on the path end, turned to the path direction there (`angle_degrees`
 when the marker fixes one) and scaled by the stroke width unless the marker is in physical units. The adapter adds no Scene
-field. Still refused with `E_VISUAL_CAPABILITY_UNSUPPORTED`, naming each primitive, its role and the feature: `pattern`
-fills, required wobble, aligned stroke clips, small-caps runs, and (TikZ) a compressed text. A render target needs a visual
+field. Rect pattern fills (#1394) serialize the completed repeat tile, original
+phase, tile-center rotation, ink/substrate channels and rounded region clip.
+Native boxes/scopes clip each repeated tile and its host; adapter repetition
+does not select density or alter completed geometry. Legacy stroke tiles and
+catalogue circle/rect/path tiles are supported. Patterned non-Rect primitives
+remain explicitly unsupported; there is no silent solid-fill substitution.
+Still refused with `E_VISUAL_CAPABILITY_UNSUPPORTED`, naming each primitive, its role and the feature: required wobble,
+aligned stroke clips, small-caps runs, and (TikZ) a compressed text. A render target needs a visual
 profile that serves it: a preset that prefers an SVG-only profile (`elevated-light`, `technical-print`) takes
 `--visual-profile chrona-output/visual/v0.5-baseline`.
 
