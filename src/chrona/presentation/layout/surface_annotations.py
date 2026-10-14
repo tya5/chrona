@@ -33,7 +33,7 @@ from chrona.presentation.layout.annotation_inline_size import FilledNote, fill_n
 from chrona.presentation.layout.viewer_fit import fit_text, require_followable_content
 from chrona.presentation.model.theme_tokens import ViewerFitToken
 from chrona.presentation.layout.annotation_kind_frame import (
-    EMPTY_FRAME, KindFrameMeasure, complete_kind_heading, measure_kind_frame, place_kind_frame,
+    EMPTY_FRAME, KindFrameMeasure, complete_kind_frame, measure_kind_frame, place_kind_frame,
 )
 from chrona.presentation.layout.annotation_tilt import (
     nearest_boundary_point, rotate_commands, polygon_commands, rotate_shape, rotate_text, rotated_corners, rotated_extent, tilt_for,
@@ -632,12 +632,19 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         content_top, content_right, content_bottom, content_left = (
                             max(value, clearance) for value in (content_top, content_right, content_bottom, content_left))
 
-                    def measure_note(measured_content: str, wrap_bound: float, may_wrap: bool, *, wrap_heading: bool = False
+                    # A border-bleeding bar uses the inner-border rectangle, not the inset
+                    # content box. Let only its labels use that extra width; heading/body
+                    # measurement continues to use the content box.
+                    bar_extra_inline = (max(0.0, content_left + content_right - box_border.start - box_border.end)
+                                        if kind_measure.bar_bleed == "border" else 0.0)
+
+                    def measure_note(measured_content: str, wrap_bound: float, may_wrap: bool, *, complete_frame: bool = False
                                      ) -> tuple[tuple[str, ...], float, tuple[float, float]]:
-                        frame = (complete_kind_heading(
+                        frame = (complete_kind_frame(
                             kind_measure, available_inline=wrap_bound + annotation_leading + annotation_trailing,
-                            may_wrap=may_wrap, theme_tokens=request.theme_tokens, metric_for=metric_for)
-                            if wrap_heading else kind_measure)
+                            may_wrap=may_wrap, bar_extra_inline=bar_extra_inline,
+                            theme_tokens=request.theme_tokens, metric_for=metric_for)
+                            if complete_frame else kind_measure)
                         lines = (wrap_text(measured_content, available_inline=wrap_bound, font_size=size, font_metrics=annotation_metrics,
                                            letter_spacing=float(annotation_treatment.letter_spacing),
                                            text_transform=annotation_treatment.transform)
@@ -672,7 +679,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         if fill_declared and annotation_slot is not None:
                             fill_may_wrap = (wrap_declared != "forbid" or plot_wrap_em is not None or list_entry)
                             filled_variant = fill_note(
-                                lambda bound: measure_note(measured_content, bound, fill_may_wrap, wrap_heading=True),
+                                lambda bound: measure_note(measured_content, bound, fill_may_wrap, complete_frame=True),
                                 target=fill_target(float(annotation_slot.bounds.inline_size),
                                                    max_inline_em=(float(container.max_inline_em)
                                                                   if container.max_inline_em is not None else None),
@@ -680,10 +687,11 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                 chrome=(annotation_leading + annotation_trailing + kind_measure.inline_insets
                                         + content_left + content_right),
                                 tilt_degrees=tilt_angle)
-                            filled_kind = complete_kind_heading(
+                            filled_kind = complete_kind_frame(
                                 kind_measure,
                                 available_inline=filled_variant.wrap_inline + annotation_leading + annotation_trailing,
-                                may_wrap=fill_may_wrap, theme_tokens=request.theme_tokens, metric_for=metric_for)
+                                may_wrap=fill_may_wrap, bar_extra_inline=bar_extra_inline,
+                                theme_tokens=request.theme_tokens, metric_for=metric_for)
                         measured_fill_size = (
                             rotated_extent(filled_variant.frame_inline, filled_variant.frame_block, tilt_angle)
                             if filled_variant is not None and tilt_angle else

@@ -589,8 +589,13 @@ Summary figure behavior specified in Specification46.
 The design-purity tool audits Theme, Layout and presentation profiles against
 the actual Project referenced by each context. View and Context connections
 are excluded. It reports matched Project identifiers and authored wording
-with resource pointers, including string keys, using complete-token/phrase
-comparison rather than arbitrary substring matching. Generic placeholders are
+with resource pointers using complete-token/phrase comparison rather than
+arbitrary substring matching. Resource-root `/version`, `/kind` and `/id`
+are excluded: they identify the format and resource, not Project content.
+Identifier candidates are limited to Project-reference or user-facing wording
+values; a design token or paint name is not a leak merely because a Project
+object has the same identifier (#1479). Authored wording phrases remain
+lexical candidates. Generic placeholders are
 allowed; literal Project wording around them is not hidden. Lexical collisions
 require review and do not by themselves prove project dependence or purity.
 Strict mode rejects unresolved findings; report-only mode preserves findings
