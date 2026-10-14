@@ -3,11 +3,20 @@
 <!-- chrona:literal-acceptance/v1 -->
 
 Design, architecture and implementation plan: [living record](https://github.com/tya5/chrona/issues/1474#issuecomment-6158249825).
-READY baseline1299e952; G1 commit56fa67d6, canonical survey1d35966c,
-annotation fallback0fa35d73. Focused combined suite:37 passed; strengthened
-overlap regression:2 passed. Actual viewer-fit600x340 now renders with5 warnings.
-Gallery --check passes; three generated pages only refresh referenced-resource
-excerpts. No examples or derived-owned reports changed.
+Ready baseline: ac4ac88360708de5421baccf043f9e65c22f5e01. Tool repair:
+d0108cd4, after the independently published gallery, Context ingress, annotation
+fallback and Windows launcher fixes in PR1483/1484.
+[Reviewer disposition](https://github.com/tya5/chrona/issues/1474#issuecomment-6167307115):
+keep all capacity cases with exact expected diagnostic outcomes; defer core
+allocation changes to #1490. API and CLI each accept all138 cases:117 render,
+21 give their recorded refusal,0 unexpected outcomes. Gallery --check passes.
+Focused tool tests15PASS; review/ledger tests7PASS. No product, examples or
+generated-output changes in this remaining slice. Main adoption, current-head
+PR gates and an exact-main containing-review three-OS release remain required
+before closure; local passes alone are not release acceptance.
+Architecture: expectations belong to the validation tool, not Layout policy.
+API and CLI share the existing failure reporter's complete diagnostic payload
+and exit code; no synthetic domain code or project-specific core exception.
 
 ## Literal issue acceptance
 
@@ -18,10 +27,10 @@ excerpts. No examples or derived-owned reports changed.
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | --- | --- | --- | --- | --- |
-| 1 | Both tools pass on main. | not met | Gallery check passes locally; canonical138-case baseline renders116 with161 warnings and22 failures, eliminating21 snapshot-input omissions while revealing5 additional Layout failures. The annotation failure is fixed and its actual600px case passes. Remaining inline-capacity contract is [awaiting disposition](https://github.com/tya5/chrona/issues/1474#issuecomment-6158879745); no failures hidden or cases retired. PR/main release evidence is still required. | — |
-| 2 | Each is either in the CI gate or explicitly documented as manual. | not met | [Conformance registration](../../../conformance/run_conformance.py) gates the gallery in PR/release CI. Final matrix ownership awaits corrected coverage/runtime and the capacity disposition; opt-in --jobs uses isolated processes and deterministic aggregation. | — |
+| 1 | Both tools pass on main. | not met | Candidate API and CLI --jobs4 each pass all138 cases (117 rendered,21 exact expected refusals,0 failures); gallery --check passes. [Recorded outcomes](../../../tools/draft_viewport_expected_refusals.yaml) retain every case and link each group to #1490. [Tests](../../../tests/unit/tools/test_check_draft_viewport_matrix.py) reject changed code/message/source/component/exit, unexpected rendering, unlisted failures and missing cases. Final ready-main verification and release are pending. | — |
+| 2 | Each is either in the CI gate or explicitly documented as manual. | met | Gallery remains in [conformance registration](../../../conformance/run_conformance.py). [CONTRIBUTING](../../../CONTRIBUTING.md) and the [tool docstring](../../../tools/check_draft_viewport_matrix.py) explicitly require the manual matrix when changing Layout allocation; no additional CI shard or duplicated whole-corpus PR run. | — |
 | 3 | Do not edit `examples/**`. | met | [Source diff](https://github.com/tya5/chrona/compare/1299e952a22d855f81d04f32b5ad81ff0f462da8...0fa35d73) changes tools, synthetic tests, Layout fallback propagation and three renderer-owned documentation pages only. [Identity tests](../../../tests/unit/tools/test_check_draft_viewport_matrix.py) preserve authored bytes/snapshot/assets; derivative Contexts are temporary and truthfully pinned. | — |
 
 ## Programme-level criteria (optional)
 
-None. Keep issue1474 open; partial slice publication is not full acceptance.
+None. Keep issue1474 open until the ready-main evidence and release gate complete.
