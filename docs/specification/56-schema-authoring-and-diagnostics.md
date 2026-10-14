@@ -167,6 +167,8 @@ changes remain visible. All other changes retain the ordinary version rule.
 Do not silently upgrade a
 stale resource; the unsupported-version behavior in §3.1 remains in force.
 
+Theme v0.15 `contrastPolicy.exceptions` (#1134) is such an optional addition: a non-empty list of `{role | purpose, over, minimum, reason}`, added in place without a version bump. Omitting it preserves the prior behavior (the evaluator receives no entries); the consumers are `resolve_theme` (`E_THEME_CONTRAST_POLICY` at the entry's pointer) and the render's completed-Scene contrast gate (Specification 07, Contrast policy). The equivalence gate records the insertion as a structural delta of the live schema.
+
 Theme v0.15/v0.16 (#1088) retires the content-box `edge` token and role member.
 v0.15 is the complete authored contract; v0.16 resolves a pinned v0.15 base
 and validates the effective body against v0.15. First-party Themes, derived

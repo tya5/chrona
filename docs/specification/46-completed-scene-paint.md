@@ -310,6 +310,7 @@ plus `unsupportedGround` for a mark or text whose ground cannot be computed (a d
   payloads and the corpus contrast report (`Warnings`), and fails neither render, Theme resolution nor the corpus
   gate.
 - `none` is an `info` row: the measured ratio stays in the evidence and nothing is reported.
+- A Theme's `contrastPolicy.exceptions` (Specification 07, #1134) turns an `error` floor finding that an entry names, and that measures at or above the entry's `minimum`, into `W_SCENE_CONTRAST_ACCEPTED` (ratio, floor, minimum and reason recorded; the blocking code it replaced is its `findingCode`); an entry that matched nothing is `W_SCENE_CONTRAST_EXCEPTION_UNUSED`. The corpus tool, which reads no Theme, passes none.
 
 **A Theme that declares nothing is not opted in: every class is `warning`.** The evaluator itself takes the
 policy as an argument and, given none, keeps the strict gate (legibility `error`, decoration `warning`) so that the
