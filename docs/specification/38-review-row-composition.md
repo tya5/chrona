@@ -92,6 +92,22 @@ row items are the complete selection and their declared order is authoritative;
 `selection`, `grouping`, and `ordering` remain invalid in the View body to prevent two
 competing selection/order authorities.
 
+**Explicit row nesting (#437).** `parentRow` names another row in this View,
+not the Project parent of its table subject. The row-local parent graph MUST
+be acyclic; self-parenting or a longer cycle is `E_REVIEW_ROW_PARENT_CYCLE`.
+An unavailable parent is `E_REVIEW_ROW_PARENT_UNAVAILABLE`. Authored `depth`
+remains nonnegative presentation indentation, not a value inferred from WBS,
+Project parents or the table subject's source. Parent and child subjects may
+be primary, Snapshot or Actual instances; ordinary source availability and
+table-subject validation still apply. This does not alter Project containment,
+scheduling, automatic hierarchy projection or temporal placements.
+
+Migration: the older primary-only/Project-edge restriction is superseded by
+the accepted #404 presentation-only contract. Explicit rows no longer emit
+`E_REVIEW_ROW_PARENT_SOURCE`, `E_REVIEW_ROW_PARENT_ROOT` or
+`E_REVIEW_ROW_PARENT_MISMATCH` merely because their local tree differs from
+Project containment. No compatibility check against Project facts is retained.
+
 ## 2. Projection semantics
 
 ### Hierarchy row appearance (#1302)
