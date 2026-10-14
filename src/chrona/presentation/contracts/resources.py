@@ -1197,12 +1197,12 @@ def _figure_fact(raw: Any) -> AsOfFact | PeriodFact | ObjectFact | GroupStartFac
 
 
 def _group_tint(raw_grouping: Any) -> ViewGroupTint | None:
-    """Type the optional group tint; it needs a grouping field to read values from (#583)."""
+    """Type the optional group tint; it needs groups that have values: `field` or `objectType` (#583, #429)."""
     raw = raw_grouping.get("tint")
     if raw is None:
         return None
-    if raw_grouping["by"] != "field":
-        raise ContractError("E_VIEW_GROUP_TINT_UNUSABLE", "tint needs grouping by field")
+    if raw_grouping["by"] not in ("field", "objectType"):
+        raise ContractError("E_VIEW_GROUP_TINT_UNUSABLE", "tint needs groups that have values (grouping by field or objectType)")
     domain = raw.get("domain", "firstAppearance")
     return ViewGroupTint(str(raw["scale"]), None if domain == "firstAppearance" else tuple(str(item) for item in domain))
 

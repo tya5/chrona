@@ -201,9 +201,19 @@ def test_a_row_stripe_is_judged_against_the_tint_it_lies_on(tmp_path):
     assert stripes and {item.ground_color.upper() for item in stripes} == {"#142642"}
 
 
-def test_a_tint_on_a_band_grouping_by_object_type_is_rejected_at_the_contract(tmp_path):
+def test_a_tint_on_a_band_grouping_by_object_type_colours_each_type_in_display_order(tmp_path):
     parts = _parts()
     parts["view"]["body"]["grouping"] = {"by": "objectType", "presentation": "header", "tint": {"scale": "series"}}
+    source = sr.project({"s": sr.span("s", date(2026, 1, 5), 12), "p": sr.point("p", date(2026, 2, 2))})
+    fills = [item.paint.fill for item in _bands(_render(tmp_path, parts, source)).values()]
+    assert len(fills) == 2 and len(set(fills)) == 2
+    assert fills == [_scheme(parts, "series-1"), _scheme(parts, "series-2")]
+
+
+@pytest.mark.parametrize("by", ["none"])
+def test_a_tint_on_a_grouping_without_valued_groups_is_rejected_at_the_contract(tmp_path, by):
+    parts = _parts()
+    parts["view"]["body"]["grouping"] = {"by": by, "tint": {"scale": "series"}}
     with pytest.raises(Exception) as failure:
         _render(tmp_path, parts)
     assert "E_VIEW_GROUP_TINT_UNUSABLE" in str(failure.value)
