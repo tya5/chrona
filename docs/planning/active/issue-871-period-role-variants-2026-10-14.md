@@ -14,7 +14,7 @@ slices. Other issue-body items remain unselected.
 ## Selected behavior and architecture
 
 `View.body.periods[]` gains optional `variant`, using the existing
-`common-v0.1.$defs.slug` grammar. No variant retains the existing roles and output.
+`common-v0.1.$defs.slug` grammar. No variant retains the unsuffixed role selection.
 A variant selects `period-band:<slug>` and, when a drawable label request is
 consumed, `period-label:<slug>`. There is no fallback to the base role or another
 variant. A selected period still requires its band role even when it clips out or
@@ -33,7 +33,10 @@ pattern completion, Scene projection, contrast and target-capability checks cons
 those completed roles. The band/label purpose, period `sourceRef`, and existing
 placement/Scene identity do not change. `period-label-chip` remains shared. No
 general dynamic-role mechanism, Project rule, edge treatment, legend-entry policy,
-or example edit is introduced.
+or example edit is introduced. The two suffix namespaces become reserved semantic
+roles; a pre-existing arbitrary axis/legend alias using them must be renamed or
+satisfy the new contract. This is intentional alpha incompatibility, not a reason
+to retain an open-role fallback. Other valid unvaried resources retain their output.
 
 This preserves the existing separation: Project owns dates, View selects and
 names the presentation variant, Theme owns tokens, Layout owns measurement and
