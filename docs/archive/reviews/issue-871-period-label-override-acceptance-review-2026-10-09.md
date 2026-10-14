@@ -37,7 +37,7 @@ intended generated reports change. Focused224 and migration154 tests pass.
 
 ## Architecture review
 
-The [current work record](../../planning/active/issue-871-period-role-variants-2026-10-14.md)
+The [completed work record](../planning/issue-871-period-role-variants-2026-10-14.md)
 links the pre-code published contracts. Layout completes geometry and identities;
 Scene consumes transient channel intent without adapter inference. Catalogue ink
 belongs to fill content, not the host outline. Legacy glyph precedence and omitted

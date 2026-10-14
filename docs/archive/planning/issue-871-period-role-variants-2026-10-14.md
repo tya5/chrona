@@ -16,7 +16,7 @@ All selected work is accepted on READY6e955ada after successful exact-main
 Board-selected scope is issue-body items1–3 only: variants, edge treatments,
 period legend entries. Items4–8 are unselected optional successors.
 Literal reviewer acceptance, already met on main and retained in the
-[current review](../../reviews/current/issue-871-period-label-override-acceptance-review-2026-10-09.md):
+[acceptance review](../reviews/issue-871-period-label-override-acceptance-review-2026-10-09.md):
 
 - "The View override sets the period-label text."
 - "Absent an override, the output is byte-identical."
