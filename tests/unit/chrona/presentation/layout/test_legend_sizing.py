@@ -15,6 +15,7 @@ from chrona.presentation.layout.surface_legend import (
     LegendArrangement, legend_arrangement, legend_source_input, swatch_extent,
 )
 from chrona.presentation.model.theme_tokens import ThemeTokenView
+from chrona.presentation.model.surface_content import SurfaceLegendEntry
 from tests.unit.chrona.presentation.layout.test_sources import theme as measuring_theme
 
 ADVANCE = 7.0  # one character at 14 px
@@ -37,7 +38,9 @@ def _tokens():
 
 
 def _measure(entries, arrangement=LegendArrangement()) -> Measurement:
-    source = legend_source_input(entries, tokens=_tokens(), mark_block_size=8.0,
+    typed_entries = tuple(entry if isinstance(entry, SurfaceLegendEntry) else SurfaceLegendEntry(*entry)
+                          for entry in entries)
+    source = legend_source_input(typed_entries, tokens=_tokens(), mark_block_size=8.0,
                                  font_metrics=_Metrics(), arrangement=arrangement)
     return measure_sources({"legend": source}, measuring_theme(), font_metrics=_Metrics()).measurements["legend"]
 
