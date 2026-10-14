@@ -15,6 +15,7 @@ import pytest
 from chrona.presentation.color_scheme import resolve_theme
 from chrona.presentation.fonts.installed import InstalledFontIndex, use_installed_fonts
 from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
+from chrona.presentation.layout.text import metric_for_family
 from chrona.resources import safe_load
 from tests.support import synthetic_review as sr
 from tests.support import text_treatments as tt
@@ -79,17 +80,69 @@ def test_the_first_installed_family_of_the_stack_is_used_and_the_scene_records_i
     assert any("role=groupHeader" in item and "face=Hiragino Sans" in item and STACK in item
                for item in _notes(rendered, "I_FONT_ROLE_RESOLVED"))
     assert not _notes(rendered, "W_FONT_FALLBACK_PACKAGED")
+    assert not _notes(rendered, "W_FONT_FAMILY_SKIPPED")
 
 
 def test_a_later_family_is_used_when_the_earlier_ones_are_not_installed(tmp_path):
     fonts = tmp_path / "fonts"
     fonts.mkdir()
-    renamed(fonts / "y.ttf", PACKAGED / "noto-sans-regular-v1.ttf", "Yu Gothic", 400)
+    renamed(fonts / "y.ttf", PACKAGED / "noto-sans-bold-v1.ttf", "Yu Gothic", 700)
+    parts = _parts("Missing Family, Yu Gothic", role="groupHeader")
+    parts["theme"]["body"]["values"]["text-weight"]["value"] = 700
     (tmp_path / "run").mkdir()
     with use_installed_fonts(InstalledFontIndex([fonts])):
-        rendered = _render(tmp_path / "run", _parts())
+        rendered = _render(tmp_path / "run", parts)
 
-    assert _header(rendered).text_layout.family == "Yu Gothic"
+    primary = _header(rendered).text_layout.family
+    assert primary == "Yu Gothic"
+    # Viewer-fit measures the selected face name, not the original stack. Keep the
+    # resolved chain addressable by that actual primary family and weight.
+    descriptor = safe_load((PACKAGED / "default-font-metrics.yaml").read_bytes())
+    theme = resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="sha256:test")
+    with use_installed_fonts(InstalledFontIndex([fonts])):
+        resolution = resolve_theme_font_stacks(theme, descriptor, asset_root=PACKAGED)
+    assert resolution is not None
+    selected = resolution.metrics.select("Missing Family, Yu Gothic", 700)
+    assert selected.family == primary
+    assert metric_for_family(primary, 700, resolution.metrics).family == primary
+    skipped = _notes(rendered, "W_FONT_FAMILY_SKIPPED")
+    assert any("role=groupHeader" in item and "requested=Missing Family, Yu Gothic" in item
+               and "skipped=Missing Family" in item and "face=Yu Gothic" in item for item in skipped)
+
+
+def test_a_later_declared_family_is_used_and_the_missing_prefix_is_reported(tmp_path):
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    (tmp_path / "run").mkdir()
+    with use_installed_fonts(InstalledFontIndex([empty])):
+        rendered = _render(tmp_path / "run", _parts("Missing Family, Noto Sans"))
+
+    assert _header(rendered).text_layout.family == "Noto Sans"
+    skipped = _notes(rendered, "W_FONT_FAMILY_SKIPPED")
+    assert any("role=groupHeader" in item and "requested=Missing Family, Noto Sans" in item
+               and "skipped=Missing Family" in item and "face=Noto Sans" in item for item in skipped)
+
+
+def test_a_later_installed_family_is_used_by_the_pdf_draft_path(tmp_path):
+    from chrona.usecases.draft_render import DraftRenderRequest, render_draft
+
+    fonts = tmp_path / "fonts"
+    fonts.mkdir()
+    for weight in (400, 700):
+        renamed(fonts / f"y-{weight}.ttf", PACKAGED / f"noto-sans-{'bold' if weight == 700 else 'regular'}-v1.ttf",
+                "Yu Gothic", weight)
+    parts = _parts("Missing Family, Yu Gothic")
+    paths = {kind: sr._write(tmp_path / f"{kind}.yaml", value) for kind, value in parts.items()}
+    project = sr._write(tmp_path / "project.yaml", _source())
+    with use_installed_fonts(InstalledFontIndex([fonts])):
+        rendered = render_draft(DraftRenderRequest(
+            project=project, target_kind="pdf", view=paths["view"], theme=paths["theme"],
+            scheme=paths["scheme"], layout=paths["layout"],
+        ))
+
+    assert rendered.artifact.content.startswith(b"%PDF-")
+    assert any("requested=Missing Family, Yu Gothic" in item and "face=Yu Gothic" in item
+               for item in _notes(rendered.rendered, "W_FONT_FAMILY_SKIPPED"))
 
 
 def test_with_none_of_the_listed_families_the_role_falls_back_to_packaged_noto_sans_with_a_warning(tmp_path):
@@ -156,6 +209,8 @@ def test_text_no_face_of_the_stack_or_the_package_covers_fails_naming_the_charac
 
     message = str(caught.value) + repr(getattr(caught.value, "detail", ""))
     assert "E_FONT_GLYPH_UNAVAILABLE" in message and "U+65E5" in message and "Noto Sans" in message
+    face_stack = message.split("face stack [", 1)[1].split("]", 1)[0]
+    assert face_stack.split(", ") == ["Hiragino Sans", "Yu Gothic", "Noto Sans JP", "Noto Sans"]
 
 
 def test_the_system_font_restriction_to_svg_and_png_is_gone(tmp_path):
