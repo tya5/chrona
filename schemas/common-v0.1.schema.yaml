@@ -200,7 +200,7 @@ $defs:
         additionalProperties: false
         properties: {entityField: {description: "Entity field name.", type: string, minLength: 1}}
   groupTintPresentation:
-    description: "Per-group band tint: a Theme colour scale over the grouping field's values; usable only when grouping by field."
+    description: "Per-group band tint: a Theme colour scale over the group values; usable when grouping by field or objectType."
     type: object
     required: [scale]
     additionalProperties: false
