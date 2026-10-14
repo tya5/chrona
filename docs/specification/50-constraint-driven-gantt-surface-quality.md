@@ -1128,7 +1128,10 @@ selected band role as `visualRole`, and the authored label; View role-wide
 legend wording has its existing precedence. Their typed provenance is shared
 by measurement and placement, and their Scene identity namespace is disjoint
 from arbitrary legacy role IDs: labels use `legend-period:<period id>` and
-swatches use `legend-period-swatch:<period id>` (component suffixes for edges).
+hosts use `legend-period-swatch:<period id>`. Edge component identities use
+`period-edge:<host-id-length>:<host-id>:<side>:<line-index>`, with the full
+host ID's Unicode codepoint length. This disjoint prefix and length framing
+prevent a colon-bearing period ID from aliasing an edge or another host.
 Unknown, unselected, ambiguous or duplicate source bindings are
 `E_REVIEW_LEGEND_PERIOD_SOURCE` at the profile entry's `sourceRef`; mismatched
 roles are `E_REVIEW_LEGEND_PERIOD_ROLE` at its `role` (Spec06).

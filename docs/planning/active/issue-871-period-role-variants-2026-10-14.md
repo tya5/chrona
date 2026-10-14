@@ -41,6 +41,8 @@ fill-only semantics. Glyph overrides/classification remain Symbol-only.
 Do not duplicate the legend pipeline or relax overlapping-period fill rank checks.
 Sourced legend IDs use disjoint prefixes (legend-period / legend-period-swatch),
 not pseudo-role keys that can collide with arbitrary existing role aliases.
+Edge IDs length-frame the complete host ID under a disjoint prefix (Spec50);
+arbitrary colon-bearing Project identifiers remain supported.
 Existing role-wide wording precedence and unsourced IDs remain unchanged.
 An explicitly absent period background keeps its sourced legend label and
 reservation but no painted key (Spec50); only this branch was held for correction.
