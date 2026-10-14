@@ -333,3 +333,40 @@ def test_a_derived_layout_extends_a_packaged_layout(tmp_path: Path) -> None:
 
     assert layout["id"] == "briefing-roomy" and layout["root"]["padding"] == {"token": "spacing.m"}
     assert [child["id"] for child in layout["root"]["children"]][:2] == ["title", "review"]
+
+
+def test_a_context_renders_from_package_references_identically_to_local_copies(tmp_path: Path) -> None:
+    """#1373 row 6: a Context whose Theme, Scheme and Layout are `provider: package` references renders through the
+    Store-config reader and the explicit-flag reader, byte-identical to a render of local copies of the same bytes."""
+    from chrona.operational.store_reads import PackageAwareReader
+
+    project = initialize_project(tmp_path / "project", example="halcyon-1").directory
+    config = load_store_config(str(project / ".chrona" / "store.yaml"))
+    reference = _reference(project)
+    context = _load(project / CONTEXT)
+    token, bundle = context["body"]["theme"]["revision"]["token"], "presets/bundles/mission-light/"
+    store = project / ".chrona" / "store" / f"revision-{token}"
+    packaged = {}
+    for name, resource in (("theme", "theme.yaml"), ("colorScheme", "scheme.yaml"), ("layout", "layout.yaml")):
+        payload = (ROOT / "src/chrona/resources" / bundle / resource).read_bytes()
+        (store / "copies").mkdir(exist_ok=True)
+        (store / "copies" / f"{name}.yaml").write_bytes(payload)
+        packaged[name] = (context["body"][name], payload)
+
+    def render(kind: str) -> bytes:
+        document = _load(project / CONTEXT)
+        for name, (entry, payload) in packaged.items():
+            if kind == "package":
+                document["body"][name] = {**entry, "store": {"provider": "package", "identity": "chrona.resources"},
+                                          "address": bundle + {"theme": "theme.yaml", "colorScheme": "scheme.yaml", "layout": "layout.yaml"}[name],
+                                          "revision": {"token": "bundled"}, "contentIdentity": _identity(payload)}
+            else:
+                document["body"][name] = {**entry, "address": f"copies/{name}.yaml", "contentIdentity": _identity(payload)}
+        _dump(store / CONTEXT, document)
+        root = project / ".chrona" / "store"
+        readers = [snapshot_reader_for(config, reference)[0], PackageAwareReader(root, "halcyon-1-example", require_content_identity=False)]
+        drawn = {render_context_closure(resolve_context_closure(reference, reader), root).artifact.content for reader in readers}
+        assert len(drawn) == 1
+        return drawn.pop()
+
+    assert render("package") == render("local")
