@@ -11,6 +11,7 @@ from PIL import Image
 
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.surface_quality import PathCommand
+from chrona.presentation.model.surface_content import SurfaceLegendEntry
 from chrona.presentation.renderers.v05_svg import render_v05_svg
 from chrona.presentation.scene.model import ScenePaint, ScenePrimitive, SceneSurface, SurfaceScaleManifest
 
@@ -187,7 +188,7 @@ def test_the_legend_key_draws_the_same_terminal_as_the_relation(shape):
     theme = _theme()
     theme["body"]["values"]["dependency-marker"] = {"type": "marker", "value": {"shape": shape, **TOKEN}}
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "dependency-marker"}
-    swatch = next(node for node in _legend_surface((("dependency", "Dependency"),), theme).primitives
+    swatch = next(node for node in _legend_surface((SurfaceLegendEntry("dependency", "Dependency"),), theme).primitives
                   if node.scene_id == "legend-swatch:dependency")
     assert swatch.marker_end.outline == _outline(shape).outline
     assert swatch.marker_end.paint_mode == _outline(shape).paint_mode

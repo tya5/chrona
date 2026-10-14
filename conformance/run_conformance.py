@@ -60,6 +60,7 @@ CHECKS = (
     CheckSpec("schema-references", _command("tools/validate_schema_references.py")),
     CheckSpec("schema-equivalence", _command("tools/schema_equivalence.py", "--layers", "L2,L3")),
     CheckSpec("example-inventory", _command("tools/example_inventory.py")),
+    CheckSpec("design-gallery", _command("tools/render_design_gallery.py", "--root", str(REPOSITORY), "--check")),
     CheckSpec("example-reachability", _command("tools/check_example_reachability.py")),
     CheckSpec("design-purity-report", _command("tools/check_design_purity.py", "--examples-root",
                                                str(REPOSITORY / "examples"), "--report-only")),

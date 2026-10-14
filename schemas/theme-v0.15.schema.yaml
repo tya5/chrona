@@ -456,6 +456,17 @@ properties:
             swatchBlockSize: {description: "Named absolute block length of an area (background) legend swatch (#1111); declaring it makes the area swatch a rectangle of swatchInlineSize (else the legacy side) by this size. Absent, the legacy square.", type: string, minLength: 1}
             pointSwatchSize: {description: "Named absolute side of the point (gate, milestone) legend swatch (#1111). Absent, the on-chart gate size.", type: string, minLength: 1}
             backgroundTreatment: {description: "Finite treatment for a completed review-surface background role; none is an explicit non-drawable disposition.", enum: [fill, outline, none]}
+            edgeRules:
+              description: "Selected per-edge rules for a named-period band; omission retains its legacy Rect outline (#871)."
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                top: {description: "Rule treatment at the period band's top edge.", enum: [single, double]}
+                bottom: {description: "Rule treatment at the period band's bottom edge.", enum: [single, double]}
+                start: {description: "Rule treatment at the period band's inline start edge.", enum: [single, double]}
+                end: {description: "Rule treatment at the period band's inline end edge.", enum: [single, double]}
+            doubleRuleGap: {description: "Named positive physical clear gap between the strokes of a double named-period edge rule (#871).", type: string, minLength: 1}
             contrastTreatment: {description: "Finite contrast-floor treatment for a classified state-text role.", enum: [required, deemphasized]}
             backgroundPaintOrder: {description: "Finite completed ordering key for a review-surface background role.", type: integer, minimum: 0, maximum: 1000}
             opacity: {description: "Named opacity token for the role.", type: string, minLength: 1}

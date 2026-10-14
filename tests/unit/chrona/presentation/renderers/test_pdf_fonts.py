@@ -13,6 +13,7 @@ from reportlab.pdfbase.ttfonts import TTFont as ReportLabTTFont
 from chrona.presentation.model.font_metrics import FontFile
 from chrona.presentation.renderers.pdf_fonts import (
     CONVERSION_GRAMMAR,
+    EMBEDDING_GRAMMAR,
     PdfFontConversionError,
     pdf_embedding_bytes,
     pdf_font_bytes,
@@ -248,6 +249,7 @@ def test_non_cff_embedding_extracts_exact_indexed_ttc_face(tmp_path):
     try:
         assert selected["name"].getDebugName(1) == "Noto Sans"
         assert selected["name"].getDebugName(6) == alias
+        assert EMBEDDING_GRAMMAR == "pdf-closed-face-v1"
         assert collection_path.read_bytes() == before
         assert source.read_bytes() == original_bytes
     finally:

@@ -31,7 +31,7 @@ from chrona.presentation.layout.region_frame import complete_region_frames
 from chrona.presentation.layout.surface_visuals import place_axis_band_visuals
 from chrona.presentation.layout.viewer_fit import stamp_surface_fits
 from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels, PresentationInfo
-from chrona.presentation.model.semantic_registry import axis_band_semantic_ids
+from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, period_variant_role_base
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject, table_row_subjects, review_row_subjects
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
 from chrona.presentation.layout.lane_window_marks import complete_lane_window_handoff
@@ -150,8 +150,12 @@ def complete_catalog_patterns(marks: tuple[MarkPlacement, ...],
     result: list[PatternedPlacement] = []
     for shape in shapes:
         # A legend key is a miniature of its mark: it carries the mark's Theme role in `source_ref` (#991).
-        role = (shape.source_ref if shape.placement_id.startswith("legend-swatch:")
+        role = (shape.visual_role if shape.placement_id.startswith("legend-period-swatch:")
+                and (shape.visual_role == "period-band"
+                     or period_variant_role_base(shape.visual_role) == "period-band")
+                else shape.source_ref if shape.placement_id.startswith("legend-swatch:")
                 and shape.source_ref in _RECT_PATTERN_THEME_ROLES.values()
+                else shape.visual_role if shape.semantic_id == "periodBand" and shape.visual_role is not None
                 else _RECT_PATTERN_THEME_ROLES.get(shape.semantic_id))
         cut = (shape.kind == "Symbol" and shape.paint_clip is not None
                and bool(shape.path_commands)
@@ -233,7 +237,7 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
             return axis.slot_id
         if item.semantic_id in BACKGROUND_SEMANTIC_IDS:
             return item.slot_id
-        if item.placement_id.startswith("legend-swatch:"):
+        if item.placement_id.startswith(("legend-swatch:", "legend-period-swatch:")):
             return by_source["legend"].slot_id
         if item.placement_id.startswith("summary-bar:"):
             return by_source.get("summary", timeline).slot_id

@@ -38,6 +38,7 @@ from chrona.presentation.model.theme_inheritance import (
 )
 from chrona.presentation.model.theme_references import ThemeReferenceError, resolve_references, uses_references
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
+from chrona.presentation.model.semantic_registry import period_variant_role_base
 from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
 from chrona.presentation.fonts.system import DraftFontResolution, SystemFontError, SystemFontResolver, resolve_draft_fonts, resolve_system_font
 from chrona.presentation.model.font_metrics import FontMetricsCatalog, FontMetricsError, FontTabularWarning, resolve_font_files, resolve_font_metrics
@@ -1013,6 +1014,16 @@ def _resolve_theme_catalog_assets(theme: Mapping[str, Any],
         conflicting = ("strokeWidth", "dash", "strokeLineCap", "strokeLineJoin",
                        "strokeFinishFidelity", "gradientStart", "gradientEnd",
                        "gradientAngle", "gradientFidelity")
+        edge_consumer = ("edgeRules" in binding
+                         and (role == "period-band"
+                              or period_variant_role_base(role) == "period-band"))
+        if edge_consumer:
+            # These stroke properties paint only the independent period-edge
+            # Paths. Catalogue tile geometry still comes solely from the
+            # catalogue entry; gradient properties remain unsupported.
+            edge_properties = {"strokeWidth", "dash", "strokeLineCap", "strokeLineJoin",
+                              "strokeFinishFidelity"}
+            conflicting = tuple(name for name in conflicting if name not in edge_properties)
         for property_name in conflicting:
             if property_name in binding:
                 raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED",
@@ -1121,6 +1132,18 @@ def _resolve_theme_catalog_assets(theme: Mapping[str, Any],
                 tokens.label_chip_shape(str(role))
             except ThemeTokenError as error:
                 raise ClosureError(error.diagnostic_id, error.path) from error
+    # Edge declarations are Theme metadata, not selected-extent geometry: close
+    # their role/token dependencies before Layout can clip a period.
+    for role in roles:
+        if (str(role) != "period-band"
+                and period_variant_role_base(str(role)) != "period-band"):
+            continue
+        try:
+            if tokens is None:
+                tokens = ThemeTokenView(theme, catalog_glyphs=glyphs, catalog_patterns=patterns)
+            tokens.period_edge_rules(str(role))
+        except ThemeTokenError as error:
+            raise ClosureError(error.diagnostic_id, error.path, error.detail) from error
     return glyphs, patterns
 
 

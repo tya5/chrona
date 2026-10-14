@@ -306,10 +306,23 @@ def is_frame_glyph_role(role: object) -> bool:
                                      fullmatch(r"frame-glyph-[a-z][a-z0-9-]*", role) is not None)
 
 
+def period_variant_role_base(role: object) -> str | None:
+    """Return the one registered period-role family selected by a common slug suffix."""
+    if not isinstance(role, str):
+        return None
+    match = fullmatch(r"period-(band|label):([a-z][a-z0-9-]*)", role)
+    return f"period-{match.group(1)}" if match is not None else None
+
+
 def contrast_binding(scene_role: str) -> SemanticBinding | None:
     """Return the unique classified binding for one completed Scene role (a ground-text binding is not by role)."""
     if is_annotation_artwork_role(scene_role):
         return _REGISTRY["annotationArtwork"]
+    period_role = period_variant_role_base(scene_role)
+    if period_role == "period-band":
+        return _REGISTRY["periodBand"]
+    if period_role == "period-label":
+        return _REGISTRY["periodLabel"]
     matches = tuple(binding for binding in _REGISTRY.values()
                     if binding.scene_role == scene_role and binding.contrast_class not in (None, ContrastClass.GROUND_TEXT))
     if len(matches) > 1:

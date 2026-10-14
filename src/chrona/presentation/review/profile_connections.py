@@ -8,6 +8,7 @@ from chrona.presentation.contracts.resources import (
     ReviewDetailInput, SummaryMetric, SummaryPanelInput,
     SummaryProfileInput, ViewInput, freeze,
 )
+from chrona.presentation.model.projection import ReviewPeriod
 
 
 class ProfileConnectionError(ValueError):
@@ -50,6 +51,34 @@ class ProfileConnectionResult:
 
 def _pointer_token(value: str) -> str:
     return value.replace("~", "~0").replace("/", "~1")
+
+
+def validate_period_legend_sources(detail: ReviewDetailInput | None,
+                                   periods: tuple[ReviewPeriod, ...]) -> None:
+    """Validate source-bound legend entries against the selected period projection."""
+    if detail is None:
+        return
+    by_id: dict[str, list[ReviewPeriod]] = {}
+    for period in periods:
+        by_id.setdefault(period.period_id, []).append(period)
+    seen: set[str] = set()
+    for index, entry in enumerate(detail.legend):
+        source_ref = entry.source_ref
+        if source_ref is None:
+            continue
+        pointer = f"/body/legend/{index}/sourceRef"
+        matches = by_id.get(source_ref, ())
+        if source_ref in seen or len(matches) != 1:
+            reason = "duplicate sourceRef" if source_ref in seen else "must identify exactly one selected period"
+            raise ProfileConnectionError(
+                "E_REVIEW_LEGEND_PERIOD_SOURCE", reason, pointer,
+                component="review-detail-profile")
+        seen.add(source_ref)
+        if entry.role != matches[0].band_role:
+            raise ProfileConnectionError(
+                "E_REVIEW_LEGEND_PERIOD_ROLE",
+                f"role {entry.role!r} must equal selected period band role {matches[0].band_role!r}",
+                f"/body/legend/{index}/role", component="review-detail-profile")
 
 
 def _source_slot(source: object) -> str | None:

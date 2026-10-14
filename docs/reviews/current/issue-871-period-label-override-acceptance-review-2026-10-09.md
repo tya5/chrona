@@ -4,21 +4,36 @@
 
 Implementation: [#1253](https://github.com/tya5/chrona/pull/1253) (head `5bf586ae`). A selected period's label object gains an optional `text` (one to eighty characters, `literalCaption`), `periods[].label.text`, added in place to `view-v0.28` (Spec 56 section 3.2; `python -m tools.schema_equivalence --base-rev origin/main`: PASS, additive=1). The label stays an ordinary `period-label` Text; only its content changes, for that View only. Plan: [Status comment](https://github.com/tya5/chrona/issues/871#issuecomment-6068339316).
 
-**Scope.** #871 is an umbrella of optional follow-ups to #582; its issue body says none is an acceptance row of #582. The only literal acceptance in this slice is the reviewer's added row (2026-10-08). The eight numbered follow-ups (period variants, edge treatments, a period legend entry, date offsets, terse syntax, bundled-preset roles, contrast through a translucent host, derived figures) are out of scope here and untouched: they are not in this review's table, and #871 stays open as their owner issue (variants and edge treatments are dev A / decoration areas; the legend entry is #497; presets are #718; figures are #586). The Marquee adoption row is an `examples/**` View edit, the reviewer's step.
+**Scope.** The board selects issue-body follow-ups 1–3 (variants, edges, period legend entries); optional items 4–8 are unselected. The reviewer's three literal criteria below remain unchanged. Variants are released; edges and legend entries are locally verified but await publication and exact-main release. Keep #871 open until that gate succeeds.
 
 ## Literal issue acceptance
 
 ### Issue #871
 
 - Source: [Issue #871 reviewer row](https://github.com/tya5/chrona/issues/871)
-- Observed: 2026-10-09
+- Observed: 2026-10-14
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
 | 1 | The View override sets the period-label text. | met | [Diff](https://github.com/tya5/chrona/pull/1253/files): `schemas/view-v0.28.schema.yaml` `periods[].label.text`, `ViewPeriod.label_text`, `render_review._selected_periods`, Spec 06; test `test_a_view_label_text_replaces_the_project_period_title_for_that_view_only` in `tests/integration/test_named_periods.py` (label text `OPENING NIGHT` against the Project title `window`); schema bounds in `test_the_label_text_follows_the_literal_caption_rule`. | — |
 | 2 | Absent an override, the output is byte-identical. | met | [PR body](https://github.com/tya5/chrona/pull/1253): no corpus View declares `label.text` and the unmodified path is unchanged; the 56 existing named-period tests pass unchanged; `test_without_a_label_text_the_output_is_byte_identical`. | — |
-| 3 | Marquee adopts it. | deferred | Adoption is a View edit in [`examples/halcyon-1/views/24-marquee.yaml`](../../../examples/halcyon-1/views/24-marquee.yaml) (add `text: OPENING NIGHT` to the `launch-window` period label), and `examples/**` is reviewer-owned; the schema, contract and Layout path are ready. | [Owner note on the issue](https://github.com/tya5/chrona/issues/871#issuecomment-6068339316): the reviewer adds `label.text` to the Marquee View and regenerates the evidence with derived-sync. |
+| 3 | Marquee adopts it. | met | The [Marquee View](../../../examples/halcyon-1/views/24-marquee.yaml) now declares `text: OPENING NIGHT`; the generated [Scene](../../../examples/halcyon-1/generated/24-marquee.scene.json) and [SVG](../../../examples/halcyon-1/generated/24-marquee.svg) contain `period-label:launch-window` with that text. [Adoption PR #1260](https://github.com/tya5/chrona/pull/1260). | — |
 
 ## Programme-level criteria (optional)
 
-None.
+| Selected follow-up | Evidence | Release state |
+| --- | --- | --- |
+| 1. Period variants | [PR1486](https://github.com/tya5/chrona/pull/1486); 158 focused tests; all92 public Scene/SVG bytes unchanged | Exact READY7a08f0c0 [three-OS release38506567088](https://github.com/tya5/chrona/actions/runs/38506567088) passed |
+| 2. Edge treatments | [Synthetic Scene/SVG tests](../../../tests/integration/test_named_period_edges.py): single/double rules, fit refusal, injective IDs, pattern pigments, outline/none, overlap ranks; [channel tests](../../../tests/unit/chrona/presentation/scene/test_shape_paint_channels.py) | Local implementation; PR and exact-main release pending |
+| 3. Period legend entries | [Public source-legend tests](../../../tests/integration/test_period_legend_source.py): same-role independent identities, source/role pointers, absent background/slot, wording, base/variant catalogue-pattern fidelity | Local implementation; PR and exact-main release pending |
+
+## Architecture review
+
+The [current work record](../../planning/active/issue-871-period-role-variants-2026-10-14.md)
+links the pre-code published contracts. Layout completes geometry and identities;
+Scene consumes transient channel intent without adapter inference. Catalogue ink
+belongs to fill content, not the host outline. Legacy glyph precedence and omitted
+fields remain unchanged. Root independently caught and corrected base/variant
+legend pattern admission; no project-specific branch or example change was added.
+Schema equivalence passes (additive2/equal36; five known baseline-invalid documents).
+Local report staleness awaits the CI-owned disposable snapshot, not hand patches.

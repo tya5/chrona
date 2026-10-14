@@ -14,6 +14,7 @@ from chrona.presentation.table_presentation import BooleanPresencePresentation
 from chrona.presentation.review.v05_content import (
     _column_width, _group_headers, _resource_body, compose_heading, legend_entries, normalize_axis_tiers, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content,
 )
+from chrona.presentation.model.surface_content import SurfaceLegendEntry
 from chrona.presentation.contracts.resources import (
     LegendEntry, ReviewDetailInput, SummaryMetric, SummaryPanelInput, SummaryProfileInput, TableColumn, ViewComparison, ViewGroupHeader, ViewGrouping, ViewInput,
     ViewHeading, ViewLaneLabel, ViewLaneTable, ViewRows, ViewVisibility, ViewWindow, freeze,
@@ -314,7 +315,7 @@ def test_scale_legend_entry_label_prefers_the_entitys_declared_title():
                                      (("bus", "#111111"), ("ground", "#222222")))
     value = normalize_v05_surface_content(projection, project, typed_view(view), summary=EMPTY_SUMMARY,
                                           color_scale=color_scale)
-    legend = dict(value.legend_entries)
+    legend = {entry.role: entry.label for entry in value.legend_entries}
     assert legend["scale:owner:bus"] == "Spacecraft bus"
     assert legend["scale:owner:ground"] == "ground"
 
@@ -960,7 +961,9 @@ def test_legend_entries_are_the_drawn_entries_detail_first_then_one_per_used_sca
 
     entries = legend_entries(detail, project, _scale_projection(), color_scale, closed_days_drawn=True)
 
-    assert entries == (("planned", "Planned"), ("scale:owner:bus", "Spacecraft bus"), ("scale:owner:ground", "ground"))
+    assert entries == (SurfaceLegendEntry("planned", "Planned"),
+                       SurfaceLegendEntry("scale:owner:bus", "Spacecraft bus"),
+                       SurfaceLegendEntry("scale:owner:ground", "ground"))
     drawn = normalize_v05_surface_content(_scale_projection(), project,
                                           typed_view({"body": {"tableColumns": (), "visibility": {}}}),
                                           summary=EMPTY_SUMMARY, color_scale=color_scale, detail=detail)
@@ -969,6 +972,27 @@ def test_legend_entries_are_the_drawn_entries_detail_first_then_one_per_used_sca
 
 def test_without_a_scale_or_a_detail_profile_there_are_no_legend_entries():
     assert legend_entries(None, {}, _scale_projection(), None, closed_days_drawn=True) == ()
+
+
+def test_period_legend_identity_is_source_based_while_visual_role_can_repeat():
+    from types import SimpleNamespace
+
+    periods = (SimpleNamespace(period_id="p1", band_role="period-band:launch"),
+               SimpleNamespace(period_id="p2", band_role="period-band:launch"))
+    projection = SimpleNamespace(periods=periods, items=())
+    detail = ReviewDetailInput((), (), (
+        LegendEntry("period-band:launch", "Launch 1", "p1"),
+        LegendEntry("period-band:launch", "Launch 2", "p2"),
+        LegendEntry("period-band:launch", "All launches"),
+    ), None)
+
+    entries = legend_entries(detail, {}, projection, None, closed_days_drawn=True)
+
+    assert [entry.role for entry in entries] == ["period-band:launch"] * 3
+    assert [entry.text_placement_id for entry in entries] == [
+        "legend-period:p1", "legend-period:p2", "legend:period-band:launch"]
+    assert [entry.swatch_placement_id for entry in entries] == [
+        "legend-period-swatch:p1", "legend-period-swatch:p2", "legend-swatch:period-band:launch"]
 
 
 def test_a_project_without_a_default_calendar_has_no_closed_day():
@@ -986,16 +1010,16 @@ def test_the_closed_day_legend_key_is_listed_only_when_a_closed_day_is_selected(
     detail = ReviewDetailInput((), (), (LegendEntry("planned", "Planned"), LegendEntry("calendar-closed", "Weekend")), None)
     projection = _scale_projection()
     assert legend_entries(detail, {}, projection, None, closed_days_drawn=True) == (
-        ("planned", "Planned"), ("calendar-closed", "Weekend"))
-    assert legend_entries(detail, {}, projection, None, closed_days_drawn=False) == (("planned", "Planned"),)
+        SurfaceLegendEntry("planned", "Planned"), SurfaceLegendEntry("calendar-closed", "Weekend"))
+    assert legend_entries(detail, {}, projection, None, closed_days_drawn=False) == (SurfaceLegendEntry("planned", "Planned"),)
     project = {"project": {"calendar": "standard"}, "calendars": {"standard": {"working_days": ["mon", "tue", "wed", "thu", "fri"]}},
                "relations": (), "annotations": {}}
     view = typed_view({"body": {"tableColumns": (), "visibility": {}}})
     window = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 8)), (), ())
     keyed = normalize_v05_surface_content(window, project, view, summary=EMPTY_SUMMARY, detail=detail)
     bare = normalize_v05_surface_content(window, {"relations": (), "annotations": {}}, view, summary=EMPTY_SUMMARY, detail=detail)
-    assert [role for role, _ in keyed.legend_entries] == ["planned", "calendar-closed"]
-    assert [role for role, _ in bare.legend_entries] == ["planned"]
+    assert [entry.role for entry in keyed.legend_entries] == ["planned", "calendar-closed"]
+    assert [entry.role for entry in bare.legend_entries] == ["planned"]
 
 
 def test_as_of_label_date_forms_day_month_and_day_month_year():

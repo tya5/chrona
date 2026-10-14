@@ -44,6 +44,7 @@ properties:
           properties:
             role: {description: "Semantic presentation role.", type: string, minLength: 1, maxLength: 4096}
             label: {description: "Human-readable role label.", type: string, minLength: 1, maxLength: 4096}
+            sourceRef: {description: "Optional stable source identity for a period legend entry.", type: string, minLength: 1, maxLength: 4096}
       observations:
         type: object
         description: "Tabular observation detail with declared columns and rows."

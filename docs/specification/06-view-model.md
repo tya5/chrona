@@ -244,7 +244,22 @@ is not changed by this rule.
 
 A `table-timeline` View MAY select named Project periods (Spec 05 §12.1) with `periods: [{id}]`, each drawn as a band across the plot rows over the period's dates. The selection owns only which periods are shown and in what order (the order is the drawing order); the period's dates are a Project fact and its colour, stroke, opacity and pattern are Theme role `period-band` (Spec 07), its geometry Layout's (Spec 50 §3.4). The band is clipped to the View window and never extends it: a period with no extent left draws nothing and is recorded as the Scene diagnostic `I_LAYOUT_PERIOD_OUTSIDE_WINDOW:<id>`. An id the Project does not declare is `E_VIEW_PERIOD_UNKNOWN` (pointer `/body/periods/<i>/id`; the message lists the declared ids) and a repeated id is `E_VIEW_PERIOD_DUPLICATE`; nothing is skipped silently. The member is optional and additive in `chrona/view/v0.28`; a `dependency-network` View, which has no timeline, MUST NOT declare it. A View without `periods` renders as before.
 
+A selected period MAY also declare `variant`, a `common-v0.1` `slug`. It chooses the paired Theme roles `period-band:<variant>` and, when a label is consumed, `period-label:<variant>` (Specification 07). The variant is View-local presentation intent, not a Project period identifier or a Theme lookup fallback. Without it, the existing unsuffixed roles and output apply. The optional member is additive to the current View version under Specification 56 §3.2.
+
 A selected period may carry `label: {placement, overflow?, text?}`. `placement` is `top` (at the plot's top edge), `bottom` (at its bottom edge) or `inside` (centred in the band); the label is the View's `text` override when it declares one (#871; one to eighty characters, shown for this View only), else the period's `title` (its identifier when absent), centred on the band's visible extent. `overflow` is `suppress` (omit the label and record `W_LAYOUT_LABEL_SUPPRESSED`) or `visible-overflow` (the default: place it at the preferred position and record `W_LAYOUT_LABEL_OVERFLOW`) when no collision-free position exists; a label never silently overprints a mark. Absent `label` draws the band alone.
+
+A Detail Profile legend entry for a period MAY declare `sourceRef` as that
+Project period's id. The binding is valid only when the same period is selected
+by this View, exactly once, and the entry `role` equals that period's selected
+band role (`period-band` or `period-band:<variant>`). Unknown, unselected,
+ambiguous, or duplicate sources fail with `E_REVIEW_LEGEND_PERIOD_SOURCE` at
+`/body/legend/<index>/sourceRef`; a mismatched role is
+`E_REVIEW_LEGEND_PERIOD_ROLE` at `/body/legend/<index>/role`, both attributed to
+the Detail Profile rather than the View. They are not ordinary unsourced keys.
+The source identifies
+the Project period, while the role controls visual selection. Existing
+`wording.legend` remains role-wide and therefore overrides the labels of all
+entries with that role, including source-bound period entries.
 
 ### 7.2 Axis band fills (#490)
 

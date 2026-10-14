@@ -8,6 +8,7 @@ import pytest
 
 from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
 from chrona.presentation.model.theme_inheritance import resolve_draft_theme
+from chrona.presentation.model.theme_role_consumers import unread_roles
 from chrona.presentation.scene.capabilities import theme_role_contract, theme_role_property_consumer
 from chrona.resources import safe_load
 from tests.support.context_references import reference_path
@@ -55,6 +56,7 @@ def _resolve(theme):
     ("fiscalAxis", "annotationContainer"), ("customLegend", "markHeight"),
     ("group:team-a", "stroke"), ("group:bad.key", "fill"),
     ("group:team-a", "fontSize"),
+    ("period-band:frost", "markHeight"),
     ("dependency", "gradientAngle"), ("text", "shadowBlur"),
     ("icon-mark", "gradientAngle"), ("group-header-band", "annotationContainer"),
 ])
@@ -131,6 +133,12 @@ def test_annotation_note_text_admits_required_treatment_to_scene_contrast_policy
     assert contract.owner_of("contrastTreatment") == "Theme contrast policy"
     assert theme_role_property_consumer("annotation-note-text", "contrastTreatment") == (
         "Scene state Text and contrast policy")
+
+
+def test_a_registered_period_variant_suffix_is_not_reported_as_an_unread_role():
+    body = {"roles": {"period-band:frost": {"backgroundTreatment": "fill"}},
+            "colorBindings": {"period-band:frost.fill": "accent"}}
+    assert unread_roles(body, [{"periods": [{"variant": "frost"}]}]) == frozenset()
 
 
 def test_every_public_theme_declaration_and_scene_paint_role_has_a_consumer():

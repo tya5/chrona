@@ -200,6 +200,29 @@ class AxisTier:
 
 
 @dataclass(frozen=True)
+class SurfaceLegendEntry:
+    """One measured-and-placed legend entry, with identity independent of its visual role."""
+
+    role: str
+    label: str
+    source_ref: str | None = None
+
+    @property
+    def source_identity(self) -> str:
+        return self.source_ref if self.source_ref is not None else self.role
+
+    @property
+    def text_placement_id(self) -> str:
+        return (f"legend-period:{self.source_ref}" if self.source_ref is not None
+                else f"legend:{self.role}")
+
+    @property
+    def swatch_placement_id(self) -> str:
+        return (f"legend-period-swatch:{self.source_ref}" if self.source_ref is not None
+                else f"legend-swatch:{self.role}")
+
+
+@dataclass(frozen=True)
 class SurfaceContentInput:
     """Selected presentation facts normalized once before Scene construction."""
 
@@ -222,7 +245,7 @@ class SurfaceContentInput:
     calendar_closed: tuple[date, ...]
     calendar_exceptions: tuple[date, ...]
     notes: tuple[tuple[str, str], ...]
-    legend_entries: tuple[tuple[str, str], ...]
+    legend_entries: tuple[SurfaceLegendEntry, ...]
     coverage_text: str
     summary: SummaryContent
     template_values: tuple[tuple[str, str], ...]

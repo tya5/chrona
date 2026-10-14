@@ -353,6 +353,7 @@ class ViewPeriod:
     label_overflow: str = "visible-overflow"
     label_text: str | None = None
     label_template: str | None = None
+    variant: str | None = None
 
 
 @dataclass(frozen=True)
@@ -429,6 +430,7 @@ class SummaryProfileInput:
 class LegendEntry:
     role: str
     label: str
+    source_ref: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1063,7 +1065,8 @@ def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
                                str(item["label"]["placement"]) if "label" in item else None,
                                str(item["label"].get("overflow", "visible-overflow")) if "label" in item else "visible-overflow",
                                str(item["label"]["text"]) if "label" in item and "text" in item["label"] else None,
-                               str(item["label"]["template"]) if "label" in item and "template" in item["label"] else None)
+                               str(item["label"]["template"]) if "label" in item and "template" in item["label"] else None,
+                               str(item["variant"]) if "variant" in item else None)
                     for item in raw)
     for index, period in enumerate(periods):
         if period.label_text is not None and period.label_template is not None:
@@ -1371,7 +1374,9 @@ def _summary_input(body: FrozenDict) -> SummaryProfileInput:
 
 def _review_detail_input(body: FrozenDict) -> ReviewDetailInput:
     return ReviewDetailInput(tuple(body.get("groupDetails", ())), tuple(str(item) for item in body.get("milestones", ())),
-                             tuple(LegendEntry(str(item["role"]), str(item["label"])) for item in body.get("legend", ())),
+                             tuple(LegendEntry(str(item["role"]), str(item["label"]),
+                                               str(item["sourceRef"]) if "sourceRef" in item else None)
+                                   for item in body.get("legend", ())),
                              body.get("observations"))
 
 
