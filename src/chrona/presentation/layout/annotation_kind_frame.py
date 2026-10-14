@@ -36,6 +36,7 @@ class KindHeaderLine:
     font_size: float
     leading: float
     width: float
+    wrap_lines: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -61,6 +62,7 @@ class KindFrameMeasure:
     bar_bleed: str = "none"
     stamp_placement: str = "column"
     heading_lines: tuple[str, ...] = ()
+    bar_end_reserve: float = 0.0
 
     @property
     def stamp_at_start(self) -> bool:
@@ -153,26 +155,68 @@ def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame:
         tuple(lines), bar, padding_inline, padding_block, header_block, header_inline,
         frame.bar_role if bar else None,
         stamp_ref, frame.stamp_corner if stamp_ref is not None else None, stamp_inline, stamp_block, stamp_column,
-        heading, bar_block, bar_inline, frame.bar_width, frame.bar_bleed, frame.stamp_placement)
+        heading, bar_block, bar_inline, frame.bar_width, frame.bar_bleed, frame.stamp_placement,
+        bar_end_reserve=(stamp_inline + STAMP_GAP_EM * text_size
+                         if stamp_ref is not None and frame.stamp_placement == "bar-end" else 0.0))
 
 
-def complete_kind_heading(measure: KindFrameMeasure, *, available_inline: float, may_wrap: bool,
-                          theme_tokens: ThemeTokenView, metric_for: Callable[[str], Any]) -> KindFrameMeasure:
-    """Close one filled variant without mutating its natural heading measurement."""
-    heading = measure.heading
-    if heading is None or not may_wrap:
+def complete_kind_frame(measure: KindFrameMeasure, *, available_inline: float, may_wrap: bool,
+                        theme_tokens: ThemeTokenView, metric_for: Callable[[str], Any]) -> KindFrameMeasure:
+    """Wrap each kind-header role within a filled note without changing natural measurements."""
+    if not may_wrap:
         return measure
-    treatment = theme_tokens.text_treatment(heading.role)
-    metrics = metric_for(heading.role)
-    lines = wrap_text(heading.content, available_inline=available_inline,
-                      font_size=heading.font_size, font_metrics=metrics,
-                      letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform)
-    width = max(measure_text_width(line, font_size=heading.font_size, font_metrics=metrics,
-                                  letter_spacing=float(treatment.letter_spacing),
-                                  text_transform=treatment.transform) for line in lines)
-    return replace(measure, heading=replace(heading, width=width), heading_lines=lines,
-                   header_inline=max(measure.bar_inline, width),
-                   header_block=measure.bar_block + heading.font_size * heading.leading * len(lines))
+    label_inline = available_inline - (2 * measure.bar_padding_inline if measure.bar else 0.0)
+    if measure.stamp_ref is not None and measure.stamp_placement == "bar-end":
+        label_inline -= measure.bar_end_reserve
+    label_inline = max(1.0, label_inline)
+    lines: list[KindHeaderLine] = []
+    for line in measure.lines:
+        treatment = theme_tokens.text_treatment(line.role)
+        metrics = metric_for(line.role)
+        measure_width = lambda content: measure_text_width(
+            content, font_size=line.font_size, font_metrics=metrics,
+            letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform)
+        # Do not normalize a fitting source string through wrap_text: that helper may
+        # discard breakable spaces even when no line break is needed.
+        wrapped = ((line.content,) if measure_width(line.content) <= label_inline else
+                   wrap_text(line.content, available_inline=label_inline,
+                             font_size=line.font_size, font_metrics=metrics,
+                             letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform))
+        width = max(measure_text_width(item, font_size=line.font_size, font_metrics=metrics,
+                                       letter_spacing=float(treatment.letter_spacing),
+                                       text_transform=treatment.transform) for item in wrapped)
+        lines.append(replace(line, width=width, wrap_lines=wrapped))
+
+    bar_block = (geometry_sum(line.font_size * line.leading * len(line.wrap_lines or (line.content,))
+                              for line in lines) + 2 * measure.bar_padding_block) if lines else 0.0
+    bar_inline = (max(line.width for line in lines) + 2 * measure.bar_padding_inline) if lines else 0.0
+    if measure.stamp_ref is not None and measure.stamp_placement == "bar-end":
+        bar_inline += measure.bar_end_reserve
+        bar_block = max(bar_block, measure.stamp_block)
+
+    heading = measure.heading
+    heading_lines: tuple[str, ...] = ()
+    heading_width = heading.width if heading is not None else 0.0
+    heading_block = heading.font_size * heading.leading if heading is not None else 0.0
+    if heading is not None:
+        treatment = theme_tokens.text_treatment(heading.role)
+        metrics = metric_for(heading.role)
+        heading_width = measure_text_width(heading.content, font_size=heading.font_size, font_metrics=metrics,
+                                           letter_spacing=float(treatment.letter_spacing),
+                                           text_transform=treatment.transform)
+        heading_lines = ((heading.content,) if heading_width <= available_inline else
+                         wrap_text(heading.content, available_inline=available_inline,
+                                   font_size=heading.font_size, font_metrics=metrics,
+                                   letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform))
+        heading_width = max(measure_text_width(item, font_size=heading.font_size, font_metrics=metrics,
+                                               letter_spacing=float(treatment.letter_spacing),
+                                               text_transform=treatment.transform) for item in heading_lines)
+        heading_block *= len(heading_lines)
+        heading = replace(heading, width=heading_width)
+
+    return replace(measure, lines=tuple(lines), heading=heading, heading_lines=heading_lines,
+                   bar_block=bar_block, bar_inline=bar_inline,
+                   header_inline=max(bar_inline, heading_width), header_block=bar_block + heading_block)
 
 
 def place_kind_frame(measure: KindFrameMeasure, *, annotation_id: str, presentation: AnnotationPresentation,
@@ -230,13 +274,14 @@ def place_kind_frame(measure: KindFrameMeasure, *, annotation_id: str, presentat
     for index, line in enumerate(measure.lines):
         semantic_id = "annotationKindLabel" if index == 0 else "annotationKindSecondary"
         placed = place_text(placement_id=f"annotation-kind-text:{annotation_id}:{index}", source_ref=annotation_id,
-                            content=line.content, inline=label_x + measure.bar_padding_inline,
+                            content=line.content, lines=line.wrap_lines or None,
+                            inline=label_x + measure.bar_padding_inline,
                             baseline_block=line_top + line.font_size, typography_role=line.role,
                             theme_tokens=theme_tokens, font_metrics=font_metrics,
                             collision_region="annotations", collision_domain=CollisionDomain(annotation_slot, "content"),
                             semantic_id=semantic_id, annotation=presentation)
         text.append(replace(placed, paint_order=paint_order + 1))
-        line_top += line.font_size * line.leading
+        line_top += line.font_size * line.leading * len(line.wrap_lines or (line.content,))
     if measure.heading is not None:
         line = measure.heading
         placed = place_text(placement_id=f"annotation-heading:{annotation_id}", source_ref=annotation_id,
