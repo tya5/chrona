@@ -21,6 +21,11 @@ runtime dependency, private font cache mutation, schema or examples edits.
 Current-head public snapshot, labeled native compiler CI and containing-review
 exact-main three-OS release are still required before closure. The existing
 typesetter workflow retains sources, SVGs, PDFs, PNGs and numeric measurements.
+Initial PR CI38502480870 failed only the two viewer-fit raw-SVG capture cases:
+their test double lacked the now-required public `font_map` argument. It now
+asserts the closed map while retaining the raw-input check; all33 viewer-fit
+tests pass. The derived-ready failure followed those failed shards. Native
+compiler38502480878 succeeded; current-head checks remain required.
 
 ## Literal issue acceptance
 
