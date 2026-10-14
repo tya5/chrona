@@ -65,6 +65,11 @@ def test_scene_perceptibility_runs_once_after_generated_evidence_integrity():
     assert ids.count("presentation-contrast") == 1
     assert ids.count("presentation-font-identity") == 1
     assert ids.count("example-reachability") == 1
+    assert ids.count("design-gallery") == 1
+    gallery = next(item for item in runner.CHECKS if item.check_id == "design-gallery")
+    assert gallery.argv[1:] == (str(runner.REPOSITORY / "tools/render_design_gallery.py"),
+                                "--root", str(runner.REPOSITORY), "--check")
+    assert ids.index("example-inventory") < ids.index("design-gallery") < ids.index("example-reachability")
     assert (ids.index("example-inventory") < ids.index("example-reachability") < ids.index("svg-explicit-fill")
             < ids.index("scene-perceptibility")
             < ids.index("legend-truncation")
