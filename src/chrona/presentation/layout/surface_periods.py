@@ -6,12 +6,11 @@ from decimal import Decimal
 from typing import Any
 
 from chrona.presentation.layout.labels import LabelRect, LabelRequest
-from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_base import SurfaceBaseGeometry
 from chrona.presentation.layout.surface_geometry import coordinate_for_date, extend_to_plot_edges
 from chrona.presentation.layout.surface_quality import CollisionDomain, ShapePlacement
 from chrona.presentation.model.projection import ReviewPeriod
-from chrona.presentation.model.semantic_registry import semantic_binding
 
 # Label placement to the shared label engine's side, about an anchor on the plot edge or the band itself.
 _LABEL_SIDE = {"top": "below", "bottom": "above", "inside": "inside"}
@@ -41,7 +40,6 @@ def compose_period_bands(*, base: SurfaceBaseGeometry, theme_tokens: Any, period
     """
     if not periods:
         return PeriodBandBatch((), ())
-    treatment, paint_order = theme_tokens.background(semantic_binding("periodBand").scene_role)
     window_start, window_end = window
     plot = base.plot
     plot_left, plot_right = float(plot.inline), float(plot.inline + plot.inline_size)
@@ -49,6 +47,8 @@ def compose_period_bands(*, base: SurfaceBaseGeometry, theme_tokens: Any, period
     extents: list[tuple[ReviewPeriod, float, float]] = []
     diagnostics: list[str] = []
     for period in periods:
+        # The selected role is required before clipping, as for the unsuffixed role.
+        treatment, paint_order = theme_tokens.background(period.band_role)
         start, end = max(period.start, window_start), min(period.end, window_end)
         left = right = 0.0
         if start < end:
@@ -65,12 +65,13 @@ def compose_period_bands(*, base: SurfaceBaseGeometry, theme_tokens: Any, period
         shapes.append(ShapePlacement(
             f"period-band:{period.period_id}", period.period_id, "Rect",
             Rect(Decimal(str(left)), plot.block, Decimal(str(right - left)), plot.block_size),
-            slot_id="timeline", paint_order=paint_order, semantic_id="periodBand"))
+            slot_id="timeline", paint_order=paint_order, semantic_id="periodBand",
+            visual_role=period.band_role))
     return PeriodBandBatch(tuple(shapes), tuple(diagnostics), tuple(extents))
 
 
 def period_label_requests(extents: tuple[tuple[ReviewPeriod, float, float], ...],
-                          plot: tuple[float, float, float, float]) -> tuple[LabelRequest, ...]:
+                          plot: tuple[float, float, float, float], theme_tokens: Any) -> tuple[LabelRequest, ...]:
     """One label request per labelled period, for the shared label engine.
 
     ``top`` and ``bottom`` anchor a zero-height strip on the plot edge so the engine's ``below`` and ``above``
@@ -82,11 +83,13 @@ def period_label_requests(extents: tuple[tuple[ReviewPeriod, float, float], ...]
     for period, band_left, band_right in extents:
         if period.label_placement is None:
             continue
+        if not theme_tokens.has_role(period.label_role):
+            raise LayoutError("E_THEME_ROLE_REQUIRED", f"/body/roles/{period.label_role}")
         anchor = LabelRect(band_left, top + (height if period.label_placement == "bottom" else 0.0),
                            band_right - band_left, height if period.label_placement == "inside" else 0.0)
         requests.append(LabelRequest(
             f"period-label:{period.period_id}", period.period_id, period.title, anchor,
-            (_LABEL_SIDE[period.label_placement],), "period-label", "period-label",
+            (_LABEL_SIDE[period.label_placement],), period.label_role, period.label_role,
             CollisionDomain("timeline", "overlay"), period.label_overflow,
             bounds=LabelRect(left, top, width, height), semantic_id="periodLabel"))
     return tuple(requests)

@@ -14,7 +14,7 @@ from chrona.presentation.layout.pattern_placement import PatternedPlacement
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, ContrastClass, PrimitiveKind, contrast_binding, contrast_bindings,
-    inside_member_label_semantic, semantic_binding)
+    inside_member_label_semantic, period_variant_role_base, semantic_binding)
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.info_diagnostics import PaintOmission
@@ -201,11 +201,13 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
                                      gradient_bounds=(0.0, 0.0, *viewport))
     except ScenePaintError as error:
         raise SceneBuildError(error.diagnostic_id, error.path, error.detail) from error
+    decoration_roles = [binding.scene_role for binding in contrast_bindings(ContrastClass.DECORATION)]
+    decoration_roles.extend(role for role in tokens.resolved_theme["body"]["roles"]
+                            if period_variant_role_base(role) == "period-band")
     absent_decorations = tuple(
-        DecorationDisposition(binding.scene_role, "absent")
-        for binding in contrast_bindings(ContrastClass.DECORATION)
-        if (background := tokens.optional_background(binding.scene_role)) is not None
-        and background[0] == "none"
+        DecorationDisposition(role, "absent")
+        for role in dict.fromkeys(decoration_roles)
+        if (background := tokens.optional_background(role)) is not None and background[0] == "none"
     )
     # An omitted as-of cone (#890) has no primitive left to carry paint, but its omission is still reported.
     completed = tuple(item for item in resolved if item[0] is not None)
@@ -631,13 +633,13 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         emit_semantic_text(heading_id, "slotHeading", heading_paint)
     for period in projection.periods:
         if f"period-label:{period.period_id}" in layout_text:
-            emit_semantic_text(f"period-label:{period.period_id}", "periodLabel")
+            emit_semantic_text(f"period-label:{period.period_id}", "periodLabel", period.label_role)
     for placed in placed_surface.shapes:
         if placed.semantic_id in {"groupBand", "rowBand", "groupHeaderBand", "groupHeaderStrip", "groupTab", "calendarClosed", "calendarException", "periodBand"}:
             binding = semantic_binding(placed.semantic_id)
             bounds = (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size))
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "decoration",
-                                             binding.purpose, binding.scene_role, bounds, slot_id=placed.slot_id,
+                                             binding.purpose, placed.visual_role or binding.scene_role, bounds, slot_id=placed.slot_id,
                                              paint_order=placed.paint_order))
             if placed.semantic_id == "rowBand" and row_subjects.get(placed.source_ref):
                 primitive_provenance.append(PrimitiveProvenance(

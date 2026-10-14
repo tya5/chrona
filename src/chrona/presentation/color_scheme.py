@@ -6,7 +6,7 @@ from re import fullmatch
 from typing import Any, Mapping
 
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, kind_header
-from chrona.presentation.model.semantic_registry import ContrastClass, contrast_bindings
+from chrona.presentation.model.semantic_registry import ContrastClass, contrast_bindings, period_variant_role_base
 from chrona.presentation.model.theme_tokens import ThemeTokenError, checked_horizontal_scale
 from chrona.presentation.scene.capabilities import theme_role_property_consumer
 from chrona.presentation.scene.contrast_policy import POLICY_MEMBERS, POLICY_SEVERITIES
@@ -102,8 +102,10 @@ def _state_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: M
     colour from the completed Theme role: Scheme bindings must not sidestep a
     role's author-visible contrast declaration.
     """
-    for binding in contrast_bindings(ContrastClass.STATE_TEXT):
-        role = binding.theme_role
+    roles = [binding.theme_role for binding in contrast_bindings(ContrastClass.STATE_TEXT)]
+    roles.extend(sorted(role for role in set(declared_roles) | set(resolved_roles)
+                        if period_variant_role_base(role) == "period-label"))
+    for role in roles:
         if role in _KIND_TEXT_ROLES:
             continue
         path = f"/body/roles/{role}"
