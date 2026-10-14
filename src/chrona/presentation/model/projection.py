@@ -310,7 +310,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     elif not explicit:
         _order(selected, view)
     snapshots = _snapshot_items(snapshot_project, snapshot_placements, snapshot_analysis)
-    if view.comparison.baseline_marks in {"ghost", "ghost-when-changed"} and not explicit and (view.comparison.baseline != "snapshot" or not snapshots):
+    # `ghost-when-changed` without a snapshot baseline draws no ghost and is not an error (#429); `ghost` still needs one.
+    if view.comparison.baseline_marks == "ghost" and not explicit and (view.comparison.baseline != "snapshot" or not snapshots):
         raise ValueError("E_REVIEW_BASELINE_MARKS_SNAPSHOT: comparison.baselineMarks needs comparison.baseline snapshot "
                          "and a snapshot Project in the Render Context")
     scenario_items = {scenario_id: _snapshot_items(value[0], value[1], None, source_kind="scenario")

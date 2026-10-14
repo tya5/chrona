@@ -70,7 +70,8 @@ def _resolved_builtin_view(entry: dict) -> tuple[ViewContract, dict]:
 
 
 def test_all_packaged_axis_views_declare_thinning_and_automatic_forms():
-    paths = sorted((ROOT / "src/chrona/resources/presets/bundles").glob("*/view.yaml"))
+    paths = sorted(path for path in (ROOT / "src/chrona/resources/presets/bundles").glob("*/view.yaml")
+                   if path.parent.name != "design-default")  # its axis is the selected design's `viewDefaults` (#429)
     paths.append(ROOT / "src/chrona/resources/presets/bundles/editorial/view-lanes.yaml")
     assert len(paths) == 9
 
@@ -82,6 +83,8 @@ def test_every_builtin_preset_resolves_to_the_declared_auto_axis_policy():
     entries = preset_library._library()
     assert entries
     for entry in entries:
+        if entry["members"]["layout"]["sourceRoot"].startswith("designs/"):
+            continue  # a packaged design owns its axis in its Layout profile's `viewDefaults` (#429)
         contract, source = _resolved_builtin_view(entry)
         _assert_axis_policy(source, source=entry["id"])
         axis = contract.view.axis

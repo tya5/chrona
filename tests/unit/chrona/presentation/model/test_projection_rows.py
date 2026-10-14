@@ -647,6 +647,10 @@ def test_ghost_when_changed_draws_a_ghost_only_where_the_baseline_moved():
     assert [item.item_id for item in {row.row_id: row for row in always.rows}["t1"].items] == ["t1", "snapshot:t1"]
 
 
-def test_ghost_when_changed_also_needs_a_snapshot_baseline():
-    with pytest.raises(ValueError, match="E_REVIEW_BASELINE_MARKS_SNAPSHOT"):
-        build_review_projection(_GHOST_PROJECT, _GHOST_PLACED, _ghost_view(marks="ghost-when-changed", baseline="primary"), None)
+def test_ghost_when_changed_without_a_snapshot_baseline_draws_no_ghost_and_no_error():
+    """#429: a draft with no baseline gets the design default without a diagnostic; `ghost` still errors."""
+    for projection in (
+        build_review_projection(_GHOST_PROJECT, _GHOST_PLACED, _ghost_view(marks="ghost-when-changed", baseline="primary"), None),
+        build_review_projection(_GHOST_PROJECT, _GHOST_PLACED, _ghost_view(marks="ghost-when-changed"), None),
+    ):
+        assert all(len(row.items) == 1 and row.items[0].track == "stacked" for row in projection.rows)

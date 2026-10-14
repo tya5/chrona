@@ -624,10 +624,15 @@ def _margin_days_preset(tmp_path, monkeypatch, preset_id):
     view_path = preset / "view.yaml"
     view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
     view["body"]["window"] = {"mode": "selected-planned", "marginDays": 7}
-    for tier in view["body"]["axis"]["tiers"]:
+    layout_path = preset / "layout.yaml"
+    layout = yaml.safe_load(layout_path.read_text(encoding="utf-8"))
+    # A packaged design keeps its axis in the Layout profile's `viewDefaults`, not in the View (#429).
+    axis = view["body"]["axis"] if "axis" in view["body"] else layout["viewDefaults"]["axis"]
+    for tier in axis["tiers"]:
         if tier.get("unit") == "month" and tier.get("role") == "labels":
             tier["label"]["overflow"] = "thin-with-record"
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+    layout_path.write_text(yaml.safe_dump(layout, sort_keys=False, allow_unicode=True), encoding="utf-8")
     return preset
 
 

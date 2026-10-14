@@ -1,0 +1,70 @@
+version: chrona/view/v0.28
+kind: view
+id: chrona-preset-design-default
+# Generic connector for the packaged shared designs (designs/<name>). It names no project field, group order or
+# wording; the design members (axis, column styles, annotation placement, grouping presentation, decoration) come
+# from the selected Layout profile's `viewDefaults`, and a member declared here replaces the design's.
+body:
+  surface: table-timeline
+  figures:
+  - {id: selected-count, kind: count, source: selected}
+  - {id: group-count, kind: count, source: groups}
+  - {id: note-count, kind: count, source: placedNotes}
+  selection:
+    include:
+      types:
+      - span
+      - point
+  grouping:
+    by: objectType
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: selected-planned
+  comparison:
+    baseline: primary
+    actual: optional
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - missingActual
+    - unmatchedActual
+  visibility:
+    labels:
+      placement: table
+      content:
+      - title
+      - finishDelta
+      side: end
+      overflow: suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations:
+      mode: presentation
+      marker: none
+  markers:
+  - kind: asOf
+    source: actual
+    label: TODAY
+  tableColumns:
+  - id: Task
+    source: title
+    missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
+  - id: Δ finish
+    source:
+      facet: finishDelta
+    missing: blank
+    align: end
+    width: content
+    headerOrientation: horizontal
+  rows:
+    mode: automatic

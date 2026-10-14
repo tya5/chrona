@@ -90,7 +90,8 @@ def test_declared_public_v03_view_validates(path: Path, effective_view: Mapping[
 
 def test_lane_resource_migration_inventory_and_editorial_mirror():
     library = yaml.safe_load((ROOT / "src/chrona/resources/presets/library.yaml").read_text(encoding="utf-8"))
-    entries = {entry["id"]: entry for entry in library["entries"] if entry["id"] != "chrona-default-draft"}  # the default has automatic rows, below
+    entries = {entry["id"]: entry for entry in library["entries"] if entry["id"] != "chrona-default-draft"
+               and not entry["members"]["layout"]["sourceRoot"].startswith("designs/")}  # the default has automatic rows, below; packaged designs are table Views (#429)
     assert len(entries) == 7
     for preset_id, entry in entries.items():
         member = entry["members"]["view"]
