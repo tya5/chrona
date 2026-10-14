@@ -96,6 +96,7 @@ def resolve_theme_font_stacks(theme: Mapping[str, Any], descriptor: dict[str, An
     for role, treatment in sorted(pending.items()):
         families, weight = named_families(treatment.family), treatment.weight
         found: list[tuple[FontMetrics, FontFile | None]] = []
+        skipped: list[str] = []
         for family in families:
             key = (family.casefold(), weight)
             if key in declared.metrics:
@@ -107,7 +108,11 @@ def resolve_theme_font_stacks(theme: Mapping[str, Any], descriptor: dict[str, An
                 try:
                     found.append(_installed_metric(face))
                 except (OSError, ValueError, FontImportError, FontMetricsError):
+                    if not found:
+                        skipped.append(family)
                     continue  # an unreadable or unmeasurable installed face is skipped, as if it were not installed
+            elif not found:
+                skipped.append(family)
         packaged_metric, packaged_file = _packaged(weight)
         fell_back = not found
         stack = [item[0] for item in found]
@@ -116,7 +121,13 @@ def resolve_theme_font_stacks(theme: Mapping[str, Any], descriptor: dict[str, An
         chained = stack[-1]
         for item in reversed(stack[:-1]):
             chained = replace(item, substitute_metrics=chained)
+        tried = tuple(families) + (() if PACKAGED_FAMILY.casefold() in {name.casefold() for name in families}
+                                   else (PACKAGED_FAMILY,))
+        chained = replace(chained, tried_families=tried)
         metrics[(treatment.family.strip().casefold() if "," in treatment.family else families[0].casefold(), weight)] = chained
+        # Completed text carries the selected face name; viewer-fit must resolve
+        # that name too, even when earlier requested families were unavailable.
+        metrics.setdefault((chained.family.casefold(), weight), chained)
         if families and "," in treatment.family:
             metrics.setdefault((families[0].casefold(), weight), chained)
         extra_files.extend(item[1] for item in found if item[1] is not None)
@@ -126,6 +137,9 @@ def resolve_theme_font_stacks(theme: Mapping[str, Any], descriptor: dict[str, An
             notes.append(f"W_FONT_FALLBACK_PACKAGED:role={role};requested={treatment.family};face={packaged_metric.family}")
         else:
             notes.append(f"I_FONT_ROLE_RESOLVED:role={role};requested={treatment.family};face={chained.family}")
+            if skipped:
+                notes.append(f"W_FONT_FAMILY_SKIPPED:role={role};requested={treatment.family};"
+                             f"skipped={', '.join(skipped)};face={chained.family}")
         try:
             chained.ensure_numeric_spacing(treatment.numeric_spacing)
         except FontMetricsError as error:

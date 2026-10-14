@@ -89,6 +89,7 @@ class FontMetrics:
     numeric_advances: dict[str, dict[int, int]] | None
     substitute_metrics: "FontMetrics | None" = None
     substitutions: set[FontGlyphSubstitution] = field(default_factory=set, compare=False, repr=False)
+    tried_families: tuple[str, ...] = ()
 
     @property
     def content_identity(self) -> str:
@@ -127,7 +128,7 @@ class FontMetrics:
                     continue
                 raise FontMetricsError(
                     "E_FONT_GLYPH_UNAVAILABLE",
-                    f"family={_shown(self.family)} weight={self.weight} codepoint=U+{codepoint:04X} ({character!r}) has no advance in the face stack [{self.face_names()}]; text_length={len(value)}",
+                    f"family={_shown(self.family)} weight={self.weight} codepoint=U+{codepoint:04X} ({character!r}) has no advance in the face stack [{', '.join(self.tried_families) or self.face_names()}]; text_length={len(value)}",
                 )
             total += advance
         return total / self.units_per_em * size + max(0, len(value) - 1) * letter_spacing

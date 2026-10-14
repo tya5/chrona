@@ -13,6 +13,14 @@ def test_stack_overflow_warning_explains_completed_row_expansion():
                              "diagnostic": "W_LAYOUT_MARK_STACK_OVERFLOW:extent=24; track=16"})
     assert "comparison stack" in text.cause
     assert "row space was expanded" in text.cause
+
+
+def test_skipped_font_warning_names_requested_missing_and_selected_families():
+    text = describe_warning({"code": "W_FONT_FAMILY_SKIPPED", "diagnostic":
+        "W_FONT_FAMILY_SKIPPED:role=heading;requested=Missing Family, Noto Sans;"
+        "skipped=Missing Family;face=Noto Sans"})
+    assert "Missing Family" in text.cause and "Noto Sans" in text.cause
+    assert "unavailable" in text.cause and text.subject == "heading"
 from chrona.usecases.failure_report import StableFailure, diagnostic_record, report_failure
 from tools.diagnostic_inventory import discover
 
