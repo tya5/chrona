@@ -35,25 +35,32 @@ def _resource(value):
 def test_finds_complete_project_id_tokens_and_phrases_but_not_substrings():
     findings = purity.audit(_project(), [("theme.yaml", _resource({
         "values": {
-            "launch-window": {"type": "text", "value": "Launch Window"},
+            "launch-window": {"type": "text", "value": "Launch Window aster-work launch-window"},
             "unrelated": {"type": "text", "value": "launch-windows"},
             "longer": {"type": "text", "value": "aster-workflow"},
-            "paint-candidate": {"type": "text", "value": "group:launch-window.fill"},
+            "paint-candidate": {"type": "paint", "value": "group:launch-window.fill"},
+            "user-text": {"type": "text", "value": "launch-window"},
             "risk-note": {"type": "text", "value": "0.35"},
+            "token-only": {"type": "number", "value": "launch-window"},
         },
-        "opaque-paint": {"opacity": 0.35, "strokeWidth": 2, "date": "2027-10-13"},
+        "opaque-paint": {"opacity": 0.35, "strokeWidth": 2, "date": "2027-10-13",
+                         "fill": "group:launch-window.fill"},
     }))])
 
     observed = {(item["pointer"], item["project_fact"], item["match_class"], item["location"])
                 for item in findings}
-    assert ("/body/values/launch-window", "identifier:/objects/launch-window",
-            "identifier-candidate", "key") in observed
     assert ("/body/values/launch-window/value", "wording:/objects/launch-window/title",
             "wording-candidate", "value") in observed
-    assert ("/body/values/paint-candidate/value", "identifier:/objects/launch-window",
+    assert ("/body/values/launch-window/value", "identifier:/project/id",
             "identifier-candidate", "value") in observed
-    assert ("/body/values/risk-note", "identifier:/annotations/0/id",
-            "identifier-candidate", "key") in observed
+    assert ("/body/values/launch-window/value", "identifier:/objects/launch-window",
+            "identifier-candidate", "value") in observed
+    assert ("/body/values/paint-candidate/value", "identifier:/objects/launch-window",
+            "identifier-candidate", "value") not in observed
+    assert ("/body/values/user-text/value", "identifier:/objects/launch-window",
+            "identifier-candidate", "value") in observed
+    assert not any(item["pointer"].endswith("/token-only/value") for item in findings)
+    assert not any(item["pointer"].endswith("/risk-note") for item in findings)
     assert not any(item["pointer"].startswith("/body/opaque-paint") for item in findings)
     assert not any(item["pointer"].endswith("/unrelated/value") for item in findings)
     assert not any(item["pointer"].endswith("/longer/value") for item in findings)
@@ -63,20 +70,20 @@ def test_finds_complete_project_id_tokens_and_phrases_but_not_substrings():
 def test_generic_slots_are_masked_but_escaped_braces_are_not():
     resource = _resource({
         "heading": "Meanwhile, in the {title}: {project} — {ordinal}",
-        "marked": "ACT {ordinal|group-ordinal} · {title}",
-        "named-figure": "ACT {figure:launch-window}",
-        "escaped": "{{launch-window}}",
-        "embedded": "Launch Window — {title}",
-        "unknown": "{launch-window}",
+        "marked": {"text": "ACT {ordinal|group-ordinal} · {title}"},
+        "named-figure": {"text": "ACT {figure:launch-window}"},
+        "escaped": {"text": "{{launch-window}}"},
+        "embedded": {"text": "Launch Window — {title}"},
+        "unknown": {"text": "{launch-window}"},
     })
     findings = purity.audit(_project(), [("theme.yaml", resource)])
     pointers = {item["pointer"] for item in findings}
     assert "/body/heading" not in pointers
-    assert "/body/marked" not in pointers
-    assert "/body/named-figure" in pointers
-    assert "/body/embedded" in pointers
-    assert "/body/escaped" in pointers
-    assert "/body/unknown" in pointers
+    assert "/body/marked/text" not in pointers
+    assert "/body/named-figure/text" in pointers
+    assert "/body/embedded/text" in pointers
+    assert "/body/escaped/text" in pointers
+    assert "/body/unknown/text" in pointers
 
 
 def test_unicode_casefold_and_whitespace_normalization_finds_cjk_phrase():
@@ -103,16 +110,39 @@ def test_typed_object_source_is_distinguished_from_collision_candidate():
     assert [(item["pointer"], item["project_fact"]) for item in typed] == [
         ("/body/panels/0/metrics/0/source/object", "identifier:/objects/launch-window"),
     ]
-    assert any(item["project_fact"] == "identifier:/periods/launch-window"
+    assert any(item["pointer"].endswith("/source/object")
+               and item["project_fact"] == "identifier:/periods/launch-window"
                and item["match_class"] == "identifier-candidate" for item in findings)
     assert any(item["pointer"].endswith("/label") and item["match_class"] == "wording-candidate"
                for item in findings)
 
 
+def test_project_id_in_summary_object_reference_remains_an_identifier_candidate():
+    project = {**_project(), "project": {"id": "project-key", "title": "ASTER Work"}}
+    design = {
+        "version": "chrona/summary-profile/v0.1", "kind": "summary-profile",
+        "body": {"panels": [{"metrics": [{"source": {"object": "project-key"}}]}]},
+    }
+
+    findings = purity.audit(project, [("summary.yaml", design)])
+
+    assert any(item["pointer"] == "/body/panels/0/metrics/0/source/object"
+               and item["project_fact"] == "identifier:/project/id"
+               and item["match_class"] == "identifier-candidate" for item in findings)
+
+
 def test_lookalike_theme_source_is_not_a_typed_project_connection():
     findings = purity.audit(_project(), [("theme.yaml", _resource({"source": {"object": "launch-window"}}))])
-    assert findings
-    assert all(item["match_class"] != "typed-connection-identifier" for item in findings)
+    assert not findings
+
+
+def test_resource_envelope_metadata_is_not_design_content():
+    project = {**_project(), "project": {"id": "chrona", "title": "Chrona"}}
+    findings = purity.audit(project, [("theme.yaml", {
+        "version": "chrona/theme/v0.15", "kind": "theme", "id": "launch-window",
+        "body": {"title": "Generic theme"},
+    })])
+    assert findings == []
 
 
 def test_empty_or_unsupported_explicit_inputs_fail_closed(tmp_path, capsys):
@@ -199,8 +229,8 @@ def test_manifest_uses_slide_context_override_shared_store_and_theme_base(tmp_pa
 
     assert any(item["resource"] == "local:example/summary.yaml"
                and item["match_class"] == "typed-connection-identifier" for item in findings)
-    assert any(item["resource"] == "local:shared-design/themes/base.yaml"
-               and item["pointer"] == "/body/values/special" for item in findings)
+    assert not any(item["resource"] == "local:shared-design/themes/base.yaml"
+                   and item["pointer"] == "/body/values/special" for item in findings)
     assert any(item["resource"] == "local:example/detail.yaml"
                and item["match_class"] == "wording-candidate" for item in findings)
     assert not any(item["resource"] == "local:example/default.yaml" for item in findings)

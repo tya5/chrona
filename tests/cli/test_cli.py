@@ -31,6 +31,28 @@ from chrona.resources import builtin_preset_library_resource
 from tests.support import synthetic_review as sr
 
 
+def test_cli_init_reports_available_and_deferred_example_slides(tmp_path, monkeypatch, capsys):
+    from chrona.usecases.local_authoring import DeferredSlide, InitializationResult
+
+    destination = tmp_path / "example"
+    destination.mkdir()
+    (destination / "manifest.yaml").write_text("version: test\n", encoding="utf-8")
+    deferred = DeferredSlide("gallery", "contexts/gallery.yaml", ("chrona-fonts-noto-cjk",))
+    monkeypatch.setattr(cli, "initialize_project", lambda *_args, **_kwargs: InitializationResult(
+        destination, ("briefing",), (deferred,)))
+
+    cli._run_init(SimpleNamespace(directory=str(destination), example="synthetic"))
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["status"] == "ok"
+    assert payload["availableSlides"] == ["briefing"]
+    assert payload["deferredSlides"] == [{
+        "slideId": "gallery", "context": "contexts/gallery.yaml", "providers": ["chrona-fonts-noto-cjk"]}]
+    assert payload["diagnostics"] == [deferred.as_diagnostic()]
+    assert payload["diagnostics"][0]["code"] == "W_INIT_EXAMPLE_SLIDE_DEFERRED"
+    assert payload["created"] == ["manifest.yaml"]
+
+
 def _snapshot_resource(root, token, address, value, kind, identifier, identity="cli-test", payload=None):
     payload = payload if payload is not None else yaml.safe_dump(value, sort_keys=True).encode()
     path = snapshot_directory(root, token) / address
@@ -602,10 +624,15 @@ def _margin_days_preset(tmp_path, monkeypatch, preset_id):
     view_path = preset / "view.yaml"
     view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
     view["body"]["window"] = {"mode": "selected-planned", "marginDays": 7}
-    for tier in view["body"]["axis"]["tiers"]:
+    layout_path = preset / "layout.yaml"
+    layout = yaml.safe_load(layout_path.read_text(encoding="utf-8"))
+    # A packaged design keeps its axis in the Layout profile's `viewDefaults`, not in the View (#429).
+    axis = view["body"]["axis"] if "axis" in view["body"] else layout["viewDefaults"]["axis"]
+    for tier in axis["tiers"]:
         if tier.get("unit") == "month" and tier.get("role") == "labels":
             tier["label"]["overflow"] = "thin-with-record"
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+    layout_path.write_text(yaml.safe_dump(layout, sort_keys=False, allow_unicode=True), encoding="utf-8")
     return preset
 
 

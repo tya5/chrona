@@ -8,6 +8,7 @@ from chrona.presentation.contracts.resources import (
     ReviewDetailInput, SummaryMetric, SummaryPanelInput,
     SummaryProfileInput, ViewInput, freeze,
 )
+from chrona.presentation.model.projection import ReviewPeriod
 
 
 class ProfileConnectionError(ValueError):
@@ -50,6 +51,34 @@ class ProfileConnectionResult:
 
 def _pointer_token(value: str) -> str:
     return value.replace("~", "~0").replace("/", "~1")
+
+
+def validate_period_legend_sources(detail: ReviewDetailInput | None,
+                                   periods: tuple[ReviewPeriod, ...]) -> None:
+    """Validate source-bound legend entries against the selected period projection."""
+    if detail is None:
+        return
+    by_id: dict[str, list[ReviewPeriod]] = {}
+    for period in periods:
+        by_id.setdefault(period.period_id, []).append(period)
+    seen: set[str] = set()
+    for index, entry in enumerate(detail.legend):
+        source_ref = entry.source_ref
+        if source_ref is None:
+            continue
+        pointer = f"/body/legend/{index}/sourceRef"
+        matches = by_id.get(source_ref, ())
+        if source_ref in seen or len(matches) != 1:
+            reason = "duplicate sourceRef" if source_ref in seen else "must identify exactly one selected period"
+            raise ProfileConnectionError(
+                "E_REVIEW_LEGEND_PERIOD_SOURCE", reason, pointer,
+                component="review-detail-profile")
+        seen.add(source_ref)
+        if entry.role != matches[0].band_role:
+            raise ProfileConnectionError(
+                "E_REVIEW_LEGEND_PERIOD_ROLE",
+                f"role {entry.role!r} must equal selected period band role {matches[0].band_role!r}",
+                f"/body/legend/{index}/role", component="review-detail-profile")
 
 
 def _source_slot(source: object) -> str | None:
@@ -135,30 +164,41 @@ def resolve_profile_connections(view: ViewInput, summary: SummaryProfileInput | 
 
     summary_wording = wording.get("summary", {})
     if summary_wording:
-        matches: dict[str, list[tuple[int, int]]] = {}
+        matches: dict[str, list[tuple[str, int, int | None]]] = {}
         for panel_index, panel in enumerate(effective_summary.panels if effective_summary else ()):
+            matches.setdefault(f"{panel.id}.title", []).append(("title", panel_index, None))
             for metric_index, metric in enumerate(panel.metrics):
                 key = f"{panel.id}.{_metric_id(metric)}"
-                matches.setdefault(key, []).append((panel_index, metric_index))
-        overrides: dict[tuple[int, int], str] = {}
+                matches.setdefault(key, []).append(("metric", panel_index, metric_index))
+        title_overrides: dict[int, str] = {}
+        metric_overrides: dict[tuple[int, int], str] = {}
         for key, text in summary_wording.items():
             pointer = f"/body/wording/summary/{_pointer_token(str(key))}"
             found = matches.get(str(key), ())
             if not found:
-                raise ProfileConnectionError("E_VIEW_WORDING_UNKNOWN", f"summary wording key {key!r} names no profile metric", pointer)
+                raise ProfileConnectionError("E_VIEW_WORDING_UNKNOWN", f"summary wording key {key!r} names no profile metric or panel title", pointer)
             if len(found) != 1:
-                raise ProfileConnectionError("E_VIEW_WORDING_AMBIGUOUS", f"summary wording key {key!r} matches more than one profile metric", pointer)
-            overrides[found[0]] = str(text)
+                raise ProfileConnectionError("E_VIEW_WORDING_AMBIGUOUS", f"summary wording key {key!r} matches more than one profile metric or panel title", pointer)
+            target, panel_index, metric_index = found[0]
+            if target == "title":
+                title_overrides[panel_index] = str(text)
+            else:
+                assert metric_index is not None
+                metric_overrides[(panel_index, metric_index)] = str(text)
         if effective_summary is not None:
             panels = []
             for panel_index, panel in enumerate(effective_summary.panels):
                 metrics = tuple(
-                    replace(metric, label=overrides[(panel_index, metric_index)])
-                    if (panel_index, metric_index) in overrides and isinstance(metric, SummaryMetric)
+                    replace(metric, label=metric_overrides[(panel_index, metric_index)])
+                    if (panel_index, metric_index) in metric_overrides and isinstance(metric, SummaryMetric)
                     else metric
                     for metric_index, metric in enumerate(panel.metrics)
                 )
-                panels.append(replace(panel, metrics=metrics))
+                panels.append(replace(
+                    panel,
+                    title=title_overrides.get(panel_index, panel.title),
+                    metrics=metrics,
+                ))
             effective_summary = replace(effective_summary, panels=tuple(panels))
 
     legend_wording = wording.get("legend", {})

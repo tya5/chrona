@@ -65,3 +65,34 @@ entries:
       colorScheme: {id: chrona-builtin-editorial, kind: color-scheme, sourceRoot: presets/bundles/editorial, sourcePath: scheme.yaml}
       layout: {id: chrona-builtin-editorial, kind: layout-profile, sourceRoot: presets/bundles/editorial, sourcePath: layout.yaml}
       detailProfile: {id: chrona-builtin-editorial-detail, kind: review-detail-profile, sourceRoot: presets/bundles/editorial, sourcePath: detail.yaml}
+  - id: marquee
+    visualProfile: {preferred: chrona-output/visual/v0.7-svg}
+    members:
+      view: {id: chrona-preset-design-default, kind: view, sourceRoot: presets/bundles/design-default, sourcePath: view.yaml}
+      theme: {id: marquee, kind: theme, sourceRoot: designs/marquee, sourcePath: theme.yaml}
+      colorScheme: {id: marquee, kind: color-scheme, sourceRoot: designs/marquee, sourcePath: scheme.yaml}
+      layout: {id: marquee, kind: layout-profile, sourceRoot: designs/marquee, sourcePath: layout.yaml}
+      detailProfile: {id: halcyon-marquee-legend, kind: review-detail-profile, sourceRoot: designs/marquee, sourcePath: detail.yaml}
+      iconCatalogs:
+        - id: chrona-target-parts-v2026-10-09
+          kind: icon-catalog
+          sourceRoot: icons
+          sourcePath: chrona-target-parts-v2026-10-09.yaml
+          noticeSourcePath: chrona-target-parts.NOTICE
+          contentIdentity: sha256:139be42bed11eaa9809ef98bb427eb74f8f0862c3d5c4ccfd9eba2b23185acee
+          noticeContentIdentity: sha256:b07fa7bbb7bff0acdfb2cf02905b7ca7ad1db3ead9f59b13f47c4ced097f3eb6
+  - id: sunday
+    members:
+      view: {id: chrona-preset-design-default, kind: view, sourceRoot: presets/bundles/design-default, sourcePath: view.yaml}
+      theme: {id: sunday, kind: theme, sourceRoot: designs/sunday, sourcePath: theme.yaml}
+      colorScheme: {id: sunday, kind: color-scheme, sourceRoot: designs/sunday, sourcePath: scheme.yaml}
+      layout: {id: sunday, kind: layout-profile, sourceRoot: designs/sunday, sourcePath: layout.yaml}
+      detailProfile: {id: halcyon-sunday-legend, kind: review-detail-profile, sourceRoot: designs/sunday, sourcePath: detail.yaml}
+      iconCatalogs:
+        - id: chrona-target-parts-v2026-10-09
+          kind: icon-catalog
+          sourceRoot: icons
+          sourcePath: chrona-target-parts-v2026-10-09.yaml
+          noticeSourcePath: chrona-target-parts.NOTICE
+          contentIdentity: sha256:139be42bed11eaa9809ef98bb427eb74f8f0862c3d5c4ccfd9eba2b23185acee
+          noticeContentIdentity: sha256:b07fa7bbb7bff0acdfb2cf02905b7ca7ad1db3ead9f59b13f47c4ced097f3eb6

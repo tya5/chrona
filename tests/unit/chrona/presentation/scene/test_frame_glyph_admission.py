@@ -32,7 +32,7 @@ def _profile(identifier: str, target: str = "svg"):
 @pytest.mark.parametrize("mode,family", [("stroke", PaintFamily.PATH), ("fill", PaintFamily.SOLID)])
 def test_builder_selects_the_completed_glyph_parts_used_channel(mode, family):
     primitive = SimpleNamespace(pattern=None, kind=PrimitiveKind.SYMBOL, purpose="frame-glyph",
-                                visual_role="frame-glyph", glyph_paint_mode=mode)
+                                visual_role="frame-glyph", glyph_paint_mode=mode, paint_channels=None)
     assert _paint_family(primitive, _tokens()) == family
 
 
@@ -43,7 +43,7 @@ def test_builder_keeps_explicit_outline_override_before_glyph_part_channel_selec
                  "roles": {"ghost": {"pattern": "outline"}}, "metrics": {}},
     })
     primitive = SimpleNamespace(pattern=None, kind=PrimitiveKind.SYMBOL, purpose="planned",
-                                visual_role="ghost", glyph_paint_mode="fill")
+                                visual_role="ghost", glyph_paint_mode="fill", paint_channels=None)
     assert _paint_family(primitive, tokens) == PaintFamily.OUTLINE
 
 

@@ -38,6 +38,8 @@ Use `.venv/bin/python conformance/run_conformance.py` for conformance.
 
 ### Public evidence checks
 
+Manual, when changing Layout allocation: run `.venv/bin/python tools/check_draft_viewport_matrix.py --jobs 4` (add `--cli` to exercise the saved-Context command). Every case must render or give its recorded exact refusal; capacity cases remain linked to #1490. The gallery freshness check already runs in conformance CI.
+
 Reachability and ledger tests require current manifest-declared generated
 SVG/Scene files. A source PR must not commit generated files or managed reports.
 For an intentional corpus change, use a disposable worktree (and its own venv),

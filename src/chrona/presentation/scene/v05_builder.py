@@ -9,12 +9,12 @@ from chrona.presentation.layout.surface_quality import completed_symbol_primitiv
 from chrona.presentation.layout.surface_completion import SurfaceLayoutComposition
 from chrona.presentation.layout.model import LayoutManifest
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
-from chrona.presentation.layout.surface_quality import AlignedStrokePlacement
+from chrona.presentation.layout.surface_quality import AlignedStrokePlacement, ShapePlacement
 from chrona.presentation.layout.pattern_placement import PatternedPlacement
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, ContrastClass, PrimitiveKind, contrast_binding, contrast_bindings,
-    inside_member_label_semantic, semantic_binding)
+    inside_member_label_semantic, period_variant_role_base, semantic_binding)
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.info_diagnostics import PaintOmission
@@ -29,6 +29,7 @@ from chrona.presentation.scene.model import (
 from chrona.presentation.scene.paint import (
     AS_OF_CONE_ROLE, PaintFamily, ScenePaintError, complete_icon_path_paints, resolve_artwork_admission,
     is_ink_only_surface_pattern, resolve_cone_paint, resolve_scene_paint, resolve_surface_pattern_admission,
+    restrict_paint_channels,
 )
 from chrona.presentation.scene.surface_overlays import project_canvas_overlays
 from chrona.presentation.scene.window_absences import project_lane_window_absences
@@ -88,6 +89,10 @@ def _heading_paint_role(tokens: ThemeTokenView, role: str = "heading") -> str:
 
 
 def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFamily:
+    if primitive.paint_channels == "fill":
+        return PaintFamily.SOLID
+    if primitive.paint_channels == "stroke":
+        return PaintFamily.PATH
     if primitive.pattern is not None and primitive.pattern.primitives:
         return PaintFamily.SOLID
     if primitive.kind == PrimitiveKind.TEXT:
@@ -174,6 +179,32 @@ def _attach_completed_patterns(primitives: tuple[ScenePrimitive, ...],
     return tuple(projected)
 
 
+def _complete_shape_channels(result: tuple[ScenePrimitive | None, tuple[PaintOmission, ...]]) -> tuple[ScenePrimitive | None, tuple[PaintOmission, ...]]:
+    primitive, omissions = result
+    if primitive is None or primitive.paint_channels is None:
+        return result
+    if primitive.paint is None:
+        raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", primitive.scene_id)
+    return replace(primitive, paint=restrict_paint_channels(
+        primitive.paint, primitive.paint_channels, primitive.visual_role,
+        patterned_fill=primitive.pattern is not None), paint_channels=None), omissions
+
+
+def _completed_shape_primitive(placement: ShapePlacement, source_kind: str, purpose: str,
+                               visual_role: str, **shared: Any) -> ScenePrimitive:
+    """Project the completed shape kind and path without geometry inference."""
+    bounds = (float(placement.bounds.inline), float(placement.bounds.block),
+              float(placement.bounds.inline_size), float(placement.bounds.block_size))
+    shared.update(slot_id=placement.slot_id, paint_order=placement.paint_order,
+                  paint_channels=placement.paint_channels)
+    if placement.kind == "Path":
+        return ScenePrimitive(placement.placement_id, PrimitiveKind.PATH, placement.source_ref,
+                              source_kind, purpose, visual_role, bounds, points=placement.points,
+                              path_commands=placement.path_commands, paint_clip=placement.paint_clip, **shared)
+    return _completed_host_primitive(placement.placement_id, placement.source_ref, source_kind,
+                                     purpose, visual_role, bounds, placement, **shared)
+
+
 def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visual_profile: VisualProfile | None = None,
                             viewport: tuple[float, float] = (0.0, 0.0),
                             *, scale_target_role: str | None = None,
@@ -191,21 +222,23 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
                       if not (isinstance(item, PaintOmission) and item.treatment in {"annotation-artwork", "frame-glyph"}))
     clip_hosts = frozenset(item.clip_source_id for item in surface.primitives if item.clip_source_id)
     try:
-        resolved = tuple(_complete_primitive_paint(
+        resolved = tuple(_complete_shape_channels(_complete_primitive_paint(
             primitive, tokens, visual_profile, scale_target_role, scale_paints or {}, scale_legend_paints or {},
             group_tints or {}, surface.canvas_bounds or (0.0, 0.0, *viewport), annotation_kind_paints or {},
-            clip_hosts, axis_band_paints or {})
+            clip_hosts, axis_band_paints or {}))
                          for primitive in surface.primitives)
         canvas = resolve_scene_paint(tokens, "background", PaintFamily.CANVAS,
                                      visual_profile=visual_profile,
                                      gradient_bounds=(0.0, 0.0, *viewport))
     except ScenePaintError as error:
         raise SceneBuildError(error.diagnostic_id, error.path, error.detail) from error
+    decoration_roles = [binding.scene_role for binding in contrast_bindings(ContrastClass.DECORATION)]
+    decoration_roles.extend(role for role in tokens.resolved_theme["body"]["roles"]
+                            if period_variant_role_base(role) == "period-band")
     absent_decorations = tuple(
-        DecorationDisposition(binding.scene_role, "absent")
-        for binding in contrast_bindings(ContrastClass.DECORATION)
-        if (background := tokens.optional_background(binding.scene_role)) is not None
-        and background[0] == "none"
+        DecorationDisposition(role, "absent")
+        for role in dict.fromkeys(decoration_roles)
+        if (background := tokens.optional_background(role)) is not None and background[0] == "none"
     )
     # An omitted as-of cone (#890) has no primitive left to carry paint, but its omission is still reported.
     completed = tuple(item for item in resolved if item[0] is not None)
@@ -362,7 +395,9 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
         completed = replace(completed, image=primitive.image_fill_pending)
     if primitive.stroke_clip is not None:
         completed = replace(completed, stroke_width=primitive.stroke_clip.stroke_width)
-    treatment = tokens.optional_pattern(primitive.visual_role)
+    # A completed stroke-only child shares its host role, not its fill content.
+    treatment = (None if primitive.paint_channels == "stroke"
+                 else tokens.optional_pattern(primitive.visual_role))
     result = replace(primitive, paint=completed,
                      pattern=(primitive.pattern if primitive.pattern is not None and primitive.pattern.primitives
                               else pattern_geometry(treatment) if treatment is not None else None),
@@ -631,14 +666,13 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         emit_semantic_text(heading_id, "slotHeading", heading_paint)
     for period in projection.periods:
         if f"period-label:{period.period_id}" in layout_text:
-            emit_semantic_text(f"period-label:{period.period_id}", "periodLabel")
+            emit_semantic_text(f"period-label:{period.period_id}", "periodLabel", period.label_role)
     for placed in placed_surface.shapes:
         if placed.semantic_id in {"groupBand", "rowBand", "groupHeaderBand", "groupHeaderStrip", "groupTab", "calendarClosed", "calendarException", "periodBand"}:
             binding = semantic_binding(placed.semantic_id)
             bounds = (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size))
-            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "decoration",
-                                             binding.purpose, binding.scene_role, bounds, slot_id=placed.slot_id,
-                                             paint_order=placed.paint_order))
+            primitives.append(_completed_shape_primitive(placed, "decoration", binding.purpose,
+                                                        placed.visual_role or binding.scene_role))
             if placed.semantic_id == "rowBand" and row_subjects.get(placed.source_ref):
                 primitive_provenance.append(PrimitiveProvenance(
                     placed.placement_id, row_subjects[placed.source_ref]))
@@ -879,12 +913,13 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     for placed in placed_surface.shapes:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
                   float(placed.bounds.inline_size), float(placed.bounds.block_size))
-        if placed.placement_id.startswith("legend-swatch:"):
+        if (placed.semantic_id == "legendEntry"
+                or placed.placement_id.startswith(("legend-swatch:", "legend-period-swatch:"))):
             role = (semantic_binding("scaleLegendEntry").scene_role
                     if placed.source_ref.startswith("scale:") else placed.source_ref)
-            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "legend",
-                                             legend_binding.purpose, role, bounds, paint_order=placed.paint_order,
-                                             slot_id=placed.slot_id, corner_radius=placed.corner_radius or None))
+            primitives.append(_completed_shape_primitive(placed, "legend", legend_binding.purpose,
+                                                        placed.visual_role or role,
+                                                        corner_radius=placed.corner_radius or None))
         elif placed.placement_id.startswith("progress-fill:"):
             progress = semantic_binding("progressFill")
             primitives.append(_completed_host_primitive(placed.placement_id, placed.source_ref, "object",
@@ -994,7 +1029,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     text_roles = tuple(
         (prefix, semantic_binding(semantic_id).purpose, role or semantic_binding(semantic_id).scene_role)
         for prefix, semantic_id, role in (
-            ("legend:", "legendLabel", legend_paint), ("note:", "projectNote", None),
+            ("legend:", "legendLabel", legend_paint), ("legend-period:", "legendLabel", legend_paint),
+            ("note:", "projectNote", None),
             ("group-detail:", "groupDetail", None), ("milestone:", "milestoneDigestEntry", None),
             ("summary:", "summaryMetric", None), ("note-index:", "noteIndex", None),
             ("relation-label:", "relationLabel", None),

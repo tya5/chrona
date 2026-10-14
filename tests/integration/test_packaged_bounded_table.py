@@ -12,12 +12,13 @@ from chrona.usecases import preset_library
 from tests.support import synthetic_review as sr
 
 
-PRESETS = tuple(entry["id"] for entry in preset_library._library())
+PRESETS = tuple(entry["id"] for entry in preset_library._library()
+                if not entry["members"]["layout"]["sourceRoot"].startswith("designs/"))  # designs are reviewer-owned (#429)
 
 
 def test_all_nine_packaged_views_admit_wrap_in_the_live_contract():
     root = Path(__file__).resolve().parents[2] / "src/chrona/resources/presets/bundles"
-    paths = sorted(root.glob("*/view.yaml")) + [root / "editorial/view-lanes.yaml"]
+    paths = sorted(path for path in root.glob("*/view.yaml") if path.parent.name != "design-default") + [root / "editorial/view-lanes.yaml"]
     assert len(paths) == 9
     for path in paths:
         raw = path.read_bytes()

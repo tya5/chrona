@@ -241,11 +241,11 @@ See [Specification 64](docs/specification/64-portable-icon-catalogs.md) and
 [Controller Z's icon Context](examples/controller-z/contexts/icons.yaml) for a
 fully pinned materialized example.
 
-The complete reproducible HALCYON corpus remains available explicitly. Its Japanese slides declare the font
-package `packages/chrona-fonts-noto-cjk`, which is not published, so materializing needs a clone with
-`pip install -e packages/chrona-fonts-noto-cjk`:
+The reproducible HALCYON corpus is available explicitly from an installed wheel.
+Slides requiring an absent font provider are omitted with typed warnings; the other
+slides remain materializable. For every Japanese slide, install the unpublished
+`packages/chrona-fonts-noto-cjk` package from a clone and initialize a new directory.
 
-<!-- chrona:doc-check requires: clone the HALCYON slides need packages/chrona-fonts-noto-cjk, which a wheel does not install -->
 ```bash
 chrona init my-halcyon-example --example halcyon-1
 chrona materialize my-halcyon-example/manifest.yaml \

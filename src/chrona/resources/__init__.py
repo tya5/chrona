@@ -145,6 +145,7 @@ def builtin_preset_source_root(address: str) -> Traversable:
     if packaged.is_dir() and (
         packaged.joinpath("project.yaml").is_file()
         or path.parts[:2] == ("presets", "bundles")
+        or (len(path.parts) == 2 and path.parts[0] == "designs")
     ):
         return packaged
     raise ValueError(f"E_BUILTIN_PRESET_RESOURCE: source root {address!r} is not packaged")

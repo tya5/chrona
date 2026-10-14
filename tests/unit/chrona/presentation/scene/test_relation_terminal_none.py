@@ -8,6 +8,7 @@ import pytest
 
 from chrona.presentation.layout.path_geometry import rounded_orthogonal_path
 from chrona.presentation.layout.relation_terminals import SHAPES, centred_on_route, marker_geometry, terminal_run
+from chrona.presentation.model.surface_content import SurfaceLegendEntry
 from chrona.presentation.renderers.v05_svg import render_v05_svg
 from chrona.presentation.renderers.v05_typeset import render_v05_tikz, render_v05_typst
 from chrona.presentation.scene.model import ScenePaint, ScenePrimitive
@@ -76,7 +77,7 @@ def test_the_legend_key_of_a_none_terminal_is_the_plain_stroke():
     theme = _theme()
     theme["body"]["values"]["dependency-marker"] = {"type": "marker", "value": {"shape": "none", **TOKEN}}
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "dependency-marker"}
-    swatch = next(node for node in _legend_surface((("dependency", "Dependency"),), theme).primitives
+    swatch = next(node for node in _legend_surface((SurfaceLegendEntry("dependency", "Dependency"),), theme).primitives
                   if node.scene_id == "legend-swatch:dependency")
     assert swatch.kind == "Path" and swatch.marker_end is None and swatch.paint.stroke is not None
 

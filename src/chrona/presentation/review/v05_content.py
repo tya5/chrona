@@ -8,10 +8,11 @@ from typing import Any, Mapping
 from chrona.presentation.model.projection import ObservationState, ReviewProjection
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
-    AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, table_value,
+    AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, SurfaceLegendEntry, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, table_value,
 )
 from chrona.presentation.table_presentation import affix_state
 from chrona.presentation.review.detail import normalize_v05_review_detail_profile
+from chrona.presentation.review.profile_connections import validate_period_legend_sources
 from chrona.presentation.review.figure_facts import projected_counts
 from chrona.presentation.review.annotation_expansion import expand_annotations
 from chrona.presentation.model.placement_candidates import legacy_candidate_order, parse_candidates
@@ -203,22 +204,25 @@ CALENDAR_CLOSED_LEGEND_ROLE = "calendar-closed"
 
 
 def legend_entries(detail: ReviewDetailInput | None, project: Mapping[str, Any], projection: ReviewProjection,
-                   color_scale: ResolvedColorScale | None, *, closed_days_drawn: bool) -> tuple[tuple[str, str], ...]:
-    """Return the legend entries, `(role, label)`, exactly as Layout draws them (#497).
+                   color_scale: ResolvedColorScale | None, *, closed_days_drawn: bool) -> tuple[SurfaceLegendEntry, ...]:
+    """Return typed legend entries exactly as Layout measures and draws them (#497, #871).
 
     The Detail Profile's own entries come first; a colour scale then adds one entry per
     value in use, labelled with the entity's declared title when the Project has one.
     Layout measures the legend slot and draws the legend from this one list. The closed-day key
     is a key for a band on the plot, so it is listed only when a closed day is drawn (#893).
     """
-    entries = tuple((item.role, item.label) for item in detail.legend
+    validate_period_legend_sources(detail, projection.periods)
+    entries = tuple(SurfaceLegendEntry(item.role, item.label, item.source_ref)
+                    for item in detail.legend
                     if closed_days_drawn or item.role != CALENDAR_CLOSED_LEGEND_ROLE) if detail is not None else ()
     if color_scale is None:
         return entries
     used = _used_scale_values(color_scale, projection)
     entities = project.get("entities", {})
     return entries + tuple(
-        (f"scale:{color_scale.scale_id}:{value}", str(entities.get(value, {}).get("title", value)))
+        SurfaceLegendEntry(f"scale:{color_scale.scale_id}:{value}",
+                           str(entities.get(value, {}).get("title", value)))
         for value in color_scale.domain if value in used)
 
 

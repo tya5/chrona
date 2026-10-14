@@ -289,7 +289,7 @@ def test_the_store_read_tools_are_listed_read_only_and_the_instructions_name_the
 def test_render_review_on_a_read_only_server_returns_the_svg_as_an_embedded_resource(tmp_path):
     from chrona.usecases.local_authoring import initialize_project
 
-    root = initialize_project(tmp_path / "corpus", example="halcyon-1")
+    root = initialize_project(tmp_path / "corpus", example="halcyon-1").directory
     (root / "ctx.yaml").write_text(
         "id: halcyon-1-01-mission-brief\nkind: render-context\nstore: {provider: local, identity: halcyon-1-example}\n"
         "address: contexts/01-mission-brief.yaml\nrevision: {token: example-v6}\n", encoding="utf-8")

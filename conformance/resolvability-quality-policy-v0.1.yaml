@@ -55,7 +55,17 @@ declaredComputedValues:
     classification: pinned-deliberately
     producer: chrona workspace revision
   - path: src/chrona/usecases/materialize.py
-    function: copy_context_closure
+    function: _font_copy_plan
+    field: contentIdentity
+    classification: pinned-deliberately
+    producer: chrona identity bytes
+  - path: src/chrona/presentation/renderers/pdf_fonts.py
+    function: pdf_font_bytes
+    field: contentIdentity
+    classification: pinned-deliberately
+    producer: chrona identity bytes
+  - path: src/chrona/presentation/renderers/pdf_fonts.py
+    function: pdf_embedding_bytes
     field: contentIdentity
     classification: pinned-deliberately
     producer: chrona identity bytes

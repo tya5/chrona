@@ -1,4 +1,5 @@
 from dataclasses import replace
+from types import SimpleNamespace
 
 import pytest
 
@@ -9,7 +10,9 @@ from chrona.presentation.contracts.resources import (
     ViewRows, ViewVisibility, ViewWindow, _view_figures, _view_profile_bindings,
     freeze, _summary_input,
 )
-from chrona.presentation.review.profile_connections import ProfileConnectionError, resolve_profile_connections
+from chrona.presentation.review.profile_connections import (
+    ProfileConnectionError, resolve_profile_connections, validate_period_legend_sources,
+)
 
 
 def _view(*, bindings=(), figures=(), wording=None):
@@ -181,17 +184,75 @@ def test_summary_wording_uses_exact_dotted_key_and_handles_ambiguity_and_unknown
     assert legacy_result.view.wording["summary"]["panel.note"] == "PROMO"
 
 
+def test_summary_wording_overrides_panel_title_without_mutating_profile_and_checks_collisions():
+    panel = _panel("panel.with.dot", _metric("metric", "count.selected"))
+    panel = replace(panel, title="Original title")
+    summary = _summary(panel)
+    view = _view(wording={"summary": {"panel.with.dot.title": "RC まで"}})
+
+    result = resolve_profile_connections(view, summary, None, project_object_ids=frozenset())
+
+    assert result.summary.panels[0].title == "RC まで"
+    assert result.summary.panels[0].id == "panel.with.dot"
+    assert summary.panels[0].title == "Original title"
+    assert view.wording["summary"]["panel.with.dot.title"] == "RC まで"
+
+    collision = _summary(_panel("panel", _metric("title", "count.selected")))
+    with pytest.raises(ProfileConnectionError) as metric_collision:
+        resolve_profile_connections(_view(wording={"summary": {"panel.title": "Override"}}), collision, None,
+                                    project_object_ids=frozenset())
+    assert metric_collision.value.code == "E_VIEW_WORDING_AMBIGUOUS"
+    assert metric_collision.value.source_ref == "/body/wording/summary/panel.title"
+
+    duplicate_panels = _summary(_panel("duplicate"), _panel("duplicate"))
+    with pytest.raises(ProfileConnectionError) as duplicate_collision:
+        resolve_profile_connections(_view(wording={"summary": {"duplicate.title": "Override"}}),
+                                    duplicate_panels, None, project_object_ids=frozenset())
+    assert duplicate_collision.value.code == "E_VIEW_WORDING_AMBIGUOUS"
+
+    with pytest.raises(ProfileConnectionError) as unknown:
+        resolve_profile_connections(_view(wording={"summary": {"unknown/a~b.title": "X"}}), summary, None,
+                                    project_object_ids=frozenset())
+    assert unknown.value.code == "E_VIEW_WORDING_UNKNOWN"
+    assert unknown.value.source_ref == "/body/wording/summary/unknown~1a~0b.title"
+
+
 def test_legend_wording_is_limited_to_profile_roles_without_closing_role_vocabulary():
-    detail = ReviewDetailInput((), (), (LegendEntry("project-defined", "Old"),), None)
+    detail = ReviewDetailInput((), (), (LegendEntry("project-defined", "Old", "p1"),), None)
     result = resolve_profile_connections(_view(wording={"legend": {"project-defined": "New"}}),
                                          None, detail, project_object_ids=frozenset())
-    assert result.detail.legend == (LegendEntry("project-defined", "New"),)
+    assert result.detail.legend == (LegendEntry("project-defined", "New", "p1"),)
 
     with pytest.raises(ProfileConnectionError) as error:
         resolve_profile_connections(_view(wording={"legend": {"not-present": "X"}}),
                                     None, detail, project_object_ids=frozenset())
     assert error.value.code == "E_VIEW_WORDING_UNKNOWN"
     assert error.value.source_ref == "/body/wording/legend/not-present"
+
+
+def test_period_legend_source_requires_one_selected_period_and_the_exact_visual_role():
+    period = SimpleNamespace(period_id="p1", band_role="period-band:launch")
+    validate_period_legend_sources(
+        ReviewDetailInput((), (), (LegendEntry("period-band:launch", "Launch", "p1"),), None),
+        (period,),
+    )
+
+    cases = (
+        (ReviewDetailInput((), (), (LegendEntry("period-band:launch", "X", "missing"),), None),
+         (period,), "E_REVIEW_LEGEND_PERIOD_SOURCE", "/body/legend/0/sourceRef"),
+        (ReviewDetailInput((), (), (LegendEntry("period-band:launch", "X", "p1"),
+                                    LegendEntry("period-band:launch", "Y", "p1")), None),
+         (period,), "E_REVIEW_LEGEND_PERIOD_SOURCE", "/body/legend/1/sourceRef"),
+        (ReviewDetailInput((), (), (LegendEntry("period-band:launch", "X", "p1"),), None),
+         (period, period), "E_REVIEW_LEGEND_PERIOD_SOURCE", "/body/legend/0/sourceRef"),
+        (ReviewDetailInput((), (), (LegendEntry("period-band", "X", "p1"),), None),
+         (period,), "E_REVIEW_LEGEND_PERIOD_ROLE", "/body/legend/0/role"),
+    )
+    for detail, periods, code, pointer in cases:
+        with pytest.raises(ProfileConnectionError) as error:
+            validate_period_legend_sources(detail, periods)
+        assert (error.value.code, error.value.source_ref, error.value.component) == (
+            code, pointer, "review-detail-profile")
 
 
 def test_wording_error_pointer_escapes_selector_tokens():

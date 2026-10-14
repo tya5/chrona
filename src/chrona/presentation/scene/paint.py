@@ -59,6 +59,26 @@ class PaintResolution:
     omissions: tuple[PaintOmission, ...] = ()
 
 
+def restrict_paint_channels(paint: ScenePaint, channels: str | None, role: str,
+                            *, patterned_fill: bool = False) -> ScenePaint:
+    """Apply completed shape intent, separately from catalogue-part precedence."""
+    if channels is None:
+        return paint
+    if channels == "fill":
+        if paint.fill is None:
+            raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}/fill")
+        if patterned_fill:
+            # Catalogue ink is fill content, not an outline of the host shape.
+            return replace(paint, stroke_finish=None, wobble=None)
+        return replace(paint, stroke=None, stroke_width=None, dash=(), stroke_finish=None, wobble=None)
+    if channels == "stroke":
+        if paint.stroke is None or paint.stroke_width is None:
+            missing = "stroke" if paint.stroke is None else "strokeWidth"
+            raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}/{missing}")
+        return replace(paint, fill=None, gradient=None, radial_gradient=None, image=None)
+    raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"/body/roles/{role}")
+
+
 @dataclass(frozen=True)
 class RadialOverlayResolution:
     paint: ScenePaint | None

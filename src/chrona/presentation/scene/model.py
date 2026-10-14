@@ -441,6 +441,8 @@ class ScenePrimitive:
     clip_source_id: str | None = None
     end_treatment: str = "closed"
     contrast_treatment: str | None = None
+    # Transient completed-shape mask, cleared by Scene paint completion.
+    paint_channels: str | None = None
     glyph_paint_mode: str | None = None
     glyph_paint_color: str | None = None
     glyph_stroke_width: float | None = None
@@ -458,6 +460,9 @@ class ScenePrimitive:
     paint_clip: PaintClip | None = None
 
     def __post_init__(self) -> None:
+        if (self.paint_channels not in (None, "fill", "stroke")
+                or (self.paint_channels is not None and self.kind not in {"Rect", "Path", "Symbol"})):
+            raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} paint_channels")
         if self.stroke_clip is not None and (self.kind not in {"Rect", "Symbol", "Path"}
                 or (self.kind != "Rect" and not self.stroke_clip.outline)
                 or self.viewer_fit == BOX_FOLLOWS_TEXT

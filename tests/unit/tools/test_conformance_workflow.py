@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import yaml
+
 
 def test_conformance_workflow_routes_prs_and_preserves_full_release_matrix():
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
@@ -22,6 +24,35 @@ def test_conformance_workflow_routes_prs_and_preserves_full_release_matrix():
     assert "cancel-in-progress: ${{ github.event_name == 'pull_request' }}" in workflow
     assert "github.event.pull_request.number || github.run_id" in workflow
     assert "os_failure_probe" in workflow
+
+
+def test_one_readiness_job_freezes_sha_for_all_scheduled_consumers_without_bypassing_failure():
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    workflow = yaml.load((root / ".github/workflows/conformance.yml").read_text(encoding="utf-8"),
+                         Loader=yaml.BaseLoader)
+    jobs = workflow["jobs"]
+    readiness = jobs["ready-sha"]
+    assert readiness["timeout-minutes"] == "2"
+    assert readiness["outputs"]["sha"] == "${{ steps.resolve.outputs.sha }}"
+    assert any(step.get("run") == "python tools/scheduled_readiness.py" for step in readiness["steps"])
+    assert readiness["steps"][-1]["env"]["SELECT_READY_MAIN"] == "${{ inputs.select_ready_main }}"
+    assert workflow["on"]["workflow_dispatch"]["inputs"]["select_ready_main"]["default"] == "false"
+
+    expected_checkout = "${{ needs.ready-sha.outputs.sha }}"
+    for name in ("full-matrix", "reproduction-newest-python", "mcp-floor"):
+        job = jobs[name]
+        assert "ready-sha" in job["needs"], name
+        assert "needs.ready-sha.result == 'success'" in job["if"], name
+        checkout = next(step for step in job["steps"]
+                        if step.get("uses", "").startswith("actions/checkout@"))
+        assert checkout["with"]["ref"] == expected_checkout, name
+
+    # The immutable selector is a pass-through for ordinary dispatch, leaving
+    # the existing exact-SHA release check intact.
+    full = jobs["full-matrix"]
+    guard = next(step for step in full["steps"]
+                 if step.get("name") == "Verify exact full-CI SHA when supplied")
+    assert 'test "$GITHUB_SHA" = "$EXPECTED_SHA"' in guard["run"]
 
 
 def test_workflow_installs_the_mcp_extra_where_the_mcp_tests_must_run_and_pins_the_tested_floor():

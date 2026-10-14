@@ -24,6 +24,13 @@ class _PlainDumper(yaml.SafeDumper):
         return True
 
 
+def _plain(raw: bytes) -> bytes:
+    """The document unchanged, or written without anchors and aliases when it uses them (a copy is plain YAML to edit)."""
+    if not any(isinstance(event, (yaml.AliasEvent,)) or getattr(event, "anchor", None) for event in yaml.parse(raw)):
+        return raw
+    return yaml.dump(safe_load(raw), Dumper=_PlainDumper, sort_keys=False, allow_unicode=True).encode("utf-8")
+
+
 def _safe(address: object) -> str:
     """Return a catalogue address the shared Store-address guard accepts (the schema's `storeAddress`), else refuse (#731)."""
     try:
@@ -122,11 +129,11 @@ def copy_builtin_preset(identifier: str, destination: Path) -> Path:
     resources: dict[str, Any] = {}
     for name, output in _MEMBER_OUTPUTS.items():
         member = _member(entry, name)
-        payloads[output] = _read_member(member)
+        payloads[output] = _plain(_read_member(member))
         resources[name] = {"id": str(member["id"]), "kind": str(member["kind"]), "path": output}
     if isinstance(entry.get("members"), dict) and "detailProfile" in entry["members"]:
         member = _member(entry, "detailProfile")
-        payloads["detail.yaml"] = _read_member(member)
+        payloads["detail.yaml"] = _plain(_read_member(member))
         resources["detailProfile"] = {"id": str(member["id"]), "kind": str(member["kind"]), "path": "detail.yaml"}
     members_value = entry.get("members", {})
     for member in members_value.get("iconCatalogs", []) if isinstance(members_value, dict) else []:

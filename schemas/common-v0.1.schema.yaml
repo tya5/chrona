@@ -320,12 +320,12 @@ $defs:
         propertyNames: {$ref: "#/$defs/profileFigureIdentity"}
         additionalProperties: {$ref: "#/$defs/profileLegendLabel"}
       summary:
-        description: "Summary metric captions keyed by the exact joined panel and metric identifiers."
+        description: "Summary metric captions or panel titles keyed by exact joined panel/metric identifiers or <panel-id>.title."
         type: object
         propertyNames: {$ref: "#/$defs/profileFigureIdentity"}
         additionalProperties: {$ref: "#/$defs/profileSummaryLabel"}
   profileLegendLabel: {description: "A View override for a Detail Profile legend label, with the same text limits as the existing label.", type: string, minLength: 1, maxLength: 4096}
-  profileSummaryLabel: {description: "A View override for a Summary metric label, with the same unrestricted string grammar as the existing label.", type: string}
+  profileSummaryLabel: {description: "A View override for a Summary metric label or panel title, with the same unrestricted string grammar as the existing text.", type: string}
   summarySlotSource:
     description: "A named Summary Profile data slot supplied explicitly by a View binding."
     type: object

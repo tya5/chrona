@@ -203,7 +203,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         for item in (*member_label_requests.pre_route, *member_label_requests.post_route)
         if item.subjects
     }
-    period_requests = period_label_requests(period_batch.extents, _bounds(base.plot))
+    period_requests = period_label_requests(period_batch.extents, _bounds(base.plot), request.theme_tokens)
     if period_requests:  # placed first of the pre-route labels, so routes and later labels avoid them
         member_label_requests = replace(member_label_requests,
                                         pre_route=(*period_requests, *member_label_requests.pre_route))

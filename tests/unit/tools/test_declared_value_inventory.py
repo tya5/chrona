@@ -1,6 +1,7 @@
 import pytest
+from pathlib import Path
 
-from tools.declared_value_inventory import ComparisonSite, DeclaredValueInventoryError, render, validate
+from tools.declared_value_inventory import ComparisonSite, DeclaredValueInventoryError, discover, load_policy, render, validate
 
 
 def _site(field: str = "contentIdentity") -> ComparisonSite:
@@ -33,3 +34,14 @@ def test_report_exposes_resolution_route():
                                "classification": "product-bookkeeping", "resolver": "chrona workspace revision"},))
 
     assert "chrona workspace revision" in report
+
+
+def test_materializer_font_copy_plan_keeps_deliberate_identity_pinning():
+    root = Path(__file__).resolve().parents[3]
+    sites = discover(root)
+    policy = load_policy(root / "conformance/resolvability-quality-policy-v0.1.yaml")
+    validate(sites, policy)
+    entry = next(item for item in policy if item["path"] == "src/chrona/usecases/materialize.py"
+                 and item["function"] == "_font_copy_plan" and item["field"] == "contentIdentity")
+    assert entry["classification"] == "pinned-deliberately"
+    assert entry["producer"] == "chrona identity bytes"

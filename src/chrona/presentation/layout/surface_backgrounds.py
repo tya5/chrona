@@ -246,7 +246,12 @@ def validate_background_shapes(shapes: tuple[ShapePlacement, ...] | list[ShapePl
     for shape in shapes:
         if shape.semantic_id not in BACKGROUND_SEMANTIC_IDS:
             continue
-        role = semantic_binding(shape.semantic_id).scene_role
+        # A primitive whose completed channel mask excludes fill is not a
+        # background host, even when it preserves the host's semantic role.
+        channels = getattr(shape, "paint_channels", None)
+        if channels is not None and "fill" not in channels:
+            continue
+        role = shape.visual_role or semantic_binding(shape.semantic_id).scene_role
         treatment, _ = theme_tokens.background(role)
         if treatment == "fill" and theme_tokens.opacity(role) < 1:
             translucent.append(shape)
@@ -278,8 +283,8 @@ def _is_later_overlay(upper: ShapePlacement, lower: ShapePlacement, theme_tokens
     if (upper.semantic_id not in _OVERLAY_RANK or lower.semantic_id not in _OVERLAY_RANK
             or _OVERLAY_RANK[upper.semantic_id] <= _OVERLAY_RANK[lower.semantic_id]):
         return False
-    upper_role = semantic_binding(upper.semantic_id).scene_role
-    lower_role = semantic_binding(lower.semantic_id).scene_role
+    upper_role = upper.visual_role or semantic_binding(upper.semantic_id).scene_role
+    lower_role = lower.visual_role or semantic_binding(lower.semantic_id).scene_role
     upper_treatment, upper_order = theme_tokens.background(upper_role)
     lower_treatment, lower_order = theme_tokens.background(lower_role)
     return (upper_treatment == "fill" and lower_treatment == "fill"

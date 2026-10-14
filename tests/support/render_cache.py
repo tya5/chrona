@@ -121,7 +121,12 @@ def make_key(project: str | Path, actual: str | Path | None = None, preset: str 
         files.extend(_files_under(path))
     if preset is not None:
         bundle = ROOT / "src" / "chrona" / "resources" / "presets"
-        files.extend([bundle / "library.yaml", *_files_under(bundle / "bundles" / preset)])
+        own = bundle / "bundles" / preset
+        files.extend([bundle / "library.yaml", *(_files_under(own) if own.exists() else ())])
+        design = bundle.parent / "designs" / preset  # a packaged design is referenced in place (#429)
+        if design.is_dir():
+            files.extend([*_files_under(design), *_files_under(bundle / "bundles" / "design-default"),
+                          *_files_under(bundle.parent / "icons")])
     relative = lambda path: _repo_path(path).relative_to(ROOT).as_posix()  # noqa: E731
     return RenderKey(relative(project), relative(actual) if actual else None, preset, tuple(extra),
                      digest_files(files))

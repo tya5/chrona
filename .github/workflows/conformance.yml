@@ -11,6 +11,11 @@ on:
         description: 'Optional exact SHA for a dispatched release CI run'
         type: string
         required: false
+      select_ready_main:
+        description: 'Select the current ready main SHA instead of this dispatch SHA'
+        type: boolean
+        required: false
+        default: false
       os_failure_probe:
         description: 'Optional OS-specific failure probe (never for release acceptance)'
         type: choice
@@ -23,6 +28,28 @@ concurrency:
   group: conformance-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
+  ready-sha:
+    name: Freeze the immutable CI source SHA
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+      - id: resolve
+        name: Resolve event SHA or validate current ready main
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          SELECT_READY_MAIN: ${{ inputs.select_ready_main }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: python tools/scheduled_readiness.py
+
   classify-pr:
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
@@ -138,12 +165,13 @@ jobs:
           --required pytest-shard-${{ matrix.shard }}=${{ steps.pytest.outcome }}
 
   reproduction-newest-python:
-    needs: [classify-pr, derived-preview]
-    if: ${{ !cancelled() && ((github.event_name == 'pull_request' && needs.classify-pr.outputs.path == 'code') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+    needs: [classify-pr, derived-preview, ready-sha]
+    if: ${{ !cancelled() && needs.ready-sha.result == 'success' && ((github.event_name == 'pull_request' && needs.classify-pr.outputs.path == 'code') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ needs.ready-sha.outputs.sha }}
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
@@ -164,11 +192,13 @@ jobs:
         run: pytest -q tests/integration/test_materialize_example.py::test_declared_examples_reproduce_by_public_cli
 
   mcp-floor:
-    needs: [classify-pr]
-    if: ${{ !cancelled() && ((github.event_name == 'pull_request' && needs.classify-pr.outputs.path == 'code') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+    needs: [classify-pr, ready-sha]
+    if: ${{ !cancelled() && needs.ready-sha.result == 'success' && ((github.event_name == 'pull_request' && needs.classify-pr.outputs.path == 'code') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.ready-sha.outputs.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -258,7 +288,8 @@ jobs:
 
   full-matrix:
     if: >-
-      ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+      ${{ !cancelled() && needs.ready-sha.result == 'success' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+    needs: [ready-sha]
     strategy:
       fail-fast: false
       matrix:
@@ -267,7 +298,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ needs.ready-sha.outputs.sha }}
       - name: Verify exact full-CI SHA when supplied
         if: ${{ github.event_name == 'workflow_dispatch' }}
         shell: bash

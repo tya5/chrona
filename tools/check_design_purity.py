@@ -34,6 +34,10 @@ _COLLECTIONS = (
     "relations", "annotations",
 )
 _WORDING_FIELDS = frozenset({"title", "label", "description", "text"})
+_DESIGN_TEXT_FIELDS = frozenset({
+    "title", "label", "description", "text", "heading", "kicker", "subtitle",
+    "caption", "secondary", "header", "footer", "placeholder",
+})
 _PLACEHOLDER = re.compile(
     r"(?<!\{)\{(?:project|asOf|calendar|ordinal|title|secondary|label|subject|subjectId"
     r")(?:\|[A-Za-z][A-Za-z0-9_-]*)?\}(?!\})"
@@ -127,22 +131,33 @@ def _project_facts(project: object) -> tuple[ProjectFact, ...]:
 
 def _connection_identifier(pointer: str) -> bool:
     parts = pointer.split("/")
-    # Summary/detail resources can name Project objects only via typed source
-    # declarations. Keep other collisions visible as lexical candidates.
+    # Summary metric source.object is the only design field that names a
+    # Project object directly; its other lexical collisions remain candidates.
     return len(parts) >= 3 and parts[-2:] == ["source", "object"]
 
 
+def _user_facing_text(parent: Mapping[str, Any], key: object) -> bool:
+    """Whether this resource value is authored text, rather than a token name/value."""
+    if key == "value" and parent.get("type") == "text":
+        return True
+    return isinstance(key, str) and key in _DESIGN_TEXT_FIELDS
+
+
 def _matches(text: str, facts: tuple[ProjectFact, ...], pointer: str,
-             location: str, resource_kind: str | None) -> list[dict[str, str]]:
+             location: str, resource_kind: str | None, *,
+             user_facing_text: bool = False) -> list[dict[str, str]]:
     result: list[dict[str, str]] = []
     for segment in _literal_segments(text):
         for fact in facts:
             if fact.kind == "identifier":
+                connection = (resource_kind == "summary-profile" and location == "value"
+                              and _connection_identifier(pointer))
+                typed = (connection and fact.pointer.startswith("/objects/")
+                         and text == fact.value)
+                if not connection and not (location == "value" and user_facing_text):
+                    continue
                 if not _phrase_occurs(fact.value, segment):
                     continue
-                typed = (resource_kind == "summary-profile" and location == "value"
-                         and _connection_identifier(pointer) and fact.pointer.startswith("/objects/")
-                         and text == fact.value)
                 match_class = "typed-connection-identifier" if typed else "identifier-candidate"
             else:
                 if not _phrase_occurs(fact.value, segment):
@@ -168,10 +183,19 @@ def _scan_design(resource_name: str, value: object,
         if isinstance(node, Mapping):
             for key, child in node.items():
                 child_pointer = _pointer(pointer, key)
+                # Resource envelope identity/version are schema metadata, not design content.
+                if not pointer and key in {"version", "kind", "id"}:
+                    continue
                 if isinstance(key, str):
                     findings.extend({"resource": resource_name, **item}
                                     for item in _matches(key, facts, child_pointer, "key", resource_kind))
-                visit(child, child_pointer)
+                if isinstance(child, str):
+                    findings.extend({"resource": resource_name, **item}
+                                    for item in _matches(
+                                        child, facts, child_pointer, "value", resource_kind,
+                                        user_facing_text=_user_facing_text(node, key)))
+                else:
+                    visit(child, child_pointer)
         elif isinstance(node, Sequence) and not isinstance(node, (str, bytes, bytearray)):
             for index, child in enumerate(node):
                 visit(child, f"{pointer}/{index}")

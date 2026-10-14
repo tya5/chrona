@@ -166,6 +166,15 @@ class ReviewPeriod:
     end: date
     label_placement: str | None = None
     label_overflow: str = "visible-overflow"
+    variant: str | None = None
+
+    @property
+    def band_role(self) -> str:
+        return f"period-band:{self.variant}" if self.variant is not None else "period-band"
+
+    @property
+    def label_role(self) -> str:
+        return f"period-label:{self.variant}" if self.variant is not None else "period-label"
 
 
 @dataclass(frozen=True)
@@ -301,7 +310,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     elif not explicit:
         _order(selected, view)
     snapshots = _snapshot_items(snapshot_project, snapshot_placements, snapshot_analysis)
-    if view.comparison.baseline_marks in {"ghost", "ghost-when-changed"} and not explicit and (view.comparison.baseline != "snapshot" or not snapshots):
+    # `ghost-when-changed` without a snapshot baseline draws no ghost and is not an error (#429); `ghost` still needs one.
+    if view.comparison.baseline_marks == "ghost" and not explicit and (view.comparison.baseline != "snapshot" or not snapshots):
         raise ValueError("E_REVIEW_BASELINE_MARKS_SNAPSHOT: comparison.baselineMarks needs comparison.baseline snapshot "
                          "and a snapshot Project in the Render Context")
     scenario_items = {scenario_id: _snapshot_items(value[0], value[1], None, source_kind="scenario")
@@ -639,25 +649,32 @@ def _attach_points(rows: tuple[ReviewRowProjection, ...], project: dict[str, Any
 
 
 def _validate_explicit_row_hierarchy(rows: list[ReviewRowProjection]) -> None:
-    """Validate only asserted View row edges against the Project-owned hierarchy."""
+    """Validate the View-local parent graph without asserting Project containment."""
     by_id = {row.row_id: row for row in rows}
+    parents: dict[str, str | None] = {}
     for row in rows:
-        if row.parent_row_id is None:
-            continue
-        parent = by_id.get(row.parent_row_id)
-        if parent is None:
+        parent_id = row.parent_row_id
+        if parent_id is not None and parent_id not in by_id:
             raise ValueError(f"E_REVIEW_ROW_PARENT_UNAVAILABLE: row {row.row_id!r} names parent row {row.parent_row_id!r}, which is not a row of the View")
-        subject = next((item for item in row.items if item.item_id == row.table_subject_id), None)
-        parent_subject = next((item for item in parent.items if item.item_id == parent.table_subject_id), None)
-        if subject is None or parent_subject is None or subject.source_kind != "primary" or parent_subject.source_kind != "primary":
-            raise ValueError(f"E_REVIEW_ROW_PARENT_SOURCE: row {row.row_id!r} and its parent row {parent.row_id!r} must both "
-                             "have a primary table subject")
-        if subject.parent_id is None:
-            raise ValueError(f"E_REVIEW_ROW_PARENT_ROOT: row {row.row_id!r} names a parent row but its subject "
-                             f"{subject.object_id!r} is a hierarchy root")
-        if subject.parent_id != parent_subject.object_id:
-            raise ValueError(f"E_REVIEW_ROW_PARENT_MISMATCH: the Project parent of {subject.object_id!r} (row {row.row_id!r}) is "
-                             f"{subject.parent_id!r}, not {parent_subject.object_id!r}, the subject of parent row {parent.row_id!r}")
+        parents[row.row_id] = parent_id
+
+    # Each row has at most one parent, so an iterative three-state walk checks
+    # the whole functional graph in linear time and supports deep authored trees.
+    state: dict[str, int] = {}
+    for row in rows:
+        start = row.row_id
+        if state.get(start, 0) == 2:
+            continue
+        path: list[str] = []
+        current: str | None = start
+        while current is not None and state.get(current, 0) == 0:
+            state[current] = 1
+            path.append(current)
+            current = parents[current]
+        if current is not None and state.get(current) == 1:
+            raise ValueError(f"E_REVIEW_ROW_PARENT_CYCLE: explicit row parent graph contains a cycle at row {current!r}")
+        for row_id in path:
+            state[row_id] = 2
 
 
 def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[str, date]] | None,

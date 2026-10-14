@@ -51,7 +51,7 @@ OWNERS = {
     "SymbolGeometry": (_owner("inspection", "scene/serialization.py", "outline"),),
     "ScenePrimitive": (
         _owner("inspection", "scene/serialization.py", "scene_id kind source_ref source_kind purpose visual_role bounds slot_id text baseline text_layout marker_start marker_end pattern symbol paint corner_radius path_commands points href link_title icon_kind icon_asset_identity icon_viewport icon_paths icon_alternative icon_decorative table_row_id table_column_id paint_order host_placement_id clip_source_id end_treatment contrast_treatment lane_row_id lane_member_id stroke_clip"),
-        _owner("derived", "scene/v05_builder.py", "icon_path_geometry glyph_paint_mode glyph_paint_color glyph_stroke_width glyph_line_cap glyph_line_join"),
+        _owner("derived", "scene/v05_builder.py", "icon_path_geometry paint_channels glyph_paint_mode glyph_paint_color glyph_stroke_width glyph_line_cap glyph_line_join"),
         _owner("adapter", "renderers/v05_svg.py", "icon_raster"),
         _owner("inspection", "scene/serialization.py", "viewer_fit"),
         _owner("inspection", "scene/serialization.py", "from_instance_id to_instance_id fan_in"),

@@ -86,6 +86,52 @@ and annotations route deterministically around the table, headers, group surface
 bars. A collision that cannot be routed produces a diagnostic and a text alternative;
 routes never become View coordinates.
 
+### Hierarchy expressions and column width (#437)
+
+These mechanisms express different facts; a shared tree shape does not make
+them interchangeable:
+
+| Mechanism | Authority and meaning |
+| --- | --- |
+| Automatic rows with `grouping.by: hierarchy` | View projects Project parent/child containment; depth and rollup follow that projection. |
+| Explicit rows with `depth` and optional `parentRow` | View-local presentation nesting, not an assertion or override of Project containment. |
+| Columns with `source: wbsCode` or `source: path` | Display content: an authored Project WBS code or its resolved hierarchy path, not another row-nesting declaration. |
+
+Project containment remains Core-owned. WBS strings are not parsed for parents
+or checked against indentation. WBS/path columns compose with either row mode.
+Automatic rows do not contain authored `items`; explicit rows prohibit automatic
+`selection`, `grouping` and `ordering` (`E_RESOURCE_SCHEMA`). Thus automatic
+hierarchy projection and an explicit row tree cannot compete in one View.
+[Specification38](38-review-row-composition.md#1-contract) owns row composition
+and local parent-graph validation; [Specification06](06-view-model.md) owns View
+selection intent. Layout completes indentation; Scene/adapters preserve it.
+
+Visible nesting requires `hierarchyColumn`, naming exactly one `tableColumns`
+ID, irrespective of its position. Missing, unknown and unused declarations are
+`E_VIEW_HIERARCHY_COLUMN_REQUIRED`, `E_VIEW_HIERARCHY_COLUMN_UNKNOWN` and
+`E_VIEW_HIERARCHY_COLUMN_UNEXPECTED`; duplicate column IDs are
+`E_VIEW_TABLE_COLUMN_DUPLICATE`. Non-hierarchy header groups may also declare
+the column under the parent-header rule below; a band alone is not nesting.
+
+The column `width` grammar introduced in View v0.17 and retained by current
+View v0.28 is the **table subset**, not the complete Layout size grammar:
+
+```text
+content | fill | {fr: weight}
+        | {minmax: {min: content, max: content | fill | {fr: weight}}}
+0 < weight <= 1000000
+```
+
+Each object is closed; `fr` is a number, and `minmax` requires both members.
+`min-content`, `max-content`, `fixed`, `fitContent` and `aspectRatio` are not
+column widths and fail schema validation. Fixed physical geometry belongs to
+the Layout Profile: fix or bound the `table` track using
+[Specification33 §5](33-intent-oriented-layout.md#5-size-and-distance-values). This stabilizes
+the table host, not an independently fixed individual column. Column allocation
+uses measured content and gutters; at most one `fill` maximum is allowed,
+otherwise Layout reports `E_LAYOUT_TABLE_OVERFLOW`. The shared schema authority
+is `common-v0.1.$defs.tableColumnPresentation.properties.width`.
+
 ### 2.1 Table and row metrics (#480)
 
 Layout measures a table once. The same measure sizes the `table` source and

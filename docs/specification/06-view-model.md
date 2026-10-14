@@ -129,7 +129,8 @@ rows name their snapshot items themselves. `ghost` without `baseline: snapshot` 
 Snapshot in the Render Context is `E_REVIEW_BASELINE_MARKS_SNAPSHOT`. `baselineMarks:
 ghost-when-changed` (#991 item 16) draws the ghost only for an item whose Snapshot placement
 differs from its current one (any planned date), so an item whose baseline equals the plan gets
-no dashed frame; it needs the same Snapshot baseline and fails the same way without it.
+no dashed frame. Without a Snapshot baseline or a Snapshot in the Render Context it draws no ghost and
+raises no diagnostic (#429), so a Layout profile's `viewDefaults` can offer it to Views that have no baseline.
 
 `startDelta = actual.start − planned.start`, `finishDelta = actual.finish − planned.finish`,
 and `atDelta = actual.at − planned.at`, each as a signed integer in calendar days.
@@ -244,7 +245,22 @@ is not changed by this rule.
 
 A `table-timeline` View MAY select named Project periods (Spec 05 §12.1) with `periods: [{id}]`, each drawn as a band across the plot rows over the period's dates. The selection owns only which periods are shown and in what order (the order is the drawing order); the period's dates are a Project fact and its colour, stroke, opacity and pattern are Theme role `period-band` (Spec 07), its geometry Layout's (Spec 50 §3.4). The band is clipped to the View window and never extends it: a period with no extent left draws nothing and is recorded as the Scene diagnostic `I_LAYOUT_PERIOD_OUTSIDE_WINDOW:<id>`. An id the Project does not declare is `E_VIEW_PERIOD_UNKNOWN` (pointer `/body/periods/<i>/id`; the message lists the declared ids) and a repeated id is `E_VIEW_PERIOD_DUPLICATE`; nothing is skipped silently. The member is optional and additive in `chrona/view/v0.28`; a `dependency-network` View, which has no timeline, MUST NOT declare it. A View without `periods` renders as before.
 
+A selected period MAY also declare `variant`, a `common-v0.1` `slug`. It chooses the paired Theme roles `period-band:<variant>` and, when a label is consumed, `period-label:<variant>` (Specification 07). The variant is View-local presentation intent, not a Project period identifier or a Theme lookup fallback. Without it, the existing unsuffixed roles and output apply. The optional member is additive to the current View version under Specification 56 §3.2.
+
 A selected period may carry `label: {placement, overflow?, text?}`. `placement` is `top` (at the plot's top edge), `bottom` (at its bottom edge) or `inside` (centred in the band); the label is the View's `text` override when it declares one (#871; one to eighty characters, shown for this View only), else the period's `title` (its identifier when absent), centred on the band's visible extent. `overflow` is `suppress` (omit the label and record `W_LAYOUT_LABEL_SUPPRESSED`) or `visible-overflow` (the default: place it at the preferred position and record `W_LAYOUT_LABEL_OVERFLOW`) when no collision-free position exists; a label never silently overprints a mark. Absent `label` draws the band alone.
+
+A Detail Profile legend entry for a period MAY declare `sourceRef` as that
+Project period's id. The binding is valid only when the same period is selected
+by this View, exactly once, and the entry `role` equals that period's selected
+band role (`period-band` or `period-band:<variant>`). Unknown, unselected,
+ambiguous, or duplicate sources fail with `E_REVIEW_LEGEND_PERIOD_SOURCE` at
+`/body/legend/<index>/sourceRef`; a mismatched role is
+`E_REVIEW_LEGEND_PERIOD_ROLE` at `/body/legend/<index>/role`, both attributed to
+the Detail Profile rather than the View. They are not ordinary unsourced keys.
+The source identifies
+the Project period, while the role controls visual selection. Existing
+`wording.legend` remains role-wide and therefore overrides the labels of all
+entries with that role, including source-bound period entries.
 
 ### 7.2 Axis band fills (#490)
 
@@ -552,11 +568,12 @@ source, with `I_SUMMARY_FIGURE_UNBOUND` (Specification46). Neither exception
 changes missing-figure errors for heading or Theme templates.
 
 The View may supply `wording.legend: {<role>: <text>}` and
-`wording.summary: {<panel-id>.<metric-id>: <text>}`. These override the selected
-profile's legend label or metric caption, not its identity, order, source,
+`wording.summary: {<panel-id>.<metric-id>: <text>}`. A summary key
+`<panel-id>.title` overrides that panel's title (#1478). These override the selected
+profile's legend label, metric caption or panel title, not its identity, order, source,
 format or arrangement. A legend key addresses all entries with that role.
 Summary keys address the exact joined identifiers, without splitting on dots;
-if more than one metric has that joined key, an override is ambiguous.
+if multiple metric or panel-title targets have that joined key, an override is ambiguous.
 An unknown or ambiguous key is `E_VIEW_WORDING_UNKNOWN` or
 `E_VIEW_WORDING_AMBIGUOUS` at its original View pointer. An omitted override
 retains the profile label. No entries or panels are synthesized.
@@ -573,8 +590,13 @@ Summary figure behavior specified in Specification46.
 The design-purity tool audits Theme, Layout and presentation profiles against
 the actual Project referenced by each context. View and Context connections
 are excluded. It reports matched Project identifiers and authored wording
-with resource pointers, including string keys, using complete-token/phrase
-comparison rather than arbitrary substring matching. Generic placeholders are
+with resource pointers using complete-token/phrase comparison rather than
+arbitrary substring matching. Resource-root `/version`, `/kind` and `/id`
+are excluded: they identify the format and resource, not Project content.
+Identifier candidates are limited to Project-reference or user-facing wording
+values; a design token or paint name is not a leak merely because a Project
+object has the same identifier (#1479). Authored wording phrases remain
+lexical candidates. Generic placeholders are
 allowed; literal Project wording around them is not hidden. Lexical collisions
 require review and do not by themselves prove project dependence or purity.
 Strict mode rejects unresolved findings; report-only mode preserves findings

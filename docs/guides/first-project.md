@@ -34,7 +34,7 @@ still require their typesetter descriptor flags.
 To select a supplied appearance explicitly, copy one into your own source tree
 and render through its ordinary local preset.  Available ids are
 `mission-light`, `control-room-dark`, `print-mono`, `executive-light`, `elevated-light`, `editorial`, `technical-print`,
-and `chrona-default-draft` (the look used when no preset is named); `chrona preset list` prints them.
+`chrona-default-draft` (the look used when no preset is named), and the packaged designs `marquee` and `sunday`; `chrona preset list` prints them.
 
 ```bash
 chrona preset copy control-room-dark --output my-first-chrona-project/looks/control-room-dark
@@ -92,10 +92,12 @@ chrona render examples/aster-ssd/project.yaml \
   --actual examples/aster-ssd/actual.yaml --output aster-derived.svg
 ```
 
-For a complete materialized regression corpus instead, request it explicitly (from a clone with
-`pip install -e packages/chrona-fonts-noto-cjk`; an installed wheel does not carry that font package yet):
+For a materialized regression corpus instead, request it explicitly. An installed wheel includes
+the slides whose declared font providers are available. Slides requiring an absent provider are
+omitted with `W_INIT_EXAMPLE_SLIDE_DEFERRED`; the result lists available and deferred slide IDs.
+For the complete corpus, install the CJK provider from a clone with
+`pip install -e packages/chrona-fonts-noto-cjk` and initialize a new directory.
 
-<!-- chrona:doc-check requires: clone init --example halcyon-1 needs packages/chrona-fonts-noto-cjk, which a wheel does not install -->
 ```bash
 chrona init my-halcyon-corpus --example halcyon-1
 ```

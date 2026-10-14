@@ -9,7 +9,9 @@ import shutil
 
 import pytest
 import yaml
+from fontTools.ttLib import TTFont
 from PIL import Image, ImageChops
+from pypdf import PdfReader
 
 from chrona.presentation.model.closure import ClosureError, resolve_draft_render
 from chrona.presentation.fonts.system import resolve_system_font
@@ -234,6 +236,19 @@ def test_declared_cjk_font_closure_reaches_svg_png_and_pdf_without_host_fonts(tm
     assert "シリコン立ち上げおよび初期機能確認" in svg.decode("utf-8")
     assert png.startswith(b"\x89PNG\r\n\x1a\n") and pdf.startswith(b"%PDF-")
     assert sha256(png).hexdigest() == sha256(render("png")).hexdigest()
+    reader = PdfReader(BytesIO(pdf))
+    embedded_families = set()
+    for reference in reader.pages[0]["/Resources"]["/Font"].values():
+        descriptor = reference.get_object().get("/FontDescriptor")
+        if descriptor is None:
+            continue
+        for key in ("/FontFile", "/FontFile2", "/FontFile3"):
+            if key in descriptor:
+                embedded = TTFont(BytesIO(descriptor[key].get_object().get_data()))
+                family = embedded["name"].getDebugName(1)
+                if family:
+                    embedded_families.add(family)
+    assert "Noto Sans JP" in embedded_families
 
 
 def test_public_render_diagnoses_a_glyph_absent_from_declared_metrics(tmp_path):

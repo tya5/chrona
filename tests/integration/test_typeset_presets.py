@@ -20,6 +20,7 @@ TARGETS = {
     "tikz": ("tex", ["--typesetter-engine", "tectonic", "--typesetter-version", "0.17.0", "--typesetter-adapter-grammar", "chrona-tikz/v0.1"]),
 }
 SVG_ONLY = {"elevated-light", "technical-print"}  # their preferred profile is the SVG icon profile
+TYPESET_REFUSED = {"marquee", "sunday"}  # packaged designs use SVG-only treatments (glow); Typst and TikZ refuse them by name (#429)
 PRESETS = [None, *(item["id"] for item in list_builtin_presets())]
 
 
@@ -53,6 +54,9 @@ def test_every_bundled_appearance_exports_to_the_typeset_targets(starter, preset
     report = json.loads(result.stdout)
     codes = [item["code"] for item in report["diagnostics"]]
 
+    if preset in TYPESET_REFUSED:
+        assert "E_VISUAL_CAPABILITY_UNSUPPORTED" in codes and result.returncode != 0, report
+        return
     assert "E_VISUAL_CAPABILITY_UNSUPPORTED" not in codes and result.returncode == 0, report
     text = output.read_text(encoding="utf-8")
     assert text
