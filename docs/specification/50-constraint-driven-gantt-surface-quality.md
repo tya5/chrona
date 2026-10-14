@@ -1041,12 +1041,25 @@ placement id `period-band:<period id>`, `sourceRef` the period id, semantic
 `periodBand`, slot `timeline`. Its inline extent is the period's half-open range
 clipped to the View window and to the plot, mapped through the scale that places
 marks; its block extent is the plot (above), as the calendar
-closure's. Fill, stroke, opacity, an optional catalogue pattern and the paint
-order come from Theme role `period-band` (`backgroundTreatment` and
-`backgroundPaintOrder`, as the axis band); `backgroundTreatment: none` is the
-explicit absent disposition. A Theme that omits the role while a View selects a
-period fails with `E_THEME_ROLE_REQUIRED` at `/body/roles/period-band`; no other
-role paints it. Every packaged Theme declares `period-band`, `period-label` and `period-label-chip` (#880): the band is a flat translucent tint (opacity 0.12 to 0.16) of the scheme's `accent` (`text` in the two print Themes), so it reads as a lighter highlighted window, never a hole; the marks, closed days and label on it are judged on the tint composited over the ground beneath it (#1013), and the label sits on a `surface` chip (#911). The packaged Themes bind these roles to the closed set of Color Scheme intents only: a binding to a scheme category would make `--preset X --scheme Y` fail for every View whose scheme lacks it, so a scheme override re-colours the band and no category or catalogue is required. The band is a background and never enters the obstacle index.
+closure's. The selected role is `period-band` or, for `variant: <slug>`,
+`period-band:<slug>`. Fill, stroke, opacity, an optional catalogue pattern and
+paint order come from that role (`backgroundTreatment` and `backgroundPaintOrder`,
+as the axis band); `backgroundTreatment: none` is the explicit absent disposition.
+A Theme that omits the selected role while a View selects a period fails with
+`E_THEME_ROLE_REQUIRED` at `/body/roles/<selected-role>`, even if clipping leaves
+no drawable extent or the treatment is `none`; there is no fallback. The role's
+properties and all pattern, opacity, background-rank and paint checks are resolved
+against the selected role. Every packaged Theme declares the unsuffixed
+`period-band`, `period-label` and `period-label-chip` (#880): the band is a flat
+translucent tint (opacity 0.12 to 0.16) of the scheme's `accent` (`text` in the two
+print Themes), so it reads as a lighter highlighted window, never a hole; the
+marks, closed days and label on it are judged on the tint composited over the ground
+beneath it (#1013), and the label sits on a `surface` chip (#911). The packaged
+Themes bind these roles to the closed set of Color Scheme intents only: a binding
+to a scheme category would make `--preset X --scheme Y` fail for every View whose
+scheme lacks it, so a scheme override re-colours the band and no category or
+catalogue is required. The band is a background and never enters the obstacle
+index.
 Contrast is measured as a decoration role at the 1.10 floor over the primitive
 beneath its centre; a band below the floor, or over a translucent host that
 cannot be measured, is a warning (`W_SCENE_DECORATION_CONTRAST`,
@@ -1077,9 +1090,12 @@ as-of and member labels, built in the first pre-route phase: `top` and `bottom` 
 edge so the engine's `below` and `above` geometry centres the label on the band against it, `inside` anchors the band;
 the candidate search, collision predicate, chip, and `W_LAYOUT_LABEL_SUPPRESSED` / `W_LAYOUT_LABEL_OVERFLOW` records are
 the engine's. The placed label is a `text` obstacle for relation routes, relation labels, later member labels and
-annotations. Its Theme role `period-label` is state text (`contrastTreatment` `required` 4.5:1 or `deemphasized`
-3.0:1, checked against the scheme surface at closure and against the primitive beneath it, the chip when present, in the
-Scene gate) and is opt-in: a Theme that selects no label declares none.
+annotations. Its Theme role is `period-label` or `period-label:<slug>` for the selected variant, and is state text
+(`contrastTreatment` `required` 4.5:1 or `deemphasized` 3.0:1, checked against the scheme surface at closure and against
+the primitive beneath it, the chip when present, in the Scene gate). Layout measures with this selected role; Scene resolves its paint;
+the role is required when a drawable label request is consumed, at `/body/roles/<selected-label-role>`, without fallback.
+The shared `period-label-chip` treatment is unchanged. Scene purpose, period `sourceRef`, placement identity and
+collision policy do not vary with the role. A Theme that selects no label declares no label role.
 
 A Layout `legend` slot is the sole authority for legend geometry. When it exists, every selected legend entry emits one swatch and one measured label. When absent, there are no legend primitives. It is a resource choice, not a renderer fallback. Header or row capacity shortfall completes visible stacked/natural geometry and a warning rather than rejecting the surface.
 

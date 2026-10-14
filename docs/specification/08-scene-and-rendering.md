@@ -54,6 +54,15 @@ Renderer adapters serialize primitives only. They do not infer policy, reflow te
 or repair missing geometry. This is the single handoff defined by ADR-0031 and
 specialized by Specification 50.
 
+For a named-period variant (Specifications 06 §7.1 and 50 §3.4), Layout consumes the
+View's selected Theme role before completing geometry or text measurement. It carries
+that completed role on the period Rect/Text placement; Scene preserves the existing
+`period-band`/`period-label` purpose and period `sourceRef`, while carrying the
+selected role as visual provenance. Scene contrast, capability and paint checks use
+that selected role. Adapters serialize the completed result and MUST NOT reconstruct
+the suffix, look up Theme roles, or substitute the unsuffixed role. The variant does
+not change period placement or Scene identity.
+
 ### 2.3 PDF font-outline translation (#1338)
 
 PDF MUST use the exact resolved font bytes and collection face index, not
