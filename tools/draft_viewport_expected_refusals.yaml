@@ -13,6 +13,10 @@
         message: 'layout mark overflow: no further detail is recorded for this code (E_LAYOUT_MARK_OVERFLOW)'
   cases:
     - chrona-roadmap/roadmap@600x340
+    - chrona-roadmap/marquee@800x450
+    - chrona-roadmap/marquee@600x340
+    - chrona-roadmap/titlecard@600x340
+    - chrona-roadmap/yuya@600x340
     - halcyon-1/01-mission-brief@800x450
     - halcyon-1/01-mission-brief@600x340
     - halcyon-1/04-tvac-slip@800x450
