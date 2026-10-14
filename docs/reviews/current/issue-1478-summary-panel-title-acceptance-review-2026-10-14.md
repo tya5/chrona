@@ -1,11 +1,16 @@
+<!-- chrona:literal-acceptance/v1 -->
+
 # Issue #1478 — Summary Panel Title Acceptance Review
 
-- Source: [Issue #1478](https://github.com/tya5/chrona/issues/1478)
 - Implementation: `691d94ab13d44c6fcbb81ce0a62288c5f2c7d863` (`bf6e96a8` applied after normative Spec 06 commit `ad1dd5a9`)
 - Public fixture source: PR #1476 commit `c2ddb68f647b566a4c51c25f2fe0735fbb664d04`
-- Observed: 2026-10-14
 
 ## Literal issue acceptance
+
+### Issue #1478
+
+- Source: [Issue #1478](https://github.com/tya5/chrona/issues/1478)
+- Observed: 2026-10-14
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
