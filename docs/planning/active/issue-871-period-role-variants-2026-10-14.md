@@ -86,7 +86,10 @@ Scene channels: c5905e39/38fc378a; edge completion:851af7fa;
 source legend:d1a0678a. Root focused batch224 passes; source-pattern/variant
 tests10 pass; delivery-owner tests2 pass. Schema annotations and equivalence
 pass (additive2/equal36). Independent audit found the base/variant pattern
-admission gap; root corrected it before these final tests. Local conformance
-report staleness is confined to diagnostic/declared-value/presentation-coverage
-generated snapshots; the CI disposable snapshot must refresh and verify them.
-PR/public artifact review and exact-main release remain pending.
+admission gap; root corrected it before these final tests. PR1488 snapshot11869408444
+retains all92 Scene/SVG bytes; only the intended three generated reports change.
+CI conformance/MCP/newest materializers pass. Run38510592348 found14 stale
+test expectations:13 tuple legend fixtures and one Rect-only capability assertion.
+The typed fixtures and Path admission are corrected without a production shim;
+the expanded migration batch154 passes. A repository-wide audit finds no other
+tuple consumers. Updated-head CI and exact-main release remain pending.

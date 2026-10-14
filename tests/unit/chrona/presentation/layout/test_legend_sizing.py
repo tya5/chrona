@@ -37,10 +37,8 @@ def _tokens():
     return ThemeTokenView(measuring_theme())
 
 
-def _measure(entries, arrangement=LegendArrangement()) -> Measurement:
-    typed_entries = tuple(entry if isinstance(entry, SurfaceLegendEntry) else SurfaceLegendEntry(*entry)
-                          for entry in entries)
-    source = legend_source_input(typed_entries, tokens=_tokens(), mark_block_size=8.0,
+def _measure(entries: tuple[SurfaceLegendEntry, ...], arrangement=LegendArrangement()) -> Measurement:
+    source = legend_source_input(entries, tokens=_tokens(), mark_block_size=8.0,
                                  font_metrics=_Metrics(), arrangement=arrangement)
     return measure_sources({"legend": source}, measuring_theme(), font_metrics=_Metrics()).measurements["legend"]
 
@@ -57,9 +55,9 @@ def _close(value: Decimal, expected: float) -> bool:
 
 
 def test_a_block_legend_is_as_wide_as_its_widest_entry_with_swatch_and_gap():
-    short = _measure((("a", "Plan"), ("b", "Act")))
-    long = _measure((("a", "Plan"), ("b", "Assembly, integration and test")))
-    mixed = _measure((("a", "Plan"), ("b", "Assembly, integration and test"), ("c", "Act")))
+    short = _measure((SurfaceLegendEntry("a", "Plan"), SurfaceLegendEntry("b", "Act")))
+    long = _measure((SurfaceLegendEntry("a", "Plan"), SurfaceLegendEntry("b", "Assembly, integration and test")))
+    mixed = _measure((SurfaceLegendEntry("a", "Plan"), SurfaceLegendEntry("b", "Assembly, integration and test"), SurfaceLegendEntry("c", "Act")))
 
     assert _close(short.preferred_inline, _entry("Plan"))
     assert _close(long.preferred_inline, _entry("Assembly, integration and test"))
@@ -68,21 +66,21 @@ def test_a_block_legend_is_as_wide_as_its_widest_entry_with_swatch_and_gap():
 
 def test_the_swatch_and_gap_are_part_of_the_entry_not_an_extra_on_the_label():
     # Before #497 the slot was the widest label: swatch plus gap short of the widest entry.
-    measured = _measure((("a", "Spacecraft bus"),))
+    measured = _measure((SurfaceLegendEntry("a", "Spacecraft bus"),))
 
     assert _close(measured.preferred_inline, len("Spacecraft bus") * ADVANCE + SWATCH + GAP)
     assert measured.preferred_inline > Decimal(len("Spacecraft bus") * ADVANCE)
 
 
 def test_a_declared_gap_widens_every_entry():
-    measured = _measure((("a", "Plan"),), LegendArrangement(gap=Decimal(10)))
+    measured = _measure((SurfaceLegendEntry("a", "Plan"),), LegendArrangement(gap=Decimal(10)))
 
     assert _close(measured.preferred_inline, SWATCH + 10 + 4 * ADVANCE)
 
 
 def test_an_inline_legend_is_the_whole_line_of_entries():
     arrangement = LegendArrangement(direction="inline", gap=Decimal(10))
-    measured = _measure((("a", "Plan"), ("b", "Actual")), arrangement)
+    measured = _measure((SurfaceLegendEntry("a", "Plan"), SurfaceLegendEntry("b", "Actual")), arrangement)
 
     assert _close(measured.preferred_inline, (SWATCH + 10 + 4 * ADVANCE) + 10 + (SWATCH + 10 + 6 * ADVANCE))
 
@@ -109,7 +107,7 @@ def test_every_swatch_bucket_has_a_declared_extent():
 
 
 def test_an_ellipsizing_block_legend_can_shrink_to_a_swatch_a_gap_and_one_ellipsis():
-    measured = _measure((("a", "Plan"), ("b", "Assembly, integration and test")),
+    measured = _measure((SurfaceLegendEntry("a", "Plan"), SurfaceLegendEntry("b", "Assembly, integration and test")),
                         LegendArrangement(overflow="ellipsize-with-source"))
 
     assert _close(measured.min_inline, SWATCH + GAP + ADVANCE)
@@ -117,7 +115,7 @@ def test_an_ellipsizing_block_legend_can_shrink_to_a_swatch_a_gap_and_one_ellips
 
 
 def test_a_legend_that_may_not_shrink_never_measures_below_its_content():
-    measured = _measure((("a", "Plan"), ("b", "Assembly, integration and test")),
+    measured = _measure((SurfaceLegendEntry("a", "Plan"), SurfaceLegendEntry("b", "Assembly, integration and test")),
                         LegendArrangement(overflow="visible-overflow"))
 
     assert measured.min_inline == measured.preferred_inline
@@ -126,7 +124,7 @@ def test_a_legend_that_may_not_shrink_never_measures_below_its_content():
 def test_a_wrapping_inline_legend_needs_only_its_widest_entry():
     arrangement = LegendArrangement(direction="inline", overflow="ellipsize-with-source",
                                     item_min_inline_size=Decimal(80))
-    measured = _measure((("a", "Plan"), ("b", "Assembly, integration and test"), ("c", "Act")), arrangement)
+    measured = _measure((SurfaceLegendEntry("a", "Plan"), SurfaceLegendEntry("b", "Assembly, integration and test"), SurfaceLegendEntry("c", "Act")), arrangement)
 
     assert _close(measured.min_inline, _entry("Assembly, integration and test"))
     assert measured.preferred_inline > measured.min_inline
