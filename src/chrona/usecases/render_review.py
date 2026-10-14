@@ -603,7 +603,7 @@ def _resolve_group_tints(view: Any, projection: Any, theme: Mapping[str, Any]
         return (), ()
     groups = tuple(dict.fromkeys(row.group_id for row in projection.rows if row.group_id))
     scale = resolve_color_scale(
-        {"scale": tint.scale, "target": "group", "source": {"field": view.grouping.field},
+        {"scale": tint.scale, "target": "group", "source": {"field": view.grouping.field or view.grouping.by},
          "domain": list(tint.domain) if tint.domain is not None else "firstAppearance"},
         theme["body"].get("colorScales"), theme["body"].get("categorySlots"),
         source_ref="/body/grouping/tint",

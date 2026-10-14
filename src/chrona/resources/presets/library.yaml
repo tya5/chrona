@@ -96,3 +96,10 @@ entries:
           noticeSourcePath: chrona-target-parts.NOTICE
           contentIdentity: sha256:139be42bed11eaa9809ef98bb427eb74f8f0862c3d5c4ccfd9eba2b23185acee
           noticeContentIdentity: sha256:b07fa7bbb7bff0acdfb2cf02905b7ca7ad1db3ead9f59b13f47c4ced097f3eb6
+  - id: target-b
+    members:
+      view: {id: chrona-preset-design-default, kind: view, sourceRoot: presets/bundles/design-default, sourcePath: view.yaml}
+      theme: {id: target-b, kind: theme, sourceRoot: designs/target-b, sourcePath: theme.yaml}
+      colorScheme: {id: target-b, kind: color-scheme, sourceRoot: designs/target-b, sourcePath: scheme.yaml}
+      layout: {id: target-b, kind: layout-profile, sourceRoot: designs/target-b, sourcePath: layout.yaml}
+      detailProfile: {id: halcyon-target-b-legend, kind: review-detail-profile, sourceRoot: designs/target-b, sourcePath: detail.yaml}
