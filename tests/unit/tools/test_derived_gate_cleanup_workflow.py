@@ -46,11 +46,17 @@ def test_candidate_cleanup_is_after_consumption_and_release_dispatch() -> None:
 
 
 def test_release_matrix_checks_out_sha_not_retired_gate_branch() -> None:
-    full = workflow("conformance.yml")["jobs"]["full-matrix"]
+    jobs = workflow("conformance.yml")["jobs"]
+    full = jobs["full-matrix"]
     checkout = next(step for step in full["steps"] if step.get("uses", "").startswith("actions/checkout@"))
-    assert checkout["with"]["ref"] == "${{ github.sha }}"
+    assert checkout["with"]["ref"] == "${{ needs.ready-sha.outputs.sha }}"
+    admission = jobs["ready-sha"]
+    resolve = next(step for step in admission["steps"] if step.get("id") == "resolve")
+    assert resolve["env"]["GITHUB_SHA"] == "${{ github.sha }}"
+    assert resolve["env"]["SELECT_READY_MAIN"] == "${{ inputs.select_ready_main }}"
     verify = next(step for step in full["steps"] if step.get("name") == "Verify exact full-CI SHA when supplied")
     assert 'test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"' in verify["run"]
+    assert 'test "$GITHUB_SHA" = "$EXPECTED_SHA"' in verify["run"]
 
 
 @pytest.mark.parametrize("failure,terminal,expected", [(False, True, 0), (True, True, 1), (False, False, 1)])
