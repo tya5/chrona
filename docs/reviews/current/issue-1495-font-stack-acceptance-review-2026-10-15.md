@@ -7,6 +7,9 @@ Plan, design and architecture: [living record](https://github.com/tya5/chrona/is
 preserves Spec30 and1281: exhausted coverage includes the packaged face; existing
 per-glyph fallback stays unchanged. Source: cd3316d9ba7bae8ed7cda373bda9badac1437f9d,
 based on READY9e6431abc8e16afcaaff5985f91cba83a05226ea.
+Normal merge adopts READYe907c6c10e6df56bcb1258f65630a809a4b36868 (PR1504's
+independent Windows UTF-8 report correction). Post-adoption focused checks44PASS;
+the approved font behavior and existing byte evidence remain unchanged.
 
 The actual selected family/weight is addressable by completed-text consumers;
 `setdefault` preserves declared exact metrics. Only unavailable named prefixes
