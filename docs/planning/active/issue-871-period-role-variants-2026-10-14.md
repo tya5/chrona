@@ -43,6 +43,8 @@ Sourced legend IDs use disjoint prefixes (legend-period / legend-period-swatch),
 not pseudo-role keys that can collide with arbitrary existing role aliases.
 Edge IDs length-frame the complete host ID under a disjoint prefix (Spec50);
 arbitrary colon-bearing Project identifiers remain supported.
+Patterned fills retain pattern pigments while suppressing their host outline;
+edge-only width/dash/finish do not override catalogue geometry (Specs07/08).
 Existing role-wide wording precedence and unsourced IDs remain unchanged.
 An explicitly absent period background keeps its sourced legend label and
 reservation but no painted key (Spec50); only this branch was held for correction.
