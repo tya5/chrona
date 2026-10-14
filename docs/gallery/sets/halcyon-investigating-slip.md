@@ -33,9 +33,27 @@ The pair changes only `view`.
 ```diff
 --- 04-tvac-slip.yaml
 +++ 07-replan-baseline.yaml
-@@ -7,8 +7,8 @@
+@@ -12,7 +12,7 @@
+         align: center
+         form: year-quarter
+         orientation: horizontal
+-        overflow: visible-overflow
++        overflow: thin-with-record
+       role: labels
+       unit: quarter
+     - every: 1
+@@ -20,7 +20,7 @@
+         align: start
+         form: short-month
+         orientation: horizontal
+-        overflow: visible-overflow
++        overflow: thin-with-record
+       role: labels
        unit: month
-     ticks: week
+     - every: 1
+@@ -33,8 +33,8 @@
+     groups: all
+     rows: none
    comparison:
 -    actual: required
 -    baseline: scenario
@@ -44,7 +62,7 @@ The pair changes only `view`.
      deltaUnit: calendar-days
      facets:
      - planned
-@@ -17,15 +17,11 @@
+@@ -43,15 +43,12 @@
      - missingActual
      - unmatchedActual
      observationSelection: latest
@@ -60,10 +78,11 @@ The pair changes only `view`.
 -    - launch
 -    presentation: header
 +    rollup: bar
++  hierarchyColumn: Work package
    markers:
-   - kind: asOf
-     label: as of
-@@ -36,10 +32,12 @@
+   - date:
+       form: localized-date
+@@ -64,10 +61,12 @@
      tieBreak: id
    rows:
      mode: automatic
@@ -77,21 +96,30 @@ The pair changes only `view`.
        - tvac
        - emc
        - psr
-@@ -56,10 +54,11 @@
-   - id: Work package
-     missing: em-dash
-     source: title
--  - id: Scenario
-+  - format: signedDays
+@@ -91,12 +90,13 @@
+         max:
+           fr: 1
+         min: content
+-  - align: start
++  - align: end
++    format: signedDays
+     headerOrientation: horizontal
+-    id: Scenario
 +    id: Baseline finish
      missing: em-dash
      source:
 -      scenario: title
 +      comparisonFacet: finishDelta
-   - format: signedDays
-     id: "\u0394"
-     missing: em-dash
-@@ -79,9 +78,9 @@
+     width: content
+   - align: end
+     format: signedDays
+@@ -117,15 +117,12 @@
+       placement: plot
+       side: auto
+     relations:
+-      content:
+-      - lag
+-      - endpointPair
        mode: semantic
        overflow: suppress
    window:
@@ -103,7 +131,7 @@ The pair changes only `view`.
 +    start: '2027-06-28'
 +id: halcyon-07-replan-baseline
  kind: view
- version: chrona/view/v0.13
+ version: chrona/view/v0.27
 
 
 ## Accessibility
