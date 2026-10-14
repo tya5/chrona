@@ -28,8 +28,12 @@ ReportLab font-state/configuration mutation, source rewrite, Scene/Layout change
 or new runtime dependency. pypdf is dev-only, for actual embedded-glyph verification.
 Luna whole-code review found no architecture blocker; helper/map/real-PDF42PASS,
 combined target/installed/helper/map/real-PDF70PASS. Full local suite is not duplicated.
-Current-head CI, public generated-artifact comparison, and exact-main three-OS
-release remain pending; do not close the issue before these gates succeed.
+PR1480 head801e08d7 passed CI38489908947; artifact11860839050 retained all101
+members/all92 Scene+SVG bytes. [Exact-main release38491118717](https://github.com/tya5/chrona/actions/runs/38491118717)
+on READY1299e952 passed full pytest/conformance/wheel on all three OSes,
+MCP floor and newest-Python public materializers. Both literal rows are met;
+issue1338 is closed. Final helper/map/actual-PDF43 tests include actual unused
+CFF registration, retaining one real source cmap anchor without substitution.
 
 ## Programme-level criteria (optional)
 
