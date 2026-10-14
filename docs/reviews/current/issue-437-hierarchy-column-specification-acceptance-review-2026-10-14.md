@@ -10,12 +10,21 @@ parent availability and an acyclic local graph, iteratively; authored depths,
 automatic Project hierarchy, Core, schema, Layout and adapters are unchanged.
 The diagnostic migration is explicit in Spec38. No examples edits.
 
-Root verification used this worktree's own venv/imports:166 projection,
-contract, hierarchyColumn and synthetic width-grammar tests passed; import
+Root verification used this worktree's own venv/imports:181 projection/message,
+contract, hierarchyColumn, synthetic width-grammar and viewport-tool tests passed; import
 direction and literal-review checks passed. The reversed12000-row chain tests
 deep traversal. The unrelated-subject fixture rejects the retired validator.
-PR artifact comparison and containing-review exact-main full release remain
-required before closure; public geometry is expected unchanged.
+PR [snapshot38499477361](https://github.com/tya5/chrona/actions/runs/38499477361)
+retains101 members; all92 Scene/SVG files are unchanged. Only the intended
+diagnostic inventory changes. That run exposed an obsolete message test still
+expecting the retired Project-root restriction; it now checks local parent
+availability and cycle messages. The independent main Windows failure in
+[release38498812532](https://github.com/tya5/chrona/actions/runs/38498812532)
+is also repaired here under [the1474 tool plan](https://github.com/tya5/chrona/issues/1474#issuecomment-6159445038):
+use the same interpreter's portable `-m chrona` entry point, not an assumed
+sibling console script. Windows/Unix-shaped launcher regressions and the actual
+CLI test pass locally. Current-head CI and containing-review exact-main full
+release remain required before closure.
 
 ## Literal issue acceptance
 
