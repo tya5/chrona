@@ -16,9 +16,14 @@ Focused tool tests15PASS; review/ledger tests7PASS. No product, examples or
 generated-output changes in this remaining slice. [PR CI38569397029](https://github.com/tya5/chrona/actions/runs/38569397029)
 passes. Snapshot11897795293: all101 members byte-identical, no added/removed
 paths. Independent implementation/architecture review found no gap.
-This final literal acceptance update still requires its containing-review
-exact-main three-OS release before closure; local passes alone are not release
-acceptance.
+Containing-review [release38575019372](https://github.com/tya5/chrona/actions/runs/38575019372)
+on exact7f0c9c50d950a5d0517872c3170ab95aedcaf447 passes all three OS full
+pytest/conformance/wheel-smoke jobs, newest-Python public materializers and MCP.
+After dev B PR1492, exact main24374ec8 was revalidated: API/CLI117 rendered,
+21 exact expected refusals,0 failures; gallery check passes, checkout unchanged.
+Issue1474 is closed. PR1494's initial readiness-only failure was
+[dispositioned](https://github.com/tya5/chrona/pull/1494#issuecomment-6169786499);
+the revalidated gate passed on attempt2 without a workflow change or bypass.
 Architecture: expectations belong to the validation tool, not Layout policy.
 API and CLI share the existing failure reporter's complete diagnostic payload
 and exit code; no synthetic domain code or project-specific core exception.
@@ -38,4 +43,4 @@ and exit code; no synthetic domain code or project-specific core exception.
 
 ## Programme-level criteria (optional)
 
-None. Keep issue1474 open until this final review's exact-main release completes.
+None.
