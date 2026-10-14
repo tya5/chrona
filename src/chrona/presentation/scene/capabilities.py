@@ -161,7 +161,7 @@ _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
     "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign", "align", "barWidth", "blockGap", "inlineGap",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "annotationContainer", "marker", "symbol", "edge",
     "stampPlacement", "coneSpread", "coneExtent", "radialCenterInline", "radialCenterBlock",
-    "radialRadiusInline", "radialRadiusBlock", "radialInnerStop",
+    "radialRadiusInline", "radialRadiusBlock", "radialInnerStop", "edgeRules", "doubleRuleGap",
 ))
 _LAYOUT_POLICY = frozenset(("backgroundTreatment", "backgroundPaintOrder", "patternMode"))
 # A box role's viewer-fit mode (#1050): Layout measures the per-line widths, the SVG adapter serialises them.
@@ -333,8 +333,9 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _PATTERNED_RECT_PAINT | _GROUP_TAB | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
              scene_kinds=frozenset(("Rect",)))
     register("period-band", "Layout period band and Scene Rect",
-             _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
-             scene_kinds=frozenset(("Rect",)))
+             _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder",
+                                                "edgeRules", "doubleRuleGap")),
+             scene_kinds=frozenset(("Rect", "Path")))
     register("axis-band-decoration axis-band-decoration2", "Layout axis band and Scene Rect",
              _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder", "cellGap",
                                                 "cellCornerRadius", "cellCornerChamfer", "cornerRadius")),

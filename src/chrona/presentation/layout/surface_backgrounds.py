@@ -246,6 +246,11 @@ def validate_background_shapes(shapes: tuple[ShapePlacement, ...] | list[ShapePl
     for shape in shapes:
         if shape.semantic_id not in BACKGROUND_SEMANTIC_IDS:
             continue
+        # A primitive whose completed channel mask excludes fill is not a
+        # background host, even when it preserves the host's semantic role.
+        channels = getattr(shape, "paint_channels", None)
+        if channels is not None and "fill" not in channels:
+            continue
         role = shape.visual_role or semantic_binding(shape.semantic_id).scene_role
         treatment, _ = theme_tokens.background(role)
         if treatment == "fill" and theme_tokens.opacity(role) < 1:
