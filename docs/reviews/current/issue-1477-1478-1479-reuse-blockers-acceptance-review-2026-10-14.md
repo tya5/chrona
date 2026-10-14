@@ -11,9 +11,14 @@ structural fingerprints unchanged, corpus/diagnostic probes unchanged.
 Public PR1476 fixture baseline:c2ddb68f. Rendering uses isolated copies; no tracked
 example or generated evidence is edited. Current-head CI and containing-review
 three-OS release are required before closure. Two literal dispositions remain open.
-Focused integrated verification:124 tests passed (42.29s); review/closed-ledger
+Focused integrated verification:126 tests passed (43.28s); review/closed-ledger
 tests7 passed. Final five-design batch preserves4 complete Scene/SVG pairs;
 only Yuya changes as disclosed below. Both roadmap canvases are1600×900.
+The [pre-code architecture correction](https://github.com/tya5/chrona/issues/1477#issuecomment-6158299823)
+closes Spec07/#1242's distinct inner-border bar extent: the bar may use width
+beyond content insets, without charging that extension twice to note size.
+[Bleed regressions](../../../tests/integration/test_annotation_kind_bar_bleed.py)
+check fitting/wrapped role text, unchanged inset heading/body and actual SVG.
 
 ## Literal issue acceptance
 
