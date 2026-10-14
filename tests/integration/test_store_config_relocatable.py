@@ -41,7 +41,7 @@ def _is_absolute_anywhere(value: str) -> bool:
 
 
 def test_the_config_init_writes_holds_a_relative_root_and_no_host_path(tmp_path):
-    project = initialize_project(tmp_path / "corpus", example="halcyon-1")
+    project = initialize_project(tmp_path / "corpus", example="halcyon-1").directory
     text = (project / ".chrona" / "store.yaml").read_text(encoding="utf-8")
 
     [store] = yaml.safe_load(text)["stores"]
@@ -53,7 +53,7 @@ def test_the_config_init_writes_holds_a_relative_root_and_no_host_path(tmp_path)
 
 
 def test_a_moved_store_still_renders_the_same_bytes_from_any_working_directory(tmp_path, monkeypatch):
-    project = initialize_project(tmp_path / "corpus", example="halcyon-1")
+    project = initialize_project(tmp_path / "corpus", example="halcyon-1").directory
     before = _render(monkeypatch, project, tmp_path / "before.svg")
     assert before.startswith(b"<svg")
 
@@ -70,7 +70,7 @@ def test_a_moved_store_still_renders_the_same_bytes_from_any_working_directory(t
 
 
 def test_a_copied_store_works_after_the_original_is_deleted(tmp_path, monkeypatch):
-    project = initialize_project(tmp_path / "corpus", example="halcyon-1")
+    project = initialize_project(tmp_path / "corpus", example="halcyon-1").directory
     before = _render(monkeypatch, project, tmp_path / "before.svg")
     copy = tmp_path / "copy"
     shutil.copytree(project, copy)
@@ -80,7 +80,7 @@ def test_a_copied_store_works_after_the_original_is_deleted(tmp_path, monkeypatc
 
 
 def test_an_absolute_root_still_works(tmp_path, monkeypatch):
-    project = initialize_project(tmp_path / "corpus", example="halcyon-1")
+    project = initialize_project(tmp_path / "corpus", example="halcyon-1").directory
     before = _render(monkeypatch, project, tmp_path / "before.svg")
     config = yaml.safe_load((project / ".chrona" / "store.yaml").read_text(encoding="utf-8"))
     config["stores"][0]["root"] = str((project / ".chrona" / "store").resolve())

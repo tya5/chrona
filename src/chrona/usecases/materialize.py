@@ -14,10 +14,10 @@ from typing import Any
 
 import yaml
 
-from chrona.presentation.contracts.resources import RENDER_CONTEXT_VERSIONS
+from chrona.presentation.contracts.resources import ClosureIdentity, RENDER_CONTEXT_VERSIONS, parse_contract
 from chrona.presentation.contracts.font_sets import expand_font_set
 from chrona.presentation.model.closure import resolve_render_context
-from chrona.presentation.model.font_resources import FontResourceError, resolve_font_resource
+from chrona.presentation.model.font_resources import FontProviderUnavailable, FontResourceError, resolve_font_resource
 from chrona.presentation.model.theme_inheritance import ThemeInheritanceError, is_derived_theme, theme_base_reference
 from chrona.resources import safe_load
 from chrona.presentation.renderers.registry import renderer_for
@@ -42,6 +42,52 @@ class MaterializationError(ValueError):
     def __init__(self, code: str, detail: str = "") -> None:
         super().__init__(f"{code}: {detail}" if detail else code)
         self.code, self.detail = code, detail
+
+
+class UnavailableFontProviders(MaterializationError):
+    """A valid Context depends on one or more uninstalled package font providers."""
+
+    def __init__(self, providers: tuple[str, ...]):
+        self.providers = providers
+        super().__init__("E_MATERIALIZER_FONT", "unavailable package font providers: " + ", ".join(providers))
+
+
+@dataclass(frozen=True)
+class _ResolvedFontAsset:
+    locator: dict[str, Any]
+    content_identity: str
+    address: str
+    provider: str
+    payload: bytes
+
+
+def _font_copy_plan(body: dict[str, Any], example: Path) -> tuple[_ResolvedFontAsset, ...]:
+    """Resolve and verify every available font asset before the caller stages any of them."""
+    plan: list[_ResolvedFontAsset] = []
+    unavailable: set[str] = set()
+    keys = ("metrics",) if body["target"]["kind"] == "svg" else ("metrics", "font")
+    for asset in body["environment"]["fontMetrics"]["assets"]:
+        for key in keys:
+            record = asset.get(key, {})
+            locator = record["locator"]
+            try:
+                source = resolve_font_resource(locator, asset_root=example)
+            except FontProviderUnavailable as error:
+                unavailable.add(error.identity)
+                continue
+            except FontResourceError as error:
+                raise ValueError(f"E_MATERIALIZER_FONT: cannot resolve {key} asset for {_label(asset.get('id', '<unknown>'))} at {_label(locator.get('address'))}: {error}; {_label(error.detail)}") from error
+            payload = source.read_bytes()
+            if record.get("contentIdentity") != _identity(payload):
+                raise ValueError(f"E_MATERIALIZER_FONT_IDENTITY: fontMetrics asset {_label(asset.get('id', '<unknown>'))} field {key} at {_label(locator.get('address'))}; expected {_label(record.get('contentIdentity'))}, found {_identity(payload)}")
+            address = locator.get("address")
+            if not isinstance(address, str):
+                raise ValueError(f"E_MATERIALIZER_FONT: fontMetrics asset {_label(asset.get('id', '<unknown>'))} field {key} locator requires string address, found {_label(address)}")
+            provider = locator.get("provider")
+            plan.append(_ResolvedFontAsset(locator, record["contentIdentity"], address, provider, payload))
+    if unavailable:
+        raise UnavailableFontProviders(tuple(sorted(unavailable)))
+    return tuple(plan)
 
 
 def _context_error(scope: str, expected: str, actual: object) -> MaterializationError:
@@ -348,8 +394,13 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
     # Normalize resource declarations for copying, not the authored bytes
     # staged below and used to compute the Context's content identity.
     context = expand_font_set(safe_load(raw_context))
+    if not isinstance(context, dict):
+        raise _context_error("context", "Render Context object", context)
     if context.get("version") not in RENDER_CONTEXT_VERSIONS or context.get("kind") != "render-context":
         raise _context_error("context", " or ".join(RENDER_CONTEXT_VERSIONS) + " render-context", {"version": context.get("version"), "kind": context.get("kind")})
+    context_id = context.get("id")
+    identity_id = context_id if isinstance(context_id, str) else "<invalid-context>"
+    parse_contract(ClosureIdentity("render-context", identity_id, "initialization", _identity(raw_context)), context)
     body = context["body"]
     revision = body["project"]["revision"]["token"]
     references = [body[name] for name in ("project", "view", "theme", "colorScheme", "layout")]
@@ -370,31 +421,15 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
         if decoded_catalogs is not None:
             decoded_catalogs[_identity(catalog_payload)] = catalog
     destination = snapshot_directory(snapshot, revision)
-    for asset in body["environment"]["fontMetrics"]["assets"]:
-        keys = ("metrics",) if body["target"]["kind"] == "svg" else ("metrics", "font")
-        for key in keys:
-            record = asset.get(key, {})
-            if not isinstance(record, dict) or not isinstance(record.get("locator"), dict):
-                raise ValueError(f"E_MATERIALIZER_FONT: fontMetrics asset {_label(asset.get('id', '<unknown>'))} field {key} requires a locator object")
-            try:
-                source = resolve_font_resource(record["locator"], asset_root=example)
-            except FontResourceError as error:
-                raise ValueError(f"E_MATERIALIZER_FONT: cannot resolve {key} asset for {_label(asset.get('id', '<unknown>'))} at {_label(record['locator'].get('address'))}: {error}; {_label(error.detail)}") from error
-            payload = source.read_bytes()
-            if record.get("contentIdentity") != _identity(payload):
-                raise ValueError(f"E_MATERIALIZER_FONT_IDENTITY: fontMetrics asset {_label(asset.get('id', '<unknown>'))} field {key} at {_label(record['locator'].get('address'))}; expected {_label(record.get('contentIdentity'))}, found {_identity(payload)}")
-            address = record["locator"].get("address")
-            if not isinstance(address, str):
-                raise ValueError(f"E_MATERIALIZER_FONT: fontMetrics asset {_label(asset.get('id', '<unknown>'))} field {key} locator requires string address, found {_label(address)}")
-            locator_provider = record["locator"].get("provider")
-            asset_target = None
-            if not (overlay_builder is not None and locator_provider == "package"):
-                asset_target = _inside(destination, address)
-                asset_target.parent.mkdir(parents=True, exist_ok=True)
-                asset_target.write_bytes(payload)
-            if overlay_builder is not None:
-                overlay_builder.add_asset(record["locator"], record.get("contentIdentity"), payload,
-                                          staged_path=asset_target if locator_provider == "context" else None)
+    for asset in _font_copy_plan(body, example):
+        asset_target = None
+        if not (overlay_builder is not None and asset.provider == "package"):
+            asset_target = _inside(destination, asset.address)
+            asset_target.parent.mkdir(parents=True, exist_ok=True)
+            asset_target.write_bytes(asset.payload)
+        if overlay_builder is not None:
+            overlay_builder.add_asset(asset.locator, asset.content_identity, asset.payload,
+                                      staged_path=asset_target if asset.provider == "context" else None)
     target = _inside(destination, context_path.relative_to(example).as_posix())
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(raw_context)

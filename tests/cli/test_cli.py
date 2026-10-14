@@ -31,6 +31,28 @@ from chrona.resources import builtin_preset_library_resource
 from tests.support import synthetic_review as sr
 
 
+def test_cli_init_reports_available_and_deferred_example_slides(tmp_path, monkeypatch, capsys):
+    from chrona.usecases.local_authoring import DeferredSlide, InitializationResult
+
+    destination = tmp_path / "example"
+    destination.mkdir()
+    (destination / "manifest.yaml").write_text("version: test\n", encoding="utf-8")
+    deferred = DeferredSlide("gallery", "contexts/gallery.yaml", ("chrona-fonts-noto-cjk",))
+    monkeypatch.setattr(cli, "initialize_project", lambda *_args, **_kwargs: InitializationResult(
+        destination, ("briefing",), (deferred,)))
+
+    cli._run_init(SimpleNamespace(directory=str(destination), example="synthetic"))
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["status"] == "ok"
+    assert payload["availableSlides"] == ["briefing"]
+    assert payload["deferredSlides"] == [{
+        "slideId": "gallery", "context": "contexts/gallery.yaml", "providers": ["chrona-fonts-noto-cjk"]}]
+    assert payload["diagnostics"] == [deferred.as_diagnostic()]
+    assert payload["diagnostics"][0]["code"] == "W_INIT_EXAMPLE_SLIDE_DEFERRED"
+    assert payload["created"] == ["manifest.yaml"]
+
+
 def _snapshot_resource(root, token, address, value, kind, identifier, identity="cli-test", payload=None):
     payload = payload if payload is not None else yaml.safe_dump(value, sort_keys=True).encode()
     path = snapshot_directory(root, token) / address
