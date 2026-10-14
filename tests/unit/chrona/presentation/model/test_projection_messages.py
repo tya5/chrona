@@ -85,14 +85,15 @@ def test_a_bad_track_and_a_foreign_table_subject_name_their_value():
     assert "'elsewhere'" in text and "'r'" in text
 
 
-def test_row_parent_errors_name_the_rows_and_objects():
+def test_row_parent_errors_name_the_view_rows():
     kw = {"project": PROJECT, "placements": PLACEMENTS}
     missing = _say(_explicit(_row("a", [_item("a", obj="programme")]), _row("b", [_item("b")], parent="ghost")), **kw)
     assert "'b'" in missing and "'ghost'" in missing
-    root = _say(_explicit(_row("a", [_item("a", obj="programme")]), _row("b", [_item("b", obj="gate")], parent="a")), **kw)
-    assert "'gate'" in root and "root" in root
-    mismatch = _say(_explicit(_row("a", [_item("a", obj="task")]), _row("b", [_item("b", obj="task")], parent="a")), **kw)
-    assert "'programme'" in mismatch and "'task'" in mismatch
+    cycle = _say(_explicit(_row("a", [_item("a", obj="programme")], parent="a")), **kw)
+    assert "E_REVIEW_ROW_PARENT_CYCLE" in cycle and "'a'" in cycle
+    cycle = _say(_explicit(_row("a", [_item("a", obj="programme")], parent="b"),
+                           _row("b", [_item("b", obj="gate")], parent="a")), **kw)
+    assert "cycle" in cycle and "'a'" in cycle
 
 
 def test_lane_key_target_and_value_name_what_is_wrong():

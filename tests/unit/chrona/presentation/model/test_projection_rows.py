@@ -5,7 +5,10 @@ from pathlib import Path
 import pytest
 import yaml
 
-from chrona.presentation.model.projection import ObservationState, ReviewItem, _observation_state, _roles, build_review_projection, shared_track_member_key
+from chrona.presentation.model.projection import (
+    ObservationState, ReviewItem, ReviewRowProjection, _observation_state, _roles,
+    _validate_explicit_row_hierarchy, build_review_projection, shared_track_member_key,
+)
 from chrona.presentation.model.surface_content import table_value
 from chrona.presentation.contracts.resources import (
     ViewComparison, ViewGrouping, ViewInput, ViewLaneKeys, ViewOrdering, ViewRow, ViewRowItem, ViewRows, ViewSelection,
@@ -426,23 +429,70 @@ def test_projection_carries_current_and_snapshot_analysis_without_crossing_them(
     assert table_value(now, project, "totalFloat") == 3
 
 
-def test_explicit_parent_row_must_assert_the_project_parent_edge():
+def test_explicit_parent_row_is_view_local_and_keeps_authored_depth():
     project = {"objects": {
-        "programme": {"title": "Programme", "schedule": {"mode": "rollup"}},
-        "task": {"title": "Task", "parent": "programme", "schedule": {"mode": "fixed"}},
+        "first": {"title": "First", "schedule": {"mode": "fixed"}},
+        "second": {"title": "Second", "schedule": {"mode": "fixed"}},
     }, "entities": {}}
     view = {"body": {"comparison": {"actual": "optional"}, "window": {"mode": "selected-planned"},
         "rows": {"mode": "explicit", "items": [
-            {"id": "programme", "depth": 0, "items": [{"id": "programme", "source": {"kind": "primary", "object": "programme"}}]},
-            {"id": "task", "depth": 1, "parentRow": "programme", "items": [{"id": "task", "source": {"kind": "primary", "object": "task"}}]},
+            {"id": "first-row", "depth": 0, "items": [{"id": "first-item", "source": {"kind": "primary", "object": "first"}}]},
+            {"id": "second-row", "depth": 3, "parentRow": "first-row", "items": [{"id": "second-item", "source": {"kind": "primary", "object": "second"}}]},
         ]}}}
-    placements = {"programme": {"start": date(2026, 1, 1), "end": date(2026, 1, 3)},
-                  "task": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}}
-    assert [row.parent_row_id for row in build_review_projection(project, placements, typed_view(view), None).rows] == [None, "programme"]
-    view["body"]["rows"]["items"][1]["parentRow"] = "task"
-    import pytest
-    with pytest.raises(ValueError, match="E_REVIEW_ROW_PARENT_MISMATCH"):
-        build_review_projection(project, placements, typed_view(view), None)
+    placements = {"first": {"start": date(2026, 1, 1), "end": date(2026, 1, 3)},
+                  "second": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}}
+    rows = build_review_projection(project, placements, typed_view(view), None).rows
+    assert [(row.row_id, row.parent_row_id, row.depth) for row in rows] == [
+        ("first-row", None, 0), ("second-row", "first-row", 3)]
+    project["objects"]["second"]["parent"] = "first"
+    rows_with_matching_project_edge = build_review_projection(project, placements, typed_view(view), None).rows
+    assert [(row.row_id, row.parent_row_id, row.depth) for row in rows_with_matching_project_edge] == [
+        ("first-row", None, 0), ("second-row", "first-row", 3)]
+
+
+def test_explicit_parent_row_allows_snapshot_and_actual_table_subjects():
+    project = {"objects": {"task": {"title": "Current", "fields": {}}}, "entities": {}}
+    historic = {"objects": {"task": {"title": "Historic", "fields": {}}}, "entities": {}}
+    view = {"body": {"comparison": {"actual": "optional"}, "window": {"mode": "selected-planned"},
+        "rows": {"mode": "explicit", "items": [
+            {"id": "snapshot-row", "depth": 0, "items": [
+                {"id": "old", "source": {"kind": "snapshot", "object": "task"}}], "tableSubject": "old"},
+            {"id": "actual-row", "depth": 1, "parentRow": "snapshot-row", "items": [
+                {"id": "now", "source": {"kind": "actual", "object": "task"}}], "tableSubject": "now"},
+        ]}}}
+    projection = build_review_projection(
+        project, {"task": {"start": date(2026, 2, 1), "end": date(2026, 2, 2)}}, typed_view(view),
+        {"body": {"asOf": "2026-02-02", "observations": [
+            {"id": "actual-1", "projectObjectId": "task", "sequence": 1,
+             "actual": {"start": "2026-02-01", "finish": "2026-02-02"}},
+        ]}}, snapshot_project=historic,
+        snapshot_placements={"task": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}},
+    )
+    assert [(row.row_id, row.parent_row_id, row.items[0].source_kind) for row in projection.rows] == [
+        ("snapshot-row", None, "snapshot"), ("actual-row", "snapshot-row", "actual")]
+
+
+def _explicit_hierarchy_test_row(row_id, parent_row_id=None, depth=0):
+    return ReviewRowProjection(row_id, row_id, "", row_id, (), depth, parent_row_id)
+
+
+def test_explicit_parent_row_requires_an_available_view_row():
+    with pytest.raises(ValueError, match="E_REVIEW_ROW_PARENT_UNAVAILABLE"):
+        _validate_explicit_row_hierarchy([_explicit_hierarchy_test_row("child", "missing")])
+
+
+@pytest.mark.parametrize("edges", [(("row", "row"),), (("a", "b"), ("b", "a"))])
+def test_explicit_parent_row_rejects_self_and_multi_row_cycles(edges):
+    rows = [_explicit_hierarchy_test_row(row_id, parent) for row_id, parent in edges]
+    with pytest.raises(ValueError, match="E_REVIEW_ROW_PARENT_CYCLE"):
+        _validate_explicit_row_hierarchy(rows)
+
+
+def test_explicit_parent_row_accepts_deep_acyclic_graph_iteratively():
+    count = 12_000
+    rows = [_explicit_hierarchy_test_row(str(index), str(index - 1) if index else None)
+            for index in reversed(range(count))]
+    _validate_explicit_row_hierarchy(rows)
 
 
 def test_hierarchy_selection_expands_predicate_roots_to_the_inclusive_depth_limit():
