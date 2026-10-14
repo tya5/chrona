@@ -996,8 +996,17 @@ def _write_result(destination: Path, result: dict[str, Any]) -> None:
         raise CliFailure("E_AUTOMATION_RESULT_IO", str(error), "automation", exit_code=3) from error
 
 
+def _utf8_streams() -> None:
+    """Every report is UTF-8 JSON; a legacy console code page (Windows cp1252) must not crash on a label such as `Δ finish`."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8")
+
+
 def main() -> None:
     global _PLAN_SOURCE
+    _utf8_streams()
     _PLAN_SOURCE = None
     if len(sys.argv) == 1:  # a bare `chrona` is a question, not a mistake: usage on stderr, exit 2, no JSON (#1304)
         print(_parser().format_help(), file=sys.stderr, end="")
