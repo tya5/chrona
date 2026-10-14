@@ -1,7 +1,7 @@
 # Chrona
 
 **Chrona** turns a YAML project file into a presentation-grade Gantt slide.
-Define the plan, pick a presentation, render SVG or PNG. Dependencies and
+Define the plan, pick a design, render SVG, PNG, PDF, Typst or TikZ. Dependencies and
 working calendars decide the dates, and the data decides the layout, so the
 chart is never drawn by hand.
 
@@ -18,7 +18,7 @@ by hand. Chrona is for the plan that keeps changing after that slide is drawn.
 | Redrawn for every slipped date or new task | Re-rendered from the updated plan |
 | Dates, deltas and dependency lines placed by eye | Computed from the schedule, the as-of date and the actuals |
 | Collisions and illegible text go unnoticed | Suppressed labels, overflows and contrast failures are reported as diagnostics |
-| A new picture on every run | The same input gives the same output, in SVG and PNG |
+| A new picture on every run | Every revision drawn in the same design |
 | One slide's look | A Theme and preset shared across every plan and team |
 
 The two work together: **a designer or an agent designs the look once, and
@@ -52,12 +52,20 @@ copied: each slide is a thin View and Context that reference the packaged design
 
 ## What is usable today
 
-- deterministic Date / CalendarPeriod / WorkPeriod arithmetic;
-- project JSON-Schema validation plus Core v0.1 semantic validation;
-- endpoint-based dependency lower bounds and Date-only scheduled-span placement;
+- plans written as Project YAML, a terse one-line-per-task plan (`.chrona`), or imported from a
+  CSV/TSV table (`chrona import`);
+- Date / CalendarPeriod / WorkPeriod arithmetic, working calendars, dependency lower bounds and
+  Date-only scheduling, with JSON-Schema and Core v0.1 semantic validation;
+- Plan/Actual review slides with baseline, plan, actuals, finish deltas, gates, periods, an as-of
+  marker, a notes rail and a YAML-controlled legend, rendered to SVG, PNG, PDF, Typst or TikZ;
+- built-in designs selectable by name (`chrona preset list`), including the target B, Marquee and
+  Sunday Strip designs shown above; a design is Theme, Color Scheme and Layout YAML, and a View
+  connects it to a project;
+- dependency lines that never disappear silently: a route that cannot be found is relaxed, drawn
+  over, stubbed or suppressed as the Layout declares, with a diagnostic;
+- fonts installed on the machine, chosen by the Theme's font family list;
+- diagnostics for suppressed labels, overflows and contrast failures;
 - executable conformance checks for the canonical Core v0.1 fixture;
-- deterministic Plan/Actual review SVGs with YAML-controlled legend, group detail,
-  source-labelled observations, and milestone digests;
 - a tested agent skill, installed with `chrona skill copy`, that teaches an AI coding
   agent this workflow, and an MCP server (`chrona mcp`, optional `chrona[mcp]` extra; read-only unless started with `--allow-write`) for
   hosts that have no shell (see [Using chrona from an AI coding agent](docs/guides/agent-interface.md)).
@@ -77,9 +85,17 @@ chrona render my-chrona-project/project.yaml --actual my-chrona-project/actual.y
 ```
 
 The resulting SVG is a Draft for review, not immutable materializer evidence. The three generated
-source files are yours to edit. Use `--preset PATH` to choose an explicit presentation preset, or
-explicit View/Theme/Color Scheme/Layout paths to override its members. Check your own plan with
-`chrona validate` and `chrona schedule`:
+source files are yours to edit. Pick a built-in design by name with `--preset` (`chrona preset list`
+shows them, `chrona preset copy` copies one to edit), or pass a preset YAML path; explicit
+View/Theme/Color Scheme/Layout paths override its members:
+
+```bash
+chrona preset list
+chrona render my-chrona-project/project.yaml --actual my-chrona-project/actual.yaml \
+  --preset marquee --viewport 1600xauto --output my-chrona-project/marquee.svg
+```
+
+Check your own plan with `chrona validate` and `chrona schedule`:
 
 <!-- chrona:doc-check skip: requires an author-provided Project path -->
 ```bash
@@ -176,8 +192,7 @@ same `chrona render-review` command so scheduling and presentation facts cannot 
 
 [`examples/aster-ssd`](examples/aster-ssd) is the worked example: a 24-object,
 28-dependency program across two work calendars, projected into four 1600x900
-slides plus a tall master view. Drop `--no-raster` to also write PNG previews;
-that path additionally requires node with `sharp`.
+slides plus a tall master view.
 
 ## Local authoring
 
@@ -241,7 +256,7 @@ See [Specification 64](docs/specification/64-portable-icon-catalogs.md) and
 [Controller Z's icon Context](examples/controller-z/contexts/icons.yaml) for a
 fully pinned materialized example.
 
-The reproducible HALCYON corpus is available explicitly from an installed wheel.
+The HALCYON example is available from an installed wheel.
 Slides requiring an absent font provider are omitted with typed warnings; the other
 slides remain materializable. For every Japanese slide, install the unpublished
 `packages/chrona-fonts-noto-cjk` package from a clone and initialize a new directory.
