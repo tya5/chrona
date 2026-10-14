@@ -18,6 +18,17 @@ coverage or adapters. Raw composition font failures use the existing usecase
 normalization; Layout/Scene never discover host fonts. Independent review found
 no blocker. Focused tests:122PASS.
 
+Post-merge correction: source0eb6f2cfe50d3a1b22f2b1a1c273dc4eca017987
+collects each metric object's glyph warnings once, rather than once per alias.
+Self-review reproduced one substitution reported2 times before the new alias
+and3 afterwards; both now report1. Distinct metric objects retain multiplicity.
+This is catalog bookkeeping, not a glyph fallback or renderer change. The
+[regression test](../../../tests/unit/chrona/presentation/model/test_font_metrics.py)
+and installed CJK render test cover alias deduplication;54 focused tests pass.
+Independent architecture review found no blocker. The pre-correction release
+on2c81f9d3 cannot accept this correction: require its own current-head checks,
+snapshot inspection and review-containing exact-main three-OS release.
+
 ## Literal issue acceptance
 
 ### Issue #1495
