@@ -1,7 +1,8 @@
-"""Batch committed Contexts through canonical Layout at narrow viewports."""
+"""Manual: run when changing Layout allocation; validate every viewport outcome."""
 from __future__ import annotations
 
 import argparse
+import json
 from concurrent.futures import ProcessPoolExecutor
 from copy import deepcopy
 from hashlib import sha256
@@ -20,12 +21,46 @@ from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.usecases.materialize import _OverlayBuilder, copy_context_closure
 from chrona.usecases.render_review import RenderRequest, render_review
+from chrona.usecases.failure_report import report_failure
 
 
 ROOT = Path(__file__).resolve().parents[1]
 VIEWPORTS = ((1600, 900), (800, 450), (600, 340))
 _Input = TypeVar("_Input")
 _Output = TypeVar("_Output")
+
+
+class CliRenderFailure(RuntimeError):
+    def __init__(self, outcome: dict[str, Any]):
+        super().__init__(json.dumps(outcome, sort_keys=True))
+        self.outcome = outcome
+
+
+def _load_expectations() -> dict[str, dict[str, Any]]:
+    records = safe_load((ROOT / "tools/draft_viewport_expected_refusals.yaml").read_bytes())
+    expectations: dict[str, dict[str, Any]] = {}
+    for record in records:
+        assert record["successor"] == "https://github.com/tya5/chrona/issues/1490"
+        for identifier in record["cases"]:
+            assert identifier not in expectations, f"duplicate expected refusal: {identifier}"
+            expectations[identifier] = record["outcome"]
+    return expectations
+
+
+def _failure_outcome(error: Exception) -> dict[str, Any]:
+    if isinstance(error, CliRenderFailure):
+        return error.outcome
+    report = report_failure(error)
+    return {**report.payload(), "exitCode": report.exit_code}
+
+
+def _outcome_mismatch(identifier: str, outcome: dict[str, Any] | None,
+                      expectations: dict[str, dict[str, Any]]) -> str | None:
+    expected = expectations.get(identifier)
+    if outcome == expected:
+        return None
+    return (f"{identifier}: expected {json.dumps(expected, sort_keys=True)}, "
+            f"observed {json.dumps(outcome, sort_keys=True)}")
 
 
 def _content_identity(payload: bytes) -> str:
@@ -86,7 +121,13 @@ def _render_cli(reference: dict[str, Any], payload: bytes, snapshot: Path,
     ]
     result = subprocess.run(command, capture_output=True, text=True, check=False)
     if result.returncode != 0:
-        raise RuntimeError(f"chrona render-review exit={result.returncode}: {result.stderr or result.stdout}")
+        try:
+            payload = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            raise RuntimeError(f"chrona render-review exit={result.returncode}: {result.stderr or result.stdout}")
+        if result.stderr or not isinstance(payload, dict) or set(payload) != {"status", "diagnostics"}:
+            raise RuntimeError(f"unexpected CLI failure output: {result.stderr or result.stdout}")
+        raise CliRenderFailure({**payload, "exitCode": result.returncode})
     artifact = output.read_bytes()
     warning_count = (result.stdout + result.stderr).count("W_LAYOUT_")
     return artifact, warning_count
@@ -110,9 +151,10 @@ def _ordered_map(worker: Callable[[_Input], _Output], tasks: Iterable[_Input],
         return tuple(executor.map(worker, tasks))
 
 
-def _survey_context(task: tuple[Path, bool]) -> tuple[int, int, tuple[str, ...]]:
+def _survey_context(task: tuple[Path, bool]) -> tuple[int, int, int, tuple[str, ...]]:
     """Survey all viewport cases for one Context using isolated temporary state."""
     context_path, use_cli = task
+    expectations = _load_expectations()
     example = context_path.parent.parent
     context = safe_load(context_path.read_bytes())
     with TemporaryDirectory(prefix="chrona-1474-viewport-") as temporary:
@@ -132,10 +174,11 @@ def _survey_context(task: tuple[Path, bool]) -> tuple[int, int, tuple[str, ...]]
                 f"closure copy {type(error).__name__}: {error}"
                 for width, height in VIEWPORTS
             )
-            return 0, 0, failures
+            return 0, 0, 0, failures
 
         completed = 0
         warning_count = 0
+        refused = 0
         failures: list[str] = []
         for viewport in VIEWPORTS:
             identifier = f"{example.name}/{context_path.stem}@{viewport[0]}x{viewport[1]}"
@@ -156,9 +199,16 @@ def _survey_context(task: tuple[Path, bool]) -> tuple[int, int, tuple[str, ...]]
                         "SVG viewBox differs from completed Layout canvas")
                     warning_count += len(rendered.surface.fit_warnings)
                 completed += 1
+                mismatch = _outcome_mismatch(identifier, None, expectations)
+                if mismatch is not None:
+                    failures.append(mismatch)
             except Exception as error:
-                failures.append(f"{identifier}: {type(error).__name__}: {error}")
-        return completed, warning_count, tuple(failures)
+                mismatch = _outcome_mismatch(identifier, _failure_outcome(error), expectations)
+                if mismatch is None:
+                    refused += 1
+                else:
+                    failures.append(mismatch)
+        return completed, refused, warning_count, tuple(failures)
 
 
 def main() -> int:
@@ -170,17 +220,23 @@ def main() -> int:
         parser.error("--jobs must be positive")
     failures: list[str] = []
     completed = 0
+    refused = 0
     warning_count = 0
     contexts = tuple(sorted(ROOT.glob("examples/*/contexts/*.yaml")))
+    identifiers = {f"{path.parent.parent.name}/{path.stem}@{width}x{height}"
+                   for path in contexts for width, height in VIEWPORTS}
+    for missing in sorted(_load_expectations().keys() - identifiers):
+        failures.append(f"{missing}: expected refusal case is missing")
     results = _ordered_map(_survey_context, ((path, args.cli) for path in contexts), args.jobs)
-    for group_completed, group_warnings, group_failures in results:
+    for group_completed, group_refused, group_warnings, group_failures in results:
         completed += group_completed
+        refused += group_refused
         warning_count += group_warnings
         failures.extend(group_failures)
     for failure in failures:
         print(failure)
-    print(f"draft viewport matrix ({'CLI' if args.cli else 'API'}): {completed}/{completed + len(failures)} rendered; "
-          f"{warning_count} fit warnings; {len(failures)} failures")
+    print(f"draft viewport matrix ({'CLI' if args.cli else 'API'}): {completed}/{len(identifiers)} rendered; "
+          f"{refused} expected refusals; {warning_count} fit warnings; {len(failures)} failures")
     return 1 if failures else 0
 
 
