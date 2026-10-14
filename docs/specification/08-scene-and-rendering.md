@@ -89,6 +89,23 @@ actual fontTools version to adapter identity; original font content identities
 remain authoritative. Rendering without CFF faces retains its existing
 registration path, adapter identity and byte output.
 
+For a CFF-translating render, SVG-to-PDF font lookup MUST use a render-local
+mapping of completed `(family, weight)` to the exact registered face. ReportLab
+registration alone does not populate svglib's mapping. The mapping MUST NOT
+discover host fonts or fall back to another family; unknown entries fail with
+`E_RENDER_FONT_CLOSURE`. It uses svglib's public font-map protocol, not private
+global maps.
+
+ReportLab caches dynamic faces by registration and PostScript names. In a
+CFF-translating render, namespace both internal embedding names by a digest of
+the exact single-face embedding payload before naming (including its selected
+glyph subset); a same-name face or different subset cannot reuse old bytes.
+Human family/full/localized names and metrics remain intact; only internal
+PostScript identity is derived. Check embedding permissions for every face in
+that new embedding path. No source resource or Scene identity is rewritten.
+The non-CFF-only path remains unchanged. This correction closes the PDF font-map
+seam; a successful PDF header alone is not evidence of exact-face embedding.
+
 ### 2.1 M27 public Review SVG binding
 
 For a Render Context whose target is SVG, the public `render-review` application route
