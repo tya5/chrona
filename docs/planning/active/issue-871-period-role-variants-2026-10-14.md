@@ -1,110 +1,95 @@
-# Issue #871 — period-role variants (living design and implementation plan)
+# Issue #871 — named-period follow-ups
 
-**Baseline:** READY `6ab07ba83c52de19a5757ebd9fd4db6abf89761a`; plan selected in
-[issue status](https://github.com/tya5/chrona/issues/871#issuecomment-6159401246).
-The main branch already meets the reviewer-added literal criteria: "the View override
-sets the period-label text"; "absent an override, the output is byte-identical";
-"Marquee adopts it"
-([acceptance review](../../reviews/current/issue-871-period-label-override-acceptance-review-2026-10-09.md)).
-The numbered optional successors are not new quotations or acceptance rows. This
-record selects only item 1 (period variants) for its first independently reviewable
-slice; edge treatments and a period legend entry remain later, separately designed
-slices. Other issue-body items remain unselected.
+## Published baseline and scope
 
-## Selected behavior and architecture
+Variants landed in [PR1486](https://github.com/tya5/chrona/pull/1486), source
+289f91f4d29b895e18c998be8ba22f11bf5779aa, from READY68457b29.
+Its 158 focused tests pass; after base adoption, 73 period/closure tests pass.
+Schema L1 is additive=1/equal=37; lifecycle23 passes. All92 public Scene/SVG
+files in artifact11867057879 are byte-identical. Exact-main release
+[38506567088](https://github.com/tya5/chrona/actions/runs/38506567088)
+passed on READY7a08f0c0, including all three OS matrices and public materializers.
+Six proven-stale L1 records were retired manually because the pruner cannot
+rewrite multiline mappings; no schema-gate code changed.
 
-`View.body.periods[]` gains optional `variant`, using the existing
-`common-v0.1.$defs.slug` grammar. No variant retains the unsuffixed role selection.
-A variant selects `period-band:<slug>` and, when a drawable label request is
-consumed, `period-label:<slug>`. There is no fallback to the base role or another
-variant. A selected period still requires its band role even when it clips out or
-uses `backgroundTreatment: none`, preserving the existing selection-time rule; a
-label role is required at the existing label-consumption boundary (a label whose
-period has no drawable extent must not create a request or a new failure). Missing
-roles are `E_THEME_ROLE_REQUIRED` at the exact selected Theme role pointer.
+Board-selected scope is issue-body items1–3 only: variants, edge treatments,
+period legend entries. Items4–8 are unselected optional successors.
+Literal reviewer acceptance, already met on main and retained in the
+[current review](../../reviews/current/issue-871-period-label-override-acceptance-review-2026-10-09.md):
 
-Theme inheritance and closed role-property contracts remain authoritative. Only the
-two period role families recognize suffixes, with the base band's pattern,
-background-treatment and opacity properties and the base label's text,
-ink and contrast properties. Layout receives resolved selected roles and uses them
-consistently for band paint/background checks and label measurement. It records the
-selected role on `ShapePlacement.visual_role` and the label's `TextPlacement` role;
-pattern completion, Scene projection, contrast and target-capability checks consume
-those completed roles. The band/label purpose, period `sourceRef`, and existing
-placement/Scene identity do not change. `period-label-chip` remains shared. No
-general dynamic-role mechanism, Project rule, edge treatment, legend-entry policy,
-or example edit is introduced. The two suffix namespaces become reserved semantic
-roles; a pre-existing arbitrary axis/legend alias using them must be renamed or
-satisfy the new contract. This is intentional alpha incompatibility, not a reason
-to retain an open-role fallback. Other valid unvaried resources retain their output.
+- "The View override sets the period-label text."
+- "Absent an override, the output is byte-identical."
+- "Marquee adopts it."
 
-This preserves the existing separation: Project owns dates, View selects and
-names the presentation variant, Theme owns tokens, Layout owns measurement and
-geometry, Scene carries completed primitives/roles, and adapters serialize without
-role lookup or substitution.
+## Next design and architecture review
 
-## Implementation plan and evidence
+Selected contracts are normative in Specs[06](../../specification/06-view-model.md#71-named-periods-582),
+[07](../../specification/07-style-and-theme.md),
+[08](../../specification/08-scene-and-rendering.md), and
+[50](../../specification/50-constraint-driven-gantt-surface-quality.md).
+Optional Theme/Detail Profile members preserve omission behavior and are added
+in place under Spec56; no adapter/Scene schema field is introduced.
+Root's consistency review accepts the boundaries below against Specs06/07/08/50,
+Spec56 schema evolution, Spec63 effect geometry and the accepted glyph-outline
+precedence. Publication of this design/plan is required before implementation.
 
-1. Add `variant` to `schemas/view-v0.28.schema.yaml` as an optional reference to
-   the common slug; normalize it in `src/chrona/presentation/contracts/resources.py`
-   and carry it on the selected period projection. Run
-   `python -m tools.schema_equivalence --base-rev
-   origin/main` and record the additive result.
-2. Extend only `period-band:<slug>` and `period-label:<slug>` in
-   `src/chrona/presentation/scene/capabilities.py`, role-consumer/pattern
-   recognition and required-role validation. Keep exact role-property validation
-   and diagnostic pointers. Update `surface_periods.py`, completion and Scene
-   projection so the selected role is carried and used by every relevant paint,
-   measurement, contrast and capability path.
-3. Focused tests: schema/slug rejection; no-variant Scene/SVG byte identity;
-   two variants on one View with different band paint/pattern and label typography;
-   missing band and label roles with exact pointers; base-role non-fallback;
-   selected band role required for out-of-window and `none` treatments; an
-   out-of-window label creates no request; stable period purpose/source/identity;
-   and selected-role contrast/pattern/capability checks. Run named-period tests,
-   Theme role consumer/capability tests, Scene contract tests, conformance and the
-   public materializer. Inspect the derived snapshot as a batch; existing unvaried
-   evidence must remain byte-identical. CI supplies the planned release matrix.
+Project owns period identity/dates; View selects periods/variants; Detail Profile
+opts into source-bound legend entries; Theme supplies paint and rule dimensions.
+Layout owns edge geometry, fit, one-list legend measurement/placement and identities.
+Scene binds completed channel intent to paint, then clears it; adapters serialize.
+Add a transient completed-shape channel mask, distinct from catalogue part
+intent: existing glyph mode has an intentional Theme-outline precedence, not
+fill-only semantics. Glyph overrides/classification remain Symbol-only.
+Do not duplicate the legend pipeline or relax overlapping-period fill rank checks.
+Sourced legend IDs use disjoint prefixes (legend-period / legend-period-swatch),
+not pseudo-role keys that can collide with arbitrary existing role aliases.
+Edge IDs length-frame the complete host ID under a disjoint prefix (Spec50);
+arbitrary colon-bearing Project identifiers remain supported.
+Patterned fills retain pattern pigments while suppressing their host outline;
+edge-only width/dash/finish do not override catalogue geometry (Specs07/08).
+Existing role-wide wording precedence and unsourced IDs remain unchanged.
+An explicitly absent period background keeps its sourced legend label and
+reservation but no painted key (Spec50); only this branch was held for correction.
 
-Affected owners/files: View schema and resource contract; period projection;
-Theme role capability, consumer, token and closure checks; Layout period completion;
-Scene builder/semantic-role provenance; Specifications 06, 07, 08 and 50; focused
-View/theme/period/Scene tests. No examples or generated files are hand-edited.
-Before code, review whether Theme token reads, pattern admission, background opacity
-and rank validation, text measurement, Scene contrast and target capability all
-use the selected role rather than silently retaining the base role.
+## Implementation plan — one atomic edge/legend publication
 
-Architecture review (dev A): accepted for this slice against Specs06/07/08/50,
-Spec56 optional-member rules and the existing582/497 boundaries. The current
-`compose_period_bands` validates band treatment before clipping, while
-`period_label_requests` creates requests only from completed drawable extents;
-the selected missing-role timing above preserves both boundaries. Semantic
-overlay rank and the shared label chip remain unchanged. Selected-role propagation
-must include background validation, catalog patterns, Theme contrast admission and
-Scene capability checks; these are implementation gates, not new policy owners.
+1. Theme schema/role admission and Layout period-edge completion: selected
+   single/double rules, authored gap, fill-only host or outline-only paths,
+   exact pointer diagnostics and geometry derived from the completed clipped band.
+   Owners: theme schema, token reader/consumer/capability checks, surface_periods,
+   surface_backgrounds and surface_quality.
+2. General transient shape paint channels and Scene projection; keep glyph overrides
+   Symbol-only and clear intent before returned Scene. Owners: scene model/paint,
+   v05_builder and layout placement types. No adapter-generated geometry.
+3. Detail Profile sourceRef and one typed legend list: resolve against
+   projection.periods, reject ambiguous/unknown/duplicate/mismatched sources,
+   carry identity independently of visual role; reuse period edge completion,
+   existing area-key dimensions, pattern/opacity and legend slot. Owners:
+   detail schema/contracts, surface_content, v05_content/profile_connections,
+   surface_legend/completion and Scene legend projection.
+4. Synthetic tests: omitted-field Scene/SVG identity; base/variant roles;
+   single/double sides and exact fit refusal; fill versus outline/none; pattern
+   hosts and translucent-rank regression; legacy glyph/channel serialization;
+   same-role periods plus an unsourced same-role entry with unique identities;
+   source/role diagnostics, wording precedence, swatch fidelity and slot sizing.
+   Run focused tests, schema equivalence and conformance locally. Inspect the CI
+   public derived batch and intended deltas; CI supplies full three-OS release.
 
-## Variant-slice implementation evidence (partial; issue remains open)
+Publish this design/architecture review and plan before code; publish the
+implementation and concise literal/selected-scope review together. No examples
+or derived-report edits. Keep871 open until items1–3 and every literal criterion
+have direct evidence plus successful exact-main containing-review release.
 
-Implementation and synthetic tests are committed locally at
-`1ab5febc` (`feat: carry View-selected period variants through completed placements`),
-not yet published to `main`. The focused command
-`./.venv/bin/python -m pytest -q tests/integration/test_named_periods.py tests/unit/chrona/presentation/test_color_scheme.py tests/unit/chrona/presentation/test_role_admission.py tests/unit/chrona/presentation/scene/test_capabilities.py tests/unit/chrona/presentation/model/test_semantic_registry_contrast.py`
-passes: **158 passed**. It covers two simultaneously selected variants with
-distinct band paint, opacity and order; label font size and letter spacing
-changing completed bounds, baseline and Scene TextLayout; selected-role contrast
-floors; background collision behavior; catalogue-pattern admission; unsupported
-property pointers; default output identity; and missing-role timing.
+## Current implementation evidence
 
-Schema equivalence against `origin/main` passes L1 with `additive=1, equal=37`
-for the optional common-slug View member. Six merged #1341 L1 expected-delta
-records were mechanically retired after proof against their landing commit and
-first parent; all L2/L3 records were preserved. The stale-entry pruner could not
-rewrite these block-style mappings because its rewrite loop parses a single
-top-level line as a whole YAML record (`E_EQUIV_DELTAS_ENTRY:{'layer':'L1'}`).
-After retiring only the proven-stale records,
-`python -m tools.schema_equivalence --base-rev origin/main --prune-stale`
-exits successfully; no schema-gate tooling was changed.
-
-This evidence is limited to the selected variant slice and local focused tests;
-the final CI/public-derived batch is pending publication. Edge treatments and
-the period legend entry remain unimplemented, separately selected follow-ups.
+Scene channels: c5905e39/38fc378a; edge completion:851af7fa;
+source legend:d1a0678a. Root focused batch224 passes; source-pattern/variant
+tests10 pass; delivery-owner tests2 pass. Schema annotations and equivalence
+pass (additive2/equal36). Independent audit found the base/variant pattern
+admission gap; root corrected it before these final tests. PR1488 snapshot11869408444
+retains all92 Scene/SVG bytes; only the intended three generated reports change.
+CI conformance/MCP/newest materializers pass. Run38510592348 found14 stale
+test expectations:13 tuple legend fixtures and one Rect-only capability assertion.
+The typed fixtures and Path admission are corrected without a production shim;
+the expanded migration batch154 passes. A repository-wide audit finds no other
+tuple consumers. Updated-head CI and exact-main release remain pending.

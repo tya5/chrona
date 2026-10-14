@@ -348,7 +348,6 @@ class MarkPlacement:
     paint_clip: PaintClip | None = None
     pattern_origin: tuple[float, float] | None = None
 
-
 @dataclass(frozen=True)
 class LayoutImageFill:
     """One completed nine-slice image fill for an annotation container (#465).
@@ -393,11 +392,17 @@ class ShapePlacement:
     viewer_fit: str = "raw"
     # Selected Theme role for completed named region frames; absent keeps the legacy Scene role.
     visual_role: str | None = None
+    # Completed shape-part channel selection; catalogue glyph intent is separate.
+    paint_channels: str | None = None
     subjects: tuple[DiagnosticSubject, ...] = ()
     # Completed visible frame, when nonrect paint extends beyond nominal bounds.
     collision_bounds: Rect | None = None
     paint_clip: PaintClip | None = None
     pattern_origin: tuple[float, float] | None = None
+
+    def __post_init__(self) -> None:
+        if self.paint_channels not in (None, "fill", "stroke"):
+            raise ValueError(f"E_LAYOUT_SHAPE_PLACEMENT_INVALID:{self.placement_id}:paint_channels")
 
 
 @dataclass(frozen=True)

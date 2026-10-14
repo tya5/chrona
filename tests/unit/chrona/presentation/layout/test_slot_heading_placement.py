@@ -13,7 +13,7 @@ from chrona.presentation.layout.slot_heading import (
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.surface_axis import AxisLabelTierGeometry
 from chrona.presentation.layout.surface_quality import SlotPlacement
-from chrona.presentation.model.surface_content import AxisTier
+from chrona.presentation.model.surface_content import AxisTier, SurfaceLegendEntry
 from chrona.presentation.model.theme_tokens import TextTreatment
 
 SIZE, LINE = 10, Decimal("1.5")  # a 15 unit line box; the gap under it is 5
@@ -39,7 +39,7 @@ class _Theme:
 
 
 def _request(**content):
-    surface = SimpleNamespace(annotations=("a",), notes=("n",), legend_entries=(("k", "v"),),
+    surface = SimpleNamespace(annotations=("a",), notes=("n",), legend_entries=(SurfaceLegendEntry("k", "v"),),
                               summary=SimpleNamespace(runs=("r",)), slot_heading_text=(),
                               group_details=(), milestones=(), observation_rows=(),
                               axis_tiers=(AxisTier("day", 1, "labels"),))

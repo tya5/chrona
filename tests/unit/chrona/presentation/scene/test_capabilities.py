@@ -50,9 +50,11 @@ def test_catalogue_pattern_contract_admits_only_always_rect_roles():
 def test_period_variant_roles_have_only_their_registered_capability_contracts():
     band = theme_role_contract("period-band:frost")
     label = theme_role_contract("period-label:frost")
-    assert band is not None and band.scene_kinds == frozenset(("Rect",))
+    assert band is not None and band.scene_kinds == frozenset(("Rect", "Path"))
     assert label is not None and label.scene_kinds == frozenset(("Text",))
     assert theme_role_property_consumer("period-band:frost", "backgroundPaintOrder") is not None
+    assert theme_role_property_consumer("period-band:frost", "edgeRules") is not None
+    assert theme_role_property_consumer("period-band:frost", "doubleRuleGap") is not None
     assert theme_role_property_consumer("period-band:frost", "markHeight") is None
     assert theme_role_property_consumer("period-label:frost", "fontSize") is not None
     assert theme_role_property_consumer("period-label:frost", "backgroundTreatment") is None

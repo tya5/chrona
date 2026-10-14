@@ -1060,6 +1060,28 @@ to a scheme category would make `--preset X --scheme Y` fail for every View whos
 scheme lacks it, so a scheme override re-colours the band and no category or
 catalogue is required. The band is a background and never enters the obstacle
 index.
+
+When the selected band role declares `edgeRules` (Specification 07), Layout
+completes the same clipped period extent as independent open edge Paths. A
+`single` centerline is inset by half the stroke width; a `double` pair is inset
+by half a stroke width and by 1.5 stroke widths plus `doubleRuleGap` for the
+second line. Each edge is trimmed by half a stroke width at both ends; edges do
+not join at corners. A `fill` treatment retains a fill/pattern-only Rect host;
+`outline` emits only the requested paths; `none` with edge rules is unsupported.
+Opacity applies to each emitted primitive. Layout refuses with a typed
+`E_LAYOUT_PERIOD_EDGE_SIZE` at `/body/roles/<selected-role>/edgeRules` when the
+nominal stroke footprint cannot fit the clipped extent: the tangent dimension
+must exceed the stroke width, and the inward dimension must be at least one
+stroke width for a single line or two stroke widths plus the declared gap for
+a double pair. Check each selected side; no epsilon, clamping or adapter clipping.
+This is nominal pre-effect geometry. Shadow, glow and wobble retain Spec63's
+separate paint contracts and may extend visibly beyond the band; they do not
+make this a promise that every decorated pixel is inside it.
+Only actual fill hosts participate in
+background overlay-rank comparisons, so stroke paths cannot create a false
+fill collision and distinct overlapping translucent period fills remain
+subject to the existing rank rule. If edge rules are absent, legacy band
+geometry and paint remain unchanged.
 Contrast is measured as a decoration role at the 1.10 floor over the primitive
 beneath its centre; a band below the floor, or over a translucent host that
 cannot be measured, is a warning (`W_SCENE_DECORATION_CONTRAST`,
@@ -1098,6 +1120,27 @@ The shared `period-label-chip` treatment is unchanged. Scene purpose, period `so
 collision policy do not vary with the role. A Theme that selects no label declares no label role.
 
 A Layout `legend` slot is the sole authority for legend geometry. When it exists, every selected legend entry emits one swatch and one measured label. When absent, there are no legend primitives. It is a resource choice, not a renderer fallback. Header or row capacity shortfall completes visible stacked/natural geometry and a warning rather than rejecting the surface.
+
+A Detail Profile entry with `sourceRef` bound to a selected period uses that
+period's selected band role and the same completed edge geometry as its area
+swatch. Source-bound entries retain the period id as Scene `sourceRef`, the
+selected band role as `visualRole`, and the authored label; View role-wide
+legend wording has its existing precedence. Their typed provenance is shared
+by measurement and placement, and their Scene identity namespace is disjoint
+from arbitrary legacy role IDs: labels use `legend-period:<period id>` and
+hosts use `legend-period-swatch:<period id>`. Edge component identities use
+`period-edge:<host-id-length>:<host-id>:<side>:<line-index>`, with the full
+host ID's Unicode codepoint length. This disjoint prefix and length framing
+prevent a colon-bearing period ID from aliasing an edge or another host.
+Unknown, unselected, ambiguous or duplicate source bindings are
+`E_REVIEW_LEGEND_PERIOD_SOURCE` at the profile entry's `sourceRef`; mismatched
+roles are `E_REVIEW_LEGEND_PERIOD_ROLE` at its `role` (Spec06).
+If its role explicitly declares `backgroundTreatment: none`, it keeps the
+authored label and measured swatch reservation but emits no painted swatch,
+matching the period's declared absence; this is the exception to the one-swatch
+rule above. It does not make a valid source binding an error.
+Entries without `sourceRef` retain
+their existing behavior and identity.
 
 ## 4. Schema and normalization
 

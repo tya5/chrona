@@ -472,7 +472,8 @@ def _band_batch(scale_origin: float, ratio: float, periods: tuple[ReviewPeriod, 
     scale = ScalePlacement("table-timeline", "primary", date(2026, 1, 1), date(2026, 1, 31), 100.0, 400.0,
                            scale_origin, ratio)
     base = SimpleNamespace(timeline=SimpleNamespace(bounds=plot), plot=plot, scale=scale)
-    tokens = SimpleNamespace(background=lambda role: ("fill", 11))
+    tokens = SimpleNamespace(background=lambda role: ("fill", 11),
+                             period_edge_rules=lambda role: None)
     return compose_period_bands(base=base, theme_tokens=tokens, periods=periods,
                                 window=(date(2026, 1, 1), date(2026, 1, 31)))
 

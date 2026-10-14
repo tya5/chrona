@@ -31,3 +31,4 @@ normative specification.
 | #1345 | closed | [Owner interpretation and acceptance](https://github.com/tya5/chrona/issues/1345#issuecomment-6158100055); exact-main [release38488112476](https://github.com/tya5/chrona/actions/runs/38488112476) |
 | #1356 | closed | [Wheel initialization acceptance](https://github.com/tya5/chrona/issues/1356#issuecomment-6158100636); exact-main [release38488112476](https://github.com/tya5/chrona/actions/runs/38488112476) |
 | #982 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/982), all three literal criteria met with actual compiler/image evidence; exact-main [release38505128183](https://github.com/tya5/chrona/actions/runs/38505128183) on68457b29 |
+| #1478 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1478), all four literal criteria met; exact-main [release38510323874](https://github.com/tya5/chrona/actions/runs/38510323874) on8b2075b4 |

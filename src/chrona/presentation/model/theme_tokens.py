@@ -159,6 +159,15 @@ class MarkStackIntent:
     frame_padding: Decimal = Decimal(0)
 
 
+@dataclass(frozen=True)
+class PeriodEdgeRules:
+    """Validated Theme edge selection and nominal stroke geometry for a period band."""
+
+    edges: tuple[tuple[str, str], ...]
+    stroke_width: Decimal
+    double_rule_gap: Decimal | None = None
+
+
 BORDER_SIDES = ("start", "end", "top", "bottom")
 
 
@@ -1028,6 +1037,44 @@ class ThemeTokenView:
         if treatment not in {"fill", "outline", "none"} or not isinstance(order, int) or not 0 <= order <= 1000:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", path)
         return treatment, order
+
+    def period_edge_rules(self, role: str) -> PeriodEdgeRules | None:
+        """Resolve the optional period-edge contract before Layout clips a selected band."""
+        binding = self._body["roles"].get(role)
+        pointer = f"/body/roles/{role}/edgeRules"
+        declared = binding.get("edgeRules") if isinstance(binding, Mapping) else None
+        gap_declared = isinstance(binding, Mapping) and "doubleRuleGap" in binding
+        if declared is None:
+            if gap_declared:
+                raise ThemeTokenError("E_THEME_ROLE_PROPERTY_UNSUPPORTED",
+                                      f"/body/roles/{role}/doubleRuleGap")
+            return None
+        treatment, _ = self.background(role)
+        if treatment == "none":
+            raise ThemeTokenError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", pointer)
+        if (not isinstance(declared, Mapping) or not declared
+                or set(declared) - {"top", "bottom", "start", "end"}
+                or any(value not in ("single", "double") for value in declared.values())):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer)
+        width = self.number(role, "strokeWidth")
+        if width <= 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/strokeWidth")
+        # Resolve both required paint and optional dash here so invalid rule metadata
+        # fails even when its selected period has no drawable clipped extent.
+        self.color(role, "stroke")
+        if self.has_binding(role, "dash"):
+            self.dash(role)
+        has_double = any(value == "double" for value in declared.values())
+        if has_double and not gap_declared:
+            raise ThemeTokenError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}/doubleRuleGap")
+        if not has_double and gap_declared:
+            raise ThemeTokenError("E_THEME_ROLE_PROPERTY_UNSUPPORTED",
+                                  f"/body/roles/{role}/doubleRuleGap")
+        gap = self.number(role, "doubleRuleGap") if has_double else None
+        if gap is not None and gap <= 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/doubleRuleGap")
+        return PeriodEdgeRules(tuple((side, declared[side]) for side in ("top", "bottom", "start", "end")
+                                     if side in declared), width, gap)
 
     def optional_background(self, role: str) -> tuple[str, int] | None:
         """Return a declared background treatment, or none when not applicable."""

@@ -63,6 +63,25 @@ that selected role. Adapters serialize the completed result and MUST NOT reconst
 the suffix, look up Theme roles, or substitute the unsuffixed role. The variant does
 not change period placement or Scene identity.
 
+For named-period edge rules (Specifications 07 and 50), Layout completes
+independent edge Paths and any fill host; Scene preserves the period purpose,
+source identity and selected visual role. A transient completed-shape
+`paint_channels` mask lets Layout request `fill`-only or `stroke`-only resolution
+for Rect, Path, or Symbol shapes; omission preserves existing resolution.
+It is consumed and cleared during Scene paint completion, not serialized.
+Fill-only removes stroke, width, dash, stroke finish and wobble; stroke-only
+removes fill and fill gradients. Shadow/glow retain their separate Spec63 rules.
+For a patterned fill host, the existing stroke pigment/width needed by the
+completed pattern remains: it is fill content, not the Rect's outline. The
+completed pattern contract already suppresses that host outline. Tile geometry
+does not acquire the period edges' stroke width, dash or finish.
+Scene contains ordinary completed paint; adapters and Scene schemas are unchanged.
+Catalogue part paint intent remains distinct: its existing Theme-outline
+precedence is preserved. Glyph mode/color/stroke overrides remain Symbol-only.
+Pattern-host validation continues to classify by primitive kind, not this
+generic channel intent. Stroke-only paths are not background fill hosts for
+overlay-rank or translucency checks.
+
 ### 2.3 PDF font-outline translation (#1338)
 
 PDF MUST use the exact resolved font bytes and collection face index, not

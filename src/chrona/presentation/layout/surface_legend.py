@@ -12,8 +12,10 @@ from chrona.presentation.layout.surface_marks import (
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
 from chrona.presentation.layout.relation_terminals import marker_geometry
+from chrona.presentation.layout.surface_periods import compose_period_decoration
 from chrona.presentation.layout.mark_geometry import complete_point_outline, symbol_parts
 from chrona.presentation.model.point_paint import resolve_point_paint_role
+from chrona.presentation.model.surface_content import SurfaceLegendEntry
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.layout.surface_quality import (
     GEOMETRY_TOLERANCE, CollisionDomain, FitWarning, MarkPlacement, RelationPlacement, ShapePlacement, SlotPlacement,
@@ -134,7 +136,7 @@ def legend_arrangement(resolved_profile: Any) -> LegendArrangement:
         int(node["columns"]) if "columns" in node else None)
 
 
-def legend_source_input(entries: tuple[tuple[str, str], ...], *, tokens: Any, mark_block_size: float,
+def legend_source_input(entries: tuple[SurfaceLegendEntry, ...], *, tokens: Any, mark_block_size: float,
                         font_metrics: Any, arrangement: LegendArrangement) -> SourceInput:
     """Describe the legend slot's content for measurement: the entries Layout will draw (#497).
 
@@ -150,8 +152,10 @@ def legend_source_input(entries: tuple[tuple[str, str], ...], *, tokens: Any, ma
     label_gap = swatch_label_gap(arrangement.gap, tokens, legend_size)
     if not entries:
         return SourceInput(("legend",), typography_role="legend")
-    extents = {role: swatch_extent(role, tokens, mark_block_size, legend_size)[0] for role, _ in entries}
-    runs = tuple(SourceTextRun(label, "legend", role, Decimal(str(extents[role] + label_gap))) for role, label in entries)
+    extents = {entry.role: swatch_extent(entry.role, tokens, mark_block_size, legend_size)[0]
+               for entry in entries}
+    runs = tuple(SourceTextRun(entry.label, "legend", entry.role,
+                               Decimal(str(extents[entry.role] + label_gap))) for entry in entries)
     grid = arrangement.columns is not None
     line = arrangement.direction == "inline" and not grid
     min_inline: Decimal | None = None
@@ -171,7 +175,8 @@ def legend_source_input(entries: tuple[tuple[str, str], ...], *, tokens: Any, ma
             min_inline = Decimal(str(max(extents.values()) + label_gap + ellipsis))
     if grid:
         text_line = legend_size * float(treatment.line_height)
-        row_block = max([text_line] + [swatch_extent(role, tokens, mark_block_size, legend_size)[1] for role, _ in entries])
+        row_block = max([text_line] + [swatch_extent(entry.role, tokens, mark_block_size, legend_size)[1]
+                                       for entry in entries])
         return SourceInput(runs=runs, typography_role="legend", run_flow="grid", run_gap=Decimal(str(gap)),
                            columns=arrangement.columns, row_block=Decimal(str(row_block)))
     return SourceInput(runs=runs, typography_role="legend", run_flow="line" if line else "stack",
@@ -200,7 +205,20 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
     def swatch_geometry(role: str) -> tuple[float, float, str]:
         return swatch_extent(role, request.theme_tokens, mark_block_size, legend_size)
 
-    def emit_swatch(role: str, x: float, y: float, width: float, height: float, bucket: str) -> None:
+    def emit_swatch(entry: SurfaceLegendEntry, x: float, y: float, width: float, height: float, bucket: str) -> None:
+        role = entry.role
+        swatch_id = entry.swatch_placement_id
+        if entry.source_ref is not None:
+            treatment, paint_order = request.theme_tokens.background(role)
+            # A declared `none` still reserves and labels the entry, but has no visible swatch.
+            if treatment == "none":
+                return
+            bounds = Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height)))
+            shapes.extend(compose_period_decoration(
+                bounds=bounds, placement_id=swatch_id, source_ref=entry.source_ref,
+                visual_role=role, slot_id=legend.slot_id, paint_order=paint_order,
+                theme_tokens=request.theme_tokens, semantic_id="legendEntry"))
+            return
         if bucket == "point":
             bounds = Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height)))
             parts = symbol_parts(
@@ -211,7 +229,7 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
                 parts, paint_role=resolve_point_paint_role(
                     role, gate_declared=request.theme_tokens.has_role("gate"), legend=True),
                 theme_tokens=request.theme_tokens)
-            marks.append(MarkPlacement(f"legend-swatch:{role}", role,
+            marks.append(MarkPlacement(swatch_id, role,
                                        bounds,
                                        (x + width / 2, y + height / 2), (x + width / 2, y + height / 2),
                                        mark_shape="point", slot_id=legend.slot_id, semantic_id="planned",
@@ -221,7 +239,7 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             corner_radius = min(float(corner_ratio) * min(width, height), min(width, height) / 2)
             corner_radius = resolve_corner_radius(request.theme_tokens.optional_token(role, "cornerRadius", "radius"),
                                                   width=width, height=height, legacy_radius=corner_radius)
-            shapes.append(ShapePlacement(f"legend-swatch:{role}", role, "Rect",
+            shapes.append(ShapePlacement(swatch_id, role, "Rect",
                                          Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),
                                          slot_id=legend.slot_id, corner_radius=corner_radius, paint_order=paint_order))
             if (role in {"planned", "actual"} and role == request.surface_content.progress_fill_source
@@ -230,24 +248,25 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
                 inset, fill_radius = request.theme_tokens.progress_track("progress-fill")
                 fill = progress_fill_bounds(shapes[-1].bounds, 1.0, inset)
                 if fill is not None and fill.inline_size > 0:
-                    shapes.append(ShapePlacement(f"legend-swatch:{role}:progress-fill", "progress-fill", "Rect", fill,
+                    shapes.append(ShapePlacement(f"{swatch_id}:progress-fill", "progress-fill", "Rect", fill,
                                                  slot_id=legend.slot_id, paint_order=paint_order + 1,
                                                  corner_radius=float(fill_radius) * float(min(fill.inline_size, fill.block_size))))
         elif bucket == "line":
             marker_token = request.theme_tokens.optional_token(role, "marker", "marker")
-            relations.append(RelationPlacement(f"legend-swatch:{role}", f"legend-swatch:{role}:start",
-                                               f"legend-swatch:{role}:end",
+            relations.append(RelationPlacement(swatch_id, f"{swatch_id}:start",
+                                               f"{swatch_id}:end",
                                                points=((x, y + height / 2), (x + width, y + height / 2)),
                                                semantic_id=role, slot_id=legend.slot_id, source_ref=role,
                                                marker_end=marker_geometry(marker_token, stroke_width=float(
                                                    request.theme_tokens.number(role, "strokeWidth")))
                                                if marker_token else None))
         else:
-            shapes.append(ShapePlacement(f"legend-swatch:{role}", role, "Rect",
+            shapes.append(ShapePlacement(swatch_id, role, "Rect",
                                          Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),
                                          slot_id=legend.slot_id))
 
-    def emit_label(role: str, label: str, x: float, baseline: float, available: float) -> float:
+    def emit_label(entry: SurfaceLegendEntry, x: float, baseline: float, available: float) -> float:
+        role, label = entry.role, entry.label
         natural_width = measure_text_width(label, font_size=legend_size, font_metrics=metric_for("legend"),
                                            letter_spacing=float(legend_treatment.letter_spacing),
                                            text_transform=legend_treatment.transform,
@@ -265,7 +284,7 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             ellipsized = True
         elif natural_width > available and legend.overflow == "visible-overflow":
             disposition = "visible-overflow"
-        placed = place_text(placement_id=f"legend:{role}", source_ref=role, content=content,
+        placed = place_text(placement_id=entry.text_placement_id, source_ref=entry.source_identity, content=content,
                             inline=x, baseline_block=baseline, typography_role="legend",
                             theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                             overflow=disposition, collision_region="legend",
@@ -290,13 +309,14 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
         # A declared grid (#1290): entry k sits in column k mod columns of row k div columns; each column is as wide as
         # its widest entry (swatch, gap and label), `gap` apart, and every row is as tall as the tallest key.
         entries = request.surface_content.legend_entries
-        row_block = max([text_line_block] + [swatch_geometry(role)[1] for role, _ in entries])
-        label_width = {role: measure_text_width(label, font_size=legend_size, font_metrics=metric_for("legend"),
+        row_block = max([text_line_block] + [swatch_geometry(entry.role)[1] for entry in entries])
+        label_width = [measure_text_width(entry.label, font_size=legend_size, font_metrics=metric_for("legend"),
                                                 letter_spacing=float(legend_treatment.letter_spacing),
                                                 text_transform=legend_treatment.transform,
                                                 numeric_spacing=legend_treatment.numeric_spacing)
-                       for role, label in entries}
-        entry_width = [swatch_geometry(role)[0] + label_gap + label_width[role] for role, _ in entries]
+                       for entry in entries]
+        entry_width = [swatch_geometry(entry.role)[0] + label_gap + label_width[index]
+                       for index, entry in enumerate(entries)]
         count = len(entries)
         column_widths = [max((entry_width[index] for index in range(column, count, legend.columns)), default=0.0)
                          for column in range(min(legend.columns, count))]
@@ -309,13 +329,14 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
         starts = [float(legend.bounds.inline)]
         for width in column_widths[:-1]:
             starts.append(starts[-1] + width + gap)
-        for index, (role, label) in enumerate(entries):
+        for index, entry in enumerate(entries):
+            role = entry.role
             row, column = divmod(index, legend.columns)
             x = starts[column]
             y = float(legend.bounds.block) + row * (row_block + gap)
             width, height, bucket = swatch_geometry(role)
-            emit_swatch(role, x, y + (row_block - height) / 2.0, width, height, bucket)
-            label_end = emit_label(role, label, x + width + label_gap, y + (row_block - text_line_block) / 2.0 + legend_size,
+            emit_swatch(entry, x, y + (row_block - height) / 2.0, width, height, bucket)
+            label_end = emit_label(entry, x + width + label_gap, y + (row_block - text_line_block) / 2.0 + legend_size,
                                    max(0.0, slot_end - (x + width + label_gap)))
             final_legend_end = max(final_legend_end, Decimal(str(label_end)), Decimal(str(y + row_block)))
     elif direction == "inline":
@@ -325,15 +346,16 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
         slot_end = float(legend.bounds.inline) + float(legend.bounds.inline_size)
         # Every swatch and label of the legend is centred on one row centreline (#991), the way the block
         # direction centres each entry: the row is as tall as the tallest swatch or the label line box.
-        row_block = max([text_line_block] + [swatch_geometry(role)[1] for role, _ in request.surface_content.legend_entries])
-        for role, label in request.surface_content.legend_entries:
+        row_block = max([text_line_block] + [swatch_geometry(entry.role)[1] for entry in request.surface_content.legend_entries])
+        for entry in request.surface_content.legend_entries:
+            role, label = entry.role, entry.label
             width, height, bucket = swatch_geometry(role)
             if item_min_inline is not None and x > float(legend.bounds.inline) and slot_end - x < item_min_inline:
                 y += row_height + gap
                 x = float(legend.bounds.inline)
                 row_height = 0.0
-            emit_swatch(role, x, y + (row_block - height) / 2.0, width, height, bucket)
-            label_end = emit_label(role, label, x + width + label_gap, y + (row_block - text_line_block) / 2.0 + legend_size,
+            emit_swatch(entry, x, y + (row_block - height) / 2.0, width, height, bucket)
+            label_end = emit_label(entry, x + width + label_gap, y + (row_block - text_line_block) / 2.0 + legend_size,
                                    max(0.0, slot_end - (x + width + label_gap)))
             row_height = row_block
             final_legend_end = max(final_legend_end, Decimal(str(label_end)), Decimal(str(y + row_height)))
@@ -343,15 +365,16 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
                                                    numeric_spacing=legend_treatment.numeric_spacing) + gap
     else:
         cursor = float(legend.bounds.block)
-        for role, label in request.surface_content.legend_entries:
+        for entry in request.surface_content.legend_entries:
+            role, label = entry.role, entry.label
             width, height, bucket = swatch_geometry(role)
             row_height = max(height, text_line_block)
             swatch_top = cursor + (row_height - height) / 2.0
             baseline = cursor + (row_height - text_line_block) / 2.0 + legend_size
             text_inline = float(legend.bounds.inline) + width + label_gap
             text_available = max(0.0, float(legend.bounds.inline_size) - width - label_gap)
-            emit_swatch(role, float(legend.bounds.inline), swatch_top, width, height, bucket)
-            label_end = emit_label(role, label, text_inline, baseline, text_available)
+            emit_swatch(entry, float(legend.bounds.inline), swatch_top, width, height, bucket)
+            label_end = emit_label(entry, text_inline, baseline, text_available)
             final_legend_end = max(final_legend_end, Decimal(str(label_end)))
             cursor += row_height + gap
     final_size = max(legend.bounds.block_size, final_legend_end - legend.bounds.block)

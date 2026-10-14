@@ -25,4 +25,6 @@ None.
 
 ## Architecture conclusion
 
-The View owns project wording. Profile closure resolves `<panel-id>.title` in the existing summary-wording namespace before rendering, preserves the authored profile and stable panel identity, and rejects unknown or ambiguous joined keys at the View pointer. The shared schema changes descriptions only. The implementation commit and local acceptance evidence are ready for PR review; CI and the release snapshot are still pending, so this review does not close the issue.
+The View owns project wording. Profile closure resolves `<panel-id>.title` in the existing summary-wording namespace before rendering, preserves the authored profile and stable panel identity, and rejects unknown or ambiguous joined keys at the View pointer. The shared schema changes descriptions only.
+
+[PR1487](https://github.com/tya5/chrona/pull/1487) merged as6b3cae27. Artifact11869376157 preserves all92 public Scene/SVG bytes; only three wording diagnostic callsite locations move. Exact-main [release38510323874](https://github.com/tya5/chrona/actions/runs/38510323874) completed successfully on8b2075b4e77ff96a3459de3ee348a491e9f4a07f, which contains this literal acceptance review, with all three OS matrices, MCP and newest-Python public materializers successful. All four literal criteria are met; issue1478 is accepted.

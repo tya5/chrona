@@ -248,6 +248,19 @@ A selected period MAY also declare `variant`, a `common-v0.1` `slug`. It chooses
 
 A selected period may carry `label: {placement, overflow?, text?}`. `placement` is `top` (at the plot's top edge), `bottom` (at its bottom edge) or `inside` (centred in the band); the label is the View's `text` override when it declares one (#871; one to eighty characters, shown for this View only), else the period's `title` (its identifier when absent), centred on the band's visible extent. `overflow` is `suppress` (omit the label and record `W_LAYOUT_LABEL_SUPPRESSED`) or `visible-overflow` (the default: place it at the preferred position and record `W_LAYOUT_LABEL_OVERFLOW`) when no collision-free position exists; a label never silently overprints a mark. Absent `label` draws the band alone.
 
+A Detail Profile legend entry for a period MAY declare `sourceRef` as that
+Project period's id. The binding is valid only when the same period is selected
+by this View, exactly once, and the entry `role` equals that period's selected
+band role (`period-band` or `period-band:<variant>`). Unknown, unselected,
+ambiguous, or duplicate sources fail with `E_REVIEW_LEGEND_PERIOD_SOURCE` at
+`/body/legend/<index>/sourceRef`; a mismatched role is
+`E_REVIEW_LEGEND_PERIOD_ROLE` at `/body/legend/<index>/role`, both attributed to
+the Detail Profile rather than the View. They are not ordinary unsourced keys.
+The source identifies
+the Project period, while the role controls visual selection. Existing
+`wording.legend` remains role-wide and therefore overrides the labels of all
+entries with that role, including source-bound period entries.
+
 ### 7.2 Axis band fills (#490)
 
 A `table-timeline` View MAY give a fixed-unit `axis.tiers[]` band tier `fillScale: {scale, key, containingTier?}`. `key: alternating` selects Theme slots `"0"` and `"1"` by the natural interval ordinal's parity; `key: interval` selects its canonical decimal ordinal. An optional `containingTier` names another declared, coarser fixed-unit band tier and selects by the unique natural interval containing this interval. The View names the Theme scale and the source rule; Layout resolves interval identity, and Scene receives the resolved paint without changing geometry. A tier without `fillScale` renders as before. See Presentation Specification 60 for interval, Theme mapping, and diagnostic rules.

@@ -11,7 +11,7 @@ from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.surface_quality import PathCommand, ShapePlacement, SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun, SourceInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
-from chrona.presentation.model.surface_content import AnnotationIntent, AxisLabelIntent, AxisTier, SummaryContent, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth
+from chrona.presentation.model.surface_content import AnnotationIntent, AxisLabelIntent, AxisTier, SummaryContent, SurfaceContentInput, SurfaceLegendEntry, TableCellContent, TableColumnContent, TableColumnWidth
 from chrona.presentation.model.surface_content import RelationPresentationFact
 from chrona.presentation.model.projection import FoldedPointProjection, ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
@@ -622,7 +622,7 @@ def test_legend_entries_emit_role_derived_swatches():
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     value = build_surface_input(projection=projection,
-                              surface_content=surface_content(legend_entries=(("planned", "Plan"),)),
+                              surface_content=surface_content(legend_entries=(SurfaceLegendEntry("planned", "Plan"),)),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis", "legend"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -657,7 +657,7 @@ def test_legend_milestone_entry_renders_as_the_bound_symbol_at_chart_size():
     theme = _theme()
     theme["body"]["roles"]["milestone"] = {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}
     theme["body"]["roles"].pop("gate")  # the fixture declares a role per registered semantic; a Theme with `gate` paints the key with it (#991)
-    surface = _legend_surface((("milestone", "Milestone"),), theme)
+    surface = _legend_surface((SurfaceLegendEntry("milestone", "Milestone"),), theme)
 
     swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:milestone")
     assert swatch.kind == "Symbol"
@@ -673,7 +673,7 @@ def test_legend_outline_pattern_role_swatch_has_no_fill():
     theme = _theme()
     theme["body"]["values"]["outline-pattern"] = {"type": "pattern", "value": {"kind": "outline"}}
     theme["body"]["roles"]["planned"]["pattern"] = "outline-pattern"
-    surface = _legend_surface((("planned", "Baseline"),), theme)
+    surface = _legend_surface((SurfaceLegendEntry("planned", "Baseline"),), theme)
 
     swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:planned")
     assert swatch.kind == "Rect"
@@ -686,7 +686,7 @@ def test_legend_dependency_entry_renders_as_a_stroke_with_its_terminal():
     # the role's own marker, not a filled rect.
     theme = _theme()
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "dependency-marker"}
-    surface = _legend_surface((("dependency", "Dependency"),), theme)
+    surface = _legend_surface((SurfaceLegendEntry("dependency", "Dependency"),), theme)
 
     swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:dependency")
     assert swatch.kind == "Path"
@@ -700,7 +700,7 @@ def test_legend_as_of_entry_renders_as_a_dashed_stroke():
     theme = _theme()
     theme["body"]["values"]["as-of-dash"] = {"type": "dashPattern", "value": [4, 3]}
     theme["body"]["roles"]["as-of"]["dash"] = "as-of-dash"
-    surface = _legend_surface((("asOf", "As of"),), theme)
+    surface = _legend_surface((SurfaceLegendEntry("asOf", "As of"),), theme)
 
     swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:asOf")
     assert swatch.kind == "Path"
@@ -712,7 +712,7 @@ def test_legend_unrecognized_role_keeps_the_fixed_square_fallback():
     # square, rather than failing or guessing a shape.
     theme = _theme()
     theme["body"]["roles"]["custom-note"] = {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}
-    surface = _legend_surface((("custom-note", "Custom"),), theme)
+    surface = _legend_surface((SurfaceLegendEntry("custom-note", "Custom"),), theme)
 
     swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:custom-note")
     assert swatch.kind == "Rect"
@@ -739,7 +739,7 @@ def test_legend_inline_direction_flows_entries_left_to_right():
     manifest = LayoutManifest("review", "sha256:test", "horizontal", "horizontal", rect, decisions,
                               row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
     value = build_surface_input(projection=projection,
-                              surface_content=surface_content(legend_entries=(("planned", "Plan"), ("actual", "Act"))),
+                              surface_content=surface_content(legend_entries=(SurfaceLegendEntry("planned", "Plan"), SurfaceLegendEntry("actual", "Act"))),
                               layout_manifest=manifest, resolved_theme=_theme(), font_metrics=_Font(),
                               measured_sources=_legend_measurement(), capabilities={"svg": True})
     surface = compose_review_surface(value)
