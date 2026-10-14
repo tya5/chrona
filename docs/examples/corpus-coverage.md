@@ -87,7 +87,7 @@ Direct `enum` and `const` values from the Project, Actual Set, Snapshot Referenc
 | Project | `periods.*.end.endpoint` | `"at"` | — | — | — | — | — |
 | Project | `periods.*.end.endpoint` | `"end"` | — | — | — | — | — |
 | Project | `periods.*.end.endpoint` | `"start"` | — | — | — | — | — |
-| Project | `periods.*.start.endpoint` | `"at"` | — | — | — | — | examples/halcyon-1/project.yaml |
+| Project | `periods.*.start.endpoint` | `"at"` | — | examples/chrona-roadmap/project.yaml | — | — | examples/halcyon-1/project.yaml |
 | Project | `periods.*.start.endpoint` | `"end"` | — | — | — | — | — |
 | Project | `periods.*.start.endpoint` | `"start"` | — | — | — | — | — |
 | Project | `relations[].from.endpoint` | `"at"` | examples/aster-ssd/project.yaml | examples/chrona-roadmap/project.yaml | examples/controller-z/project.yaml | examples/controller-z-ja/project.yaml | examples/halcyon-1/project.yaml |
