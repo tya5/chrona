@@ -58,7 +58,10 @@ class FontMetricsCatalog:
 
     @property
     def warnings(self) -> tuple[FontGlyphSubstitution, ...]:
-        return tuple(sorted((warning for metric in self.metrics.values() for warning in metric.warnings),
+        # Requested-stack and selected-face names can alias one metric object;
+        # aliases are lookup addresses, not additional substitution occurrences.
+        unique_metrics = {id(metric): metric for metric in self.metrics.values()}
+        return tuple(sorted((warning for metric in unique_metrics.values() for warning in metric.warnings),
                             key=lambda item: (item.requested_family.casefold(), item.weight,
                                               item.codepoint, item.text)))
 

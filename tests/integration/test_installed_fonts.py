@@ -192,11 +192,13 @@ def test_a_character_the_first_face_lacks_takes_the_next_face_that_has_it(tmp_pa
         (fonts / name).write_bytes((CJK_FONTS / name).read_bytes())
     (tmp_path / "run").mkdir()
     with use_installed_fonts(InstalledFontIndex([fonts])):
-        rendered = _render(tmp_path / "run", _parts(), title="日本語 Team")
+        rendered = _render(tmp_path / "run", _parts("Missing Family, " + STACK), title="日本語 Team")
     layout = _header(rendered).text_layout
 
     assert layout.family == "Hiragino Sans"
     assert layout.bounds[2] > 0
+    assert rendered.font_warnings
+    assert len(rendered.font_warnings) == len(set(rendered.font_warnings))
 
 
 def test_text_no_face_of_the_stack_or_the_package_covers_fails_naming_the_character(tmp_path):
