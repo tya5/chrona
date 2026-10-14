@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 from fontTools.ttLib import TTCollection, TTFont
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont as ReportLabTTFont
 
 from chrona.presentation.model.font_metrics import FontFile
 from chrona.presentation.renderers.pdf_fonts import (
@@ -75,6 +77,30 @@ def test_cff2_variable_face_uses_default_axis_instance(tmp_path):
     assert variable_font["hmtx"].metrics == static_font["hmtx"].metrics
     assert _points(variable_font, "A") == _points(static_font, "A")
     assert "fvar" not in variable_font  # conversion is one static default-axis instance
+
+
+def test_empty_cff_request_produces_registerable_font_with_only_codec_cmap(tmp_path):
+    source = write_cff_font(tmp_path / "empty-request.otf", family="CFF Proof")
+    source_before = source.read_bytes()
+    item = _font_file(source, "CFF Proof")
+    converted = pdf_font_bytes(item, frozenset())
+    assert converted is not None
+
+    payload, alias = pdf_embedding_bytes(item, converted)
+    font = TTFont(BytesIO(payload), recalcTimestamp=False)
+    try:
+        assert font["name"].getDebugName(1) == "CFF Proof"
+        assert font.getBestCmap() == {ord(" "): "space"}
+        assert font["hmtx"].metrics["space"] == (300, 0)
+        assert source.read_bytes() == source_before
+    finally:
+        font.close()
+
+    # Exercise the actual consumer that rejected the previously empty-cmap
+    # payload, not merely fontTools' ability to reopen it.
+    registered = ReportLabTTFont(alias, BytesIO(payload))
+    assert registered.face.name.decode("ascii") == alias
+    pdfmetrics.registerFont(registered)
 
 
 def test_ttc_conversion_uses_the_selected_nonzero_collection_face(tmp_path):

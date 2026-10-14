@@ -101,13 +101,30 @@ def _converted_font(font: TTFont, item: FontFile, characters: frozenset[int]) ->
             shown = ",".join(f"U+{codepoint:04X}" for codepoint in missing[:8])
             raise _failure(item, f"requested glyphs are missing from the selected face: {shown}")
 
+        subset_characters = characters
+        if not subset_characters:
+            # ReportLab requires at least one cmap entry when registering a
+            # dynamic font, even if completed SVG text never selects this face.
+            # Retain one real source mapping solely as its encoding anchor; no
+            # output text references or substitutes this codepoint.
+            valid_source_codepoints = sorted(
+                codepoint for codepoint, glyph_name in source_cmap.items()
+                if isinstance(codepoint, int) and not isinstance(codepoint, bool)
+                and 0 <= codepoint <= 0x10FFFF
+                and not 0xD800 <= codepoint <= 0xDFFF
+                and glyph_name != ".notdef"
+            )
+            if not valid_source_codepoints:
+                raise _failure(item, "selected face has no usable cmap encoding for PDF registration")
+            subset_characters = frozenset({valid_source_codepoints[0]})
+
         options = Options()
         options.name_IDs = ["*"]
         options.name_legacy = True
         options.name_languages = ["*"]
         options.layout_features = ["*"]
         subsetter = Subsetter(options=options)
-        subsetter.populate(unicodes=sorted(characters))
+        subsetter.populate(unicodes=sorted(subset_characters))
         subsetter.subset(font)
 
         glyph_order = font.getGlyphOrder()
