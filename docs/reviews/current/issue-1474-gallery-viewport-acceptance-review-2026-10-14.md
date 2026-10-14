@@ -3,12 +3,14 @@
 <!-- chrona:literal-acceptance/v1 -->
 
 Design, architecture and implementation plan: [living record](https://github.com/tya5/chrona/issues/1474#issuecomment-6158249825).
-Ready baseline: ac4ac88360708de5421baccf043f9e65c22f5e01. Tool repair:
+Recorded-refusal baseline: ac4ac88360708de5421baccf043f9e65c22f5e01. Tool repair:
 d0108cd4, after the independently published gallery, Context ingress, annotation
 fallback and Windows launcher fixes in PR1483/1484.
 [Reviewer disposition](https://github.com/tya5/chrona/issues/1474#issuecomment-6167307115):
 keep all capacity cases with exact expected diagnostic outcomes; defer core
-allocation changes to #1490. API and CLI each accept all138 cases:117 render,
+allocation changes to #1490. Normal adoption of published PR1481 source
+7838886c yields candidate acaea308; both full API and CLI batches were rerun
+after its Layout changes. Each accepts all138 cases:117 render,
 21 give their recorded refusal,0 unexpected outcomes. Gallery --check passes.
 Focused tool tests15PASS; review/ledger tests7PASS. No product, examples or
 generated-output changes in this remaining slice. Main adoption, current-head
