@@ -211,8 +211,11 @@ def test_final_composition_looks_up_row_lane_alias_and_folded_selection(
     expected_selection = index.lookup(key, projection=projection, as_of=as_of).selection
     request = SimpleNamespace(
         projection=projection, mark_visibility_index=index,
-        presentation_contract=SimpleNamespace(time=SimpleNamespace(as_of=as_of)),
-        surface_content=SimpleNamespace(progress_fill_source=None), theme_tokens=object(),
+        presentation_contract=SimpleNamespace(time=SimpleNamespace(as_of=as_of),
+                                              labels=SimpleNamespace(side="auto")),
+        surface_content=SimpleNamespace(progress_fill_source=None),
+        theme_tokens=SimpleNamespace(text_treatment=lambda _role: SimpleNamespace(
+            font_size=10, letter_spacing=0, transform="none")),
     )
     track = SimpleNamespace(instance_id=expected_instance_id, block=0.0, block_size=4.0)
     timeline = SimpleNamespace(slot_id="timeline")
@@ -235,10 +238,12 @@ def test_final_composition_looks_up_row_lane_alias_and_folded_selection(
     monkeypatch.setattr(surface_mark_visibility, "select_item_mark_facets", forbidden)
     monkeypatch.setattr(mark_geometry, "select_item_mark_facets", forbidden)
     monkeypatch.setattr("chrona.presentation.layout.surface_marks.compose_item_marks", compose)
+    monkeypatch.setattr("chrona.presentation.layout.surface_marks.metric_for_role", lambda *_args: None)
 
     compose_surface_marks(base, lane_owner=lane_owner)
 
-    assert seen == [expected_selection]
+    # A folded point also composes once to measure its extent for lane packing (#440), with the same selection.
+    assert seen == [expected_selection] * (2 if occurrence_kind == "folded" else 1)
 
 
 def test_request_without_projection_fails_before_cache_preparation():

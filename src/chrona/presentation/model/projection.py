@@ -624,7 +624,7 @@ def _fold_automatic_points(rows: tuple[ReviewRowProjection, ...], view: ViewInpu
         target = replacements.get(candidates[0], by_object[candidates[0]])
         folded.add(row.row_id)
         replacements[candidates[0]] = replace(target, items=target.items + tuple(
-            replace(item, track="shared") for item in row.items))
+            replace(item, track="shared", attached_to=candidates[0]) for item in row.items))
     return tuple(replacements.get(row.row_id, row) for row in rows if row.row_id not in folded), ()
 
 

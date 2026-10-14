@@ -25,6 +25,7 @@ from chrona.presentation.layout.filled_contour import (
 from chrona.presentation.layout.rounded_outline import rounded_rect_commands
 from chrona.presentation.model.projection import WindowMode, shared_track_member_key
 from chrona.presentation.layout.surface_geometry import coordinate_for_date
+from chrona.presentation.layout.text import metric_for_role, measure_text_width
 from chrona.presentation.layout.lane_projection import (
     folded_instance_id, lane_missing_actual_visible,
 )
@@ -38,6 +39,26 @@ if TYPE_CHECKING:
 
 MARK_GEOMETRY_ROLES = ("planned", "actual", "snapshot", "scenario", "missing-actual")
 MARK_PAINT_ORDER_BASE = 100
+
+
+def pack_extent_lanes(extents: list[tuple[float, float]]) -> list[int]:
+    """Greedy interval packing (#440): lowest lane whose last end is at or before each start.
+
+    ``extents`` are ``(start, end)`` in the caller's sort order; the result is one lane per extent.
+    Packing in start order is optimal for interval graphs, so the lane count is the clique number.
+    """
+    lane_ends: list[float] = []
+    lanes: list[int] = []
+    for start, end in extents:
+        for lane, last_end in enumerate(lane_ends):
+            if last_end <= start:
+                lane_ends[lane] = end
+                lanes.append(lane)
+                break
+        else:
+            lane_ends.append(end)
+            lanes.append(len(lane_ends) - 1)
+    return lanes
 
 
 def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
@@ -277,6 +298,38 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
     folded_by_group: dict[str, list[Any]] = {}
     for folded in getattr(projection, "folded_points", ()):
         folded_by_group.setdefault(folded.group_id, []).append(folded)
+    def folded_extent(folded: Any) -> tuple[float, float]:
+        """Inline extent of a folded point: its marks plus the title label on the placed side."""
+        label_treatment = request.theme_tokens.text_treatment("groupHeader")
+        label_gap = max(1.0, float(label_treatment.font_size) * 0.25)
+        label_side = contract.labels.side
+        lefts, rights = [], []
+        probe = MarkBandFrame(scale, 0.0, mark_block_size, role_geometries, allocation)
+        for item in folded.all_items:
+            visibility = prepared_visibility(
+                item, kind=MarkOccurrenceKind.FOLDED, container_id=folded.group_id,
+                source_kind=item.source_kind, as_of=contract.time.as_of)
+            composition = compose_item_marks(
+                item=item, instance_id=folded_instance_id(folded, item), source_kind=item.source_kind,
+                frame=probe, as_of=contract.time.as_of, theme_tokens=request.theme_tokens,
+                slot_id=timeline.slot_id, paint_order_base=MARK_PAINT_ORDER_BASE,
+                emit_missing_actual=False, emit_diagnostics=False,
+                selection=admitted_source_selection(visibility) if visibility is not None else None)
+            for mark in composition.marks:
+                lefts.append(float(mark.bounds.inline))
+                rights.append(float(mark.bounds.inline) + float(mark.bounds.inline_size))
+        if not lefts:
+            return (0.0, 0.0)
+        width = measure_text_width(
+            folded.item.title or "", font_size=float(label_treatment.font_size),
+            font_metrics=metric_for_role(request.theme_tokens, "groupHeader", request.font_metrics),
+            letter_spacing=float(label_treatment.letter_spacing),
+            text_transform=label_treatment.transform, numeric_spacing="proportional")
+        span = (width + label_gap) if width > 0 else 0.0
+        if label_side == "start":
+            return (min(lefts) - span, max(rights))
+        return (min(lefts), max(rights) + span)
+
     for group_id, folded_points in folded_by_group.items():
         group = group_by_id.get(group_id)
         if group is None or group.header_bounds is None:
@@ -285,7 +338,11 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                               f"/projection/foldedPoints/{folded.item.object_id}")
         pitch = allocation.outer_extent if allocation is not None else mark_block_size
         track_inset = -allocation.outer_bounds[0] if allocation is not None else 0.0
-        occupied = len(folded_points) * pitch
+        ordered_points = sorted(
+            folded_points, key=lambda point: (point.item.planned.get("at"), point.item.object_id))
+        lane_of = dict(zip((id(point) for point in ordered_points),
+                           pack_extent_lanes([folded_extent(point) for point in ordered_points])))
+        occupied = (max(lane_of.values()) + 1) * pitch
         if occupied > float(group.header_bounds.block_size):
             expanded = Rect(group.header_bounds.inline, group.header_bounds.block,
                             group.header_bounds.inline_size, Decimal(str(occupied)))
@@ -298,9 +355,8 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                                              float(update.source.header_bounds.block_size)))
         first_block = float(group.header_bounds.block) + max(
             0.0, (float(group.header_bounds.block_size) - occupied) / 2)
-        for track_index, folded in enumerate(sorted(
-            folded_points, key=lambda point: (point.item.planned.get("at"), point.item.object_id))):
-            block = first_block + track_index * pitch + track_inset
+        for folded in ordered_points:
+            block = first_block + lane_of[id(folded)] * pitch + track_inset
             members = sorted(enumerate(folded.all_items),
                              key=lambda pair: shared_track_member_key(pair[1], pair[0]))
             for _, item in members:
