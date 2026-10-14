@@ -20,7 +20,7 @@ body:
       identity: chrona-roadmap-example
     address: views/titlecard.yaml
     revision:
-      token: example-v1
+      token: example-v2
   theme:
     id: titlecard
     kind: theme

@@ -6,6 +6,9 @@ id: chrona-roadmap-titlecard
 # (work items in milestones), and the countdown slot is bound to the release-candidate gate.
 body:
   surface: table-timeline
+  wording:
+    summary:
+      countdown.title: RC まで
   heading:
     kicker: 製品化への道
     title: 計画表、{project}
