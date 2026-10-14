@@ -84,11 +84,11 @@ it MUST NOT bypass that restriction through global configuration or private
 library state. These failures name the selected family/weight and file, with
 no font-stack fallback. Embedding flags do not replace the user's license rights.
 
-Only CFF-translating renders add the conversion grammar `cff-cu2qu-v1` and
-actual fontTools version to adapter identity; original font content identities
-remain authoritative. Rendering without CFF faces retains its existing
-registration path and adapter identity. The closed-face correction below
-intentionally changes PDF bytes that previously embedded a substituted face.
+Every PDF render adds the embedding grammar `pdf-closed-face-v1` and actual
+fontTools version to adapter identity; only CFF-translating renders also add
+the outline-conversion grammar `cff-cu2qu-v1`. Original font content identities
+remain authoritative. The closed-face correction below intentionally changes
+PDF bytes and adapter identity, including TrueType-only output.
 
 For every PDF render (#982), SVG-to-PDF font lookup MUST use a render-local
 mapping of completed `(family, weight)` to the exact registered face. ReportLab
@@ -97,8 +97,8 @@ discover host fonts or fall back to another family; unknown entries fail with
 `E_RENDER_FONT_CLOSURE`. It uses svglib's public font-map protocol, not private
 global maps.
 
-ReportLab caches dynamic faces by registration and PostScript names. In a
-CFF-translating render, namespace both internal embedding names by a digest of
+ReportLab caches dynamic faces by registration and PostScript names. In every
+PDF render, namespace both internal embedding names by a digest of
 the exact single-face embedding payload before naming (including its selected
 glyph subset); a same-name face or different subset cannot reuse old bytes.
 Human family/full/localized names and metrics remain intact; only internal
@@ -107,7 +107,10 @@ that new embedding path. No source resource or Scene identity is rewritten.
 The same lookup contract applies to TrueType-only renders: registration alone
 does not authorize svglib's host/file/fontconfig fallback. This supersedes the
 earlier non-CFF byte-preservation promise where it preserved substituted glyphs.
-The registration/conversion owners and Scene/Layout geometry are unchanged.
+The same deterministic single-face embedding helper handles TrueType and
+translated CFF payloads; no legacy stable-name cache path remains. Registration
+is render-local by content identity, while conversion remains CFF-only.
+The adapter ownership and Scene/Layout geometry are unchanged.
 A successful PDF header or an arbitrary embedded font is not evidence of exact
 face use: verification must associate the text's PDF font resource with its
 completed family/weight and embedded program.
@@ -656,7 +659,7 @@ A tilted annotation (#584 A584-3, Specification 07) is completed by Layout: the 
 
 A small-caps text (#1285, Specification 07) is a `Text` whose `textLayout.textTransform` is `small-caps` and whose `runs` hold, per line, the measured runs in order: each run is capitals with its own `fontSize` and `inlineSize`, the runs of a line join to that line, and the line's inline size is the sum of the run sizes plus the letter spacing between runs. A Scene with runs is `chrona/scene/v0.7`. An adapter draws each run at its size and synthesizes nothing.
 
-A compressed text (#585 I585-1, Specification 07) is a `Text` whose `textLayout.horizontalScale` is a number from 0.5 up to but excluding 1, written only when the role declares one; its `bounds` already carry the compressed width. `scene-v0.7` gains the optional property in place and `scene_document` writes a document that carries one as v0.7; Scene v0.6 is not edited. SVG, and PNG through resvg, write `transform="[rotate(angle x y) ]matrix(s 0 0 1 x(1-s) 0)"`: the scale acts about the baseline start in the text's own frame, before any rotation. Measured: resvg gives an ink width of exactly `s` times the natural width with the left edge fixed, also under a rotation. Typst writes `#scale(x: s%, y: 100%, origin: left + top, reflow: false)` inside the `#rotate`; that fragment measures the same ink ratio on Typst 0.15, but the surrounding `#place(left:, top:)` emission is not accepted by that Typst, so no compiled Typst result is claimed. TikZ rejects a compressed text with `E_VISUAL_CAPABILITY_UNSUPPORTED` (no engine verifies a node scale about the baseline pivot). PDF is derived from the SVG and is not image-verified. The contrast and perceptibility gates judge the compressed text by its role and bounds like any other.
+A compressed text (#585 I585-1, Specification 07) is a `Text` whose `textLayout.horizontalScale` is a number from 0.5 up to but excluding 1, written only when the role declares one; its `bounds` already carry the compressed width. `scene-v0.7` gains the optional property in place and `scene_document` writes a document that carries one as v0.7; Scene v0.6 is not edited. SVG, and PNG through resvg, write `transform="[rotate(angle x y) ]matrix(s 0 0 1 x(1-s) 0)"`: the scale acts about the baseline start in the text's own frame, before any rotation. Measured: resvg gives an ink width of exactly `s` times the natural width with the left edge fixed, also under a rotation. Typst writes `#scale(x: s%, y: 100%, origin: left + top, reflow: false)` inside the `#rotate`, with the accepted absolute `#place(top + left, dx:, dy:)` syntax. The #982 backend test compiles the actual returned source with Typst 0.15.1 and closed bundled fonts, then measures its SVG raster against an uncompressed control. PDF is derived from raw SVG using the closed-face lookup in §2.3; the same test rasterizes the actual ReportLab PDF at 4 pixels per point, verifies the title's embedded family/weight, and measures compressed ink and baseline-relative origin. These controlled horizontal-text tests accept only raster-edge quantization, not an arbitrary ratio tolerance, and do not claim every typography/rotation/backend combination is verified. TikZ intentionally retains `E_VISUAL_CAPABILITY_UNSUPPORTED`: node scaling about the baseline pivot is not verified. The contrast and perceptibility gates judge the compressed text by its role and bounds like any other.
 
 A vertical group label (#585 I585-2, Specification 07) uses no new Scene vocabulary: Layout completes every segment as its own `Text` primitive `group-tag:<group id>:<n>` with purpose `group-header`: an upright character is orientation `horizontal` (rotation 0) with bounds of its one-em cell, a sideways run is orientation `rotate-cw` (rotation 90) with the bounds of its quarter-turned line box. The bounds of one label tile its column without overlap, so the perceptibility checks (slot escape, occlusion, text intersection) judge each segment as they judge any text. SVG, PNG through resvg, PDF from the SVG, Typst and TikZ draw it as they draw any horizontal or quarter-turn Text; no adapter shapes vertical text. (resvg does lay out `writing-mode: vertical-rl` natively, but its extents come from shaping that Layout cannot know before painting, and the other adapters have no equivalent, so it is not used.) Group-header text is not a classified state text, so no contrast floor applies to it, horizontal or vertical; the paint-contrast observation `I_SCENE_PAINT_CONTRAST` is listed for every segment.
 
