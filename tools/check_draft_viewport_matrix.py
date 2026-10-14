@@ -76,9 +76,8 @@ def _render_cli(reference: dict[str, Any], payload: bytes, snapshot: Path,
     reference_path = directory / f"context-reference-{viewport[0]}x{viewport[1]}.yaml"
     reference_path.write_text(yaml.safe_dump(reference, sort_keys=False), encoding="utf-8")
     output = directory / f"render-{viewport[0]}x{viewport[1]}.svg"
-    executable = Path(sys.executable).parent / ("chrona.exe" if sys.platform == "win32" else "chrona")
     command = [
-        str(executable), "render-review", "--context-reference", str(reference_path),
+        sys.executable, "-m", "chrona", "render-review", "--context-reference", str(reference_path),
         "--snapshot-root", str(snapshot), "--store-identity", reference["store"]["identity"],
         "--reject-unused-closure-inputs",
         # Original resources can be unpinned. copy_context_closure has read and

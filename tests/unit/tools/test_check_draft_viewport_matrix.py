@@ -3,6 +3,7 @@ from hashlib import sha256
 from pathlib import Path
 import sys
 import time
+import subprocess
 
 import pytest
 import yaml
@@ -129,6 +130,25 @@ def test_context_cli_matrix_path_uses_public_render_review(tmp_path):
 
     assert matrix._validate_artifact(artifact)[2:] != (0, 0)
     _assert_sources_unchanged(source_bytes, staged_references, staged_assets)
+
+
+@pytest.mark.parametrize("interpreter", ["C:/Python/python.exe", "/venv/bin/python"])
+def test_cli_uses_the_same_interpreter_without_assuming_console_script_location(tmp_path, monkeypatch, interpreter):
+    monkeypatch.setattr(sys, "executable", interpreter)
+    commands = []
+
+    def run(command, **kwargs):
+        commands.append(command)
+        Path(command[command.index("--output") + 1]).write_bytes(b"synthetic artifact")
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(matrix.subprocess, "run", run)
+    reference = {"revision": {"token": "r1"}, "address": "contexts/synthetic.yaml",
+                 "store": {"identity": "synthetic-store"}}
+    artifact, warnings = matrix._render_cli(reference, b"synthetic context", tmp_path / "snapshot", tmp_path, (800, 450))
+    assert commands[0][:4] == [interpreter, "-m", "chrona", "render-review"]
+    assert "--reject-unused-closure-inputs" in commands[0]
+    assert artifact == b"synthetic artifact" and warnings == 0
 
 
 def test_parallel_group_results_keep_submission_order():
