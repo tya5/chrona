@@ -453,7 +453,7 @@ def tree(root: Path) -> dict[str, bytes]:
 def corpus(tmp_path: Path) -> Path:
     from chrona.usecases.local_authoring import initialize_project
 
-    root = initialize_project(tmp_path / "corpus", example="halcyon-1")
+    root = initialize_project(tmp_path / "corpus", example="halcyon-1").directory
     (root / "ctx.yaml").write_text(CONTEXT_REFERENCE, encoding="utf-8")
     return root
 

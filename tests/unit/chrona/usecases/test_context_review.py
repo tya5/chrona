@@ -25,7 +25,7 @@ KEY = ("local", "halcyon-1-example")
 
 @pytest.fixture(scope="module")
 def corpus(tmp_path_factory) -> Path:
-    return initialize_project(tmp_path_factory.mktemp("corpus") / "halcyon", example="halcyon-1")
+    return initialize_project(tmp_path_factory.mktemp("corpus") / "halcyon", example="halcyon-1").directory
 
 
 def _reference(corpus: Path) -> dict:

@@ -54,7 +54,7 @@ def link(target: Path, destination: Path) -> None:
 
 @pytest.fixture(scope="module")
 def corpus_template(tmp_path_factory) -> Path:
-    return initialize_project(tmp_path_factory.mktemp("template") / "halcyon", example="halcyon-1")
+    return initialize_project(tmp_path_factory.mktemp("template") / "halcyon", example="halcyon-1").directory
 
 
 @dataclass

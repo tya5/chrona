@@ -21,7 +21,7 @@ def _say(call) -> str:
 def test_init_into_a_used_directory_names_the_directory(tmp_path: Path):
     (tmp_path / "used").mkdir()
     (tmp_path / "used" / "file").write_text("x")
-    assert str(tmp_path / "used") in _say(lambda: local_authoring.initialize_project(tmp_path / "used"))
+    assert str(tmp_path / "used") in _say(lambda: local_authoring.initialize_project(tmp_path / "used").directory)
 
 
 def test_store_config_failures_name_the_path_and_the_search(tmp_path: Path):

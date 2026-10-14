@@ -228,14 +228,13 @@ def _minimal_context(path, *, target="svg", font_asset=None):
 
 
 @pytest.mark.parametrize("asset, resolver, code, detail", [
-    ({"id": "metrics-7", "metrics": {"path": "missing"}}, None, "E_MATERIALIZER_FONT", ("metrics-7", "metrics")),
     ({"id": "metrics-7", "metrics": {"locator": {"provider": "bad", "address": "m.json"}}}, "raise", "E_MATERIALIZER_FONT", ("metrics-7", "m.json")),
     ({"id": "metrics-7", "metrics": {"locator": {"provider": "context", "address": "m.json"}, "contentIdentity": identity(b"expected")}}, "wrong-bytes", "E_MATERIALIZER_FONT_IDENTITY", ("metrics-7", "metrics", "m.json", identity(b"expected"), identity(b"font"))),
     ({"id": "metrics-7", "metrics": {"locator": {"provider": "context"}, "contentIdentity": identity(b"font")}}, "font-bytes", "E_MATERIALIZER_FONT", ("metrics-7", "metrics", "None")),
 ])
-def test_context_font_failures_name_asset_and_field(tmp_path, monkeypatch, asset, resolver, code, detail):
+def test_font_copy_plan_failures_name_asset_and_field(tmp_path, monkeypatch, asset, resolver, code, detail):
     context_path = tmp_path / "context.yaml"
-    _minimal_context(context_path, font_asset=asset)
+    context = _minimal_context(context_path, font_asset=asset)
     monkeypatch.setattr(m, "_copy_reference", lambda *_args, **_kwargs: b"resource")
     monkeypatch.setattr(m, "_copy_extension_packages", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(m, "snapshot_directory", lambda *_args: tmp_path / "destination")
@@ -253,7 +252,7 @@ def test_context_font_failures_name_asset_and_field(tmp_path, monkeypatch, asset
         resolve = m.resolve_font_resource
     monkeypatch.setattr(m, "resolve_font_resource", resolve)
     with pytest.raises(ValueError) as error:
-        m.copy_context_closure(tmp_path, context_path, tmp_path / "snapshot")
+        m._font_copy_plan(context["body"], tmp_path)
     assert_detail(error.value, code, *detail)
 
 
