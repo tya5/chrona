@@ -111,3 +111,14 @@ def test_the_help_lists_the_accepted_typesetter_values():
     assert "typst" in engine and "tectonic" in engine
     assert "chrona-typst/v0.1" in grammar and "chrona-tikz/v0.1" in grammar
     assert "exact" in version and "never looked up" in version
+
+
+def test_a_legacy_console_encoding_does_not_break_the_json_report(starter):
+    """A diagnostic naming a non-cp1252 label ('column:Δ finish') used to crash the CLI on Windows with an empty stdout (#429)."""
+    import os
+    args = ["render", "p/project.yaml", "--actual", "p/actual.yaml", "-o", "legacy.typ", *TARGETS["typst"][1], "--preset", "sunday"]
+    env = {**os.environ, "PYTHONIOENCODING": "cp1252", "PYTHONUTF8": "0"}
+    result = subprocess.run([sys.executable, "-c", "from chrona.app.cli import main; main()", *args], cwd=starter,
+                            capture_output=True, env=env, timeout=300)
+    report = json.loads(result.stdout.decode("utf-8"))
+    assert "E_VISUAL_CAPABILITY_UNSUPPORTED" in [item["code"] for item in report["diagnostics"]], result.stderr

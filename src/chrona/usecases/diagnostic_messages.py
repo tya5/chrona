@@ -218,6 +218,11 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
     if code == "W_FONT_GLYPH_SUBSTITUTED":
         return WarningText(f"a glyph missing from {payload.get('requestedFamily')} is drawn with "
                            f"{payload.get('fallbackFamily')}", f"{payload.get('codepoint')} in {payload.get('text')!r}")
+    if code == "W_FONT_FAMILY_SKIPPED":
+        fields = dict(part.split("=", 1) for part in identity.removeprefix(code).removeprefix(":").split(";") if "=" in part)
+        return WarningText(f"font families {fields.get('skipped', '?')} are unavailable in "
+                           f"{fields.get('requested', '?')}, so {fields.get('face', '?')} is used",
+                           fields.get("role", ""))
     if code == "W_FONT_FALLBACK_PACKAGED":
         fields = dict(part.split("=", 1) for part in identity.removeprefix(code).removeprefix(":").split(";") if "=" in part)
         return WarningText(f"no installed face matches {fields.get('requested', '?')}, so the packaged "
