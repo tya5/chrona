@@ -4,7 +4,7 @@
 
 Implementation: [#1253](https://github.com/tya5/chrona/pull/1253) (head `5bf586ae`). A selected period's label object gains an optional `text` (one to eighty characters, `literalCaption`), `periods[].label.text`, added in place to `view-v0.28` (Spec 56 section 3.2; `python -m tools.schema_equivalence --base-rev origin/main`: PASS, additive=1). The label stays an ordinary `period-label` Text; only its content changes, for that View only. Plan: [Status comment](https://github.com/tya5/chrona/issues/871#issuecomment-6068339316).
 
-**Scope.** #871 is an umbrella of optional follow-ups to #582; its issue body says none is an acceptance row of #582. The only literal acceptance in this review's table is the reviewer's added row (2026-10-08). The Marquee adoption remains reviewer-owned corpus work and is now met on `main`. Separately, this update records local implementation evidence for optional follow-up 1 (period variants); it does not add an acceptance row or close #871. Edge treatments and a period legend entry remain unimplemented and separately designed follow-ups; the other numbered items are untouched. #871 remains open for the selected successor work.
+**Scope.** The board selects issue-body follow-ups 1–3 (variants, edges, period legend entries); optional items 4–8 are unselected. The reviewer's three literal criteria below remain unchanged. Variants are released; edges and legend entries are locally verified but await publication and exact-main release. Keep #871 open until that gate succeeds.
 
 ## Literal issue acceptance
 
@@ -21,22 +21,19 @@ Implementation: [#1253](https://github.com/tya5/chrona/pull/1253) (head `5bf586a
 
 ## Programme-level criteria (optional)
 
-None.
+| Selected follow-up | Evidence | Release state |
+| --- | --- | --- |
+| 1. Period variants | [PR1486](https://github.com/tya5/chrona/pull/1486); 158 focused tests; all92 public Scene/SVG bytes unchanged | Exact READY7a08f0c0 [three-OS release38506567088](https://github.com/tya5/chrona/actions/runs/38506567088) passed |
+| 2. Edge treatments | [Synthetic Scene/SVG tests](../../../tests/integration/test_named_period_edges.py): single/double rules, fit refusal, injective IDs, pattern pigments, outline/none, overlap ranks; [channel tests](../../../tests/unit/chrona/presentation/scene/test_shape_paint_channels.py) | Local implementation; PR and exact-main release pending |
+| 3. Period legend entries | [Public source-legend tests](../../../tests/integration/test_period_legend_source.py): same-role independent identities, source/role pointers, absent background/slot, wording, base/variant catalogue-pattern fidelity | Local implementation; PR and exact-main release pending |
 
-## Optional follow-up 1 — period variants (partial implementation; no closure)
+## Architecture review
 
-The approved [variant plan](../../planning/active/issue-871-period-role-variants-2026-10-14.md)
-selects only the common-slug View variant and its paired band/label role families.
-Local implementation commit `1ab5febc` adds selected-role propagation and focused
-synthetic evidence. The 158-test focused batch passes; it proves simultaneous
-variants with distinct band fill/opacity/order and label font-size/letter-spacing,
-completed bounds/baseline/TextLayout, contrast treatment, pattern admission,
-collision checks, capability closure, exact unsupported-property pointers,
-unchanged unvaried output, and required-role timing. Schema L1 against
-`origin/main` passes (`additive=1, equal=37`). The schema-delta ledger cleanup
-retired six mechanically proven stale #1341 L1 records; its pruner limitation and
-the exact proof are recorded in the active plan. Final CI and public-derived
-artifact review for the variant implementation remain pending publication.
-
-This partial evidence does not cover edge treatments or period legend entries;
-both remain unimplemented follow-ups. It does not close #871.
+The [current work record](../../planning/active/issue-871-period-role-variants-2026-10-14.md)
+links the pre-code published contracts. Layout completes geometry and identities;
+Scene consumes transient channel intent without adapter inference. Catalogue ink
+belongs to fill content, not the host outline. Legacy glyph precedence and omitted
+fields remain unchanged. Root independently caught and corrected base/variant
+legend pattern admission; no project-specific branch or example change was added.
+Schema equivalence passes (additive2/equal36; five known baseline-invalid documents).
+Local report staleness awaits the CI-owned disposable snapshot, not hand patches.

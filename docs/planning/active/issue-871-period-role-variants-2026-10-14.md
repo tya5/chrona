@@ -6,7 +6,9 @@ Variants landed in [PR1486](https://github.com/tya5/chrona/pull/1486), source
 289f91f4d29b895e18c998be8ba22f11bf5779aa, from READY68457b29.
 Its 158 focused tests pass; after base adoption, 73 period/closure tests pass.
 Schema L1 is additive=1/equal=37; lifecycle23 passes. All92 public Scene/SVG
-files in artifact11867057879 are byte-identical. Exact-main release is pending.
+files in artifact11867057879 are byte-identical. Exact-main release
+[38506567088](https://github.com/tya5/chrona/actions/runs/38506567088)
+passed on READY7a08f0c0, including all three OS matrices and public materializers.
 Six proven-stale L1 records were retired manually because the pruner cannot
 rewrite multiline mappings; no schema-gate code changed.
 
@@ -77,3 +79,14 @@ Publish this design/architecture review and plan before code; publish the
 implementation and concise literal/selected-scope review together. No examples
 or derived-report edits. Keep871 open until items1–3 and every literal criterion
 have direct evidence plus successful exact-main containing-review release.
+
+## Current implementation evidence
+
+Scene channels: c5905e39/38fc378a; edge completion:851af7fa;
+source legend:d1a0678a. Root focused batch224 passes; source-pattern/variant
+tests10 pass; delivery-owner tests2 pass. Schema annotations and equivalence
+pass (additive2/equal36). Independent audit found the base/variant pattern
+admission gap; root corrected it before these final tests. Local conformance
+report staleness is confined to diagnostic/declared-value/presentation-coverage
+generated snapshots; the CI disposable snapshot must refresh and verify them.
+PR/public artifact review and exact-main release remain pending.
