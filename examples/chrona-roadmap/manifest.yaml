@@ -8,3 +8,23 @@ slides:
   context: contexts/roadmap.yaml
   expectedSvg: generated/roadmap.svg
   expectedScene: generated/roadmap.scene.json
+- id: roadmap-yuya
+  evidence: the same roadmap data in the packaged Yuya design, bound by a thin View with no design copied
+  context: contexts/yuya.yaml
+  expectedSvg: generated/roadmap-yuya.svg
+  expectedScene: generated/roadmap-yuya.scene.json
+- id: roadmap-titlecard
+  evidence: the same roadmap data in the packaged Title Card design, the countdown bound to the release-candidate gate
+  context: contexts/titlecard.yaml
+  expectedSvg: generated/roadmap-titlecard.svg
+  expectedScene: generated/roadmap-titlecard.scene.json
+- id: roadmap-marquee
+  evidence: the same roadmap data in the packaged Marquee design, the period label naming the release-candidate window
+  context: contexts/marquee.yaml
+  expectedSvg: generated/roadmap-marquee.svg
+  expectedScene: generated/roadmap-marquee.scene.json
+- id: roadmap-sunday
+  evidence: the same roadmap data in the packaged Sunday Strip design, the period and legend wording naming the release-candidate window
+  context: contexts/sunday.yaml
+  expectedSvg: generated/roadmap-sunday.svg
+  expectedScene: generated/roadmap-sunday.scene.json

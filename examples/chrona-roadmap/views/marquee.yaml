@@ -1,0 +1,66 @@
+version: chrona/view/v0.28
+kind: view
+id: chrona-roadmap-marquee
+# Thin connector: the roadmap's ids, bindings and wording only. The design is the packaged marquee
+# Layout profile's `viewDefaults`; the heading is restated here only to say what this project counts
+# (work items in milestone acts), and the period label names the release-candidate window.
+body:
+  surface: table-timeline
+  heading:
+    kicker: The road to a release candidate
+    title: '{project}'
+    subtitle: '{figure:selected-count} work items in {figure:group-count} acts · baseline, plan and what actually happened'
+    dateForm: day-month-year
+  window:
+    mode: explicit
+    start: '2026-10-01'
+    end: '2026-12-16'
+  periods:
+  - id: rc-window
+    label:
+      text: RC WINDOW
+  figures:
+  - {id: selected-count, kind: count, source: selected}
+  - {id: group-count, kind: count, source: groups}
+  comparison:
+    baseline: snapshot
+    actual: required
+    observationSelection: latest
+  annotationBindings:
+  - {kind: risk, temporalKind: span, purpose: note, facet: planned, endpoint: end}
+  - {kind: note, temporalKind: span, purpose: note, facet: planned, endpoint: end}
+  markers:
+  - source: actual
+  hierarchyColumn: The work
+  tableColumns:
+  - id: The work
+    source: title
+  - id: Cast
+    source:
+      field: lane
+  - id: Δ finish
+    source:
+      facet: finishDelta
+  selection:
+    include:
+      types:
+      - span
+      - point
+    exclude:
+      objectTypes:
+      - group
+  grouping:
+    by: field
+    field: owner
+    missing: ungrouped
+    order:
+    - m0
+    - m1
+    - m2
+    - m3
+    - m4
+    - rc
+  ordering:
+    by: source
+    direction: ascending
+    tieBreak: id

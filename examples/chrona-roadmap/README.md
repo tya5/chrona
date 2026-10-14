@@ -8,12 +8,19 @@ It reuses the approved target B design from [`halcyon-1`](../halcyon-1/): the Th
 Scheme, Layout and detail profile are copies of the target B ones, with the group tint
 scale given as a palette over the milestones in display order.
 
+The same data is also drawn in four of the approved designs without copying them:
+`roadmap-yuya`, `roadmap-titlecard`, `roadmap-marquee` and `roadmap-sunday` each have
+only a thin View and a Context here, and the Context references the packaged design
+(`designs/<name>/` in `chrona.resources`). The View holds the connection: the window,
+grouping, columns, period, annotation bindings and the project's own wording.
+
 | File | Holds |
 |---|---|
 | `project.yaml` | The current plan: work items, gates, dependencies and notes. |
 | `actual.yaml` | Observed actuals and the `asOf` date. |
 | `snapshots/plan-2026-10-10/project.yaml` | The 2026-10-10 plan, used as the baseline. |
 | `views/roadmap.yaml` | What the slide shows. |
+| `views/{yuya,titlecard,marquee,sunday}.yaml`, `contexts/` | The four thin Views and their Contexts. |
 | `themes/`, `schemes/`, `layouts/`, `profiles/` | The target B appearance and composition. |
 
 ## Updating
@@ -24,8 +31,8 @@ scale given as a palette over the milestones in display order.
 3. Move `asOf` forward to the update date.
 4. Leave `snapshots/plan-2026-10-10/` alone: the baseline stays the 2026-10-10 plan, so
    slips show against it.
-5. Update the project `contentIdentity` in `contexts/roadmap.yaml` to the sha256 of the
-   new `project.yaml` bytes.
+5. Update the project `contentIdentity` in every file under `contexts/` to the sha256 of
+   the new `project.yaml` bytes.
 
 The SVG and Scene under `generated/` are derived on `main`; do not edit them. To
 preview locally:
