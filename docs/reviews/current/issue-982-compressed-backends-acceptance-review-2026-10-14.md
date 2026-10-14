@@ -18,14 +18,16 @@ content-addressed internal names prevent ReportLab cache substitution. Geometry,
 human names, source font bytes and original asset identities remain unchanged.
 PDF bytes/adapter identity intentionally change; Scene/SVG/PNG do not. No new
 runtime dependency, private font cache mutation, schema or examples edits.
-Current-head public snapshot, labeled native compiler CI and containing-review
-exact-main three-OS release are still required before closure. The existing
+Closed after current-head native compiler38503484750, the reviewed snapshot
+11866294919 (all92 Scene/SVG files unchanged), and containing-review exact-main
+[three-OS release38505128183](https://github.com/tya5/chrona/actions/runs/38505128183)
+passed on68457b293e1a3100d6e90e11a1167bb165d62c8f. The existing
 typesetter workflow retains sources, SVGs, PDFs, PNGs and numeric measurements.
 Initial PR CI38502480870 failed only the two viewer-fit raw-SVG capture cases:
 their test double lacked the now-required public `font_map` argument. It now
 asserts the closed map while retaining the raw-input check; all33 viewer-fit
 tests pass. The derived-ready failure followed those failed shards. Native
-compiler38502480878 succeeded; current-head checks remain required.
+compiler38502480878 succeeded; the subsequent current-head checks above also passed.
 
 ## Literal issue acceptance
 

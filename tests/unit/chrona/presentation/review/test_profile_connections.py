@@ -184,6 +184,39 @@ def test_summary_wording_uses_exact_dotted_key_and_handles_ambiguity_and_unknown
     assert legacy_result.view.wording["summary"]["panel.note"] == "PROMO"
 
 
+def test_summary_wording_overrides_panel_title_without_mutating_profile_and_checks_collisions():
+    panel = _panel("panel.with.dot", _metric("metric", "count.selected"))
+    panel = replace(panel, title="Original title")
+    summary = _summary(panel)
+    view = _view(wording={"summary": {"panel.with.dot.title": "RC まで"}})
+
+    result = resolve_profile_connections(view, summary, None, project_object_ids=frozenset())
+
+    assert result.summary.panels[0].title == "RC まで"
+    assert result.summary.panels[0].id == "panel.with.dot"
+    assert summary.panels[0].title == "Original title"
+    assert view.wording["summary"]["panel.with.dot.title"] == "RC まで"
+
+    collision = _summary(_panel("panel", _metric("title", "count.selected")))
+    with pytest.raises(ProfileConnectionError) as metric_collision:
+        resolve_profile_connections(_view(wording={"summary": {"panel.title": "Override"}}), collision, None,
+                                    project_object_ids=frozenset())
+    assert metric_collision.value.code == "E_VIEW_WORDING_AMBIGUOUS"
+    assert metric_collision.value.source_ref == "/body/wording/summary/panel.title"
+
+    duplicate_panels = _summary(_panel("duplicate"), _panel("duplicate"))
+    with pytest.raises(ProfileConnectionError) as duplicate_collision:
+        resolve_profile_connections(_view(wording={"summary": {"duplicate.title": "Override"}}),
+                                    duplicate_panels, None, project_object_ids=frozenset())
+    assert duplicate_collision.value.code == "E_VIEW_WORDING_AMBIGUOUS"
+
+    with pytest.raises(ProfileConnectionError) as unknown:
+        resolve_profile_connections(_view(wording={"summary": {"unknown/a~b.title": "X"}}), summary, None,
+                                    project_object_ids=frozenset())
+    assert unknown.value.code == "E_VIEW_WORDING_UNKNOWN"
+    assert unknown.value.source_ref == "/body/wording/summary/unknown~1a~0b.title"
+
+
 def test_legend_wording_is_limited_to_profile_roles_without_closing_role_vocabulary():
     detail = ReviewDetailInput((), (), (LegendEntry("project-defined", "Old", "p1"),), None)
     result = resolve_profile_connections(_view(wording={"legend": {"project-defined": "New"}}),
