@@ -577,6 +577,23 @@ properties:
           groundText: {description: "Ink that shares the text role on a ground (a group header, the as-of label) below 4.5:1.", enum: [none, warning, error]}
           decoration: {description: "A decoration below its 1.10:1 floor, or on a ground that cannot be read.", enum: [none, warning, error]}
           unsupportedGround: {description: "A mark or text on a ground whose colour cannot be computed.", enum: [none, warning, error]}
+          exceptions:
+            description: "Optional reasoned exceptions for a class set to error (#1134). A floor miss that an entry matches and that measures at or above its minimum is the warning W_SCENE_CONTRAST_ACCEPTED; below the minimum it stays the error. An entry that matches no miss is reported (W_SCENE_CONTRAST_EXCEPTION_UNUSED)."
+            type: array
+            minItems: 1
+            items:
+              description: "One accepted pair: the foreground (role or purpose) over a ground role, at a stated minimum, for a stated reason."
+              examples: [{purpose: as-of-label, over: as-of-label-chip, minimum: 3.5, reason: "Owner-approved white on amber"}]
+              type: object
+              additionalProperties: false
+              required: [over, minimum, reason]
+              oneOf: [{description: "Names the foreground by its visual role.", required: [role]}, {description: "Names the foreground by its purpose.", required: [purpose]}]
+              properties:
+                role: {description: "The foreground's Scene visual role.", examples: [text], type: string, minLength: 1}
+                purpose: {description: "The foreground's Scene purpose.", examples: [as-of-label], type: string, minLength: 1}
+                over: {description: "The ground's Scene visual role, canvas for the canvas, or any.", examples: [as-of-label-chip], type: string, minLength: 1}
+                minimum: {description: "The lowest contrast ratio the author accepts for this pair.", examples: [3.5], type: number, exclusiveMinimum: 0}
+                reason: {description: "Why the pair is accepted; audited from the warning.", examples: ["Owner-approved white on amber"], type: string, minLength: 1}
       metrics:
         type: object
         description: "Named source-measurement metric bindings used by Layout."

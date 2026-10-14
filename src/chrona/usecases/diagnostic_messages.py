@@ -139,6 +139,8 @@ _SCENE_CAUSES: Mapping[str, str] = {
     "W_SCENE_MARK_CONTRAST": "a mark is fainter than its 3:1 visibility floor against the ground it lies on",
     "W_SCENE_STATE_TEXT_CONTRAST": "text is fainter than its contrast floor against the ground it lies on",
     "W_SCENE_CONTRAST_GROUND_UNSUPPORTED": "a mark or text lies on a ground whose colour cannot be computed, so its contrast cannot be judged",
+    "W_SCENE_CONTRAST_ACCEPTED": "a pair below its contrast floor is accepted by the Theme's declared exception",
+    "W_SCENE_CONTRAST_EXCEPTION_UNUSED": "a contrast exception declared by the Theme matched no pair that needed one",
     "W_SCENE_DECORATION_GROUND_UNSUPPORTED": "a background decoration lies on a translucent ground, so its contrast cannot be judged",
 }
 MAX_OCCURRENCES = 20
