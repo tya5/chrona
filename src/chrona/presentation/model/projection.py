@@ -166,6 +166,15 @@ class ReviewPeriod:
     end: date
     label_placement: str | None = None
     label_overflow: str = "visible-overflow"
+    variant: str | None = None
+
+    @property
+    def band_role(self) -> str:
+        return f"period-band:{self.variant}" if self.variant is not None else "period-band"
+
+    @property
+    def label_role(self) -> str:
+        return f"period-label:{self.variant}" if self.variant is not None else "period-label"
 
 
 @dataclass(frozen=True)

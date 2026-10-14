@@ -152,6 +152,7 @@ def complete_catalog_patterns(marks: tuple[MarkPlacement, ...],
         # A legend key is a miniature of its mark: it carries the mark's Theme role in `source_ref` (#991).
         role = (shape.source_ref if shape.placement_id.startswith("legend-swatch:")
                 and shape.source_ref in _RECT_PATTERN_THEME_ROLES.values()
+                else shape.visual_role if shape.semantic_id == "periodBand" and shape.visual_role is not None
                 else _RECT_PATTERN_THEME_ROLES.get(shape.semantic_id))
         cut = (shape.kind == "Symbol" and shape.paint_clip is not None
                and bool(shape.path_commands)

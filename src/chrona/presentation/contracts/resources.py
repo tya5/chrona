@@ -353,6 +353,7 @@ class ViewPeriod:
     label_overflow: str = "visible-overflow"
     label_text: str | None = None
     label_template: str | None = None
+    variant: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1063,7 +1064,8 @@ def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
                                str(item["label"]["placement"]) if "label" in item else None,
                                str(item["label"].get("overflow", "visible-overflow")) if "label" in item else "visible-overflow",
                                str(item["label"]["text"]) if "label" in item and "text" in item["label"] else None,
-                               str(item["label"]["template"]) if "label" in item and "template" in item["label"] else None)
+                               str(item["label"]["template"]) if "label" in item and "template" in item["label"] else None,
+                               str(item["variant"]) if "variant" in item else None)
                     for item in raw)
     for index, period in enumerate(periods):
         if period.label_text is not None and period.label_template is not None:

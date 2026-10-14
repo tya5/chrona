@@ -874,7 +874,7 @@ def _selected_periods(project: dict[str, Any], placements: dict[str, dict[str, A
         except FigureTextError as error:
             raise RenderFailed(error.code, error.detail, "presentation", f"/body/periods/{index}/label/template") from error
     return tuple(ReviewPeriod(item.period_id, caption(selected, item, index), item.start, item.end,
-                              selected.label_placement, selected.label_overflow)
+                              selected.label_placement, selected.label_overflow, selected.variant)
                  for index, (selected, item) in enumerate((selected, declared[selected.period_id]) for selected in view.periods))
 
 

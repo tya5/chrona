@@ -292,6 +292,7 @@ allOf:
               additionalProperties: false
               properties:
                 id: {description: "Identifier of a period declared in the Project's `periods`.", type: string, minLength: 1}
+                variant: {description: "Optional Theme role variant shared by this period's band and label; selects `period-band:<variant>` and, when a label is consumed, `period-label:<variant>`.", $ref: "urn:chrona:common-v0.1#/$defs/slug"}
                 label:
                   description: "Optional label of the band, its text the period title or the `text` override; absent draws the band without a label."
                   examples: [{placement: top, overflow: suppress}]

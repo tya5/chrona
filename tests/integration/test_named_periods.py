@@ -89,6 +89,18 @@ def _labelled(parts: dict, placement: str = "top", *, overflow: str | None = Non
     return parts
 
 
+def _variant(parts: dict, variant: str = "freeze", *, label: bool = True) -> dict:
+    """Give one selected period a distinct, ordinary Theme role pair."""
+    body = parts["theme"]["body"]
+    body["roles"][f"period-band:{variant}"] = deepcopy(body["roles"]["period-band"])
+    body["colorBindings"][f"period-band:{variant}.fill"] = "positive"
+    if label and "period-label" in body["roles"]:
+        body["roles"][f"period-label:{variant}"] = deepcopy(body["roles"]["period-label"])
+        body["colorBindings"][f"period-label:{variant}.fill"] = "text"
+    parts["view"]["body"]["periods"][0]["variant"] = variant
+    return parts
+
+
 def _labels(rendered) -> list:
     return [item for item in rendered.surface.primitives if item.purpose == "period-label"]
 
@@ -284,6 +296,128 @@ def test_the_none_treatment_draws_nothing_and_records_the_absence(tmp_path):
     assert "period-band" in {item.visual_role for item in rendered.surface.decoration_dispositions}
 
 
+def test_variant_selects_role_pair_without_changing_semantic_identity(tmp_path):
+    rendered = _render(tmp_path, parts=_variant(_labelled(_parts())))
+    (band,) = _bands(rendered)
+    (label,) = _labels(rendered)
+    assert band.visual_role == "period-band:freeze"
+    assert band.source_ref == "window" and band.purpose == "period-band"
+    assert label.visual_role == "period-label:freeze"
+    assert label.source_ref == "window" and label.purpose == "period-label"
+    assert band.paint.fill != _bands(_render(tmp_path, name="base"))[0].paint.fill
+
+
+def test_a_catalogue_pattern_is_completed_for_the_selected_variant_role(tmp_path):
+    parts = _variant(_parts(preset="technical-print", pattern="starter-halftone"))
+    parts["theme"]["body"]["colorBindings"]["period-band:freeze.stroke"] = "text"
+    (band,) = _bands(_render(tmp_path, parts=parts, catalogs=(STARTER_CATALOG,)))
+    assert band.visual_role == "period-band:freeze"
+    assert band.pattern is not None and band.pattern.primitives
+    assert tuple(band.pattern.region_bounds) == pytest.approx(band.bounds)
+
+
+def test_two_selected_variants_drive_distinct_band_paint_and_measured_label_layout(tmp_path):
+    parts = _labelled(_parts(select=None))
+    parts["view"]["body"]["periods"] = [
+        {"id": "cold", "variant": "frost", "label": {"placement": "top"}},
+        {"id": "hot", "variant": "launch", "label": {"placement": "top"}},
+    ]
+    body = parts["theme"]["body"]
+    for variant, color, size, spacing, opacity, order, treatment in (
+            ("frost", "positive", 11, 0, 0.35, 12, "required"),
+            ("launch", "warning", 22, 1, 0.65, 13, "deemphasized")):
+        band_role = deepcopy(body["roles"]["period-band"])
+        band_role["backgroundPaintOrder"] = order
+        band_role["opacity"] = f"opacity.{variant}"
+        body["roles"][f"period-band:{variant}"] = band_role
+        body["colorBindings"][f"period-band:{variant}.fill"] = color
+        body["values"][f"opacity.{variant}"] = {"type": "number", "value": opacity}
+
+        label_role = deepcopy(body["roles"]["period-label"])
+        label_role["fontSize"] = f"size.{variant}"
+        label_role["letterSpacing"] = f"spacing.{variant}"
+        label_role["contrastTreatment"] = treatment
+        body["roles"][f"period-label:{variant}"] = label_role
+        body["colorBindings"][f"period-label:{variant}.fill"] = "text"
+        body["values"][f"size.{variant}"] = {"type": "number", "value": size}
+        body["values"][f"spacing.{variant}"] = {"type": "number", "value": spacing}
+
+    source = _source(
+        cold={"title": "WINTER", "start": "2026-02-01", "end": "2026-03-01"},
+        hot={"title": "LAUNCH", "start": "2026-03-01", "end": "2026-04-01"})
+    rendered = _render(tmp_path, source, parts)
+    bands = {item.source_ref: item for item in _bands(rendered)}
+    labels = {item.source_ref: item for item in _labels(rendered)}
+
+    assert bands["cold"].visual_role == "period-band:frost"
+    assert bands["hot"].visual_role == "period-band:launch"
+    assert (bands["cold"].paint_order, bands["hot"].paint_order) == (12, 13)
+    assert (bands["cold"].paint.opacity, bands["hot"].paint.opacity) == pytest.approx((0.35, 0.65))
+    assert bands["cold"].paint.fill != bands["hot"].paint.fill
+    assert labels["cold"].visual_role == "period-label:frost"
+    assert labels["hot"].visual_role == "period-label:launch"
+    assert labels["cold"].contrast_treatment == "required"
+    assert labels["hot"].contrast_treatment == "deemphasized"
+    assert labels["cold"].text_layout.font_size == 11
+    assert labels["hot"].text_layout.font_size == 22
+    assert labels["cold"].text_layout.letter_spacing == 0
+    assert labels["hot"].text_layout.letter_spacing == 22
+    assert labels["hot"].bounds[2] > labels["cold"].bounds[2]
+    assert labels["hot"].bounds[3] > labels["cold"].bounds[3]
+    assert labels["hot"].baseline[1] > labels["cold"].baseline[1]
+    document = scene_document(rendered.scene)
+    findings = {item.visual_role: item for item in evaluate_scene_contrast(document)
+                if item.visual_role in {"period-label:frost", "period-label:launch"}}
+    assert findings["period-label:frost"].floor == 4.5
+    assert findings["period-label:launch"].floor == 3.0
+
+
+def test_unselected_variant_roles_leave_default_output_byte_identical(tmp_path):
+    plain = _render(tmp_path, parts=_parts(), name="plain")
+    extra = _parts()
+    body = extra["theme"]["body"]
+    body["roles"]["period-band:freeze"] = deepcopy(body["roles"]["period-band"])
+    body["colorBindings"]["period-band:freeze.fill"] = "positive"
+    expanded = _render(tmp_path, parts=extra, name="expanded")
+    assert plain.artifact.content == expanded.artifact.content
+    assert scene_document(plain.scene)["surfaces"] == scene_document(expanded.scene)["surfaces"]
+
+
+def test_a_selected_variant_band_never_falls_back_to_the_base_role(tmp_path):
+    parts = _variant(_parts())
+    del parts["theme"]["body"]["roles"]["period-band:freeze"]
+    del parts["theme"]["body"]["colorBindings"]["period-band:freeze.fill"]
+    with pytest.raises(RenderFailed) as raised:
+        _render(tmp_path, parts=parts)
+    assert (raised.value.code, raised.value.source_ref) == (
+        "E_THEME_ROLE_REQUIRED", "/body/roles/period-band:freeze")
+
+
+def test_a_variant_band_role_is_required_before_clipping_even_when_none(tmp_path):
+    parts = _variant(_parts(treatment="none"))
+    del parts["theme"]["body"]["roles"]["period-band:freeze"]
+    del parts["theme"]["body"]["colorBindings"]["period-band:freeze.fill"]
+    outside = _source(window={"start": "2025-01-01", "end": "2025-02-01"},
+                      after={"start": "2026-04-01", "end": "2026-05-01"})
+    with pytest.raises(RenderFailed) as raised:
+        _render(tmp_path, outside, parts)
+    assert (raised.value.code, raised.value.source_ref) == (
+        "E_THEME_ROLE_REQUIRED", "/body/roles/period-band:freeze")
+
+
+def test_variant_label_role_is_required_only_when_a_label_request_is_drawable(tmp_path):
+    parts = _variant(_labelled(_parts()), label=False)
+    del parts["theme"]["body"]["roles"]["period-label"]
+    del parts["theme"]["body"]["colorBindings"]["period-label.fill"]
+    outside = _source(window={"start": "2025-01-01", "end": "2025-02-01"},
+                      after={"start": "2026-04-01", "end": "2026-05-01"})
+    assert _labels(_render(tmp_path, outside, parts, name="outside")) == []
+    with pytest.raises(RenderFailed) as raised:
+        _render(tmp_path, parts=parts, name="drawable")
+    assert (raised.value.code, raised.value.source_ref) == (
+        "E_THEME_ROLE_REQUIRED", "/body/roles/period-label:freeze")
+
+
 def test_a_catalogue_pattern_is_completed_in_layout_over_the_band(tmp_path):
     (band,) = _bands(_patterned(tmp_path))
     assert band.pattern is not None and band.pattern.primitives
@@ -359,9 +493,9 @@ def test_a_period_wholly_beyond_the_plot_edge_is_recorded_not_drawn():
 # --- the one explicit overlay relation ------------------------------------------------------------------
 
 
-def _shape(semantic_id: str, order: int, source: str = "s") -> ShapePlacement:
+def _shape(semantic_id: str, order: int, source: str = "s", visual_role: str | None = None) -> ShapePlacement:
     return ShapePlacement(f"{semantic_id}:{source}", source, "Rect", Rect(Decimal(0), Decimal(0), Decimal(10), Decimal(10)),
-                          slot_id="timeline", paint_order=order, semantic_id=semantic_id)
+                          slot_id="timeline", paint_order=order, semantic_id=semantic_id, visual_role=visual_role)
 
 
 def _tokens(orders: dict[str, int], *, opacity: float = 0.5):
@@ -406,6 +540,37 @@ def test_two_translucent_periods_may_not_cross():
 def test_opaque_backgrounds_may_overlap_in_any_order():
     orders = _orders(groupBand=10, periodBand=9)
     validate_background_shapes([_shape("groupBand", 10), _shape("periodBand", 9)], _tokens(orders, opacity=1.0))
+
+
+def test_selected_variant_opacity_and_paint_order_drive_semantic_collision_checks():
+    group_role = semantic_binding("groupBand").scene_role
+    orders = {"period-band:freeze": 12, "period-band": 9, group_role: 10}
+    opacities = {"period-band:freeze": 0.5, "period-band": 1.0, group_role: 0.5}
+    tokens = SimpleNamespace(background=lambda role: ("fill", orders[role]),
+                              opacity=lambda role: opacities[role])
+    lower = _shape("groupBand", 10, "group")
+    selected = _shape("periodBand", 12, "freeze", "period-band:freeze")
+    # Only the selected variant's later paint order permits this translucent, lower-rank crossing.
+    validate_background_shapes([lower, selected], tokens)
+
+    earlier = _shape("periodBand", 9, "freeze", "period-band:freeze")
+    with pytest.raises(LayoutError) as raised:
+        validate_background_shapes([lower, earlier], tokens)
+    assert raised.value.diagnostic_id == "E_LAYOUT_BACKGROUND_OVERLAP"
+
+
+def test_selected_variant_opacity_cannot_be_hidden_by_an_opaque_base_role():
+    orders = {"period-band:frost": 12, "period-band:launch": 13,
+              "period-band": 12}
+    opacities = {"period-band:frost": 0.4, "period-band:launch": 0.6,
+                 "period-band": 1.0}
+    tokens = SimpleNamespace(background=lambda role: ("fill", orders[role]),
+                              opacity=lambda role: opacities[role])
+    overlapping = [_shape("periodBand", 12, "frost", "period-band:frost"),
+                   _shape("periodBand", 13, "launch", "period-band:launch")]
+    with pytest.raises(LayoutError) as raised:
+        validate_background_shapes(overlapping, tokens)
+    assert raised.value.diagnostic_id == "E_LAYOUT_BACKGROUND_OVERLAP"
 
 
 # --- the label ------------------------------------------------------------------------------------------
@@ -584,3 +749,14 @@ def test_a_malformed_label_is_a_schema_error(tmp_path, label):
     with pytest.raises(ClosureError) as raised:
         _render(tmp_path, parts=parts)
     assert raised.value.diagnostic_id == "E_VIEW_SCHEMA" and raised.value.source_ref.startswith("/body/periods/0/label")
+
+
+def test_period_variant_is_a_common_slug_schema_member():
+    validator = schema_validator("view-v0.28.schema.yaml")
+    valid = _parts()["view"]
+    valid["body"]["periods"][0]["variant"] = "winter-freeze"
+    assert not list(validator.iter_errors(valid))
+    for invalid in ("", "Winter", "winter_freeze"):
+        candidate = deepcopy(valid)
+        candidate["body"]["periods"][0]["variant"] = invalid
+        assert list(validator.iter_errors(candidate)), invalid

@@ -23,8 +23,10 @@ availability and cycle messages. The independent main Windows failure in
 is also repaired here under [the1474 tool plan](https://github.com/tya5/chrona/issues/1474#issuecomment-6159445038):
 use the same interpreter's portable `-m chrona` entry point, not an assumed
 sibling console script. Windows/Unix-shaped launcher regressions and the actual
-CLI test pass locally. Current-head CI and containing-review exact-main full
-release remain required before closure.
+CLI test pass locally. Current-head CI38500762062 passed; the final snapshot
+retains all92 Scene/SVG files unchanged. Closed after containing-review exact-main
+[release38501977990](https://github.com/tya5/chrona/actions/runs/38501977990)
+passed all three OSes on f0d6fa73dc4dda98f690c7256ae29477cfcde5cb.
 
 ## Literal issue acceptance
 

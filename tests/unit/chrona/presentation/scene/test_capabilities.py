@@ -7,6 +7,8 @@ from chrona.presentation.scene.capabilities import (
     capability_ceiling,
     theme_catalog_pattern_consumer,
     theme_role_property_consumer,
+    theme_catalog_pattern_consumer,
+    theme_role_contract,
     validate_substitution_request,
 )
 
@@ -43,6 +45,19 @@ def test_catalogue_pattern_contract_admits_only_always_rect_roles():
     # This restriction is specific to new catalogue values. Existing Theme
     # applicability for legacy patterns remains unchanged.
     assert theme_role_property_consumer("planned", "pattern") is not None
+
+
+def test_period_variant_roles_have_only_their_registered_capability_contracts():
+    band = theme_role_contract("period-band:frost")
+    label = theme_role_contract("period-label:frost")
+    assert band is not None and band.scene_kinds == frozenset(("Rect",))
+    assert label is not None and label.scene_kinds == frozenset(("Text",))
+    assert theme_role_property_consumer("period-band:frost", "backgroundPaintOrder") is not None
+    assert theme_role_property_consumer("period-band:frost", "markHeight") is None
+    assert theme_role_property_consumer("period-label:frost", "fontSize") is not None
+    assert theme_role_property_consumer("period-label:frost", "backgroundTreatment") is None
+    assert theme_catalog_pattern_consumer("period-band:frost", "pattern") is not None
+    assert theme_catalog_pattern_consumer("period-label:frost", "pattern") is None
 
 
 def test_stroke_alignment_is_admitted_only_for_contour_stroke_consumers():

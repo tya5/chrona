@@ -4,7 +4,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 from re import fullmatch
-from chrona.presentation.model.semantic_registry import is_annotation_artwork_role, is_frame_glyph_role
+from chrona.presentation.model.semantic_registry import (
+    is_annotation_artwork_role, is_frame_glyph_role, period_variant_role_base,
+)
 
 
 class CapabilityDisposition(StrEnum):
@@ -388,6 +390,9 @@ def theme_role_contract(role: str) -> RolePropertyContract | None:
         return _ROLE_PROPERTY_CONTRACTS["frame-glyph"]
     if is_annotation_artwork_role(role):
         return _ROLE_PROPERTY_CONTRACTS["annotation-artwork"]
+    period_role = period_variant_role_base(role)
+    if period_role is not None:
+        return _ROLE_PROPERTY_CONTRACTS[period_role]
     return _ROLE_PROPERTY_CONTRACTS.get(role)
 
 
@@ -406,6 +411,8 @@ def theme_role_property_consumer(role: str, property_name: str) -> str | None:
         return ("Layout group colour encoding"
                 if property_name == "fill" and fullmatch(r"group:[A-Za-z][A-Za-z0-9_-]*", role)
                 else None)
+    if role.startswith(("period-band:", "period-label:")):
+        return None
     if property_name in _OPEN_AXIS_PROPERTIES:
         return "View-named axis-tier or table column text measurement"
     if property_name in _OPEN_LEGEND_PROPERTIES:
@@ -421,6 +428,7 @@ def theme_catalog_pattern_consumer(role: str, property_name: str) -> str | None:
     current completed pattern clip contract covers Rect primitives only.
     """
     if property_name == "pattern" and (role in _CATALOG_PATTERN_ROLES or
+                                      period_variant_role_base(role) == "period-band" or
                                       (role.startswith("region-frame-") and theme_role_contract(role) is not None)):
         return "Layout-completed Rect pattern geometry"
     return None

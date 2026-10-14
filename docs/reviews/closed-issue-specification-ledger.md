@@ -25,6 +25,8 @@ normative specification.
 | #1403 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1403), all literal criteria met; exact-main [release38478676595](https://github.com/tya5/chrona/actions/runs/38478676595) |
 | #1342 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1342), both literal criteria met; exact-main [release38481430846](https://github.com/tya5/chrona/actions/runs/38481430846) |
 | #1338 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1338), both literal criteria met; exact-main [release38491118717](https://github.com/tya5/chrona/actions/runs/38491118717) |
+| #437 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/437), all literal criteria met; exact-main [release38501977990](https://github.com/tya5/chrona/actions/runs/38501977990) on f0d6fa73 |
+| #988 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/988), all literal criteria met with actual PNG evidence; exact-main [release38501977990](https://github.com/tya5/chrona/actions/runs/38501977990) on f0d6fa73 |
 | #1340 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1340), all five literal criteria met; exact-main [release38497397881](https://github.com/tya5/chrona/actions/runs/38497397881) |
 | #1345 | closed | [Owner interpretation and acceptance](https://github.com/tya5/chrona/issues/1345#issuecomment-6158100055); exact-main [release38488112476](https://github.com/tya5/chrona/actions/runs/38488112476) |
 | #1356 | closed | [Wheel initialization acceptance](https://github.com/tya5/chrona/issues/1356#issuecomment-6158100636); exact-main [release38488112476](https://github.com/tya5/chrona/actions/runs/38488112476) |

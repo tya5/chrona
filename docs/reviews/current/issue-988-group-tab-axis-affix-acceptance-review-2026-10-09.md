@@ -10,7 +10,8 @@ replaces deleted group-tabs with Title Card; its tab aspect is
 This issue needs no product change or examples edit. Existing affix/tab focused
 tests:55 passed. PNGs rasterize exact committed SVGs at96dpi with resvg-py0.5.0 /
 resvg0.48.1, only the packaged fonts matching Scene's font identities, no host fonts.
-Containing-review exact-main full release is required before closure.
+Closed after containing-review exact-main [release38501977990](https://github.com/tya5/chrona/actions/runs/38501977990)
+passed all three OSes on f0d6fa73dc4dda98f690c7256ae29477cfcde5cb.
 
 ## Literal issue acceptance
 
