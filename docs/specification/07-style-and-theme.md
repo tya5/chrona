@@ -242,6 +242,21 @@ A Theme binds visual roles to concrete tokens. Tokens may describe colour, typog
 
 `period-band:<slug>` and `period-label:<slug>` are reserved semantic role families, not arbitrary axis/legend aliases. A pre-existing custom alias in either namespace must be renamed or satisfy the period-role contract, including label contrast admission. No compatibility fallback preserves its former open-role meaning. Absence of a View variant keeps the unsuffixed selection; it does not exempt declared roles from their contracts.
 
+**Named-period edge rules (#871).** A period band role MAY add the closed,
+nonempty `edgeRules` map with optional `top`, `bottom`, `start`, and `end`
+members, each `single` or `double`; an omitted member requests no edge. Without
+this property the existing Rect stroke is unchanged. With it, the role's stroke,
+positive `strokeWidth`, dash, and opacity paint the selected edges. Missing
+stroke/width uses the existing `E_THEME_ROLE_REQUIRED` at the missing property.
+Any `double` requires
+`doubleRuleGap`, and it is forbidden when no side is double; its value names a
+positive finite Theme `number` token and is the clear physical gap between the
+two strokes. `backgroundTreatment: none` with `edgeRules` is
+`E_THEME_ROLE_PROPERTY_UNSUPPORTED` at `/body/roles/<role>/edgeRules`. The
+property is additive to `theme-v0.15` under Specification 56 §3.2; its closed
+role admission applies equally to base and variant band roles. Edge rules also
+govern a source-bound period area swatch in the Detail Profile legend.
+
 Themes contain no selectors over Project fields. For example, `behind` is chosen by Style; its colour, line treatment, and label treatment are selected by Theme.
 
 A `symbol` token's value is either a built-in shape (`diamond`, `circle`, `square`,
