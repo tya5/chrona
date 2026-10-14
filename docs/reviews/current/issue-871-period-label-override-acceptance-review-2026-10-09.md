@@ -4,7 +4,7 @@
 
 Implementation: [#1253](https://github.com/tya5/chrona/pull/1253) (head `5bf586ae`). A selected period's label object gains an optional `text` (one to eighty characters, `literalCaption`), `periods[].label.text`, added in place to `view-v0.28` (Spec 56 section 3.2; `python -m tools.schema_equivalence --base-rev origin/main`: PASS, additive=1). The label stays an ordinary `period-label` Text; only its content changes, for that View only. Plan: [Status comment](https://github.com/tya5/chrona/issues/871#issuecomment-6068339316).
 
-**Scope.** The board selects issue-body follow-ups 1–3 (variants, edges, period legend entries); optional items 4–8 are unselected. The reviewer's three literal criteria below remain unchanged. Variants are released; edges and legend entries are locally verified but await publication and exact-main release. Keep #871 open until that gate succeeds.
+**Scope.** The board selects issue-body follow-ups 1–3 (variants, edges, period legend entries); optional items 4–8 are unselected. All selected follow-ups and the three unchanged literal criteria below are met on published READY6e955ada.
 
 ## Literal issue acceptance
 
@@ -24,8 +24,16 @@ Implementation: [#1253](https://github.com/tya5/chrona/pull/1253) (head `5bf586a
 | Selected follow-up | Evidence | Release state |
 | --- | --- | --- |
 | 1. Period variants | [PR1486](https://github.com/tya5/chrona/pull/1486); 158 focused tests; all92 public Scene/SVG bytes unchanged | Exact READY7a08f0c0 [three-OS release38506567088](https://github.com/tya5/chrona/actions/runs/38506567088) passed |
-| 2. Edge treatments | [Synthetic Scene/SVG tests](../../../tests/integration/test_named_period_edges.py): single/double rules, fit refusal, injective IDs, pattern pigments, outline/none, overlap ranks; [channel tests](../../../tests/unit/chrona/presentation/scene/test_shape_paint_channels.py) | Local implementation; PR and exact-main release pending |
-| 3. Period legend entries | [Public source-legend tests](../../../tests/integration/test_period_legend_source.py): same-role independent identities, source/role pointers, absent background/slot, wording, base/variant catalogue-pattern fidelity | Local implementation; PR and exact-main release pending |
+| 2. Edge treatments | [Synthetic Scene/SVG tests](../../../tests/integration/test_named_period_edges.py): single/double rules, fit refusal, injective IDs, pattern pigments, outline/none, overlap ranks; [channel tests](../../../tests/unit/chrona/presentation/scene/test_shape_paint_channels.py) | met; PR1488 and common release gate below |
+| 3. Period legend entries | [Public source-legend tests](../../../tests/integration/test_period_legend_source.py): same-role independent identities, source/role pointers, absent background/slot, wording, base/variant catalogue-pattern fidelity | met; PR1488 and common release gate below |
+
+[PR1488](https://github.com/tya5/chrona/pull/1488) merged36085747. Exact-main
+[release38513826857](https://github.com/tya5/chrona/actions/runs/38513826857)
+passed on6e955ada73b490652f92ba3913f957fe65c9e69d, containing this acceptance
+review and all selected implementations: Windows/macOS/Ubuntu full pytest,
+conformance and wheel/smoke, MCP and newest-Python public materializers succeed.
+Final artifact11870002491 preserves all92 public Scene/SVG bytes; only three
+intended generated reports change. Focused224 and migration154 tests pass.
 
 ## Architecture review
 
@@ -36,4 +44,7 @@ belongs to fill content, not the host outline. Legacy glyph precedence and omitt
 fields remain unchanged. Root independently caught and corrected base/variant
 legend pattern admission; no project-specific branch or example change was added.
 Schema equivalence passes (additive2/equal36; five known baseline-invalid documents).
-Local report staleness awaits the CI-owned disposable snapshot, not hand patches.
+The CI-owned snapshot and published derived commit resolve report staleness;
+no report or example was hand-patched. Renderer review confirms catalogue tiles
+retain their own stroke geometry, with no patterned host outline in SVG/PNG/PDF
+or Typst/TikZ. The transient channel mask is consumed before Scene serialization.
