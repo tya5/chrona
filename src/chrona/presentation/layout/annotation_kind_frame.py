@@ -161,11 +161,17 @@ def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame:
 
 
 def complete_kind_frame(measure: KindFrameMeasure, *, available_inline: float, may_wrap: bool,
+                        bar_extra_inline: float = 0.0,
                         theme_tokens: ThemeTokenView, metric_for: Callable[[str], Any]) -> KindFrameMeasure:
-    """Wrap each kind-header role within a filled note without changing natural measurements."""
+    """Wrap each kind-header role within a filled note without changing natural measurements.
+
+    ``bar_extra_inline`` is the border-bleed bar's width beyond the inset content box. Its
+    labels may use that painted width, but the returned ``header_inline`` stays relative to
+    the content box so the insets are not charged twice when sizing the note.
+    """
     if not may_wrap:
         return measure
-    label_inline = available_inline - (2 * measure.bar_padding_inline if measure.bar else 0.0)
+    label_inline = available_inline + bar_extra_inline - (2 * measure.bar_padding_inline if measure.bar else 0.0)
     if measure.stamp_ref is not None and measure.stamp_placement == "bar-end":
         label_inline -= measure.bar_end_reserve
     label_inline = max(1.0, label_inline)
@@ -216,7 +222,8 @@ def complete_kind_frame(measure: KindFrameMeasure, *, available_inline: float, m
 
     return replace(measure, lines=tuple(lines), heading=heading, heading_lines=heading_lines,
                    bar_block=bar_block, bar_inline=bar_inline,
-                   header_inline=max(bar_inline, heading_width), header_block=bar_block + heading_block)
+                   header_inline=max(max(0.0, bar_inline - bar_extra_inline), heading_width),
+                   header_block=bar_block + heading_block)
 
 
 def place_kind_frame(measure: KindFrameMeasure, *, annotation_id: str, presentation: AnnotationPresentation,
