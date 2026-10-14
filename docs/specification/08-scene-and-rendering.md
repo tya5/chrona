@@ -87,9 +87,10 @@ no font-stack fallback. Embedding flags do not replace the user's license rights
 Only CFF-translating renders add the conversion grammar `cff-cu2qu-v1` and
 actual fontTools version to adapter identity; original font content identities
 remain authoritative. Rendering without CFF faces retains its existing
-registration path, adapter identity and byte output.
+registration path and adapter identity. The closed-face correction below
+intentionally changes PDF bytes that previously embedded a substituted face.
 
-For a CFF-translating render, SVG-to-PDF font lookup MUST use a render-local
+For every PDF render (#982), SVG-to-PDF font lookup MUST use a render-local
 mapping of completed `(family, weight)` to the exact registered face. ReportLab
 registration alone does not populate svglib's mapping. The mapping MUST NOT
 discover host fonts or fall back to another family; unknown entries fail with
@@ -103,8 +104,13 @@ glyph subset); a same-name face or different subset cannot reuse old bytes.
 Human family/full/localized names and metrics remain intact; only internal
 PostScript identity is derived. Check embedding permissions for every face in
 that new embedding path. No source resource or Scene identity is rewritten.
-The non-CFF-only path remains unchanged. This correction closes the PDF font-map
-seam; a successful PDF header alone is not evidence of exact-face embedding.
+The same lookup contract applies to TrueType-only renders: registration alone
+does not authorize svglib's host/file/fontconfig fallback. This supersedes the
+earlier non-CFF byte-preservation promise where it preserved substituted glyphs.
+The registration/conversion owners and Scene/Layout geometry are unchanged.
+A successful PDF header or an arbitrary embedded font is not evidence of exact
+face use: verification must associate the text's PDF font resource with its
+completed family/weight and embedded program.
 
 ### 2.1 M27 public Review SVG binding
 
