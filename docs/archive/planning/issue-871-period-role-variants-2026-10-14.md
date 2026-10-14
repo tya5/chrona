@@ -9,13 +9,14 @@ Schema L1 is additive=1/equal=37; lifecycle23 passes. All92 public Scene/SVG
 files in artifact11867057879 are byte-identical. Exact-main release
 [38506567088](https://github.com/tya5/chrona/actions/runs/38506567088)
 passed on READY7a08f0c0, including all three OS matrices and public materializers.
-Six proven-stale L1 records were retired manually because the pruner cannot
-rewrite multiline mappings; no schema-gate code changed.
+Edges and source-bound legends landed in [PR1488](https://github.com/tya5/chrona/pull/1488).
+All selected work is accepted on READY6e955ada after successful exact-main
+[release38513826857](https://github.com/tya5/chrona/actions/runs/38513826857).
 
 Board-selected scope is issue-body items1–3 only: variants, edge treatments,
 period legend entries. Items4–8 are unselected optional successors.
 Literal reviewer acceptance, already met on main and retained in the
-[current review](../../reviews/current/issue-871-period-label-override-acceptance-review-2026-10-09.md):
+[acceptance review](../reviews/issue-871-period-label-override-acceptance-review-2026-10-09.md):
 
 - "The View override sets the period-label text."
 - "Absent an override, the output is byte-identical."
@@ -77,8 +78,8 @@ reservation but no painted key (Spec50); only this branch was held for correctio
 
 Publish this design/architecture review and plan before code; publish the
 implementation and concise literal/selected-scope review together. No examples
-or derived-report edits. Keep871 open until items1–3 and every literal criterion
-have direct evidence plus successful exact-main containing-review release.
+or derived-report edits. Items1–3 and every literal criterion have direct
+evidence and successful exact-main containing-review release.
 
 ## Current implementation evidence
 
@@ -86,10 +87,8 @@ Scene channels: c5905e39/38fc378a; edge completion:851af7fa;
 source legend:d1a0678a. Root focused batch224 passes; source-pattern/variant
 tests10 pass; delivery-owner tests2 pass. Schema annotations and equivalence
 pass (additive2/equal36). Independent audit found the base/variant pattern
-admission gap; root corrected it before these final tests. PR1488 snapshot11869408444
-retains all92 Scene/SVG bytes; only the intended three generated reports change.
-CI conformance/MCP/newest materializers pass. Run38510592348 found14 stale
-test expectations:13 tuple legend fixtures and one Rect-only capability assertion.
-The typed fixtures and Path admission are corrected without a production shim;
-the expanded migration batch154 passes. A repository-wide audit finds no other
-tuple consumers. Updated-head CI and exact-main release remain pending.
+admission gap; root corrected it before final tests. Final PR1488
+snapshot11870002491 retains all92 Scene/SVG bytes; only three intended generated
+reports change. Expanded migration154 tests and all final-head CI checks pass.
+No tuple compatibility shim or remaining tuple consumer exists. Exact-main
+three-OS release38513826857 succeeds on6e955ada, containing the acceptance review.
