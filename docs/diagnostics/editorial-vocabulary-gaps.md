@@ -11,7 +11,7 @@ the role or capability it would need. It was missing when #383 closed (row 4); i
 | 3 | A gate drawn inside its parent capsule | not expressible: a milestone is a free-row mark | a Layout placement rule hosting a point mark inside a span mark | #1373 row 3 |
 | 4 | Legend milestone key without a spurious `W_LAYOUT_MARK_OVERFLOW` | resolved: the default render no longer emits it | nothing | |
 | 5 | Reaching Editorial by name carries its legend | resolved: the `editorial` catalogue entry has a `detailProfile`, and `preset copy editorial` writes `detail.yaml` | nothing | |
-| 6 | Rendering a Context straight from the bundled resources | not expressible: `LocalSnapshotReader` rejects a package-provider reference (`E_STORE_REFERENCE`), so the corpus keeps byte-identical copies under `examples/halcyon-1/` | a reader that resolves `provider: package` to the wheel resources | #1373 row 6 |
+| 6 | Rendering a Context straight from the bundled resources | resolved: every Context render path (`render-review`, the gallery, `materialize`, the Store-config reader) reads a `provider: package` reference from the wheel resources through `read_package_reference` (#1342); only the raw `LocalSnapshotReader`, used for Project snapshots, still rejects it, and a Context never needs it there. Pinned by `test_a_context_renders_from_package_references_identically_to_local_copies`. The corpus copies under `examples/halcyon-1/` remain by choice; dropping them is reviewer work | nothing | #1373 row 6 |
 
 Not a gap: `progressFill` is exercised by the corpus (the bare default render draws `progress-fill:*`).
 
