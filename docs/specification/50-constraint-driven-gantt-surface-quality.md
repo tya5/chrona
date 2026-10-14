@@ -1132,6 +1132,10 @@ swatches use `legend-period-swatch:<period id>` (component suffixes for edges).
 Unknown, unselected, ambiguous or duplicate source bindings are
 `E_REVIEW_LEGEND_PERIOD_SOURCE` at the profile entry's `sourceRef`; mismatched
 roles are `E_REVIEW_LEGEND_PERIOD_ROLE` at its `role` (Spec06).
+If its role explicitly declares `backgroundTreatment: none`, it keeps the
+authored label and measured swatch reservation but emits no painted swatch,
+matching the period's declared absence; this is the exception to the one-swatch
+rule above. It does not make a valid source binding an error.
 Entries without `sourceRef` retain
 their existing behavior and identity.
 

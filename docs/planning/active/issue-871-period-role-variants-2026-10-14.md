@@ -42,6 +42,8 @@ Do not duplicate the legend pipeline or relax overlapping-period fill rank check
 Sourced legend IDs use disjoint prefixes (legend-period / legend-period-swatch),
 not pseudo-role keys that can collide with arbitrary existing role aliases.
 Existing role-wide wording precedence and unsourced IDs remain unchanged.
+An explicitly absent period background keeps its sourced legend label and
+reservation but no painted key (Spec50); only this branch was held for correction.
 
 ## Implementation plan — one atomic edge/legend publication
 
