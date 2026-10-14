@@ -34,7 +34,7 @@ still require their typesetter descriptor flags.
 To select a supplied appearance explicitly, copy one into your own source tree
 and render through its ordinary local preset.  Available ids are
 `mission-light`, `control-room-dark`, `print-mono`, `executive-light`, `elevated-light`, `editorial`, `technical-print`,
-and `chrona-default-draft` (the look used when no preset is named); `chrona preset list` prints them.
+`chrona-default-draft` (the look used when no preset is named), and the packaged designs `marquee` and `sunday`; `chrona preset list` prints them.
 
 ```bash
 chrona preset copy control-room-dark --output my-first-chrona-project/looks/control-room-dark

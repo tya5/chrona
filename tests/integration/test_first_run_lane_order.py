@@ -11,7 +11,9 @@ from chrona.usecases.draft_render import DraftRenderRequest, render_draft
 from tests.support import synthetic_review as sr
 
 
-PRESETS = [entry["id"] for entry in yaml.safe_load(builtin_preset_library_resource().read_text())["entries"]]
+_ENTRIES = yaml.safe_load(builtin_preset_library_resource().read_text())["entries"]
+PRESETS = [entry["id"] for entry in _ENTRIES]
+DESIGN_PRESETS = {entry["id"] for entry in _ENTRIES if entry["members"]["layout"]["sourceRoot"].startswith("designs/")}
 
 
 @pytest.mark.parametrize("policy", [False, True, "auto", "omitted"])
@@ -52,8 +54,13 @@ def test_every_builtin_preset_shows_start_order_without_singleton_items_column(t
     titles = [item for item in rendered.surface.primitives
               if item.purpose == "table-cell" and item.scene_id.endswith((":Task", ":Lane"))]
     member_by_row = {member.row_id: member.member_id for member in rendered.surface.lane_members}
-    assert [member_by_row.get(item.source_ref, item.source_ref) for item in titles] == [
-        "zeta-kickoff", "mid-build", "alpha-launch"]
+    order = [member_by_row.get(item.source_ref, item.source_ref) for item in titles]
+    if preset in DESIGN_PRESETS:
+        # A packaged design groups by object type for its group headers (#429): start order holds within each group.
+        assert sorted(order) == ["alpha-launch", "mid-build", "zeta-kickoff"]
+        assert order.index("zeta-kickoff") < order.index("alpha-launch")
+    else:
+        assert order == ["zeta-kickoff", "mid-build", "alpha-launch"]
     assert all(item.text for item in titles)
     ids = [item.scene_id for item in titles]
     svg = ElementTree.fromstring(rendered.artifact.content)

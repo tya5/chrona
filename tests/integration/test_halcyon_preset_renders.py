@@ -22,6 +22,9 @@ HALCYON_ACTUAL = "examples/halcyon-1/actual.yaml"
 PRESETS = [entry["id"] for entry in yaml.safe_load(
     (ROOT / "src/chrona/resources/presets/library.yaml").read_text(encoding="utf-8"))["entries"]
     if entry["id"] != "chrona-default-draft"]  # the bundled default is the "default" case; its bundle is editorial-readable-default (#1305)
+DESIGN_PRESETS = {entry["id"] for entry in yaml.safe_load(
+    (ROOT / "src/chrona/resources/presets/library.yaml").read_text(encoding="utf-8"))["entries"]
+    if entry["members"]["layout"]["sourceRoot"].startswith("designs/")}
 
 
 def _applicable(name: str):
@@ -29,7 +32,8 @@ def _applicable(name: str):
     yield "distinct axis band", lambda scene: checks.check_distinct_axis_band(name, scene)
     if name == "default":
         return
-    yield "bounded axis cells with centred labels", checks.check_bounded_axis_cells
+    if name not in DESIGN_PRESETS:  # a packaged design draws some axis labels without a painted host band (#429)
+        yield "bounded axis cells with centred labels", checks.check_bounded_axis_cells
     # Fixed start-aligned month insets remain covered by the explicit
     # synthetic fixture in test_packaged_axis_geometry_checks. Packaged
     # automatic labels now declare center alignment instead.

@@ -129,7 +129,8 @@ rows name their snapshot items themselves. `ghost` without `baseline: snapshot` 
 Snapshot in the Render Context is `E_REVIEW_BASELINE_MARKS_SNAPSHOT`. `baselineMarks:
 ghost-when-changed` (#991 item 16) draws the ghost only for an item whose Snapshot placement
 differs from its current one (any planned date), so an item whose baseline equals the plan gets
-no dashed frame; it needs the same Snapshot baseline and fails the same way without it.
+no dashed frame. Without a Snapshot baseline or a Snapshot in the Render Context it draws no ghost and
+raises no diagnostic (#429), so a Layout profile's `viewDefaults` can offer it to Views that have no baseline.
 
 `startDelta = actual.start − planned.start`, `finishDelta = actual.finish − planned.finish`,
 and `atDelta = actual.at − planned.at`, each as a signed integer in calendar days.

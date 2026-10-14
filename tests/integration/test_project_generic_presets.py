@@ -18,6 +18,14 @@ PRESETS = [entry["id"] for entry in yaml.safe_load(
     if entry["id"] != "chrona-default-draft"]  # the bundled default is the "default" case; its bundle is editorial-readable-default (#1305)
 
 
+def _member_path(preset_id: str, member: str) -> Path | None:
+    """The packaged file one library entry names for ``member``, in a bundle or a shared design (#429)."""
+    entry = next(item for item in yaml.safe_load(
+        (ROOT / "src/chrona/resources/presets/library.yaml").read_text(encoding="utf-8"))["entries"] if item["id"] == preset_id)
+    declared = entry["members"].get(member)
+    return None if declared is None else ROOT / "src/chrona/resources" / declared["sourceRoot"] / declared["sourcePath"]
+
+
 def _project_values(path: Path) -> set[str]:
     """Group-field values and entity ids an example project names."""
     project = yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -49,15 +57,16 @@ def _render(tmp_path: Path, monkeypatch, preset_id: str, project: Path) -> tuple
 def test_each_preset_renders_halcyon_and_the_starter(tmp_path, monkeypatch, preset_id):
     (tmp_path / "halcyon").mkdir()
     halcyon, _ = _render(tmp_path / "halcyon", monkeypatch, preset_id, ROOT / "examples/halcyon-1/project.yaml")
-    view = yaml.safe_load((BUNDLES / preset_id / "view.yaml").read_text(encoding="utf-8"))["body"]
+    view = yaml.safe_load(_member_path(preset_id, "view").read_text(encoding="utf-8"))["body"]
     if (view.get("grouping") or {}).get("presentation") == "header":
         assert any(item["id"].startswith("group-header:") for item in halcyon["primitives"])
     starter = tmp_path / "starter"
     initialize_project(starter)
     (tmp_path / "out").mkdir()
     surface, _ = _render(tmp_path / "out", monkeypatch, preset_id, starter / "project.yaml")
-    assert not any(item["id"].startswith("group-header:") for item in surface["primitives"])
-    if (BUNDLES / preset_id / "detail.yaml").is_file():
+    if (view.get("grouping") or {}).get("by") == "field":  # a header that distinguishes nothing is not drawn; type groups are real
+        assert not any(item["id"].startswith("group-header:") for item in surface["primitives"])
+    if (_member_path(preset_id, "detailProfile") or Path("/nonexistent")).is_file():
         assert any(item["id"].startswith("legend:") for item in halcyon["primitives"])
     labels = view["visibility"]["labels"]
     if isinstance(labels, dict) and labels.get("placement") in {"plot", "both"} and any(
