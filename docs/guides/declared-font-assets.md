@@ -82,9 +82,10 @@ A Theme `fontFamily` is an ordered list, for example `Hiragino Sans, Yu Gothic, 
 The Scene records the face each role resolved to (`textLayout.family`), and the render reports one note per role whose
 list was resolved: `I_FONT_ROLE_RESOLVED:role=...;requested=<list>;face=<family>`, or the warning
 `W_FONT_FALLBACK_PACKAGED:role=...;requested=<list>;face=Noto Sans` when it fell back. SVG names the resolved family
-and embeds nothing; PNG and PDF rasterize with the resolved files (the PDF adapter embeds TrueType outlines only: an installed
-face with PostScript outlines, such as the macOS Hiragino collections, is refused for PDF with `E_RENDER_FONT_CLOSURE` naming the
-face, and renders to SVG and PNG). A selected face must support each numeric-spacing
+and embeds nothing; PNG and PDF use the resolved files. PDF translates permitted CFF/CFF2 outlines into deterministic
+in-memory TrueType outlines for ReportLab, preserving the selected face/index and advances, never selecting another font.
+Restricted, bitmap-only, invalid embedding flags and no-subsetting declarations are refused with `E_RENDER_FONT_CLOSURE` naming the
+face; SVG/PNG behavior is unchanged. A selected face must support each numeric-spacing
 mode the Theme requests: unsupported tabular figures are never simulated (the role degrades to proportional and
 says so).
 

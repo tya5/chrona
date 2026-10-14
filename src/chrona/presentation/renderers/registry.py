@@ -5,12 +5,16 @@ from importlib.metadata import version
 from io import BytesIO
 from pathlib import Path
 from typing import Any
+from xml.etree import ElementTree
 
 from chrona.core.ports import RenderArtifact, Renderer
 from chrona.presentation.model.font_metrics import FontFile, FontMetricsError, resolve_font_files
 from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.presentation.renderers.v05_typeset import V05TikzRenderer, V05TypstRenderer
+from chrona.presentation.renderers.pdf_fonts import (
+    CONVERSION_GRAMMAR, PdfFontConversionError, pdf_embedding_bytes, pdf_font_bytes,
+)
 
 
 def _failure(code: str, detail: str) -> ValueError:
@@ -74,32 +78,82 @@ class ReportLabPdfRenderer:
         files, identities = _font_files(self._font_metrics, self._asset_root, self._font_files_override,
                                         self._asset_resolver)
         svg = V05SvgRenderer(viewer_fit=False).render(surface).content
+        characters = _svg_font_characters(svg)
+        translated = False
         try:
             from reportlab import rl_config
             from reportlab.pdfbase import pdfmetrics
             from reportlab.pdfbase.ttfonts import TTFError, TTFont
             from reportlab.graphics import renderPDF
             from svglib.svglib import svg2rlg
-            for item in files:
+            plans = [(item, pdf_font_bytes(item, characters.get((item.family, item.weight), frozenset())))
+                     for item in files]
+            translated = any(converted is not None for _, converted in plans)
+            mapping: dict[tuple[str, int], str] = {}
+            for item, converted in plans:
                 try:
-                    pdfmetrics.registerFont(TTFont(_reportlab_font_name(item.family, item.weight), str(item.path),
-                                                   subfontIndex=item.index))
-                except TTFError as error:
-                    # The PDF adapter embeds TrueType outlines only; a PostScript-outline installed face is refused by name.
+                    if translated:
+                        payload, alias = pdf_embedding_bytes(item, converted)
+                        registered = TTFont(alias, BytesIO(payload))
+                        key = (item.family.casefold(), item.weight)
+                        if key in mapping and mapping[key] != alias:
+                            raise PdfFontConversionError(f"conflicting closed PDF faces for {item.family}/{item.weight}")
+                        mapping[key] = alias
+                    else:
+                        registered = TTFont(_reportlab_font_name(item.family, item.weight), str(item.path),
+                                            subfontIndex=item.index)
+                    pdfmetrics.registerFont(registered)
+                except (TTFError, PdfFontConversionError) as error:
                     raise _failure("E_RENDER_FONT_CLOSURE", f"PDF cannot embed {item.family}/{item.weight} from "
-                                   f"{item.path.name}: {error}; choose a TrueType face, or render SVG or PNG") from error
-            for family in {item.family for item in files}:
-                faces = {item.weight: _reportlab_font_name(item.family, item.weight)
-                         for item in files if item.family == family}
-                if 400 in faces:
-                    pdfmetrics.registerFontFamily(family, normal=faces[400],
-                                                  bold=faces.get(700, faces[400]))
+                                   f"{item.path.name}: {error}; render SVG or PNG if embedding is unavailable") from error
+            if not translated:
+                for family in {item.family for item in files}:
+                    faces = {item.weight: _reportlab_font_name(item.family, item.weight)
+                             for item in files if item.family == family}
+                    if 400 in faces:
+                        pdfmetrics.registerFontFamily(family, normal=faces[400],
+                                                      bold=faces.get(700, faces[400]))
             rl_config.invariant = 1
-            content = renderPDF.drawToString(svg2rlg(BytesIO(svg)))
+            drawing = (svg2rlg(BytesIO(svg), font_map=_ClosedPdfFontMap(mapping))
+                       if translated else svg2rlg(BytesIO(svg)))
+            content = renderPDF.drawToString(drawing)
+        except PdfFontConversionError as error:
+            raise _failure("E_RENDER_FONT_CLOSURE", str(error)) from error
         except ImportError as error:
             raise _failure("E_RENDER_RASTERIZER_UNAVAILABLE", "target PDF requires installed svglib and reportlab adapters") from error
-        return RenderArtifact("pdf", "application/pdf", content, _adapter_identity(
-            f"svglib-{self._descriptor['svglibVersion']}-reportlab-{self._descriptor['reportlabVersion']}-invariant", identities))
+        prefix = f"svglib-{self._descriptor['svglibVersion']}-reportlab-{self._descriptor['reportlabVersion']}-invariant"
+        if translated:
+            prefix += f"-{CONVERSION_GRAMMAR}-fonttools-{version('fonttools')}"
+        return RenderArtifact("pdf", "application/pdf", content, _adapter_identity(prefix, identities))
+
+
+class _ClosedPdfFontMap:
+    """Public svglib font-map protocol bound only to this render's completed faces."""
+
+    def __init__(self, faces: dict[tuple[str, int], str]):
+        self._faces = faces
+
+    def find_font(self, font_name: str, weight: str = "normal", style: str = "normal") -> tuple[str, bool]:
+        try:
+            numeric_weight = {"normal": 400, "bold": 700}.get(str(weight))
+            if numeric_weight is None:
+                numeric_weight = int(weight)
+            if style != "normal":
+                raise KeyError(style)
+            return self._faces[(font_name.casefold(), numeric_weight)], True
+        except (KeyError, TypeError, ValueError) as error:
+            raise _failure("E_RENDER_FONT_CLOSURE", f"SVG requests an unregistered PDF face {font_name}/{weight}/{style}") from error
+
+
+def _svg_font_characters(svg: bytes) -> dict[tuple[str, int], frozenset[int]]:
+    """Read completed text's selected face, never resolve or measure a font here."""
+    characters: dict[tuple[str, int], set[int]] = {}
+    for node in ElementTree.fromstring(svg).iter():
+        if node.tag.rsplit("}", 1)[-1] != "text":
+            continue
+        key = (node.attrib["font-family"], int(node.attrib["font-weight"]))
+        characters.setdefault(key, set()).update(ord(character) for character in "".join(node.itertext()))
+    return {key: frozenset(values) for key, values in characters.items()}
 
 
 def renderer_for(target: dict[str, Any], environment: dict[str, Any], *, asset_root: Path | None = None,
