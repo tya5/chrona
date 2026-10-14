@@ -552,11 +552,12 @@ source, with `I_SUMMARY_FIGURE_UNBOUND` (Specification46). Neither exception
 changes missing-figure errors for heading or Theme templates.
 
 The View may supply `wording.legend: {<role>: <text>}` and
-`wording.summary: {<panel-id>.<metric-id>: <text>}`. These override the selected
-profile's legend label or metric caption, not its identity, order, source,
+`wording.summary: {<panel-id>.<metric-id>: <text>}`. A summary key
+`<panel-id>.title` overrides that panel's title (#1478). These override the selected
+profile's legend label, metric caption or panel title, not its identity, order, source,
 format or arrangement. A legend key addresses all entries with that role.
 Summary keys address the exact joined identifiers, without splitting on dots;
-if more than one metric has that joined key, an override is ambiguous.
+if multiple metric or panel-title targets have that joined key, an override is ambiguous.
 An unknown or ambiguous key is `E_VIEW_WORDING_UNKNOWN` or
 `E_VIEW_WORDING_AMBIGUOUS` at its original View pointer. An omitted override
 retains the profile label. No entries or panels are synthesized.
@@ -573,8 +574,13 @@ Summary figure behavior specified in Specification46.
 The design-purity tool audits Theme, Layout and presentation profiles against
 the actual Project referenced by each context. View and Context connections
 are excluded. It reports matched Project identifiers and authored wording
-with resource pointers, including string keys, using complete-token/phrase
-comparison rather than arbitrary substring matching. Generic placeholders are
+with resource pointers using complete-token/phrase comparison rather than
+arbitrary substring matching. Resource-root `/version`, `/kind` and `/id`
+are excluded: they identify the format and resource, not Project content.
+Identifier candidates are limited to Project-reference or user-facing wording
+values; a design token or paint name is not a leak merely because a Project
+object has the same identifier (#1479). Authored wording phrases remain
+lexical candidates. Generic placeholders are
 allowed; literal Project wording around them is not hidden. Lexical collisions
 require review and do not by themselves prove project dependence or purity.
 Strict mode rejects unresolved findings; report-only mode preserves findings
