@@ -11,6 +11,13 @@ def test_font_map_uses_only_completed_face_aliases():
     assert mapping.find_font("CFF Proof", "bold", "normal") == ("exact-bold", True)
 
 
+def test_font_map_routes_registered_truetype_faces_without_default_lookup():
+    mapping = _ClosedPdfFontMap({("noto sans", 400): "Noto Sans",
+                                 ("noto sans", 700): "Noto Sans-700"})
+    assert mapping.find_font("Noto Sans", "400", "normal") == ("Noto Sans", True)
+    assert mapping.find_font("Noto Sans", "700", "normal") == ("Noto Sans-700", True)
+
+
 @pytest.mark.parametrize("family,weight,style", [
     ("unknown", "400", "normal"), ("CFF Proof", "700", "normal"),
     ("CFF Proof", "400", "italic"), ("CFF Proof", "invalid", "normal"),

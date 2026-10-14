@@ -13,7 +13,11 @@ from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.presentation.renderers.v05_typeset import V05TikzRenderer, V05TypstRenderer
 from chrona.presentation.renderers.pdf_fonts import (
-    CONVERSION_GRAMMAR, PdfFontConversionError, pdf_embedding_bytes, pdf_font_bytes,
+    CONVERSION_GRAMMAR,
+    EMBEDDING_GRAMMAR,
+    PdfFontConversionError,
+    pdf_embedding_bytes,
+    pdf_font_bytes,
 )
 
 
@@ -92,38 +96,28 @@ class ReportLabPdfRenderer:
             mapping: dict[tuple[str, int], str] = {}
             for item, converted in plans:
                 try:
-                    if translated:
-                        payload, alias = pdf_embedding_bytes(item, converted)
-                        registered = TTFont(alias, BytesIO(payload))
-                        key = (item.family.casefold(), item.weight)
-                        if key in mapping and mapping[key] != alias:
-                            raise PdfFontConversionError(f"conflicting closed PDF faces for {item.family}/{item.weight}")
-                        mapping[key] = alias
-                    else:
-                        registered = TTFont(_reportlab_font_name(item.family, item.weight), str(item.path),
-                                            subfontIndex=item.index)
+                    payload, alias = pdf_embedding_bytes(item, converted)
+                    registered = TTFont(alias, BytesIO(payload))
+                    registered_name = alias
+                    key = (item.family.casefold(), item.weight)
+                    if key in mapping and mapping[key] != registered_name:
+                        raise PdfFontConversionError(f"conflicting closed PDF faces for {item.family}/{item.weight}")
                     pdfmetrics.registerFont(registered)
+                    mapping[key] = registered_name
                 except (TTFError, PdfFontConversionError) as error:
                     raise _failure("E_RENDER_FONT_CLOSURE", f"PDF cannot embed {item.family}/{item.weight} from "
                                    f"{item.path.name}: {error}; render SVG or PNG if embedding is unavailable") from error
-            if not translated:
-                for family in {item.family for item in files}:
-                    faces = {item.weight: _reportlab_font_name(item.family, item.weight)
-                             for item in files if item.family == family}
-                    if 400 in faces:
-                        pdfmetrics.registerFontFamily(family, normal=faces[400],
-                                                      bold=faces.get(700, faces[400]))
             rl_config.invariant = 1
-            drawing = (svg2rlg(BytesIO(svg), font_map=_ClosedPdfFontMap(mapping))
-                       if translated else svg2rlg(BytesIO(svg)))
+            drawing = svg2rlg(BytesIO(svg), font_map=_ClosedPdfFontMap(mapping))
             content = renderPDF.drawToString(drawing)
         except PdfFontConversionError as error:
             raise _failure("E_RENDER_FONT_CLOSURE", str(error)) from error
         except ImportError as error:
             raise _failure("E_RENDER_RASTERIZER_UNAVAILABLE", "target PDF requires installed svglib and reportlab adapters") from error
-        prefix = f"svglib-{self._descriptor['svglibVersion']}-reportlab-{self._descriptor['reportlabVersion']}-invariant"
+        prefix = (f"svglib-{self._descriptor['svglibVersion']}-reportlab-{self._descriptor['reportlabVersion']}-invariant"
+                  f"-{EMBEDDING_GRAMMAR}-fonttools-{version('fonttools')}")
         if translated:
-            prefix += f"-{CONVERSION_GRAMMAR}-fonttools-{version('fonttools')}"
+            prefix += f"-{CONVERSION_GRAMMAR}"
         return RenderArtifact("pdf", "application/pdf", content, _adapter_identity(prefix, identities))
 
 
@@ -203,8 +197,6 @@ def _font_files(descriptor: dict[str, Any] | None, asset_root: Path | None,
     return resolve_font_files(descriptor, asset_root=asset_root, asset_resolver=asset_resolver)
 
 
-def _reportlab_font_name(family: str, weight: int) -> str:
-    return family if weight == 400 else f"{family}-{weight}"
 def _adapter_identity(prefix: str, identities: tuple[str, ...]) -> str:
     return prefix + "-fonts-" + ".".join(identity.removeprefix("sha256:") for identity in identities)
 
