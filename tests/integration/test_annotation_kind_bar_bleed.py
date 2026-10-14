@@ -109,6 +109,21 @@ def _geometry(rendered, note="view-n0"):
             ids[f"annotation-heading:{note}"], ids[f"annotation-text:{note}"])
 
 
+def _filled_bleed_parts(*, label: str, secondary: str = "WARNING", secondary_size: float = 11):
+    source, parts = _parts(bar_bleed="border", text="Short body.")
+    sr.with_note_rail(parts, 300)
+    theme = parts["theme"]["body"]
+    container_id = theme["roles"]["annotation-note-box"]["annotationContainer"]
+    theme["values"][container_id]["value"]["inlineSize"] = "fill"
+    theme["annotationKinds"]["risk"].update(title="{label}", label=label, secondary=secondary)
+    theme["values"]["kind-secondary-size"]["value"] = secondary_size
+    parts["view"]["body"]["annotations"][0]["candidates"] = [sr.candidate(
+        "rail", region={"kind": "slot", "source": "annotations"},
+        connector="none", search_kind="row-aligned")]
+    parts["view"]["body"]["visibility"]["annotations"]["marker"] = "none"
+    return source, parts
+
+
 def _with_explicit_defaults(parts):
     theme = parts["theme"]["body"]
     theme["roles"]["annotation-kind-bar"]["barBleed"] = "none"
@@ -153,6 +168,64 @@ def test_border_bleed_uses_distinct_inner_edges_and_keeps_inset_content_below_ba
         assert image.width > 0 and image.height > 0
         sample = image.getpixel((round(bar.bounds[0] + bar.bounds[2] / 2), round(bar.bounds[1] + 2)))
         assert sample == (142, 27, 18)
+
+
+def test_filled_bleed_label_can_fit_bleeding_bar_beyond_content_insets(tmp_path):
+    source, parts = _filled_bleed_parts(label="Wide title phrase " * 2)
+    rendered = _render(tmp_path, source=source, parts=parts)
+    box, bar, heading, body = _geometry(rendered)
+    title = _ids(rendered)["annotation-kind-text:view-n0:0"]
+    x, _, width, _ = box.bounds
+    body_size = body.text_layout.font_size
+    bar_padding = 0.6 * title.text_layout.font_size
+    inset_bound = (width - (INSET["left"] + INSET["right"]) * body_size
+                   - BORDERS["start"]["width"] - BORDERS["end"]["width"] - 2 * bar_padding)
+    bleed_bound = (width - BORDERS["start"]["width"] - BORDERS["end"]["width"] - 2 * bar_padding)
+
+    assert title.bounds[2] > inset_bound
+    assert title.bounds[2] <= bleed_bound
+    assert len(title.text_layout.lines) == 1
+    assert box.bounds[2] == pytest.approx(300)
+    assert bar.bounds[0] == pytest.approx(x + BORDERS["start"]["width"])
+    assert bar.bounds[2] == pytest.approx(width - BORDERS["start"]["width"] - BORDERS["end"]["width"])
+    assert heading.bounds[0] >= x + BORDERS["start"]["width"] + INSET["left"] * body_size - 0.01
+    assert body.bounds[0] >= x + BORDERS["start"]["width"] + INSET["left"] * body_size - 0.01
+    svg = ET.fromstring(rendered.artifact.content)
+    assert svg.attrib["viewBox"] == "0 0 1200 800"
+    svg_nodes = {node.get("data-scene-id"): node for node in svg.iter() if node.get("data-scene-id")}
+    assert svg_nodes[bar.scene_id] is not None
+    assert float(svg_nodes[bar.scene_id].attrib["width"]) == pytest.approx(bar.bounds[2])
+    assert svg_nodes[title.scene_id] is not None
+    assert "".join(svg_nodes[title.scene_id].itertext()).rstrip() == title.text.rstrip()
+
+
+def test_filled_bleed_wrapped_roles_use_bar_extent_without_widening_slot_twice(tmp_path):
+    long_label = "Wide kind title " * 5
+    source, parts = _filled_bleed_parts(label=long_label, secondary=long_label, secondary_size=22)
+    rendered = _render(tmp_path, source=source, parts=parts)
+    box, bar, heading, body = _geometry(rendered)
+    ids = _ids(rendered)
+    title = ids["annotation-kind-text:view-n0:0"]
+    secondary = ids["annotation-kind-text:view-n0:1"]
+
+    assert len(title.text_layout.lines) >= 2
+    assert title.text == long_label
+    assert len(secondary.text_layout.lines) >= 2
+    assert secondary.text == long_label
+    assert secondary.text_layout.font_size == 22
+    assert box.bounds[2] == pytest.approx(300)
+    assert bar.bounds[2] == pytest.approx(300 - BORDERS["start"]["width"] - BORDERS["end"]["width"])
+    for label in (title, secondary):
+        assert label.bounds[0] >= bar.bounds[0] + 0.6 * title.text_layout.font_size - 0.01
+        assert label.bounds[0] + label.bounds[2] <= bar.bounds[0] + bar.bounds[2] - 0.6 * title.text_layout.font_size + 0.01
+    assert heading.bounds[0] >= box.bounds[0] + BORDERS["start"]["width"] + INSET["left"] * body.text_layout.font_size - 0.01
+    svg = ET.fromstring(rendered.artifact.content)
+    assert svg.attrib["viewBox"] == "0 0 1200 800"
+    svg_nodes = {node.get("data-scene-id"): node for node in svg.iter() if node.get("data-scene-id")}
+    for item in (bar, title, secondary, heading, body):
+        assert item.scene_id in svg_nodes
+    assert len(list(svg_nodes[title.scene_id])) >= 2
+    assert len(list(svg_nodes[secondary.scene_id])) >= 2
 
 
 @pytest.mark.parametrize("bar_width", ["fill", "hug"])
