@@ -82,3 +82,29 @@ the selected missing-role timing above preserves both boundaries. Semantic
 overlay rank and the shared label chip remain unchanged. Selected-role propagation
 must include background validation, catalog patterns, Theme contrast admission and
 Scene capability checks; these are implementation gates, not new policy owners.
+
+## Variant-slice implementation evidence (partial; issue remains open)
+
+Implementation and synthetic tests are committed locally at
+`1ab5febc` (`feat: carry View-selected period variants through completed placements`),
+not yet published to `main`. The focused command
+`./.venv/bin/python -m pytest -q tests/integration/test_named_periods.py tests/unit/chrona/presentation/test_color_scheme.py tests/unit/chrona/presentation/test_role_admission.py tests/unit/chrona/presentation/scene/test_capabilities.py tests/unit/chrona/presentation/model/test_semantic_registry_contrast.py`
+passes: **158 passed**. It covers two simultaneously selected variants with
+distinct band paint, opacity and order; label font size and letter spacing
+changing completed bounds, baseline and Scene TextLayout; selected-role contrast
+floors; background collision behavior; catalogue-pattern admission; unsupported
+property pointers; default output identity; and missing-role timing.
+
+Schema equivalence against `origin/main` passes L1 with `additive=1, equal=37`
+for the optional common-slug View member. Six merged #1341 L1 expected-delta
+records were mechanically retired after proof against their landing commit and
+first parent; all L2/L3 records were preserved. The stale-entry pruner could not
+rewrite these block-style mappings because its rewrite loop parses a single
+top-level line as a whole YAML record (`E_EQUIV_DELTAS_ENTRY:{'layer':'L1'}`).
+After retiring only the proven-stale records,
+`python -m tools.schema_equivalence --base-rev origin/main --prune-stale`
+exits successfully; no schema-gate tooling was changed.
+
+This evidence is limited to the selected variant slice and local focused tests;
+the final CI/public-derived batch is pending publication. Edge treatments and
+the period legend entry remain unimplemented, separately selected follow-ups.
