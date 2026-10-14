@@ -525,8 +525,10 @@ def _scene_contrast_warnings(
     warning, never an error of the render), `none` reports nothing, and `error` fails the render with the first
     finding's blocking code before any adapter output. Structural findings (a malformed paint) are not governed.
     """
-    policy = {**DEFAULT_POLICY, **theme["body"].get("contrastPolicy", {})}
-    findings = evaluate_scene_contrast(scene_document(scene), policy=policy)
+    declared = dict(theme["body"].get("contrastPolicy", {}))
+    exceptions = declared.pop("exceptions", ())
+    findings = evaluate_scene_contrast(scene_document(scene), policy={**DEFAULT_POLICY, **declared},
+                                       exceptions=exceptions)
     blocking = [item for item in findings if item.severity == "error" and item.code in BLOCKING_CODES]
     if blocking:
         first = blocking[0]
@@ -557,12 +559,15 @@ def _contrast_warnings_from_findings(
             continue
         facts: list[tuple[str, float | str]] = []
         for name, value in (("contrastRatio", finding.contrast_ratio), ("floor", finding.floor),
+                            ("exceptionMinimum", finding.exception_minimum),
+                            ("exceptionReason", finding.exception_reason),
                             ("groundId", finding.ground_id), ("groundKind", finding.ground_kind),
                             ("paintChannel", finding.paint_channel)):
             if value is not None:
                 facts.append((name, value))
         warnings.append(SceneContrastWarning(
-            finding.code, WARNING_BLOCKING_CODES[finding.code], finding.scene_path,
+            finding.code, finding.accepted_code or WARNING_BLOCKING_CODES.get(finding.code, finding.code),
+            finding.scene_path,
             (finding.primitive_id,) if finding.primitive_id is not None else (), tuple(facts), finding.disposition,
             _finding_subjects((finding.primitive_id,) if finding.primitive_id is not None else (), provenance)))
     return tuple(warnings)

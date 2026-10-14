@@ -1,7 +1,7 @@
 """Finite completed-Scene contrast policy; no renderer or Theme re-resolution."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from collections.abc import Mapping, Sequence
 from types import MappingProxyType
 from typing import Any
@@ -59,6 +59,9 @@ BLOCKING_CODES = frozenset(WARNING_BLOCKING_CODES.values())
 # Kept for #995's callers and tests: the decoration subset.
 DECORATION_WARNING_BLOCKING_CODES = {warning: blocking for (is_decoration, blocking), warning in _WARNING_CODES.items()
                                      if is_decoration}
+# A floor error that a Theme exception accepts, and an exception that matched nothing (#1134).
+ACCEPTED_CODE = "W_SCENE_CONTRAST_ACCEPTED"
+EXCEPTION_UNUSED_CODE = "W_SCENE_CONTRAST_EXCEPTION_UNUSED"
 # Roles whose sibling parts (one source, one role) are a single ink and never each other's ground.
 _SIBLING_INK_ROLES = frozenset({"annotation-kind-stamp"})
 # The parts of a vector artwork behind an annotation (#848) are ink over the note box: never a host by bounds (their
@@ -147,6 +150,9 @@ class SceneContrastFinding:
     ground_kind: str | None = None
     density_basis_points: int | None = None
     severity_class: str | None = None
+    accepted_code: str | None = None
+    exception_minimum: float | None = None
+    exception_reason: str | None = None
 
     def as_mapping(self) -> dict[str, Any]:
         result = {
@@ -163,16 +169,23 @@ class SceneContrastFinding:
             result["densityBasisPoints"] = self.density_basis_points
         if self.severity_class is not None:
             result["severityClass"] = self.severity_class
+        if self.accepted_code is not None:
+            result.update(acceptedCode=self.accepted_code, exceptionMinimum=self.exception_minimum,
+                          exceptionReason=self.exception_reason)
         return result
 
 
 def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity: str = "warning",
-                            policy: Mapping[str, str] | None = None) -> tuple[SceneContrastFinding, ...]:
+                            policy: Mapping[str, str] | None = None,
+                            exceptions: Sequence[Mapping[str, Any]] = ()) -> tuple[SceneContrastFinding, ...]:
     """Evaluate every finite classified role from serialized completed facts.
 
     `policy` maps each class (`mark`, `stateText`, `groundText`, `decoration`, `unsupportedGround`) to `none`,
     `warning` or `error` (a Theme's `contrastPolicy`, #1126); a class it omits keeps the evaluator's own default:
     a legibility finding is an `error`, a decoration is `decoration_severity` (`warning` or `error`, #995).
+    `exceptions` are a Theme's validated `contrastPolicy.exceptions` (#1134): a floor `error` that an entry matches
+    and that measures at or above the entry's `minimum` becomes `W_SCENE_CONTRAST_ACCEPTED`; an entry that matched
+    nothing is reported as `W_SCENE_CONTRAST_EXCEPTION_UNUSED`. No entries leaves every finding untouched.
     """
     if decoration_severity not in DECORATION_SEVERITIES:
         raise ValueError(f"unsupported decoration severity {decoration_severity!r}")
@@ -184,10 +197,12 @@ def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity:
     surfaces = document.get("surfaces")
     _require(isinstance(surfaces, list) and surfaces, "scene has no surfaces")
     findings: list[SceneContrastFinding] = []
+    used_exceptions: set[int] = set()
     for surface_index, raw_surface in enumerate(surfaces):
         _require(isinstance(raw_surface, Mapping), f"invalid surface {surface_index}")
         surface_id = _string(raw_surface.get("id"), f"surface {surface_index} id")
         scene_path = f"/surfaces/{surface_index}:{surface_id}"
+        start = len(findings)
         canvas = raw_surface.get("canvasPaint")
         ground = _ground(canvas, scene_path)
         primitives = raw_surface.get("primitives")
@@ -217,9 +232,44 @@ def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity:
                                                 catalog_patterns=version == "chrona/scene/v0.7", cones=cones,
                                                 severities=severities))
         findings.extend(_absence_findings(scene_path, raw_surface.get("decorationDispositions", [])))
+        if exceptions:
+            findings[start:] = _apply_exceptions(findings[start:], exceptions, primitives, used_exceptions)
+    for position in range(len(exceptions)):
+        if position not in used_exceptions:
+            findings.append(SceneContrastFinding(
+                EXCEPTION_UNUSED_CODE, "warning", "/", "-", "-", None, None, None, f"exceptions[{position}]"))
     return tuple(sorted(findings, key=lambda item: (
         item.scene_path, item.purpose, item.visual_role, item.disposition, item.primitive_id or "", item.code,
     )))
+
+
+def _apply_exceptions(findings: Sequence[SceneContrastFinding], exceptions: Sequence[Mapping[str, Any]],
+                      primitives: Sequence[Any], used: set[int]) -> list[SceneContrastFinding]:
+    """Turn a floor `error` that a Theme exception accepts into `W_SCENE_CONTRAST_ACCEPTED` (#1134).
+
+    The first entry, in declaration order, that names the finding's role or purpose and its ground applies. A pair
+    below the entry's `minimum` stays the error; the entry still counts as used because the error names the pair.
+    """
+    roles = {item.get("id"): item.get("visualRole") for item in primitives if isinstance(item, Mapping)}
+    result = []
+    for finding in findings:
+        if finding.severity != "error" or finding.code not in _FLOOR_CODES or finding.contrast_ratio is None:
+            result.append(finding)
+            continue
+        ground = "canvas" if finding.ground_id in (None, "canvas") else roles.get(finding.ground_id)
+        for position, entry in enumerate(exceptions):
+            if ("role" in entry and entry["role"] != finding.visual_role) or (
+                    "purpose" in entry and entry["purpose"] != finding.purpose):
+                continue
+            if entry["over"] != "any" and entry["over"] != ground:
+                continue
+            used.add(position)
+            if finding.contrast_ratio >= entry["minimum"]:
+                finding = replace(finding, code=ACCEPTED_CODE, severity="warning", accepted_code=finding.code,
+                                  exception_minimum=float(entry["minimum"]), exception_reason=entry["reason"])
+            break
+        result.append(finding)
+    return result
 
 
 def _mark_figures(primitives: Sequence[Any]) -> dict[int, tuple[tuple[int, Mapping[str, Any]], ...]]:

@@ -1,6 +1,8 @@
 """Immutable Color Scheme validation and deterministic paint resolution."""
 from __future__ import annotations
 
+import math
+
 from decimal import Decimal, InvalidOperation
 from re import fullmatch
 from typing import Any, Mapping
@@ -342,24 +344,54 @@ def _canvas_texture(*, roles: Mapping[str, Any], values: Mapping[str, Any]) -> N
                                f"role='canvas-texture', token={_shown(token_id)}, valueType={type(value).__name__}; expected catalog or seeded pattern")
 
 
-def _contrast_policy(declared: Any) -> dict[str, str]:
+def _contrast_policy(declared: Any) -> dict[str, Any]:
     """Validate the Theme's `contrastPolicy` (#995, #1126) and return it, empty when it declares nothing.
 
     Contrast constraints are an opt-in design option: each member (`mark`, `stateText`, `groundText`,
     `decoration`, `unsupportedGround`) is `none`, `warning` or `error`; a member the Theme omits is `warning`
-    at render. A structural gate is not a contrast constraint and has no member.
+    at render. A structural gate is not a contrast constraint and has no member. The optional `exceptions` list
+    (#1134) names pairs a strict class accepts at a stated `minimum` with a stated `reason`.
     """
     if declared is None:
         return {}
     if not isinstance(declared, Mapping):
         raise ColorSchemeError("E_THEME_CONTRAST_POLICY", "/body/contrastPolicy")
     for member, severity in declared.items():
+        if member == "exceptions":
+            _contrast_exceptions(severity)
+            continue
         if member not in POLICY_MEMBERS:
             raise ColorSchemeError("E_THEME_CONTRAST_POLICY", f"/body/contrastPolicy/{member}")
         if severity not in POLICY_SEVERITIES:
             raise ColorSchemeError("E_THEME_CONTRAST_POLICY", f"/body/contrastPolicy/{member}",
                                    detail=f"expected one of {', '.join(POLICY_SEVERITIES)}")
     return dict(declared)
+
+
+def _contrast_exceptions(declared: Any) -> None:
+    """Validate `contrastPolicy.exceptions` (#1134): `{role | purpose, over, minimum, reason}`, each field at its pointer."""
+    base = "/body/contrastPolicy/exceptions"
+    if not isinstance(declared, list) or not declared:
+        raise ColorSchemeError("E_THEME_CONTRAST_POLICY", base, detail="expected a non-empty list")
+    for position, entry in enumerate(declared):
+        pointer = f"{base}/{position}"
+        if not isinstance(entry, Mapping):
+            raise ColorSchemeError("E_THEME_CONTRAST_POLICY", pointer)
+        for key in entry:
+            if key not in {"role", "purpose", "over", "minimum", "reason"}:
+                raise ColorSchemeError("E_THEME_CONTRAST_POLICY", f"{pointer}/{key}")
+        subjects = [key for key in ("role", "purpose") if key in entry]
+        if len(subjects) != 1:
+            raise ColorSchemeError("E_THEME_CONTRAST_POLICY", pointer, detail="expected exactly one of role or purpose")
+        for key in (subjects[0], "over", "reason"):
+            value = entry.get(key)
+            if not isinstance(value, str) or not value.strip():
+                raise ColorSchemeError("E_THEME_CONTRAST_POLICY", f"{pointer}/{key}",
+                                       detail="expected a non-empty string")
+        minimum = entry.get("minimum")
+        if isinstance(minimum, bool) or not isinstance(minimum, (int, float)) or not math.isfinite(minimum) or minimum <= 0:
+            raise ColorSchemeError("E_THEME_CONTRAST_POLICY", f"{pointer}/minimum",
+                                   detail="expected a finite number greater than 0")
 
 
 def _as_of_cone(*, roles: Mapping[str, Any]) -> None:

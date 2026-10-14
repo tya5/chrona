@@ -326,3 +326,36 @@ def test_the_rule_colour_is_not_a_contrast_surface():
     declared = scheme()
     declared["body"]["colors"]["rule"] = "#FFFFFF"  # as light as the canvas: a hairline, never judged as text
     assert resolve_color_scheme(declared, content_identity="sha256:" + "a" * 64)["rule"] == "#FFFFFF"
+
+
+_EXCEPTION = {"purpose": "as-of-label", "over": "as-of-label-chip", "minimum": 3.5, "reason": "Owner-approved white on amber"}
+
+
+def test_a_valid_contrast_exception_is_carried_by_the_resolved_theme():
+    theme = _paper_note_theme()
+    by_role = {key: value for key, value in _EXCEPTION.items() if key != "purpose"} | {"role": "actual"}
+    theme["body"]["contrastPolicy"] = {"groundText": "error", "exceptions": [_EXCEPTION, by_role]}
+    resolved = resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
+    assert resolved["body"]["contrastPolicy"]["exceptions"][0] == _EXCEPTION
+
+
+@pytest.mark.parametrize("exceptions, pointer", [
+    ([{key: value for key, value in _EXCEPTION.items() if key != "minimum"}], "/body/contrastPolicy/exceptions/0/minimum"),
+    ([{**_EXCEPTION, "minimum": 0}], "/body/contrastPolicy/exceptions/0/minimum"),
+    ([{**_EXCEPTION, "minimum": True}], "/body/contrastPolicy/exceptions/0/minimum"),
+    ([{**_EXCEPTION, "minimum": "3.5"}], "/body/contrastPolicy/exceptions/0/minimum"),
+    ([{key: value for key, value in _EXCEPTION.items() if key != "reason"}], "/body/contrastPolicy/exceptions/0/reason"),
+    ([_EXCEPTION, {**_EXCEPTION, "reason": "  "}], "/body/contrastPolicy/exceptions/1/reason"),
+    ([{**_EXCEPTION, "reason": ""}], "/body/contrastPolicy/exceptions/0/reason"),
+    ([{key: value for key, value in _EXCEPTION.items() if key != "over"}], "/body/contrastPolicy/exceptions/0/over"),
+    ([{**_EXCEPTION, "role": "text"}], "/body/contrastPolicy/exceptions/0"),
+    ([{key: value for key, value in _EXCEPTION.items() if key != "purpose"}], "/body/contrastPolicy/exceptions/0"),
+    ([{**_EXCEPTION, "floor": 3}], "/body/contrastPolicy/exceptions/0/floor"),
+    ([], "/body/contrastPolicy/exceptions"),
+    ("all", "/body/contrastPolicy/exceptions")])
+def test_a_malformed_contrast_exception_is_refused_at_its_pointer(exceptions, pointer):
+    theme = _paper_note_theme()
+    theme["body"]["contrastPolicy"] = {"exceptions": exceptions}
+    with pytest.raises(ColorSchemeError) as error:
+        resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
+    assert (error.value.diagnostic_id, error.value.source_ref) == ("E_THEME_CONTRAST_POLICY", pointer)
