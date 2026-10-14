@@ -33,8 +33,20 @@ The pair changes only `view`.
 ```diff
 --- executive.yaml
 +++ plan-only.yaml
-@@ -1,64 +1,43 @@
- body:
+@@ -19,7 +19,6 @@
+       label:
+         align: start
+         form: short-month
+-        nameTable: en-US
+         orientation: horizontal
+         overflow: thin-with-record
+       role: labels
+@@ -29,39 +28,29 @@
+       unit: month
+   backgroundDecoration:
+     groups: all
+-    rows: alternate
++    rows: none
    comparison:
 -    actual: required
 +    actual: optional
@@ -76,12 +88,17 @@ The pair changes only `view`.
        types:
        - span
        - point
-   surface: table-timeline
+@@ -69,7 +58,7 @@
    tableColumns:
--  - id: Workstream
-+  - id: Work item
+   - align: start
+     headerOrientation: horizontal
+-    id: Workstream
++    id: Work item
      missing: em-dash
      source: title
+     width:
+@@ -79,27 +68,13 @@
+         min: content
    visibility:
      annotations: none
 -    fallback:
@@ -97,6 +114,9 @@ The pair changes only `view`.
 -      side: inside
 +    labels: true
      relations:
+-      content:
+-      - lag
+-      - endpointPair
        mode: semantic
        overflow: suppress
    window:
@@ -108,7 +128,7 @@ The pair changes only `view`.
 +    mode: selected-planned
 +id: controller-z-plan-only
  kind: view
- version: chrona/view/v0.13
+ version: chrona/view/v0.27
 
 
 ## Accessibility
