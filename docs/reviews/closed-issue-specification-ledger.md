@@ -24,3 +24,5 @@ normative specification.
 | #1392 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1392), all literal criteria met; exact-main [release38478676595](https://github.com/tya5/chrona/actions/runs/38478676595) |
 | #1403 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1403), all literal criteria met; exact-main [release38478676595](https://github.com/tya5/chrona/actions/runs/38478676595) |
 | #1342 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1342), both literal criteria met; exact-main [release38481430846](https://github.com/tya5/chrona/actions/runs/38481430846) |
+| #1345 | closed | [Owner provenance disposition](https://github.com/tya5/chrona/issues/1345#issuecomment-6157049134), literal criterion met; exact-main [release38488112476](https://github.com/tya5/chrona/actions/runs/38488112476) |
+| #1356 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1356), selected proposal(a) and acceptance gates met; exact-main [release38488112476](https://github.com/tya5/chrona/actions/runs/38488112476) |
