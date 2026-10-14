@@ -1,5 +1,6 @@
 """The actual PDF contains the selected installed face's glyphs, not a fallback."""
 from hashlib import sha256
+from importlib.metadata import version
 from io import BytesIO
 
 from fontTools.ttLib import TTFont
@@ -52,6 +53,7 @@ def test_installed_cff_role_embeds_exact_selected_glyph_in_pdf(tmp_path, kind, h
     header = next(item for item in rendered.surface.primitives if item.scene_id == "group-header:team-0")
     assert header.text_layout.family == "CFF Proof"
     assert "cff-cu2qu-v1" in rendered.artifact.adapter_identity
+    assert f"pdf-closed-face-v1-fonttools-{version('fonttools')}" in rendered.artifact.adapter_identity
     assert source_identity.removeprefix("sha256:") in rendered.artifact.adapter_identity
     reader = PdfReader(BytesIO(rendered.artifact.content))
     assert header_text in reader.pages[0].extract_text()

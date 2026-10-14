@@ -13,7 +13,7 @@ gates implement its selected proposal(a), not an invented quotation.
 | Invalid declarations, pins and duplicate providers remain hard failures. | met locally | Provider/font-set/initializer/diagnostic batch37 passed; expanded malformed-Context admission suite7 passed (missing locator/address, invalid provider, unknown set, unsafe address). Only typed zero-entry-point facts are deferrable. |
 | Deferred closures cannot leave partial usable Store members. | met locally | [Initializer tests](../../../tests/unit/chrona/usecases/test_init_provider_deferral.py) cover staging discard, source-only pruning, all-deferred and hard-error paths; configuration is published last. |
 | No authored example changes or rendering fallback. | met locally | Implementation changes resource admission and initialization only; source examples are untouched. Rendering still rejects unavailable declared fonts. |
-| Current-head public snapshot and full three-OS release. | not met yet | Required CI/publication gates remain pending; do not close the issue. |
+| Current-head public snapshot and full three-OS release. | met | PR1475 artifact11860435128 retains all101 members and all92 Scene/SVG bytes; only two diagnostic reports change. Exact containing-review main85ed35f12822db7548c743cface1000796e1122f [release38488112476](https://github.com/tya5/chrona/actions/runs/38488112476) succeeds on all three OSes, MCP and newest-Python materializers; [issue closed](https://github.com/tya5/chrona/issues/1356#issuecomment-6158100636). |
 
 Architecture: font-resource owner supplies typed availability; materializer validates
 canonical Contexts and checks every available asset before reporting absence;

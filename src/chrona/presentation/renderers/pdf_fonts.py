@@ -16,6 +16,7 @@ from chrona.presentation.model.font_metrics import FontFile
 
 
 CONVERSION_GRAMMAR = "cff-cu2qu-v1"
+EMBEDDING_GRAMMAR = "pdf-closed-face-v1"
 _OUTLINE_TOLERANCE_EM = 0.001
 
 
@@ -213,14 +214,16 @@ def pdf_font_bytes(item: FontFile, characters: frozenset[int]) -> bytes | None:
 
 
 def pdf_embedding_bytes(item: FontFile, converted: bytes | None) -> tuple[bytes, str]:
-    """Return a namespaced single-face payload for a CFF-translating render.
+    """Return a namespaced, deterministic payload for one selected PDF face.
 
     ``converted`` is the subsetted glyf payload returned by
     :func:`pdf_font_bytes` for CFF sources, and ``None`` for an already-glyf
-    source. This path checks permissions for every selected source face,
-    serializes a deterministic pre-name payload, then derives a unique
-    PostScript name from that payload so ReportLab cannot reuse another face's
-    dynamic-font cache entry.
+    source. This path checks the exact selected source face's embedding
+    permissions, serializes a deterministic pre-name payload, then derives a
+    unique PostScript name from that payload so ReportLab cannot reuse another
+    face's dynamic-font cache entry. TrueType input is extracted unchanged
+    except for its internal PostScript name; CFF input uses the converted glyf
+    payload.
     """
     try:
         source_bytes = item.path.read_bytes()

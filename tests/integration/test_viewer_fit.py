@@ -408,7 +408,8 @@ def test_png_and_pdf_are_drawn_from_the_raw_svg_so_a_fixed_font_output_is_the_ra
         seen["png"] = kwargs["svg_string"]
         return b"png"
 
-    def capture_pdf(stream):
+    def capture_pdf(stream, *, font_map):
+        assert isinstance(font_map, registry._ClosedPdfFontMap)
         seen["pdf"] = stream.read().decode("utf-8")
         raise _Captured
 
