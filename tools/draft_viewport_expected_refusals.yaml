@@ -1,0 +1,59 @@
+# Observed on ready main ac4ac883; each listed case retains its exact refusal.
+# Groups share diagnostic records, not a blanket exemption for a code or project.
+- successor: https://github.com/tya5/chrona/issues/1490
+  outcome:
+    exitCode: 1
+    status: rejected
+    diagnostics:
+      - code: E_LAYOUT_MARK_OVERFLOW
+        severity: error
+        component: presentation
+        sourceRef: /layoutManifest/sources/timeline
+        revisionRefs: []
+        message: 'layout mark overflow: no further detail is recorded for this code (E_LAYOUT_MARK_OVERFLOW)'
+  cases:
+    - chrona-roadmap/roadmap@600x340
+    - halcyon-1/01-mission-brief@800x450
+    - halcyon-1/01-mission-brief@600x340
+    - halcyon-1/04-tvac-slip@800x450
+    - halcyon-1/04-tvac-slip@600x340
+    - halcyon-1/07-replan-baseline@800x450
+    - halcyon-1/07-replan-baseline@600x340
+    - halcyon-1/15-gallery-image-notes@800x450
+    - halcyon-1/15-gallery-image-notes@600x340
+    - halcyon-1/21-target-b@600x340
+    - halcyon-1/22-yuya@600x340
+    - halcyon-1/23-titlecard@600x340
+    - halcyon-1/24-marquee@600x340
+- successor: https://github.com/tya5/chrona/issues/1490
+  outcome:
+    exitCode: 1
+    status: rejected
+    diagnostics:
+      - code: E_LAYOUT_LANE_SEED_INVALID
+        severity: error
+        component: presentation
+        sourceRef: /layoutManifest
+        revisionRefs: []
+        message: 'layout lane seed invalid: no further detail is recorded for this code (E_LAYOUT_LANE_SEED_INVALID)'
+  cases:
+    - halcyon-1/02-programme-board@800x450
+    - halcyon-1/02-programme-board@600x340
+    - halcyon-1/12-glyph-gates@800x450
+    - halcyon-1/12-glyph-gates@600x340
+    - halcyon-1/19-gallery-text-compression@800x450
+    - halcyon-1/19-gallery-text-compression@600x340
+- successor: https://github.com/tya5/chrona/issues/1490
+  outcome:
+    exitCode: 1
+    status: rejected
+    diagnostics:
+      - code: E_LAYOUT_PATH_INPUT
+        severity: error
+        component: presentation
+        sourceRef: /
+        revisionRefs: []
+        message: 'E_LAYOUT_PATH_INPUT: open span requires positive inline_size/block_size and finite nonnegative radius; inline_size=0.0, block_size=14.399999999999999, radius=0.0'
+  cases:
+    - controller-z/annotation-rounded@600x340
+    - controller-z/slot-heading@600x340

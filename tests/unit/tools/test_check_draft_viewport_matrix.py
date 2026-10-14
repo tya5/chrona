@@ -4,12 +4,14 @@ from pathlib import Path
 import sys
 import time
 import subprocess
+import json
 
 import pytest
 import yaml
 
 from chrona.resources import safe_load
 from chrona.usecases.materialize import _OverlayBuilder, copy_context_closure
+from chrona.usecases.render_review import RenderFailed
 from tools import check_draft_viewport_matrix as matrix
 
 
@@ -165,3 +167,69 @@ def test_jobs_must_be_positive(tmp_path, monkeypatch):
         matrix.main()
 
     assert raised.value.code == 2
+
+
+def test_all_21_capacity_cases_remain_explicitly_recorded():
+    expectations = matrix._load_expectations()
+    assert len(expectations) == 21
+    assert sum(item["diagnostics"][0]["code"] == "E_LAYOUT_MARK_OVERFLOW"
+               for item in expectations.values()) == 13
+    assert sum(item["diagnostics"][0]["code"] == "E_LAYOUT_LANE_SEED_INVALID"
+               for item in expectations.values()) == 6
+    assert sum(item["diagnostics"][0]["code"] == "E_LAYOUT_PATH_INPUT"
+               for item in expectations.values()) == 2
+
+
+def test_expected_refusal_matches_complete_public_diagnostic_not_only_code():
+    expected = matrix._load_expectations()["chrona-roadmap/roadmap@600x340"]
+    diagnostic = expected["diagnostics"][0]
+    error = RenderFailed(diagnostic["code"], diagnostic["message"],
+                         diagnostic["component"], diagnostic["sourceRef"])
+    observed = matrix._failure_outcome(error)
+    expectations = {"synthetic/context@600x340": expected}
+    assert matrix._outcome_mismatch("synthetic/context@600x340", observed, expectations) is None
+    for key, value in (("code", "E_OTHER"), ("message", "changed failure"),
+                       ("sourceRef", "/another-source"), ("component", "closure")):
+        changed = deepcopy(observed)
+        changed["diagnostics"][0][key] = value
+        assert matrix._outcome_mismatch("synthetic/context@600x340", changed, expectations)
+    changed = deepcopy(observed)
+    changed["exitCode"] = 2
+    assert matrix._outcome_mismatch("synthetic/context@600x340", changed, expectations)
+
+
+def test_unexpected_success_and_unlisted_failure_are_reported():
+    expected = matrix._load_expectations()["chrona-roadmap/roadmap@600x340"]
+    expectations = {"expected": expected}
+    assert matrix._outcome_mismatch("expected", None, expectations)
+    assert matrix._outcome_mismatch("unlisted", expected, expectations)
+    assert matrix._outcome_mismatch("unlisted", None, expectations) is None
+
+
+def test_retired_expected_case_fails_instead_of_silently_disappearing(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(matrix, "ROOT", tmp_path)
+    monkeypatch.setattr(matrix, "_load_expectations", lambda: {"missing@600x340": {}})
+    monkeypatch.setattr(sys, "argv", ["check_draft_viewport_matrix.py"])
+    assert matrix.main() == 1
+    assert "missing@600x340: expected refusal case is missing" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("identifier", ["chrona-roadmap/roadmap@600x340",
+    "halcyon-1/02-programme-board@600x340", "controller-z/annotation-rounded@600x340"])
+def test_cli_failure_retains_exact_report_and_exit_code(tmp_path, monkeypatch, identifier):
+    expected = matrix._load_expectations()[identifier]
+    payload = {key: value for key, value in expected.items() if key != "exitCode"}
+    monkeypatch.setattr(matrix.subprocess, "run", lambda *args, **kwargs:
+        subprocess.CompletedProcess(args[0], expected["exitCode"],
+                                    stdout=json.dumps(payload, indent=2), stderr=""))
+    reference = {"revision": {"token": "r1"}, "address": "contexts/synthetic.yaml",
+                 "store": {"identity": "synthetic-store"}}
+    with pytest.raises(matrix.CliRenderFailure) as raised:
+        matrix._render_cli(reference, b"synthetic context", tmp_path / "snapshot", tmp_path, (600, 340))
+    assert matrix._failure_outcome(raised.value) == expected
+
+
+def test_raw_path_value_error_uses_existing_failure_reporter():
+    expected = matrix._load_expectations()["controller-z/annotation-rounded@600x340"]
+    error = ValueError(expected["diagnostics"][0]["message"])
+    assert matrix._failure_outcome(error) == expected
