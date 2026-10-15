@@ -115,6 +115,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     table_batch = compose_table(base, seed=table_seed)
     column_placements = table_batch.columns
     text.extend(table_batch.text)
+    table_rule_shapes = table_batch.shapes
     group_batch = compose_group_presentation(
         request=request, rows=rows, review_rows=review_rows, groups=groups, body_size=body_size,
         tag_column=(base.table_bounds[0], base.group_tag_inline_size) if base.group_tag_inline_size else None)
@@ -125,6 +126,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         group_presentation=group_batch,
         row_decoration=request.surface_content.row_decoration,
         group_decoration=request.surface_content.group_decoration))
+    shapes.extend(table_rule_shapes)
     axis = by_source["timeline-axis"]
     shapes.extend(axis_batch.shapes)
     text.extend(axis_batch.text)

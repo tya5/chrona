@@ -164,6 +164,8 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("groupBand", "decoration", "group-decoration", "group-band", "group-band", ContrastClass.DECORATION),
     _binding("rowBand", "decoration", "row-decoration", "row-band", "row-band", ContrastClass.DECORATION),
     _binding("rowRule", "decoration", "row-rule", "row-rule", "row-rule", ContrastClass.DECORATION),
+    # The rule under the table's column headers, across the table width only (#1545).
+    _binding("tableColumnRule", "decoration", "table-column-rule", "tableColumnRule", "tableColumnRule", ContrastClass.DECORATION),
     _binding("groupHeaderBand", "decoration", "group-header-band", "group-header-band", "group-header-band", ContrastClass.DECORATION),
     _binding("groupHeaderStrip", "decoration", "group-header-strip", "group-header-strip", "group-header-strip", ContrastClass.DECORATION),
     # A patterned tab on each group header (#882), a Theme role Layout completes beside the header text.

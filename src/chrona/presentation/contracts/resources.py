@@ -166,6 +166,7 @@ class TableColumn:
     end_display: str = "exclusive"  # display only; scheduled spans retain exclusive endpoints (#1293)
     text_wrap: str = "forbid"
     transform: str | None = None  # a closed cell transform, `initials` (#1373)
+    suffix: str | None = None  # a literal appended to a `rowIndex` cell (#1545)
 
 
 @dataclass(frozen=True)
@@ -209,6 +210,7 @@ class ViewLaneColumn:
     align: str = "start"
     text_role: str | None = None
     transform: str | None = None
+    suffix: str | None = None  # a literal appended to a `rowIndex` cell (#1545)
 
 
 @dataclass(frozen=True)
@@ -992,7 +994,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                                       str(column.get("zero", "signed")),
                                       end_display=str(column.get("endDisplay", "exclusive")),
                                       text_wrap=str(column.get("text", {}).get("wrap", "forbid")),
-                                      transform=str(column["transform"]) if "transform" in column else None)
+                                      transform=str(column["transform"]) if "transform" in column else None,
+                                      suffix=str(column["suffix"]) if "suffix" in column else None)
                           for column in body.get("tableColumns", ()))
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)
@@ -1324,7 +1327,8 @@ def _lane_table_columns(raw: Any) -> tuple[ViewLaneColumn, ...]:
                                    freeze(column["missing"]) if isinstance(column.get("missing"), Mapping) else str(column.get("missing", "em-dash")),
                                    str(column.get("align", "start")),
                                    str(column["textRole"]) if "textRole" in column else None,
-                                   str(column["transform"]) if "transform" in column else None)
+                                   str(column["transform"]) if "transform" in column else None,
+                                   str(column["suffix"]) if "suffix" in column else None)
                     for column in raw)
     if not columns:
         return columns
@@ -1339,6 +1343,9 @@ def _lane_table_columns(raw: Any) -> tuple[ViewLaneColumn, ...]:
         if column.transform is not None and not isinstance(column.source, Mapping):
             raise ContractError("E_VIEW_LANE_TABLE_COLUMNS",
                                 f"laneTable column {column.id!r} declares transform: {column.transform}, so its source must be a field")
+        if column.suffix is not None and column.source != "rowIndex":
+            raise ContractError("E_VIEW_LANE_TABLE_COLUMNS",
+                                f"laneTable column {column.id!r} declares a suffix, so its source must be rowIndex")
     return columns
 
 
@@ -1365,6 +1372,9 @@ def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping
                 raise ContractError("E_VIEW_COLUMN_TRANSFORM",
                                     f"column {column.id!r} declares transform: {column.transform}, so its source must be a field or title "
                                     "and its format text")
+        if column.suffix is not None and column.source != "rowIndex":
+            raise ContractError("E_VIEW_COLUMN_SUFFIX",
+                                f"column {column.id!r} declares a suffix, so its source must be rowIndex")
         if column.affixes is not None and column.format not in SIGNED_FORMATS and any(
                 item is not None for item in (column.affixes.slip, column.affixes.on_time, column.affixes.ahead)):
             raise ContractError("E_VIEW_COLUMN_AFFIX",

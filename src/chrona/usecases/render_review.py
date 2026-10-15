@@ -30,7 +30,8 @@ from chrona.presentation.layout.surface_render_plan import (
     SurfaceRenderPlanInput, SlotHeadingCopyError, SurfacePlanFontError, prepare_surface_render_plan,
 )
 from chrona.presentation.layout.group_header_runs import validate_group_header_roles
-from chrona.presentation.layout.presentation import validate_label_text_role, validate_table_text_roles
+from chrona.presentation.layout.presentation import (
+    validate_label_text_role, validate_lane_table_text_roles, validate_table_text_roles)
 from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
@@ -322,6 +323,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     table_content = normalize_v05_table_content(projection, project, view, actual_set=actual_observations,
                                                 locale=environment.locale)
     validate_table_text_roles(view.table_columns, ThemeTokenView(theme))
+    validate_lane_table_text_roles(view.rows.lane_table, ThemeTokenView(theme))
     validate_label_text_role(view.visibility.labels, ThemeTokenView(theme))
     if view.grouping is not None and view.grouping.header is not None:
         validate_group_header_roles(view.grouping.header.role_pointers(), ThemeTokenView(theme))

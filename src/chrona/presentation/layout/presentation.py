@@ -325,6 +325,15 @@ def validate_table_text_roles(columns: Any, theme_tokens: Any) -> None:
                               detail=f"the Theme declares no text role {role!r} (/body/roles/{role})")
 
 
+def validate_lane_table_text_roles(lane_table: Any, theme_tokens: Any) -> None:
+    """Fail a lane-table column whose `textRole` names a role the Theme does not declare (#1545)."""
+    for index, column in enumerate(getattr(lane_table, "columns", ()) if lane_table is not None else ()):
+        role = column.text_role
+        if role is not None and not theme_tokens.has_role(role):
+            raise LayoutError("E_THEME_ROLE_REQUIRED", f"/body/rows/laneTable/columns/{index}/textRole",
+                              detail=f"the Theme declares no text role {role!r} (/body/roles/{role})")
+
+
 def validate_label_text_role(labels: Any, theme_tokens: Any) -> None:
     """Fail a View whose `visibility.labels.textRole` names a role the Theme does not declare (#1141)."""
     role = labels.get("textRole") if isinstance(labels, Mapping) else None

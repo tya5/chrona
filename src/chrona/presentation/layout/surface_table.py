@@ -12,8 +12,9 @@ from chrona.presentation.layout.presentation import (
 from chrona.presentation.layout.group_tags import header_child_lead
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_base import SurfaceBaseGeometry
+from chrona.presentation.layout.surface_geometry import BACKGROUND_PAINT_ORDER
 from chrona.presentation.layout.surface_quality import (
-    CollisionDomain, ColumnPlacement, SlotPlacement, SurfaceLayoutRequest, TextPlacement, FitWarning,
+    CollisionDomain, ColumnPlacement, ShapePlacement, SlotPlacement, SurfaceLayoutRequest, TextPlacement, FitWarning,
 )
 from chrona.presentation.layout.text import (centred_text_baseline, ellipsize_text, ellipsized_text_warning, measure_text_width,
                                              metric_for_role, place_text, translate_text_block)
@@ -27,6 +28,8 @@ class SurfaceTablePlacements:
     columns: tuple[ColumnPlacement, ...]
     text: tuple[TextPlacement, ...]
     warnings: tuple[FitWarning, ...] = ()
+    # The completed column-header rule, only when the Theme declares `tableColumnRule` (#1545).
+    shapes: tuple[ShapePlacement, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -239,7 +242,26 @@ def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | N
     warnings = tuple(warning for item in text if (warning := ellipsized_text_warning(
         item, theme_tokens=tokens, font_metrics=font_metrics, failure_kind="table-text")) is not None
     ) if seed.bounded_table is not None else ()
-    return SurfaceTablePlacements(tuple(layout_columns), seed.columns, tuple(text), warnings)
+    return SurfaceTablePlacements(tuple(layout_columns), seed.columns, tuple(text), warnings,
+                                  _column_header_rule(base, seed))
+
+
+def _column_header_rule(base: SurfaceBaseGeometry, seed: SurfaceTableHeaderSeed) -> tuple[ShapePlacement, ...]:
+    """One hairline under the column headers, from the table's inline start to its inline end (#1545).
+
+    It sits on the block edge where the first row begins and spans the table slot only, never the timeline.
+    """
+    if base.request.theme_tokens is None or not base.request.theme_tokens.has_role("tableColumnRule"):
+        return ()
+    if not seed.columns or not base.rows:
+        return ()
+    inline, _, inline_size, _ = seed.table_bounds
+    block = min(row.bounds.block for row in base.rows)
+    left, right = Decimal(str(inline)), Decimal(str(inline + inline_size))
+    return (ShapePlacement("table-column-rule", "table-header", "Path",
+                           Rect(left, block, right - left, Decimal(0)),
+                           ((float(left), float(block)), (float(right), float(block))),
+                           slot_id="review-surface", paint_order=BACKGROUND_PAINT_ORDER + 2, semantic_id="tableColumnRule"),)
 
 
 def _resolve_table_text(content: str, available_inline: float, typography_role: str,
