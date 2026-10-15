@@ -513,6 +513,19 @@ hidden new placement mode. The exact versioned View grammar and tail Theme
 treatment are in the linked design; Scene and adapters only project completed
 geometry.
 
+After every declared candidate has failed its existing search, Layout retries
+`nearest-free` candidates in their original order on a coarse grid spanning
+the whole resolved region (#1568), before the existing terminal fallback.
+Each coarse pass examines at most the candidate's existing `maxPositions`
+budget; a one-position budget samples the legal box-origin region's center.
+Grid positions are unique and ordered by anchor distance, then block and
+inline distance and coordinates. Box containment, declared obstacle classes,
+as-of partition, connector topology, bend and detour limits remain unchanged.
+A box and required connector must both fit before either is committed;
+connector-state budgets remain independently bounded per pass. Existing
+successful searches retain their result without entering this second pass.
+If the coarse pass also fails, retain the existing fallback and diagnostics.
+
 ### 8.2 Annotation connector topology after the shared inventory
 
 The [#466 connector correction](../design/issue-466-annotation-connector-topology-correction-2026-09-26.md)
