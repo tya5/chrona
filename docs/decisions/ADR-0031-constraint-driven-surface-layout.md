@@ -22,6 +22,15 @@ Introduce one internal, immutable **SurfaceLayoutRequest → SurfacePlacement** 
 
 A fit or placement condition in an otherwise valid closure never fails before Scene. Layout completes a deterministic `visible-overflow` placement and warning, expanding the completed canvas where necessary. `suppress`, `ellipsize-with-source`, clipping, wrapping and thinning remain explicit author-selected alternatives and retain their source/provenance evidence. Schema, resource, identity, and other invalid-input failures remain errors. Scene and adapters project the completed canvas, geometry and warning records verbatim.
 
+**Temporal-capacity clarification (#1490).** This completion rule requires a
+valid finite positive temporal mapping. A timeline whose allocation leaves no
+positive usable range after native point insets is refused by Layout with a
+typed, slot-named capacity diagnostic and sufficient natural-demand width
+(Spec33/50). Measurement may use natural demand as a prototype, not as an
+emitted placement. No epsilon, guessed host growth or unilateral slot widening
+substitutes for the missing mapping; ordinary positive-range fit shortages
+still complete under the rule above.
+
 ## Consequences
 
 ### Positive

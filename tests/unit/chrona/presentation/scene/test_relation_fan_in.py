@@ -15,11 +15,11 @@ from chrona.presentation.scene.model import (
 )
 from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
 from chrona.presentation.scene.serialization import scene_document
-from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
+from chrona.presentation.surface_pipeline import compose_review_surface
 
 from tests.unit.chrona.presentation.scene.test_relation_entry_side import D, _item
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
-    _Font, _manifest, _theme, _title_measurement, surface_content,
+    _Font, _manifest, _theme, _title_measurement, build_surface_input, surface_content,
 )
 
 

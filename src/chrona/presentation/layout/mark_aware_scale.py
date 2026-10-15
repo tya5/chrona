@@ -38,29 +38,11 @@ def inset_scale_for_point_facets(
     scale is the sole completed mapping; an empty facet set preserves the
     original scale object.
     """
-    if (not isinstance(provisional, ScalePlacement)
-            or type(provisional.domain_start) is not date
-            or type(provisional.domain_end) is not date
-            or provisional.domain_start >= provisional.domain_end
-            or any(not isfinite(value) for value in (
-                provisional.range_start, provisional.range_end,
-                provisional.origin, provisional.unit_ratio))
-            or provisional.range_end <= provisional.range_start
-            or provisional.unit_ratio <= 0):
-        raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/layoutManifest/sources/timeline")
     resolved = tuple(facets)
+    left_inset, right_inset = point_facet_insets(provisional, resolved)
     if not resolved:
         return provisional
-    left_inset = right_inset = 0.0
     days = (provisional.domain_end - provisional.domain_start).days
-    for facet in resolved:
-        if not isinstance(facet, PointMarkFootprint):
-            raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/layout/pointFacets")
-        anchor = provisional.origin + (facet.anchor_date - provisional.domain_start).days * provisional.unit_ratio
-        left_inset = max(left_inset, anchor - facet.left)
-        right_inset = max(right_inset, facet.right - anchor)
-    left_inset = max(0.0, left_inset)
-    right_inset = max(0.0, right_inset)
     range_start = provisional.range_start + left_inset
     range_end = provisional.range_end - right_inset
     if range_end <= range_start:
@@ -71,3 +53,33 @@ def inset_scale_for_point_facets(
         range_start, range_end, range_start,
         (range_end - range_start) / days,
     )
+
+
+def point_facet_insets(
+    provisional: ScalePlacement,
+    facets: Iterable[PointMarkFootprint],
+) -> tuple[float, float]:
+    """Return the exact left/right edge protrusions reserved for resolved point facets.
+
+    This shares the scale's date-to-inline anchor calculation with
+    ``inset_scale_for_point_facets`` so measurement-only capacity prototypes
+    use the same footprint arithmetic as completed placement.
+    """
+    if (not isinstance(provisional, ScalePlacement)
+            or type(provisional.domain_start) is not date
+            or type(provisional.domain_end) is not date
+            or provisional.domain_start >= provisional.domain_end
+            or any(not isfinite(value) for value in (
+                provisional.range_start, provisional.range_end,
+                provisional.origin, provisional.unit_ratio))
+            or provisional.range_end <= provisional.range_start
+            or provisional.unit_ratio <= 0):
+        raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/layoutManifest/sources/timeline")
+    left_inset = right_inset = 0.0
+    for facet in facets:
+        if not isinstance(facet, PointMarkFootprint):
+            raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/layout/pointFacets")
+        anchor = provisional.origin + (facet.anchor_date - provisional.domain_start).days * provisional.unit_ratio
+        left_inset = max(left_inset, anchor - facet.left)
+        right_inset = max(right_inset, facet.right - anchor)
+    return max(0.0, left_inset), max(0.0, right_inset)

@@ -30,7 +30,7 @@ body:
   window:
     mode: selected-planned
   comparison:
-    baseline: primary
+    baseline: snapshot
     actual: optional
     observationSelection: latest
     deltaUnit: calendar-days

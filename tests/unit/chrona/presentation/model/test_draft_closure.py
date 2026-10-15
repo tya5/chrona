@@ -8,7 +8,7 @@ import yaml
 
 from chrona.presentation.model.closure import ClosureError, resolve_draft_render, resolve_guided_draft_render
 from chrona.presentation.fonts.system import SystemFontFace, resolve_system_font
-from chrona.presentation.contracts import PresentationIngressRejected, TypesetterIdentity
+from chrona.presentation.contracts import PresentationIngressRejected, ProjectContract, TypesetterIdentity
 from chrona.usecases.render_review import RenderRequest, render_review
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.resources import default_preset_resource, default_preset_root
@@ -38,6 +38,69 @@ def test_draft_closure_accepts_optional_review_inputs():
     assert draft.closure.detail_profile is not None
     assert draft.closure.context.identity.revision == "draft"
     assert draft.asset_root.name == "resources"
+
+
+def test_draft_snapshot_project_is_typed_without_fabricating_snapshot_reference(tmp_path):
+    root = _root()
+    project_path = _paths(root)["project_path"]
+    snapshot_path = tmp_path / "snapshot-project.yaml"
+    source_bytes = project_path.read_bytes()
+    snapshot_path.write_bytes(source_bytes)
+
+    without_snapshot = resolve_draft_render(**_paths(root))
+    draft = resolve_draft_render(**_paths(root), snapshot_project_path=snapshot_path)
+
+    (snapshot_project,) = [item for item in draft.closure.resources if item.kind == "snapshot-project"]
+    assert isinstance(snapshot_project.contract, ProjectContract)
+    assert snapshot_project.id == draft.closure.project.identity.id
+    assert snapshot_project.revision == "draft"
+    assert snapshot_project.content_identity == "sha256:" + sha256(source_bytes).hexdigest()
+    assert snapshot_project.contract.identity.kind == "project"
+    assert snapshot_project.contract.identity.content_identity == snapshot_project.content_identity
+    assert draft.closure.snapshot_project is snapshot_project.contract
+    assert draft.closure.snapshot is None
+    assert draft.closure.resource("snapshot-ref") is None
+    assert draft.closure.context.snapshot is None
+    assert draft.closure.context == without_snapshot.closure.context
+    assert without_snapshot.closure.snapshot_project is None
+    assert snapshot_path.read_bytes() == source_bytes
+
+
+def test_draft_snapshot_project_rejects_a_different_project_id(tmp_path):
+    root = _root()
+    primary = yaml.safe_load(_paths(root)["project_path"].read_bytes())
+    primary_id = primary["project"]["id"]
+    primary["project"]["id"] = "different-project"
+    snapshot_path = tmp_path / "different-project.yaml"
+    snapshot_path.write_text(yaml.safe_dump(primary, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ClosureError, match="E_CLOSURE_ID") as error:
+        resolve_draft_render(**_paths(root), snapshot_project_path=snapshot_path)
+
+    assert error.value.detail == (
+        f"the snapshot project id 'different-project' is not the context project id {primary_id!r}")
+
+
+@pytest.mark.parametrize(
+    ("document", "code", "source_ref"),
+    [
+        ({"version": "timeline/v0.7", "project": {"id": "controller-z", "title": 7}},
+         "E_PROJECT_SCHEMA", "/project/title"),
+        ({"version": "timeline/v0.6", "project": {"id": "controller-z"}, "objects": {}},
+         "E_RESOURCE_VERSION_UNSUPPORTED", "/version"),
+    ],
+)
+def test_draft_snapshot_project_uses_normal_project_validation(tmp_path, document, code, source_ref):
+    root = _root()
+    primary = yaml.safe_load(_paths(root)["project_path"].read_bytes())
+    document["project"]["id"] = primary["project"]["id"]
+    snapshot_path = tmp_path / "invalid-snapshot-project.yaml"
+    snapshot_path.write_text(yaml.safe_dump(document, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ClosureError) as error:
+        resolve_draft_render(**_paths(root), snapshot_project_path=snapshot_path)
+
+    assert (error.value.diagnostic_id, error.value.source_ref) == (code, source_ref)
 
 
 def test_draft_closure_aggregates_every_schema_finding_in_the_known_resource_set(tmp_path):

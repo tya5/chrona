@@ -14,11 +14,11 @@ import tests.unit.chrona.presentation.scene.test_relation_node_approach as node_
 from chrona.presentation.contracts.resources import ViewWindow
 from chrona.presentation.layout.sources import MeasuredSources, SourceInput
 from chrona.presentation.model.projection import build_review_projection
-from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
+from chrona.presentation.surface_pipeline import compose_review_surface
 
 from tests.unit.chrona.presentation.scene.test_relation_ghost_endpoints import PROJECT as PROJECT_BASE, _view
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
-    _Font, _manifest, _theme, _title_measurement, surface_content,
+    _Font, _manifest, _theme, _title_measurement, build_surface_input, surface_content,
 )
 
 

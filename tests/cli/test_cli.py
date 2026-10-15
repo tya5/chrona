@@ -307,9 +307,29 @@ def test_cli_render_parser_advertises_the_bundled_default_preset():
     assert render.preset is None
     assert render.format is None
     assert render.viewport == "1600xauto"
+    assert render.snapshot is None
     workspace = parser.parse_args(["render-workspace", "workspace.yaml", "--output", "out.svg"])
     assert workspace.viewport == "1600xauto" and workspace.format is None
     assert "chrona-default-draft" in parser._subparsers._group_actions[0].choices["render"].format_help()
+
+
+def test_cli_draft_snapshot_is_a_project_path_forwarded_without_policy_override(monkeypatch):
+    parsed = cli._parser().parse_args([
+        "render", "project.yaml", "--snapshot", "baseline/project.yaml",
+        "--view", "explicit-view.yaml", "--output", "out.svg"])
+    requests = []
+    rendered = object()
+
+    def render(request):
+        requests.append(request)
+        return SimpleNamespace(rendered=rendered)
+
+    monkeypatch.setattr(cli, "render_draft", render)
+    monkeypatch.setattr(cli, "_write_render_outputs", lambda *_: None)
+    monkeypatch.setattr(cli, "_emit_render_result", lambda *_: None)
+    cli._run_draft_render(parsed)
+    assert requests[0].snapshot == "baseline/project.yaml"
+    assert requests[0].view == "explicit-view.yaml"
 
 
 @pytest.mark.parametrize(("suffix", "target"), [

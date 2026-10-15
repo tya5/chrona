@@ -239,6 +239,7 @@ def resolve_draft_render(
     locale: str = "en-US", target_kind: str = "svg", visual_profile: str | None = None, typesetter: TypesetterIdentity | None = None,
     relations: Literal["none", "semantic"] | None = None,
     previous_scene_path: Path | None = None,
+    snapshot_project_path: Path | None = None,
 ) -> DraftRender:
     """Build a typed, in-memory closure from explicit authoring inputs.
 
@@ -273,6 +274,17 @@ def resolve_draft_render(
     sources.extend(_load_draft_source(kind, path) for kind, path in optional if path is not None)
     sources.extend(_load_draft_source("icon-catalog", path) for path in selected_catalog_paths)
     resources = _collect_presentation_resources(sources)
+    if snapshot_project_path is not None:
+        snapshot_project = _load_draft_resource("project", snapshot_project_path)
+        if snapshot_project.id != resources[0].id:
+            raise ClosureError(
+                "E_CLOSURE_ID",
+                detail=(f"the snapshot project id {snapshot_project.id!r} is not the context project id "
+                        f"{resources[0].id!r}"),
+            )
+        resources.append(ClosureResource(
+            "snapshot-project", snapshot_project.id, snapshot_project.revision,
+            snapshot_project.content_identity, snapshot_project.contract))
     preset_metrics, preset_notes = _preset_font_metrics(preset)
     catalog_resources = tuple(resource for resource in resources if resource.kind == "icon-catalog")
     _validate_icon_catalog_set(catalog_resources)

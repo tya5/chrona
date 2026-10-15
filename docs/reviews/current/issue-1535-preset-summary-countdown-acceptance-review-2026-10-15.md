@@ -2,8 +2,12 @@
 
 Implementation: `4643606d0`; public base: `d2992523a`.
 [Approved design, architecture review and implementation plan](https://github.com/tya5/chrona/issues/1535#issuecomment-6189469928).
-Release status: [PR 1547](https://github.com/tya5/chrona/pull/1547), latest-head PR
-and exact-main three-OS gates pending; issue remains open.
+Release accepted: [PR1547](https://github.com/tya5/chrona/pull/1547) merged as
+`ea602a91b`; its final-head [CI38720587731](https://github.com/tya5/chrona/actions/runs/38720587731)
+passed. Exact review-containing ready main `1deffc01491636951f1bf1e25deadb2b0b0494b8`
+passed [release38722752962](https://github.com/tya5/chrona/actions/runs/38722752962):
+Ubuntu/macOS/Windows full pytest, conformance, wheel/smoke, MCP floor and
+newest-Python public-materializer reproduction. All literal rows below are met.
 
 | Literal criterion | Status | Evidence |
 | --- | --- | --- |
@@ -28,10 +32,6 @@ its only external consumer is the live View v0.28 changed in this PR.
 
 Focused results: 122 render-usecase/Core/projection/content/Layout tests;
 137 schema-part/connection/content tests; 66 derived-figure tests, plus the
-new ordinary-heading regression (6 selected tests passed). Full pytest,
-conformance, wheel/smoke and public materializers remain CI release gates.
-CI review finding: the two new Summary id reference sites must be counted in
-the schema identity inventory. Its test census now includes both, preserving
-the existing Summary opaque-id grammar; no product semantics or test guard
-was relaxed. This addresses the sole failing test in run38719293306 (4005 other
-tests passed in that shard); derived-ready failed consequentially.
+new ordinary-heading regression (6 selected tests passed). The schema identity
+census includes both additive Summary id sites, retaining the existing opaque-id
+grammar. Final PR and exact-main release gates above pass without a waiver.

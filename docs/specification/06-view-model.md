@@ -132,6 +132,10 @@ differs from its current one (any planned date), so an item whose baseline equal
 no dashed frame. Without a Snapshot baseline or a Snapshot in the Render Context it draws no ghost and
 raises no diagnostic (#429), so a Layout profile's `viewDefaults` can offer it to Views that have no baseline.
 
+Draft's explicit `--snapshot <project.yaml>` supplies the same Snapshot Project
+role without an immutable SnapshotRef (Spec08 §3.2, #1533). It does not select or
+override a View baseline; the rules above apply to either ingress.
+
 `startDelta = actual.start − planned.start`, `finishDelta = actual.finish − planned.finish`,
 and `atDelta = actual.at − planned.at`, each as a signed integer in calendar days.
 Positive means later/behind; negative means earlier; zero means equal. A delta is absent,

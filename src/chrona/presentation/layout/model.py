@@ -166,6 +166,10 @@ class LayoutManifest:
     relation_unroutable: RelationUnroutableMode = RelationUnroutableMode.RELAX
     point_host_mode: PointHostMode | None = None
 
+    def source_decisions(self) -> dict[str, LayoutDecision]:
+        """Resolve native source ownership in the established manifest order."""
+        return {item.source: item for item in self.decisions if item.source}
+
     def canonical_bytes(self, precision: int = 3) -> bytes:
         quantum = Decimal(1).scaleb(-precision)
 

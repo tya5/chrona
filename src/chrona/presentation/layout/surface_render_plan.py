@@ -20,6 +20,7 @@ from chrona.presentation.layout.source_presence import omit_absent_layout_source
 from chrona.presentation.layout.surface_legend import LegendArrangement, legend_arrangement, legend_source_input
 from chrona.presentation.layout.surface_preparation import SurfacePreRowGeometry, prepare_surface_content, prepare_surface_natural_candidate
 from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest, VisualRequest
+from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
 from chrona.presentation.layout.relation_hint_model import PreviousRouteHints
 from chrona.presentation.layout.surface_source_inputs import bind_heading_dependencies, surface_source_inputs, heading_part_sources
 from chrona.presentation.model.font_metrics import FontMetricsError
@@ -174,10 +175,13 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
             detail=value.detail,
             layout_manifest=candidate,
         )
+        measured = source_sizing.close_manifest(candidate)
         return SurfaceLayoutRequest(
             projection=projection, presentation_contract=normalize_presentation_input(content),
             surface_content=content, layout_manifest=candidate,
-            measured_sources=source_sizing.close_manifest(candidate),
+            measured_sources=measured,
+            temporal_capacity=(TemporalInlineCapacity.from_manifest(candidate, measured)
+                               if view.surface == "table-timeline" else None),
             theme_tokens=ThemeTokenView(theme), font_metrics=font_metrics,
             capabilities=dict(value.capabilities),
             icon_assets=icon_assets, visual_requests=visual_requests,
