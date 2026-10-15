@@ -91,11 +91,13 @@ body:
       columns:
       - id: 'No'
         source: rowIndex
+        suffix: .
       - id: Task
         source: label
       - id: Owner
         source: {field: owner}
         transform: initials
+        textRole: tableCellMono
   markers:
   - kind: asOf
     source: actual
