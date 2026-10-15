@@ -1,6 +1,6 @@
 # #1373 row 3: architecture review
 
-Decision: design complete; implementation not started.
+Decision: design complete; input slice published, physical allocation in progress.
 [Plan](../../planning/active/issue-1373-hosted-points-design-plan-2026-10-15.md) ·
 [Design](../../design/issue-1373-hosted-points-design-2026-10-15.md) ·
 [Normative contract](../../specification/50-constraint-driven-gantt-surface-quality.md#35-physical-point-hosting-1373).
@@ -22,6 +22,15 @@ lane subtracks could not represent a point physically hosted in another lane.
 The selected design resolves it with an allocation-only facet partition, explicit
 hosted-only accounting and final-frame equivalence. Re-review found no remaining
 architecture blocker or mismatch with reviewer6184233415.
+
+Consumer review found that legacy `ConnectorEgress.host_ids` is passed to
+whole-route reduction and recovery. Adding physical neighbours to that field
+would violate the endpoint-only contract. The current design separates physical
+corridor authority and splits full-route segments at recorded exposed boundaries;
+body checks and recovery retain those obstacles. This stays wholly in Layout,
+preserves existing comparison behavior and changes no public policy or schema.
+Required evidence includes reduced collinear terminal segments, setbacks,
+reciprocal endpoint coverage, route-body re-entry, hints and annotation fanout.
 
 Release risks to verify, not completed claims: cross-row labels/dependencies;
 planned/Actual/snapshot/scenario isolation; duplicate occurrence ambiguity;

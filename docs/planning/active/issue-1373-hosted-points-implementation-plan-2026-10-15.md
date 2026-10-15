@@ -3,8 +3,8 @@
 Authority: [design](../../design/issue-1373-hosted-points-design-2026-10-15.md),
 [architecture review](../../reviews/current/issue-1373-hosted-points-architecture-review-2026-10-15.md),
 and [Spec 50 section 3.5](../../specification/50-constraint-driven-gantt-surface-quality.md#35-physical-point-hosting-1373).
-Design published as `c157522e5`; no product code yet. Implementation starts only
-after #1397 row 3 lands. Adopt its current trusted main before the final push.
+Design published as `c157522e5`; input slice published as `563685c8e` after
+#1397 row 3 merged in PR #1523. Adopt current trusted main before the final push.
 
 ## One feature PR, independently checked commits
 
@@ -18,6 +18,13 @@ after #1397 row 3 lands. Adopt its current trusted main before the final push.
 Before shared-file writes, inspect dev B's current claim/PR and coordinate any
 overlap. Do not edit `examples/**` or bot-owned generated reports. No packaged
 Theme adaptation is required; authors opt in and tune existing Theme roles.
+
+Route API correction: keep legacy comparison `host_ids` separate from new
+physical `corridor_host_ids`. Validate physical authority only inside recorded
+endpoint corridors, splitting a reduced segment at exposed boundaries; preserve
+physical host obstacles in recovery. Cover reduction, terminal setback, re-entry,
+fanout, hint and annotation paths before connecting physical neighbour discovery.
+This corrects the consumer contract, not the selected hosting behavior.
 
 ## Required synthetic evidence
 

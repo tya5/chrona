@@ -69,6 +69,17 @@ the View's half-open window admission is independent of inclusive host eligibili
   covering point only on that endpoint corridor. A different hosted point not
   covering the endpoint gains no exemption. All candidate/recovery and
   annotation callers consume this reciprocal, endpoint-local relationship.
+  Keep physical corridor authority separate from `ConnectorEgress.host_ids`,
+  whose legacy consumers also use it for route-body checks. Add an immutable
+  `corridor_host_ids` field and an explicit union used only when validating
+  the semantic-to-exposed segment. The legacy field retains its comparison
+  meaning. Physical neighbours affect exposed-boundary geometry, not generic
+  comparison connectivity. Full-path validators split segments at the recorded
+  exposed boundaries: only the contained endpoint portions receive physical
+  authority, even after collinear reduction or terminal setback. Body portions,
+  corner arcs and fanout extensions receive none. Relaxed recovery must retain
+  physical hosts as obstacles, not discard them as non-endpoint marks. Hint
+  reanchoring and annotation validation consume the same recorded corridors.
 - Lane closure still accounts for exactly one child facet. Preflight needs an
   explicit separation of semantic ownership from physical allocation: the
   current whole-instance subtrack unit cannot represent independently hosted
