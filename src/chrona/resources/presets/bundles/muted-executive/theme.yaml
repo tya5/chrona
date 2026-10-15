@@ -41,7 +41,7 @@ body:
       value: 14
     size.body:
       type: number
-      value: 14
+      value: 15
     size.axis:
       type: number
       value: 11

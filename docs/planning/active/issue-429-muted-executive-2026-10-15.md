@@ -19,7 +19,7 @@ Living record. Public base: `4aab0b9b9` on `main`. Reference: the Muted executiv
 | Dashed baseline outline above the bar | View + Theme | View `comparison.baselineMarks: ghost-when-changed`; Theme `snapshot` role with `pattern: outline`, `dash: dash.baseline`, height 0.28 at offset 0.06 against the bar at 0.42 |
 | 45-degree squares | Theme | `milestone-symbol` shape `diamond` |
 | Dashed amber today marker | Theme/Scheme | `dash.as-of`, `as-of.stroke: accent` (amber) |
-| Two-tier date band, sentence case | View + Theme | `axis.tiers` quarter and month bands with `axisQuarter` / `axisMonth` lane heights (44 and 38), label forms `quarter`, `short-month`, `textTransform: none` |
+| Date band | View + Theme | the packaged axis policy: year band, quarter grid, automatic labels (`axisQuarter`), month grid; two-tier sentence case is a named gap (9) |
 | Palette: warm greys, one blue, one amber | Scheme | `surface`, `surfaceRaised`, `text`, `category:bar` (blue), `accent` (amber) |
 | Legend strip | Detail Profile + Layout | Planned, Baseline, Milestone, Dependency, Today, Non-working day; Layout inherited from the Editorial bundle (horizontal legend) |
 
@@ -27,7 +27,7 @@ The actual mark (drawn whenever Actual data exists) is a thin light strip inside
 
 ## Named gaps
 
-Recorded in [muted-executive-vocabulary-gaps.md](../../diagnostics/muted-executive-vocabulary-gaps.md): dashed baseline not reachable by `render --preset` (no Snapshot on a draft); critical dependencies not distinguishable on the table-timeline; one weight short of three; generic `objectType` group names; group band table-only; number column width; no variance legend swatch. No capability was invented and no design YAML or `examples/**` was edited.
+Recorded in [muted-executive-vocabulary-gaps.md](../../diagnostics/muted-executive-vocabulary-gaps.md): dashed baseline not reachable by `render --preset` (no Snapshot on a draft); critical dependencies not distinguishable on the table-timeline; one weight short of three; no global start order under grouping; axis policy; float drift; no lane-table numbering; generic `objectType` group names; group band table-only; number column width; no variance legend swatch. No capability was invented and no design YAML or `examples/**` was edited.
 
 ## Slice plan and evidence
 
