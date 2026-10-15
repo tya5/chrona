@@ -675,6 +675,10 @@ class ThemeTokenView:
             values.append(float(value) if value is not None else None)
         return values[0], values[1], values[2]
 
+    def legend_swatch_shape(self) -> str | None:
+        """Return the optional Theme default legend-key shape (#1580)."""
+        return self.optional_choice("legend-swatch", "swatchShape", ("circle", "rule-pair"))
+
     def wobble_intent(self, role: str) -> StrokeWobbleIntent | None:
         """Share the declared ink envelope between Layout and Scene (Spec63)."""
         amplitude = self.optional_number(role, "wobbleAmplitude")

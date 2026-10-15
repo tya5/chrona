@@ -70,6 +70,12 @@ def test_stroke_alignment_is_admitted_only_for_contour_stroke_consumers():
         assert theme_role_property_consumer(role, "strokeAlign") is None
 
 
+def test_theme_legend_shape_is_layout_owned_not_a_scene_paint_capability():
+    assert theme_role_property_consumer("legend-swatch", "swatchShape") == "Layout legend swatch geometry and spacing"
+    assert theme_role_property_consumer("planned", "swatchShape") is None
+    assert theme_role_property_consumer("legend-swatch", "arbitraryShape") is None
+
+
 @pytest.mark.parametrize("role", ["actual-ahead", "actual-on-track", "actual-behind"])
 def test_actual_variance_traits_admit_only_fill_not_geometry_or_scene_roles(role):
     contract = theme_role_contract(role)

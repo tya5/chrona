@@ -25,6 +25,22 @@ def test_typed_view_reads_current_resolved_theme_roles_only():
     assert tokens.text_treatment("text").font_size == Decimal(14)
 
 
+@pytest.mark.parametrize("shape", [None, "circle", "rule-pair"])
+def test_optional_legend_shape_is_validated_and_absent_without_fallback(shape):
+    theme = _theme()
+    if shape is not None:
+        theme["body"]["roles"]["legend-swatch"] = {"swatchShape": shape}
+    assert ThemeTokenView(theme).legend_swatch_shape() == shape
+
+
+def test_resolved_legend_shape_rejects_values_outside_closed_vocabulary():
+    theme = _theme()
+    theme["body"]["roles"]["legend-swatch"] = {"swatchShape": "triangle"}
+    with pytest.raises(ThemeTokenError) as raised:
+        ThemeTokenView(theme).legend_swatch_shape()
+    assert raised.value.path == "/body/roles/legend-swatch/swatchShape"
+
+
 @pytest.mark.parametrize("declared,expected", ((None, 6), (8, 8)))
 def test_dependency_halo_width_is_theme_owned(declared, expected):
     theme = _theme()
