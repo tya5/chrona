@@ -760,7 +760,14 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     candidates, ladder = candidate_order(annotation.candidates, annotation.purpose,
                                                           annotation.fallback_ladder, preferred)
                     box, selected_rung, tail_tip = None, None, None
-                    for candidate in (() if annotation_id in suppressed_callout_ids else candidates):
+                    fine_attempts = tuple((item, "fine") for item in candidates)
+                    coarse_attempts = tuple((item, "coarse") for item in candidates
+                                             if item.search.kind == "nearest-free")
+                    search_attempts = (() if annotation_id in suppressed_callout_ids
+                                       else (*fine_attempts, *coarse_attempts))
+                    for candidate, search_pass in search_attempts:
+                        if search_pass == "coarse" and box is not None:
+                            break
                         use_variant(candidate)
                         used_fill = False
                         rung = candidate.candidate_id
@@ -791,7 +798,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                     region=region_bounds, anchor=anchor_bounds, box_size=annotation_size,
                                     max_positions=candidate.search.max_positions, obstacles=surface_obstacles,
                                     obstacle_classes=candidate.obstacles.classes, corner_radius=corner_radius,
-                                    tail_base=tail_base, host_id=host_id, side_of_as_of=as_of_side_constraint)
+                                    tail_base=tail_base, host_id=host_id, side_of_as_of=as_of_side_constraint,
+                                    search_pass=search_pass)
                                 annotation_search_count += trials
                                 tail_box_position_limit = candidate.search.max_positions
                                 tail_box_positions_examined = trials
@@ -820,7 +828,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                             float(viewport.block + viewport.block_size)),
                                         host_id=host_id, side_of_as_of=as_of_side_constraint,
                                         max_bends=layout_manifest.annotation_max_bends,
-                                        max_detour_ratio=layout_manifest.annotation_max_detour_ratio)
+                                        max_detour_ratio=layout_manifest.annotation_max_detour_ratio,
+                                        search_pass=search_pass)
                                     annotation_search_count += routed.box_trials + routed.route_states
                                     tail_box_positions_examined = max(trials, routed.box_trials)
                                     tail_route_state_limit = 1024
@@ -828,7 +837,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                     tail_route_search_exhausted = routed.exhausted and routed.box is None
                                     if routed.exhausted and routed.box is None:
                                         add_diagnostic(
-                                            f"W_LAYOUT_ANNOTATION_ROUTE_SEARCH_EXHAUSTED:{annotation_id}:{rung}", annotation)
+                                            f"W_LAYOUT_ANNOTATION_ROUTE_SEARCH_EXHAUSTED:{annotation_id}:{rung}",
+                                            annotation)
                                     if routed.box is not None and routed.egress is not None and routed.route is not None:
                                         box = AnnotationBox(resolved, LabelPlacement(rung, routed.box, False), False)
                                         selected_rung, tail_tip = rung, routed.tip
@@ -841,16 +851,29 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             else:
                                 anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
                                                  anchor_bounds.y + anchor_bounds.height / 2)
+                                leader_required = candidate.connector.kind == "leader"
+                                coarse_leader_trial = None
+
+                                def coarse_box_has_connector(free_box: LabelRect) -> bool:
+                                    nonlocal coarse_leader_trial
+                                    candidate_box = AnnotationBox(
+                                        resolved, LabelPlacement(rung, free_box, False), leader_required)
+                                    coarse_leader_trial = trial_leader(candidate_box, rung) if leader_required else None
+                                    return not (leader_required and presentation.leader_semantic_id is not None
+                                                and coarse_leader_trial is None)
+
                                 free_box, trials = nearest_free_box(
                                     region=region_bounds, anchor_center=anchor_center, box_size=annotation_size,
                                     max_positions=candidate.search.max_positions, obstacles=surface_obstacles,
                                     obstacle_classes=candidate.obstacles.classes, host_id=host_id,
-                                    side_of_as_of=as_of_side_constraint)
+                                    side_of_as_of=as_of_side_constraint, search_pass=search_pass,
+                                    candidate_validator=(coarse_box_has_connector
+                                                         if search_pass == "coarse" else None))
                                 annotation_search_count += trials
                                 if free_box is not None:
-                                    leader_required = candidate.connector.kind == "leader"
                                     candidate_box = AnnotationBox(resolved, LabelPlacement(rung, free_box, False), leader_required)
-                                    leader_trial = trial_leader(candidate_box, rung) if leader_required else None
+                                    leader_trial = (coarse_leader_trial if search_pass == "coarse" else
+                                                    trial_leader(candidate_box, rung) if leader_required else None)
                                     if not (leader_required and presentation.leader_semantic_id is not None and leader_trial is None):
                                         box, selected_rung, selected_leader = candidate_box, rung, leader_trial
                         else:

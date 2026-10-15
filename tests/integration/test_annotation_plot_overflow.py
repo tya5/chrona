@@ -11,6 +11,12 @@ from tests.support import synthetic_review as sr
 def _render(tmp_path, *, max_positions: int):
     source = ak.project(kinds=("risk", "risk"), text="Required synthetic plot annotation text.")
     parts = sr.bundle()
+    if max_positions == 1:
+        # This is the explicit exhausted-search fixture: the legal plot cannot
+        # contain the measured callout at all, so neither coarse nor fine
+        # search has a box to accept and the existing visible fallback applies.
+        sr.fix_inline(parts, "timeline", 20, token="tiny-timeline-inline")
+        sr.fix_block(parts, "timeline", 20, token="tiny-timeline-block")
     ak.with_view_notes(parts, source)
     ak.with_kind_theme(parts)
     view_annotations = parts["view"]["body"]["annotations"]

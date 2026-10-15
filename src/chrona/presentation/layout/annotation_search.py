@@ -10,7 +10,8 @@ measures text, reads a Theme or serializes a primitive.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import fsum
+from math import fsum, log
+from typing import Callable
 
 from chrona.presentation.layout.annotations import nearest_box_port
 from chrona.presentation.layout.balloon_geometry import nearest_eligible_edge, tail_base_points
@@ -88,6 +89,74 @@ def lattice_positions(region: LabelRect, box_size: tuple[float, float],
     return tuple(LabelRect(x, y, width, height) for _, (x, y) in ordered)
 
 
+def coarse_lattice_positions(region: LabelRect, box_size: tuple[float, float],
+                             anchor_center: tuple[float, float], max_positions: int) -> tuple[LabelRect, ...]:
+    """Return a bounded, whole-region grid, nearest-first and deterministic.
+
+    Unlike the fine lattice, this samples legal box-origin extents rather than
+    stepping out from the anchor. The existing per-pass position budget is the
+    only cap; a one-position pass samples the region center.
+    """
+    width, height = box_size
+    if width <= 0 or height <= 0 or max_positions < 1:
+        raise _search_input_error("coarse lattice box candidates", box_size=box_size,
+                                  max_positions=max_positions, region=(region.x, region.y,
+                                                                       region.width, region.height))
+    min_x, min_y = region.x, region.y
+    max_x, max_y = region.right - width, region.bottom - height
+    if max_x < min_x or max_y < min_y:
+        return ()
+    if max_positions == 1:
+        xs = ((min_x + max_x) / 2,)
+        ys = ((min_y + max_y) / 2,)
+    else:
+        range_x, range_y = max_x - min_x, max_y - min_y
+        if range_x == 0:
+            columns, rows = 1, max_positions
+        elif range_y == 0:
+            columns, rows = max_positions, 1
+        elif max_positions >= 4:
+            dimensions = [(columns, max_positions // columns)
+                          for columns in range(2, max_positions // 2 + 1)]
+
+            def grid_score(pair: tuple[int, int]) -> tuple[float, int, int, int]:
+                columns, rows = pair
+                inline_step = range_x / (columns - 1)
+                block_step = range_y / (rows - 1)
+                return (abs(log(inline_step / block_step)), -(columns * rows),
+                        abs(columns - rows), columns)
+
+            columns, rows = min(dimensions, key=grid_score)
+        else:
+            if range_x >= range_y:
+                columns, rows = max_positions, 1
+            else:
+                columns, rows = 1, max_positions
+        xs = tuple(min_x + range_x * index / (columns - 1) for index in range(columns)) if columns > 1 else ((min_x + max_x) / 2,)
+        ys = tuple(min_y + range_y * index / (rows - 1) for index in range(rows)) if rows > 1 else ((min_y + max_y) / 2,)
+    raw = tuple(dict.fromkeys((x, y) for y in ys for x in xs))
+
+    def key(indexed: tuple[int, tuple[float, float]]) -> tuple[float, float, float, float, float, int]:
+        index, (x, y) = indexed
+        cx, cy = x + width / 2, y + height / 2
+        block_distance = abs(cy - anchor_center[1])
+        inline_distance = abs(cx - anchor_center[0])
+        return (block_distance + inline_distance, block_distance, inline_distance, y, x, index)
+
+    ordered = sorted(enumerate(raw), key=key)[:max_positions]
+    return tuple(LabelRect(x, y, width, height) for _, (x, y) in ordered)
+
+
+def _candidate_positions(region: LabelRect, box_size: tuple[float, float],
+                         anchor_center: tuple[float, float], max_positions: int,
+                         search_pass: str) -> tuple[LabelRect, ...]:
+    if search_pass == "fine":
+        return lattice_positions(region, box_size, anchor_center, max_positions)
+    if search_pass == "coarse":
+        return coarse_lattice_positions(region, box_size, anchor_center, max_positions)
+    raise _search_input_error("annotation search pass", search_pass=search_pass)
+
+
 def _axis_positions(minimum: float, maximum: float, step: float) -> tuple[float, ...]:
     positions = [minimum]
     value = minimum
@@ -108,7 +177,10 @@ def nearest_free_box(*, region: LabelRect, anchor_center: tuple[float, float],
                      box_size: tuple[float, float], max_positions: int,
                      obstacles: SurfaceObstacleIndex, obstacle_classes: tuple[str, ...],
                      exempt_ids: tuple[str, ...] = (), host_id: str | None = None,
-                     side_of_as_of: tuple[float, str] | None = None) -> tuple[LabelRect | None, int]:
+                     side_of_as_of: tuple[float, str] | None = None,
+                     search_pass: str = "fine",
+                     candidate_validator: Callable[[LabelRect], bool] | None = None
+                     ) -> tuple[LabelRect | None, int]:
     """Return the first collision-free box on the lattice, and the trial count.
 
     ``side_of_as_of`` is ``(as_of_x, "start"|"end")``: when given, an
@@ -116,7 +188,7 @@ def nearest_free_box(*, region: LabelRect, anchor_center: tuple[float, float],
     as-of rule's inline coordinate.
     """
     trials = 0
-    for box in lattice_positions(region, box_size, anchor_center, max_positions):
+    for box in _candidate_positions(region, box_size, anchor_center, max_positions, search_pass):
         trials += 1
         if side_of_as_of is not None:
             as_of_x, side = side_of_as_of
@@ -124,7 +196,7 @@ def nearest_free_box(*, region: LabelRect, anchor_center: tuple[float, float],
                 continue
         collisions = obstacles.collisions(ObstacleRect(box.x, box.y, box.right, box.bottom),
                                           classes=obstacle_classes, port_ids=exempt_ids, host_id=host_id)
-        if not collisions:
+        if not collisions and (candidate_validator is None or candidate_validator(box)):
             return box, trials
     return None, trials
 
@@ -134,7 +206,8 @@ def nearest_free_tail_box(*, region: LabelRect, anchor: LabelRect,
                           obstacles: SurfaceObstacleIndex, obstacle_classes: tuple[str, ...],
                           corner_radius: float, tail_base: float,
                           host_id: str | None = None,
-                          side_of_as_of: tuple[float, str] | None = None
+                          side_of_as_of: tuple[float, str] | None = None,
+                          search_pass: str = "fine"
                           ) -> tuple[LabelRect | None, tuple[float, float] | None, int]:
     """Return the first box whose body *and* tail edges clear every obstacle.
 
@@ -146,7 +219,7 @@ def nearest_free_tail_box(*, region: LabelRect, anchor: LabelRect,
     """
     anchor_center = (anchor.x + anchor.width / 2, anchor.y + anchor.height / 2)
     trials = 0
-    for box in lattice_positions(region, box_size, anchor_center, max_positions):
+    for box in _candidate_positions(region, box_size, anchor_center, max_positions, search_pass):
         trials += 1
         if side_of_as_of is not None:
             as_of_x, side = side_of_as_of
@@ -177,7 +250,8 @@ def nearest_free_routed_tail_box(*, region: LabelRect, anchor: MarkPlacement, en
                                  host_id: str | None = None,
                                  side_of_as_of: tuple[float, str] | None = None,
                                  max_bends: int = 4, max_detour_ratio: float = 2.0,
-                                 route_state_limit: int = 1024) -> RoutedTailSearchResult:
+                                 route_state_limit: int = 1024,
+                                 search_pass: str = "fine") -> RoutedTailSearchResult:
     """Find a free box with a strict routed connector ending at an exterior tip.
 
     Candidate-box trials and connector states have independent finite limits.
@@ -191,7 +265,7 @@ def nearest_free_routed_tail_box(*, region: LabelRect, anchor: MarkPlacement, en
     anchor_center = (float(anchor.bounds.inline + anchor.bounds.inline_size / 2),
                      float(anchor.bounds.block + anchor.bounds.block_size / 2))
     route_states = box_trials = 0
-    for box in lattice_positions(region, box_size, anchor_center, max_positions):
+    for box in _candidate_positions(region, box_size, anchor_center, max_positions, search_pass):
         box_trials += 1
         if side_of_as_of is not None:
             x, side = side_of_as_of
