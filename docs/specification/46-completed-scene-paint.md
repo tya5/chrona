@@ -275,7 +275,12 @@ primitive's painted sample point; if none covers it, the opaque canvas is
 the ground. The finding records the ground primitive identity or `canvas`,
 ground colour, evaluated paint channel and ratio. A classified mark has a
 3.0:1 visibility floor; a required state-text role has a 4.5:1 floor.
-`variance-behind` is always required. A translucent or non-flat overlapping
+Text in `variance-behind` is always required. A graphical legend swatch
+(`legend-swatch`, kind Rect, Symbol or Path) using a registered state-text
+role is instead a mark: it retains that role's bound paint, requires no
+`contrastTreatment`, and follows the 3.0:1 mark floor and `contrastPolicy.mark`.
+This does not relax Text or graphical uses with any other purpose.
+A translucent or non-flat overlapping
 host cannot be treated as an opaque ground by assumption. The evaluator is a
 Scene observer, not a Theme or adapter paint selector. This supersedes the
 canvas-only ground rule of the initial #431 design.
@@ -295,7 +300,7 @@ host is composited over its own ground (#1013, section 8); other non-flat hosts 
 **Contrast constraints are an opt-in design option (#995, #1126).** The floors of this section (3.0:1 for a
 mark, 4.5:1 or 3.0:1 for a state text, 4.5:1 for ground text, 1.10:1 for a decoration) are design constraints a
 Theme chooses; they do not bind a Theme that does not ask. Every finding belongs to a *class*, fixed by the
-registry's contrast class of the role and never by a slide: `mark`, `stateText`, `groundText` and `decoration`,
+registry's completed role/kind/purpose classification and never by a slide: `mark`, `stateText`, `groundText` and `decoration`,
 plus `unsupportedGround` for a mark or text whose ground cannot be computed (a decoration on such a ground follows
 `decoration`: a measurement that cannot be made, not an illegibility). A finding carries `severityClass`
 (`legibility` or `decoration`). The Theme's `contrastPolicy` (Specification 07) sets each class `none`,

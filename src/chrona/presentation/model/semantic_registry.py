@@ -11,7 +11,7 @@ what a Layout Profile may name, and what a renderer must be able to draw.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from re import fullmatch
 
@@ -351,6 +351,19 @@ def contrast_binding_for(scene_role: str, purpose: str | None) -> SemanticBindin
     theme_text_role = scene_role not in _SCENE_ROLES or scene_role in {"heading", "subtitle", "kicker", "summary-caption", "summary-unit"}
     return next((item for item in contrast_bindings(ContrastClass.GROUND_TEXT)
                  if item.purpose == purpose and (theme_text_role or scene_role in ("text", item.scene_role))), None)
+
+
+def contrast_binding_for_primitive(scene_role: str, kind: str, purpose: str | None) -> SemanticBinding | None:
+    """Classify completed ink without mistaking a graphical legend key for text.
+
+    Role identity and Theme paint remain unchanged. Only a closed graphical
+    legend swatch borrows MARK contrast; purpose-based ground text remains Text-only.
+    """
+    binding = contrast_binding_for(scene_role, purpose if kind == "Text" else None)
+    if (binding is not None and binding.contrast_class == ContrastClass.STATE_TEXT
+            and kind in {"Rect", "Symbol", "Path"} and purpose == "legend-swatch"):
+        return replace(binding, contrast_class=ContrastClass.MARK)
+    return binding
 
 
 def contrast_bindings(contrast_class: ContrastClass) -> tuple[SemanticBinding, ...]:

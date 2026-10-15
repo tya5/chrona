@@ -1,7 +1,8 @@
 import pytest
 
 from chrona.presentation.model.semantic_registry import (
-    ContrastClass, contrast_binding, contrast_binding_for, contrast_bindings, semantic_binding, semantic_ids,
+    ContrastClass, contrast_binding, contrast_binding_for, contrast_binding_for_primitive,
+    contrast_bindings, semantic_binding, semantic_ids,
 )
 
 # Free ink on a ground the Theme chose (#884, #980): every Text a surface draws that no role-classified binding covers.
@@ -96,3 +97,30 @@ def test_a_theme_text_paint_role_is_ground_text_by_its_purpose(tmp_path):
     assert contrast_binding_for("table-cell-secondary", "no-such-purpose") is None
     assert contrast_binding_for("table-cell-secondary", None) is None
     assert contrast_binding_for("axis-label2", "member-label") is None
+
+
+@pytest.mark.parametrize("role", ["variance-ahead", "variance-on-track", "variance-behind"])
+@pytest.mark.parametrize("kind", ["Rect", "Symbol", "Path"])
+def test_graphical_variance_legend_swatches_use_mark_contrast(role, kind):
+    binding = contrast_binding_for_primitive(role, kind, "legend-swatch")
+
+    assert binding is not None and binding.contrast_class == ContrastClass.MARK
+
+
+@pytest.mark.parametrize("kind,purpose", [
+    ("Text", "table-cell"),
+    ("Text", "legend-label"),
+    ("Rect", "planned"),
+    ("Symbol", "planned"),
+    ("Path", "dependency-connector"),
+    ("Text", "legend-swatch"),
+])
+def test_variance_role_keeps_existing_state_text_class_outside_graphical_legend(kind, purpose):
+    binding = contrast_binding_for_primitive("variance-behind", kind, purpose)
+
+    assert binding is not None and binding.contrast_class == ContrastClass.STATE_TEXT
+
+
+def test_primitive_resolver_keeps_purpose_based_ground_text_text_only():
+    assert contrast_binding_for_primitive("text", "Text", "legend-label").contrast_class == ContrastClass.GROUND_TEXT
+    assert contrast_binding_for_primitive("text", "Rect", "legend-label") is None
