@@ -98,7 +98,9 @@ def compose_deadline_marks(*, base: SurfaceBaseGeometry, theme_tokens: object, d
                     ((x, bottom), (finish, bottom)), slot_id=host.slot_id, paint_order=paint_order_base + order,
                     semantic_id=DEADLINE_SEMANTIC, subjects=host.subjects))
     if outline_width and stroke_width > 0:
+        wobble = theme_tokens.wobble_intent("deadline-mark")
+        margin = stroke_width / 2 + outline_width + (float(wobble.amplitude) if wobble is not None else 0)
         outlines = tuple(ground for shape in shapes
-                         if (ground := _outline(shape, stroke_width / 2 + outline_width)) is not None)
+                         if (ground := _outline(shape, margin)) is not None)
         shapes = [*outlines, *shapes]
     return DeadlineBatch(tuple(shapes), tuple(diagnostics))

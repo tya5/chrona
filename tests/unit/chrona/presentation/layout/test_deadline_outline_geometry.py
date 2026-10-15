@@ -47,6 +47,7 @@ def test_invisible_stroke_adds_no_ground_but_visible_tick_and_run_do(stroke_widt
                          (20, 35), (60, 35), semantic_id="planned", slot_id="timeline")
     tokens = SimpleNamespace(deadline_mark=lambda _role: (1.7, 5),
                              deadline_outline_width=lambda _role: 1,
+                             wobble_intent=lambda _role: None,
                              number=lambda _role, _property: stroke_width)
     batch = compose_deadline_marks(base=base, theme_tokens=tokens,
         deadlines=(ReviewDeadline("owner", date(2026, 1, 5), date(2026, 1, 8), True),),

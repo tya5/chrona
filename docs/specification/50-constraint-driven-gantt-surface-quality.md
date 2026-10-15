@@ -1109,7 +1109,8 @@ Contrast is gated as a `mark` role at 3:1 over the primitive beneath its centre.
 With the optional Spec07 `outlineWidth`, Layout also completes a
 `deadlineMarkOutline` Rect for each nonzero painted stroke, preserving its
 source/subject/slot and using placement id `<stroke id>:outline`. Its bounds
-enclose the stroke plus the declared margin, including the caps, and its paint
+enclose the maximum stroke ink envelope (including declared wobble amplitude)
+plus the outline margin, including the caps, and its paint
 order is one below the foreground. All outline grounds paint before all
 foregrounds at that order. Scene fills these grounds with opaque
 `background.fill`; the existing foreground contrast gate observes their real

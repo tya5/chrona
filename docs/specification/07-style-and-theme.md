@@ -415,7 +415,10 @@ primitive on the row ground. `markReach` is added in place to the live Theme sch
 Optional `outlineWidth` (#1397) names a nonnegative physical-pixel margin around
 the tick and run strokes; absent/zero preserves flat output. Layout completes
 an opaque filled rectangular ground around each nonzero straight stroke,
-including its caps, with total width `strokeWidth + 2 * outlineWidth`.
+including its caps, with total width
+`strokeWidth + 2 * (outlineWidth + declared wobbleAmplitude)` (amplitude is zero
+when absent). This uses the declared maximum ink envelope even when a profile
+omits optional wobble, so the completed ground geometry is profile-independent.
 Its ink is `background.fill`, and all grounds paint at the foreground order
 minus one. Scene projects them as `deadline-mark-outline` Rects; adapters do
 not derive them. Existing clipping is preserved for both layers. The underlay

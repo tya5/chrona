@@ -354,6 +354,37 @@ def test_negative_outline_width_is_refused_at_its_theme_property(tmp_path):
     assert raised.value.source_ref == "/body/roles/deadline-mark/outlineWidth"
 
 
+def test_outline_contains_wobbled_ink_and_keeps_its_geometry_on_profile_fallback(tmp_path):
+    from xml.etree import ElementTree
+
+    parts = _parts(outline=1)
+    body = parts["theme"]["body"]
+    body["values"].update({"deadline.amp": {"type": "number", "value": 4},
+                           "deadline.wave": {"type": "number", "value": 4},
+                           "deadline.seed": {"type": "number", "value": 1},
+                           "deadline.fidelity": {"type": "fidelity", "value": "decorative-optional"}})
+    body["roles"]["deadline-mark"].update({"wobbleAmplitude": "deadline.amp", "wobbleWavelength": "deadline.wave",
+                                          "wobbleSeed": "deadline.seed", "wobbleFidelity": "deadline.fidelity"})
+    rich = _render(tmp_path, parts=parts, name="rich", visual_profile="chrona-output/visual/v0.6-svg")
+    baseline = _render(tmp_path, parts=parts, name="baseline")
+    grounds = {item.scene_id: item for item in rich.surface.primitives if item.visual_role == "deadline-mark-outline"}
+    assert [item.bounds for item in grounds.values()] == [item.bounds for item in baseline.surface.primitives
+                                                        if item.visual_role == "deadline-mark-outline"]
+    assert all(item.paint.wobble is None for item in _marks(baseline))
+    svg = ElementTree.fromstring(rich.artifact.content)
+    elements = {node.attrib["data-scene-id"]: node for node in svg.iter() if "data-scene-id" in node.attrib}
+    for mark in _marks(rich):
+        ground = grounds[mark.scene_id + ":outline"]
+        assert mark.paint.wobble is not None
+        reserve = mark.paint.stroke_width / 2 + 1
+        for line in mark.paint.wobble.outline:
+            for x, y in line:
+                assert ground.bounds[0] + reserve - .001 <= x <= ground.bounds[0] + ground.bounds[2] - reserve + .001
+                assert ground.bounds[1] + reserve - .001 <= y <= ground.bounds[1] + ground.bounds[3] - reserve + .001
+        assert elements[mark.scene_id].tag.endswith("path") and "d" in elements[mark.scene_id].attrib
+        assert elements[ground.scene_id].tag.endswith("rect")
+
+
 def test_the_scene_validates_and_the_contrast_gate_judges_every_mark_at_the_mark_floor(tmp_path):
     document = scene_document(_render(tmp_path).scene)
     validate_scene_document(document)

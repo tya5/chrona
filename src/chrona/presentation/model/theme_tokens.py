@@ -20,6 +20,15 @@ class ThemeTokenError(ValueError):
         self.detail = detail
 
 
+@dataclass(frozen=True)
+class StrokeWobbleIntent:
+    """Validated geometry parameters; profile admission stays with Scene paint."""
+
+    amplitude: Decimal
+    wavelength: Decimal
+    seed: int
+
+
 def _operand(value: Any) -> str:
     """Describe an invalid Theme operand by type without echoing authored content."""
     if value is None:
@@ -665,6 +674,28 @@ class ThemeTokenView:
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/legend-swatch/{name}")
             values.append(float(value) if value is not None else None)
         return values[0], values[1], values[2]
+
+    def wobble_intent(self, role: str) -> StrokeWobbleIntent | None:
+        """Share the declared ink envelope between Layout and Scene (Spec63)."""
+        amplitude = self.optional_number(role, "wobbleAmplitude")
+        wavelength = self.optional_number(role, "wobbleWavelength")
+        seed = self.optional_number(role, "wobbleSeed")
+        if amplitude is None and wavelength is None and seed is None:
+            return None
+        pointer = f"/body/roles/{role}/wobbleAmplitude"
+        if amplitude is None or wavelength is None or seed is None:
+            raise ThemeTokenError("E_VISUAL_CAPABILITY_VALUE", pointer,
+                                  "wobbleAmplitude, wobbleWavelength, and wobbleSeed must be declared together")
+        if not 0 < float(amplitude) <= 16:
+            raise ThemeTokenError("E_VISUAL_CAPABILITY_LIMIT", pointer,
+                                  f"wobbleAmplitude {float(amplitude):g} must be in (0, 16]")
+        if not 4 <= float(wavelength) <= 1000:
+            raise ThemeTokenError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/wobbleWavelength",
+                                  f"wobbleWavelength {float(wavelength):g} must be in [4, 1000]")
+        if seed != seed.to_integral_value() or not 0 <= seed < 2 ** 32:
+            raise ThemeTokenError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/wobbleSeed",
+                                  f"wobbleSeed {seed} must be an integer in [0, 2^32)")
+        return StrokeWobbleIntent(amplitude, wavelength, int(seed))
 
     def deadline_mark(self, role: str) -> tuple[Decimal, int]:
         """Return the deadline tick's reach and paint order (#822).
