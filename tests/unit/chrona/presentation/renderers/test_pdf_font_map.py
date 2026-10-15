@@ -33,3 +33,8 @@ def test_svg_characters_follow_completed_face_and_multiline_runs():
         ("CFF Proof", 400): frozenset(map(ord, "AH&")),
         ("Other", 700): frozenset({ord("B")}),
     }
+
+
+def test_svg_viewer_alternatives_do_not_hide_selected_pdf_subset_characters():
+    svg = b'<svg><text font-family="&quot;CFF Proof&quot;, Missing Face, sans-serif" font-weight="700">A<tspan>B</tspan></text></svg>'
+    assert _svg_font_characters(svg) == {("CFF Proof", 700): frozenset(map(ord, "AB"))}

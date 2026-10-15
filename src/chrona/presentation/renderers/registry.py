@@ -8,7 +8,7 @@ from typing import Any
 from xml.etree import ElementTree
 
 from chrona.core.ports import RenderArtifact, Renderer
-from chrona.presentation.model.font_metrics import FontFile, FontMetricsError, resolve_font_files
+from chrona.presentation.model.font_metrics import FontFile, FontMetricsError, _families, resolve_font_files
 from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.presentation.renderers.v05_typeset import V05TikzRenderer, V05TypstRenderer
@@ -145,7 +145,8 @@ def _svg_font_characters(svg: bytes) -> dict[tuple[str, int], frozenset[int]]:
     for node in ElementTree.fromstring(svg).iter():
         if node.tag.rsplit("}", 1)[-1] != "text":
             continue
-        key = (node.attrib["font-family"], int(node.attrib["font-weight"]))
+        # Layout puts the exact measured face first; the rest are viewer alternatives.
+        key = (_families(node.attrib["font-family"])[0], int(node.attrib["font-weight"]))
         characters.setdefault(key, set()).update(ord(character) for character in "".join(node.itertext()))
     return {key: frozenset(values) for key, values in characters.items()}
 

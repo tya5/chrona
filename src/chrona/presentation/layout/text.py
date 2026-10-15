@@ -7,7 +7,6 @@ from math import isfinite
 from typing import Any, Literal
 
 from chrona.presentation.layout.model import Rect, geometry_sum
-from chrona.presentation.model.font_metrics import named_families
 from chrona.presentation.layout.surface_quality import (AnnotationPresentation, CollisionDomain, TextPlacement,
                                                         TextRunPlacement, FitWarning)
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
@@ -305,12 +304,15 @@ def measured_text_bounds(*, inline: float, baseline_block: float, width: float,
 
 
 def _resolved_family(stack: str, font_metrics: Any) -> str:
-    """The declared family text, or the face a font stack resolved to when that is not the one the Theme named (#1281)."""
-    named = named_families(stack)
+    """Complete viewer alternatives with the measured face first (#1512)."""
     resolved = getattr(font_metrics, "family", None)
-    if resolved and (len(named) > 1 or (named and named[0].casefold() != str(resolved).casefold())):
-        return str(resolved)
-    return stack
+    entries = [entry.strip() for entry in stack.split(",") if entry.strip()]
+    if not resolved or (entries and entries[0].strip("'\"").casefold() == str(resolved).casefold()):
+        return stack
+    selected = next((entry for entry in entries if entry.strip("'\"").casefold() == str(resolved).casefold()),
+                    str(resolved))
+    return ", ".join([selected, *(entry for entry in entries
+                                if entry.strip("'\"").casefold() != str(resolved).casefold())])
 
 
 def translate_text_block(placement: TextPlacement, origin: Decimal) -> TextPlacement:
@@ -367,7 +369,7 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
         placement_id, source_ref, painted_content,
         bounds,
         typography_role, overflow, required,
-        # A font stack records the face it resolved to (#1281); a single family keeps its declared name.
+        # Viewer alternatives retain the measured primary face first.
         baseline=(inline, baseline_block), lines=resolved_lines,
         font_family=_resolved_family(treatment.family, font_metrics),
         font_weight=int(treatment.weight), font_size=font_size, line_height=leading,
