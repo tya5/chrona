@@ -20,9 +20,7 @@ TARGETS = {
     "tikz": ("tex", ["--typesetter-engine", "tectonic", "--typesetter-version", "0.17.0", "--typesetter-adapter-grammar", "chrona-tikz/v0.1"]),
 }
 SVG_ONLY = {"elevated-light", "technical-print"}  # their preferred profile is the SVG icon profile
-TYPESET_REFUSED = {"marquee", "sunday"}  # packaged designs use SVG-only treatments (glow); Typst and TikZ refuse them by name (#429)
-# TikZ has no verified horizontal text scale; the Title Card axis labels need 0.8, so TikZ refuses them by name (#429)
-TYPESET_REFUSED_TARGET = {("titlecard", "tikz")}
+TYPESET_REFUSED = {"marquee"}  # its glow has no Typst or TikZ form; both refuse it by name and nothing approximates it (#429, #1532)
 PRESETS = [None, *(item["id"] for item in list_builtin_presets())]
 
 
@@ -56,7 +54,7 @@ def test_every_bundled_appearance_exports_to_the_typeset_targets(starter, preset
     report = json.loads(result.stdout)
     codes = [item["code"] for item in report["diagnostics"]]
 
-    if preset in TYPESET_REFUSED or (preset, target) in TYPESET_REFUSED_TARGET:
+    if preset in TYPESET_REFUSED:
         assert "E_VISUAL_CAPABILITY_UNSUPPORTED" in codes and result.returncode != 0, report
         return
     assert "E_VISUAL_CAPABILITY_UNSUPPORTED" not in codes and result.returncode == 0, report
@@ -116,11 +114,14 @@ def test_the_help_lists_the_accepted_typesetter_values():
 
 
 def test_a_legacy_console_encoding_does_not_break_the_json_report(starter):
-    """A diagnostic naming a non-cp1252 label ('column:Δ finish') used to crash the CLI on Windows with an empty stdout (#429)."""
+    """A report beside a non-cp1252 label ('column:Δ finish') used to crash the CLI on Windows with an empty stdout (#429).
+
+    `sunday` exports now (#1532), so the report is the successful one; its labels still carry the non-cp1252 text."""
     import os
     args = ["render", "p/project.yaml", "--actual", "p/actual.yaml", "-o", "legacy.typ", *TARGETS["typst"][1], "--preset", "sunday"]
     env = {**os.environ, "PYTHONIOENCODING": "cp1252", "PYTHONUTF8": "0"}
     result = subprocess.run([sys.executable, "-c", "from chrona.app.cli import main; main()", *args], cwd=starter,
                             capture_output=True, env=env, timeout=300)
     report = json.loads(result.stdout.decode("utf-8"))
-    assert "E_VISUAL_CAPABILITY_UNSUPPORTED" in [item["code"] for item in report["diagnostics"]], result.stderr
+    assert report["status"] == "ok" and result.returncode == 0, result.stderr
+    assert "Δ finish".encode("utf-8").decode("utf-8") in (starter / "legacy.typ").read_text(encoding="utf-8")
