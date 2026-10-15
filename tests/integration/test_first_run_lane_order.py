@@ -14,6 +14,9 @@ from tests.support import synthetic_review as sr
 _ENTRIES = yaml.safe_load(builtin_preset_library_resource().read_text())["entries"]
 PRESETS = [entry["id"] for entry in _ENTRIES]
 DESIGN_PRESETS = {entry["id"] for entry in _ENTRIES if entry["members"]["layout"]["sourceRoot"].startswith("designs/")}
+# Group header rows need a grouping, and no generic grouping keeps one global start order (named gap 8 in
+# docs/diagnostics/muted-executive-vocabulary-gaps.md); start order holds within each group.
+DESIGN_PRESETS |= {"muted-executive"}
 
 
 @pytest.mark.parametrize("policy", [False, True, "auto", "omitted"])
