@@ -9,3 +9,8 @@ def test_every_public_scene_field_has_one_live_explicit_delivery_owner():
 def test_delivery_manifest_covers_each_field_once():
     for name, fields in model_fields().items():
         assert {field for owner in OWNERS[name] for field in owner.fields} == fields
+
+
+def test_legend_swatch_shape_is_owned_by_scene_completion_not_export():
+    owners = [owner for owner in OWNERS["ScenePrimitive"] if "legend_swatch_shape" in owner.fields]
+    assert [(owner.delivery, owner.consumer) for owner in owners] == [("derived", "scene/v05_builder.py")]

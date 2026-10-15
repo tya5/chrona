@@ -61,6 +61,7 @@ OWNERS = {
         _owner("adapter", "renderers/v05_svg.py", "paint_clip"),
         _owner("derived", "scene/visual_capabilities.py", "visual_capability_source_ref"),
         _owner("derived", "scene/v05_builder.py", "image_fill_pending"),
+        _owner("derived", "scene/v05_builder.py", "legend_swatch_shape"),
     ),
     "SceneSlot": (_owner("inspection", "scene/serialization.py", "slot_id source scale_id bounds priority overflow"),),
     "SceneRow": (_owner("inspection", "scene/serialization.py", "object_id group_id bounds row_id lane_mark_band_block"),),
