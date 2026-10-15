@@ -7551,7 +7551,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `planned:shipment:snapshot:shipment` | `snapshot` | 1045.289, 677.606 | `canvas-texture` | texture-ink | `#1B1A18` | stroke | 5.508 | 3.000 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `planned:tvac:snapshot:tvac` | `snapshot` | 923.438, 508.355 | `canvas-texture` | texture-ink | `#1B1A18` | stroke | 5.508 | 3.000 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `planned:vibration:snapshot:vibration` | `snapshot` | 891.525, 489.891 | `canvas-texture` | texture-ink | `#1B1A18` | stroke | 5.508 | 3.000 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `subtitle` | `subtitle` | 334.400, 150.125 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 6.667 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `subtitle` | `subtitle` | 269.634, 150.125 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 6.667 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `summary:/panels/0/title` | `summary-caption` | 1188.000, 94.960 | `region-frame:countdown` | flat | `#1B1917` | fill | 15.382 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `summary:/panels/0/metrics/0/value` | `metric` | 1272.432, 81.360 | `region-frame:countdown` | flat | `#1B1917` | fill | 6.720 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `summary:/panels/0/metrics/0/label` | `summary-unit` | 1332.696, 96.660 | `region-frame:countdown` | flat | `#1B1917` | fill | 6.720 | 4.500 | info |
@@ -7799,7 +7799,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-tab:launch` | `group-tab` | 39.500, 634.949 | `group-header-band:launch` | flat | `#3A1115` | fill | 7.627 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-tab:ops` | `group-tab` | 39.500, 750.825 | `group-header-band:ops` | flat | `#3A1115` | fill | 7.627 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-tab:payload` | `group-tab` | 39.500, 343.647 | `group-header-band:payload` | flat | `#3A1115` | fill | 7.627 | 1.100 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `kicker` | `kicker` | 413.680, 48.785 | `canvas` | canvas | `#0D0A09` | fill | 9.106 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `kicker` | `kicker` | 351.263, 48.785 | `canvas` | canvas | `#0D0A09` | fill | 9.106 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:actual` | `legend` | 285.072, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:calendar-exception` | `legend` | 600.975, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:dependency` | `legend` | 720.291, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
@@ -8118,7 +8118,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header-strip:payload` | `group-header-strip` | 800.000, 352.577 | `group-header-strip:payload` | pattern-substrate | `#FFFDF5` | stroke | 1.350 | 1.100 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header-strip:payload` | `group-header-strip` | 800.000, 352.577 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 1.350 | 1.100 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header-strip:payload` | `group-header-strip` | 800.000, 352.577 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.000 | 1.100 | warning |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `kicker` | `kicker` | 423.733, 68.951 | `region-frame:title-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `kicker` | `kicker` | 350.551, 68.951 | `region-frame:title-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:actual` | `legend` | 1391.412, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:calendar-exception` | `legend` | 1395.309, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:dependency` | `legend` | 1173.993, 113.500 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
@@ -8178,7 +8178,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:shipment:snapshot:shipment` | `snapshot` | 1229.980, 680.626 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 3.454 | 3.000 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:tvac:snapshot:tvac` | `snapshot` | 1063.759, 506.453 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 3.454 | 3.000 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:vibration:snapshot:vibration` | `snapshot` | 1020.225, 487.857 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 3.454 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `subtitle` | `subtitle` | 425.347, 101.767 | `region-frame:title-panel` | flat | `#FFFDF5` | fill | 4.747 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `subtitle` | `subtitle` | 341.204, 101.767 | `region-frame:title-panel` | flat | `#FFFDF5` | fill | 4.747 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:avionics:Phase` | `table-cell-secondary` | 300.851, 276.491 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:bus-test:Phase` | `table-cell-secondary` | 306.600, 313.683 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:campaign:Phase` | `table-cell-secondary` | 315.646, 699.222 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |

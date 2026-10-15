@@ -11,7 +11,7 @@ relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side, search: best, unr
 # The heading reads the count figures `selected-count` and `group-count`, which the View declares.
 viewDefaults:
   heading:
-    kicker: The programme board
+    kicker: The plan
     title: "{project}"
     subtitle: "{figure:selected-count} work packages in {figure:group-count} acts · baseline, plan and what actually happened"
     dateForm: day-month-year

@@ -435,6 +435,9 @@ body:
     spacing.s:
       type: number
       value: 8
+  # Calendar shading, axis bands and header strips are faint on purpose in this design, so the
+  # decoration floor is not reported. Marks and text keep the default warnings.
+  contrastPolicy: {decoration: none}
   roles:
     legend-swatch:
       swatchInlineSize: legend-swatch-inline-size
