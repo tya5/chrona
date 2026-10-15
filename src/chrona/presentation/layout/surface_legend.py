@@ -79,6 +79,11 @@ def swatch_extent(role: str, tokens: Any, mark_block_size: float, legend_size: f
     this table does not recognize keeps today's fixed square. Measuring the
     legend slot and drawing the legend both call this function (#497).
     """
+    # Detail's per-entry value wins; otherwise the Theme's one shared default
+    # applies equally to authored and generated keys. Resolve it here so every
+    # measurement and drawing path consumes the same dispatch bucket.
+    if shape is None:
+        shape = tokens.legend_swatch_shape()
     legacy = _legacy_swatch_size(legend_size)
     declared_inline = tokens.optional_number("legend-swatch", "swatchInlineSize")
     fallback_inline = float(declared_inline) if declared_inline is not None else legacy
@@ -223,12 +228,12 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
     def emit_swatch(entry: SurfaceLegendEntry, x: float, y: float, width: float, height: float, bucket: str) -> None:
         role = entry.role
         swatch_id = entry.swatch_placement_id
-        if entry.swatch_shape is not None:
+        if bucket in ("circle", "rule-pair"):
             if entry.source_ref is not None and request.theme_tokens.background(role)[0] == "none":
                 return
             bounds = Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height)))
             paint_role = _swatch_paint_role(role, request.theme_tokens)
-            if entry.swatch_shape == "circle":
+            if bucket == "circle":
                 commands = symbol_parts({"shape": "circle"}, (x, y, width, height))[0].commands
             else:
                 half_stroke = float(request.theme_tokens.number(paint_role, "strokeWidth")) / 2
@@ -236,11 +241,11 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
                                  for command in (PathCommand("move", ((inline, y + half_stroke),)),
                                                  PathCommand("line", ((inline, y + height - half_stroke),))))
             shapes.append(ShapePlacement(swatch_id, entry.source_identity,
-                                         "Symbol" if entry.swatch_shape == "circle" else "Path", bounds,
+                                         "Symbol" if bucket == "circle" else "Path", bounds,
                                          points=(tuple(command.points[0] for command in commands)
-                                                 if entry.swatch_shape == "rule-pair" else ()),
+                                                 if bucket == "rule-pair" else ()),
                                          path_commands=commands, visual_role=paint_role, slot_id=legend.slot_id,
-                                         semantic_id="legendEntry", legend_swatch_shape=entry.swatch_shape))
+                                         semantic_id="legendEntry", legend_swatch_shape=bucket))
             return
         if entry.source_ref is not None:
             treatment, paint_order = request.theme_tokens.background(role)
