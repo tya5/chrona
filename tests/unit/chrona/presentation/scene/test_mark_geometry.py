@@ -126,6 +126,8 @@ def test_item_composer_closes_planned_open_actual_missing_actual_and_absences():
     assert (actual.bounds.inline, actual.bounds.inline_size) == (102, 6)
     assert actual.end_port == (108.0, 8.0)
     assert actual.end_treatment == "open"
+    assert len(actual.symbol_parts) == 1
+    assert actual.symbol_parts[0].commands == actual.path_commands
     assert completed.diagnostics == ()
     assert completed.absences == ()
 
@@ -142,3 +144,65 @@ def test_item_composer_closes_planned_open_actual_missing_actual_and_absences():
                                         frame=frame, as_of=None, theme_tokens=theme, slot_id="timeline")
     assert as_of_required.diagnostics == ("W_LAYOUT_OPEN_ACTUAL_AS_OF_REQUIRED:task",)
     assert as_of_required.absences == (MarkFacetAbsence("actual", "as-of-required"),)
+
+
+def test_actual_open_span_uses_completed_duration_outline_not_milestone_variant():
+    scale = ScalePlacement("surface", "primary", date(2026, 1, 1), date(2026, 2, 1),
+                           100.0, 162.0, 100.0, 2.0)
+    roles = {name: MarkGeometry(0.5, 0.25, 0, 0.0)
+             for name in ("planned", "snapshot", "actual", "missing-actual")}
+    frame = MarkBandFrame.zero_origin(scale, 10.0, roles)
+
+    class PointOnlyTheme:
+        def variant_symbol(self, _role):
+            raise AssertionError("milestone symbols are point geometry only")
+
+    item = SimpleNamespace(
+        object_id="task", source_type="span",
+        planned={"start": date(2026, 1, 1), "end": date(2026, 1, 5)},
+        actual={"start": date(2026, 1, 2), "openUntil": "asOf"},
+        observation_state=ObservationState.RECORDED,
+    )
+    result = compose_item_marks(item=item, instance_id="row:task", source_kind="combined",
+                                frame=frame, as_of=date(2026, 1, 5), theme_tokens=PointOnlyTheme(),
+                                slot_id="timeline")
+    actual = next(mark for mark in result.marks if mark.semantic_id == "actual")
+    assert actual.mark_shape == "open-span"
+    assert actual.path_commands
+    assert len(actual.symbol_parts) == 1
+    assert actual.symbol_parts[0].commands == actual.path_commands
+    assert actual.placement_id == "actual:row:task"
+
+
+def test_actual_point_continues_to_use_the_theme_milestone_glyph():
+    scale = ScalePlacement("surface", "primary", date(2026, 1, 1), date(2026, 2, 1),
+                           100.0, 162.0, 100.0, 2.0)
+    roles = {name: MarkGeometry(0.5, 0.25, 0, 0.0)
+             for name in ("planned", "snapshot", "actual", "missing-actual")}
+    frame = MarkBandFrame.zero_origin(scale, 10.0, roles)
+    requests = []
+
+    class GlyphTheme:
+        def variant_symbol(self, role):
+            requests.append(role)
+            return _glyph({"d": "M0 0L10 0L10 10Z", "paint": "fill"},
+                          {"d": "M2 2L8 2L8 8Z", "paint": "stroke"})
+
+        def has_role(self, _role):
+            return False
+
+        def has_binding(self, _role, _member):
+            return False
+
+    item = SimpleNamespace(
+        object_id="gate", source_type="point",
+        planned={"at": date(2026, 1, 3)}, actual={"at": date(2026, 1, 4)},
+        observation_state=ObservationState.RECORDED,
+    )
+    result = compose_item_marks(item=item, instance_id="row:gate", source_kind="combined",
+                                frame=frame, as_of=date(2026, 1, 5), theme_tokens=GlyphTheme(),
+                                slot_id="timeline")
+    actual = next(mark for mark in result.marks if mark.semantic_id == "actual")
+    assert requests == ["planned", "actual"]
+    assert actual.mark_shape == "point"
+    assert len(actual.symbol_parts) == 2
