@@ -46,7 +46,7 @@ body:
     purpose: note
     anchor:
       kind: object
-      id: titlecard
+      id: rerun
       facet: planned
       endpoint: finish
     projectAnnotation: signoff
@@ -73,29 +73,10 @@ body:
     purpose: note
     anchor:
       kind: object
-      id: route-bound
+      id: ai-design
       facet: planned
       endpoint: finish
     projectAnnotation: route
-    candidates:
-    - id: rail
-      region:
-        kind: slot
-        source: annotations
-      search:
-        kind: row-aligned
-      obstacles:
-        classes: *id001
-      connector:
-        kind: leader
-  - id: station-note
-    purpose: note
-    anchor:
-      kind: object
-      id: japanese
-      facet: planned
-      endpoint: finish
-    projectAnnotation: ja
     candidates:
     - id: rail
       region:
