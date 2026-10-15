@@ -68,15 +68,15 @@ def test_typst_draws_a_rounded_path_as_a_curve_and_names_a_path_without_two_poin
     assert message.startswith("E_PRESENTATION_PRIMITIVE_INVALID:") and "curve-5" in message and "two Path points" in message
 
 
-def test_tikz_capability_failure_names_primitive_and_requested_scale():
+def test_tikz_scales_a_compressed_node_about_its_baseline_start():
     layout = TextLayout((1, 1, 3, 2), (1, 3), ("abc",), "Test Sans", 400, 2, 1,
                         "sha256:test", 0, "mixed", "proportional", horizontal_scale=0.8)
     node = ScenePrimitive("scaled-title", "Text", "src", "text", "title", "title", (1, 1, 3, 2),
                           text="abc", baseline=(1, 3), text_layout=layout,
                           paint=ScenePaint("#000", None, None, (), 1))
-    message = _error_text(lambda: v05_typeset.render_v05_tikz(_surface(node)))
-    assert message.startswith("E_VISUAL_CAPABILITY_UNSUPPORTED:")
-    assert "scaled-title" in message and "horizontal_scale=0.8" in message
+    source = v05_typeset.render_v05_tikz(_surface(node))
+    assert r"\node[anchor=base west, inner sep=0pt, align=left, xscale=0.8, " in source
+    assert "at (1,3)" in source
 
 
 def test_registry_capability_failure_names_target_and_unsupported_capability():

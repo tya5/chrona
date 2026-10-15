@@ -126,6 +126,33 @@ def _tikz_numeric_text(layout: object, text: str) -> str:
     return f"\\fontspec[Numbers={number}]{{{_tex_string(family)}}}{text}"
 
 
+def _typst_line(layout: object, index: int) -> str:
+    """One line: its single string, or its Layout-measured small-caps runs, each at its own size (#1532)."""
+    runs = getattr(layout, "runs", ())
+    if not runs:
+        return f'#("{_typst_string(layout.lines[index])}")'
+    body = "".join(
+        f'#("{_typst_string(run.text)}")' if run.font_size == layout.font_size
+        else f'#text(size: {_number(run.font_size)}pt)[#("{_typst_string(run.text)}")]'
+        for run in runs[index])
+    if any(run.font_size == layout.font_size for run in runs[index]):
+        return body
+    # A line of only small runs would put its top edge at the small cap height; a hidden zero-width capital at the role
+    # size keeps the line box (and so the baseline below the placed top) where the unmarked text has it.
+    return f'#box(width: 0pt, hide[#text(size: {_number(layout.font_size)}pt)[#("I")]])' + body
+
+
+def _tikz_line(layout: object, index: int) -> str:
+    """The TikZ counterpart of `_typst_line`: a smaller run is a font-size group inside the node (#1532)."""
+    runs = getattr(layout, "runs", ())
+    if not runs:
+        return _tex_string(layout.lines[index])
+    return "".join(
+        _tex_string(run.text) if run.font_size == layout.font_size
+        else f"{{\\fontsize{{{_number(run.font_size)}pt}}{{{_number(run.font_size * layout.line_height)}pt}}\\selectfont {_tex_string(run.text)}}}"
+        for run in runs[index])
+
+
 def _typst_rect_paint(node: ScenePrimitive) -> str:
     """Serialize completed rect paint without inventing a missing fill channel."""
     paint = node.paint
@@ -378,16 +405,13 @@ def _unsupported_details(surface: SceneSurface, target: str) -> str:
             features.append("pattern")
         if node.stroke_clip is not None:
             features.append("aligned stroke clip")
-        if node.text_layout is not None and node.text_layout.runs:
-            features.append("small-caps runs")
         if features:
             reasons.append(f"{node.scene_id!r} (role {node.visual_role}): {', '.join(features)}")
     return f"{target} cannot serialize completed features ({'; '.join(reasons)}); select SVG"
 
 
 def render_v05_typst(surface: SceneSurface) -> str:
-    if any(node.stroke_clip is not None or (node.text_layout is not None and node.text_layout.runs)
-           for node in surface.primitives):
+    if any(node.stroke_clip is not None for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "Typst"))
     if _requires_wobble(surface) or any(node.pattern is not None and node.kind != "Rect" for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "Typst"))
@@ -412,7 +436,7 @@ def render_v05_typst(surface: SceneSurface) -> str:
                 raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, "Text payload, textLayout, and baseline"))
             layout = node.text_layout
             parts.append(f"// font-asset: {_typst_string(layout.asset_identity)} baseline: {_number(node.baseline[0])},{_number(node.baseline[1])}")
-            text = "#linebreak()".join(f'#("{_typst_string(line)}")' for line in layout.lines)
+            text = "#linebreak()".join(_typst_line(layout, index) for index in range(len(layout.lines)))
             rendered = f'#text(font: {_typst_font(layout.family)}, weight: {layout.weight}, size: {_number(layout.font_size)}pt{_typst_tracking(layout)}{_typst_numeric_width(layout)}, fill: {_typst_fill(node)})[{text}]'
             if layout.horizontal_scale != 1:
                 # Compression is applied in the text's own frame, inside the rotation (#585).
@@ -450,8 +474,7 @@ def render_v05_typst(surface: SceneSurface) -> str:
 
 
 def render_v05_tikz(surface: SceneSurface) -> str:
-    if any(node.stroke_clip is not None or (node.text_layout is not None and node.text_layout.runs)
-           for node in surface.primitives):
+    if any(node.stroke_clip is not None for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "TikZ"))
     if _requires_wobble(surface) or any(node.pattern is not None and node.kind != "Rect" for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "TikZ"))
@@ -477,13 +500,14 @@ def render_v05_tikz(surface: SceneSurface) -> str:
             if node.text is None or node.text_layout is None or node.baseline is None:
                 raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, "Text payload, textLayout, and baseline"))
             layout = node.text_layout
-            if layout.horizontal_scale != 1:
-                # No engine verifies a TikZ node scale about the baseline pivot, so none is shipped (#585).
-                raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", f"Text scene_id={node.scene_id!r} requires horizontal_scale={layout.horizontal_scale!r}; TikZ has no verified horizontal text scale")
             parts.append(f"% font-asset: {_tex_string(layout.asset_identity)} baseline: {_number(node.baseline[0])},{_number(node.baseline[1])}")
-            text = _tikz_tracked_text(layout, r"\\".join(_tex_string(line) for line in layout.lines))
+            text = _tikz_tracked_text(layout, r"\\".join(_tikz_line(layout, index) for index in range(len(layout.lines))))
             rotation = f", rotate={_number(layout.rotation_degrees)}" if layout.rotation_degrees else ""
-            parts.append(f"\\node[anchor=base west, align=left{rotation}, text={_tikz_color(node, 'fill')}, text opacity={_number(_tikz_channel_opacity(node, 'fill'))}, font=\\fontsize{{{_number(layout.font_size)}pt}}{{{_number(layout.font_size * layout.line_height)}pt}}\\selectfont] at ({_number(node.baseline[0])},{_number(node.baseline[1])}) {{{_tikz_numeric_text(layout, text)}}};")
+            # `inner sep=0pt` puts the text's own origin on the anchor; the default 0.333em padding would shift the run right
+            # and, under a scale, about a pivot that is not the baseline start. Compression acts in the text's own frame, so it
+            # follows the rotation (#585, #1532).
+            rotation += f", xscale={_number(layout.horizontal_scale)}" if layout.horizontal_scale != 1 else ""
+            parts.append(f"\\node[anchor=base west, inner sep=0pt, align=left{rotation}, text={_tikz_color(node, 'fill')}, text opacity={_number(_tikz_channel_opacity(node, 'fill'))}, font=\\fontsize{{{_number(layout.font_size)}pt}}{{{_number(layout.font_size * layout.line_height)}pt}}\\selectfont] at ({_number(node.baseline[0])},{_number(node.baseline[1])}) {{{_tikz_numeric_text(layout, text)}}};")
         elif node.kind == "Symbol":
             if node.symbol is None:
                 raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, "completed Symbol geometry"))

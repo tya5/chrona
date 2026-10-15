@@ -6,6 +6,7 @@ small caps; no test reads `examples/`.
 from __future__ import annotations
 
 import json
+import re
 import xml.etree.ElementTree as ET
 from datetime import date, timedelta
 
@@ -94,13 +95,41 @@ def test_the_svg_sets_each_run_at_its_own_size_and_the_scene_validates(tmp_path)
     assert len(sizes) >= 2 and len(set(sizes)) == 1  # the small runs share one size; the capitals have no attribute
 
 
-def test_typst_and_tikz_refuse_small_caps_runs_with_the_visual_capability_diagnostic(tmp_path):
+def test_typst_sets_each_run_at_its_measured_size(tmp_path):
     rendered = _render(tmp_path, _parts())
+    layout = _header(rendered, "imaging").text_layout
+    source = render_v05_typst(rendered.scene.surfaces[0])
+    lines = source.splitlines()
+    head = next(index for index, item in enumerate(lines) if item.startswith('// scene-id: group-header:imaging'))
+    place = lines[head + 2]
+    small = f'#text(size: {layout.runs[0][1].font_size:g}pt)[#("MAGING")]'
 
-    for render in (render_v05_typst, render_v05_tikz):
-        with pytest.raises(Exception) as caught:
-            render(rendered.scene.surfaces[0])
-        assert "E_VISUAL_CAPABILITY_UNSUPPORTED" in str(caught.value) + repr(getattr(caught.value, "code", ""))
+    assert place.startswith("#place(") and '[#("I")' in place and small in place and "#linebreak()" not in place
+    assert source.count("// scene-id:") == len(rendered.scene.surfaces[0].primitives)
+
+
+def test_typst_keeps_the_role_size_line_box_when_a_line_has_only_small_runs(tmp_path):
+    source = _source()
+    source["entities"]["imaging"]["title"] = "tea"
+    rendered = sr.render(tmp_path, source, presentation=_parts())
+    layout = _header(rendered, "imaging").text_layout
+    text = render_v05_typst(rendered.scene.surfaces[0])
+    strut = f'#box(width: 0pt, hide[#text(size: {layout.font_size:g}pt)[#("I")]])'
+
+    assert {run.font_size for run in layout.runs[0]} == {layout.font_size * SCALE}
+    assert text.count(strut) == 1 and f'{strut}#text(size: {layout.font_size * SCALE:g}pt)[#("TEA")]' in text
+
+
+def test_tikz_sets_each_run_in_a_font_size_group_inside_the_same_node(tmp_path):
+    rendered = _render(tmp_path, _parts())
+    layout = _header(rendered, "imaging").text_layout
+    source = render_v05_tikz(rendered.scene.surfaces[0])
+    size, leading = layout.runs[0][1].font_size, layout.runs[0][1].font_size * layout.line_height
+    group = f"{{\\fontsize{{{size:g}pt}}{{{leading:g}pt}}\\selectfont MAGING}}"
+    node = next(item for item in source.splitlines() if item.startswith("\\node[") and group in item)
+
+    assert "I" + group in node
+    assert len(re.findall(r"^\\node\[", source, re.M)) == sum(1 for item in rendered.surface.primitives if item.kind == "Text")
 
 
 @pytest.mark.parametrize("transform,scale,code", [
