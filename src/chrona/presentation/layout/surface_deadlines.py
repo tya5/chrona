@@ -5,6 +5,7 @@ from dataclasses import dataclass, replace
 from decimal import Decimal
 
 from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.deadline_captions import DeadlineCaptionAnchor
 from chrona.presentation.layout.surface_base import SurfaceBaseGeometry
 from chrona.presentation.layout.surface_geometry import coordinate_for_date
 from chrona.presentation.layout.surface_quality import MarkPlacement, ShapePlacement
@@ -36,6 +37,7 @@ class DeadlineBatch:
 
     shapes: tuple[ShapePlacement, ...]
     diagnostics: tuple[str, ...]
+    captions: tuple[DeadlineCaptionAnchor, ...] = ()
 
 
 def compose_deadline_marks(*, base: SurfaceBaseGeometry, theme_tokens: object, deadlines: tuple[ReviewDeadline, ...],
@@ -55,7 +57,12 @@ def compose_deadline_marks(*, base: SurfaceBaseGeometry, theme_tokens: object, d
         return DeadlineBatch((), ())
     reach, order = theme_tokens.deadline_mark(semantic_binding(DEADLINE_SEMANTIC).theme_role)
     outline_width = float(theme_tokens.deadline_outline_width("deadline-mark"))
-    stroke_width = float(theme_tokens.number("deadline-mark", "strokeWidth")) if outline_width else 0
+    needs_envelope = outline_width or any(item.caption is not None for item in deadlines)
+    stroke_width = float(theme_tokens.number("deadline-mark", "strokeWidth")) if needs_envelope else 0
+    margin = 0.0
+    if needs_envelope and stroke_width > 0:
+        wobble = theme_tokens.wobble_intent("deadline-mark")
+        margin = stroke_width / 2 + outline_width + (float(wobble.amplitude) if wobble is not None else 0)
     window_start, window_end = window
     plot = base.plot
     right_edge = float(plot.inline + plot.inline_size)
@@ -70,6 +77,7 @@ def compose_deadline_marks(*, base: SurfaceBaseGeometry, theme_tokens: object, d
             planned.setdefault(mark.source_ref, []).append(mark)
     shapes: list[ShapePlacement] = []
     diagnostics: list[str] = []
+    captions: list[DeadlineCaptionAnchor] = []
     for deadline in deadlines:
         hosts = planned.get(deadline.object_id, [])
         if not hosts:
@@ -97,10 +105,12 @@ def compose_deadline_marks(*, base: SurfaceBaseGeometry, theme_tokens: object, d
                     Rect(Decimal(str(x)), Decimal(str(bottom)), Decimal(str(finish - x)), Decimal(0)),
                     ((x, bottom), (finish, bottom)), slot_id=host.slot_id, paint_order=paint_order_base + order,
                     semantic_id=DEADLINE_SEMANTIC, subjects=host.subjects))
+                if deadline.caption is not None:
+                    captions.append(DeadlineCaptionAnchor(
+                        f"deadline-caption:{instance}", deadline.object_id, host.placement_id,
+                        deadline.caption, x, finish, bottom, margin, host.subjects))
     if outline_width and stroke_width > 0:
-        wobble = theme_tokens.wobble_intent("deadline-mark")
-        margin = stroke_width / 2 + outline_width + (float(wobble.amplitude) if wobble is not None else 0)
         outlines = tuple(ground for shape in shapes
                          if (ground := _outline(shape, margin)) is not None)
         shapes = [*outlines, *shapes]
-    return DeadlineBatch(tuple(shapes), tuple(diagnostics))
+    return DeadlineBatch(tuple(shapes), tuple(diagnostics), tuple(captions))

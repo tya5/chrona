@@ -37,6 +37,7 @@ from chrona.presentation.layout.surface_mark_visibility import (
     ensure_request_mark_visibility_index,
 )
 from chrona.presentation.layout.lane_mark_facets import _mark_facets
+from chrona.presentation.layout.key_row_lanes import assign_key_row_lanes
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS
 
 
@@ -280,6 +281,10 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
             mark_visibility_index=request.mark_visibility_index,
         )
         scale = inset_scale_for_point_facets(provisional_scale, point_facets)
+    review_row_values = assign_key_row_lanes(
+        review_row_values, request=request, scale=scale, as_of=request.surface_content.as_of,
+        slot_id=timeline.slot_id, mark_block_size=mark_block_size, role_geometries=role_geometries,
+        mark_band_allocation=mark_band_allocation)
     row_padding = float(metric_values["timeline.row.paddingBlock"])
     text_line_block = table_text_line_block(
         request.theme_tokens, (cell.typography_role for cell in request.surface_content.table_cells))

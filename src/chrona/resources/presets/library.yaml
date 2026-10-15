@@ -103,6 +103,45 @@ entries:
       colorScheme: {id: target-b, kind: color-scheme, sourceRoot: designs/target-b, sourcePath: scheme.yaml}
       layout: {id: target-b, kind: layout-profile, sourceRoot: designs/target-b, sourcePath: layout.yaml}
       detailProfile: {id: halcyon-target-b-legend, kind: review-detail-profile, sourceRoot: designs/target-b, sourcePath: detail.yaml}
+  - id: titlecard
+    members:
+      fontSets: [chrona.noto-sans+jp]
+      view: {id: chrona-preset-design-default, kind: view, sourceRoot: presets/bundles/design-default, sourcePath: view.yaml}
+      theme: {id: titlecard, kind: theme, sourceRoot: designs/titlecard, sourcePath: theme.yaml}
+      colorScheme: {id: titlecard, kind: color-scheme, sourceRoot: designs/titlecard, sourcePath: scheme.yaml}
+      layout: {id: titlecard, kind: layout-profile, sourceRoot: designs/titlecard, sourcePath: layout.yaml}
+      detailProfile: {id: halcyon-titlecard-legend, kind: review-detail-profile, sourceRoot: designs/titlecard, sourcePath: detail.yaml}
+      iconCatalogs:
+        - id: chrona-target-parts-v2026-10-09
+          kind: icon-catalog
+          sourceRoot: icons
+          sourcePath: chrona-target-parts-v2026-10-09.yaml
+          noticeSourcePath: chrona-target-parts.NOTICE
+          contentIdentity: sha256:139be42bed11eaa9809ef98bb427eb74f8f0862c3d5c4ccfd9eba2b23185acee
+          noticeContentIdentity: sha256:b07fa7bbb7bff0acdfb2cf02905b7ca7ad1db3ead9f59b13f47c4ced097f3eb6
+  - id: yuya
+    members:
+      fontSets: [chrona.noto-sans+jp]
+      view: {id: chrona-preset-design-default, kind: view, sourceRoot: presets/bundles/design-default, sourcePath: view.yaml}
+      theme: {id: yuya, kind: theme, sourceRoot: designs/yuya, sourcePath: theme.yaml}
+      colorScheme: {id: yuya, kind: color-scheme, sourceRoot: designs/yuya, sourcePath: scheme.yaml}
+      layout: {id: yuya, kind: layout-profile, sourceRoot: designs/yuya, sourcePath: layout.yaml}
+      detailProfile: {id: halcyon-yuya-legend, kind: review-detail-profile, sourceRoot: designs/yuya, sourcePath: detail.yaml}
+      iconCatalogs:
+        - id: chrona-target-parts-v2026-10-09
+          kind: icon-catalog
+          sourceRoot: icons
+          sourcePath: chrona-target-parts-v2026-10-09.yaml
+          noticeSourcePath: chrona-target-parts.NOTICE
+          contentIdentity: sha256:139be42bed11eaa9809ef98bb427eb74f8f0862c3d5c4ccfd9eba2b23185acee
+          noticeContentIdentity: sha256:b07fa7bbb7bff0acdfb2cf02905b7ca7ad1db3ead9f59b13f47c4ced097f3eb6
+        - id: chrona-annotation-parts-v2026-10-09
+          kind: icon-catalog
+          sourceRoot: icons
+          sourcePath: chrona-annotation-parts-v2026-10-09.yaml
+          noticeSourcePath: chrona-annotation-parts.NOTICE
+          contentIdentity: sha256:6cd6591036f927a7df4fe2ee75274bcb38dd90790e4823e9121ff0d2be55f5c9
+          noticeContentIdentity: sha256:b07fa7bbb7bff0acdfb2cf02905b7ca7ad1db3ead9f59b13f47c4ced097f3eb6
   - id: muted-executive
     members:
       view: {id: chrona-preset-muted-executive, kind: view, sourceRoot: presets/bundles/muted-executive, sourcePath: view.yaml}

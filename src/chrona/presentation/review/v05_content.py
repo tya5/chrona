@@ -90,6 +90,10 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         return "tableCell"
     if projection.rows:
         def row_cell(row: Any, column: Any, row_index: int) -> TableCellContent:
+            if row.key_row:
+                # The key row names itself in the first column and leaves the others empty (#1501).
+                text = row.label if column.id == view.table_columns[0].id else ""
+                return TableCellContent(row.row_id, column.id, text, "tableCell", cell_typography_role(column))
             item = next(item for item in row.items if item.item_id == row.table_subject_id)
             header = (item.is_rollup and row.rollup_presentation == "header"
                       and column.id == view.hierarchy_column)
@@ -103,7 +107,8 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         table_cell_objects = tuple(
             (row.row_id, column.id,
              next(item for item in row.items if item.item_id == row.table_subject_id).object_id,
-             next(item for item in row.items if item.item_id == row.table_subject_id).source_kind in {"primary", "combined"})
+             next(item for item in row.items if item.item_id == row.table_subject_id).source_kind in {"primary", "combined"}
+             and not row.key_row)
             for row in projection.rows for column in view.table_columns)
         row_levels = tuple(TableRowLevel((row.row_id, row.table_subject_id), bool(row.group_id), row.depth)
                            for row in projection.rows)
@@ -134,8 +139,11 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
     lane_table = view.rows.lane_table
     if projection.lane_membership is None or not projection.lane_rows or lane_table is None:
         raise ValueError(f"E_REVIEW_LANE_TABLE_PROJECTION: laneMembership={projection.lane_membership is not None}, laneRows={len(projection.lane_rows)}, laneTable={lane_table is not None}")
-    columns = (TableColumnContent("Lane", "Lane", "start", TableColumnWidth("content", "content"),
-                                  text_wrap=lane_table.text_wrap),)
+    declared = lane_table.columns  # #1517: empty keeps the single `Lane` column byte-for-byte
+    columns = tuple(TableColumnContent("Lane" if column.source == "label" else column.id, column.id, column.align,
+                                       TableColumnWidth("content", "content"), text_wrap=lane_table.text_wrap)
+                    for column in declared) or (
+        TableColumnContent("Lane", "Lane", "start", TableColumnWidth("content", "content"), text_wrap=lane_table.text_wrap),)
     show_count = (lane_table.count is True or (lane_table.count == "auto"
                   and any(len(lane.member_item_ids) > 1 for lane in projection.lane_membership.lanes)))
     if show_count:
@@ -170,7 +178,7 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
             raise ValueError(f"E_REVIEW_LANE_TITLE_MISSING:{member_id}: /items/{_diagnostic_value(member_id)}/title={_diagnostic_value(None if item is None else item.title)}; expected distinct nonblank display title")
         return item.title
 
-    for row in projection.lane_rows:
+    for row_number, row in enumerate(projection.lane_rows, 1):
         lane = lanes_by_id.get(row.lane_id)
         if lane is None:
             raise ValueError(f"E_REVIEW_LANE_TABLE_PROJECTION: laneId={_diagnostic_value(row.lane_id)} is absent from membership lanes")
@@ -189,7 +197,20 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
                 label = group_title(row.group_id, row)
                 if row.group_id in disambiguate_groups:
                     label = f"{label} — {first_title}"
-        cells.append(TableCellContent(row.lane_id, "Lane", label, "tableCell"))
+        if not declared:
+            cells.append(TableCellContent(row.lane_id, "Lane", label, "tableCell"))
+        for column in declared:
+            if column.source == "label":
+                cells.append(TableCellContent(row.lane_id, "Lane", label, "tableCell", column.text_role or "text"))
+                continue
+            if column.source == "rowIndex":
+                value: Any = row_number
+            else:
+                founder = next((item for item in row.items if lane.member_item_ids and item.item_id == lane.member_item_ids[0]), None)
+                value = (founder.fields or {}).get(column.source["field"]) if founder is not None else None
+            cells.append(TableCellContent(row.lane_id, column.id,
+                                          display_value(value, column.missing, "text", transform=column.transform),
+                                          "tableCell", column.text_role or "text"))
         if show_count:
             member_count = len(lane.member_item_ids)
             cells.append(TableCellContent(row.lane_id, "Items", str(member_count), "tableCell", "numeric"))
