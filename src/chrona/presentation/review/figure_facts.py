@@ -1,6 +1,7 @@
 """One projection-owned count producer for summary metrics and View figures (#927)."""
 from collections import Counter
 from collections.abc import Sequence
+from datetime import date
 
 from chrona.core.figures import FigureCounts, FigureSpec
 from chrona.presentation.model.projection import ObservationState, ReviewItem
@@ -26,3 +27,19 @@ def projected_counts(items: Sequence[ReviewItem], *, as_of_available: bool) -> F
                         due if as_of_available else None, len(deltas),
                         sum(value > 0 for value in deltas), sum(value < 0 for value in deltas),
                         groups=len({item.group_id for item in selected if item.group_id}))
+
+
+def projected_last_planned_finish(items: Sequence[ReviewItem]) -> date | None:
+    """Latest planned endpoint among distinct selected Primary items.
+
+    Comparison ghosts and scenario/actual rows are not selected Project facts. A selected
+    span contributes its planned end; a selected point contributes its planned at date.
+    """
+    selected_by_id = {}
+    for item in items:
+        if item.source_kind in {"primary", "combined"}:
+            selected_by_id.setdefault(item.object_id, item)
+    finishes = (item.planned.get("at" if item.source_type == "point" else "end")
+                for item in selected_by_id.values())
+    dates = tuple(value for value in finishes if value is not None)
+    return max(dates) if dates else None

@@ -16,6 +16,7 @@ from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.slot_heading import bind_slot_heading_templates, headed_slot_ids, reserve_slot_heading_blocks
 from chrona.presentation.layout.sources import MeasuredSources, resolve_theme_metrics, measure_sources
 from chrona.presentation.layout.source_sizing import SourceSizingSession
+from chrona.presentation.layout.source_presence import omit_absent_layout_sources
 from chrona.presentation.layout.surface_legend import LegendArrangement, legend_arrangement, legend_source_input
 from chrona.presentation.layout.surface_preparation import SurfacePreRowGeometry, prepare_surface_content, prepare_surface_natural_candidate
 from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest, VisualRequest
@@ -133,6 +134,8 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
     if layout_error is not None:
         raise layout_error
     _check_slot_heading_text(view, resolved_layout)
+    if summary.absent:
+        resolved_layout = omit_absent_layout_sources(resolved_layout, frozenset({"summary"}))
     selected_content = bind_slot_heading_templates(resolved_layout, content=selected_content, view=view,
                                                   figures=dict(projection.figures), measured=measured)
     # A declared slot heading is part of its content-sized slot's measurement (#1064).

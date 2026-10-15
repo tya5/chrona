@@ -719,6 +719,7 @@ $defs:
       typographyRole: {description: "Named Theme text-treatment role measuring and sizing the secondary text; its colour is the tier's.", type: string, minLength: 1}
       placement: {description: "stacked draws it on the line below the main label; inline draws it after the main label on the same baseline.", enum: [stacked, inline]}
   figureFact:
+    description: "A date fact, including the selected Project's latest planned finish."
     $ref: "urn:chrona:common-v0.1#/$defs/profileFigureFact"
   figureIdentity:
     $ref: "urn:chrona:common-v0.1#/$defs/profileFigureIdentity"

@@ -66,7 +66,7 @@ schemas:
       annotationCandidates: "sha256:2daa0753bf0c453e7f80c7bc8f3d8f78ffd0ae9677ce96ea0b39f8b6ab7bba9e"
       annotationPlacementPolicy: "sha256:5dbd61db1ea073720443ba0076b7d17fd148629de6dee8fed99b339169d358c7"
       annotationPlacementByPurpose: "sha256:3241c3e652f34b517df15f2fd84e25af0e71bbc67542f266e1a9b91731ce9be2"
-      profileFigureFact: "sha256:aed294c179aa09bae72fc688ac6d15872deb0cc2adf4ff0c4fad26a2d2e02823"
+      profileFigureFact: "sha256:1ed8ac7991cb2e878f135217e9678992707b92a0b11491ec8c39c806ac1de941"
       profileFigureIdentity: "sha256:9ac136edb99a2063b3091602181c8d2022fdccb5b514991319d58544c2e57e95"
       profileFigureScope: "sha256:54cb50d00c2e293548b9e4c0b2a2cdfde13204d9f3db5155a589b3bd7207c3b2"
       profileFigureDays: "sha256:42d2203abeb044cfd165671fdfec72788f622df8c6dab2d1d7d8b3505ff2c905"

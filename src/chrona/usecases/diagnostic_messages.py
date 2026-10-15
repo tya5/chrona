@@ -81,6 +81,8 @@ def error_message(code: str, message: str | None) -> str:
 # severity and cause are one finding that happened more than once, and collapse into one row (design D1).
 
 _SURFACE_CAUSES: Mapping[str, str] = {
+    "W_SUMMARY_SLOT_UNBOUND": "the named Summary slot has no View binding; supply its binding to draw the metric; an empty summary frame is omitted",
+    "W_SUMMARY_SLOT_UNAVAILABLE": "the named Summary slot has no date value; supply an Actual Set with asOf for a daysUntil origin, or selected planned dates for its target; the empty summary frame is omitted",
     "W_LAYOUT_OUTSIDE_WINDOW": "objects outside the explicit window were clipped or left out of the plot; their source data is unchanged",
     "W_LAYOUT_MARK_STACK_OVERFLOW": "a comparison stack exceeds its nominal track; row space was expanded",
     "W_LAYOUT_LABEL_SUPPRESSED": "a label was left out of the picture because it does not fit",

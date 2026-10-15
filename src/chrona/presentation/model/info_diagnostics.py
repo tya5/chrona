@@ -305,6 +305,7 @@ class UnboundSummarySource:
     metric_id: str
     source_kind: str
     source_name: str
+    reason: str | None = None
 
     def __post_init__(self) -> None:
         if (self.source_kind not in {"slot", "figure"}
@@ -314,11 +315,14 @@ class UnboundSummarySource:
 
     @property
     def code(self) -> str:
-        return "I_SUMMARY_SLOT_UNBOUND" if self.source_kind == "slot" else "I_SUMMARY_FIGURE_UNBOUND"
+        if self.reason is not None:
+            return "W_SUMMARY_SLOT_UNAVAILABLE"
+        return "W_SUMMARY_SLOT_UNBOUND" if self.source_kind == "slot" else "I_SUMMARY_FIGURE_UNBOUND"
 
     def scene_diagnostic(self) -> str:
         return self.code + ":" + json.dumps({"panel": self.panel_id,
-            "metric": self.metric_id, self.source_kind: self.source_name},
+            "metric": self.metric_id, self.source_kind: self.source_name,
+            **({"reason": self.reason} if self.reason is not None else {})},
             ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 

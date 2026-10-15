@@ -9,7 +9,7 @@ import re
 from typing import Any, Literal, Mapping
 
 
-from chrona.core.figures import AsOfFact, FigureSpec, GroupStartFact, ObjectFact, PeriodFact
+from chrona.core.figures import AsOfFact, FigureSpec, GroupStartFact, ObjectFact, PeriodFact, ProjectFinishFact
 from chrona.presentation.figure_text import FigureTextError, figure_ids
 from chrona.presentation.count_text import CountTextError, CountTextFormat
 from chrona.presentation.deadline_text import DeadlineCaptionText, compile_deadline_caption
@@ -1235,13 +1235,15 @@ def _view_figure(item: Mapping[str, Any], path: str, *, figure_id: str | None = 
                       calendar_id=calendar, path=path)
 
 
-def _figure_fact(raw: Any) -> AsOfFact | PeriodFact | ObjectFact | GroupStartFact:
+def _figure_fact(raw: Any) -> AsOfFact | PeriodFact | ObjectFact | GroupStartFact | ProjectFinishFact:
     if raw == "asOf":
         return AsOfFact()
     if "period" in raw:
         return PeriodFact(str(raw["period"]), str(raw["side"]))
     if "group" in raw:
         return GroupStartFact()
+    if "project" in raw:
+        return ProjectFinishFact()
     return ObjectFact(str(raw["object"]), str(raw["endpoint"]))
 
 

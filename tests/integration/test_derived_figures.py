@@ -79,6 +79,62 @@ def test_period_last_flows_through_the_view_contract_into_rendered_summary_text(
     assert b">37<" in rendered.artifact.content
 
 
+def _project_countdown_parts():
+    parts = _parts()
+    parts["view"]["body"]["bindings"] = {
+        "countdown": {"figure": {"kind": "daysUntil", "to": {"project": "lastPlannedFinish"}}}}
+    return parts
+
+
+def _slot_summary():
+    return _summary(dict(_metric(), source={"slot": "countdown"}))
+
+
+def test_project_finish_binding_uses_selected_planned_dates(tmp_path):
+    rendered = _render(tmp_path, _project_countdown_parts(), _slot_summary())
+    # Latest selected endpoint is the build span's exclusive March 16 end,
+    # or the later March 20 point; the latter wins.
+    assert _texts(rendered)["summary:key:m:value"] == "28"
+
+
+def test_unavailable_summary_binding_warns_and_omits_even_a_required_fixed_slot(tmp_path):
+    parts = _project_countdown_parts()
+    slot = next(item for item in parts["layout"]["root"]["children"] if item.get("source") == "summary")
+    slot.update(priority="required", inlineSize={"fixed": 200}, blockSize={"fixed": 100})
+    # Use a legal existing box role, independent of the packaged titlecard.
+    slot["frame"] = {}
+    rendered = _render(tmp_path, parts, _slot_summary(), actual=None)
+    assert not _texts(rendered)
+    assert not any(item.scene_id.startswith("region-frame:summary") for item in rendered.surface.primitives)
+    warning, = [item for item in rendered.warning_records if item.payload["code"] == "W_SUMMARY_SLOT_UNAVAILABLE"]
+    assert "countdown" in warning.identity
+    assert "Actual Set with asOf" in warning.payload["message"]
+
+
+def test_explicit_project_finish_figure_stays_strict_without_asof(tmp_path):
+    parts = _parts({"id": "countdown", "kind": "daysUntil", "to": {"project": "lastPlannedFinish"}})
+    with pytest.raises(RenderRejected) as error:
+        _render(tmp_path, parts, _slot_summary(), actual=None)
+    assert any(item.id == "E_FIGURE_ASOF_MISSING" for item in error.value.diagnostics)
+
+
+def test_missing_asof_does_not_hide_an_unknown_binding_reference(tmp_path):
+    parts = _parts()
+    parts["view"]["body"]["bindings"] = {
+        "countdown": {"figure": {"kind": "daysUntil", "to": {"period": "typo", "side": "end"}}}}
+    with pytest.raises(RenderRejected) as error:
+        _render(tmp_path, parts, _slot_summary(), actual=None)
+    assert any(item.id == "E_FIGURE_PERIOD_UNKNOWN" for item in error.value.diagnostics)
+
+
+def test_unavailable_summary_alias_remains_an_error_for_an_ordinary_heading(tmp_path):
+    parts = _project_countdown_parts()
+    parts["view"]["body"]["heading"] = {"title": "Days: {figure:countdown}"}
+    with pytest.raises((RenderFailed, ValueError)) as error:
+        _render(tmp_path, parts, _slot_summary(), actual=None)
+    assert "E_VIEW_FIGURE_UNKNOWN" in str(error.value)
+
+
 GROUP_COUNTDOWN = {"id": "group-countdown", "kind": "daysUntil", "scope": "group",
                    "to": {"group": "firstPlannedStart"}}
 
@@ -317,7 +373,7 @@ def test_unbound_slot_omits_content_without_project_inference(tmp_path):
     rendered = _render(tmp_path, _parts(), _summary(dict(_metric(), source={"slot": "countdown"})))
     assert _texts(rendered) == {}
     assert b"summary:key" not in rendered.artifact.content
-    assert any(item.code == "I_SUMMARY_SLOT_UNBOUND" for item in rendered.info_diagnostics)
+    assert any(item.payload["code"] == "W_SUMMARY_SLOT_UNBOUND" for item in rendered.warning_records)
 
 
 def test_object_binding_keeps_selection_unavailability_separate_from_unknown_object(tmp_path):

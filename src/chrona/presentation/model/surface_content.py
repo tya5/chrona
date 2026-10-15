@@ -53,6 +53,7 @@ class SummaryContent:
     """Immutable semantic summary facts shared by measurement and placement."""
 
     panels: tuple[SummaryPanel, ...]
+    absent: bool = False
 
     @property
     def runs(self) -> tuple[SummaryTextRun, ...]:

@@ -115,8 +115,10 @@ def _with_count(value: SurfaceRenderPlanInput, count: int) -> Any:
                               default_calendar=None, counts=counts)
     assert not resolved.diagnostics, "closed Layout count facts must resolve"
     values = {**dict(value.projection.figures), **resolved.values}
+    unavailable_ids = {finding.details["figure"] for finding in value.projection.unavailable_figures}
     return replace(value.projection, figures=tuple((item.figure_id, values[item.figure_id])
-        for item in value.view.figures if item.scope == "global"))
+        for item in value.view.figures if item.scope == "global"
+        and item.figure_id not in unavailable_ids))
 
 
 def _compose(value: SurfaceRenderPlanInput, plan: PreparedSurfaceRenderPlan):
