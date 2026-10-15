@@ -8,6 +8,16 @@ Source `056d68e28849d64f4652b74bac3cffb98992e949`, ready base
 Local acceptance below is complete; PR snapshot and exact-main three-OS
 release remain required before closure.
 
+The exact-head [PR snapshot](https://github.com/tya5/chrona/actions/runs/38822417510)
+at `5438827d3cb27bc4e8c4d41d3160d4e00655262d` (artifact `12013647251`)
+matches all 109 locally audited output/report paths byte-for-byte. Its 14
+pytest failures were stale expectations: five CLI warning goldens, eight
+fixture materializer checks and one obsolete HALCYON warning assertion.
+Test-only refreshes preserve inputs and admit only the specified Actual/variance
+changes: seven controller-z variance labels (and one delta cell), one Japanese
+no-cutoff diagnostic, and warning removals for started spans. The HALCYON test
+now positively requires the Actual bar and retains the truly missing control.
+
 ## Literal issue acceptance
 
 ### Issue #1582
