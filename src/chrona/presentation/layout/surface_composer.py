@@ -41,13 +41,14 @@ from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT_FALLBACK
 from chrona.presentation.layout.as_of_cone import complete_as_of_cone
 from chrona.presentation.layout.surface_deadlines import compose_deadline_marks
 from chrona.presentation.layout.deadline_captions import place_deadline_captions
+from chrona.presentation.layout.surface_obstacle_seed import seed_surface_obstacles
 from chrona.presentation.layout.surface_periods import compose_period_bands, period_label_requests
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.label_visual_measurement import absent_label_visual_sources
 from chrona.presentation.layout.text import metric_for_role
 from chrona.presentation.layout.labels import (LabelRect, LabelRequest)
 from chrona.presentation.layout.obstacles import (
-    ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
+    ObstacleRect, SurfaceObstacle,
 )
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, FitWarning, PlacementDecision, IconPlacement, ShapePlacement, SurfaceLayoutRequest,
@@ -215,7 +216,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     lane_label_suppressions: list[LaneLabelSuppression] = []
     # One monotonically growing Layout inventory is shared by labels, semantic
     # routes and annotations. Background bands deliberately do not enter it.
-    surface_obstacles = SurfaceObstacleIndex()
+    surface_obstacles = seed_surface_obstacles(marks=marks, text=text, shapes=shapes)
 
     def register_rect(placement_id: str, obstacle_class: str, region_id: str, bounds: Rect) -> None:
         inline, block, inline_size, block_size = _bounds(bounds)
@@ -223,29 +224,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
             surface_obstacles.add(SurfaceObstacle(placement_id, obstacle_class, region_id,
                                                   ObstacleRect(inline, block, inline + inline_size, block + block_size)))
 
-    def register_path(placement_id: str, obstacle_class: str, region_id: str,
-                      points: tuple[tuple[float, float], ...], *, stroke_width: float = 0.0) -> None:
-        for index, (source, target) in enumerate(zip(points, points[1:])):
-            if source != target:
-                surface_obstacles.add(SurfaceObstacle(f"{placement_id}:segment:{index}", obstacle_class,
-                                                      region_id, ObstacleSegment(source, target, stroke_width)))
-
     def register_port(placement_id: str, point: tuple[float, float], region_id: str) -> None:
         surface_obstacles.add(SurfaceObstacle(placement_id, "port", region_id,
                                               ObstacleRect(point[0] - 0.01, point[1] - 0.01,
                                                            point[0] + 0.01, point[1] + 0.01)))
-
-    for mark in marks:
-        register_rect(mark.placement_id, "mark", "timeline", mark.bounds)
-    for placed_text in text:
-        if placed_text.required and placed_text.overflow != "suppressed":
-            register_rect(placed_text.placement_id, "text", placed_text.collision_domain.slot, placed_text.bounds)
-    for shape in shapes:
-        if shape.placement_id == "as-of" and len(shape.points) >= 2:
-            surface_obstacles.add(SurfaceObstacle(shape.placement_id, "rule", "timeline",
-                                                  ObstacleSegment(shape.points[0], shape.points[1])))
-        elif shape.semantic_id == "deadlineMark":  # a thin rule an annotation candidate must not cover, as for the as-of rule
-            register_path(shape.placement_id, "rule", "timeline", shape.points)
 
     timeline_rect = LabelRect(*timeline_bounds)
 

@@ -553,6 +553,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_groups` | Place group-header text and group presentation from completed base extents. |
 | `surface_axis` | Place axis bands/labels and targets; derive calendar overlay intervals from the completed scale. |
 | `surface_marks` | Place tracks/marks/folded points/progress. |
+| `surface_obstacle_seed` | Seed the single ordered obstacle index from completed marks, required text and rule shapes; background bands stay outside it. Later phase owners extend the same index. |
 | `surface_mark_visibility` | Close selected source mark occurrences and window admission once, with typed source/final lane aliases; no membership or Scene geometry repair. |
 | `surface_member_labels` | Build requests and place member/item labels. |
 | `surface_lanes` | Adapt/preflight fixed lanes; emit lane facets and close host identities. |

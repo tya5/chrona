@@ -17,6 +17,10 @@ are the authority; do not duplicate their rules here.
 
 The TextPlacement handoff also carries typed subjects (`surface_quality.py`);
 outside captions do not use host_placement_id as a generic provenance link.
+`surface_obstacle_seed.py` now owns unchanged initial obstacle registration
+(Spec33), keeping the composer under its existing size gate.87 combined
+regression checks PASS; standard font-error message transport is retained.
+The three first-run failures are identified in the [CI disposition](https://github.com/tya5/chrona/pull/1523#issuecomment-6184316468).
 
 Local evidence: combined103 focused cases (including actual SVG/PDF and Typst/
 TikZ copy, all four count forms, fallback/drop/contrast/provenance and existing

@@ -17,6 +17,7 @@ from chrona.presentation.fonts.installed import InstalledFontIndex, use_installe
 from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
 from chrona.presentation.layout.text import metric_for_family
 from chrona.resources import safe_load
+from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
 from tests.support import text_treatments as tt
 
@@ -228,10 +229,10 @@ def test_text_no_face_of_the_stack_or_the_package_covers_fails_naming_the_charac
     empty.mkdir()
     (tmp_path / "run").mkdir()
     with use_installed_fonts(InstalledFontIndex([empty])):
-        with pytest.raises(Exception) as caught:
+        with pytest.raises(RenderFailed) as caught:
             _render(tmp_path / "run", _parts(), title="日本語")
 
-    message = str(caught.value) + repr(getattr(caught.value, "detail", ""))
+    message = caught.value.code + caught.value.message
     assert "E_FONT_GLYPH_UNAVAILABLE" in message and "U+65E5" in message and "Noto Sans" in message
     face_stack = message.split("face stack [", 1)[1].split("]", 1)[0]
     assert face_stack.split(", ") == ["Hiragino Sans", "Yu Gothic", "Noto Sans JP", "Noto Sans"]
