@@ -46,7 +46,7 @@ from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenVi
 from chrona.core.attachments import AttachmentWarning, attachment_warnings
 from chrona.core.deadlines import deadline_statuses, deadline_warnings
 from chrona.presentation.count_text import CountTextError
-from chrona.core.figures import FigureCounts, resolve_figures
+from chrona.core.figures import FigureCounts, FigureResolution, resolve_figures
 from chrona.core.periods import period_range_diagnostics, resolve_periods
 from chrona.core.temporal import Calendar
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
@@ -58,7 +58,7 @@ from chrona.presentation.model.actual_variance_paint import resolve_actual_varia
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.contracts.resources import ViewInput
 from chrona.presentation.review.detail import ReviewDetailError
-from chrona.presentation.review.figure_facts import deferred_layout_figures, projected_counts
+from chrona.presentation.review.figure_facts import deferred_layout_figures, projected_counts, projected_last_planned_finish
 from chrona.presentation.review.annotation_expansion import AnnotationExpansionError
 from chrona.presentation.review.profile_connections import ProfileConnectionError, resolve_profile_connections
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, header_lines, heading_text
@@ -275,6 +275,17 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     if request.progress is not None:
         request.progress.phase("schedule")
     projection, scenario_provenance, attachments, deadlines = _project_review(project, view, render_closure, manifests, request.scheduler)
+    unavailable = {item.details["figure"]: item.id for item in projection.unavailable_figures}
+    unavailable_metrics = []
+    if profile_connections.summary is not None:
+        for panel_index, panel in enumerate(profile_connections.summary.panels):
+            for metric_index, metric in enumerate(panel.metrics):
+                source = getattr(metric, "source", None)
+                if isinstance(source, Mapping) and source.get("figure") in unavailable:
+                    unavailable_metrics.append((panel_index, metric_index))
+                    profile_info += (UnboundSummarySource(panel.id, metric.id, "slot", source["figure"],
+                                                         reason=unavailable[source["figure"]]),)
+    omitted_metrics = omitted_metrics | frozenset(unavailable_metrics)
     if request.progress is not None:
         request.progress.phase("layout")
     color_scale = resolve_color_scale(view.color_encoding, theme["body"].get("colorScales"),
@@ -304,6 +315,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                                         projection, render_closure.actual_set.observations_input if render_closure.actual_set else None,
                                         project, omitted_metrics=omitted_metrics,
                                         summary_wording=(view.wording or {}).get("summary", {}))
+    summary = replace(summary, absent=bool(omitted_metrics) and not summary.panels)
     if render_closure.summary_profile is not None:
         ledger.summary()
     icon_assets = {item.icon_id: item for item in render_closure.icon_assets}
@@ -390,7 +402,9 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                                                    initial=plan, admitted=scene_input)
         surface, projection, plan = rendered.surface, rendered.projection, rendered.plan
         if profile_info:
-            surface = replace(surface, info_diagnostics=(*surface.info_diagnostics, *profile_info))
+            surface = replace(surface,
+                info_diagnostics=(*surface.info_diagnostics, *(item for item in profile_info if not item.code.startswith("W_"))),
+                diagnostics=(*surface.diagnostics, *(item.scene_diagnostic() for item in profile_info if item.code.startswith("W_"))))
         surface_content = plan.content
     except FontMetricsError as error:
         raise _font_failure(error) from error
@@ -698,11 +712,18 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
     late_ids = {item.figure_id for item in deferred_layout_figures(view.figures)}
     figure_diagnostics = []
     try:
-        global_figures = _resolved_figures(project, result.placements,
+        resolution = _figure_resolution(project, result.placements,
             replace(view, figures=tuple(item for item in view.figures if item.scope == "global"
                                        and item.figure_id not in late_ids)), actual,
+            project_last_finish=projected_last_planned_finish(projection.items),
             counts=projected_counts(projection.items, as_of_available=
                                    ((actual or {}).get("body") or {}).get("asOf") is not None))
+        global_figures = tuple(resolution.values.items())
+        binding_ids = {item.figure.figure_id for item in view.profile_bindings if item.figure is not None}
+        unavailable_figures = tuple(item for item in resolution.diagnostics
+            if item.details.get("figure") in binding_ids
+            and item.id in {"E_FIGURE_ASOF_MISSING", "E_FIGURE_PROJECT_FINISH_MISSING"})
+        figure_diagnostics.extend(item for item in resolution.diagnostics if item not in unavailable_figures)
     except RenderRejected as error:
         figure_diagnostics.extend(error.diagnostics)
     try:
@@ -713,6 +734,7 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         raise RenderRejected(figure_diagnostics)
     projection = replace(projection, periods=_selected_periods(project, result.placements, view, dict(global_figures)),
                          figures=global_figures, group_figures=group_figures,
+                         unavailable_figures=unavailable_figures,
                          deadlines=_shown_deadlines(project, result.placements, view))
     return projection, tuple(provenance), attachment_warnings(project, result.placements), deadline_warnings(project, result.placements)
 
@@ -793,25 +815,34 @@ def _check_summary_figures(summary: Any, projection: Any, view: ViewInput, *,
 def _resolved_figures(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput,
                       actual: Mapping[str, Any] | None, *,
                       group_first_start: date | None = None,
+                      project_last_finish: date | None = None,
                       counts: FigureCounts | None = None) -> tuple[tuple[str, int], ...]:
+    resolution = _figure_resolution(project, placements, view, actual,
+                                   group_first_start=group_first_start, project_last_finish=project_last_finish, counts=counts)
+    if resolution.diagnostics:
+        raise RenderRejected(list(resolution.diagnostics))
+    return tuple(resolution.values.items())
+
+
+def _figure_resolution(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput,
+                       actual: Mapping[str, Any] | None, *, group_first_start: date | None = None,
+                       project_last_finish: date | None = None,
+                       counts: FigureCounts | None = None) -> FigureResolution:
     """Every figure the View declares, computed by the Core from the facts gathered here (#586).
 
     This is the one place the as-of, the placements, the resolved periods and the Project calendars are
-    collected; the arithmetic is Core's. A finding on any figure refuses the render with all findings: a
-    figure with a missing fact never becomes a blank or a made-up number.
+    collected; the arithmetic is Core's. A finding yields no number; the caller
+    distinguishes strict consumers from unavailable Summary connections.
     """
     if not view.figures:
-        return ()
+        return FigureResolution({}, ())
     as_of = ((actual or {}).get("body") or {}).get("asOf")
-    resolution = resolve_figures(
+    return resolve_figures(
         view.figures, as_of=date.fromisoformat(as_of) if isinstance(as_of, str) else None, placements=placements,
         periods=resolve_periods(project, placements),
         calendars={key: Calendar.from_mapping(value) for key, value in (project.get("calendars") or {}).items()},
         default_calendar=(project.get("project") or {}).get("calendar"), group_first_start=group_first_start,
-        counts=counts)
-    if resolution.diagnostics:
-        raise RenderRejected(list(resolution.diagnostics))
-    return tuple(resolution.values.items())
+        counts=counts, project_last_finish=project_last_finish)
 
 
 def _resolved_group_figures(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput,
@@ -839,6 +870,7 @@ def _resolved_group_figures(project: dict[str, Any], placements: dict[str, dict[
         try:
             resolved = _resolved_figures(project, placements, scoped_view, actual,
                                          group_first_start=min(dates) if dates else None,
+                                         project_last_finish=projected_last_planned_finish(projection.items),
                                          counts=projected_counts(members, as_of_available=
                                              ((actual or {}).get("body") or {}).get("asOf") is not None))
             values.append((group_id, resolved))

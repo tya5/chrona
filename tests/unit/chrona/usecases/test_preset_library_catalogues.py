@@ -34,6 +34,33 @@ def test_technical_print_copies_catalogue_and_notice_with_exact_library_pins(tmp
     assert copied_preset["body"]["resources"]["detailProfile"]["path"] == "detail.yaml"
 
 
+def test_titlecard_copy_includes_the_optional_summary_profile_unchanged(tmp_path):
+    entry = next(item for item in preset_library._library() if item["id"] == "titlecard")
+    member = entry["members"]["summaryProfile"]
+    source = resources.builtin_preset_source_root(member["sourceRoot"]).joinpath(member["sourcePath"]).read_bytes()
+
+    destination = tmp_path / "titlecard"
+    preset_path = preset_library.copy_builtin_preset("titlecard", destination)
+
+    assert (destination / "summary.yaml").read_bytes() == source
+    copied = yaml.safe_load(preset_path.read_text(encoding="utf-8"))
+    assert copied["body"]["resources"]["summaryProfile"] == {
+        "id": member["id"], "kind": member["kind"], "path": "summary.yaml",
+    }
+
+
+def test_bad_summary_member_fails_before_destination_creation(monkeypatch, tmp_path):
+    entry = deepcopy(next(item for item in preset_library._library() if item["id"] == "titlecard"))
+    entry["members"]["summaryProfile"]["contentIdentity"] = "sha256:" + "0" * 64
+    monkeypatch.setattr(preset_library, "_library", lambda: [entry])
+    destination = tmp_path / "not-created"
+
+    with pytest.raises(ValueError, match="E_BUILTIN_PRESET_RESOURCE"):
+        preset_library.copy_builtin_preset("titlecard", destination)
+
+    assert not destination.exists()
+
+
 def test_bad_notice_pin_fails_before_destination_creation(monkeypatch, tmp_path):
     entry = next(item for item in preset_library._library() if item["id"] == "technical-print")
     entry = deepcopy(entry)

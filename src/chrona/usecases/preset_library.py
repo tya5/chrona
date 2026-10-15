@@ -131,10 +131,11 @@ def copy_builtin_preset(identifier: str, destination: Path) -> Path:
         member = _member(entry, name)
         payloads[output] = _plain(_read_member(member))
         resources[name] = {"id": str(member["id"]), "kind": str(member["kind"]), "path": output}
-    if isinstance(entry.get("members"), dict) and "detailProfile" in entry["members"]:
-        member = _member(entry, "detailProfile")
-        payloads["detail.yaml"] = _plain(_read_member(member))
-        resources["detailProfile"] = {"id": str(member["id"]), "kind": str(member["kind"]), "path": "detail.yaml"}
+    for name, output in (("detailProfile", "detail.yaml"), ("summaryProfile", "summary.yaml")):
+        if isinstance(entry.get("members"), dict) and name in entry["members"]:
+            member = _member(entry, name)
+            payloads[output] = _plain(_read_member(member))
+            resources[name] = {"id": str(member["id"]), "kind": str(member["kind"]), "path": output}
     members_value = entry.get("members", {})
     for member in members_value.get("iconCatalogs", []) if isinstance(members_value, dict) else []:
         raw = _read_member(member)

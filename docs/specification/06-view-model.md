@@ -569,7 +569,7 @@ restrictions still apply.
 
 A binding to an undeclared slot is `E_VIEW_BINDING_UNKNOWN` at
 `/body/bindings/<escaped-name>`. A declared but unbound slot omits its metric
-and emits `I_SUMMARY_SLOT_UNBOUND`; a panel with no remaining metrics is also
+and emits `W_SUMMARY_SLOT_UNBOUND`; a panel with no remaining metrics is also
 omitted. No fact or target is inferred from the project. A supplied nonexistent
 object is `E_FIGURE_OBJECT_UNKNOWN`; invalid figure facts retain their existing
 errors. A valid object excluded by selection retains the existing unavailable
@@ -594,6 +594,18 @@ retains the profile label. No entries or panels are synthesized.
 
 The use-case boundary closes profile connections before fact resolution and
 text measurement, preserving authored resource identities in provenance.
+Without a selected Summary Profile, Summary bindings and Summary wording are
+dormant: their generated aliases do not resolve, while explicit `figures` remain
+eager. Active-profile name checks remain strict. `{project: lastPlannedFinish}`
+reads the maximum selected Primary/combined planned span end or point at, once
+per object identity, excluding ghosts/scenarios; even a group-scoped consumer
+uses the whole selected Project, not the current group.
+An active Summary figure binding with unavailable as-of or selected finish
+omits its consumers with `W_SUMMARY_SLOT_UNAVAILABLE`, naming the slot. A missing
+origin explains that an Actual Set with `asOf` supplies it; there is no implicit
+clock. Unknown/malformed references and explicit View figures remain fatal.
+If all Summary metrics are omitted, Layout receives typed semantic absence
+and removes its slot and exclusively empty ancestor frames (Spec33).
 Layout still owns completed geometry; Scene and adapters receive resolved
 content only. Existing explicit sources and labels remain supported; absent
 bindings or wording do not change their output, except the approved unbound

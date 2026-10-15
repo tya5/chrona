@@ -36,7 +36,7 @@ class ProfileOmission:
 
     @property
     def code(self) -> str:
-        return "I_SUMMARY_SLOT_UNBOUND" if self.source_kind == "slot" else "I_SUMMARY_FIGURE_UNBOUND"
+        return "W_SUMMARY_SLOT_UNBOUND" if self.source_kind == "slot" else "I_SUMMARY_FIGURE_UNBOUND"
 
 
 @dataclass(frozen=True)
@@ -107,7 +107,7 @@ def resolve_profile_connections(view: ViewInput, summary: SummaryProfileInput | 
         if (slot := _source_slot(metric.source)) is not None
     }
 
-    for binding in view.profile_bindings:
+    for binding in view.profile_bindings if summary is not None else ():
         if binding.name not in declared_slots:
             raise ProfileConnectionError("E_VIEW_BINDING_UNKNOWN",
                                          f"binding slot {binding.name!r} is not declared by the selected Summary Profile",
@@ -163,7 +163,7 @@ def resolve_profile_connections(view: ViewInput, summary: SummaryProfileInput | 
     wording = view.wording or {}
 
     summary_wording = wording.get("summary", {})
-    if summary_wording:
+    if summary_wording and summary is not None:
         matches: dict[str, list[tuple[str, int, int | None]]] = {}
         for panel_index, panel in enumerate(effective_summary.panels if effective_summary else ()):
             matches.setdefault(f"{panel.id}.title", []).append(("title", panel_index, None))
@@ -216,4 +216,7 @@ def resolve_profile_connections(view: ViewInput, summary: SummaryProfileInput | 
                              for entry in detail.legend),
             )
 
+    if summary is None:
+        inactive_ids = {item.figure.figure_id for item in view.profile_bindings if item.figure is not None}
+        view = replace(view, figures=tuple(item for item in view.figures if item.figure_id not in inactive_ids))
     return ProfileConnectionResult(view, effective_summary, effective_detail, tuple(omissions))

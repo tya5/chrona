@@ -104,6 +104,8 @@ def bind_heading_dependencies(inputs: dict[str, SourceInput], programs: HeadingT
 
 def _summary_source(summary: SummaryContent) -> SourceInput:
     """Retain panel grouping only when an arrangement opts into grouped flow."""
+    if summary.absent:
+        return SourceInput(content_present=False)
     if not any(panel.arrangement == "inline" for panel in summary.panels):
         return SourceInput(runs=tuple(SourceTextRun(run.content, run.typography_role) for run in summary.runs))
     return SourceInput(runs=tuple(SourceTextRun(run.content, run.typography_role, run.placement_id)

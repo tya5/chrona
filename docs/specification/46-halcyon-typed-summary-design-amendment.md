@@ -30,7 +30,9 @@ A typed metric `source` may also be `{figure: <id>}`, naming a global figure the
 `source: {slot: <name>}` declares a reusable data slot. Specification06 §9.3
 defines View bindings, caption overrides and pointed errors. Binding resolution
 precedes Summary figure validation and content measurement. An unbound slot
-is omitted with `I_SUMMARY_SLOT_UNBOUND`, not displayed as `unknown` or zero.
+is omitted with `W_SUMMARY_SLOT_UNBOUND`, not displayed as `unknown` or zero.
+Unavailable dates in Summary bindings warn and omit under Spec06 §9.3;
+explicit View figures and invalid references remain strict.
 Omission preserves the original declaration indexes in surviving completed
 SourceRefs, including inline arrangements; omitted metrics emit no primitives.
 Info facts carry the original

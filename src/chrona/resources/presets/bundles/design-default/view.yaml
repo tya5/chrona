@@ -6,6 +6,12 @@ id: chrona-preset-design-default
 # from the selected Layout profile's `viewDefaults`, and a member declared here replaces the design's.
 body:
   surface: table-timeline
+  bindings:
+    countdown:
+      figure: {kind: daysUntil, to: {project: lastPlannedFinish}}
+  wording:
+    summary:
+      countdown.title: 完了まで
   figures:
   - {id: selected-count, kind: count, source: selected}
   - {id: group-count, kind: count, source: groups}
