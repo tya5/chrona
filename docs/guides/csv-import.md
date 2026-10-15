@@ -68,7 +68,7 @@ closed. Only `id` is required.
 | `deadline` | `YYYY-MM-DD`; moves nothing, `schedule` warns if it is missed |
 | `calendar` | a calendar name declared with `--calendar` |
 | `progress` | observed progress: `60%`, `60` or `0.6` (a value above 1 is a percentage). Goes to the Actual Set |
-| `actual_start`, `actual_finish` | observed dates, to the Actual Set (for a gate, either one is the observed date) |
+| `actual_start`, `actual_finish` | observed dates, to the Actual Set. `actual_finish` is **inclusive** like `finish`: the last day the task was worked, written to the Actual `finish` as the next calendar day (the exclusive end), so a task that finished on its planned `finish` is drawn to its planned end and a one-day task has `actual_start` = `actual_finish`. For a gate, either one is the observed date and it is written unchanged |
 
 A schedule is read from `start`/`end`/`finish`/`duration`: start and end (or finish) give a fixed span, a duration with a start
 (or an end) gives a scheduled span, a duration alone relies on `predecessors`, a gate with predecessors and no date is derived

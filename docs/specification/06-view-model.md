@@ -431,7 +431,7 @@ Current-versus-Snapshot compares the Primary Project with an immutable named Sna
 
 ### 8.2 Plan versus Actual
 
-Plan-versus-Actual compares planned placements from the Primary Project or named Snapshot with independent Actual observations. An observation has exactly one occurrence shape: a point `at`, or an interval with one or both of `start`/`finish`, optionally progress. It has a positive `sequence`; v0.1 selects the latest sequence. Actuals MUST NOT automatically change planned dependencies, duration, forecast, or schedule.
+Plan-versus-Actual compares planned placements from the Primary Project or named Snapshot with independent Actual observations. An observation has exactly one occurrence shape (an interval's `finish` is the exclusive end, the day after the last day, and MUST be after its `start`; otherwise the Actual Set is rejected when read as `E_ACTUAL_FINISH_NOT_AFTER_START` at `/body/observations/<i>/actual/finish`, naming the observation id and suggesting `finish: <start + 1 day>`): a point `at`, or an interval with one or both of `start`/`finish`, optionally progress. It has a positive `sequence`; v0.1 selects the latest sequence. Actuals MUST NOT automatically change planned dependencies, duration, forecast, or schedule.
 
 The View Projection MAY expose planned and actual endpoints, start/finish delta, progress, absent observation, and unmatched observation. Whether an actual delay triggers rescheduling belongs to a future scheduling or application policy.
 

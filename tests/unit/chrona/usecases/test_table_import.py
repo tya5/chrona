@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 
+import pytest
 import yaml
 
 from chrona.core.validation import validate_project
@@ -87,7 +88,7 @@ def test_a_table_using_every_column_validates_schedules_and_writes_an_actual_set
     assert actual["body"]["asOf"] == "2027-04-01"
     observed = {item["projectObjectId"]: item["actual"] for item in actual["body"]["observations"]}
     assert observed["a"] == {"start": "2027-03-02", "progress": 0.6} and observed["b"] == {"progress": 0.25}
-    assert observed["g"] == {"at": "2027-03-01"} and observed["c"] == {"finish": "2027-03-19", "progress": 0.4}
+    assert observed["g"] == {"at": "2027-03-01"} and observed["c"] == {"finish": "2027-03-20", "progress": 0.4}  # actual_finish is inclusive
 
 
 def test_three_mistakes_are_three_diagnostics_with_row_and_column_in_one_run():
@@ -148,3 +149,35 @@ def test_the_command_writes_files_reports_cells_and_never_overwrites(tmp_path):
 
     missing = chrona("import", "nope.csv", "-o", "x.yaml")
     assert missing.returncode == 2 and json.loads(missing.stdout)["diagnostics"][0]["code"] == "E_IMPORT_INPUT_IO"
+
+
+def _observed(actual_start: str, actual_finish: str, kind: str = "task") -> dict:
+    table = f"id,type,start,finish,actual_start,actual_finish\nx,{kind},2026-10-05,2026-10-09,{actual_start},{actual_finish}\n"
+    result = import_table(table, project_id="p", as_of="2027-01-01")
+    assert result.ok, [item.as_dict() for item in result.diagnostics]
+    return yaml.safe_load(result.actual_yaml)["body"]["observations"][0]["actual"]
+
+
+@pytest.mark.parametrize("finish,exclusive", [
+    ("2026-10-09", "2026-10-10"),  # ordinary day
+    ("2026-10-31", "2026-11-01"),  # month end
+    ("2026-12-31", "2027-01-01"),  # year end
+    ("2028-02-28", "2028-02-29"),  # day before a leap day
+    ("2028-02-29", "2028-03-01"),  # leap day
+    ("2026-02-28", "2026-03-01"),  # non-leap February
+])
+def test_actual_finish_is_inclusive_and_becomes_the_exclusive_actual_finish(finish, exclusive):
+    assert _observed("2026-10-05", finish)["finish"] == exclusive
+
+
+def test_the_issue_csv_imports_a_one_day_actual_as_a_positive_interval():
+    table = ("id,title,start,finish,actual_start,actual_finish\n"
+             "a,Design,2026-10-05,2026-10-09,2026-10-05,2026-10-09\n"
+             "b,Review,2026-10-12,2026-10-12,2026-10-12,2026-10-12\n")
+    actual = yaml.safe_load(import_table(table, project_id="p").actual_yaml)["body"]["observations"]
+    assert actual[0]["actual"] == {"start": "2026-10-05", "finish": "2026-10-10"}
+    assert actual[1]["actual"] == {"start": "2026-10-12", "finish": "2026-10-13"}
+
+
+def test_a_gate_keeps_its_observed_date_unchanged():
+    assert _observed("2026-10-09", "2026-10-09", "gate") == {"at": "2026-10-09"}
