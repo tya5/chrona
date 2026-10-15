@@ -127,3 +127,60 @@ def test_typeset_draws_legacy_line_tile():
     surface = replace(_surface(), primitives=(node,))
     assert "thickness: 0.5pt" in render_v05_typst(surface)
     assert "line width=0.5pt" in render_v05_tikz(surface)
+
+
+# TikZ names the font by file from the render's font closure (#1553).
+def _face(directory: Path, name: str, family: str, weight: int = 400):
+    from chrona.presentation.model.font_metrics import FontFile
+
+    path = directory / name
+    path.write_bytes(b"\0")
+    return FontFile(path, "sha256:test", family, weight)
+
+
+def _with_family(family: str, weight: int = 400) -> SceneSurface:
+    surface = _surface()
+    node = surface.primitives[0]
+    return replace(surface, primitives=(replace(node, text_layout=replace(node.text_layout, family=family, weight=weight)),))
+
+
+def test_tikz_names_the_face_by_file_path_when_the_closure_has_it(tmp_path):
+    directory = tmp_path / "pkg_fonts"
+    directory.mkdir()
+    tikz = render_v05_tikz(_with_family("Noto Sans JP"), (_face(directory, "jp-regular.ttf", "Noto Sans JP"),))
+    assert f"\\fontspec[Path=\\detokenize{{{directory.as_posix()}/}}, Numbers=Proportional]{{jp-regular.ttf}}" in tikz
+    assert "{Noto Sans JP}" not in tikz
+
+
+def test_tikz_uses_the_next_family_when_the_first_has_no_file(tmp_path):
+    files = (_face(tmp_path, "h.ttf", "Hiragino Sans"),)
+    tikz = render_v05_tikz(_with_family("Noto Sans JP, Hiragino Sans, sans-serif"), files)
+    assert "{h.ttf}" in tikz and "Noto Sans JP" not in tikz
+
+
+def test_tikz_prefers_the_first_family_that_has_a_file(tmp_path):
+    files = (_face(tmp_path, "h.ttf", "Hiragino Sans"), _face(tmp_path, "jp.ttf", "Noto Sans JP"))
+    assert "{jp.ttf}" in render_v05_tikz(_with_family("Noto Sans JP, Hiragino Sans"), files)
+
+
+def test_tikz_picks_the_file_nearest_the_weight(tmp_path):
+    files = (_face(tmp_path, "regular.ttf", "Face", 400), _face(tmp_path, "bold.ttf", "Face", 700))
+    assert "{bold.ttf}" in render_v05_tikz(_with_family("Face", 700), files)
+    assert "{regular.ttf}" in render_v05_tikz(_with_family("Face", 400), files)
+
+
+def test_tikz_refuses_with_the_family_named_when_none_can_be_loaded(tmp_path):
+    with pytest.raises(ValueError) as caught:
+        render_v05_tikz(_with_family("Noto Sans JP, Hiragino Sans, sans-serif"), ())
+    message = str(caught.value)
+    assert message.startswith("E_VISUAL_CAPABILITY_UNSUPPORTED") and "Noto Sans JP" in message and "Hiragino Sans" in message
+
+
+@pytest.mark.parametrize("name", ["a,b.ttf", "a#b.ttf", "a%b.ttf", "a{b.ttf"])
+def test_tikz_refuses_a_file_path_that_tex_would_misread(tmp_path, name):
+    with pytest.raises(ValueError, match="E_VISUAL_CAPABILITY_UNSUPPORTED.*cannot name by file"):
+        render_v05_tikz(_with_family("Face"), (_face(tmp_path, name, "Face"),))
+
+
+def test_tikz_without_a_closure_keeps_naming_the_family():
+    assert r"\fontspec[Numbers=Proportional]{Test Sans}" in render_v05_tikz(_surface())
