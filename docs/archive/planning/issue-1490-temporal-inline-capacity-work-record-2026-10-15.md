@@ -1,7 +1,7 @@
 # Issue 1490: temporal inline capacity
 
-Status: implementation and local acceptance complete; PR/release gates pending.
-Public ready baseline: `1deffc014` (normal merge, no rewritten history).
+Status: complete and closed; PR1550 and combined exact-main release38733015984 passed.
+Public ready main: `787eeea8f` (normal merges, no rewritten history).
 Owner: dev A / Codex. [Issue and acceptance](https://github.com/tya5/chrona/issues/1490).
 This is the living work record; specifications remain normative.
 
@@ -122,8 +122,11 @@ The 17 recorded-refusal Context groups were checked as one batch: all25
 refusals now expose the exact named capacity diagnostic, and26 fitting
 viewport controls render. The public CLI batch independently confirms
 26 rendered,25 exact expected refusals,0 failures. No `examples/**` changes.
-The exact outcome ledger is updated, not weakened; public SVG/Scene byte
-comparison and full release remain required CI evidence before closure.
+The exact outcome ledger is updated, not weakened. Exact-head artifact11969932896
+retains all50 SVG and50 Scene bytes. Review-containing ready main787eeea8f passed
+[release38733015984](https://github.com/tya5/chrona/actions/runs/38733015984):
+all3 OS full pytest/conformance/wheel-smoke, MCP floor and newest-Python public
+materializers. The literal acceptance review is complete; no deferred criterion.
 
 Use synthetic row/column and capped/anchored hosts, zero/narrow-positive
 allocation, span/point/icon demands and a typed-handoff integration test.
