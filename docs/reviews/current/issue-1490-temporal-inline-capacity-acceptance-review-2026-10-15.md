@@ -26,3 +26,10 @@ Layout alone owns natural demand, native measurement and diagnostics. Positive
 lane arithmetic and ordinary scale construction are preserved; natural-width
 prototypes cannot become completed Scene geometry. Full pytest/conformance,
 wheel/smoke and materializer evidence are CI gates, not inferred from local tests.
+
+PR CI38725449877: conformance, newest-Python reproduction and two pytest shards
+passed; shard3 found one stale integration assertion expecting the old
+E_LAYOUT_MARK_OVERFLOW (4014 other tests passed). The assertion now requires
+the approved capacity code and slot/width detail; no product rule was relaxed.
+Derived-ready failed consequentially. Artifact11967577646 contains109 members:
+all50 SVGs and50 Scenes are byte-identical; only the diagnostic inventory changes.
