@@ -15,18 +15,31 @@ EXPECTED_FORMS = {
     "half": "half-year",
     "year": "year",
 }
+SHORT_AXIS_PRESETS = {
+    "chrona-preset-technical-print",
+    "chrona-preset-muted-executive",
+    "chrona-preset-wallboard-dark",
+}
+
+
+def _fixed_labels(unit: str, form: str, typography: str) -> dict:
+    return {
+        "unit": unit, "every": 1, "role": "labels", "typographyRole": typography,
+        "label": {"form": form, "align": "center", "overflow": "thin-with-record",
+                  "orientation": "horizontal"},
+    }
 
 
 def _assert_axis_policy(document: dict, *, source: str) -> None:
     tiers = document["body"]["axis"]["tiers"]
     policy_tiers = [tier for tier in tiers if tier["role"] != "band"]
-    assert policy_tiers == [
+    expected_policy = [
         {"unit": "quarter", "every": 1, "role": "grid-major"},
         {
             "unit": "auto",
             "every": 1,
             "role": "labels",
-            "typographyRole": "axis" if document["id"] in {"chrona-preset-technical-print", "chrona-preset-wallboard-dark"} else "axisQuarter",
+            "typographyRole": "axisQuarter",
             "label": {
                 "forms": ({"day": "localized-date", "week": "start-day-month", **EXPECTED_FORMS}
                           if document["id"] == "chrona-preset-editorial-readable-default" else EXPECTED_FORMS),
@@ -36,15 +49,24 @@ def _assert_axis_policy(document: dict, *, source: str) -> None:
             },
         },
         {"unit": "month", "every": 1, "role": "grid-minor"},
-    ], source
+    ]
+    if document["id"] in SHORT_AXIS_PRESETS:
+        expected_policy = [
+            {"unit": "quarter", "every": 1, "role": "grid-major"},
+            _fixed_labels("quarter", "quarter", "axisQuarter"),
+            _fixed_labels("month", "short-month", "axisMonth"),
+            {"unit": "month", "every": 1, "role": "grid-minor"},
+        ]
+    assert policy_tiers == expected_policy, source
     bands = [tier for tier in tiers if tier["role"] == "band"]
     expected_bands = [
         {"unit": "year", "every": 1, "role": "band", "typographyRole": "axisQuarter"},
     ]
-    if document["id"] == "chrona-preset-technical-print":
-        expected_bands.append(
+    if document["id"] in SHORT_AXIS_PRESETS:
+        expected_bands = [
+            {"unit": "quarter", "every": 1, "role": "band", "typographyRole": "axisQuarter"},
             {"unit": "month", "every": 1, "role": "band", "typographyRole": "axisMonth"},
-        )
+        ]
     if document["id"] == "chrona-preset-wallboard-dark":  # a fill per interval needs its own band tiers (#490; gap 3 of wallboard-dark-vocabulary-gaps.md)
         expected_bands = [
             {"unit": "quarter", "every": 1, "role": "band", "typographyRole": "axisQuarter",
@@ -76,7 +98,7 @@ def _resolved_builtin_view(entry: dict) -> tuple[ViewContract, dict]:
     return contract, source
 
 
-def test_all_packaged_axis_views_declare_thinning_and_automatic_forms():
+def test_packaged_axis_views_keep_automatic_or_declared_quarter_month_policy():
     paths = sorted(path for path in (ROOT / "src/chrona/resources/presets/bundles").glob("*/view.yaml")
                    if path.parent.name != "design-default")  # its axis is the selected design's `viewDefaults` (#429)
     paths.append(ROOT / "src/chrona/resources/presets/bundles/editorial/view-lanes.yaml")
@@ -86,7 +108,7 @@ def test_all_packaged_axis_views_declare_thinning_and_automatic_forms():
         _assert_axis_policy(safe_load(path.read_bytes()), source=path.relative_to(ROOT).as_posix())
 
 
-def test_every_builtin_preset_resolves_to_the_declared_auto_axis_policy():
+def test_every_builtin_preset_resolves_to_its_declared_axis_policy():
     entries = preset_library._library()
     assert entries
     for entry in entries:
@@ -95,7 +117,16 @@ def test_every_builtin_preset_resolves_to_the_declared_auto_axis_policy():
         contract, source = _resolved_builtin_view(entry)
         _assert_axis_policy(source, source=entry["id"])
         axis = contract.view.axis
+        labels = [tier for tier in axis["tiers"] if tier["role"] == "labels"]
+        if source["id"] in SHORT_AXIS_PRESETS:
+            assert labels == [
+                _fixed_labels("quarter", "quarter", "axisQuarter"),
+                _fixed_labels("month", "short-month", "axisMonth"),
+            ]
+            continue
         expected = ({"day": "localized-date", "week": "start-day-month", **EXPECTED_FORMS}
                     if source["id"] == "chrona-preset-editorial-readable-default" else EXPECTED_FORMS)
-        assert axis["tiers"][2]["label"]["forms"] == expected
-        assert axis["tiers"][2]["label"]["overflow"] == "thin-with-record"
+        assert len(labels) == 1
+        assert labels[0]["unit"] == "auto"
+        assert labels[0]["label"]["forms"] == expected
+        assert labels[0]["label"]["overflow"] == "thin-with-record"
