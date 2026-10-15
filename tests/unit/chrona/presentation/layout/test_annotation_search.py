@@ -217,6 +217,33 @@ def test_coarse_routed_search_rejects_free_boxes_behind_a_blocked_connector():
     assert 0 < result.route_states <= 1024
 
 
+def test_coarse_tail_search_rejects_boxes_larger_than_the_anchor_as_of_side() -> None:
+    # The whole plot has ample empty space on the far side, but no complete
+    # 210-unit box can fit before the as-of rule at x=200. Coarse search must
+    # preserve the same body-side contract as fine search, before checking a
+    # direct tail or trying routed egress.
+    region = LabelRect(0, 0, 600, 100)
+    anchor_box = LabelRect(145, 45, 10, 10)
+    index = SurfaceObstacleIndex()
+    side = (200.0, "start")
+    common = dict(region=region, box_size=(210, 20), max_positions=32,
+                  obstacles=index, obstacle_classes=("mark",),
+                  side_of_as_of=side, search_pass="coarse")
+
+    direct, tip, direct_trials = nearest_free_tail_box(
+        anchor=anchor_box, corner_radius=0, tail_base=0, **common)
+    mark = MarkPlacement("mark:anchor", "anchor", Rect(145, 45, 10, 10),
+                         (145, 50), (155, 50), mark_shape="span")
+    routed = nearest_free_routed_tail_box(
+        anchor=mark, endpoint="start", siblings=(mark,), corner_radius=0,
+        tail_base=0, content_bounds=(0, 0, 600, 100), **common)
+
+    assert direct is None and tip is None and direct_trials > 0
+    assert routed.box is None and not routed.exhausted
+    assert routed.box_trials > 0
+    assert routed.route_states == 0
+
+
 def test_routed_tail_exempts_only_the_named_source_port_on_egress() -> None:
     index = SurfaceObstacleIndex()
     mark = MarkPlacement("mark:anchor", "anchor", Rect(40, 40, 10, 10),
