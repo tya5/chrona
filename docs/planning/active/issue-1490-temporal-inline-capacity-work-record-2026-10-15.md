@@ -1,7 +1,6 @@
 # Issue 1490: temporal inline capacity
 
-Status: design, architecture review and implementation plan complete;
-no product changes.
+Status: implementation and local acceptance complete; PR/release gates pending.
 Public ready baseline: `1deffc014` (normal merge, no rewritten history).
 Owner: dev A / Codex. [Issue and acceptance](https://github.com/tya5/chrona/issues/1490).
 This is the living work record; specifications remain normative.
@@ -110,6 +109,16 @@ semantic/layer correction. Missing capacity data is not silently reconstructed
 by Scene; adapt native constructors/test builders to the typed boundary.
 
 ## Verification and publication
+
+Implementation: `f0dc77be3` (typed facts/shared arithmetic), `00c8cbfc4`
+(native closure and integration). Local Layout/Scene regression batch:
+3829 passed,3 corpus tests deselected; focused matrix/capacity batch34 passed.
+The 17 recorded-refusal Context groups were checked as one batch: all25
+refusals now expose the exact named capacity diagnostic, and26 fitting
+viewport controls render. The public CLI batch independently confirms
+26 rendered,25 exact expected refusals,0 failures. No `examples/**` changes.
+The exact outcome ledger is updated, not weakened; public SVG/Scene byte
+comparison and full release remain required CI evidence before closure.
 
 Use synthetic row/column and capped/anchored hosts, zero/narrow-positive
 allocation, span/point/icon demands and a typed-handoff integration test.

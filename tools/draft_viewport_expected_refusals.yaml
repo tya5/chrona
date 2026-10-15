@@ -1,50 +1,102 @@
-# Observed on ready main ac4ac883; each listed case retains its exact refusal.
-# Groups share diagnostic records, not a blanket exemption for a code or project.
+# Exact temporal-capacity refusals: original21 plus4 roadmap additions (issue1490).
+# Full diagnostic/status/exit records remain authoritative; no blanket exemption.
 - successor: https://github.com/tya5/chrona/issues/1490
   outcome:
     exitCode: 1
     status: rejected
     diagnostics:
-      - code: E_LAYOUT_MARK_OVERFLOW
+      - code: E_LAYOUT_TEMPORAL_INLINE_CAPACITY
         severity: error
         component: presentation
         sourceRef: /layoutManifest/sources/timeline
         revisionRefs: []
-        message: 'layout mark overflow: no further detail is recorded for this code (E_LAYOUT_MARK_OVERFLOW)'
+        message: "slot=timeline; allocated_inline=21.127960000000030; required_inline=183.229193781352820; natural_inline=152; point_insets=15.614596739823185+15.614597041529635 (timeline)"
   cases:
-    - chrona-roadmap/roadmap@600x340
     - chrona-roadmap/marquee@800x450
-    - chrona-roadmap/marquee@600x340
-    - chrona-roadmap/titlecard@600x340
-    - chrona-roadmap/yuya@600x340
-    - halcyon-1/01-mission-brief@800x450
-    - halcyon-1/01-mission-brief@600x340
-    - halcyon-1/04-tvac-slip@800x450
-    - halcyon-1/04-tvac-slip@600x340
-    - halcyon-1/07-replan-baseline@800x450
-    - halcyon-1/07-replan-baseline@600x340
-    - halcyon-1/15-gallery-image-notes@800x450
-    - halcyon-1/15-gallery-image-notes@600x340
-    - halcyon-1/21-target-b@600x340
-    - halcyon-1/22-yuya@600x340
-    - halcyon-1/23-titlecard@600x340
-    - halcyon-1/24-marquee@600x340
 - successor: https://github.com/tya5/chrona/issues/1490
   outcome:
     exitCode: 1
     status: rejected
     diagnostics:
-      - code: E_LAYOUT_LANE_SEED_INVALID
+      - code: E_LAYOUT_TEMPORAL_INLINE_CAPACITY
         severity: error
         component: presentation
-        sourceRef: /layoutManifest
+        sourceRef: /layoutManifest/sources/timeline
         revisionRefs: []
-        message: 'layout lane seed invalid: no further detail is recorded for this code (E_LAYOUT_LANE_SEED_INVALID)'
+        message: "slot=timeline; allocated_inline=0; required_inline=183.22918701171875; natural_inline=152; point_insets=15.61459371093747+15.61459330078128 (timeline)"
   cases:
+    - chrona-roadmap/marquee@600x340
+- successor: https://github.com/tya5/chrona/issues/1490
+  outcome:
+    exitCode: 1
+    status: rejected
+    diagnostics:
+      - code: E_LAYOUT_TEMPORAL_INLINE_CAPACITY
+        severity: error
+        component: presentation
+        sourceRef: /layoutManifest/sources/timeline
+        revisionRefs: []
+        message: "slot=timeline; allocated_inline=0; required_inline=186.000030517578124; natural_inline=152; point_insets=17.000002197265644+17.00002832031248 (timeline)"
+  cases:
+    - chrona-roadmap/roadmap@600x340
+- successor: https://github.com/tya5/chrona/issues/1490
+  outcome:
+    exitCode: 1
+    status: rejected
+    diagnostics:
+      - code: E_LAYOUT_TEMPORAL_INLINE_CAPACITY
+        severity: error
+        component: presentation
+        sourceRef: /layoutManifest/sources/timeline
+        revisionRefs: []
+        message: "slot=timeline; allocated_inline=0; required_inline=184.833374023437500; natural_inline=152; point_insets=16.416678378906226+16.416695644531274 (timeline)"
+  cases:
+    - chrona-roadmap/titlecard@600x340
+- successor: https://github.com/tya5/chrona/issues/1490
+  outcome:
+    exitCode: 1
+    status: rejected
+    diagnostics:
+      - code: E_LAYOUT_TEMPORAL_INLINE_CAPACITY
+        severity: error
+        component: presentation
+        sourceRef: /layoutManifest/sources/timeline
+        revisionRefs: []
+        message: "slot=timeline; allocated_inline=0; required_inline=181.309997558593807; natural_inline=152; point_insets=14.655003417968828+14.654994140624979 (timeline)"
+  cases:
+    - chrona-roadmap/yuya@600x340
+- successor: https://github.com/tya5/chrona/issues/1490
+  outcome:
+    exitCode: 1
+    status: rejected
+    diagnostics:
+      - code: E_LAYOUT_TEMPORAL_INLINE_CAPACITY
+        severity: error
+        component: presentation
+        sourceRef: /layoutManifest/sources/timeline
+        revisionRefs: []
+        message: "slot=timeline; allocated_inline=0; required_inline=1824.0; natural_inline=1800; point_insets=12.0+12.0 (timeline)"
+  cases:
+    - controller-z/annotation-rounded@600x340
+    - controller-z/slot-heading@600x340
+- successor: https://github.com/tya5/chrona/issues/1490
+  outcome:
+    exitCode: 1
+    status: rejected
+    diagnostics:
+      - code: E_LAYOUT_TEMPORAL_INLINE_CAPACITY
+        severity: error
+        component: presentation
+        sourceRef: /layoutManifest/sources/timeline
+        revisionRefs: []
+        message: "slot=timeline; allocated_inline=0; required_inline=1110.0; natural_inline=1100; point_insets=5.0+5.0 (timeline)"
+  cases:
+    - halcyon-1/01-mission-brief@800x450
+    - halcyon-1/01-mission-brief@600x340
     - halcyon-1/02-programme-board@800x450
     - halcyon-1/02-programme-board@600x340
-    - halcyon-1/12-glyph-gates@800x450
-    - halcyon-1/12-glyph-gates@600x340
+    - halcyon-1/15-gallery-image-notes@800x450
+    - halcyon-1/15-gallery-image-notes@600x340
     - halcyon-1/19-gallery-text-compression@800x450
     - halcyon-1/19-gallery-text-compression@600x340
 - successor: https://github.com/tya5/chrona/issues/1490
@@ -52,12 +104,92 @@
     exitCode: 1
     status: rejected
     diagnostics:
-      - code: E_LAYOUT_PATH_INPUT
+      - code: E_LAYOUT_TEMPORAL_INLINE_CAPACITY
         severity: error
         component: presentation
-        sourceRef: /
+        sourceRef: /layoutManifest/sources/timeline
         revisionRefs: []
-        message: 'E_LAYOUT_PATH_INPUT: open span requires positive inline_size/block_size and finite nonnegative radius; inline_size=0.0, block_size=14.399999999999999, radius=0.0'
+        message: "slot=timeline; allocated_inline=0; required_inline=622.0; natural_inline=612; point_insets=5.0+5.0 (timeline)"
   cases:
-    - controller-z/annotation-rounded@600x340
-    - controller-z/slot-heading@600x340
+    - halcyon-1/04-tvac-slip@800x450
+    - halcyon-1/04-tvac-slip@600x340
+- successor: https://github.com/tya5/chrona/issues/1490
+  outcome:
+    exitCode: 1
+    status: rejected
+    diagnostics:
+      - code: E_LAYOUT_TEMPORAL_INLINE_CAPACITY
+        severity: error
+        component: presentation
+        sourceRef: /layoutManifest/sources/timeline
+        revisionRefs: []
+        message: "slot=timeline; allocated_inline=0; required_inline=570.0; natural_inline=560; point_insets=5.0+5.0 (timeline)"
+  cases:
+    - halcyon-1/07-replan-baseline@800x450
+    - halcyon-1/07-replan-baseline@600x340
+- successor: https://github.com/tya5/chrona/issues/1490
+  outcome:
+    exitCode: 1
+    status: rejected
+    diagnostics:
+      - code: E_LAYOUT_TEMPORAL_INLINE_CAPACITY
+        severity: error
+        component: presentation
+        sourceRef: /layoutManifest/sources/timeline
+        revisionRefs: []
+        message: "slot=timeline; allocated_inline=0; required_inline=1130.000061035156250; natural_inline=1100; point_insets=15.000039062500036+15.000021972656214 (timeline)"
+  cases:
+    - halcyon-1/12-glyph-gates@800x450
+    - halcyon-1/12-glyph-gates@600x340
+- successor: https://github.com/tya5/chrona/issues/1490
+  outcome:
+    exitCode: 1
+    status: rejected
+    diagnostics:
+      - code: E_LAYOUT_TEMPORAL_INLINE_CAPACITY
+        severity: error
+        component: presentation
+        sourceRef: /layoutManifest/sources/timeline
+        revisionRefs: []
+        message: "slot=timeline; allocated_inline=0; required_inline=584.000000000000000; natural_inline=550; point_insets=17.000008300781246+16.999991699218754 (timeline)"
+  cases:
+    - halcyon-1/21-target-b@600x340
+- successor: https://github.com/tya5/chrona/issues/1490
+  outcome:
+    exitCode: 1
+    status: rejected
+    diagnostics:
+      - code: E_LAYOUT_TEMPORAL_INLINE_CAPACITY
+        severity: error
+        component: presentation
+        sourceRef: /layoutManifest/sources/timeline
+        revisionRefs: []
+        message: "slot=timeline; allocated_inline=0; required_inline=579.310028076171875; natural_inline=550; point_insets=14.655007568359338+14.655020507812537 (timeline)"
+  cases:
+    - halcyon-1/22-yuya@600x340
+- successor: https://github.com/tya5/chrona/issues/1490
+  outcome:
+    exitCode: 1
+    status: rejected
+    diagnostics:
+      - code: E_LAYOUT_TEMPORAL_INLINE_CAPACITY
+        severity: error
+        component: presentation
+        sourceRef: /layoutManifest/sources/timeline
+        revisionRefs: []
+        message: "slot=timeline; allocated_inline=0; required_inline=582.833343505859375; natural_inline=550; point_insets=16.416663027343702+16.416680478515673 (timeline)"
+  cases:
+    - halcyon-1/23-titlecard@600x340
+- successor: https://github.com/tya5/chrona/issues/1490
+  outcome:
+    exitCode: 1
+    status: rejected
+    diagnostics:
+      - code: E_LAYOUT_TEMPORAL_INLINE_CAPACITY
+        severity: error
+        component: presentation
+        sourceRef: /layoutManifest/sources/timeline
+        revisionRefs: []
+        message: "slot=timeline; allocated_inline=0; required_inline=581.229187011718750; natural_inline=550; point_insets=15.614591220703119+15.614595791015631 (timeline)"
+  cases:
+    - halcyon-1/24-marquee@600x340
