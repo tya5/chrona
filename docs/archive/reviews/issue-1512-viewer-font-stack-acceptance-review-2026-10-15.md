@@ -30,5 +30,12 @@ Focused evidence:50 initial stack/adapter tests,94 viewer-fit/typeset/PDF tests,
 
 None.
 
-Release acceptance pending: current-head PR checks/snapshot inspection and an
-exact review-containing public-main three-OS release are required before closure.
+Release accepted: [PR1520](https://github.com/tya5/chrona/pull/1520) merged as
+`d68ea206b7ea1baeb94c0ec202ecd9b4270c1c69`. The exact containing-review public
+main `d5564a346c7b91335e4e58379a7b9d7e0e7ea7ef` passed
+[release38676819484](https://github.com/tya5/chrona/actions/runs/38676819484):
+all three OS full pytest/conformance/wheel smoke, newest-Python materializers
+and MCP floor. Final PR snapshot11946036513 had100 unchanged visual files and
+only report source-location changes. Issue1512 is closed; reviewer Theme
+adoption and preset registration are separate work. This archive move changes
+no product behavior or acceptance criterion.
