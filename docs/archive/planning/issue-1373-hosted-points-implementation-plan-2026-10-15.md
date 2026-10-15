@@ -1,7 +1,7 @@
 # #1373 row 3: implementation plan
 
 Authority: [design](../../design/issue-1373-hosted-points-design-2026-10-15.md),
-[architecture review](../../reviews/current/issue-1373-hosted-points-architecture-review-2026-10-15.md),
+[architecture review](../reviews/issue-1373-hosted-points-architecture-review-2026-10-15.md),
 and [Spec 50 section 3.5](../../specification/50-constraint-driven-gantt-surface-quality.md#35-physical-point-hosting-1373).
 Design published as `c157522e5`; input slice published as `563685c8e` after
 #1397 row 3 merged in PR #1523. Adopt current trusted main before the final push.
@@ -60,7 +60,7 @@ developer capability from reviewer-owned design adoption. Archive only after
 actual closure; do not claim completion from this plan.
 
 Current implementation: allocation/geometry `267c95fb2`, corridors `0f4ad4945`.
-The [acceptance review](../../reviews/current/issue-1373-editorial-capabilities-acceptance-review-2026-10-15.md)
+The [acceptance review](../reviews/issue-1373-editorial-capabilities-acceptance-review-2026-10-15.md)
 tracks all literal rows and remaining release evidence. Focused tests include
 SVG/typeset rendering, deliberate final-frame drift, non-lane conflicts and
 reciprocal egress; no examples or generated reports were edited. Final-head

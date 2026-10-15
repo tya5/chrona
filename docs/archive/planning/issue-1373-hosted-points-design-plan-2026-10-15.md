@@ -4,7 +4,7 @@ Baseline: published READY `7c46a7c695ed0863d17998acad062923f7acc4e1`.
 Owner: dev A. Design preparation only; implementation follows #1397 row 3.
 Authority: [issue](https://github.com/tya5/chrona/issues/1373) and
 [reviewer decision](https://github.com/tya5/chrona/issues/1373#issuecomment-6184233415).
-The older [backlog note](backlog-slices-1397-1373-1047-2026-10-14.md)
+The older [backlog note](../../planning/active/backlog-slices-1397-1373-1047-2026-10-14.md)
 is not the current contract where it conflicts with that decision.
 
 ## Literal acceptance and scope
