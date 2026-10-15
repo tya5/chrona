@@ -65,7 +65,7 @@ def test_every_entry_is_mapped_or_yaml_only_with_a_reason():
 
 
 def test_the_scope_rule_keeps_free_maps_and_other_sections_out_of_the_grammar():
-    for path in ("object.fields", "top.entities", "top.annotations", "top.scenarios", "top.extensions", "object.link", "object.wbsCode",
+    for path in ("object.fields", "top.fieldRoles", "top.entities", "top.annotations", "top.scenarios", "top.extensions", "object.link", "object.wbsCode",
                  "object.plannedProgress", "object.attachesTo", "calendar.fiscalStartMonth",
                  "top.periods", "period.start", "period.end"):
         assert LEDGER[path][0] == YAML_ONLY, path

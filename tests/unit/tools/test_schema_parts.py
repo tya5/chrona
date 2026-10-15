@@ -280,7 +280,6 @@ PROBES: dict[str, tuple[list[Any], list[Any]]] = {
                               {"placement": "top", "template": "WINDOW {figure:closing} DAYS"}],
                              [{}, {"placement": "middle"}, {"placement": "top", "overflow": "hide"},
                               {"placement": "top", "extra": True}, None]),
-    # Shared dependency introduced by #1559; copied from that slice's exact probe contract.
     "projectFieldReference": ([{"field": "owner"}, {"fieldRole": "responsible"}],
                               [{}, {"field": ""}, {"fieldRole": "unknown"},
                                {"field": "owner", "fieldRole": "responsible"},
