@@ -1,11 +1,14 @@
 from decimal import Decimal
+from datetime import date
+from types import SimpleNamespace
 
 import pytest
 
 from chrona.presentation.layout.model import Rect
-from chrona.presentation.layout.surface_deadlines import _outline
-from chrona.presentation.layout.surface_quality import ShapePlacement
+from chrona.presentation.layout.surface_deadlines import _outline, compose_deadline_marks
+from chrona.presentation.layout.surface_quality import MarkPlacement, ScalePlacement, ShapePlacement
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
+from chrona.presentation.model.projection import ReviewDeadline
 
 
 @pytest.mark.parametrize("points,expected", [
@@ -32,3 +35,21 @@ def test_zero_length_stroke_has_no_phantom_opaque_ground():
                             Rect(Decimal(10), Decimal(20), Decimal(0), Decimal(0)),
                             ((10, 20), (10, 20)), semantic_id="deadlineMark")
     assert _outline(stroke, 2) is None
+
+
+@pytest.mark.parametrize("stroke_width,expected_grounds", [(0, 0), (2, 2)])
+def test_invisible_stroke_adds_no_ground_but_visible_tick_and_run_do(stroke_width, expected_grounds):
+    base = SimpleNamespace(
+        plot=Rect(Decimal(0), Decimal(0), Decimal(100), Decimal(100)),
+        scale=ScalePlacement("surface", "time", date(2026, 1, 1), date(2026, 1, 11), 0, 100, 0, 10))
+    host = MarkPlacement("planned:owner", "owner",
+                         Rect(Decimal(20), Decimal(30), Decimal(40), Decimal(10)),
+                         (20, 35), (60, 35), semantic_id="planned", slot_id="timeline")
+    tokens = SimpleNamespace(deadline_mark=lambda _role: (1.7, 5),
+                             deadline_outline_width=lambda _role: 1,
+                             number=lambda _role, _property: stroke_width)
+    batch = compose_deadline_marks(base=base, theme_tokens=tokens,
+        deadlines=(ReviewDeadline("owner", date(2026, 1, 5), date(2026, 1, 8), True),),
+        marks=(host,), window=(date(2026, 1, 1), date(2026, 1, 11)), paint_order_base=100)
+    assert sum(shape.semantic_id == "deadlineMarkOutline" for shape in batch.shapes) == expected_grounds
+    assert sum(shape.semantic_id == "deadlineMark" for shape in batch.shapes) == 2
