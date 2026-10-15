@@ -238,7 +238,7 @@ def test_coarse_routed_tail_search_finds_a_complete_collision_free_pair() -> Non
                                     classes=("mark", "text", "dependency-route"),
                                     host_id="mark:anchor")
     assert not any(completed.collisions(ObstacleSegment(a, b),
-                                        classes=("mark", "text", "dependency-route"),
+                                        classes=("mark", "text", "dependency-route", "annotation-box"),
                                         host_id="mark:anchor")
                    for a, b in zip(result.full_points, result.full_points[1:]))
     edge = nearest_eligible_edge(result.box, result.tip)
@@ -246,7 +246,7 @@ def test_coarse_routed_tail_search_finds_a_complete_collision_free_pair() -> Non
         result.box, result.tip, edge=edge, tail_base=8,
         corner_radius=min(3, result.box.width / 2, result.box.height / 2))
     assert not any(completed.collisions(ObstacleSegment(a, b),
-                                        classes=("mark", "text", "dependency-route"),
+                                        classes=("mark", "text", "dependency-route", "annotation-box"),
                                         host_id="mark:anchor")
                    for a, b in ((base_a, result.tip), (result.tip, base_b)))
 
