@@ -11,9 +11,9 @@ relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side, search: best, unr
 # below. The heading reads the count figure `group-count`, which the View declares.
 viewDefaults:
   heading:
-    kicker: The programme board,
+    kicker: The plan,
     title: '{project}'
-    subtitle: "in {figure:group-count} panels · by the Programme Office"
+    subtitle: "in {figure:group-count} panels"
     dateForm: day-month-year
   figureFormats:
     group-count: {form: english-words}

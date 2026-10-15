@@ -14,7 +14,7 @@ viewDefaults:
   heading:
     kicker: 第弐面
     title: 計画表、{project}
-    subtitle: "PROGRAMME BOARD : SLIDE 02 · {figure:selected-count} WORK PACKAGES · {figure:group-count} SECTIONS · BASELINE / PLAN / ACTUAL"
+    subtitle: "SCHEDULE · {figure:selected-count} WORK PACKAGES · {figure:group-count} SECTIONS · BASELINE / PLAN / ACTUAL"
     dateForm: day-month-year
   figureFormats:
     note-count: {form: digits, minimumDigits: 2}
