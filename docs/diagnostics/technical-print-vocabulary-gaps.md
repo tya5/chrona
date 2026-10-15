@@ -11,7 +11,7 @@ the preset's rendered slide and that reference. The reference image was read dir
 | 1 | `overrun-actual-colour` | the inner bar of one task (UAT) in red; all others black | one black actual role for every task | a Theme binding for the actual mark per variance class. Established from the role registry and theme, not rendered with an overrun fixture | #1516 |
 | 2 | `legend-variance-swatch` | a red rect swatch, "Overrun (behind schedule)" | no entry; adding `variance-behind` to the legend is rejected with `E_PRESENTATION_PRIMITIVE_INVALID` (reproduced) | a legend swatch for variance roles with no text contrast treatment | #1515 |
 | 3 | `lane-table-columns` | header `Task` / `Owner`; rows numbered `1.` to `8.`; owner as monospaced initials | one column headed `Lane`, no numbers, no owner | `rowIndex`, `field` and `transform: initials` sources on a lane table (they exist on `tableColumns` of automatic rows only) | #1517 |
-| 4 | `axis-two-tier-short-labels` | a Q1 to Q4 row over a Jan to Dec row, white cells with hairline borders | one black band reading `Sep 2026`, `Oct 2026`, over an unlabelled halftone band | a quarter band over a month band with `Q1` / `Jan` label forms | #1518 |
+| 4 | `axis-two-tier-short-labels` | a Q1 to Q4 row over a Jan to Dec row, white cells with hairline borders | reached: the packaged View declares separate quarter/month bands and fixed labels (`Q1` / `Jan`), measured on aligned independent lanes; the existing black/halftone paint is unchanged | none for the axis mechanism; white cells and hairline separators remain Theme tuning | #1518; `test_packaged_quarter_month_axis.py` |
 | 5 | `table-header-role-undeclared` | header in bold with a rule beneath (the rule spans the table only) | header `Lane` in the regular body role; no table-side rule | none for the role: `tableColumnLabel` exists since #1015 and the bundled Theme does not declare it. The header rule under the table is not measured as expressible | bundle follow-up (below) |
 | 6 | `open-circle-milestone` | open circle, hairline, about 20 px on a 36 px bar row | the pin glyph (`chrona-starter:pin`) | reachable without new capability: in a scratch copy, `milestone-symbol: {shape: circle}` with `milestone.fill: surface` and `milestone.stroke: text` draws an outlined circle-like mark. It takes the full mark size (about 38 px, squarer than a circle). `milestoneSymbol` accepts no `pattern` or `strokeWidth` (`E_THEME_ROLE_PROPERTY_UNSUPPORTED`). The handoff's "no outline-only glyph treatment" holds for catalogue glyphs, not for the `circle` shape | bundle follow-up (below); a smaller milestone size is not measured as expressible |
 | 7 | `open-arrowhead-unused` | small open (outline) arrowheads | filled triangle (`arrow` marker, `shape: triangle`) | none: `shape: open-triangle` exists (#1042); the bundle does not use it | bundle follow-up |
@@ -40,8 +40,7 @@ non-working days as outlines rather than a tint.
    Switching to automatic rows gives up lane `packing`, which is gap 3 (#1517); decide whether that trade is wanted.
 2. Use `milestone-symbol: {shape: circle}` with the outline bindings from row 6, `open-triangle` for `arrow`,
    a black `as-of.stroke`, no row band, and no finish-delta bar label, one change at a time with a render.
-3. Declare the axis cells in the reference's own terms (white `axis-band-decoration` fill, hairline separators) once #1518
-   admits two labelled tiers.
+3. Tune the existing two labelled axis tiers' paint (white `axis-band-decoration` fill, hairline separators) in the Theme.
 
 Palette: black, white and one red (`accent`, `negative`) are carried by the Scheme; no further hue is used beyond the
 `positive` and `warning` entries the Scheme keeps for variance and exception roles.
