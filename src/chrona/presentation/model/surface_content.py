@@ -296,6 +296,8 @@ class SurfaceContentInput:
     # Completed Scheme colours keyed by neutral axis-band placement identity (#490).
     axis_band_paints: tuple[tuple[str, str], ...] = ()
     relation_overflow_declared: bool = False
+    # Completed fill overrides for Actual marks, keyed by semantic source object.
+    actual_variance_paints: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)

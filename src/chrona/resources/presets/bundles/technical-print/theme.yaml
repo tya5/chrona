@@ -500,6 +500,7 @@ body:
     snapshot.fill: neutral
     snapshot.stroke: text
     actual.fill: text
+    actual-behind.fill: negative
     actual.stroke: text
     variance-ahead.fill: positive
     variance-on-track.fill: textMuted

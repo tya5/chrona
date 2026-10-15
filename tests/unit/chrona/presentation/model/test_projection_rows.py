@@ -59,7 +59,7 @@ def test_projection_exposes_only_fact_derived_role_inputs() -> None:
         "planned", "actual", "variance-behind", "critical",
     )
     assert _roles(ObservationState.RECORDED, -2) == ("planned", "actual", "variance-ahead")
-    assert _roles(ObservationState.RECORDED, 0) == ("planned", "actual", "variance-on-plan")
+    assert _roles(ObservationState.RECORDED, 0) == ("planned", "actual", "variance-on-track")
 
 
 @pytest.mark.parametrize("planned", (

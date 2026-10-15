@@ -68,3 +68,32 @@ def test_stroke_alignment_is_admitted_only_for_contour_stroke_consumers():
         assert theme_role_property_consumer(role, "strokeAlign") is not None
     for role in ("as-of-cone", "canvas-texture", "text", "dependency"):
         assert theme_role_property_consumer(role, "strokeAlign") is None
+
+
+@pytest.mark.parametrize("role", ["actual-ahead", "actual-on-track", "actual-behind"])
+def test_actual_variance_traits_admit_only_fill_not_geometry_or_scene_roles(role):
+    contract = theme_role_contract(role)
+    assert contract is not None and not contract.scene_kinds
+    assert theme_role_property_consumer(role, "fill") is not None
+    for property_name in ("stroke", "strokeWidth", "strokeAlign", "markHeight", "markOffset",
+                          "symbolHeight", "pattern", "gradientAngle", "opacity"):
+        assert theme_role_property_consumer(role, property_name) is None
+
+
+@pytest.mark.parametrize("member,property_name,value", [
+    ("roles", "strokeWidth", "stroke-width"),
+    ("colorBindings", "stroke", "text"),
+])
+def test_actual_variance_nonfill_declarations_fail_at_theme_admission(member, property_name, value):
+    from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
+    from tests.support import synthetic_review as sr
+
+    parts = sr.bundle("technical-print")
+    body = parts["theme"]["body"]
+    if member == "roles":
+        body[member]["actual-behind"] = {property_name: value}
+    else:
+        body[member][f"actual-behind.{property_name}"] = value
+    with pytest.raises(ColorSchemeError) as failure:
+        resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="sha256:" + "a" * 64)
+    assert failure.value.diagnostic_id == "E_THEME_ROLE_PROPERTY_UNSUPPORTED"

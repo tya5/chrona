@@ -119,6 +119,36 @@ This preserves the scheduling model's separation between planned constraints and
 
 ## 5. Theme model
 
+### Actual variance fill selection (#1516)
+
+A Theme MAY bind `actual-ahead.fill`, `actual-on-track.fill` and
+`actual-behind.fill`, including through `colorBindings`. These optional names
+are fill-only traits, not replacement Style/Scene roles; other properties on
+them are rejected. Style selects the trait from the Projection's existing
+variance category. The canonical zero category is `variance-on-track`.
+No date, observation or point-variance semantics are introduced.
+
+Review normalization completes a source-object-to-colour mapping before
+Scene construction, including repeated explicit Actual instances and folded
+items. Only an Actual primitive consumes that mapping. Missing Actual,
+unclassified points, snapshots and scenarios acquire no inferred category.
+An absent selected binding preserves the original paint exactly.
+
+The selected colour replaces inherited Actual fill, never a fixed catalogue
+part colour or a stroke-only/outline channel. It explicitly selects solid
+fill instead of that primitive's base linear gradient: the replaced gradient
+is not completed and produces no capability failure or omission diagnostic.
+Pattern substrate may use the fill; pattern ink and geometry are unchanged.
+Unrelated paint is still validated and preserved. The semantic role remains
+`actual`, with the existing mark contrast floor; Layout continues to complete
+all geometry, widths, alignment, clips and hosting footprints from `actual`.
+Existing text contrast gates also apply; colour selection does not retune ink.
+The [progress submark](61-progress-fill-marks.md) retains its independent paint
+and contrast gate against the host; this selection does not recolour it or
+suppress a resulting progress/host contrast finding.
+Adapters receive only completed paint. This does not extend the closed
+Style v0.1 role vocabulary or add a Scene field.
+
 ### Contour-relative strokes (#1148)
 
 Box and symbol paint roles may declare `strokeAlign: inside | center | outside`.

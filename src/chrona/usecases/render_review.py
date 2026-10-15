@@ -54,6 +54,7 @@ from chrona.presentation.model.axis_color_scale import (
     AxisBandScaleError, resolve_axis_band_scales, validate_axis_band_fill_targets,
 )
 from chrona.presentation.model.projection import ReviewDeadline, ReviewPeriod, build_review_projection
+from chrona.presentation.model.actual_variance_paint import resolve_actual_variance_colors
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.contracts.resources import ViewInput
 from chrona.presentation.review.detail import ReviewDetailError
@@ -329,6 +330,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         detail=profile_connections.detail,
         summary=summary, locale=environment.locale, color_scale=color_scale, table=table_content,
         group_tints=group_tints, annotation_kind_colors=_annotation_kind_colors(theme),
+        actual_variance_colors=resolve_actual_variance_colors(ThemeTokenView(theme)),
         annotation_kind_also=_annotation_kind_also(theme))
     try:
         validate_axis_band_fill_targets(selected_content.axis_tiers, ThemeTokenView(theme))

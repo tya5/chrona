@@ -87,6 +87,7 @@ class RadialOverlayResolution:
 
 def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                         *, visual_profile: VisualProfile | None = None,
+                        fill_override: str | None = None,
                         gradient_bounds: tuple[float, float, float, float] | None = None,
                         glow_extent: tuple[float, float, float, float] | None = None,
                         canvas_bounds: tuple[float, float, float, float] | None = None,
@@ -109,6 +110,13 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
         opacity = tokens.optional_number(role, "opacity")
     except ThemeTokenError as error:
         raise ScenePaintError(error.diagnostic_id, error.path) from error
+    # A completed Style selection changes only inherited fill. Explicit glyph
+    # colours and stroke-only/outline parts retain their declared channels.
+    solid_override = (fill_override is not None and part_color is None
+                      and part_mode != "stroke"
+                      and family not in {PaintFamily.OUTLINE, PaintFamily.PATH})
+    if solid_override:
+        fill = fill_override
     path = f"/body/roles/{role}"
     if fill_required and fill is None:
         raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/fill")
@@ -137,7 +145,10 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
     if fill is None and stroke is None:
         raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path)
     try:
-        gradient, gradient_omitted = _gradient(tokens, role, visual_profile, gradient_bounds)
+        # A selected solid fill replaces, rather than tints, the base gradient.
+        # Do not resolve a replaced effect or report its capability omission.
+        gradient, gradient_omitted = ((None, False) if solid_override else
+                                     _gradient(tokens, role, visual_profile, gradient_bounds))
         shadow, shadow_omitted = _shadow(tokens, role, visual_profile)
         glow, glow_omitted = _glow(tokens, role, visual_profile, glow_extent, canvas_bounds, shadow is not None or shadow_omitted)
         wobble, wobble_omitted = _wobble(tokens, role, visual_profile)
