@@ -56,6 +56,17 @@ aligns the safety check with that serialization, retaining unsafe-character,
 suffix, face-index and existence checks. Host-independent Windows-path controls
 cover safe spaces and unsafe directories/filenames; native Windows release CI
 is still required. Font ordering, measurement and Layout/Scene are unchanged.
+The two-file repair landed separately in [PR1578](https://github.com/tya5/chrona/pull/1578)
+at4ab652a5f; its109-path artifact is unchanged and its PR CI passes.
+
+Diagnostic-only [branch matrix38763194585](https://github.com/tya5/chrona/actions/runs/38763194585)
+has8Ubuntu/8macOS stale-Scene failures; Windows has those8 plus the autocrlf
+Scene check and one new test's implicit-decoding failure. The two YAML reads
+now explicitly use UTF-8;14period tests and43combined period/renderer tests
+pass locally. The prior26Windows font failures are absent from the failed-test
+list, not claimed individually proven from that summary. Manual dispatch did
+not apply the PR snapshot, so this run is not release acceptance; generated
+evidence remains bot-owned. Native Windows and exact-main release gates remain.
 
 ## Architecture conclusion
 
