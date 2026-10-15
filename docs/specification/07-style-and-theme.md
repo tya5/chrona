@@ -327,6 +327,9 @@ duration outline completed by Layout from its interval bounds; it never stretche
 milestone symbol across time. In particular, an open Actual span retains the
 completed open-span path as its single physical host, while the Actual Theme role
 continues to supply its paint.
+For progress on a point glyph, Layout uses the nonzero-winding union of its filled
+parts as the fillable interior; Scene part identities are not substituted for the
+logical point-mark identity.
 
 The #496 asset-catalog successor permits `shape: {catalog: set:name}` on
 milestone/gate symbol roles. It resolves only a normalized glyph entry and

@@ -82,7 +82,9 @@ retains its existing invalid-cutoff diagnostic/absence behavior.
 The open Actual's outline is the single Layout-completed duration path, not a
 milestone glyph fitted across the time interval. `milestoneSymbolActual` remains a
 point-only geometry choice. This keeps the progress-fill clip host identical to the
-completed open-span mark while leaving the Actual paint role unchanged.
+completed open-span mark while leaving the Actual paint role unchanged. A multipart
+point glyph's Layout-completed progress contour retains its logical mark owner
+separately from any Scene clip host; this does not alias a glyph part as the mark.
 
 For a started open Actual, `finishDelta` is absent until `asOf` is past the planned
 exclusive end. Once past it, the canonical variance is `asOf` minus that end, so

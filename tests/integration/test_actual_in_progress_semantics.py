@@ -107,3 +107,34 @@ def test_shared_design_defaults_fill_open_actual_fraction_and_authored_view_wins
     assert set(override_fills) == {"before-06"}
     assert override_fills["before-06"].scene_id.startswith("progress-fill:planned:")
 
+
+def test_actual_point_progress_is_completed_inside_multipart_glyph_without_scene_clip_alias(tmp_path):
+    project, actual = _project()
+    project["objects"]["gate"] = sr.point("gate", date(2026, 2, 3), title="Gate")
+    actual["body"]["observations"].append({
+        "id": "gate-observation", "sequence": 1, "projectObjectId": "gate",
+        "actual": {"at": "2026-02-04", "progress": 0.6},
+    })
+    parts = sr.bundle("executive-light")
+    parts["view"]["body"]["rows"] = {"mode": "automatic"}
+    parts["view"]["body"]["progressFill"] = {"source": "actual"}
+    parts["theme"]["body"]["values"]["milestone-symbol"]["value"] = {
+        "shape": "glyph", "viewBox": [10, 10], "parts": [
+            {"d": "M0 0L7 0L7 10L0 10Z", "paint": "fill"},
+            {"d": "M5 0L10 0L10 10L5 10Z", "paint": "fill"},
+        ],
+    }
+    rendered = sr.render(tmp_path, project, presentation=parts, actual=actual)
+    actual_parts = [primitive for primitive in rendered.surface.primitives
+                    if primitive.purpose == "actual" and primitive.source_ref == "gate"]
+    progress = next(primitive for primitive in rendered.surface.primitives
+                    if primitive.purpose == "progress-fill" and primitive.source_ref == "gate")
+    assert {primitive.scene_id for primitive in actual_parts} == {
+        "actual:gate:gate:part0", "actual:gate:gate:part1", "actual:gate:gate:part2",
+    }
+    assert progress.kind == "Symbol" and progress.symbol is not None
+    assert progress.clip_source_id is None
+    points = tuple(point for command in progress.symbol.outline for point in command.points)
+    left, _, width, _ = actual_parts[0].bounds
+    assert max(x for x, _ in points) <= left + width * 0.6 + 1e-5
+
