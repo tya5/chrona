@@ -316,6 +316,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--scheme", help="Color Scheme YAML path")
     command.add_argument("--layout", help="Layout Profile YAML path")
     command.add_argument("--actual", help="Actual Set YAML path")
+    command.add_argument("--snapshot", help="baseline Snapshot Project YAML path; the View selects baseline semantics")
     command.add_argument("--summary", help="Summary Profile YAML path")
     command.add_argument("--detail", help="Review Detail Profile YAML path")
     command.add_argument("--icon-catalog", action="append", default=[],
@@ -745,6 +746,7 @@ def _run_draft_render(args: argparse.Namespace) -> None:
         progress=_draft_render_progress(getattr(args, "progress", False)),
         relations=getattr(args, "relations", None),
         previous_scene=getattr(args, "previous_scene", None),
+        snapshot=getattr(args, "snapshot", None),
     ))
     _write_render_outputs(result.rendered, args)
     _emit_render_result(result.rendered)
