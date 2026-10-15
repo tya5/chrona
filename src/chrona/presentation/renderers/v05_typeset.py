@@ -425,9 +425,109 @@ def _pattern_tile(node: ScenePrimitive, target: str) -> str:
     return "\n".join(parts)
 
 
-def _pattern_rect(node: ScenePrimitive, target: str) -> str:
-    """Lower a periodic fill without changing Layout's completed geometry."""
+def _pattern_channels(node: ScenePrimitive) -> tuple[str, ...]:
+    channels = {"stroke"}
+    if node.pattern.primitives and node.paint.fill is not None:
+        channels.add("fill")
+    channels.update("fill" if (item.fill_channel or "ink") == "substrate" else "stroke"
+                    for item in node.pattern.primitives if item.kind == "circle" and item.fill_channel != "none")
+    return tuple(sorted(channels))
+
+
+def _declarable_tikz_pattern(node: ScenePrimitive) -> bool:
+    """A catalogue pattern at angle 0 and full opacity is one periodic fill (#1551).
+
+    pgf patterns cannot rotate and carry no transparency, so a rotated or translucent pattern keeps the per-tile expansion."""
+    return (node.pattern is not None and bool(node.pattern.primitives) and node.pattern.angle_degrees == 0
+            and all(_tikz_channel_opacity(node, channel) == 1 for channel in _pattern_channels(node)))
+
+
+def _phase(offset: float, period: float) -> float:
+    value = offset % period
+    return 0.0 if value < 1e-6 or period - value < 1e-6 else value
+
+
+def _pgf_point(x: float, y: float) -> str:
+    return f"{{\\pgfpoint{{{_number(x)}pt}}{{{_number(y)}pt}}}}"
+
+
+def _pgf_path(commands: list, fill: str | None, width: float | None, stroke: str | None, cap: str = "butt", join: str = "miter") -> str:
+    parts = []
+    if fill is not None:
+        parts.append(f"\\pgfsetfillcolor{fill}")
+    if width is not None:
+        parts.extend((f"\\pgfsetstrokecolor{stroke}", f"\\pgfset{cap}cap", f"\\pgfset{join}join", f"\\pgfsetlinewidth{{{_number(width)}pt}}"))
+    for kind, points in commands:
+        if kind == "close":
+            parts.append("\\pgfpathclose")
+            continue
+        names = {"move": "moveto", "line": "lineto", "quadratic": "quadraticcurveto"}
+        parts.append(f"\\pgfpath{names[kind]}" + "".join(_pgf_point(x, y) for x, y in points))
+    use = ",".join(name for name, on in (("fill", fill is not None), ("stroke", width is not None)) if on)
+    return "".join(parts) + (f"\\pgfusepath{{{use}}}" if use else "")
+
+
+def _pgf_tile(node: ScenePrimitive) -> str:
+    """The completed tile in pgf's basic layer, in the tile's own y-down frame (the caller's transform flips it).
+
+    Only paths: a nested tikzpicture, or any box, would leak into the page when pgf runs the pattern body."""
+    pattern, paint = node.pattern, node.paint
+    tw, th = pattern.tile_inline_size, pattern.tile_block_size
+    ink, substrate = _tikz_color(node, "stroke"), _tikz_color(node, "fill") if paint.fill is not None else None
+    parts = []
+    if substrate is not None:
+        parts.append(_pgf_path([("move", ((0, 0),)), ("line", ((tw, 0),)), ("line", ((tw, th),)), ("line", ((0, th),)), ("close", ())], substrate, None, None))
+    for stroke in pattern.strokes:
+        parts.append(_pgf_path([("move", (stroke.start,)), ("line", (stroke.end,))], None, stroke.width, ink))
+    for item in pattern.primitives:
+        if item.kind == "circle":
+            channel = item.fill_channel or "ink"
+            fill = None if channel == "none" else (substrate if channel == "substrate" else ink)
+            head = f"\\pgfsetfillcolor{fill}" if fill is not None else ""
+            if item.stroke_width is not None:
+                head += f"\\pgfsetstrokecolor{ink}\\pgfsetlinewidth{{{_number(item.stroke_width)}pt}}"
+            use = ",".join(n for n, on in (("fill", fill is not None), ("stroke", item.stroke_width is not None)) if on)
+            if use:
+                parts.append(f"{head}\\pgfpathcircle{_pgf_point(item.cx, item.cy)}{{{_number(item.radius)}pt}}\\pgfusepath{{{use}}}")
+        elif item.kind == "rect":
+            commands = [("move", ((item.x, item.y),)), ("line", ((item.x+item.inline_size, item.y),)),
+                        ("line", ((item.x+item.inline_size, item.y+item.block_size),)),
+                        ("line", ((item.x, item.y+item.block_size),)), ("close", ())]
+            parts.append(_pgf_path(commands, ink, None, None))
+        else:
+            commands = [(command.kind, command.points) for command in item.commands]
+            parts.append(_pgf_path(commands, ink if item.paint == "fill" else None, item.stroke_width, ink,
+                                   item.line_cap or "butt", item.line_join or "miter"))
+    return "\n".join(parts)
+
+
+def _tikz_pattern_declaration(node: ScenePrimitive, name: str, page_height: float) -> str:
+    """One pgf pattern whose lattice is the Scene's: origin (x right, y down from the canvas top), tile size, angle 0.
+
+    A pgf pattern is anchored at the page's lower-left corner with y up (measured against Tectonic 0.17.0), so the tile body
+    is drawn flipped and offset by the origin's phase, as up to four translated copies; the pattern's bounding box clips
+    each of them. Each copy is also clipped to its own tile, as the expansion clips every tile."""
+    pattern = node.pattern
+    tw, th = pattern.tile_inline_size, pattern.tile_block_size
+    ox, oy = pattern.origin
+    u0, v0 = _phase(ox, tw), _phase(page_height - oy, th)
+    tile = _pgf_tile(node)
+    box = f"\\pgfpathrectangle{{\\pgfpointorigin}}{{\\pgfpoint{{{_number(tw)}pt}}{{{_number(th)}pt}}}}"
+    copies = [f"\\begin{{pgfscope}}\\pgftransformcm{{1}}{{0}}{{0}}{{-1}}{{\\pgfpoint{{{_number(u)}pt}}{{{_number(v)}pt}}}}{box}\\pgfusepath{{clip}}\n{tile}\n\\end{{pgfscope}}"
+              for u in dict.fromkeys((u0, u0 - tw) if u0 else (0.0,)) for v in dict.fromkeys((v0, v0 + th) if v0 else (th,))]
+    size = f"{{\\pgfpoint{{{_number(tw)}pt}}{{{_number(th)}pt}}}}"
+    return f"\\pgfdeclarepatterninherentlycolored{{{name}}}{{\\pgfpointorigin}}{size}{size}{{%\n" + "\n".join(copies) + "%\n}"
+
+
+def _pattern_rect(node: ScenePrimitive, target: str, declared: str | None = None) -> str:
+    """Lower a periodic fill without changing Layout's completed geometry.
+
+    `declared` names the TikZ pattern that already holds the tile lattice: the fill is then one path (#1551)."""
     cells = repeat_cells(node)
+    if declared is not None:
+        x, y, w, h = node.bounds
+        rounded = f", rounded corners={_number(node.corner_radius)}pt" if node.corner_radius else ""
+        return f"\\path[pattern={declared}{rounded}] ({_number(x)},{_number(y)}) rectangle ({_number(x+w)},{_number(y+h)});"
     pattern = node.pattern
     x, y, w, h = node.bounds
     tile = _pattern_tile(node, target)
@@ -531,18 +631,28 @@ def render_v05_tikz(surface: SceneSurface, font_files: Sequence[FontFile] | None
     if surface.canvas_bounds is None:
         raise _error("E_PRESENTATION_RENDER_INPUT", "TikZ requires completed canvasBounds")
     _, _, width, height = surface.canvas_bounds
+    declarations: dict[str, str] = {}
+    pattern_names: dict[int, str] = {}
+    for index, node in enumerate(surface.primitives):
+        if node.kind == "Rect" and _declarable_tikz_pattern(node):
+            repeat_cells(node)  # the same validation as the expansion
+            body = _tikz_pattern_declaration(node, "@", height)
+            name = declarations.setdefault(body, f"chronaPattern{chr(97 + len(declarations)) if len(declarations) < 26 else len(declarations)}")
+            pattern_names[index] = name
+    library = [r"\usetikzlibrary{patterns}"] if declarations else []
+    declared = [body.replace("{@}", "{" + name + "}", 1) for body, name in declarations.items()]
     parts = ["% chrona-tikz/v0.1", r"\documentclass{article}",
              f"\\usepackage[paperwidth={_number(width)}pt,paperheight={_number(height)}pt,margin=0pt]{{geometry}}",
-             r"\usepackage{tikz}", r"\usepackage{fontspec}",
-             r"\pagestyle{empty}", r"\begin{document}", r"\noindent",
+             r"\usepackage{tikz}", *library, r"\usepackage{fontspec}",
+             r"\pagestyle{empty}", r"\begin{document}", *declared, r"\noindent",
              r"\begin{tikzpicture}[x=1pt,y=-1pt]",
              f"\\path[fill={_tikz_color_value(surface.canvas_paint.fill)}] (0,0) rectangle ({_number(width)},{_number(height)});"]
-    for node in (node for _, node in sorted(enumerate(surface.primitives), key=lambda item: (item[1].paint_order, item[0]))):
+    for index, node in ((index, node) for index, node in sorted(enumerate(surface.primitives), key=lambda item: (item[1].paint_order, item[0]))):
         x, y, w, h = node.bounds
         parts.append(f"% scene-id: {_tex_string(node.scene_id)} source-ref: {_tex_string(node.source_ref)}")
         if node.kind == "Rect":
             if node.pattern is not None:
-                parts.append(_pattern_rect(node, "tikz"))
+                parts.append(_pattern_rect(node, "tikz", pattern_names.get(index)))
                 continue
             rounded = f", rounded corners={_number(node.corner_radius)}pt" if node.corner_radius else ""
             parts.append(f"\\path[{_tikz_rect_paint(node)}{rounded}] ({_number(x)},{_number(y)}) rectangle ({_number(x+w)},{_number(y+h)});")
