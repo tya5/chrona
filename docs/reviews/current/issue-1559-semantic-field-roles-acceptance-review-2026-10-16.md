@@ -27,13 +27,12 @@ The changed generic View necessarily adds required unbound-role info diagnostics
 on Projects without roles; visible SVG is unchanged, not the old View's Scene
 diagnostics. [Reviewer disposition](https://github.com/tya5/chrona/issues/1559#issuecomment-6194167626)
 is unresolved. Do not silently waive the issue's default-output decision.
-The earlier implementation-containing main matrix
-[run 38757817385](https://github.com/tya5/chrona/actions/runs/38757817385)
-failed on Windows. The current implementation-containing main matrix
-[run 38767049424](https://github.com/tya5/chrona/actions/runs/38767049424)
-which is in progress for base `4ab652a5f0d0641175663f57eba9c1da499712e6`.
-That release does not contain this acceptance review. This review's publication
-and its own exact-main release gate are still required.
+The implementation-containing main commit
+`4ab652a5f0d0641175663f57eba9c1da499712e6` passed
+[release38767049424](https://github.com/tya5/chrona/actions/runs/38767049424).
+That commit does not contain this review. Release acceptance requires a
+successful exact-main gate containing this review, plus resolution of the
+unresolved migration disposition.
 
 ## Architecture conclusion
 
