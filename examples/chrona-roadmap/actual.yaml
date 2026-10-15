@@ -2,12 +2,27 @@ version: chrona/actual-set/v0.3
 kind: actual-set
 id: chrona-roadmap-observed
 body:
-  asOf: '2026-10-10'
+  asOf: '2026-10-15'
   observations:
-    - {id: tb, sequence: 1, projectObjectId: target-b, actual: {start: '2026-10-02', finish: '2026-10-05', progress: 1}}
-    - {id: yy, sequence: 1, projectObjectId: yuya, actual: {start: '2026-10-03', finish: '2026-10-06', progress: 1}}
-    - {id: tc, sequence: 1, projectObjectId: titlecard, actual: {start: '2026-10-06', progress: 0.9}}
-    - {id: mq, sequence: 1, projectObjectId: marquee, actual: {start: '2026-10-08', progress: 0.8}}
-    - {id: su, sequence: 1, projectObjectId: sunday, actual: {start: '2026-10-09', progress: 0.4}}
-    - {id: cf, sequence: 1, projectObjectId: canvas-fit, actual: {start: '2026-10-09', progress: 0.9}}
-    - {id: fb, sequence: 1, projectObjectId: flow-bugs, actual: {start: '2026-10-07', progress: 0.3}}
+    - {id: tb, sequence: 1, projectObjectId: target-b, actual: {start: '2026-10-02', finish: '2026-10-06', progress: 1}}
+    - {id: yy, sequence: 1, projectObjectId: yuya, actual: {start: '2026-10-03', finish: '2026-10-07', progress: 1}}
+    - {id: tc, sequence: 1, projectObjectId: titlecard, actual: {start: '2026-10-06', finish: '2026-10-10', progress: 1}}
+    - {id: mq, sequence: 1, projectObjectId: marquee, actual: {start: '2026-10-08', finish: '2026-10-10', progress: 1}}
+    - {id: su, sequence: 1, projectObjectId: sunday, actual: {start: '2026-10-09', finish: '2026-10-14', progress: 1}}
+    - {id: m0, sequence: 1, projectObjectId: m0-gate, actual: {at: '2026-10-14'}}
+    - {id: cf, sequence: 1, projectObjectId: canvas-fit, actual: {start: '2026-10-09', finish: '2026-10-10', progress: 1}}
+    - {id: fb, sequence: 1, projectObjectId: flow-bugs, actual: {start: '2026-10-07', finish: '2026-10-14', progress: 1}}
+    - {id: lw, sequence: 1, projectObjectId: legend-warning, actual: {start: '2026-10-09', finish: '2026-10-11', progress: 1}}
+    - {id: rh, sequence: 1, projectObjectId: rows-headers, actual: {start: '2026-10-09', finish: '2026-10-11', progress: 1}}
+    - {id: sc, sequence: 1, projectObjectId: scene-checks, actual: {start: '2026-10-10', finish: '2026-10-14', progress: 1}}
+    - {id: m1, sequence: 1, projectObjectId: m1-gate, actual: {at: '2026-10-14'}}
+    - {id: rb, sequence: 1, projectObjectId: route-bound, actual: {start: '2026-10-09', finish: '2026-10-14', progress: 1}}
+    - {id: tall, sequence: 1, projectObjectId: tall-canvas, actual: {start: '2026-10-09', finish: '2026-10-12', progress: 1}}
+    - {id: ja, sequence: 1, projectObjectId: japanese, actual: {start: '2026-10-09', finish: '2026-10-11', progress: 1}}
+    - {id: m2, sequence: 1, projectObjectId: m2-gate, actual: {at: '2026-10-13'}}
+    - {id: dc, sequence: 1, projectObjectId: docs-ci, actual: {start: '2026-10-09', finish: '2026-10-12', progress: 1}}
+    - {id: df, sequence: 1, projectObjectId: defaults, actual: {start: '2026-10-09', finish: '2026-10-12', progress: 1}}
+    - {id: er, sequence: 1, projectObjectId: errors, actual: {start: '2026-10-09', finish: '2026-10-12', progress: 1}}
+    - {id: m3, sequence: 1, projectObjectId: m3-gate, actual: {at: '2026-10-12'}}
+    - {id: pr, sequence: 1, projectObjectId: presets, actual: {start: '2026-10-14', progress: 0.8}}
+    - {id: io, sequence: 1, projectObjectId: io, actual: {start: '2026-10-09', progress: 0.9}}
