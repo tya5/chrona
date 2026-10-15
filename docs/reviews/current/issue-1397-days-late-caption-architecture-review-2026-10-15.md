@@ -21,3 +21,9 @@ text placement helpers and obstacle machinery, and identified the substantive
 No examples edits, compatibility shim, new generic figure scope, or global
 collision-policy rewrite is justified. Implementation must still prove actual
 SVG text, fallback/drop counts, default-off bytes and full release evidence.
+
+Integration exposed an existing invariant: TextPlacement.host_placement_id
+asserts containment, not a generic attachment. The design now keeps that field
+unset for outside captions and carries typed subjects directly for provenance.
+This corrects the mistaken host-field mapping before resuming that slice; the
+existing containment validator and public Scene schema remain unchanged.

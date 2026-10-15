@@ -48,8 +48,11 @@ Text paint and viewer-fit capabilities, not Path capabilities.
 
 One caption belongs to each drawable planned host occurrence, not to snapshots,
 scenarios or folded headers. Placement id is `deadline-caption:<mark instance>`;
-sourceRef is the Project object id, hostPlacementId is the planned placement,
-and slot is timeline. Carry object provenance explicitly to diagnostics and
+sourceRef is the Project object id and slot is timeline. The anchor retains
+the planned placement identity, but an outside caption MUST NOT set
+`hostPlacementId`: that existing contract means text contained inside its host.
+Carry typed subjects on TextPlacement into primitive provenance instead of
+inferring ownership from a drawing id. Carry the same subjects to diagnostics and
 Scene. The existing outside-window/folded diagnostics remain authoritative;
 no extra caption-drop count is emitted when no deadline run is drawn.
 
@@ -77,7 +80,7 @@ label to make room. Then, in Project and planned-host order:
    for dropped hosts. Tick/run and all prior placements remain unchanged.
 
 Layout returns complete TextPlacements (bounds, baseline, lines, treatment,
-font asset identity and host identity). Scene emits them through the ordinary
+font asset identity and explicit subjects). Scene emits them through the ordinary
 semantic text path and paint/contrast gates. SVG/PDF/typeset adapters serialize
 the same primitives without choosing positions or reformatting days.
 

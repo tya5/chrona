@@ -14,6 +14,9 @@ are the authority; do not duplicate their rules here.
 | 4. Theme and Scene projection | `model/theme_tokens.py`, `model/semantic_registry.py`, `scene/capabilities.py`, `scene/v05_builder.py` | Optional caption text role and explicit text fallback; actual SVG text and ordering; 4.5:1 gate; identical Layout-to-Scene geometry; representative PDF/typeset projection. |
 | 5. Release review | Relevant living Specs06/07/49/50; one row3 acceptance record | Focused combined suite; schema-equivalence L1/L2/L3; exact-head PR snapshot and reproduction; exact published main three-OS pytest/conformance/wheel smoke. |
 
+The TextPlacement handoff also carries typed subjects (`surface_quality.py`);
+outside captions do not use the containment-only host_placement_id field.
+
 Publish steps 1–4 together as one atomic product PR after their focused checks;
 formatting alone is not a visible deliverable. Product changes include the
 normative specification updates and synthetic tests. Inspect generated
