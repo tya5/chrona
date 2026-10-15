@@ -8,7 +8,7 @@ from typing import Any, Mapping
 from chrona.presentation.model.projection import ObservationState, ReviewProjection
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
-    AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, SurfaceLegendEntry, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, table_value,
+    AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, SurfaceLegendEntry, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, initials, table_value,
 )
 from chrona.presentation.table_presentation import affix_state
 from chrona.presentation.review.detail import normalize_v05_review_detail_profile
@@ -66,7 +66,9 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
             core = _missing_actual_display(item, as_of)
         else:
             core = display_value(value, missing, column.format, locale=locale, zero=column.zero,
-                                 end_display=column.end_display)
+                                 end_display=column.end_display, transform=column.transform)
+            if column.transform == "initials" and isinstance(value, str) and not initials(value):
+                value = None  # no letter or digit: the cell reads as absent, so the `missing` affix applies (#1373)
         affix = column.affixes.for_state(affix_state(value, column.format)) if column.affixes is not None else None
         return (affix.prefix, core, affix.suffix) if affix is not None else ("", core, "")
 

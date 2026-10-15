@@ -164,6 +164,7 @@ class TableColumn:
     zero: str = "signed"  # `plain` draws a zero signed value without its sign (#1289)
     end_display: str = "exclusive"  # display only; scheduled spans retain exclusive endpoints (#1293)
     text_wrap: str = "forbid"
+    transform: str | None = None  # a closed cell transform, `initials` (#1373)
 
 
 @dataclass(frozen=True)
@@ -967,7 +968,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                                       str(column["textRole"]) if "textRole" in column else None,
                                       str(column.get("zero", "signed")),
                                       end_display=str(column.get("endDisplay", "exclusive")),
-                                      text_wrap=str(column.get("text", {}).get("wrap", "forbid")))
+                                      text_wrap=str(column.get("text", {}).get("wrap", "forbid")),
+                                      transform=str(column["transform"]) if "transform" in column else None)
                           for column in body.get("tableColumns", ()))
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)
@@ -1275,6 +1277,12 @@ def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping
         if column.zero != "signed" and column.format not in SIGNED_FORMATS:
             raise ContractError("E_VIEW_COLUMN_ZERO",
                                 f"column {column.id!r} declares zero: {column.zero}, so its format must be signedDays or signedNumber")
+        if column.transform is not None:
+            from_field_or_title = column.source == "title" or (isinstance(column.source, Mapping) and "field" in column.source)
+            if not from_field_or_title or column.format != "text":
+                raise ContractError("E_VIEW_COLUMN_TRANSFORM",
+                                    f"column {column.id!r} declares transform: {column.transform}, so its source must be a field or title "
+                                    "and its format text")
         if column.affixes is not None and column.format not in SIGNED_FORMATS and any(
                 item is not None for item in (column.affixes.slip, column.affixes.on_time, column.affixes.ahead)):
             raise ContractError("E_VIEW_COLUMN_AFFIX",
