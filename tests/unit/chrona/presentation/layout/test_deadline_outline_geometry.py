@@ -50,7 +50,28 @@ def test_invisible_stroke_adds_no_ground_but_visible_tick_and_run_do(stroke_widt
                              wobble_intent=lambda _role: None,
                              number=lambda _role, _property: stroke_width)
     batch = compose_deadline_marks(base=base, theme_tokens=tokens,
-        deadlines=(ReviewDeadline("owner", date(2026, 1, 5), date(2026, 1, 8), True),),
+        deadlines=(ReviewDeadline("owner", date(2026, 1, 5), date(2026, 1, 8), True, 3),),
         marks=(host,), window=(date(2026, 1, 1), date(2026, 1, 11)), paint_order_base=100)
     assert sum(shape.semantic_id == "deadlineMarkOutline" for shape in batch.shapes) == expected_grounds
     assert sum(shape.semantic_id == "deadlineMark" for shape in batch.shapes) == 2
+
+
+def test_caption_anchor_uses_the_same_completed_maximum_wobble_envelope():
+    base = SimpleNamespace(
+        plot=Rect(Decimal(0), Decimal(0), Decimal(100), Decimal(100)),
+        scale=ScalePlacement("surface", "time", date(2026, 1, 1), date(2026, 1, 11), 0, 100, 0, 10))
+    subject = DiagnosticSubject.project_object("owner")
+    host = MarkPlacement("planned:owner", "owner",
+                         Rect(Decimal(20), Decimal(30), Decimal(40), Decimal(10)),
+                         (20, 35), (60, 35), semantic_id="planned", slot_id="timeline", subjects=(subject,))
+    tokens = SimpleNamespace(deadline_mark=lambda _role: (1.7, 5),
+                             deadline_outline_width=lambda _role: 1,
+                             wobble_intent=lambda _role: SimpleNamespace(amplitude=4),
+                             number=lambda _role, _property: 2)
+    result = compose_deadline_marks(base=base, theme_tokens=tokens,
+        deadlines=(ReviewDeadline("owner", date(2026, 1, 5), date(2026, 1, 8), True, 3, "3 days late"),),
+        marks=(host,), window=(date(2026, 1, 1), date(2026, 1, 11)), paint_order_base=100)
+    anchor, = result.captions
+    assert anchor.stroke_margin == 6 and anchor.subjects == (subject,)
+    ground = next(shape for shape in result.shapes if shape.placement_id == "deadline-run:owner:outline")
+    assert float(ground.bounds.inline + ground.bounds.inline_size) == anchor.run_end + anchor.stroke_margin

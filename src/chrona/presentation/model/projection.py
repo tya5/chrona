@@ -192,6 +192,8 @@ class ReviewDeadline:
     deadline: date
     finish: date
     slipped: bool
+    days_late: int
+    caption: str | None = None
 
 
 @dataclass(frozen=True)

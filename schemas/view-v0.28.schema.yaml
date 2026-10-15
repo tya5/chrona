@@ -332,6 +332,15 @@ allOf:
             additionalProperties: false
             properties:
               show: {description: "Which deadlines are drawn: only those the plan misses (slipped), or every deadline (all), the missed ones with their run.", enum: [slipped, all]}
+              caption:
+                description: "Optional slipped-deadline copy. The only placeholder is {daysLate}; unit words and locale are author text."
+                examples: [{template: "{daysLate} days late", format: {form: digits}}]
+                type: object
+                required: [template]
+                additionalProperties: false
+                properties:
+                  template: {$ref: "urn:chrona:common-v0.1#/$defs/literalCaption"}
+                  format: {$ref: "urn:chrona:common-v0.1#/$defs/countTextFormat"}
           shading:
             type: object
             additionalProperties: false

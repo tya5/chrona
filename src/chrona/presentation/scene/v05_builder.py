@@ -1047,6 +1047,12 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     for placed in placed_surface.text:
         if placed.overflow == "suppressed":
             continue
+        if placed.semantic_id == "deadlineCaption":
+            emit_semantic_text(placed.placement_id, placed.semantic_id,
+                               value.theme_tokens.title_paint_role("deadline-caption"))
+            if placed.subjects:
+                primitive_provenance.append(PrimitiveProvenance(placed.placement_id, placed.subjects))
+            continue
         if placed.annotation is not None:
             emit_semantic_text(placed.placement_id, placed.semantic_id)
             record_annotation_primitives((placed.placement_id,), placed.source_ref)
