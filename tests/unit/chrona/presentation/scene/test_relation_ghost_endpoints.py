@@ -16,10 +16,10 @@ from chrona.presentation.layout.sources import MeasuredSources, SourceInput
 from chrona.presentation.layout.surface_lanes import preflight_fixed_lane_layout
 from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.model.theme_tokens import ThemeTokenView
-from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
+from chrona.presentation.surface_pipeline import compose_review_surface
 
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
-    _Font, _manifest, _theme, _title_measurement, surface_content,
+    _Font, _manifest, _seal_temporal_capacity, _theme, _title_measurement, build_surface_input, surface_content,
 )
 
 PROJECT = {
@@ -64,8 +64,9 @@ def _relation_paths(view: ViewInput, ghost_kind: str = "snapshot"):
                                    "timeline.mark.blockSize": Decimal(8)})
     content = surface_content(relations=PROJECT["relations"])
     manifest, theme = _manifest("title", "table", "timeline", "timeline-axis"), _theme()
+    measurement, temporal_capacity = _seal_temporal_capacity(manifest, measurement)
     preflight = (preflight_fixed_lane_layout(projection=projection, layout_manifest=manifest, surface_content=content,
-        theme_tokens=ThemeTokenView(theme), metric_values=measurement.metric_values, icon_assets={}, visual_requests=(),
+        temporal_capacity=temporal_capacity, theme_tokens=ThemeTokenView(theme), metric_values=measurement.metric_values, icon_assets={}, visual_requests=(),
         font_metrics=_Font()) if projection.lane_membership is not None else None)
     value = build_surface_input(projection=projection, surface_content=content, layout_manifest=manifest,
         resolved_theme=theme, font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True},

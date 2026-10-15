@@ -13,7 +13,7 @@ from chrona.presentation.model.presentation_contract import normalize_presentati
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
-    _Font, _manifest, _theme, _title_measurement, surface_content,
+    _Font, _manifest, _seal_temporal_capacity, _theme, _title_measurement, surface_content,
 )
 
 
@@ -39,9 +39,11 @@ def _compose(*, headed=True, description="Description", observations=False):
         "timeline.mark.blockSize": Decimal(8)})
     theme = _theme()
     theme["body"]["roles"]["slot-heading"] = dict(theme["body"]["roles"]["text"])
+    measured, temporal_capacity = _seal_temporal_capacity(manifest, measured)
     return compose_surface_layout(SurfaceLayoutRequest(
         projection=projection, presentation_contract=normalize_presentation_input(content),
         surface_content=content, layout_manifest=manifest, measured_sources=measured,
+        temporal_capacity=temporal_capacity,
         theme_tokens=ThemeTokenView(theme), font_metrics=_Font(), capabilities={"svg": True})).placement
 
 

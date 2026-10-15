@@ -833,6 +833,17 @@ viewBox without independently repositioning primitives.
 Malformed profile constraints and invalid references remain errors. Scene and
 adapters MUST NOT resolve this shortage independently.
 
+**Degenerate temporal capacity (#1490).** A timeline allocation that cannot
+provide a positive usable date-to-coordinate range after native point insets
+has no valid temporal placement to overflow. Layout refuses with
+`E_LAYOUT_TEMPORAL_INLINE_CAPACITY`, naming its source/slot, allocated inline
+width and sufficient natural-demand width (measured span width plus point
+insets). Carry these capacity facts typed into native composition. Do not
+guess host growability or change flex minima, caps or sibling placement. A
+natural-demand prototype may measure insets for a zero allocation, but is not
+a completed placement. Positive usable ranges retain the existing fit rule;
+no epsilon or case-derived floor is introduced.
+
 **Declared viewport overrun (#1279).** The original Render Context viewport
 declaration remains distinct from content-adjusted allocation and completed
 canvas bounds. Layout MUST emit one `W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT` when the

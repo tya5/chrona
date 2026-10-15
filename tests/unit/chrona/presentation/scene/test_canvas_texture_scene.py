@@ -19,11 +19,12 @@ from chrona.presentation.scene.capabilities import (
 )
 from chrona.presentation.scene.contrast_policy import evaluate_scene_contrast
 from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
-from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
+from chrona.presentation.surface_pipeline import compose_review_surface
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
     BACKGROUND_EXTENTS,
     _axis_tiers_scene,
     _theme,
+    build_surface_input,
     surface_content,
 )
 

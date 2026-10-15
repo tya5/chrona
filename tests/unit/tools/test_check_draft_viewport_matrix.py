@@ -172,28 +172,25 @@ def test_jobs_must_be_positive(tmp_path, monkeypatch):
 def test_all_25_capacity_cases_remain_explicitly_recorded():
     expectations = matrix._load_expectations()
     assert len(expectations) == 25
-    assert sum(item["diagnostics"][0]["code"] == "E_LAYOUT_MARK_OVERFLOW"
-               for item in expectations.values()) == 17
-    assert sum(item["diagnostics"][0]["code"] == "E_LAYOUT_LANE_SEED_INVALID"
-               for item in expectations.values()) == 6
-    assert sum(item["diagnostics"][0]["code"] == "E_LAYOUT_PATH_INPUT"
-               for item in expectations.values()) == 2
+    for item in expectations.values():
+        diagnostic = item["diagnostics"][0]
+        assert diagnostic["code"] == "E_LAYOUT_TEMPORAL_INLINE_CAPACITY"
+        assert diagnostic["sourceRef"] == "/layoutManifest/sources/timeline"
+        assert all(field in diagnostic["message"] for field in (
+            "slot=", "allocated_inline=", "required_inline="))
 
 
-def test_four_new_roadmap_contexts_keep_the_exact_mark_overflow_expectation():
+def test_four_additional_roadmap_cases_remain_separate_from_the_original_21():
     expectations = matrix._load_expectations()
-    expected = expectations["chrona-roadmap/roadmap@600x340"]
-    assert {identifier: expectations[identifier] for identifier in (
+    additions = {
         "chrona-roadmap/marquee@800x450",
         "chrona-roadmap/marquee@600x340",
         "chrona-roadmap/titlecard@600x340",
         "chrona-roadmap/yuya@600x340",
-    )} == {
-        "chrona-roadmap/marquee@800x450": expected,
-        "chrona-roadmap/marquee@600x340": expected,
-        "chrona-roadmap/titlecard@600x340": expected,
-        "chrona-roadmap/yuya@600x340": expected,
     }
+    assert additions <= expectations.keys()
+    assert len(expectations.keys() - additions) == 21
+    assert len({expectations[key]["diagnostics"][0]["message"] for key in additions}) == 4
 
 
 def test_expected_refusal_matches_complete_public_diagnostic_not_only_code():
@@ -246,6 +243,8 @@ def test_cli_failure_retains_exact_report_and_exit_code(tmp_path, monkeypatch, i
 
 
 def test_raw_path_value_error_uses_existing_failure_reporter():
-    expected = matrix._load_expectations()["controller-z/annotation-rounded@600x340"]
-    error = ValueError(expected["diagnostics"][0]["message"])
-    assert matrix._failure_outcome(error) == expected
+    message = "E_LAYOUT_PATH_INPUT: open span requires positive inline_size"
+    observed = matrix._failure_outcome(ValueError(message))
+    assert observed["exitCode"] == 1
+    assert observed["diagnostics"][0]["code"] == "E_LAYOUT_PATH_INPUT"
+    assert observed["diagnostics"][0]["message"] == message

@@ -15,6 +15,7 @@ from chrona.presentation.layout.surface_count_closure import CountReadInput, Cou
 from chrona.presentation.layout.surface_render_plan import PreparedSurfaceRenderPlan
 from chrona.presentation.layout.surface_preparation import SurfacePreRowGeometry
 from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest
+from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
 from chrona.presentation.layout.relation_hint_model import PreviousRouteHints
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.render_progress import RenderProgress
@@ -159,6 +160,7 @@ def _complete_table_timeline(value: PreparedSurfaceInput):
             projection=projection, presentation_contract=normalize_presentation_input(value.surface_content),
             surface_content=value.surface_content, layout_manifest=value.layout_manifest,
             measured_sources=value.measured_sources, theme_tokens=value.theme_tokens,
+            temporal_capacity=TemporalInlineCapacity.from_manifest(value.layout_manifest, value.measured_sources),
             font_metrics=value.font_metrics,
             capabilities=dict(value.capabilities), icon_assets=value.icon_assets or {},
             visual_requests=value.visual_requests,

@@ -97,8 +97,9 @@ def test_immutable_automatic_context_rejects_nonpositive_timeline_range(tmp_path
     # marks behind a generic visible-overflow warning.
     with pytest.raises(RenderFailed) as raised:
         render_review(RenderRequest(closure, snapshot, ReferenceScheduler()))
-    assert raised.value.code == "E_LAYOUT_MARK_OVERFLOW"
+    assert raised.value.code == "E_LAYOUT_TEMPORAL_INLINE_CAPACITY"
     assert raised.value.source_ref == "/layoutManifest/sources/timeline"
+    assert "slot=timeline; allocated_inline=0; required_inline=" in raised.value.message
 
 
 def test_context_font_assets_resolve_from_context_revision_not_theme_revision(tmp_path):
