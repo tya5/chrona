@@ -44,6 +44,34 @@ def test_coarse_grid_spans_legal_region_with_existing_position_cap() -> None:
         LabelRect(140, 100, 40, 20),)
 
 
+def test_coarse_grid_small_budgets_are_bounded_deterministic_long_axis_samples() -> None:
+    region = LabelRect(10, 20, 300, 100)
+    for budget in (2, 3):
+        boxes = coarse_lattice_positions(region, (40, 20), (160, 70), max_positions=budget)
+        assert 0 < len(boxes) <= budget
+        assert boxes == coarse_lattice_positions(region, (40, 20), (160, 70), max_positions=budget)
+        expected_x = ({region.x, region.right - 40} if budget == 2 else
+                      {region.x, (region.x + region.right - 40) / 2, region.right - 40})
+        assert {box.x for box in boxes} == expected_x
+        assert {box.y for box in boxes} == {60}
+
+
+def test_coarse_grid_handles_degenerate_legal_origin_extents() -> None:
+    vertical = coarse_lattice_positions(LabelRect(10, 20, 40, 120), (40, 20),
+                                        (30, 80), max_positions=6)
+    assert len(vertical) == 6
+    assert {box.x for box in vertical} == {10}
+    assert min(box.y for box in vertical) == 20
+    assert max(box.bottom for box in vertical) == 140
+
+    horizontal = coarse_lattice_positions(LabelRect(10, 20, 120, 20), (40, 20),
+                                          (70, 30), max_positions=6)
+    assert len(horizontal) == 6
+    assert {box.y for box in horizontal} == {20}
+    assert min(box.x for box in horizontal) == 10
+    assert max(box.right for box in horizontal) == 130
+
+
 def test_coarse_box_search_reaches_far_free_space_after_fine_neighborhood_misses() -> None:
     region = LabelRect(0, 0, 100, 100)
     index = SurfaceObstacleIndex()
@@ -177,6 +205,49 @@ def test_routed_tail_search_returns_bounded_strict_route_and_keeps_box_out_of_in
         corner_radius=min(3, result.box.width / 2, result.box.height / 2))
     assert not any(candidate_index.collisions(ObstacleSegment(a, b),
                                                classes=("mark", "text", "dependency-route"))
+                   for a, b in ((base_a, result.tip), (result.tip, base_b)))
+
+
+def test_coarse_routed_tail_search_finds_a_complete_collision_free_pair() -> None:
+    region = LabelRect(0, 0, 120, 100)
+    index = SurfaceObstacleIndex()
+    mark = MarkPlacement("mark:anchor", "anchor", Rect(40, 40, 10, 10),
+                         (40, 45), (50, 45), mark_shape="point")
+    index.add(SurfaceObstacle("mark:anchor", "mark", "plot", ObstacleRect(40, 40, 50, 50)))
+    result = nearest_free_routed_tail_box(
+        region=region, anchor=mark, endpoint="at", siblings=(mark,), box_size=(30, 20),
+        max_positions=16, obstacles=index, obstacle_classes=("mark", "text", "dependency-route"),
+        corner_radius=3, tail_base=8, content_bounds=(0, 0, 120, 100), host_id="mark:anchor",
+        route_state_limit=1024, search_pass="coarse")
+    assert result.box is not None and result.tip is not None
+    assert result.egress is not None and result.route is not None
+    assert result.route.topology == "strict"
+    assert result.full_points[0] == result.egress.semantic_port
+    assert result.full_points[-1] == result.tip
+    assert 0 < result.box_trials <= 16
+    assert 0 < result.route_states <= 1024
+    assert not result.exhausted
+
+    completed = SurfaceObstacleIndex()
+    completed.extend(index.all())
+    completed.add(SurfaceObstacle("candidate:balloon-box", "annotation-box", "plot",
+                                  ObstacleRect(result.box.x, result.box.y,
+                                               result.box.right, result.box.bottom)))
+    assert not completed.collisions(ObstacleRect(result.box.x, result.box.y,
+                                                  result.box.right, result.box.bottom),
+                                    classes=("mark", "text", "dependency-route"),
+                                    host_id="mark:anchor")
+    assert not any(completed.collisions(ObstacleSegment(a, b),
+                                        classes=("mark", "text", "dependency-route"),
+                                        host_id="mark:anchor")
+                   for a, b in zip(result.full_points, result.full_points[1:]))
+    edge = nearest_eligible_edge(result.box, result.tip)
+    base_a, base_b = tail_base_points(
+        result.box, result.tip, edge=edge, tail_base=8,
+        corner_radius=min(3, result.box.width / 2, result.box.height / 2))
+    assert not any(completed.collisions(ObstacleSegment(a, b),
+                                        classes=("mark", "text", "dependency-route"),
+                                        host_id="mark:anchor")
                    for a, b in ((base_a, result.tip), (result.tip, base_b)))
 
 
