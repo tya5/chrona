@@ -126,10 +126,10 @@ def test_generic_view_snapshot_default_without_a_snapshot_keeps_primary_review_u
     source_bytes = {path: path.read_bytes() for path in (project, actual, primary_view, snapshot_default_view)}
 
     primary = render_draft(DraftRenderRequest(
-        project=project, target_kind="svg", view=primary_view, actual=actual,
+        project=project, target_kind="svg", preset="target-b", view=primary_view, actual=actual,
     )).rendered
     snapshot_default = render_draft(DraftRenderRequest(
-        project=project, target_kind="svg", view=snapshot_default_view, actual=actual,
+        project=project, target_kind="svg", preset="target-b", view=snapshot_default_view, actual=actual,
     )).rendered
 
     assert snapshot_default.artifact.content == primary.artifact.content

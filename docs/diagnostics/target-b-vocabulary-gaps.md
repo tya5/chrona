@@ -12,7 +12,7 @@ Reading rule. The reference is the HALCYON mock (26 work packages in six groups)
 | 4 | `launch-window-absent` | faint blue band Oct to Nov, label `launch window` | no band, no label | none: named periods delivered (#582) | bundle-side |
 | 5 | `baseline-ghost-absent` | dashed baseline outline beside the plan bar on the changed rows | no ghost; the legend still lists `baseline`. `baselineMarks: ghost-when-changed` draws nothing without a Snapshot (by design, #1492); no diagnostic | a draft-render way to supply a baseline Snapshot | #1533 |
 | 6 | `heading-wording` | `HALCYON-1 · Programme board` with a subtitle line (team, baseline, as-of, calendar) | `HALCYON-1` only | not investigated (Layout heading template; calendar titles are #1026) | not measured |
-| 7 | `as-of-chip-wording` | orange chip `as of 20 Aug` | orange chip `TODAY 20 Aug` | not investigated (Layout wording) | not measured |
+| 7 | `as-of-chip-wording` | orange chip `as of 20 Aug` | orange chip `as of 20 Aug`; generic View inherits the design's marker wording | reached using existing marker defaults and date presentation | #1563 |
 | 8 | `axis-window` | March to November | February to December (automatic) | none: `window.mode: explicit` exists | bundle-side |
 | 9 | `plan-bar-colour` | mock blue | pale blue plan bar with a blue outline; the README records palette C as an owner decision | none: deliberate (class c) | none |
 | 10 | `decoration-contrast-warning` | weekend stripes and calendar exceptions behind the bands | `W_SCENE_DECORATION_CONTRAST` (27 decorations, lowest 1.08:1 against the floor) | none identified; a reviewer choice | bundle-side |
@@ -20,4 +20,4 @@ Reading rule. The reference is the HALCYON mock (26 work packages in six groups)
 
 Reached as drawn: tinted group bands, two-tier axis, weekend stripes and calendar exceptions, plan, actual and in-progress hatch marks, 14 px diamond gates, dependencies with elbows and triangle heads, the legend entries. Typst and TikZ export both succeed (no refusal measured).
 
-Not measured: colour values, pixel positions, the heading and chip wording causes.
+Not measured: colour values, pixel positions and the heading wording cause.

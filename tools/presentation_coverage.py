@@ -6,6 +6,7 @@ import argparse
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+from pathlib import PurePosixPath
 import tempfile
 from typing import Any, Iterable, Mapping
 
@@ -124,11 +125,64 @@ def effective_view(slide: Slide) -> Mapping[str, Any]:
 
 def _declared_view_contexts(root: Path) -> tuple[tuple[Path, Mapping[str, Any], Mapping[str, Any]], ...]:
     loader = RunLocalYamlLoader()
-    return tuple(_view_context(slide) for slide in discover(root, loader))
+    contexts = [_view_context(slide) for slide in discover(root, loader)]
+    contexts.extend(_packaged_preset_view_contexts(root, loader))
+    return tuple(contexts)
+
+
+def _safe_catalogue_address(value: object) -> str:
+    """Accept only canonical relative POSIX paths from the packaged preset library."""
+    if not isinstance(value, str) or not value:
+        raise PresentationCoverageError("E_PRESENTATION_COVERAGE_PRESET_REFERENCE")
+    path = PurePosixPath(value)
+    if (path.is_absolute() or "\\" in value or ":" in value or path.as_posix() != value
+            or any(part in {"", ".", ".."} for part in path.parts)):
+        raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_PRESET_REFERENCE:{value}")
+    return value
+
+
+def _packaged_preset_member_path(resources_root: Path, member: object) -> Path:
+    if not isinstance(member, Mapping):
+        raise PresentationCoverageError("E_PRESENTATION_COVERAGE_PRESET_MEMBER")
+    source_root = _safe_catalogue_address(member.get("sourceRoot"))
+    source_path = _safe_catalogue_address(member.get("sourcePath"))
+    return _inside(resources_root, f"{source_root}/{source_path}")
+
+
+def _packaged_preset_view_contexts(
+    root: Path, loader: RunLocalYamlLoader,
+) -> tuple[tuple[Path, Mapping[str, Any], Mapping[str, Any]], ...]:
+    """Read only the View/Layout pairings explicitly declared by the builtin library."""
+    library_path = root / "src/chrona/resources/presets/library.yaml"
+    if not library_path.is_file():
+        return ()  # Synthetic context-only roots need not provide packaged resources.
+    library = loader.load(library_path)
+    entries = library.get("entries")
+    if not isinstance(entries, list):
+        raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_PRESET_LIBRARY:{library_path}")
+    resources_root = root / "src/chrona/resources"
+    contexts = []
+    for entry in entries:
+        members = entry.get("members") if isinstance(entry, Mapping) else None
+        if not isinstance(members, Mapping):
+            raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_PRESET_LIBRARY:{library_path}")
+        view_path = _packaged_preset_member_path(resources_root, members.get("view"))
+        layout_path = _packaged_preset_member_path(resources_root, members.get("layout"))
+        view, layout = loader.load(view_path), loader.load(layout_path)
+        view_member, layout_member = members["view"], members["layout"]
+        if view.get("id") != view_member.get("id") or layout.get("id") != layout_member.get("id"):
+            raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_PRESET_ID:{entry.get('id', '<unknown>')}")
+        defaults = layout.get("viewDefaults", {})
+        if not isinstance(defaults, Mapping):
+            identifier = entry.get("id", "<unknown>")
+            raise PresentationCoverageError(
+                f"E_PRESENTATION_COVERAGE_VIEW_DEFAULTS:{identifier}:{layout_path}")
+        contexts.append((view_path, view, defaults))
+    return tuple(contexts)
 
 
 def view_default_contexts(root: Path) -> dict[Path, tuple[Mapping[str, Any], ...]]:
-    """Return every declared Layout default context paired with each View path.
+    """Return every corpus and packaged-preset Layout default context paired with each View path.
 
     Empty mappings are retained for contexts without defaults. A shared View used
     by multiple Slides therefore keeps every pairing in manifest order.
@@ -140,7 +194,7 @@ def view_default_contexts(root: Path) -> dict[Path, tuple[Mapping[str, Any], ...
 
 
 def effective_views(root: Path) -> dict[Path, tuple[Mapping[str, Any], ...]]:
-    """Return the effective View for every declared context, grouped by View path."""
+    """Return the effective View for every corpus and packaged-preset context, grouped by View path."""
     contexts: dict[Path, list[Mapping[str, Any]]] = {}
     for path, view, defaults in _declared_view_contexts(root):
         contexts.setdefault(path, []).append(merge_view_defaults(view, defaults))

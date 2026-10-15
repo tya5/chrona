@@ -450,6 +450,10 @@ body:
       letterSpacing: letter-spacing.none
       textTransform: text-transform.none
       numericSpacing: numeric-spacing
+    as-of-label-chip:
+      backgroundTreatment: fill
+      chipPadding: chip-padding
+      markCornerRadius: chip-radius
     period-label-chip:
       backgroundTreatment: fill
       chipPadding: chip-padding
@@ -475,6 +479,8 @@ body:
     calendar-closed.stroke: neutral
     calendar-exception.fill: warning
     as-of.stroke: accent
+    as-of-label-chip.fill: accent
+    as-of-label.fill: insideLabelPlanned
     note-index.fill: textMuted
     planned.fill: category:series-1
     planned.stroke: surface

@@ -1,8 +1,12 @@
 from pathlib import Path
 
 import pytest
+import yaml
+
+from chrona.resources import schema_validator
 
 from tests.support.public_evidence import declared_slides
+from tools.schema_equivalence import SchemaValidators, load_schema_dir, run_l2
 from tools.presentation_coverage import (
     PresentationCoverageError, RunLocalYamlLoader, _validate_resource_versions,
     discover, effective_view, effective_views, live_schemas, render,
@@ -162,6 +166,76 @@ def test_view_context_helpers_do_not_reuse_a_global_yaml_cache(tmp_path):
 def test_view_context_helpers_reject_invalid_defaults_in_later_context(tmp_path):
     _write_multicontext_corpus(tmp_path, invalid_defaults=True)
     with pytest.raises(PresentationCoverageError, match="E_PRESENTATION_COVERAGE_VIEW_DEFAULTS:multi-context/second"):
+        effective_views(tmp_path)
+
+
+def _write_packaged_preset_contexts(root: Path, *, unsafe_source_root: str | None = None,
+                                   unsafe_source_path: str | None = None) -> Path:
+    resources = root / "src/chrona/resources"
+    view_path = resources / "presets/bundles/design-default/view.yaml"
+    view_path.parent.mkdir(parents=True, exist_ok=True)
+    source_view = _root() / "src/chrona/resources/presets/bundles/design-default/view.yaml"
+    view_path.write_bytes(source_view.read_bytes())
+    entries = []
+    for identifier, defaults in (
+        ("design-one", "{markerPresentation: {kind: asOf, label: FIRST}}"),
+        ("design-two", "{}"),
+    ):
+        layout_path = resources / f"designs/{identifier}/layout.yaml"
+        layout_path.parent.mkdir(parents=True, exist_ok=True)
+        layout_path.write_text(
+            f"version: chrona/layout-profile/v0.10\nid: {identifier}\nviewDefaults: {defaults}\n",
+            encoding="utf-8",
+        )
+        source_root = (unsafe_source_root if identifier == "design-two" and unsafe_source_root
+                       else f"designs/{identifier}")
+        source_path = unsafe_source_path if identifier == "design-two" and unsafe_source_path else "layout.yaml"
+        entries.append({
+            "id": identifier,
+            "members": {
+                "view": {"id": "chrona-preset-design-default", "kind": "view",
+                         "sourceRoot": "presets/bundles/design-default", "sourcePath": "view.yaml"},
+                "layout": {"id": identifier, "kind": "layout-profile",
+                           "sourceRoot": source_root, "sourcePath": source_path},
+            },
+        })
+    library_path = resources / "presets/library.yaml"
+    library_path.parent.mkdir(parents=True, exist_ok=True)
+    library = {"version": "chrona/preset-library/v0.2", "entries": entries}
+    library_path.write_text(yaml.safe_dump(library, sort_keys=False), encoding="utf-8")
+    return view_path
+
+
+def test_packaged_library_pairs_shared_view_with_every_declared_layout_default(tmp_path):
+    view_path = _write_packaged_preset_contexts(tmp_path)
+    defaults = view_default_contexts(tmp_path)[view_path.resolve()]
+    variants = effective_views(tmp_path)[view_path.resolve()]
+
+    assert defaults == ({"markerPresentation": {"kind": "asOf", "label": "FIRST"}}, {})
+    assert len(variants) == 2
+    assert variants[0]["body"]["markers"][0]["label"] == "FIRST"
+    assert "label" not in variants[1]["body"]["markers"][0]
+    validator = schema_validator("view-v0.28.schema.yaml")
+    assert validator.is_valid(variants[0])
+    assert any(list(error.absolute_path) == ["body", "markers", 0] and "'label'" in error.message
+               for error in validator.iter_errors(variants[1]))
+    relative_path = view_path.relative_to(tmp_path).as_posix()
+    corpus = run_l2(
+        {relative_path: view_path.read_bytes()}, SchemaValidators(load_schema_dir(_root() / "schemas")),
+        view_defaults={relative_path: defaults},
+    )
+    assert corpus.records[0]["valid"] is False
+
+
+@pytest.mark.parametrize(("field", "unsafe_path"), [
+    ("sourcePath", "../../../../outside.yaml"),
+    ("sourceRoot", r"..\..\outside"),
+    ("sourcePath", "C:/outside.yaml"),
+])
+def test_packaged_library_member_paths_cannot_escape_resources(tmp_path, field, unsafe_path):
+    option = "unsafe_source_path" if field == "sourcePath" else "unsafe_source_root"
+    _write_packaged_preset_contexts(tmp_path, **{option: unsafe_path})
+    with pytest.raises(PresentationCoverageError, match="E_PRESENTATION_COVERAGE_PRESET_REFERENCE"):
         effective_views(tmp_path)
 
 

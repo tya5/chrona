@@ -15,11 +15,11 @@ Reading rule. The reference is the HALCYON mock (26 work packages in six groups)
 | 7 | `gate-actual-stars` | every gate a yellow star; dashed outline stars for baseline gates; no red stars | yellow stars; two red stars (actual gates on Critical design review and Payload delivered); no outline stars | none: project data (the mock's data has no actual gates); outline stars follow `baseline-ghost-absent` | #1533 |
 | 8 | `axis-window-and-thinning` | March to November, all month names shown | February to December automatic; `W_LAYOUT_AXIS_LABEL_THINNED`, `W_LAYOUT_AXIS_DENSITY` and `W_LAYOUT_AXIS_FORM_EQUIVALENT` raised (a label dropped, a tier thinned, long form equal to short form for May) | none for the window (`window.mode: explicit`); the thinning is the axis rule at this width, cause not investigated | not measured |
 | 9 | `relation-suppressed` | all dependencies drawn | `W_LAYOUT_RELATION_SUPPRESSED`: one relation line left out because no route fits | not investigated; which relation and whether the reference draws it was not compared | not measured |
-| 10 | `as-of-burst-wording` | red burst `TODAY! 20 Aug` | red burst `TODAY 20 AUG` (no exclamation, small caps) | not investigated (Layout wording) | not measured |
+| 10 | `as-of-burst-wording` | red burst `TODAY! 20 Aug` | red burst `TODAY! 20 AUG`; inherits the design's exclamation and typography | reached using the design's existing marker defaults | #1563 |
 | 11 | `typeset-export-refused` | n/a | delivered (#1532): Typst and TikZ export the preset. Each small-caps run is set at the size Layout measured (`#text(size:)`, `\fontsize`); the compiled Typst and TikZ pages were checked by eye and the ink measured against Layout's bounds | none | #1532 |
 | 12 | `hand-lettering` | Patrick Hand | Noto Sans | none: deliberate (no new packaged fonts). Fonts: the declared font set adds candidates; a missing provider is skipped with `W_FONT_FAMILY_SKIPPED`, then installed fonts are used (soft font sets, Refs #429). | #429 |
 | 13 | `canvas-height` | 900 px | 867 px (29 rows against 26) | none | not measured |
 
-Reached as drawn: inked panels with a gutter, title and key panels, yellow caption boxes with the halftone strip, star gates with ink edge, flat red `TODAY` burst, `+n!` slips and `?` for a missing actual, `0` for on time, Ben-Day holiday and hatch paints, three-column key grid.
+Reached as drawn: inked panels with a gutter, title and key panels, yellow caption boxes with the halftone strip, star gates with ink edge, flat red `TODAY!` burst, `+n!` slips and `?` for a missing actual, `0` for on time, Ben-Day holiday and hatch paints, three-column key grid.
 
 Not measured: pixel positions, wobble amplitude, row pitch, the wording causes marked above.

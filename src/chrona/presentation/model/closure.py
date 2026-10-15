@@ -29,6 +29,7 @@ from chrona.presentation.contracts import (
     PresentationIngressRejected, PresentationResourceSource, collect_presentation_contracts,
     freeze, parse_contract, validate_icon_catalog_entry, validate_theme_asset_entry, IconRasterSource,
 )
+from chrona.presentation.contracts.view_defaults import apply_view_defaults
 from chrona.presentation.model.authoring import AuthoringError, normalize_authoring_workspace
 from chrona.presentation.model.layout_inheritance import (
     LayoutInheritanceError, is_derived_layout, resolve_snapshot_layout,
@@ -349,6 +350,8 @@ def _draft_preset_paths(preset: Any, preset_path: Path, preset_root: Path | None
     mapping = {"view": "view", "theme": "theme", "colorScheme": "color-scheme", "layout": "layout-profile",
                "detailProfile": "review-detail-profile", "summaryProfile": "summary-profile"}
     paths: dict[str, Path] = {}
+    sources: list[PresentationResourceSource] = []
+    declarations: dict[str, tuple[str, Mapping[str, Any], Path]] = {}
     for name, kind in mapping.items():
         declaration = preset.contract.resources.get(name)
         if declaration is None and kind in {"review-detail-profile", "summary-profile"}:
@@ -356,8 +359,17 @@ def _draft_preset_paths(preset: Any, preset_path: Path, preset_root: Path | None
         if not isinstance(declaration, Mapping):
             raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail=f"preset {preset.id!r} declares no valid {name!r} resource")
         path = _declared_child(preset_root or preset_path.parent, str(declaration["path"]))
+        sources.append(_read_draft_resource_source(kind, path))
+        paths[kind] = path
+        declarations[kind] = name, declaration, path
+
+    # A declared View can be a thin connection to its declared design, just
+    # like the selected View below. Normalize the set before freezing any
+    # contract, but still validate every member even when later overridden.
+    for source in apply_view_defaults(sources):
+        name, declaration, path = declarations[source.identity.kind]
         try:
-            resource = _load_draft_resource(kind, path)
+            resource = _freeze_draft_resource_source(source)
         except ClosureError as error:
             if error.diagnostic_id != "E_RESOURCE_VERSION_UNSUPPORTED":
                 raise
@@ -367,7 +379,6 @@ def _draft_preset_paths(preset: Any, preset_path: Path, preset_root: Path | None
                                declaring_preset_id=preset.id) from error
         if resource.id != declaration["id"]:
             raise ClosureError("E_DRAFT_PRESET_RESOURCE", detail=f"preset {preset.id!r} declares {name} id {declaration['id']!r}, but {path.name} has id {resource.id!r}")
-        paths[kind] = path
     return paths
 
 
@@ -653,14 +664,26 @@ def _draft_system_font_resolution(theme: Mapping[str, Any], resolver: SystemFont
 
 def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
     """Read one explicit draft input and freeze it through its resource contract."""
-    value = safe_load(path.read_bytes())
+    return _freeze_draft_resource_source(_read_draft_resource_source(kind, path))
+
+
+def _read_draft_resource_source(kind: str, path: Path) -> PresentationResourceSource:
+    """Read exact raw bytes without prematurely parsing a thin resource."""
+    payload = path.read_bytes()
+    value = safe_load(payload)
     if not isinstance(value, dict):
         raise _draft_shape_error(kind, value)
     identifier = _resource_id(kind, value)
     if not isinstance(identifier, str) or not identifier:
         raise _draft_shape_error(kind, value)
-    payload = path.read_bytes()
     identity = ClosureIdentity(kind, identifier, "draft", "sha256:" + sha256(payload).hexdigest())
+    return PresentationResourceSource(identity, value)
+
+
+def _freeze_draft_resource_source(source: PresentationResourceSource) -> ClosureResource:
+    """Freeze an effective value while retaining its authored byte identity."""
+    identity, value = source.identity, source.value
+    kind, identifier = identity.kind, identity.id
     try:
         contract = parse_contract(identity, value)
     except SchemaContractError as error:

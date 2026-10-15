@@ -551,6 +551,13 @@ An encoded visual never takes a default direct `ref`, though it may take default
 side/decorative intent. Required connection fields and all ordinary effective
 View validation remain unchanged. Scene and adapters never see this overlay.
 
+Draft preset preflight applies this same overlay to its declared View/Layout
+pair before per-resource contract validation (#1563), even for members later
+overridden by explicit inputs. Path/read/header preflight precedes that
+declaration-order validation; raw resource identities and unsupported-version
+preset provenance are retained. The selected resources are closed again after
+overrides. A thin View without compatible defaults remains invalid.
+
 ### 9.3 Profile data bindings and wording (#1341, #1344)
 
 A Summary Profile may declare a typed metric `source: {slot: <name>}`.
