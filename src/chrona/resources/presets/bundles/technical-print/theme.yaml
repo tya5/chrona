@@ -269,6 +269,16 @@ body:
       numericSpacing: tabular-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+    tableColumnLabel:
+      fontFamily: sans
+      fontWeight: weight.bold
+      fontSize: size.body
+      lineHeight: leading.body
+      letterSpacing: letter-spacing.none
+      textTransform: text-transform.none
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
     heading:
       fontFamily: sans
       fontWeight: weight.bold
