@@ -5,6 +5,7 @@ from datetime import date
 import pytest
 
 from tests.support import synthetic_review as sr
+from chrona.presentation.layout.mark_geometry import symbol_parts
 
 
 def _parts():
@@ -78,3 +79,17 @@ def test_existing_symbol_size_token_is_track_relative_and_independent_of_bar_hei
     assert marks(after, "a").bounds[3] == marks(before, "a").bounds[3]
     assert marks(after, "g").bounds[3] > marks(before, "g").bounds[3]
     assert marks(after, "g").bounds[3] > marks(after, "a").bounds[3]
+
+
+@pytest.mark.parametrize("shape", ["circle", "square", "chevron"])
+def test_positive_mark_radius_never_replaces_a_declared_native_point_shape(tmp_path, shape):
+    parts = _parts()
+    body = parts["theme"]["body"]
+    symbol_token = body["roles"]["milestoneSymbol"]["symbol"]
+    body["values"][symbol_token]["value"] = {"shape": shape}
+    body["values"]["point-radius"] = {"type": "number", "value": 0.25}
+    body["roles"]["planned"]["markCornerRadius"] = "point-radius"
+    result = _render(tmp_path / shape, parts=parts)
+    point = next(item for item in result.surface.primitives if item.source_ref == "g" and item.purpose == "planned")
+    assert point.corner_radius > 0
+    assert point.symbol.outline == symbol_parts({"shape": shape}, point.bounds)[0].commands
