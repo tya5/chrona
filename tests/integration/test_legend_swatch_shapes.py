@@ -1,10 +1,15 @@
 """Finite legend keys borrow Theme ink; Layout owns all geometry (#1562)."""
 from copy import deepcopy
 from datetime import date
+from decimal import Decimal
 
 import pytest
 
 from tests.support import synthetic_review as sr
+from chrona.presentation.layout.surface_legend import LegendArrangement, legend_source_input, swatch_extent
+from chrona.presentation.model.surface_content import SurfaceLegendEntry
+from chrona.presentation.model.theme_tokens import ThemeTokenView
+from chrona.presentation.color_scheme import resolve_theme
 from chrona.presentation.layout.mark_geometry import symbol_parts
 
 
@@ -60,6 +65,75 @@ def test_absent_shape_preserves_legacy_primitives_and_svg_bytes(tmp_path):
     second = _render(tmp_path / "second", shape=None)
     assert first.artifact.content == second.artifact.content
     assert first.surface == second.surface
+
+
+def test_theme_default_applies_to_detail_without_shape_and_detail_override_wins(tmp_path):
+    parts = _parts()
+    parts["theme"]["body"]["roles"]["legend-swatch"] = {"swatchShape": "rule-pair"}
+    (tmp_path / "inherited").mkdir()
+    inherited = sr.render(
+        tmp_path / "inherited",
+        sr.with_calendar(sr.project({"a": sr.span("a", date(2026, 2, 2), 20)})),
+        presentation=parts,
+        detail={"version": "chrona/review-detail-profile/v0.1", "id": "shape-detail",
+                "body": {"legend": [{"role": "planned", "label": "Planned"}]}},
+    )
+    pair = next(item for item in inherited.surface.primitives if item.scene_id == "legend-swatch:planned")
+    assert pair.kind == "Path"
+    assert pair.legend_swatch_shape is None  # Scene remains shape-neutral after Layout completion.
+
+    overridden = _render(tmp_path / "overridden", parts=parts, shape="circle")
+    circle = next(item for item in overridden.surface.primitives if item.scene_id == "legend-swatch:planned")
+    assert circle.kind == "Symbol" and circle.bounds[2] == circle.bounds[3]
+
+
+def test_theme_default_applies_to_generated_scale_keys_and_uses_drawn_extent(tmp_path):
+    parts = _parts()
+    parts["theme"]["body"]["roles"]["legend-swatch"] = {"swatchShape": "circle"}
+    parts["theme"]["body"]["colorScales"] = {
+        "owners": {"slots": {"a": "default", "b": "capabilities-band"}},
+    }
+    parts["view"]["body"]["colorEncoding"] = {
+        "scale": "owners", "target": "planned", "source": {"field": "owner"}, "domain": ["a", "b"],
+    }
+    source = sr.with_calendar(sr.project({
+        "a": sr.span("a", date(2026, 2, 2), 20, owner="a"),
+        "b": sr.span("b", date(2026, 2, 4), 18, owner="b"),
+    }))
+    result = sr.render(
+        tmp_path,
+        source,
+        presentation=parts,
+        detail={"version": "chrona/review-detail-profile/v0.1", "id": "scale-detail",
+                "body": {"legend": [{"role": "planned", "label": "Planned", "swatchShape": "rule-pair"}]}},
+    )
+    keys = [item for item in result.surface.primitives if item.scene_id.startswith("legend-swatch:scale:owners:")]
+    assert len(keys) == 2
+    assert all(item.kind == "Symbol" and item.bounds[2] == item.bounds[3] for item in keys)
+    planned = next(item for item in result.surface.primitives if item.scene_id == "legend-swatch:planned")
+    assert planned.kind == "Path"  # The Detail shape overrides the Theme default.
+
+
+def test_theme_circle_default_uses_the_same_extent_for_measurement_and_emission(tmp_path):
+    parts = _parts()
+    parts["theme"]["body"]["values"]["large-swatch-block"] = {"type": "number", "value": 22}
+    parts["theme"]["body"]["roles"]["legend-swatch"] = {
+        "swatchShape": "circle", "swatchBlockSize": "large-swatch-block",
+    }
+    resolved = resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="synthetic")
+    tokens = ThemeTokenView(resolved)
+    legend_size = float(tokens.text_treatment("legend").font_size)
+    inline, block, bucket = swatch_extent("planned", tokens, 42.0, legend_size)
+    content = legend_source_input(
+        (SurfaceLegendEntry("planned", "Planned"),), tokens=tokens, mark_block_size=42.0,
+        font_metrics=None, arrangement=LegendArrangement(),
+    )
+    assert (inline, block, bucket) == (22.0, 22.0, "circle")
+    assert content.runs[0].inline_advance == Decimal(str(inline + legend_size * 0.4))
+
+    result = _render(tmp_path / "circle", parts=parts)
+    circle = next(item for item in result.surface.primitives if item.scene_id == "legend-swatch:planned")
+    assert circle.kind == "Symbol" and circle.bounds[2:] == (22.0, 22.0)
 
 
 def test_existing_symbol_size_token_is_track_relative_and_independent_of_bar_height(tmp_path):
