@@ -125,6 +125,19 @@ properties:
         properties:
           maxBends: {description: "Maximum bends allowed in one annotation leader.", type: integer, minimum: 0, maximum: 64}
           maxDetourRatio: {description: "Maximum route detour relative to direct distance.", type: number, minimum: 1, maximum: 100}
+      marks:
+        type: object
+        description: "Optional mark-specific physical placement policies."
+        additionalProperties: false
+        properties:
+          points:
+            description: "Physical placement policies for point marks; omission preserves their own row geometry."
+            type: object
+            additionalProperties: false
+            properties:
+              host:
+                description: "Resolve selected point marks onto eligible spans when their dates lie inside."
+                const: span-when-inside
   extends: {description: "Base Layout Profile pinned for an override profile.", $ref: "#/$defs/reference"}
   overrides:
     type: object

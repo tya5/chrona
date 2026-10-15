@@ -324,6 +324,14 @@ class TemporalEndpointPlacement:
 
 
 @dataclass(frozen=True)
+class PhysicalMarkHost:
+    """Exact Layout placement relation, independent of semantic lane ownership."""
+
+    placement_id: str
+    row_id: str
+
+
+@dataclass(frozen=True)
 class MarkPlacement:
     """Completed mark geometry and ports, independent of Scene primitives."""
 
@@ -348,6 +356,7 @@ class MarkPlacement:
     subjects: tuple[DiagnosticSubject, ...] = ()
     paint_clip: PaintClip | None = None
     pattern_origin: tuple[float, float] | None = None
+    physical_host: PhysicalMarkHost | None = None
 
 @dataclass(frozen=True)
 class LayoutImageFill:

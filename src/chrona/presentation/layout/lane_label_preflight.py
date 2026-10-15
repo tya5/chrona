@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from math import isfinite
-from typing import Any
+from typing import Any, Mapping
 
 from chrona.presentation.layout.lane_subtracks import LaneItemFootprints, LaneSubtrackPlan
 from chrona.presentation.layout.model import geometry_sum
@@ -25,6 +25,7 @@ def lane_label_row_requirements(
     *,
     timeline_bounds: tuple[float, float],
     row_padding: float = 0.0,
+    physical_label_rows: Mapping[str, str] | None = None,
 ) -> dict[str, float]:
     """Return full row minima, including measured lane-name stagger demand.
 
@@ -65,6 +66,17 @@ def lane_label_row_requirements(
             marks_by_item.setdefault(unit.item_id, []).append((x1, x2))
 
     lanes = {lane.lane_id: lane for lane in subtracks.lanes}
+    if physical_label_rows is not None:
+        if not isinstance(physical_label_rows, Mapping):
+            raise _preflight_error("physical label rows", mapping_type=type(physical_label_rows).__name__)
+        measured_ids = {getattr(label, "placement_id", None) for label in measured_labels}
+        unknown_ids = set(physical_label_rows) - measured_ids
+        if unknown_ids:
+            raise _preflight_error("physical label placement", placement_ids=tuple(sorted(map(str, unknown_ids))))
+        invalid_entries = {placement_id: row_id for placement_id, row_id in physical_label_rows.items()
+                           if not isinstance(placement_id, str) or not isinstance(row_id, str)}
+        if invalid_entries:
+            raise _preflight_error("physical label mapping", placement_rows=invalid_entries)
     label_rows: dict[str, list[list[tuple[float, float, float]]]] = {
         lane_id: [] for lane_id in lanes
     }
@@ -92,6 +104,10 @@ def lane_label_row_requirements(
             raise _preflight_error("measured lane label", placement_id=getattr(label, "placement_id", None),
                                    member_id=member_id, lane_id=lane_id,
                                    width=width, height=height, gap=gap, candidates=candidates)
+        physical_row_id = (physical_label_rows or {}).get(label.placement_id, lane_id)
+        if physical_row_id not in lanes:
+            raise _preflight_error("physical label row", placement_id=getattr(label, "placement_id", None),
+                                   row_id=physical_row_id, available_rows=tuple(lanes))
         anchors = marks_by_item.get(item_id, ())
         if not anchors:
             # There may be an intentionally unmarked member; the temporal
@@ -122,7 +138,7 @@ def lane_label_row_requirements(
                         else (anchor_left - gap - width, anchor_left - gap))
             options = [(side, interval)]
 
-        rows = label_rows[lane_id]
+        rows = label_rows[physical_row_id]
         # Choose the declared-side interval with the fewest occupied rows;
         # preserve candidate order as the stable tie break.
         scored = []
@@ -138,7 +154,8 @@ def lane_label_row_requirements(
 
     label_heights: dict[str, list[float]] = {lane_id: [] for lane_id in lanes}
     for label in measured_labels:
-        label_heights[label.lane_id].append(float(label.height) + float(label.gap))
+        row_id = (physical_label_rows or {}).get(label.placement_id, label.lane_id)
+        label_heights[row_id].append(float(label.height) + float(label.gap))
     result = {}
     for lane_id, lane in lanes.items():
         extra = geometry_sum(max((item[2] for item in row), default=0.0)

@@ -8,6 +8,10 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Callable
 
 from chrona.presentation.layout.model import LayoutError, Rect
+from chrona.presentation.layout.point_hosting import resolve_point_host_plan
+from chrona.presentation.layout.point_host_geometry import (
+    complete_hosted_point_geometry, translate_point_block, validate_hosted_point_collisions,
+)
 from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry
 from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation, compose_mark_band
 from chrona.presentation.layout.surface_groups import (
@@ -290,6 +294,28 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             diagnostics.extend(composition.diagnostics)
             diagnostic_provenance.extend(composition.diagnostic_provenance)
             absences.extend(composition.absences)
+
+    preflight = request.fixed_lane_preflight
+    host_plan = (preflight.point_host_plan if preflight is not None else None)
+    if host_plan is None:
+        host_plan = resolve_point_host_plan(
+            projection, as_of=contract.time.as_of,
+            mode=request.layout_manifest.point_host_mode, visibility_index=visibility_index)
+    if host_plan.relations:
+        previous_marks = {mark.placement_id: mark for mark in marks}
+        marks = list(complete_hosted_point_geometry(host_plan, tuple(marks)))
+        validate_hosted_point_collisions(host_plan, tuple(marks), request.theme_tokens)
+        final_marks = {mark.placement_id: mark for mark in marks}
+        moved_records = []
+        for record in window_marks:
+            original = previous_marks.get(record.original.placement_id)
+            completed = final_marks.get(record.original.placement_id)
+            if original is not None and completed is not None and completed.physical_host is not None:
+                offset = float(completed.bounds.block - original.bounds.block)
+                record = replace(record, original=translate_point_block(record.original, offset),
+                                 visible=completed)
+            moved_records.append(record)
+        window_marks = moved_records
 
     groups = tuple(base.groups)
     group_by_id = {group.group_id: group for group in groups}

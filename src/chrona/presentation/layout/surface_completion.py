@@ -35,6 +35,7 @@ from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, 
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject, table_row_subjects, review_row_subjects
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
 from chrona.presentation.layout.lane_window_marks import complete_lane_window_handoff
+from chrona.presentation.layout.point_host_validation import validate_point_host_frames
 
 
 @dataclass(frozen=True)
@@ -401,11 +402,21 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
         lane_mark_blocks: dict[str, Decimal] = {}
         for mark in marks:
             if mark.lane_row_id is not None:
-                lane_mark_blocks[mark.lane_row_id] = min(
-                    lane_mark_blocks.get(mark.lane_row_id, mark.bounds.block), mark.bounds.block)
+                physical_row = (mark.physical_host.row_id if mark.physical_host is not None
+                                else mark.lane_row_id)
+                lane_mark_blocks[physical_row] = min(
+                    lane_mark_blocks.get(physical_row, mark.bounds.block), mark.bounds.block)
+        hosted_only_rows = set()
+        preflight = request.fixed_lane_preflight
+        if (preflight is not None and preflight.point_host_allocation is not None
+                and preflight.point_host_plan is not None):
+            hosted_only_rows = {occurrence.row_id for occurrence in preflight.point_host_plan.occurrences
+                                if occurrence.instance in preflight.point_host_allocation.hosted_only_instances}
         by_track = {track.instance_id: track for track in tracks}
         for review_row in review_rows:
-            if review_row.row_id not in omitted_rows:
+            if (review_row.row_id not in omitted_rows
+                    and not (review_row.row_id in hosted_only_rows
+                             and review_row.row_id not in lane_mark_blocks)):
                 continue
             row_tracks = [by_track.get(f"{review_row.row_id}:{item.item_id or item.object_id}")
                           for item in review_row.items]
@@ -421,6 +432,9 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                               "completed lane mark band falls outside its row bounds") from error
     lane_emissions = build_lane_emissions(projection, tuple(review_rows), marks, text,
                                      shapes, completed_icons, request.theme_tokens)
+    if request.fixed_lane_preflight is not None:
+        validate_point_host_frames(request.fixed_lane_preflight, marks, completed_icons,
+                                   shapes, tracks, request.theme_tokens)
     # Abstract mark IDs remain Layout anchors; hosted text needs the actual
     # Scene primitive ID completed by this typed lane-emission closure.
     completed_text = complete_hosted_text_identity(tuple(text), tuple(marks), lane_emissions)

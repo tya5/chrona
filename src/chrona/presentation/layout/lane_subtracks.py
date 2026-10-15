@@ -23,6 +23,8 @@ from chrona.presentation.review.lane_membership import (
 )
 
 if TYPE_CHECKING:
+    from chrona.presentation.layout.point_host_allocation import PointHostAllocation
+    from chrona.presentation.layout.point_hosting import PointHostPlan
     from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
     from chrona.presentation.layout.lane_label_intent import MeasuredLaneMemberLabel
     from chrona.presentation.layout.surface_quality import ScalePlacement
@@ -48,6 +50,10 @@ class LaneFacetFootprint:
     footprint: LaneFootprint
     overlay_with: tuple[str, ...] = ()
     point_anchor_date: date | None = None
+    mark_id: str | None = None
+    mark_block_center: float | None = None
+    is_mark_geometry: bool = False
+    purpose: str = ""
 
 
 @dataclass(frozen=True)
@@ -131,6 +137,8 @@ class FixedLanePreflight:
     row_requirements: tuple[tuple[str, float], ...] = ()
     mark_band_allocation: MarkBandAllocation | None = None
     mark_visibility_index: ItemMarkVisibilityIndex | None = None
+    point_host_plan: PointHostPlan | None = None
+    point_host_allocation: PointHostAllocation | None = None
 
     def __post_init__(self) -> None:
         if (not self.natural_block_requirement.is_finite()
@@ -158,6 +166,7 @@ def assign_lane_subtracks(
     clearance: float = 0.0,
     reserved_band_bounds: tuple[float, float] | None = None,
     mark_visibility_index: ItemMarkVisibilityIndex | None = None,
+    point_host_allocation: PointHostAllocation | None = None,
 ) -> LaneSubtrackPlan:
     """Place projection instances inside immutable data-only lanes.
 
@@ -207,6 +216,13 @@ def assign_lane_subtracks(
             raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "visibility occurrence mismatch")
     units, overlay_pairs = _validate_footprints(
         item_footprints, set(assignments), assignments, wholly_omitted=wholly_omitted)
+    if point_host_allocation is not None:
+        if point_host_allocation.semantic_units != item_footprints:
+            raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "physical allocation source mismatch")
+        units, overlay_pairs = _validate_footprints(
+            point_host_allocation.physical_units, set(assignments), assignments,
+            wholly_omitted=wholly_omitted,
+            physically_hosted=point_host_allocation.hosted_only_instances)
     ordered_units = [unit for lane in membership.lanes for item_id in lane_members[lane.lane_id]
                      for unit in units[item_id]]
 
@@ -340,6 +356,7 @@ def _validate_footprints(
     values: tuple[LaneItemFootprints, ...], expected_ids: set[str],
     assignments: dict[str, LaneAssignment],
     *, wholly_omitted: frozenset[LaneProjectionInstance] = frozenset(),
+    physically_hosted: frozenset[LaneProjectionInstance] = frozenset(),
 ) -> tuple[dict[str, list[LaneItemFootprints]], set[frozenset[str]]]:
     if not isinstance(values, tuple):
         raise TypeError("E_LAYOUT_LANE_SUBTRACK_INPUT: footprints must be a tuple")
@@ -353,7 +370,7 @@ def _validate_footprints(
                 or not isinstance(unit.projection_instance_id, LaneProjectionInstance)
                 or unit.projection_instance_id in instance_ids
                 or not isinstance(unit.facets, tuple)
-                or (not unit.facets and unit.projection_instance_id not in wholly_omitted)
+                or (not unit.facets and unit.projection_instance_id not in wholly_omitted | physically_hosted)
                 or (unit.facets and unit.projection_instance_id in wholly_omitted)):
             raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "item footprints",
                               item_id=getattr(unit, "item_id", None),
