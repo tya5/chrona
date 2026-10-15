@@ -69,6 +69,7 @@ def test_progress_fill_uses_exact_projection_item_subject_not_source_or_mark_ins
     roles = {name: MarkGeometry(.5, .25, index, 0)
              for index, name in enumerate(("planned", "actual", "missing-actual"))}
     request = SimpleNamespace(
+        fixed_lane_preflight=None, layout_manifest=SimpleNamespace(point_host_mode=None),
         projection=projection, presentation_contract=SimpleNamespace(time=SimpleNamespace(as_of=None)),
         theme_tokens=_Theme(), surface_content=SimpleNamespace(progress_fill_source="planned"),
     )

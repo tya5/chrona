@@ -81,6 +81,8 @@ class ReviewItem:
     temporal_paint: bool = True
     # Lane of a key-row point, assigned by Layout from measured extents (#1501); None everywhere else.
     key_lane: int | None = None
+    # Project-declared link retained separately from lane-derived ``attached_to`` (#1373).
+    declared_attaches_to: str | None = None
 
     @property
     def at_delta(self) -> int | None:
@@ -302,7 +304,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             is_rollup=project["objects"][object_id].get("schedule", {}).get("mode") == "rollup",
             total_float=total_float, critical=critical, link=link,
             planned_progress=project["objects"][object_id].get("plannedProgress"),
-            observation_state=observation_state, source_index=declared.get(object_id, 0)))
+            observation_state=observation_state, source_index=declared.get(object_id, 0),
+            declared_attaches_to=project["objects"][object_id].get("attachesTo")))
     if not selected:
         raise ValueError("E_REVIEW_EMPTY: the View selects no object of the Project; check its selection against the Project objects")
     if (grouping is not None and grouping.by == "field" and grouping.presentation == "header"
@@ -713,16 +716,20 @@ def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[s
     if project is None or placements is None:
         return {}
     result: dict[str, ReviewItem] = {}
+    hierarchy_entries = {entry.object_id: entry for entry in normalize_hierarchy(project)}
     for object_id, planned in placements.items():
         source_type = "point" if "at" in planned else "span"
         float_value = analysis.total_float.get(object_id) if analysis is not None else None
         total_float = float_value.value if float_value is not None else None
         critical = object_id in analysis.critical if analysis is not None else False
+        entry = hierarchy_entries.get(object_id)
         result[object_id] = ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
             planned, None, None, _roles(ObservationState.UNAVAILABLE, None, critical), "", "",
             dict(project["objects"][object_id].get("fields", {})), object_id, source_kind,
-            total_float=total_float, critical=critical, link=_object_link(project["objects"][object_id].get("link")))
+            parent_id=entry.parent_id if entry else None,
+            total_float=total_float, critical=critical, link=_object_link(project["objects"][object_id].get("link")),
+            declared_attaches_to=project["objects"][object_id].get("attachesTo"))
     return result
 
 

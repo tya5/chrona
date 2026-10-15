@@ -170,6 +170,9 @@ def compose_lane_item_footprints(
                     point_anchor = candidate if isinstance(candidate, date) else None
                 collected[instance].append(LaneFacetFootprint(
                     facet.facet_id, footprint, facet.overlay_with, point_anchor,
+                    mark.placement_id, float(mark.bounds.block + mark.bounds.block_size / 2),
+                    facet.purpose in {"planned", "actual", "snapshot", "scenario", "missing-actual"},
+                    facet.purpose,
                 ))
                 facet_purposes[instance][facet.purpose].append(facet.facet_id)
                 if facet.purpose == "icon":

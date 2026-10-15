@@ -50,6 +50,7 @@ def _context(decisions, tokens):
     viewport = Rect(D(0), D(0), D(50), D(50))
     manifest = SimpleNamespace(decisions=tuple(decisions), fit_warnings=(), viewport=viewport)
     request = SimpleNamespace(theme_tokens=tokens, font_metrics=None, layout_manifest=manifest,
+                              fixed_lane_preflight=None,
                               declared_viewport=None, auto_block_limit=None)
     slot = SlotPlacement("timeline", "timeline", Rect(D(0), D(0), D(50), D(50)))
     return surface_completion.SurfaceCompletionContext(

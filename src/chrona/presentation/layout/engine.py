@@ -9,7 +9,7 @@ from typing import Any, Callable, Literal, Mapping
 
 from chrona.presentation.layout.model import (
     CountDependentHeadingFitError, LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect, RegionFrame, ResolvedLayoutProfile, SlotHeading,
-    RelationUnroutableMode,
+    RelationUnroutableMode, PointHostMode,
 )
 from chrona.presentation.layout.surface_quality import FitWarning
 from chrona.presentation.layout.tracks import resolve_flexible_tracks as _resolve_flexible_tracks
@@ -1044,6 +1044,9 @@ def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float
         background_extents=dict(profile.profile["reviewSurface"]["backgroundExtents"]),
         member_names=dict(profile.profile["reviewSurface"].get("memberNames", {})),
         fit_warnings=tuple(arranger.fit_warnings),
+        point_host_mode=(PointHostMode(profile.profile["reviewSurface"]["marks"]["points"]["host"])
+                         if profile.profile["reviewSurface"].get("marks", {}).get("points", {}).get("host") is not None
+                         else None),
     )
 
 

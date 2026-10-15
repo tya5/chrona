@@ -229,13 +229,16 @@ def nearest_free_routed_tail_box(*, region: LabelRect, anchor: MarkPlacement, en
                                                         box.x, box.y, box.right, box.bottom)))
                 source_points = egress.corridor or (egress.exposed_port,)
                 endpoint_ports = tuple(dict.fromkeys((
-                    *coincident_endpoint_port_ids(obstacles, egress.semantic_port, egress.host_ids),
-                    *coincident_endpoint_port_ids(obstacles, egress.exposed_port, egress.host_ids),
+                    *coincident_endpoint_port_ids(obstacles, egress.semantic_port,
+                                                 (*egress.host_ids, *egress.corridor_host_ids)),
+                    *coincident_endpoint_port_ids(obstacles, egress.exposed_port,
+                                                 (*egress.host_ids, *egress.corridor_host_ids)),
                 )))
                 egress_clear = True
                 for start, end in zip(source_points, source_points[1:]):
                     segment = ObstacleSegment(start, end)
-                    if obstacles.egress_collisions(segment, host_ids=egress.host_ids,
+                    if obstacles.egress_collisions(segment,
+                                                   host_ids=(*egress.host_ids, *egress.corridor_host_ids),
                                                    classes=obstacle_classes,
                                                    port_ids=endpoint_ports):
                         egress_clear = False

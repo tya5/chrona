@@ -50,7 +50,10 @@ from chrona.presentation.layout.labels import (
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
 )
-from chrona.presentation.layout.ports import ConnectorEgress, coincident_endpoint_port_ids, connector_egress_candidates
+from chrona.presentation.layout.ports import (
+    ConnectorEgress, coincident_endpoint_port_ids, connector_egress_candidates,
+    physical_host_neighbors,
+)
 from chrona.presentation.model.placement_candidates import candidate_order
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.routing import (
@@ -282,6 +285,10 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
     review_rows, rows, by_source, scale = context.review_rows, context.rows, context.by_source, context.scale
     start, end, timeline, timeline_bounds = context.start, context.end, context.timeline, context.timeline_bounds
     mark_by_id, comparison_clusters, instance_rows = context.mark_by_id, context.comparison_clusters, context.instance_rows
+    completed_marks = tuple(mark_by_id.values())
+
+    def endpoint_host_neighbors(mark: MarkPlacement, endpoint: str) -> tuple[MarkPlacement, ...]:
+        return physical_host_neighbors(mark, completed_marks, endpoint)
     metric_for, surface_obstacles = context.metric_for, context.surface_obstacles
     register_rect, register_port = context.register_rect, context.register_port
     text: list[TextPlacement] = []
@@ -500,7 +507,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 anchor_row = instance_rows.get(anchor_instance)
                 source_candidates = connector_egress_candidates(
                     anchor_host, resolved.endpoint, target,
-                    comparison_clusters.get((anchor_host.source_ref, anchor_row), (anchor_host,)))
+                    comparison_clusters.get((anchor_host.source_ref, anchor_row), (anchor_host,)),
+                    explicit_neighbors=endpoint_host_neighbors(anchor_host, resolved.endpoint))
                 viewport = request.layout_manifest.viewport
                 content_extent = (float(viewport.inline), float(viewport.block),
                                   max(float(viewport.inline + viewport.inline_size), candidate_bounds.right),
@@ -515,13 +523,16 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 for source_egress in source_candidates:
                     source_port_id = f"port:{anchor_host.placement_id}:{source_egress.side}"
                     known_ports = coincident_endpoint_port_ids(
-                        surface_obstacles, source_egress.exposed_port, source_egress.host_ids)
+                        surface_obstacles, source_egress.exposed_port,
+                        (*source_egress.host_ids, *source_egress.corridor_host_ids))
                     known_ports = tuple(dict.fromkeys((*known_ports, *coincident_endpoint_port_ids(
-                        surface_obstacles, source_egress.semantic_port, source_egress.host_ids))))
+                        surface_obstacles, source_egress.semantic_port,
+                        (*source_egress.host_ids, *source_egress.corridor_host_ids)))))
                     if surface_obstacles.has(source_port_id) and source_port_id not in known_ports:
                         known_ports = (*known_ports, source_port_id)
                     if source_egress.corridor and surface_obstacles.egress_collisions(
-                            ObstacleSegment(*source_egress.corridor), host_ids=source_egress.host_ids,
+                            ObstacleSegment(*source_egress.corridor),
+                            host_ids=(*source_egress.host_ids, *source_egress.corridor_host_ids),
                             port_ids=known_ports):
                         continue
                     base_prefix = (source_egress.corridor if source_egress.corridor
@@ -796,7 +807,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                         region=region_bounds, anchor=anchor_host,
                                         endpoint=resolved.endpoint,
                                         siblings=comparison_clusters.get(
-                                            (anchor_host.source_ref, anchor_row), (anchor_host,)),
+                                            (anchor_host.source_ref, anchor_row), (anchor_host,))
+                                            + endpoint_host_neighbors(anchor_host, resolved.endpoint),
                                         box_size=annotation_size,
                                         max_positions=candidate.search.max_positions,
                                         obstacles=surface_obstacles,
@@ -1231,7 +1243,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     anchor_row_id = instance_rows.get(anchor_instance_id)
                     selected_source = connector_egress_candidates(
                         anchor_host, resolved.endpoint, target,
-                        comparison_clusters.get((anchor_host.source_ref, anchor_row_id), (anchor_host,)))[0]
+                        comparison_clusters.get((anchor_host.source_ref, anchor_row_id), (anchor_host,)),
+                        explicit_neighbors=endpoint_host_neighbors(anchor_host, resolved.endpoint))[0]
                     points = (selected_source.semantic_port, target)
                     path_commands = ()
                     visible_route_segments = tuple(zip(points, points[1:]))

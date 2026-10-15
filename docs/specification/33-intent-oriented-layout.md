@@ -28,6 +28,12 @@ The authority boundary remains:
 Layout MUST NOT select Project facts, calculate schedules, define colors/fonts, invent
 metrics, persist authoritative coordinates, or branch on a profile ID.
 
+Optional `reviewSurface.marks.points.host: span-when-inside` selects physical
+point hosting under [Spec 50 section 3.5](50-constraint-driven-gantt-surface-quality.md#35-physical-point-hosting-1373).
+Omission disables it. This is a Layout placement policy, not View row membership,
+Project hierarchy mutation or a Theme geometry/paint override. Add the optional
+member in place to Layout Profile v0.10 under Spec 56 section 3.2.
+
 ## 2. Resource and reuse model
 
 The canonical resource is `chrona/layout-profile/v0.4` as defined by the replacement
