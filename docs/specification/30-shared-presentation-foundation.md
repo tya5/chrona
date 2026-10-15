@@ -95,6 +95,16 @@ platform's font directories (fontconfig's file list on Linux when present) and m
 rule; they are measured from their own bytes and rasterized from the same files. SVG names the resolved family and embeds
 nothing. Output that uses an installed face depends on the fonts installed where it is rendered.
 
+If named families preceding the selected named face are unavailable, closure emits
+`W_FONT_FAMILY_SKIPPED` with the requested list, skipped prefix and selected face,
+in addition to `I_FONT_ROLE_RESOLVED`. The resolved primary family/weight also has
+a catalog entry for completed-text consumers, without replacing a declared exact
+face. Exhausted glyph coverage retains `E_FONT_GLYPH_UNAVAILABLE`; its detail names
+every requested named family in order, followed by the packaged fallback when not
+already named. This does not change packaged or per-glyph fallback (#1495).
+Catalog aliases do not create additional glyph-substitution occurrences: collect
+each metric object's warnings once, preserving distinct metric objects.
+
 ## 3. Generalized callouts
 
 A callout is not a special component. Project an existing annotation into a target

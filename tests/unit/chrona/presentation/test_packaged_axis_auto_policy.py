@@ -73,7 +73,7 @@ def test_all_packaged_axis_views_declare_thinning_and_automatic_forms():
     paths = sorted(path for path in (ROOT / "src/chrona/resources/presets/bundles").glob("*/view.yaml")
                    if path.parent.name != "design-default")  # its axis is the selected design's `viewDefaults` (#429)
     paths.append(ROOT / "src/chrona/resources/presets/bundles/editorial/view-lanes.yaml")
-    assert len(paths) == 9
+    assert len(paths) == 10
 
     for path in paths:
         _assert_axis_policy(safe_load(path.read_bytes()), source=path.relative_to(ROOT).as_posix())

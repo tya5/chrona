@@ -103,3 +103,10 @@ entries:
       colorScheme: {id: target-b, kind: color-scheme, sourceRoot: designs/target-b, sourcePath: scheme.yaml}
       layout: {id: target-b, kind: layout-profile, sourceRoot: designs/target-b, sourcePath: layout.yaml}
       detailProfile: {id: halcyon-target-b-legend, kind: review-detail-profile, sourceRoot: designs/target-b, sourcePath: detail.yaml}
+  - id: muted-executive
+    members:
+      view: {id: chrona-preset-muted-executive, kind: view, sourceRoot: presets/bundles/muted-executive, sourcePath: view.yaml}
+      theme: {id: chrona-builtin-muted-executive, kind: theme, sourceRoot: presets/bundles/muted-executive, sourcePath: theme.yaml}
+      colorScheme: {id: chrona-builtin-muted-executive, kind: color-scheme, sourceRoot: presets/bundles/muted-executive, sourcePath: scheme.yaml}
+      layout: {id: chrona-builtin-muted-executive, kind: layout-profile, sourceRoot: presets/bundles/muted-executive, sourcePath: layout.yaml}
+      detailProfile: {id: chrona-builtin-muted-executive-detail, kind: review-detail-profile, sourceRoot: presets/bundles/muted-executive, sourcePath: detail.yaml}

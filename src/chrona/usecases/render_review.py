@@ -356,6 +356,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         plan = prepare_surface_render_plan(count_input.value) if not count_input.active else None
     except SurfacePlanFontError as error:
         raise _font_failure(error.failure) from error.failure
+    except FontMetricsError as error:
+        raise _font_failure(error) from error
     except SlotHeadingCopyError as error:
         raise RenderFailed(error.diagnostic_id, error.detail, "view", error.path) from error
     except FigureTextReadError as error:

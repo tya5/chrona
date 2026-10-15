@@ -169,15 +169,31 @@ def test_jobs_must_be_positive(tmp_path, monkeypatch):
     assert raised.value.code == 2
 
 
-def test_all_21_capacity_cases_remain_explicitly_recorded():
+def test_all_25_capacity_cases_remain_explicitly_recorded():
     expectations = matrix._load_expectations()
-    assert len(expectations) == 21
+    assert len(expectations) == 25
     assert sum(item["diagnostics"][0]["code"] == "E_LAYOUT_MARK_OVERFLOW"
-               for item in expectations.values()) == 13
+               for item in expectations.values()) == 17
     assert sum(item["diagnostics"][0]["code"] == "E_LAYOUT_LANE_SEED_INVALID"
                for item in expectations.values()) == 6
     assert sum(item["diagnostics"][0]["code"] == "E_LAYOUT_PATH_INPUT"
                for item in expectations.values()) == 2
+
+
+def test_four_new_roadmap_contexts_keep_the_exact_mark_overflow_expectation():
+    expectations = matrix._load_expectations()
+    expected = expectations["chrona-roadmap/roadmap@600x340"]
+    assert {identifier: expectations[identifier] for identifier in (
+        "chrona-roadmap/marquee@800x450",
+        "chrona-roadmap/marquee@600x340",
+        "chrona-roadmap/titlecard@600x340",
+        "chrona-roadmap/yuya@600x340",
+    )} == {
+        "chrona-roadmap/marquee@800x450": expected,
+        "chrona-roadmap/marquee@600x340": expected,
+        "chrona-roadmap/titlecard@600x340": expected,
+        "chrona-roadmap/yuya@600x340": expected,
+    }
 
 
 def test_expected_refusal_matches_complete_public_diagnostic_not_only_code():

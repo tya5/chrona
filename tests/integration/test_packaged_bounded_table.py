@@ -16,10 +16,10 @@ PRESETS = tuple(entry["id"] for entry in preset_library._library()
                 if not entry["members"]["layout"]["sourceRoot"].startswith("designs/"))  # designs are reviewer-owned (#429)
 
 
-def test_all_nine_packaged_views_admit_wrap_in_the_live_contract():
+def test_all_ten_packaged_views_admit_wrap_in_the_live_contract():
     root = Path(__file__).resolve().parents[2] / "src/chrona/resources/presets/bundles"
     paths = sorted(path for path in root.glob("*/view.yaml") if path.parent.name != "design-default") + [root / "editorial/view-lanes.yaml"]
-    assert len(paths) == 9
+    assert len(paths) == 10
     for path in paths:
         raw = path.read_bytes()
         document = safe_load(raw)
