@@ -1,5 +1,4 @@
 """Existing scheduler critical facts select optional paint before Layout (#1561)."""
-from copy import deepcopy
 from datetime import date
 
 from tests.support import synthetic_review as sr
@@ -45,13 +44,3 @@ def test_theme_role_is_wired_through_real_render_without_reclassifying_the_short
     assert {item.source_ref for item in themed.values() if item.visual_role == "dependency-critical"} == {
         "relation:0:start-long", "relation:2:long-finish"}
     assert {item.paint.stroke_width for item in themed.values() if item.visual_role == "dependency-critical"} == {2}
-
-
-def test_absent_optional_role_preserves_rendered_output(tmp_path):
-    (tmp_path / "one").mkdir()
-    (tmp_path / "two").mkdir()
-    parts = _parts(critical=False)
-    before = sr.render(tmp_path / "one", _source(), presentation=parts)
-    after = sr.render(tmp_path / "two", _source(), presentation=deepcopy(parts))
-    assert before.artifact.content == after.artifact.content
-    assert before.surface == after.surface

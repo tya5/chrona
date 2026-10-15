@@ -11,7 +11,8 @@ This document defines how a Chrona view acquires a visual language without chang
 On a table-timeline with semantic relations, declaring the optional Theme
 role `dependency-critical` selects it for the existing scheduling-derived
 critical relation facts (#1561). Absence keeps `dependency`. It supplies the
-ordinary path paint/width/terminal intent, not a criticality classifier;
+ordinary path paint and width, not a criticality classifier; existing shared
+relation-terminal policy still applies, without a new role-specific marker;
 the wider stroke participates in Layout safety, halos and Scene contrast.
 The **Style** layer maps the semantic objects and comparison facets emitted by the View Model to named visual roles. The **Theme** layer supplies concrete visual tokens for those roles. Together they make the same Project and View usable in a compact engineering review, a plan-versus-actual review, or a presentation-oriented timeline while preserving a small, reviewable semantic source.
 
