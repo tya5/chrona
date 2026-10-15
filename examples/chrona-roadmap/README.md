@@ -27,7 +27,8 @@ grouping, columns, period, annotation bindings and the project's own wording.
 
 1. Change plan dates (or add work items) in `project.yaml`.
 2. Record actuals in `actual.yaml` from GitHub issue dates: `start` is the day work
-   started or the PR was opened; `finish` is the issue's `closedAt` date.
+   started or the PR was opened; `finish` is the day after the issue's `closedAt` date
+   (an exclusive end, like a planned `end`). A gate takes `at`: the day it was met.
 3. Move `asOf` forward to the update date.
 4. Leave `snapshots/plan-2026-10-10/` alone: the baseline stays the 2026-10-10 plan, so
    slips show against it.

@@ -57,6 +57,27 @@ def test_milestone_key_matches_the_planned_point_shape_and_paint():
     assert any("milestone" in finding and "paint" in finding.lower() for finding in findings)
 
 
+def _gate_scene(*, key_fill: str | None, mark_fill: str | None, ghost: bool) -> dict:
+    primitives = [_rect("planned:m0-gate:m0-gate:part0", kind="Symbol", fill=mark_fill),
+                  _rect("legend-swatch:milestone:part0", kind="Symbol", fill=key_fill)]
+    if ghost:  # ghost-when-changed draws the baseline gate stroke-only, first in order
+        ghost_item = _rect("planned:m0-gate:snapshot:m0-gate:part0", kind="Symbol", fill=None)
+        ghost_item["paint"]["stroke"] = "#808080"
+        primitives.insert(0, ghost_item)
+    return _scene(primitives)
+
+
+def test_milestone_key_ignores_baseline_gate_ghosts():
+    assert legend_key_findings(_gate_scene(key_fill="#B06020", mark_fill="#B06020", ghost=True)) == []
+
+
+def test_milestone_key_with_ghosts_still_rejects_a_real_mismatch():
+    scene = _gate_scene(key_fill="#B06020", mark_fill=None, ghost=True)
+    scene["surfaces"][0]["primitives"][1]["paint"]["stroke"] = "#000000"
+    findings = legend_key_findings(scene)
+    assert any("milestone" in finding and "paint" in finding.lower() for finding in findings)
+
+
 def test_planned_progress_does_not_require_an_actual_progress_key():
     scene = _scene([
         _rect("planned:campaign"),
