@@ -20,6 +20,17 @@ Issue rows 1, 2 and 6 remain separate acceptance rows in the final issue review;
 their published implementation and release evidence must be verified before closure.
 Reviewer adoption of preset YAML is not a developer closing condition.
 
+Other literal issue rows (not new implementation scope):
+
+| Row | Literal acceptance | Published baseline to verify at closure |
+| --- | --- | --- |
+| 1 | **Table header typography.** Column headers have no Theme text role of their own: they share `text` with the body cells, and the semantic role registry (`presentation/model/semantic_registry.py`) has no table-header role. Editorial's `TASK` / `OWNER` headers therefore cannot be upper-case and tracked as the reference sets them. Needs: a Theme role for column headers (`textRole`-like, size/weight/tracking/transform) and the View member that selects it. | [PR1514](https://github.com/tya5/chrona/pull/1514), merged `f3dbc0710`; reviewer accepts existing `tableColumnLabel` without a new View selector. |
+| 2 | **Field to initials column transform.** A `source: {field: owner}` column shows the raw field value; the reference shows initials. Needs: a closed set of cell transforms in the View column grammar (initials first), applied by Layout, so Scene stays completed text. | [PR1509](https://github.com/tya5/chrona/pull/1509), merged `9400d1073`. |
+| 6 | **A Context cannot render from a package-provider reference.** `LocalSnapshotReader` raises `E_STORE_REFERENCE`, so the HALCYON corpus carries byte-identical copies of the bundled Editorial resources under `examples/halcyon-1/` (guarded by `test_public_preset_evidence`). Needs: a reader that resolves `provider: package` references to the wheel resources. | [PR1502](https://github.com/tya5/chrona/pull/1502), merged `3ce47886d`; Context reader behavior pinned, corpus copies remain reviewer-owned. |
+
+All three merge states were rechecked on GitHub on 2026-10-15. They are
+published mechanisms, not proof of the final review-containing release.
+
 ## Published facts and unresolved design
 
 - `ReviewItem.parent_id` carries Project hierarchy; `attached_to` is a derived

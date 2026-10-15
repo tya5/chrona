@@ -1,7 +1,9 @@
 # #1373 row 3: physical point hosting
 
-Selected design; implementation still waits for the architecture review,
-implementation plan and #1397 row 3. [Plan](../planning/active/issue-1373-hosted-points-design-plan-2026-10-15.md).
+Selected design; [architecture review](../reviews/current/issue-1373-hosted-points-architecture-review-2026-10-15.md)
+and [implementation plan](../planning/active/issue-1373-hosted-points-implementation-plan-2026-10-15.md)
+are published. Product implementation waits for #1397 row 3.
+[Design plan](../planning/active/issue-1373-hosted-points-design-plan-2026-10-15.md).
 Authority: [reviewer boundaries](https://github.com/tya5/chrona/issues/1373#issuecomment-6184233415).
 
 ## Contract
