@@ -356,6 +356,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         summary=summary, locale=environment.locale, color_scale=color_scale, table=table_content,
         group_tints=group_tints, annotation_kind_colors=_annotation_kind_colors(theme),
         actual_variance_colors=resolve_actual_variance_colors(ThemeTokenView(theme)),
+        dependency_critical_role_available=ThemeTokenView(theme).has_role("dependency-critical"),
         annotation_kind_also=_annotation_kind_also(theme))
     try:
         validate_axis_band_fill_targets(selected_content.axis_tiers, ThemeTokenView(theme))

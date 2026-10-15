@@ -262,6 +262,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                   group_tints: tuple[tuple[str, str], ...] = (),
                                   annotation_kind_colors: Mapping[str, str] | None = None,
                                   actual_variance_colors: Mapping[str, str] | None = None,
+                                  dependency_critical_role_available: bool = False,
                                   annotation_kind_also: Mapping[str, tuple[str, ...]] | None = None) -> SurfaceContentInput:
     """Normalize current Project/View/profile facts without legacy Settings."""
     if table is None:
@@ -327,10 +328,13 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         lag = relation.get("lag", "0d")
         critical = (relation_identity(index, relation) in projection.driving_relations
                     and source["object"] in critical_objects and target["object"] in critical_objects)
+        selected_semantic_id = ("dependency-critical"
+                                if relation_mode == "semantic" and dependency_critical_role_available and critical
+                                else semantic_id)
         return RelationPresentationFact(relation_identity(index, relation), str(source["object"]), str(source.get("endpoint", "end")),
                                         str(target["object"]), str(target.get("endpoint", "start")), lag,
                                         str(lag.get("calendar")) if isinstance(lag, Mapping) and lag.get("calendar") is not None else None,
-                                        semantic_id, relation_content, critical=critical,
+                                        selected_semantic_id, relation_content, critical=critical,
                                         source_title=str(endpoint_titles.get(source["object"], source["object"])),
                                         target_title=str(endpoint_titles.get(target["object"], target["object"])))
     if relation_mode == "critical":

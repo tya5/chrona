@@ -441,10 +441,11 @@ def test_missing_actual_summary_counts_due_absences_and_requires_as_of():
 
 
 @pytest.mark.parametrize("mode", ["semantic", "critical"])
+@pytest.mark.parametrize("critical_role_available", [False, True])
 @pytest.mark.parametrize("driving", [False, True])
 @pytest.mark.parametrize("source_critical,target_critical", [(False, False), (True, False), (False, True), (True, True)])
 def test_relation_critical_fact_is_scheduler_membership_not_selected_paint(
-        mode, driving, source_critical, target_critical):
+        mode, critical_role_available, driving, source_critical, target_critical):
     items = tuple(
         ReviewItem(object_id, object_id, "span", {}, None, None,
                    ("critical",), critical=critical)
@@ -459,14 +460,20 @@ def test_relation_critical_fact_is_scheduler_membership_not_selected_paint(
                                   driving_relations=frozenset({"relation:1:selected"}) if driving else frozenset())
     view = typed_view({"body": {"tableColumns": (), "visibility": {
         "relations": {"mode": mode}, "annotations": "none"}}})
-    content = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
+    content = normalize_v05_surface_content(
+        projection, project, view, summary=EMPTY_SUMMARY,
+        dependency_critical_role_available=critical_role_available)
     selected = [fact for fact in content.relations if fact.relation_id == "relation:1:selected"]
     if mode == "critical" and not driving:
         assert selected == []
     else:
         assert len(selected) == 1
         assert selected[0].critical is (driving and source_critical and target_critical)
-        assert selected[0].semantic_id == ("dependency-critical" if mode == "critical" else "dependency")
+        assert selected[0].semantic_id == (
+            "dependency-critical"
+            if mode == "critical" or (mode == "semantic" and critical_role_available
+                                       and driving and source_critical and target_critical)
+            else "dependency")
     assert all(not fact.critical for fact in content.relations if fact.relation_id == "relation:0:preceding")
 
 
@@ -521,6 +528,15 @@ def test_critical_relation_fact_closes_real_scheduler_analysis_through_projectio
         "relation:0:start-long": True, "relation:1:start-short": False,
         "relation:2:long-finish": True, "relation:3:short-finish": False}
     assert all(fact.semantic_id == "dependency" for fact in content.relations)
+    themed = normalize_v05_surface_content(
+        projection, project, view, summary=EMPTY_SUMMARY,
+        dependency_critical_role_available=True)
+    assert {fact.relation_id: fact.semantic_id for fact in themed.relations} == {
+        "relation:0:start-long": "dependency-critical", "relation:1:start-short": "dependency",
+        "relation:2:long-finish": "dependency-critical", "relation:3:short-finish": "dependency"}
+    assert {fact.relation_id: fact.critical for fact in themed.relations} == {
+        "relation:0:start-long": True, "relation:1:start-short": False,
+        "relation:2:long-finish": True, "relation:3:short-finish": False}
 
 
 def test_calendar_closures_come_only_from_project_calendar_exceptions():
