@@ -1006,6 +1006,39 @@
   "stderr": "",
   "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_PROJECT_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/objects/a\", \"revisionRefs\": [], \"message\": \"missing required property 'schedule'\"}]}\n"
  },
+ "render-snapshot-missing": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--snapshot",
+   "nowhere/project.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'nowhere/project.yaml'\"}]}\n"
+ },
+ "render-snapshot-project": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--snapshot",
+   "starter.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 0,
+  "files": {
+   "out.svg": {
+    "kind": "svg",
+    "root": "{http://www.w3.org/2000/svg}svg"
+   }
+  },
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}, {\"code\": \"I_LAYOUT_RELATION_POLICY_SUPERSEDED\", \"layoutMember\": \"relationRouting.unroutable\", \"layoutValue\": \"relax\", \"message\": \"Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing\", \"severity\": \"info\", \"surfaceId\": \"table-timeline\", \"viewMember\": \"visibility.relations.overflow\", \"viewValue\": \"suppress\"}]}\n"
+ },
  "render-starter-emit-scene": {
   "argv": [
    "render",

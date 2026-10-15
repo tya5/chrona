@@ -208,6 +208,9 @@ class ClosureReadLedger:
     def snapshot(self) -> None:
         self.read.update({"snapshot-ref", "snapshot-project"})
 
+    def snapshot_project(self) -> None:
+        self.read.add("snapshot-project")
+
     def detail(self) -> None:
         self.read.add("review-detail-profile")
 
@@ -298,6 +301,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         ledger.actual()
     if render_closure.snapshot is not None:
         ledger.snapshot()
+    elif render_closure.snapshot_project is not None:
+        ledger.snapshot_project()
 
     environment = render_closure.context.environment
     asset_root = request.asset_root or snapshot_directory(request.snapshot_root, render_closure.context.identity.revision)

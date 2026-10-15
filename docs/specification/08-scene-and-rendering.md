@@ -208,6 +208,15 @@ Immutable `render-review` obtains the input only from its Context, not a CLI
 override. Layout alone consumes neutral decoded route evidence; Scene and adapters
 do not reanchor, search or validate routing geometry.
 
+Draft `chrona render --snapshot <project.yaml>` (#1533) accepts a baseline
+Project file as the typed Snapshot Project role. Validate it through the normal
+Project contract and require its `project.id` to match the primary Project id. Capture its exact bytes
+and identity without creating a SnapshotRef, Store pin or persistent Context
+member. Existing View baseline and ghost semantics remain authoritative; the
+flag MUST NOT override `comparison.baseline`. Without the flag no Snapshot
+Project is supplied and existing output is unchanged. This input is not an
+MCP or preset-library member.
+
 ### 3.2.1 CLI output filename and target identity
 
 For `render` and `render-workspace`, the CLI MUST resolve one target before
