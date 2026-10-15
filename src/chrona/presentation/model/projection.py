@@ -12,6 +12,8 @@ from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.contracts.resources import ViewInput
+from chrona.presentation.model.field_roles import FieldRoleBindings
+from chrona.presentation.model.field_role_view import resolve_role_grouping
 from chrona.presentation.review.lane_membership import (
     LaneItem, LaneMembership, LanePackingInput, PlannedPoint, PlannedSpan,
     SelectedFSRelation, derive_lane_membership,
@@ -84,6 +86,7 @@ class ReviewItem:
     key_lane: int | None = None
     # Project-declared link retained separately from lane-derived ``attached_to`` (#1373).
     declared_attaches_to: str | None = None
+    field_bindings: FieldRoleBindings = FieldRoleBindings()
 
     @property
     def at_delta(self) -> int | None:
@@ -270,7 +273,10 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     types = set(view.selection.types) if view.selection and view.selection.types else {"span", "point"}
     object_types = set(view.selection.object_types) if view.selection else set()
     excluded_object_types = set(view.selection.excluded_object_types) if view.selection else set()
-    grouping = view.grouping
+    bindings = FieldRoleBindings.from_project(project)
+    grouping = resolve_role_grouping(view.grouping, bindings)
+    if grouping is not view.grouping:
+        view = replace(view, grouping=grouping)
     selected: list[ReviewItem] = []
     hierarchy = grouping is not None and grouping.by == "hierarchy"
     hierarchy_entries = {entry.object_id: entry for entry in normalize_hierarchy(project)}
@@ -307,7 +313,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             total_float=total_float, critical=critical, link=link,
             planned_progress=project["objects"][object_id].get("plannedProgress"),
             observation_state=observation_state, source_index=declared.get(object_id, 0),
-            declared_attaches_to=project["objects"][object_id].get("attachesTo")))
+            declared_attaches_to=project["objects"][object_id].get("attachesTo"), field_bindings=bindings))
     if not selected:
         raise ValueError("E_REVIEW_EMPTY: the View selects no object of the Project; check its selection against the Project objects")
     if (grouping is not None and grouping.by == "field" and grouping.presentation == "header"
@@ -433,8 +439,10 @@ def _project_lane_membership(project: dict[str, Any], rows: tuple[ReviewRowProje
         # An attachment owns row placement independently of WBS or object fields.
         group_id = selected_host.group_id if selected_host is not None and "attached" in view.rows.packing else item.group_id
         key = by_object.get(item.object_id)
-        if key is None and lane_keys is not None and lane_keys.field is not None:
-            key = (item.fields or {}).get(lane_keys.field)
+        if key is None and lane_keys is not None:
+            source = ({"fieldRole": lane_keys.field_role} if lane_keys.field_role is not None
+                      else {"field": lane_keys.field})
+            key = item.field_bindings.read(item.fields, source)
         if key is not None and (not isinstance(key, str) or not key):
             raise ValueError(f"E_REVIEW_LANE_KEY: the lane key of object {item.object_id!r} must be a non-empty string, got {key!r}")
         items.append(LaneItem(item.item_id, item.object_id, group_id, planned, key, attached_host))
@@ -718,6 +726,7 @@ def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[s
     if project is None or placements is None:
         return {}
     result: dict[str, ReviewItem] = {}
+    bindings = FieldRoleBindings.from_project(project)
     hierarchy_entries = {entry.object_id: entry for entry in normalize_hierarchy(project)}
     for object_id, planned in placements.items():
         source_type = "point" if "at" in planned else "span"
@@ -731,7 +740,7 @@ def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[s
             dict(project["objects"][object_id].get("fields", {})), object_id, source_kind,
             parent_id=entry.parent_id if entry else None,
             total_float=total_float, critical=critical, link=_object_link(project["objects"][object_id].get("link")),
-            declared_attaches_to=project["objects"][object_id].get("attachesTo"))
+            declared_attaches_to=project["objects"][object_id].get("attachesTo"), field_bindings=bindings)
     return result
 
 

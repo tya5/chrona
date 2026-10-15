@@ -33,6 +33,11 @@ properties:
     type: array
     description: "Dependency relations between Project object endpoints."
     items: {$ref: "#/$defs/relation"}
+  fieldRoles:
+    description: "Optional bindings from closed semantic roles to object-specific field names."
+    type: object
+    propertyNames: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/projectFieldRole"}
+    additionalProperties: {description: "Object field bound to this semantic role.", examples: [owner], type: string, minLength: 1, pattern: '\S'}
   annotations:
     type: object
     description: "Named semantic annotations attached to Project objects."

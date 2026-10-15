@@ -210,7 +210,7 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
                 value: Any = row_number
             else:
                 founder = next((item for item in row.items if lane.member_item_ids and item.item_id == lane.member_item_ids[0]), None)
-                value = (founder.fields or {}).get(column.source["field"]) if founder is not None else None
+                value = founder.field_bindings.read(founder.fields, column.source) if founder is not None else None
             cells.append(TableCellContent(row.lane_id, column.id,
                                           display_value(value, column.missing, "text", transform=column.transform)
                                           + (column.suffix or ""),

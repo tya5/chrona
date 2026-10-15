@@ -227,6 +227,10 @@ object IDs in the View map, non-string field values and conflicting explicit
 keys inside one attached host bundle fail before rendering. Without
 `explicit` in `packing`, lane-key declarations have no effect.
 
+`laneKeys.fieldRole` is an alternative to `field`; lane column sources also
+admit `{fieldRole: ...}`. Binding ownership and unbound-role diagnostics follow
+[Spec 06 §6.2](06-view-model.md#62-semantic-field-references-1559).
+
 If `attached` is selected, a selected point with `attachesTo` and its
 selected span host form one atomic countable bundle for membership. The
 point remains a distinct member with its own name, mark and count, but

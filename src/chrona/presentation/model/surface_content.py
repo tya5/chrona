@@ -321,8 +321,8 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
         return {"id": item.object_id, "title": item.title, "objectType": item.source_type,
                 "entity": item.group_label, "rowIndex": row_index, "totalFloat": item.total_float,
                 "wbsCode": item.wbs_code}.get(source)
-    if "field" in source:
-        return (item.fields or {}).get(source["field"])
+    if "field" in source or "fieldRole" in source:
+        return item.field_bindings.read(item.fields, source)
     if "facet" in source:
         return {"planned": item.planned, "actual": item.actual,
                 "finishDelta": item.finish_delta}.get(source["facet"])

@@ -77,7 +77,8 @@ def _column_source_kind(source: object) -> str | None:
     if isinstance(source, str):
         return source
     if isinstance(source, Mapping) and len(source) == 1:
-        return next(iter(source))
+        kind = next(iter(source))
+        return "field" if kind == "fieldRole" else kind
     return None
 
 

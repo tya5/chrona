@@ -347,6 +347,16 @@ objects:
 Profile/extension schemas define whether a field is a reference and what targets it
 accepts.
 
+### 10.1 Semantic object-field roles (#1559)
+
+A Project MAY declare top-level `fieldRoles: {responsible: owner, phase: stage}`.
+The closed roles `responsible` and `phase` bind to nonblank keys in object
+`fields`; the mapping belongs to this Project, not its presentation design or
+profile package. A declaration does not require every object to contain that
+field, change its value type, or make it an entity reference. Profile validation
+retains ownership of field types and reference constraints. View role references
+and unbound-role behavior are defined in [Spec 06](06-view-model.md#62-semantic-field-references-1559).
+
 ## 11. Profiles and extensions
 
 A project MAY declare immutable extension package references. Each reference is resolved

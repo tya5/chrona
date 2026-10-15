@@ -23,7 +23,7 @@ from chrona.presentation.model.info_diagnostics import (
     RelationHintReceipt, RelationHintSummary,
     PaintOmission, SuppressedPlotLabels, DeadlineCaptionsDropped, RelationRoutingSummary, RelationSearchBudgetHit,
     RelationResolutionInfo, RelationResolutionSummary,
-    RelationPolicySupersession,
+    RelationPolicySupersession, UnboundFieldRole,
 )
 from chrona.presentation.model.render_progress import RenderProgress
 from chrona.resources import default_preset_resource, default_preset_root
@@ -210,7 +210,11 @@ def warning_payloads(rendered: RenderedReview) -> list[dict[str, Any]]:
                          "message": f"preset {fallback.preset_id} prefers {fallback.preferred_profile}; "
                                     f"selected {fallback.selected_profile} for {fallback.target_kind}"})
     for info in rendered.info_diagnostics:
-        if isinstance(info, (RelationHintReceipt, RelationHintSummary)):
+        if isinstance(info, UnboundFieldRole):
+            payloads.append({"code": info.code, "severity": "info", **info.payload(),
+                "message": f"Project does not declare field role {info.role!r}; "
+                           f"{info.count} View declarations use their fallback or are omitted"})
+        elif isinstance(info, (RelationHintReceipt, RelationHintSummary)):
             payloads.append({"code": info.code, "severity": "info", **info.payload(),
                 "message": (f"Prior route {info.relation_id}: {info.disposition} ({info.reason})"
                             if isinstance(info, RelationHintReceipt) else

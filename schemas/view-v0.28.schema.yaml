@@ -25,11 +25,8 @@ allOf:
               scale: {$ref: "urn:chrona:common-v0.1#/$defs/colorEncodingPresentation/properties/scale"}
               target: {$ref: "urn:chrona:common-v0.1#/$defs/colorEncodingPresentation/properties/target"}
               source:
-                description: "Project field supplying the encoded value."
-                type: object
-                required: [field]
-                additionalProperties: false
-                properties: {field: {description: "Project field name.", type: string, minLength: 1}}
+                description: "Project object field or closed semantic role supplying the encoded value."
+                $ref: "urn:chrona:common-v0.1#/$defs/projectFieldReference"
               domain:
                 description: "Closed set of values admitted by the scale, or firstAppearance to derive it from the selected items in projection order."
                 oneOf:
@@ -71,8 +68,17 @@ allOf:
             required: [by]
             additionalProperties: false
             properties:
-              by: {description: "Grouping dimension.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/viewGroupingBy"}
+              by:
+                description: "Grouping dimension, or one closed project field role."
+                oneOf:
+                  - {$ref: "urn:chrona:vocabulary-v0.1#/$defs/viewGroupingBy"}
+                  - type: object
+                    required: [fieldRole]
+                    additionalProperties: false
+                    properties:
+                      fieldRole: {description: "Project-level semantic field role used to group rows.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/projectFieldRole"}
               field: {description: "Project field used when grouping by field.", type: string, minLength: 1}
+              fallback: {description: "Required for role grouping: objectType uses the ordinary object-type groups when the primary Project does not bind the role; none disables grouping.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/fieldRoleGroupingFallback"}
               order:
                 description: "Preferred order of group values, or a data-derived order."
                 oneOf:
@@ -96,6 +102,16 @@ allOf:
                 examples: [{by: field, field: status, missing: Unset}]
                 if: {properties: {by: {const: field}}, required: [by]}
                 then: {required: [field, missing]}
+              - description: "Role grouping requires an explicit unbound-role fallback and its ordinary missing-value label; fallback is not valid for other grouping forms."
+                examples: [{by: {fieldRole: responsible}, fallback: objectType, missing: Unset}]
+                if:
+                  properties:
+                    by:
+                      type: object
+                      required: [fieldRole]
+                  required: [by]
+                then: {required: [fallback, missing], not: {required: [field]}}
+                else: {not: {required: [fallback]}}
               - description: "Hierarchy grouping requires a depth and rollup presentation."
                 examples: [{by: hierarchy, depth: 1, rollup: header}]
                 if: {properties: {by: {const: hierarchy}}, required: [by]}
@@ -394,10 +410,7 @@ allOf:
                 source:
                   oneOf:
                     - {enum: [id, title, objectType, entity, rowIndex, wbsCode, path, totalFloat]}
-                    - type: object
-                      required: [field]
-                      additionalProperties: false
-                      properties: {field: {type: string, minLength: 1}}
+                    - {$ref: "urn:chrona:common-v0.1#/$defs/projectFieldReference"}
                     - type: object
                       required: [comparisonFacet]
                       additionalProperties: false
@@ -510,13 +523,16 @@ allOf:
                 additionalProperties: false
                 properties:
                   field: {description: "Project object fields key read as a lane key.", type: string, minLength: 1}
+                  fieldRole: {description: "Project-level semantic role read as a lane key.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/projectFieldRole"}
                   byObject:
                     description: "Explicit lane keys by selected Project object ID."
                     type: object
                     additionalProperties: {type: string, minLength: 1}
                 anyOf:
                   - required: [field]
+                  - required: [fieldRole]
                   - required: [byObject]
+                not: {required: [field, fieldRole]}
               laneTable:
                 description: "Finite group/lane summary columns for generated lane rows."
                 type: object
@@ -540,10 +556,7 @@ allOf:
                         source:
                           oneOf:
                             - {enum: [label, rowIndex]}
-                            - type: object
-                              required: [field]
-                              additionalProperties: false
-                              properties: {field: {type: string, minLength: 1}}
+                            - {$ref: "urn:chrona:common-v0.1#/$defs/projectFieldReference"}
                         transform: {description: "A closed cell transform (#1373); valid on a `field` source only (`E_VIEW_LANE_TABLE_COLUMNS`).", examples: [initials], enum: [initials]}
                         suffix: {description: "A literal appended to the 1-based row number of a `rowIndex` column (#1545), e.g. `.` reads `1.`; Layout measures the full text. No format language. Valid only on a `rowIndex` source (`E_VIEW_LANE_TABLE_COLUMNS`). Absent, the cell is the bare number.", examples: ["."], type: string, minLength: 1, maxLength: 8}
                         missing: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/missing"}
@@ -774,16 +787,27 @@ $defs:
       ref: {$ref: "urn:chrona:common-v0.1#/$defs/visualPresentation/properties/ref"}
       encoding:
         description: "Closed source-field to icon-reference mapping."
+        examples: [{fieldRole: phase, domain: {Design: "material:flag-outline-rounded"}}]
         type: object
-        required: [field, domain]
+        required: [domain]
         additionalProperties: false
         properties:
           field: {description: "Projection-exposed source field name.", type: string, minLength: 1}
+          fieldRole: {description: "Project-level semantic field role supplying the icon value.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/projectFieldRole"}
           domain:
             description: "Mapping from source value to Context-local icon reference."
             type: object
             minProperties: 1
             additionalProperties: {description: "Mapped Context-local icon reference.", examples: ["material:flag-outline-rounded"], type: string, pattern: "^[A-Za-z][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
+        oneOf:
+          - description: "An icon mapping selected from an explicit Project field."
+            examples: [{field: stage, domain: {Design: "material:flag-outline-rounded"}}]
+            required: [field]
+            not: {required: [fieldRole]}
+          - description: "An icon mapping selected from a Project semantic field role."
+            examples: [{fieldRole: phase, domain: {Design: "material:flag-outline-rounded"}}]
+            required: [fieldRole]
+            not: {required: [field]}
       side: {$ref: "urn:chrona:common-v0.1#/$defs/visualPresentation/properties/side"}
       decorative: {$ref: "urn:chrona:common-v0.1#/$defs/visualPresentation/properties/decorative"}
     oneOf:
