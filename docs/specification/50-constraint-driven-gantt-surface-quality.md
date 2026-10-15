@@ -1172,7 +1172,6 @@ their existing behavior and identity.
 
 ### 3.5 Physical point hosting (#1373)
 
-**Selected design; implementation pending for #1373 row 3.**
 Layout Profile `reviewSurface.marks.points.host: span-when-inside` opts into
 placing admitted point facets on selected span facets; omission keeps existing
 output. Project-declared `attachesTo` takes precedence over the direct Project
