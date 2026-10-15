@@ -1,7 +1,7 @@
 # #1373 row 3: architecture review
 
 Decision: design complete; input slice published, physical allocation in progress.
-[Plan](../../planning/active/issue-1373-hosted-points-design-plan-2026-10-15.md) ·
+[Plan](../planning/issue-1373-hosted-points-design-plan-2026-10-15.md) ·
 [Design](../../design/issue-1373-hosted-points-design-2026-10-15.md) ·
 [Normative contract](../../specification/50-constraint-driven-gantt-surface-quality.md#35-physical-point-hosting-1373).
 Baseline: published READY `7c46a7c695ed0863d17998acad062923f7acc4e1`.

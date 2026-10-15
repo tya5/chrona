@@ -5,6 +5,7 @@ from dataclasses import replace
 from datetime import date, timedelta
 from typing import Any, Mapping
 
+from chrona.presentation.model.actual_variance_paint import select_actual_variance_paints
 from chrona.presentation.model.projection import ObservationState, ReviewProjection
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
@@ -257,6 +258,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                   table: TableContent | None = None,
                                   group_tints: tuple[tuple[str, str], ...] = (),
                                   annotation_kind_colors: Mapping[str, str] | None = None,
+                                  actual_variance_colors: Mapping[str, str] | None = None,
                                   annotation_kind_also: Mapping[str, tuple[str, ...]] | None = None) -> SurfaceContentInput:
     """Normalize current Project/View/profile facts without legacy Settings."""
     if table is None:
@@ -445,7 +447,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                    pair for item in annotations if annotation_kind_colors and item.kind in annotation_kind_colors
                                    for pair in ((item.annotation_id, annotation_kind_colors[item.kind]),
                                                 *((f"{item.annotation_id}#{target}", annotation_kind_colors[item.kind])
-                                                  for target in (annotation_kind_also or {}).get(item.kind, ())))))
+                                                  for target in (annotation_kind_also or {}).get(item.kind, ())))),
+                               actual_variance_paints=select_actual_variance_paints(
+                                   projection, actual_variance_colors or {}))
 
 
 def _group_header_facts(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> dict[str, Any] | None:

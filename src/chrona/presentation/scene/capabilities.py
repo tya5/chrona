@@ -269,6 +269,8 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("variance-ahead variance-on-track variance-behind missing-actual-cell",
              "Scene state Text and contrast policy", _TEXT_PAINT | frozenset(("contrastTreatment",)),
              scene_kinds=frozenset(("Text",)))
+    register("actual-ahead actual-on-track actual-behind",
+             "Review Actual variance fill selection", frozenset(("fill",)))
     register("member-label-inside-planned member-label-inside-actual member-label-inside-snapshot member-label-inside-scenario",
              "Scene inside-label Text", _TEXT_PAINT, scene_kinds=frozenset(("Text",)))
     register("axis-label2 axis-label3 group-header note-index", "Scene Text", _TEXT_PAINT,

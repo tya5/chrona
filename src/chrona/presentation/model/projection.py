@@ -861,7 +861,7 @@ def _roles(observation_state: ObservationState, finish_delta: int | None,
     elif observation_state == ObservationState.DUE_UNOBSERVED:
         roles.append("missing-actual")
     if finish_delta is not None:
-        roles.append("variance-behind" if finish_delta > 0 else "variance-ahead" if finish_delta < 0 else "variance-on-plan")
+        roles.append("variance-behind" if finish_delta > 0 else "variance-ahead" if finish_delta < 0 else "variance-on-track")
     if critical:
         roles.append("critical")
     return tuple(roles)
