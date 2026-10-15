@@ -506,6 +506,7 @@ class LegendEntry:
     role: str
     label: str
     source_ref: str | None = None
+    swatch_shape: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1550,7 +1551,8 @@ def _summary_input(body: FrozenDict) -> SummaryProfileInput:
 def _review_detail_input(body: FrozenDict) -> ReviewDetailInput:
     return ReviewDetailInput(tuple(body.get("groupDetails", ())), tuple(str(item) for item in body.get("milestones", ())),
                              tuple(LegendEntry(str(item["role"]), str(item["label"]),
-                                               str(item["sourceRef"]) if "sourceRef" in item else None)
+                                               str(item["sourceRef"]) if "sourceRef" in item else None,
+                                               str(item["swatchShape"]) if "swatchShape" in item else None)
                                    for item in body.get("legend", ())),
                              body.get("observations"))
 

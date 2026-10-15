@@ -240,7 +240,7 @@ def legend_entries(detail: ReviewDetailInput | None, project: Mapping[str, Any],
     is a key for a band on the plot, so it is listed only when a closed day is drawn (#893).
     """
     validate_period_legend_sources(detail, projection.periods)
-    entries = tuple(SurfaceLegendEntry(item.role, item.label, item.source_ref)
+    entries = tuple(SurfaceLegendEntry(item.role, item.label, item.source_ref, item.swatch_shape)
                     for item in detail.legend
                     if closed_days_drawn or item.role != CALENDAR_CLOSED_LEGEND_ROLE) if detail is not None else ()
     if color_scale is None:

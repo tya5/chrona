@@ -12,6 +12,12 @@
 version: chrona/schema-equivalence-expected-deltas/v0.1
 deltas:
   - layer: L1
+    schema: review-detail-profile-v0.1.schema.yaml
+    pointer: /properties/body/properties/legend/items/properties/swatchShape
+    after: {enum: [circle, rule-pair]}
+    reason: "#1562 adds one optional closed per-entry legend geometry choice without changing the existing role paint or default swatch."
+    test: tests/unit/chrona/presentation/contracts/test_legend_swatch_contract.py::test_closed_detail_swatch_shape_is_typed_and_threaded_with_period_source
+  - layer: L1
     schema: view-v0.28.schema.yaml
     pointer: /allOf/1/properties/body/properties/periods/allOf
     after:

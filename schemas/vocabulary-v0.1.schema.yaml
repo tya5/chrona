@@ -90,6 +90,10 @@ $defs:
     description: "Closed View selector for every Project-declared period in declaration order."
     examples: [all]
     enum: [all]
+  legendSwatchShape:
+    description: "Optional alternate shape for one Review Detail legend swatch."
+    examples: [circle, rule-pair]
+    enum: [circle, rule-pair]
   valueFormat:
     description: "Every public value formatter: the union of the subsets below. No site references it; each context accepts its own named subset."
     examples: [text]

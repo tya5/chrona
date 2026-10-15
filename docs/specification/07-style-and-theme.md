@@ -8,6 +8,12 @@
 
 This document defines how a Chrona view acquires a visual language without changing its meaning.
 
+Detail's optional finite legend shapes borrow Theme ink/opacity through the
+paint-channel contract in [Specification28](28-review-detail-profile.md#finite-legend-key-shapes-1562).
+They do not introduce a parallel colour palette. Independent milestone size
+continues to use the existing mark-role `symbolHeight`/`symbolOffset` track
+ratios below, not a second `milestoneSymbol` sizing mechanism (#1562).
+
 The **Style** layer maps the semantic objects and comparison facets emitted by the View Model to named visual roles. The **Theme** layer supplies concrete visual tokens for those roles. Together they make the same Project and View usable in a compact engineering review, a plan-versus-actual review, or a presentation-oriented timeline while preserving a small, reviewable semantic source.
 
 Neither layer is a scheduling engine, a second project model, or an editable drawing canvas.

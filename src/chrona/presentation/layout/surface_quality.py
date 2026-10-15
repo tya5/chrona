@@ -410,8 +410,12 @@ class ShapePlacement:
     collision_bounds: Rect | None = None
     paint_clip: PaintClip | None = None
     pattern_origin: tuple[float, float] | None = None
+    # Finite legend key paint intent, completed by Scene from the keyed Theme ink.
+    legend_swatch_shape: str | None = None
 
     def __post_init__(self) -> None:
+        if self.legend_swatch_shape not in (None, "circle", "rule-pair"):
+            raise ValueError(f"E_LAYOUT_SHAPE_PLACEMENT_INVALID:{self.placement_id}:legend_swatch_shape")
         if self.paint_channels not in (None, "fill", "stroke"):
             raise ValueError(f"E_LAYOUT_SHAPE_PLACEMENT_INVALID:{self.placement_id}:paint_channels")
 

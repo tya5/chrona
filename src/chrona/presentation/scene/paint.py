@@ -59,6 +59,31 @@ class PaintResolution:
     omissions: tuple[PaintOmission, ...] = ()
 
 
+def resolve_legend_shape_paint(tokens: ThemeTokenView, role: str, shape: str,
+                               *, fill_override: str | None = None) -> ScenePaint:
+    """A finite key borrows its source role's ink, never its pattern geometry."""
+    try:
+        opacity = tokens.optional_number(role, "opacity")
+        if opacity is not None and not 0 <= opacity <= 1:
+            raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"/body/roles/{role}/opacity")
+        if shape == "circle":
+            fill = fill_override or tokens.optional_color(role, "fill") or tokens.optional_color(role, "stroke")
+            if fill is None:
+                raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}/fill")
+            return ScenePaint(fill=fill, stroke=None, stroke_width=None, dash=(),
+                              opacity=float(opacity) if opacity is not None else 1.0)
+        if shape == "rule-pair":
+            stroke = tokens.color(role, "stroke")
+            width = tokens.number(role, "strokeWidth")
+            if width <= 0:
+                raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"/body/roles/{role}/strokeWidth")
+            return ScenePaint(fill=None, stroke=stroke, stroke_width=float(width), dash=(),
+                              opacity=float(opacity) if opacity is not None else 1.0)
+    except ThemeTokenError as error:
+        raise ScenePaintError(error.diagnostic_id, error.path) from error
+    raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"/body/roles/{role}")
+
+
 def restrict_paint_channels(paint: ScenePaint, channels: str | None, role: str,
                             *, patterned_fill: bool = False) -> ScenePaint:
     """Apply completed shape intent, separately from catalogue-part precedence."""
