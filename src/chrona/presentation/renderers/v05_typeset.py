@@ -1,12 +1,25 @@
 """Positioned Typst and TikZ serialization of completed Scene surfaces."""
 from __future__ import annotations
 
+from collections.abc import Sequence
 from math import atan2, cos, degrees, radians, sin
+from pathlib import Path
 import re
+from typing import Protocol
 
 from chrona.core.ports import RenderArtifact
+from chrona.presentation.fonts.installed import _weight_rank
 from chrona.presentation.scene.model import ScenePrimitive, SceneSurface
 from chrona.presentation.renderers.pattern_repeat import repeat_cells
+
+
+class FontFile(Protocol):
+    """One resolved font file of the render's closure; the adapter only names it, it never measures it."""
+
+    path: Path
+    family: str
+    weight: int
+    index: int
 
 
 def _error(code: str, detail: str) -> ValueError:
@@ -114,8 +127,41 @@ def _tikz_tracked_text(layout: object, text: str) -> str:
     return f"{{\\addfontfeatures{{LetterSpace={_number(spacing / size * 100)}}}{text}}}"
 
 
-def _tikz_numeric_text(layout: object, text: str) -> str:
-    """Apply Layout's selected OpenType number width in the fontspec run."""
+_GENERIC_FAMILIES = frozenset({"serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui"})
+_UNSAFE_PATH = re.compile(r"[\\{}#%,=\[\]]")  # read by TeX before \detokenize, or split by fontspec's key parser
+_LOADABLE_SUFFIXES = frozenset({".ttf", ".otf", ".ttc", ".otc"})
+
+
+def _tikz_face(layout: object, font_files: Sequence[FontFile]) -> FontFile:
+    """The first family of the completed list that Tectonic can load by file, at the weight nearest the layout's (#1553)."""
+    families = [value.strip().strip("\"'") for value in str(getattr(layout, "family", "")).split(",") if value.strip()]
+    weight, reasons = getattr(layout, "weight", 400), []
+    for family in families:
+        if family.casefold() in _GENERIC_FAMILIES:
+            continue
+        candidates = [item for item in font_files if item.family.casefold() == family.casefold()]
+        if not candidates:
+            reasons.append(f"{family!r} has no font file in the render's font closure")
+            continue
+        face = min(candidates, key=lambda item: (_weight_rank(weight, item.weight), str(item.path), item.index))
+        path = Path(face.path)
+        if face.index != 0 or path.suffix.lower() not in _LOADABLE_SUFFIXES or _UNSAFE_PATH.search(str(path)) or not path.is_file():
+            reasons.append(f"{family!r} is {path.name!r} (face index {face.index}), which TikZ cannot name by file")
+            continue
+        return face
+    named = ", ".join(families) or "(empty)"
+    raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED",
+                 f"TikZ cannot load any family of the completed font list [{named}] by file path ({'; '.join(reasons) or 'no named family'}); "
+                 "install the font package for the first family (for example chrona-fonts-noto-cjk) or select SVG")
+
+
+def _tikz_numeric_text(layout: object, text: str, font_files: Sequence[FontFile] | None = None) -> str:
+    """Apply Layout's selected OpenType number width in the fontspec run.
+
+    With the render's font closure the face is named by file (`Path=` and the file name), which Tectonic loads without
+    fontconfig; without one the first family is named and fontconfig must find it (#1553). Output that names a file
+    depends on where it is rendered, as for an installed face on every other target.
+    """
     spacing = getattr(layout, "numeric_spacing", "proportional")
     if spacing not in {"proportional", "tabular"}:
         raise _error("E_PRESENTATION_PRIMITIVE_INVALID", f"text layout numeric_spacing={_brief(spacing)}; expected 'proportional' or 'tabular'")
@@ -123,6 +169,10 @@ def _tikz_numeric_text(layout: object, text: str) -> str:
     family = str(getattr(layout, "family", "")).split(",", 1)[0].strip()
     if not family:
         raise _error("E_PRESENTATION_PRIMITIVE_INVALID", "text layout family is empty; expected a font family for numeric-width serialization")
+    if font_files is not None:
+        face = _tikz_face(layout, font_files)
+        directory = Path(face.path).parent.as_posix().rstrip("/") + "/"
+        return f"\\fontspec[Path=\\detokenize{{{directory}}}, Numbers={number}]{{{Path(face.path).name}}}{text}"
     return f"\\fontspec[Numbers={number}]{{{_tex_string(family)}}}{text}"
 
 
@@ -473,7 +523,7 @@ def render_v05_typst(surface: SceneSurface) -> str:
     return "\n".join(parts) + "\n"
 
 
-def render_v05_tikz(surface: SceneSurface) -> str:
+def render_v05_tikz(surface: SceneSurface, font_files: Sequence[FontFile] | None = None) -> str:
     if any(node.stroke_clip is not None for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "TikZ"))
     if _requires_wobble(surface) or any(node.pattern is not None and node.kind != "Rect" for node in surface.primitives):
@@ -507,7 +557,7 @@ def render_v05_tikz(surface: SceneSurface) -> str:
             # and, under a scale, about a pivot that is not the baseline start. Compression acts in the text's own frame, so it
             # follows the rotation (#585, #1532).
             rotation += f", xscale={_number(layout.horizontal_scale)}" if layout.horizontal_scale != 1 else ""
-            parts.append(f"\\node[anchor=base west, inner sep=0pt, align=left{rotation}, text={_tikz_color(node, 'fill')}, text opacity={_number(_tikz_channel_opacity(node, 'fill'))}, font=\\fontsize{{{_number(layout.font_size)}pt}}{{{_number(layout.font_size * layout.line_height)}pt}}\\selectfont] at ({_number(node.baseline[0])},{_number(node.baseline[1])}) {{{_tikz_numeric_text(layout, text)}}};")
+            parts.append(f"\\node[anchor=base west, inner sep=0pt, align=left{rotation}, text={_tikz_color(node, 'fill')}, text opacity={_number(_tikz_channel_opacity(node, 'fill'))}, font=\\fontsize{{{_number(layout.font_size)}pt}}{{{_number(layout.font_size * layout.line_height)}pt}}\\selectfont] at ({_number(node.baseline[0])},{_number(node.baseline[1])}) {{{_tikz_numeric_text(layout, text, font_files)}}};")
         elif node.kind == "Symbol":
             if node.symbol is None:
                 raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, "completed Symbol geometry"))
@@ -546,6 +596,9 @@ class V05TypstRenderer:
 class V05TikzRenderer:
     target_kind = "tikz"
 
+    def __init__(self, font_files: Sequence[FontFile] | None = None) -> None:
+        self.font_files = None if font_files is None else tuple(font_files)
+
     def render(self, surface: object) -> RenderArtifact:
         checked_surface = _validate(surface)
-        return RenderArtifact("tikz", "application/x-tex", render_v05_tikz(checked_surface).encode("utf-8"), "chrona-tikz/v0.1")
+        return RenderArtifact("tikz", "application/x-tex", render_v05_tikz(checked_surface, self.font_files).encode("utf-8"), "chrona-tikz/v0.1")
