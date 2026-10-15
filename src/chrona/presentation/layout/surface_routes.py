@@ -416,11 +416,14 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             if any(marker is not None and marker.centred and marker.angle_degrees is not None
                    for marker in (first, last)):
                 return None
-        # Reduction callbacks are advisory: they may never run (or may return
-        # an unchanged route). Keep the former acceptance guard unconditional,
-        # and validate both the layout path and the terminal-adjusted ink.
-        if (not clears_primary_marks(reduced, width, required_ids, source_egress, target_egress)
-                or not clears_primary_marks(drawn, width, required_ids, source_egress, target_egress)):
+        # Physical corridors need an unconditional post-reduction guard because
+        # segment-local authority must be revalidated after terminal completion.
+        # With the feature off, the legacy acceptance callback remains the
+        # primary-mark gate and preserves its diagnostic ordering.
+        if (any(egress is not None and egress.corridor_host_ids
+                for egress in (source_egress, target_egress))
+                and (not clears_primary_marks(reduced, width, required_ids, source_egress, target_egress)
+                     or not clears_primary_marks(drawn, width, required_ids, source_egress, target_egress))):
             return None
         if plot_clip is not None and not relation_geometry_inside_plot(plot_clip, drawn,
                 marker_start=first, marker_end=last, stroke_width=width):
@@ -667,6 +670,18 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                             for source_exit, target_entry in pairs
                             if candidate[0] == source_exit.semantic_port
                             and candidate[-1] == target_entry.semantic_port)
+                    def candidate_accepted(candidate):
+                        matched_pairs = tuple((source_exit, target_entry) for source_exit, target_entry in pairs
+                            if candidate[0] == source_exit.semantic_port
+                            and candidate[-1] == target_entry.semantic_port)
+                        if any(egress.corridor_host_ids for pair_ in matched_pairs for egress in pair_):
+                            primary_clear = candidate_primary_clear(candidate)
+                        else:
+                            # Preserve the former default-off acceptance path
+                            # and its ordering relative to route preparation.
+                            primary_clear = clears_primary_marks(candidate, dependency_stroke,
+                                                                 domain.required_primary_mark_ids)
+                        return primary_clear and terminal_segments_fit(candidate, dependency_stroke)
                     selection = select_relation_route(pairs, obstacles=domain.obstacles,
                         endpoint_preserving_prepare=True,
                         protected=(relation.critical and context.layout_manifest.relation_unroutable
@@ -688,8 +703,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                             end_minimum=hypot(target_entry.exposed_port[0] - target_entry.semantic_port[0],
                                               target_entry.exposed_port[1] - target_entry.semantic_port[1]),
                             domain=domain),
-                        accept=lambda candidate: (candidate_primary_clear(candidate)
-                            and terminal_segments_fit(candidate, dependency_stroke)),
+                        accept=candidate_accepted,
                         rank=candidate_rank)
                     pair, route = selection.selected_pair, selection.points
                     used_back_route = False

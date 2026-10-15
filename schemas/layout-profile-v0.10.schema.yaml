@@ -131,6 +131,7 @@ properties:
         additionalProperties: false
         properties:
           points:
+            description: "Physical placement policies for point marks; omission preserves their own row geometry."
             type: object
             additionalProperties: false
             properties:

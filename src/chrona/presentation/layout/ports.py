@@ -112,6 +112,8 @@ def split_route_at_physical_corridors(
     """
     if len(points) < 2:
         return ()
+    if not any(egress is not None and egress.corridor_host_ids for egress in (source, target)):
+        return tuple((start, end, ()) for start, end in zip(points, points[1:]) if start != end)
 
     def corridor_limit(egress: ConnectorEgress | None, *, reverse: bool) -> float:
         if egress is None or not egress.corridor_host_ids:
@@ -159,7 +161,8 @@ def split_route_at_physical_corridors(
         length = abs(end[0] - start[0]) + abs(end[1] - start[1])
         cuts = [start, end]
         for egress in (source, target):
-            if egress is not None and _point_on_segment(egress.exposed_port, start, end):
+            if (egress is not None and egress.corridor_host_ids
+                    and _point_on_segment(egress.exposed_port, start, end)):
                 cuts.append(egress.exposed_port)
         cuts = sorted(set(cuts), key=lambda point: abs(point[0] - start[0]) + abs(point[1] - start[1]))
         traversed = 0.0

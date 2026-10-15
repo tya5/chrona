@@ -70,6 +70,15 @@ def test_reduced_collinear_segment_is_split_at_exposed_boundary():
     )
 
 
+def test_no_host_authority_preserves_legacy_segment_boundaries():
+    source = ConnectorEgress("end", (0.0, 25.0), (4.0, 25.0), ("planned:source",))
+    target = ConnectorEgress("start", (10.0, 25.0), (6.0, 25.0), ("planned:target",))
+
+    assert split_route_at_physical_corridors(((0.0, 25.0), (10.0, 25.0)), source, target) == (
+        ((0.0, 25.0), (10.0, 25.0), ()),
+    )
+
+
 def test_source_round_head_setback_keeps_corridor_authority_until_exposed_boundary():
     host = _span()
     point = _point("planned:gate", "gate", Rect(Decimal(8), Decimal(23), Decimal(4), Decimal(4)))
