@@ -14,7 +14,7 @@ from chrona.usecases.preset_library import list_builtin_presets
 
 ROOT = Path(__file__).resolve().parents[2]
 RESOURCES = ROOT / "src/chrona/resources"
-DESIGNS = ("marquee", "sunday", "target-b")
+DESIGNS = ("marquee", "sunday", "target-b", "titlecard", "yuya")
 MEMBER_FILES = {"theme": "theme.yaml", "colorScheme": "scheme.yaml", "layout": "layout.yaml", "detailProfile": "detail.yaml"}
 
 

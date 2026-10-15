@@ -161,6 +161,9 @@ def copy_builtin_preset(identifier: str, destination: Path) -> Path:
         payloads[output] = raw
         payloads[notice_output] = notice
         resources.setdefault("iconCatalogs", []).append({"id": member["id"], "kind": "icon-catalog", "path": output})
+    if isinstance(members_value, dict) and members_value.get("fontSets"):
+        # A set is a name for packaged, identity-pinned faces: nothing is copied, the declaration travels in preset.yaml (#429).
+        resources["fontSets"] = [str(item) for item in members_value["fontSets"]]
     destination.mkdir(parents=True, exist_ok=True)
     for output, raw in payloads.items():
         target = destination / output

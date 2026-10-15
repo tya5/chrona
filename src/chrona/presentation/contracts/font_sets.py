@@ -40,3 +40,20 @@ def expand_font_set(value: Mapping[str, Any]) -> Mapping[str, Any]:
     del target["fontSet"]
     target["assets"] = deepcopy(assets)
     return expanded
+
+
+def draft_font_metrics(set_ids: tuple[str, ...], base: Mapping[str, Any]) -> dict[str, Any]:
+    """The draft font descriptor a preset's `fontSets` stand for (#429): `base` with its assets replaced by the union of the sets.
+
+    Assets are deduplicated by (family, weight) and keep the declared order; an unknown id is refused by the schema, so it
+    cannot reach here.
+    """
+    assets: list[Any] = []
+    seen: set[tuple[str, int]] = set()
+    for set_id in set_ids:
+        for asset in _sets()[set_id]:
+            key = (str(asset["family"]).casefold(), int(asset["weight"]))
+            if key not in seen:
+                seen.add(key)
+                assets.append(deepcopy(asset))
+    return {**{key: deepcopy(value) for key, value in base.items() if key not in {"assets", "fontSet"}}, "assets": assets}
