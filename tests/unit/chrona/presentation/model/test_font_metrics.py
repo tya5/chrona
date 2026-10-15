@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from chrona.presentation.model.font_metrics import font_metrics_from_document, resolve_font_files, resolve_font_metrics, resolve_font_metrics_catalog
-from chrona.presentation.model.font_metrics import FontMetricsError
+from chrona.presentation.model.font_metrics import FontMetricsCatalog, FontMetricsError
 from chrona.resources import safe_load
 
 
@@ -81,6 +81,24 @@ def test_catalog_selects_exact_declared_family_weight_and_rejects_missing_face()
     with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE") as missing_weight:
         catalog.select("Noto Sans", 500)
     assert "Noto Sans" in missing_weight.value.detail and "weight=500" in missing_weight.value.detail
+
+
+def test_catalog_aliases_do_not_multiply_glyph_substitution_warnings():
+    metric = resolve_font_metrics("Noto Sans", descriptor())
+    fallback = replace(metric, family="Glyph Face", advances={ord("日"): 777})
+    primary = replace(metric, substitute_metrics=fallback)
+    primary.width("日", 12)
+    catalog = FontMetricsCatalog({
+        ("missing, noto sans, glyph face", 400): primary,
+        ("missing", 400): primary,
+        ("noto sans", 400): primary,
+    })
+    assert catalog.warnings == primary.warnings
+    assert len(catalog.warnings) == 1
+    # Distinct metric objects remain distinct occurrences; only aliases collapse.
+    other = replace(primary, substitutions=set(primary.substitutions))
+    catalog.metrics[("other stack", 400)] = other
+    assert len(catalog.warnings) == 2
 
 
 def test_packaged_catalog_selects_the_bundled_monospace_face():

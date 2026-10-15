@@ -102,6 +102,8 @@ a catalog entry for completed-text consumers, without replacing a declared exact
 face. Exhausted glyph coverage retains `E_FONT_GLYPH_UNAVAILABLE`; its detail names
 every requested named family in order, followed by the packaged fallback when not
 already named. This does not change packaged or per-glyph fallback (#1495).
+Catalog aliases do not create additional glyph-substitution occurrences: collect
+each metric object's warnings once, preserving distinct metric objects.
 
 ## 3. Generalized callouts
 
