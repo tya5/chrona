@@ -525,6 +525,28 @@ allOf:
                   label: {enum: [group, lane]}
                   count: {anyOf: [{type: boolean}, {enum: [auto]}], default: false, description: "auto shows Items only when completed countable lane membership includes a multi-member lane."}
                   text: {$ref: "#/$defs/presentationIntent/properties/text"}
+                  columns:
+                    description: "Ordered lane table columns (#1517): the lane label column (`source: label`, exactly one), a 1-based `rowIndex`, or a `{field}` read from the lane's first member, with an optional `initials` transform on a field column. Absent, the table is the label column headed `Lane`."
+                    examples: [[{id: No, source: rowIndex}, {id: Task, source: label}, {id: Owner, source: {field: owner}, transform: initials}]]
+                    type: array
+                    minItems: 1
+                    items:
+                      type: object
+                      required: [id, source]
+                      additionalProperties: false
+                      properties:
+                        id: {description: "The header text; unique within the lane table.", type: string, minLength: 1}
+                        source:
+                          oneOf:
+                            - {enum: [label, rowIndex]}
+                            - type: object
+                              required: [field]
+                              additionalProperties: false
+                              properties: {field: {type: string, minLength: 1}}
+                        transform: {description: "A closed cell transform (#1373); valid on a `field` source only (`E_VIEW_LANE_TABLE_COLUMNS`).", examples: [initials], enum: [initials]}
+                        missing: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/missing"}
+                        align: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/align"}
+                        textRole: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/textRole"}
               points: {description: "Automatic-row point policy; attached (the default) draws a point that attachesTo a selected span on that span's row; key-row draws every selected point in one row directly under the axis, packed into lanes by mark and label extent, titled by keyRow.title.", enum: [attached, own-row, group-header, predecessor, key-row]}
               keyRow:
                 description: "The key row of points: key-row (#1501). Required with points key-row and invalid without it."
