@@ -50,7 +50,8 @@ One caption belongs to each drawable planned host occurrence, not to snapshots,
 scenarios or folded headers. Placement id is `deadline-caption:<mark instance>`;
 sourceRef is the Project object id and slot is timeline. The anchor retains
 the planned placement identity, but an outside caption MUST NOT set
-`hostPlacementId`: that existing contract means text contained inside its host.
+`hostPlacementId`: that existing paint-host contract admits specific semantics,
+not arbitrary attachment/provenance links.
 Carry typed subjects on TextPlacement into primitive provenance instead of
 inferring ownership from a drawing id. Carry the same subjects to diagnostics and
 Scene. The existing outside-window/folded diagnostics remain authoritative;

@@ -124,7 +124,7 @@ def test_deadline_shapes_inherit_typed_host_subject_for_ticks_and_runs():
     theme = SimpleNamespace(deadline_mark=lambda _role: (.8, 4), deadline_outline_width=lambda _role: 0)
 
     result = compose_deadline_marks(base=base, theme_tokens=theme,
-        deadlines=(ReviewDeadline("project/11", deadline_day, finish_day, True),),
+        deadlines=(ReviewDeadline("project/11", deadline_day, finish_day, True, 3),),
         marks=(host,), window=(date(2026, 1, 1), date(2026, 1, 11)), paint_order_base=120)
 
     assert [shape.placement_id for shape in result.shapes] == [

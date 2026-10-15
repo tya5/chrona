@@ -1,7 +1,8 @@
 # Issue 1397 row 3 — implementation plan
 
-Status: planned; no product code changed. Requires merged PR1521 before the
-caption implementation is integrated. [Design](../../design/issue-1397-days-late-caption-design-2026-10-15.md),
+Status: implemented locally; PR and release acceptance pending. PR1521 merged
+as `e10985a6d`; next public base is READY `c06840468`.
+[Design](../../design/issue-1397-days-late-caption-design-2026-10-15.md),
 [architecture review](../../reviews/current/issue-1397-days-late-caption-architecture-review-2026-10-15.md),
 and [literal acceptance/evidence](issue-1397-days-late-caption-design-plan-2026-10-15.md)
 are the authority; do not duplicate their rules here.
@@ -15,7 +16,13 @@ are the authority; do not duplicate their rules here.
 | 5. Release review | Relevant living Specs06/07/49/50; one row3 acceptance record | Focused combined suite; schema-equivalence L1/L2/L3; exact-head PR snapshot and reproduction; exact published main three-OS pytest/conformance/wheel smoke. |
 
 The TextPlacement handoff also carries typed subjects (`surface_quality.py`);
-outside captions do not use the containment-only host_placement_id field.
+outside captions do not use host_placement_id as a generic provenance link.
+
+Local evidence: combined103 focused cases (including actual SVG/PDF and Typst/
+TikZ copy, all four count forms, fallback/drop/contrast/provenance and existing
+deadline contracts); schema-equivalence L1(additive View property)/L2/L3 PASS.
+Independent static implementation review found no remaining blocker. Final PR
+snapshot, CI and exact-main release remain required, not assumed from local tests.
 
 Publish steps 1–4 together as one atomic product PR after their focused checks;
 formatting alone is not a visible deliverable. Product changes include the

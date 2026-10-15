@@ -40,6 +40,7 @@ from chrona.presentation.layout.surface_axis import complete_axis_plot
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT_FALLBACK
 from chrona.presentation.layout.as_of_cone import complete_as_of_cone
 from chrona.presentation.layout.surface_deadlines import compose_deadline_marks
+from chrona.presentation.layout.deadline_captions import place_deadline_captions
 from chrona.presentation.layout.surface_periods import compose_period_bands, period_label_requests
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.label_visual_measurement import absent_label_visual_sources
@@ -357,6 +358,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     visible_label_overflows.extend(annotation_batch.visible_label_overflows)
     visible_route_fallbacks.extend(annotation_batch.visible_route_fallbacks)
     handled_candidate_visuals.update(annotation_batch.handled_visual_sources)
+    deadline_captions = place_deadline_captions(
+        anchors=deadline_batch.captions, plot=base.plot, shapes=deadline_batch.shapes,
+        obstacles=surface_obstacles, theme_tokens=request.theme_tokens, font_metrics=request.font_metrics)
+    text.extend(deadline_captions.text)
+    diagnostic_provenance.extend(deadline_captions.provenance)
     text = [replace(item, slot_id=text_slot(item)) for item in text]
     text_visuals = place_text_visuals(tuple(text), request,
         handled_sources=handled_candidate_visuals, axis_label_targets=axis_label_targets,
@@ -388,7 +394,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         text_visual_warnings=text_visual_warnings, visible_label_overflows=visible_label_overflows,
         visible_route_fallbacks=visible_route_fallbacks, visible_group_header_overflows=visible_group_header_overflows,
         lane_label_suppressions=lane_label_suppressions,
-        routing_info=(*routes_batch.routing_info, *routes_batch.resolution_info),
+        info_diagnostics=(*routes_batch.routing_info, *routes_batch.resolution_info, *deadline_captions.info),
         narrative_receipts=tuple(narrative_receipts),
         diagnostic_provenance=tuple(diagnostic_provenance),
         window_label_absences=member_label_requests.window_absences,

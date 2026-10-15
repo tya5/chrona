@@ -85,7 +85,7 @@ class SurfaceCompletionContext:
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
     visible_label_subjects: Mapping[str, tuple[DiagnosticSubject, ...]] = field(default_factory=dict)
     window_label_absences: tuple[WindowLabelAbsence, ...] = ()
-    routing_info: tuple[PresentationInfo, ...] = ()
+    info_diagnostics: tuple[PresentationInfo, ...] = ()
     narrative_receipts: tuple[NarrativeReceipt, ...] = ()
 
 
@@ -454,7 +454,7 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                                  axis_tier_outcomes=tuple(axis_tier_outcomes),
                                  diagnostics=tuple(diagnostics), icons=completed_icons,
                                  canvas_bounds=canvas, fit_warnings=tuple(fit_warnings),
-                                 info_diagnostics=(*context.routing_info,
+                                 info_diagnostics=(*context.info_diagnostics,
                                      *((SuppressedPlotLabels("table-timeline", suppressed_plot_labels),)
                                        if suppressed_plot_labels else ())),
                                  lane_emissions=lane_emissions, patterns=patterns,
