@@ -1,6 +1,7 @@
 """Finite, renderer-neutral annotation connector topology trials."""
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass
 from itertools import product
 
@@ -119,22 +120,14 @@ def route_annotation_candidate(start: tuple[float, float], end: tuple[float, flo
     return None
 
 
-def route_strict_bounded(start: tuple[float, float], end: tuple[float, float],
-                         index: SurfaceObstacleIndex, *,
-                         bounds: tuple[float, float, float, float],
-                         port_ids: tuple[str, ...] = (), limit: int = 1024,
-                         max_bends: int, max_detour_ratio: float
-                         ) -> tuple[AnnotationRouteTrial | None, int, bool]:
-    """Search finite obstacle-envelope corridors, returning tried states and exhaustion.
-
-    Axis candidates come from the endpoints and every expanded obstacle envelope;
-    no nearest-axis truncation is used. Paths are yielded in deterministic order
-    and the separate connector-state budget applies to examined paths.
-    """
-    if limit < 1:
-        raise _topology_search_error(state_limit=limit, start=start, end=end,
-                                     bounds=bounds, max_bends=max_bends,
-                                     max_detour_ratio=max_detour_ratio)
+def strict_route_candidates(start: tuple[float, float], end: tuple[float, float],
+                            index: SurfaceObstacleIndex, *,
+                            bounds: tuple[float, float, float, float],
+                            max_bends: int, max_detour_ratio: float,
+                            candidate_limit: int = 1024,
+                            interleave_axial: bool = False
+                            ) -> Iterator[tuple[tuple[float, float], ...]]:
+    """Yield strict routes lazily; optional axial interleave is fallback-only."""
     left, top, right, bottom = bounds
     xs = {start[0], end[0]}
     ys = {start[1], end[1]}
@@ -148,35 +141,105 @@ def route_strict_bounded(start: tuple[float, float], end: tuple[float, float],
     ys = tuple(sorted((y for y in ys if top <= y <= bottom),
                       key=lambda y: (min(abs(y - start[1]), abs(y - end[1])),
                                     abs(y - end[1]), y)))
-    candidates: list[tuple[tuple[float, float], ...]] = []
     seen = set()
+    yielded = 0
 
-    def add(points: tuple[tuple[float, float], ...]) -> None:
+    def candidate(points: tuple[tuple[float, float], ...]
+                  ) -> tuple[tuple[float, float], ...] | None:
+        nonlocal yielded
         path = _compact_path(points)
-        if (len(path) >= 2 and path[0] == start and path[-1] == end and path not in seen
-                and len(candidates) <= limit):
-            seen.add(path)
-            candidates.append(path)
+        if len(path) < 2 or path[0] != start or path[-1] != end or path in seen:
+            return None
+        seen.add(path)
+        yielded += 1
+        return path
+
+    def x_first() -> Iterator[tuple[tuple[float, float], ...]]:
+        for x in xs:
+            path = candidate((start, (x, start[1]), (x, end[1]), end))
+            if path is not None:
+                yield path
+
+    def y_first() -> Iterator[tuple[tuple[float, float], ...]]:
+        for y in ys:
+            path = candidate((start, (start[0], y), (end[0], y), end))
+            if path is not None:
+                yield path
+
+    def xy_paths() -> Iterator[tuple[tuple[float, float], ...]]:
+        for x, y in product(xs, ys):
+            first = candidate((start, (x, start[1]), (x, y), (end[0], y), end))
+            if first is not None:
+                yield first
+            second = candidate((start, (start[0], y), (x, y), (x, end[1]), end))
+            if second is not None:
+                yield second
 
     if start[0] == end[0] or start[1] == end[1]:
-        add((start, end))
-    # One and two corridor coordinates cover all orthogonal paths up to four bends.
-    for x in xs:
-        add((start, (x, start[1]), (x, end[1]), end))
-        if len(candidates) > limit:
-            break
-    for y in ys:
-        if len(candidates) > limit:
-            break
-        add((start, (start[0], y), (end[0], y), end))
-    if len(candidates) <= limit:
-        for x, y in product(xs, ys):
-            add((start, (x, start[1]), (x, y), (end[0], y), end))
-            if len(candidates) > limit:
-                break
-            add((start, (start[0], y), (x, y), (x, end[1]), end))
-            if len(candidates) > limit:
-                break
+        direct = candidate((start, end))
+        if direct is not None:
+            yield direct
+            if yielded > candidate_limit:
+                return
+    if interleave_axial:
+        x_paths, y_paths = iter(x_first()), iter(y_first())
+        x_done = y_done = False
+        while not (x_done and y_done):
+            if not x_done:
+                try:
+                    path = next(x_paths)
+                except StopIteration:
+                    x_done = True
+                else:
+                    yield path
+                    if yielded > candidate_limit:
+                        return
+            if not y_done:
+                try:
+                    path = next(y_paths)
+                except StopIteration:
+                    y_done = True
+                else:
+                    yield path
+                    if yielded > candidate_limit:
+                        return
+    else:
+        for path in x_first():
+            yield path
+            if yielded > candidate_limit:
+                return
+        for path in y_first():
+            yield path
+            if yielded > candidate_limit:
+                return
+    for path in xy_paths():
+        yield path
+        if yielded > candidate_limit:
+            return
+
+
+def route_strict_bounded(start: tuple[float, float], end: tuple[float, float],
+                         index: SurfaceObstacleIndex, *,
+                         bounds: tuple[float, float, float, float],
+                         port_ids: tuple[str, ...] = (), limit: int = 1024,
+                         max_bends: int, max_detour_ratio: float,
+                         rule_host_id: str | None = None
+                         ) -> tuple[AnnotationRouteTrial | None, int, bool]:
+    """Search finite obstacle-envelope corridors, returning tried states and exhaustion.
+
+    Axis candidates come from the endpoints and every expanded obstacle envelope;
+    no nearest-axis truncation is used. Paths are yielded in deterministic order
+    and the separate connector-state budget applies to examined paths.
+    """
+    if limit < 1:
+        raise _topology_search_error(state_limit=limit, start=start, end=end,
+                                     bounds=bounds, max_bends=max_bends,
+                                     max_detour_ratio=max_detour_ratio)
+    # Keep this exact prefix for the established path; opposite-side fallback
+    # consumes the same iterator fairly across its egress/edge alternatives.
+    candidates = tuple(strict_route_candidates(
+        start, end, index, bounds=bounds, max_bends=max_bends,
+        max_detour_ratio=max_detour_ratio, candidate_limit=limit))
     examined = min(len(candidates), limit)
     exhausted = len(candidates) > limit
     valid = []
@@ -185,7 +248,8 @@ def route_strict_bounded(start: tuple[float, float], end: tuple[float, float],
                 for a, b in zip(points, points[1:]))
                 and relation_route_quality(points, max_bends=max_bends,
                                    max_detour_ratio=max_detour_ratio)
-                and not any(index.collisions(ObstacleSegment(a, b), port_ids=port_ids)
+                and not any(index.collisions(ObstacleSegment(a, b), port_ids=port_ids,
+                                             rule_host_id=rule_host_id)
                             for a, b in zip(points, points[1:]))):
             length = geometry_sum(abs(b[0] - a[0]) + abs(b[1] - a[1])
                                   for a, b in zip(points, points[1:]))
