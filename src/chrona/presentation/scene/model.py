@@ -13,7 +13,7 @@ from chrona.presentation.layout.pattern_placement import PatternTilePrimitive
 from chrona.presentation.model.font_metrics import FontTabularWarning
 from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, PrimitiveProvenance
-from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding, semantic_binding
+from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding_for_primitive, semantic_binding
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, TEXT_FOLLOWS_BOX, VIEWER_FIT_MODES
 from chrona.presentation.scene.pattern_host import completed_pattern_host_valid
 
@@ -528,10 +528,11 @@ class ScenePrimitive:
             raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} has incompatible completed fields; expected marker_start/marker_end only on Path, pattern only on a phase-preserving Rect or completed closed window-cut Symbol, symbol exactly on Symbol, radial paint only on plain filled Rect, glyph paint only on Symbol, table/lane/relation fields consistent with purpose/kind, and icon viewport only on Icon; found sourceRef={_brief(self.source_ref)}, kind={_brief(self.kind)}, purpose={_brief(self.purpose)}, marker_start={_brief(self.marker_start)}, marker_end={_brief(self.marker_end)}, pattern={_brief(self.pattern)}, symbol={_brief(self.symbol)}, radial_gradient={_brief(getattr(self.paint, 'radial_gradient', self.paint) if self.paint is not None else None)}, glyph_mode={_brief(self.glyph_paint_mode)}, table_row_id={_brief(self.table_row_id)}, table_column_id={_brief(self.table_column_id)}, lane_row_id={_brief(self.lane_row_id)}, lane_member_id={_brief(self.lane_member_id)}, from_instance_id={_brief(self.from_instance_id)}, to_instance_id={_brief(self.to_instance_id)}, icon_kind={_brief(self.icon_kind)}, icon_viewport={_brief(self.icon_viewport)}")
         if self.end_treatment not in {"closed", "open"}:
             raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} end_treatment; expected 'closed' or 'open'; found {_brief(self.end_treatment)}")
-        classified = contrast_binding(self.visual_role)
+        classified = contrast_binding_for_primitive(self.visual_role, self.kind, self.purpose)
         if ((classified is not None and classified.contrast_class == ContrastClass.STATE_TEXT
              and self.contrast_treatment not in {"required", "deemphasized"})
-                or (self.visual_role == "annotation-note-text" and self.contrast_treatment != "required")
+                or (classified is not None and classified.contrast_class == ContrastClass.STATE_TEXT
+                    and self.visual_role == "annotation-note-text" and self.contrast_treatment != "required")
                 or ((classified is None or classified.contrast_class != ContrastClass.STATE_TEXT)
                     and self.contrast_treatment is not None)):
             raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} visual_role/contrast_treatment; expected required or deemphasized for state text, required for annotation-note-text, and absent otherwise; found role={_brief(self.visual_role)}, treatment={_brief(self.contrast_treatment)}")

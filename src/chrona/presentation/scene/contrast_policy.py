@@ -10,6 +10,7 @@ from chrona.presentation.model.semantic_registry import (
     ContrastClass,
     contrast_binding,
     contrast_binding_for,
+    contrast_binding_for_primitive,
     is_annotation_artwork_role,
     is_frame_glyph_role,
     is_label_chip_role,
@@ -281,7 +282,7 @@ def _mark_figures(primitives: Sequence[Any]) -> dict[int, tuple[tuple[int, Mappi
         identifier, role = primitive.get("id"), primitive.get("visualRole")
         if not isinstance(identifier, str) or not isinstance(role, str):
             continue
-        binding = contrast_binding_for(role, None)
+        binding = contrast_binding_for_primitive(role, primitive.get("kind"), primitive.get("purpose"))
         if binding is None or binding.contrast_class != ContrastClass.MARK:
             continue
         base, separator, part = identifier.rpartition(":part")
@@ -351,7 +352,7 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
     role = primitive.get("visualRole")
     if not isinstance(role, str):
         return ()
-    binding = contrast_binding_for(role, primitive.get("purpose") if primitive.get("kind") == "Text" else None)
+    binding = contrast_binding_for_primitive(role, primitive.get("kind"), primitive.get("purpose"))
     if binding is None:
         return ()
     primitive_id = _string(primitive.get("id"), f"primitive id at {scene_path}")
@@ -470,6 +471,12 @@ def policy_member_of(finding: SceneContrastFinding) -> str | None:
         return "decoration" if finding.severity_class == DECORATION_CLASS else "unsupportedGround"
     if code not in _FLOOR_CODES:
         return None
+    # The finding already carries the completed ink class: a state-text role
+    # can produce a graphical legend mark, so role-only reclassification loses it.
+    if code == "E_SCENE_MARK_CONTRAST":
+        return "mark"
+    if code == "E_SCENE_DECORATION_CONTRAST":
+        return "decoration"
     binding = contrast_binding_for(finding.visual_role, finding.purpose)
     return _policy_class(binding.contrast_class) if binding is not None else None
 
@@ -596,7 +603,7 @@ def effective_surface_paint_pairs(subject: Mapping[str, Any], primitives: Sequen
     if not isinstance(paint, Mapping) or not is_hex_color(paint.get(channel)):
         raise InkTouchError("unreadable subject channel")
     sample = _sample_point(subject, channel)
-    binding = contrast_binding_for(subject.get("visualRole"), subject.get("purpose"))
+    binding = contrast_binding_for_primitive(subject.get("visualRole"), subject.get("kind"), subject.get("purpose"))
     decoration = binding is not None and binding.contrast_class == ContrastClass.DECORATION
     try:
         cones = cones_in(primitives)
