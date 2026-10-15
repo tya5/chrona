@@ -181,12 +181,13 @@ create a new editable project in a new directory
 
 rebuild one slide of an example from its manifest
 
-`chrona materialize --output --slide --write -o`
+`chrona materialize --output --replace --slide --write -o`
 
 - `manifest`: example materializer manifest
 - `--slide`: declared slide identifier
 - `--output, -o`: empty output directory
 - `--write`: replace the manifest-declared generated artifact
+- `--replace`: re-run into an output directory a previous run filled, overwriting its review.svg, review.scene.json and closure.yaml; any other file there is refused
 
 ## chrona materialize-presentation-preset
 

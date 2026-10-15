@@ -61,8 +61,7 @@ def test_documented_path_renders_an_example_context_with_the_init_store_config(t
     assert (tmp_path / _flag(render, "--output")).read_bytes().startswith(b"<svg")
     config_path = tmp_path / _flag(render, "--store-config")
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-    assert [entry["integrity"] for entry in config["stores"]] == ["optional"]  # written explicitly by init --example
-    assert "ADR-0030" in config_path.read_text(encoding="utf-8")  # with the reason beside it
+    assert ["integrity" in entry for entry in config["stores"]] == [False]  # init --example writes no integrity entry (#1567)
     assert load_store_config(str(config_path)).integrity == {KEY: "optional"}
 
 
@@ -86,22 +85,21 @@ def test_the_same_example_store_marked_required_refuses_the_unpinned_reference(t
     assert (tmp_path / _flag(render, "--output")).read_bytes().startswith(b"<svg")
 
 
-def test_example_init_writes_optional_explicitly_and_minimal_init_writes_no_config(tmp_path):
+def test_example_init_writes_no_integrity_entry_and_minimal_init_writes_no_config(tmp_path):
     example = initialize_project(tmp_path / "example", example="halcyon-1").directory
     minimal = initialize_project(tmp_path / "minimal").directory
 
     config = example / ".chrona" / "store.yaml"
-    assert yaml.safe_load(config.read_text(encoding="utf-8"))["stores"][0]["integrity"] == "optional"
-    assert "ADR-0030" in config.read_text(encoding="utf-8")
-    assert not (minimal / ".chrona" / "store.yaml").exists()  # no Store config, so nothing opts out of the required default
+    assert "integrity" not in yaml.safe_load(config.read_text(encoding="utf-8"))["stores"][0]
+    assert not (minimal / ".chrona" / "store.yaml").exists()
 
 
-def test_a_store_config_that_omits_integrity_is_required(tmp_path):
-    reader = ConfiguredStoreReader({"stores": [{"provider": "local", "identity": "s", "root": str(tmp_path)}]})
-
-    assert reader.integrity == {("local", "s"): "required"}
+def test_a_store_config_that_omits_integrity_is_optional_and_required_is_an_explicit_opt_in(tmp_path):
+    reference = {"store": {"provider": "local", "identity": "s"}, "kind": "render-context", "address": "a.yaml", "revision": {"token": "r"}}
+    assert ConfiguredStoreReader({"stores": [{"provider": "local", "identity": "s", "root": str(tmp_path)}]}).integrity == {("local", "s"): "optional"}
+    strict = ConfiguredStoreReader({"stores": [{"provider": "local", "identity": "s", "root": str(tmp_path), "integrity": "required"}]})
     with pytest.raises(ValueError, match="E_CONTENT_IDENTITY_REQUIRED"):
-        reader.read({"store": {"provider": "local", "identity": "s"}, "kind": "render-context", "address": "a.yaml", "revision": {"token": "r"}})
+        strict.read(reference)
 
 
 def test_render_review_needs_a_store_config_or_both_snapshot_flags(tmp_path, monkeypatch, capsys):

@@ -120,8 +120,8 @@ command line returns.
   `E_MCP_PATH_CONTAINMENT` (`sourceRef` `/storeConfig`) before any file is read from a root.
 - **Integrity.** The reference's Store must be declared by the configuration (`E_STORE_CONFIG_REQUIRED`). Every
   reference the closure reads is verified against its pinned `contentIdentity` (a mismatch is refused), and the
-  configuration's `integrity` for that Store applies exactly as on the command line: `required` (the default) demands
-  an identity on every reference, `optional` is the configuration owner's explicit setting. No argument can lower it:
+  configuration's `integrity` for that Store applies exactly as on the command line: `optional` (the default; an
+  absent identity is accepted, Spec 42) or `required` (demands an identity on every reference), the configuration owner's setting. No argument can lower it:
   there is no snapshot-root, store-identity, integrity or `--allow-missing-content-identity` input.
 - `render_review` renders the immutable Render Context, which fixes its own target format and viewport, so neither is an
   input. Result: `format` (the Context's target: `svg`, `png`, `pdf`, `typst`, `tikz`), `contentIdentity` (`sha256:` of the

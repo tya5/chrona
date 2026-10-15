@@ -113,10 +113,9 @@ Two read-only tools reach a Store, the same one `apply_command` writes, and work
   command line writes to `--result`.
 
 Both name the Store with `storeConfig` (default `.chrona/store.yaml`), and every Store root in that file must lie inside
-the workspace. Integrity is the Store configuration's, as on the command line: every reference is checked against its
-pinned content identity, a Store with `integrity: required` (the default) refuses a reference that has none, and no
-argument lowers either. A Store whose configuration says `integrity: optional` (the packaged example corpus does) is its
-owner's explicit choice. Failures keep the codes the command line reports, so an identity mismatch on a render is
+the workspace. Integrity is the Store configuration's, as on the command line: a content identity a reference carries is
+verified, a reference without one is accepted (Spec 42), a Store whose configuration says `integrity: required` refuses a
+reference that has none, and no argument lowers either. That setting is its owner's explicit choice. Failures keep the codes the command line reports, so an identity mismatch on a render is
 `E_CONTENT_IDENTITY` and one on a comparison is `E_BASELINE_REFERENCE` with a message that names the mismatch.
 
 ### What the server offers

@@ -65,13 +65,13 @@ properties:
           minLength: 1
         - type: object
           description: "Pinned file reference to an extension package."
-          required: [packageId, path, revision, contentIdentity]
+          required: [packageId, path, revision]
           additionalProperties: false
           properties:
             packageId: {description: "Extension package identifier.", type: string, minLength: 1}
             path: {description: "Safe relative path to the extension resource.", examples: ["extensions/example.yaml"], $ref: "urn:chrona:common-v0.1#/$defs/safeRelativePath"}
             revision: {description: "Pinned Git revision of the extension resource.", examples: ["git:0123456789abcdef0123456789abcdef01234567"], $ref: "urn:chrona:common-v0.1#/$defs/gitRevision"}
-            contentIdentity: {description: "SHA-256 identity of the extension resource.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+            contentIdentity: {description: "Optional SHA-256 pin of the extension resource; verified when supplied.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
         - type: object
           description: "Inline extension package and resource declaration."
           required: [packageId, resource]
