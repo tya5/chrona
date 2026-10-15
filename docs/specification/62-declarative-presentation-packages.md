@@ -88,6 +88,14 @@ This remains wheel-owned preset behavior, not package acquisition, package
 locking, or a resolver for this proposed specification. Existing
 `presentation-preset/v0.1` already carries catalogue and detail-profile pins;
 no preset schema migration is implied.
+A catalogue entry may also declare `members.fontSets` (#429), a list of packaged
+font-set ids (`chrona.noto-sans`, `chrona.noto-sans+jp`; the names of a Render
+Context's `fontMetrics.fontSet`). `preset copy` writes it to `preset.yaml` as
+`resources.fontSets` and copies no font bytes. A draft render of that preset
+measures with the union of the named sets unless `--font-metrics` is given;
+installed faces stay a fallback behind it. The `+jp` set needs the separately
+installed `chrona-fonts-noto-cjk` package: without it the render fails with
+`E_FONT_METRICS_UNAVAILABLE` naming that provider, never a silent substitute.
 
 `profile-v0.2` is a Project semantic-profile package with fields and semantic
 constraints; it is not a generic package envelope. A future Presentation

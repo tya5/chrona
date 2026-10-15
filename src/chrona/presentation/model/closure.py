@@ -42,6 +42,7 @@ from chrona.presentation.model.semantic_registry import period_variant_role_base
 from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
 from chrona.presentation.fonts.system import DraftFontResolution, SystemFontError, SystemFontResolver, resolve_draft_fonts, resolve_system_font
 from chrona.presentation.model.font_metrics import FontMetricsCatalog, FontMetricsError, FontTabularWarning, resolve_font_files, resolve_font_metrics
+from chrona.presentation.contracts.font_sets import draft_font_metrics
 from chrona.presentation.contracts.resources import (
     RENDER_CONTEXT_VERSION, RENDER_CONTEXT_VERSIONS, FrozenDict, FrozenList, _compact_commands,
 )
@@ -277,12 +278,22 @@ def resolve_draft_render(
                                         visual_profile=visual_profile, typesetter=typesetter,
                                         icon_assets=_load_draft_icon_assets(catalog_resources, selected_catalog_paths,
                                                                             _draft_view(resources), _draft_theme_refs(resources)),
-                                        font_metrics=(safe_load(font_metrics_path.read_bytes()) if font_metrics_path else None),
+                                        font_metrics=(safe_load(font_metrics_path.read_bytes()) if font_metrics_path
+                                                      else _preset_font_metrics(preset)),
                                         font_asset_root=(font_metrics_path.parent.resolve() if font_metrics_path else None),
                                         system_fonts=system_fonts, system_font_resolver=system_font_resolver,
                                         previous_scene_bytes=(previous_scene_path.read_bytes()
                                                               if previous_scene_path is not None else None))
     return replace(draft, preset_visual_profile_fallback=profile_fallback)
+
+
+def _preset_font_metrics(preset: Any) -> dict[str, Any] | None:
+    """The descriptor of the font sets a preset declares (#429), or None to keep the packaged default."""
+    declared = preset.contract.resources.get("fontSets") if preset is not None and isinstance(preset.contract, PresentationPresetContract) else None
+    if not declared:
+        return None
+    return draft_font_metrics(tuple(str(item) for item in declared),
+                              _packaged_font_metrics(Path(__file__).resolve().parents[2] / "resources"))
 
 
 _BASELINE_VISUAL_PROFILE = "chrona-output/visual/v0.5-baseline"
