@@ -9,6 +9,7 @@ import pytest
 import yaml
 
 from chrona import schema_diagnostics
+from chrona.presentation.contracts.view_defaults import merge_view_defaults
 from tools import schema_equivalence as gate
 from tools.schema_inventory import validate_inventory
 
@@ -62,6 +63,25 @@ def test_l2_rejects_a_bad_second_context_instead_of_accepting_the_first():
                          view_defaults=defaults)
     assert not result.records[0]["valid"]
     assert result.records[0]["error"] == {"pointer": "/body/visibility", "rule": "type"}
+
+
+def test_l2_validates_each_distinct_effective_context_once(monkeypatch):
+    raw = {"version": "test/view/v1", "body": {"surface": "table-timeline"}}
+    offered = ({"visibility": {}}, {"visibility": {}}, {"visibility": {"relations": "none"}})
+    validators = _thin_view_validators()
+    calls = []
+    original = validators.first_error
+
+    def counted(name, value):
+        calls.append(deepcopy(value))
+        return original(name, value)
+
+    monkeypatch.setattr(validators, "first_error", counted)
+    result = gate.run_l2({"view.yaml": yaml.safe_dump(raw).encode()}, validators,
+                         view_defaults={"view.yaml": offered})
+
+    assert result.records[0]["valid"]
+    assert calls == [merge_view_defaults(raw, offered[index]) for index in (0, 2)]
 
 
 def _copy_schemas(tmp_path: Path) -> Path:
@@ -149,7 +169,23 @@ def test_l2_l3_validation_work_is_linear_in_documents_and_probes(committed):
     counts = committed._test_work_counts
     assert counts["decode"] == (committed._test_document_count + committed._test_l3_document_count
                                  + committed._test_schema_count + committed._test_control_document_count)
-    assert counts["first_error"] == len(committed.corpus.records)
+    # A shared View is validated once per distinct effective context, not
+    # merely once per authored file. Every declared pairing must be valid.
+    contexts = gate._view_defaults(REPOSITORY)
+    expected_validations = 0
+    for record in committed.corpus.records:
+        offered = contexts.get(record["path"], ())
+        if not offered:
+            expected_validations += 1
+            continue
+        assert record["valid"], record["path"]
+        distinct = []
+        for defaults in offered:
+            effective = merge_view_defaults(committed.corpus.parsed[record["path"]], defaults)
+            if effective not in distinct:
+                distinct.append(effective)
+        expected_validations += len(distinct)
+    assert counts["first_error"] == expected_validations
     assert counts["ingress"] == len(committed.probes) + len(committed.invalid)
 
 
