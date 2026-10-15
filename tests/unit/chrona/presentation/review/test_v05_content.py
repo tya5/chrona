@@ -524,6 +524,10 @@ def test_critical_relation_fact_closes_real_scheduler_analysis_through_projectio
     projection = build_review_projection(project, scheduled.placements, view, None,
                                          analysis=scheduled.analysis)
     content = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
+    disabled = normalize_v05_surface_content(
+        projection, project, view, summary=EMPTY_SUMMARY,
+        dependency_critical_role_available=False)
+    assert disabled == content
     assert {fact.relation_id: fact.critical for fact in content.relations} == {
         "relation:0:start-long": True, "relation:1:start-short": False,
         "relation:2:long-finish": True, "relation:3:short-finish": False}
