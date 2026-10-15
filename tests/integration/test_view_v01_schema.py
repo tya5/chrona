@@ -92,7 +92,7 @@ def test_lane_resource_migration_inventory_and_editorial_mirror():
     library = yaml.safe_load((ROOT / "src/chrona/resources/presets/library.yaml").read_text(encoding="utf-8"))
     entries = {entry["id"]: entry for entry in library["entries"] if entry["id"] != "chrona-default-draft"
                and not entry["members"]["layout"]["sourceRoot"].startswith("designs/")
-               and entry["id"] != "muted-executive"}  # the default has automatic rows, below; packaged designs and muted-executive are table Views (#429; numbered rows need tableColumns, gap 11)
+               and entry["id"] not in {"muted-executive", "wallboard-dark"}}  # the default has automatic rows, below; packaged designs, muted-executive and wallboard-dark are table Views (#429; numbered rows and an Owner column need tableColumns, gap 11 and gap 12 of the gaps reports)
     assert len(entries) == 7
     for preset_id, entry in entries.items():
         member = entry["members"]["view"]

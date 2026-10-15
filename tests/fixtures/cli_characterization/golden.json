@@ -186,7 +186,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"unknown builtin preset 'no-such-preset'; valid ids: mission-light, control-room-dark, print-mono, executive-light, elevated-light, editorial, technical-print, chrona-default-draft, marquee, sunday, target-b, muted-executive (chrona preset list); a value containing '/' or ending in .yaml is read as a file path\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"unknown builtin preset 'no-such-preset'; valid ids: mission-light, control-room-dark, print-mono, executive-light, elevated-light, editorial, technical-print, chrona-default-draft, marquee, sunday, target-b, muted-executive, wallboard-dark (chrona preset list); a value containing '/' or ending in .yaml is read as a file path\"}]}\n"
  },
  "preset-list": {
   "argv": [
@@ -196,7 +196,7 @@
   "exit": 0,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"ok\", \"presets\": [{\"id\": \"mission-light\"}, {\"id\": \"control-room-dark\"}, {\"id\": \"print-mono\"}, {\"id\": \"executive-light\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"elevated-light\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"editorial\"}, {\"id\": \"technical-print\"}, {\"id\": \"chrona-default-draft\"}, {\"id\": \"marquee\"}, {\"id\": \"sunday\"}, {\"id\": \"target-b\"}, {\"id\": \"muted-executive\"}], \"default\": \"chrona-default-draft\"}\n"
+  "stdout": "{\"status\": \"ok\", \"presets\": [{\"id\": \"mission-light\"}, {\"id\": \"control-room-dark\"}, {\"id\": \"print-mono\"}, {\"id\": \"executive-light\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"elevated-light\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"editorial\"}, {\"id\": \"technical-print\"}, {\"id\": \"chrona-default-draft\"}, {\"id\": \"marquee\"}, {\"id\": \"sunday\"}, {\"id\": \"target-b\"}, {\"id\": \"muted-executive\"}, {\"id\": \"wallboard-dark\"}], \"default\": \"chrona-default-draft\"}\n"
  },
  "render-actual": {
   "argv": [
@@ -245,7 +245,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"unknown builtin preset 'no-such-preset'; valid ids: mission-light, control-room-dark, print-mono, executive-light, elevated-light, editorial, technical-print, chrona-default-draft, marquee, sunday, target-b, muted-executive (chrona preset list); a value containing '/' or ending in .yaml is read as a file path\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"unknown builtin preset 'no-such-preset'; valid ids: mission-light, control-room-dark, print-mono, executive-light, elevated-light, editorial, technical-print, chrona-default-draft, marquee, sunday, target-b, muted-executive, wallboard-dark (chrona preset list); a value containing '/' or ending in .yaml is read as a file path\"}]}\n"
  },
  "render-bad-viewport-number": {
   "argv": [
@@ -897,7 +897,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"unknown builtin preset 'no-such-preset'; valid ids: mission-light, control-room-dark, print-mono, executive-light, elevated-light, editorial, technical-print, chrona-default-draft, marquee, sunday, target-b, muted-executive (chrona preset list); a value containing '/' or ending in .yaml is read as a file path\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"unknown builtin preset 'no-such-preset'; valid ids: mission-light, control-room-dark, print-mono, executive-light, elevated-light, editorial, technical-print, chrona-default-draft, marquee, sunday, target-b, muted-executive, wallboard-dark (chrona preset list); a value containing '/' or ending in .yaml is read as a file path\"}]}\n"
  },
  "render-preset-with-scheme-override": {
   "argv": [
