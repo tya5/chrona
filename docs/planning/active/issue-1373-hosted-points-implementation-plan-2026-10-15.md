@@ -58,3 +58,10 @@ The final acceptance review copies all four literal issue rows (1, 2, 3, 6),
 joins prior merged row evidence to this exact release, and explicitly separates
 developer capability from reviewer-owned design adoption. Archive only after
 actual closure; do not claim completion from this plan.
+
+Current implementation: allocation/geometry `267c95fb2`, corridors `0f4ad4945`.
+The [acceptance review](../../reviews/current/issue-1373-editorial-capabilities-acceptance-review-2026-10-15.md)
+tracks all literal rows and remaining release evidence. Focused tests include
+SVG/typeset rendering, deliberate final-frame drift, non-lane conflicts and
+reciprocal egress; no examples or generated reports were edited. Final-head
+artifact inspection and exact-main three-OS release are still required.

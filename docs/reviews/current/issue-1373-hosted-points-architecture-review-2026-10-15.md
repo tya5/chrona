@@ -35,5 +35,6 @@ reciprocal endpoint coverage, route-body re-entry, hints and annotation fanout.
 Release risks to verify, not completed claims: cross-row labels/dependencies;
 planned/Actual/snapshot/scenario isolation; duplicate occurrence ambiguity;
 source-facet partition and ports/parts/window equivalence; fixed glyph collision;
-actual SVG/typeset and default-off public materializer evidence. Implementation
-waits for its published plan and #1397 row 3.
+actual SVG/typeset and default-off public materializer evidence. Both prerequisite
+publications are complete. Final-frame proof and non-lane collision tests now
+pass; acceptance remains subject to current-head CI and exact-main release.
