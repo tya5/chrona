@@ -89,3 +89,18 @@ def test_existing_date_and_theme_chip_controls_are_independent(tmp_path, append_
         assert chip.bounds[1] < label.bounds[1]
         assert chip.bounds[2] > label.bounds[2]
         assert chip.bounds[3] > label.bounds[3]
+
+
+def test_wallboard_keeps_its_bare_word_in_a_theme_painted_chip(tmp_path):
+    source = sr.with_calendar(sr.project({"a": sr.span("a", date(2026, 2, 1), 40)}))
+    actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "observed",
+              "body": {"asOf": "2026-02-20", "observations": []}}
+
+    rendered = sr.render(tmp_path, source, presentation=sr.bundle("wallboard-dark"), actual=actual)
+
+    primitives = {item.scene_id: item for item in rendered.surface.primitives}
+    label, chip = primitives["as-of-label"], primitives["chip:as-of-label"]
+    assert label.text == "Today"
+    assert chip.paint is not None and chip.paint.fill
+    assert label.paint is not None and label.paint.fill != chip.paint.fill
+    assert chip.paint_order < label.paint_order

@@ -12,7 +12,7 @@ Reading rule. The reference is the HALCYON mock (26 work packages in six groups)
 | 4 | `launch-window-absent` | `OPENING NIGHT` band with a label over the Oct to Nov window | no band, no label | none: named periods are delivered (#582, #871); the generic View selects none | bundle-side |
 | 5 | `baseline-ghost-absent` | dashed baseline outline beside the plan bar on the changed rows | no ghost; the legend still lists `baseline`. `baselineMarks: ghost-when-changed` draws nothing without a Snapshot (by design, #1492); no diagnostic | a draft-render way to supply a baseline Snapshot | #1533 |
 | 6 | `axis-window` | explicit window March to November, twelve columns | automatic window February to December | none: `window.mode: explicit` exists; the generic View sets none | bundle-side |
-| 7 | `as-of-label-wording` | chip `AS OF · 20 AUG` | chip `TODAY 20 AUG` (gold chip, spotlight cone drawn) | not investigated (Layout or vocabulary wording) | not measured |
+| 7 | `as-of-label-wording` | chip `AS OF · 20 AUG` | chip `AS OF 20 AUG` (gold chip, spotlight cone drawn); inherits the design's wording | design voice reached; separator punctuation remains reviewer-owned wording | #1563 |
 | 8 | `typeset-export-refused` | n/a (a reference has no export) | Typst and TikZ still refuse the preset: `E_VISUAL_CAPABILITY_UNSUPPORTED` at `/body/roles/kicker/glowBlur`; the one name left in `tests/integration/test_typeset_presets.py`. Decision of 2026-10-15 on #1532: the refusal stays, glow is not approximated and not dropped implicitly (a Theme could later declare a typeset fallback) | none: deliberate refusal | #1532 (decided) |
 | 9 | `mark-contrast-warning` | newsprint actual line on crimson plan | `W_SCENE_MARK_CONTRAST` (4 marks; actual over plan 1.60:1 against the 3:1 floor) and `W_SCENE_DECORATION_CONTRAST` (93 band decorations, lowest 1.05:1 against 1.1); the reference palette is carried as designed, so the warnings are the design's | none identified: design YAML is not changed here; a reviewer choice | bundle-side |
 | 10 | `canvas-height` | 900 px | 864 px (29 rows against 26; row pitch not measured) | none (data and row count) | not measured |
@@ -21,4 +21,4 @@ Reading rule. The reference is the HALCYON mock (26 work packages in six groups)
 
 Reached as drawn: bulb-bordered sign with glow, ACT headers with the gold `ACT n ·` prefix, spotlight cone and as-of line, stage-black ground with crimson plan, newsprint actual, hatched not-yet-observed, gold diamond gates, dependency lines, ticket-stub legend (`BASELINE`, `PLAN`, `ACTUAL`, `IN THE WINGS`, `GATE`, `HOLIDAY`, `DEPENDENCY`).
 
-Not measured: pixel positions, row pitch, colour values, the as-of wording cause, and the roadmap project image beyond "renders without error".
+Not measured: pixel positions, row pitch, colour values, and the roadmap project image beyond "renders without error".
