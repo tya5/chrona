@@ -220,6 +220,9 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
                            f"{payload.get('fallbackFamily')}", f"{payload.get('codepoint')} in {payload.get('text')!r}")
     if code == "W_FONT_FAMILY_SKIPPED":
         fields = dict(part.split("=", 1) for part in identity.removeprefix(code).removeprefix(":").split(";") if "=" in part)
+        if fields.get("role") == "font-set":
+            return WarningText(f"font set {fields.get('requested', '?')} needs the package {fields.get('skipped', '?')}, "
+                               "which is not installed, so the Theme font list continues on installed fonts", "")
         return WarningText(f"font families {fields.get('skipped', '?')} are unavailable in "
                            f"{fields.get('requested', '?')}, so {fields.get('face', '?')} is used",
                            fields.get("role", ""))

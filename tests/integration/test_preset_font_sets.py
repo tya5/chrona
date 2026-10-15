@@ -93,14 +93,64 @@ def test_the_descriptor_is_the_deduplicated_union_of_the_named_sets():
     assert union["algorithm"] == "declared-metrics-v3" and "fontSet" not in union
 
 
-def test_without_the_cjk_package_a_declaring_preset_fails_loudly(starter, monkeypatch):
+@pytest.fixture(scope="module")
+def hiragino(tmp_path_factory):
+    """An installed CJK face under the name a Mac has: a renamed copy of the packaged Noto Sans JP."""
+    from tests.integration.test_installed_fonts import CJK_FONTS, renamed
+
+    root = tmp_path_factory.mktemp("installed-cjk")
+    for weight, name in ((400, "regular"), (700, "bold")):
+        renamed(root / f"h-{weight}.ttf", CJK_FONTS / f"noto-sans-jp-{name}-v1.ttf", "Hiragino Sans", weight)
+    return InstalledFontIndex([root])
+
+
+@pytest.fixture
+def no_provider(monkeypatch):
+    """A plain `pip install chrona`: no `chrona.font-resource-provider` entry point is registered."""
     from chrona.presentation.model import font_resources
 
     monkeypatch.setattr(font_resources, "entry_points", lambda **_kwargs: ())
-    with use_installed_fonts(NO_FONTS), pytest.raises((RenderFailed, StableFailure, Exception)) as caught:
-        _render(starter, "titlecard")
-    text = str(caught.value) + getattr(caught.value, "code", "") + getattr(caught.value, "message", "") + str(getattr(caught.value, "detail", ""))
-    assert "E_FONT_METRICS_UNAVAILABLE" in text and "chrona-fonts-noto-cjk" in text
+
+
+def _skipped(rendered) -> list[str]:
+    return [item for item in rendered.rendered.scene.diagnostics if item.startswith("W_FONT_FAMILY_SKIPPED")]
+
+
+@needs_cjk
+@pytest.mark.parametrize("identifier", DECLARING)
+def test_a_missing_provider_with_an_installed_cjk_face_renders_with_the_skip_warning(starter, no_provider, hiragino, identifier):
+    with use_installed_fonts(hiragino):
+        rendered = _render(starter, identifier)
+    assert rendered.artifact.content
+    assert any("role=font-set" in item and "requested=chrona.noto-sans+jp" in item and "skipped=chrona-fonts-noto-cjk" in item
+               for item in _skipped(rendered))
+
+
+@needs_cjk
+@pytest.mark.parametrize("identifier", DECLARING)
+def test_a_missing_provider_and_no_cjk_face_still_refuses_the_glyph(starter, no_provider, identifier):
+    root = starter if identifier == "titlecard" else Path(__file__).resolve().parents[2] / "examples" / "halcyon-1"
+    with use_installed_fonts(NO_FONTS), pytest.raises(RenderFailed) as caught:
+        render_draft(DraftRenderRequest(project=root / "project.yaml", actual=root / "actual.yaml",
+                                        target_kind="svg", preset=identifier))
+    assert "E_FONT_GLYPH_UNAVAILABLE" in caught.value.code + caught.value.message
+
+
+@needs_cjk
+@pytest.mark.parametrize("identifier", DECLARING)
+def test_a_present_provider_is_unchanged_and_not_reported_as_skipped(starter, hiragino, identifier):
+    with use_installed_fonts(hiragino):
+        rendered = _render(starter, identifier)
+    assert not [item for item in _skipped(rendered) if "role=font-set" in item]
+    with use_installed_fonts(NO_FONTS):
+        assert _render(starter, identifier).artifact.content
+
+
+def test_a_missing_provider_only_drops_its_assets_from_the_descriptor():
+    base = {"algorithm": "declared-metrics-v3", "missingFont": "diagnose", "assets": []}
+    kept = draft_font_metrics(("chrona.noto-sans+jp",), base, frozenset({"chrona-fonts-noto-cjk"}))
+    families = {item["family"] for item in kept["assets"]}
+    assert "Noto Sans JP" not in families and "Noto Sans" in families
 
 
 @needs_cjk
