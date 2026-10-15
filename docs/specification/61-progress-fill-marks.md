@@ -29,12 +29,22 @@ does not gain a progress inset; no separate legend entry is inferred.
 
 ## 2. Layout and Scene boundary
 
-Layout receives the selected fraction and completed host mark bounds.  It
-creates one renderer-neutral `progress-fill:<host-id>` Rect whose inline extent
-is the host extent multiplied by the fraction and whose block bounds equal the
-host's.  It owns rounding, clipping, and zero-width omission.  The progress
-submark is optional and never displaces text, changes collision policy, or
-causes a label fallback.
+Layout receives the selected fraction and completed host mark bounds. It creates
+one renderer-neutral `progress-fill:<host-id>` submark whose inline extent is the
+original host extent multiplied by the fraction and whose block bounds equal the
+host's. For a native Rect host this remains a Rect; for a host whose Scene identity
+is split across painted glyph parts, Layout completes a Symbol contour by
+intersecting the fraction region with the nonzero-winding union of the host's
+filled parts. A stroke-only point glyph has no fillable interior and produces no
+progress submark. Layout owns rounding, clipping, and zero-width omission. The
+submark is optional and never displaces text, changes collision policy, or causes
+a label fallback.
+
+Every progress placement carries its typed logical `host_placement_id`, independent
+of `clip_host_id`. A native rectangle may retain a clip-host relation; a glyph
+progress contour is already clipped by Layout and has no Scene clip host. Explicit
+window clipping intersects the original fraction region with the visible completed
+host; it never rescales the fraction to the shortened visible extent.
 
 Scene projects that completed placement under the closed `progressFill`
 semantic binding.  Theme resolves its paint independently from the host and

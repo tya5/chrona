@@ -312,6 +312,7 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
             role_geometries=role_geometries, text_line_block=text_line_block,
             mark_band_allocation=mark_band_allocation,
             row_text_blocks=row_text_blocks,
+            as_of=request.surface_content.as_of,
         )
         headers = sum(bool(row.group_id) and bool(group_header_size)
                       and (index == 0 or review_row_values[index - 1].group_id != row.group_id)
@@ -411,7 +412,8 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
               if lane_subtracks is not None else
               place_mark_tracks(review_rows=review_row_values, row_placements=raw_rows,
                                 mark_block_size=mark_block_size, role_geometries=role_geometries,
-                                mark_band_allocation=mark_band_allocation))
+                                mark_band_allocation=mark_band_allocation,
+                                as_of=request.surface_content.as_of))
     return SurfaceBaseGeometry(
         request, projection, layout_manifest, measured_sources, metric_values, decisions,
         slots, by_source, table, timeline,

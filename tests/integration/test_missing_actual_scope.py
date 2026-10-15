@@ -56,25 +56,21 @@ def _marks(rendered, prefix: str) -> dict[str, tuple]:
             if item.scene_id.startswith(prefix + ":")}
 
 
-def test_by_default_a_due_unobserved_span_and_gate_are_marked_and_the_open_actual_is_drawn(tmp_path):
+def test_by_default_a_due_unobserved_span_and_gate_are_marked_and_all_started_actuals_are_drawn(tmp_path):
     rendered = _render(tmp_path, None)
     missing, actual = _marks(rendered, "missing-actual"), _marks(rendered, "actual")
     assert set(missing) == {"overdue", "gate"}
-    # Only an Actual that declares `openUntil: asOf` draws an open actual; the others are incomplete observations.
-    assert set(actual) == {"running", "finished", "explicit"}
+    assert set(actual) == {"running", "started", "stalled", "noprogress", "finished", "explicit"}
 
 
-def test_in_progress_marks_only_the_started_span_from_its_actual_start_to_as_of(tmp_path):
+def test_in_progress_scope_does_not_reclassify_recorded_actuals(tmp_path):
     rendered = _render(tmp_path, "in-progress")
     missing, actual = _marks(rendered, "missing-actual"), _marks(rendered, "actual")
 
-    # The owner's rule: started (on or before as-of), unfinished and progress below 1 or absent is in progress,
-    # `openUntil: asOf` or not (and `openUntil` alone is enough, even at progress 1); at progress 1 without a
-    # finish or `openUntil` it is not, nor is a span that has not started. No mark on the overdue span or the gate.
-    assert set(missing) == {"running", "started", "noprogress", "explicit"}
-    assert set(actual) == {"finished"}
-    assert not {"stalled", "future", "overdue", "gate"} & set(missing)
-    left, _, width, _ = missing["running"]
+    assert set(missing) == set()
+    assert set(actual) == {"running", "started", "stalled", "noprogress", "finished", "explicit"}
+    assert "future" not in actual
+    left, _, width, _ = actual["running"]
     planned = next(item for item in rendered.surface.primitives if item.scene_id.startswith("planned:") and item.scene_id.endswith(":running"))
     day = planned.bounds[2] / 40  # one calendar day, from the planned 40-day span
     assert left == pytest.approx(planned.bounds[0] + 7 * day, abs=0.05)  # 9 Feb is 7 days after 2 Feb
@@ -84,11 +80,16 @@ def test_in_progress_marks_only_the_started_span_from_its_actual_start_to_as_of(
 def test_in_progress_with_lane_rows_draws_the_same_marks_as_automatic_rows(tmp_path):
     lanes = _render(tmp_path, "in-progress", rows="lanes")
     missing, actual = _marks(lanes, "missing-actual"), _marks(lanes, "actual")
-    assert set(missing) == {"running", "started", "noprogress", "explicit"}
-    assert set(actual) == {"finished"}
-    assert not {"stalled", "future", "overdue", "gate"} & set(missing)
+    assert set(missing) == set()
+    assert set(actual) == {"running", "started", "stalled", "noprogress", "finished", "explicit"}
+    assert "future" not in actual
 
 
-def test_the_default_scope_with_lane_rows_is_unchanged_by_the_in_progress_inventory(tmp_path):
+def test_in_progress_scope_suppresses_missing_marks_but_keeps_started_actual_marks(tmp_path):
     first = _render(tmp_path, None, rows="lanes")
     assert set(_marks(first, "missing-actual")) == {"overdue", "gate"}
+    scoped_path = tmp_path / "scoped"
+    scoped_path.mkdir()
+    scoped = _render(scoped_path, "in-progress", rows="lanes")
+    assert set(_marks(scoped, "missing-actual")) == set()
+    assert set(_marks(scoped, "actual")) == {"running", "started", "stalled", "noprogress", "finished", "explicit"}

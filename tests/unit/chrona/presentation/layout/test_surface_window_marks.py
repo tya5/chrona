@@ -64,6 +64,8 @@ def test_progress_uses_original_fraction_and_intersects_visible_notched_host():
     host = batch.marks[0]
     assert progress.kind == "Symbol" and progress.path_commands
     assert progress.paint_clip == host.paint_clip
+    assert progress.clip_host_id == host.placement_id
+    assert progress.host_placement_id == host.placement_id
     # 60% of Jan 1..11 ends Jan 7, not 60% of the shortened Jan 5..9 host.
     right = max(px for command in progress.path_commands for px, _ in command.points)
     assert right == pytest.approx(coordinate_for_date(date(2026, 1, 7), base.scale))

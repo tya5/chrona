@@ -67,6 +67,33 @@ declare inclusive display on their date-range columns through the packaged
 resource authority (Spec 32 §4). Existing example Views are not rewritten;
 changed corpus cells and their causes must be listed with the migration.
 
+### 1.2 In-progress Actual observations (#1582)
+
+A selected interval Actual with `start` and no `finish` is in progress, independent
+of its `progress` value. The renderer-neutral Review semantics retain that source
+meaning; Layout draws the Actual mark from its observed start to the Actual Set's
+`asOf`. It does not synthesize an `actual.finish`. Where the View selects the
+existing Actual `progressFill`, the Theme's existing fill policy draws the declared
+fraction inside this Actual mark. A missing start remains an incomplete Actual and
+emits `W_LAYOUT_ACTUAL_INCOMPLETE`; a started Actual without an `asOf` uses the
+existing open-Actual as-of-required diagnostic/absence, and a zero-length cutoff
+retains its existing invalid-cutoff diagnostic/absence behavior.
+
+The open Actual's outline is the single Layout-completed duration path, not a
+milestone glyph fitted across the time interval. `milestoneSymbolActual` remains a
+point-only geometry choice. This keeps the progress-fill clip host identical to the
+completed open-span mark while leaving the Actual paint role unchanged. A multipart
+point glyph's Layout-completed progress contour retains its logical mark owner
+separately from any Scene clip host; this does not alias a glyph part as the mark.
+
+For a started open Actual, `finishDelta` is absent until `asOf` is past the planned
+exclusive end. Once past it, the canonical variance is `asOf` minus that end, so
+table and label consumers report the delay known at the cutoff. Missing-value text
+for an in-progress delta remains controlled by the View column's `missingBy`
+member; the packaged target-b, marquee, sunday, titlecard and yuya designs use
+`blank` for that state. A known variance takes precedence over that missing-state
+text. The `missingActualScope` policy cannot relabel a recorded Actual as missing.
+
 ## 2. Axis, groups, and layout
 
 The View continues to own its explicit temporal window. The profile may use two or

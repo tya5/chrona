@@ -465,6 +465,8 @@ Current-versus-Snapshot compares the Primary Project with an immutable named Sna
 
 Plan-versus-Actual compares planned placements from the Primary Project or named Snapshot with independent Actual observations. An observation has exactly one occurrence shape (an interval's `finish` is the exclusive end, the day after the last day, and MUST be after its `start`; otherwise the Actual Set is rejected when read as `E_ACTUAL_FINISH_NOT_AFTER_START` at `/body/observations/<i>/actual/finish`, naming the observation id and suggesting `finish: <start + 1 day>`): a point `at`, or an interval with one or both of `start`/`finish`, optionally progress. It has a positive `sequence`; v0.1 selects the latest sequence. Actuals MUST NOT automatically change planned dependencies, duration, forecast, or schedule.
 
+A selected span Actual with a `start` and no `finish` is an in-progress observation, independently of its progress value (including 0, 1, or no progress). When the Actual Set supplies an `asOf` strictly after the start, Layout draws its Actual facet from the observed start through that cutoff and the existing Theme `progressFill` policy may fill the declared fraction. The cutoff is not an Actual fact: implementations MUST NOT write or expose it as `actual.finish`. An absent start remains incomplete and cannot produce an Actual bar. A started Actual without an `asOf` uses the existing open-Actual as-of-required diagnostic/absence; a zero-length cutoff at/before start keeps its existing invalid-cutoff behavior (#1582).
+
 The View Projection MAY expose planned and actual endpoints, start/finish delta, progress, absent observation, and unmatched observation. Whether an actual delay triggers rescheduling belongs to a future scheduling or application policy.
 
 ### 8.3 Comparison Alignment
@@ -476,6 +478,7 @@ Comparison alignment MUST use stable IDs. A renamed title, regrouped object, or 
 | Baseline placement | Selected Actual | Requested facet | Result |
 |---|---|---|---|
 | span `[S, F)` | interval | `startDelta`, `finishDelta` | Signed calendar-day difference for each present endpoint |
+| span with Actual start and no finish | in-progress interval through Actual `asOf` | `finishDelta` | Absent before the planned exclusive end; otherwise signed calendar-day difference from that end to `asOf` |
 | point `A` | point `at` | `atDelta` | Signed calendar-day difference |
 | span | point | start/finish delta | Absent facet and `VIEW-COMPARISON-ENDPOINT-KIND` |
 | point | interval | `atDelta` | Absent facet and `VIEW-COMPARISON-ENDPOINT-KIND` |
@@ -492,21 +495,20 @@ The View derives one typed observation state (`recorded`, `due-unobserved`,
 planned due endpoint and explicit Actual `asOf`. Equality with `asOf` is due.
 All table, summary and Layout missing-Actual consumers use this projected
 state; a future unobserved item must not be called “Recorded”. An observed but
-incomplete Actual remains recorded, not missing. A start-based obligation or
-separate not-yet-due treatment requires a future versioned View policy.
+incomplete Actual remains recorded, not missing. A started span Actual with no
+finish is displayed through the explicit Actual `asOf` cutoff and uses that
+cutoff for finish variance once it passes the planned exclusive end. This does
+not synthesize an Actual finish or change missing-observation policy.
 
 A table column MAY declare `missingBy` (optional, #991): the text of an absent value by the item's observation state, each of `inProgress` (a span with an Actual start and no finish), `dueUnobserved`, `notYetDue` and `unavailable` taking `blank`, `em-dash`, `unknown` or an author-chosen literal `{text}` (#1288: one to eight characters with no control character, drawn exactly as written in the column's text role); a state not named keeps the column's `missing`, which takes the same `{text}` form. `affixes.missing` is unchanged and wraps whatever the absent text is, in every absent state, so it is not the way to mark one state only. A Delta column can thereby leave unobserved items blank and show a dash for in-progress ones. It changes only the text of an absent value (affixes still wrap it); without it every absent value reads `missing` as before. It applies to automatic and explicit rows, not to the fixed lane table.
 
 `comparison.missingActualScope` (optional; omitted or `due-unobserved` is the behaviour above,
-#991) selects which work the missing-Actual **mark** covers; the projected state and every table
-and summary count stay as above. `in-progress` marks only a span in progress at `asOf` (the
-owner's rule: an observed span with a `start` on or before `asOf`, no `finish`, and a `progress`
-that is absent or below 1; `openUntil: asOf` stays a sufficient explicit signal, even at progress 1;
-a span at progress 1 without a finish or `openUntil`, or one that has not started, is not in
-progress), drawn as a span from that start to `asOf` in place of its open Actual, and puts no mark
-on a due-unobserved span or on a gate. With lane rows the lane expected-mark inventory lists that
-mark (`missing-actual`) in place of the span's `actual` mark when the `missingActual` facet is
-selected, and a typed absence (`in-progress-empty-at-cutoff`) when `asOf` is not after the start (#1027).
+#991) selects the scope of the `missingActual` facet; it does not change observation truth. A
+started span Actual is recorded and is drawn as an Actual facet through `asOf`, never as a
+`missing-actual` mark, regardless of this member or progress. Its finish variance is absent before
+the planned end and uses `asOf` once that end has passed. Genuinely unobserved work remains
+subject to the selected missing-Actual scope. The selected Actual with an invalid zero-length
+cutoff remains absent with its established invalid-open-Actual diagnostic (#1582).
 
 ## 9. Annotations and Layout Intent
 
