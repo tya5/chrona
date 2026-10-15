@@ -9,7 +9,8 @@ from datetime import date, timedelta
 import pytest
 
 from chrona.core.figures import (
-    AsOfFact, FigureSpec, GroupStartFact, ObjectFact, PeriodFact, calendar_days_until, resolve_figures, working_days_in,
+    AsOfFact, FigureSpec, GroupStartFact, ObjectFact, PeriodFact, ProjectFinishFact,
+    calendar_days_until, resolve_figures, working_days_in,
     working_days_until)
 from chrona.core.periods import ResolvedPeriod
 from chrona.core.temporal import Calendar, advance
@@ -107,6 +108,29 @@ def _codes(result):
 def test_a_countdown_to_a_period_start_is_the_calendar_days_from_the_as_of():
     result = _resolve(FigureSpec("launch-countdown", "daysUntil", to=PeriodFact("window", "start")))
     assert dict(result.values) == {"launch-countdown": 63} and result.diagnostics == ()
+
+
+def test_days_until_project_last_planned_finish_uses_the_caller_gathered_fact():
+    result = resolve_figures((FigureSpec("countdown", "daysUntil", to=ProjectFinishFact()),),
+                             as_of=D("2027-08-20"), placements={}, periods=(), calendars={},
+                             default_calendar=None, project_last_finish=D("2027-10-22"))
+    assert dict(result.values) == {"countdown": 63} and result.diagnostics == ()
+
+
+def test_missing_project_last_planned_finish_is_diagnostic_not_zero():
+    result = resolve_figures((FigureSpec("countdown", "daysUntil", to=ProjectFinishFact(),
+                                         path="/body/figures/0"),),
+                             as_of=D("2027-08-20"), placements={}, periods=(), calendars={},
+                             default_calendar=None)
+    assert dict(result.values) == {}
+    assert _codes(result) == ["E_FIGURE_PROJECT_FINISH_MISSING"]
+    assert result.diagnostics[0].path == "/body/figures/0/to/project"
+
+
+def test_project_last_planned_finish_fact_uses_shared_view_grammar_parser():
+    from chrona.presentation.contracts.resources import _figure_fact
+
+    assert _figure_fact({"project": "lastPlannedFinish"}) == ProjectFinishFact()
 
 
 @pytest.mark.parametrize(("start", "end", "as_of", "expected"), [

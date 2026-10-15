@@ -72,6 +72,14 @@ persisted representation of a named Design Space point.  Its `id` is a useful
 human name; its authoritative meaning is the exact acquired resource identities
 and package version.  A preset does not need a duplicate flat dimension map.
 
+The existing preset/library versions optionally declare `summaryProfile`
+(#1535). The ordinary Summary Profile is copied and closed like other explicit
+members; `--summary` overrides it. It remains selected under an explicit Theme
+override. Titlecard reuses its existing design Summary, while the generic View
+binds countdown to `daysUntil({project: lastPlannedFinish})` and supplies the
+project-independent panel title `完了まで`. Presets without Summary have no
+consumer and retain their output.
+
 An implementation may expose a derived, immutable `PresentationDesignSummary`
 for inspection, gallery curation, GUI, or AI proposals.  It must be calculated
 only from the validated effective ordinary resources, use the taxonomy in

@@ -110,6 +110,7 @@ entries:
       theme: {id: titlecard, kind: theme, sourceRoot: designs/titlecard, sourcePath: theme.yaml}
       colorScheme: {id: titlecard, kind: color-scheme, sourceRoot: designs/titlecard, sourcePath: scheme.yaml}
       layout: {id: titlecard, kind: layout-profile, sourceRoot: designs/titlecard, sourcePath: layout.yaml}
+      summaryProfile: {id: halcyon-titlecard-countdown, kind: summary-profile, sourceRoot: designs/titlecard, sourcePath: summary.yaml}
       detailProfile: {id: halcyon-titlecard-legend, kind: review-detail-profile, sourceRoot: designs/titlecard, sourcePath: detail.yaml}
       iconCatalogs:
         - id: chrona-target-parts-v2026-10-09
