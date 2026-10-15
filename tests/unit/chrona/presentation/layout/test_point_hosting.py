@@ -91,6 +91,17 @@ def test_source_and_scenario_boundaries_are_not_crossed(span_kind, point_kind, s
     assert not _plan(projection).relations
 
 
+@pytest.mark.parametrize("kind,scenario", [("snapshot", None), ("scenario", "one")])
+def test_snapshot_and_scenario_points_can_use_their_own_source_host(kind, scenario):
+    span = _span(source_kind=kind, scenario_id=scenario)
+    point = _point(parent_id="a", source_kind=kind, scenario_id=scenario)
+    plan = _plan(_projection(span, point, rows=(_row("s", span), _row("p", point))))
+    assert len(plan.relations) == 1
+    assert plan.relations[0].facet == "planned"
+    assert plan.relations[0].point.instance.source_kind == kind
+    assert plan.relations[0].span.item.scenario_id == scenario
+
+
 def test_multiple_occurrences_require_a_unique_host_or_prefer_the_child_row():
     span, other = _span(item_id="first"), _span(item_id="second")
     point = _point(parent_id="a", item_id="point")

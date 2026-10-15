@@ -59,6 +59,20 @@ from chrona.presentation.model.info_diagnostics import (
 )
 
 
+def _stub_fragment_clears_physical_hosts(points, egress: ConnectorEgress, *, source: bool,
+                                         obstacles: SurfaceObstacleIndex) -> bool:
+    """Check a fallback fragment against mark obstacles, splitting only its endpoint corridor."""
+    if not egress.corridor_host_ids:
+        return True
+    parts = split_route_at_physical_corridors(points,
+        egress if source else None, None if source else egress)
+    physical_hosts = frozenset(egress.corridor_host_ids)
+    return all(not any(item.placement_id in physical_hosts and item.placement_id not in physical_ids
+                       for item in obstacles.collisions(ObstacleSegment(start, end), classes=("mark",),
+                           regions=("timeline", "group-header")))
+        for start, end, physical_ids in parts)
+
+
 @dataclass(frozen=True)
 class SurfaceRoutesContext:
     request: SurfaceLayoutRequest
@@ -770,8 +784,14 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                             geometry.target, None, marker_end, dependency_stroke)
                         if (all(hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 >= dependency_stroke
                                 for path in (outgoing, incoming) for a, b in zip(path, path[1:]))
-                                and clears_primary_marks(outgoing, dependency_stroke, frozenset(pair[0].host_ids))
-                                and clears_primary_marks(incoming, dependency_stroke, frozenset(pair[1].host_ids))):
+                                and clears_primary_marks(outgoing, dependency_stroke,
+                                    frozenset(pair[0].host_ids), source_egress=pair[0])
+                                and clears_primary_marks(incoming, dependency_stroke,
+                                    frozenset(pair[1].host_ids), target_egress=pair[1])
+                                and _stub_fragment_clears_physical_hosts(outgoing, pair[0], source=True,
+                                    obstacles=obstacles)
+                                and _stub_fragment_clears_physical_hosts(incoming, pair[1], source=False,
+                                    obstacles=obstacles)):
                             stub_choice = (pair, outgoing, incoming,
                                 orient_terminal(start, outgoing, pair[0].side, source=True),
                                 orient_terminal(end, incoming, pair[1].side, source=False))

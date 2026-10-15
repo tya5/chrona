@@ -9,7 +9,9 @@ from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacleIndex, segment_length_inside_rect,
 )
 from chrona.presentation.layout.routing import select_relation_route
+from chrona.presentation.layout.surface_routes import _stub_fragment_clears_physical_hosts
 from chrona.presentation.layout.surface_quality import MarkPlacement, PhysicalMarkHost
+from chrona.presentation.layout.obstacles import SurfaceObstacle
 
 
 def _span():
@@ -129,3 +131,34 @@ def test_unchanged_primary_crossing_is_rejected_by_final_acceptance_guard():
                                 for a, b in zip(path, path[1:])))
 
     assert result.selected_pair is None
+
+
+def test_stub_physical_check_is_inactive_without_explicit_host_corridor():
+    ordinary = ConnectorEgress("end", (0.0, 5.0), (2.0, 5.0), ("planned:gate",))
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("planned:gate", "mark", "timeline", ObstacleRect(-1, 3, 1, 7)))
+
+    assert _stub_fragment_clears_physical_hosts(((0.0, 5.0), (2.0, 5.0)), ordinary,
+        source=True, obstacles=obstacles)
+
+
+def test_source_stub_post_boundary_crossing_of_physical_span_is_rejected():
+    point = ConnectorEgress("end", (0.0, 5.0), (5.0, 5.0), ("planned:gate",),
+                            corridor_host_ids=("planned:span",))
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("planned:gate", "mark", "timeline", ObstacleRect(-1, 3, 1, 7)))
+    obstacles.add(SurfaceObstacle("planned:span", "mark", "timeline", ObstacleRect(1, 0, 5, 10)))
+
+    assert not _stub_fragment_clears_physical_hosts(((0.0, 5.0), (5.0, 5.0), (3.0, 5.0)),
+        point, source=True, obstacles=obstacles)
+
+
+def test_reciprocal_target_stub_post_boundary_crossing_of_hosted_point_is_rejected():
+    span = ConnectorEgress("start", (10.0, 5.0), (8.0, 5.0), ("planned:span",),
+                           corridor_host_ids=("planned:gate",))
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("planned:span", "mark", "timeline", ObstacleRect(10, 0, 20, 10)))
+    obstacles.add(SurfaceObstacle("planned:gate", "mark", "timeline", ObstacleRect(8, 3, 12, 7)))
+
+    assert not _stub_fragment_clears_physical_hosts(((14.0, 5.0), (8.0, 5.0), (10.0, 5.0)),
+        span, source=False, obstacles=obstacles)

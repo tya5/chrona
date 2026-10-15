@@ -40,6 +40,18 @@ def test_final_host_frame_gate_rejects_geometry_or_partition_drift(tmp_path, mon
     assert failure.value.code == "E_PRESENTATION_PLACEMENT_REQUIRED"
 
 
+def test_typeset_adapters_serialize_completed_hosted_geometry(tmp_path):
+    from chrona.presentation.renderers.v05_typeset import V05TikzRenderer, V05TypstRenderer
+    objects = {"host": sr.span("host", date(2026, 1, 1), 20),
+               "gate": {**sr.point("gate", date(2026, 1, 10)), "parent": "host"}}
+    off = _render(tmp_path / "off", objects, parts=_parts(host=False))
+    on = _render(tmp_path / "on", objects)
+    for renderer in (V05TikzRenderer(), V05TypstRenderer()):
+        before = renderer.render(off.surface).content
+        after = renderer.render(on.surface).content
+        assert after and after != before
+
+
 def _parts(*, host: bool = True, rows: str = "lanes"):
     parts = sr.bundle("executive-light")
     body = parts["view"]["body"]
