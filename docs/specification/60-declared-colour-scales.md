@@ -24,6 +24,11 @@ eligible role is `planned` member marks.  A scale domain is non-empty, unique,
 and ordered solely for stable legend reading order; no paint choice depends on
 position.
 
+The source also admits `{fieldRole: ...}` under
+[Spec 06 §6.2](06-view-model.md#62-semantic-field-references-1559). Availability
+is resolved against the primary Project before scale evaluation; a bound field
+still obeys this specification's ordinary domain and missing-value rules.
+
 ## 2. Total mapping and diagnostics
 
 For every View domain value, Theme must provide exactly one mapping to a Scheme

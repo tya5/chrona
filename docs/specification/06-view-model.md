@@ -208,6 +208,39 @@ an immutable render-review Context. Scheduling still sees every Core dependency.
 omission is not `W_LAYOUT_RELATION_SUPPRESSED`. The CLI documents the override
 in help and the first-project guide.
 
+### 6.2 Semantic field references (#1559)
+
+Where a View addresses an object field, it MAY use `{fieldRole: responsible}` or
+`{fieldRole: phase}` instead of the direct field key. This applies to table and
+lane-table column sources, color sources, icon encodings and `rows.laneKeys`.
+Grouping declares `by: {fieldRole: responsible}`, `fallback: objectType|none`
+and its ordinary `missing` label. The Project declares the role-to-field map
+(Spec 05 §10.1); entity fields and built-in/derived projection sources are not
+role targets. Role columns use the design's existing `field` column style.
+
+The primary Project's role declarations determine View policy. An undeclared
+role selects grouping's explicit fallback, omits its columns/optional color or
+icon encoding, or removes the role lane-key component (retaining `byObject`).
+Evaluation emits one `I_VIEW_FIELD_ROLE_UNBOUND` per role, with `count` and
+`sourceRefs` counting affected declarations, not rows. Ordinary tables with no
+remaining column reject with `E_VIEW_TABLE_COLUMNS_EMPTY`; an omitted
+`hierarchyColumn` is `E_VIEW_HIERARCHY_COLUMN_UNKNOWN`. No column is invented or
+silently substituted. Other target-reference validation remains unchanged.
+
+A declared role whose field is absent on an item retains the consumer's existing
+missing-value/domain behavior, not the undeclared-role fallback. Every item's
+role value uses its own source Project's mapping, including Snapshot/scenario
+items. Group entity IDs keep existing entity-title resolution; ordinary cells
+retain their existing value formatting. Grouping, color eligibility and icon
+selection retain their existing primary-item scope. Resolve these semantic
+facts before Layout; Scene and adapters do not look up roles.
+
+Existing View inputs without role references retain their behavior and bytes.
+The generic preset intentionally adopts role references: without Project roles,
+its visible output falls back, but its required info diagnostics are new input
+semantics, not suppressed to preserve an old Scene. Unmodified public Context
+outputs remain subject to the public SVG/Scene byte gate.
+
 ## 7. Temporal Window
 
 A View selects a temporal window independently from scheduling semantics. v0.1 allows

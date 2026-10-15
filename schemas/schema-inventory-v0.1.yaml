@@ -79,6 +79,7 @@ schemas:
       profileLegendLabel: "sha256:f7be3125a2038a14d7cd75b5ae3a7eeefaaf39698437bbbabfa6eb0163390469"
       profileSummaryLabel: "sha256:00404e686415370f1711c4d7acfa2905444d3cf23cef2e10c47d445ebe690f96"
       summarySlotSource: "sha256:9f0c93048c879c5ac3d6d5963ba6f2c5373f46f6696c2af20e294b03f8407e8c"
+      projectFieldReference: "sha256:ee9097153fb99fe8778991b2eb3b1ba255c705dde58cbedea8fe1c56c86ed691"
   - {file: presentation-preset-v0.1.schema.yaml, kind: presentation-preset, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: preset-library-v0.2.schema.yaml, kind: builtin-preset-library, state: live, consumers: [src/chrona/usecases/preset_library.py]}
   - {file: example-registry-v0.1.schema.yaml, kind: example-registry, state: live, consumers: [src/chrona/resources/__init__.py]}
@@ -139,6 +140,8 @@ schemas:
       monthLabelForm: "sha256:8e84803c4ff90e2e6163372510a03cecece9ceb714e7571723b9d638017af737"
       quarterLabelForm: "sha256:51ca08f50380128f3b58bf55a2ef3b9954781e327cd16dc4652995a116d2ae65"
       annotationPurpose: "sha256:6334d4284f2d7977d981b54609eb2eebdcd0cc24f3e2a490d6aa428391c7cccf"
+      projectFieldRole: "sha256:436a55cdd7ef53cdbf6e30d445032d0cb7ea7b3ef6b9276ebff2b46caab2e338"
+      fieldRoleGroupingFallback: "sha256:03836c55cd9b84ad3c627fb0b70210197b7d5214dc5621b216103059e4e94c0d"
       plannedActualFacet: "sha256:1661dd28bc389d4663f1ff8477c2fed047bcd140b3ccd88cd4e65d59d0f044fd"
       annotationSide: "sha256:8b7453e1c16755eed298aa09fc8d5702fb7a24359f4f90e5063d240725606ca9"
       annotationAlignment: "sha256:78e88eae1e0678883bce8130ce34bc068d2ec435da9e905ba651c4345078f058"

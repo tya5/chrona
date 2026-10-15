@@ -183,8 +183,14 @@ def _write_packaged_preset_contexts(root: Path, *, unsafe_source_root: str | Non
     ):
         layout_path = resources / f"designs/{identifier}/layout.yaml"
         layout_path.parent.mkdir(parents=True, exist_ok=True)
+        resolved_defaults = yaml.safe_load(defaults)
+        resolved_defaults["columnStyles"] = {"field": {
+            "missing": "em-dash", "align": "start", "width": "content",
+            "headerOrientation": "horizontal",
+        }}
         layout_path.write_text(
-            f"version: chrona/layout-profile/v0.10\nid: {identifier}\nviewDefaults: {defaults}\n",
+            yaml.safe_dump({"version": "chrona/layout-profile/v0.10", "id": identifier,
+                            "viewDefaults": resolved_defaults}, sort_keys=False),
             encoding="utf-8",
         )
         source_root = (unsafe_source_root if identifier == "design-two" and unsafe_source_root
@@ -211,10 +217,13 @@ def test_packaged_library_pairs_shared_view_with_every_declared_layout_default(t
     defaults = view_default_contexts(tmp_path)[view_path.resolve()]
     variants = effective_views(tmp_path)[view_path.resolve()]
 
-    assert defaults == ({"markerPresentation": {"kind": "asOf", "label": "FIRST"}}, {})
+    assert defaults[0]["markerPresentation"] == {"kind": "asOf", "label": "FIRST"}
+    assert "markerPresentation" not in defaults[1]
+    assert all(value["columnStyles"]["field"]["width"] == "content" for value in defaults)
     assert len(variants) == 2
     assert variants[0]["body"]["markers"][0]["label"] == "FIRST"
     assert "label" not in variants[1]["body"]["markers"][0]
+    assert all(value["body"]["tableColumns"][1]["width"] == "content" for value in variants)
     validator = schema_validator("view-v0.28.schema.yaml")
     assert validator.is_valid(variants[0])
     assert any(list(error.absolute_path) == ["body", "markers", 0] and "'label'" in error.message

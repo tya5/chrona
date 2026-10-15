@@ -38,6 +38,8 @@ from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMe
 from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import PresentationInfo, UnboundSummarySource
+from chrona.presentation.model.field_role_view import resolve_field_role_view
+from chrona.presentation.contracts.resources import ContractError
 from chrona.presentation.model.preset_target import PresetVisualProfileFallback
 from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
@@ -256,6 +258,10 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         ledger.read.add("previous-scene")
     project, view, layout = (render_closure.project.scheduler_input, render_closure.view.view,
                              render_closure.layout_profile.layout_input)
+    try:
+        view, field_role_info = resolve_field_role_view(view, project)
+    except ContractError as error:
+        raise RenderFailed(error.diagnostic_id, error.detail, "view", error.source_ref) from error
     profile_connections = resolve_profile_connections(
         view, render_closure.summary_profile.summary if render_closure.summary_profile else None,
         render_closure.detail_profile.detail if render_closure.detail_profile else None,
@@ -263,7 +269,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     view = profile_connections.view
     omitted_metrics = frozenset((item.panel_index, item.metric_index)
                                for item in profile_connections.omissions)
-    profile_info = tuple(UnboundSummarySource(item.panel_id, item.metric_id,
+    profile_info = field_role_info + tuple(UnboundSummarySource(item.panel_id, item.metric_id,
                                               item.source_kind, item.source_name)
                          for item in profile_connections.omissions)
     theme = render_closure.resolved_theme.resolved_input

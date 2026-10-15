@@ -261,6 +261,7 @@ class ViewLaneKeys:
 
     field: str | None = None
     by_object: FrozenDict | None = None
+    field_role: str | None = None
 
 
 @dataclass(frozen=True)
@@ -344,6 +345,8 @@ class ViewGrouping:
     order_by: str | None = None
     header: ViewGroupHeader | None = None
     tint: ViewGroupTint | None = None
+    field_role: str | None = None
+    fallback: str | None = None
 
 
 @dataclass(frozen=True)
@@ -529,6 +532,7 @@ class ReviewDetailProfileContract(ResourceContract):
 class ProjectContract(ResourceContract):
     scheduler_input: FrozenDict
     extensions: tuple[FrozenDict, ...]
+    field_roles: FrozenDict = field(default_factory=FrozenDict)
 
 
 @dataclass(frozen=True)
@@ -977,7 +981,10 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                               tuple(str(item) for item in raw_include.get("objectTypes", ())),
                               tuple(str(item) for item in raw_exclude.get("objectTypes", ()))) if raw_selection else None
     raw_grouping = body.get("grouping")
-    grouping = (ViewGrouping(str(raw_grouping["by"]), str(raw_grouping["field"]) if "field" in raw_grouping else None,
+    raw_grouping_by = raw_grouping.get("by") if raw_grouping else None
+    field_role = raw_grouping_by.get("fieldRole") if isinstance(raw_grouping_by, Mapping) else None
+    grouping = (ViewGrouping("field" if field_role is not None else str(raw_grouping_by),
+                             str(raw_grouping["field"]) if "field" in raw_grouping else None,
                              tuple(str(item) for item in raw_grouping.get("order", ()))
                              if not isinstance(raw_grouping.get("order"), FrozenDict) else (),
                              str(raw_grouping["missing"]) if "missing" in raw_grouping else None,
@@ -985,7 +992,9 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                              raw_grouping.get("depth"),
                              str(raw_grouping["rollup"]) if "rollup" in raw_grouping else None,
                              str(raw_grouping["order"]["by"]) if isinstance(raw_grouping.get("order"), FrozenDict) else None,
-                             _group_header(raw_grouping), _group_tint(raw_grouping))
+                             _group_header(raw_grouping), _group_tint(raw_grouping),
+                             str(field_role) if field_role is not None else None,
+                             str(raw_grouping["fallback"]) if "fallback" in raw_grouping else None)
                 if raw_grouping else None)
     raw_ordering = body.get("ordering")
     ordering = (ViewOrdering(str(raw_ordering["by"]), str(raw_ordering["direction"]), str(raw_ordering["tieBreak"]))
@@ -1058,8 +1067,9 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
              if "laneTable" in rows else None),
             (tuple(str(item) for item in rows.get("packing", ("explicit", "attached")))
              if version == "chrona/view/v0.28" else ()),
-            (ViewLaneKeys(str(rows["laneKeys"]["field"]) if "field" in rows["laneKeys"] else None,
-                          rows["laneKeys"].get("byObject"))
+            (ViewLaneKeys(field=str(rows["laneKeys"]["field"]) if "field" in rows["laneKeys"] else None,
+                          by_object=rows["laneKeys"].get("byObject"),
+                          field_role=str(rows["laneKeys"]["fieldRole"]) if "fieldRole" in rows["laneKeys"] else None)
              if version == "chrona/view/v0.28" and "laneKeys" in rows else None),
             _key_row_title(rows),
         ), body.get("axis"),
@@ -1284,7 +1294,7 @@ def _group_tint(raw_grouping: Any) -> ViewGroupTint | None:
     raw = raw_grouping.get("tint")
     if raw is None:
         return None
-    if raw_grouping["by"] not in ("field", "objectType"):
+    if _grouping_by_kind(raw_grouping) not in ("field", "objectType"):
         raise ContractError("E_VIEW_GROUP_TINT_UNUSABLE", "tint needs groups that have values (grouping by field or objectType)")
     domain = raw.get("domain", "firstAppearance")
     return ViewGroupTint(str(raw["scale"]), None if domain == "firstAppearance" else tuple(str(item) for item in domain))
@@ -1325,9 +1335,9 @@ def _group_header(raw_grouping: Any) -> ViewGroupHeader | None:
     header = ViewGroupHeader(str(raw["text"]), str(raw.get("ordinal", "arabic")),
                              str(raw["first"]) if "first" in raw else None,
                              str(secondary["entityField"]) if secondary is not None else None)
-    if raw_grouping.get("presentation") != "header" or raw_grouping["by"] not in {"field", "objectType"}:
+    if raw_grouping.get("presentation") != "header" or _grouping_by_kind(raw_grouping) not in {"field", "objectType"}:
         raise ContractError("E_VIEW_GROUP_HEADER_UNUSABLE", "header needs presentation header and grouping by field or objectType")
-    if header.secondary_field is not None and raw_grouping["by"] != "field":
+    if header.secondary_field is not None and _grouping_by_kind(raw_grouping) != "field":
         raise ContractError("E_VIEW_GROUP_HEADER_UNUSABLE", "secondary needs grouping by field (an entity)")
     used: set[str] = set()
     try:
@@ -1339,6 +1349,14 @@ def _group_header(raw_grouping: Any) -> ViewGroupHeader | None:
     if ("secondary" in used) != (header.secondary_field is not None):
         raise ContractError("E_VIEW_GROUP_HEADER_TEMPLATE", "{secondary} and the secondary declaration must appear together")
     return header
+
+
+def _grouping_by_kind(raw_grouping: Mapping[str, Any]) -> str:
+    """Normalize the role-backed grouping form to its ordinary field-group semantics."""
+    declared = raw_grouping.get("by")
+    if isinstance(declared, Mapping) and "fieldRole" in declared:
+        return "field"
+    return str(declared)
 
 
 def _key_row_title(rows: Mapping[str, Any]) -> str | None:
@@ -1401,7 +1419,9 @@ def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping
             raise ContractError("E_VIEW_COLUMN_ZERO",
                                 f"column {column.id!r} declares zero: {column.zero}, so its format must be signedDays or signedNumber")
         if column.transform is not None:
-            from_field_or_title = column.source == "title" or (isinstance(column.source, Mapping) and "field" in column.source)
+            from_field_or_title = (column.source == "title" or
+                                   (isinstance(column.source, Mapping)
+                                    and bool({"field", "fieldRole"} & set(column.source))))
             if not from_field_or_title or column.format != "text":
                 raise ContractError("E_VIEW_COLUMN_TRANSFORM",
                                     f"column {column.id!r} declares transform: {column.transform}, so its source must be a field or title "
@@ -1528,7 +1548,10 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
         extensions = frozen.get("extensions", ())
         if not isinstance(extensions, (tuple, FrozenList)) or not all(isinstance(item, FrozenDict) for item in extensions):
             raise _closure_kind_error(identity, "extension object list", extensions)
-        return ProjectContract(identity, version, frozen, tuple(extensions))
+        field_roles = frozen.get("fieldRoles", FrozenDict())
+        if not isinstance(field_roles, FrozenDict):
+            raise _closure_kind_error(identity, "frozen Project field role mapping", field_roles)
+        return ProjectContract(identity, version, frozen, tuple(extensions), field_roles)
     if identity.kind == "view":
         return ViewContract(identity, version, _view_input(body, version))
     if identity.kind == "theme":

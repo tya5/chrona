@@ -326,6 +326,33 @@ class UnboundSummarySource:
             ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
+@dataclass(frozen=True)
+class UnboundFieldRole:
+    """Count role-bound View declarations unavailable on the primary Project."""
+
+    role: str
+    source_refs: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if (not self.role or not self.source_refs or len(set(self.source_refs)) != len(self.source_refs)
+                or any(not path.startswith("/body/") for path in self.source_refs)):
+            raise _diagnostic_error("UnboundFieldRole requires a role and distinct View declaration paths")
+
+    @property
+    def code(self) -> str:
+        return "I_VIEW_FIELD_ROLE_UNBOUND"
+
+    @property
+    def count(self) -> int:
+        return len(self.source_refs)
+
+    def payload(self) -> dict[str, object]:
+        return {"fieldRole": self.role, "count": self.count, "sourceRefs": list(self.source_refs)}
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))
+
+
 PresentationInfo = (SuppressedPlotLabels | DeadlineCaptionsDropped | PaintOmission | RelationRoutingSummary | RelationSearchBudgetHit
                     | RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession
-                    | RelationHintReceipt | RelationHintSummary | UnboundSummarySource)
+                    | RelationHintReceipt | RelationHintSummary | UnboundSummarySource | UnboundFieldRole)

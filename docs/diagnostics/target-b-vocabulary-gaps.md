@@ -6,8 +6,8 @@ Reading rule. The reference is the HALCYON mock (26 work packages in six groups)
 
 | # | Name | Reference shows | Chrona draws | Missing capability | Tracked in |
 | --- | --- | --- | --- | --- | --- |
-| 1 | `group-names-by-object-type` | six bands named by team, each tinted (`Spacecraft bus` blue, `Imaging payload` green ...) | two bands named `point` and `span`, tinted blue and green. The tint now works for an `objectType` grouping (#1497); the names are the object types, lowercase | a Project-declared standard grouping field (no standard owner field in the project model) | #429 (#1497); #883 |
-| 2 | `phase-column-absent` | columns `Work package`, `Phase` (muted), `Δ finish` | `Task`, `Δ finish` only | none: `field: phase` column exists; generic View names none | bundle-side |
+| 1 | `group-names-by-object-type` | six bands named by team, each tinted (`Spacecraft bus` blue, `Imaging payload` green ...) | without Project roles, `point`/`span` fallback; scratch `fieldRoles.responsible: owner` shows six team bands plus `Unassigned` for three ownerless group objects | delivered: semantic responsibility binding; committed Project adoption is reviewer-owned | #1559; #883 |
+| 2 | `phase-column-absent` | columns `Work package`, `Phase` (muted), `Δ finish` | generic role-bound `Phase` column; omitted when the role is undeclared, displayed in the scratch role-bound PNG | delivered: `fieldRoles.phase` and `{fieldRole: phase}`; no project field in the generic View | #1559 |
 | 3 | `notes-rail-absent` | `NOTES` rail: three boxes (RISK red, NOTE blue) with dotted leaders | no rail; no annotation bindings in the generic View | none: rail is delivered (#1049, #1051, #1064) | bundle-side |
 | 4 | `launch-window-absent` | faint blue band Oct to Nov, label `launch window` | no band, no label | none: named periods delivered (#582) | bundle-side |
 | 5 | `baseline-ghost-absent` | dashed baseline outline beside the plan bar on the changed rows | no ghost; the legend still lists `baseline`. `baselineMarks: ghost-when-changed` draws nothing without a Snapshot (by design, #1492); no diagnostic | a draft-render way to supply a baseline Snapshot | #1533 |

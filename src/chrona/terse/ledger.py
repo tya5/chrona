@@ -15,6 +15,7 @@ LEDGER: dict[str, tuple[str, str]] = {
     "top.version": (MAPPED, "emitted as timeline/v0.7"),
     "top.project": (MAPPED, "`project` statement"),
     "top.calendars": (MAPPED, "`calendar` statements"),
+    "top.fieldRoles": (YAML_ONLY, "a Project-scoped field-role map, not identity, hierarchy, dates or dependencies"),
     "top.entities": (YAML_ONLY, "another top-level section, not a scalar"),
     "top.objects": (MAPPED, "object statements"),
     "top.relations": (MAPPED, "`after` clauses"),

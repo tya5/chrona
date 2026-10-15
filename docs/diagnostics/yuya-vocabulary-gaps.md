@@ -7,7 +7,7 @@ Reading rule. The reference is the HALCYON mock (26 work packages in six groups)
 | # | Name | Reference shows | Chrona draws | Missing capability | Tracked in |
 | --- | --- | --- | --- | --- | --- |
 | 1 | `icon-catalogue-carried-by-entry` | lantern gates, seigaiha, scroll and seal artwork | drawn because the library entry pins `chrona-target-parts` and `chrona-annotation-parts`; a copy or another entry that omits them loses the artwork | none: the entry carries it. A user preset must list both catalogues | none |
-| 2 | `vertical-group-tags` | six plates `壱 · 機体` ... `陸 · 運用`, ordinal and bilingual title | two tan plates reading `point` and `span` vertically; no ordinal, no kanji | a Project-declared standard grouping field; ordinal tag text not investigated | #429; #883 |
+| 2 | `vertical-group-tags` | six plates `壱 · 機体` ... `陸 · 運用`, ordinal and bilingual title | plates use responsibility entity titles when the Project declares the role, retaining object-type fallback otherwise | responsibility mechanism delivered; ordinal/bilingual wording and Project adoption remain reviewer-owned | #1559; #883 |
 | 3 | `group-header-rows` | light bands with the group name over its rows | none: group rows are untinted (owner choice B, 2026-10-06) | none: deliberate | none |
 | 4 | `scroll-notes-absent` | three hanging-scroll notes with 危 / 記 seals | no notes; no `annotationBindings` in the generic View | none: delivered (#848, #1167) | bundle-side |
 | 5 | `launch-window-absent` | seigaiha band with `出航の窓 · LAUNCH WINDOW` | no band | none: delivered (#582, #1178) | bundle-side |

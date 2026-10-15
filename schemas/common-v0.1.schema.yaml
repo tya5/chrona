@@ -581,3 +581,19 @@ $defs:
     type: object
     propertyNames: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationPurpose"}
     additionalProperties: {$ref: "#/$defs/annotationPlacementPolicy"}
+  projectFieldReference:
+    description: "One explicit project object-field name or one closed project field role."
+    examples: [{field: owner}, {fieldRole: responsible}]
+    oneOf:
+      - description: "A direct Project object-field name, preserving the original field-reference form."
+        type: object
+        required: [field]
+        additionalProperties: false
+        properties:
+          field: {description: "Project object field name.", type: string, minLength: 1}
+      - description: "A closed semantic role resolved through the primary Project's fieldRoles map."
+        type: object
+        required: [fieldRole]
+        additionalProperties: false
+        properties:
+          fieldRole: {description: "Project-level semantic field role.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/projectFieldRole"}

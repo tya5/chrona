@@ -128,6 +128,10 @@ a field encoding `{field, domain: {value: set:name}, unknown: reject}`. It has
 `side: leading|trailing` (default leading) and `decorative: boolean`. A target
 allows at most one visual per side. Theme never names an icon.
 
+An encoding may use `fieldRole` instead of `field` under
+[Spec 06 §6.2](06-view-model.md#62-semantic-field-references-1559); existing
+selected-primary-item and domain rules are unchanged once the role is bound.
+
 The successor vocabulary admits all current text placements: document title,
 table column header, member/plot label, group header/detail, annotation text,
 project note/note index, legend label, summary header/metric/caption, milestone
