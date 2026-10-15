@@ -22,7 +22,9 @@ body:
       - span
       - point
   grouping:
-    by: objectType
+    by: {fieldRole: responsible}
+    fallback: objectType
+    missing: Unassigned
   ordering:
     by: plannedStart
     direction: ascending
@@ -64,6 +66,8 @@ body:
     align: start
     width: {minmax: {min: content, max: {fr: 1}}}
     headerOrientation: horizontal
+  - id: Phase
+    source: {fieldRole: phase}
   - id: Δ finish
     source:
       facet: finishDelta
