@@ -39,5 +39,5 @@ def test_legacy_caption_wording_preserves_metric_identity_and_value():
 def test_info_preserves_delimiters_and_unicode_in_admitted_ids():
     fact = UnboundSummarySource("panel;=雪", "metric;=雪", "slot", "slot;=雪")
     code, payload = fact.scene_diagnostic().split(":", 1)
-    assert code == "I_SUMMARY_SLOT_UNBOUND"
+    assert code == "W_SUMMARY_SLOT_UNBOUND"
     assert json.loads(payload) == {"panel": "panel;=雪", "metric": "metric;=雪", "slot": "slot;=雪"}

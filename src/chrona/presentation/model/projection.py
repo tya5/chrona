@@ -9,6 +9,7 @@ from enum import StrEnum
 from typing import Any
 
 from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
+from chrona.core.diagnostics import Diagnostic
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.contracts.resources import ViewInput
 from chrona.presentation.review.lane_membership import (
@@ -217,6 +218,7 @@ class ReviewProjection:
     figures: tuple[tuple[str, int], ...] = ()  # (figure id, days) the Core resolved from the View's `figures` (#586)
     deadlines: tuple[ReviewDeadline, ...] = ()  # the Project deadlines the View's `deadlines` shows, in Project order (#822)
     group_figures: tuple[tuple[str, tuple[tuple[str, int], ...]], ...] = ()
+    unavailable_figures: tuple[Diagnostic, ...] = ()
     window_mode: WindowMode = WindowMode.SELECTED_PLANNED
 
 

@@ -226,7 +226,7 @@ $defs:
       target: {description: "Only planned marks are colour-encoded.", const: planned}
   profileFigureFact:
     description: "One existing figure fact grammar, shared by explicit View figures and profile bindings."
-    examples: [asOf, {period: launch, side: start}, {object: task, endpoint: end}, {group: firstPlannedStart}]
+    examples: [asOf, {period: launch, side: start}, {object: task, endpoint: end}, {group: firstPlannedStart}, {project: lastPlannedFinish}]
     oneOf:
       - {description: "The Actual Set as-of date.", const: asOf}
       - description: "A named Project period boundary or final covered calendar day."
@@ -248,6 +248,11 @@ $defs:
         required: [group]
         additionalProperties: false
         properties: {group: {description: "Select the first planned start in the current View group.", const: firstPlannedStart}}
+      - description: "The latest planned finish among selected Project items, supplied by the caller."
+        type: object
+        required: [project]
+        additionalProperties: false
+        properties: {project: {description: "Select the latest planned finish among selected items.", const: lastPlannedFinish}}
   profileFigureIdentity: {description: "A non-empty identity for a View figure or a profile binding name, preserving the existing identifier grammar.", type: string, minLength: 1}
   profileFigureScope: {description: "Resolve globally (default) or once for each current View group.", enum: [global, group]}
   profileFigureDays: {description: "Count calendar days or working days of the figure's calendar.", enum: [calendar, working]}

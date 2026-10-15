@@ -32,6 +32,7 @@ properties:
           colorScheme: {description: "Preset Color Scheme resource.", $ref: "#/$defs/resource"}
           layout: {description: "Preset Layout Profile resource.", $ref: "#/$defs/resource"}
           detailProfile: {description: "Optional review-detail profile (for example a legend) applied unless an explicit detail profile is given.", $ref: "#/$defs/detailProfileResource"}
+          summaryProfile: {description: "Optional Summary Profile, overridden by an explicit summary input.", $ref: "#/$defs/summaryProfileResource"}
           iconCatalogs:
             description: "Optional ordered icon catalogs closed by this preset; no catalog discovery occurs."
             type: array
@@ -77,6 +78,15 @@ $defs:
       id: {description: "Stable review-detail profile identifier.", type: string, minLength: 1}
       kind: {description: "The only permitted detail resource kind.", const: review-detail-profile}
       path: {description: "Safe relative path to the review-detail profile document.", examples: ["detail.yaml"], minLength: 1, $ref: "urn:chrona:common-v0.1#/$defs/safeRelativePath"}
+  summaryProfileResource:
+    type: object
+    description: "Pinned Summary Profile supplied by the preset."
+    required: [id, kind, path]
+    additionalProperties: false
+    properties:
+      id: {description: "Stable Summary Profile identifier.", type: string, minLength: 1}
+      kind: {description: "The only permitted summary resource kind.", const: summary-profile}
+      path: {description: "Safe relative path to the Summary Profile document.", examples: ["summary.yaml"], minLength: 1, $ref: "urn:chrona:common-v0.1#/$defs/safeRelativePath"}
   iconCatalogResource:
     type: object
     description: "Pinned icon catalog resource supplied by the preset."

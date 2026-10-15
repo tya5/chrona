@@ -36,6 +36,13 @@ member in place to Layout Profile v0.10 under Spec 56 section 3.2.
 
 ## 2. Resource and reuse model
 
+For explicitly absent Summary content (#1535), Layout removes source slots
+and ancestor containers whose content children are all removed, including their
+frames. Required/fixed sizing does not fabricate content. Mixed-content parents
+and unrelated decorative nodes remain. This is typed semantic absence, not an
+inference from empty strings or zero geometry. Internal tree normalization
+preserves authored resource identity and remaps resolved distance paths.
+
 The canonical resource is `chrona/layout-profile/v0.4` as defined by the replacement
 schema. A resource contains exactly one of:
 

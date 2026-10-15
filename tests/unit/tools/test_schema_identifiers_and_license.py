@@ -66,8 +66,9 @@ ID_SITES: dict[tuple[str, str], int] = {
     ("example-registry-v0.1.schema.yaml", "slug"): 1,
     ("layout-profile-v0.10.schema.yaml", "layout-profile-id"): 7,
     ("presentation-materialization-receipt-v0.1.schema.yaml", "non-empty-string"): 1,
-    ("presentation-preset-v0.1.schema.yaml", "non-empty-string"): 4,
-    ("preset-library-v0.2.schema.yaml", "non-empty-string"): 5,
+    # Optional Summary members preserve the referenced resource's opaque id grammar (#1535).
+    ("presentation-preset-v0.1.schema.yaml", "non-empty-string"): 5,
+    ("preset-library-v0.2.schema.yaml", "non-empty-string"): 6,
     ("preset-library-v0.2.schema.yaml", "portable-name"): 1,
     ("preset-library-v0.2.schema.yaml", "slug"): 1,
     ("profile-v0.3.schema.yaml", "non-empty-string"): 1,

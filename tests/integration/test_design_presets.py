@@ -15,7 +15,8 @@ from chrona.usecases.preset_library import list_builtin_presets
 ROOT = Path(__file__).resolve().parents[2]
 RESOURCES = ROOT / "src/chrona/resources"
 DESIGNS = ("marquee", "sunday", "target-b", "titlecard", "yuya")
-MEMBER_FILES = {"theme": "theme.yaml", "colorScheme": "scheme.yaml", "layout": "layout.yaml", "detailProfile": "detail.yaml"}
+MEMBER_FILES = {"theme": "theme.yaml", "colorScheme": "scheme.yaml", "layout": "layout.yaml",
+                "detailProfile": "detail.yaml"}
 
 
 def _run(monkeypatch, capsys, *argv):
@@ -56,16 +57,25 @@ def test_copy_writes_the_design_files_unchanged_in_content_and_nothing_else_extr
     destination = tmp_path / name
     result = json.loads(_run(monkeypatch, capsys, "preset", "copy", name, "--output", str(destination)))
     assert result["status"] == "ok"
-    for filename in MEMBER_FILES.values():  # the same document, written without YAML anchors and aliases
+    optional_members = {"summaryProfile": "summary.yaml"} if "summaryProfile" in _entry(name)["members"] else {}
+    expected_members = MEMBER_FILES | optional_members
+    for filename in expected_members.values():  # the same document, written without YAML anchors and aliases
         source = (RESOURCES / "designs" / name / filename).read_bytes()
         assert safe_load(source) == safe_load((destination / filename).read_bytes())
         assert not any(isinstance(event, yaml.AliasEvent) for event in yaml.parse((destination / filename).read_bytes()))
+    if name == "titlecard":
+        assert (destination / "summary.yaml").read_bytes() == (RESOURCES / "designs/titlecard/summary.yaml").read_bytes()
     assert (destination / "view.yaml").read_bytes() == (RESOURCES / "presets/bundles/design-default/view.yaml").read_bytes()
     written = {path.relative_to(destination).as_posix() for path in destination.rglob("*") if path.is_file()}
     catalogs = {f"catalogs/{item['id']}.{suffix}" for item in _entry(name)["members"].get("iconCatalogs", ())
                 for suffix in ("yaml", "NOTICE")}
     # the same shape `preset copy` writes for every other preset: view, theme, scheme, layout, detail, preset.yaml, catalogs
-    assert written == {"preset.yaml", "view.yaml", *MEMBER_FILES.values(), *catalogs}
+    assert written == {"preset.yaml", "view.yaml", *expected_members.values(), *catalogs}
+    if name == "titlecard":
+        copied = yaml.safe_load((destination / "preset.yaml").read_text(encoding="utf-8"))
+        assert copied["body"]["resources"]["summaryProfile"] == {
+            "id": "halcyon-titlecard-countdown", "kind": "summary-profile", "path": "summary.yaml",
+        }
 
 
 @pytest.mark.parametrize("name", DESIGNS)

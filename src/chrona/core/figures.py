@@ -64,7 +64,12 @@ class GroupStartFact:
     """The caller-gathered first planned start/point in the current selected group."""
 
 
-Fact = AsOfFact | PeriodFact | ObjectFact | GroupStartFact
+@dataclass(frozen=True)
+class ProjectFinishFact:
+    """The caller-gathered latest planned finish among selected Project items."""
+
+
+Fact = AsOfFact | PeriodFact | ObjectFact | GroupStartFact | ProjectFinishFact
 
 
 @dataclass(frozen=True)
@@ -140,6 +145,7 @@ def resolve_figures(specs: Sequence[FigureSpec], *, as_of: date | None,
                     placements: Mapping[str, Mapping[str, date]], periods: Sequence[ResolvedPeriod],
                     calendars: Mapping[str, Calendar], default_calendar: str | None,
                     group_first_start: date | None = None,
+                    project_last_finish: date | None = None,
                     counts: FigureCounts | None = None) -> FigureResolution:
     """Resolve every declared figure; report every finding, not only the first.
 
@@ -163,7 +169,7 @@ def resolve_figures(specs: Sequence[FigureSpec], *, as_of: date | None,
             else:
                 values[spec.figure_id] = value
             continue
-        resolve = _Reader(spec, as_of, placements, declared, found, group_first_start)
+        resolve = _Reader(spec, as_of, placements, declared, found, group_first_start, project_last_finish)
         calendar = _calendar(spec, calendars, default_calendar, found) if spec.days == "working" else None
         if spec.kind == "daysUntil":
             origin, target = resolve.read(spec.origin, "from"), resolve.read(spec.to, "to")
@@ -187,9 +193,11 @@ class _Reader:
     """Reads one fact of one figure, appending a diagnostic when it cannot."""
 
     def __init__(self, spec: FigureSpec, as_of: date | None, placements: Mapping[str, Mapping[str, date]],
-                 periods: Mapping[str, ResolvedPeriod], found: list[Diagnostic], group_first_start: date | None) -> None:
+                 periods: Mapping[str, ResolvedPeriod], found: list[Diagnostic], group_first_start: date | None,
+                 project_last_finish: date | None) -> None:
         self._spec, self._as_of, self._placements, self._periods, self._found = spec, as_of, placements, periods, found
         self._group_first_start = group_first_start
+        self._project_last_finish = project_last_finish
 
     def read(self, fact: Fact | None, where: str) -> date | None:
         spec = self._spec
@@ -200,6 +208,13 @@ class _Reader:
                     f"Figure {spec.figure_id} reads the current group's first planned start, but none is available",
                     f"{spec.path}/{where}/group", details={"figure": spec.figure_id}))
             return self._group_first_start
+        if isinstance(fact, ProjectFinishFact):
+            if self._project_last_finish is None:
+                self._found.append(Diagnostic(
+                    "E_FIGURE_PROJECT_FINISH_MISSING",
+                    f"Figure {spec.figure_id} reads the selected Project's latest planned finish, but none is available",
+                    f"{spec.path}/{where}/project", details={"figure": spec.figure_id}))
+            return self._project_last_finish
         if isinstance(fact, AsOfFact):
             if self._as_of is None:
                 self._found.append(Diagnostic(

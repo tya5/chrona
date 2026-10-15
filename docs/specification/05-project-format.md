@@ -447,6 +447,12 @@ first planned start/point date of the current selected group. Selection and grou
 remain View-owned; Core imports no projection model and applies the same date arithmetic.
 An absent injected date yields `E_FIGURE_GROUP_START_MISSING` at the figure's group fact.
 
+`{project: lastPlannedFinish}` (#1535) additionally reads the caller-gathered
+maximum selected planned span `end` or point `at`. Selection, distinct Primary/
+combined identities and exclusion of comparison ghosts/scenarios stay View-owned.
+Core accepts only the injected date; absence is `E_FIGURE_PROJECT_FINISH_MISSING`.
+It applies the same arithmetic without adjusting an exclusive end or inventing today.
+
 ## 13. Precision and uncertainty
 
 The semantic model distinguishes precision and uncertainty.

@@ -1,6 +1,7 @@
 """Draft ingress freezes explicit authoring files before they enter rendering."""
 from pathlib import Path
 from hashlib import sha256
+import shutil
 
 import pytest
 import yaml
@@ -313,7 +314,7 @@ def preset_with(tmp_path):
     def make(**body: object) -> Path:
         preset = yaml.safe_load((root / "executive-light.preset.yaml").read_text(encoding="utf-8"))
         for key, value in body.items():
-            (preset["body"]["resources"] if key == "detailProfile" else preset["body"])[key] = value
+            (preset["body"]["resources"] if key in {"detailProfile", "summaryProfile"} else preset["body"])[key] = value
         path = tmp_path / "variant.preset.yaml"
         path.write_text(yaml.safe_dump(preset, sort_keys=False), encoding="utf-8")
         return path
@@ -333,6 +334,44 @@ def test_preset_detail_profile_applies_unless_an_explicit_detail_is_given(preset
                                           preset_path=preset, preset_root=root,
                                           theme_path=root / "themes/executive-light.yaml")
     assert explicit_theme.closure.detail_profile is None  # the legend belongs to the preset's own Theme
+
+
+def test_preset_summary_profile_applies_unless_an_explicit_summary_is_given(preset_with, tmp_path):
+    root = _root() / "tests/fixtures/controller-z"
+    preset_root = tmp_path / "preset-root"
+    for relative in ("views/executive.yaml", "themes/executive-light.yaml",
+                     "schemes/executive-light.yaml", "layouts/executive-review.yaml"):
+        target = preset_root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(root / relative, target)
+    valid_summary = _root() / "src/chrona/resources/designs/titlecard/summary.yaml"
+    summary_target = preset_root / "profiles/summary.yaml"
+    summary_target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(valid_summary, summary_target)
+    summary_document = yaml.safe_load(summary_target.read_text(encoding="utf-8"))
+    summary_document["id"] = "controller-z-summary"
+    summary_target.write_text(yaml.safe_dump(summary_document, sort_keys=False, allow_unicode=True),
+                              encoding="utf-8")
+    preset = preset_with(summaryProfile={"id": "controller-z-summary", "kind": "summary-profile",
+                                         "path": "profiles/summary.yaml"})
+
+    preset_summary = resolve_draft_render(project_path=root / "project.yaml", preset_path=preset,
+                                          preset_root=preset_root)
+    without_summary = resolve_draft_render(project_path=root / "project.yaml",
+                                          preset_path=root / "executive-light.preset.yaml")
+    assert preset_summary.closure.summary_profile is not None
+    assert preset_summary.closure.summary_profile.identity.id == "controller-z-summary"
+    assert without_summary.closure.summary_profile is None
+
+    explicit = dict(summary_document)
+    explicit["id"] = "explicit-summary-override"
+    explicit_path = tmp_path / "explicit-summary.yaml"
+    explicit_path.write_text(yaml.safe_dump(explicit, sort_keys=False), encoding="utf-8")
+    overridden = resolve_draft_render(project_path=root / "project.yaml", preset_path=preset,
+                                      preset_root=preset_root, summary_path=explicit_path)
+
+    assert overridden.closure.summary_profile is not None
+    assert overridden.closure.summary_profile.identity.id == "explicit-summary-override"
 
 
 def test_preset_preferred_visual_profile_applies_unless_a_flag_is_given(preset_with):

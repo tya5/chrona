@@ -261,7 +261,7 @@ def resolve_draft_render(
     if any(path is None for _kind, path in paths):
         raise ClosureError("E_DRAFT_PRESENTATION_INCOMPLETE", detail="no file for " + ", ".join(kind for kind, path in paths if path is None) + "; pass it, or a preset that declares it")
     optional = (
-        ("actual-set", actual_path), ("summary-profile", summary_path),
+        ("actual-set", actual_path), ("summary-profile", summary_path or preset_paths.get("summary-profile")),
         # A preset legend names roles of the preset's own Theme, so it applies
         # only when that Theme is the one rendered (#479 amendment 2).
         ("review-detail-profile", detail_path or (preset_paths.get("review-detail-profile") if theme_path is None else None)),
@@ -335,11 +335,11 @@ def _draft_preset_paths(preset: Any, preset_path: Path, preset_root: Path | None
     if not isinstance(preset.contract, PresentationPresetContract):
         raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail=f"{preset_path.name} is not a presentation preset")
     mapping = {"view": "view", "theme": "theme", "colorScheme": "color-scheme", "layout": "layout-profile",
-               "detailProfile": "review-detail-profile"}
+               "detailProfile": "review-detail-profile", "summaryProfile": "summary-profile"}
     paths: dict[str, Path] = {}
     for name, kind in mapping.items():
         declaration = preset.contract.resources.get(name)
-        if declaration is None and kind == "review-detail-profile":
+        if declaration is None and kind in {"review-detail-profile", "summary-profile"}:
             continue
         if not isinstance(declaration, Mapping):
             raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail=f"preset {preset.id!r} declares no valid {name!r} resource")

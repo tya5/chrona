@@ -92,7 +92,7 @@ def test_unbound_slot_retains_original_metric_and_index_in_omission_fact():
     assert result.omissions == (result.omissions[0],)
     omission, = result.omissions
     assert (omission.panel_index, omission.metric_index, omission.panel_id, omission.metric_id) == (0, 1, "panel", "later")
-    assert (omission.source_kind, omission.source_name, omission.code) == ("slot", "later", "I_SUMMARY_SLOT_UNBOUND")
+    assert (omission.source_kind, omission.source_name, omission.code) == ("slot", "later", "W_SUMMARY_SLOT_UNBOUND")
     assert omission.source_ref == "/body/panels/0/metrics/1/source"
 
 
@@ -154,6 +154,21 @@ def test_unbound_legacy_figure_omission_is_distinct_from_bound_figure_scope_erro
     bound = _summary(_panel("panel", _metric("m", {"figure": "group-count"})))
     assert resolve_profile_connections(_view(figures=(group,)), bound, None,
                                        project_object_ids=frozenset()).omissions == ()
+
+
+def test_dormant_summary_bindings_and_wording_drop_generated_aliases_but_keep_explicit_figures():
+    explicit = FigureSpec("explicit-count", "count", source="selected")
+    view = _view(bindings=(_figure_binding("dormant-countdown"),), figures=(explicit,), wording={
+        "summary": {"missing.panel": "Dormant copy"},
+    })
+
+    result = resolve_profile_connections(view, None, None, project_object_ids=frozenset())
+
+    assert result.summary is None
+    assert result.omissions == ()
+    assert result.view.wording["summary"]["missing.panel"] == "Dormant copy"
+    assert result.view.figures == (explicit,)
+    assert result.view.profile_bindings == view.profile_bindings
 
 
 def test_summary_wording_uses_exact_dotted_key_and_handles_ambiguity_and_unknown_keys():

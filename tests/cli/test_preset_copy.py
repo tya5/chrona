@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+from xml.etree import ElementTree
 
 import pytest
 import yaml
@@ -55,3 +56,28 @@ def test_every_builtin_copy_is_plain_yaml_and_renders_like_the_id(starter, ident
                     or getattr(event, "anchor", None) is not None], path.name
     assert _render(starter, f"by-copy-{identifier}", "--preset", f"{target}/preset.yaml") == _render(
         starter, f"by-id-{identifier}", "--preset", identifier)
+
+
+def test_explicit_summary_flag_overrides_the_copied_titlecard_preset(starter):
+    target = "copy-titlecard-with-summary"
+    copied = _chrona(starter, "preset", "copy", "titlecard", "--output", target)
+    assert copied.returncode == 0, copied.stdout
+
+    summary_path = starter / target / "summary.yaml"
+    summary = yaml.safe_load(summary_path.read_text(encoding="utf-8"))
+    summary["body"]["panels"][0]["metrics"][0]["label"] = "Explicit CLI Summary"
+    override_path = starter / "explicit-summary.yaml"
+    override_path.write_text(yaml.safe_dump(summary, sort_keys=False, allow_unicode=True), encoding="utf-8")
+
+    default_result = _chrona(starter, "render", "p/project.yaml", "--actual", "p/actual.yaml",
+                             "--preset", f"{target}/preset.yaml", "--output", "titlecard-default.svg")
+    override_result = _chrona(starter, "render", "p/project.yaml", "--actual", "p/actual.yaml",
+                              "--preset", f"{target}/preset.yaml", "--summary", str(override_path),
+                              "--output", "titlecard-override.svg")
+    assert default_result.returncode == 0, default_result.stdout
+    assert override_result.returncode == 0, override_result.stdout
+
+    default_text = "".join(ElementTree.fromstring((starter / "titlecard-default.svg").read_bytes()).itertext())
+    override_text = "".join(ElementTree.fromstring((starter / "titlecard-override.svg").read_bytes()).itertext())
+    assert "EXPLICIT CLI SUMMARY" not in default_text
+    assert "EXPLICIT CLI SUMMARY" in override_text
