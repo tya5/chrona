@@ -11,7 +11,8 @@ from typing import Any, Literal, Mapping
 
 from chrona.core.figures import AsOfFact, FigureSpec, GroupStartFact, ObjectFact, PeriodFact
 from chrona.presentation.figure_text import FigureTextError, figure_ids
-from chrona.presentation.count_text import CountTextFormat
+from chrona.presentation.count_text import CountTextError, CountTextFormat
+from chrona.presentation.deadline_text import DeadlineCaptionText, compile_deadline_caption
 from chrona.core.store_address import StoreAddressError, check_store_address
 from chrona.resources import schema_validator
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
@@ -372,6 +373,14 @@ class ViewPeriod:
 
 
 @dataclass(frozen=True)
+class ViewDeadlines:
+    """Shown Project deadlines and optional closed caption copy, without geometry."""
+
+    show: str
+    caption: DeadlineCaptionText | None = None
+
+
+@dataclass(frozen=True)
 class ViewInput:
     """Closed View v0.3 vocabulary after schema acceptance."""
 
@@ -398,7 +407,7 @@ class ViewInput:
     periods: tuple[ViewPeriod, ...] = ()
     figures: tuple[FigureSpec, ...] = ()
     heading: ViewHeading | None = None
-    deadlines: str | None = None  # `slipped` or `all`: which Project deadlines the surface draws; None draws none (#822)
+    deadlines: ViewDeadlines | None = None
     slot_heading_text: FrozenDict | None = None
     annotation_bindings: tuple[FrozenDict, ...] = ()
     annotation_placement: FrozenDict | None = None
@@ -1031,7 +1040,7 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                                str(body.get("backgroundDecoration", FrozenDict()).get("groups", "all"))),
         periods=periods,
         figures=figures,
-        deadlines=str(body["deadlines"]["show"]) if "deadlines" in body else None,
+        deadlines=_view_deadlines(body.get("deadlines")),
         heading=_view_heading(body.get("heading"), figures),
         slot_heading_text=(freeze(body["slotHeadingText"]) if "slotHeadingText" in body else None),
         annotation_bindings=tuple(body.get("annotationBindings", ())),
@@ -1039,6 +1048,25 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         figure_formats=_view_figure_formats(body.get("figureFormats", {}), figures),
         profile_bindings=profile_bindings,
         wording=freeze(body["wording"]) if "wording" in body else None)
+
+
+def _view_deadlines(raw: Mapping[str, Any] | None) -> ViewDeadlines | None:
+    if raw is None:
+        return None
+    caption = raw.get("caption")
+    if caption is None:
+        return ViewDeadlines(str(raw["show"]))
+    try:
+        value = caption.get("format", {})
+        text_format = CountTextFormat(str(value.get("form", "digits")),
+                                      value.get("minimumDigits", 1), value.get("capitalize", False))
+    except CountTextError as error:
+        raise ContractError(error.code, error.detail, "/body/deadlines/caption/format") from error
+    try:
+        program = compile_deadline_caption(str(caption["template"]), text_format)
+    except GroupHeaderTextError as error:
+        raise ContractError(error.code, error.detail, "/body/deadlines/caption/template") from error
+    return ViewDeadlines(str(raw["show"]), program)
 
 
 def _view_figure_formats(raw: Mapping[str, Any], figures: tuple[FigureSpec, ...]) -> FrozenDict:

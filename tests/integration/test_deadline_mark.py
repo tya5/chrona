@@ -252,7 +252,7 @@ def test_a_folded_header_point_is_recorded_and_not_decorated():
                            (0, 0), (0, 0), semantic_id="planned")
     batch = compose_deadline_marks(
         base=base, theme_tokens=Tokens(), marks=(folded,), window=(date(2026, 1, 1), date(2026, 1, 11)), paint_order_base=100,
-        deadlines=(ReviewDeadline("x", date(2026, 1, 5), date(2026, 1, 8), True),))
+        deadlines=(ReviewDeadline("x", date(2026, 1, 5), date(2026, 1, 8), True, 3),))
     assert batch.shapes == () and batch.diagnostics == ("I_LAYOUT_DEADLINE_FOLDED:x",)
 
 
@@ -483,7 +483,7 @@ def test_only_a_planned_mark_hosts_a_deadline_never_a_snapshot_or_scenario_mark(
              MarkPlacement("planned:row:x", "x", bounds, (0, 0), (0, 0), semantic_id="planned", slot_id="timeline"))
     batch = compose_deadline_marks(
         base=base, theme_tokens=Tokens(), marks=marks, window=(date(2026, 1, 1), date(2026, 1, 11)), paint_order_base=100,
-        deadlines=(ReviewDeadline("x", date(2026, 1, 5), date(2026, 1, 8), True),))
+        deadlines=(ReviewDeadline("x", date(2026, 1, 5), date(2026, 1, 8), True, 3),))
     assert [item.placement_id for item in batch.shapes] == ["deadline-tick:row:x", "deadline-run:row:x"]
     assert batch.shapes[0].bounds.inline == Decimal("40.0")
     assert batch.shapes[0].bounds.block_size == Decimal("12.0")  # 8 * the reach of 1.5

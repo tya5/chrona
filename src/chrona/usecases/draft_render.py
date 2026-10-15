@@ -21,7 +21,7 @@ from chrona.presentation.contracts import TypesetterIdentity
 from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, ClosureError, resolve_draft_render
 from chrona.presentation.model.info_diagnostics import (
     RelationHintReceipt, RelationHintSummary,
-    PaintOmission, SuppressedPlotLabels, RelationRoutingSummary, RelationSearchBudgetHit,
+    PaintOmission, SuppressedPlotLabels, DeadlineCaptionsDropped, RelationRoutingSummary, RelationSearchBudgetHit,
     RelationResolutionInfo, RelationResolutionSummary,
     RelationPolicySupersession,
 )
@@ -233,10 +233,11 @@ def warning_payloads(rendered: RenderedReview) -> list[dict[str, Any]]:
                 "fallbackSearch": info.fallback_search,
                 "message": f"{info.shape_settled} relations on {info.surface_id} settled without search; "
                            f"{info.fallback_search} used fallback search"})
-        elif isinstance(info, SuppressedPlotLabels):
+        elif isinstance(info, (SuppressedPlotLabels, DeadlineCaptionsDropped)):
+            label_kind = "deadline captions" if isinstance(info, DeadlineCaptionsDropped) else "plot labels"
             payloads.append({"code": info.code, "severity": "info", "surfaceId": info.surface_id,
                              "count": info.count,
-                             "message": f"{info.count} plot labels on {info.surface_id} were left out because "
+                             "message": f"{info.count} {label_kind} on {info.surface_id} were left out because "
                                         "they do not fit"})
         elif isinstance(info, PaintOmission):
             message = (f"{info.treatment} on {info.role} was omitted by {info.visual_profile}; "

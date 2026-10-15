@@ -56,6 +56,7 @@ The registry owns canonical primitive semantics. Its entries declare `semantic_i
 | `asOf` | Path/Text | `as-of`, `as-of-label` | `asOf` |
 | `deadlineMark` | Path | `deadline-mark` | `deadline-mark` (contrast class `mark`; the role is required when a View shows deadlines) |
 | `deadlineMarkOutline` | Rect | `deadline-mark-outline` | `background` (completed opaque ground under the deadline stroke, not independently contrast-classified; Spec07 outlineWidth) |
+| `deadlineCaption` | Text | `deadline-caption` | `deadline-caption` when it binds fill, otherwise the explicit `text` alternative; ground text at4.5:1. Typography follows Spec07. |
 | `groupHeader` | Rect/Text | `group-header-band`, `group-header` | `groupHeader` |
 | `slotHeading` | Text | `slot-heading` | `slot-heading` (ground text; the role is opt-in and the `text` role applies without it, #1064) |
 | `titleText` / `subtitleText` | Text | `title-text` / `subtitle-text` | `heading` / `subtitle` when the respective role binds `fill`, otherwise the explicit registered `text` alternative; ground text (#1164) |

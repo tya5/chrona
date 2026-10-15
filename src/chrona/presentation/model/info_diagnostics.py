@@ -35,6 +35,26 @@ class SuppressedPlotLabels:
 
 
 @dataclass(frozen=True)
+class DeadlineCaptionsDropped:
+    """Optional caption occurrences that did not fit either approved anchor."""
+
+    surface_id: str
+    count: int
+
+    def __post_init__(self) -> None:
+        if (not self.surface_id or any(char in self.surface_id for char in ";=")
+                or isinstance(self.count, bool) or not isinstance(self.count, int) or self.count < 1):
+            raise _diagnostic_error("DeadlineCaptionsDropped requires a surface id and positive occurrence count")
+
+    @property
+    def code(self) -> str:
+        return "I_LAYOUT_DEADLINE_CAPTION_DROPPED"
+
+    def scene_diagnostic(self) -> str:
+        return f"{self.code}:surface={self.surface_id};count={self.count}"
+
+
+@dataclass(frozen=True)
 class PaintOmission:
     """One optional Theme treatment omitted by a selected target profile."""
 
@@ -302,6 +322,6 @@ class UnboundSummarySource:
             ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
-PresentationInfo = (SuppressedPlotLabels | PaintOmission | RelationRoutingSummary | RelationSearchBudgetHit
+PresentationInfo = (SuppressedPlotLabels | DeadlineCaptionsDropped | PaintOmission | RelationRoutingSummary | RelationSearchBudgetHit
                     | RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession
                     | RelationHintReceipt | RelationHintSummary | UnboundSummarySource)

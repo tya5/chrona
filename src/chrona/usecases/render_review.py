@@ -45,6 +45,7 @@ from chrona.presentation.model.theme_role_consumers import unread_diagnostics as
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
 from chrona.core.attachments import AttachmentWarning, attachment_warnings
 from chrona.core.deadlines import deadline_statuses, deadline_warnings
+from chrona.presentation.count_text import CountTextError
 from chrona.core.figures import FigureCounts, resolve_figures
 from chrona.core.periods import period_range_diagnostics, resolve_periods
 from chrona.core.temporal import Calendar
@@ -389,6 +390,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         if profile_info:
             surface = replace(surface, info_diagnostics=(*surface.info_diagnostics, *profile_info))
         surface_content = plan.content
+    except FontMetricsError as error:
+        raise _font_failure(error) from error
     except SurfacePlanFontError as error:
         raise _font_failure(error.failure) from error.failure
     except SlotHeadingCopyError as error:
@@ -853,8 +856,19 @@ def _shown_deadlines(project: dict[str, Any], placements: dict[str, dict[str, An
     """
     if view.deadlines is None:
         return ()
-    return tuple(ReviewDeadline(item.object_id, item.deadline, item.finish, item.slipped)
-                 for item in deadline_statuses(project, placements) if item.slipped or view.deadlines == "all")
+    shown = []
+    for item in deadline_statuses(project, placements):
+        if not item.slipped and view.deadlines.show != "all":
+            continue
+        caption = None
+        if item.slipped and view.deadlines.caption is not None:
+            try:
+                caption = view.deadlines.caption.bind(item.days_late)
+            except CountTextError as error:
+                raise RenderFailed(error.code, error.detail, "view", "/body/deadlines/caption/format") from error
+        shown.append(ReviewDeadline(item.object_id, item.deadline, item.finish, item.slipped,
+                                    item.days_late, caption))
+    return tuple(shown)
 
 
 def _selected_periods(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput,

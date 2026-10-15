@@ -292,6 +292,7 @@ class TextPlacement:
     fit: TextFit | None = None
     # One tuple of measured runs per line when the role is `small-caps` (#1285); empty otherwise.
     runs: tuple[tuple[TextRunPlacement, ...], ...] = ()
+    subjects: tuple[DiagnosticSubject, ...] = ()
 
 
 @dataclass(frozen=True)

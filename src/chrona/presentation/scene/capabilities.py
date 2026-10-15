@@ -247,6 +247,8 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT, scene_kinds=frozenset(("Text",)))
     register("slot-heading", "Layout slot-heading measurement and Scene Text",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT, scene_kinds=frozenset(("Text",)))
+    register("deadline-caption", "Layout deadline caption measurement and Scene Text",
+             _TEXT_MEASUREMENT | _TEXT_PAINT | _VIEWER_FIT, scene_kinds=frozenset(("Text",)))
     register("tableColumnLabel", "Layout table header measurement and Scene Text",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT | _VIEWER_FIT, scene_kinds=frozenset(("Text",)))
     register("metric summary-caption summary-unit", "Layout summary text and Scene Text",

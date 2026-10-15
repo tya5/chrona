@@ -183,6 +183,7 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("subtitleText", "label", "subtitle-text", "subtitle", "subtitle", ContrastClass.GROUND_TEXT),
     # The caption a Layout Profile slot declares (#1064), in the Theme's `slot-heading` text role (`text` when absent).
     _binding("slotHeading", "label", "slot-heading", "slot-heading", "slot-heading", ContrastClass.GROUND_TEXT),
+    _binding("deadlineCaption", "label", "deadline-caption", "text", "text", ContrastClass.GROUND_TEXT),
     _binding("tableColumnLabel", "label", "table-column-label", "text", "text", ContrastClass.GROUND_TEXT),
     _binding("tableCell", "label", "table-cell", "text", "text", ContrastClass.GROUND_TEXT),
     _binding("tableVarianceAhead", "label", "table-cell", "variance-ahead", "variance-ahead", ContrastClass.STATE_TEXT),
