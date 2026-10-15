@@ -1,7 +1,7 @@
 """Owns deadline tick and run geometry; reads the View-shown deadlines, the completed planned marks and the Theme reach (#822)."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
 
 from chrona.presentation.layout.model import Rect
@@ -16,6 +16,18 @@ TICK_PREFIX = "deadline-tick:"
 RUN_PREFIX = "deadline-run:"
 # A planned mark folded into a group header has no row of its own to hold a tick (see `compose_deadline_marks`).
 _FOLDED_PREFIX = "planned:group-header:"
+
+
+def _outline(shape: ShapePlacement, margin: float) -> ShapePlacement | None:
+    """Complete a filled ground around a straight stroke, including its caps."""
+    if shape.points[0] == shape.points[-1]:
+        return None  # A zero-length butt stroke has no painted area to outline.
+    xs, ys = zip(*shape.points)
+    return replace(shape, placement_id=shape.placement_id + ":outline", kind="Rect",
+                   bounds=Rect(Decimal(str(min(xs) - margin)), Decimal(str(min(ys) - margin)),
+                               Decimal(str(max(xs) - min(xs) + 2 * margin)),
+                               Decimal(str(max(ys) - min(ys) + 2 * margin))),
+                   points=(), paint_order=shape.paint_order - 1, semantic_id="deadlineMarkOutline")
 
 
 @dataclass(frozen=True)
@@ -42,6 +54,8 @@ def compose_deadline_marks(*, base: SurfaceBaseGeometry, theme_tokens: object, d
     if not deadlines:
         return DeadlineBatch((), ())
     reach, order = theme_tokens.deadline_mark(semantic_binding(DEADLINE_SEMANTIC).theme_role)
+    outline_width = float(theme_tokens.deadline_outline_width("deadline-mark"))
+    stroke_width = float(theme_tokens.number("deadline-mark", "strokeWidth")) if outline_width else 0
     window_start, window_end = window
     plot = base.plot
     right_edge = float(plot.inline + plot.inline_size)
@@ -83,4 +97,10 @@ def compose_deadline_marks(*, base: SurfaceBaseGeometry, theme_tokens: object, d
                     Rect(Decimal(str(x)), Decimal(str(bottom)), Decimal(str(finish - x)), Decimal(0)),
                     ((x, bottom), (finish, bottom)), slot_id=host.slot_id, paint_order=paint_order_base + order,
                     semantic_id=DEADLINE_SEMANTIC, subjects=host.subjects))
+    if outline_width and stroke_width > 0:
+        wobble = theme_tokens.wobble_intent("deadline-mark")
+        margin = stroke_width / 2 + outline_width + (float(wobble.amplitude) if wobble is not None else 0)
+        outlines = tuple(ground for shape in shapes
+                         if (ground := _outline(shape, margin)) is not None)
+        shapes = [*outlines, *shapes]
     return DeadlineBatch(tuple(shapes), tuple(diagnostics))

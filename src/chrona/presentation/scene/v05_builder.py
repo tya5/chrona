@@ -330,9 +330,9 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
         if primitive.paint is None or primitive.paint.radial_gradient is None:
             raise SceneBuildError("E_PRESENTATION_PAINT_INVALID", "/body/roles/canvas-overlay-gradient")
         return primitive, ()
-    if primitive.visual_role == "dependency-halo":
+    if primitive.visual_role in {"dependency-halo", "deadline-mark-outline"}:
         if primitive.paint is None:
-            raise SceneBuildError("E_PRESENTATION_PAINT_INVALID", "/body/roles/dependency-halo")
+            raise SceneBuildError("E_PRESENTATION_PAINT_INVALID", f"/body/roles/{primitive.visual_role}")
         return primitive, ()
     ink_only_pattern = bool(primitive.pattern and primitive.pattern.primitives
                             and is_ink_only_surface_pattern(tokens, primitive.visual_role))
@@ -926,6 +926,15 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                              progress.purpose, progress.scene_role, bounds, placed, slot_id=placed.slot_id,
                                              paint_order=placed.paint_order, clip_source_id=placed.clip_host_id,
                                              corner_radius=placed.corner_radius or None))
+            if placed.subjects:
+                primitive_provenance.append(PrimitiveProvenance(placed.placement_id, placed.subjects))
+        elif placed.semantic_id == "deadlineMarkOutline":
+            outline = semantic_binding("deadlineMarkOutline")
+            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "decoration",
+                                             outline.purpose, outline.scene_role, bounds, slot_id=placed.slot_id,
+                                             paint_order=placed.paint_order,
+                                             paint=ScenePaint(fill=value.theme_tokens.color("background", "fill"),
+                                                              stroke=None, stroke_width=None, dash=(), opacity=1)))
             if placed.subjects:
                 primitive_provenance.append(PrimitiveProvenance(placed.placement_id, placed.subjects))
         elif placed.semantic_id == "deadlineMark":

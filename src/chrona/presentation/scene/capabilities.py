@@ -156,7 +156,7 @@ _CANVAS_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "g
 _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",))
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
-    "labelInsetEnd",
+    "labelInsetEnd", "outlineWidth",
     "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "glyphSize", "glyphPitch", "chipPadding", "chipMinBlockSize", "chipShape", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach", "barBleed",
     "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign", "align", "barWidth", "blockGap", "inlineGap",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "annotationContainer", "marker", "symbol", "edge",
@@ -303,8 +303,10 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("annotation-arrow-leader", "Layout explanatory arrow and Scene Path",
              _PATH_PAINT | frozenset(("marker",)), scene_kinds=frozenset(("Path",)))
     register("asOf", "Layout as-of relation width", frozenset(("dash", "strokeWidth")))
-    register("deadline-mark", "Layout deadline mark geometry and Scene Path", _PATH_PAINT | frozenset(("markReach", "markPaintOrder")),
+    register("deadline-mark", "Layout deadline mark geometry and Scene Path", _PATH_PAINT | frozenset(("markReach", "markPaintOrder", "outlineWidth")),
              scene_kinds=frozenset(("Path",)))
+    register("deadline-mark-outline", "Layout deadline outline ground and Scene Rect", frozenset(),
+             scene_kinds=frozenset(("Rect",)))
     register("relationSourceTerminal relationTargetTerminal", "Layout relation terminal geometry",
              frozenset(("marker",)))
     register("annotation-callout-box annotation-highlight-box annotation-note-box annotation-arrow-box",

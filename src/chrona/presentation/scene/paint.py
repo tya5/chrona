@@ -444,28 +444,19 @@ def _glow(tokens: ThemeTokenView, role: str, profile: VisualProfile | None,
 
 def _wobble(tokens: ThemeTokenView, role: str, profile: VisualProfile | None) -> tuple[StrokeWobble | None, bool]:
     """The declared parameters of a hand-wobble; Scene completes the outline from the primitive (#588)."""
-    amplitude = tokens.optional_number(role, "wobbleAmplitude")
-    wavelength = tokens.optional_number(role, "wobbleWavelength")
-    seed = tokens.optional_number(role, "wobbleSeed")
-    if amplitude is None and wavelength is None and seed is None:
+    try:
+        intent = tokens.wobble_intent(role)
+    except ThemeTokenError as error:
+        if error.diagnostic_id.startswith("E_VISUAL_"):
+            raise ScenePaintError(error.diagnostic_id, error.path, error.detail) from error
+        raise
+    if intent is None:
         return None, False
     pointer = f"/body/roles/{role}/wobbleAmplitude"
-    if amplitude is None or wavelength is None or seed is None:
-        raise ScenePaintError("E_VISUAL_CAPABILITY_VALUE", pointer,
-                              "wobbleAmplitude, wobbleWavelength, and wobbleSeed must be declared together")
-    if not 0 < float(amplitude) <= 16:
-        raise ScenePaintError("E_VISUAL_CAPABILITY_LIMIT", pointer,
-                              f"wobbleAmplitude {float(amplitude):g} must be in (0, 16]")
-    if not 4 <= float(wavelength) <= 1000:
-        raise ScenePaintError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/wobbleWavelength",
-                              f"wobbleWavelength {float(wavelength):g} must be in [4, 1000]")
-    if seed != seed.to_integral_value() or not 0 <= seed < 2 ** 32:
-        raise ScenePaintError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/wobbleSeed",
-                              f"wobbleSeed {seed} must be an integer in [0, 2^32)")
     fidelity = _fidelity(tokens, role, "wobbleFidelity")
     if not _admit(profile, frozenset((WOBBLE,)), fidelity, pointer):
         return None, True
-    return StrokeWobble(float(amplitude), float(wavelength), int(seed), fidelity), False
+    return StrokeWobble(float(intent.amplitude), float(intent.wavelength), intent.seed, fidelity), False
 
 
 def _stroke_finish(tokens: ThemeTokenView, role: str, profile: VisualProfile | None) -> tuple[StrokeFinish | None, bool]:
