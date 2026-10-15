@@ -104,6 +104,7 @@ entries:
       layout: {id: target-b, kind: layout-profile, sourceRoot: designs/target-b, sourcePath: layout.yaml}
       detailProfile: {id: halcyon-target-b-legend, kind: review-detail-profile, sourceRoot: designs/target-b, sourcePath: detail.yaml}
   - id: titlecard
+    visualProfile: {preferred: chrona-output/visual/v0.7-svg}
     members:
       fontSets: [chrona.noto-sans+jp]
       view: {id: chrona-preset-design-default, kind: view, sourceRoot: presets/bundles/design-default, sourcePath: view.yaml}
@@ -121,6 +122,7 @@ entries:
           contentIdentity: sha256:139be42bed11eaa9809ef98bb427eb74f8f0862c3d5c4ccfd9eba2b23185acee
           noticeContentIdentity: sha256:b07fa7bbb7bff0acdfb2cf02905b7ca7ad1db3ead9f59b13f47c4ced097f3eb6
   - id: yuya
+    visualProfile: {preferred: chrona-output/visual/v0.7-svg}
     members:
       fontSets: [chrona.noto-sans+jp]
       view: {id: chrona-preset-design-default, kind: view, sourceRoot: presets/bundles/design-default, sourcePath: view.yaml}

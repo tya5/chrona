@@ -298,28 +298,36 @@ allOf:
                 date: {$ref: "urn:chrona:common-v0.1#/$defs/markerPresentation/properties/date"}
                 placement: {$ref: "urn:chrona:common-v0.1#/$defs/markerPresentation/properties/placement"}
           periods:
-            description: "Named Project periods drawn as bands across the plot, in paint order of declaration; absent selects none."
-            type: array
-            items:
-              description: "One selected Project period."
-              examples: [{id: launch-window}]
-              type: object
-              required: [id]
-              additionalProperties: false
-              properties:
-                id: {description: "Identifier of a period declared in the Project's `periods`.", type: string, minLength: 1}
-                variant: {description: "Optional Theme role variant shared by this period's band and label; selects `period-band:<variant>` and, when a label is consumed, `period-label:<variant>`.", $ref: "urn:chrona:common-v0.1#/$defs/slug"}
-                label:
-                  description: "Optional label of the band, its text the period title or the `text` override; absent draws the band without a label."
-                  examples: [{placement: top, overflow: suppress}]
+            description: "Named Project periods drawn as bands across the plot; absent selects none. An id list controls selection and order, or the closed `all` selector chooses every Project period in declaration order."
+            type: [array, object]
+            allOf:
+              - description: "The explicit id-list form retains authored selection order and per-period presentation."
+                examples: [[{id: launch-window}]]
+                if: {type: array}
+                then:
+                  items:
+                    description: "One selected Project period."
+                    examples: [{id: launch-window}]
+                    type: object
+                    required: [id]
+                    additionalProperties: false
+                    properties:
+                      id: {description: "Identifier of a period declared in the Project's `periods`.", type: string, minLength: 1}
+                      variant: {description: "Optional Theme role variant shared by this period's band and label; selects `period-band:<variant>` and, when a label is consumed, `period-label:<variant>`.", $ref: "urn:chrona:common-v0.1#/$defs/slug"}
+                      label:
+                        description: "Optional label of the band, its text the period title or the `text` override; absent draws the band without a label."
+                        examples: [{placement: top, overflow: suppress}]
+                        $ref: "urn:chrona:common-v0.1#/$defs/periodLabelSelection"
+              - description: "The all selector chooses every Project period in declaration order with one shared optional label presentation."
+                examples: [{select: all, label: {placement: top}}]
+                if: {type: object}
+                then:
                   type: object
-                  required: [placement]
+                  required: [select]
                   additionalProperties: false
                   properties:
-                    placement: {$ref: "urn:chrona:common-v0.1#/$defs/periodLabelPresentation/properties/placement"}
-                    overflow: {$ref: "urn:chrona:common-v0.1#/$defs/periodLabelPresentation/properties/overflow"}
-                    text: {description: "Optional display text of the label, replacing the Project period title for this View only (the Theme role's text transform styles it); absent shows the period title.", $ref: "urn:chrona:common-v0.1#/$defs/literalCaption", examples: [OPENING NIGHT]}
-                    template: {description: "Optional closed figure template instead of literal text: {figure:id} reads a global View figure; {{ and }} escape braces. Mutually exclusive with text.", $ref: "urn:chrona:common-v0.1#/$defs/literalCaption", examples: ["WINDOW CLOSES IN {figure:closing} DAYS"]}
+                    select: {description: "The closed Project-period selection mode.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/viewPeriodSelection"}
+                    label: {description: "Optional label presentation applied to each selected period; Layout defaults fill omitted placement and overflow.", $ref: "urn:chrona:common-v0.1#/$defs/periodLabelSelection"}
           figures:
             description: "Derived integer figures: signed days from declared dates or neutral projected counts, shown by name in Summary, group headers and declared label templates; absent declares none."
             examples: [[{id: launch-countdown, kind: daysUntil, to: {period: launch-window, side: start}}]]

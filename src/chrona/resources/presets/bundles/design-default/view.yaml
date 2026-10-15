@@ -5,6 +5,11 @@ id: chrona-preset-design-default
 # wording; the design members (axis, column styles, annotation placement, grouping presentation, decoration) come
 # from the selected Layout profile's `viewDefaults`, and a member declared here replaces the design's.
 body:
+  periods: {select: all, label: {}}
+  annotationBindings:
+  - {kind: note, temporalKind: point, purpose: note, facet: planned, endpoint: at}
+  - {kind: risk, temporalKind: span, purpose: note, facet: planned, endpoint: end}
+  - {kind: note, temporalKind: span, purpose: note, facet: planned, endpoint: end}
   surface: table-timeline
   bindings:
     countdown:

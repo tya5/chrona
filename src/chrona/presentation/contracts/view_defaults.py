@@ -54,8 +54,9 @@ def _close_array_presentation(body: dict[str, Any], defaults: Mapping[str, Any])
                 _fill_presentation(marker, offered, MARKER_PRESENTATION_MEMBERS)
     offered = defaults.get("periodLabelPresentation")
     periods = body.get("periods")
-    if isinstance(offered, Mapping) and isinstance(periods, list):
-        for period in periods:
+    if isinstance(offered, Mapping) and isinstance(periods, (list, Mapping)):
+        selections = periods if isinstance(periods, list) else [periods]
+        for period in selections:
             label = period.get("label") if isinstance(period, Mapping) else None
             if isinstance(label, dict):
                 _fill_presentation(label, offered, PERIOD_LABEL_PRESENTATION_MEMBERS)
