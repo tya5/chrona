@@ -1,6 +1,6 @@
 from dataclasses import replace
 from datetime import date
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from hashlib import sha256
 import pytest
 
@@ -155,6 +155,34 @@ def test_tikz_names_the_face_by_file_path_when_the_closure_has_it(tmp_path):
     tikz = render_v05_tikz(_with_family("Noto Sans JP"), (_face(directory, "jp-regular.ttf", "Noto Sans JP"),))
     assert f"\\fontspec[Path=\\detokenize{{{directory.as_posix()}/}}, Numbers=Proportional]{{jp-regular.ttf}}" in tikz
     assert "{Noto Sans JP}" not in tikz
+
+
+@pytest.mark.parametrize(("directory", "name", "accepted"), [
+    (r"C:\Program Files\Chrona\fonts", "Face Regular.ttf", True),
+    (r"C:\Fonts#unsafe", "face.ttf", False),
+    (r"C:\Fonts,unsafe", "face.ttf", False),
+    (r"C:\Fonts[unsafe]", "face.ttf", False),
+    (r"C:\Fonts", "face%unsafe.ttf", False),
+    (r"C:\Fonts", "face{unsafe.ttf", False),
+])
+def test_tikz_validates_the_serialized_windows_font_path(monkeypatch, directory, name, accepted):
+    from chrona.presentation.model.font_metrics import FontFile
+    from chrona.presentation.renderers import v05_typeset
+
+    class ExistingWindowsPath(PureWindowsPath):
+        def is_file(self):
+            return True  # Exercise Windows path syntax on every host; native tests use real files.
+
+    monkeypatch.setattr(v05_typeset, "Path", ExistingWindowsPath)
+    path = ExistingWindowsPath(directory) / name
+    face = FontFile(path, "sha256:test", "Face", 400)
+    if not accepted:
+        with pytest.raises(ValueError, match="E_VISUAL_CAPABILITY_UNSUPPORTED.*cannot name by file"):
+            render_v05_tikz(_with_family("Face"), (face,))
+        return
+    source = render_v05_tikz(_with_family("Face"), (face,))
+    assert f"Path=\\detokenize{{{path.parent.as_posix()}/}}" in source
+    assert f"{{{name}}}" in source
 
 
 def test_tikz_uses_the_next_family_when_the_first_has_no_file(tmp_path):
