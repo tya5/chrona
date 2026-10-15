@@ -29,7 +29,7 @@ from chrona.presentation.scene.model import (
 from chrona.presentation.scene.paint import (
     AS_OF_CONE_ROLE, PaintFamily, ScenePaintError, complete_icon_path_paints, resolve_artwork_admission,
     is_ink_only_surface_pattern, resolve_cone_paint, resolve_scene_paint, resolve_surface_pattern_admission,
-    restrict_paint_channels,
+    restrict_paint_channels, resolve_legend_shape_paint,
 )
 from chrona.presentation.scene.surface_overlays import project_canvas_overlays
 from chrona.presentation.scene.window_absences import project_lane_window_absences
@@ -196,7 +196,8 @@ def _completed_shape_primitive(placement: ShapePlacement, source_kind: str, purp
     bounds = (float(placement.bounds.inline), float(placement.bounds.block),
               float(placement.bounds.inline_size), float(placement.bounds.block_size))
     shared.update(slot_id=placement.slot_id, paint_order=placement.paint_order,
-                  paint_channels=placement.paint_channels)
+                  paint_channels=placement.paint_channels,
+                  legend_swatch_shape=placement.legend_swatch_shape)
     if placement.kind == "Path":
         return ScenePrimitive(placement.placement_id, PrimitiveKind.PATH, placement.source_ref,
                               source_kind, purpose, visual_role, bounds, points=placement.points,
@@ -324,6 +325,10 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
                               axis_band_paints: Mapping[str, str] = {},
                               actual_variance_paints: Mapping[str, str] | None = None,
                               ) -> tuple[ScenePrimitive | None, tuple[PaintOmission, ...]]:
+    if primitive.legend_swatch_shape is not None:
+        paint = resolve_legend_shape_paint(tokens, primitive.visual_role, primitive.legend_swatch_shape,
+                                           fill_override=scale_legend_paints.get(primitive.source_ref))
+        return replace(primitive, paint=paint, legend_swatch_shape=None), ()
     if primitive.visual_role == AS_OF_CONE_ROLE:
         # The cone's paint is its gradient; a profile that cannot paint one omits the whole cone (#890).
         cone = resolve_cone_paint(tokens, primitive.visual_role, visual_profile=visual_profile, bounds=primitive.bounds)

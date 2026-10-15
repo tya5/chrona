@@ -174,6 +174,12 @@ body:
     mark-height-bar:
       type: number
       value: 0.56
+    point-height:
+      type: number
+      value: 0.9
+    point-offset:
+      type: number
+      value: 0.05
     mark-offset-bar:
       type: number
       value: 0.22
@@ -387,6 +393,8 @@ body:
       strokeWidth: stroke-width
       markHeight: mark-height-bar
       markOffset: mark-offset-bar
+      symbolHeight: point-height
+      symbolOffset: point-offset
       markPaintOrder: mark-paint-middle
       markCornerRadius: mark-radius-capsule
     axis-major:

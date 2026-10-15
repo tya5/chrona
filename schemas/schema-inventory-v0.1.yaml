@@ -144,6 +144,7 @@ schemas:
       projectFieldRole: "sha256:436a55cdd7ef53cdbf6e30d445032d0cb7ea7b3ef6b9276ebff2b46caab2e338"
       fieldRoleGroupingFallback: "sha256:03836c55cd9b84ad3c627fb0b70210197b7d5214dc5621b216103059e4e94c0d"
       viewPeriodSelection: "sha256:1b6e39b52bc4e61b604b2f2c594e171ea659dd9b47b83a45a2c0d84d32cb2eb2"
+      legendSwatchShape: "sha256:85bcc619451348f828a258247e4dbfe8573eedfe2f22c3afeee05f893a03172d"
       plannedActualFacet: "sha256:1661dd28bc389d4663f1ff8477c2fed047bcd140b3ccd88cd4e65d59d0f044fd"
       annotationSide: "sha256:8b7453e1c16755eed298aa09fc8d5702fb7a24359f4f90e5063d240725606ca9"
       annotationAlignment: "sha256:78e88eae1e0678883bce8130ce34bc068d2ec435da9e905ba651c4345078f058"
