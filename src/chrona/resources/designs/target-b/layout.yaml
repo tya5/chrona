@@ -15,6 +15,7 @@ viewDefaults:
     missingActualScope: in-progress
     deltaUnit: calendar-days
     facets: [planned, actual, finishDelta, missingActual, unmatchedActual]
+  progressFill: {source: actual}
   visibility:
     labels: {placement: table, content: [title, finishDelta], side: end, overflow: suppress}
     relations: {mode: semantic, overflow: suppress}
@@ -53,7 +54,7 @@ viewDefaults:
     facet:
       format: signedDays
       missing: blank
-      missingBy: {inProgress: em-dash, dueUnobserved: blank, notYetDue: blank}
+      missingBy: {inProgress: blank, dueUnobserved: blank, notYetDue: blank}
       align: end
       width: content
       headerOrientation: horizontal

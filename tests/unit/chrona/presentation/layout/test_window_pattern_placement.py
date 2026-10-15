@@ -40,6 +40,18 @@ def test_cut_symbol_pattern_retains_original_phase_and_exact_closed_visible_cont
     SurfacePlacement(shapes=(shape,), patterns=patterns).assert_valid()
 
 
+def test_preclipped_glyph_progress_pattern_uses_logical_owner_without_scene_clip_host():
+    mark = MarkPlacement("actual", "object", BOUNDS, (10, 25), (50, 25), slot_id="timeline")
+    shape = replace(_shape("progressFill"), slot_id="timeline", paint_clip=None,
+                    host_placement_id=mark.placement_id)
+    patterns = complete_catalog_patterns((mark,), (shape,), Theme())
+    assert len(patterns) == 1
+    assert patterns[0].pattern.cut_contour == tuple(
+        PatternPathCommand(command.kind, command.points) for command in shape.path_commands)
+    assert patterns[0].pattern.origin == shape.pattern_origin
+    SurfacePlacement(marks=(mark,), shapes=(shape,), patterns=patterns).assert_valid()
+
+
 def test_cut_missing_actual_span_uses_same_phase_contract_without_admitting_other_roles():
     mark = MarkPlacement("cut", "object", BOUNDS, None, (50, 25), semantic_id="missing-actual",
         path_commands=CONTOUR, paint_clip=PaintClip((10, 20, 40, 10)), pattern_origin=(-30, 20))

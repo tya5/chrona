@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal
 import math
 from typing import TYPE_CHECKING, Any, Callable, Literal, Mapping, Sequence
@@ -10,6 +11,7 @@ from chrona.presentation.layout.model import LayoutError, geometry_sum
 from chrona.presentation.layout.text import measure_text_width, metric_for_role
 from chrona.presentation.layout.tracks import resolve_flexible_tracks
 from chrona.presentation.model.projection import ObservationState, shared_track_member_key
+from chrona.presentation.model.actual_observation import in_progress_actual
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent
 
 if TYPE_CHECKING:
@@ -353,7 +355,8 @@ def required_row_block_extents(*, review_rows: tuple[Any, ...], row_minimum: flo
                                role_geometries: Mapping[str, MarkGeometry] | None = None,
                                mark_band_allocation: MarkBandAllocation | None = None,
                                text_line_block: float = 0.0,
-                               row_text_blocks: Mapping[str, Decimal] | None = None) -> tuple[float, ...]:
+                               row_text_blocks: Mapping[str, Decimal] | None = None,
+                               as_of: date | None = None) -> tuple[float, ...]:
     """Close each row's minimum before any surplus distribution occurs.
 
     ``row_padding`` is the row's total block padding.  It is added once to the
@@ -371,7 +374,7 @@ def required_row_block_extents(*, review_rows: tuple[Any, ...], row_minimum: flo
 
     return tuple(max(row_minimum, text_requirement(row), minimum_track_block_extent(
         review_row=row, mark_block_size=mark_block_size, role_geometries=role_geometries,
-        mark_band_allocation=mark_band_allocation,
+        mark_band_allocation=mark_band_allocation, as_of=as_of,
     ) + row_padding) for row in review_rows)
 
 
@@ -419,7 +422,8 @@ def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, fl
 
 def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[RowPlacement, ...],
                       mark_block_size: float, role_geometries: Mapping[str, MarkGeometry] | None = None,
-                      mark_band_allocation: MarkBandAllocation | None = None) -> tuple[TrackPlacement, ...]:
+                      mark_band_allocation: MarkBandAllocation | None = None,
+                      as_of: date | None = None) -> tuple[TrackPlacement, ...]:
     """Allocate member tracks whose completed marks are contained by their row."""
     geometries = role_geometries or {
         "planned": MarkGeometry(1.0, 0.0, 0, 0.0),
@@ -437,8 +441,9 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
 
     def has_actual(item: Any) -> bool:
         actual = getattr(item, "actual", None) or {}
+        opened = in_progress_actual(actual, as_of)
         return bool((actual.get("start") is not None and actual.get("finish") is not None)
-                    or (actual.get("start") is not None and actual.get("openUntil") == "asOf")
+                    or (opened is not None and opened.drawable)
                     or actual.get("at") is not None)
 
     placements: list[TrackPlacement] = []
@@ -494,7 +499,8 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
 
 def minimum_track_block_extent(*, review_row: Any, mark_block_size: float,
                                role_geometries: Mapping[str, MarkGeometry] | None = None,
-                               mark_band_allocation: MarkBandAllocation | None = None) -> float:
+                               mark_band_allocation: MarkBandAllocation | None = None,
+                               as_of: date | None = None) -> float:
     """Find the smallest integral row block accepted by the track planner.
 
     This deliberately invokes ``place_mark_tracks`` rather than re-encoding
@@ -506,7 +512,7 @@ def minimum_track_block_extent(*, review_row: Any, mark_block_size: float,
                 RowPlacement(str(review_row.row_id), getattr(review_row, "group_id", None),
                              (0.0, 0.0, 1.0, block_size)),
             ), mark_block_size=mark_block_size, role_geometries=role_geometries,
-                mark_band_allocation=mark_band_allocation)
+                mark_band_allocation=mark_band_allocation, as_of=as_of)
         except LayoutError as error:
             if error.diagnostic_id != "E_LAYOUT_MARK_OVERFLOW":
                 raise

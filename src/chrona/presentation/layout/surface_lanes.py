@@ -264,8 +264,8 @@ def build_lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: l
             icons_by_host.setdefault(icon.host_placement_id, []).append(icon)
     progress_by_host: dict[str, list[ShapePlacement]] = {}
     for shape in shapes:
-        if shape.clip_host_id is not None and shape.semantic_id == "progressFill":
-            progress_by_host.setdefault(shape.clip_host_id, []).append(shape)
+        if shape.host_placement_id is not None and shape.semantic_id == "progressFill":
+            progress_by_host.setdefault(shape.host_placement_id, []).append(shape)
 
     grouped: dict[tuple[str, str, str, str, str], list[LaneEmissionFacet]] = {}
 
@@ -336,7 +336,7 @@ def build_lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: l
             purpose, LaneEmissionFacet(f"icon:{icon.placement_id}", "icon", icon.placement_id,
                                        icon.placement_id, obstacle, "required-label"))
     for shape in shapes:
-        if shape.lane_row_id is None or shape.clip_host_id is not None:
+        if shape.lane_row_id is None or shape.clip_host_id is not None or shape.host_placement_id is not None:
             continue
         if shape.lane_member_id is None:
             raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", shape.placement_id)
