@@ -20,7 +20,8 @@ from tests.support.cff_fonts import write_cff_collection, write_cff_font
 
 @pytest.mark.parametrize("kind", ["cff", "cff2", "variable", "collection"])
 @pytest.mark.parametrize("header_text", ["A", "H", "AH"])
-def test_installed_cff_role_embeds_exact_selected_glyph_in_pdf(tmp_path, kind, header_text):
+@pytest.mark.parametrize("family", ["CFF Proof", "Missing Family, CFF Proof, sans-serif"])
+def test_installed_cff_role_embeds_exact_selected_glyph_in_pdf(tmp_path, kind, header_text, family):
     fonts = tmp_path / "fonts"
     fonts.mkdir()
     if kind == "collection":
@@ -34,7 +35,7 @@ def test_installed_cff_role_embeds_exact_selected_glyph_in_pdf(tmp_path, kind, h
     source_identity = "sha256:" + sha256(source_bytes).hexdigest()
     parts = sr.bundle()
     theme = parts["theme"]["body"]
-    theme["values"]["cff.family"] = {"type": "fontFamily", "value": "CFF Proof"}
+    theme["values"]["cff.family"] = {"type": "fontFamily", "value": family}
     theme["roles"]["groupHeader"]["fontFamily"] = "cff.family"
     source = sr.bunched_project(groups=1, per_group=1)
     source["entities"]["team-0"]["title"] = header_text
@@ -51,7 +52,8 @@ def test_installed_cff_role_embeds_exact_selected_glyph_in_pdf(tmp_path, kind, h
                                                asset_root=draft.asset_root, draft_auto_block=draft.auto_block,
                                                draft_font_resolution=draft.font_resolution))
     header = next(item for item in rendered.surface.primitives if item.scene_id == "group-header:team-0")
-    assert header.text_layout.family == "CFF Proof"
+    assert header.text_layout.family == ("CFF Proof" if family == "CFF Proof"
+                                         else "CFF Proof, Missing Family, sans-serif")
     assert "cff-cu2qu-v1" in rendered.artifact.adapter_identity
     assert f"pdf-closed-face-v1-fonttools-{version('fonttools')}" in rendered.artifact.adapter_identity
     assert source_identity.removeprefix("sha256:") in rendered.artifact.adapter_identity
