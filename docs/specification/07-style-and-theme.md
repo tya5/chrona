@@ -19,6 +19,13 @@ square, chevron or catalogue glyph; those retain their native symbol contour.
 Bars keep their independent corner treatment. Layout completes this shape
 identity before Scene projection.
 
+On a table-timeline with semantic relations, declaring the optional Theme
+role `dependency-critical` selects it for the existing scheduling-derived
+critical relation facts (#1561). Absence keeps `dependency`. It supplies the
+ordinary path paint and width, not a criticality classifier; existing shared
+relation-terminal policy still applies, without a new role-specific marker;
+the wider stroke participates in Layout safety, halos and Scene contrast.
+
 The **Style** layer maps the semantic objects and comparison facets emitted by the View Model to named visual roles. The **Theme** layer supplies concrete visual tokens for those roles. Together they make the same Project and View usable in a compact engineering review, a plan-versus-actual review, or a presentation-oriented timeline while preserving a small, reviewable semantic source.
 
 Neither layer is a scheduling engine, a second project model, or an editable drawing canvas.
