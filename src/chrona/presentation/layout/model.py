@@ -22,6 +22,12 @@ class RelationUnroutableMode(str, Enum):
     SUPPRESS = "suppress"
 
 
+class PointHostMode(str, Enum):
+    """Physical hosting policy for selected point marks."""
+
+    SPAN_WHEN_INSIDE = "span-when-inside"
+
+
 class LayoutError(ValueError):
     """Stable M24 layout diagnostic."""
 
@@ -158,6 +164,7 @@ class LayoutManifest:
     relation_search_budget: int | None = None
     # Staged implementation: flip only after recovery and target protection land.
     relation_unroutable: RelationUnroutableMode = RelationUnroutableMode.RELAX
+    point_host_mode: PointHostMode | None = None
 
     def canonical_bytes(self, precision: int = 3) -> bytes:
         quantum = Decimal(1).scaleb(-precision)
@@ -222,6 +229,8 @@ class LayoutManifest:
         }
         if self.member_names:
             payload["reviewSurface"]["memberNames"] = dict(sorted(self.member_names.items()))
+        if self.point_host_mode is not None:
+            payload["reviewSurface"]["marks"] = {"points": {"host": self.point_host_mode.value}}
         if self.fit_warnings:
             payload["fitWarnings"] = [
                 {"code": item.code, "placementId": item.placement_id,
