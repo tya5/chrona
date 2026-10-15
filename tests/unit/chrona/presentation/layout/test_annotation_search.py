@@ -1,9 +1,11 @@
+import chrona.presentation.layout.annotation_search as search
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.annotation_search import (
     coarse_lattice_positions, lattice_positions, nearest_free_box, nearest_free_tail_box,
 )
 from chrona.presentation.layout.annotation_search import nearest_free_routed_tail_box
+from chrona.presentation.layout.annotation_search import _route_crosses_rule_once
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.surface_quality import MarkPlacement
 from chrona.presentation.layout.balloon_geometry import nearest_eligible_edge, tail_base_points
@@ -330,3 +332,90 @@ def test_routed_tail_exempts_only_the_named_source_port_on_egress() -> None:
         host_id="mark:anchor")
     assert result.box is not None and result.egress is not None
     assert result.egress.semantic_port == (50, 45)
+
+
+def test_as_of_fallback_routes_once_transversely_and_keeps_other_obstacles_authoritative() -> None:
+    mark = MarkPlacement("mark:anchor", "anchor", Rect(20, 40, 10, 10),
+                         (20, 45), (30, 45), mark_shape="point")
+    as_of = SurfaceObstacle("as-of", "rule", "timeline", ObstacleSegment((50, 0), (50, 100)))
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("mark:anchor", "mark", "plot", ObstacleRect(20, 40, 30, 50)))
+    index.add(as_of)
+    args = dict(
+        region=LabelRect(0, 0, 160, 100), anchor=mark, endpoint="at", siblings=(mark,),
+        box_size=(30, 20), max_positions=1, obstacles=index,
+        obstacle_classes=("mark", "text", "dependency-route", "rule"),
+        corner_radius=3, tail_base=8, content_bounds=(0, 0, 160, 100),
+        host_id="mark:anchor", side_of_as_of=(50.0, "start"), search_pass="coarse",
+        route_state_limit=1024, crossing_rule_id="as-of")
+
+    result = nearest_free_routed_tail_box(**args)
+    assert result.box is not None and result.tip is not None and result.egress is not None
+    assert result.route is not None and result.route.topology == "strict"
+    assert result.box.x > 50
+    assert all(point[0] < 50 for point in (result.egress.semantic_port,
+                                            result.egress.exposed_port,
+                                            *result.egress.corridor))
+    assert _route_crosses_rule_once(result.route.points, as_of.geometry)
+    assert all(point[0] > 50 for point in (result.tip,))
+    edge = nearest_eligible_edge(result.box, result.tip)
+    base_a, base_b = tail_base_points(result.box, result.tip, edge=edge, tail_base=8,
+                                      corner_radius=3)
+    assert all(point[0] > 50 for point in (base_a, base_b))
+    assert 0 < result.route_states <= 1024
+
+    # The typed route exemption is only for the exact as-of rule. A text
+    # obstacle covering the crossing remains authoritative.
+    blocked = SurfaceObstacleIndex()
+    blocked.extend(index.all())
+    blocked.add(SurfaceObstacle("blocking-text", "text", "timeline",
+                                ObstacleRect(49, 0, 51, 100)))
+    assert nearest_free_routed_tail_box(**{**args, "obstacles": blocked}).box is None
+    other_rule = SurfaceObstacleIndex()
+    other_rule.extend(index.all())
+    other_rule.add(SurfaceObstacle("another-rule", "rule", "timeline",
+                                   ObstacleSegment((50, 0), (50, 100))))
+    assert nearest_free_routed_tail_box(**{**args, "obstacles": other_rule}).box is None
+
+
+def test_as_of_fallback_requires_exactly_one_interior_transverse_crossing() -> None:
+    rule = ObstacleSegment((50, 0), (50, 100))
+    assert _route_crosses_rule_once(((30, 40), (70, 40)), rule)
+    assert not _route_crosses_rule_once(((30, 40), (50, 40), (70, 40)), rule)
+    assert not _route_crosses_rule_once(((30, 40), (70, 40), (30, 50), (70, 50)), rule)
+    assert not _route_crosses_rule_once(((50, -10), (50, 110)), rule)
+    assert not _route_crosses_rule_once(((30, 0), (70, 0)), rule)
+
+
+def test_as_of_fallback_continues_after_body_free_box_has_no_route(monkeypatch) -> None:
+    mark = MarkPlacement("mark:anchor", "anchor", Rect(20, 40, 10, 10),
+                         (20, 45), (30, 45), mark_shape="point")
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("mark:anchor", "mark", "plot", ObstacleRect(20, 40, 30, 50)))
+    index.add(SurfaceObstacle("as-of", "rule", "timeline", ObstacleSegment((50, 0), (50, 100))))
+    first = LabelRect(130, 0, 30, 20)
+    later = LabelRect(65, 40, 30, 20)
+    monkeypatch.setattr(search, "_candidate_positions",
+                        lambda *args, **kwargs: iter((first, later)))
+    original_egresses = search.connector_egress_candidates
+
+    def egresses(anchor, endpoint, target, siblings):
+        # The first box is body-free but has no legal source egress; the next
+        # coarse box has a complete strict route in the same bounded search.
+        if target == (first.x + first.width / 2, first.y + first.height / 2):
+            return ()
+        return original_egresses(anchor, endpoint, target, siblings)
+
+    monkeypatch.setattr(search, "connector_egress_candidates", egresses)
+    result = nearest_free_routed_tail_box(
+        region=LabelRect(0, 0, 160, 100), anchor=mark, endpoint="at", siblings=(mark,),
+        box_size=(30, 20), max_positions=2, obstacles=index,
+        obstacle_classes=("mark", "text", "dependency-route", "rule"),
+        corner_radius=3, tail_base=8, content_bounds=(0, 0, 160, 100),
+        host_id="mark:anchor", side_of_as_of=(50.0, "start"), search_pass="coarse",
+        route_state_limit=1024, crossing_rule_id="as-of")
+
+    assert result.box == later
+    assert result.route is not None and result.egress is not None
+    assert result.box_trials == 2
+    assert 0 < result.route_states <= 1024
