@@ -13,6 +13,11 @@ paint-channel contract in [Specification28](28-review-detail-profile.md#finite-l
 They do not introduce a parallel colour palette. Independent milestone size
 continues to use the existing mark-role `symbolHeight`/`symbolOffset` track
 ratios below, not a second `milestoneSymbol` sizing mechanism (#1562).
+Rounded-diamond completion applies only to a declared builtin `diamond`.
+A positive mark radius MUST NOT substitute a diamond for a declared circle,
+square, chevron or catalogue glyph; those retain their native symbol contour.
+Bars keep their independent corner treatment. Layout completes this shape
+identity before Scene projection.
 
 The **Style** layer maps the semantic objects and comparison facets emitted by the View Model to named visual roles. The **Theme** layer supplies concrete visual tokens for those roles. Together they make the same Project and View usable in a compact engineering review, a plan-versus-actual review, or a presentation-oriented timeline while preserving a small, reviewable semantic source.
 
