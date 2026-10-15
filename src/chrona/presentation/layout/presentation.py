@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal
 import math
-from typing import TYPE_CHECKING, Any, Callable, Literal, Mapping
+from typing import TYPE_CHECKING, Any, Callable, Literal, Mapping, Sequence
 
 from chrona.presentation.layout.model import LayoutError, geometry_sum
 from chrona.presentation.layout.text import measure_text_width, metric_for_role
@@ -293,13 +293,24 @@ def place_table_columns(*, columns: tuple[TableColumnContent, ...],
         widths = tuple(width + (remaining * columns[index].width.fraction / weights
                                 if index in flexible and weights else 0.0)
                        for index, width in enumerate(base))
-    cursor = bounds[0]
-    placements: list[TableColumnPlacement] = []
-    for column, natural, width in zip(columns, natural_widths, widths, strict=True):
-        placed_width = widths[len(placements)]
-        placements.append(TableColumnPlacement(column.column_id, cursor, placed_width, natural))
-        cursor += placed_width + gutter
-    return tuple(placements)
+    positions = column_inline_positions(bounds[0], widths, gutter)
+    return tuple(TableColumnPlacement(column.column_id, position, width, natural)
+                 for column, natural, width, position in zip(columns, natural_widths, widths, positions,
+                                                              strict=True))
+
+
+def column_inline_positions(origin: float, widths: Sequence[float], gutter: float) -> tuple[float, ...]:
+    """Return each column's inline start as one correctly rounded sum from the table origin (#1542).
+
+    Every placement path derives x from the same origin and widths with this single accumulation, so
+    wrapped, unwrapped and source-closed tables agree to the last float digit.
+    """
+    terms: list[float] = [origin]
+    positions: list[float] = []
+    for width in widths:
+        positions.append(geometry_sum(terms))
+        terms.extend((width, gutter))
+    return tuple(positions)
 
 
 def validate_table_text_roles(columns: Any, theme_tokens: Any) -> None:

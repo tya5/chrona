@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Any
 
 from chrona.presentation.layout.presentation import (
-    TableColumnPlacement, header_group_cell_indent, table_cell_indent, table_text_measurer, place_table_columns,
+    TableColumnPlacement, column_inline_positions, header_group_cell_indent, table_cell_indent, table_text_measurer, place_table_columns,
 )
 from chrona.presentation.layout.group_tags import header_child_lead
 from chrona.presentation.layout.model import LayoutError, Rect
@@ -107,8 +107,10 @@ def prepare_table_header_seed(*, request: SurfaceLayoutRequest, table: SlotPlace
                               detail="bounded source closure does not match allocated table geometry")
         if tuple(item.column_id for item in bounded.columns) != tuple(item.column_id for item in columns_intent):
             raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/table", detail="bounded source columns disagree")
-        layout_columns = tuple(replace(item, inline=float(table.bounds.inline) + item.inline)
-                               for item in bounded.columns)
+        gutter = float(metric_values.get("table.column.gutter.inlineSize", 0))
+        layout_columns = tuple(replace(item, inline=inline) for item, inline in zip(
+            bounded.columns, column_inline_positions(
+                table_bounds[0], [item.inline_size for item in bounded.columns], gutter), strict=True))
         cell_indents = dict(bounded.cell_indents)
     else:
         layout_columns = place_table_columns(

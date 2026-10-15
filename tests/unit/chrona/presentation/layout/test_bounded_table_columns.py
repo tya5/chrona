@@ -119,3 +119,20 @@ def test_bounded_track_random_feasible_vectors_respect_every_floor_cap_and_total
         result = resolve_flexible_tracks(bases, available)
         assert all(low <= size <= high for size, (low, high, _) in zip(result, bases))
         assert abs(sum(result, D(0)) - available) < D("1e-23")
+
+
+def test_column_x_is_one_exact_accumulation_on_every_placement_path():
+    """Wrapped (origin-relative) and unwrapped (absolute) placement agree to the last digit (#1542)."""
+    from chrona.presentation.layout.presentation import column_inline_positions
+    widths, origin, reserved = (63.225022, 262.771700626, 80.0), 369.0, 8.0
+    # Sequential float accumulation, as the two paths used to do, differs in the last digit.
+    assert (origin + reserved) + widths[0] != origin + (reserved + widths[0])
+    absolute = column_inline_positions(origin + reserved, widths, 0.0)
+    assert absolute[1] == geometry_sum((origin, reserved, widths[0]))
+    columns = tuple(column(name) for name in "abc")
+    cells = tuple(TableCellContent("r", name, "x" * (width // 10), "tableCell")
+                  for name, width in zip("abc", (30, 40, 50)))
+    kwargs = dict(columns=columns, cells=cells, measure_text=measure, minimum_inline=10, gutter=6.0)
+    placed = place_table_columns(bounds=(origin + reserved, 0, 500.0, 0), **kwargs)
+    assert tuple(item.inline for item in placed) == column_inline_positions(
+        origin + reserved, [item.inline_size for item in placed], 6.0)
