@@ -34,6 +34,8 @@ Theme adaptation is required; authors opt in and tune existing Theme roles.
   non-hosted Actual geometry when only the planned point is hosted, and vice versa.
 - Exact host-only egress; an unrelated obstacle still blocks the corridor and
   the host still blocks route-body re-entry; no silent relation loss.
+  Also test the span's start/end dependency with an inclusive endpoint milestone:
+  reciprocal authority covers only that covering point, not other hosted points.
 - Two hosted points with incompatible fixed footprints produce
   `E_LAYOUT_POINT_HOST_OVERLAP`; no hidden glyph or new subtrack fallback.
 

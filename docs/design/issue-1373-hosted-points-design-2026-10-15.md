@@ -62,7 +62,11 @@ the View's half-open window admission is independent of inclusive host eligibili
   host may be crossed on the recorded endpoint-to-exposed-boundary corridor,
   never on the route body. Comparison siblings keep their existing eligibility;
   do not insert a different object's span into generic comparison clusters.
-  All candidate/recovery and annotation callers consume the same typed link.
+  If a span endpoint itself is covered by its exact hosted point (notably an
+  inclusive start/end milestone), the same link permits egress through that
+  covering point only on that endpoint corridor. A different hosted point not
+  covering the endpoint gains no exemption. All candidate/recovery and
+  annotation callers consume this reciprocal, endpoint-local relationship.
 - Lane closure still accounts for exactly one child facet. Preflight needs an
   explicit separation of semantic ownership from physical allocation: the
   current whole-instance subtrack unit cannot represent independently hosted

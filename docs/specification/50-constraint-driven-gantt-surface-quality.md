@@ -1194,7 +1194,9 @@ Plot labels follow the physical host row for measured demand, association and
 candidate bounds, while keeping child identity; table rows do not move.
 Relations and annotation leaders retain the point's semantic endpoint. The exact
 resolved span may be exempt only on the finite endpoint egress corridor to its
-exposed boundary, never on the route body. Every candidate/recovery caller uses
+exposed boundary, never on the route body. Conversely a span endpoint covered
+by its exact hosted point may cross that covering point on its endpoint corridor;
+other hosted points not covering the endpoint remain obstacles. Every candidate/recovery caller uses
 that same typed host relationship, not a generic comparison-cluster insertion.
 Scene and adapters project completed ordinary primitives without hosting policy.
 

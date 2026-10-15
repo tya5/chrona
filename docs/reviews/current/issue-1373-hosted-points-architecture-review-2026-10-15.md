@@ -13,7 +13,7 @@ Baseline: published READY `7c46a7c695ed0863d17998acad062923f7acc4e1`.
 | Layout, Specs 33/50 | Resolve eligible facet identities once; separate semantic inventory from physical allocation and use one host-relative frame in preflight and final composition. Exact point/host overlap is not a lane-membership relaxation. |
 | Windows and comparisons | Source/scenario/facet identity and original dates govern eligibility; existing child window admission governs emission. Missing/hidden hosts do not gain paint or ports. |
 | Labels | Physical row owns placement demand/band; child retains semantic ownership and provenance. No stale own-row association after moving its point. |
-| Routes and annotations | Explicit exact-host egress only; no route-body exemption or different-object comparison-cluster pollution. All recovery callers must retain the relationship. |
+| Routes and annotations | Explicit exact-host egress only, reciprocally for a span endpoint covered by its exact hosted point; other hosted points remain obstacles. No route-body exemption or different-object comparison-cluster pollution. All recovery callers retain the relationship. |
 | Scene/adapters, Specs 08/49 | Completed ordinary geometry and paint order only; no host lookup, measurement or coordinate correction downstream. |
 | Schema, Spec 56 | Optional v0.10 insertion, explicit runtime default-off, shared parts unchanged. No Project/View/Scene schema migration. |
 
