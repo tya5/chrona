@@ -119,6 +119,8 @@ DIFFERENT_CONCEPT: dict[tuple[str, str], str] = {
         "a named layout guide position along an axis, not an annotation's alignment along a side",
     ("layout-profile-v0.10.schema.yaml", "/$defs/slotHeading/properties/align"):
         "the inline position of a slot heading within its slot, not an annotation's alignment along a side",
+    ("view-v0.28.schema.yaml", "/allOf/1/properties/body/properties/grouping/properties/depth/anyOf/1"):
+        "hierarchy grouping's depth limit, where all means no depth limit, not selection of every Project period",
 }
 
 
