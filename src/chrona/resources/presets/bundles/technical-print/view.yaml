@@ -84,7 +84,18 @@ body:
   rows:
     mode: lanes
     packing: [explicit, attached]
-    laneTable: {label: lane, count: auto, text: {wrap: allow}}
+    laneTable:
+      label: lane
+      count: auto
+      text: {wrap: allow}
+      columns:
+      - id: 'No'
+        source: rowIndex
+      - id: Task
+        source: label
+      - id: Owner
+        source: {field: owner}
+        transform: initials
   markers:
   - kind: asOf
     source: actual

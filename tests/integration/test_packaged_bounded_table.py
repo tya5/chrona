@@ -1,4 +1,5 @@
 """Packaged table/heading policy and fitting-copy preservation (#1295)."""
+import dataclasses
 from copy import deepcopy
 from datetime import date
 from hashlib import sha256
@@ -10,7 +11,6 @@ from chrona.presentation.contracts import ClosureIdentity, ViewContract, parse_c
 from chrona.resources import safe_load, schema_validator
 from chrona.usecases import preset_library
 from tests.support import synthetic_review as sr
-
 
 PRESETS = tuple(entry["id"] for entry in preset_library._library()
                 if not entry["members"]["layout"]["sourceRoot"].startswith("designs/"))  # designs are reviewer-owned (#429)
@@ -76,6 +76,18 @@ def test_every_packaged_preset_bounds_long_table_and_heading(tmp_path, identifie
     assert b"<tspan" in rendered.artifact.content
 
 
+def _rounded(value):
+    if isinstance(value, float):
+        return round(value, 6)
+    if dataclasses.is_dataclass(value) and not isinstance(value, type):
+        return {f.name: _rounded(getattr(value, f.name)) for f in dataclasses.fields(value)}
+    if isinstance(value, (tuple, list)):
+        return tuple(_rounded(item) for item in value)
+    if isinstance(value, dict):
+        return {key: _rounded(item) for key, item in value.items()}
+    return value
+
+
 @pytest.mark.parametrize("identifier", PRESETS)
 def test_fitting_packaged_copy_keeps_scene_surface_and_svg(tmp_path, identifier):
     bounded = _parts(identifier)
@@ -93,5 +105,8 @@ def test_fitting_packaged_copy_keeps_scene_surface_and_svg(tmp_path, identifier)
     catalogs = _catalogs(tmp_path, identifier)
     before = sr.render(before_path, _source(), presentation=original, icon_catalogs=catalogs)
     after = sr.render(after_path, _source(), presentation=bounded, icon_catalogs=catalogs)
-    assert after.surface == before.surface
+    # Column x offsets accumulate float widths in a different order when a lane table has several
+    # columns; compare geometry to micro-pixel precision (#1529).
+    # Refs #1542: exact equality returns when place_table_columns accumulates identically
+    assert _rounded(after.surface) == _rounded(before.surface)
     assert after.artifact.content == before.artifact.content
