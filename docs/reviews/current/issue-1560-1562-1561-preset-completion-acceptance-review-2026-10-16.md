@@ -48,6 +48,15 @@ integration candidate must pass its own CI and public-artifact review, then
 exact-main three-OS release containing these reviews. None is inferred from
 an older green run or an artifact-only comparison.
 
+Release prerequisite: [main run38757817385](https://github.com/tya5/chrona/actions/runs/38757817385)
+passed Ubuntu/macOS but failed26Windows TikZ tests because native backslashes
+were validated before existing POSIX path serialization. The
+[published repair plan](https://github.com/tya5/chrona/issues/1553#issuecomment-6196104996)
+aligns the safety check with that serialization, retaining unsafe-character,
+suffix, face-index and existence checks. Host-independent Windows-path controls
+cover safe spaces and unsafe directories/filenames; native Windows release CI
+is still required. Font ordering, measurement and Layout/Scene are unchanged.
+
 ## Architecture conclusion
 
 Content closes period selection and canonical critical-role intent before

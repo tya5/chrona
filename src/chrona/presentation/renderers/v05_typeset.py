@@ -145,7 +145,7 @@ def _tikz_face(layout: object, font_files: Sequence[FontFile]) -> FontFile:
             continue
         face = min(candidates, key=lambda item: (_weight_rank(weight, item.weight), str(item.path), item.index))
         path = Path(face.path)
-        if face.index != 0 or path.suffix.lower() not in _LOADABLE_SUFFIXES or _UNSAFE_PATH.search(str(path)) or not path.is_file():
+        if face.index != 0 or path.suffix.lower() not in _LOADABLE_SUFFIXES or _UNSAFE_PATH.search(path.as_posix()) or not path.is_file():
             reasons.append(f"{family!r} is {path.name!r} (face index {face.index}), which TikZ cannot name by file")
             continue
         return face
