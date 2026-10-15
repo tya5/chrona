@@ -78,7 +78,11 @@ allOf:
                     properties:
                       fieldRole: {description: "Project-level semantic field role used to group rows.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/projectFieldRole"}
               field: {description: "Project field used when grouping by field.", type: string, minLength: 1}
-              fallback: {description: "Required for role grouping: objectType uses the ordinary object-type groups when the primary Project does not bind the role; none disables grouping.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/fieldRoleGroupingFallback"}
+              fallback:
+                description: "Required for role grouping: objectType uses ordinary object-type groups, none disables grouping, and hierarchy groups selected objects under their rootmost Project group when the primary Project does not bind the role."
+                oneOf:
+                  - {$ref: "urn:chrona:vocabulary-v0.1#/$defs/fieldRoleGroupingFallback"}
+                  - {const: hierarchy}
               order:
                 description: "Preferred order of group values, or a data-derived order."
                 oneOf:

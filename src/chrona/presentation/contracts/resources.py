@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
-from enum import StrEnum
+from enum import Enum, StrEnum
 import math
 import re
 from typing import Any, Literal, Mapping
@@ -333,9 +333,15 @@ class ViewGroupTint:
     domain: tuple[str, ...] | None = None  # None: firstAppearance, the groups in display order
 
 
+class _PrivateGroupingMode(Enum):
+    """Runtime-only grouping source selected by a semantic-role fallback."""
+
+    PROJECT_ROOT_GROUP = "project-root-group"
+
+
 @dataclass(frozen=True)
 class ViewGrouping:
-    by: str
+    by: str | _PrivateGroupingMode
     field: str | None
     order: tuple[str, ...]
     missing: str | None
