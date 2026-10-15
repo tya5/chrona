@@ -1,7 +1,7 @@
 """The bundled appearances declare a `deadline-mark` role, so a View can show deadlines on them (#946).
 
-The ink must read at the mark floor (3:1) on the row ground and on the planned bar; `control-room-dark` has a light bar on a dark
-ground, so no single flat ink can, and it keeps asking for the role (a halo is a Layout decision, recorded on the issue).
+The ink must read at the mark floor (3:1); control-room-dark uses an outlined
+tick/run so the actual ground remains readable across its light bar.
 """
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from tests.support import synthetic_review as sr
 
 BUNDLES = Path(__file__).resolve().parents[2] / "src/chrona/resources/presets/bundles"
 # `editorial` and the bundled default are mirrored byte for byte under examples/halcyon-1 (reviewer-owned), so they wait for the mirror
-PRESETS = ["mission-light", "print-mono", "executive-light", "elevated-light", "technical-print"]
+PRESETS = ["mission-light", "print-mono", "executive-light", "elevated-light", "technical-print", "control-room-dark"]
 
 
 def _source() -> dict:
@@ -69,10 +69,14 @@ def test_a_view_that_shows_deadlines_renders_on_a_bundled_appearance_and_every_m
     assert findings and all(item.severity != "error" and item.contrast_ratio >= 3.0 for item in findings), preset
 
 
-def test_control_room_dark_still_asks_for_the_role(tmp_path):
+def test_control_room_dark_declares_visible_outlined_deadline_ink(tmp_path):
     parts = sr.bundle("control-room-dark")
     parts["view"]["body"]["deadlines"] = {"show": "all"}
 
-    with pytest.raises(Exception) as raised:
-        sr.render(tmp_path, _source(), presentation=parts)
-    assert getattr(raised.value, "code", "") == "E_THEME_ROLE_REQUIRED" or "deadline-mark" in str(raised.value)
+    rendered = sr.render(tmp_path, _source(), presentation=parts)
+    outlines = [item for item in rendered.surface.primitives if item.visual_role == "deadline-mark-outline"]
+    assert outlines and all(item.kind == "Rect" for item in outlines)
+    findings = [item for item in evaluate_scene_contrast(scene_document(rendered.scene))
+                if item.visual_role == "deadline-mark"]
+    assert findings and all(item.severity != "error" and item.contrast_ratio >= 3 for item in findings)
+    assert all(item.ground_id.endswith(":outline") for item in findings)

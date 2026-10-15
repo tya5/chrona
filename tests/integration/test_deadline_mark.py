@@ -49,7 +49,7 @@ MIXED = {"a": "2026-02-05", "b": "2026-03-25", "g": "2026-03-10", "h": "2026-03-
 
 
 def _parts(show: str | None = "all", *, color: str = "text", reach: float = 1.7, width: float = 2, order: int = 5,
-           preset: str = "executive-light", role: bool = True) -> dict:
+           preset: str = "executive-light", role: bool = True, outline: float | None = None) -> dict:
     parts = sr.bundle(preset)
     body = parts["theme"]["body"]
     if role:
@@ -59,6 +59,9 @@ def _parts(show: str | None = "all", *, color: str = "text", reach: float = 1.7,
         body["roles"]["deadline-mark"] = {"strokeWidth": "deadline-width", "markReach": "deadline-reach",
                                           "markPaintOrder": "deadline-order"}
         body["colorBindings"]["deadline-mark.stroke"] = color
+        if outline is not None:
+            body["values"]["deadline-outline"] = {"type": "number", "value": outline}
+            body["roles"]["deadline-mark"]["outlineWidth"] = "deadline-outline"
     else:  # the bundled appearances declare the role since #946: "no role" removes it
         body["roles"].pop("deadline-mark", None)
         body["colorBindings"].pop("deadline-mark.stroke", None)
@@ -239,6 +242,9 @@ def test_a_folded_header_point_is_recorded_and_not_decorated():
         def deadline_mark(self, role):
             return Decimal("1.5"), 5
 
+        def deadline_outline_width(self, role):
+            return Decimal(0)
+
     base = SimpleNamespace(plot=Rect(Decimal(0), Decimal(0), Decimal(100), Decimal(50)), scale=SimpleNamespace(
         domain_start=date(2026, 1, 1), domain_end=date(2026, 1, 11), range_start=0.0, range_end=100.0, origin=0.0,
         unit_ratio=10.0))
@@ -290,6 +296,93 @@ def test_the_dependency_network_surface_has_no_timeline_to_draw_a_deadline_on():
 
 
 # --- Scene and gates ------------------------------------------------------------------------------------
+
+
+def test_zero_outline_keeps_flat_scene_primitives_and_svg_bytes(tmp_path):
+    flat = _render(tmp_path, name="flat")
+    zero = _render(tmp_path, parts=_parts(outline=0), name="zero")
+    assert flat.surface.primitives == zero.surface.primitives
+    assert flat.artifact.content == zero.artifact.content
+
+
+def test_outline_is_actual_svg_ground_and_preserves_deadline_geometry(tmp_path):
+    from xml.etree import ElementTree
+
+    flat_parts = _parts(preset="control-room-dark")
+    outlined_parts = _parts(preset="control-room-dark", outline=1)
+    # Exercise the Theme's light planned ink, not the preset's dark owner palette.
+    for parts in (flat_parts, outlined_parts):
+        parts["view"]["body"].pop("colorEncoding", None)
+    flat = _render(tmp_path, parts=flat_parts, name="flat")
+    outlined = _render(tmp_path, parts=outlined_parts, name="outlined")
+    assert _marks(flat) == _marks(outlined)
+    flat_findings = [item for item in evaluate_scene_contrast(scene_document(flat.scene))
+                     if item.visual_role == "deadline-mark"]
+    assert any(item.severity == "error" for item in flat_findings)
+    grounds = {item.scene_id: item for item in outlined.surface.primitives
+               if item.visual_role == "deadline-mark-outline"}
+    assert len(grounds) == len(_marks(outlined))
+    for mark in _marks(outlined):
+        ground = grounds[mark.scene_id + ":outline"]
+        assert ground.paint_order == mark.paint_order - 1
+        assert ground.bounds == pytest.approx((mark.bounds[0] - 2, mark.bounds[1] - 2,
+                                              mark.bounds[2] + 4, mark.bounds[3] + 4))
+        assert ground.paint.fill == outlined.surface.canvas_paint.fill
+    findings = [item for item in evaluate_scene_contrast(scene_document(outlined.scene))
+                if item.visual_role == "deadline-mark"]
+    assert all(item.contrast_ratio >= 3 and item.ground_id in grounds for item in findings)
+    svg = ElementTree.fromstring(outlined.artifact.content)
+    elements = [node for node in svg.iter() if node.attrib.get("data-purpose") in {"deadline-mark", "deadline-outline"}]
+    first_stroke = next(index for index, node in enumerate(elements) if node.attrib["data-purpose"] == "deadline-mark")
+    assert all(node.attrib["data-purpose"] == "deadline-outline" for node in elements[:first_stroke])
+    assert all(node.attrib["data-purpose"] == "deadline-mark" for node in elements[first_stroke:])
+
+
+@pytest.mark.parametrize("deadline", ["2026-01-01", "2026-04-01"])
+def test_outline_and_foreground_keep_existing_window_edge_clipping(tmp_path, deadline):
+    rendered = _render(tmp_path, source=_source(a=deadline), parts=_parts(outline=1))
+    tick = _ticks(rendered)["a"]
+    ground = next(item for item in rendered.surface.primitives if item.scene_id == tick.scene_id + ":outline")
+    assert ground.bounds[0] == pytest.approx(tick.bounds[0] - 2)
+    assert ground.paint_clip == tick.paint_clip
+
+
+def test_negative_outline_width_is_refused_at_its_theme_property(tmp_path):
+    with pytest.raises(RenderFailed) as raised:
+        _render(tmp_path, parts=_parts(outline=-1))
+    assert raised.value.code == "E_THEME_TOKEN_TYPE"
+    assert raised.value.source_ref == "/body/roles/deadline-mark/outlineWidth"
+
+
+def test_outline_contains_wobbled_ink_and_keeps_its_geometry_on_profile_fallback(tmp_path):
+    from xml.etree import ElementTree
+
+    parts = _parts(outline=1)
+    body = parts["theme"]["body"]
+    body["values"].update({"deadline.amp": {"type": "number", "value": 4},
+                           "deadline.wave": {"type": "number", "value": 4},
+                           "deadline.seed": {"type": "number", "value": 1},
+                           "deadline.fidelity": {"type": "fidelity", "value": "decorative-optional"}})
+    body["roles"]["deadline-mark"].update({"wobbleAmplitude": "deadline.amp", "wobbleWavelength": "deadline.wave",
+                                          "wobbleSeed": "deadline.seed", "wobbleFidelity": "deadline.fidelity"})
+    rich = _render(tmp_path, parts=parts, name="rich", visual_profile="chrona-output/visual/v0.6-svg")
+    baseline = _render(tmp_path, parts=parts, name="baseline")
+    grounds = {item.scene_id: item for item in rich.surface.primitives if item.visual_role == "deadline-mark-outline"}
+    assert [item.bounds for item in grounds.values()] == [item.bounds for item in baseline.surface.primitives
+                                                        if item.visual_role == "deadline-mark-outline"]
+    assert all(item.paint.wobble is None for item in _marks(baseline))
+    svg = ElementTree.fromstring(rich.artifact.content)
+    elements = {node.attrib["data-scene-id"]: node for node in svg.iter() if "data-scene-id" in node.attrib}
+    for mark in _marks(rich):
+        ground = grounds[mark.scene_id + ":outline"]
+        assert mark.paint.wobble is not None
+        reserve = mark.paint.stroke_width / 2 + 1
+        for line in mark.paint.wobble.outline:
+            for x, y in line:
+                assert ground.bounds[0] + reserve - .001 <= x <= ground.bounds[0] + ground.bounds[2] - reserve + .001
+                assert ground.bounds[1] + reserve - .001 <= y <= ground.bounds[1] + ground.bounds[3] - reserve + .001
+        assert elements[mark.scene_id].tag.endswith("path") and "d" in elements[mark.scene_id].attrib
+        assert elements[ground.scene_id].tag.endswith("rect")
 
 
 def test_the_scene_validates_and_the_contrast_gate_judges_every_mark_at_the_mark_floor(tmp_path):
@@ -378,6 +471,9 @@ def test_only_a_planned_mark_hosts_a_deadline_never_a_snapshot_or_scenario_mark(
     class Tokens:
         def deadline_mark(self, role):
             return Decimal("1.5"), 5
+
+        def deadline_outline_width(self, role):
+            return Decimal(0)
 
     base = SimpleNamespace(plot=Rect(Decimal(0), Decimal(0), Decimal(100), Decimal(50)), scale=SimpleNamespace(
         domain_start=date(2026, 1, 1), domain_end=date(2026, 1, 11), range_start=0.0, range_end=100.0, origin=0.0,

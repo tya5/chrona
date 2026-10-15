@@ -1106,6 +1106,16 @@ edges inclusive) is recorded as `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>` and 
 `I_LAYOUT_DEADLINE_FOLDED:<object>`. The paths are registered as `rule` obstacles, so annotation candidates avoid them as they
 avoid the as-of rule; member labels and relation routes treat a rule as they treat the as-of rule and may cross it.
 Contrast is gated as a `mark` role at 3:1 over the primitive beneath its centre.
+With the optional Spec07 `outlineWidth`, Layout also completes a
+`deadlineMarkOutline` Rect for each nonzero painted stroke, preserving its
+source/subject/slot and using placement id `<stroke id>:outline`. Its bounds
+enclose the maximum stroke ink envelope (including declared wobble amplitude)
+plus the outline margin, including the caps, and its paint
+order is one below the foreground. All outline grounds paint before all
+foregrounds at that order. Scene fills these grounds with opaque
+`background.fill`; the existing foreground contrast gate observes their real
+painted area. No generic contrast exception or adapter-derived geometry is used.
+Absent/zero outline width returns the original placements unchanged.
 
 A selected period's label (`label: {placement, overflow}`) is one request to the shared label engine that places the
 as-of and member labels, built in the first pre-route phase: `top` and `bottom` anchor a zero-height strip on the plot

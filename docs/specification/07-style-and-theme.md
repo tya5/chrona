@@ -412,6 +412,21 @@ deadlines (`E_THEME_ROLE_REQUIRED`); there is no fallback to another role. Its c
 against the ground under each primitive's centre, so a tick that crosses a bar must be visible on the bar and every
 primitive on the row ground. `markReach` is added in place to the live Theme schemas (Spec 56 section 3.2).
 
+Optional `outlineWidth` (#1397) names a nonnegative physical-pixel margin around
+the tick and run strokes; absent/zero preserves flat output. Layout completes
+an opaque filled rectangular ground around each nonzero straight stroke,
+including its caps, with total width
+`strokeWidth + 2 * (outlineWidth + declared wobbleAmplitude)` (amplitude is zero
+when absent). This uses the declared maximum ink envelope even when a profile
+omits optional wobble, so the completed ground geometry is profile-independent.
+Its ink is `background.fill`, and all grounds paint at the foreground order
+minus one. Scene projects them as `deadline-mark-outline` Rects; adapters do
+not derive them. Existing clipping is preserved for both layers. The underlay
+is ground, like a label chip, not a second message: the foreground retains
+the existing3:1 contrast gate against the actual underlay. Zero-width or
+zero-length strokes have no outline. Authored foreground paint order remains
+unchanged; the bundled control-room-dark role explicitly paints over its bar.
+
 **Glow (#587).** A role that admits a shadow (Rect, Symbol, Text or Path paint)
 also admits `glowColor` (a Scheme binding), `glowBlur`, `glowOpacity` and
 `glowFidelity`; the rules, limits, the shadow conflict and the profile ladder are

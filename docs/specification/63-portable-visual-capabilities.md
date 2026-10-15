@@ -240,6 +240,11 @@ the same with and without the treatment. The ink of a wobbled primitive lies wit
 effective amplitude of the nominal outline, so its extent is the bounds grown by at most
 that amplitude plus half the stroke width; a glow region is computed from the nominal
 extent.
+The opt-in deadline outline (Spec07 `outlineWidth`, #1397) uses that declared
+maximum ink envelope for its separate Layout-completed ground Rect. Its
+geometry therefore includes amplitude even when optional wobble is omitted by
+a profile. Theme geometry parameters are normalized once for both Layout and
+Scene; profile/fidelity admission and outline perturbation remain Scene-owned.
 
 **The algorithm is normative and platform independent.**
 
