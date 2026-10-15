@@ -76,11 +76,33 @@ def test_the_first_installed_family_of_the_stack_is_used_and_the_scene_records_i
     with use_installed_fonts(InstalledFontIndex([fonts])):
         rendered = _render(tmp_path / "run", _parts())
 
-    assert _header(rendered).text_layout.family == "Hiragino Sans"
+    assert _header(rendered).text_layout.family == STACK
     assert any("role=groupHeader" in item and "face=Hiragino Sans" in item and STACK in item
                for item in _notes(rendered, "I_FONT_ROLE_RESOLVED"))
     assert not _notes(rendered, "W_FONT_FALLBACK_PACKAGED")
     assert not _notes(rendered, "W_FONT_FAMILY_SKIPPED")
+
+
+def test_svg_keeps_the_complete_theme_list_without_changing_measured_geometry(tmp_path):
+    from xml.etree import ElementTree
+    from chrona.presentation.renderers.v05_svg import V05SvgRenderer
+
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    (tmp_path / "stacked").mkdir()
+    (tmp_path / "control").mkdir()
+    stack = "Noto Sans, Missing Family, sans-serif"
+    with use_installed_fonts(InstalledFontIndex([empty])):
+        stacked = _render(tmp_path / "stacked", _parts(stack))
+        control = _render(tmp_path / "control", _parts("Noto Sans, sans-serif"))
+    actual, previous = _header(stacked), _header(control)
+    assert actual.text_layout.family == stack
+    assert actual.bounds == previous.bounds
+    assert actual.baseline == previous.baseline
+    assert actual.text_layout.asset_identity == previous.text_layout.asset_identity
+    svg = ElementTree.fromstring(V05SvgRenderer().render(stacked.surface).content)
+    text = next(node for node in svg.iter() if node.attrib.get("data-scene-id") == actual.scene_id)
+    assert text.attrib["font-family"] == stack
 
 
 def test_a_later_family_is_used_when_the_earlier_ones_are_not_installed(tmp_path):
@@ -94,7 +116,7 @@ def test_a_later_family_is_used_when_the_earlier_ones_are_not_installed(tmp_path
         rendered = _render(tmp_path / "run", parts)
 
     primary = _header(rendered).text_layout.family
-    assert primary == "Yu Gothic"
+    assert primary == "Yu Gothic, Missing Family"
     # Viewer-fit measures the selected face name, not the original stack. Keep the
     # resolved chain addressable by that actual primary family and weight.
     descriptor = safe_load((PACKAGED / "default-font-metrics.yaml").read_bytes())
@@ -103,8 +125,8 @@ def test_a_later_family_is_used_when_the_earlier_ones_are_not_installed(tmp_path
         resolution = resolve_theme_font_stacks(theme, descriptor, asset_root=PACKAGED)
     assert resolution is not None
     selected = resolution.metrics.select("Missing Family, Yu Gothic", 700)
-    assert selected.family == primary
-    assert metric_for_family(primary, 700, resolution.metrics).family == primary
+    assert selected.family == "Yu Gothic"
+    assert metric_for_family(primary, 700, resolution.metrics).family == "Yu Gothic"
     skipped = _notes(rendered, "W_FONT_FAMILY_SKIPPED")
     assert any("role=groupHeader" in item and "requested=Missing Family, Yu Gothic" in item
                and "skipped=Missing Family" in item and "face=Yu Gothic" in item for item in skipped)
@@ -117,7 +139,7 @@ def test_a_later_declared_family_is_used_and_the_missing_prefix_is_reported(tmp_
     with use_installed_fonts(InstalledFontIndex([empty])):
         rendered = _render(tmp_path / "run", _parts("Missing Family, Noto Sans"))
 
-    assert _header(rendered).text_layout.family == "Noto Sans"
+    assert _header(rendered).text_layout.family == "Noto Sans, Missing Family"
     skipped = _notes(rendered, "W_FONT_FAMILY_SKIPPED")
     assert any("role=groupHeader" in item and "requested=Missing Family, Noto Sans" in item
                and "skipped=Missing Family" in item and "face=Noto Sans" in item for item in skipped)
@@ -152,7 +174,7 @@ def test_with_none_of_the_listed_families_the_role_falls_back_to_packaged_noto_s
     with use_installed_fonts(InstalledFontIndex([empty])):
         rendered = _render(tmp_path / "run", _parts())
 
-    assert _header(rendered).text_layout.family == "Noto Sans"
+    assert _header(rendered).text_layout.family == "Noto Sans, " + STACK
     warnings = _notes(rendered, "W_FONT_FALLBACK_PACKAGED")
     assert any("role=groupHeader" in item and STACK in item and "face=Noto Sans" in item for item in warnings)
 
@@ -195,7 +217,7 @@ def test_a_character_the_first_face_lacks_takes_the_next_face_that_has_it(tmp_pa
         rendered = _render(tmp_path / "run", _parts("Missing Family, " + STACK), title="日本語 Team")
     layout = _header(rendered).text_layout
 
-    assert layout.family == "Hiragino Sans"
+    assert layout.family == "Hiragino Sans, Missing Family, Yu Gothic, Noto Sans JP"
     assert layout.bounds[2] > 0
     assert rendered.font_warnings
     assert len(rendered.font_warnings) == len(set(rendered.font_warnings))

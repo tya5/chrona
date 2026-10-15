@@ -74,6 +74,17 @@ def test_typst_uses_native_placement_font_list_and_literal_text():
     assert 'left:' not in result and 'top:' not in result
 
 
+def test_typeset_family_lists_use_native_alternatives_or_the_completed_first_face():
+    surface = _surface()
+    node = surface.primitives[0]
+    layout = replace(node.text_layout, family="A Face, B Face, sans-serif")
+    surface = replace(surface, primitives=(replace(node, text_layout=layout),))
+    assert 'font: ("A Face", "B Face", "sans-serif",)' in render_v05_typst(surface)
+    tikz = render_v05_tikz(surface)
+    assert r"\fontspec[Numbers=Proportional]{A Face}" in tikz
+    assert "B Face" not in tikz
+
+
 def test_tikz_projects_native_hex_color_and_multiplies_alpha():
     node = ScenePrimitive("rect", "Rect", "a", "object", "planned", "planned", (1, 2, 8, 4),
                           paint=ScenePaint("#1238", "#abcdef80", 2, (), 0.5))

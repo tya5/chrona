@@ -92,8 +92,14 @@ face lacks takes the next listed face that has it, the packaged face last, faili
 when none does. Declared metrics keep precedence and stay exact and pinned: a role whose single family is declared,
 and a Context that declares everything it uses, resolve and render as before. Installed faces are found by scanning the
 platform's font directories (fontconfig's file list on Linux when present) and matching family and weight by the CSS
-rule; they are measured from their own bytes and rasterized from the same files. SVG names the resolved family and embeds
-nothing. Output that uses an installed face depends on the fonts installed where it is rendered.
+rule; they are measured from their own bytes and rasterized from the same files.
+Layout completes a viewer family list with the resolved measurement face first,
+then the remaining Theme entries in their declared order, including any generic
+fallback (#1512). SVG serializes this list without embedding fonts; Typst uses
+native alternatives. PDF embeds the completed first face's exact bytes, and
+TikZ/fontspec selects that first face: neither format re-resolves the list.
+Viewer alternatives do not change Layout measurement, geometry or glyph coverage.
+Output that uses an installed face depends on the fonts installed where it is rendered.
 
 If named families preceding the selected named face are unavailable, closure emits
 `W_FONT_FAMILY_SKIPPED` with the requested list, skipped prefix and selected face,
