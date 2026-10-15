@@ -42,16 +42,32 @@ def expand_font_set(value: Mapping[str, Any]) -> Mapping[str, Any]:
     return expanded
 
 
-def draft_font_metrics(set_ids: tuple[str, ...], base: Mapping[str, Any]) -> dict[str, Any]:
+def package_providers(set_id: str) -> tuple[str, ...]:
+    """The separately installed package providers (not `chrona.resources`) whose assets a set names, in declared order."""
+    found: list[str] = []
+    for asset in _sets()[set_id]:
+        for part in ("metrics", "font"):
+            locator = asset[part]["locator"]
+            identity = locator.get("identity")
+            if locator.get("provider") == "package" and identity != "chrona.resources" and identity not in found:
+                found.append(str(identity))
+    return tuple(found)
+
+
+def draft_font_metrics(set_ids: tuple[str, ...], base: Mapping[str, Any],
+                       unavailable: frozenset[str] = frozenset()) -> dict[str, Any]:
     """The draft font descriptor a preset's `fontSets` stand for (#429): `base` with its assets replaced by the union of the sets.
 
-    Assets are deduplicated by (family, weight) and keep the declared order; an unknown id is refused by the schema, so it
-    cannot reach here.
+    A set adds candidates, it is not a requirement: an asset served by a provider named in `unavailable` is left out, so
+    the Theme family list continues on installed fonts. Assets are deduplicated by (family, weight) and keep the declared
+    order; an unknown id is refused by the schema, so it cannot reach here.
     """
     assets: list[Any] = []
     seen: set[tuple[str, int]] = set()
     for set_id in set_ids:
         for asset in _sets()[set_id]:
+            if unavailable and any(asset[part]["locator"].get("identity") in unavailable for part in ("metrics", "font")):
+                continue
             key = (str(asset["family"]).casefold(), int(asset["weight"]))
             if key not in seen:
                 seen.add(key)
