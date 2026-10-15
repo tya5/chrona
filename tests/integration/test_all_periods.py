@@ -101,8 +101,8 @@ def test_all_label_cannot_mix_literal_text_and_template(tmp_path):
 
 def test_generic_note_bindings_do_not_require_optional_actual_geometry():
     root = Path(__file__).resolve().parents[2]
-    raw = yaml.safe_load((root / "src/chrona/resources/presets/bundles/design-default/view.yaml").read_text())
-    layout = yaml.safe_load((root / "src/chrona/resources/designs/target-b/layout.yaml").read_text())
+    raw = yaml.safe_load((root / "src/chrona/resources/presets/bundles/design-default/view.yaml").read_text(encoding="utf-8"))
+    layout = yaml.safe_load((root / "src/chrona/resources/designs/target-b/layout.yaml").read_text(encoding="utf-8"))
     raw = merge_view_defaults(raw, layout["viewDefaults"])
     view = parse_contract(ClosureIdentity("view", raw["id"], "r", "sha256:" + "a" * 64), raw).view
     span = ReviewItem("task", "Task", "span", {"start": date(2026, 2, 1), "end": date(2026, 2, 8)},
