@@ -158,7 +158,7 @@ def test_typst_and_tikz_draw_the_completed_canvas_texture(tmp_path) -> None:
 
     typst, tikz = render_v05_typst(review.surface), render_v05_tikz(review.surface)
     assert "scene-id: canvas-texture" in typst and "clip: true" in typst
-    assert "scene-id: canvas-texture" in tikz and r"\clip" in tikz
+    assert "scene-id: canvas-texture" in tikz and r"\pgfdeclarepatterninherentlycolored" in tikz  # one pattern fill (#1551)
 
 
 @pytest.mark.parametrize(("role", "code", "pointer"), [

@@ -53,7 +53,9 @@ def _surface_findings(primitives: list[dict[str, Any]]) -> list[str]:
         # Plan represents spans; planned points have their own milestone key.
         expected_kind = "Symbol" if role == "milestone" else "Rect"
         candidates = [item for item in marks.get("planned" if role == "milestone" else role, ())
-                      if item["kind"] == expected_kind]
+                      if item["kind"] == expected_kind
+                      # Baseline ghosts are stroke-only echoes, not the mark the key shows.
+                      and ":snapshot:" not in item["id"]]
         if not candidates:
             continue
         if key["kind"] != expected_kind:

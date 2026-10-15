@@ -403,7 +403,7 @@ Project YAML (and an Actual Set). The closed column vocabulary is `id`, `title`,
 `fields`, and `--columns` maps header names to the vocabulary. The importer turns the table into a terse plan and compiles it
 with the compiler of section 4, so the Project is byte-identical to `chrona compile` of that plan; `fields` are added to the
 compiled mapping and the emitter of section 8 writes it. `progress` (a fraction, or a percentage when above 1 or written with
-`%`) and the `actual_*` dates become observations of an Actual Set (`--as-of` sets its date); `--actual-output` is required when
+`%`) and the `actual_*` dates become observations of an Actual Set (`--as-of` sets its date); `actual_finish` is inclusive like `finish` and is written as the exclusive Actual `finish`, the next calendar day (a gate's observed date is written unchanged); `--actual-output` is required when
 the table has them. Every finding of the compiler or of Core validation, and the importer's own (`E_IMPORT_ID_MISSING`,
 `E_IMPORT_ID_DUPLICATE`, `E_IMPORT_PARENT_UNKNOWN`, `E_IMPORT_PARENT_CYCLE`, `E_IMPORT_COLUMN_MISSING`,
 `E_IMPORT_COLUMN_DUPLICATE`, `E_IMPORT_COLUMN_CONFLICT`, `E_IMPORT_ROW_TOO_LONG`, `E_IMPORT_DATE_INVALID`,

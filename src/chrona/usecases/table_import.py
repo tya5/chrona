@@ -351,7 +351,8 @@ def _observations(ordered: list[tuple[_Row, int]]) -> tuple[list[dict[str, Any]]
                 problems.append(ImportDiagnostic("E_IMPORT_DATE_INVALID", f"'{value}' is not a real YYYY-MM-DD date", row.number,
                                                  row.columns[column], column, "write the date as 2027-03-05"))
             else:
-                actual.setdefault(key, value)
+                # `actual_finish` is inclusive like `finish`; the Actual Set `finish` is exclusive (#1565). A gate's `at` is a date.
+                actual.setdefault(key, _date_plus_one(value) if key == "finish" else value)
         if row.get("progress"):
             fraction = _progress(row.get("progress"))
             if fraction is None:
