@@ -268,9 +268,23 @@ A `table-timeline` View MAY give a fixed-unit `axis.tiers[]` band tier `fillScal
 
 ### 7.3 Deadline marks (#822)
 
-A `table-timeline` View MAY declare `deadlines: {show: slipped | all}` to draw each object's Project `deadline` (Spec 05 section 9). A deadline is drawn as a **tick** at its date, centred on the object's planned mark, and, when the planned finish is later than the deadline, a **run** from the tick to that finish (`at` of a point, `end` of a span, the date `W_DEADLINE` compares: Spec 04 section 10). `slipped` draws only the deadlines the plan misses; `all` draws every deadline, the missed ones with their run, so a kept promise reads as slack. Slipped and kept differ by shape (the run), not only by colour. The Core decides which deadlines slipped (`deadline_statuses`); a deadline equal to the finish is kept. The View selects; the Project owns the date; the Theme owns paint and reach (Spec 07, role `deadline-mark`); Layout owns the geometry (Spec 50 section 3.4). No text is drawn.
+A `table-timeline` View MAY declare `deadlines: {show: slipped | all}` to draw each object's Project `deadline` (Spec 05 section 9). A deadline is drawn as a **tick** at its date, centred on the object's planned mark, and, when the planned finish is later than the deadline, a **run** from the tick to that finish (`at` of a point, `end` of a span, the date `W_DEADLINE` compares: Spec 04 section 10). `slipped` draws only the deadlines the plan misses; `all` draws every deadline, the missed ones with their run, so a kept promise reads as slack. Slipped and kept differ by shape (the run), not only by colour. The Core decides which deadlines slipped (`deadline_statuses`); a deadline equal to the finish is kept. The View selects; the Project owns the date; the Theme owns paint and reach (Spec 07, role `deadline-mark`); Layout owns the geometry (Spec 50 section 3.4). Without the optional caption below, no text is drawn.
 
 A deadline outside the View window draws nothing and is recorded as the Scene diagnostic `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>`; a planned mark folded into a group header is not decorated and is recorded as `I_LAYOUT_DEADLINE_FOLDED:<object>`. A Theme that omits the role while a View shows deadlines fails with `E_THEME_ROLE_REQUIRED` at `/body/roles/deadline-mark`. The member is optional and additive in `chrona/view/v0.28`; a `dependency-network` View, which has no timeline, MUST NOT declare it. A View without `deadlines` renders as before. An author explains the mark with a Detail Profile legend entry whose role is `deadlineMark`.
+
+An optional `deadlines.caption: {template, format?}` (#1397) draws copy beside
+each slipped run; the bare tick/run treatment described above draws no text.
+The template is a shared `literalCaption` string and accepts only `{daysLate}`
+plus escaped literal braces `{{`/`}}`. Unit words and locale are author text;
+inline role marks and figure references are not admitted. Malformed templates
+fail with `E_VIEW_DEADLINE_CAPTION_TEMPLATE` at
+`/body/deadlines/caption/template`. `format` uses shared `countTextFormat`
+(digits by default, English words, kanji or formal kanji); its existing invalid
+and range diagnostics point to `/body/deadlines/caption/format`. Presentation
+formats the Core's existing late-day count before Layout; no new figure scope
+or domain date calculation is introduced. Kept deadlines have no caption.
+Absent caption preserves existing output. Theme text treatment is Spec07;
+placement, optional omission and counted diagnostics are Spec50 section3.4.
 
 ### 7.4 Heading templates (#991)
 

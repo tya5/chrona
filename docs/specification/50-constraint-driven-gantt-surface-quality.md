@@ -1117,6 +1117,24 @@ foregrounds at that order. Scene fills these grounds with opaque
 painted area. No generic contrast exception or adapter-derived geometry is used.
 Absent/zero outline width returns the original placements unchanged.
 
+An opted-in deadline caption (#1397; Spec06 section7.3) receives the Core count
+already formatted in Presentation. After existing labels, routes and annotations
+are completed, Layout measures its selected text role and tries two boxes:
+right of the clipped run end, then left of the tick, vertically centered on the
+run line. The gap is the deadline's maximum ink margin plus
+`max(1px, fontSize / 4)`. Bounds must fit wholly inside the plot and avoid all
+completed obstacles, deadline stroke/outline/wobble envelopes and accepted
+captions. No bar-host exemption, reflow, rerouting, wrapping or font shrinking
+is used. Caption placement cannot change prior content. If both candidates
+fail, only the caption is omitted: typed info
+`I_LAYOUT_DEADLINE_CAPTION_DROPPED:surface=table-timeline;count=<positive count>`
+counts omitted drawable host occurrences and carries their subjects.
+Outside-window/folded deadlines do not contribute to this count. Accepted
+TextPlacements use identity `deadline-caption:<mark instance>`, object sourceRef,
+slot timeline and explicit subjects for primitive provenance. They do not set
+the existing paint-host field merely to express attachment. Scene projects
+completed bounds/baseline/font identity and applies the ground-text gate.
+
 A selected period's label (`label: {placement, overflow}`) is one request to the shared label engine that places the
 as-of and member labels, built in the first pre-route phase: `top` and `bottom` anchor a zero-height strip on the plot
 edge so the engine's `below` and `above` geometry centres the label on the band against it, `inside` anchors the band;

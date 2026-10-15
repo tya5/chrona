@@ -427,6 +427,13 @@ the existing3:1 contrast gate against the actual underlay. Zero-width or
 zero-length strokes have no outline. Authored foreground paint order remains
 unchanged; the bundled control-room-dark role explicitly paints over its bar.
 
+**Deadline caption (#1397).** Optional role `deadline-caption` selects caption
+typography; absent, Layout uses `text`. Its `fill`, when declared, selects the
+caption ink; otherwise the registered `text` paint alternative applies. The
+role admits text measurement, Text paint and viewer-fit properties, not Path
+stroke properties. Its semantic is ground text (required4.5:1), never the
+deadline mark's3:1 class. Existing Themes need no new role to show a caption.
+
 **Glow (#587).** A role that admits a shadow (Rect, Symbol, Text or Path paint)
 also admits `glowColor` (a Scheme binding), `glowBlur`, `glowOpacity` and
 `glowFidelity`; the rules, limits, the shadow conflict and the profile ladder are

@@ -11,7 +11,7 @@ GROUND_TEXT_SEMANTICS = {
     "memberLabelInsideActual", "memberLabelInsideSnapshot", "memberLabelInsideScenario", "milestoneDigestEntry",
     "relationLabel", "legendLabel", "projectNote", "noteIndex", "annotationCalloutText", "annotationHighlightText",
     "annotationArrowText", "summaryHeader", "summaryMetric", "summaryFigureValue", "summaryFigureCaption",
-    "summaryCaption", "summaryUnit",
+    "summaryCaption", "summaryUnit", "deadlineCaption",
     "slotHeading", "annotationListText", "networkLabel", "observationSource", "observationColumnLabel",
     "observationCell",
 }
@@ -67,14 +67,15 @@ def test_every_label_semantic_is_classified_so_a_new_label_cannot_reopen_the_hol
 
 def test_free_text_resolves_by_purpose_in_the_shared_role_and_by_role_and_purpose_in_its_own():
     for purpose in ("as-of-label", "member-label", "axis-label", "table-cell", "legend-label", "group-detail",
-                    "annotation-list-text"):
+                    "annotation-list-text", "deadline-caption"):
         assert contrast_binding_for("text", purpose).contrast_class == ContrastClass.GROUND_TEXT, purpose
     for role, purpose in (("axis-label2", "axis-label"), ("axis-label3", "axis-label"),
                           ("member-label-inside-planned", "member-label"), ("note-index", "note-index"),
                           ("annotation-callout-text", "annotation-text"), ("metric", "summary-figure-value"),
                           ("slot-heading", "slot-heading"), ("heading", "title-text"),
                           ("subtitle", "subtitle-text"), ("kicker", "kicker-text"),
-                          ("text", "title-text"), ("text", "subtitle-text"), ("text", "kicker-text")):
+                          ("text", "title-text"), ("text", "subtitle-text"), ("text", "kicker-text"),
+                          ("deadline-caption", "deadline-caption")):
         assert contrast_binding_for(role, purpose).contrast_class == ContrastClass.GROUND_TEXT, (role, purpose)
     # A role of its own never borrows another purpose's class, and only a Text primitive (a purpose) can be ground text.
     assert contrast_binding_for("axis-label2", "member-label") is None

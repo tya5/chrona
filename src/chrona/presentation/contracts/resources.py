@@ -11,7 +11,8 @@ from typing import Any, Literal, Mapping
 
 from chrona.core.figures import AsOfFact, FigureSpec, GroupStartFact, ObjectFact, PeriodFact
 from chrona.presentation.figure_text import FigureTextError, figure_ids
-from chrona.presentation.count_text import CountTextFormat
+from chrona.presentation.count_text import CountTextError, CountTextFormat
+from chrona.presentation.deadline_text import DeadlineCaptionText, compile_deadline_caption
 from chrona.core.store_address import StoreAddressError, check_store_address
 from chrona.resources import schema_validator
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
@@ -199,12 +200,25 @@ class ViewTrackAllocation(StrEnum):
 
 
 @dataclass(frozen=True)
+class ViewLaneColumn:
+    """One declared lane table column: the lane label, a 1-based row index, or a field of the lane's first member (#1517)."""
+
+    id: str
+    source: str | FrozenDict
+    missing: str | FrozenDict = "em-dash"
+    align: str = "start"
+    text_role: str | None = None
+    transform: str | None = None
+
+
+@dataclass(frozen=True)
 class ViewLaneTable:
     """Finite aggregate summary intent for generated lane rows."""
 
     label: ViewLaneLabel
     count: bool | Literal["auto"] = False
     text_wrap: str = "forbid"
+    columns: tuple["ViewLaneColumn", ...] = ()  # ordered columns incl. the label column; empty keeps the single `Lane` column (#1517)
 
 
 @dataclass(frozen=True)
@@ -359,6 +373,14 @@ class ViewPeriod:
 
 
 @dataclass(frozen=True)
+class ViewDeadlines:
+    """Shown Project deadlines and optional closed caption copy, without geometry."""
+
+    show: str
+    caption: DeadlineCaptionText | None = None
+
+
+@dataclass(frozen=True)
 class ViewInput:
     """Closed View v0.3 vocabulary after schema acceptance."""
 
@@ -385,7 +407,7 @@ class ViewInput:
     periods: tuple[ViewPeriod, ...] = ()
     figures: tuple[FigureSpec, ...] = ()
     heading: ViewHeading | None = None
-    deadlines: str | None = None  # `slipped` or `all`: which Project deadlines the surface draws; None draws none (#822)
+    deadlines: ViewDeadlines | None = None
     slot_heading_text: FrozenDict | None = None
     annotation_bindings: tuple[FrozenDict, ...] = ()
     annotation_placement: FrozenDict | None = None
@@ -996,7 +1018,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
             ViewRowMode(str(rows["mode"])), row_items, str(rows.get("points", "attached")),
             ViewTrackAllocation(str(rows["trackAllocation"])) if "trackAllocation" in rows else None,
             (ViewLaneTable(ViewLaneLabel(str(rows["laneTable"]["label"])), rows["laneTable"].get("count", False),
-                           str(rows["laneTable"].get("text", {}).get("wrap", "forbid")))
+                           str(rows["laneTable"].get("text", {}).get("wrap", "forbid")),
+                           _lane_table_columns(rows["laneTable"].get("columns", ())))
              if "laneTable" in rows else None),
             (tuple(str(item) for item in rows.get("packing", ("explicit", "attached")))
              if version == "chrona/view/v0.28" else ()),
@@ -1017,7 +1040,7 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                                str(body.get("backgroundDecoration", FrozenDict()).get("groups", "all"))),
         periods=periods,
         figures=figures,
-        deadlines=str(body["deadlines"]["show"]) if "deadlines" in body else None,
+        deadlines=_view_deadlines(body.get("deadlines")),
         heading=_view_heading(body.get("heading"), figures),
         slot_heading_text=(freeze(body["slotHeadingText"]) if "slotHeadingText" in body else None),
         annotation_bindings=tuple(body.get("annotationBindings", ())),
@@ -1025,6 +1048,25 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         figure_formats=_view_figure_formats(body.get("figureFormats", {}), figures),
         profile_bindings=profile_bindings,
         wording=freeze(body["wording"]) if "wording" in body else None)
+
+
+def _view_deadlines(raw: Mapping[str, Any] | None) -> ViewDeadlines | None:
+    if raw is None:
+        return None
+    caption = raw.get("caption")
+    if caption is None:
+        return ViewDeadlines(str(raw["show"]))
+    try:
+        value = caption.get("format", {})
+        text_format = CountTextFormat(str(value.get("form", "digits")),
+                                      value.get("minimumDigits", 1), value.get("capitalize", False))
+    except CountTextError as error:
+        raise ContractError(error.code, error.detail, "/body/deadlines/caption/format") from error
+    try:
+        program = compile_deadline_caption(str(caption["template"]), text_format)
+    except GroupHeaderTextError as error:
+        raise ContractError(error.code, error.detail, "/body/deadlines/caption/template") from error
+    return ViewDeadlines(str(raw["show"]), program)
 
 
 def _view_figure_formats(raw: Mapping[str, Any], figures: tuple[FigureSpec, ...]) -> FrozenDict:
@@ -1274,6 +1316,30 @@ def _key_row_title(rows: Mapping[str, Any]) -> str | None:
     if rows.get("mode") != "automatic":
         raise ContractError("E_VIEW_KEY_ROW_MODE", "rows.points key-row applies to rows.mode automatic only")
     return str(declared["title"])
+
+
+def _lane_table_columns(raw: Any) -> tuple[ViewLaneColumn, ...]:
+    """Close the declared lane table columns (#1517): one label column, unique ids, `transform` on a field source."""
+    columns = tuple(ViewLaneColumn(str(column["id"]), freeze(column["source"]) if isinstance(column["source"], Mapping) else str(column["source"]),
+                                   freeze(column["missing"]) if isinstance(column.get("missing"), Mapping) else str(column.get("missing", "em-dash")),
+                                   str(column.get("align", "start")),
+                                   str(column["textRole"]) if "textRole" in column else None,
+                                   str(column["transform"]) if "transform" in column else None)
+                    for column in raw)
+    if not columns:
+        return columns
+    ids = [column.id for column in columns]
+    if len(set(ids)) != len(ids):
+        raise ContractError("E_VIEW_LANE_TABLE_COLUMNS", f"laneTable.columns repeats the column id {sorted({item for item in ids if ids.count(item) > 1})}")
+    if sum(column.source == "label" for column in columns) != 1:
+        raise ContractError("E_VIEW_LANE_TABLE_COLUMNS", "laneTable.columns needs exactly one column with source label")
+    for column in columns:
+        if column.id == "Items" or (column.id == "Lane" and column.source != "label"):
+            raise ContractError("E_VIEW_LANE_TABLE_COLUMNS", f"laneTable column id {column.id!r} is reserved for the generated lane table")
+        if column.transform is not None and not isinstance(column.source, Mapping):
+            raise ContractError("E_VIEW_LANE_TABLE_COLUMNS",
+                                f"laneTable column {column.id!r} declares transform: {column.transform}, so its source must be a field")
+    return columns
 
 
 def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping: ViewGrouping | None,
