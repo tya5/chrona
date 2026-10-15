@@ -31,10 +31,12 @@ The dedicated overlay regression preserves its primitives and reports genuine
 new progress/host contrast warnings; positive host-fill fixtures do not mask
 the host with an optional overlay.
 
-Focused model/review tests: 122 passed; combined paint/model/hosting: 96 passed;
-Scene/Scheme/contrast regressions: 1047 passed; new selection/paint/SVG tests:
-13 passed in one collection (unique test filenames).
-Final combined Scene/Scheme/contrast, model, SVG, hosting, axis and documentation
-run: 1152 passed; documentation/literal review checks passed again after archiving
-released records. CI/public-materializer artifact review and the exact
-review-containing main three-OS release are required before issue closure.
+Final focused Scene/Scheme/contrast, model, SVG, hosting, axis and documentation
+run: 1152 passed. Final PR CI [run 38698146372](https://github.com/tya5/chrona/actions/runs/38698146372)
+completed successfully. Immutable artifact review [11954233482](https://github.com/tya5/chrona/pull/1539#issuecomment-6186818437)
+found 109 before/after files with no additions or retirements; all 100 public
+SVG/Scene files were byte-identical, with only inventory source positions differing.
+The exact review-containing main release on `0c20e7802c4d64594fbc77d3a1dcbc5afb78809e`
+completed successfully: [run 38699780693](https://github.com/tya5/chrona/actions/runs/38699780693),
+including the three-OS full matrix, conformance, wheel/doc smoke, newest-Python
+materializer and MCP-floor checks. Issue #1516 was closed after this evidence.

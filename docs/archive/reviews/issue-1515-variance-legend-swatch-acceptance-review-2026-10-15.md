@@ -25,6 +25,12 @@ adapters, schemas and finding/report shapes are unchanged. Independent review
 found no blocking issue. Diagnostic codes retain mark policy attribution.
 
 Focused new/registry/SVG checks: 45 passed. Final Scene/contrast/legend/Actual/
-documentation regression run: 1143 passed. CI artifact
-comparison and exact review-containing main three-OS release remain required
-before closure; the literal row alone does not authorize closing the issue.
+documentation regression run: 1143 passed; post-main-adoption checks: 74 passed.
+Final PR [CI38699901519](https://github.com/tya5/chrona/actions/runs/38699901519)
+passed. [Artifact11955492403](https://github.com/tya5/chrona/pull/1540#issuecomment-6187062142)
+proves all100 public SVG/Scene files byte-identical; only diagnostic inventory
+source positions differ. Exact review-containing main
+`80d71f54402b6561bda04795d0745c7adcd2355b` passed
+[release38701552979](https://github.com/tya5/chrona/actions/runs/38701552979):
+three-OS full pytest, conformance, wheel/doc smoke, newest-Python public
+materializers and MCP. Issue1515 was closed after verifying the required steps.
