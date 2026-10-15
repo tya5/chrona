@@ -7,7 +7,9 @@ normative specification.
 
 | Issue | State | Evidence |
 | ---: | --- | --- |
-| #1535 | closed | [Literal acceptance review](current/issue-1535-preset-summary-countdown-acceptance-review-2026-10-15.md), all rows met; exact review-containing main1deffc014 passed [release38722752962](https://github.com/tya5/chrona/actions/runs/38722752962). |
+| #1490 | closed | [Literal acceptance review](../archive/reviews/issue-1490-temporal-inline-capacity-acceptance-review-2026-10-15.md), all rows met; exact review-containing main787eeea8f passed [release38733015984](https://github.com/tya5/chrona/actions/runs/38733015984). |
+| #1533 | closed | [Literal acceptance review](../archive/reviews/issue-1533-draft-snapshot-acceptance-review-2026-10-15.md), all rows met; exact review-containing main787eeea8f passed [release38733015984](https://github.com/tya5/chrona/actions/runs/38733015984). |
+| #1535 | closed | [Literal acceptance review](../archive/reviews/issue-1535-preset-summary-countdown-acceptance-review-2026-10-15.md), all rows met; exact review-containing main1deffc014 passed [release38722752962](https://github.com/tya5/chrona/actions/runs/38722752962). |
 | #332 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/332) |
 | #1214 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1214), owner-narrowed scope6144755026 and exact-main [release38396884738](https://github.com/tya5/chrona/actions/runs/38396884738) |
 | #1219 | closed | [GitHub issue](https://github.com/tya5/chrona/issues/1219), exact-main [release38362304100](https://github.com/tya5/chrona/actions/runs/38362304100) |

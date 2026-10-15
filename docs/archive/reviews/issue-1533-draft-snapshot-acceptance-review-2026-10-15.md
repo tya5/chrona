@@ -4,8 +4,13 @@ Implementation: `ea74667cb` (input), `415c4fd7d` (CLI reference), `ffcc0b155`
 (approved declarative generic View default).
 [Design/architecture/implementation plan](https://github.com/tya5/chrona/issues/1533#issuecomment-6190843702);
 [Option A approval and no-flag condition](https://github.com/tya5/chrona/issues/1533#issuecomment-6191147968).
-Release pending: current-head PR CI, public-materializer comparison and exact-main
-three-OS release. Keep issue1533 open until those gates pass.
+[PR1555](https://github.com/tya5/chrona/pull/1555) merged as `72cdd2b89`;
+exact head `c4b133125` passed [CI38731365139](https://github.com/tya5/chrona/actions/runs/38731365139).
+Derived sync and exact-SHA gate passed. Review-containing ready main
+`787eeea8f1e1e5fbeab0a4cc89ca5f4d65f85854` passed
+[release38733015984](https://github.com/tya5/chrona/actions/runs/38733015984):
+Ubuntu/macOS/Windows full pytest, conformance and wheel/smoke, MCP floor and
+newest-Python public materializers. All literal rows are met; issue1533 is closed.
 
 | Literal criterion | Status | Evidence |
 | --- | --- | --- |
@@ -29,11 +34,15 @@ SVG and inspection Scene also match before/after the input implementation.
 Focused evidence:277 CLI/usecase/closure tests; final27 closure/Snapshot tests.
 After the resource default, all128 CLI characterization/Snapshot tests pass.
 The CLI reference's `--check --execute` succeeds after regeneration.
+After merging ready main,27 closure/Snapshot tests pass. Exact-head
+[artifact11971240922](https://github.com/tya5/chrona/actions/runs/38731365139/artifacts/11971240922)
+retains all50 SVG and50 Scene bytes, without additions/retirements. Report
+changes are source-location shifts plus the intended E_CLOSURE_ID validation site.
 
 Architecture: Draft ingress freezes the local Project without persisting a
 SnapshotRef/Context member. The existing renderer consumes its typed role;
 the read ledger does not invent a snapshot-ref read. View owns baseline choice;
 Core comparison, Layout geometry, Scene and adapters are unchanged. No compatibility
-fallback, implicit promotion or project-specific branch was added. The initial
-conformance failure was a stale generated CLI reference, now corrected; current-head
-CI still must prove release acceptance.
+fallback, implicit promotion or project-specific branch was added. The generated
+CLI reference is current; final PR and exact-main release checks pass without
+a waived gate.
