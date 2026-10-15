@@ -408,6 +408,14 @@ This changes
 display text, not lane identity or membership (#554). A visible delta table
 promise removed during resource migration must be selected in lane-label
 content or explicitly retired.
+`laneTable.columns` (#1517, optional) declares the lane table's columns in order: exactly one `source: label` column
+(the lane label above, headed by its `id`), a `rowIndex` column (the lane row's 1-based position) and `{field: name}`
+columns (that field of the lane's first member, the member a `label: lane` singleton reads), each with optional `missing`,
+`align`, `textRole` and, on a field column, `transform: initials` (Spec 46 "Cell transform"). A misdeclaration (no or
+several label columns, a repeated or reserved id, `transform` on a non-field source) is `E_VIEW_LANE_TABLE_COLUMNS`.
+`count` still appends `Items`. Absent `columns`, the table is the single `Lane` column and output is byte-identical.
+Lane `packing` is not touched; `tableColumns` stay invalid in lane mode.
+
 Where a group header already names the group, or grouping is absent, a
 counted lane table selects `lane` rather than showing an empty label beside
 its count. An unrelated singleton is not automatically a useful lane: a

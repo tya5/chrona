@@ -199,12 +199,25 @@ class ViewTrackAllocation(StrEnum):
 
 
 @dataclass(frozen=True)
+class ViewLaneColumn:
+    """One declared lane table column: the lane label, a 1-based row index, or a field of the lane's first member (#1517)."""
+
+    id: str
+    source: str | FrozenDict
+    missing: str | FrozenDict = "em-dash"
+    align: str = "start"
+    text_role: str | None = None
+    transform: str | None = None
+
+
+@dataclass(frozen=True)
 class ViewLaneTable:
     """Finite aggregate summary intent for generated lane rows."""
 
     label: ViewLaneLabel
     count: bool | Literal["auto"] = False
     text_wrap: str = "forbid"
+    columns: tuple["ViewLaneColumn", ...] = ()  # ordered columns incl. the label column; empty keeps the single `Lane` column (#1517)
 
 
 @dataclass(frozen=True)
@@ -996,7 +1009,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
             ViewRowMode(str(rows["mode"])), row_items, str(rows.get("points", "attached")),
             ViewTrackAllocation(str(rows["trackAllocation"])) if "trackAllocation" in rows else None,
             (ViewLaneTable(ViewLaneLabel(str(rows["laneTable"]["label"])), rows["laneTable"].get("count", False),
-                           str(rows["laneTable"].get("text", {}).get("wrap", "forbid")))
+                           str(rows["laneTable"].get("text", {}).get("wrap", "forbid")),
+                           _lane_table_columns(rows["laneTable"].get("columns", ())))
              if "laneTable" in rows else None),
             (tuple(str(item) for item in rows.get("packing", ("explicit", "attached")))
              if version == "chrona/view/v0.28" else ()),
@@ -1274,6 +1288,30 @@ def _key_row_title(rows: Mapping[str, Any]) -> str | None:
     if rows.get("mode") != "automatic":
         raise ContractError("E_VIEW_KEY_ROW_MODE", "rows.points key-row applies to rows.mode automatic only")
     return str(declared["title"])
+
+
+def _lane_table_columns(raw: Any) -> tuple[ViewLaneColumn, ...]:
+    """Close the declared lane table columns (#1517): one label column, unique ids, `transform` on a field source."""
+    columns = tuple(ViewLaneColumn(str(column["id"]), freeze(column["source"]) if isinstance(column["source"], Mapping) else str(column["source"]),
+                                   freeze(column["missing"]) if isinstance(column.get("missing"), Mapping) else str(column.get("missing", "em-dash")),
+                                   str(column.get("align", "start")),
+                                   str(column["textRole"]) if "textRole" in column else None,
+                                   str(column["transform"]) if "transform" in column else None)
+                    for column in raw)
+    if not columns:
+        return columns
+    ids = [column.id for column in columns]
+    if len(set(ids)) != len(ids):
+        raise ContractError("E_VIEW_LANE_TABLE_COLUMNS", f"laneTable.columns repeats the column id {sorted({item for item in ids if ids.count(item) > 1})}")
+    if sum(column.source == "label" for column in columns) != 1:
+        raise ContractError("E_VIEW_LANE_TABLE_COLUMNS", "laneTable.columns needs exactly one column with source label")
+    for column in columns:
+        if column.id == "Items" or (column.id == "Lane" and column.source != "label"):
+            raise ContractError("E_VIEW_LANE_TABLE_COLUMNS", f"laneTable column id {column.id!r} is reserved for the generated lane table")
+        if column.transform is not None and not isinstance(column.source, Mapping):
+            raise ContractError("E_VIEW_LANE_TABLE_COLUMNS",
+                                f"laneTable column {column.id!r} declares transform: {column.transform}, so its source must be a field")
+    return columns
 
 
 def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping: ViewGrouping | None,
