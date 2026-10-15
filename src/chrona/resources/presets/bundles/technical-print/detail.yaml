@@ -7,4 +7,4 @@ body:
     - {role: milestone, label: Milestone}
     - {role: dependency, label: Dependency}
     - {role: asOf, label: Today}
-    - {role: calendar-closed, label: Non-working day}
+    - {role: calendar-closed, label: Non-working day, swatchShape: rule-pair}

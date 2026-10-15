@@ -86,6 +86,10 @@ $defs:
     description: "The explicit fallback when a View's requested project field role is undeclared."
     examples: [objectType]
     enum: [objectType, none]
+  legendSwatchShape:
+    description: "Optional alternate shape for one Review Detail legend swatch."
+    examples: [circle, rule-pair]
+    enum: [circle, rule-pair]
   valueFormat:
     description: "Every public value formatter: the union of the subsets below. No site references it; each context accepts its own named subset."
     examples: [text]
