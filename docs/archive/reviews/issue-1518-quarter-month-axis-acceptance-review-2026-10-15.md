@@ -27,5 +27,10 @@ declarations change. Reference pixel heights and white/hairline paint are author
 tuning, not new core rules. Implementation: [417574bac](https://github.com/tya5/chrona/commit/417574bac192f4efe172254ba218096470d14cfc).
 Policy, SVG, axis geometry and documentation tests: 58 passed. Independent
 review found no blocking scope, ownership or adapter-evidence issue.
-Final-head CI, public-materializer artifact review and the exact review-containing
-main three-OS release remain required before closure.
+Final PR CI: [run 38695605213](https://github.com/tya5/chrona/actions/runs/38695605213), successful.
+The immutable public-materializer batch review found all 109 artifacts unchanged,
+including all 100 SVG/Scene files ([artifact review](https://github.com/tya5/chrona/pull/1538#issuecomment-6186424609)).
+The exact review-containing main release on `9402ef0a743ce04db994377e5bfb9142932dcb05`
+completed successfully: [run 38697083126](https://github.com/tya5/chrona/actions/runs/38697083126),
+including the three-OS full matrix, conformance, wheel/smoke, docs, newest-Python
+materializer and MCP-floor checks. Issue #1518 was closed after this evidence.
