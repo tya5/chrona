@@ -24,8 +24,8 @@ def validate_point_host_frames(preflight, marks, icons, shapes, tracks, theme):
         if icon.host_placement_id is not None:
             icon_by_host[icon.host_placement_id].append(icon)
     for shape in shapes:
-        if shape.clip_host_id is not None and shape.semantic_id == "progressFill":
-            progress_by_host[shape.clip_host_id].append(shape)
+        if shape.host_placement_id is not None and shape.semantic_id == "progressFill":
+            progress_by_host[shape.host_placement_id].append(shape)
     verified = set()
     for unit in allocation.semantic_units:
         occurrence = occurrences[unit.projection_instance_id]

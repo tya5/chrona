@@ -322,6 +322,15 @@ roles, `milestoneSymbolActual` and `milestoneSymbolBaseline`, each falling back 
 when a variant needs a different asset altogether (a ghost sprite for a baseline
 gate), not merely a different treatment of the same asset.
 
+These milestone symbol roles apply only to point marks. An open-span mark is a
+duration outline completed by Layout from its interval bounds; it never stretches a
+milestone symbol across time. In particular, an open Actual span retains the
+completed open-span path as its single physical host, while the Actual Theme role
+continues to supply its paint.
+For progress on a point glyph, Layout uses the nonzero-winding union of its filled
+parts as the fillable interior; Scene part identities are not substituted for the
+logical point-mark identity.
+
 The #496 asset-catalog successor permits `shape: {catalog: set:name}` on
 milestone/gate symbol roles. It resolves only a normalized glyph entry and
 then uses the same mark-fit and paint rules above; unknown or wrong-kind

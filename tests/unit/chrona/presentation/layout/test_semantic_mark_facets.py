@@ -66,21 +66,26 @@ def test_due_missing_actual_keeps_eligibility_and_end_anchor(emit_missing):
         )
 
 
-def test_in_progress_missing_actual_retains_original_start_and_as_of():
+@pytest.mark.parametrize("progress", (0.0, 0.6, 1.0, None))
+def test_started_open_actual_is_an_actual_span_independent_of_missing_scope_or_progress(progress):
     start, as_of = date(2026, 4, 8), date(2026, 4, 12)
-    item = _item(actual={"start": start, "openUntil": "asOf"}, missing_actual_mark="in-progress")
-    selected = select_item_mark_facets(item=item, source_kind="combined", as_of=as_of)
-    missing = selected.facets[-1]
-    assert (missing.facet, missing.semantic_id, missing.geometry) == (
-        "missing-actual", "missing-actual", "in-progress"
+    actual = {"start": start, "progress": progress}
+    item = _item(actual=actual, missing_actual_mark="due-end")
+    selected = select_item_mark_facets(item=item, source_kind="combined", as_of=as_of,
+                                       emit_missing_actual=False)
+    actual_facet = selected.facets[-1]
+    assert (actual_facet.facet, actual_facet.semantic_id, actual_facet.geometry) == (
+        "actual", "actual", "open-span"
     )
-    assert (missing.start, missing.finish) == (start, as_of)
-    assert item.actual == {"start": start, "openUntil": "asOf"}
+    assert (actual_facet.start, actual_facet.finish, actual_facet.end_treatment) == (start, as_of, "open")
+    assert item.actual == actual
 
 
 @pytest.mark.parametrize(
     ("actual", "as_of", "diagnostic", "reason"),
     [
+        ({"start": DAY}, None,
+         "W_LAYOUT_OPEN_ACTUAL_AS_OF_REQUIRED:task-17", "as-of-required"),
         ({"start": DAY, "openUntil": "asOf"}, None,
          "W_LAYOUT_OPEN_ACTUAL_AS_OF_REQUIRED:task-17", "as-of-required"),
         ({"start": DAY, "openUntil": "asOf"}, DAY,
@@ -95,6 +100,13 @@ def test_open_actual_absences_and_diagnostic_suppression_are_preserved(actual, a
     silent = select_item_mark_facets(item=item, source_kind="combined", as_of=as_of,
                                      emit_diagnostics=False)
     assert silent.diagnostics == () and silent.absences == selected.absences
+
+
+def test_unfinished_observation_without_start_still_warns_as_incomplete():
+    selected = select_item_mark_facets(item=_item(actual={"progress": 0.6}),
+                                       source_kind="combined", as_of=DAY)
+    assert selected.diagnostics == ("W_LAYOUT_ACTUAL_INCOMPLETE:task-17",)
+    assert selected.absences[-1].reason == "incomplete-observation"
 
 
 @pytest.mark.parametrize(

@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any, Literal
 
+from chrona.presentation.model.actual_observation import in_progress_actual
 from chrona.presentation.model.projection import ObservationState
 
 
@@ -75,24 +76,23 @@ def select_item_mark_facets(*, item: Any, source_kind: str,
         facets.append(LogicalMarkFacet("planned", planned_semantic, "span",
                                        start=planned["start"], finish=planned["end"]))
 
-    runs_to_as_of = (actual.get("openUntil") == "asOf"
-                     or (emit_missing_actual and getattr(item, "missing_actual_mark", "due-end") == "in-progress"))
-    open_actual = (source_kind in {"actual", "combined"} and item.source_type == "span"
-                   and runs_to_as_of and isinstance(actual.get("start"), date)
-                   and as_of is not None)
+    open_actual = (in_progress_actual(actual, as_of)
+                   if source_kind in {"actual", "combined"} and item.source_type == "span"
+                   else None)
     if (source_kind in {"actual", "combined"} and item.source_type == "span"
             and isinstance(actual.get("start"), date) and isinstance(actual.get("finish"), date)):
         facets.append(LogicalMarkFacet("actual", "actual", "span",
                                        start=actual["start"], finish=actual["finish"]))
-    elif open_actual:
-        start = actual["start"]
-        if as_of <= start:
+    elif open_actual is not None:
+        start = open_actual.start
+        if as_of is None:
+            if emit_diagnostics:
+                diagnostics.append(f"W_LAYOUT_OPEN_ACTUAL_AS_OF_REQUIRED:{item.object_id}")
+            absences.append(MarkFacetAbsence("actual", "as-of-required"))
+        elif as_of <= start:
             if emit_diagnostics:
                 diagnostics.append(f"W_LAYOUT_OPEN_ACTUAL_INVALID:{item.object_id}")
             absences.append(MarkFacetAbsence("actual", "invalid-open-actual"))
-        elif emit_missing_actual and getattr(item, "missing_actual_mark", "due-end") == "in-progress":
-            facets.append(LogicalMarkFacet("missing-actual", "missing-actual", "span",
-                                           geometry="in-progress", start=start, finish=as_of))
         else:
             facets.append(LogicalMarkFacet("actual", "actual", "open-span",
                                            geometry="open-span", start=start, finish=as_of,

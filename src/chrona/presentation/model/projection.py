@@ -12,6 +12,7 @@ from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.contracts.resources import ViewInput
+from chrona.presentation.model.actual_observation import finish_variance
 from chrona.presentation.model.field_roles import FieldRoleBindings
 from chrona.presentation.model.field_role_view import resolve_role_grouping
 from chrona.presentation.review.lane_membership import (
@@ -293,7 +294,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             hierarchy_root_ids.add(object_id)
         actual = _actual(latest.get(object_id))
         observation_state = _observation_state(planned, latest.get(object_id), as_of)
-        finish_delta = _finish_delta(planned, actual)
+        finish_delta = _finish_delta(planned, actual, as_of)
         float_value = analysis.total_float.get(object_id) if analysis is not None else None
         total_float = float_value.value if float_value is not None else None
         critical = object_id in analysis.critical if analysis is not None else False
@@ -334,7 +335,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     scenario_items = {scenario_id: _snapshot_items(value[0], value[1], None, source_kind="scenario")
                       for scenario_id, value in (scenarios or {}).items()}
     if view.comparison.missing_actual_scope == "in-progress":
-        selected = [replace(item, missing_actual_mark=_in_progress_mark(item, as_of)) for item in selected]
+        selected = [replace(item, missing_actual_mark=_missing_actual_scope_mark(item)) for item in selected]
     rows, folded_points = _compose_rows(view, selected, snapshots, scenario_items, project)
     lane_membership = _project_lane_membership(project, rows, view) if view.rows.mode == "lanes" else None
     lane_rows = _project_lane_rows(rows, lane_membership) if lane_membership is not None else ()
@@ -498,23 +499,9 @@ def _network_order_key(item: ReviewItem, view: ViewInput) -> tuple[Any, ...]:
     return (value, item.object_id)
 
 
-def _in_progress_mark(item: ReviewItem, as_of: date | None) -> str:
-    """`comparison.missingActualScope: in-progress`: a span in progress at as-of.
-
-    The owner's rule (#991): an observed span is in progress when it has started (an actual `start` on or before
-    as-of), has no actual finish, and its progress is below 1 or absent; `openUntil: asOf` stays a sufficient
-    explicit signal. One that has not started, or sits at progress 1 without a finish and without `openUntil`, is not.
-    """
-    actual = item.actual or {}
-    if item.observation_state == ObservationState.DUE_UNOBSERVED:
-        return "none"
-    start = actual.get("start")
-    if (item.source_type != "span" or not isinstance(start, date) or as_of is None or start > as_of
-            or actual.get("finish") is not None or actual.get("at") is not None):
-        return "due-end"
-    progress = actual.get("progress")
-    below_one = progress is None or (isinstance(progress, (int, float)) and not isinstance(progress, bool) and progress < 1)
-    return "in-progress" if actual.get("openUntil") == "asOf" or below_one else "due-end"
+def _missing_actual_scope_mark(item: ReviewItem) -> str:
+    """Select only missing-Actual marks; recorded open Actuals stay Actual (#1582)."""
+    return "none" if item.observation_state == ObservationState.DUE_UNOBSERVED else "due-end"
 
 
 def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[str, ReviewItem],
@@ -773,8 +760,10 @@ def _object_link(value: Any) -> dict[str, str] | None:
     return None
 
 
-def _finish_delta(planned: dict[str, date], actual: dict[str, date | float] | None) -> int | None:
-    return (actual["finish"] - planned["end"]).days if actual and "finish" in actual and "end" in planned else None  # type: ignore[operator]
+def _finish_delta(planned: dict[str, date], actual: dict[str, date | float] | None,
+                  as_of: date | None = None) -> int | None:
+    """The canonical known finish variance, including a started open Actual at as-of."""
+    return finish_variance(planned, actual, as_of)
 
 
 def _order(rows: list[ReviewItem], view: ViewInput) -> None:
