@@ -1,6 +1,7 @@
 # Issue 1490: temporal inline capacity
 
-Status: design plan; no product changes. Public baseline: `ea602a91b`.
+Status: design and architecture review complete; no product changes.
+Public ready baseline: `1deffc014` (normal merge, no rewritten history).
 Owner: dev A / Codex. [Issue and acceptance](https://github.com/tya5/chrona/issues/1490).
 This is the living work record; specifications remain normative.
 
@@ -48,7 +49,51 @@ Which host facts are actually needed by the selected policy? What width is
 reported without claiming an arbitrary epsilon or a mathematically minimal
 positive real number?
 
-## Planned verification and publication
+## Selected design and architecture review
+
+Choose the issue's refusal option B. Do not change flex minima, reallocate the
+whole profile or infer that an uncapped host can grow. A finite positive scale
+continues existing rendering/overflow behavior; only a non-positive usable
+temporal range gets `E_LAYOUT_TEMPORAL_INLINE_CAPACITY` at
+`/layoutManifest/sources/timeline`.
+
+Layout closes a narrow typed host-capacity record at the allocation-to-native
+composition boundary: actual slot/source identity, allocated inline width and
+the source's measured natural temporal width. The latter is the existing
+preferred measurement, not a new minimum or a value recomputed in Scene.
+Point insets are then closed by the existing representation-specific native
+mark footprint producers and shared inset arithmetic. Icons remain inside
+their host bounds; do not add a separate icon geometry estimator.
+
+For zero allocation, measurement uses a positive prototype scale from natural
+demand, never an epsilon. It is not a completed placement and cannot escape
+into Scene. Native point composition supplies exact start/end protrusions;
+the diagnostic reports allocated width and natural temporal width plus those
+insets, naming the slot. This is a sufficient natural-demand width, not a
+claimed smallest positive real width. Malformed source/Theme/domain errors
+retain their owners. An empty admitted point set contributes zero insets.
+
+Consistency: Spec33 flex allocation is untouched. Spec50's positive temporal
+mapping invariant is retained. ADR0031/Spec33's blanket fit-completion rule
+needs the published narrow distinction between degenerate temporal mapping
+and otherwise valid finite geometry that can overflow. View still owns dates;
+Layout owns demand, allocation and native measurement; Scene/adapters own no
+new decision. No schema, CLI flag, project-specific threshold, ancestor
+framework or unused growability flag is added. Capped and uncapped hosts obey
+the same explicit refusal rule, so no lost ancestry is guessed downstream.
+
+Rejected A for this slice: safe natural completion needs an inline counterpart
+of whole-profile block growth, including cross-axis/anchored/grid/capped hosts
+and a verified re-solve that preserves siblings. Mutating one slot or treating
+preferred width as a flex minimum would not implement that contract. B is an
+explicitly permitted final outcome, not a partial implementation of A.
+
+Migration: the recorded degenerate-scale cases keep refusal but replace the
+generic mark/lane/path failures with the named capacity diagnostic and measured
+widths. Valid positive-scale output must remain unchanged. Keep exact matrix
+outcomes; update the ledger rather than weakening its comparison.
+
+## Verification and publication
 
 Use synthetic row/column and capped/anchored hosts, zero/narrow-positive
 allocation, span/point/icon demands and a typed-handoff integration test.
