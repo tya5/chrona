@@ -46,6 +46,12 @@ properties:
               description: Optional icon catalog resources included with this preset.
               uniqueItems: true
               items: {$ref: "#/$defs/iconCatalog"}
+            fontSets:
+              type: array
+              description: Optional packaged font sets this preset needs (#429); copied into preset.yaml and honoured by the draft render unless --font-metrics is given.
+              minItems: 1
+              uniqueItems: true
+              items: {description: Packaged font set id., enum: [chrona.noto-sans, chrona.noto-sans+jp]}
 $defs:
   address:
     $ref: "urn:chrona:common-v0.1#/$defs/storeAddress"

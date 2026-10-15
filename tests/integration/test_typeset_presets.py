@@ -21,6 +21,8 @@ TARGETS = {
 }
 SVG_ONLY = {"elevated-light", "technical-print"}  # their preferred profile is the SVG icon profile
 TYPESET_REFUSED = {"marquee", "sunday"}  # packaged designs use SVG-only treatments (glow); Typst and TikZ refuse them by name (#429)
+# TikZ has no verified horizontal text scale; the Title Card axis labels need 0.8, so TikZ refuses them by name (#429)
+TYPESET_REFUSED_TARGET = {("titlecard", "tikz")}
 PRESETS = [None, *(item["id"] for item in list_builtin_presets())]
 
 
@@ -54,7 +56,7 @@ def test_every_bundled_appearance_exports_to_the_typeset_targets(starter, preset
     report = json.loads(result.stdout)
     codes = [item["code"] for item in report["diagnostics"]]
 
-    if preset in TYPESET_REFUSED:
+    if preset in TYPESET_REFUSED or (preset, target) in TYPESET_REFUSED_TARGET:
         assert "E_VISUAL_CAPABILITY_UNSUPPORTED" in codes and result.returncode != 0, report
         return
     assert "E_VISUAL_CAPABILITY_UNSUPPORTED" not in codes and result.returncode == 0, report
