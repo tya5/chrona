@@ -30,11 +30,36 @@ def _view(tmp_path, *, baseline: str, baseline_marks: str | None = None):
     return path
 
 
+def _generic_view(tmp_path, *, baseline: str):
+    value = yaml.safe_load(default_preset_root().joinpath(
+        "bundles/design-default/view.yaml").read_bytes())
+    value["body"]["comparison"]["baseline"] = baseline
+    path = tmp_path / f"generic-view-{baseline}.yaml"
+    path.write_text(yaml.safe_dump(value, sort_keys=False), encoding="utf-8")
+    return path
+
+
 def _write_project(path, *, title: str, start: str, end: str):
     value = yaml.safe_load(PROJECT)
     value["project"]["title"] = title
     value["objects"]["task"]["schedule"]["start"] = start
     value["objects"]["task"]["schedule"]["end"] = end
+    path.write_text(yaml.safe_dump(value, sort_keys=False), encoding="utf-8")
+
+
+def _write_actual(path):
+    value = {
+        "version": "chrona/actual-set/v0.3",
+        "kind": "actual-set",
+        "id": "draft-snapshot-actual",
+        "body": {
+            "asOf": "2026-11-15",
+            "observations": [{
+                "id": "task-finished-late", "sequence": 1, "projectObjectId": "task",
+                "actual": {"start": "2026-10-01", "finish": "2026-11-10", "progress": 1},
+            }],
+        },
+    }
     path.write_text(yaml.safe_dump(value, sort_keys=False), encoding="utf-8")
 
 
@@ -88,4 +113,40 @@ def test_draft_snapshot_selected_by_view_renders_changed_baseline_ghost_and_clos
     assert "snapshot-project" in result.read_inputs
     assert "snapshot-ref" not in result.read_inputs
     assert result.artifact.content.startswith(b"<?xml") or b"<svg" in result.artifact.content[:256]
+    assert {path: path.read_bytes() for path in source_bytes} == source_bytes
+
+
+def test_generic_view_snapshot_default_without_a_snapshot_keeps_primary_review_unchanged(tmp_path):
+    project = tmp_path / "project.yaml"
+    actual = tmp_path / "actual.yaml"
+    _write_project(project, title="Current", start="2026-10-01", end="2026-10-10")
+    _write_actual(actual)
+    primary_view = _generic_view(tmp_path, baseline="primary")
+    snapshot_default_view = _generic_view(tmp_path, baseline="snapshot")
+    source_bytes = {path: path.read_bytes() for path in (project, actual, primary_view, snapshot_default_view)}
+
+    primary = render_draft(DraftRenderRequest(
+        project=project, target_kind="svg", view=primary_view, actual=actual,
+    )).rendered
+    snapshot_default = render_draft(DraftRenderRequest(
+        project=project, target_kind="svg", view=snapshot_default_view, actual=actual,
+    )).rendered
+
+    assert snapshot_default.artifact.content == primary.artifact.content
+    assert snapshot_default.warning_records == primary.warning_records
+    assert not any(item.purpose == "snapshot" for item in snapshot_default.surface.primitives)
+    roles = {item.visual_role for item in snapshot_default.surface.primitives}
+    assert "actual" in roles and "variance-behind" in roles
+    assert any(item.kind == "Text" and item.purpose == "table-cell"
+               and item.visual_role == "variance-behind"
+               for item in snapshot_default.surface.primitives), [
+                   (item.kind, item.purpose, item.text, item.visual_role, item.scene_id)
+                   for item in snapshot_default.surface.primitives if item.kind == "Text"
+               ]
+    legend = tuple((item.scene_id, item.purpose, item.text, item.visual_role)
+                   for item in snapshot_default.surface.primitives
+                   if item.purpose in {"legend-label", "legend-swatch"})
+    assert legend == tuple((item.scene_id, item.purpose, item.text, item.visual_role)
+                           for item in primary.surface.primitives
+                           if item.purpose in {"legend-label", "legend-swatch"})
     assert {path: path.read_bytes() for path in source_bytes} == source_bytes
