@@ -1,6 +1,10 @@
 """Started incomplete Actuals are rendered as Actual, with progress and an as-of delta (#1582)."""
 from datetime import date
 
+import pytest
+
+from chrona.resources import builtin_preset_source_root, safe_load
+
 from tests.support import synthetic_review as sr
 
 
@@ -59,4 +63,47 @@ def test_open_actuals_draw_with_declared_progress_and_known_delta_but_without_fa
         "late-00": "+5d", "late-06": "+5d", "late-10": "+5d",
     }
     assert "W_LAYOUT_ACTUAL_INCOMPLETE:no-start" in rendered.scene.diagnostics
+
+
+@pytest.mark.parametrize("design", ("target-b", "sunday"))
+def test_shared_design_defaults_fill_open_actual_fraction_and_authored_view_wins(tmp_path, design):
+    project, actual = _project()
+    # Exercise fractional fractions alongside the boundary controls 0 and 1.
+    next(item for item in actual["body"]["observations"]
+         if item["projectObjectId"] == "late-06")["actual"]["progress"] = 0.3
+    project["objects"]["before-06"]["plannedProgress"] = 0.25
+    parts = sr.bundle("executive-light")
+    design_root = builtin_preset_source_root(f"designs/{design}")
+    design_layout = safe_load(design_root.joinpath("layout.yaml").read_bytes())
+    assert design_layout["viewDefaults"]["progressFill"] == {"source": "actual"}
+    # Exercise the published design default through the generic View while
+    # retaining this synthetic fixture's compatible Theme and Layout geometry.
+    parts["layout"]["viewDefaults"] = {
+        "progressFill": design_layout["viewDefaults"]["progressFill"],
+    }
+    parts["view"]["body"]["rows"] = {"mode": "automatic"}
+    # The generic View does not select a fill; the shared design defaults do.
+    parts["view"]["body"].pop("progressFill", None)
+
+    directory = tmp_path / design
+    directory.mkdir()
+    rendered = sr.render(directory, project, presentation=parts, actual=actual)
+    fills = {item.source_ref: item for item in rendered.surface.primitives
+             if item.purpose == "progress-fill"}
+    assert set(fills) == {"before-06", "before-10", "late-06", "late-10"}
+    assert fills["before-06"].scene_id.startswith("progress-fill:actual:")
+    assert fills["late-06"].scene_id.startswith("progress-fill:actual:")
+    assert fills["before-10"].bounds[2] > fills["before-06"].bounds[2] > 0
+    assert fills["late-10"].bounds[2] > fills["late-06"].bounds[2] > 0
+
+    # An authored source remains authoritative over the design's actual default.
+    parts["view"]["body"]["progressFill"] = {"source": "planned"}
+    override_directory = tmp_path / f"{design}-override"
+    override_directory.mkdir()
+    overridden = sr.render(override_directory, project,
+                           presentation=parts, actual=actual)
+    override_fills = {item.source_ref: item for item in overridden.surface.primitives
+                      if item.purpose == "progress-fill"}
+    assert set(override_fills) == {"before-06"}
+    assert override_fills["before-06"].scene_id.startswith("progress-fill:planned:")
 
