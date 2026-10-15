@@ -13,7 +13,8 @@ import pytest
 from tests.support import synthetic_review as sr
 
 
-def _render(tmp_path, *, role: bool, fill: bool = True):
+def _render(tmp_path, *, role: bool, fill: bool = True, weight: str | None = None, transform: str | None = None,
+            overrides: bool = True):
     source = sr.project({"a": sr.span("a", date(2026, 2, 2), 30, title="Alpha"), "b": sr.span("b", date(2026, 3, 9), 20, title="Beta")})
     parts = sr.bundle("executive-light")
     body = parts["theme"]["body"]
@@ -24,7 +25,15 @@ def _render(tmp_path, *, role: bool, fill: bool = True):
     if role:
         body["values"]["header-size"] = {"type": "number", "value": 9}
         body["values"]["header-spacing"] = {"type": "number", "value": 0.1}
-        body["roles"]["tableColumnLabel"] = {**body["roles"]["text"], "fontSize": "header-size", "letterSpacing": "header-spacing"}
+        body["roles"]["tableColumnLabel"] = dict(body["roles"]["text"])
+        if overrides:
+            body["roles"]["tableColumnLabel"].update({"fontSize": "header-size", "letterSpacing": "header-spacing"})
+        if weight is not None:
+            body["values"]["header-weight"] = {"type": "fontWeight", "value": weight}
+            body["roles"]["tableColumnLabel"]["fontWeight"] = "header-weight"
+        if transform is not None:
+            body["values"]["header-transform"] = {"type": "textTransform", "value": transform}
+            body["roles"]["tableColumnLabel"]["textTransform"] = "header-transform"
         if fill:
             body["colorBindings"]["tableColumnLabel.fill"] = "textMuted"
     return sr.render(tmp_path, source, presentation=parts)
@@ -63,3 +72,36 @@ def test_a_role_without_a_fill_changes_type_but_keeps_the_text_colour(tmp_path):
     header, _ = _header_and_cell(_render(_sub(tmp_path, "nofill"), role=True, fill=False))
     assert header.text_layout.font_size == 9 and header.visual_role == "text"
     assert header.paint.fill == plain_header.paint.fill
+
+
+def test_weight_and_transform_on_the_role_change_the_rendered_header_and_its_measured_width(tmp_path):
+    plain, plain_cell = _header_and_cell(_render(_sub(tmp_path, "plain"), role=True))
+    styled, cell = _header_and_cell(_render(_sub(tmp_path, "styled"), role=True, weight="700", transform="uppercase"))
+    assert plain.text_layout.weight == 400 and styled.text_layout.weight == 700
+    assert plain.text_layout.text_transform == "none" and styled.text_layout.text_transform == "uppercase"
+    assert styled.text_layout.font_size == plain.text_layout.font_size == 9
+    assert styled.bounds[2] > plain.bounds[2]  # bold capitals are measured wider than regular mixed case
+    assert cell.text_layout.weight == plain_cell.text_layout.weight and cell.bounds == plain_cell.bounds  # cells untouched
+
+
+def test_the_header_cell_width_follows_the_upper_casing(tmp_path):
+    lower, _ = _header_and_cell(_render(_sub(tmp_path, "lower"), role=True, transform="none"))
+    upper, _ = _header_and_cell(_render(_sub(tmp_path, "upper"), role=True, transform="uppercase"))
+    assert upper.bounds[2] > lower.bounds[2]
+
+
+def test_a_role_that_repeats_the_text_role_leaves_header_geometry_and_type_unchanged(tmp_path):
+    plain, _ = _header_and_cell(_render(_sub(tmp_path, "plain"), role=False))
+    same, _ = _header_and_cell(_render(_sub(tmp_path, "same"), role=True, fill=False, overrides=False))
+    assert same.bounds == plain.bounds and same.text_layout == plain.text_layout
+
+
+def test_typeset_targets_render_with_the_role_declared(tmp_path):
+    from chrona.presentation.renderers.v05_typeset import V05TikzRenderer, V05TypstRenderer
+
+    rendered = _render(_sub(tmp_path, "typeset"), role=True, weight="700", transform="uppercase")
+    typst = V05TypstRenderer().render(rendered.surface).content.decode()
+    tikz = V05TikzRenderer().render(rendered.surface).content.decode()
+    assert "Work package" in typst and "size: 9pt" in typst
+    assert "Work package" in tikz and "\\fontsize{9pt}" in tikz
+    assert typst.upper().count("WORK PACKAGE") >= 1
