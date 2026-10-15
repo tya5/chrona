@@ -79,6 +79,8 @@ class ReviewItem:
     # Position of the object among the Project's `objects` as declared, for `ordering.by: source` (#991).
     source_index: int = 0
     temporal_paint: bool = True
+    # Lane of a key-row point, assigned by Layout from measured extents (#1501); None everywhere else.
+    key_lane: int | None = None
 
     @property
     def at_delta(self) -> int | None:
@@ -100,6 +102,8 @@ class ReviewRowProjection:
     depth: int = 0
     parent_row_id: str | None = None
     rollup_presentation: str = "none"
+    # The one row of `points: key-row` (#1501): `label` is the declared title, every item is a point.
+    key_row: bool = False
 
 
 @dataclass(frozen=True)
@@ -584,6 +588,8 @@ def _fold_automatic_points(rows: tuple[ReviewRowProjection, ...], view: ViewInpu
     """Apply View-owned automatic point policy without exposing relation facts to Layout."""
     if view.rows.points == "own-row":
         return rows, ()
+    if view.rows.points == "key-row":
+        return _key_row(rows, view), ()
     if view.rows.points in {"attached", "predecessor"}:
         rows = _attach_points(rows, project)
     if view.rows.points == "attached":
@@ -628,6 +634,28 @@ def _fold_automatic_points(rows: tuple[ReviewRowProjection, ...], view: ViewInpu
         replacements[candidates[0]] = replace(target, items=target.items + tuple(
             replace(item, track="shared", attached_to=candidates[0]) for item in row.items))
     return tuple(replacements.get(row.row_id, row) for row in rows if row.row_id not in folded), ()
+
+
+KEY_ROW_ID = "key-row"
+
+
+def _key_row(rows: tuple[ReviewRowProjection, ...], view: ViewInput) -> tuple[ReviewRowProjection, ...]:
+    """Move every point row into one row placed first, under the axis (#1501); Layout packs it into lanes."""
+    labels = view.visibility.labels
+    if not (labels is True or (isinstance(labels, Mapping) and labels.get("placement") in {"plot", "both"}
+                               and "title" in labels.get("content", ()))):
+        raise ValueError("E_REVIEW_POINT_KEY_ROW_LABEL_REQUIRED: rows.points key-row needs visibility.labels "
+                         "to show titles on the plot")
+    points = sorted((row for row in rows if row.items and row.items[0].source_type == "point"),
+                    key=lambda row: (row.items[0].planned.get("at"), row.items[0].object_id))
+    if not points:
+        return rows
+    if any(row.row_id == KEY_ROW_ID for row in rows):
+        raise ValueError(f"E_REVIEW_ROW_ID_DUPLICATE: an object is named {KEY_ROW_ID!r}, the id of the key row")
+    key = ReviewRowProjection(
+        KEY_ROW_ID, view.rows.key_row_title or "", "", points[0].items[0].item_id or points[0].items[0].object_id,
+        tuple(replace(item, attached_to=None) for row in points for item in row.items), key_row=True)
+    return (key, *(row for row in rows if not row.items or row.items[0].source_type != "point"))
 
 
 def _attach_points(rows: tuple[ReviewRowProjection, ...], project: dict[str, Any]) -> tuple[ReviewRowProjection, ...]:

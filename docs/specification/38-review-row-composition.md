@@ -423,9 +423,21 @@ lane membership. `rows.laneTable` is required only in lane mode; item-level
 `tableColumns` are invalid there. Generated-lane Views declare lane mode
 and packing explicitly. A packaged
 View seeking transit-map compression must declare `chain` and/or `dates`.
-Hierarchical lanes and a `points: key-row` policy are not implied by this
-contract. View v0.28 is an intentional schema migration; older View
+Hierarchical lanes are not implied by this contract.
+ View v0.28 is an intentional schema migration; older View
 resources must be migrated explicitly rather than silently reinterpreted.
+
+**Key row (#1501).** In `rows.mode: automatic`, `rows.points: key-row` moves every selected point (including a point
+that `attachesTo` a span) out of its own row into one row placed first, directly under the axis. `rows.keyRow.title`
+is required with it (author text, 1 to 80 characters, shown in the first table column as written, the other cells
+empty; no locale substitution) and is `E_VIEW_KEY_ROW_TITLE_REQUIRED` when absent, `E_VIEW_KEY_ROW_UNUSED` with any
+other policy, `E_VIEW_KEY_ROW_MODE` outside `automatic`. It works with any grouping, including none; group headers
+stay below it. The View must show titles on the plot (`E_REVIEW_POINT_KEY_ROW_LABEL_REQUIRED`). Layout packs the
+points into lanes by the greedy interval rule of folded group-header points: a point's extent is its marks plus its
+title label on the placed side, a point takes the lowest lane whose last extent ends at or before its start, so the
+lane count is the clique number of the extents and the row height is that many mark lanes. Labels stay on the start
+or end side inside their lane and use `visible-overflow`: a label that cannot clear its neighbours is drawn
+overlapping, never suppressed. A View with no point draws no key row. Other policies and the default are unchanged.
 
 ## 4. Diagnostics and validation
 

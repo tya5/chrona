@@ -237,6 +237,7 @@ class ViewRows:
     lane_table: ViewLaneTable | None = None
     packing: tuple[str, ...] = ()
     lane_keys: ViewLaneKeys | None = None
+    key_row_title: str | None = None  # the declared title of `points: key-row` (#1501)
 
 
 @dataclass(frozen=True)
@@ -1011,6 +1012,7 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
             (ViewLaneKeys(str(rows["laneKeys"]["field"]) if "field" in rows["laneKeys"] else None,
                           rows["laneKeys"].get("byObject"))
              if version == "chrona/view/v0.28" and "laneKeys" in rows else None),
+            _key_row_title(rows),
         ), body.get("axis"),
         tuple(body.get("markers", ())), body.get("shading"), body.get("timePresentation"),
         str(body["annotationPresentation"]) if "annotationPresentation" in body else None,
@@ -1286,6 +1288,20 @@ def _group_header(raw_grouping: Any) -> ViewGroupHeader | None:
     if ("secondary" in used) != (header.secondary_field is not None):
         raise ContractError("E_VIEW_GROUP_HEADER_TEMPLATE", "{secondary} and the secondary declaration must appear together")
     return header
+
+
+def _key_row_title(rows: Mapping[str, Any]) -> str | None:
+    """The declared key-row title, validated against the point policy it belongs to (#1501)."""
+    declared = rows.get("keyRow")
+    if rows.get("points") != "key-row":
+        if declared is not None:
+            raise ContractError("E_VIEW_KEY_ROW_UNUSED", "rows.keyRow is only meaningful with rows.points key-row")
+        return None
+    if declared is None:
+        raise ContractError("E_VIEW_KEY_ROW_TITLE_REQUIRED", "rows.points key-row needs rows.keyRow.title")
+    if rows.get("mode") != "automatic":
+        raise ContractError("E_VIEW_KEY_ROW_MODE", "rows.points key-row applies to rows.mode automatic only")
+    return str(declared["title"])
 
 
 def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping: ViewGrouping | None,

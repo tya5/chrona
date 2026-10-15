@@ -525,7 +525,15 @@ allOf:
                   label: {enum: [group, lane]}
                   count: {anyOf: [{type: boolean}, {enum: [auto]}], default: false, description: "auto shows Items only when completed countable lane membership includes a multi-member lane."}
                   text: {$ref: "#/$defs/presentationIntent/properties/text"}
-              points: {description: "Automatic-row point policy; attached (the default) draws a point that attachesTo a selected span on that span's row.", enum: [attached, own-row, group-header, predecessor]}
+              points: {description: "Automatic-row point policy; attached (the default) draws a point that attachesTo a selected span on that span's row; key-row draws every selected point in one row directly under the axis, packed into lanes by mark and label extent, titled by keyRow.title.", enum: [attached, own-row, group-header, predecessor, key-row]}
+              keyRow:
+                description: "The key row of points: key-row (#1501). Required with points key-row and invalid without it."
+                examples: [{title: Key milestones}]
+                type: object
+                required: [title]
+                additionalProperties: false
+                properties:
+                  title: {description: "Author text of the key row, shown in the first table column as written; the Theme role's text transform styles it.", $ref: "urn:chrona:common-v0.1#/$defs/literalCaption", examples: [Key milestones]}
               items:
                 type: array
                 minItems: 1

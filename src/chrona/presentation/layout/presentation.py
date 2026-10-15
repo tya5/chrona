@@ -425,7 +425,9 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
     pitch = mark_band_allocation.outer_extent if mark_band_allocation is not None else mark_block_size
     track_inset = -mark_band_allocation.outer_bounds[0] if mark_band_allocation is not None else 0.0
     for review_row, row in zip(review_rows, row_placements, strict=True):
-        stacked_total = max(1, sum(item.track != "shared" for item in review_row.items))
+        key_lanes = [lane for lane in (getattr(item, "key_lane", None) for item in review_row.items) if lane is not None]
+        stacked_total = (max(key_lanes) + 1 if key_lanes else
+                         max(1, sum(item.track != "shared" for item in review_row.items)))
         if row.bounds[3] < stacked_total * pitch:
             raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/measuredSources/metricValues/timeline.mark.blockSize",
                               detail=f"lanes={stacked_total}; extent={stacked_total * pitch}")
@@ -436,7 +438,12 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
             key=lambda pair: shared_track_member_key(pair[1], pair[0]),
         )
         for _, item in members:
-            if item.track == "shared":
+            key_lane = getattr(item, "key_lane", None)
+            if key_lane is not None:
+                # A key-row point sits in the lane Layout packed it into (#1501); comparison variants share it.
+                block = lane_origin + key_lane * pitch + track_inset
+                actual_block = block
+            elif item.track == "shared":
                 block = lane_origin + track_inset
                 actual_block = block
             else:
