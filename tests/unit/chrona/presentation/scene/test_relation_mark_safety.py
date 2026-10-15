@@ -8,11 +8,11 @@ import pytest
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, segment_length_inside_rect
 from chrona.presentation.layout.sources import MeasuredSources, SourceInput
 from chrona.presentation.model.projection import ReviewProjection
-from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
+from chrona.presentation.surface_pipeline import compose_review_surface
 from tests.unit.chrona.presentation.scene.test_relation_entry_side import D, _item, _route, _rows
 from tests.unit.chrona.presentation.scene.test_relation_route_invariant import gate
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
-    _Font, _manifest, _theme, _title_measurement, surface_content,
+    _Font, _manifest, _theme, _title_measurement, build_surface_input, surface_content,
 )
 
 

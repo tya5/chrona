@@ -182,9 +182,9 @@ def test_real_owners_recover_centered_name_by_rerouting_a_vertical_dependency(mo
     from chrona.presentation.layout.sources import MeasuredSources, SourceInput
     from chrona.presentation.layout.surface_geometry import bounds_from_rect
     from chrona.presentation.layout.surface_quality import CollisionDomain
-    from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
+    from chrona.presentation.surface_pipeline import compose_review_surface
     from tests.unit.chrona.presentation.scene.test_v05_builder import (
-        _Font, _manifest, _title_measurement, surface_content,
+        _Font, _manifest, _title_measurement, build_surface_input, surface_content,
     )
 
     monkeypatch.setattr(fixture, "RELATION", {

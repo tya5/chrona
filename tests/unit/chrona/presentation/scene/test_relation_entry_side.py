@@ -12,10 +12,10 @@ import pytest
 from chrona.presentation.layout.sources import MeasuredSources, SourceInput
 from chrona.presentation.layout.model import RelationUnroutableMode
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
-from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
+from chrona.presentation.surface_pipeline import compose_review_surface
 
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
-    _Font, _manifest, _theme, _title_measurement, surface_content,
+    _Font, _manifest, _theme, _title_measurement, build_surface_input, surface_content,
 )
 
 D = date

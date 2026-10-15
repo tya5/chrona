@@ -108,6 +108,8 @@ def _request_with_candidate_lane_preflight(request: SurfaceLayoutRequest) -> Sur
     """Recompute fixed-lane inputs from this candidate's exact content and manifest."""
     request = ensure_request_mark_visibility_index(request)
     if request.projection.lane_membership is not None:
+        if request.temporal_capacity is None:
+            raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/temporalCapacity")
         preflight = preflight_fixed_lane_layout(
             projection=request.projection, layout_manifest=request.layout_manifest,
             surface_content=request.surface_content, theme_tokens=request.theme_tokens,
@@ -115,6 +117,7 @@ def _request_with_candidate_lane_preflight(request: SurfaceLayoutRequest) -> Sur
             icon_assets=request.icon_assets, visual_requests=request.visual_requests,
             font_metrics=request.font_metrics,
             mark_visibility_index=request.mark_visibility_index,
+            temporal_capacity=request.temporal_capacity,
         )
         return replace(request, fixed_lane_preflight=preflight)
     return request

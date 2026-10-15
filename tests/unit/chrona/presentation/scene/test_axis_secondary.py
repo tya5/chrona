@@ -101,9 +101,11 @@ def _composition(*tiers, theme=None):
                                    layout_manifest=base._manifest("title", "table", "timeline", "timeline-axis"),
                                    resolved_theme=theme or _theme_with(), font_metrics=base._Font(),
                                    measured_sources=measurement, capabilities={"svg": True})
+    measured, temporal_capacity = base._seal_temporal_capacity(value.layout_manifest, value.measured_sources)
     return compose_surface_layout(SurfaceLayoutRequest(
         projection=value.projection, presentation_contract=normalize_presentation_input(content),
-        surface_content=content, layout_manifest=value.layout_manifest, measured_sources=value.measured_sources,
+        surface_content=content, layout_manifest=value.layout_manifest, measured_sources=measured,
+        temporal_capacity=temporal_capacity,
         theme_tokens=value.theme_tokens, font_metrics=value.font_metrics, capabilities=dict(value.capabilities))).placement
 
 

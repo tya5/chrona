@@ -191,8 +191,14 @@ of selected point facets relative to their date anchors, including resolved
 symbol, icon, rotation and stroke geometry. No selected point means no inset.
 Its Date-only domain remains the View window; axes, calendar shading, marks
 and routes use the same completed inset scale in lane preflight and final
-composition. Layout diagnoses a non-positive usable range as
-`E_LAYOUT_MARK_OVERFLOW` rather than letting an adapter clip the point.
+composition. Layout diagnoses non-positive allocated/usable temporal capacity
+as `E_LAYOUT_TEMPORAL_INLINE_CAPACITY` (#1490), rather than allowing a generic
+mark/lane/path failure or adapter clipping. The typed Layout capacity names the
+timeline slot and allocated width; native measurement closes point insets and
+reports sufficient width as natural temporal demand plus those insets. A
+natural-width prototype permits measurement when allocation is zero, never a
+fake completed scale or epsilon. Both capped and uncapped hosts retain the
+authored allocation; positive usable ranges retain their current output.
 
 **Explicit-window visibility closure (#1292).** Before point-inset measurement
 or lane-footprint preflight, Layout derives one immutable visibility result per

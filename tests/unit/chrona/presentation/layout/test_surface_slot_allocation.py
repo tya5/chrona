@@ -19,7 +19,7 @@ from chrona.presentation.model.surface_content import AxisLabelIntent, AxisTier
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
-    _Font, _manifest, _theme, _title_measurement, surface_content,
+    _Font, _manifest, _seal_temporal_capacity, _theme, _title_measurement, surface_content,
 )
 
 
@@ -31,10 +31,12 @@ def _request():
         "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
         "timeline.mark.blockSize": Decimal(8)})
     content = surface_content()
+    manifest = _manifest("title", "table", "timeline", "timeline-axis")
+    measured, temporal_capacity = _seal_temporal_capacity(manifest, measured)
     return SurfaceLayoutRequest(
         projection=projection, surface_content=content, presentation_contract=normalize_presentation_input(content),
-        layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
-        measured_sources=measured, theme_tokens=ThemeTokenView(_theme()), font_metrics=_Font())
+        layout_manifest=manifest, measured_sources=measured, temporal_capacity=temporal_capacity,
+        theme_tokens=ThemeTokenView(_theme()), font_metrics=_Font())
 
 
 def test_full_allocations_need_no_projection_measurement_fonts_or_row_geometry():
@@ -112,6 +114,7 @@ def test_lane_candidate_replaces_prior_preflight_from_exact_candidate_inputs(mon
     assert calls == [dict(
         projection=candidate.projection, layout_manifest=candidate.layout_manifest,
         surface_content=candidate.surface_content, theme_tokens=candidate.theme_tokens,
+        temporal_capacity=candidate.temporal_capacity,
         metric_values=candidate.measured_sources.metric_values,
         icon_assets=candidate.icon_assets, visual_requests=candidate.visual_requests,
         font_metrics=candidate.font_metrics, mark_visibility_index=passed_index)]
@@ -123,7 +126,8 @@ def test_width_changed_lane_candidate_reuses_one_selection_index_for_preflight_a
     from chrona.presentation.layout import surface_mark_visibility
     from chrona.presentation.layout.lane_projection import close_lane_projection
     from chrona.presentation.model.projection import build_review_projection
-    from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
+    from chrona.presentation.surface_pipeline import compose_review_surface
+    from tests.unit.chrona.presentation.scene.test_v05_builder import build_surface_input
     from tests.unit.chrona.presentation.scene.test_relation_ghost_endpoints import (
         MODES, PLACED, PROJECT, SNAPSHOT,
     )
@@ -158,7 +162,9 @@ def test_width_changed_lane_candidate_reuses_one_selection_index_for_preflight_a
         replace(item, bounds=replace(item.bounds, inline_size=Decimal(250)))
         if item.source in {"timeline", "timeline-axis"} else item
         for item in original.layout_manifest.decisions))
-    candidate = replace(original, layout_manifest=manifest,
+    measured, temporal_capacity = _seal_temporal_capacity(manifest, original.measured_sources)
+    candidate = replace(original, layout_manifest=manifest, measured_sources=measured,
+                        temporal_capacity=temporal_capacity,
                         fixed_lane_preflight=initial.inline.request.fixed_lane_preflight)
     current = prepare_surface_candidate(candidate)
     preflight = current.inline.request.fixed_lane_preflight
