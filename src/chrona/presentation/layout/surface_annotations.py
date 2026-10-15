@@ -963,8 +963,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                 status_in_list = _is_annotation_list_candidate(candidate)
                                 break
                     if (box is not None and annotation.candidates
-                            and selected_rung != candidates[0].candidate_id
-                            and not other_side_of_as_of):
+                            and selected_rung != candidates[0].candidate_id):
                         add_diagnostic(
                             f"W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:{annotation_id}:{selected_rung}", annotation)
                     if other_side_of_as_of:
