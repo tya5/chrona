@@ -115,6 +115,11 @@ def test_typeset_draws_completed_catalogue_tile_channels_and_clip(angle):
     typst, tikz = render_v05_typst(surface), render_v05_tikz(surface)
     assert "clip: true" in typst and "radius: 1pt" in typst and "#circle" in typst
     assert 'curve.quad' in typst and 'cap: "round"' in typst and 'join: "bevel"' in typst
+    if angle == 0:  # one declared pgf pattern; the catalogue tile is written in pgf's basic layer (#1551)
+        assert r"\path[pattern=chronaPatterna, rounded corners=1pt] (1,2) rectangle (9,10);" in tikz
+        assert r"\pgfpathcircle{\pgfpoint{2pt}{2pt}}{1pt}" in tikz and r"\pgfsetroundcap\pgfsetbeveljoin" in tikz
+        assert r"\pgfpathquadraticcurveto{\pgfpoint{1pt}{2pt}}{\pgfpoint{4pt}{4pt}}" in tikz
+        return
     assert r"\clip[rounded corners=1pt]" in tikz and "circle[radius=1pt]" in tikz
     assert "line cap=round" in tikz and "line join=bevel" in tikz
     assert "controls (0.667,1.333) and (2,2.667) .. (4,4)" in tikz

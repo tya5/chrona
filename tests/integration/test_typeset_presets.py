@@ -62,7 +62,7 @@ def test_every_bundled_appearance_exports_to_the_typeset_targets(starter, preset
     assert text
     if preset == "technical-print":
         assert "axis-band-rect" in text
-        assert ("clip: true" if target == "typst" else r"\clip") in text
+        assert ("clip: true" if target == "typst" else r"\pgfdeclarepatterninherentlycolored") in text  # one pattern fill (#1551)
 
 
 def _kinds(scene: Path) -> dict[str, int]:
