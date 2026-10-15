@@ -184,7 +184,11 @@ def renderer_for(target: dict[str, Any], environment: dict[str, Any], *, asset_r
         if not isinstance(descriptor, dict) or (descriptor.get("engine"), descriptor.get("adapterGrammar")) != expected:
             actual = (descriptor.get("engine"), descriptor.get("adapterGrammar")) if isinstance(descriptor, dict) else type(descriptor).__name__
             raise _failure("E_RENDER_TYPESETTER_IDENTITY", f"target {kind!r} requires engine={expected[0]!r}, adapterGrammar={expected[1]!r}; received {actual!r}")
-        return V05TypstRenderer() if kind == "typst" else V05TikzRenderer()
+        if kind == "typst":
+            return V05TypstRenderer()
+        closure = (_font_files(environment.get("fontMetrics"), asset_root, font_files, asset_resolver)[0]
+                   if font_files is not None or isinstance(environment.get("fontMetrics"), dict) else None)
+        return V05TikzRenderer(closure)
     raise _failure("E_PRESENTATION_TARGET", f"unsupported target kind {_brief(kind)}; supported kinds are {sorted(supported)!r}")
 
 
