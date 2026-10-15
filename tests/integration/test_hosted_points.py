@@ -52,6 +52,24 @@ def test_typeset_adapters_serialize_completed_hosted_geometry(tmp_path):
         assert after and after != before
 
 
+def test_dependency_can_enter_span_endpoint_covered_by_its_hosted_point(tmp_path):
+    objects = {"earlier": sr.span("earlier", date(2025, 12, 20), 5),
+               "host": sr.span("host", date(2026, 1, 1), 20),
+               "gate": {**sr.point("gate", date(2026, 1, 1)), "parent": "host"}}
+    relations = [{"id": "enter-host", "type": "dependency", "lag": "0d",
+                  "from": {"object": "earlier", "endpoint": "end"},
+                  "to": {"object": "host", "endpoint": "start"}}]
+    rendered = _render(tmp_path, objects, relations=relations)
+    route = next(item for item in rendered.surface.primitives
+                 if item.purpose == "dependency" and item.source_ref == "relation:0:enter-host")
+    gate = _mark(rendered, "planned", "gate")
+    x, y = route.points[-1]
+    left, top, width, height = gate.bounds
+    assert left <= x <= left + width and top <= y <= top + height
+    assert any(node.get("data-scene-id") == route.scene_id and node.get("d")
+               for node in ElementTree.fromstring(rendered.artifact.content).iter())
+
+
 def _parts(*, host: bool = True, rows: str = "lanes"):
     parts = sr.bundle("executive-light")
     body = parts["view"]["body"]
@@ -231,3 +249,30 @@ def test_two_same_date_points_without_hosting_policy_keep_existing_rendering(tmp
 
     assert len([item for item in rendered.surface.primitives if item.purpose == "planned"
                 and item.source_ref in {"gate-a", "gate-b"}]) == 2
+
+
+def test_annotation_leader_anchors_to_completed_cross_row_hosted_point(tmp_path):
+    source = sr.project({
+        "host": sr.span("host", date(2026, 1, 1), 20, owner="a", title="Host span"),
+        "gate": {**sr.point("gate", date(2026, 1, 1), owner="b", title="Review gate"), "parent": "host"},
+    })
+    parts = _parts()
+    sr.add_notes(source, parts["view"], ("gate",),
+        (sr.candidate("plot-near", connector="leader", max_positions=512),), words=0, endpoint="at")
+    rendered = sr.render(tmp_path, source, presentation=parts)
+
+    gate = _mark(rendered, "planned", "gate")
+    annotation = next(item for item in rendered.surface.primitives
+                      if item.scene_id == "annotation-text:note-0")
+    leader = next(item for item in rendered.surface.primitives
+                  if item.scene_id == "annotation-leader:note-0")
+    assert annotation.text
+    assert len(leader.points) >= 2
+    gx, gy, gw, gh = gate.bounds
+    assert any(gx - 1e-6 <= x <= gx + gw + 1e-6 and gy - 1e-6 <= y <= gy + gh + 1e-6
+               for x, y in (leader.points[0], leader.points[-1]))
+    svg = ElementTree.fromstring(rendered.artifact.content)
+    svg_ids = {item.get("data-scene-id") for item in svg.iter()}
+    assert "annotation-text:note-0" in svg_ids and "annotation-leader:note-0" in svg_ids
+    svg_leader = next(item for item in svg.iter() if item.get("data-scene-id") == "annotation-leader:note-0")
+    assert svg_leader.get("d")
