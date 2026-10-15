@@ -32,6 +32,7 @@ from chrona.presentation.layout.surface_geometry import (
     HOSTED_TEXT_PAINT_ORDER, bounds_from_rect, coordinate_for_date,
 )
 from chrona.presentation.layout.surface_lanes import lane_owner
+from chrona.presentation.layout.key_row_lanes import key_row_label_ladder
 from chrona.presentation.layout.lane_mark_facets import span_mark_footprint
 from chrona.presentation.layout.text import metric_for_role, measure_text_width, place_text, wrap_text
 from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
@@ -254,7 +255,9 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 intent = getattr(item, "presentation", None) or {}
                 preferred_side = (intent.get("label") or {}).get("side") if isinstance(intent, dict) else None
                 wrap = (intent.get("text") or {}).get("wrap", "forbid") if isinstance(intent, dict) else "forbid"
-                ladder = (_lane_label_candidates(contract.labels.side,
+                key_row = getattr(review_row, "key_row", False)
+                ladder = (key_row_label_ladder(contract.labels.side) if key_row else
+                    _lane_label_candidates(contract.labels.side,
                     request.surface_content.label_fallback, preferred_side) if lane_mode else
                     ((preferred_side,) + tuple(side for side in default_ladder if side != preferred_side)
                      if preferred_side else default_ladder))
@@ -268,7 +271,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 sides = tuple(side for side in ladder if side != "suppress")
                 requests.append(LabelRequest(f"member-label:{instance_id}", item.object_id, " ".join(parts),
                     anchor, sides, request.surface_content.label_text_role or "text", "plot-label", CollisionDomain("timeline", "overlay"),
-                    "visible-overflow" if attached is not None else "suppress" if lane_mode else
+                    "visible-overflow" if attached is not None or key_row else "suppress" if lane_mode else
                     "suppress" if "suppress" in ladder else contract.labels.overflow,
                     wrap, bounds=row_bands.get(review_row.row_id),
                     inside_host_obstacle_id=host_mark_id if mark is not None else None,

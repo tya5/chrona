@@ -90,6 +90,10 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         return "tableCell"
     if projection.rows:
         def row_cell(row: Any, column: Any, row_index: int) -> TableCellContent:
+            if row.key_row:
+                # The key row names itself in the first column and leaves the others empty (#1501).
+                text = row.label if column.id == view.table_columns[0].id else ""
+                return TableCellContent(row.row_id, column.id, text, "tableCell", cell_typography_role(column))
             item = next(item for item in row.items if item.item_id == row.table_subject_id)
             header = (item.is_rollup and row.rollup_presentation == "header"
                       and column.id == view.hierarchy_column)
@@ -103,7 +107,8 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         table_cell_objects = tuple(
             (row.row_id, column.id,
              next(item for item in row.items if item.item_id == row.table_subject_id).object_id,
-             next(item for item in row.items if item.item_id == row.table_subject_id).source_kind in {"primary", "combined"})
+             next(item for item in row.items if item.item_id == row.table_subject_id).source_kind in {"primary", "combined"}
+             and not row.key_row)
             for row in projection.rows for column in view.table_columns)
         row_levels = tuple(TableRowLevel((row.row_id, row.table_subject_id), bool(row.group_id), row.depth)
                            for row in projection.rows)
