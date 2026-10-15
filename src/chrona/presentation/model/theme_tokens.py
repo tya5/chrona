@@ -682,6 +682,13 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markPaintOrder")
         return reach, int(order)
 
+    def deadline_outline_width(self, role: str) -> Decimal:
+        """Optional physical outline margin; absent/zero preserves flat marks."""
+        value = self.optional_number(role, "outlineWidth")
+        if value is not None and value < 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/outlineWidth")
+        return value if value is not None else Decimal(0)
+
     def progress_track(self, role: str) -> tuple[Decimal, Decimal]:
         """Return the optional track inset and fill corner-radius ratios (#430).
 

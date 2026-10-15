@@ -101,6 +101,8 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     # A Project deadline (#822): a tick at the promised date and, when the planned finish is later, a run to it.
     # One role paints both, so a Theme gives them one ink; the run is what tells a missed promise from a kept one.
     _binding("deadlineMark", "line", "deadline-mark", "deadline-mark", "deadline-mark", ContrastClass.MARK),
+    # A deadline outline is its actual painted ground, not another message.
+    _binding("deadlineMarkOutline", "decoration", "deadline-outline", "deadline-mark-outline", "background"),
     # Label chips (#428): a background drawn from a label's own measured box,
     # one binding per label semantic, Theme role ``<label purpose>-chip``.
     _binding("asOfLabelChip", "decoration", "label-chip", "as-of-label-chip", "as-of-label-chip"),
