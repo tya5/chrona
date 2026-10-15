@@ -1,10 +1,10 @@
 """Finite Layout-owned boundary ports for visible connector geometry."""
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 
-from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.model import LayoutError, geometry_sum
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacleIndex
 from chrona.presentation.layout.surface_quality import MarkPlacement
 
@@ -17,6 +17,7 @@ class ConnectorEgress:
     host_ids: tuple[str, ...]
     stub: bool = False  # the horizontal-entry stub candidate of `relationRouting.entry` (#1030)
     through_body: bool = False  # a span exit on the far side of its own mark: the corridor crosses the bar (#1072)
+    corridor_host_ids: tuple[str, ...] = ()
 
     @property
     def corridor(self) -> tuple[tuple[float, float], ...]:
@@ -72,10 +73,127 @@ def connector_boundary_port(mark: MarkPlacement, endpoint: str,
     return ports[0][1]
 
 
+def physical_host_neighbors(mark: MarkPlacement, marks: Iterable[MarkPlacement],
+                            endpoint: str) -> tuple[MarkPlacement, ...]:
+    """Return the exact resolved host, or hosted points covering a span endpoint."""
+    by_id = {item.placement_id: item for item in marks}
+    if mark.mark_shape == "point":
+        host = by_id.get(mark.physical_host.placement_id) if mark.physical_host is not None else None
+        return (host,) if host is not None and host.mark_shape != "point" else ()
+    if endpoint not in {"start", "at", "finish", "end"}:
+        return ()
+    semantic = mark.start_port if endpoint in {"start", "at"} else mark.end_port
+    if semantic is None:
+        return ()
+    x, y = semantic
+    result = []
+    for child in by_id.values():
+        host = child.physical_host
+        if child.mark_shape != "point" or host is None or host.placement_id != mark.placement_id:
+            continue
+        bounds = child.bounds
+        left, top = float(bounds.inline), float(bounds.block)
+        right, bottom = left + float(bounds.inline_size), top + float(bounds.block_size)
+        if left - 1e-9 <= x <= right + 1e-9 and top - 1e-9 <= y <= bottom + 1e-9:
+            result.append(child)
+    return tuple(sorted(result, key=lambda item: item.placement_id))
+
+
+def split_route_at_physical_corridors(
+        points: tuple[tuple[float, float], ...],
+        source: ConnectorEgress | None,
+        target: ConnectorEgress | None,
+) -> tuple[tuple[tuple[float, float], tuple[float, float], tuple[str, ...]], ...]:
+    """Split route segments at each recorded exposed boundary.
+
+    The final tuple on each segment contains only physical host IDs authorized
+    for that endpoint corridor. Legacy comparison hosts are supplied separately
+    by callers and therefore keep their established whole-route semantics.
+    """
+    if len(points) < 2:
+        return ()
+
+    def corridor_limit(egress: ConnectorEgress | None, *, reverse: bool) -> float:
+        if egress is None or not egress.corridor_host_ids:
+            return 0.0
+        path = tuple(reversed(points)) if reverse else points
+        semantic, exposed = egress.semantic_port, egress.exposed_port
+        if not path or not _point_on_segment(path[0], semantic, exposed):
+            return 0.0
+        def progress(point: tuple[float, float]) -> float:
+            if semantic[0] != exposed[0]:
+                direction = 1.0 if exposed[0] > semantic[0] else -1.0
+                return (point[0] - semantic[0]) * direction
+            if semantic[1] != exposed[1]:
+                direction = 1.0 if exposed[1] > semantic[1] else -1.0
+                return (point[1] - semantic[1]) * direction
+            return 0.0
+
+        previous_progress = progress(path[0])
+        distance = 0.0
+        for start, end in zip(path, path[1:]):
+            if not _point_on_segment(start, semantic, exposed):
+                return 0.0
+            current_progress = progress(end)
+            if current_progress < previous_progress - 1e-9:
+                return 0.0
+            length = abs(end[0] - start[0]) + abs(end[1] - start[1])
+            if _point_on_segment(exposed, start, end):
+                if (previous_progress > progress(exposed) + 1e-9
+                        or current_progress < progress(exposed) - 1e-9):
+                    return 0.0
+                return distance + abs(exposed[0] - start[0]) + abs(exposed[1] - start[1])
+            if not _point_on_segment(end, semantic, exposed):
+                return 0.0
+            distance += length
+            previous_progress = current_progress
+        return 0.0
+
+    source_limit = corridor_limit(source, reverse=False)
+    target_limit = corridor_limit(target, reverse=True)
+    total = geometry_sum(abs(b[0] - a[0]) + abs(b[1] - a[1])
+                         for a, b in zip(points, points[1:]))
+    result = []
+    distance = 0.0
+    for start, end in zip(points, points[1:]):
+        length = abs(end[0] - start[0]) + abs(end[1] - start[1])
+        cuts = [start, end]
+        for egress in (source, target):
+            if egress is not None and _point_on_segment(egress.exposed_port, start, end):
+                cuts.append(egress.exposed_port)
+        cuts = sorted(set(cuts), key=lambda point: abs(point[0] - start[0]) + abs(point[1] - start[1]))
+        traversed = 0.0
+        for left, right in zip(cuts, cuts[1:]):
+            part_length = abs(right[0] - left[0]) + abs(right[1] - left[1])
+            midpoint = distance + traversed + part_length / 2
+            midpoint_point = ((left[0] + right[0]) / 2, (left[1] + right[1]) / 2)
+            hosts = set()
+            if (source is not None and midpoint <= source_limit + 1e-9
+                    and _point_on_segment(midpoint_point, source.semantic_port, source.exposed_port)):
+                hosts.update(source.corridor_host_ids)
+            if (target is not None and total - midpoint <= target_limit + 1e-9
+                    and _point_on_segment(midpoint_point, target.semantic_port, target.exposed_port)):
+                hosts.update(target.corridor_host_ids)
+            result.append((left, right, tuple(sorted(hosts))))
+            traversed += part_length
+        distance += length
+    return tuple(result)
+
+
+def _point_on_segment(point: tuple[float, float], start: tuple[float, float],
+                      end: tuple[float, float]) -> bool:
+    if start[0] == end[0]:
+        return abs(point[0] - start[0]) <= 1e-9 and min(start[1], end[1]) - 1e-9 <= point[1] <= max(start[1], end[1]) + 1e-9
+    if start[1] == end[1]:
+        return abs(point[1] - start[1]) <= 1e-9 and min(start[0], end[0]) - 1e-9 <= point[0] <= max(start[0], end[0]) + 1e-9
+    return False
+
+
 def connector_egress_candidates(mark: MarkPlacement, endpoint: str,
                                 toward: tuple[float, float],
                                 siblings: tuple[MarkPlacement, ...], *, entry: str = "any", stub_length: float = 0.0,
-                                stub_free: Callable[[ConnectorEgress], bool] | None = None) -> tuple[ConnectorEgress, ...]:
+                                stub_free: Callable[[ConnectorEgress], bool] | None = None,
+                                explicit_neighbors: tuple[MarkPlacement, ...] = ()) -> tuple[ConnectorEgress, ...]:
     """Keep the temporal port while leaving only its connected comparison host.
 
     ``entry="side-when-free"`` (``relationRouting.entry``, #1030) puts a stub candidate first for a span ``start``
@@ -99,11 +217,15 @@ def connector_egress_candidates(mark: MarkPlacement, endpoint: str,
                 continue
             connected[sibling.placement_id] = sibling
             pending.append(sibling)
+    physical_neighbors = {item.placement_id: item for item in (
+        *physical_host_neighbors(mark, (mark, *siblings, *explicit_neighbors), endpoint),
+        *explicit_neighbors)}
     cluster = tuple(connected[key] for key in sorted(connected))
-    left = min(float(item.bounds.inline) for item in cluster)
-    top = min(float(item.bounds.block) for item in cluster)
-    right = max(float(item.bounds.inline + item.bounds.inline_size) for item in cluster)
-    bottom = max(float(item.bounds.block + item.bounds.block_size) for item in cluster)
+    extent_marks = (*cluster, *(physical_neighbors[key] for key in sorted(physical_neighbors)))
+    left = min(float(item.bounds.inline) for item in extent_marks)
+    top = min(float(item.bounds.block) for item in extent_marks)
+    right = max(float(item.bounds.inline + item.bounds.inline_size) for item in extent_marks)
+    bottom = max(float(item.bounds.block + item.bounds.block_size) for item in extent_marks)
     candidates = []
     if mark.mark_shape == "point" or endpoint in {"at", "body"}:
         semantic_ports = connector_boundary_ports(mark, endpoint, toward)
@@ -120,7 +242,7 @@ def connector_egress_candidates(mark: MarkPlacement, endpoint: str,
             # A temporal endpoint cannot egress through the opposite side of its own bar.
             continue
         candidates.append(ConnectorEgress(side, semantic, exposed, tuple(sorted(connected)), False,
-            through_body))
+            through_body, tuple(sorted(physical_neighbors))))
     order = {"end": 0, "start": 1, "above": 2, "below": 3}
     ranked = tuple(sorted(candidates, key=lambda item: (
         abs(item.exposed_port[0] - toward[0]) + abs(item.exposed_port[1] - toward[1]),
@@ -136,7 +258,8 @@ def connector_egress_candidates(mark: MarkPlacement, endpoint: str,
         return ranked
     direction = -1.0 if horizontal == "start" else 1.0
     stub = ConnectorEgress(plain.side, plain.semantic_port,
-                           (plain.exposed_port[0] + direction * stub_length, plain.exposed_port[1]), plain.host_ids, True)
+                           (plain.exposed_port[0] + direction * stub_length, plain.exposed_port[1]), plain.host_ids,
+                           True, plain.through_body, plain.corridor_host_ids)
     return (stub, *ranked) if stub_free(stub) else ranked
 
 

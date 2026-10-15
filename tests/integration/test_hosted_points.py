@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import date
+from dataclasses import replace
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -9,6 +10,34 @@ import pytest
 
 from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
+
+
+@pytest.mark.parametrize("corruption", ["glyph-shift", "missing-mark", "frame-shift"])
+def test_final_host_frame_gate_rejects_geometry_or_partition_drift(tmp_path, monkeypatch, corruption):
+    from chrona.presentation.layout import surface_completion
+    from chrona.presentation.layout.point_host_geometry import translate_point_block
+    original = surface_completion.validate_point_host_frames
+
+    def corrupt(preflight, marks, icons, shapes, tracks, theme):
+        if corruption == "glyph-shift":
+            marks = tuple(translate_point_block(mark, 1.0) if mark.physical_host is not None else mark
+                          for mark in marks)
+        elif corruption == "missing-mark":
+            marks = tuple(mark for mark in marks if mark.physical_host is None)
+        else:
+            allocation = preflight.point_host_allocation
+            frames = tuple(replace(frame, block_offset=frame.block_offset + 1.0)
+                           if frame.semantic_instance != frame.allocation_instance else frame
+                           for frame in allocation.frames)
+            preflight = replace(preflight, point_host_allocation=replace(allocation, frames=frames))
+        return original(preflight, marks, icons, shapes, tracks, theme)
+
+    monkeypatch.setattr(surface_completion, "validate_point_host_frames", corrupt)
+    objects = {"host": sr.span("host", date(2026, 1, 1), 20),
+               "gate": {**sr.point("gate", date(2026, 1, 10)), "parent": "host"}}
+    with pytest.raises(RenderFailed) as failure:
+        _render(tmp_path, objects)
+    assert failure.value.code == "E_PRESENTATION_PLACEMENT_REQUIRED"
 
 
 def _parts(*, host: bool = True, rows: str = "lanes"):
