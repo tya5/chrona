@@ -7,7 +7,7 @@ the role or capability it would need. It was missing when #383 closed (row 4); i
 | # | Reference element | Status on main | Needs | Tracked in |
 |---|---|---|---|---|
 | 1 | Column headers set in upper case with tracking (`TASK`, `OWNER`) | resolved: the Theme text role `tableColumnLabel` (#1015, Spec 07) sets every column header's size, weight, letter spacing and transform, and Layout measures the header cell with it; no View member is needed. The default Editorial Theme does not declare the role yet (a reviewer adoption step); bundled `marquee` does | nothing | #1373 row 1 |
-| 2 | Owner column as initials | resolved: View `transform: initials` produces measured, completed cell text in Layout (PR #1509) | reviewer-owned YAML adoption | #1373 row 2 |
+| 2 | Owner column as initials | resolved: a column's `transform: initials` (#1509, Spec 46) is applied by Layout; the Scene carries completed text | nothing | #1373 row 2 |
 | 3 | A gate drawn inside its parent capsule | resolved: Layout Profile `reviewSurface.marks.points.host: span-when-inside` physically hosts eligible point facets on selected span facets without changing semantic row membership; omitted by default | reviewer-owned YAML adoption | #1373 row 3 |
 | 4 | Legend milestone key without a spurious `W_LAYOUT_MARK_OVERFLOW` | resolved: the default render no longer emits it | nothing | |
 | 5 | Reaching Editorial by name carries its legend | resolved: the `editorial` catalogue entry has a `detailProfile`, and `preset copy editorial` writes `detail.yaml` | nothing | |
