@@ -1,6 +1,7 @@
 # Issue 1490: temporal inline capacity
 
-Status: design and architecture review complete; no product changes.
+Status: design, architecture review and implementation plan complete;
+no product changes.
 Public ready baseline: `1deffc014` (normal merge, no rewritten history).
 Owner: dev A / Codex. [Issue and acceptance](https://github.com/tya5/chrona/issues/1490).
 This is the living work record; specifications remain normative.
@@ -33,21 +34,6 @@ measurement already supplies `span_days × timeline.dayWidth` as preferred,
 not minimum, width. `dayWidth` is validated positive. Mark insets are measured
 only after a provisional temporal scale; zero allocation currently fails
 before a useful capacity diagnostic. The final manifest loses host ancestry.
-
-## Design slices and review questions
-
-1. Choose completion or refusal against Spec33 §§5/6/13, Spec50's positive
-   usable scale and ADR0031, including fixed/capped/anchored hosts.
-2. Define typed allocated/natural/point-inset demand and its Layout-owned
-   handoff; reuse the exact native mark/visual footprint producers.
-3. Review ownership, whole-profile effects, diagnostics and migration; publish
-   the normative correction before finalizing implementation or changing code.
-
-Questions: can inline growth be closed without overlapping sibling content or
-violating a cap? Can point demand be measured without a circular zero scale?
-Which host facts are actually needed by the selected policy? What width is
-reported without claiming an arbitrary epsilon or a mathematically minimal
-positive real number?
 
 ## Selected design and architecture review
 
@@ -92,6 +78,36 @@ Migration: the recorded degenerate-scale cases keep refusal but replace the
 generic mark/lane/path failures with the named capacity diagnostic and measured
 widths. Valid positive-scale output must remain unchanged. Keep exact matrix
 outcomes; update the ledger rather than weakening its comparison.
+
+## Implementation plan
+
+1. **Typed facts and arithmetic.** Add a small Layout temporal-capacity module
+   and extract shared point-inset arithmetic in `mark_aware_scale.py`. Pair
+   the solved slot with existing `MeasuredSources` preferred demand upstream
+   of native composition. Add the typed handoff to the surface request/plan;
+   network and measurement-only requests need no temporal host. Test exact
+   positive natural demand, zero/narrow allocation and empty/nonempty insets.
+2. **Native closure.** Wire `surface_render_plan`, `surface_pipeline`,
+   `surface_preparation`, `surface_lanes`, `surface_base` and count closure as
+   required. Ordinary rows and lanes retain their own exact native footprint
+   producers. For a zero host only the measurement prototype uses natural
+   width; close capacity before validating/emitting a real lane frame or mark
+   path. Fitting paths must preserve their old scale and primitive bytes.
+   Test both representations, fixed/capped/uncapped hosts, positive controls,
+   explicit-window visibility and a point/icon contained by its host.
+3. **Acceptance and publication.** Batch the recorded25 cases (explicitly
+   distinguish original21 and4 additions), plus fitting controls, using the
+   existing matrix helpers. Update only exact ledger outcomes; test the
+   checker and public diagnostic transport. Compare public SVG/Scene evidence
+   as one batch, run focused tests per slice, and let CI supply full pytest,
+   conformance and release gates. Keep one product PR with the normative
+   correction, tests, ledger and concise literal acceptance review. No schema
+   or resource migration, generated output patch or `examples/**` edit.
+
+Each slice is a reviewable commit on this branch; the last slice is the release
+boundary. Publish this plan before product code, and update it before any
+semantic/layer correction. Missing capacity data is not silently reconstructed
+by Scene; adapt native constructors/test builders to the typed boundary.
 
 ## Verification and publication
 
