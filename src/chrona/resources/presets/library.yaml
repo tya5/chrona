@@ -110,3 +110,10 @@ entries:
       colorScheme: {id: chrona-builtin-muted-executive, kind: color-scheme, sourceRoot: presets/bundles/muted-executive, sourcePath: scheme.yaml}
       layout: {id: chrona-builtin-muted-executive, kind: layout-profile, sourceRoot: presets/bundles/muted-executive, sourcePath: layout.yaml}
       detailProfile: {id: chrona-builtin-muted-executive-detail, kind: review-detail-profile, sourceRoot: presets/bundles/muted-executive, sourcePath: detail.yaml}
+  - id: wallboard-dark
+    members:
+      view: {id: chrona-preset-wallboard-dark, kind: view, sourceRoot: presets/bundles/wallboard-dark, sourcePath: view.yaml}
+      theme: {id: chrona-builtin-wallboard-dark, kind: theme, sourceRoot: presets/bundles/wallboard-dark, sourcePath: theme.yaml}
+      colorScheme: {id: chrona-builtin-wallboard-dark, kind: color-scheme, sourceRoot: presets/bundles/wallboard-dark, sourcePath: scheme.yaml}
+      layout: {id: chrona-builtin-wallboard-dark, kind: layout-profile, sourceRoot: presets/bundles/wallboard-dark, sourcePath: layout.yaml}
+      detailProfile: {id: chrona-builtin-wallboard-dark-detail, kind: review-detail-profile, sourceRoot: presets/bundles/wallboard-dark, sourcePath: detail.yaml}

@@ -26,7 +26,7 @@ def _assert_axis_policy(document: dict, *, source: str) -> None:
             "unit": "auto",
             "every": 1,
             "role": "labels",
-            "typographyRole": "axis" if document["id"] == "chrona-preset-technical-print" else "axisQuarter",
+            "typographyRole": "axis" if document["id"] in {"chrona-preset-technical-print", "chrona-preset-wallboard-dark"} else "axisQuarter",
             "label": {
                 "forms": ({"day": "localized-date", "week": "start-day-month", **EXPECTED_FORMS}
                           if document["id"] == "chrona-preset-editorial-readable-default" else EXPECTED_FORMS),
@@ -45,6 +45,13 @@ def _assert_axis_policy(document: dict, *, source: str) -> None:
         expected_bands.append(
             {"unit": "month", "every": 1, "role": "band", "typographyRole": "axisMonth"},
         )
+    if document["id"] == "chrona-preset-wallboard-dark":  # a fill per interval needs its own band tiers (#490; gap 3 of wallboard-dark-vocabulary-gaps.md)
+        expected_bands = [
+            {"unit": "quarter", "every": 1, "role": "band", "typographyRole": "axisQuarter",
+             "fillScale": {"scale": "axis-quarter", "key": "alternating"}},
+            {"unit": "month", "every": 1, "role": "band", "typographyRole": "axisMonth",
+             "fillScale": {"scale": "axis-month", "key": "alternating", "containingTier": 0}},
+        ]
     assert bands == expected_bands, source
 
 
@@ -73,7 +80,7 @@ def test_all_packaged_axis_views_declare_thinning_and_automatic_forms():
     paths = sorted(path for path in (ROOT / "src/chrona/resources/presets/bundles").glob("*/view.yaml")
                    if path.parent.name != "design-default")  # its axis is the selected design's `viewDefaults` (#429)
     paths.append(ROOT / "src/chrona/resources/presets/bundles/editorial/view-lanes.yaml")
-    assert len(paths) == 10
+    assert len(paths) == 11
 
     for path in paths:
         _assert_axis_policy(safe_load(path.read_bytes()), source=path.relative_to(ROOT).as_posix())
