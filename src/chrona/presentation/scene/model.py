@@ -458,8 +458,13 @@ class ScenePrimitive:
     viewer_fit: str = "raw"
     stroke_clip: StrokeClip | None = None
     paint_clip: PaintClip | None = None
+    # Transient finite-key ink projection; cleared before the completed Scene.
+    legend_swatch_shape: str | None = None
 
     def __post_init__(self) -> None:
+        if (self.legend_swatch_shape not in (None, "circle", "rule-pair")
+                or (self.legend_swatch_shape is not None and self.source_kind != "legend")):
+            raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} legend_swatch_shape")
         if (self.paint_channels not in (None, "fill", "stroke")
                 or (self.paint_channels is not None and self.kind not in {"Rect", "Path", "Symbol"})):
             raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} paint_channels")

@@ -303,16 +303,19 @@ def compose_mark_placement(*, frame: MarkBandFrame, placement_id: str, source_re
     radius = resolve_corner_radius(geometry.physical_corner_radius,
                                   width=float(bounds.inline_size), height=float(bounds.block_size),
                                   legacy_radius=radius)
+    token = None
+    if shape in {"point", "open-span"}:
+        variant = "baseline" if semantic_id in {"snapshot", "scenario"} else semantic_id
+        token = theme_tokens.variant_symbol(variant)
     commands = (open_span_path(inline=float(bounds.inline), block=float(bounds.block),
                                inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
                 if shape == "open-span" else
                 rounded_diamond_path(inline=float(bounds.inline), block=float(bounds.block),
                                      inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
-                if shape == "point" and radius > 0 else ())
+                if shape == "point" and radius > 0 and token is not None and token.get("shape") == "diamond" else ())
     completed_symbols = ()
     if shape in {"point", "open-span"}:
-        variant = "baseline" if semantic_id in {"snapshot", "scenario"} else semantic_id
-        token = theme_tokens.variant_symbol(variant)
+        assert token is not None
         try:
             completed_symbols = symbol_parts(
                 token, (float(bounds.inline), float(bounds.block),

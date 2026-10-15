@@ -26,6 +26,30 @@ The complete M23 surface set has four members:
 This keeps external supplier notes visibly attributable without fabricating Actual or
 turning slide content into scheduling input.
 
+## Finite legend key shapes (#1562)
+
+A `legend` entry MAY declare `swatchShape: circle|rule-pair`. Omission retains
+the existing key, paint, sizing and identity. The shape does not change its
+semantic role or optional period `sourceRef`.
+
+`circle` draws a flat filled disk using the keyed Theme fill, or its stroke
+ink when no fill exists, with the same opacity and existing scale-key fill
+override. It uses the area `swatchBlockSize`, else the legacy side. `rule-pair`
+draws two vertical strokes at one-quarter and three-quarters of the key box,
+using the keyed stroke ink/width/opacity. Existing inline/area sizing applies;
+the box expands to at least three stroke widths inline and two blockwise.
+The finite glyph replaces source pattern, terminal and effect geometry; it
+does not invent a colour or duplicate a Theme palette. Missing required ink
+or width uses the existing Theme diagnostics. The milestone key retains the
+existing planned/gate paint-role selection; semantic aliases retain theirs.
+
+Layout owns the footprint, measurement and completed contours/strokes. Scene
+completes this typed ink-channel relation and clears transient intent before
+serialization. Adapters receive ordinary painted Symbol/Path primitives and
+perform no legend inference. Source-bound period keys with absent background
+remain absent. Entries are measured individually, including repeated roles
+with different source identities or shapes.
+
 ## Layout integration
 
 The Review Detail Profile is the single contract for detail wording and rows. Its body
