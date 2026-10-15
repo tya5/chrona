@@ -43,5 +43,5 @@ by more than one float unit.
 | 07-replan-baseline | 37 (e.g. 854.0799999999999 to 854.08) |
 | 26-gates | 12 (e.g. 1488.2759999999998 to 1488.276) |
 
-`examples/**` is reviewer-owned, so this branch is not published until the reviewer accepts the
-regeneration of those three files (recommended) or chooses a variant that keeps them byte-identical.
+The owner accepted these as expected derived deltas on #1542. The files are supplied by the derived-sync
+snapshot, not edited in this change.
