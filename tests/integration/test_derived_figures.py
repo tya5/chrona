@@ -193,6 +193,22 @@ def test_finish_delta_counts_use_observed_signs_not_a_forecast(tmp_path):
     assert texts["summary:key:behind:value"] == texts["summary:key:ahead:value"] == "1"
 
 
+def test_open_actual_as_of_variance_flows_into_summary_counts_without_a_finish(tmp_path):
+    actual = deepcopy(ACTUAL)
+    actual["body"]["observations"] = [
+        {"id": "a-open", "sequence": 1, "projectObjectId": "a",
+         "actual": {"start": "2026-02-18", "progress": 0.6}},
+    ]
+    figures = tuple({"id": name, "kind": "count", "source": name}
+                    for name in ("knownFinishVariance", "behind", "ahead"))
+    rendered = _render(tmp_path, _parts(*figures),
+                       _summary(*(_metric(f["id"], metric_id=f["id"]) for f in figures)), actual=actual)
+    texts = _texts(rendered)
+    assert texts["summary:key:knownFinishVariance:value"] == "1"
+    assert texts["summary:key:behind:value"] == "1"
+    assert texts["summary:key:ahead:value"] == "0"
+
+
 def test_missing_actual_count_without_as_of_refuses_the_render(tmp_path):
     with pytest.raises(RenderRejected) as failure:
         _render(tmp_path, _parts({"id": "n", "kind": "count", "source": "missingActual"}),

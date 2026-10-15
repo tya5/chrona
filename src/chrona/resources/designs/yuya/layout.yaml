@@ -77,7 +77,7 @@ viewDefaults:
       format: signedNumber
       affixes: {slip: {suffix: 日}, onTime: {suffix: 日}, ahead: {suffix: 日}}
       missing: blank
-      missingBy: {inProgress: em-dash, dueUnobserved: blank, notYetDue: blank}
+      missingBy: {inProgress: blank, dueUnobserved: blank, notYetDue: blank}
       align: end
       width: content
       headerOrientation: horizontal

@@ -68,7 +68,7 @@ viewDefaults:
     facet:
       format: signedNumber
       missing: blank
-      missingBy: {inProgress: em-dash, dueUnobserved: blank, notYetDue: blank}
+      missingBy: {inProgress: blank, dueUnobserved: blank, notYetDue: blank}
       align: end
       width: content
       headerOrientation: horizontal

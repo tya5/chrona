@@ -141,25 +141,25 @@ def test_open_actual_is_bound_to_selected_cutoff_and_incomplete_payload_is_typed
         close_lane_projection(missing_start_projection, as_of=None)
 
 
-def test_in_progress_span_expects_the_missing_actual_mark_in_place_of_the_actual_mark():
+def test_started_open_actual_expects_actual_mark_regardless_of_missing_scope():
     start = date(2026, 1, 3)
     item = replace(_item("item", source_kind="combined", actual={"start": start},
                          state=ObservationState.RECORDED), missing_actual_mark="in-progress")
     projection = _projection(ReviewRowProjection("row", "Row", "g", "item", (item,)))
-    with pytest.raises(LayoutError, match="E_LAYOUT_LANE_AS_OF_REQUIRED"):
-        close_lane_projection(projection, as_of=None)
+    assert [(entry.role, entry.reason) for entry in close_lane_projection(projection, as_of=None).intentional_absences] == [
+        ("actual", "as-of-required")]
     closure = close_lane_projection(projection, as_of=date(2026, 1, 10))
     assert [(mark.role, mark.purpose) for mark in closure.expected_marks] == [
-        ("planned", "planned"), ("missing-actual", "missing-actual")]
-    assert closure.expected_marks[1].placement_id.startswith("missing-actual:")
+        ("planned", "planned"), ("actual", "actual")]
+    assert closure.expected_marks[1].placement_id.startswith("actual:")
     assert not closure.intentional_absences
     empty = close_lane_projection(projection, as_of=start)
     assert [(entry.role, entry.reason) for entry in empty.intentional_absences] == [
-        ("missing-actual", "in-progress-empty-at-cutoff")]
-    # Without the in-progress mark the same Actual stays an incomplete payload, as before.
+        ("actual", "open-actual-empty-at-cutoff")]
+    # The old scope setting no longer reclassifies a recorded Actual as missing.
     unmarked = _projection(ReviewRowProjection("row", "Row", "g", "item", (replace(item, missing_actual_mark="due-end"),)))
-    assert [(entry.role, entry.reason) for entry in close_lane_projection(unmarked, as_of=date(2026, 1, 10)).intentional_absences] == [
-        ("actual", "incomplete-actual-payload")]
+    assert [(mark.role, mark.purpose) for mark in close_lane_projection(unmarked, as_of=date(2026, 1, 10)).expected_marks] == [
+        ("planned", "planned"), ("actual", "actual")]
 
 
 def test_primary_recorded_actual_is_an_explicit_absence():
@@ -191,7 +191,7 @@ def test_incomplete_recorded_actual_is_typed_absence_and_state_conflicts_fail():
     result = close_lane_projection(_projection(ReviewRowProjection(
         "row", "Row", "g", "item", (incomplete,))), as_of=None)
     assert [(absence.role, absence.reason) for absence in result.intentional_absences] == [
-        ("actual", "incomplete-actual-payload"),
+        ("actual", "as-of-required"),
     ]
     contradictory = replace(incomplete, observation_state=ObservationState.UNAVAILABLE,
                              roles=("planned",))
