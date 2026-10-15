@@ -16,7 +16,7 @@ Reading rule. The reference is the HALCYON mock (26 work packages in six groups)
 | 8 | `title-plate-text` | `計画表  HALCYON-1`, subtitle `PROGRAMME BOARD · 二〇二七年 · 工学暦`, lantern string | plate with `HALCYON-1` only; no lanterns | none: wording is project and Layout data; lantern string is ornament (class c) | none |
 | 9 | `as-of-marker` | indigo line, `今` marker, chip `本日 八月二十日 · AS OF` | indigo dashed line and chip `TODAY 20 Aug` | none: wording (class c) | none |
 | 10 | `legend-bilingual` | `基準 baseline`, `計画 plan` ... | English only; extra `non-working day` and `calendar exception` entries | none: legend wording is a Layout choice | bundle-side |
-| 11 | `serif-faces` | Mincho / serif faces | Noto Sans JP; the slip suffix `日` is drawn through the declared font set `chrona.noto-sans+jp`. Fonts: the declared font set adds candidates; a missing provider is skipped with `W_FONT_FAMILY_SKIPPED`, then installed fonts are used (soft font sets, Refs #429). | #429 |
+| 11 | `serif-faces` | Mincho / serif faces | Noto Sans JP; the slip suffix `日` is drawn through the declared font set `chrona.noto-sans+jp` | none: chrona packages no Mincho. Fonts: the declared font set adds candidates; a missing provider is skipped with `W_FONT_FAMILY_SKIPPED`, then installed fonts are used (soft font sets, Refs #429). | #429 |
 | 12 | `decoration-contrast-warning` | pale stripes on hinoki | `W_SCENE_DECORATION_CONTRAST` (27, lowest 1.05:1) and `W_SCENE_MARK_CONTRAST` (legend swatch 2.59:1 against 3:1) | none identified; a reviewer choice | bundle-side |
 | 13 | `canvas-height` | 900 px | 864 px (29 rows against 26) | none | not measured |
 
