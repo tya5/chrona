@@ -42,7 +42,8 @@ from chrona.presentation.model.semantic_registry import period_variant_role_base
 from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
 from chrona.presentation.fonts.system import DraftFontResolution, SystemFontError, SystemFontResolver, resolve_draft_fonts, resolve_system_font
 from chrona.presentation.model.font_metrics import FontMetricsCatalog, FontMetricsError, FontTabularWarning, resolve_font_files, resolve_font_metrics
-from chrona.presentation.contracts.font_sets import draft_font_metrics
+from chrona.presentation.contracts.font_sets import draft_font_metrics, package_providers
+from chrona.presentation.model.font_resources import FontProviderUnavailable, _package_root
 from chrona.presentation.contracts.resources import (
     RENDER_CONTEXT_VERSION, RENDER_CONTEXT_VERSIONS, FrozenDict, FrozenList, _compact_commands,
 )
@@ -272,6 +273,7 @@ def resolve_draft_render(
     sources.extend(_load_draft_source(kind, path) for kind, path in optional if path is not None)
     sources.extend(_load_draft_source("icon-catalog", path) for path in selected_catalog_paths)
     resources = _collect_presentation_resources(sources)
+    preset_metrics, preset_notes = _preset_font_metrics(preset)
     catalog_resources = tuple(resource for resource in resources if resource.kind == "icon-catalog")
     _validate_icon_catalog_set(catalog_resources)
     draft = _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
@@ -279,7 +281,8 @@ def resolve_draft_render(
                                         icon_assets=_load_draft_icon_assets(catalog_resources, selected_catalog_paths,
                                                                             _draft_view(resources), _draft_theme_refs(resources)),
                                         font_metrics=(safe_load(font_metrics_path.read_bytes()) if font_metrics_path
-                                                      else _preset_font_metrics(preset)),
+                                                      else preset_metrics),
+                                        font_notes=(() if font_metrics_path else preset_notes),
                                         font_asset_root=(font_metrics_path.parent.resolve() if font_metrics_path else None),
                                         system_fonts=system_fonts, system_font_resolver=system_font_resolver,
                                         previous_scene_bytes=(previous_scene_path.read_bytes()
@@ -287,13 +290,28 @@ def resolve_draft_render(
     return replace(draft, preset_visual_profile_fallback=profile_fallback)
 
 
-def _preset_font_metrics(preset: Any) -> dict[str, Any] | None:
-    """The descriptor of the font sets a preset declares (#429), or None to keep the packaged default."""
+def _preset_font_metrics(preset: Any) -> tuple[dict[str, Any] | None, tuple[str, ...]]:
+    """The descriptor of the font sets a preset declares (#429) and the notes for skipped providers.
+
+    A set adds candidates; it is not a requirement. A set whose package provider is not installed is skipped with a
+    `W_FONT_FAMILY_SKIPPED` note naming the provider, and the Theme family list continues on installed fonts (#1495).
+    `(None, ())` keeps the packaged default.
+    """
     declared = preset.contract.resources.get("fontSets") if preset is not None and isinstance(preset.contract, PresentationPresetContract) else None
     if not declared:
-        return None
-    return draft_font_metrics(tuple(str(item) for item in declared),
-                              _packaged_font_metrics(Path(__file__).resolve().parents[2] / "resources"))
+        return None, ()
+    set_ids = tuple(str(item) for item in declared)
+    unavailable: dict[str, list[str]] = {}
+    for set_id in set_ids:
+        for provider in package_providers(set_id):
+            try:
+                _package_root(provider)
+            except FontProviderUnavailable:
+                unavailable.setdefault(provider, []).append(set_id)
+    notes = tuple(f"W_FONT_FAMILY_SKIPPED:role=font-set;requested={', '.join(sets)};skipped={provider};face=installed fonts"
+                  for provider, sets in unavailable.items())
+    return (draft_font_metrics(set_ids, _packaged_font_metrics(Path(__file__).resolve().parents[2] / "resources"),
+                               frozenset(unavailable)), notes)
 
 
 _BASELINE_VISUAL_PROFILE = "chrona-output/visual/v0.5-baseline"
@@ -468,6 +486,7 @@ def _draft_render_from_resources(
     icon_assets: tuple[IconAsset, ...] = (),
     font_metrics: dict[str, Any] | None = None,
     font_asset_root: Path | None = None,
+    font_notes: tuple[str, ...] = (),
     system_fonts: bool = False,
     system_font_resolver: SystemFontResolver | None = None,
     previous_scene_bytes: bytes | None = None,
@@ -504,6 +523,8 @@ def _draft_render_from_resources(
                   resolve_theme_font_stacks(resolved_theme.resolved_input,
                                             font_metrics if font_metrics is not None else _packaged_font_metrics(asset_root),
                                             asset_root=font_asset_root or asset_root))
+    if font_notes and resolution is not None:
+        resolution = replace(resolution, notes=(*font_notes, *resolution.notes))
     context_value = {
             "version": RENDER_CONTEXT_VERSION, "kind": "render-context", "id": "draft-render",
         "body": {

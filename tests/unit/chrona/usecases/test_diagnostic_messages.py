@@ -21,6 +21,13 @@ def test_skipped_font_warning_names_requested_missing_and_selected_families():
         "skipped=Missing Family;face=Noto Sans"})
     assert "Missing Family" in text.cause and "Noto Sans" in text.cause
     assert "unavailable" in text.cause and text.subject == "heading"
+
+
+def test_skipped_font_set_warning_names_the_missing_provider():
+    text = describe_warning({"code": "W_FONT_FAMILY_SKIPPED", "diagnostic":
+        "W_FONT_FAMILY_SKIPPED:role=font-set;requested=chrona.noto-sans+jp;"
+        "skipped=chrona-fonts-noto-cjk;face=installed fonts"})
+    assert "chrona-fonts-noto-cjk" in text.cause and "chrona.noto-sans+jp" in text.cause and "not installed" in text.cause
 from chrona.usecases.failure_report import StableFailure, diagnostic_record, report_failure
 from tools.diagnostic_inventory import discover
 
