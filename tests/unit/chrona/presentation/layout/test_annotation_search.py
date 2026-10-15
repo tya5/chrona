@@ -1,6 +1,8 @@
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
-from chrona.presentation.layout.annotation_search import lattice_positions, nearest_free_box, nearest_free_tail_box
+from chrona.presentation.layout.annotation_search import (
+    coarse_lattice_positions, lattice_positions, nearest_free_box, nearest_free_tail_box,
+)
 from chrona.presentation.layout.annotation_search import nearest_free_routed_tail_box
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.surface_quality import MarkPlacement
@@ -27,6 +29,70 @@ def test_lattice_positions_step_is_half_the_box_and_at_least_one_unit() -> None:
 def test_lattice_positions_empty_when_box_cannot_fit_region() -> None:
     region = LabelRect(0, 0, 10, 10)
     assert lattice_positions(region, (20, 20), (5, 5), max_positions=16) == ()
+
+
+def test_coarse_grid_spans_legal_region_with_existing_position_cap() -> None:
+    region = LabelRect(10, 20, 300, 180)
+    boxes = coarse_lattice_positions(region, (40, 20), (160, 110), max_positions=16)
+    assert len(boxes) <= 16
+    assert min(box.x for box in boxes) == region.x
+    assert max(box.right for box in boxes) == region.right
+    assert min(box.y for box in boxes) == region.y
+    assert max(box.bottom for box in boxes) == region.bottom
+    assert boxes == coarse_lattice_positions(region, (40, 20), (160, 110), max_positions=16)
+    assert coarse_lattice_positions(region, (40, 20), (160, 110), max_positions=1) == (
+        LabelRect(140, 100, 40, 20),)
+
+
+def test_coarse_grid_small_budgets_are_bounded_deterministic_long_axis_samples() -> None:
+    region = LabelRect(10, 20, 300, 100)
+    for budget in (2, 3):
+        boxes = coarse_lattice_positions(region, (40, 20), (160, 70), max_positions=budget)
+        assert 0 < len(boxes) <= budget
+        assert boxes == coarse_lattice_positions(region, (40, 20), (160, 70), max_positions=budget)
+        expected_x = ({region.x, region.right - 40} if budget == 2 else
+                      {region.x, (region.x + region.right - 40) / 2, region.right - 40})
+        assert {box.x for box in boxes} == expected_x
+        assert {box.y for box in boxes} == {60}
+
+
+def test_coarse_grid_handles_degenerate_legal_origin_extents() -> None:
+    vertical = coarse_lattice_positions(LabelRect(10, 20, 40, 120), (40, 20),
+                                        (30, 80), max_positions=6)
+    assert len(vertical) == 6
+    assert {box.x for box in vertical} == {10}
+    assert min(box.y for box in vertical) == 20
+    assert max(box.bottom for box in vertical) == 140
+
+    horizontal = coarse_lattice_positions(LabelRect(10, 20, 120, 20), (40, 20),
+                                          (70, 30), max_positions=6)
+    assert len(horizontal) == 6
+    assert {box.y for box in horizontal} == {20}
+    assert min(box.x for box in horizontal) == 10
+    assert max(box.right for box in horizontal) == 130
+
+
+def test_coarse_box_search_reaches_far_free_space_after_fine_neighborhood_misses() -> None:
+    region = LabelRect(0, 0, 100, 100)
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("busy-neighborhood", "mark", "plot", ObstacleRect(0, 0, 90, 100)))
+    fine, fine_trials = nearest_free_box(
+        region=region, anchor_center=(50, 50), box_size=(10, 10), max_positions=16,
+        obstacles=index, obstacle_classes=("mark",), search_pass="fine")
+    coarse, coarse_trials = nearest_free_box(
+        region=region, anchor_center=(50, 50), box_size=(10, 10), max_positions=16,
+        obstacles=index, obstacle_classes=("mark",), search_pass="coarse")
+    assert fine is None and fine_trials == 16
+    assert coarse is not None and coarse.x == 90
+    assert coarse.y in {0, 30, 60, 90}
+    assert 0 < coarse_trials <= 16
+
+
+def test_default_box_search_remains_the_fine_search() -> None:
+    args = dict(region=LabelRect(0, 0, 400, 300), anchor_center=(200, 150),
+                box_size=(80, 30), max_positions=8, obstacles=SurfaceObstacleIndex(),
+                obstacle_classes=("mark",))
+    assert nearest_free_box(**args) == nearest_free_box(**args, search_pass="fine")
 
 
 def test_nearest_free_box_finds_first_collision_free_lattice_position() -> None:
@@ -142,6 +208,49 @@ def test_routed_tail_search_returns_bounded_strict_route_and_keeps_box_out_of_in
                    for a, b in ((base_a, result.tip), (result.tip, base_b)))
 
 
+def test_coarse_routed_tail_search_finds_a_complete_collision_free_pair() -> None:
+    region = LabelRect(0, 0, 120, 100)
+    index = SurfaceObstacleIndex()
+    mark = MarkPlacement("mark:anchor", "anchor", Rect(40, 40, 10, 10),
+                         (40, 45), (50, 45), mark_shape="point")
+    index.add(SurfaceObstacle("mark:anchor", "mark", "plot", ObstacleRect(40, 40, 50, 50)))
+    result = nearest_free_routed_tail_box(
+        region=region, anchor=mark, endpoint="at", siblings=(mark,), box_size=(30, 20),
+        max_positions=16, obstacles=index, obstacle_classes=("mark", "text", "dependency-route"),
+        corner_radius=3, tail_base=8, content_bounds=(0, 0, 120, 100), host_id="mark:anchor",
+        route_state_limit=1024, search_pass="coarse")
+    assert result.box is not None and result.tip is not None
+    assert result.egress is not None and result.route is not None
+    assert result.route.topology == "strict"
+    assert result.full_points[0] == result.egress.semantic_port
+    assert result.full_points[-1] == result.tip
+    assert 0 < result.box_trials <= 16
+    assert 0 < result.route_states <= 1024
+    assert not result.exhausted
+
+    completed = SurfaceObstacleIndex()
+    completed.extend(index.all())
+    completed.add(SurfaceObstacle("candidate:balloon-box", "annotation-box", "plot",
+                                  ObstacleRect(result.box.x, result.box.y,
+                                               result.box.right, result.box.bottom)))
+    assert not completed.collisions(ObstacleRect(result.box.x, result.box.y,
+                                                  result.box.right, result.box.bottom),
+                                    classes=("mark", "text", "dependency-route"),
+                                    host_id="mark:anchor")
+    assert not any(completed.collisions(ObstacleSegment(a, b),
+                                        classes=("mark", "text", "dependency-route", "annotation-box"),
+                                        host_id="mark:anchor")
+                   for a, b in zip(result.full_points, result.full_points[1:]))
+    edge = nearest_eligible_edge(result.box, result.tip)
+    base_a, base_b = tail_base_points(
+        result.box, result.tip, edge=edge, tail_base=8,
+        corner_radius=min(3, result.box.width / 2, result.box.height / 2))
+    assert not any(completed.collisions(ObstacleSegment(a, b),
+                                        classes=("mark", "text", "dependency-route", "annotation-box"),
+                                        host_id="mark:anchor")
+                   for a, b in ((base_a, result.tip), (result.tip, base_b)))
+
+
 def test_routed_tail_distinguishes_no_box_from_connector_budget_exhaustion() -> None:
     index = SurfaceObstacleIndex()
     mark = MarkPlacement("mark:anchor", "anchor", Rect(40, 40, 10, 10),
@@ -158,6 +267,52 @@ def test_routed_tail_distinguishes_no_box_from_connector_budget_exhaustion() -> 
     capped = nearest_free_routed_tail_box(region=LabelRect(0, 0, 120, 100),
                                           route_state_limit=1, **common)
     assert capped.box is None and capped.exhausted and capped.route_states == 1
+
+
+def test_coarse_routed_search_rejects_free_boxes_behind_a_blocked_connector():
+    anchor = MarkPlacement("mark:anchor", "anchor", Rect(10, 45, 10, 10),
+                           (10, 50), (20, 50), mark_shape="span")
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("mark:anchor", "mark", "plot", ObstacleRect(10, 45, 20, 55)))
+    index.add(SurfaceObstacle("barrier", "dependency-route", "plot",
+                              ObstacleSegment((45, 0), (45, 100), 2.0)))
+    result = nearest_free_routed_tail_box(
+        region=LabelRect(60, 0, 40, 100), anchor=anchor, endpoint="finish",
+        siblings=(anchor,), box_size=(20, 10), max_positions=16, obstacles=index,
+        obstacle_classes=("dependency-route",), corner_radius=3, tail_base=8,
+        content_bounds=(0, 0, 100, 100), max_detour_ratio=2.0,
+        host_id="mark:anchor",
+        search_pass="coarse")
+    assert result.box is None
+    assert result.box_trials > 0
+    assert 0 < result.route_states <= 1024
+
+
+def test_coarse_tail_search_rejects_boxes_larger_than_the_anchor_as_of_side() -> None:
+    # The whole plot has ample empty space on the far side, but no complete
+    # 210-unit box can fit before the as-of rule at x=200. Coarse search must
+    # preserve the same body-side contract as fine search, before checking a
+    # direct tail or trying routed egress.
+    region = LabelRect(0, 0, 600, 100)
+    anchor_box = LabelRect(145, 45, 10, 10)
+    index = SurfaceObstacleIndex()
+    side = (200.0, "start")
+    common = dict(region=region, box_size=(210, 20), max_positions=32,
+                  obstacles=index, obstacle_classes=("mark",),
+                  side_of_as_of=side, search_pass="coarse")
+
+    direct, tip, direct_trials = nearest_free_tail_box(
+        anchor=anchor_box, corner_radius=0, tail_base=0, **common)
+    mark = MarkPlacement("mark:anchor", "anchor", Rect(145, 45, 10, 10),
+                         (145, 50), (155, 50), mark_shape="span")
+    routed = nearest_free_routed_tail_box(
+        anchor=mark, endpoint="start", siblings=(mark,), corner_radius=0,
+        tail_base=0, content_bounds=(0, 0, 600, 100), **common)
+
+    assert direct is None and tip is None and direct_trials > 0
+    assert routed.box is None and not routed.exhausted
+    assert routed.box_trials > 0
+    assert routed.route_states == 0
 
 
 def test_routed_tail_exempts_only_the_named_source_port_on_egress() -> None:
