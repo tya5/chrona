@@ -104,7 +104,7 @@ same Automation Result the command line writes to `--result`.
 
 Two read-only tools reach a Store, the same one `apply_command` writes, and work with or without `--allow-write`:
 
-- `render_review` renders an immutable Render Context (the pinned, reproducible picture of `chrona render-review`, not a
+- `render_review` renders an immutable Render Context (the picture `chrona render-review` draws from a Store, not a
   draft). Its `contextReference` is a workspace path to the Context's resource reference. The Context fixes its own
   format and viewport, so the tool takes neither, and an SVG or PNG result travels inline (`inline: none` returns only
   the identity, length and warnings).

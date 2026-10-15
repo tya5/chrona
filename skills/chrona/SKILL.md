@@ -1,19 +1,20 @@
 ---
 name: chrona
-description: Plan a project timeline, Gantt chart, roadmap slide, milestone schedule, or plan-versus-actual review from a YAML file, with the dates computed from durations, working-day calendars and dependencies instead of drawn by hand. Use it when the user asks for a Gantt chart, a project timeline, a schedule with dependencies, lags, deadlines or working days, a milestone or roadmap slide, or a plan versus actual comparison, and the picture will be edited and re-rendered or must be reproducible. The chrona CLI computes the schedule and draws a deterministic SVG (or PNG) from the plan; the agent edits the plan, never the picture.
+description: Plan a project timeline, Gantt chart, roadmap slide, milestone schedule, or plan-versus-actual review from a YAML file, with the dates computed from durations, working-day calendars and dependencies instead of drawn by hand. Use it when the user asks for a Gantt chart, a project timeline, a schedule with dependencies, lags, deadlines or working days, a milestone or roadmap slide, or a plan versus actual comparison, and the picture will be edited and re-rendered, or the plan will be updated as work progresses and compared with an earlier plan and with actuals. The chrona CLI computes the dates, draws every revision in the same design, and compares plan with actual; the agent edits the plan, never the picture. To update an existing plan (record actuals, move asOf, re-plan, compare with the saved plan), read the section "Update the plan after a week of work".
 ---
 
 # chrona
 
-Chrona turns a YAML plan into a computed schedule and a deterministic picture. You
-write and edit the plan; the `chrona` command computes every date and draws every
-pixel. An identical input produces identical bytes, so a changed SVG means a changed plan.
+Chrona turns a YAML plan into a computed schedule and a picture. You write and edit the
+plan; the `chrona` command computes every date and draws every pixel, always in the same
+design, so a changed picture means a changed plan.
 
 ## When to use it
 
 - Dates must be right: durations in working days, a holiday calendar, dependencies, lags.
 - The plan will be edited and re-rendered, or a reviewer will diff the result.
-- The picture must be reproducible next quarter, or compared with actual progress.
+- The plan will be updated as work progresses, and each revision compared with the earlier
+  plan and with actual progress.
 
 For a quick sketch inside a README or pull request, or for a decorative one-off picture,
 read [references/mermaid-or-chrona.md](references/mermaid-or-chrona.md) first. Chrona is
@@ -63,6 +64,77 @@ required, and its suffix picks the format: use `.svg`, or `.png` (needs `pip ins
 The result of `validate` and `schedule` is JSON on standard output. A command that
 rejects the plan prints `{"status": "rejected", "diagnostics": [...]}` and exits 1; a bad
 file, flag or output suffix exits 2; success exits 0.
+
+## Update the plan after a week of work
+
+To keep a plan current (the guide [docs/guides/update-a-plan.md](../../docs/guides/update-a-plan.md)
+has a complete worked example), do these five steps with plain files, no Store:
+
+1. **Keep the baseline.** `cp my-plan.yaml baseline.yaml` before editing (for the worked
+   example, copy `skills/chrona/examples/launch.yaml`). Never edit the baseline afterwards.
+   Comparing later is `render --snapshot baseline.yaml` (step 5): a saved copy of the plan file is
+   the whole mechanism, with no Store and no command file. `chrona baseline-capture` is not this:
+   it saves a named baseline into a Store from a command document, which is the pinned path
+   for reviewed history and is not needed to compare plans.
+2. **Record actuals** in `actual.yaml`, one observation per object: `start` (first day
+   worked); `finish` (the day **after** the last day worked, exclusive like a plan `end`);
+   `at` for a gate that has happened; and, while a task is open, `start`, no `finish`,
+   `openUntil: asOf` and a `progress` below 1 (without `openUntil` the bar is not drawn and
+   `W_LAYOUT_ACTUAL_INCOMPLETE` is reported). Next week, append new observations for the
+   same objects with a higher `sequence` (the highest wins) instead of rewriting the file.
+   No draft command writes an observation; the other ways are a sheet with `progress` and
+   `actual_*` columns read by `chrona import --actual-output` (to a new file), or, for a Store,
+   `chrona actual-intake`, which needs a Store config and an intake batch command document.
+3. **Move `asOf`** in `actual.yaml` to the date the observations are true on.
+4. **Change the plan.** Edit dates, or `amount`, in `project.yaml`, then run `chrona schedule`
+   and read the new dates from it. Leave work already done as it was planned, so it shows as late.
+5. **Render with the baseline**, naming a preset that draws it (the default preset accepts
+   `--snapshot` but draws no ghost and no `Δ finish`):
+
+`launch-actual.yaml`, after two weeks (Design finished on 2026-11-12, Build is open):
+
+<!-- chrona:doc-check file: launch-actual.yaml -->
+```yaml
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: launch-observed
+body:
+  asOf: '2026-11-16'
+  observations:
+    - {id: kickoff-1, sequence: 1, projectObjectId: kickoff, actual: {at: '2026-11-02'}}
+    - {id: design-1, sequence: 1, projectObjectId: design, actual: {start: '2026-11-02', finish: '2026-11-12', progress: 1}}
+    - {id: build-1, sequence: 1, projectObjectId: build, actual: {start: '2026-11-12', openUntil: asOf, progress: 0.2}}
+```
+
+```bash
+chrona render skills/chrona/examples/launch.yaml --actual launch-actual.yaml --snapshot skills/chrona/examples/launch.yaml --preset target-b --output launch-update.svg
+```
+
+Here the plan and the baseline are both the shipped file, to show the command; in a real
+update the first is your edited copy and the second the copy from step 1. `render` does not
+replace an existing output file, so use a new name for each update.
+
+If the plan starts as a spreadsheet, import it once and edit the YAML from then on:
+
+<!-- chrona:doc-check file: skill-tasks.csv -->
+```csv
+id,title,type,start,end
+design,Design,task,2026-11-02,2026-11-09
+launch,Launch,gate,2026-12-01,
+```
+
+```bash
+chrona import skill-tasks.csv --output skill-import.yaml --project-id skill-import --title "Imported plan"
+```
+
+`chrona import` never replaces a file, reports every bad row with its row and column, and
+takes `progress` and `actual_*` columns into an Actual Set with `--actual-output` and `--as-of`;
+the columns are in [docs/guides/csv-import.md](../../docs/guides/csv-import.md).
+
+Read the picture: a dashed outline is where the baseline had the item (drawn only for an item
+that moved); a dark line is the actual; a striped bar is a task open at `asOf`; `Δ finish` is the
+Actual finish minus the **current** plan's finish in calendar days (so it reads `+0d` once the
+plan is moved to match). Worked values are in the guide.
 
 ## If the chrona MCP server is connected
 
@@ -137,7 +209,7 @@ the pinned-evidence path (next section); do not use them unless the user asks fo
 
 ## Pinned evidence from a Store (only when the user asks)
 
-`render` draws a draft of a Project file. Evidence that must be reproducible is another path: an
+`render` draws a draft of a Project file. Evidence kept in a saved store is another path: an
 immutable **Render Context** (the closed list of Project, View, Theme, Color Scheme, Layout and fonts
 to render, each pinned by a content identity) lives in a **Store**, which a **Store configuration**
 (`.chrona/store.yaml`) names. A reference file (`id`, `kind`, `store`, `address`, `revision`,

@@ -41,7 +41,7 @@ SERVER_NAME = "chrona"
 AUTHORING_URI = "chrona://guide/authoring"
 DIAGNOSTICS_URI = "chrona://guide/diagnostics"
 _BASE_INSTRUCTIONS = (
-    "Chrona turns a YAML plan into computed dates and a deterministic picture: edit the plan file, never the "
+    "Chrona turns a YAML plan into computed dates and a picture: edit the plan file, never the "
     "picture. Tools: validate_project (structure and dependency cycles, no dates), schedule_project "
     "(computed placements; it also rejects contradictory fixed dates and bounds, so run it to read dates), "
     "render_draft (a PNG preview by default, SVG on request), list_presets, render_review and compare_baseline "
@@ -50,7 +50,8 @@ _BASE_INSTRUCTIONS = (
     "workspace root. A result's status is ok, rejected (the input is refused: read each diagnostic's code and "
     "sourceRef) or failed (the call could not run); a rejection is a normal result, so read status, not only "
     "isError. The "
-    f"resources {AUTHORING_URI} and {DIAGNOSTICS_URI} explain the model and every diagnostic code."
+    f"resources {AUTHORING_URI} and {DIAGNOSTICS_URI} explain the model and every diagnostic code; the authoring guide also has the plan-update loop "
+    "(record actuals, move asOf, re-plan, render with a baseline) and docs/guides/update-a-plan.md in the chrona repository walks through it."
 )
 INSTRUCTIONS = _BASE_INSTRUCTIONS + " Writes are off: apply_command is refused unless the server is started with --allow-write."
 WRITE_INSTRUCTIONS = _BASE_INSTRUCTIONS + " Writes are on (--allow-write): apply_command executes directly, with no approval step."
