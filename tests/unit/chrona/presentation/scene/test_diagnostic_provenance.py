@@ -23,6 +23,7 @@ from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.theme_tokens import ThemeTokenView
+from tests.unit.chrona.presentation.scene import test_v05_builder as base
 
 
 def _surface(item, content, rows=()):
@@ -33,8 +34,10 @@ def _surface(item, content, rows=()):
          "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
          "timeline.mark.blockSize": Decimal(8)},
     )
+    manifest = _manifest("title", "table", "timeline", "timeline-axis")
+    measurement, _ = base._seal_temporal_capacity(manifest, measurement)
     value = build_surface_input(projection=projection, surface_content=content,
-                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              layout_manifest=manifest,
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
     return compose_review_surface(value)
@@ -186,9 +189,11 @@ def test_detail_milestone_overflow_carries_only_its_explicit_project_reference()
          "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
          "timeline.mark.blockSize": Decimal(8)},
     )
+    measurement, temporal_capacity = base._seal_temporal_capacity(manifest, measurement)
     placement = compose_surface_layout(SurfaceLayoutRequest(
         projection=projection, presentation_contract=normalize_presentation_input(content),
         surface_content=content, layout_manifest=manifest, measured_sources=measurement,
+        temporal_capacity=temporal_capacity,
         theme_tokens=ThemeTokenView(_theme()), font_metrics=_Font(), capabilities={"svg": True},
     )).placement
 

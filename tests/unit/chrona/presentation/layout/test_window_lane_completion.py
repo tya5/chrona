@@ -25,7 +25,8 @@ def _request(*, point=False, all_outside=False, containing=False, mode=WindowMod
                    surface_content=replace(request.surface_content, show_member_labels=False),
                    mark_visibility_index=None)
     preflight = preflight_fixed_lane_layout(projection=projection, layout_manifest=request.layout_manifest,
-        surface_content=request.surface_content, theme_tokens=request.theme_tokens,
+        surface_content=request.surface_content, temporal_capacity=request.temporal_capacity,
+        theme_tokens=request.theme_tokens,
         metric_values=request.measured_sources.metric_values, icon_assets=request.icon_assets,
         visual_requests=request.visual_requests, font_metrics=request.font_metrics)
     return replace(request, fixed_lane_preflight=preflight)

@@ -14,6 +14,7 @@ from chrona.presentation.layout.slot_heading import compile_slot_heading_program
 from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.surface_completion import SurfaceLayoutComposition
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
+from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
 from chrona.presentation.layout.surface_render_plan import PreparedSurfaceRenderPlan, SurfaceRenderPlanInput, prepare_surface_render_plan
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.projection import ReviewProjection
@@ -126,6 +127,8 @@ def _compose(value: SurfaceRenderPlanInput, plan: PreparedSurfaceRenderPlan):
         projection=value.projection, surface_content=plan.content,
         presentation_contract=normalize_presentation_input(plan.content),
         layout_manifest=plan.manifest, measured_sources=plan.measured,
+        temporal_capacity=(TemporalInlineCapacity.from_manifest(plan.manifest, plan.measured)
+                           if value.view.surface == "table-timeline" else None),
         theme_tokens=ThemeTokenView(value.theme), font_metrics=value.font_metrics,
         capabilities=dict(value.capabilities), icon_assets=value.icon_assets,
         visual_requests=value.visual_requests, capacity_short_sources=plan.capacity_short_sources,

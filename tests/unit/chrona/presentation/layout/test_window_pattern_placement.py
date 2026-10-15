@@ -110,7 +110,8 @@ def test_real_lane_composition_completes_cut_progress_pattern_from_original_geom
     monkeypatch.setattr(tokens, "progress_track", lambda self, role: (Decimal('.1'), Decimal(0)))
     request = replace(request, surface_content=replace(request.surface_content, progress_fill_source="planned"))
     preflight = preflight_fixed_lane_layout(projection=projection, layout_manifest=request.layout_manifest,
-        surface_content=request.surface_content, theme_tokens=request.theme_tokens,
+        surface_content=request.surface_content, temporal_capacity=request.temporal_capacity,
+        theme_tokens=request.theme_tokens,
         metric_values=request.measured_sources.metric_values, icon_assets=request.icon_assets,
         visual_requests=request.visual_requests, font_metrics=request.font_metrics)
     placement = compose_surface_layout(replace(request, fixed_lane_preflight=preflight)).placement

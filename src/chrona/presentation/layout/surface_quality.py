@@ -18,6 +18,7 @@ from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, D
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, axis_label_semantic_ids
 
 if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement.
+    from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
     from chrona.presentation.layout.canvas_overlays import CanvasOverlays
     from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip
     from chrona.presentation.layout.canvas_viewport import AutoBlockSizeWarning, CanvasViewportWarning, DeclaredViewport
@@ -687,6 +688,7 @@ class SurfaceLayoutRequest:
     progress: RenderProgress | None = field(default=None, compare=False, repr=False)
     mark_visibility_index: ItemMarkVisibilityIndex | None = None
     previous_route_hints: PreviousRouteHints | None = None
+    temporal_capacity: TemporalInlineCapacity | None = None
 
 
 @dataclass(frozen=True)

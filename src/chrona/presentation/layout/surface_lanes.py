@@ -10,7 +10,9 @@ from typing import Any
 from chrona.presentation.layout.lane_preflight import lane_inline_frame_for_manifest
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight, LaneSubtrackPlan, assign_lane_subtracks
 from chrona.presentation.layout.lane_item_footprints import compose_lane_item_footprints
-from chrona.presentation.layout.mark_aware_scale import PointMarkFootprint, inset_scale_for_point_facets
+from chrona.presentation.layout.mark_aware_scale import (
+    PointMarkFootprint, inset_scale_for_point_facets, point_facet_insets,
+)
 from chrona.presentation.layout.obstacles import obstacle_envelope
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.presentation import TrackPlacement, table_text_line_block
@@ -38,6 +40,7 @@ from chrona.presentation.layout.surface_quality import (
     IconPlacement, LaneEmissionFacet, LaneEmissionPlacement, MarkPlacement, ShapePlacement, TextPlacement,
     completed_symbol_primitive_ids,
 )
+from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
 from chrona.presentation.model.semantic_registry import semantic_binding
 
 
@@ -136,6 +139,7 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
                                 surface_content: Any, theme_tokens: Any,
                                 metric_values: dict[str, Decimal], icon_assets: Mapping[str, Any],
                                 visual_requests: tuple[Any, ...], font_metrics: Any,
+                                temporal_capacity: TemporalInlineCapacity,
                                 mark_visibility_index: ItemMarkVisibilityIndex | None = None
                                 ) -> FixedLanePreflight:
     """Close fixed-lane tracks before final allocation from fixed View rows and Layout inputs."""
@@ -149,12 +153,22 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
         visibility_index=mark_visibility_index)
     start, end = projection.window
     rows = review_rows(projection)
-    frame = lane_inline_frame_for_manifest(layout_manifest, window=(start, end))
     timeline = next(item for item in layout_manifest.decisions if item.source == "timeline")
-    provisional_scale = ScalePlacement("table-timeline", "primary", start, end,
-                                       float(frame.timeline_inline),
-                                       float(frame.timeline_inline + frame.timeline_inline_size),
-                                       float(frame.timeline_inline), float(frame.temporal_scale))
+    if temporal_capacity.allocated_inline > 0:
+        # Preserve the established positive-allocation arithmetic exactly;
+        # the natural-width scale below is only a zero-allocation measurement
+        # prototype and must never perturb fitting outputs.
+        days = max(1, (end - start).days)
+        provisional_scale = ScalePlacement(
+            "table-timeline", "primary", start, end,
+            float(timeline.bounds.inline),
+            float(timeline.bounds.inline + timeline.bounds.inline_size),
+            float(timeline.bounds.inline),
+            float(timeline.bounds.inline_size) / days,
+        )
+    else:
+        provisional_scale = temporal_capacity.prototype_scale(
+            (start, end), inline_origin=timeline.bounds.inline)
     mark_band_size = float(metric_values["timeline.mark.blockSize"])
     role_geometries = resolve_mark_geometries(theme_tokens)
     mark_band_allocation = resolve_mark_band(theme_tokens, mark_band_size, role_geometries=role_geometries)
@@ -174,6 +188,12 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
             if facet.point_anchor_date is not None:
                 left, _, right, _ = obstacle_envelope(facet.footprint)
                 point_facets.append(PointMarkFootprint(facet.point_anchor_date, left, right))
+    left_inset, right_inset = point_facet_insets(provisional_scale, point_facets)
+    temporal_capacity.require_usable(left_inset, right_inset, provisional=provisional_scale)
+    # A real frame is valid only after the typed capacity boundary has accepted
+    # the actual allocation. Zero-width hosts use the natural-width prototype
+    # above solely for exact native mark measurement; it never reaches placement.
+    frame = lane_inline_frame_for_manifest(layout_manifest, window=(start, end))
     scale = inset_scale_for_point_facets(provisional_scale, point_facets)
     footprints = (provisional_footprints if scale is provisional_scale else
                   compose_lane_item_footprints(scale=scale, **footprint_inputs))

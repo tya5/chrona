@@ -1,4 +1,5 @@
 from datetime import date
+from dataclasses import replace
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
@@ -10,6 +11,7 @@ from chrona.presentation.layout.surface_backgrounds import validate_background_s
 from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.surface_quality import PathCommand, ShapePlacement, SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun, SourceInput
+from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.surface_content import AnnotationIntent, AxisLabelIntent, AxisTier, SummaryContent, SurfaceContentInput, SurfaceLegendEntry, TableCellContent, TableColumnContent, TableColumnWidth
 from chrona.presentation.model.surface_content import RelationPresentationFact
@@ -18,7 +20,7 @@ from chrona.presentation.model.semantic_registry import semantic_binding, semant
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.model import DecorationDisposition, ScenePrimitive, SceneSurface, SymbolGeometry, TextLayout
 from chrona.presentation.scene.v05_builder import SceneBuildError
-from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
+from chrona.presentation.surface_pipeline import build_surface_input as _build_surface_input, compose_review_surface
 
 BACKGROUND_EXTENTS = {"rowBand": "table", "groupBand": "timeline", "groupHeaderBand": "both", "calendarClosed": "timeline"}
 
@@ -133,6 +135,30 @@ def _manifest(*sources):
     return LayoutManifest("review", "sha256:test", "horizontal", "horizontal", rect,
                           tuple(LayoutDecision(source, "slot", bounds.get(source, rect), source) for source in sources),
                           row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
+
+
+def _seal_temporal_capacity(manifest, measured):
+    """Give direct composition fixtures the same typed allocation/demand handoff as production."""
+    if not hasattr(measured, "measurements"):
+        return measured, None
+    if "timeline" not in measured.measurements:
+        timeline = next(item for item in manifest.decisions if item.source == "timeline")
+        measurements = dict(measured.measurements)
+        measurements["timeline"] = Measurement(
+            Decimal(0), timeline.bounds.inline_size, None, Decimal(0), Decimal(0), None)
+        measured = replace(measured, measurements=measurements)
+    return measured, TemporalInlineCapacity.from_manifest(manifest, measured)
+
+
+def build_surface_input(**kwargs):
+    """Seal synthetic table/timeline fixtures with the typed native-width fact."""
+    manifest = kwargs.get("layout_manifest")
+    measured = kwargs.get("measured_sources")
+    if manifest is not None and measured is not None and any(
+        item.source == "timeline" for item in manifest.decisions
+    ):
+        kwargs["measured_sources"], _ = _seal_temporal_capacity(manifest, measured)
+    return _build_surface_input(**kwargs)
 
 
 def _theme():
@@ -1288,9 +1314,11 @@ def test_layout_records_auto_candidate_and_completed_axis_label_measurements():
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
+    measurement, temporal_capacity = _seal_temporal_capacity(value.layout_manifest, value.measured_sources)
     composition = compose_surface_layout(SurfaceLayoutRequest(
         projection=value.projection, presentation_contract=normalize_presentation_input(content),
-        surface_content=content, layout_manifest=value.layout_manifest, measured_sources=value.measured_sources,
+        surface_content=content, layout_manifest=value.layout_manifest, measured_sources=measurement,
+        temporal_capacity=temporal_capacity,
         theme_tokens=value.theme_tokens, font_metrics=value.font_metrics,
         capabilities=dict(value.capabilities),
     ))
@@ -1328,9 +1356,11 @@ def test_thin_with_record_records_unavailable_phase_after_an_unfit_first_label()
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_WideQ1Font(), measured_sources=measurement,
                               capabilities={"svg": True})
+    measurement, temporal_capacity = _seal_temporal_capacity(value.layout_manifest, value.measured_sources)
     composition = compose_surface_layout(SurfaceLayoutRequest(
         projection=value.projection, presentation_contract=normalize_presentation_input(content),
-        surface_content=content, layout_manifest=value.layout_manifest, measured_sources=value.measured_sources,
+        surface_content=content, layout_manifest=value.layout_manifest, measured_sources=measurement,
+        temporal_capacity=temporal_capacity,
         theme_tokens=value.theme_tokens, font_metrics=value.font_metrics,
         capabilities=dict(value.capabilities),
     ))

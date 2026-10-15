@@ -13,7 +13,8 @@ from chrona.presentation.layout.model import LayoutDecision, LayoutError, Layout
 from chrona.presentation.layout.lane_preflight import lane_inline_frame_for_manifest
 from chrona.presentation.layout.lane_projection import LaneProjectionInstance, lane_missing_actual_visible
 from chrona.presentation.layout.lane_subtracks import LaneSubtrackPlan
-from chrona.presentation.layout.mark_aware_scale import PointMarkFootprint, inset_scale_for_point_facets
+from chrona.presentation.layout.mark_aware_scale import (
+    PointMarkFootprint, inset_scale_for_point_facets, point_facet_insets)
 from chrona.presentation.layout.obstacles import obstacle_envelope
 from chrona.presentation.layout.presentation import (
     MarkBandFrame, MarkGeometry, TrackPlacement, place_mark_tracks,
@@ -253,11 +254,10 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
                           "group_id": item.group_id, "table_subject_id": item.object_id,
                           "items": (item,)})() for item in projection.items)
     timeline_bounds = bounds_from_rect(timeline.bounds)
-    provisional_scale = ScalePlacement(
-        "table-timeline", "primary", start, end, timeline_bounds[0],
-        timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
-        timeline_bounds[2] / max(1, (end - start).days),
-    )
+    capacity = request.temporal_capacity
+    if capacity is None:
+        raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/temporalCapacity")
+    provisional_scale = capacity.prototype_scale((start, end), inline_origin=timeline_bounds[0])
     group_tags = vertical_group_tags(request)
     # A vertical group label replaces the header row: no row is reserved for it (#585).
     group_header_size = (float(metric_values["timeline.groupHeader.blockSize"])
@@ -280,6 +280,8 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
             mark_band_allocation=mark_band_allocation,
             mark_visibility_index=request.mark_visibility_index,
         )
+        capacity.require_usable(*point_facet_insets(provisional_scale, point_facets),
+                                provisional=provisional_scale)
         scale = inset_scale_for_point_facets(provisional_scale, point_facets)
     review_row_values = assign_key_row_lanes(
         review_row_values, request=request, scale=scale, as_of=request.surface_content.as_of,
