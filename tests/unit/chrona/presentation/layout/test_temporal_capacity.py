@@ -34,6 +34,29 @@ def test_manifest_closes_timeline_slot_and_existing_preferred_natural_demand():
     assert capacity.natural_inline == Decimal(120)
 
 
+def test_repeated_timeline_uses_the_manifest_canonical_last_source_decision():
+    manifest = _manifest("20")
+    first = manifest.decisions[0]
+    last = LayoutDecision("timeline-later", "slot", Rect(Decimal(275), Decimal(0),
+                                                          Decimal(35), Decimal(200)),
+                          source="timeline")
+    repeated = LayoutManifest(manifest.profile_id, manifest.profile_hash, manifest.flow_direction,
+                              manifest.dependency_network_flow_direction, manifest.viewport,
+                              (first, last))
+
+    capacity = TemporalInlineCapacity.from_manifest(repeated, _measured())
+    assert repeated.source_decisions()["timeline"] == last
+    assert (capacity.slot_id, capacity.allocated_inline) == ("timeline-later", Decimal(35))
+
+
+def test_missing_timeline_retains_the_existing_missing_primitive_diagnostic():
+    manifest = _manifest("20")
+    missing = LayoutManifest(manifest.profile_id, manifest.profile_hash, manifest.flow_direction,
+                             manifest.dependency_network_flow_direction, manifest.viewport, ())
+    with pytest.raises(LayoutError, match="E_PRESENTATION_PRIMITIVE_MISSING"):
+        TemporalInlineCapacity.from_manifest(missing, _measured())
+
+
 def test_prototype_uses_natural_scale_only_for_zero_allocation():
     window = (date(2026, 1, 1), date(2026, 1, 11))
     zero = _capacity("0").prototype_scale(window, inline_origin=100)

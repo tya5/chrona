@@ -88,7 +88,7 @@ def _layout_manifest(request: SurfaceLayoutRequest) -> LayoutManifest:
 def prepare_surface_slots(request: SurfaceLayoutRequest) -> SurfaceSlotAllocation:
     """Validate source allocations without closing any row, scale, track or axis geometry."""
     manifest = _layout_manifest(request)
-    decisions = {item.source: item for item in manifest.decisions if item.source}
+    decisions = manifest.source_decisions()
     missing = next((slot.value for slot in REQUIRED_SLOTS if slot.value not in decisions), None)
     if missing is not None:
         raise LayoutError("E_PRESENTATION_PRIMITIVE_MISSING", f"/layoutManifest/sources/{missing}")

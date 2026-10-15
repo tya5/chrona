@@ -7,6 +7,7 @@ import pytest
 
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.surface_composer import compose_surface_layout, prepare_surface_candidate
+from chrona.presentation.layout.surface_base import prepare_surface_slots
 from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewLaneRowProjection, ReviewRowProjection
 from chrona.presentation.review.lane_membership import Lane, LaneAssignment, LaneMembership
@@ -67,6 +68,37 @@ def test_table_timeline_composition_requires_the_capacity_fact():
     with pytest.raises(LayoutError, match="E_PRESENTATION_MEASUREMENTS_REQUIRED") as error:
         prepare_surface_candidate(request)
     assert error.value.path == "/temporalCapacity"
+
+
+def test_ordinary_native_completion_and_capacity_use_same_last_repeated_timeline():
+    request = _request()
+    timeline = next(item for item in request.layout_manifest.decisions if item.source == "timeline")
+    duplicate = replace(timeline, node_id="timeline-second",
+                        bounds=replace(timeline.bounds, inline_size=Decimal("550")))
+    manifest = replace(request.layout_manifest, decisions=(*request.layout_manifest.decisions, duplicate))
+    capacity = TemporalInlineCapacity.from_manifest(manifest, request.measured_sources)
+    repeated = replace(request, layout_manifest=manifest, temporal_capacity=capacity)
+
+    allocation = prepare_surface_slots(repeated)
+    selected_slot = next(slot for slot in allocation.slots if slot.source_ref == "timeline")
+    assert (capacity.slot_id, capacity.allocated_inline) == ("timeline-second", Decimal("550"))
+    assert selected_slot.bounds == duplicate.bounds
+
+    prepared = prepare_surface_candidate(repeated)
+    assert prepared.inline.timeline.bounds == duplicate.bounds
+    assert prepared.inline.scale.range_end == float(duplicate.bounds.inline + duplicate.bounds.inline_size)
+
+
+def test_duplicate_timeline_source_remains_invalid_for_fixed_lane_seed():
+    request = replace(_request(), projection=_point_projection(lane=True))
+    timeline = next(item for item in request.layout_manifest.decisions if item.source == "timeline")
+    duplicate = replace(timeline, node_id="timeline-second")
+    manifest = replace(request.layout_manifest, decisions=(*request.layout_manifest.decisions, duplicate))
+    repeated = replace(request, layout_manifest=manifest)
+    repeated = _with_allocation(repeated, "500")
+
+    with pytest.raises(LayoutError, match="E_LAYOUT_LANE_SEED_INVALID"):
+        prepare_surface_candidate(repeated)
 
 
 def test_narrow_positive_timeline_keeps_native_point_geometry_and_valid_wide_control():

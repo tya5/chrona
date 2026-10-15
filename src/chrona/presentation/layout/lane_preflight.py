@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
-from chrona.presentation.layout.model import LayoutError, LayoutManifest
+from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
 
 
 @dataclass(frozen=True)
@@ -31,6 +31,16 @@ def lane_inline_frame_for_manifest(
     manifest: LayoutManifest, *, window: tuple[date, date],
 ) -> LaneInlineFrame:
     """Read the exact lane-driving table/timeline inline frame from one solve."""
+    table, timeline = lane_source_bounds_for_manifest(manifest, window=window)
+    ratio = float(timeline.inline_size) / max(1, (window[1] - window[0]).days)
+    return LaneInlineFrame(table.inline, table.inline_size,
+                           timeline.inline, timeline.inline_size, Decimal(str(ratio)))
+
+
+def lane_source_bounds_for_manifest(
+    manifest: LayoutManifest, *, window: tuple[date, date],
+) -> tuple[Rect, Rect]:
+    """Validate lane source identity independently of positive-width geometry."""
     if (not isinstance(manifest, LayoutManifest) or len(window) != 2
             or any(type(value) is not date for value in window)
             or window[0] >= window[1]):
@@ -39,8 +49,4 @@ def lane_inline_frame_for_manifest(
                for name in ("table", "timeline")}
     if any(len(items) != 1 for items in sources.values()):
         raise LayoutError("E_LAYOUT_LANE_SEED_INVALID", "/layoutManifest")
-    table = sources["table"][0].bounds
-    timeline = sources["timeline"][0].bounds
-    ratio = float(timeline.inline_size) / max(1, (window[1] - window[0]).days)
-    return LaneInlineFrame(table.inline, table.inline_size,
-                           timeline.inline, timeline.inline_size, Decimal(str(ratio)))
+    return sources["table"][0].bounds, sources["timeline"][0].bounds

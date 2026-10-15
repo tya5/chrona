@@ -33,3 +33,10 @@ E_LAYOUT_MARK_OVERFLOW (4014 other tests passed). The assertion now requires
 the approved capacity code and slot/width detail; no product rule was relaxed.
 Derived-ready failed consequentially. Artifact11967577646 contains109 members:
 all50 SVGs and50 Scenes are byte-identical; only the diagnostic inventory changes.
+
+Additional review found that the initial capacity producer incorrectly rejected
+accepted ordinary repeated-source slots. Capacity now consumes the same manifest
+source selection as native allocation; missing timeline and lane source-identity
+errors retain their owners. Four regressions cover selected slot/width, completed
+positive geometry, missing source and lane duplicates. This restores the approved
+unchanged-positive-output contract without a schema or cardinality-policy change.

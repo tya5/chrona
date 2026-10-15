@@ -7,7 +7,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from typing import Any
 
-from chrona.presentation.layout.lane_preflight import lane_inline_frame_for_manifest
+from chrona.presentation.layout.lane_preflight import (
+    lane_inline_frame_for_manifest, lane_source_bounds_for_manifest)
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight, LaneSubtrackPlan, assign_lane_subtracks
 from chrona.presentation.layout.lane_item_footprints import compose_lane_item_footprints
 from chrona.presentation.layout.mark_aware_scale import (
@@ -152,6 +153,7 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
         projection, as_of=surface_content.as_of, mode=layout_manifest.point_host_mode,
         visibility_index=mark_visibility_index)
     start, end = projection.window
+    lane_source_bounds_for_manifest(layout_manifest, window=(start, end))
     rows = review_rows(projection)
     timeline = next(item for item in layout_manifest.decisions if item.source == "timeline")
     if temporal_capacity.allocated_inline > 0:

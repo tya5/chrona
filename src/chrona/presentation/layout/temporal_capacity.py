@@ -34,14 +34,14 @@ class TemporalInlineCapacity:
         """Seal the actual timeline slot allocation and its measured natural width."""
         if not isinstance(manifest, LayoutManifest):
             raise LayoutError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
-        decisions = tuple(item for item in manifest.decisions if item.source == "timeline")
-        if len(decisions) != 1:
-            raise LayoutError("E_LAYOUT_SLOT_IDENTITY", "/layoutManifest/sources/timeline")
+        decision = manifest.source_decisions().get("timeline")
+        if decision is None:
+            raise LayoutError("E_PRESENTATION_PRIMITIVE_MISSING", "/layoutManifest/sources/timeline")
         try:
             natural = measured_sources.measurements["timeline"].preferred_inline
         except (AttributeError, KeyError, TypeError) as error:
             raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/measurements/timeline") from error
-        return cls("timeline", decisions[0].node_id, decisions[0].bounds.inline_size, natural)
+        return cls("timeline", decision.node_id, decision.bounds.inline_size, natural)
 
     def prototype_scale(
         self,

@@ -50,6 +50,11 @@ Point insets are then closed by the existing representation-specific native
 mark footprint producers and shared inset arithmetic. Icons remain inside
 their host bounds; do not add a separate icon geometry estimator.
 
+Capacity sealing and ordinary allocation share the manifest's existing
+source-selection operation; sealing must not introduce source cardinality
+restrictions. Lane source identity validation remains owned by lane preflight
+and precedes native measurement independently of positive-width validation.
+
 For zero allocation, measurement uses a positive prototype scale from natural
 demand, never an epsilon. It is not a completed placement and cannot escape
 into Scene. Native point composition supplies exact start/end protrusions;
