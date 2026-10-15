@@ -8300,5 +8300,6 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 Every independently required decoration role has committed Scene or explicit synthetic evidence; group-band, group-header-band or group-header-strip supplies the group concept, and row-band or row-rule supplies the row concept when there are no corpus errors.
 
 - Synthetic `dependency-halo` (no public use): `tests/integration/test_unroutable_visible_obstacle.py`, `tests/integration/test_relation_resolution_wiring.py`, `tests/unit/chrona/presentation/scene/test_contrast_policy.py`
+- Synthetic `tableColumnRule` (no public use): `tests/integration/test_table_details_1545.py`, `tests/integration/test_technical_print_columns.py`
 
 Findings: 8220; errors: 0; warnings: 391.

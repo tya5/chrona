@@ -279,6 +279,16 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+    tableCellMono:
+      fontFamily: mono
+      fontWeight: weight.regular
+      fontSize: size.body
+      lineHeight: leading.body
+      letterSpacing: letter-spacing.none
+      textTransform: text-transform.none
+      numericSpacing: numeric-spacing
+    tableColumnRule:
+      strokeWidth: stroke-width
     heading:
       fontFamily: sans
       fontWeight: weight.bold
@@ -482,6 +492,7 @@ body:
     axis-label3.fill: text
     axis-cell-separator.stroke: surfaceRaised
     axis-rule.stroke: text
+    tableColumnRule.stroke: text
     background.fill: surface
     text.fill: text
     subtitle.fill: textMuted

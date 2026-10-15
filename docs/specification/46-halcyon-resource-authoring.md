@@ -35,6 +35,8 @@ A column declares its display formatter rather than embedding date strings in a 
 
 **Lane table columns (#1517).** `transform: initials` is also accepted on a `{field}` column of `rows.laneTable.columns` (Spec 38), with the same rule, applied to the field of the lane's first member.
 
+**Row-number suffix (#1545).** A `rowIndex` column of `tableColumns` or `rows.laneTable.columns` may declare `suffix`, a literal string of 1 to 8 characters appended to the number (`.` reads `1.`). Layout measures the full text; there is no format language. A `suffix` on any other source is `E_VIEW_COLUMN_SUFFIX` (flat table) or `E_VIEW_LANE_TABLE_COLUMNS` (lane table).
+
 **Per-state affixes (#588).** A column may declare `affixes`, a mapping from a state to `{prefix, suffix}`
 (each 1 to 8 characters, literal, no control character, at least one present). The states are `slip`, `onTime`
 and `ahead` (a `signedDays` or `signedNumber` value above, at and below zero) and `missing` (an absent value, of any

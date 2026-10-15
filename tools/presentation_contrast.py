@@ -35,6 +35,11 @@ SYNTHETIC_DECORATION_COVERAGE = {
         "tests/integration/test_relation_resolution_wiring.py",
         "tests/unit/chrona/presentation/scene/test_contrast_policy.py",
     ),
+    # Only a Theme that declares the stroke paints it; the sole bundled one (technical-print) has no public slide (#1545).
+    "tableColumnRule": (
+        "tests/integration/test_table_details_1545.py",
+        "tests/integration/test_technical_print_columns.py",
+    ),
 }
 
 

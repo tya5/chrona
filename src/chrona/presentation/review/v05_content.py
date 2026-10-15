@@ -70,6 +70,8 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
                                  end_display=column.end_display, transform=column.transform)
             if column.transform == "initials" and isinstance(value, str) and not initials(value):
                 value = None  # no letter or digit: the cell reads as absent, so the `missing` affix applies (#1373)
+        if column.suffix is not None:
+            core += column.suffix  # a literal after the row number, measured with it (#1545)
         affix = column.affixes.for_state(affix_state(value, column.format)) if column.affixes is not None else None
         return (affix.prefix, core, affix.suffix) if affix is not None else ("", core, "")
 
@@ -210,7 +212,8 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
                 founder = next((item for item in row.items if lane.member_item_ids and item.item_id == lane.member_item_ids[0]), None)
                 value = (founder.fields or {}).get(column.source["field"]) if founder is not None else None
             cells.append(TableCellContent(row.lane_id, column.id,
-                                          display_value(value, column.missing, "text", transform=column.transform),
+                                          display_value(value, column.missing, "text", transform=column.transform)
+                                          + (column.suffix or ""),
                                           "tableCell", column.text_role or "text"))
         if show_count:
             member_count = len(lane.member_item_ids)
