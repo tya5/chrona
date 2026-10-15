@@ -27,6 +27,7 @@ from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderRequest, render_review
 from tests.support import synthetic_review as sr
 from tests.support import text_treatments as tt
+from tests.support import typeset_compile as tc
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -43,7 +44,8 @@ def _render_surface(directory: Path, target: str, scale: float):
     source = sr.bunched_project(groups=1, per_group=1)
     paths = {kind: sr._write(directory / f"{kind}.yaml", value) for kind, value in parts.items()}
     project = sr._write(directory / "project.yaml", source)
-    typesetter = TypesetterIdentity("typst", "0.15.1", "chrona-typst/v0.1") if target == "typst" else None
+    typesetter = {"typst": TypesetterIdentity("typst", "0.15.1", "chrona-typst/v0.1"),
+                  "tikz": TypesetterIdentity("tectonic", "0.17.0", "chrona-tikz/v0.1")}.get(target)
     draft = resolve_draft_render(
         project_path=project, view_path=paths["view"], theme_path=paths["theme"],
         scheme_path=paths["scheme"], layout_path=paths["layout"], viewport=VIEWPORT,
@@ -103,14 +105,19 @@ def _measure_compressed_ink(base_image: Image.Image, scaled_image: Image.Image,
     }
 
 
-def _assert_compressed_measurement(measurements: dict[str, object]) -> None:
+def _assert_compressed_measurement(measurements: dict[str, object], *, scaled_bearing: bool = False) -> None:
     base_width = measurements["base_ink_width_px"]
     scaled_width = measurements["scaled_ink_width_px"]
     ratio_interval = measurements["ratio_interval_from_plus_minus_one_pixel_edges"]
     assert base_width > 30
     assert ratio_interval[0] <= SCALE <= ratio_interval[1], measurements
     # Independent integer rounding of the anchor and ink edge accounts for at most 2 px.
-    assert measurements["origin_delta_px"] <= 2, measurements
+    if scaled_bearing:
+        # The pivot is the anchor itself, so the glyph's left side bearing scales with the run: the scaled ink starts at
+        # `SCALE` times the natural ink offset from the anchor (rather than at the same offset).
+        assert abs(measurements["scaled_origin_offset_px"] - SCALE * measurements["base_origin_offset_px"]) <= 1.5, measurements
+    else:
+        assert measurements["origin_delta_px"] <= 2, measurements
     assert measurements["scale"] == SCALE
 
 
@@ -198,6 +205,30 @@ def test_typst_compiled_svg_preserves_compressed_text_ink_and_origin(tmp_path):
     _retain_measurements("typst", {"backend": "typst-0.15.1", "natural_scale": 1.0,
                                     "compressed": measurements})
     _assert_compressed_measurement(measurements)
+
+
+def test_tectonic_compiled_pdf_preserves_compressed_text_ink_and_origin(tmp_path):
+    """TikZ `xscale` on the baseline-anchored node, measured like the Typst and PDF routes (#1532)."""
+    executable = os.environ.get("CHRONA_TECTONIC")
+    if not executable:
+        pytest.skip("native TikZ path absent; the typesetter-compile workflow supplies pinned Tectonic 0.17.0")
+    reviews, images = [], []
+    for name, scale in (("natural", 1.0), ("compressed", SCALE)):
+        rendered = _render_surface(tmp_path / name, "tikz", scale)
+        assert rendered.artifact.target_kind == "tikz"
+        canvas = rendered.surface.canvas_bounds[2:]
+        image, source = tc.compile_to_image("tikz", rendered.artifact.content.decode("utf-8"), tmp_path / f"{name}-tikz", name, canvas)
+        reviews.append(rendered)
+        images.append(image)
+        if EVIDENCE is not None:
+            destination = Path(EVIDENCE) / "tikz"
+            destination.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination / source.name)
+            image.save(destination / f"{name}.png")
+    assert r"xscale=0.5" in reviews[1].artifact.content.decode("utf-8")
+    measurements = _measure_compressed_ink(images[0], images[1], reviews[0], reviews[1])
+    _retain_measurements("tikz", {"backend": "tectonic-0.17.0", "natural_scale": 1.0, "compressed": measurements})
+    _assert_compressed_measurement(measurements, scaled_bearing=True)
 
 
 def test_reportlab_pdf_raster_preserves_compressed_text_ink_and_origin(tmp_path):

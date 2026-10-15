@@ -97,7 +97,7 @@ def test_tikz_projects_native_hex_color_and_multiplies_alpha():
 
 def test_pattern_support_keeps_compiler_correct_no_pattern_bytes():
     assert sha256(render_v05_typst(_surface()).encode()).hexdigest() == "5b6a897c2582237c719f15cf0e4a45f75982778cc554ae4fd4acc547ce17ab91"
-    assert sha256(render_v05_tikz(_surface()).encode()).hexdigest() == "0951ea495c7f72bbbdae44566611b49a3df55bd0337a191d014ba6b0ea209b44"
+    assert sha256(render_v05_tikz(_surface()).encode()).hexdigest() == "fd641d1d44569ab00cc22126ff3be18248877bb1d737937082818aa17c838ee6"
 
 
 @pytest.mark.parametrize("angle", [0, 45, 90])

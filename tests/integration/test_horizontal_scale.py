@@ -184,10 +184,10 @@ def test_the_gates_cover_compressed_text(tmp_path):
     assert text["bounds"]["inlineSize"] == pytest.approx(tt.texts(rendered)["annotation-text:view-n0"].bounds[2])
 
 
-def test_tikz_has_no_verified_scale_and_typst_writes_a_scale_fragment(tmp_path):
+def test_tikz_writes_a_node_xscale_and_typst_writes_a_scale_fragment(tmp_path):
     surface = _render(tmp_path, scale=SCALE, roles=("heading",)).surface
-    with pytest.raises(ValueError, match="E_VISUAL_CAPABILITY_UNSUPPORTED"):
-        render_v05_tikz(surface)
+    assert f"xscale={SCALE:g}," in render_v05_tikz(surface)
+    assert "xscale" not in render_v05_tikz(_render(_sub(tmp_path, "plainx")).surface)
     typst = render_v05_typst(surface)
     assert "#scale(x: 60%, y: 100%, origin: left + top, reflow: false)[#text(" in typst
     plain = render_v05_typst(_render(_sub(tmp_path, "plain")).surface)
