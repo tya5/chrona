@@ -95,6 +95,9 @@ body:
     stroke-width:
       type: number
       value: 1
+    stroke-width-critical:
+      type: number
+      value: 2
     outline:
       type: pattern
       value:
@@ -397,6 +400,8 @@ body:
     dependency:
       marker: arrow
       strokeWidth: stroke-width
+    dependency-critical:
+      strokeWidth: stroke-width-critical
     planned:
       strokeWidth: stroke-width
       markHeight: mark-height-bar
@@ -510,6 +515,7 @@ body:
     missing-actual.stroke: text
     missing-actual-cell.fill: textMuted
     dependency.stroke: textMuted
+    dependency-critical.stroke: negative
     period-band.fill: accent
     period-label.fill: text
     period-label-chip.fill: surface

@@ -30,6 +30,17 @@ $defs:
     properties:
       placement: {description: "Where the label sits: at the plot's top edge, at its bottom edge, or centred in the band.", enum: [top, bottom, inside]}
       overflow: {description: "What happens when no collision-free position exists: suppress the label with a recorded warning, or place it anyway with a recorded overflow. Defaults to visible-overflow.", enum: [suppress, visible-overflow]}
+  periodLabelSelection:
+    description: "Partial label intent applied to every period selected by a View; an offered Layout periodLabelPresentation fills omitted placement and overflow."
+    examples: [{placement: top}, {placement: top, overflow: suppress}]
+    type: object
+    required: [placement]
+    additionalProperties: false
+    properties:
+      placement: {description: "Where the label sits: at the plot's top edge, at its bottom edge, or centred in the band.", $ref: "#/$defs/periodLabelPresentation/properties/placement"}
+      overflow: {description: "What happens when no collision-free position exists: suppress the label with a recorded warning, or place it anyway with a recorded overflow.", $ref: "#/$defs/periodLabelPresentation/properties/overflow"}
+      text: {description: "Optional display text replacing the Project period title for this View only; absent shows the period title.", $ref: "#/$defs/literalCaption", examples: [OPENING NIGHT]}
+      template: {description: "Optional closed figure template instead of literal text: {figure:id} reads a global View figure; {{ and }} escape braces.", $ref: "#/$defs/literalCaption", examples: ["WINDOW CLOSES IN {figure:closing} DAYS"]}
   visualPresentation:
     description: "Optional project-independent visualPresentation properties; existing View occurrences and explicit fields remain authoritative."
     type: object

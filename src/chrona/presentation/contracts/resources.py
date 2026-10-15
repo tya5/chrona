@@ -398,15 +398,29 @@ class ViewVisual:
 
 
 @dataclass(frozen=True)
+class ViewPeriodLabel:
+    """Closed label intent shared by explicit and all-period selection."""
+
+    placement: str
+    overflow: str = "visible-overflow"
+    text: str | None = None
+    template: str | None = None
+
+
+@dataclass(frozen=True)
 class ViewPeriod:
-    """One Project period the View selects to draw; geometry and paint belong to Layout and Theme (#582)."""
+    """One selected Project period; geometry and paint belong to Layout and Theme."""
 
     period_id: str
-    label_placement: str | None = None
-    label_overflow: str = "visible-overflow"
-    label_text: str | None = None
-    label_template: str | None = None
+    label: ViewPeriodLabel | None = None
     variant: str | None = None
+
+
+@dataclass(frozen=True)
+class ViewAllPeriods:
+    """Explicit selection of every Project period in its declaration order."""
+
+    label: ViewPeriodLabel | None = None
 
 
 @dataclass(frozen=True)
@@ -441,7 +455,7 @@ class ViewInput:
     visuals: tuple[ViewVisual, ...] = ()
     hierarchy_column: str | None = None
     background_decoration: tuple[str, str] = ("none", "all")
-    periods: tuple[ViewPeriod, ...] = ()
+    periods: tuple[ViewPeriod, ...] | ViewAllPeriods = ()
     figures: tuple[FigureSpec, ...] = ()
     heading: ViewHeading | None = None
     deadlines: ViewDeadlines | None = None
@@ -492,6 +506,7 @@ class LegendEntry:
     role: str
     label: str
     source_ref: str | None = None
+    swatch_shape: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1150,33 +1165,40 @@ def _view_annotations(body: FrozenDict) -> tuple[FrozenDict, ...]:
                  for index, annotation in enumerate(annotations))
 
 
-def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
+def _view_period_label(raw: Any, path: str) -> ViewPeriodLabel | None:
+    if raw is None:
+        return None
+    if "text" in raw and "template" in raw:
+        raise ContractError("E_VIEW_PERIOD_LABEL_SOURCE", "period label chooses text or template, not both", path)
+    return ViewPeriodLabel(str(raw["placement"]), str(raw.get("overflow", "visible-overflow")),
+                           str(raw["text"]) if "text" in raw else None,
+                           str(raw["template"]) if "template" in raw else None)
+
+
+def _view_periods(raw: Any) -> tuple[ViewPeriod, ...] | ViewAllPeriods:
     """Close the schema-accepted period selection; one entry per Project period (#582)."""
+    if isinstance(raw, Mapping):
+        return ViewAllPeriods(_view_period_label(raw.get("label"), "/body/periods/label"))
     periods = tuple(ViewPeriod(str(item["id"]),
-                               str(item["label"]["placement"]) if "label" in item else None,
-                               str(item["label"].get("overflow", "visible-overflow")) if "label" in item else "visible-overflow",
-                               str(item["label"]["text"]) if "label" in item and "text" in item["label"] else None,
-                               str(item["label"]["template"]) if "label" in item and "template" in item["label"] else None,
+                               _view_period_label(item.get("label"), f"/body/periods/{index}/label"),
                                str(item["variant"]) if "variant" in item else None)
-                    for item in raw)
-    for index, period in enumerate(periods):
-        if period.label_text is not None and period.label_template is not None:
-            raise ContractError("E_VIEW_PERIOD_LABEL_SOURCE", "period label chooses text or template, not both",
-                                f"/body/periods/{index}/label")
+                    for index, item in enumerate(raw))
     if len({item.period_id for item in periods}) != len(periods):
         repeated = sorted({item.period_id for item in periods if [p.period_id for p in periods].count(item.period_id) > 1})
         raise ContractError("E_VIEW_PERIOD_DUPLICATE", f"periods selects a Project period more than once: {repeated}")
     return periods
 
 
-def _validate_period_figures(periods: tuple[ViewPeriod, ...], figures: tuple[FigureSpec, ...]) -> None:
+def _validate_period_figures(periods: tuple[ViewPeriod, ...] | ViewAllPeriods, figures: tuple[FigureSpec, ...]) -> None:
     declared = {item.figure_id: item.scope for item in figures}
-    for index, period in enumerate(periods):
-        if period.label_template is None:
+    selections = (periods,) if isinstance(periods, ViewAllPeriods) else periods
+    for index, period in enumerate(selections):
+        if period.label is None or period.label.template is None:
             continue
-        path = f"/body/periods/{index}/label/template"
+        path = ("/body/periods/label/template" if isinstance(periods, ViewAllPeriods)
+                else f"/body/periods/{index}/label/template")
         try:
-            references = figure_ids(period.label_template, strict=True)
+            references = figure_ids(period.label.template, strict=True)
         except FigureTextError as error:
             raise ContractError(error.code, error.detail, path) from error
         for figure_id in sorted(references):
@@ -1529,7 +1551,8 @@ def _summary_input(body: FrozenDict) -> SummaryProfileInput:
 def _review_detail_input(body: FrozenDict) -> ReviewDetailInput:
     return ReviewDetailInput(tuple(body.get("groupDetails", ())), tuple(str(item) for item in body.get("milestones", ())),
                              tuple(LegendEntry(str(item["role"]), str(item["label"]),
-                                               str(item["sourceRef"]) if "sourceRef" in item else None)
+                                               str(item["sourceRef"]) if "sourceRef" in item else None,
+                                               str(item["swatchShape"]) if "swatchShape" in item else None)
                                    for item in body.get("legend", ())),
                              body.get("observations"))
 

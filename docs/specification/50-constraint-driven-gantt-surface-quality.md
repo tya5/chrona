@@ -589,6 +589,14 @@ relations, retaining arrivals-before-departures and declaration ties within
 each class. This priority pass may be published independently of protected
 feasibility; it retains declaration-based placement identity/output order and
 does not itself enable the quality exception or establish safe-path completeness.
+
+Optional timeline paint (#1561): in semantic relation mode, a declared Theme
+`dependency-critical` role selects that paint for exactly these canonical
+critical facts before Layout; otherwise `dependency` is unchanged. It neither
+changes critical-only View filtering nor recomputes scheduling analysis.
+The routing policy/order is unchanged, but the selected stroke width remains
+part of terminal clearance, feasibility, halo and contrast geometry; it is
+not safe to freeze old route points when a new width no longer fits.
 The protected feasibility contract below applies only under Layout
 `relationRouting.unroutable: suppress`. Under `relax`, `overlap` and `stub`,
 the published #1427 resolution contract applies to critical relations too;

@@ -209,6 +209,7 @@ class SurfaceLegendEntry:
     role: str
     label: str
     source_ref: str | None = None
+    swatch_shape: str | None = None
 
     @property
     def source_identity(self) -> str:

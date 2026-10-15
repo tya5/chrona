@@ -39,7 +39,7 @@ from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import PresentationInfo, UnboundSummarySource
 from chrona.presentation.model.field_role_view import resolve_field_role_view
-from chrona.presentation.contracts.resources import ContractError
+from chrona.presentation.contracts.resources import ContractError, ViewAllPeriods, ViewPeriod
 from chrona.presentation.model.preset_target import PresetVisualProfileFallback
 from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
@@ -356,6 +356,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         summary=summary, locale=environment.locale, color_scale=color_scale, table=table_content,
         group_tints=group_tints, annotation_kind_colors=_annotation_kind_colors(theme),
         actual_variance_colors=resolve_actual_variance_colors(ThemeTokenView(theme)),
+        dependency_critical_role_available=ThemeTokenView(theme).has_role("dependency-critical"),
         annotation_kind_also=_annotation_kind_also(theme))
     try:
         validate_axis_band_fill_targets(selected_content.axis_tiers, ThemeTokenView(theme))
@@ -928,22 +929,27 @@ def _selected_periods(project: dict[str, Any], placements: dict[str, dict[str, A
     if not view.periods:
         return ()
     declared = {item.period_id: item for item in resolve_periods(project, placements)}
-    for index, selected in enumerate(view.periods):
+    selected_periods = (tuple(ViewPeriod(period_id, view.periods.label) for period_id in declared)
+                        if isinstance(view.periods, ViewAllPeriods) else view.periods)
+    for index, selected in enumerate(selected_periods):
         if selected.period_id not in declared:
             known = ", ".join(declared) if declared else "none"
             raise RenderFailed("E_VIEW_PERIOD_UNKNOWN",
                                f"the View selects period {selected.period_id}, which the Project does not declare (declared: {known})",
                                "presentation", f"/body/periods/{index}/id")
     def caption(selected: Any, item: Any, index: int) -> str:
-        if selected.label_template is None:
-            return selected.label_text if selected.label_text is not None else item.title
+        if selected.label is None or selected.label.template is None:
+            return selected.label.text if selected.label is not None and selected.label.text is not None else item.title
         try:
-            return resolve_figure_text(selected.label_template, figures or {}, strict=True)
+            return resolve_figure_text(selected.label.template, figures or {}, strict=True)
         except FigureTextError as error:
-            raise RenderFailed(error.code, error.detail, "presentation", f"/body/periods/{index}/label/template") from error
+            path = ("/body/periods/label/template" if isinstance(view.periods, ViewAllPeriods)
+                    else f"/body/periods/{index}/label/template")
+            raise RenderFailed(error.code, error.detail, "presentation", path) from error
     return tuple(ReviewPeriod(item.period_id, caption(selected, item, index), item.start, item.end,
-                              selected.label_placement, selected.label_overflow, selected.variant)
-                 for index, (selected, item) in enumerate((selected, declared[selected.period_id]) for selected in view.periods))
+                              selected.label.placement if selected.label else None,
+                              selected.label.overflow if selected.label else "visible-overflow", selected.variant)
+                 for index, (selected, item) in enumerate((selected, declared[selected.period_id]) for selected in selected_periods))
 
 
 def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_root: Path,

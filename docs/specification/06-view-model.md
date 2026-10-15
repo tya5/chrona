@@ -280,6 +280,24 @@ is not changed by this rule.
 
 ### 7.1 Named periods (#582)
 
+Alternatively, `periods: {select: all}` selects every Project period in Project
+declaration order (#1560), including an empty selection when none are declared.
+The closed selector MAY carry `label` with the same grammar as an explicit
+entry; that label intent applies independently to every selected period.
+`label: {}` may inherit `viewDefaults.periodLabelPresentation`, with explicit
+View members taking precedence. No label member means bands without labels.
+The selector introduces no per-period variant, inferred dates or Theme policy.
+Explicit id-list ordering, duplicate/unknown-id failures, absent selection and
+the dependency-network exclusion remain unchanged. Expansion occurs after
+Project period resolution, before Layout receives ordinary completed period
+intent; Scene and adapters do not implement selection.
+The shared named-preset View selects all periods and requests their labels.
+It also declares the existing kind bindings for span `note`/`risk` at
+`planned/end` and point `note` at `planned/at`, all with purpose `note`.
+These generic bindings do not require an Actual input; a project-specific
+View may explicitly choose another existing facet/endpoint. Kind matching,
+selection, overrides and placement policies retain Specification44's rules.
+
 A `table-timeline` View MAY select named Project periods (Spec 05 §12.1) with `periods: [{id}]`, each drawn as a band across the plot rows over the period's dates. The selection owns only which periods are shown and in what order (the order is the drawing order); the period's dates are a Project fact and its colour, stroke, opacity and pattern are Theme role `period-band` (Spec 07), its geometry Layout's (Spec 50 §3.4). The band is clipped to the View window and never extends it: a period with no extent left draws nothing and is recorded as the Scene diagnostic `I_LAYOUT_PERIOD_OUTSIDE_WINDOW:<id>`. An id the Project does not declare is `E_VIEW_PERIOD_UNKNOWN` (pointer `/body/periods/<i>/id`; the message lists the declared ids) and a repeated id is `E_VIEW_PERIOD_DUPLICATE`; nothing is skipped silently. The member is optional and additive in `chrona/view/v0.28`; a `dependency-network` View, which has no timeline, MUST NOT declare it. A View without `periods` renders as before.
 
 A selected period MAY also declare `variant`, a `common-v0.1` `slug`. It chooses the paired Theme roles `period-band:<variant>` and, when a label is consumed, `period-label:<variant>` (Specification 07). The variant is View-local presentation intent, not a Project period identifier or a Theme lookup fallback. Without it, the existing unsuffixed roles and output apply. The optional member is additive to the current View version under Specification 56 §3.2.

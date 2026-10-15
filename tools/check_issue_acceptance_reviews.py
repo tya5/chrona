@@ -23,7 +23,23 @@ def _error(path: Path, line: int, code: str) -> str:
 def _cells(line: str) -> tuple[str, ...] | None:
     if not line.startswith("|") or not line.endswith("|"):
         return None
-    return tuple(cell.strip() for cell in line[1:-1].split("|"))
+    content = line[1:-1]
+    cells: list[str] = []
+    start = 0
+    index = 0
+    while index < len(content):
+        if content[index] == "|":
+            backslashes = 0
+            cursor = index - 1
+            while cursor >= start and content[cursor] == "\\":
+                backslashes += 1
+                cursor -= 1
+            if backslashes % 2 == 0:
+                cells.append(content[start:index].strip())
+                start = index + 1
+        index += 1
+    cells.append(content[start:].strip())
+    return tuple(cells)
 
 
 def _is_separator(cells: tuple[str, ...]) -> bool:
