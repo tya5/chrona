@@ -1,0 +1,192 @@
+"""Synthetic public-render evidence for physical point hosting (#1373 row 3)."""
+from __future__ import annotations
+
+from datetime import date
+from pathlib import Path
+from xml.etree import ElementTree
+
+import pytest
+
+from chrona.usecases.render_review import RenderFailed
+from tests.support import synthetic_review as sr
+
+
+def _parts(*, host: bool = True, rows: str = "lanes"):
+    parts = sr.bundle("executive-light")
+    body = parts["view"]["body"]
+    body["rows"] = ({"mode": rows, "packing": ["explicit"], "laneTable": {"label": "lane"}}
+                    if rows == "lanes" else {"mode": rows})
+    body["grouping"] = {"by": "none", "missing": "ungrouped"}
+    body["visibility"]["labels"] = {
+        "placement": "plot", "content": ["title"], "side": "end", "overflow": "suppress"}
+    body["visibility"]["relations"] = {"mode": "semantic", "overflow": "suppress"}
+    if host:
+        marks = parts["layout"]["reviewSurface"].setdefault("marks", {})
+        marks.setdefault("points", {})["host"] = "span-when-inside"
+    return parts
+
+
+def _render(tmp_path, objects, *, parts=None, relations=(), actual=None):
+    Path(tmp_path).mkdir(parents=True, exist_ok=True)
+    return sr.render(tmp_path, sr.project(objects, relations), presentation=parts or _parts(), actual=actual)
+
+
+def _mark(rendered, purpose, source_ref, source_kind=None):
+    return next(item for item in rendered.surface.primitives
+                if item.purpose == purpose and item.source_ref == source_ref
+                and (source_kind is None or item.source_kind == source_kind))
+
+
+def _centre(bounds, axis):
+    start, size = (bounds[1], bounds[3]) if axis == "block" else (bounds[0], bounds[2])
+    return start + size / 2
+
+
+def test_hosting_is_default_off_and_preserves_the_point_when_omitted(tmp_path):
+    objects = {"host": sr.span("host", date(2026, 1, 1), 20),
+               "gate": {**sr.point("gate", date(2026, 1, 10)), "parent": "host"}}
+    off = _render(tmp_path / "off", objects, parts=_parts(host=False))
+    on = _render(tmp_path / "on", objects)
+    off_mark, on_mark = _mark(off, "planned", "gate"), _mark(on, "planned", "gate")
+    host = _mark(on, "planned", "host")
+    assert _centre(off_mark.bounds, "block") != pytest.approx(_centre(host.bounds, "block"))
+    assert _centre(on_mark.bounds, "block") == pytest.approx(_centre(host.bounds, "block"))
+    assert _centre(on_mark.bounds, "inline") == pytest.approx(_centre(off_mark.bounds, "inline"))
+    assert off_mark.scene_id == on_mark.scene_id
+
+
+def test_cross_row_parent_host_keeps_lane_identity_and_renders_label_and_dependency(tmp_path):
+    objects = {
+        "host": sr.span("host", date(2026, 1, 1), 20, owner="a", title="Host span"),
+        "gate": {**sr.point("gate", date(2026, 1, 1), owner="b", title="Review gate"), "parent": "host"},
+        "later": sr.span("later", date(2026, 1, 24), 5, owner="b"),
+    }
+    relations = [{"id": "gate-to-later", "type": "dependency", "lag": "0d",
+                  "from": {"object": "gate", "endpoint": "at"},
+                  "to": {"object": "later", "endpoint": "start"}}]
+    parts = _parts()
+    parts["view"]["body"]["visibility"]["labels"]["side"] = "start"
+    rendered = _render(tmp_path, objects, parts=parts, relations=relations)
+    gate, host = _mark(rendered, "planned", "gate"), _mark(rendered, "planned", "host")
+    assert _centre(gate.bounds, "block") == pytest.approx(_centre(host.bounds, "block"))
+    assert gate.lane_row_id != host.lane_row_id  # semantic membership stays with the child
+    label = _mark(rendered, "member-label", "gate")
+    assert "Review gate" in label.text
+    host_row = next(row for row in rendered.surface.rows if row.row_id == host.lane_row_id)
+    assert label.lane_row_id == gate.lane_row_id
+    assert host_row.bounds[1] <= label.bounds[1]
+    assert label.bounds[1] + label.bounds[3] <= host_row.bounds[1] + host_row.bounds[3]
+    svg_text = "".join(ElementTree.fromstring(rendered.artifact.content).itertext())
+    assert "Review gate" in svg_text
+    dependency, = [item for item in rendered.surface.primitives
+                   if item.purpose == "dependency" and item.source_kind == "relation"]
+    assert len(dependency.points) >= 2
+    svg_routes = [item for item in ElementTree.fromstring(rendered.artifact.content).iter()
+                  if item.tag.endswith("path") and item.get("data-purpose") == "dependency"]
+    assert any(item.get("d") for item in svg_routes)
+
+
+def test_automatic_rows_parent_host_label_uses_host_row_band(tmp_path):
+    objects = {"host": sr.span("host", date(2026, 1, 1), 20, title="Host span"),
+               "gate": {**sr.point("gate", date(2026, 1, 1), title="Review gate"), "parent": "host"}}
+    parts = _parts(rows="automatic")
+    parts["view"]["body"]["visibility"]["labels"]["side"] = "start"
+    rendered = _render(tmp_path, objects, parts=parts)
+    gate, host = _mark(rendered, "planned", "gate"), _mark(rendered, "planned", "host")
+    label = _mark(rendered, "member-label", "gate")
+    assert _centre(gate.bounds, "block") == pytest.approx(_centre(host.bounds, "block"))
+    host_row = next(row for row in rendered.surface.rows if row.row_id == "host")
+    assert host_row.bounds[1] <= label.bounds[1]
+    assert label.bounds[1] + label.bounds[3] <= host_row.bounds[1] + host_row.bounds[3]
+    assert "Review gate" in "".join(ElementTree.fromstring(rendered.artifact.content).itertext())
+
+
+def test_declared_attachment_precedes_direct_parent(tmp_path):
+    objects = {
+        "parent": sr.span("parent", date(2026, 1, 1), 20),
+        "attached": sr.span("attached", date(2026, 1, 5), 10, owner="b"),
+        "gate": {**sr.point("gate", date(2026, 1, 10)), "parent": "parent", "attachesTo": "attached"},
+    }
+    rendered = _render(tmp_path, objects)
+    gate = _mark(rendered, "planned", "gate")
+    assert _centre(gate.bounds, "block") == pytest.approx(_centre(_mark(rendered, "planned", "attached").bounds, "block"))
+    assert _centre(gate.bounds, "block") != pytest.approx(_centre(_mark(rendered, "planned", "parent").bounds, "block"))
+
+
+@pytest.mark.parametrize("offset", [0, 20], ids=["inclusive-start", "inclusive-end"])
+def test_original_span_interval_includes_both_point_endpoints(tmp_path, offset):
+    start = date(2026, 1, 1)
+    objects = {"host": sr.span("host", start, 20),
+               "gate": {**sr.point("gate", start.fromordinal(start.toordinal() + offset)), "parent": "host"}}
+    rendered = _render(tmp_path, objects)
+    gate, host = _mark(rendered, "planned", "gate"), _mark(rendered, "planned", "host")
+    assert _centre(gate.bounds, "block") == pytest.approx(_centre(host.bounds, "block"))
+    days_from_domain = (start.fromordinal(start.toordinal() + offset) - rendered.surface.scale_manifest.domain_start).days
+    assert _centre(gate.bounds, "inline") == pytest.approx(
+        rendered.surface.scale_manifest.origin + days_from_domain * rendered.surface.scale_manifest.unit_ratio)
+
+
+@pytest.mark.parametrize("point_day", [date(2025, 12, 31), date(2026, 1, 22)], ids=["before", "after"])
+def test_parent_outside_original_interval_leaves_point_in_its_own_row(tmp_path, point_day):
+    objects = {"host": sr.span("host", date(2026, 1, 1), 20),
+               "gate": {**sr.point("gate", point_day), "parent": "host"}}
+    rendered = _render(tmp_path, objects)
+    gate, host = _mark(rendered, "planned", "gate"), _mark(rendered, "planned", "host")
+    assert _centre(gate.bounds, "block") != pytest.approx(_centre(host.bounds, "block"))
+
+
+def test_point_without_any_attachment_or_parent_stays_in_its_own_row(tmp_path):
+    objects = {"host": sr.span("host", date(2026, 1, 1), 20),
+               "gate": sr.point("gate", date(2026, 1, 10))}
+    rendered = _render(tmp_path, objects)
+    assert _centre(_mark(rendered, "planned", "gate").bounds, "block") != pytest.approx(
+        _centre(_mark(rendered, "planned", "host").bounds, "block"))
+
+
+def test_unselected_parent_is_not_a_physical_host(tmp_path):
+    objects = {"host": sr.span("host", date(2026, 1, 1), 20),
+               "gate": {**sr.point("gate", date(2026, 1, 10)), "parent": "host"}}
+    parts = _parts()
+    parts["view"]["body"]["selection"] = {"include": {"ids": ["gate"]}}
+    rendered = _render(tmp_path, objects, parts=parts)
+    assert not any(item.purpose == "planned" and item.source_ref == "host" for item in rendered.surface.primitives)
+    assert _mark(rendered, "planned", "gate")
+
+
+def test_actual_point_uses_its_own_source_facet_and_unhosted_actual_stays_put(tmp_path):
+    objects = {"host": sr.span("host", date(2026, 1, 1), 20),
+               "gate": {**sr.point("gate", date(2026, 1, 10)), "parent": "host"}}
+    actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "observed",
+              "body": {"asOf": "2026-01-25", "observations": [
+        {"id": "gate-observed", "sequence": 1, "projectObjectId": "gate", "actual": {"at": "2026-01-25"}}]}}
+    rendered = _render(tmp_path, objects, actual=actual)
+    host, planned = _mark(rendered, "planned", "host"), _mark(rendered, "planned", "gate")
+    observed = _mark(rendered, "actual", "gate")
+    assert _centre(planned.bounds, "block") == pytest.approx(_centre(host.bounds, "block"))
+    assert _centre(observed.bounds, "block") != pytest.approx(_centre(host.bounds, "block"))
+
+
+def test_two_non_lane_hosted_points_at_same_date_fail_fixed_overlap(tmp_path):
+    objects = {
+        "host": sr.span("host", date(2026, 1, 1), 20),
+        "gate-a": {**sr.point("gate-a", date(2026, 1, 10)), "parent": "host"},
+        "gate-b": {**sr.point("gate-b", date(2026, 1, 10)), "parent": "host"},
+    }
+    parts = _parts(rows="automatic")
+
+    with pytest.raises(RenderFailed) as raised:
+        _render(tmp_path / "hosted", objects, parts=parts)
+
+    assert raised.value.code == "E_LAYOUT_POINT_HOST_OVERLAP"
+
+
+def test_two_same_date_points_without_hosting_policy_keep_existing_rendering(tmp_path):
+    objects = {
+        "host": sr.span("host", date(2026, 1, 1), 20),
+        "gate-a": {**sr.point("gate-a", date(2026, 1, 10)), "parent": "host"},
+        "gate-b": {**sr.point("gate-b", date(2026, 1, 10)), "parent": "host"},
+    }
+    rendered = _render(tmp_path, objects, parts=_parts(host=False, rows="automatic"))
+
+    assert len([item for item in rendered.surface.primitives if item.purpose == "planned"
+                and item.source_ref in {"gate-a", "gate-b"}]) == 2

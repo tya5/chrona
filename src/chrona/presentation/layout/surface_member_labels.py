@@ -269,11 +269,18 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                             or lane_measure.candidates != ladder):
                         raise LayoutError("E_LAYOUT_LANE_PREFLIGHT_INVALID", f"/placement/member-label:{instance_id}")
                 sides = tuple(side for side in ladder if side != "suppress")
+                physical_row_id = (mark.physical_host.row_id
+                                   if mark is not None and mark.physical_host is not None
+                                   else review_row.row_id)
+                label_bounds = row_bands.get(physical_row_id)
+                if label_bounds is None:
+                    raise LayoutError("E_LAYOUT_LANE_PREFLIGHT_INVALID",
+                                      f"/placement/member-label:{instance_id}")
                 requests.append(LabelRequest(f"member-label:{instance_id}", item.object_id, " ".join(parts),
                     anchor, sides, request.surface_content.label_text_role or "text", "plot-label", CollisionDomain("timeline", "overlay"),
                     "visible-overflow" if attached is not None or key_row else "suppress" if lane_mode else
                     "suppress" if "suppress" in ladder else contract.labels.overflow,
-                    wrap, bounds=row_bands.get(review_row.row_id),
+                    wrap, bounds=label_bounds,
                     inside_host_obstacle_id=host_mark_id if mark is not None else None,
                     semantic_id="memberLabel", lane_row_id=lane[0] if lane else None,
                     lane_member_id=lane[1] if lane else None,
