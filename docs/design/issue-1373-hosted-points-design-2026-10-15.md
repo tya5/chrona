@@ -1,7 +1,7 @@
 # #1373 row 3: physical point hosting
 
-Design candidate; not implementation authorization until the architecture review
-and implementation plan are published. [Plan](../planning/active/issue-1373-hosted-points-design-plan-2026-10-15.md).
+Selected design; implementation still waits for the architecture review,
+implementation plan and #1397 row 3. [Plan](../planning/active/issue-1373-hosted-points-design-plan-2026-10-15.md).
 Authority: [reviewer boundaries](https://github.com/tya5/chrona/issues/1373#issuecomment-6184233415).
 
 ## Contract
@@ -77,11 +77,45 @@ the View's half-open window admission is independent of inclusive host eligibili
   broadening `overlay_with` across semantic lanes. Only each resolved child/host
   pair may intentionally overlap; unrelated points retain collision checks.
   Preflight must prove the same physical bounds and exact overlap pairs emitted
-  by final composition. This structural change requires explicit unit coverage
-  before the implementation plan is finalized; it is not a post-render patch.
+  by final composition; it is not a post-render patch. See the allocation
+  contract below.
 - Scene emits ordinary completed marks/text/routes. Adapters do not place,
   fit, infer hosts or change dates. The existing actual-ground contrast gate
   remains enforced for point and bar; no automatic recolouring or exemption.
+
+## Facet allocation contract
+
+One immutable resolved host plan joins original selected child/host occurrences
+and facets before packing. It has no coordinates and performs no row assignment.
+Window admission is an explicit input; final composition consumes that same plan,
+not a second heuristic host search. Non-lane composition uses the same resolver.
+
+Keep the original semantic footprint inventory intact. Derive an allocation-only
+inventory by moving each hosted facet's glyph parts and mark-bound visuals to its
+host span's allocation unit, translated into the host's zero-origin frame. Each
+source facet occurs exactly once across the derived units. The child keeps its
+semantic lane and its remaining facets; a unit with no remaining physical facets
+is admitted only by the explicit hosted-facet account, never by pretending it was
+window-omitted. Existing unhosted inputs keep their allocation and order.
+
+Pack each host assembly as a unit. Add only exact host-mark/hosted-mark overlay
+pairs to that unit; preserve existing compound-paint overlays, never grant a
+child/child or icon/text blanket exemption. Two hosted glyphs that cannot occupy
+their fixed truthful positions without an undeclared collision fail with
+`E_LAYOUT_POINT_HOST_OVERLAP` at `/projection/items`, naming both identities.
+Do not hide a point, change its date, or move it to another host subtrack.
+
+The result retains semantic instance tracks and adds a source-facet-to-physical-
+frame map. Final composition uses the host's allocated track origin plus the
+same zero-origin facet offset; no absolute cross-lane offset is guessed before
+row allocation. Labels retain their semantic owner but their measured demand
+and candidate band use the resolved physical row. Original/final inventories
+must prove identical facet IDs and translated footprints. Validators compare
+against this physical map while preserving semantic lane emission accounting.
+
+This separates allocation from ownership inside Layout; it does not relax the
+existing same-lane `overlay_with` rule on the semantic inventory. The no-policy
+path does not build or consume a physical-host map.
 
 ## Alternatives and migration
 
@@ -100,8 +134,6 @@ bands, every connector egress caller, and actual adapter output. Acceptance
 must include cross-row parent hosting with labels and dependencies enabled,
 not only a point already sharing its host's row.
 
-Open architecture decision: choose the minimal facet-allocation record that
-preserves existing subtrack and visible-emission invariants, and specify the
-failure for two fixed hosted glyphs that physically collide. Do not finalize
-implementation planning until that decision is reviewed. A draft is not a
-completed design or permission to change product code.
+The physical allocation contract resolves the earlier preflight gap. Review its
+partition proof, exact overlap authority and final-frame equivalence before
+publishing the implementation plan. A review is not evidence of implemented code.

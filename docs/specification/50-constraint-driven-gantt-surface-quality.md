@@ -1152,6 +1152,52 @@ rule above. It does not make a valid source binding an error.
 Entries without `sourceRef` retain
 their existing behavior and identity.
 
+### 3.5 Physical point hosting (#1373)
+
+**Selected design; implementation pending for #1373 row 3.**
+Layout Profile `reviewSurface.marks.points.host: span-when-inside` opts into
+placing admitted point facets on selected span facets; omission keeps existing
+output. Project-declared `attachesTo` takes precedence over the direct Project
+`parent` when eligible. An ineligible attachment permits the direct parent;
+grandparents and inferred row/predecessor attachments are not host declarations.
+Same temporal facet, source kind and scenario identity are required. Compare
+original semantic dates inclusively, `start <= at <= end`; never substitute
+clipped bounds or half-open packing/window intervals. Missing, outside,
+unselected or nondrawable hosts leave the point unchanged. A missing-Actual
+placeholder is not an observed point; folded/header-only and hidden rollup
+marks do not become hosts.
+
+Prefer a unique qualifying host occurrence in the child's review row, otherwise
+require a unique qualifying occurrence in the selected source. An ambiguous
+host is `E_LAYOUT_POINT_HOST_AMBIGUOUS` at `/projection/items`, with child and
+candidate identities, not an arbitrary first match.
+
+Keep the point's date-derived inline centre, Theme size and glyph; centre it on
+the host span's block axis. Endpoint glyphs may protrude; do not clamp dates,
+shrink glyphs or clip them to the capsule. Complete paths, parts, ports, bounds
+and window records together, with paint order above that exact host. Preserve
+child source/provenance and semantic row/lane/member identity. The existing
+half-open View window admission still applies independently. Theme owns ink,
+size and outline; actual-ground contrast remains mandatory.
+
+One typed host relation drives provisional and final Layout geometry. Separate
+physical facet allocation from semantic ownership: hosted facets contribute once
+to the host's allocation, with host-relative zero-origin offsets reused at its
+final allocated origin. A hosted-only child is not window-omitted; validate an
+exact source-facet partition and final translated-footprint equivalence. Do not
+broaden semantic same-lane overlays. Only each exact point/host-mark pair may
+overlap intentionally; incompatible fixed hosted glyphs fail with
+`E_LAYOUT_POINT_HOST_OVERLAP` at `/projection/items` and named identities,
+not a shifted date, hidden point or new host subtrack.
+
+Plot labels follow the physical host row for measured demand, association and
+candidate bounds, while keeping child identity; table rows do not move.
+Relations and annotation leaders retain the point's semantic endpoint. The exact
+resolved span may be exempt only on the finite endpoint egress corridor to its
+exposed boundary, never on the route body. Every candidate/recovery caller uses
+that same typed host relationship, not a generic comparison-cluster insertion.
+Scene and adapters project completed ordinary primitives without hosting policy.
+
 ## 4. Schema and normalization
 
 Update View schema/normalizer for the label overflow field, relation object form, and grouping presentation. Update Layout Profile schema/normalizer for relation routing. Preserve legacy `relations: semantic` by ingress-normalizing it to `{mode: semantic, overflow: visible-overflow}`. Preserve existing boolean or shorthand labels through the existing ingress adapter and normalize before Layout.
