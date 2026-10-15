@@ -5497,12 +5497,12 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:tvac:Δ` | `text` | 872.965, 191.000 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:vibration:Work package` | `text` | 585.893, 161.000 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:integration:Baseline finish` | `variance-on-track` | 811.887, 131.000 | `canvas` | canvas | `#0B1220` | fill | 7.032 | 4.500 | info |
-| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:integration:Δ` | `variance-on-track` | 867.272, 131.000 | `canvas` | canvas | `#0B1220` | fill | 7.032 | 4.500 | info |
+| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:integration:Δ` | `variance-on-track` | 867.273, 131.000 | `canvas` | canvas | `#0B1220` | fill | 7.032 | 4.500 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:vibration:Baseline finish` | `variance-on-track` | 811.887, 161.000 | `canvas` | canvas | `#0B1220` | fill | 7.032 | 4.500 | info |
-| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:vibration:Δ` | `variance-on-track` | 867.272, 161.000 | `canvas` | canvas | `#0B1220` | fill | 7.032 | 4.500 | info |
+| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:vibration:Δ` | `variance-on-track` | 867.273, 161.000 | `canvas` | canvas | `#0B1220` | fill | 7.032 | 4.500 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `column:Baseline finish` | `text` | 774.178, 50.875 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `column:Work package` | `text` | 550.040, 50.875 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
-| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `column:Δ` | `text` | 875.672, 50.875 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
+| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `column:Δ` | `text` | 875.673, 50.875 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `title` | `text` | 154.500, 68.760 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `actual:review-lane:["generated","ait","integration"]:integration` | `actual` | 1457.710, 738.250 | `planned:review-lane:["generated","ait","integration"]:integration` | flat | `#2C2138` | fill | 7.730 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `actual:review-lane:["generated","ait","integration"]:vibration` | `actual` | 1517.165, 738.250 | `planned:review-lane:["generated","ait","integration"]:vibration` | flat | `#2C2138` | fill | 7.730 | 3.000 | info |
