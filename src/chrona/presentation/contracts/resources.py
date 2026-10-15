@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime, timedelta
 from enum import StrEnum
 import math
 import re
@@ -48,6 +48,38 @@ class UnsupportedResourceVersionError(ContractError):
         detail = (f"{identity.kind} id={identifier} declares version {found}; "
                   f"supported: {', '.join(supported_versions)}")
         super().__init__("E_RESOURCE_VERSION_UNSUPPORTED", detail, "/version")
+
+
+def _actual_day(value: object) -> date | None:
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    try:
+        return date.fromisoformat(str(value)[:10]) if isinstance(value, str) else None
+    except ValueError:
+        return None  # calendar validity is reported by a later phase
+
+
+def _check_actual_intervals(body: Mapping[str, Any]) -> None:
+    """Reject an Actual interval whose exclusive `finish` is not after its `start` (#1565)."""
+    observations = body.get("observations", ())
+    if not isinstance(observations, (tuple, list, FrozenList)):
+        return
+    for index, observation in enumerate(observations):
+        actual = observation.get("actual") if isinstance(observation, Mapping) else None
+        if not isinstance(actual, Mapping):
+            continue
+        start, finish = _actual_day(actual.get("start")), _actual_day(actual.get("finish"))
+        if start is None or finish is None or finish > start:
+            continue
+        shown = actual["start"]
+        raise ContractError(
+            "E_ACTUAL_FINISH_NOT_AFTER_START",
+            f"observation {observation.get('id')!r}: actual finish {actual['finish']} is not after actual start {shown}. "
+            f"`finish` is the exclusive end (the day after the last day); for a one-day task write "
+            f"finish: {(start + timedelta(days=1)).isoformat()}",
+            f"/body/observations/{index}/actual/finish")
 
 
 def _closure_kind_error(identity: ClosureIdentity, expected: str, found: object) -> ContractError:
@@ -1542,6 +1574,7 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
              if "previousScene" in inputs else None),
         )
     if identity.kind == "actual-set":
+        _check_actual_intervals(body)
         return ActualSetContract(identity, version, frozen)
     if identity.kind == "snapshot-ref":
         return SnapshotRefContract(identity, version, ResourceReference.from_value(body["project"]))
