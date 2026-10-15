@@ -33,6 +33,7 @@ schemas:
     frozenDefs:
       markerPresentation: "sha256:a15f2f9e08b892e037e9fd75f72f443b26f26fa09ef2d653a3959701bcfd6791"
       periodLabelPresentation: "sha256:7bf332f1bcd2dae6c8cee3e438567a540c7e83a87f4cfbfb54e7d19ee02df7e3"
+      periodLabelSelection: "sha256:276f3487e4c0d0037858a6d842789baab1e53c14833e18dcfacdd7df3d7beec7"
       visualPresentation: "sha256:9dd63598ad4a0a0fe77a4ecf066ba7a5db17bdf62859155a2e658411105a6351"
       visualPresentationByKind: "sha256:ae83b3150041dbb54fed2a8d5d350a15fbb2c4c0d7a643a67f9817058a489998"
       tableMissingText: "sha256:4185fdfe4f1f1c64f9847db57679ece4ff4b0a534066acac0ae5576484f7d937"
@@ -142,6 +143,7 @@ schemas:
       annotationPurpose: "sha256:6334d4284f2d7977d981b54609eb2eebdcd0cc24f3e2a490d6aa428391c7cccf"
       projectFieldRole: "sha256:436a55cdd7ef53cdbf6e30d445032d0cb7ea7b3ef6b9276ebff2b46caab2e338"
       fieldRoleGroupingFallback: "sha256:03836c55cd9b84ad3c627fb0b70210197b7d5214dc5621b216103059e4e94c0d"
+      viewPeriodSelection: "sha256:1b6e39b52bc4e61b604b2f2c594e171ea659dd9b47b83a45a2c0d84d32cb2eb2"
       plannedActualFacet: "sha256:1661dd28bc389d4663f1ff8477c2fed047bcd140b3ccd88cd4e65d59d0f044fd"
       annotationSide: "sha256:8b7453e1c16755eed298aa09fc8d5702fb7a24359f4f90e5063d240725606ca9"
       annotationAlignment: "sha256:78e88eae1e0678883bce8130ce34bc068d2ec435da9e905ba651c4345078f058"
