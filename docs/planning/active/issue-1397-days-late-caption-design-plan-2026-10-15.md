@@ -1,6 +1,6 @@
 # Issue 1397 row 3 — design plan
 
-Status: design preparation; no caption implementation. Public baseline:
+Status: design and architecture review complete; no caption implementation. Public baseline:
 `d5564a346c7b91335e4e58379a7b9d7e0e7ea7ef`.
 
 ## Authority and scope
@@ -44,6 +44,9 @@ does not close the parent issue or change `examples/**`.
 5. Review against Specs 04/06/07/49/50/56 and the existing figure, typography,
    semantic registry, routing and adapter boundaries. Publish the design and
    architecture review, then finalize the implementation plan before code.
+
+Selected contract: [design](../../design/issue-1397-days-late-caption-design-2026-10-15.md);
+[architecture review](../../reviews/current/issue-1397-days-late-caption-architecture-review-2026-10-15.md).
 
 ## Required acceptance evidence
 
