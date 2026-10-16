@@ -36,13 +36,20 @@ def point(object_id: str, at: date, *, owner: str = "a", title: str | None = Non
             "schedule": {"mode": "fixed-point", "at": at.isoformat()}}
 
 
-def project(objects: Mapping[str, Mapping[str, Any]], relations: Iterable[Mapping[str, Any]] = ()) -> dict[str, Any]:
-    """A Project document holding exactly the given objects."""
+def project(objects: Mapping[str, Mapping[str, Any]], relations: Iterable[Mapping[str, Any]] = (), *,
+            responsible_field_role: bool = True) -> dict[str, Any]:
+    """A Project document holding the given objects and explicit owner-role binding when owners are present.
+
+    Set `responsible_field_role=False` for tests whose subject is an intentionally unbound responsible role.
+    """
     owners = sorted({str(value["fields"]["owner"]) for value in objects.values() if "owner" in value.get("fields", {})})
-    return {"version": "timeline/v0.7", "project": {"id": "synthetic", "title": "Synthetic"},
-            "entities": {owner: {"type": "team", "title": f"Team {owner}"} for owner in owners},
-            "objects": {key: deepcopy(dict(value)) for key, value in objects.items()},
-            "relations": [dict(item) for item in relations]}
+    project = {"version": "timeline/v0.7", "project": {"id": "synthetic", "title": "Synthetic"},
+               "entities": {owner: {"type": "team", "title": f"Team {owner}"} for owner in owners},
+               "objects": {key: deepcopy(dict(value)) for key, value in objects.items()},
+               "relations": [dict(item) for item in relations]}
+    if responsible_field_role and owners:
+        project["fieldRoles"] = {"responsible": "owner"}
+    return project
 
 
 def with_calendar(source: dict[str, Any], working_days: Iterable[str] = ("mon", "tue", "wed", "thu", "fri"),

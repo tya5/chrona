@@ -22,7 +22,7 @@ def _source(*, roles=True):
     source = sr.with_calendar(sr.project({
         "a": sr.span("a", date(2026, 2, 1), 10, owner="engineering"),
         "b": sr.span("b", date(2026, 2, 5), 10, owner="operations"),
-    }))
+    }, responsible_field_role=roles))
     source["objects"]["a"]["fields"]["stage"] = "Design"
     source["objects"]["b"]["fields"]["stage"] = "Build"
     if roles:

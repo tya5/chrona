@@ -28,7 +28,7 @@ body:
       - point
   grouping:
     by: {fieldRole: responsible}
-    fallback: objectType
+    fallback: hierarchy
     missing: Unassigned
   ordering:
     by: plannedStart
