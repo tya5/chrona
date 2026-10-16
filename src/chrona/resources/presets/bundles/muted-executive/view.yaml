@@ -101,7 +101,7 @@ body:
     headerOrientation: horizontal
   - id: Owner
     text: {wrap: allow}
-    source: {field: owner}
+    source: {fieldRole: responsible}
     missing: em-dash
     align: start
     width: content

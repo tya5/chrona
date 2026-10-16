@@ -13,8 +13,8 @@ body:
       objectTypes:
       - group
   grouping:
-    by: field
-    field: owner
+    by: {fieldRole: responsible}
+    fallback: none
     missing: Other
     order:
       by: earliestPlannedStart
