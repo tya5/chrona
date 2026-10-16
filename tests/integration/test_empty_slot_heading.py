@@ -122,12 +122,11 @@ def _render_empty_legend(tmp_path, name, *, headed):
 def test_empty_legend_placeholder_does_not_reserve_a_suppressed_heading(tmp_path):
     plain = _render_empty_legend(tmp_path, "legend-plain", headed=False)
     headed = _render_empty_legend(tmp_path, "legend-headed", headed=True)
-    plain_slot = next(slot for slot in plain.surface.slots if slot.slot_id == "legend")
-    headed_slot = next(slot for slot in headed.surface.slots if slot.slot_id == "legend")
-
-    assert headed_slot.bounds == plain_slot.bounds
+    assert "legend" not in {slot.slot_id for slot in plain.surface.slots}
+    assert "legend" not in {slot.slot_id for slot in headed.surface.slots}
     assert "slot-heading:legend" not in {item.scene_id for item in headed.surface.primitives}
-    assert "I_LAYOUT_SLOT_HEADING_OMITTED:legend:no-content" in headed.surface.diagnostics
+    assert not any(item.startswith("I_LAYOUT_SLOT_HEADING_OMITTED:legend:")
+                   for item in headed.surface.diagnostics)
     assert headed.scene.manifest.content_family_counts.legend_entries == 0
     assert headed.artifact.content == plain.artifact.content
 

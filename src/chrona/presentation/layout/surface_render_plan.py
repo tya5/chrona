@@ -142,9 +142,9 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         absent_sources.add("annotations")
     if not selected_content.legend_entries:
         absent_sources.add("legend")
-    resolved_layout = omit_absent_layout_sources(resolved_layout, frozenset(absent_sources))
     selected_content = bind_slot_heading_templates(resolved_layout, content=selected_content, view=view,
                                                   figures=dict(projection.figures), measured=measured)
+    resolved_layout = omit_absent_layout_sources(resolved_layout, frozenset(absent_sources))
     # A declared slot heading is part of its content-sized slot's measurement (#1064).
     measured = reserve_slot_heading_blocks(measured, resolved_layout, ThemeTokenView(theme), content=selected_content,
                                            font_metrics=font_metrics)

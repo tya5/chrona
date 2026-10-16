@@ -32,6 +32,16 @@ Layout preserves typed source availability through validation and zero-content
 measurement, then reuses semantic-absence tree normalization and stable-ID path
 remapping before allocation. Empty source subtrees have no frame/caption placement
 notice; content-present placement, suppression and error rules are unchanged.
+CI [38928337073](https://github.com/tya5/chrona/actions/runs/38928337073)
+failed all three pytest shards (3/2/4 cases); derived-ready failed consequentially.
+Three absent-slot template cases exposed validation occurring after pruning:
+binding now precedes pruning, while reservation follows it. Two as-of controls
+now supply a nonempty legend; one empty-legend heading control asserts semantic
+absence. Three Scene goldens were independently reproduced using published-base
+preparation: only the removed legend slot and empty sibling origins differ;
+SVG, primitives and diagnostics are byte-identical. Their Scene hashes alone
+are updated. Final-head CI must verify the complete correction.
+
 Core, View selection, Scene and adapters are unchanged. Specs08/33 are aligned;
 independent architecture review found no remaining blocker. Generated evidence
 is not authored or committed by this PR.
