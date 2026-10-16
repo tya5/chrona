@@ -2,12 +2,20 @@
 
 # Issue #1608 — conditional heading parts
 
-Source `fba7e51474bdd5d30db5ebaeb3bbcfe9b0e2c21c`, ready base `6bb56c205`.
+Heading source `fba7e5147`, face-closure correction `40380c7c1`, reconciled
+with ready base `d2d5460e6`.
 [Design/architecture/implementation plan](https://github.com/tya5/chrona/issues/1608#issuecomment-6225977074)
 and [frozen shared-schema integration](https://github.com/tya5/chrona/issues/1608#issuecomment-6226005448).
 Ingress validates typed parts; Layout binds raw guards before measurement and
 includes their late-count dependencies. No Scene or adapter policy is added.
 Proposed three-design YAML adoption awaits the reviewer's acceptance in the PR.
+The [integration correction](https://github.com/tya5/chrona/issues/1608#issuecomment-6226118452)
+shares existing Layout fallback-run completion with measured sources and carries
+those facts through independent heading and network projections. It changes no
+geometry or Latin-only serialization. [Synthetic controls](../../../tests/integration/test_heading_face_closure.py)
+verify the exact Japanese/Latin run identities and widths, whole/split heading
+equivalence, and both network title/node producers. No fallback is selected by
+Scene or an adapter.
 
 ## Literal issue acceptance
 
@@ -24,10 +32,12 @@ Proposed three-design YAML adoption awaits the reviewer's acceptance in the PR.
 
 ## Programme-level criteria (optional)
 
-Validation: 46 heading/count/closure integration tests passed before adding the
-additional deferred-zero case; all ten new controls then passed. Legacy focused
-heading/contracts/count-format/content batch: 239 passed. Schema equivalence:
-two explicitly reviewed widened sites, 36 equal schemas, 576 documents and 739
-probes; L2+L3 20.6 seconds within its 60-second gate. Original shared definitions
-remain frozen. Full CI and exact review-containing main three-OS release remain
-open; this is not issue-release acceptance.
+Validation: 46 heading/count/closure integrations and all ten final zero-guard
+controls passed. Legacy heading/contracts/count-format/content: 239 passed;
+shared-schema/inventory: 147 passed. Face-closure integration: 67 passed;
+Layout text/heading: 76 passed; final network/title/omission batch: 25 passed.
+Schema equivalence after reconciliation: two explicit widening deltas, 36 equal
+schemas, 576 documents/739 probes; L2+L3 20.7 seconds within its 60-second gate.
+The proven-stale I1583 schema delta was pruned; frozen definitions are unchanged.
+Full CI and exact review-containing main three-OS release remain open; this is
+not issue-release acceptance.
