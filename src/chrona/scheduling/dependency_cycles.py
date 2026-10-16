@@ -32,6 +32,16 @@ _FIXED = frozenset({"fixed-point", "fixed-span"})
 _SPANS = frozenset({"scheduled", "fixed-span", "rollup"})
 
 
+ARROW = "->"
+
+
+def relation_reference(index: int, endpoints: tuple[str, str] | None) -> str:
+    """`/relations/auth -> payments` (an ASCII arrow: stdout encodings differ across platforms) for a relation between two objects, else its list index.
+
+    Diagnostics name ids, not positions; `core.source_ranges.locate` resolves this form back to the relation's line."""
+    return f"/relations/{endpoints[0]} {ARROW} {endpoints[1]}" if endpoints else f"/relations/{index}"
+
+
 @dataclass(frozen=True)
 class DependencyCycle:
     """One cycle: its objects in Project order and the relation (by index) declared last inside it."""
@@ -39,6 +49,8 @@ class DependencyCycle:
     objects: tuple[str, ...]
     closing_relation: int
     unsatisfiable: bool
+    closing_endpoints: tuple[str, str] | None = None
+    """The object ids the closing relation runs between (from, to); the diagnostic names the relation by them (#1585)."""
 
     def diagnostic(self) -> Diagnostic:
         code = "E_UNSATISFIABLE_DEPENDENCIES" if self.unsatisfiable else "E_UNSUPPORTED_CYCLE"
@@ -46,7 +58,7 @@ class DependencyCycle:
             code,
             f"Dependency cycle among {', '.join(self.objects)}; the relation at this path closes it. "
             "Objects that wait on each other cannot be scheduled: remove or redirect one relation in the cycle",
-            f"/relations/{self.closing_relation}",
+            relation_reference(self.closing_relation, self.closing_endpoints),
         )
 
 
@@ -117,7 +129,9 @@ def find_dependency_cycles(project: Mapping[str, Any]) -> tuple[DependencyCycle,
     for members, inside in found:
         ordered = tuple(sorted(members, key=order.__getitem__))
         carrying = [relations[index] for index in sorted(inside)]
-        cycles.append(DependencyCycle(ordered, max(inside), _has_positive_dependency_cycle({"relations": carrying})))
+        closing = max(inside)
+        cycles.append(DependencyCycle(ordered, closing, _has_positive_dependency_cycle({"relations": carrying}),
+                                      (relations[closing]["from"]["object"], relations[closing]["to"]["object"])))
     return tuple(sorted(cycles, key=lambda cycle: order[cycle.objects[0]]))
 
 

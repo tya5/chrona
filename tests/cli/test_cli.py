@@ -28,6 +28,7 @@ from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.usecases.materialize import MaterializationError
 from chrona.core.identity import content_identity
 from chrona.resources import builtin_preset_library_resource
+from chrona.usecases.preset_library import PRESET_DESCRIPTIONS
 from tests.support import synthetic_review as sr
 
 
@@ -322,7 +323,7 @@ def test_cli_draft_snapshot_is_a_project_path_forwarded_without_policy_override(
 
     def render(request):
         requests.append(request)
-        return SimpleNamespace(rendered=rendered)
+        return SimpleNamespace(rendered=rendered, notes=())
 
     monkeypatch.setattr(cli, "render_draft", render)
     monkeypatch.setattr(cli, "_write_render_outputs", lambda *_: None)
@@ -821,7 +822,8 @@ def test_cli_preset_list_reports_every_catalogue_entry_in_order(monkeypatch, cap
     payload = json.loads(capsys.readouterr().out)
     assert payload["status"] == "ok"
     assert payload["presets"] == [
-        {"id": entry["id"], **({"gallerySet": entry["gallerySet"]} if "gallerySet" in entry else {})} for entry in expected]
+        {"id": entry["id"], "description": PRESET_DESCRIPTIONS[entry["id"]],
+         **({"gallerySet": entry["gallerySet"]} if "gallerySet" in entry else {})} for entry in expected]
 
 
 @pytest.mark.parametrize(

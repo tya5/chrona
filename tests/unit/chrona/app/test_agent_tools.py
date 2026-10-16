@@ -215,7 +215,8 @@ def test_validate_reports_a_cycle_exactly_as_the_cli_and_schedule_do(scope, monk
     keys = ("code", "severity", "component", "sourceRef", "message")
     assert [{key: item[key] for key in keys} for item in validated.structured["diagnostics"]] == [
         {key: item[key] for key in keys} for item in expected]
-    assert validated.structured["diagnostics"][0]["sourceRef"] == "/relations/1"
+    assert validated.structured["diagnostics"][0]["sourceRef"] == expected[0]["sourceRef"]
+    assert re.fullmatch(r"/relations/\w+ -> \w+", expected[0]["sourceRef"])  # the relation by its object ids (#1585)
     scheduled = run(scope, "schedule_project", project="cycle.yaml")
     assert scheduled.structured["diagnostics"] == validated.structured["diagnostics"]
 
