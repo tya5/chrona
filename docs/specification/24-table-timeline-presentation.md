@@ -70,6 +70,10 @@ working-day finish variance uses the item's effective calendar; when absent, it
 counts all calendar days. This delta policy does not change the display rule for
 `endDisplay: inclusive` above.
 
+Bundled draft and named preset defaults select `working-days` for this shared
+comparison fact, including in-plot labels. An explicitly authored View may
+still select `calendar-days`; adapters never override the declared unit.
+
 Content normalization applies this rule once, before affixes and Layout
 measurement. Layout receives completed cell text; Scene and adapters emit it
 without endpoint calculation. The bundled default and every builtin preset
