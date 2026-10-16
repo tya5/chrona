@@ -342,7 +342,8 @@ copy the agent skill into an empty directory
 
 `chrona skill copy --output -o`
 
-- `--output, -o`: empty or absent output directory
+- `directory`: empty or absent output directory; the same as --output
+- `--output, -o`: empty or absent output directory; the same as the positional DIR (give one of the two)
 
 ## chrona validate
 

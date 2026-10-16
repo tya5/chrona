@@ -1,7 +1,7 @@
 # The authoring model, with one worked plan
 
 Read this to know which file owns which decision. It restates no rule: the
-specifications in `docs/specification/` of the chrona repository do (Spec 05 project
+specifications in the chrona repository's specification directory do (Spec 05 project
 format, Spec 03 and 04 time and scheduling, Specs 06, 07 and 33 view, theme and layout).
 
 ## Who owns what
