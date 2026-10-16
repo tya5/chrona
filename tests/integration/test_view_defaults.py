@@ -17,7 +17,7 @@ from chrona.presentation.contracts.resources import ClosureIdentity
 from chrona.presentation.contracts.view_defaults import (
     SPLIT_MEMBERS, WHOLE_MEMBERS, collect_column_style_diagnostics, merge_view_defaults,
 )
-from chrona.resources import schema_validator
+from chrona.resources import builtin_preset_source_root, safe_load, schema_validator
 from tests.support import synthetic_review as sr
 
 
@@ -85,6 +85,27 @@ def test_split_members_merge_one_level_down_and_create_omitted_members():
     assert merged["body"]["rows"] == {"mode": "lanes"}
     assert merged["body"]["window"] == {"marginDays": 7}
     assert view["body"]["comparison"] == {"baseline": "snapshot", "deltaUnit": "working-days"}  # the input is not mutated
+
+
+def test_design_working_day_comparison_default_is_valid_and_explicit_view_unit_wins():
+    draft_view = builtin_preset_source_root("presets/bundles/editorial-readable-default").joinpath("view.yaml")
+    assert safe_load(draft_view.read_bytes())["body"]["comparison"]["deltaUnit"] == "working-days"
+    parts = sr.bundle("executive-light")
+    default_view = builtin_preset_source_root("presets/bundles/design-default").joinpath("view.yaml")
+    marquee_layout = builtin_preset_source_root("designs/marquee").joinpath("layout.yaml")
+    parts["view"] = safe_load(default_view.read_bytes())
+    parts["layout"] = safe_load(marquee_layout.read_bytes())
+    assert "deltaUnit" not in parts["view"]["body"]["comparison"]
+
+    merged = merge_view_defaults(parts["view"], parts["layout"]["viewDefaults"])
+    assert merged["body"]["comparison"]["deltaUnit"] == "working-days"
+    assert not tuple(schema_validator("view-v0.28.schema.yaml").iter_errors(merged))
+
+    explicit = deepcopy(parts["view"])
+    explicit["body"]["comparison"]["deltaUnit"] = "calendar-days"
+    explicit_merged = merge_view_defaults(explicit, parts["layout"]["viewDefaults"])
+    assert explicit_merged["body"]["comparison"]["deltaUnit"] == "calendar-days"
+    assert not tuple(schema_validator("view-v0.28.schema.yaml").iter_errors(explicit_merged))
 
 
 def test_slice_two_presentation_defaults_merge_without_replacing_connections():

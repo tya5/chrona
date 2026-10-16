@@ -147,7 +147,7 @@ allOf:
               missingActualScope: {description: "Which work the missing-actual mark covers. `due-unobserved` (the default) marks a planned finish that has passed with no observation. `in-progress` marks a span that has an actual start and no finish up to the as-of date, drawn as a span in place of its open actual, and marks nothing else (a gate or a span with no observation gets no mark).", enum: [due-unobserved, in-progress], examples: [in-progress]}
               actual: {description: "Requiredness of actual observations.", enum: [forbidden, optional, required]}
               observationSelection: {description: "Only the latest observation is selected.", const: latest}
-              deltaUnit: {description: "Comparison delta unit.", const: calendar-days}
+              deltaUnit: {description: "Comparison delta unit.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/comparisonDeltaUnit"}
               facets: {description: "Comparison facets exposed to the surface.", type: array, uniqueItems: true, items: {description: "One comparison facet.", enum: [planned, actual, startDelta, finishDelta, atDelta, progress, missingActual, unmatchedActual]}}
           visibility:
             description: "Visibility and fallback policy for surface content."

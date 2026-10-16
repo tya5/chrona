@@ -47,11 +47,15 @@ is valid only for `dateRange`; invalid values or formatter combinations fail
 View validation. The live View schema adds this optional property in place.
 
 For a complete half-open interval with date-valued `start < end`, exclusive
-display formats the stored endpoint; inclusive display formats `end − 1`
-calendar day. Planned `end` and Actual `finish` have the same exclusive endpoint
-meaning (Specs 03 §4 and 06 §4). This display calculation does not mutate the
-source, schedule, deltas, or bar geometry. With a working calendar it still
-subtracts one calendar day, not the last working day.
+display formats the stored endpoint. Inclusive display of a planned span whose
+schedule is a WorkPeriod in working days (`wd`) formats the last working day
+before the exclusive end, using the object's calendar and then the Project
+calendar. If neither declares a calendar, each calendar day counts as working;
+no weekday calendar or warning is invented. Other planned spans, including
+calendar-day (`d`) and week (`w`) schedules, and explicit Actual intervals use
+the civil day immediately before the exclusive end. Planned `end` and Actual
+`finish` retain their half-open endpoint meaning (Specs 03 §4 and 06 §4). This
+display calculation does not mutate the source, schedule, deltas, or bar geometry.
 
 An inclusive one-day interval collapses to one compact date without a year:
 `[2027-01-04, 2027-01-05)` reads `04 Jan` in `en-US` and `1月4日` in `ja-JP`.
@@ -59,6 +63,12 @@ Other complete ranges retain the existing locale and same-year/cross-year
 formatting, using the displayed endpoint. Points, missing values, incomplete
 or open intervals, and non-positive ranges retain their existing formatting;
 this option introduces no temporal data validator.
+
+The View's `comparison.deltaUnit` selects calendar-day or effective-calendar
+working-day distances for projected start, finish, and point comparisons. A
+working-day finish variance uses the item's effective calendar; when absent, it
+counts all calendar days. This delta policy does not change the display rule for
+`endDisplay: inclusive` above.
 
 Content normalization applies this rule once, before affixes and Layout
 measurement. Layout receives completed cell text; Scene and adapters emit it

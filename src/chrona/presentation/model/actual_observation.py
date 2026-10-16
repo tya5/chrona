@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Mapping
 
+from chrona.presentation.model.date_basis import ItemDateBasis, endpoint_distance
+
 
 @dataclass(frozen=True)
 class InProgressActual:
@@ -40,15 +42,16 @@ def in_progress_actual(actual: Mapping[str, object] | None,
 
 
 def finish_variance(planned: Mapping[str, object], actual: Mapping[str, object] | None,
-                    as_of: date | None) -> int | None:
+                    as_of: date | None, *, basis: ItemDateBasis = ItemDateBasis(),
+                    delta_unit: str = "calendar-days") -> int | None:
     """Return known finish variance, using the cutoff for a started open Actual."""
     planned_end = planned.get("end")
     if not isinstance(planned_end, date) or not isinstance(actual, Mapping):
         return None
     finish = actual.get("finish")
     if isinstance(finish, date):
-        return (finish - planned_end).days
+        return endpoint_distance(planned_end, finish, basis, delta_unit)
     opened = in_progress_actual(actual, as_of)
     if opened is not None and opened.drawable and opened.as_of > planned_end:
-        return (opened.as_of - planned_end).days
+        return endpoint_distance(planned_end, opened.as_of, basis, delta_unit)
     return None

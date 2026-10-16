@@ -40,7 +40,6 @@ body:
     baseline: snapshot
     actual: optional
     observationSelection: latest
-    deltaUnit: calendar-days
     facets:
     - planned
     - actual

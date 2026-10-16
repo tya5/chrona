@@ -113,7 +113,7 @@ changes a planned placement because a delta facet exists.
 ### 4.2 Closed comparison language
 
 v0.1 comparison bodies use `baseline: primary|snapshot`,
-`observationSelection: latest`, and `deltaUnit: calendar-days`. `baseline: primary`
+`observationSelection: latest`, and `deltaUnit: calendar-days|working-days`. `baseline: primary`
 uses the primary Project's derived planned schedule; `baseline: snapshot` requires a
 Snapshot whose resolved `project.id` equals the primary Project ID. `latest` chooses the
 observation with greatest positive `sequence` for each resolved Project object; equal
@@ -136,8 +136,13 @@ Draft's explicit `--snapshot <project.yaml>` supplies the same Snapshot Project
 role without an immutable SnapshotRef (Spec08 §3.2, #1533). It does not select or
 override a View baseline; the rules above apply to either ingress.
 
-`startDelta = actual.start − planned.start`, `finishDelta = actual.finish − planned.finish`,
-and `atDelta = actual.at − planned.at`, each as a signed integer in calendar days.
+`startDelta`, `finishDelta`, and `atDelta` are signed integer distances in the declared
+`deltaUnit`: calendar days, or working days in the item's effective calendar (the
+object calendar, then the Project calendar). With no calendar, presentation counting
+uses all calendar days as working days; it does not invent a weekday calendar or emit
+a warning. For finish comparison, planned and observed half-open exclusive endpoints
+are compared on the selected basis, so a Saturday exclusive Actual finish and Monday
+exclusive planned finish can both denote Friday and yield zero working-day variance.
 Positive means later/behind; negative means earlier; zero means equal. A delta is absent,
 not zero, if either endpoint is absent or the point/span kinds differ. Point Actuals
 compare only with planned points and intervals only with planned spans. Actual intervals

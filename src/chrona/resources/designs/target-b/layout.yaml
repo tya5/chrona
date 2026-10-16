@@ -13,7 +13,7 @@ viewDefaults:
   comparison:
     baselineMarks: ghost-when-changed
     missingActualScope: in-progress
-    deltaUnit: calendar-days
+    deltaUnit: working-days
     facets: [planned, actual, finishDelta, missingActual, unmatchedActual]
   progressFill: {source: actual}
   visibility:
