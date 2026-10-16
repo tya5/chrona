@@ -78,11 +78,11 @@ properties:
           typesetter:
             type: object
             description: "Text typesetting engine and adapter grammar evidence."
-            required: [engine, version, adapterGrammar]
+            required: [engine, adapterGrammar]
             additionalProperties: false
             properties:
               engine: {description: "Installed typesetting engine.", enum: [typst, tectonic]}
-              version: {description: "Installed typesetting engine version.", examples: ["0.12.0"], type: string, pattern: "^[0-9]+(\\.[0-9]+){1,3}([+-][0-9A-Za-z.-]+)?$"}
+              version: {description: "Typesetting engine version the output is compiled with; absent when the caller did not specify one.", examples: ["0.12.0"], type: string, pattern: "^[0-9]+(\\.[0-9]+){1,3}([+-][0-9A-Za-z.-]+)?$"}
               adapterGrammar: {description: "Chrona adapter grammar selected for the engine.", enum: [chrona-typst/v0.1, chrona-tikz/v0.1]}
       target:
         type: object

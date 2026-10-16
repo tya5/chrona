@@ -807,7 +807,8 @@ def _draft_typesetter(target_kind: str, typesetter: TypesetterIdentity | None) -
         return None
     if typesetter is None:
         raise ClosureError("E_RENDER_TYPESETTER_DESCRIPTOR", detail=f"a {target_kind} render needs a typesetter identity (engine, version, adapter grammar)")
-    return {"engine": typesetter.engine, "version": typesetter.version,
+    return {"engine": typesetter.engine,
+            **({"version": typesetter.version} if typesetter.version is not None else {}),
             "adapterGrammar": typesetter.adapter_grammar}
 
 

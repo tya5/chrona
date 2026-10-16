@@ -1127,7 +1127,7 @@
   "stderr": "",
   "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_RESOURCE_VERSION_UNSUPPORTED\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/version\", \"revisionRefs\": [], \"message\": \"theme id=nope declares version chrona/theme/v0.1; supported: chrona/theme/v0.15, chrona/theme/v0.16; see the current resource schema and migration notes before re-applying edits\"}]}\n"
  },
- "render-typesetter-descriptor-missing": {
+ "render-typesetter-defaults-from-target": {
   "argv": [
    "render",
    "starter.yaml",
@@ -1136,10 +1136,14 @@
    "-o",
    "out.typ"
   ],
-  "exit": 2,
-  "files": {},
+  "exit": 0,
+  "files": {
+   "out.typ": {
+    "kind": "typ"
+   }
+  },
   "stderr": "",
-  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_RENDER_TYPESETTER_DESCRIPTOR\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/typesetter\", \"revisionRefs\": [], \"message\": \"typeset Draft targets require --typesetter-engine, --typesetter-version, and --typesetter-adapter-grammar\"}]}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}, {\"code\": \"I_LAYOUT_RELATION_POLICY_SUPERSEDED\", \"layoutMember\": \"relationRouting.unroutable\", \"layoutValue\": \"relax\", \"message\": \"Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing\", \"severity\": \"info\", \"surfaceId\": \"table-timeline\", \"viewMember\": \"visibility.relations.overflow\", \"viewValue\": \"suppress\"}, {\"code\": \"I_RENDER_TYPESETTER_VERSION_UNSPECIFIED\", \"input\": \"--typesetter-version\", \"message\": \"no --typesetter-version was given; the typesetter version is unspecified in the render context\", \"severity\": \"info\"}]}\n"
  },
  "render-typesetter-descriptor-on-svg": {
   "argv": [

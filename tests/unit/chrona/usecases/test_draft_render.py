@@ -47,10 +47,17 @@ def test_typesetter_descriptor_rules():
     assert typesetter_identity(None, None, None, "svg") is None
     identity = typesetter_identity("typst", "0.13.1", "grammar", "typst")
     assert (identity.engine, identity.version) == ("typst", "0.13.1")
-    for values, kind in [((None, None, None), "typst"), (("typst", None, None), "svg")]:
-        with pytest.raises(StableFailure) as raised:
-            typesetter_identity(*values, kind)
-        assert raised.value.code == "E_RENDER_TYPESETTER_DESCRIPTOR" and raised.value.exit_code == 2
+    with pytest.raises(StableFailure) as raised:
+        typesetter_identity("typst", None, None, "svg")
+    assert raised.value.code == "E_RENDER_TYPESETTER_DESCRIPTOR" and raised.value.exit_code == 2
+
+
+def test_typesetter_identity_defaults_from_the_target():
+    typst = typesetter_identity(None, None, None, "typst")
+    assert (typst.engine, typst.version, typst.adapter_grammar) == ("typst", None, "chrona-typst/v0.1")
+    tikz = typesetter_identity(None, None, None, "tikz")
+    assert (tikz.engine, tikz.version, tikz.adapter_grammar) == ("tectonic", None, "chrona-tikz/v0.1")
+    assert typesetter_identity(None, "0.13.1", None, "typst").version == "0.13.1"
 
 
 def test_a_preset_value_is_a_path_only_with_a_separator_or_yaml_suffix():

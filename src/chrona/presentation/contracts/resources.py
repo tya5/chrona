@@ -753,7 +753,7 @@ class RenderTarget:
 @dataclass(frozen=True)
 class TypesetterIdentity:
     engine: str
-    version: str
+    version: str | None
     adapter_grammar: str
 
 
@@ -771,8 +771,10 @@ class RenderEnvironment:
         return {
             "fontMetrics": self.font_metrics,
             **({"rasterizer": self.rasterizer} if self.rasterizer else {}),
-            **({"typesetter": {"engine": self.typesetter.engine, "version": self.typesetter.version,
-                                "adapterGrammar": self.typesetter.adapter_grammar}} if self.typesetter else {}),
+            **({"typesetter": {
+                "engine": self.typesetter.engine,
+                **({"version": self.typesetter.version} if self.typesetter.version is not None else {}),
+                "adapterGrammar": self.typesetter.adapter_grammar}} if self.typesetter else {}),
         }
 
 
@@ -1604,7 +1606,7 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
         raw_typesetter = environment.get("typesetter")
         if raw_typesetter is not None and not isinstance(raw_typesetter, FrozenDict):
             raise _closure_kind_error(identity, "typesetter object or absent", raw_typesetter)
-        typesetter = (TypesetterIdentity(str(raw_typesetter["engine"]), str(raw_typesetter["version"]),
+        typesetter = (TypesetterIdentity(str(raw_typesetter["engine"]), str(raw_typesetter["version"]) if "version" in raw_typesetter else None,
                                          str(raw_typesetter["adapterGrammar"])) if raw_typesetter else None)
         return RenderContextContract(
             identity, version,

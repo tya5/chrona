@@ -111,6 +111,20 @@ def test_the_help_lists_the_accepted_typesetter_values():
     assert "typst" in engine and "tectonic" in engine
     assert "chrona-typst/v0.1" in grammar and "chrona-tikz/v0.1" in grammar
     assert "exact" in version and "never looked up" in version
+    assert "defaults" in engine and "defaults" in grammar and "optional" in version
+
+
+def test_render_to_typ_needs_no_typesetter_flag(starter):
+    """The suffix implies engine and grammar; the version is optional and reported unspecified (#1609)."""
+    implicit = _chrona(starter, "render", "p/project.yaml", "--actual", "p/actual.yaml", "-o", "implicit.typ")
+    assert implicit.returncode == 0, implicit.stderr
+    assert "unspecified" in implicit.stdout and "I_RENDER_TYPESETTER_VERSION_UNSPECIFIED" in implicit.stdout
+    explicit = _chrona(starter, "render", "p/project.yaml", "--actual", "p/actual.yaml", "-o", "explicit.typ",
+                       *TARGETS["typst"][1])
+    assert explicit.returncode == 0, explicit.stderr
+    assert (starter / "implicit.typ").read_text(encoding="utf-8").startswith("// chrona-typst/v0.1")
+    assert (starter / "explicit.typ").read_text(encoding="utf-8").startswith("// chrona-typst/v0.1")
+    assert "I_RENDER_TYPESETTER_VERSION_UNSPECIFIED" not in explicit.stdout
 
 
 def test_a_legacy_console_encoding_does_not_break_the_json_report(starter):
