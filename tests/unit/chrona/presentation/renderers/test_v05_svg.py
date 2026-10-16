@@ -11,7 +11,7 @@ from chrona.presentation.layout.surface_quality import PathCommand
 from chrona.presentation.layout.pattern_placement import PatternTilePrimitive
 from chrona.presentation.renderers.v05_svg import render_v05_svg
 from chrona.presentation.layout.relation_terminals import marker_geometry
-from chrona.presentation.scene.model import DropShadow, LinearGradient, PatternGeometry, PatternStroke, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish, SurfaceScaleManifest, SymbolGeometry, TextLayout
+from chrona.presentation.scene.model import DropShadow, LinearGradient, PatternGeometry, PatternStroke, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish, SurfaceScaleManifest, SymbolGeometry, TextLayout, TextRun
 
 
 def _surface(*primitives):
@@ -38,6 +38,22 @@ def test_svg_serializes_stroke_only_rect_and_symbol_with_explicit_no_fill():
     output = render_v05_svg(_surface(rect, symbol))
     assert 'data-scene-id="closed"' in output and 'data-scene-id="milestone"' in output
     assert output.count('fill="none"') == 2
+
+
+def test_svg_serializes_per_run_completed_font_identity():
+    primitive = ScenePrimitive(
+        "label", "Text", "a", "review", "label", "label", (1, 2, 8, 4),
+        text="A日", baseline=(1, 6),
+        text_layout=TextLayout(
+            (1, 2, 8, 4), (1, 6), ("A日",), "Primary", 400, 12, 1.2, "sha256:primary",
+            runs=((
+                TextRun("A", 12, 5),
+                TextRun("日", 12, 12, "Noto Sans JP", 400, "sha256:cjk"),
+            ),)),
+        paint=ScenePaint("#000000", None, None, (), 1),
+    )
+    output = render_v05_svg(_surface(primitive))
+    assert '<tspan font-family="Noto Sans JP" font-weight="400" data-asset-identity="sha256:cjk">日</tspan>' in output
 
 
 def test_svg_raster_preserves_an_outline_interior_as_canvas():
