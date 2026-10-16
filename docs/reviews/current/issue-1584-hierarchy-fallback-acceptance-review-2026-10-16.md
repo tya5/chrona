@@ -21,6 +21,8 @@ Final-head public snapshot/CI and exact-main three-OS release remain required.
 | 2 | The #1582 CSV renders three team groups with team headers in `target-b`, `marquee`, `sunday`, `yuya` and `executive-light`, viewed as PNG. | met | Reviewer explicitly confirms this row uses hierarchy fallback without role binding. Five combined #1582/#1584 PNGs independently viewed: Backend/Frontend/QA headers, no group bars, both started Actuals/progress. Three generic-design suppressed relations warn explicitly; no inputs were tuned. [Evidence](https://github.com/tya5/chrona/issues/1584#issuecomment-6203805177). | — |
 | 3 | HALCYON (role bound) output byte-identical; other public changes listed with counts. | not met | [Five bound-role controls](https://github.com/tya5/chrona/issues/1584#issuecomment-6204311050) preserve all10 paired SVG/Scene bytes. Prior full public preflight preserves50SVG+50Scene; final-head CI count table remains required before release. | — |
 
+## Programme-level criteria (optional)
+
 Architecture: Project owns containment; View projection resolves a private typed
 root-group source, distinct from authored full-tree hierarchy. Layout receives
 resolved groups, Scene/adapters remain unchanged. Only the handled grouping
