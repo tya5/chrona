@@ -2,21 +2,14 @@
 
 # Issue #1582 — in-progress Actuals
 
-Source `056d68e28849d64f4652b74bac3cffb98992e949`, ready base
-`6ae0ccd80ed8b7b5e05a0edfbc09d2ef3f9113a1`.
+Released through [PR #1591](https://github.com/tya5/chrona/pull/1591).
+Final source `e06ad8519d6072d03259a8265914b5a1eb0c82bd` passed
+[PR CI38823725828](https://github.com/tya5/chrona/actions/runs/38823725828);
+artifact `12014360721` matches all 109 independently audited output/report paths.
+Exact review-containing main `153d7ba155f61c52e6c1e232ae36c5f03778eb15`
+passed [three-OS release38825302918](https://github.com/tya5/chrona/actions/runs/38825302918).
 [Published design/implementation record](https://github.com/tya5/chrona/issues/1582#issuecomment-6203648318).
-Local acceptance below is complete; PR snapshot and exact-main three-OS
-release remain required before closure.
-
-The exact-head [PR snapshot](https://github.com/tya5/chrona/actions/runs/38822417510)
-at `5438827d3cb27bc4e8c4d41d3160d4e00655262d` (artifact `12013647251`)
-matches all 109 locally audited output/report paths byte-for-byte. Its 14
-pytest failures were stale expectations: five CLI warning goldens, eight
-fixture materializer checks and one obsolete HALCYON warning assertion.
-Test-only refreshes preserve inputs and admit only the specified Actual/variance
-changes: seven controller-z variance labels (and one delta cell), one Japanese
-no-cutoff diagnostic, and warning removals for started spans. The HALCYON test
-now positively requires the Actual bar and retains the truly missing control.
+All literal acceptance rows and release gates are met.
 
 ## Literal issue acceptance
 
@@ -40,14 +33,16 @@ Verification commands (project-local venv):
 .venv/bin/python -m tools.derived_workflow snapshot 6ae0ccd80ed8b7b5e05a0edfbc09d2ef3f9113a1 derived-snapshot.tar.gz
 ```
 
-Import the unmodified issue CSV with `chrona import --help`'s CSV syntax,
-`--calendar 'standard mon-fri' --as-of 2026-10-16`; render its Project and
-Actual-set with `chrona render project.yaml --actual actual.yaml --out result.png`
-and each named preset. The initial default has no `--preset` argument.
-Scratch evidence: `/tmp/chrona-1582-outsider.0WCfT8/final-*.png` and
-`final-*.scene.json`; public snapshot and representative rasterizations:
-`/private/tmp/chrona-1582-verify-agent/`. These are local verification aids,
-not public release evidence; CI uploads the authoritative final snapshot.
+For the unmodified issue CSV saved as `plan.csv`, use a fresh output directory:
+
+```sh
+.venv/bin/chrona import plan.csv --output project.yaml --actual-output actual.yaml --calendar 'standard mon-fri' --as-of 2026-10-16
+.venv/bin/chrona render project.yaml --actual actual.yaml --output draft.png
+.venv/bin/chrona render project.yaml --actual actual.yaml --preset target-b --output target-b.png
+```
+
+Repeat the named-preset command for `executive-light` and `sunday`; view all four
+PNGs. Public final-head snapshot evidence is attached to the PR CI run above.
 
 Architecture: shared model classification/delta; Layout completes open-span
 and multipart progress geometry and explicit logical ownership. Scene/adapters
