@@ -8,11 +8,12 @@ import pytest
 from chrona.presentation.layout import surface_composer
 from chrona.presentation.model.info_diagnostics import RelationHintReceipt
 from chrona.presentation.scene.serialization import serialize_scene
+from chrona.resources import builtin_preset_source_root, safe_load
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
 from tests.support import synthetic_review as sr
 
 
-def _render(directory, *, shift=0, append=False, previous_scene=None):
+def _render(directory, *, shift=0, append=False, previous_scene=None, delta_unit=None):
     directory.mkdir()
     move = timedelta(days=shift)
     source = sr.with_calendar(sr.project({
@@ -35,8 +36,15 @@ def _render(directory, *, shift=0, append=False, previous_scene=None):
     project_path, actual_path = directory / "project.yaml", directory / "actual.yaml"
     project_path.write_text(yaml.safe_dump(source, sort_keys=False), encoding="utf-8")
     actual_path.write_text(yaml.safe_dump(actual, sort_keys=False), encoding="utf-8")
+    view_path = None
+    if delta_unit is not None:
+        view = safe_load(builtin_preset_source_root("presets/bundles/editorial-readable-default")
+                         .joinpath("view.yaml").read_bytes())
+        view["body"]["comparison"]["deltaUnit"] = delta_unit
+        view_path = directory / "view.yaml"
+        view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
     return render_draft(DraftRenderRequest(project_path, "svg", actual=actual_path,
-                                           previous_scene=previous_scene)).rendered
+                                           previous_scene=previous_scene, view=view_path)).rendered
 
 
 def _relation_routes(rendered):
@@ -117,10 +125,17 @@ def test_default_preset_delta_anchors_and_route_class_survive_translation_and_un
     for rendered in (baseline, shifted, appended):
         svg = ET.fromstring(rendered.artifact.content)
         content = "".join(svg.itertext())
-        assert "+3d" in content and "-2d" in content
+        # The default counts the Thu→Sun interval as two working days (#1583).
+        assert "+2d" in content and "-2d" in content
         assert not [item for item in rendered.scene.diagnostics if item.startswith("E_")]
     assert _anchor_sides(baseline) == _anchor_sides(shifted) == _anchor_sides(appended)
     assert _suppressed_relations(baseline) == _suppressed_relations(shifted) == _suppressed_relations(appended)
+
+
+def test_explicit_calendar_day_comparison_retains_the_original_delta_text(tmp_path):
+    rendered = _render(tmp_path / "calendar", delta_unit="calendar-days")
+    content = "".join(ET.fromstring(rendered.artifact.content).itertext())
+    assert "+3d" in content and "-2d" in content
 
 
 @pytest.mark.parametrize("change", ["shift", "append"])
