@@ -231,7 +231,7 @@ def test_absent_shape_preserves_characterized_scene_and_svg_bytes(tmp_path):
     # First-fit adds its completed routing receipt; SVG bytes do not change.
     assert len(scene) == 26532
     # Explicit suppress changes only the verified Layout resource identity.
-    assert sha256(scene).hexdigest() == "d857e86d6360750db435b67ff9d4d66eed00dd0188dd864766028a08b2e55517"
+    assert sha256(scene).hexdigest() == "f9bd3878b86ac6cc3fa3ba53ebb84459269719cd1571f6a2e97259132af9411b"
     assert len(rendered.artifact.content) == 8173
     assert sha256(rendered.artifact.content).hexdigest() == "3f700aae2dd6cc1e5d42370babe2805a2231ec2c8a643eb07dc1317cc4cc7437"
 

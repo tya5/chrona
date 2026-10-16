@@ -8,7 +8,8 @@ from tests.support import synthetic_review as sr
 
 
 def _project():
-    return sr.project({"task": sr.span("task", date(2026, 2, 1), 5, owner="engineering")})
+    return sr.project({"task": sr.span("task", date(2026, 2, 1), 5, owner="engineering")},
+                      responsible_field_role=False)
 
 
 def _view(*, lanes=False):
@@ -107,6 +108,11 @@ def test_lane_key_and_lane_table_role_references_remain_frozen():
     assert source == {"fieldRole": "phase"}
 
 
+def _remove_role_grouping_fallback(body):
+    body["grouping"]["by"] = {"fieldRole": "responsible"}
+    body["grouping"].pop("fallback")
+
+
 def test_legacy_field_references_keep_their_existing_nonempty_string_grammar():
     view = _view()
     view["body"]["tableColumns"][0]["source"] = {"field": " "}
@@ -116,7 +122,8 @@ def test_legacy_field_references_keep_their_existing_nonempty_string_grammar():
 
 @pytest.mark.parametrize("change", [
     lambda body: body["grouping"].update(by={"fieldRole": "unlisted"}, fallback="none"),
-    lambda body: body["grouping"].update(by={"fieldRole": "responsible"}),
+    _remove_role_grouping_fallback,
+    lambda body: body["grouping"].update(by={"fieldRole": "responsible"}, fallback="unknown"),
     lambda body: body["grouping"].update(by={"fieldRole": "responsible"}, fallback="none",
                                          field="owner", missing="Unset"),
     lambda body: body["grouping"].update(by="field", field="owner", missing="none", fallback="none"),
