@@ -2,8 +2,8 @@
 
 # Issue #1583 — working-day display and comparison
 
-Product source `fa14587ab`, combined source `feaae2185`, ready base
-`e02bcf5a1097d2c6b4a8f85c53376704906dcb70` (includes #1584).
+Product source `fa14587ab`, reconciled source `5c79ac909`, ready base
+`9edbfface85256e7c5541dd6fef0beb60379d536` (includes #1594/#1597/#1596).
 [Approved design/implementation plan](https://github.com/tya5/chrona/issues/1583#issuecomment-6203710183)
 and [calendarless policy](https://github.com/tya5/chrona/issues/1583#issuecomment-6217533121).
 This is not release acceptance: final-head CI, row2 disposition
@@ -29,8 +29,10 @@ typed basis and shared date helper feed canonical projection comparison facts
 and pre-Layout display ranges. Scene/adapters perform no calendar arithmetic.
 Calendarless presentation counts civil days without warning. Specifications06/24
 and shared vocabulary express the contract; default policy is declared in YAML,
-never selected by preset ID. Focused205 tests pass; schema equivalence against
-ready main passes (delta1/equal37,575 corpus documents,739 probes;L2+L3=22.1s
-within60s). Combined hierarchy/date/policy/routing/coverage controls pass106 tests;
-the earlier policy-fixture batch passes84+18 tests. Independent combined-merge
-review found no dropped policy, source-local basis, diagnostic or ownership rule.
+never selected by preset ID. Latest reconciliation passes101 date/default/
+routing/coverage/empty-slot/PDF controls and33 snapshot tests. Schema equivalence
+against ready9edbfface passes (delta1/equal37,575 corpus documents,739 probes;
+L2+L3=21.1s within60s). Direct source comparison and independent review found no
+integration blocker; Layout pruning and PDF serialization remain downstream
+of the unchanged date-policy ownership. Literal row2 remains not met pending
+the linked reviewer decision; reconciliation does not waive it.
