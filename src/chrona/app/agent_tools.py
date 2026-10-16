@@ -638,7 +638,8 @@ _TOOLS: tuple[ToolSpec, ...] = (
         _output_schema({
             "presets": {"type": "array", "items": {
                 "type": "object", "additionalProperties": False, "required": ["id"],
-                "properties": {"id": {"type": "string"}, "gallerySet": {"type": "string"}}}},
+                "properties": {"id": {"type": "string"}, "description": {"type": "string"},
+                               "gallerySet": {"type": "string"}}}},
             "default": {"type": "string"},
         }),
         _list_presets,

@@ -69,18 +69,24 @@ def rollup_waits_on_its_own_child():
 
 
 CYCLES = [
-    ("fixed-span (the issue's reproduction)", starter_cycle, "/relations/1", ["design", "build"], "E_UNSUPPORTED_CYCLE"),
-    ("duration", duration_cycle, "/relations/1", ["a", "b"], "E_UNSUPPORTED_CYCLE"),
-    ("point", point_cycle, "/relations/1", ["p", "q"], "E_UNSUPPORTED_CYCLE"),
-    ("fixed and duration", fixed_and_duration_cycle, "/relations/1", ["design", "build"], "E_UNSUPPORTED_CYCLE"),
-    ("start-to-start and finish-to-finish", wait_cycle_acyclic_by_endpoint, "/relations/1", ["a", "b"], "E_UNSUPPORTED_CYCLE"),
-    ("self relation", self_relation, "/relations/0", ["a"], "E_UNSUPPORTED_CYCLE"),
-    ("rollup on its own child", rollup_waits_on_its_own_child, "/relations/0", ["group", "child"], "E_UNSUPPORTED_CYCLE"),
+    ("fixed-span (the issue's reproduction)", starter_cycle, 1, ["design", "build"], "E_UNSUPPORTED_CYCLE"),
+    ("duration", duration_cycle, 1, ["a", "b"], "E_UNSUPPORTED_CYCLE"),
+    ("point", point_cycle, 1, ["p", "q"], "E_UNSUPPORTED_CYCLE"),
+    ("fixed and duration", fixed_and_duration_cycle, 1, ["design", "build"], "E_UNSUPPORTED_CYCLE"),
+    ("start-to-start and finish-to-finish", wait_cycle_acyclic_by_endpoint, 1, ["a", "b"], "E_UNSUPPORTED_CYCLE"),
+    ("self relation", self_relation, 0, ["a"], "E_UNSUPPORTED_CYCLE"),
+    ("rollup on its own child", rollup_waits_on_its_own_child, 0, ["group", "child"], "E_UNSUPPORTED_CYCLE"),
 ]
 
 
-@pytest.mark.parametrize("build,path,objects,code", [case[1:] for case in CYCLES], ids=[case[0] for case in CYCLES])
-def test_validate_names_the_cycle_and_schedule_agrees(build, path, objects, code):
+def named(plan, index):
+    """The reference a diagnostic gives the relation at `index`: its object ids, not its position (#1585)."""
+    relation = plan["relations"][index]
+    return f"/relations/{relation['from']['object']} -> {relation['to']['object']}"
+
+
+@pytest.mark.parametrize("build,index,objects,code", [case[1:] for case in CYCLES], ids=[case[0] for case in CYCLES])
+def test_validate_names_the_cycle_and_schedule_agrees(build, index, objects, code):
     plan = build()
 
     validated = validate_project_mapping(plan)
@@ -88,7 +94,7 @@ def test_validate_names_the_cycle_and_schedule_agrees(build, path, objects, code
 
     assert not validated.ok
     [finding] = validated.diagnostics
-    assert (finding.id, finding.path) == (code, path)
+    assert (finding.id, finding.path) == (code, named(plan, index))
     assert f"among {', '.join(objects)};" in finding.message  # Project order, each named once
     assert scheduled.diagnostics == validated.diagnostics
     assert scheduled.placements == {} and scheduled.analysis is None
@@ -120,7 +126,7 @@ def test_only_the_objects_on_the_cycle_are_named_not_those_waiting_downstream():
 
     [finding] = validate_project_mapping(plan).diagnostics
 
-    assert "downstream" not in finding.message and finding.path == "/relations/1"
+    assert "downstream" not in finding.message and finding.path == named(plan, 1)
 
 
 def test_two_separate_cycles_are_two_findings_in_project_order():
@@ -130,7 +136,7 @@ def test_two_separate_cycles_are_two_findings_in_project_order():
 
     findings = validate_project_mapping(plan).diagnostics
 
-    assert [item.path for item in findings] == ["/relations/3", "/relations/1"]  # the cycle holding `a` first
+    assert [item.path for item in findings] == [named(plan, 3), named(plan, 1)]  # the cycle holding `a` first
     assert "a, b" in findings[0].message and "x, y" in findings[1].message
 
 
@@ -140,10 +146,10 @@ def test_the_closing_relation_is_the_one_declared_last_inside_the_cycle():
 
     [finding] = validate_project_mapping(plan).diagnostics
 
-    assert finding.path == "/relations/1"
+    assert finding.path == named(plan, 1)
     plan["relations"].insert(0, rel("a", "start", "b", "start"))  # an extra, non-cyclic-looking edge that is on the wait cycle too
     [again] = validate_project_mapping(plan).diagnostics
-    assert again.path == "/relations/2"
+    assert again.path == named(plan, 2)
 
 
 def test_the_message_holds_no_host_path_and_is_stable():

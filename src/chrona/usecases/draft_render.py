@@ -68,6 +68,8 @@ class DraftRenderRequest:
 @dataclass(frozen=True)
 class DraftRenderResult:
     rendered: RenderedReview
+    notes: tuple[dict[str, Any], ...] = ()
+    """Warnings about the request itself (an input the chosen View does not draw); they never change the artifact."""
 
     @property
     def artifact(self) -> RenderArtifact:
@@ -192,7 +194,20 @@ def render_draft(request: DraftRenderRequest) -> DraftRenderResult:
     finally:
         if owned_tempdir is not None:
             owned_tempdir.cleanup()
-    return DraftRenderResult(rendered)
+    return DraftRenderResult(rendered, _undrawn_input_notes(request, closure.closure))
+
+
+def _undrawn_input_notes(request: DraftRenderRequest, closure: Any) -> tuple[dict[str, Any], ...]:
+    """Warn when `--snapshot` was supplied but the chosen View does not draw a snapshot baseline (#1585)."""
+    if not request.snapshot:
+        return ()
+    comparison = closure.view.view.comparison
+    if comparison.baseline == "snapshot" and comparison.baseline_marks in {"ghost", "ghost-when-changed"}:
+        return ()
+    return ({"code": "W_SNAPSHOT_NOT_DRAWN", "severity": "warning", "input": "--snapshot",
+             "message": f"--snapshot {request.snapshot} was read but the chosen View draws no snapshot baseline "
+                        "(its comparison.baseline is not 'snapshot' with baselineMarks ghost); the render shows no baseline. "
+                        "Use a preset or View that draws one, for example --preset target-b"},)
 
 
 def warning_payloads(rendered: RenderedReview) -> list[dict[str, Any]]:

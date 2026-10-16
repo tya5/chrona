@@ -49,6 +49,21 @@ To: end
 chrona import sheet.csv --output sheet.yaml --columns columns.yaml --delimiter semicolon
 ```
 
+A column that is not in the vocabulary below is kept as a text field. To let a View group or lane by one of them, bind a
+Project field role to it with `--role ROLE=HEADER` (repeatable; the roles are `responsible` and `phase`). The header must be
+an extra column of the table, a role is bound once, and nothing is guessed: without `--role` no role is declared.
+
+<!-- chrona:doc-check file: teams.csv -->
+```csv
+id,title,type,start,end,team
+design,Design,task,2027-03-01,2027-03-08,platform
+build,Build,task,2027-03-08,2027-03-22,payments
+```
+
+```sh
+chrona import teams.csv --output teams.yaml --role responsible=team
+```
+
 ## Columns
 
 Headers match case-insensitively; spaces and hyphens read as underscores (`Actual Start` is `actual_start`). The vocabulary is
@@ -82,10 +97,15 @@ cell adds nothing. `--columns map.yaml` maps your header names to the vocabulary
 - `--project-id` (default: the file name as a slug) and `--title`.
 - `--calendar "NAME DAYS [except DATE ...]"`, repeatable; the first declared calendar is the project default. A table with
   `wd` amounts needs one.
+- `--role ROLE=HEADER`, repeatable: bind the Project field role `responsible` or `phase` to an extra column (see above). An unknown
+  role, a role given twice, a header the table lacks and a header that is one of the vocabulary columns are each rejected.
 - `--delimiter comma|tab|semicolon`: the default is tab for `.tsv`, comma otherwise.
 
 ## What it checks
 
 A bad date, an unknown predecessor, a duplicate id, an unknown `parent`, a parent cycle, a bad `type` or amount: each is a
 diagnostic at its cell, with the same codes and hints as the terse compiler (`E_TERSE_*`) or an `E_IMPORT_*` code, and the
-generated Project then goes through normal validation.
+generated Project then goes through the same validation as `chrona validate` and `chrona render`: a dependency cycle is
+reported at the `predecessors` cell of the row that closes it, with the relation named by its object ids (`auth -> payments`), and a
+reversed `actual_start` and `actual_finish` at the `actual_finish` cell, before anything is written. A missing calendar is
+reported once with the `--calendar "standard mon-fri"` form to pass.
