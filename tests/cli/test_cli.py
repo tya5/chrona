@@ -362,14 +362,15 @@ def test_cli_output_target_explicit_mismatch_names_both_targets():
     assert ".png" in failed.value.message and "png" in failed.value.message and "svg" in failed.value.message
 
 
-def test_cli_inferred_typeset_target_still_requires_descriptor(tmp_path, monkeypatch, capsys):
+def test_cli_inferred_typeset_target_needs_no_descriptor(tmp_path, monkeypatch, capsys):
     for suffix in (".typ", ".tex"):
         output = tmp_path / f"board{suffix}"
         monkeypatch.setattr(sys, "argv", ["chrona", "render", "missing.yaml", "--output", str(output)])
         with pytest.raises(SystemExit) as failed:
             main()
         assert failed.value.code == 2
-        assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_RENDER_TYPESETTER_DESCRIPTOR"
+        # the suffix implies the descriptor (#1609): the failure is the missing project, not the descriptor
+        assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] != "E_RENDER_TYPESETTER_DESCRIPTOR"
         assert not output.exists()
 
 
@@ -905,8 +906,6 @@ def test_cli_render_preset_path_is_never_looked_up_as_a_builtin_id(tmp_path, mon
 @pytest.mark.parametrize(
     ("format_name", "extra", "expected"),
     [
-        ("typst", [], "E_RENDER_TYPESETTER_DESCRIPTOR"),
-        ("typst", ["--typesetter-engine", "typst"], "E_RENDER_TYPESETTER_DESCRIPTOR"),
         ("svg", ["--typesetter-engine", "typst", "--typesetter-version", "0.13.1", "--typesetter-adapter-grammar", "chrona-typst/v0.1"], "E_RENDER_TYPESETTER_DESCRIPTOR"),
     ],
 )
@@ -959,12 +958,10 @@ def _guided_workspace(tmp_path: Path) -> Path:
 def test_cli_guided_draft_typesetter_descriptor_contract(tmp_path, monkeypatch, capsys):
     workspace = _guided_workspace(tmp_path)
     monkeypatch.setattr(sys, "argv", ["chrona", "render-workspace", str(workspace), "--format", "tikz", "--output", str(tmp_path / "review.tex")])
-    with pytest.raises(SystemExit) as exited:
-        main()
-    assert exited.value.code == 2
-    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_RENDER_TYPESETTER_DESCRIPTOR"
+    main()
+    assert (tmp_path / "review.tex").read_bytes().startswith(b"% chrona-tikz/v0.1")
 
-    output = tmp_path / "review.tex"
+    output = tmp_path / "explicit.tex"
     monkeypatch.setattr(sys, "argv", [
         "chrona", "render-workspace", str(workspace), "--format", "tikz",
         "--typesetter-engine", "tectonic", "--typesetter-version", "0.15.0",
