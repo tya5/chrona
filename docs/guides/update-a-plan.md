@@ -98,8 +98,9 @@ chrona schedule update-plan.yaml
 ## 5. Render and read it
 
 Pass the edited plan, the actuals and the baseline. The `target-b` preset draws the
-baseline and the `Δ finish` column; the default preset accepts `--snapshot` but draws
-neither, so name a preset that does:
+baseline and the `Δ finish` column. The default preset accepts `--snapshot` but draws no
+baseline; `render` says so with a `W_SNAPSHOT_NOT_DRAWN` warning (status stays `ok`), so name
+a preset that draws one:
 
 ```bash
 chrona render update-plan.yaml --actual update-actual.yaml --snapshot update-baseline.yaml \
