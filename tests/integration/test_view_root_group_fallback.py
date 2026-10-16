@@ -3,6 +3,8 @@ from copy import deepcopy
 from datetime import date
 from pathlib import Path
 
+import pytest
+
 from chrona.presentation.model.info_diagnostics import UnboundFieldRole
 from chrona.resources import builtin_preset_source_root, safe_load
 from tests.support import synthetic_review as sr
@@ -36,6 +38,24 @@ def test_unbound_responsible_renders_root_group_headers_without_group_bars(tmp_p
     assert not any(isinstance(item, UnboundFieldRole) for item in rendered.info_diagnostics)
     assert not any(item.source_ref in {"root", "nested"} and item.purpose == "planned"
                    for item in rendered.surface.primitives)
+
+
+def test_missing_root_group_secondary_names_the_object_source(tmp_path):
+    project = sr.project({
+        "root": {"type": "group", "title": "Root", "schedule": {"mode": "rollup"}},
+        "work": {"type": "task", "title": "Work", "parent": "root",
+                 "schedule": {"mode": "fixed-span", "start": "2026-02-02", "end": "2026-02-06"}},
+    })
+    parts = sr.bundle("executive-light")
+    parts["view"]["body"]["grouping"] = {
+        "by": {"fieldRole": "responsible"}, "fallback": "hierarchy",
+        "missing": "Unassigned", "presentation": "header",
+        "header": {"text": "{title} {secondary}", "secondary": {"entityField": "label"}},
+    }
+    with pytest.raises(ValueError, match="E_REVIEW_GROUP_HEADER_SECONDARY") as failure:
+        sr.render(tmp_path, project, presentation=parts)
+    assert "/objects/'root'/fields/'label'=" in str(failure.value)
+    assert "/entities/" not in str(failure.value)
 
 
 def test_shared_design_default_view_uses_the_same_fallback_on_a_synthetic_project(tmp_path):
