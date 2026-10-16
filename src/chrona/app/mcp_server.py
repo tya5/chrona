@@ -50,8 +50,7 @@ _BASE_INSTRUCTIONS = (
     "workspace root. A result's status is ok, rejected (the input is refused: read each diagnostic's code and "
     "sourceRef) or failed (the call could not run); a rejection is a normal result, so read status, not only "
     "isError. The "
-    f"resources {AUTHORING_URI} and {DIAGNOSTICS_URI} explain the model and every diagnostic code; the authoring guide also has the plan-update loop "
-    "(record actuals, move asOf, re-plan, render with a baseline) and docs/guides/update-a-plan.md in the chrona repository walks through it."
+    f"resources {AUTHORING_URI} and {DIAGNOSTICS_URI} explain the model, the plan-update loop and every diagnostic code."
 )
 INSTRUCTIONS = _BASE_INSTRUCTIONS + " Writes are off: apply_command is refused unless the server is started with --allow-write."
 WRITE_INSTRUCTIONS = _BASE_INSTRUCTIONS + " Writes are on (--allow-write): apply_command executes directly, with no approval step."
