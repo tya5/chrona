@@ -3,7 +3,7 @@
 # Issue #1612 — automatic CJK font closure
 
 Product source `467221c95`; public baseline `4358e8844`, reconciled with
-`9db9de7da` (reviewer example-pin removal).
+`6bb56c205` (reviewer example-pin removal and its trusted generated evidence).
 [Design, architecture review and implementation plan](https://github.com/tya5/chrona/issues/1612#issuecomment-6225435042).
 Release is not accepted: final-head CI, the marquee PDF disposition, final
 public byte audit and exact review-containing main three-OS release are pending.
@@ -30,3 +30,6 @@ when names/weights coincide, default SVG namespaces and clipping remain intact,
 and TikZ uses closed file paths. Strict system-font refusal is unchanged.
 Specs08/30/37 and optional Scene run fields describe the contract. No preset,
 example or generated-output edits are part of this implementation.
+Reconciled focused run:206 passed; separate strict closure/small-caps/viewer-fit
+batch:85 passed. Schema equivalence: additive1/equal37;576 documents/739 probes;
+L2+L3=27.6s within60s. Final ready-base CI remains required.
