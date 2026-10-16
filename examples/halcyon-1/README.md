@@ -11,12 +11,11 @@ second surface and extension-typed objects, on one spacecraft programme.
   `payload-fast-track` replaces the detector-to-payload-TVAC dependency with one
   carrying a negative lag (`-3wd`): payload TVAC starts three working days before
   detector calibration ends.
-- `project.yaml` declares `extensions[0].resource`, a pinned reference to
+- `project.yaml` declares `extensions[0].resource`, a reference to
   `extensions/semiconductor-development.yaml`, a `chrona/profile/v0.3` package that
   defines the `PDR`, `CDR` and `PSR` review-gate profiles, the `approval` enum field they
   require, and the package-wide `model`, `customerReview` and `lot` fields. The package's
-  own `contentIdentity` frames the document with that field omitted; the Project's
-  reference pins the exact file bytes, which the closure verifies. The `pdr`, `cdr` and
+  own `contentIdentity` frames the document with that field omitted. The `pdr`, `cdr` and
   `psr` gates use the package types directly (`type: PDR`), and every work item carries
   a `model` (`EM`, `QM` or `FM`).
 - `actual.yaml` records span observations, point observations for gates that were held

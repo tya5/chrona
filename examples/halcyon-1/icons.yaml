@@ -19,7 +19,6 @@ body:
       kind: raster
       source:
         address: assets/annotation-container.png
-        contentIdentity: sha256:03f8c4d495b031937f9d52d3780375e3cdcb694070553e2b6f64c1a37195387d
       viewport:
         inlineSize: 40
         blockSize: 40

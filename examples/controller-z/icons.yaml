@@ -28,7 +28,6 @@ body:
       kind: raster
       source:
         address: assets/programme-mark.png
-        contentIdentity: sha256:83dba74097d943bbc3f95f99457ca50f8750c90e217866e9ddc68c839a8871d4
       viewport:
         inlineSize: 24
         blockSize: 24

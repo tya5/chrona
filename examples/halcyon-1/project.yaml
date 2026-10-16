@@ -11,7 +11,6 @@ extensions:
       store: {provider: local, identity: halcyon-1-example}
       address: extensions/semiconductor-development.yaml
       revision: {token: example-v1}
-      contentIdentity: sha256:e1f04370772d97c0b9a0891227a9923226483c496798c8d16c1d2849c06bad1c
 calendars:
   engineering:
     working_days: [mon, tue, wed, thu, fri]

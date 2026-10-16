@@ -32,8 +32,6 @@ grouping, columns, period, annotation bindings and the project's own wording.
 3. Move `asOf` forward to the update date.
 4. Leave `snapshots/plan-2026-10-10/` alone: the baseline stays the 2026-10-10 plan, so
    slips show against it.
-5. Update the project `contentIdentity` in every file under `contexts/` to the sha256 of
-   the new `project.yaml` bytes.
 
 The SVG and Scene under `generated/` are derived on `main`; do not edit them. To
 preview locally:
