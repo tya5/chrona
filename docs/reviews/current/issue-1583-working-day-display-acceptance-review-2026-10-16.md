@@ -2,8 +2,8 @@
 
 # Issue #1583 — working-day display and comparison
 
-Product source `fa14587ab`, reconciled source `68e9ce296`, ready base
-`b28afc8cf2cca1fd24d87ea0815305d94c3e5351`.
+Product source `fa14587ab`, combined source `feaae2185`, ready base
+`e02bcf5a1097d2c6b4a8f85c53376704906dcb70` (includes #1584).
 [Approved design/implementation plan](https://github.com/tya5/chrona/issues/1583#issuecomment-6203710183)
 and [calendarless policy](https://github.com/tya5/chrona/issues/1583#issuecomment-6217533121).
 This is not release acceptance: final-head CI, row2 disposition
@@ -30,6 +30,7 @@ and pre-Layout display ranges. Scene/adapters perform no calendar arithmetic.
 Calendarless presentation counts civil days without warning. Specifications06/24
 and shared vocabulary express the contract; default policy is declared in YAML,
 never selected by preset ID. Focused205 tests pass; schema equivalence against
-ready main passes (delta1/equal37,575 corpus documents,739 probes;L2+L3=39.0s
-within60s). Policy-fixture/explicit-calendar-day/routing controls pass84+18 tests.
-Independent read-only review found no blocker.
+ready main passes (delta1/equal37,575 corpus documents,739 probes;L2+L3=22.1s
+within60s). Combined hierarchy/date/policy/routing/coverage controls pass106 tests;
+the earlier policy-fixture batch passes84+18 tests. Independent combined-merge
+review found no dropped policy, source-local basis, diagnostic or ownership rule.
