@@ -18,7 +18,7 @@ from tests.support.legacy_axis import use_legacy_six_tier_axis
 # #1343 closes natural measurements from resolved annotation/unconsumed-note
 # content. Slot metadata changes; every visible SVG byte remains identical.
 # Explicit suppress changes only the independently verified Layout identity.
-NO_SUPPRESSION_SCENE_SHA256 = "0a9c4ae45bbc6c0b4e957b9b1bbf675a71d985cf62d81d16d26d064d7d0ff497"
+NO_SUPPRESSION_SCENE_SHA256 = "5b18f246ec0f47ebf71b118d333c447ffb517f17b5e33c9e5edb7f08fe5f85de"
 NO_SUPPRESSION_SVG_SHA256 = "3e9593666a8f1e60d9180ca6f9697e0ff912626fbe565080edbf5a57d9c5c5ce"
 
 

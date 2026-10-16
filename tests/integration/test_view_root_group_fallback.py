@@ -63,7 +63,7 @@ def test_shared_design_default_view_uses_the_same_fallback_on_a_synthetic_projec
         "root": {"type": "group", "title": "Root team", "schedule": {"mode": "rollup"}},
         "task": {"type": "task", "title": "Work", "parent": "root", "fields": {"owner": "eng"},
                  "schedule": {"mode": "fixed-span", "start": "2026-02-02", "end": "2026-02-06"}},
-    })
+    }, responsible_field_role=False)
     preset_root = builtin_preset_source_root("designs/marquee")
     parts = {kind: safe_load(preset_root.joinpath(filename).read_bytes()) for kind, filename in {
         "theme": "theme.yaml", "scheme": "scheme.yaml", "layout": "layout.yaml",
