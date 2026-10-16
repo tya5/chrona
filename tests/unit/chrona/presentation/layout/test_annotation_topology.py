@@ -1,12 +1,93 @@
 """Atomic annotation connector topology and visible bridge geometry."""
 from __future__ import annotations
 
+from itertools import islice
+
 from chrona.presentation.layout.annotation_topology import (
-    _sparse_elbows, local_route_bounds, route_annotation_candidate, visible_segments,
+    _sparse_elbows, local_route_bounds, route_annotation_candidate,
+    strict_route_candidates, visible_segments,
 )
+from chrona.presentation.layout.annotation_search import _route_crosses_rule_once
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
 )
+
+
+def test_opposite_side_axial_interleave_reaches_y_first_before_four_bend_routes() -> None:
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("axis-source", "mark", "plot", ObstacleRect(40, 20, 50, 30)))
+    common = dict(index=index, bounds=(0, 0, 120, 70), max_bends=4,
+                  max_detour_ratio=10.0, candidate_limit=64)
+    start, end = (10.0, 10.0), (100.0, 50.0)
+    legacy = tuple(strict_route_candidates(start, end, **common))
+    interleaved = tuple(strict_route_candidates(start, end, interleave_axial=True, **common))
+
+    # The legacy sequence stays X-family, then Y-family, then XY-family.
+    assert legacy[:2] == (
+        ((10.0, 10.0), (100.0, 10.0), (100.0, 50.0)),
+        ((10.0, 10.0), (10.0, 50.0), (100.0, 50.0)),
+    )
+    y_axis_route = ((10.0, 10.0), (10.0, 18.0), (100.0, 18.0), (100.0, 50.0))
+    assert y_axis_route in interleaved[:6]
+    assert y_axis_route not in legacy[:4]
+
+
+def test_strict_route_candidates_are_lazy_before_xy_family(monkeypatch) -> None:
+    import chrona.presentation.layout.annotation_topology as topology
+
+    index = SurfaceObstacleIndex()
+    for number in range(8):
+        index.add(SurfaceObstacle(f"axis-{number}", "mark", "plot",
+                                  ObstacleRect(20 + number * 5, 15 + number * 4,
+                                               21 + number * 5, 16 + number * 4)))
+    calls = 0
+    original = topology._compact_path
+
+    def count_compaction(points):
+        nonlocal calls
+        calls += 1
+        return original(points)
+
+    monkeypatch.setattr(topology, "_compact_path", count_compaction)
+    routes = strict_route_candidates((10.0, 10.0), (100.0, 50.0), index,
+                                     bounds=(0, 0, 120, 80), max_bends=4,
+                                     max_detour_ratio=10.0, candidate_limit=1024,
+                                     interleave_axial=True)
+    next(routes)
+    assert calls <= 2
+
+
+def test_interleaved_axial_prefix_finds_vertical_first_fit_under_same_cap() -> None:
+    index = SurfaceObstacleIndex()
+    rule = ObstacleSegment((1000.0, -10.0), (1000.0, 120.0))
+    index.add(SurfaceObstacle("as-of", "rule", "plot", rule))
+    # X-first horizontal runs meet the near-rule blocker or their vertical
+    # corridor meets the long barrier. A low Y-first corridor at y=3 is clear.
+    index.add(SurfaceObstacle("barrier", "mark", "plot",
+                              ObstacleRect(-2.0, 49.0, 1990.0, 51.0)))
+    index.add(SurfaceObstacle("near-rule", "text", "plot",
+                              ObstacleRect(999.0, -1.0, 1001.0, 1.0)))
+    for number in range(520):
+        x = 10.0 + number * 3.0
+        index.add(SurfaceObstacle(f"x-corridor-{number}", "mark", "plot",
+                                  ObstacleRect(x, 200.0, x + 1.0, 201.0)))
+    expected = ((0.0, 0.0), (0.0, 3.0), (2000.0, 3.0), (2000.0, 100.0))
+    common = dict(bounds=(0.0, -10.0, 2000.0, 300.0), max_bends=4,
+                  max_detour_ratio=2.0, candidate_limit=1024)
+    legacy_prefix = tuple(islice(strict_route_candidates(
+        (0.0, 0.0), (2000.0, 100.0), index, **common), 1025))
+    axial_prefix = tuple(islice(strict_route_candidates(
+        (0.0, 0.0), (2000.0, 100.0), index, interleave_axial=True, **common), 1025))
+
+    assert len(legacy_prefix) == len(axial_prefix) == 1025
+    assert expected not in legacy_prefix
+    assert expected in axial_prefix
+    assert _route_crosses_rule_once(expected, rule)
+    assert not any(index.collisions(ObstacleSegment(a, b), rule_host_id="as-of")
+                   for a, b in zip(expected, expected[1:]))
+    assert all(any(index.collisions(ObstacleSegment(a, b), rule_host_id="as-of")
+                   for a, b in zip(path, path[1:]))
+               for path in legacy_prefix[:1024])
 
 
 def test_strict_connector_uses_one_shared_index() -> None:
