@@ -208,11 +208,14 @@ $defs:
       text: {$ref: "#/$defs/viewHeading/properties/text"}
   headingText:
     description: "A template string or ordered template parts, concatenated verbatim. A guarded part is omitted silently when its declared global count figure is zero."
+    examples: ["{project}", [{text: "in {figure:group-count} panels", omitWhenZero: group-count}]]
     oneOf:
       - {$ref: "#/$defs/viewHeading/properties/title"}
       - type: array
+        description: "Ordered heading fragments with literal spacing and optional count guards."
         minItems: 1
         items:
+          description: "One heading fragment, optionally omitted at raw count zero."
           type: object
           required: [text]
           additionalProperties: false
