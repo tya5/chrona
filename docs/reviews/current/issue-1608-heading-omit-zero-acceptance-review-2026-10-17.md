@@ -20,7 +20,9 @@ Proposed three-design YAML adoption awaits the reviewer's acceptance in the PR.
 | ---: | --- | --- | --- | --- |
 | 1 | Synthetic tests: a part with `omitWhenZero` is drawn at 1 and omitted at 0, and an unknown figure id is the existing figure diagnostic. | met | [Synthetic controls](../../../tests/integration/test_heading_omit_when_zero.py): whole/split heading 0/1, premeasurement omission, literal concatenation, unknown/non-count/group-scope guards and deferred guard-only reads at 0/3. Ten tests pass. | — |
 | 2 | `--preset sunday`, `marquee` and `titlecard` on `examples/chrona-roadmap` (no groups) show no zero count, viewed as PNG. The #1582 CSV still shows `in three panels`. | met | Root rendered and viewed all four PNGs using the unchanged [roadmap Project](../../../examples/chrona-roadmap/project.yaml) and public [CSV fixture](https://github.com/tya5/chrona/issues/1582): no panels/acts/sections zero phrase remains; Sunday CSV retains `in three panels`. Local artifacts `/private/tmp/chrona-1608-visual-20261017/{roadmap-sunday,roadmap-marquee,roadmap-titlecard,csv-sunday}.png`. | — |
-| 3 | Public SVG/Scene changes are listed with counts. | not met | Official CI before/after artifacts and per-output counts remain required; no generated evidence is authored. | — |
+| 3 | Public SVG/Scene changes are listed with counts. | not met | [Planned artifact audit](https://github.com/tya5/chrona/issues/1608#issuecomment-6225977074) requires official CI before/after artifacts and per-output counts; no generated evidence is authored. | — |
+
+## Programme-level criteria (optional)
 
 Validation: 46 heading/count/closure integration tests passed before adding the
 additional deferred-zero case; all ten new controls then passed. Legacy focused
