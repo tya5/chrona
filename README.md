@@ -66,6 +66,8 @@ copied: each slide is a thin View and Context that reference the packaged design
 - fonts installed on the machine, chosen by the Theme's font family list;
 - diagnostics for suppressed labels, overflows and contrast failures;
 - executable conformance checks for the canonical Core v0.1 fixture;
+- the plan-update loop (actuals, `asOf`, re-plan, compare with the saved plan) in the
+  [update-a-plan guide](docs/guides/update-a-plan.md);
 - a tested agent skill, installed with `chrona skill copy`, that teaches an AI coding
   agent this workflow, and an MCP server (`chrona mcp`, optional `chrona[mcp]` extra; read-only unless started with `--allow-write`) for
   hosts that have no shell (see [Using chrona from an AI coding agent](docs/guides/agent-interface.md)).
@@ -103,6 +105,10 @@ chrona validate path/to/project.yaml
 chrona schedule path/to/project.yaml
 python -m chrona validate path/to/project.yaml
 ```
+
+After a week of work, record actuals, move `asOf`, re-plan and compare with the plan you started
+from: [Update a plan](docs/guides/update-a-plan.md). The same loop is a section of the agent
+skill (`chrona skill copy`).
 
 To work on chrona itself, see [Develop chrona](CONTRIBUTING.md#development-setup).
 

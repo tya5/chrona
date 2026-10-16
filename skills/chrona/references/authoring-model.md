@@ -13,7 +13,7 @@ format, Spec 03 and 04 time and scheduling, Specs 06, 07 and 33 view, theme and 
 | Theme | Concrete tokens: sizes, fonts, strokes | restyle without changing facts |
 | Color Scheme | Which color each kind of thing gets | recolor |
 | Layout | How the surface is composed | rearrange the page |
-| CLI | Renders a deterministic picture from the five | nothing: never edit its output |
+| CLI | Renders a picture from the five | nothing: never edit its output |
 
 A preset (see `chrona preset list`) supplies View, Theme, Color Scheme and Layout together,
 so the draft path needs only a Project (and an optional Actual Set for progress). A
