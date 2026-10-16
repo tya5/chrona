@@ -487,10 +487,14 @@ def test_halcyon_current_project_pin_rejects_changed_source_bytes(tmp_path):
     copied_example = tmp_path / "halcyon"
     shutil.copytree(ROOT / "examples/halcyon-1", copied_example)
     context_path = copied_example / "contexts/02-programme-board.yaml"
-    project_reference = yaml.safe_load(context_path.read_bytes())["body"]["project"]
+    context = yaml.safe_load(context_path.read_bytes())
+    project_reference = context["body"]["project"]
     project_path = copied_example / "project.yaml"
     assert project_reference["revision"]["token"] == HALCYON_PROJECT_REVISION
-    assert project_reference["contentIdentity"] == "sha256:" + sha256(project_path.read_bytes()).hexdigest()
+    # The committed example carries no pin (#1567); a pin the author supplies is still verified.
+    assert "contentIdentity" not in project_reference
+    project_reference["contentIdentity"] = "sha256:" + sha256(project_path.read_bytes()).hexdigest()
+    context_path.write_text(yaml.safe_dump(context, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
     project_path.write_bytes(project_path.read_bytes() + b"\n# stale Project bytes\n")
     with pytest.raises(ValueError, match="E_CONTENT_IDENTITY"):
@@ -502,14 +506,13 @@ HALCYON_PROJECT_REVISION = "example-v6"
 
 def test_every_halcyon_context_pins_current_project_without_repinning_theme():
     example = ROOT / "examples/halcyon-1"
-    expected_identity = "sha256:" + sha256((example / "project.yaml").read_bytes()).hexdigest()
     contexts = sorted((example / "contexts").glob("*.yaml"))
     manifest = yaml.safe_load((example / "manifest.yaml").read_text(encoding="utf-8"))
     assert {path.name for path in contexts} == {Path(slide["context"]).name for slide in manifest["slides"]}
     for path in contexts:
         body = yaml.safe_load(path.read_bytes())["body"]
         assert body["project"]["revision"]["token"] == HALCYON_PROJECT_REVISION, path.name
-        assert body["project"]["contentIdentity"] == expected_identity, path.name
+        assert "contentIdentity" not in body["project"], path.name  # no authored pins (#1567)
         if body["theme"]["store"]["provider"] == "package":
             # A shared design in the packaged store is pinned by its Store and token only (#1342, Spec 13).
             assert body["theme"]["revision"]["token"] == "bundled" and "contentIdentity" not in body["theme"], path.name
