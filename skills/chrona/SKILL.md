@@ -67,74 +67,26 @@ file, flag or output suffix exits 2; success exits 0.
 
 ## Update the plan after a week of work
 
-To keep a plan current (the guide [docs/guides/update-a-plan.md](../../docs/guides/update-a-plan.md)
-has a complete worked example), do these five steps with plain files, no Store:
+Walkthrough: [docs/guides/update-a-plan.md](../../docs/guides/update-a-plan.md). Plain files, no Store:
 
-1. **Keep the baseline.** `cp my-plan.yaml baseline.yaml` before editing (for the worked
-   example, copy `skills/chrona/examples/launch.yaml`). Never edit the baseline afterwards.
-   Comparing later is `render --snapshot baseline.yaml` (step 5): a saved copy of the plan file is
-   the whole mechanism, with no Store and no command file. `chrona baseline-capture` is not this:
-   it saves a named baseline into a Store from a command document, which is the pinned path
-   for reviewed history and is not needed to compare plans.
-2. **Record actuals** in `actual.yaml`, one observation per object: `start` (first day
-   worked); `finish` (the day **after** the last day worked, exclusive like a plan `end`);
-   `at` for a gate that has happened; and, while a task is open, `start`, no `finish`,
-   `openUntil: asOf` and a `progress` below 1 (without `openUntil` the bar is not drawn and
-   `W_LAYOUT_ACTUAL_INCOMPLETE` is reported). Next week, append new observations for the
-   same objects with a higher `sequence` (the highest wins) instead of rewriting the file.
-   No draft command writes an observation; the other ways are a sheet with `progress` and
-   `actual_*` columns read by `chrona import --actual-output` (to a new file), or, for a Store,
-   `chrona actual-intake`, which needs a Store config and an intake batch command document.
-3. **Move `asOf`** in `actual.yaml` to the date the observations are true on.
-4. **Change the plan.** Edit dates, or `amount`, in `project.yaml`, then run `chrona schedule`
-   and read the new dates from it. Leave work already done as it was planned, so it shows as late.
-5. **Render with the baseline**, naming a preset that draws it (the default preset accepts
-   `--snapshot` but draws no ghost and no `Δ finish`):
-
-`launch-actual.yaml`, after two weeks (Design finished on 2026-11-12, Build is open):
-
-<!-- chrona:doc-check file: launch-actual.yaml -->
-```yaml
-version: chrona/actual-set/v0.3
-kind: actual-set
-id: launch-observed
-body:
-  asOf: '2026-11-16'
-  observations:
-    - {id: kickoff-1, sequence: 1, projectObjectId: kickoff, actual: {at: '2026-11-02'}}
-    - {id: design-1, sequence: 1, projectObjectId: design, actual: {start: '2026-11-02', finish: '2026-11-12', progress: 1}}
-    - {id: build-1, sequence: 1, projectObjectId: build, actual: {start: '2026-11-12', openUntil: asOf, progress: 0.2}}
-```
+1. **Keep the baseline:** `cp project.yaml baseline.yaml` (for the worked example, copy
+   `skills/chrona/examples/launch.yaml`); never edit the copy. `baseline-capture` needs a Store.
+2. **Record actuals** in `actual.yaml`: `start`; `finish` (the day **after** the last day worked);
+   `at` for a gate; an open task has `start`, `openUntil: asOf` and `progress` below 1, no `finish`.
+   Next week append observations with a higher `sequence` (the highest wins). Move `asOf`.
+   No command writes an observation; a sheet with `progress`/`actual_*` columns can go through
+   `chrona import`, which also starts a plan from a CSV (`chrona import TABLE.csv --output p.yaml`).
+3. **Re-plan** in `project.yaml`, then read the new dates from `chrona schedule`.
+4. **Render against the baseline** with a preset that draws it; the default draws no ghost:
 
 ```bash
-chrona render skills/chrona/examples/launch.yaml --actual launch-actual.yaml --snapshot skills/chrona/examples/launch.yaml --preset target-b --output launch-update.svg
+chrona init week-plan
+chrona render week-plan/project.yaml --actual week-plan/actual.yaml --snapshot week-plan/project.yaml --preset target-b --output week-plan/update.svg
 ```
 
-Here the plan and the baseline are both the shipped file, to show the command; in a real
-update the first is your edited copy and the second the copy from step 1. `render` does not
-replace an existing output file, so use a new name for each update.
-
-If the plan starts as a spreadsheet, import it once and edit the YAML from then on:
-
-<!-- chrona:doc-check file: skill-tasks.csv -->
-```csv
-id,title,type,start,end
-design,Design,task,2026-11-02,2026-11-09
-launch,Launch,gate,2026-12-01,
-```
-
-```bash
-chrona import skill-tasks.csv --output skill-import.yaml --project-id skill-import --title "Imported plan"
-```
-
-`chrona import` never replaces a file, reports every bad row with its row and column, and
-takes `progress` and `actual_*` columns into an Actual Set with `--actual-output` and `--as-of`;
-the columns are in [docs/guides/csv-import.md](../../docs/guides/csv-import.md).
-
-Read the picture: a dashed outline is where the baseline had the item (drawn only for an item
-that moved); a dark line is the actual; a striped bar is a task open at `asOf`; `Δ finish` is the
-Actual finish minus the **current** plan's finish in calendar days (so it reads `+0d` once the
-plan is moved to match). Worked values are in the guide.
+Here plan and baseline are one file; in an update they are your edited plan and the step 1 copy.
+Use a new output name each time. A dashed outline is the baseline's place for an item that moved;
+`Δ finish` is actual minus the **current** plan.
 
 ## If the chrona MCP server is connected
 
@@ -154,10 +106,9 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 | `check_command` | `chrona command-check` | Previews a Store command (an Actual intake batch or a baseline capture); writes nothing. |
 | `apply_command` | `chrona command-apply` | Applies that command to the Store. It runs only if the user started the server with `--allow-write`. |
 
-No tool writes the plan. Edit `project.yaml` with your own file tools, then call the
-tools again. `apply_command` changes a Store, never the plan, and has no approval step of
-its own: apply only what the user asked for. A stale `baseRevision` is rejected, a repeated
-`commandId` is a no-op, and nothing is overwritten.
+No tool writes the plan: edit `project.yaml` yourself, then call the tools again. `apply_command`
+changes a Store, never the plan, and has no approval step: apply only what the user asked for. A
+stale `baseRevision` is rejected, a repeated `commandId` is a no-op, nothing is overwritten.
 
 ## The model in five lines
 
@@ -176,10 +127,8 @@ relation joins two endpoints and has a `lag`. The worked example, with all of it
 `examples/launch.yaml`.
 
 ## Check the worked example
-
-These commands use the repository-relative path; in an installed copy of this skill,
-prefix `skills/chrona/` with the directory that holds the skill (for example
-`.claude/skills/chrona/`).
+Paths are repository-relative; in an installed copy, prefix `skills/chrona/` with the directory
+that holds the skill (for example `.claude/skills/chrona/`).
 
 ```bash
 chrona validate skills/chrona/examples/launch.yaml
@@ -200,65 +149,52 @@ chrona preset copy executive-light --output looks/executive-light
 chrona render skills/chrona/examples/launch.yaml --preset looks/executive-light/preset.yaml --output launch-executive.svg
 ```
 
-`--viewport WIDTHxHEIGHT` sets a finite minimum size (the default is `1600xauto`). A
-narrower viewport can clip or drop labels; see the warnings below.
-
-Reach for explicit `--view`, `--theme`, `--scheme` or `--layout` files only to override
-one member of a preset. Immutable Render Contexts, snapshots and Store configuration are
-the pinned-evidence path (next section); do not use them unless the user asks for pinned evidence.
+`--viewport WIDTHxHEIGHT` sets a finite minimum size (the default is `1600xauto`); a narrower
+one can clip or drop labels. Use explicit `--view`, `--theme`, `--scheme` or `--layout` files only
+to override one member of a preset. Contexts and Stores are the pinned-evidence path below; do not use them unless the user asks for pinned evidence.
 
 ## Pinned evidence from a Store (only when the user asks)
 
-`render` draws a draft of a Project file. Evidence kept in a saved store is another path: an
-immutable **Render Context** (the closed list of Project, View, Theme, Color Scheme, Layout and fonts
-to render, each pinned by a content identity) lives in a **Store**, which a **Store configuration**
-(`.chrona/store.yaml`) names. A reference file (`id`, `kind`, `store`, `address`, `revision`,
-`contentIdentity`) points at one resource in it. `render_review` takes the Context's reference file and
-renders exactly that, in the Context's own format and viewport (so it has no `preset` or `viewport`);
-`compare_baseline` takes the reference of a named baseline (an immutable snapshot of a Project) and a
-candidate Project's reference and returns what changed. Both only read, refuse a Store root outside the workspace, and refuse bytes that do not
-match the pinned identity; no argument loosens that. Do not edit a Store file or unpin a reference to
-make a call pass, and do not change a Store's `integrity` setting: it is the user's. Without the tools,
-`chrona render-review` and `chrona baseline-compare` do the same work.
+`render` draws a draft of a Project file. An immutable **Render Context** (the closed list of
+Project, View, Theme, Color Scheme, Layout and fonts, each pinned by a content identity) lives in a
+**Store** named by a **Store configuration** (`.chrona/store.yaml`); a reference file points at one
+resource in it. `render_review` renders a Context's reference exactly (its own format and viewport);
+`compare_baseline` compares a named baseline reference with a candidate Project's. Both only read,
+refuse a Store root outside the workspace and refuse bytes that do not match the pinned identity.
+Do not edit a Store file, unpin a reference or change a Store's `integrity` to make a call pass: that
+is the user's. Without the tools, `chrona render-review` and `chrona baseline-compare` do the same.
 
 ## Warnings and diagnostics
 
 Errors are JSON on standard output with exit 1 or 2. A render that succeeds can still
 print warnings (`W_...`) and notes (`I_...`) as JSON lines on standard error with exit 0:
-something was clipped, suppressed or substituted. A warning carries a code and its facts
-but no explanation, so read it in [references/diagnostics.md](references/diagnostics.md).
-Shorten a title, widen `--viewport`, or accept it.
-
-If a command reports a code that file does not list, run it again with the smallest plan
-that shows it, quote the whole diagnostic to the user, and do not guess a fix.
+something was clipped, suppressed or substituted. Read the code in
+[references/diagnostics.md](references/diagnostics.md); shorten a title, widen `--viewport`, or
+accept it. If that file does not list a code, rerun the smallest plan that shows it, quote the
+whole diagnostic to the user, and do not guess a fix.
 
 ## What chrona does not do
 
-No resource leveling at this surface, no interactive editing, no cycle analysis (a
-cycle is rejected). A `deadline` is a promise, not a bound: `chrona schedule` still places
-everything and lists a `W_DEADLINE` in its `warnings` for each object planned after its
-deadline (`render` repeats it on standard error). `validate` does not judge it. A View
-can draw it (`deadlines: {show: slipped}`: a tick at the date and a run to the planned
-finish), and a terse plan states it with a last clause, `deadline 2027-06-30`.
+No resource leveling at this surface, no interactive editing, no cycle analysis (a cycle is
+rejected). A `deadline` is a promise, not a bound: `chrona schedule` still places everything and
+lists a `W_DEADLINE` for each object planned after it (`render` repeats it on standard error);
+`validate` does not judge it. A View can draw it (`deadlines: {show: slipped}`), and a terse plan
+states it with a last clause, `deadline 2027-06-30`.
 
 ## Install and refresh this skill
 
 This skill ships inside the chrona package, so it always matches the installed command.
-`chrona skill copy` copies it into an empty or absent directory and refuses to
-overwrite anything. Point it at the skills directory your agent host reads (for example
-`.claude/skills/chrona`):
+`chrona skill copy` copies it into an empty or absent directory and never overwrites. Point it at
+the skills directory your agent host reads (for example `.claude/skills/chrona`):
 
 ```bash
 chrona skill copy --output agent-skills/chrona
 ```
 
-After upgrading chrona, refresh by copying into a new directory, comparing it with the
-installed one (`diff -r` on macOS and Linux), and replacing the old directory with the
-new one. A failing copy writes nothing: `E_SKILL_OUTPUT_EXISTS` means the directory is
-not empty, so choose a new one.
+After upgrading, copy into a new directory, compare with `diff -r`, and replace the old one.
+`E_SKILL_OUTPUT_EXISTS` means the directory is not empty; choose a new one.
 
 ## Where the rules live
 
-This skill teaches the workflow, not the specification. Spec 05 (project format), Spec 04
-(scheduling) and Specs 06, 07 and 33 (view, theme, layout) in `docs/specification/` of the
-chrona repository state the rules; the skill links to them instead of restating them.
+This skill teaches the workflow. Spec 05 (project format), Spec 04 (scheduling) and Specs 06, 07
+and 33 (view, theme, layout) in `docs/specification/` state the rules.
