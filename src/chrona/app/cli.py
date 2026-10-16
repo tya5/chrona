@@ -262,7 +262,7 @@ def _group_command_help(parser: argparse.ArgumentParser, action: argparse.Action
             continue
         lines.append(f"\n  {title}")
         lines.extend(f"    {name:<32}{summaries[name]}" for name in names)
-    parser.description = "\n".join(lines) + "\n\nRun `chrona COMMAND --help` for the options of one command."
+    parser.description = "\n".join(lines) + "\n\nRun `chrona COMMAND --help` for the options of one command.\nKeep a plan current after a week of work: docs/guides/update-a-plan.md (the same loop is in `chrona skill copy`)."
     parser.formatter_class = argparse.RawDescriptionHelpFormatter
 
 
@@ -307,8 +307,8 @@ def _parser() -> JsonArgumentParser:
     for name, help_text in commands.items():
         command = sub.add_parser(name, help=help_text, description=help_text)
         _add_snapshot_arguments(command)
-    command = sub.add_parser("render", help="draw a slide from a Project (a draft for review, not reproducible evidence)",
-                              description="draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix. A draft for review, not reproducible evidence")
+    command = sub.add_parser("render", help="draw a slide from a Project file, with its optional Actual and look files",
+                              description="draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix, from the files you pass")
     command.add_argument("project", help="Draft Project YAML path, or a terse .chrona plan")
     command.add_argument("--preset", help="Presentation preset YAML path, or a builtin catalogue id (see `chrona preset list`); omit it to use bundled chrona-default-draft; explicit resource flags override its members")
     command.add_argument("--view", help="View YAML path")
@@ -392,7 +392,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--provenance", help="write a JSON record of which inputs the render used")
     command.add_argument("--output", "-o", required=True)
 
-    command = sub.add_parser("render-review", help="draw a slide from a saved render context (reproducible)", description="draw a slide from a saved render context; the same inputs always give the same slide")
+    command = sub.add_parser("render-review", help="draw a slide from a saved render context in a Store", description="draw a slide from a saved render context: the Project, View, Theme and Layout it lists, read from a Store")
     command.add_argument("--context-reference", required=True, help="saved render context reference YAML")
     command.add_argument("--store-config", help="Store config YAML (for example .chrona/store.yaml); its integrity setting applies and replaces --snapshot-root/--store-identity")
     command.add_argument("--snapshot-root", help="local snapshot adapter root (required without --store-config)")

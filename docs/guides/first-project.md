@@ -57,6 +57,9 @@ and `chrona compile` turns it into the Project once it is final.
 To learn Project capabilities in small independent steps, follow the
 [progressive Project tutorial](progressive-project-tutorial.md).
 
+Once the plan is moving, [update it after a week of work](update-a-plan.md): record actuals, move
+`asOf`, re-plan, and draw the result against the plan you started from.
+
 An AI coding agent can follow the same path from the [chrona agent skill](../../skills/chrona/SKILL.md),
 which carries the authoring model, a worked plan, the diagnostic codes an agent meets and
 when to use Mermaid instead.
