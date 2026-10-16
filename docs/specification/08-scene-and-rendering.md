@@ -173,9 +173,14 @@ fallback selected by profile, example, or missing capability are invalid.
 Every declared and present slot family is complete-or-diagnose: title, table,
 timeline/axis, legend, notes, group details, observations, milestones, and summary
 either emit their declared primitives or fail before output. Optional families are
-absent only when their resolved input is empty and their profile contract marks them
+absent when their resolved input is empty and their profile contract marks them
 optional. The SVG adapter validates primitive bounds and required target capabilities;
 it does not silently clip a required label or substitute a literal policy value.
+
+Empty resolved annotation and legend content is semantically absent at Layout
+allocation (#1597, Spec33 §2): its source slots and newly empty ancestors reserve
+no space, including fixed-size slots. Source validation and measurement still run;
+nonempty content is not reclassified because placement fails or is suppressed.
 
 ## 3. Scene inputs and output
 
