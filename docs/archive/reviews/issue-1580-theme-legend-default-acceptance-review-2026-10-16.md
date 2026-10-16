@@ -2,7 +2,11 @@
 
 # Acceptance Review — Theme Legend Shape Default (#1580)
 
-Feature commit: [0182956cc](https://github.com/tya5/chrona/commit/0182956cc6aafbc5bb8b567f2a349ed958032dd5). Preflight base: [7ca7e5553](https://github.com/tya5/chrona/commit/7ca7e5553244b1e726730ad07304c08562cf93d6). The candidate is reconciled with newer ready main d65735f13; its own snapshot and release gate remain required.
+Released through [PR #1589](https://github.com/tya5/chrona/pull/1589).
+Exact review-containing main `6ae0ccd80ed8b7b5e05a0edfbc09d2ef3f9113a1`
+passed [three-OS release38820611467](https://github.com/tya5/chrona/actions/runs/38820611467).
+Final head `393a16534` passed CI38818663157; artifact12011628134
+preserves all 50 SVG and 50 Scene raw bytes, with no added/retired paths.
 
 ## Literal issue acceptance
 
@@ -26,4 +30,4 @@ Schema equivalence passed after retiring merged deltas: L1 delta 1/equal 37; 575
 
 Theme schema admission reuses the existing closed `circle`/`rule-pair` vocabulary; the finite Theme consumer registry assigns the new property to Layout. `ThemeTokenView` reads the optional default, and Layout resolves Detail-over-Theme precedence in `swatch_extent`, shared by measurement and drawing. No Scene or adapter behavior was added. With the Theme property absent, the existing legacy geometry path remains active.
 
-All three literal acceptance rows are met. The final PR snapshot and release CI remain pending; this review does not claim those publication gates are complete.
+All three literal acceptance rows and the exact-main release gate are met.
