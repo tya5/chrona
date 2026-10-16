@@ -54,8 +54,11 @@ def _manifest_contexts(root: Path) -> dict[Path, Path]:
         raise ValueError("E_FONT_IDENTITY_MANIFEST") from error
 
 
-def _context_catalog(context: Mapping[str, Any]) -> tuple[str, dict[tuple[str, int], str], set[str]]:
-    """Return exact declared assets keyed by completed text selection facts."""
+def _context_catalog(context: Mapping[str, Any]) -> tuple[str, dict[tuple[str, int], str | None], set[str]]:
+    """Return declared assets keyed by completed text selection facts.
+
+    A face without contentIdentity is unpinned: it maps to None and claims no identity.
+    """
     body = context.get("body")
     environment = body.get("environment") if isinstance(body, Mapping) else None
     descriptor = environment.get("fontMetrics") if isinstance(environment, Mapping) else None
@@ -63,7 +66,7 @@ def _context_catalog(context: Mapping[str, Any]) -> tuple[str, dict[tuple[str, i
     context_id = context.get("id")
     if not isinstance(context_id, str) or not isinstance(assets, list):
         raise ValueError("E_FONT_IDENTITY_CONTEXT")
-    catalog: dict[tuple[str, int], str] = {}
+    catalog: dict[tuple[str, int], str | None] = {}
     regular_identities: set[str] = set()
     identities: dict[str, tuple[str, int]] = {}
     for asset in assets:
@@ -71,12 +74,15 @@ def _context_catalog(context: Mapping[str, Any]) -> tuple[str, dict[tuple[str, i
         family = asset.get("family") if isinstance(asset, Mapping) else None
         weight = asset.get("weight") if isinstance(asset, Mapping) else None
         identity = font.get("contentIdentity") if isinstance(font, Mapping) else None
-        if not isinstance(family, str) or not isinstance(weight, int) or not isinstance(identity, str):
+        if not isinstance(family, str) or not isinstance(weight, int) \
+                or not (identity is None or isinstance(identity, str)):
             raise ValueError("E_FONT_IDENTITY_CONTEXT")
         key = (family.casefold(), weight)
-        if key in catalog or (identity in identities and identities[identity] != key):
+        if key in catalog or (identity is not None and identity in identities and identities[identity] != key):
             raise ValueError("E_FONT_IDENTITY_CONTEXT")
         catalog[key] = identity
+        if identity is None:
+            continue
         identities[identity] = key
         if weight == 400:
             regular_identities.add(identity)
@@ -143,9 +149,12 @@ def evaluate_committed_scenes(paths: Iterable[Path], *, root: Path = ROOT,
                                              None, actual if isinstance(actual, str) else None,
                                              "E_FONT_IDENTITY_SCENE", "error"))
                     continue
-                expected = catalog.get((_primary_family(family).casefold(), weight))
-                if expected is None:
+                face = (_primary_family(family).casefold(), weight)
+                expected = catalog.get(face)
+                if face not in catalog:
                     code = "E_FONT_IDENTITY_FACE"
+                elif expected is None:
+                    code = "I_FONT_IDENTITY_UNPINNED"
                 elif weight == 700 and actual in regular_identities:
                     code = "E_FONT_IDENTITY_WEIGHT"
                 elif actual != expected:
