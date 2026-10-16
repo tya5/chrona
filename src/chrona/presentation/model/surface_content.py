@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Mapping
 
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec
+from chrona.presentation.model.date_basis import DisplayDateRange
 from chrona.presentation.model.placement_candidates import PlacementCandidate
 from chrona.presentation.model.projection import ObservationState, ReviewItem
 
@@ -388,6 +389,10 @@ def display_value(value: Any, missing: str | Mapping[str, Any], formatter: str |
         if isinstance(value, dict):
             point = value.get("at", value.get("finish", value.get("end", value.get("start"))))
             return point.isoformat() if isinstance(point, date) else str(point)
+    if formatter == "dateRange" and isinstance(value, DisplayDateRange):
+        if value.start == value.end:
+            return _format_compact_date(value.start, include_year=False, locale=locale)
+        return _format_date_range(value.start, value.end, locale=locale)
     if formatter == "dateRange" and isinstance(value, dict):
         start, end = value.get("start"), value.get("end", value.get("finish"))
         if isinstance(start, date) and isinstance(end, date):

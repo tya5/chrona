@@ -7000,15 +7000,15 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:tvac:Work package` | `text` | 107.312, 462.598 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:tvac:Δ finish` | `text` | 437.500, 462.598 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:vibration:Work package` | `text` | 94.244, 440.744 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:comms-test:Δ finish` | `variance-ahead` | 424.924, 591.867 | `canvas` | canvas | `#FFFFFF` | fill | 4.312 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:comms-test:Δ finish` | `variance-ahead` | 428.356, 591.867 | `canvas` | canvas | `#FFFFFF` | fill | 4.312 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:eps:Δ finish` | `variance-ahead` | 428.356, 225.913 | `canvas` | canvas | `#FFFFFF` | fill | 4.312 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:station:Δ finish` | `variance-ahead` | 424.924, 570.013 | `canvas` | canvas | `#FFFFFF` | fill | 4.312 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:station:Δ finish` | `variance-ahead` | 428.356, 570.013 | `canvas` | canvas | `#FFFFFF` | fill | 4.312 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:avionics:Δ finish` | `variance-behind` | 426.844, 204.060 | `canvas` | canvas | `#FFFFFF` | fill | 5.438 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:bus-test:Δ finish` | `variance-behind` | 423.412, 247.767 | `canvas` | canvas | `#FFFFFF` | fill | 5.438 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:detector:Δ finish` | `variance-behind` | 426.844, 333.329 | `canvas` | canvas | `#FFFFFF` | fill | 5.438 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:mcs:Δ finish` | `variance-behind` | 426.844, 548.160 | `canvas` | canvas | `#FFFFFF` | fill | 5.438 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:optics:Δ finish` | `variance-behind` | 426.844, 311.475 | `canvas` | canvas | `#FFFFFF` | fill | 5.438 | 4.500 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:payload-tvac:Δ finish` | `variance-behind` | 423.412, 355.183 | `canvas` | canvas | `#FFFFFF` | fill | 5.438 | 4.500 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:payload-tvac:Δ finish` | `variance-behind` | 426.844, 355.183 | `canvas` | canvas | `#FFFFFF` | fill | 5.438 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:integration:Δ finish` | `variance-on-track` | 426.844, 418.890 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:structure:Δ finish` | `variance-on-track` | 426.844, 182.206 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:vibration:Δ finish` | `variance-on-track` | 426.844, 440.744 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
@@ -7377,15 +7377,15 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:tvac:Work package` | `text` | 134.762, 491.217 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:tvac:Δ finish` | `text` | 442.167, 491.217 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:vibration:Work package` | `text` | 121.169, 468.075 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:comms-test:Δ finish` | `variance-ahead` | 426.867, 606.924 | `region-frame:board` | flat | `#EFE3C8` | fill | 4.637 | 3.000 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:comms-test:Δ finish` | `variance-ahead` | 430.407, 606.924 | `region-frame:board` | flat | `#EFE3C8` | fill | 4.637 | 3.000 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:eps:Δ finish` | `variance-ahead` | 430.407, 282.945 | `region-frame:board` | flat | `#EFE3C8` | fill | 4.637 | 3.000 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:station:Δ finish` | `variance-ahead` | 426.867, 583.782 | `region-frame:board` | flat | `#EFE3C8` | fill | 4.637 | 3.000 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:station:Δ finish` | `variance-ahead` | 430.407, 583.782 | `region-frame:board` | flat | `#EFE3C8` | fill | 4.637 | 3.000 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:avionics:Δ finish` | `variance-behind` | 429.087, 259.803 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.022 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:bus-test:Δ finish` | `variance-behind` | 425.547, 306.086 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.022 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:detector:Δ finish` | `variance-behind` | 429.087, 375.510 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.022 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:mcs:Δ finish` | `variance-behind` | 429.087, 560.641 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.022 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:optics:Δ finish` | `variance-behind` | 429.087, 352.369 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.022 | 4.500 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:payload-tvac:Δ finish` | `variance-behind` | 425.547, 398.651 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.022 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:payload-tvac:Δ finish` | `variance-behind` | 429.087, 398.651 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.022 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:integration:Δ finish` | `variance-on-track` | 429.087, 444.934 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.184 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:structure:Δ finish` | `variance-on-track` | 429.087, 236.662 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.184 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `cell:vibration:Δ finish` | `variance-on-track` | 429.087, 468.075 | `region-frame:board` | flat | `#EFE3C8` | fill | 5.184 | 4.500 | info |
@@ -7765,15 +7765,15 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:tvac:Work package` | `text` | 117.061, 508.355 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:tvac:Δ finish` | `text` | 431.333, 508.355 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:vibration:Work package` | `text` | 105.838, 489.891 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:comms-test:Δ finish` | `variance-ahead` | 423.335, 620.677 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 10.142 | 3.000 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:comms-test:Δ finish` | `variance-ahead` | 426.380, 620.677 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 10.142 | 3.000 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:eps:Δ finish` | `variance-ahead` | 426.380, 302.175 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 10.142 | 3.000 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:station:Δ finish` | `variance-ahead` | 423.335, 602.213 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 10.142 | 3.000 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:station:Δ finish` | `variance-ahead` | 426.380, 602.213 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 10.142 | 3.000 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:avionics:Δ finish` | `variance-behind` | 425.245, 283.711 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 5.669 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:bus-test:Δ finish` | `variance-behind` | 422.200, 320.640 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 5.669 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:detector:Δ finish` | `variance-behind` | 425.245, 396.033 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 5.669 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:mcs:Δ finish` | `variance-behind` | 425.245, 583.749 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 5.669 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:optics:Δ finish` | `variance-behind` | 425.245, 377.569 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 5.669 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:payload-tvac:Δ finish` | `variance-behind` | 422.200, 414.498 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 5.669 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:payload-tvac:Δ finish` | `variance-behind` | 425.245, 414.498 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 5.669 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:integration:Δ finish` | `variance-on-track` | 425.245, 471.426 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:structure:Δ finish` | `variance-on-track` | 425.245, 265.247 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:vibration:Δ finish` | `variance-on-track` | 425.245, 489.891 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
@@ -8102,15 +8102,15 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:tvac:The company` | `text` | 119.329, 498.685 | `canvas` | canvas | `#0D0A09` | fill | 15.659 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:tvac:Δ finish` | `text` | 436.833, 498.685 | `canvas` | canvas | `#0D0A09` | fill | 15.659 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:vibration:The company` | `text` | 108.090, 479.910 | `canvas` | canvas | `#0D0A09` | fill | 15.659 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:comms-test:Δ finish` | `variance-ahead` | 423.733, 614.561 | `canvas` | canvas | `#0D0A09` | fill | 10.201 | 3.000 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:comms-test:Δ finish` | `variance-ahead` | 427.308, 614.561 | `canvas` | canvas | `#0D0A09` | fill | 10.201 | 3.000 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:eps:Δ finish` | `variance-ahead` | 427.308, 285.709 | `canvas` | canvas | `#0D0A09` | fill | 10.201 | 3.000 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:station:Δ finish` | `variance-ahead` | 423.733, 595.786 | `canvas` | canvas | `#0D0A09` | fill | 10.201 | 3.000 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:station:Δ finish` | `variance-ahead` | 427.308, 595.786 | `canvas` | canvas | `#0D0A09` | fill | 10.201 | 3.000 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:avionics:Δ finish` | `variance-behind` | 425.733, 266.934 | `canvas` | canvas | `#0D0A09` | fill | 7.109 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:bus-test:Δ finish` | `variance-behind` | 422.158, 304.484 | `canvas` | canvas | `#0D0A09` | fill | 7.109 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:detector:Δ finish` | `variance-behind` | 425.733, 382.810 | `canvas` | canvas | `#0D0A09` | fill | 7.109 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:mcs:Δ finish` | `variance-behind` | 425.733, 577.011 | `canvas` | canvas | `#0D0A09` | fill | 7.109 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:optics:Δ finish` | `variance-behind` | 425.733, 364.034 | `canvas` | canvas | `#0D0A09` | fill | 7.109 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:payload-tvac:Δ finish` | `variance-behind` | 422.158, 401.585 | `canvas` | canvas | `#0D0A09` | fill | 7.109 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:payload-tvac:Δ finish` | `variance-behind` | 425.733, 401.585 | `canvas` | canvas | `#0D0A09` | fill | 7.109 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:integration:Δ finish` | `variance-on-track` | 425.733, 461.135 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:structure:Δ finish` | `variance-on-track` | 425.733, 248.159 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:vibration:Δ finish` | `variance-on-track` | 425.733, 479.910 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
@@ -8413,15 +8413,15 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:tvac:Late?` | `text` | 403.500, 506.453 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:tvac:What` | `text` | 121.167, 506.453 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:vibration:What` | `text` | 107.758, 487.857 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:comms-test:Late?` | `variance-ahead` | 394.112, 621.434 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 6.357 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:comms-test:Late?` | `variance-ahead` | 397.780, 621.434 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 6.357 | 3.000 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:eps:Late?` | `variance-ahead` | 397.780, 295.087 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 6.357 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:station:Late?` | `variance-ahead` | 394.112, 602.838 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 6.357 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:station:Late?` | `variance-ahead` | 397.780, 602.838 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 6.357 | 3.000 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:avionics:Late?` | `variance-behind` | 394.356, 276.491 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 5.926 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:bus-test:Late?` | `variance-behind` | 390.688, 313.683 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 5.926 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:detector:Late?` | `variance-behind` | 394.356, 391.472 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 5.926 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:mcs:Late?` | `variance-behind` | 394.356, 584.241 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 5.926 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:optics:Late?` | `variance-behind` | 394.356, 372.875 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 5.926 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:payload-tvac:Late?` | `variance-behind` | 390.688, 410.068 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 5.926 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:payload-tvac:Late?` | `variance-behind` | 394.356, 410.068 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 5.926 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:integration:Late?` | `variance-on-track` | 399.832, 469.260 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:structure:Late?` | `variance-on-track` | 399.832, 257.894 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:vibration:Late?` | `variance-on-track` | 399.832, 487.857 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
