@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 from math import isclose
+from xml.etree import ElementTree
 
 import pytest
 
@@ -423,7 +424,13 @@ def test_png_and_pdf_are_drawn_from_the_raw_svg_so_a_fixed_font_output_is_the_ra
     monkeypatch.setattr(registry, "_verify_reportlab", lambda descriptor: None)
     with pytest.raises(_Captured):
         pdf.render(fitted.surface)
-    assert seen["png"] == raw_svg and seen["pdf"] == raw_svg  # not one fit attribute reaches a rasteriser
+    assert seen["png"] == raw_svg
+    # PDF lowers completed vector paints, but not one fit attribute or altered
+    # text run may reach its fixed-font converter.
+    def text_nodes(svg):
+        return tuple(ElementTree.tostring(node) for node in ElementTree.fromstring(svg).iter()
+                     if node.tag.endswith("}text"))
+    assert text_nodes(seen["pdf"]) == text_nodes(raw_svg)
     assert "textLength" not in seen["png"] and "filter=" not in seen["pdf"]
 
 
