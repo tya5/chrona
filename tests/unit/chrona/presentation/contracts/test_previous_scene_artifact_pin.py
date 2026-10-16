@@ -61,7 +61,7 @@ def test_context_optional_previous_scene_decodes_to_neutral_artifact_pin():
     assert not hasattr(context.previous_scene, "kind")
 
 
-@pytest.mark.parametrize("mutation", ["id", "kind", "missing-hash", "bad-hash", "unsafe-address"])
+@pytest.mark.parametrize("mutation", ["id", "kind", "bad-hash", "unsafe-address"])
 def test_context_rejects_scene_pin_resource_identity_or_unpinned_bytes(mutation):
     value = _context()
     pin = _pin()
@@ -69,8 +69,6 @@ def test_context_rejects_scene_pin_resource_identity_or_unpinned_bytes(mutation)
         pin["id"] = "invented-scene-resource"
     elif mutation == "kind":
         pin["kind"] = "scene"
-    elif mutation == "missing-hash":
-        del pin["contentIdentity"]
     elif mutation == "bad-hash":
         pin["contentIdentity"] = "sha256:not-a-digest"
     else:
@@ -79,3 +77,15 @@ def test_context_rejects_scene_pin_resource_identity_or_unpinned_bytes(mutation)
 
     with pytest.raises(SchemaContractError):
         parse_contract(_identity(value), value)
+
+
+def test_context_accepts_a_scene_pin_without_a_content_identity():
+    value = _context()
+    pin = _pin()
+    del pin["contentIdentity"]
+    value["body"]["inputs"]["previousScene"] = pin
+
+    context = parse_contract(_identity(value), value)
+
+    assert context.previous_scene.content_identity is None
+    assert "contentIdentity" not in context.previous_scene.as_reader_reference()

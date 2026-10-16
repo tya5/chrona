@@ -626,7 +626,7 @@ class IconRasterSource:
     """Identity-closed PNG payload retained only for a raster catalog entry."""
 
     address: str
-    content_identity: str
+    content_identity: str | None  # the authored pin; None when the catalog supplies none
 
 
 @dataclass(frozen=True)
@@ -777,12 +777,12 @@ class ArtifactPin:
     store: Mapping[str, Any]
     address: str
     revision_token: str
-    content_identity: str
+    content_identity: str | None  # the authored pin; None when none was supplied
 
     def as_reader_reference(self) -> FrozenDict:
         return freeze({"store": self.store, "address": self.address,
                        "revision": {"token": self.revision_token},
-                       "contentIdentity": self.content_identity})
+                       **({"contentIdentity": self.content_identity} if self.content_identity is not None else {})})
 
 
 @dataclass(frozen=True)
@@ -1616,7 +1616,7 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
                          str(target["textMode"]) if "textMode" in target else None),
             (ArtifactPin(inputs["previousScene"]["store"], str(inputs["previousScene"]["address"]),
                          str(inputs["previousScene"]["revision"]["token"]),
-                         str(inputs["previousScene"]["contentIdentity"]))
+                         inputs["previousScene"].get("contentIdentity"))
              if "previousScene" in inputs else None),
         )
     if identity.kind == "actual-set":

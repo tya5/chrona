@@ -165,7 +165,7 @@ def _merge_base(profile: Mapping[str, Any], bases: Mapping[str, LayoutBase], sta
     if base_id in stack:
         raise LayoutError("E_LAYOUT_BASE_CYCLE", "/extends", base_id)
     base = bases.get(base_id)
-    if base is None or base.revision != reference["revision"]["token"] or base.content_identity != reference["contentIdentity"]:
+    if base is None or base.revision != reference["revision"]["token"] or ("contentIdentity" in reference and base.content_identity != reference["contentIdentity"]):
         raise LayoutError("E_LAYOUT_REFERENCE_UNKNOWN", "/extends", base_id)
     resolved = _merge_base(base.profile, bases, stack + (base_id,))
     return compose_layout_profile(profile, resolved)

@@ -894,7 +894,7 @@ def _read_previous_scene(pin: ArtifactPin, reader: SnapshotReader) -> bytes:
     except SnapshotReadError as error:
         raise ClosureError(error.diagnostic_id, "/body/inputs/previousScene", error.detail) from error
     # Injected readers cannot bypass integrity at the closure seam.
-    if f"sha256:{sha256(payload).hexdigest()}" != pin.content_identity:
+    if pin.content_identity is not None and f"sha256:{sha256(payload).hexdigest()}" != pin.content_identity:
         raise ClosureError("E_CONTENT_IDENTITY", "/body/inputs/previousScene",
                            "previous Scene bytes do not match their declared identity")
     return payload
@@ -1278,7 +1278,7 @@ def _selected_icon_entry(catalog: IconCatalogContract, name: str) -> IconEntry:
     if source_value is not None:
         if not isinstance(source_value, FrozenDict):
             raise ClosureError("E_ICON_CATALOG_SCHEMA", detail=f"icon {name!r} of catalog {catalog.set_name!r}: source must be a mapping")
-        source = IconRasterSource(str(source_value["address"]), str(source_value["contentIdentity"]))
+        source = IconRasterSource(str(source_value["address"]), source_value.get("contentIdentity"))
     return IconEntry(name, str(raw["kind"]), (int(viewport["inlineSize"]), int(viewport["blockSize"])),
                      str(raw["alternative"]), normalized, source)
 
@@ -1330,7 +1330,7 @@ def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[C
             asset_reference = {
                 "id": entry.name, "kind": "icon-asset", "store": reference.store,
                 "address": entry.source.address, "revision": {"token": reference.revision_token},
-                "contentIdentity": entry.source.content_identity,
+                **({"contentIdentity": entry.source.content_identity} if entry.source.content_identity is not None else {}),
             }
             try:
                 payload = reader.read(asset_reference)
@@ -1341,7 +1341,8 @@ def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[C
                 validate_png(payload, entry.viewport)
             except IconNormalizationError as error:
                 raise ClosureError(error.diagnostic_id, f"/body/icons/{entry.name}/source") from error
-            assets.append(IconAsset(icon_id, entry.kind, entry.source.content_identity, entry.viewport, entry.alternative, payload))
+            assets.append(IconAsset(icon_id, entry.kind, entry.source.content_identity or "sha256:" + sha256(payload).hexdigest(),
+                                    entry.viewport, entry.alternative, payload))
     return tuple(assets)
 
 
@@ -1379,14 +1380,14 @@ def _load_draft_icon_assets(catalog_resources: tuple[ClosureResource, ...],
                 payload = path.read_bytes()
             except OSError as error:
                 raise ClosureError("E_ICON_ASSET_MISSING", f"/body/icons/{entry.name}/source") from error
-            if "sha256:" + sha256(payload).hexdigest() != entry.source.content_identity:
+            if entry.source.content_identity is not None and "sha256:" + sha256(payload).hexdigest() != entry.source.content_identity:
                 raise ClosureError("E_ICON_ASSET_IDENTITY", f"/body/icons/{entry.name}/source")
             try:
                 validate_png(payload, entry.viewport)
             except IconNormalizationError as error:
                 raise ClosureError(error.diagnostic_id, f"/body/icons/{entry.name}/source") from error
-            assets.append(IconAsset(icon_id, entry.kind, entry.source.content_identity, entry.viewport,
-                                    entry.alternative, payload))
+            assets.append(IconAsset(icon_id, entry.kind, entry.source.content_identity or "sha256:" + sha256(payload).hexdigest(),
+                                    entry.viewport, entry.alternative, payload))
     return tuple(assets)
 
 

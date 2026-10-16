@@ -55,7 +55,7 @@ class UnavailableFontProviders(MaterializationError):
 @dataclass(frozen=True)
 class _ResolvedFontAsset:
     locator: dict[str, Any]
-    content_identity: str
+    content_identity: str | None  # the authored pin; None when the author supplied none
     address: str
     provider: str
     payload: bytes
@@ -78,13 +78,13 @@ def _font_copy_plan(body: dict[str, Any], example: Path) -> tuple[_ResolvedFontA
             except FontResourceError as error:
                 raise ValueError(f"E_MATERIALIZER_FONT: cannot resolve {key} asset for {_label(asset.get('id', '<unknown>'))} at {_label(locator.get('address'))}: {error}; {_label(error.detail)}") from error
             payload = source.read_bytes()
-            if record.get("contentIdentity") != _identity(payload):
+            if record.get("contentIdentity") is not None and record["contentIdentity"] != _identity(payload):  # a pin is optional; a supplied one is verified (#1567)
                 raise ValueError(f"E_MATERIALIZER_FONT_IDENTITY: fontMetrics asset {_label(asset.get('id', '<unknown>'))} field {key} at {_label(locator.get('address'))}; expected {_label(record.get('contentIdentity'))}, found {_identity(payload)}")
             address = locator.get("address")
             if not isinstance(address, str):
                 raise ValueError(f"E_MATERIALIZER_FONT: fontMetrics asset {_label(asset.get('id', '<unknown>'))} field {key} locator requires string address, found {_label(address)}")
             provider = locator.get("provider")
-            plan.append(_ResolvedFontAsset(locator, record["contentIdentity"], address, provider, payload))
+            plan.append(_ResolvedFontAsset(locator, record.get("contentIdentity"), address, provider, payload))
     if unavailable:
         raise UnavailableFontProviders(tuple(sorted(unavailable)))
     return tuple(plan)
@@ -349,7 +349,7 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
             if source_path.is_symlink():
                 raise ValueError(f"E_ICON_ASSET_PATH: icon {_label(icon_id)} asset at {_label(asset_address)} must not be a symlink")
             payload = source_path.read_bytes()
-        if expected != _identity(payload):
+        if expected is not None and expected != _identity(payload):
             raise ValueError(f"E_ICON_ASSET_IDENTITY: icon {_label(icon_id)} asset at {_label(asset_address)}; expected {_label(expected)}, found {_identity(payload)}")
         package_asset = catalog_reference.get("store", {}).get("provider") == "package"
         staged_path = None
@@ -441,7 +441,19 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
     return context_reference, revision
 
 
-def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool = False) -> MaterializationResult:
+MATERIALIZED_OUTPUT_FILES = frozenset({"review.svg", "review.scene.json", "closure.yaml"})
+
+
+def _check_replaceable_output(output: Path) -> None:
+    """`--replace` re-runs into a directory this command filled before; any other entry is foreign and refuses it."""
+    foreign = sorted(entry.name for entry in output.iterdir()
+                     if entry.name not in MATERIALIZED_OUTPUT_FILES or entry.is_symlink() or not entry.is_file())
+    if foreign:
+        raise ValueError(f"E_MATERIALIZER_OUTPUT: output directory {_label(output)} holds files this command did not write "
+                         f"({', '.join(_label(name) for name in foreign)}); --replace refuses to touch them")
+
+
+def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool = False, replace: bool = False) -> MaterializationResult:
     example = manifest_path.parent.resolve()
     manifest = safe_load(manifest_path.read_text(encoding="utf-8"))
     if manifest.get("version") != "chrona/example-materializer/v0.1" or manifest.get("role") != "regression-corpus":
@@ -451,7 +463,9 @@ def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool
         raise ValueError(f"E_MATERIALIZER_SLIDE: slide {_label(slide_id)} is missing or has no non-empty evidence path")
     expected = _inside(example, str(slide["expectedSvg"]))
     if output.exists() and any(output.iterdir()):
-        raise ValueError(f"E_MATERIALIZER_OUTPUT: output directory {_label(output)} is not empty")
+        if not replace:
+            raise ValueError(f"E_MATERIALIZER_OUTPUT: output directory {_label(output)} is not empty")
+        _check_replaceable_output(output)
     output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as temporary:
         snapshot = Path(temporary) / "snapshot"; snapshot.mkdir()
