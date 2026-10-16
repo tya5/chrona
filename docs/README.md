@@ -21,6 +21,9 @@ stable document identifiers rather than a mandatory reading order. Review record
 describe their stated historical scope; they do not supersede the corresponding
 normative specification.
 
+For keeping a plan current (actuals, `asOf`, re-plan, compare with the saved plan), see the
+[update-a-plan guide](guides/update-a-plan.md).
+
 For the current immutable review entry and its reusable resource split, see the
 [render-review YAML layout guide](guides/render-review-yaml-layout.md).
 
