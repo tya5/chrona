@@ -86,6 +86,10 @@ $defs:
     description: "The explicit fallback when a View's requested project field role is undeclared."
     examples: [objectType]
     enum: [objectType, none]
+  comparisonDeltaUnit:
+    description: "Calendar-day or effective-calendar working-day distance for projected comparison endpoints."
+    examples: [working-days]
+    enum: [calendar-days, working-days]
   viewPeriodSelection:
     description: "Closed View selector for every Project-declared period in declaration order."
     examples: [all]

@@ -24,7 +24,7 @@ body:
     baseline: primary
     actual: optional
     observationSelection: latest
-    deltaUnit: calendar-days
+    deltaUnit: working-days
     facets:
     - planned
   progressFill:

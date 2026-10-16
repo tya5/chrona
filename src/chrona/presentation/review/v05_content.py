@@ -6,6 +6,7 @@ from datetime import date, timedelta
 from typing import Any, Mapping
 
 from chrona.presentation.model.actual_variance_paint import select_actual_variance_paints
+from chrona.presentation.model.date_basis import ItemDateBasis, date_range_display
 from chrona.presentation.model.projection import ObservationState, ReviewProjection
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
@@ -60,6 +61,11 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
     def cell_parts(item: Any, column: Any, row_index: int) -> tuple[str, str, str]:
         """The cell's (prefix, core, suffix): the affix of its state wraps the formatted text (#588)."""
         value = table_value(item, dict(project), column.source, row_index)
+        if column.format == "dateRange":
+            value = date_range_display(
+                value, basis=(item.date_basis if isinstance(column.source, Mapping)
+                              and column.source.get("facet") == "planned" else ItemDateBasis()),
+                end_display=column.end_display)
         missing = column.missing
         if value is None and column.missing_by:
             # The text of an absent value follows the item's observation state when the column declares it (#991).
