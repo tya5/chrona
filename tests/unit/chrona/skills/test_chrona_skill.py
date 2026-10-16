@@ -8,6 +8,7 @@ import pytest
 import yaml
 
 from chrona.usecases.preset_library import list_builtin_presets
+from chrona.usecases.skill_library import copy_skill
 from tests.support.skill_files import EXAMPLE, ROOT, SKILL_DIR, fences, run_cli, skill_documents
 from tools.check_documented_commands import discover
 
@@ -116,3 +117,30 @@ def test_the_derived_gate_the_skill_teaches_places_where_it_says_and_a_floor_and
     status, result = launch("schedule: {mode: fixed-point, at: 2026-11-30}")
     assert status == 1 and [item["code"] for item in result["diagnostics"]] == ["E_FIXED_TARGET_VIOLATION"]
     assert "2026-12-01" in result["diagnostics"][0]["message"]  # the rejection names the date to write
+
+
+def _named_paths(text: str) -> set[str]:
+    return set(re.findall(r"(?<![\w/.-])((?:examples|references|docs|skills)/[\w./-]*[\w])", text))
+
+
+def test_every_path_the_skill_names_exists_in_a_copied_skill(tmp_path):
+    copied = copy_skill(tmp_path / "copy")
+    named = {path for document in skill_documents() for path in _named_paths(document.read_text(encoding="utf-8"))}
+
+    assert {"examples/launch.yaml", "examples/actual.yaml"} <= named
+    assert [path for path in sorted(named) if not (copied / path).exists()] == []
+
+
+def test_the_update_loop_runs_on_the_shipped_files_from_inside_a_copy(tmp_path, monkeypatch, capsys):
+    copied = copy_skill(tmp_path / "copy")
+    monkeypatch.chdir(copied)
+    plan = copied / "plan.yaml"
+    plan.write_text((copied / "examples" / "launch.yaml").read_text(encoding="utf-8").replace(
+        "to: {object: build, endpoint: start}\n    lag: 0d", "to: {object: build, endpoint: start}\n    lag: 3d"), encoding="utf-8")
+    argv = ("render", "plan.yaml", "--actual", "examples/actual.yaml", "--snapshot", "examples/launch.yaml",
+            "--preset", "target-b", "--output", "update.svg")
+
+    status, out, _err = run_cli(monkeypatch, capsys, *argv)
+
+    assert status == 0 and json.loads(out)["status"] == "ok"
+    assert 'data-purpose="snapshot"' in (copied / "update.svg").read_text(encoding="utf-8")

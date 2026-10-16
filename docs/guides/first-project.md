@@ -28,8 +28,10 @@ for a smaller review; paging is a future option, not a current CLI feature.
 The output filename also selects the format: `.svg`, `.png`, `.pdf`, `.typ`
 and `.tex` select SVG, PNG, PDF, Typst and TikZ respectively. Without a
 suffix, Draft defaults to SVG. An explicit `--format` must match a recognized
-suffix; unknown suffixes are rejected before writing output. Typst and TikZ
-still require their typesetter descriptor flags.
+suffix; unknown suffixes are rejected before writing output. For Typst and TikZ the
+typesetter engine and adapter grammar default from the suffix (`typst` /
+`chrona-typst/v0.1`, `tectonic` / `chrona-tikz/v0.1`); `--typesetter-version`
+is optional and the result reports it as unspecified when absent.
 
 To select a supplied appearance explicitly, copy one into your own source tree
 and render through its ordinary local preset.  Available ids are

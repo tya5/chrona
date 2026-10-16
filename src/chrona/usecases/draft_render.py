@@ -90,24 +90,24 @@ def parse_viewport(value: str) -> tuple[int, int | None]:
     return width, height
 
 
+_TYPESETTER_DEFAULTS = {"typst": ("typst", "chrona-typst/v0.1"), "tikz": ("tectonic", "chrona-tikz/v0.1")}
+
+
 def typesetter_identity(
     engine: str | None, version: str | None, adapter_grammar: str | None, target_kind: str,
 ) -> TypesetterIdentity | None:
-    values = (engine, version, adapter_grammar)
-    is_typeset = target_kind in {"typst", "tikz"}
-    if is_typeset and not all(values):
-        raise StableFailure(
-            "E_RENDER_TYPESETTER_DESCRIPTOR",
-            "typeset Draft targets require --typesetter-engine, --typesetter-version, and --typesetter-adapter-grammar",
-            "cli", "/typesetter", 2,
-        )
-    if not is_typeset and any(values):
-        raise StableFailure(
-            "E_RENDER_TYPESETTER_DESCRIPTOR",
-            "typesetter descriptor is valid only with --format typst or tikz",
-            "cli", "/typesetter", 2,
-        )
-    return TypesetterIdentity(*values) if is_typeset else None
+    """Engine and adapter grammar default from the target; an absent version stays absent (unspecified) (#1609)."""
+    default = _TYPESETTER_DEFAULTS.get(target_kind)
+    if default is None:
+        if any((engine, version, adapter_grammar)):
+            raise StableFailure(
+                "E_RENDER_TYPESETTER_DESCRIPTOR",
+                "typesetter descriptor is valid only with --format typst or tikz",
+                "cli", "/typesetter", 2,
+            )
+        return None
+    return TypesetterIdentity(engine or default[0], version or None,
+                              adapter_grammar or default[1])
 
 
 def looks_like_preset_path(value: str) -> bool:
@@ -194,7 +194,15 @@ def render_draft(request: DraftRenderRequest) -> DraftRenderResult:
     finally:
         if owned_tempdir is not None:
             owned_tempdir.cleanup()
-    return DraftRenderResult(rendered, _undrawn_input_notes(request, closure.closure))
+    return DraftRenderResult(rendered, _typesetter_version_notes(request) + _undrawn_input_notes(request, closure.closure))
+
+
+def _typesetter_version_notes(request: DraftRenderRequest) -> tuple[dict[str, Any], ...]:
+    """Say so when a typeset target is written without an engine version (#1609)."""
+    if request.target_kind not in _TYPESETTER_DEFAULTS or request.typesetter_version:
+        return ()
+    return ({"code": "I_RENDER_TYPESETTER_VERSION_UNSPECIFIED", "severity": "info", "input": "--typesetter-version",
+             "message": "no --typesetter-version was given; the typesetter version is unspecified in the render context"},)
 
 
 def _undrawn_input_notes(request: DraftRenderRequest, closure: Any) -> tuple[dict[str, Any], ...]:

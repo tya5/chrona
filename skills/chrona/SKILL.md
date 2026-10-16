@@ -67,26 +67,27 @@ file, flag or output suffix exits 2; success exits 0.
 
 ## Update the plan after a week of work
 
-Walkthrough: [docs/guides/update-a-plan.md](../../docs/guides/update-a-plan.md). Plain files, no Store:
+Plain files, no Store. Run from the skill directory; the worked files are `examples/launch.yaml`
+(plan) and `examples/actual.yaml` (a complete Actual Set for it: copy and edit it).
 
-1. **Keep the baseline:** `cp project.yaml baseline.yaml` (for the worked example, copy
-   `skills/chrona/examples/launch.yaml`); never edit the copy. `baseline-capture` needs a Store.
-2. **Record actuals** in `actual.yaml`: `start`; `finish` (the day **after** the last day worked);
-   `at` for a gate; an open task has `start`, `openUntil: asOf` and `progress` below 1, no `finish`.
-   Next week append observations with a higher `sequence` (the highest wins). Move `asOf`.
-   No command writes an observation; a sheet with `progress`/`actual_*` columns can go through
-   `chrona import`, which also starts a plan from a CSV (`chrona import TABLE.csv --output p.yaml`).
-3. **Re-plan** in `project.yaml`, then read the new dates from `chrona schedule`.
-4. **Render against the baseline** with a preset that draws it; the default draws no ghost:
+1. **Keep the baseline:** `cp project.yaml baseline.yaml`; never edit the copy. `baseline-capture` needs a Store.
+2. **Record actuals** in `actual.yaml`. Each observation is `{id, sequence, projectObjectId, actual}` and
+   `actual` is: `start` and `finish` (the day **after** the last day worked) for a finished task; `start`,
+   `openUntil: asOf` and `progress` below 1, no `finish`, for an open one; `at` for a gate. Next week append
+   observations with a higher `sequence` (the highest wins). No command writes one; a sheet with
+   `progress`/`actual_*` columns can go through `chrona import`.
+3. **Move `asOf`** (`body.asOf`) to the day the observations are true on. Before any actual exists use the
+   plan's first day (or today); it draws the TODAY marker and never changes a plan date.
+4. **Re-plan** in `project.yaml`: edit `at` of a `fixed-point` gate, `start`/`end` (`end` exclusive) of a
+   `fixed-span`, or the `amount`/`lag` of a `scheduled` item. Read dates from `chrona schedule`, not by hand.
+5. **Render against the baseline** with a preset that draws one (`chrona preset list` names them):
 
 ```bash
-chrona init week-plan
-chrona render week-plan/project.yaml --actual week-plan/actual.yaml --snapshot week-plan/project.yaml --preset target-b --output week-plan/update.svg
+chrona render examples/launch.yaml --actual examples/actual.yaml --snapshot examples/launch.yaml --preset target-b --output update.svg
 ```
 
-Here plan and baseline are one file; in an update they are your edited plan and the step 1 copy.
-Use a new output name each time. A dashed outline is the baseline's place for an item that moved;
-`Δ finish` is actual minus the **current** plan.
+Here plan and baseline are one file; in an update, your edited plan and the step 1 copy. Use a new
+output name each time. A dashed outline is where the baseline had an item that moved.
 
 ## If the chrona MCP server is connected
 
@@ -127,13 +128,12 @@ relation joins two endpoints and has a `lag`. The worked example, with all of it
 `examples/launch.yaml`.
 
 ## Check the worked example
-Paths are repository-relative; in an installed copy, prefix `skills/chrona/` with the directory
-that holds the skill (for example `.claude/skills/chrona/`).
+Run from the skill directory (it holds this file).
 
 ```bash
-chrona validate skills/chrona/examples/launch.yaml
-chrona schedule skills/chrona/examples/launch.yaml
-chrona render skills/chrona/examples/launch.yaml --output launch.svg
+chrona validate examples/launch.yaml
+chrona schedule examples/launch.yaml
+chrona render examples/launch.yaml --output launch.svg
 ```
 
 ## Change the look, not the plan
@@ -144,9 +144,9 @@ plan. List the builtin ids, render with one, or copy one to edit:
 
 ```bash
 chrona preset list
-chrona render skills/chrona/examples/launch.yaml --preset editorial --output launch-editorial.svg
+chrona render examples/launch.yaml --preset editorial --output launch-editorial.svg
 chrona preset copy executive-light --output looks/executive-light
-chrona render skills/chrona/examples/launch.yaml --preset looks/executive-light/preset.yaml --output launch-executive.svg
+chrona render examples/launch.yaml --preset looks/executive-light/preset.yaml --output launch-executive.svg
 ```
 
 `--viewport WIDTHxHEIGHT` sets a finite minimum size (the default is `1600xauto`); a narrower
@@ -184,11 +184,11 @@ states it with a last clause, `deadline 2027-06-30`.
 ## Install and refresh this skill
 
 This skill ships inside the chrona package, so it always matches the installed command.
-`chrona skill copy` copies it into an empty or absent directory and never overwrites. Point it at
-the skills directory your agent host reads (for example `.claude/skills/chrona`):
+`chrona skill copy DIR` (or `--output DIR`) copies it into an empty or absent directory and never
+overwrites. Point it at the skills directory your agent host reads (for example `.claude/skills/chrona`):
 
 ```bash
-chrona skill copy --output agent-skills/chrona
+chrona skill copy agent-skills/chrona
 ```
 
 After upgrading, copy into a new directory, compare with `diff -r`, and replace the old one.
@@ -197,4 +197,4 @@ After upgrading, copy into a new directory, compare with `diff -r`, and replace 
 ## Where the rules live
 
 This skill teaches the workflow. Spec 05 (project format), Spec 04 (scheduling) and Specs 06, 07
-and 33 (view, theme, layout) in `docs/specification/` state the rules.
+and 33 (view, theme, layout) in the chrona repository's specification directory state the rules.

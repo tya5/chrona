@@ -161,9 +161,9 @@ def _add_draft_target_arguments(command: argparse.ArgumentParser) -> None:
     command.add_argument("--visual-profile", default=None,
                          choices=VISUAL_PROFILES,
                          help="exact visual capability profile (default: the preset's preferred profile, else baseline)")
-    command.add_argument("--typesetter-engine", help="the engine that will compile the output; required with --format typst or tikz: typst (for .typ) or tectonic (for .tex)")
-    command.add_argument("--typesetter-version", help="the exact engine version you will compile with (for example 0.13.1 for typst); recorded in the result, never looked up on this machine; required with --format typst or tikz")
-    command.add_argument("--typesetter-adapter-grammar", help="the output grammar: chrona-typst/v0.1 for typst, chrona-tikz/v0.1 for tectonic; required with --format typst or tikz")
+    command.add_argument("--typesetter-engine", help="the engine that will compile the output: typst (for .typ) or tectonic (for .tex); defaults from the output target")
+    command.add_argument("--typesetter-version", help="the exact engine version you will compile with (for example 0.13.1 for typst); recorded in the result, never looked up on this machine; optional, recorded as unspecified when absent")
+    command.add_argument("--typesetter-adapter-grammar", help="the output grammar: chrona-typst/v0.1 for typst, chrona-tikz/v0.1 for tectonic; defaults from the output target")
 
 
 _OUTPUT_SUFFIX_TARGETS = {".svg": "svg", ".png": "png", ".pdf": "pdf", ".typ": "typst", ".tex": "tikz"}
@@ -262,7 +262,7 @@ def _group_command_help(parser: argparse.ArgumentParser, action: argparse.Action
             continue
         lines.append(f"\n  {title}")
         lines.extend(f"    {name:<32}{summaries[name]}" for name in names)
-    parser.description = "\n".join(lines) + "\n\nRun `chrona COMMAND --help` for the options of one command.\nKeep a plan current after a week of work: docs/guides/update-a-plan.md (the same loop is in `chrona skill copy`)."
+    parser.description = "\n".join(lines) + "\n\nRun `chrona COMMAND --help` for the options of one command.\nKeep a plan current after a week of work: docs/guides/update-a-plan.md (the same loop is in the skill that `chrona skill copy DIR` installs)."
     parser.formatter_class = argparse.RawDescriptionHelpFormatter
 
 
@@ -439,7 +439,8 @@ def _parser() -> JsonArgumentParser:
     skill = sub.add_parser("skill", help="install the chrona skill for an AI coding agent")
     skill_sub = skill.add_subparsers(dest="skill_command", required=True, parser_class=JsonArgumentParser)
     command = skill_sub.add_parser("copy", help="copy the agent skill into an empty directory")
-    command.add_argument("--output", "-o", required=True, help="empty or absent output directory")
+    command.add_argument("directory", nargs="?", help="empty or absent output directory; the same as --output")
+    command.add_argument("--output", "-o", help="empty or absent output directory; the same as the positional DIR (give one of the two)")
 
     command = sub.add_parser("mcp", help="serve chrona to an AI agent over MCP (read-only unless --allow-write)",
                              description="serve validate_project, schedule_project, render_draft, list_presets, render_review, compare_baseline, check_command and apply_command to an MCP client; render_review and compare_baseline read a Store inside the workspace; apply_command writes a Store only with --allow-write; needs the optional chrona[mcp] extra")
@@ -924,8 +925,11 @@ def _run(args: argparse.Namespace) -> None:
         _run_init(args)
         return
     if args.command == "skill":
-        copy_skill(Path(args.output))
-        _print_created(Path(args.output))
+        if (args.directory is None) == (args.output is None):
+            raise CliFailure("E_COMMAND_SYNTAX", "give the output directory once: `chrona skill copy DIR` or `chrona skill copy --output DIR`", exit_code=2)
+        destination = Path(args.directory if args.directory is not None else args.output)
+        copy_skill(destination)
+        _print_created(destination)
         return
     if args.command == "mcp":
         _run_mcp(args)

@@ -237,3 +237,21 @@ def test_every_code_this_file_provokes_is_named_by_the_skill():
                  "W_LAYOUT_LABEL_SUPPRESSED", "W_SCENE_TEXT_INTERSECTION", "I_LAYOUT_PLOT_LABELS_SUPPRESSED"}
 
     assert provoked <= _skill_codes()
+
+
+def test_skill_copy_takes_the_directory_positionally_or_with_output_and_not_both_or_neither(tmp_path, monkeypatch, capsys):
+    for argv in (["skill", "copy", str(tmp_path / "positional")], ["skill", "copy", "--output", str(tmp_path / "flag")],
+                 ["skill", "copy", "-o", str(tmp_path / "short")]):
+        status, out, _err = run_cli(monkeypatch, capsys, *argv)
+
+        assert status == 0, argv
+        assert json.loads(out)["status"] == "ok"
+    for name in ("positional", "flag", "short"):
+        assert (tmp_path / name / "SKILL.md").is_file()
+        assert (tmp_path / name / "examples" / "actual.yaml").is_file()
+    for argv in (["skill", "copy"], ["skill", "copy", str(tmp_path / "a"), "--output", str(tmp_path / "b")]):
+        status, out, _err = run_cli(monkeypatch, capsys, *argv)
+
+        assert status == 2, argv
+        assert "E_COMMAND_SYNTAX" in out
+    assert not (tmp_path / "a").exists() and not (tmp_path / "b").exists()

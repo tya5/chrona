@@ -268,7 +268,7 @@ CASES: tuple[Case, ...] = (
     _case("render-bad-viewport-zero", "render", "starter.yaml", "--viewport", "0x100", "-o", "out.svg"),
     _case("render-bad-viewport-and-unknown-preset", "render", "starter.yaml", "--viewport", "0x100",
           "--preset", "no-such-preset", "-o", "out.svg"),
-    _case("render-typesetter-descriptor-missing", "render", "starter.yaml", "--format", "typst", "-o", "out.typ"),
+    _case("render-typesetter-defaults-from-target", "render", "starter.yaml", "--format", "typst", "-o", "out.typ"),
     _case("render-typesetter-descriptor-on-svg", "render", "starter.yaml", "--typesetter-engine", "typst",
           "-o", "out.svg"),
     _case("render-typst-with-descriptor", "render", "starter.yaml", "--format", "typst", "--typesetter-engine", "typst",

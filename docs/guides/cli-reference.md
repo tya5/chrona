@@ -256,9 +256,9 @@ draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix, 
 - `--locale`: render locale: en-US or ja-JP (default: en-US)
 - `--format`: output target (default: infer from .svg/.png/.pdf/.typ/.tex; SVG without a suffix)
 - `--visual-profile`: exact visual capability profile (default: the preset's preferred profile, else baseline)
-- `--typesetter-engine`: the engine that will compile the output; required with --format typst or tikz: typst (for .typ) or tectonic (for .tex)
-- `--typesetter-version`: the exact engine version you will compile with (for example 0.13.1 for typst); recorded in the result, never looked up on this machine; required with --format typst or tikz
-- `--typesetter-adapter-grammar`: the output grammar: chrona-typst/v0.1 for typst, chrona-tikz/v0.1 for tectonic; required with --format typst or tikz
+- `--typesetter-engine`: the engine that will compile the output: typst (for .typ) or tectonic (for .tex); defaults from the output target
+- `--typesetter-version`: the exact engine version you will compile with (for example 0.13.1 for typst); recorded in the result, never looked up on this machine; optional, recorded as unspecified when absent
+- `--typesetter-adapter-grammar`: the output grammar: chrona-typst/v0.1 for typst, chrona-tikz/v0.1 for tectonic; defaults from the output target
 - `--output, -o`: where to write the slide (the suffix selects the format); an existing file is replaced
 - `--emit-scene`: write a schema-validated inspection Scene JSON without replacing an existing file
 - `--previous-scene`: revalidate routes from this previous Scene under first-fit
@@ -302,9 +302,9 @@ draw a slide from a guided authoring workspace (a draft)
 - `--locale`: render locale: en-US or ja-JP (default: en-US)
 - `--format`: output target (default: infer from .svg/.png/.pdf/.typ/.tex; SVG without a suffix)
 - `--visual-profile`: exact visual capability profile (default: the preset's preferred profile, else baseline)
-- `--typesetter-engine`: the engine that will compile the output; required with --format typst or tikz: typst (for .typ) or tectonic (for .tex)
-- `--typesetter-version`: the exact engine version you will compile with (for example 0.13.1 for typst); recorded in the result, never looked up on this machine; required with --format typst or tikz
-- `--typesetter-adapter-grammar`: the output grammar: chrona-typst/v0.1 for typst, chrona-tikz/v0.1 for tectonic; required with --format typst or tikz
+- `--typesetter-engine`: the engine that will compile the output: typst (for .typ) or tectonic (for .tex); defaults from the output target
+- `--typesetter-version`: the exact engine version you will compile with (for example 0.13.1 for typst); recorded in the result, never looked up on this machine; optional, recorded as unspecified when absent
+- `--typesetter-adapter-grammar`: the output grammar: chrona-typst/v0.1 for typst, chrona-tikz/v0.1 for tectonic; defaults from the output target
 - `--provenance`: write a JSON record of which inputs the render used
 - `--output, -o`: where to write the result; an existing file is not replaced
 
@@ -342,7 +342,8 @@ copy the agent skill into an empty directory
 
 `chrona skill copy --output -o`
 
-- `--output, -o`: empty or absent output directory
+- `directory`: empty or absent output directory; the same as --output
+- `--output, -o`: empty or absent output directory; the same as the positional DIR (give one of the two)
 
 ## chrona validate
 
