@@ -132,12 +132,12 @@ def _title_source(project: dict[str, Any], heading: HeadingContent | None) -> So
 
 def _annotation_source_input(view: ViewInput, content: SurfaceContentInput,
                              visual_requests: tuple[VisualRequest, ...],
-                             icon_assets: dict[str, Any], theme: Mapping[str, Any]) -> SourceInput | None:
+                             icon_assets: dict[str, Any], theme: Mapping[str, Any]) -> SourceInput:
     """Build annotation measurements from the same closed visuals Layout composes."""
     visible = view.visibility.annotations
     mode = visible.get("mode", "none") if isinstance(visible, Mapping) else visible
-    if mode == "none":
-        return None
+    if mode == "none" or not content.annotations:
+        return SourceInput(content_present=False)
     tokens = ThemeTokenView(theme)
     runs = []
     for annotation in content.annotations:

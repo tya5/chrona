@@ -138,7 +138,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
     absent_sources = set()
     if summary.absent:
         absent_sources.add("summary")
-    if not selected_content.annotations:
+    if not source_inputs["annotations"].content_present:
         absent_sources.add("annotations")
     if not selected_content.legend_entries:
         absent_sources.add("legend")

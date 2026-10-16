@@ -4,6 +4,8 @@ from __future__ import annotations
 from datetime import date
 from math import isclose
 
+import pytest
+
 from tests.support import synthetic_review as sr
 
 
@@ -116,6 +118,18 @@ def test_hidden_view_note_does_not_reserve_a_rail(tmp_path):
 
     assert _slot(rendered, "annotations") is None
     assert not any(item.purpose == "annotation" for item in rendered.surface.primitives)
+
+
+@pytest.mark.parametrize("mode", ["none", "presentation"])
+def test_empty_required_annotation_source_is_available_then_omitted(tmp_path, mode):
+    parts = _parts(annotation_rail=True)
+    sr.find_node(parts["layout"], "annotations")["priority"] = "required"
+    parts["view"]["body"]["visibility"]["annotations"] = {"mode": mode, "marker": "none"}
+
+    rendered = _render(tmp_path, _project(), parts)
+
+    assert _slot(rendered, "annotations") is None
+    assert _timeline(rendered).bounds[2] > 300
 
 
 def test_empty_and_nonempty_side_legend_only_allocate_when_entries_exist(tmp_path):

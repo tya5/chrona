@@ -48,6 +48,9 @@ Determine annotation and legend absence from selected presentation content after
 source validation and measurement, before allocation. Project note count is not
 the presence rule: literal View annotations count, while hidden or filtered-out
 annotations do not. An empty measurement placeholder does not reserve a slot.
+The annotations source remains available with typed empty content when hidden
+or empty, so required slots reach normalization instead of failing as unknown
+sources; its natural measurement is zero without unused annotation typography.
 Nonempty sources retain their placement, suppression and failure contracts;
 a failed placement is not semantic absence and does not trigger reflow.
 
