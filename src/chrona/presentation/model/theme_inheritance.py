@@ -65,7 +65,7 @@ def _child_reference(parent: Mapping[str, Any], declaration: Mapping[str, Any]) 
         "store": parent["store"],
         "address": child_address.as_posix(),
         "revision": parent["revision"],
-        "contentIdentity": declaration["sourceContentIdentity"],
+        **({"contentIdentity": declaration["sourceContentIdentity"]} if "sourceContentIdentity" in declaration else {}),
     }
 
 
@@ -103,7 +103,7 @@ def _resolve(value: dict[str, Any], key: str, load_base: BaseLoader,
     base_value, source_identity, child_key = load_base(key, declaration)
     if child_key in (*stack, key):
         raise ThemeInheritanceError("E_THEME_INHERITANCE_CYCLE", f"Theme inheritance loops: {_chain((*stack, key, child_key))}")
-    if source_identity != declaration["sourceContentIdentity"]:
+    if "sourceContentIdentity" in declaration and source_identity != declaration["sourceContentIdentity"]:
         raise ThemeInheritanceError("E_THEME_INHERITANCE_SOURCE_IDENTITY",
                                     f"base Theme {Path(child_key).name} has source identity {source_identity}, "
                                     f"the derived Theme declares {declaration['sourceContentIdentity']}")
@@ -117,7 +117,7 @@ def _resolve(value: dict[str, Any], key: str, load_base: BaseLoader,
     # The declared base identity is that of the resolved base (#1151); the effective Theme below keeps the base's
     # references unresolved, so a child override of a token also moves every alias of it in the base.
     base_identity = content_identity(resolve_references(base))
-    if base_identity != declaration["contentIdentity"]:
+    if "contentIdentity" in declaration and base_identity != declaration["contentIdentity"]:
         raise ThemeInheritanceError("E_THEME_INHERITANCE_BASE_IDENTITY",
                                     f"base Theme {declaration['id']!r} has content identity {base_identity}, "
                                     f"the derived Theme declares {declaration['contentIdentity']}")

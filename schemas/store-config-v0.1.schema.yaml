@@ -20,4 +20,4 @@ properties:
         provider: {description: "The only provider supported by this configuration.", const: local}
         identity: {description: "Stable Store identity.", type: string, minLength: 1}
         root: {description: "Filesystem root of the local Store. A relative root is resolved against the directory that contains this config file; an absolute root is used as written.", type: string, minLength: 1}
-        integrity: {description: "Whether content-identity checking is mandatory.", enum: [optional, required]}
+        integrity: {description: "Whether an absent contentIdentity is rejected. Default optional: an absent identity is accepted and a supplied one is always verified; required is an explicit strict opt-in.", enum: [optional, required]}

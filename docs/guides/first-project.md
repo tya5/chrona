@@ -65,12 +65,11 @@ when to use Mermaid instead.
 
 [This five-line derived Theme](../../examples/aster-ssd/themes/onboarding-variation.yaml)
 replaces only `heading-size` and `text-size` in ASTER's complete Theme. Its
-`extends` declaration pins both the exact base file bytes
-(`sourceContentIdentity`) and the complete base Theme's canonical identity
-(`contentIdentity`). It resolves before rendering to an ordinary Theme; it is
+`extends` declaration names the base file by `id` and `path`; the exact-byte
+pins `sourceContentIdentity` and `contentIdentity` are optional, and a pin you
+do supply is verified. It resolves before rendering to an ordinary Theme; it is
 not an arbitrary YAML merge, and unknown token names are rejected. Keep the
-base file beside the derived file, and update both pins deliberately if the
-base changes.
+base file beside the derived file.
 
 These two Draft renders use the same Project, View, Scheme and Layout. The
 derived output has a 30 px title and 16 px table header, versus 24 px and
@@ -138,9 +137,8 @@ so the whole directory can be moved, copied or committed and `--store-config` ke
 working. A config written by an older `chrona` holds an absolute `root`: it still works
 where it was made, and replacing the value with `store` makes it relocatable.
 
-Content identity is required by default for every Store (Spec 42), and the
-example Contexts leave their inner references unpinned by design (ADR-0030).
-So `init --example` writes `integrity: optional` into `.chrona/store.yaml`, with
-a comment saying why.  That exception covers the example corpus only: a Store
-you create yourself, and an `integrity` you omit, stay `required`; for one call
-on such a Store, `--allow-missing-content-identity` is the explicit opt-out.
+A `contentIdentity` on a reference is an optional pin (Spec 42): leave it out
+and the reference resolves, and you never compute a hash by hand. A pin you do
+write is verified against the stored bytes. A Store config may set
+`integrity: required` to reject unpinned references; `init --example` does not,
+and `--allow-missing-content-identity` lowers such a setting for one call.

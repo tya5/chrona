@@ -14,12 +14,6 @@ from chrona.core.store_address import resolve_store_address
 from chrona.usecases.materialize import UnavailableFontProviders, copy_context_closure
 
 
-EXAMPLE_INTEGRITY_COMMENT = (
-    "  # This example Store opts out of required content identity: the example Contexts leave inner\n"
-    "  # references unpinned by design (ADR-0030). Example corpus only; Stores you create keep `required`.\n"
-)
-
-
 @dataclass(frozen=True)
 class StoreConfiguration:
     path: Path
@@ -130,11 +124,8 @@ def initialize_project(destination: Path, *, example: str | None = None) -> Init
     config = destination / ".chrona" / "store.yaml"
     config.parent.mkdir(parents=True, exist_ok=True)
     document = yaml.safe_dump({"version": "chrona/store-config/v0.1", "stores": [{
-        "provider": "local", "identity": f"{example}-example", "root": _config_relative(store_root, config.parent), "integrity": "optional",
+        "provider": "local", "identity": f"{example}-example", "root": _config_relative(store_root, config.parent),
     }]}, sort_keys=False)
-    # The example corpus is not a trust boundary and its Contexts leave inner references unpinned by design
-    # (ADR-0030), so the example Store opts out explicitly (#727); every other Store keeps the `required` default (#723).
-    document = document.replace("  integrity: optional\n", EXAMPLE_INTEGRITY_COMMENT + "  integrity: optional\n")
     config.write_text(document, encoding="utf-8")
     return InitializationResult(destination, tuple(slide["id"] for slide in retained), deferred)
 

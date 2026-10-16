@@ -1462,8 +1462,8 @@ def test_cli_schedule_reads_an_immutable_snapshot_without_path_fallback(tmp_path
     assert json.loads(capsys.readouterr().out)["placements"] == {"gate": {"at": "2026-10-01"}}
 
 
-def test_cli_snapshot_read_requires_content_identity_unless_explicitly_allowed(tmp_path, monkeypatch, capsys):
-    # #723: an omitted contentIdentity is refused by default; --allow-missing-content-identity is the explicit opt-out.
+def test_cli_snapshot_read_accepts_a_missing_content_identity_and_still_checks_a_supplied_one(tmp_path, monkeypatch, capsys):
+    # #1567: an omitted contentIdentity is accepted by default; a wrong supplied one is still refused.
     project = {"version": "timeline/v0.7", "project": {"id": "snapshot"}, "extensions": [],
                "objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed-point", "at": "2026-10-01"}}}, "relations": []}
     payload = yaml.safe_dump(project).encode()
@@ -1475,17 +1475,20 @@ def test_cli_snapshot_read_requires_content_identity_unless_explicitly_allowed(t
     argv = ["chrona", "schedule", "--snapshot-reference", str(reference_path), "--snapshot-root", str(tmp_path), "--store-identity", "cli-test"]
 
     monkeypatch.setattr(sys, "argv", argv)
-    with pytest.raises(SystemExit) as refused:
-        main()
-    assert refused.value.code == 1
-    assert "E_CONTENT_IDENTITY_REQUIRED" in capsys.readouterr().out
-
-    monkeypatch.setattr(sys, "argv", [*argv, "--allow-missing-content-identity"])
     try:
         main()
     except SystemExit as exit:
         assert exit.code is False
     assert json.loads(capsys.readouterr().out)["placements"] == {"gate": {"at": "2026-10-01"}}
+
+    reference_path.write_text(yaml.safe_dump({"kind": "project", "store": {"provider": "local", "identity": "cli-test"},
+                                              "revision": {"token": "snapshot-1"}, "address": "project.yaml",
+                                              "contentIdentity": "sha256:" + "0" * 64}))
+    monkeypatch.setattr(sys, "argv", argv)
+    with pytest.raises(SystemExit) as refused:
+        main()
+    assert refused.value.code == 1
+    assert "E_CONTENT_IDENTITY" in capsys.readouterr().out
 
 
 def test_cli_help_describes_all_commands(monkeypatch, capsys):

@@ -31,7 +31,7 @@ chrona render-review \
   --output review.svg
 ```
 
-All referenced resources use one snapshot token. Their `contentIdentity` values are
-SHA-256 evidence generated from the exact stored bytes. There is no Presentation
+All referenced resources use one snapshot token. A `contentIdentity` on a reference is an optional pin of the exact stored
+bytes, verified when written and never required. There is no Presentation
 Settings/Preset file, compatibility adapter, raw coordinate offset, or renderer default
 table in this path.

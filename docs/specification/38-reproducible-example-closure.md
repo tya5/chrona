@@ -2,9 +2,9 @@
 
 ## Authoring and execution boundary
 
-Render Context v0.5/v0.6 may keep `contentIdentity` optional in source authoring. The public example materializer is the immutable-closure boundary: before invoking `render-review`, it derives a temporary Context whose every copied resource reference carries the SHA-256 of the exact copied bytes, then invokes the CLI with `--require-content-identity`.
+Render Context source authoring keeps `contentIdentity` optional, and the public examples carry none (Specification 42, Issue 1567). The public example materializer is the immutable-closure boundary: it copies every referenced resource byte-for-byte, computes the SHA-256 of the exact copied bytes itself, and records that computed identity in the generated evidence and in the Context reference it renders. An authored pin is verified against the copied bytes and a mismatch fails; an absent pin is not an error and is never backfilled into the authored file.
 
-This repairs stale or omitted source hashes without silently weakening execution-time verification. The derived Context reference already follows the same rule.
+The derived Context reference already follows the same rule.
 
 ## Context selection
 

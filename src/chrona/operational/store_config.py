@@ -30,7 +30,7 @@ class ConfiguredStoreReader:
             if key in self.roots:
                 raise ValueError(f"E_STORE_CONFIG: Store {key[0]}/{key[1]} is declared more than once")
             self.roots[key] = resolve_store_root(entry["root"], base)
-            self.integrity[key] = entry.get("integrity", "required")  # required unless the Store explicitly opts out (#723)
+            self.integrity[key] = entry.get("integrity", "optional")  # an absent contentIdentity is accepted unless the Store explicitly says `required` (#1567)
 
     def read(self, reference: dict[str, Any]) -> bytes:
         store = reference.get("store", {})

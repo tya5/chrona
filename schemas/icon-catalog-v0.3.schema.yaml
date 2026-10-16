@@ -118,7 +118,7 @@ $defs:
   rasterSource:
     description: "Immutable local source for a purpose-built raster icon."
     type: object
-    required: [address, contentIdentity]
+    required: [address]
     additionalProperties: false
     properties:
       address:
@@ -127,7 +127,7 @@ $defs:
         type: string
         minLength: 1
         pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$"
-      contentIdentity: {description: "SHA-256 of the exact raster bytes.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+      contentIdentity: {description: "Optional SHA-256 pin of the exact raster bytes; verified when supplied.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
   icon:
     description: "One vector or verified raster icon entry."
     type: object

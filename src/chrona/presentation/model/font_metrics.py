@@ -325,7 +325,7 @@ def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400
             rejected.append(f"{_shown(family)}/{weight}: {error.detail or error.diagnostic_id}")
             continue
         metrics_identity = _identity(metrics_path)
-        if metrics.get("contentIdentity") != metrics_identity:
+        if metrics.get("contentIdentity") is not None and metrics["contentIdentity"] != metrics_identity:  # a pin is optional (#1567)
             rejected.append(f"{_shown(family)}/{weight}: metrics/contentIdentity expected {_shown(metrics_identity)}; got {_shown(metrics.get('contentIdentity'))}")
             continue
         try:
@@ -408,11 +408,11 @@ def resolve_font_files(descriptor: dict, *, asset_root: Path | None,
             locator = font.get("locator")
             address = locator.get("address") if isinstance(locator, dict) else None
             raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE", f"family={_shown(family)} weight={_shown(asset.get('weight'))} font locator address={_shown(address)} unavailable: {error.detail or error.diagnostic_id}") from error
-        if not isinstance(family, str) or not family or font.get("contentIdentity") != _identity(path):
+        if not isinstance(family, str) or not family or (font.get("contentIdentity") is not None and font["contentIdentity"] != _identity(path)):
             locator = font.get("locator")
             address = locator.get("address") if isinstance(locator, dict) else None
             raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE", f"family={_shown(family)} weight={_shown(asset.get('weight'))} font address={_shown(address)} identity expected={_shown(_identity(path))} got={_shown(font.get('contentIdentity'))}")
-        identity = str(font["contentIdentity"])
+        identity = _identity(path)
         declared = FontFile(path, identity, family, int(asset["weight"]))
         previous = files_by_identity.setdefault(identity, declared)
         if previous.family.casefold() != declared.family.casefold() or previous.weight != declared.weight:

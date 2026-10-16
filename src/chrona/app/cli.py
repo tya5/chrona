@@ -204,7 +204,7 @@ def _load_primary_project(args: argparse.Namespace) -> dict[str, Any]:
                 exit_code=2,
             )
         reference = load_yaml(args.snapshot_reference)
-        return load_project(reference, LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=not args.allow_missing_content_identity))
+        return load_project(reference, LocalSnapshotReader(Path(args.snapshot_root), args.store_identity))
     if not args.project:
         raise CliFailure("E_COMMAND_SYNTAX", "a raw project or complete snapshot mode is required", exit_code=2)
     if _is_plan_path(args.project):
@@ -407,6 +407,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--slide", required=True, help="declared slide identifier")
     command.add_argument("--output", "-o", required=True, help="empty output directory")
     command.add_argument("--write", action="store_true", help="replace the manifest-declared generated artifact")
+    command.add_argument("--replace", action="store_true", help="re-run into an output directory a previous run filled, overwriting its review.svg, review.scene.json and closure.yaml; any other file there is refused")
 
     command = sub.add_parser("compile", help="turn a terse plan (.chrona) into Project YAML",
                              description="compile a terse plan (.chrona) to Project YAML; the YAML is the authority afterwards")
@@ -504,7 +505,7 @@ def _render_review_reader(args: argparse.Namespace, reference: dict[str, Any]) -
         if args.snapshot_root is None or args.store_identity is None:
             raise CliFailure("E_COMMAND_SYNTAX", "render-review requires --store-config or both --snapshot-root and --store-identity", exit_code=2)
         root = Path(args.snapshot_root)
-        return PackageAwareReader(root, args.store_identity, require_content_identity=not allow_missing), root
+        return PackageAwareReader(root, args.store_identity), root
     if args.snapshot_root is not None or args.store_identity is not None:
         raise CliFailure("E_COMMAND_SYNTAX", "--store-config replaces --snapshot-root and --store-identity", exit_code=2)
     try:
@@ -532,7 +533,7 @@ def _store_reader(args: argparse.Namespace):
 
 def _run_materialize(args: argparse.Namespace) -> None:
     try:
-        materialize(Path(args.manifest), args.slide, Path(args.output), write=args.write)
+        materialize(Path(args.manifest), args.slide, Path(args.output), write=args.write, replace=args.replace)
     except MaterializationError as error:
         if error.code != "E_MATERIALIZER_MISMATCH":
             raise
@@ -833,7 +834,7 @@ def _run_render_review_gallery(args: argparse.Namespace) -> None:
     destination = Path(args.output_directory)
     if destination.exists() and any(destination.iterdir()):
         raise CliFailure("E_SCHEME_GALLERY_OUTPUT", "output directory must be empty", "gallery")
-    reader = PackageAwareReader(Path(args.snapshot_root), args.store_identity, require_content_identity=not args.allow_missing_content_identity)
+    reader = PackageAwareReader(Path(args.snapshot_root), args.store_identity)
     entries = []
     for reference_path in args.context_reference:
         closure = resolve_render_context(load_yaml(reference_path), reader)
@@ -956,7 +957,7 @@ def _run(args: argparse.Namespace) -> None:
         _run_render_review_gallery(args)
         return
     if args.command == "review":
-        reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=not args.allow_missing_content_identity)
+        reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity)
         before = load_project(load_yaml(args.before_reference), reader)
         candidate = load_project(load_yaml(args.candidate_reference), reader)
         output = review_projects(before, candidate)
