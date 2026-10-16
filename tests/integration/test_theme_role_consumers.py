@@ -76,3 +76,17 @@ def test_the_function_reports_declarations_across_roles_and_bindings():
     body = {"roles": {"ghost": {}, "text": {}}, "colorBindings": {"phantom.fill": "accent", "text.fill": "text"}}
     assert unread_role_pointers(body, ({"x": "y"},)) == ("/body/colorBindings/phantom.fill", "/body/roles/ghost")
     assert unread_role_pointers(body, ({"x": ["ghost", {"y": "phantom"}]},)) == ()
+
+
+def test_a_role_read_only_by_an_unbound_field_role_column_is_not_unread(tmp_path):
+    def columns(parts):
+        _column_role(parts)
+        view = parts["view"]["body"]
+        view["rows"] = {"mode": "automatic"}
+        view["tableColumns"] = [
+            {"id": "Work package", "source": "title", "missing": "em-dash", "align": "start", "width": "content",
+             "headerOrientation": "horizontal"},
+            {"id": "Phase", "source": {"fieldRole": "phase"}, "missing": "em-dash", "align": "start", "width": "content",
+             "headerOrientation": "horizontal", "textRole": "column-ink"}]
+    omitted = _render(tmp_path / "omitted", bindings={"column-ink.fill": "accent", "ghost.fill": "accent"}, mutate=columns)
+    assert _unread(omitted) == [f"{UNREAD}:/body/roles/ghost"]  # column-ink is not unread; ghost still is

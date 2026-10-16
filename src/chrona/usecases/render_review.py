@@ -434,7 +434,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                            "presentation", error.path) from error
     # A Theme role or binding no document of this closure reads is reported, not silently accepted (#1117).
     unread_roles = unread_theme_diagnostics(
-        theme["body"], (view, layout, render_closure.detail_profile.detail if render_closure.detail_profile else None,
+        theme["body"], (view, *((render_closure.view.view,) if field_role_info else ()),  # omitted unbound-role columns still read their roles (#1616)
+                        layout, render_closure.detail_profile.detail if render_closure.detail_profile else None,
                         render_closure.summary_profile.summary if render_closure.summary_profile else None))
     if unread_roles:
         surface = replace(surface, diagnostics=(*surface.diagnostics, *unread_roles))
