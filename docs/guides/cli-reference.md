@@ -233,7 +233,7 @@ list every builtin preset id with a one-line description
 
 ## chrona render
 
-draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix. A draft for review, not reproducible evidence
+draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix, from the files you pass
 
 `chrona render --actual --detail --emit-scene --font-metrics --format --icon-catalog --layout --locale --output --preset --previous-scene --progress --relations --scheme --snapshot --summary --system-fonts --theme --typesetter-adapter-grammar --typesetter-engine --typesetter-version --view --viewport --visual-profile -o`
 
@@ -265,7 +265,7 @@ draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix. 
 
 ## chrona render-review
 
-draw a slide from a saved render context; the same inputs always give the same slide
+draw a slide from a saved render context: the Project, View, Theme and Layout it lists, read from a Store
 
 `chrona render-review --allow-missing-content-identity --context-reference --emit-scene --format --output --reject-unused-closure-inputs --snapshot-root --store-config --store-identity -o`
 

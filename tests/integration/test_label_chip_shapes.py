@@ -228,10 +228,10 @@ def test_absent_shape_preserves_characterized_scene_and_svg_bytes(tmp_path):
     # Keep actual current bytes frozen, without provenance/geometry normalization.
     rendered = _render_asof(tmp_path)
     scene = serialize_scene(rendered.scene)
-    # First-fit adds its completed routing receipt; SVG bytes do not change.
-    assert len(scene) == 26532
-    # Explicit suppress changes only the verified Layout resource identity.
-    assert sha256(scene).hexdigest() == "f9bd3878b86ac6cc3fa3ba53ebb84459269719cd1571f6a2e97259132af9411b"
+    # Empty-legend normalization changes only slots and empty sibling origins;
+    # completed primitives, diagnostics and SVG bytes remain characterized.
+    assert len(scene) == 26368
+    assert sha256(scene).hexdigest() == "c520bade9cec4442304def89bf5a024cb6238e9c64640cfb8795d16bae02dead"
     assert len(rendered.artifact.content) == 8173
     assert sha256(rendered.artifact.content).hexdigest() == "3f700aae2dd6cc1e5d42370babe2805a2231ec2c8a643eb07dc1317cc4cc7437"
 

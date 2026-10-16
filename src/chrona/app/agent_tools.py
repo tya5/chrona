@@ -607,7 +607,7 @@ _TOOLS: tuple[ToolSpec, ...] = (
         "carries a PNG preview image (inline 'image'); inline 'svg' carries the SVG text; 'none' carries only the "
         "structured result. 'format' chooses the artifact that contentIdentity and byteLength describe. 'preset' "
         "is a builtin id from list_presets or a workspace .yaml path; omitted means chrona-default-draft. "
-        "The tool writes no file, and a draft render is not reproducible evidence. PNG needs the render extra "
+        "The tool writes no file, and it renders the file you name, not a saved Render Context. PNG needs the render extra "
         "(pngAvailable says whether it is installed). Read 'status' and 'warnings', not only isError: a rejected "
         "plan is a result, and a warning means something was clipped, suppressed or substituted.",
         _input_schema({

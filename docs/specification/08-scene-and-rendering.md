@@ -143,6 +143,25 @@ A successful PDF header or an arbitrary embedded font is not evidence of exact
 face use: verification must associate the text's PDF font resource with its
 completed family/weight and embedded program.
 
+### 2.4 PDF marker and pattern serialization (#1596)
+
+PDF converts the raw completed SVG surface through an adapter-private vector
+lowering step before svglib. It materializes both terminal outlines using the
+same completed marker transform as Scene validation, and patterned Rects using
+the existing completed repeat-cell enumeration. Tile geometry, pigment,
+substrate, phase, rotation, tile and host clipping, opacity and painter order
+are preserved. No routing, endpoint selection, font measurement or Theme lookup
+occurs in the adapter; SVG/PNG serialization and Scene data are unchanged.
+
+Non-Rect pattern hosts are an aggregated `E_VISUAL_CAPABILITY_UNSUPPORTED`
+refusal naming the primitive IDs and count, not a successful conversion that
+drops paint. Missing completed paint at the lowering boundary diagnoses rather
+than substituting a plain fill. Every PDF adapter identity includes the grammar
+`pdf-scene-paint-v1` in addition to its engine and closed-face embedding grammar.
+Raw viewer-fit text and exact render-local font mapping remain unchanged.
+For completed wobbled Paths, terminal axes follow the painted outline's first
+and last sub-paths, not the nominal route; wobble is never recomputed here.
+
 ### 2.1 M27 public Review SVG binding
 
 For a Render Context whose target is SVG, the public `render-review` application route
@@ -154,9 +173,14 @@ fallback selected by profile, example, or missing capability are invalid.
 Every declared and present slot family is complete-or-diagnose: title, table,
 timeline/axis, legend, notes, group details, observations, milestones, and summary
 either emit their declared primitives or fail before output. Optional families are
-absent only when their resolved input is empty and their profile contract marks them
+absent when their resolved input is empty and their profile contract marks them
 optional. The SVG adapter validates primitive bounds and required target capabilities;
 it does not silently clip a required label or substitute a literal policy value.
+
+Empty resolved annotation and legend content is semantically absent at Layout
+allocation (#1597, Spec33 §2): its source slots and newly empty ancestors reserve
+no space, including fixed-size slots. Source validation and measurement still run;
+nonempty content is not reclassified because placement fails or is suppressed.
 
 ## 3. Scene inputs and output
 
