@@ -18,7 +18,7 @@ properties:
       extends:
         description: "Exact local base source and effective Theme identity."
         type: object
-        required: [id, path, sourceContentIdentity, contentIdentity]
+        required: [id, path]
         additionalProperties: false
         properties:
           id: {description: "Declared base Theme id.", type: string, minLength: 1}

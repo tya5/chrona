@@ -127,13 +127,13 @@ $defs:
   artifactPin:
     type: object
     description: "Identity-neutral immutable Store pin for exact Scene artifact bytes."
-    required: [store, address, revision, contentIdentity]
+    required: [store, address, revision]
     additionalProperties: false
     properties:
       store: {description: "Named Store that resolves the immutable artifact.", $ref: "urn:chrona:revision-store-resource-ref-v0.2#/properties/store"}
       address: {description: "Strict Store-relative artifact address.", $ref: "urn:chrona:common-v0.1#/$defs/storeAddress"}
       revision: {description: "Opaque revision within the named Store.", $ref: "urn:chrona:revision-store-resource-ref-v0.2#/properties/revision"}
-      contentIdentity: {description: "Mandatory SHA-256 identity of the exact artifact bytes.", $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+      contentIdentity: {description: "Optional SHA-256 identity of the exact artifact bytes; verified when supplied.", $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
   sha256:
     description: "SHA-256 identity of one immutable declared byte payload."
     examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
@@ -194,19 +194,19 @@ $defs:
             metrics:
               description: "Measured glyph advances generated from this exact font face."
               type: object
-              required: [locator, contentIdentity]
+              required: [locator]
               additionalProperties: false
               properties:
                 locator: {description: "Identity-neutral metrics resource location.", $ref: "#/$defs/fontLocator"}
-                contentIdentity: {description: "Exact identity of the metrics JSON bytes.", $ref: "#/$defs/sha256"}
+                contentIdentity: {description: "Optional exact identity of the metrics JSON bytes; verified when supplied.", $ref: "#/$defs/sha256"}
             font:
               description: "Optional rasterizable static TrueType font face, required only by byte-consuming targets."
               type: object
-              required: [locator, contentIdentity]
+              required: [locator]
               additionalProperties: false
               properties:
                 locator: {description: "Identity-neutral raster-font resource location.", $ref: "#/$defs/fontLocator"}
-                contentIdentity: {description: "Exact identity of the font bytes.", $ref: "#/$defs/sha256"}
+                contentIdentity: {description: "Optional exact identity of the font bytes; verified when supplied.", $ref: "#/$defs/sha256"}
   reference:
     type: object
     description: "Pinned Store reference to one materialization input resource."

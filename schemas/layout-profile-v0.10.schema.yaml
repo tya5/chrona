@@ -182,7 +182,7 @@ $defs:
     type: object
     description: "Pinned reference to an immutable Layout Profile resource."
     additionalProperties: false
-    required: [id, kind, store, address, revision, contentIdentity]
+    required: [id, kind, store, address, revision]
     properties:
       id: {description: "Referenced Layout Profile identifier.", $ref: "#/$defs/id"}
       kind: {description: "The only allowed referenced resource kind.", const: layout-profile}

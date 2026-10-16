@@ -23,11 +23,12 @@ fontMetrics:
       weight: 400
       metrics:
         locator: {provider: context, address: fonts/acme-regular.metrics.json}
-        contentIdentity: sha256:<metrics-bytes>
       font:
         locator: {provider: context, address: fonts/acme-regular.ttf}
-        contentIdentity: sha256:<font-bytes>
 ```
+
+A `contentIdentity: sha256:...` on `metrics` or `font` is an optional pin: it is verified when
+written and never required.
 
 Package records use `{provider: package, identity: chrona-fonts-noto-cjk,
 address: ...}`. The materializer copies and verifies metrics for every target,

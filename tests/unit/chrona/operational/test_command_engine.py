@@ -28,3 +28,15 @@ def test_command_check_accepts_revision_only_target_and_returns_computed_identit
 
     assert result["status"] == "accepted"
     assert result["inputs"][0]["contentIdentity"] == "sha256:" + sha256(payload).hexdigest()
+
+
+def test_expected_content_identity_is_an_optional_lock_that_still_rejects_a_stale_value():
+    project = {"version": "timeline/v0.7", "project": {"id": "p"}, "extensions": [], "objects": {}, "relations": []}
+    payload = yaml.safe_dump(project).encode()
+    target = {"id": "p", "kind": "project", "store": {"provider": "local", "identity": "s"}, "address": "p.yaml", "revision": {"token": "r1"}}
+    command = {"version": "chrona/command/v0.3", "commandId": "c1", "type": "captureSnapshot", "target": target, "baseRevision": "r1", "payload": {"snapshotId": "q2", "registry": target | {"id": "r", "kind": "snapshot-registry"}}}
+
+    assert check_command(Reader(payload), command)["status"] == "accepted"
+    result = check_command(Reader(payload), command | {"expectedContentIdentity": "sha256:" + "0" * 64})
+    assert result["status"] == "rejected"
+    assert result["diagnostics"][0]["code"] == "E_AUTOMATION_BASE_REVISION"

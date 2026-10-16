@@ -177,8 +177,8 @@ $defs:
     description: "Immutable local source for a purpose-built raster icon."
     examples: [{address: icons/sample.png, contentIdentity: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}]
     type: object
-    required: [address, contentIdentity]
+    required: [address]
     additionalProperties: false
     properties:
       address: {description: "Relative catalog asset address in the strict Store-address grammar (#731); the parse step refuses an unsafe one even in an entry nothing selects.", examples: [icons/sample.png], $ref: "urn:chrona:common-v0.1#/$defs/storeAddress"}
-      contentIdentity: {description: "SHA-256 of the exact raster bytes.", examples: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+      contentIdentity: {description: "Optional SHA-256 pin of the exact raster bytes; verified when supplied.", examples: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}

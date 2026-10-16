@@ -22,3 +22,7 @@ whether inputs are pinned.
 PR #53's full-pin conversion is not merged. The current unpinned examples remain canonical.
 Strict closure verification, if introduced later, must be an explicit user-selected mode
 with its own design and acceptance tests.
+
+## Revision (Issue 1567)
+
+Specification 42 now makes an absent `contentIdentity` acceptable on every reference, including Store reads and extension packages; the example corpus is expected to carry no pins. The rule here is unchanged: supplied pins are verified, absent pins are not required or backfilled.

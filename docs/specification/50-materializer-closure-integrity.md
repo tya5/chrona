@@ -25,7 +25,7 @@ For each referenced resource, the materializer MUST:
 3. compute the SHA-256 of those copied bytes; and
 4. verify any authored `contentIdentity` against that digest.
 
-An absent identity remains absent when opt-in pinning permits it. A present identity MUST NOT
+An absent identity is accepted and remains absent (Spec 42); the digest computed in step 3 is the identity the closure and generated evidence record. A present identity MUST NOT
 be replaced, normalized, or backfilled. A mismatch fails before rendering with the
 resource-reader identity diagnostic. The same rule applies recursively to a snapshot
 reference's embedded project reference.
