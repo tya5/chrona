@@ -168,7 +168,7 @@ def _build(parsed: ParseResult) -> tuple[dict[str, Any], SourceMap]:
             }
             index = len(relations)
             relations.append(relation)
-            for key in (str(index), relation_id):
+            for key in (str(index), relation_id, f"{predecessor} -> {item.name.value}"):  # also the form diagnostics name (#1585)
                 prefix = f"/relations/{key}"
                 smap[prefix] = dep.range
                 smap[prefix + "/from"] = dep.name.range if dep.endpoint is None else dep.name.range.through(dep.endpoint.range)

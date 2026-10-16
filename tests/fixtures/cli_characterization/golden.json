@@ -196,7 +196,7 @@
   "exit": 0,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"ok\", \"presets\": [{\"id\": \"mission-light\"}, {\"id\": \"control-room-dark\"}, {\"id\": \"print-mono\"}, {\"id\": \"executive-light\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"elevated-light\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"editorial\"}, {\"id\": \"technical-print\"}, {\"id\": \"chrona-default-draft\"}, {\"id\": \"marquee\"}, {\"id\": \"sunday\"}, {\"id\": \"target-b\"}, {\"id\": \"titlecard\"}, {\"id\": \"yuya\"}, {\"id\": \"muted-executive\"}, {\"id\": \"wallboard-dark\"}], \"default\": \"chrona-default-draft\"}\n"
+  "stdout": "{\"status\": \"ok\", \"presets\": [{\"id\": \"mission-light\", \"description\": \"lane rows with a bold blue time band, light; --snapshot baseline not drawn; draws actuals and finish delta\"}, {\"id\": \"control-room-dark\", \"description\": \"lane rows with a bright blue time band on a navy page, dark; --snapshot baseline not drawn; draws actuals and finish delta\"}, {\"id\": \"print-mono\", \"description\": \"black-and-white lane rows with grey bars for print, light; --snapshot baseline not drawn; draws actuals and finish delta\"}, {\"id\": \"executive-light\", \"description\": \"lane rows with wide rounded bars and a navy time band, light; --snapshot baseline not drawn; draws actuals and finish delta\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"elevated-light\", \"description\": \"blue lane rows with a soft raised shading and a legend, light; --snapshot baseline not drawn; draws actuals and finish delta\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"editorial\", \"description\": \"blue lane rows with a centred title and a legend, light; --snapshot baseline not drawn; draws actuals as progress fill\"}, {\"id\": \"technical-print\", \"description\": \"numbered table with owner column, black axis and outlined bars for print, light; --snapshot baseline not drawn; draws actuals\"}, {\"id\": \"chrona-default-draft\", \"description\": \"plain readable table and timeline used when no preset is named, light; --snapshot baseline not drawn; draws actuals as progress fill\"}, {\"id\": \"marquee\", \"description\": \"theatre marquee with gold lamps and act headings, dark; baseline drawn from --snapshot; draws actuals\"}, {\"id\": \"sunday\", \"description\": \"newspaper comics page with a key and panel headings, light; baseline drawn from --snapshot; draws actuals\"}, {\"id\": \"target-b\", \"description\": \"clean table and timeline with tinted group bands, light; baseline drawn from --snapshot; draws actuals\"}, {\"id\": \"titlecard\", \"description\": \"broadcast title card with a countdown box, dark; baseline drawn from --snapshot; draws actuals\"}, {\"id\": \"yuya\", \"description\": \"cream chart in a red frame on a dark teal page, dark; baseline drawn from --snapshot; draws actuals\"}, {\"id\": \"muted-executive\", \"description\": \"numbered table with owner column, slate bars and warm grey bands, light; --snapshot baseline not drawn; draws actuals\"}, {\"id\": \"wallboard-dark\", \"description\": \"large-type table with owner column and blue axis for a shared screen, dark; --snapshot baseline not drawn; draws actuals\"}], \"default\": \"chrona-default-draft\"}\n"
  },
  "render-actual": {
   "argv": [
@@ -1037,7 +1037,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}, {\"code\": \"I_LAYOUT_RELATION_POLICY_SUPERSEDED\", \"layoutMember\": \"relationRouting.unroutable\", \"layoutValue\": \"relax\", \"message\": \"Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing\", \"severity\": \"info\", \"surfaceId\": \"table-timeline\", \"viewMember\": \"visibility.relations.overflow\", \"viewValue\": \"suppress\"}]}\n"
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"I_LAYOUT_RELATION_ROUTING\", \"fallbackSearch\": 0, \"message\": \"0 relations on table-timeline settled without search; 0 used fallback search\", \"relationInstances\": 0, \"severity\": \"info\", \"shapeSettled\": 0, \"surfaceId\": \"table-timeline\"}, {\"code\": \"I_LAYOUT_RELATION_POLICY_SUPERSEDED\", \"layoutMember\": \"relationRouting.unroutable\", \"layoutValue\": \"relax\", \"message\": \"Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing\", \"severity\": \"info\", \"surfaceId\": \"table-timeline\", \"viewMember\": \"visibility.relations.overflow\", \"viewValue\": \"suppress\"}, {\"code\": \"W_SNAPSHOT_NOT_DRAWN\", \"input\": \"--snapshot\", \"message\": \"--snapshot starter.yaml was read but the chosen View draws no snapshot baseline (its comparison.baseline is not 'snapshot' with baselineMarks ghost); the render shows no baseline. Use a preset or View that draws one, for example --preset target-b\", \"severity\": \"warning\"}]}\n"
  },
  "render-starter-emit-scene": {
   "argv": [
@@ -1355,7 +1355,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_UNSUPPORTED_CYCLE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/relations/1\", \"revisionRefs\": [], \"message\": \"Dependency cycle among a, b; the relation at this path closes it. Objects that wait on each other cannot be scheduled: remove or redirect one relation in the cycle\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_UNSUPPORTED_CYCLE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/relations/b -> a\", \"revisionRefs\": [], \"message\": \"Dependency cycle among a, b; the relation at this path closes it. Objects that wait on each other cannot be scheduled: remove or redirect one relation in the cycle\"}]}\n"
  },
  "schedule-deadline-not-a-date": {
   "argv": [
@@ -1497,7 +1497,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_UNSUPPORTED_CYCLE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/relations/1\", \"revisionRefs\": [], \"message\": \"Dependency cycle among a, b; the relation at this path closes it. Objects that wait on each other cannot be scheduled: remove or redirect one relation in the cycle\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_UNSUPPORTED_CYCLE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/relations/b -> a\", \"revisionRefs\": [], \"message\": \"Dependency cycle among a, b; the relation at this path closes it. Objects that wait on each other cannot be scheduled: remove or redirect one relation in the cycle\"}]}\n"
  },
  "validate-deadline-late-unchanged": {
   "argv": [

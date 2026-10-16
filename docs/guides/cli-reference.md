@@ -157,7 +157,7 @@ print the canonical identity of one YAML or JSON document
 
 turn a CSV or TSV table (one row per task, gate or group) into Project YAML; every row error is reported with its row and column in one run, and an existing file is never replaced
 
-`chrona import --actual-output --as-of --calendar --columns --delimiter --output --project-id --title -o`
+`chrona import --actual-output --as-of --calendar --columns --delimiter --output --project-id --role --title -o`
 
 - `table`: CSV or TSV file (a .tsv suffix selects tabs)
 - `--output, -o`: where to write the Project YAML; an existing file is not replaced
@@ -167,6 +167,7 @@ turn a CSV or TSV table (one row per task, gate or group) into Project YAML; eve
 - `--calendar`: declare a working calendar such as 'standard mon-fri except 2027-04-02'; repeatable; the first is the project default
 - `--as-of`: observation date (YYYY-MM-DD) of the Actual Set
 - `--columns`: YAML mapping of your header names to the column vocabulary
+- `--role`: bind a Project field role (responsible, phase) to an extra column of the table, such as --role responsible=team; repeatable, one header per role
 - `--delimiter`: cell delimiter (default: tab for .tsv, else comma)
 
 ## chrona init
@@ -226,7 +227,7 @@ copy one named builtin preset
 
 ## chrona preset list
 
-list every builtin preset id and its gallery set
+list every builtin preset id with a one-line description
 
 `chrona preset list`
 
@@ -243,7 +244,7 @@ draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix. 
 - `--scheme`: Color Scheme YAML path
 - `--layout`: Layout Profile YAML path
 - `--actual`: Actual Set YAML path
-- `--snapshot`: baseline Snapshot Project YAML path; the View selects baseline semantics
+- `--snapshot`: baseline Snapshot Project YAML path; drawn only when the View compares against a snapshot (otherwise a warning says it was not drawn)
 - `--summary`: Summary Profile YAML path
 - `--detail`: Review Detail Profile YAML path
 - `--icon-catalog`: explicit local icon catalog YAML path; repeatable
@@ -258,7 +259,7 @@ draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix. 
 - `--typesetter-engine`: the engine that will compile the output; required with --format typst or tikz: typst (for .typ) or tectonic (for .tex)
 - `--typesetter-version`: the exact engine version you will compile with (for example 0.13.1 for typst); recorded in the result, never looked up on this machine; required with --format typst or tikz
 - `--typesetter-adapter-grammar`: the output grammar: chrona-typst/v0.1 for typst, chrona-tikz/v0.1 for tectonic; required with --format typst or tikz
-- `--output, -o`: where to write the result; an existing file is not replaced
+- `--output, -o`: where to write the slide (the suffix selects the format); an existing file is replaced
 - `--emit-scene`: write a schema-validated inspection Scene JSON without replacing an existing file
 - `--previous-scene`: revalidate routes from this previous Scene under first-fit
 

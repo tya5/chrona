@@ -167,7 +167,7 @@ def _observed(actual_start: str, actual_finish: str, kind: str = "task") -> dict
     ("2026-02-28", "2026-03-01"),  # non-leap February
 ])
 def test_actual_finish_is_inclusive_and_becomes_the_exclusive_actual_finish(finish, exclusive):
-    assert _observed("2026-10-05", finish)["finish"] == exclusive
+    assert _observed("2026-01-01", finish)["finish"] == exclusive
 
 
 def test_the_issue_csv_imports_a_one_day_actual_as_a_positive_interval():

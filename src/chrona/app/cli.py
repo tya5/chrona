@@ -73,9 +73,9 @@ def _emit_failure(failure: CliFailure) -> NoReturn:
     _emit_report(report_failure(failure))
 
 
-def _emit_render_result(rendered: RenderedReview) -> None:
+def _emit_render_result(rendered: RenderedReview, notes: tuple[dict[str, Any], ...] = ()) -> None:
     """One machine-readable success channel; warnings never change exit 0."""
-    print(json.dumps({"status": "ok", "diagnostics": [], "warnings": warning_payloads(rendered)},
+    print(json.dumps({"status": "ok", "diagnostics": [], "warnings": [*warning_payloads(rendered), *notes]},
                      ensure_ascii=False, sort_keys=True))
 
 
@@ -316,7 +316,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--scheme", help="Color Scheme YAML path")
     command.add_argument("--layout", help="Layout Profile YAML path")
     command.add_argument("--actual", help="Actual Set YAML path")
-    command.add_argument("--snapshot", help="baseline Snapshot Project YAML path; the View selects baseline semantics")
+    command.add_argument("--snapshot", help="baseline Snapshot Project YAML path; drawn only when the View compares against a snapshot (otherwise a warning says it was not drawn)")
     command.add_argument("--summary", help="Summary Profile YAML path")
     command.add_argument("--detail", help="Review Detail Profile YAML path")
     command.add_argument("--icon-catalog", action="append", default=[],
@@ -331,7 +331,8 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--locale", choices=("en-US", "ja-JP"), default="en-US",
                          help="render locale: en-US or ja-JP (default: en-US)")
     _add_draft_target_arguments(command)
-    command.add_argument("--output", "-o", required=True)
+    command.add_argument("--output", "-o", required=True,
+                         help="where to write the slide (the suffix selects the format); an existing file is replaced")
     command.add_argument("--emit-scene", help="write a schema-validated inspection Scene JSON without replacing an existing file")
     command.add_argument("--previous-scene", help="revalidate routes from this previous Scene under first-fit")
 
@@ -426,6 +427,9 @@ def _parser() -> JsonArgumentParser:
                          help="declare a working calendar such as 'standard mon-fri except 2027-04-02'; repeatable; the first is the project default")
     command.add_argument("--as-of", help="observation date (YYYY-MM-DD) of the Actual Set")
     command.add_argument("--columns", help="YAML mapping of your header names to the column vocabulary")
+    command.add_argument("--role", action="append", default=[], metavar="ROLE=HEADER",
+                         help="bind a Project field role (responsible, phase) to an extra column of the table, such as "
+                              "--role responsible=team; repeatable, one header per role")
     command.add_argument("--delimiter", choices=("comma", "tab", "semicolon"), help="cell delimiter (default: tab for .tsv, else comma)")
     command = sub.add_parser("init", help="create a new editable project in a new directory")
     command.add_argument("directory", nargs="?", default=".")
@@ -448,7 +452,7 @@ def _parser() -> JsonArgumentParser:
     command = preset_sub.add_parser("copy", help="copy one named builtin preset")
     command.add_argument("id", help="builtin preset identifier")
     command.add_argument("--output", "-o", required=True, help="empty output directory")
-    preset_sub.add_parser("list", help="list every builtin preset id and its gallery set")
+    preset_sub.add_parser("list", help="list every builtin preset id with a one-line description")
 
 
     command = sub.add_parser("render-review-gallery", help="draw the same slide in several color schemes for comparison")
@@ -645,7 +649,7 @@ def _run_import(args: argparse.Namespace) -> None:
         fail((ImportDiagnostic("E_IMPORT_COLUMNS_INVALID", "--columns must be a YAML mapping of header to column name"),), "failed", 2)
     delimiter = {"comma": ",", "tab": "\t", "semicolon": ";"}.get(args.delimiter or "", "\t" if table.suffix.lower() == ".tsv" else ",")
     result = import_table(text, delimiter=delimiter, project_id=args.project_id or slug(table.stem), title=args.title,
-                          calendars=args.calendar, as_of=args.as_of, mapping=mapping, source=args.table)
+                          calendars=args.calendar, as_of=args.as_of, mapping=mapping, source=args.table, roles=args.role)
     if not result.ok:
         fail(result.diagnostics, "rejected", 1)
     targets = [(Path(args.output), result.project_yaml)]
@@ -750,7 +754,7 @@ def _run_draft_render(args: argparse.Namespace) -> None:
         snapshot=getattr(args, "snapshot", None),
     ))
     _write_render_outputs(result.rendered, args)
-    _emit_render_result(result.rendered)
+    _emit_render_result(result.rendered, result.notes)
 
 
 def _write_render_outputs(rendered: RenderedReview, args: argparse.Namespace) -> None:

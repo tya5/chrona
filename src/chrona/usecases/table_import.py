@@ -14,12 +14,17 @@ from dataclasses import dataclass, field
 from datetime import date, timedelta
 from typing import Any, Iterable, Mapping
 
+from chrona.resources import safe_load, schema_document
+from chrona.scheduling.dependency_cycles import find_dependency_cycles
+from chrona.usecases.project_checks import validate_project_mapping
 from chrona.usecases.terse_compile import compile_plan, emit_project_text
 
 COLUMNS = ("id", "title", "type", "start", "end", "finish", "duration", "parent", "predecessors", "deadline", "calendar",
            "progress", "actual_start", "actual_finish")
 """The closed column vocabulary. Headers match case-insensitively; spaces and hyphens read as underscores."""
 
+CALENDAR_HINT = ('working-day amounts need a calendar: pass --calendar "standard mon-fri" to `chrona import` '
+                 "(repeat --calendar for more; the first is the project default)")
 _SLUG = re.compile(r"[^a-z0-9]+")
 _ISO = re.compile(r"\d{4}-\d{2}-\d{2}")
 _PROGRESS = re.compile(r"\s*(\d+(?:\.\d+)?)\s*(%?)\s*")
@@ -37,11 +42,12 @@ class ImportDiagnostic:
     header: str | None = None
     hint: str | None = None
     source: str | None = None
+    source_ref: str | None = None
 
     def as_dict(self) -> dict[str, Any]:
         where = f" (row {self.row}, column {self.column} `{self.header}`)" if self.row and self.column else (
             f" (row {self.row})" if self.row else "")
-        record: dict[str, Any] = {"code": self.code, "severity": "error", "component": "import", "sourceRef": "/",
+        record: dict[str, Any] = {"code": self.code, "severity": "error", "component": "import", "sourceRef": self.source_ref or "/",
                                   "message": self.message + where}
         if self.row is not None:
             record["cell"] = {key: value for key, value in (("row", self.row), ("column", self.column), ("header", self.header))
@@ -76,6 +82,40 @@ class _Row:
         return self.cells.get(name, "").strip()
 
 
+def field_role_vocabulary() -> tuple[str, ...]:
+    """The closed Project field-role vocabulary, read from the schema that owns it (never restated here)."""
+    return tuple(schema_document("vocabulary-v0.1.schema.yaml")["$defs"]["projectFieldRole"]["enum"])
+
+
+def _bind_roles(roles: Iterable[str], header_kinds: Mapping[str, str]) -> tuple[dict[str, str], list[ImportDiagnostic]]:
+    """`ROLE=HEADER` bindings to imported extra columns, or the findings that refuse them (#1584, #1585)."""
+    vocabulary = field_role_vocabulary()
+    bound: dict[str, str] = {}
+    problems: list[ImportDiagnostic] = []
+    for text in roles:
+        role, separator, header = text.partition("=")
+        role, header = role.strip(), header.strip()
+        if not separator or not role or not header:
+            problems.append(ImportDiagnostic("E_IMPORT_ROLE_SYNTAX", f"--role '{text}' is not ROLE=HEADER",
+                                             hint="write --role responsible=team"))
+        elif role not in vocabulary:
+            problems.append(ImportDiagnostic("E_IMPORT_ROLE_UNKNOWN", f"'{role}' is not a field role",
+                                             hint="roles: " + ", ".join(vocabulary)))
+        elif role in bound:
+            problems.append(ImportDiagnostic("E_IMPORT_ROLE_DUPLICATE", f"--role {role} is given twice",
+                                             hint="bind each role to one header"))
+        elif header not in header_kinds:
+            problems.append(ImportDiagnostic("E_IMPORT_ROLE_HEADER_ABSENT", f"--role {role}={header}: the table has no `{header}` header",
+                                             hint="headers: " + ", ".join(header_kinds)))
+        elif header_kinds[header]:
+            problems.append(ImportDiagnostic("E_IMPORT_ROLE_COLUMN_RESERVED",
+                                             f"--role {role}={header}: `{header}` is the `{header_kinds[header]}` column, not an extra field",
+                                             hint="bind a column the import vocabulary does not use, such as `team`"))
+        else:
+            bound[role] = header
+    return bound, problems
+
+
 def slug(text: str, fallback: str = "plan") -> str:
     """A project id from free text: lower-case letters, digits and hyphens, starting with a letter."""
     value = _SLUG.sub("-", text.lower()).strip("-") or fallback
@@ -89,20 +129,25 @@ def _canonical(header: str, mapping: Mapping[str, str]) -> str | None:
 
 
 def read_table(text: str, delimiter: str, mapping: Mapping[str, str] | None = None
-               ) -> tuple[list[_Row], list[ImportDiagnostic], list[str]]:
-    """Rows keyed by canonical column name; unknown headers are kept as `fields`."""
+               ) -> tuple[list[_Row], list[ImportDiagnostic], list[str], dict[str, str]]:
+    """Rows keyed by canonical column name; unknown headers are kept as `fields`.
+
+    The last item maps every header of the table to its canonical column name, or to "" for an extra (field) header."""
     mapping = mapping or {}
     problems: list[ImportDiagnostic] = []
     reader = csv.reader(io.StringIO(text.lstrip("﻿"), newline=""), delimiter=delimiter)
     rows = [(reader.line_num, record) for record in reader]
     if not rows:
-        return [], [ImportDiagnostic("E_IMPORT_EMPTY", "the table is empty", hint="start with a header row such as `id,title,type,start,end`")], []
+        return [], [ImportDiagnostic("E_IMPORT_EMPTY", "the table is empty", hint="start with a header row such as `id,title,type,start,end`")], [], {}
     header_number, headers = rows[0]
     header_number = 1
     columns: dict[str, int] = {}
     extra: dict[int, str] = {}
+    header_kinds: dict[str, str] = {}
     for index, header in enumerate(headers, start=1):
         name = _canonical(header, mapping)
+        if header.strip():
+            header_kinds.setdefault(header.strip(), name or "")
         if name is None:
             if header.strip():
                 extra[index] = header.strip()
@@ -133,7 +178,7 @@ def read_table(text: str, delimiter: str, mapping: Mapping[str, str] | None = No
                 item.fields[header] = value
                 item.field_columns[header] = index
         parsed.append(item)
-    return parsed, problems, [name for name in COLUMNS if name in columns]
+    return parsed, problems, [name for name in COLUMNS if name in columns], header_kinds
 
 
 def _piece_line(pieces: list[tuple[str, str | None]], indent: int) -> tuple[str, list[tuple[int, int, str | None]]]:
@@ -294,15 +339,22 @@ def _locate(plan: _Plan, line: int | None, column: int | None, code: str = "") -
 
 
 def import_table(text: str, *, delimiter: str = ",", project_id: str, title: str | None = None, calendars: Iterable[str] = (),
-                 as_of: str | None = None, mapping: Mapping[str, str] | None = None, source: str | None = None) -> ImportResult:
-    """Convert a table to Project YAML (and an Actual Set when it has actual columns). Reports every row error in one run."""
-    rows, problems, _present = read_table(text, delimiter, mapping)
+                 as_of: str | None = None, mapping: Mapping[str, str] | None = None, source: str | None = None,
+                 roles: Iterable[str] = ()) -> ImportResult:
+    """Convert a table to Project YAML (and an Actual Set when it has actual columns). Reports every row error in one run.
+
+    `roles` are `ROLE=HEADER` bindings of Project `fieldRoles` to extra columns (#1584). The Project then goes through the one
+    Project validation (`validate`, `render`) and the Actual Set through the Actual contract, each finding mapped to its cell (#1585)."""
+    rows, problems, _present, header_kinds = read_table(text, delimiter, mapping)
+    bound_roles, role_problems = _bind_roles(roles, header_kinds)
+    problems.extend(role_problems)
     if "E_IMPORT_COLUMN_MISSING" in {item.code for item in problems} or "E_IMPORT_EMPTY" in {item.code for item in problems}:
         return ImportResult(None, None, _finish(problems, source))
     preface = ["terse 0.1", f"project {project_id} {_quote(title or project_id)}", *[f"calendar {item}" for item in calendars]]
     ordered = _order(rows, problems)
     plan = _generate(ordered, preface)
     compiled = compile_plan("\n".join(plan.lines).encode("utf-8") + b"\n", source)
+    seen_calendar_hint = False
     for item in compiled.diagnostics:
         line = item.range.line if item.range is not None else None
         column = item.range.column if item.range is not None else None
@@ -310,7 +362,11 @@ def import_table(text: str, *, delimiter: str = ",", project_id: str, title: str
         message = item.message
         if row is None and item.range is not None and item.range.line <= len(preface):
             message = f"{message} (the generated project or calendar line)"
-        problems.append(ImportDiagnostic(item.id, message, row, index, header, item.hint, source))
+        hint = item.hint
+        if item.id == "E_CALENDAR_REQUIRED":  # plan syntax is wrong here: say it once, as the import option
+            hint = None if seen_calendar_hint else CALENDAR_HINT
+            seen_calendar_hint = True
+        problems.append(ImportDiagnostic(item.id, message, row, index, header, hint, source))
     if problems:
         return ImportResult(None, None, _finish(problems, source))
     project = compiled.project
@@ -319,15 +375,66 @@ def import_table(text: str, *, delimiter: str = ",", project_id: str, title: str
     for row, _depth in ordered:
         if row.fields:
             objects[row.get("id")]["fields"] = dict(row.fields)
+    if bound_roles:
+        project["fieldRoles"] = dict(bound_roles)
+    problems.extend(_project_findings(project, ordered))
     observations, actual_problems = _observations(ordered)
     problems.extend(actual_problems)
+    actual_yaml = _actual_yaml(project_id, as_of, observations) if observations else None
+    if actual_yaml is not None and not actual_problems:
+        problems.extend(_actual_findings(project_id, actual_yaml, ordered))
     if as_of is not None and not _valid_date(as_of):
         problems.append(ImportDiagnostic("E_IMPORT_AS_OF_INVALID", f"--as-of '{as_of}' is not a YYYY-MM-DD date"))
     if problems:
         return ImportResult(None, None, _finish(problems, source))
     project_yaml = emit_project_text(project).encode("utf-8")
-    actual_yaml = _actual_yaml(project_id, as_of, observations) if observations else None
     return ImportResult(project_yaml, actual_yaml, ())
+
+
+def _project_findings(project: dict[str, Any], ordered: list[tuple[_Row, int]]) -> list[ImportDiagnostic]:
+    """The Project validation `validate` and `render` run (Core rules, then dependency cycles), at the cells that caused it."""
+    by_id = {row.get("id"): row for row, _depth in ordered}
+    found: list[ImportDiagnostic] = []
+    for item in validate_project_mapping(project).diagnostics:
+        row, column, header, hint, path = None, None, None, None, item.path
+        pointer = (item.path or "").split("/")
+        if item.id in {"E_UNSUPPORTED_CYCLE", "E_UNSATISFIABLE_DEPENDENCIES"}:
+            for cycle in find_dependency_cycles(project):
+                if cycle.closing_endpoints and item.path == cycle.diagnostic().path:
+                    source_id, target_id = cycle.closing_endpoints
+                    target = by_id.get(target_id)
+                    if target is not None and "predecessors" in target.columns:
+                        row, column, header = target.number, target.columns["predecessors"], "predecessors"
+                        hint = f"remove `{source_id}` from the predecessors of `{target_id}`, or another link of the loop"
+        elif len(pointer) > 2 and pointer[1] == "objects" and pointer[2] in by_id:
+            target = by_id[pointer[2]]
+            row, column, header = target.number, target.columns["id"], "id"
+        found.append(ImportDiagnostic(item.id, item.message, row, column, header, hint, None, path))
+    return found
+
+
+def _actual_findings(project_id: str, actual_yaml: bytes, ordered: list[tuple[_Row, int]]) -> list[ImportDiagnostic]:
+    """The Actual Set contract `render` applies to the generated Actual Set, reported at the row and column of the value."""
+    from chrona.presentation.contracts import ClosureIdentity, ContractError
+    from chrona.presentation.contracts.resources import parse_contract
+    document = safe_load(actual_yaml)
+    try:
+        parse_contract(ClosureIdentity("actual-set", str(document["id"]), "draft", "sha256:import"), document)
+    except ContractError as error:
+        match = re.fullmatch(r"/body/observations/(\d+)(?:/actual/(\w+))?.*", error.source_ref or "")
+        rows = {row.get("id"): row for row, _depth in ordered}
+        observation = document["body"]["observations"][int(match.group(1))] if match else None
+        row = rows.get(observation["projectObjectId"]) if observation else None
+        header = {"start": "actual_start", "finish": "actual_finish"}.get(match.group(2) or "", None) if match else None
+        if row is None or header is None or header not in row.columns:
+            return [ImportDiagnostic(error.diagnostic_id, error.detail or error.diagnostic_id, row.number if row else None,
+                                     row.columns["id"] if row else None, "id" if row else None)]
+        message = error.detail
+        if error.diagnostic_id == "E_ACTUAL_FINISH_NOT_AFTER_START":
+            message = f"actual_finish {row.get('actual_finish')} is before actual_start {row.get('actual_start')}"
+        return [ImportDiagnostic(error.diagnostic_id, message, row.number, row.columns[header], header,
+                                 "actual_finish is the last day worked (inclusive), on or after actual_start")]
+    return []
 
 
 def _valid_date(value: str) -> bool:
@@ -383,4 +490,5 @@ def _finish(problems: list[ImportDiagnostic], source: str | None) -> tuple[Impor
     if len(ordered) > ERROR_LIMIT:
         extra = len(ordered) - ERROR_LIMIT
         ordered = ordered[:ERROR_LIMIT] + [ImportDiagnostic("E_IMPORT_TOO_MANY_ERRORS", f"{extra} more errors are not listed")]
-    return tuple(ImportDiagnostic(item.code, item.message, item.row, item.column, item.header, item.hint, source) for item in ordered)
+    return tuple(ImportDiagnostic(item.code, item.message, item.row, item.column, item.header, item.hint, source, item.source_ref)
+                 for item in ordered)

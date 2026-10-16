@@ -96,9 +96,33 @@ def _read_member(member: dict[str, Any]) -> bytes:
     return raw
 
 
+_DRAWN = "baseline drawn from --snapshot"
+_NOT_DRAWN = "--snapshot baseline not drawn"
+PRESET_DESCRIPTIONS: dict[str, str] = {
+    "mission-light": f"lane rows with a bold blue time band, light; {_NOT_DRAWN}; draws actuals and finish delta",
+    "control-room-dark": f"lane rows with a bright blue time band on a navy page, dark; {_NOT_DRAWN}; draws actuals and finish delta",
+    "print-mono": f"black-and-white lane rows with grey bars for print, light; {_NOT_DRAWN}; draws actuals and finish delta",
+    "executive-light": f"lane rows with wide rounded bars and a navy time band, light; {_NOT_DRAWN}; draws actuals and finish delta",
+    "elevated-light": f"blue lane rows with a soft raised shading and a legend, light; {_NOT_DRAWN}; draws actuals and finish delta",
+    "editorial": f"blue lane rows with a centred title and a legend, light; {_NOT_DRAWN}; draws actuals as progress fill",
+    "technical-print": f"numbered table with owner column, black axis and outlined bars for print, light; {_NOT_DRAWN}; draws actuals",
+    "chrona-default-draft": f"plain readable table and timeline used when no preset is named, light; {_NOT_DRAWN}; draws actuals as progress fill",
+    "marquee": f"theatre marquee with gold lamps and act headings, dark; {_DRAWN}; draws actuals",
+    "sunday": f"newspaper comics page with a key and panel headings, light; {_DRAWN}; draws actuals",
+    "target-b": f"clean table and timeline with tinted group bands, light; {_DRAWN}; draws actuals",
+    "titlecard": f"broadcast title card with a countdown box, dark; {_DRAWN}; draws actuals",
+    "yuya": f"cream chart in a red frame on a dark teal page, dark; {_DRAWN}; draws actuals",
+    "muted-executive": f"numbered table with owner column, slate bars and warm grey bands, light; {_NOT_DRAWN}; draws actuals",
+    "wallboard-dark": f"large-type table with owner column and blue axis for a shared screen, dark; {_NOT_DRAWN}; draws actuals",
+}
+"""One line per builtin preset: its look, light or dark, whether `--snapshot` is drawn as a baseline, and whether actuals are drawn (#1585).
+A test checks that every catalogue id has one and that the light/dark and baseline words match the preset's own resources."""
+
+
 def list_builtin_presets() -> list[dict[str, str]]:
-    """Return the finite catalogue's ids, each with its `gallerySet` when a gallery set shows it, in `library.yaml` order (#429, #1403)."""
-    return [{"id": str(entry["id"]), **({"gallerySet": str(entry["gallerySet"])} if "gallerySet" in entry else {})} for entry in _library()]
+    """Return the finite catalogue's ids, each with its one-line `description` and its `gallerySet` when a gallery set shows it, in `library.yaml` order (#429, #1403, #1585)."""
+    return [{"id": str(entry["id"]), "description": PRESET_DESCRIPTIONS.get(str(entry["id"]), ""),
+             **({"gallerySet": str(entry["gallerySet"])} if "gallerySet" in entry else {})} for entry in _library()]
 
 
 def is_builtin_preset_id(identifier: str) -> bool:

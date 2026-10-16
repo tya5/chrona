@@ -23,6 +23,26 @@ def _tokens(pointer: str) -> list[str]:
     return [item.replace("~1", "/").replace("~0", "~") for item in pointer.split("/")[1:]] if pointer not in {"", "/"} else []
 
 
+def _relation_between(sequence: SequenceNode, token: str) -> Node | None:
+    """The relation entry a reference `FROM -> TO` names (object ids), the last one when several run between them."""
+    ends = [part.strip() for part in token.split("->")]
+    if len(ends) != 2:
+        return None
+    found = None
+    for item in sequence.value:
+        if not isinstance(item, MappingNode):
+            continue
+        objects = {}
+        for key, value in item.value:
+            if isinstance(key, ScalarNode) and key.value in {"from", "to"} and isinstance(value, MappingNode):
+                for inner_key, inner in value.value:
+                    if isinstance(inner_key, ScalarNode) and inner_key.value == "object" and isinstance(inner, ScalarNode):
+                        objects[key.value] = inner.value
+        if (objects.get("from"), objects.get("to")) == (ends[0], ends[1]):
+            found = item
+    return found
+
+
 def _mark_range(node: Node) -> dict[str, int]:
     line, column = node.start_mark.line + 1, node.start_mark.column + 1
     width = len(node.value) if isinstance(node, ScalarNode) and "\n" not in node.value else 1
@@ -45,6 +65,8 @@ def locate(root: Node | None, pointer: str, member: str | None = None) -> dict[s
                 break
         elif isinstance(node, SequenceNode) and token.isdigit() and int(token) < len(node.value):
             node = node.value[int(token)]
+        elif isinstance(node, SequenceNode) and (relation := _relation_between(node, token)) is not None:
+            node = relation
         else:
             break
         found = key_node if key_node is not None else node
