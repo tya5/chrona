@@ -114,6 +114,52 @@ def _lower_pattern(element: Element, node: ScenePrimitive,
     return group
 
 
+def _lower_text_runs(element: Element, layout: object) -> None:
+    """Place completed measured runs explicitly for PDF's independent text engine."""
+    lines = layout.runs
+    if not lines:
+        return
+    x = float(element.get("x", layout.baseline[0]))
+    scale = float(layout.horizontal_scale)
+    if scale <= 0:
+        raise _invalid(f"small-caps text {element.get('data-scene-id')!r} has invalid horizontal scale")
+    # The public SVG leaves runs inline for resvg/browser shaping. svglib instead
+    # lays each tspan out using ReportLab's font metrics, so place every run at
+    # the prefix sum of Layout's completed metrics in this PDF-only copy.
+    # Retain completed face attributes (including render-local PDF aliases),
+    # rather than restoring a family name or selecting a face here.
+    original_runs = iter(child for child in element.iter()
+                         if child is not element and child.tag.endswith("}tspan")
+                         and len(child) == 0 and child.get("x") is None)
+    run_attributes = [dict(child.attrib) for child in original_runs]
+    run_offset = 0
+    element.text = None
+    for child in tuple(element):
+        element.remove(child)
+    namespace = element.tag.partition("}")[0] + "}" if "}" in element.tag else ""
+    xml_space = "{http://www.w3.org/XML/1998/namespace}space"
+    for line_index, runs in enumerate(lines):
+        line = element.makeelement(namespace + "tspan", {})
+        if len(lines) > 1:
+            line.set("x", _number(x))
+            line.set("dy", _number(0 if line_index == 0 else layout.font_size * layout.line_height))
+            element.append(line)
+        else:
+            line = element
+        advance = 0.0
+        for run_index, run in enumerate(runs):
+            position = x + (advance + run_index * layout.letter_spacing) / scale
+            has_span = run.font_size != layout.font_size or any(
+                getattr(run, name, None) is not None for name in ("family", "weight", "asset_identity"))
+            attributes = run_attributes[run_offset].copy() if has_span and run_offset < len(run_attributes) else {}
+            run_offset += int(has_span)
+            attributes.update({"x": _number(position), "font-size": _number(run.font_size), xml_space: "preserve"})
+            span = line.makeelement(namespace + "tspan", attributes)
+            span.text = run.text
+            line.append(span)
+            advance += run.inline_size
+
+
 def lower_pdf_svg(surface: SceneSurface, svg: bytes) -> bytes:
     """Materialize markers and patterned Rects without changing completed facts.
 
@@ -127,7 +173,9 @@ def lower_pdf_svg(surface: SceneSurface, svg: bytes) -> bytes:
                          f"count={len(unsupported)} primitiveIds={unsupported!r}")
     relevant = {node.scene_id: node for node in surface.primitives
                 if node.pattern is not None or node.marker_start is not None or node.marker_end is not None}
-    if not relevant:
+    text_layouts = {node.scene_id: node.text_layout for node in surface.primitives
+                    if node.kind == "Text" and node.text_layout is not None and node.text_layout.runs}
+    if not relevant and not text_layouts:
         return svg
     # Preserve the default SVG namespace: svglib indexes <defs> through that
     # binding. Rewriting it to ns0 silently loses even existing host clips.
@@ -136,14 +184,21 @@ def lower_pdf_svg(surface: SceneSurface, svg: bytes) -> bytes:
     except ImportError as error:
         raise ValueError("E_RENDER_RASTERIZER_UNAVAILABLE: PDF vector lowering requires lxml") from error
     root = etree.fromstring(svg)
-    parents = {child: parent for parent in root.iter() for child in parent}
-    definitions = root.find(_NS + "defs")
-    if definitions is None:
+    definitions = root.find(_NS + "defs") if relevant else None
+    if relevant and definitions is None:
         raise _invalid("completed marker/pattern definitions are missing")
-    tiles = {item.get("id"): item for item in definitions if item.tag == _NS + "pattern"}
+    tiles = {item.get("id"): item for item in definitions if item.tag == _NS + "pattern"} if definitions is not None else {}
+    if text_layouts:
+        for element in root.iter(_NS + "text"):
+            layout = text_layouts.get(element.get("data-scene-id"))
+            if layout is not None:
+                _lower_text_runs(element, layout)
+    parents = {child: parent for parent in root.iter() for child in parent}
     marker_hits: set[str] = set()
     pattern_hits: set[str] = set()
     for element in tuple(root.iter()):
+        if not relevant:
+            continue
         owner = element
         while owner is not None and owner.get("data-scene-id") not in relevant:
             owner = parents.get(owner)

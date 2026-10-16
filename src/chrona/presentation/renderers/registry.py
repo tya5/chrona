@@ -21,6 +21,7 @@ from chrona.presentation.renderers.pdf_fonts import (
     pdf_font_bytes,
 )
 from chrona.presentation.renderers.pdf_svg import PDF_PAINT_GRAMMAR, lower_pdf_svg
+from chrona.presentation.renderers.pdf_opacity import PDF_OPACITY_GRAMMAR, render_pdf_vector
 
 
 def _failure(code: str, detail: str) -> ValueError:
@@ -92,8 +93,6 @@ class ReportLabPdfRenderer:
             from reportlab import rl_config
             from reportlab.pdfbase import pdfmetrics
             from reportlab.pdfbase.ttfonts import TTFError, TTFont
-            from reportlab.graphics import renderPDF
-            from svglib.svglib import svg2rlg
             def face_name(item: FontFile) -> str:
                 if pdf_aliases is None:
                     return item.family
@@ -118,14 +117,13 @@ class ReportLabPdfRenderer:
                     raise _failure("E_RENDER_FONT_CLOSURE", f"PDF cannot embed {item.family}/{item.weight} from "
                                    f"{item.path.name}: {error}; render SVG or PNG if embedding is unavailable") from error
             rl_config.invariant = 1
-            drawing = svg2rlg(BytesIO(svg), font_map=_ClosedPdfFontMap(mapping))
-            content = renderPDF.drawToString(drawing)
+            content = render_pdf_vector(svg, font_map=_ClosedPdfFontMap(mapping))
         except PdfFontConversionError as error:
             raise _failure("E_RENDER_FONT_CLOSURE", str(error)) from error
         except ImportError as error:
             raise _failure("E_RENDER_RASTERIZER_UNAVAILABLE", "target PDF requires installed svglib and reportlab adapters") from error
         prefix = (f"svglib-{self._descriptor['svglibVersion']}-reportlab-{self._descriptor['reportlabVersion']}-invariant"
-                  f"-{PDF_PAINT_GRAMMAR}-{EMBEDDING_GRAMMAR}-fonttools-{version('fonttools')}")
+                  f"-{PDF_PAINT_GRAMMAR}-{PDF_OPACITY_GRAMMAR}-{EMBEDDING_GRAMMAR}-fonttools-{version('fonttools')}")
         if translated:
             prefix += f"-{CONVERSION_GRAMMAR}"
         return RenderArtifact("pdf", "application/pdf", content, _adapter_identity(prefix, identities))
