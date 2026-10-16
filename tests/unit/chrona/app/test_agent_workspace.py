@@ -188,6 +188,7 @@ def test_the_scrubber_replaces_any_absolute_host_path_shape(workspace, text):
 @pytest.mark.parametrize("text", [
     "/objects/design/schedule", "/", "/root/children/1", "plans/project.yaml", "end must follow start", "expected 5/7 items",
     "/objects/tmp/title", "/objects/home/title", "see /tmp2/x and /usrx/y", "a/Users/b", "/objects/var",
+    "W_THEME_ROLE_UNREAD:/body/roles/tableCellMono",
 ])
 def test_the_scrubber_leaves_pointers_and_relative_paths_alone(workspace, text):
     assert WorkspaceScope(workspace).scrub(text) == text
