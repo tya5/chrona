@@ -12,13 +12,9 @@ from tests.support import synthetic_review as sr
 from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 
-# #1296 pads the selected-planned window, moving anchors and adding axis buckets.
-# Removing only that rule independently reproduces both preceding byte hashes.
-# All four entries/indexes/leaders remain present; first-fit adds a routing receipt.
-# #1343 closes natural measurements from resolved annotation/unconsumed-note
-# content. Slot metadata changes; every visible SVG byte remains identical.
-# Explicit suppress changes only the independently verified Layout identity.
-NO_SUPPRESSION_SCENE_SHA256 = "5b18f246ec0f47ebf71b118d333c447ffb517f17b5e33c9e5edb7f08fe5f85de"
+# All four entries/indexes/leaders remain present. Empty-legend normalization
+# changes only slot metadata; every visible SVG byte remains characterized.
+NO_SUPPRESSION_SCENE_SHA256 = "0762c2b7b447ee89029e44bbd472f874c0009e620a0d876c68ffd14f3613216f"
 NO_SUPPRESSION_SVG_SHA256 = "3e9593666a8f1e60d9180ca6f9697e0ff912626fbe565080edbf5a57d9c5c5ce"
 
 

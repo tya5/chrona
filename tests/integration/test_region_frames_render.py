@@ -293,7 +293,8 @@ def test_a_panel_around_an_absent_region_is_not_drawn_and_the_rest_does_not_move
 
     assert not any(item.slot_id == "annotations" for item in review.surface.slots)
     assert "region-frame:annotations-panel" not in _frames(review)
-    assert "I_LAYOUT_REGION_FRAME_OMITTED:annotations-panel:no-content" in review.scene.diagnostics
+    # Semantic absence removes the subtree before frame placement.
+    assert "I_LAYOUT_REGION_FRAME_OMITTED:annotations-panel:no-content" not in review.scene.diagnostics
     assert "frame:annotations-panel" not in {item.slot_id for item in review.surface.slots}
     # Omitting the panel moves nothing: with the declaration removed every other primitive is identical.
     unframed = _presentation(role=ROLE)

@@ -237,7 +237,8 @@ def test_a_slot_whose_source_has_no_content_draws_no_caption(tmp_path):
         sr.find_node(parts["layout"], "legend")["heading"] = {"text": "Key"}
     rendered = _render(tmp_path, notes=False, configure=legend)  # no review detail: an empty legend
     assert "slot-heading:legend" not in _by_id(rendered)
-    assert "I_LAYOUT_SLOT_HEADING_OMITTED:legend:no-content" in rendered.surface.diagnostics
+    assert "legend" not in {slot.source for slot in rendered.surface.slots}
+    assert "I_LAYOUT_SLOT_HEADING_OMITTED:legend:no-content" not in rendered.surface.diagnostics
 
 
 ACTUAL = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "observed",

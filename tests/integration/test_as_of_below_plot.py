@@ -20,7 +20,7 @@ ROW_MODES = pytest.mark.parametrize("rows", ["lanes", "automatic"])
 
 
 def _render(directory, *, placement, viewport=(1600, None), distribution=None, fixed_timeline=None,
-            as_of="2026-02-20", rows="lanes", preset="executive-light"):
+            as_of="2026-02-20", rows="lanes", preset="executive-light", detail=None):
     directory.mkdir(parents=True, exist_ok=True)
     source = sr.project({"a": sr.span("a", date(2026, 2, 2), 40, title="Alpha"),
                          "b": sr.span("b", date(2026, 3, 9), 20, title="Beta")})
@@ -35,7 +35,7 @@ def _render(directory, *, placement, viewport=(1600, None), distribution=None, f
     if rows == "automatic":  # the preset draws lane rows; this is the automatic row mode
         parts["view"]["body"]["rows"] = {"mode": "automatic"}
     actual = {**ACTUAL, "body": {**ACTUAL["body"], "asOf": as_of}}
-    return sr.render(directory, source, presentation=parts, actual=actual, viewport=viewport)
+    return sr.render(directory, source, presentation=parts, actual=actual, viewport=viewport, detail=detail)
 
 
 def _parts(rendered):
@@ -69,8 +69,12 @@ def test_the_chip_sits_below_the_plot_centred_on_the_rule_and_clear_of_rows_and_
 
 @ROW_MODES
 def test_the_slot_below_moves_down_by_exactly_the_reserved_block(tmp_path, rows):
-    foot = _render(tmp_path / "foot", placement="foot", rows=rows)
-    below = _render(tmp_path / "below", placement="below-plot", rows=rows)
+    # This reservation control needs a nonempty legend; an empty key now has
+    # no allocated slot (#1597).
+    detail = {"version": "chrona/review-detail-profile/v0.1", "id": "reservation-key",
+              "body": {"legend": [{"role": "planned", "label": "Planned"}]}}
+    foot = _render(tmp_path / "foot", placement="foot", rows=rows, detail=detail)
+    below = _render(tmp_path / "below", placement="below-plot", rows=rows, detail=detail)
     foot_slots, below_slots = _parts(foot)[2], _parts(below)[2]
     reserved = _reserved(below)
     for slot_id in ("legend", "notes", "group-details"):
