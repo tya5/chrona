@@ -162,6 +162,19 @@ Raw viewer-fit text and exact render-local font mapping remain unchanged.
 For completed wobbled Paths, terminal axes follow the painted outline's first
 and last sub-paths, not the nominal route; wobble is never recomputed here.
 
+PDF overall paint opacity (#1606) is applied once to the composed primitive,
+including overlapping fill/stroke, terminal outlines and pattern children.
+The adapter uses isolated transparency Form XObjects, preserving nested alpha,
+clips, transforms, painter order and the closed font mapping; it must not
+approximate group opacity by assigning alpha independently to each child.
+Its identity includes `pdf-isolated-opacity-v1`. Opaque spans retain the normal
+vector conversion path; neither page rasterization nor Layout changes are needed.
+For completed text runs, the PDF-private SVG places each run at the prefix sum
+of its measured `inlineSize` plus between-run letter spacing, divided by the
+existing horizontal scale in the text's pre-transform frame. Baselines, line
+offsets, whitespace, run sizes and exact face identity are preserved. The adapter
+does not remeasure advances. Public SVG/PNG and Scene serialization are unchanged.
+
 ### 2.1 M27 public Review SVG binding
 
 For a Render Context whose target is SVG, the public `render-review` application route
