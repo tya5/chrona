@@ -513,6 +513,31 @@ hidden new placement mode. The exact versioned View grammar and tail Theme
 treatment are in the linked design; Scene and adapters only project completed
 geometry.
 
+After every declared candidate has failed its existing search, Layout retries
+`nearest-free` candidates in their original order on a coarse grid spanning
+the whole resolved region (#1568), before the existing terminal fallback.
+Each coarse pass examines at most the candidate's existing `maxPositions`
+budget; a one-position budget samples the legal box-origin region's center.
+Grid positions are unique and ordered by anchor distance, then block and
+inline distance and coordinates. Box containment, declared obstacle classes,
+as-of partition, connector topology, bend and detour limits remain unchanged.
+A box and required connector must both fit before either is committed;
+connector-state budgets remain independently bounded per pass. Existing
+successful searches retain their result without entering this second pass.
+If the coarse pass also fails, retain the existing fallback and diagnostics.
+
+For a balloon-tail `nearest-free` annotation with an in-window as-of rule,
+after every declared anchor-side fine and coarse candidate has failed, Layout
+retries the same nearest-free candidates in their original order on the
+opposite-side coarse grid. The box body and tail tip, base, and triangle MUST
+remain strictly on that opposite side; the source egress and corridor MUST
+remain on the anchor side. A direct triangular tail is not a routed crossing
+and MUST NOT be accepted when its boundary strokes cross the rule. Every
+successful opposite-side placement emits
+`W_LAYOUT_ANNOTATION_AS_OF_OTHER_SIDE:<annotation-id>:<candidate-id>:` with
+reason `other-side-of-as-of`, including when the first candidate fits. If the
+pass fails, retain the existing fallback and diagnostics.
+
 ### 8.2 Annotation connector topology after the shared inventory
 
 The [#466 connector correction](../design/issue-466-annotation-connector-topology-correction-2026-09-26.md)
@@ -545,6 +570,24 @@ fit. The later candidate grammar will specify the public spelling of these
 policies. The local corridor is based on the source mark and selected box
 attachment point, not the full box extent; see the
 [#466 corridor amendment](../design/issue-466-connector-corridor-amendment-2026-09-26.md).
+
+The opposite-side as-of fallback is a separate strict route mode. Its route
+query MAY exempt only the identified as-of rule obstacle by its inventory ID;
+body, source corridor, tip, and both triangle edges retain the complete
+obstacle checks. The completed routed centerline MUST cross that exact rule
+once, transversely through the rule segment's interior; a touch, collinear
+overlap, endpoint contact, multiple crossing, or crossing another rule is not
+a fit. Layout lazily admits body-valid boxes in their unchanged coarse order
+and round-robins the existing finite egress/edge strict-route candidate
+streams across those boxes. It uses one aggregate 1024-state budget per
+candidate search; it MUST NOT multiply the budget per box, egress, or edge.
+Within this fallback only, each stream lazily interleaves its existing
+X-first and Y-first low-bend corridor families before its existing higher-bend
+XY family. The ordinary anchor-side strict-route prefix and its ordering,
+examined count, and exhaustion semantics remain unchanged.
+Among fits in the bounded prefix, Layout selects the earliest coarse box and
+then the existing route rank within that box. Existing route quality, bend,
+detour, and obstacle checks continue to apply.
 
 When a hosted annotation number refers to a Theme glyph mark, Layout MUST
 resolve its abstract mark host to an actual emitted lane-facet primitive ID

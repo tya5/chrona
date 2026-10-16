@@ -158,7 +158,8 @@ def complete_catalog_patterns(marks: tuple[MarkPlacement, ...],
                 and shape.source_ref in _RECT_PATTERN_THEME_ROLES.values()
                 else shape.visual_role if shape.semantic_id == "periodBand" and shape.visual_role is not None
                 else _RECT_PATTERN_THEME_ROLES.get(shape.semantic_id))
-        cut = (shape.kind == "Symbol" and shape.paint_clip is not None
+        cut = (shape.kind == "Symbol" and (shape.paint_clip is not None
+                                             or shape.host_placement_id is not None)
                and bool(shape.path_commands)
                and shape.semantic_id in {"progressFill", "summaryBar"})
         if (shape.kind != "Rect" and not cut) or role is None:

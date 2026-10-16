@@ -24,7 +24,7 @@ from chrona.presentation.layout.mark_geometry import (
 from chrona.presentation.layout.mark_facet_visibility import FacetDisposition, admitted_source_selection
 from chrona.presentation.layout.window_span_geometry import complete_clipped_span_geometry
 from chrona.presentation.layout.filled_contour import (
-    intersect_visible_host_contour,
+    ContourUnionError, intersect_visible_host_contour, union_filled_contours,
 )
 from chrona.presentation.layout.rounded_outline import rounded_rect_commands
 from chrona.presentation.model.projection import WindowMode, shared_track_member_key
@@ -168,8 +168,48 @@ def complete_progress_shape(host: MarkPlacement, *, original_host: MarkPlacement
         return None
     radius = float(radius_ratio) * float(min(bounds.inline_size, bounds.block_size))
     pattern_origin = (float(bounds.inline), float(bounds.block)) if host.paint_clip is not None else None
+    fraction_origin = (float(bounds.inline), float(bounds.block))
+    paint_clip = host.paint_clip
     commands, kind = (), "Rect"
-    if host.paint_clip is not None:
+    glyph_parts = tuple(part for part in original_host.symbol_parts if part.paint_mode is not None)
+    if glyph_parts:
+        # Painted glyph parts are emitted under part identities, so there is no
+        # Scene primitive at the mark's base identity to use as a clip host.
+        # Complete the fraction against the union of visible filled glyph ink.
+        visible_fills = tuple(part.commands for part in host.symbol_parts
+                              if part.paint_mode == "fill")
+        if not visible_fills:
+            return None
+        try:
+            filled_host = union_filled_contours(visible_fills)
+        except ContourUnionError as error:
+            raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/body/progressFill",
+                              node_id=host.source_ref,
+                              detail=f"stage=progress-union; reason={error.reason}") from error
+        points = tuple(point for command in filled_host for point in command.points)
+        left, right = min(point[0] for point in points), max(point[0] for point in points)
+        top, bottom = min(point[1] for point in points), max(point[1] for point in points)
+        # The union backend may round source coordinates by a few ulps. Use its
+        # exact completed contour bounds as the clipping coordinate frame; the
+        # contour itself remains the physical boundary, not this Rect.
+        contour_frame = Rect(Decimal(str(left)), Decimal(str(top)),
+                             Decimal(str(right - left)), Decimal(str(bottom - top)))
+        original = rounded_rect_commands(tuple(map(float, (
+            bounds.inline, bounds.block, bounds.inline_size, bounds.block_size))), radius)
+        commands = intersect_visible_host_contour(
+            original, filled_host, contour_frame,
+            source_ref=host.source_ref, facet="progress")
+        if not commands:
+            return None
+        points = tuple(point for command in commands for point in command.points)
+        left, right = min(point[0] for point in points), max(point[0] for point in points)
+        top, bottom = min(point[1] for point in points), max(point[1] for point in points)
+        if left == right or top == bottom:
+            return None
+        bounds = Rect(Decimal(str(left)), Decimal(str(top)),
+                      Decimal(str(right - left)), Decimal(str(bottom - top)))
+        kind, radius, pattern_origin, paint_clip = "Symbol", 0.0, fraction_origin, None
+    elif host.paint_clip is not None:
         original = rounded_rect_commands(tuple(map(float, (
             bounds.inline, bounds.block, bounds.inline_size, bounds.block_size))), radius)
         commands = intersect_visible_host_contour(original, host.path_commands, host.bounds,
@@ -179,9 +219,10 @@ def complete_progress_shape(host: MarkPlacement, *, original_host: MarkPlacement
         bounds, kind, radius = host.bounds, "Symbol", 0.0
     return ShapePlacement(
         f"progress-fill:{host.placement_id}", host.source_ref, kind, bounds,
-        required=False, slot_id=host.slot_id, clip_host_id=host.placement_id,
+        required=False, slot_id=host.slot_id, clip_host_id=(None if glyph_parts else host.placement_id),
+        host_placement_id=host.placement_id,
         paint_order=host.paint_order + 1, corner_radius=radius,
-        semantic_id="progressFill", path_commands=commands, paint_clip=host.paint_clip,
+        semantic_id="progressFill", path_commands=commands, paint_clip=paint_clip,
         pattern_origin=pattern_origin)
 
 

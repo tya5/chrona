@@ -159,7 +159,7 @@ _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
     "labelInsetEnd", "outlineWidth",
     "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "glyphSize", "glyphPitch", "chipPadding", "chipMinBlockSize", "chipShape", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach", "barBleed",
     "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign", "align", "barWidth", "blockGap", "inlineGap",
-    "progressInset", "summaryBarHeight", "swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "annotationContainer", "marker", "symbol", "edge",
+    "progressInset", "summaryBarHeight", "swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "swatchShape", "annotationContainer", "marker", "symbol", "edge",
     "stampPlacement", "coneSpread", "coneExtent", "radialCenterInline", "radialCenterBlock",
     "radialRadiusInline", "radialRadiusBlock", "radialInnerStop", "edgeRules", "doubleRuleGap",
 ))
@@ -374,8 +374,8 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("frame-glyph", "Layout region frame glyph run and Scene Symbol",
              _ARTWORK_PAINT | _GLOW_PAINT | frozenset(("symbol", "glyphSize", "glyphPitch")),
              scene_kinds=frozenset(("Symbol",)))
-    register("legend-swatch", "Layout legend swatch size and gap",
-             frozenset(("swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize")))
+    register("legend-swatch", "Layout legend swatch geometry and spacing",
+             frozenset(("swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "swatchShape")))
     register("baseline", "Retired Theme paint alias", frozenset())
     return roles
 

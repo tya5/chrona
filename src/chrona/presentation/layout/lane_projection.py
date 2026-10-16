@@ -12,6 +12,7 @@ from urllib.parse import quote
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.model.actual_observation import in_progress_actual
 from chrona.presentation.layout.semantic_mark_facets import due_end_missing_actual_selected
 from chrona.presentation.model.projection import ObservationState, ReviewProjection
 
@@ -191,17 +192,19 @@ def close_lane_projection(
                         instance, "missing-actual", "incomplete-actual-payload"))
             continue
 
-        if (missing_actual_visible and getattr(item, "missing_actual_mark", "due-end") == "in-progress"
-                and item.source_type == "span" and isinstance(actual.get("start"), date)):
-            # `comparison.missingActualScope: in-progress` (#1027): the View marked this span as in progress, so
-            # Layout draws the missing-actual span from its actual start to the cutoff in place of the open actual.
+        open_actual = (in_progress_actual(actual, as_of)
+                       if item.source_type == "span" else None)
+        if open_actual is not None:
+            # Started, unfinished observations are Actual marks regardless of
+            # missingActualScope; that View member applies only to absent Actuals.
             if as_of is None:
-                raise LayoutError("E_LAYOUT_LANE_AS_OF_REQUIRED", f"{path}/actual/start")
-            if as_of <= actual["start"]:
                 intentional_absences.append(LaneIntentionalAbsence(
-                    instance, "missing-actual", "in-progress-empty-at-cutoff"))
+                    instance, "actual", "as-of-required"))
+            elif as_of <= open_actual.start:
+                intentional_absences.append(LaneIntentionalAbsence(
+                    instance, "actual", "open-actual-empty-at-cutoff"))
             else:
-                _expect_mark(expected_marks, instance, "missing-actual", "missing-actual")
+                _expect_mark(expected_marks, instance, "actual", "actual")
         elif _has_complete_actual(item.source_type, actual):
             if actual.get("openUntil") == "asOf":
                 start = actual.get("start")

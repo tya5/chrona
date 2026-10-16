@@ -473,6 +473,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             tail_box_position_limit = tail_box_positions_examined = 0
             tail_route_state_limit = tail_route_states_examined = 0
             tail_route_search_exhausted = False
+            other_side_of_as_of = False
             tail_topology: str | None = None
             kind_measure = EMPTY_FRAME
             tilt_angle = 0.0  # the Theme's deterministic tilt for this annotation's position (#584)
@@ -760,7 +761,14 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     candidates, ladder = candidate_order(annotation.candidates, annotation.purpose,
                                                           annotation.fallback_ladder, preferred)
                     box, selected_rung, tail_tip = None, None, None
-                    for candidate in (() if annotation_id in suppressed_callout_ids else candidates):
+                    fine_attempts = tuple((item, "fine") for item in candidates)
+                    coarse_attempts = tuple((item, "coarse") for item in candidates
+                                             if item.search.kind == "nearest-free")
+                    search_attempts = (() if annotation_id in suppressed_callout_ids
+                                       else (*fine_attempts, *coarse_attempts))
+                    for candidate, search_pass in search_attempts:
+                        if search_pass == "coarse" and box is not None:
+                            break
                         use_variant(candidate)
                         used_fill = False
                         rung = candidate.candidate_id
@@ -791,7 +799,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                     region=region_bounds, anchor=anchor_bounds, box_size=annotation_size,
                                     max_positions=candidate.search.max_positions, obstacles=surface_obstacles,
                                     obstacle_classes=candidate.obstacles.classes, corner_radius=corner_radius,
-                                    tail_base=tail_base, host_id=host_id, side_of_as_of=as_of_side_constraint)
+                                    tail_base=tail_base, host_id=host_id, side_of_as_of=as_of_side_constraint,
+                                    search_pass=search_pass)
                                 annotation_search_count += trials
                                 tail_box_position_limit = candidate.search.max_positions
                                 tail_box_positions_examined = trials
@@ -820,7 +829,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                             float(viewport.block + viewport.block_size)),
                                         host_id=host_id, side_of_as_of=as_of_side_constraint,
                                         max_bends=layout_manifest.annotation_max_bends,
-                                        max_detour_ratio=layout_manifest.annotation_max_detour_ratio)
+                                        max_detour_ratio=layout_manifest.annotation_max_detour_ratio,
+                                        search_pass=search_pass)
                                     annotation_search_count += routed.box_trials + routed.route_states
                                     tail_box_positions_examined = max(trials, routed.box_trials)
                                     tail_route_state_limit = 1024
@@ -828,7 +838,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                     tail_route_search_exhausted = routed.exhausted and routed.box is None
                                     if routed.exhausted and routed.box is None:
                                         add_diagnostic(
-                                            f"W_LAYOUT_ANNOTATION_ROUTE_SEARCH_EXHAUSTED:{annotation_id}:{rung}", annotation)
+                                            f"W_LAYOUT_ANNOTATION_ROUTE_SEARCH_EXHAUSTED:{annotation_id}:{rung}",
+                                            annotation)
                                     if routed.box is not None and routed.egress is not None and routed.route is not None:
                                         box = AnnotationBox(resolved, LabelPlacement(rung, routed.box, False), False)
                                         selected_rung, tail_tip = rung, routed.tip
@@ -841,16 +852,29 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             else:
                                 anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
                                                  anchor_bounds.y + anchor_bounds.height / 2)
+                                leader_required = candidate.connector.kind == "leader"
+                                coarse_leader_trial = None
+
+                                def coarse_box_has_connector(free_box: LabelRect) -> bool:
+                                    nonlocal coarse_leader_trial
+                                    candidate_box = AnnotationBox(
+                                        resolved, LabelPlacement(rung, free_box, False), leader_required)
+                                    coarse_leader_trial = trial_leader(candidate_box, rung) if leader_required else None
+                                    return not (leader_required and presentation.leader_semantic_id is not None
+                                                and coarse_leader_trial is None)
+
                                 free_box, trials = nearest_free_box(
                                     region=region_bounds, anchor_center=anchor_center, box_size=annotation_size,
                                     max_positions=candidate.search.max_positions, obstacles=surface_obstacles,
                                     obstacle_classes=candidate.obstacles.classes, host_id=host_id,
-                                    side_of_as_of=as_of_side_constraint)
+                                    side_of_as_of=as_of_side_constraint, search_pass=search_pass,
+                                    candidate_validator=(coarse_box_has_connector
+                                                         if search_pass == "coarse" else None))
                                 annotation_search_count += trials
                                 if free_box is not None:
-                                    leader_required = candidate.connector.kind == "leader"
                                     candidate_box = AnnotationBox(resolved, LabelPlacement(rung, free_box, False), leader_required)
-                                    leader_trial = trial_leader(candidate_box, rung) if leader_required else None
+                                    leader_trial = (coarse_leader_trial if search_pass == "coarse" else
+                                                    trial_leader(candidate_box, rung) if leader_required else None)
                                     if not (leader_required and presentation.leader_semantic_id is not None and leader_trial is None):
                                         box, selected_rung, selected_leader = candidate_box, rung, leader_trial
                         else:
@@ -869,10 +893,83 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         if box is not None:
                             status_in_list = _is_annotation_list_candidate(candidate)
                             break
+                    if (box is None and annotation_id not in suppressed_callout_ids
+                            and as_of_side_constraint is not None and anchor_host is not None
+                            and container is not None and container.outline == "balloon"):
+                        as_of_obstacle = next((item for item in surface_obstacles.all()
+                                               if item.placement_id == "as-of"
+                                               and item.obstacle_class == "rule"
+                                               and isinstance(item.geometry, ObstacleSegment)), None)
+                        if as_of_obstacle is not None:
+                            for candidate in candidates:
+                                if (candidate.search.kind != "nearest-free"
+                                        or candidate.connector.kind != "tail"):
+                                    continue
+                                use_variant(candidate)
+                                rung = candidate.candidate_id
+                                corner_radius = (_container_radius(
+                                    role_corner_radius, container, size,
+                                    annotation_size[0], annotation_size[1])
+                                    if role_corner_radius is not None else
+                                    float(container.corner_radius) * size)
+                                tail_base = float(container.tail_base) * size
+                                viewport = request.layout_manifest.viewport
+                                routed = nearest_free_routed_tail_box(
+                                    region=LabelRect(*_bounds(timeline.bounds)),
+                                    anchor=anchor_host, endpoint=resolved.endpoint,
+                                    siblings=comparison_clusters.get(
+                                        (anchor_host.source_ref,
+                                         instance_rows.get(anchor_host.placement_id.split(":", 1)[1])),
+                                        (anchor_host,))
+                                    + endpoint_host_neighbors(anchor_host, resolved.endpoint),
+                                    box_size=annotation_size,
+                                    max_positions=candidate.search.max_positions,
+                                    obstacles=surface_obstacles,
+                                    obstacle_classes=candidate.obstacles.classes,
+                                    corner_radius=corner_radius, tail_base=tail_base,
+                                    content_bounds=(
+                                        float(viewport.inline), float(viewport.block),
+                                        float(viewport.inline + viewport.inline_size),
+                                        float(viewport.block + viewport.block_size)),
+                                    host_id=anchor_host.placement_id,
+                                    side_of_as_of=as_of_side_constraint,
+                                    max_bends=layout_manifest.annotation_max_bends,
+                                    max_detour_ratio=layout_manifest.annotation_max_detour_ratio,
+                                    search_pass="coarse", route_state_limit=1024,
+                                    crossing_rule_id=as_of_obstacle.placement_id)
+                                annotation_search_count += routed.box_trials + routed.route_states
+                                tail_box_position_limit = candidate.search.max_positions
+                                tail_box_positions_examined = max(tail_box_positions_examined,
+                                                                  routed.box_trials)
+                                tail_route_state_limit = 1024
+                                tail_route_states_examined = routed.route_states
+                                tail_route_search_exhausted = routed.exhausted and routed.box is None
+                                if routed.exhausted and routed.box is None:
+                                    add_diagnostic(
+                                        f"W_LAYOUT_ANNOTATION_ROUTE_SEARCH_EXHAUSTED:{annotation_id}:{rung}",
+                                        annotation)
+                                if routed.box is None or routed.egress is None or routed.route is None:
+                                    continue
+                                box = AnnotationBox(
+                                    resolved, LabelPlacement(rung, routed.box, False), False)
+                                selected_rung, tail_tip = rung, routed.tip
+                                routed_tail_tip = routed.tip
+                                tail_topology = "routed-tail"
+                                prefix = (routed.egress.corridor if routed.egress.corridor
+                                          else (routed.egress.exposed_port,))
+                                selected_leader = (routed.egress, routed.route,
+                                                   routed.full_points, prefix)
+                                other_side_of_as_of = True
+                                status_in_list = _is_annotation_list_candidate(candidate)
+                                break
                     if (box is not None and annotation.candidates
                             and selected_rung != candidates[0].candidate_id):
                         add_diagnostic(
                             f"W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:{annotation_id}:{selected_rung}", annotation)
+                    if other_side_of_as_of:
+                        add_diagnostic(
+                            f"W_LAYOUT_ANNOTATION_AS_OF_OTHER_SIDE:{annotation_id}:{selected_rung}:other-side-of-as-of",
+                            annotation)
                     if box is None:
                         if annotation_id in suppressed_callout_ids:
                             placement_decisions.append(PlacementDecision(

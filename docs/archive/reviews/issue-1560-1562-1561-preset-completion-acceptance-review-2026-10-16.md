@@ -2,8 +2,9 @@
 
 # Generic preset completion — acceptance review
 
-The combined implementation candidate is green; the review-containing
-exact-main release remains required for acceptance and closure.
+The review-containing main commit `7ca7e5553244b1e726730ad07304c08562cf93d6`
+passed the three-OS release matrix, conformance, wheel, newest-Python
+materializer and MCP checks in [release38814769736](https://github.com/tya5/chrona/actions/runs/38814769736).
 
 ## Literal issue acceptance
 
@@ -40,23 +41,11 @@ exact-main release remains required for acceptance and closure.
 | 2 | Original: `render --preset muted-executive` on halcyon-1 shows heavier critical relations, viewed as PNG. Revised by reviewer: the named preset on a neutral synthetic chain shows two critical width-2 and two ordinary width-1 relations, viewed as PNG; HALCYON has zero critical relations and no regression. | met | Reviewer accepted the synthetic witness because HALCYON's canonical critical set is empty under Spec57; relabeling slack edges would be incorrect ([revised disposition](https://github.com/tya5/chrona/issues/1561#issuecomment-6202897214)). Both PNGs were inspected. | — |
 | 3 | All public SVG and Scene files are byte-identical. | met | [Exact-head artifact11984004378](https://github.com/tya5/chrona/actions/runs/38759593755/artifacts/11984004378) atf028e65dd:50SVG+50Scene raw bytes identical,0added/retired; only diagnostic-source-line report changes. | — |
 
-## Programme-level criteria (optional)
-
-Reviewer dispositions resolve the source-identity-only empty-Scene comparison
-for #1560, accept the synthetic critical-path witness for #1561, and accept the
-limited Scene correction for #1562. The combined PR #1577 is green at
-[CI38773871204](https://github.com/tya5/chrona/actions/runs/38773871204);
-artifact11993036158 has all109 paths identical to its previous candidate.
-
-Compared with main, the disclosed #1562 change remains 11 Scene files omitting
-336 unused `pathCommands`; other public SVG/Scene outputs match. The
-review-containing exact-main release is pending.
-
 ## Architecture conclusion
 
 Content closes period selection and canonical critical-role intent before
 Layout. Layout owns all completed geometry; Scene owns keyed paint projection
 and clears transient legend intent before export. Adapters do not place shapes
 or classify criticality. No examples or generated outputs were hand-edited.
-Closure awaits the exact-main release containing this review; successor #1580
-tracks the generated-key default independently.
+Acceptance and closure are recorded by the review-containing release above.
+Successor #1580 tracks the generated-key default independently.

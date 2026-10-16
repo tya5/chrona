@@ -18,7 +18,7 @@ ACTUAL = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "obse
         {"id": "r", "sequence": 1, "projectObjectId": "running", "actual": {"start": "2026-03-02", "openUntil": "asOf"}}]}}
 
 
-def _render(tmp_path, missing_by: dict | None):
+def _render(tmp_path, missing_by: dict | None, *, as_of: date = AS_OF):
     source = sr.project({
         "done": sr.span("done", date(2026, 2, 2), 14, title="Done"),
         "running": sr.span("running", date(2026, 3, 2), 30, title="Running"),
@@ -32,7 +32,8 @@ def _render(tmp_path, missing_by: dict | None):
     title = {"id": "Task", "source": "title", "missing": "em-dash", "align": "start", "width": "content", "headerOrientation": "horizontal"}
     parts["view"]["body"]["rows"] = {"mode": "automatic"}
     parts["view"]["body"]["tableColumns"] = [title, column]
-    review = sr.render(tmp_path, source, presentation=parts, actual=ACTUAL)
+    actual = {**ACTUAL, "body": {**ACTUAL["body"], "asOf": as_of.isoformat()}}
+    review = sr.render(tmp_path, source, presentation=parts, actual=actual)
     cells = {item.source_ref: item.text for item in review.surface.primitives
              if item.purpose == "table-cell" and item.table_column_id == "Delta"}
     return cells
@@ -46,6 +47,17 @@ def test_without_missing_by_every_absent_value_reads_the_columns_missing_text(tm
 def test_each_observation_state_reads_its_own_text_and_an_unnamed_state_keeps_missing(tmp_path):
     cells = _render(tmp_path, {"inProgress": "em-dash", "dueUnobserved": "blank", "notYetDue": "blank"})
     assert cells == {"done": "+4d", "running": "—", "overdue": "", "later": ""}
+
+
+def test_custom_in_progress_missing_by_stays_authoritative_before_due(tmp_path):
+    cells = _render(tmp_path, {"inProgress": {"text": "started"}, "dueUnobserved": "blank"})
+    assert cells["running"] == "started"
+
+
+def test_known_as_of_delta_takes_precedence_over_custom_missing_by_after_due(tmp_path):
+    cells = _render(tmp_path, {"inProgress": {"text": "started"}, "dueUnobserved": "blank"},
+                    as_of=date(2026, 4, 5))
+    assert cells["running"] == "+4d"
 
 
 def test_a_state_not_named_keeps_the_columns_missing_text(tmp_path):

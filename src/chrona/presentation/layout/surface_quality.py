@@ -412,6 +412,9 @@ class ShapePlacement:
     pattern_origin: tuple[float, float] | None = None
     # Finite legend key paint intent, completed by Scene from the keyed Theme ink.
     legend_swatch_shape: str | None = None
+    # Logical mark owner, independent of a renderer clip host (e.g. a glyph
+    # progress contour already completed by Layout).
+    host_placement_id: str | None = None
 
     def __post_init__(self) -> None:
         if self.legend_swatch_shape not in (None, "circle", "rule-pair"):
@@ -983,6 +986,11 @@ class SurfacePlacement:
                 host = next((mark for mark in self.marks if mark.placement_id == shape.clip_host_id), None)
                 if host is None or host.slot_id != shape.slot_id:
                     raise ValueError(f"E_LAYOUT_CLIP_HOST_INVALID:{shape.placement_id}")
+            if shape.host_placement_id is not None:
+                owner = next((mark for mark in self.marks
+                              if mark.placement_id == shape.host_placement_id), None)
+                if owner is None or owner.slot_id != shape.slot_id:
+                    raise ValueError(f"E_LAYOUT_SHAPE_HOST_INVALID:{shape.placement_id}")
         pattern_ids = [item.placement_id for item in self.patterns]
         if len(pattern_ids) != len(set(pattern_ids)):
             raise ValueError(f"E_LAYOUT_PATTERN_PLACEMENT_DUPLICATE: pattern placement IDs={tuple(item.placement_id[:160] for item in self.patterns[:8])!r}, total={len(self.patterns)}")
@@ -998,7 +1006,8 @@ class SurfacePlacement:
             if item.pattern.cut_contour:
                 host = mark if mark is not None else shape
                 contour = tuple(PatternPathCommand(command.kind, command.points) for command in host.path_commands)
-                if (host.paint_clip is None or host.pattern_origin != item.pattern.origin
+                if ((host.paint_clip is None and getattr(host, "host_placement_id", None) is None)
+                        or host.pattern_origin != item.pattern.origin
                         or contour != item.pattern.cut_contour or host.bounds != item.pattern.region
                         or host.semantic_id not in {"missing-actual", "progressFill", "summaryBar"}):
                     raise ValueError(f"E_LAYOUT_PATTERN_REGION_INVALID:{item.placement_id}")

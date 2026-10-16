@@ -340,6 +340,8 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+    legend-swatch:
+      swatchShape: circle
     annotation:
       fontFamily: sans
       fontWeight: weight.regular

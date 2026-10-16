@@ -634,7 +634,8 @@ def test_halcyon_missing_actual_is_due_only_and_tvac_boundary_is_inclusive(tmp_p
     future = {"psr", "campaign", "frr", "launch", "leop", "first-light"}
     assert not {f"missing-actual:{object_id}:{object_id}" for object_id in future} & shipped_ids
     assert "missing-actual:tvac:tvac" not in shipped_ids
-    assert "W_LAYOUT_ACTUAL_INCOMPLETE:tvac" in shipped.scene.diagnostics
+    assert "actual:tvac:tvac" in shipped_ids
+    assert "W_LAYOUT_ACTUAL_INCOMPLETE:tvac" not in shipped.scene.diagnostics
     assert shipped_by_id["cell:tvac:Obs"].text == "Recorded"
     assert all(shipped_by_id[f"cell:{object_id}:Obs"].text == "—" for object_id in future)
     assert 'data-scene-id="missing-actual:tvac:tvac"' not in shipped.artifact.content.decode()
@@ -648,6 +649,7 @@ def test_halcyon_missing_actual_is_due_only_and_tvac_boundary_is_inclusive(tmp_p
     boundary_ids = {primitive.scene_id for primitive in boundary.surface.primitives}
     boundary_by_id = {primitive.scene_id: primitive for primitive in boundary.surface.primitives}
     assert "missing-actual:tvac:tvac" in boundary_ids
+    assert "actual:tvac:tvac" not in boundary_ids
     assert boundary_by_id["cell:tvac:Obs"].text == "Missing"
     assert 'data-scene-id="missing-actual:tvac:tvac"' in boundary.artifact.content.decode()
     assert "W_LAYOUT_ACTUAL_INCOMPLETE:tvac" not in boundary.scene.diagnostics
