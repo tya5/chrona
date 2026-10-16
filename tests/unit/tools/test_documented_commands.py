@@ -101,8 +101,8 @@ def test_skill_documents_are_discovered_and_the_skills_tree_reaches_the_fixture(
     root = _document_root(tmp_path, "text\n")
     skill = root / "skills" / "chrona"
     (skill / "references").mkdir(parents=True)
-    (skill / "SKILL.md").write_text("```sh\nchrona validate skills/chrona/examples/p.yaml\n```\n", encoding="utf-8")
-    (skill / "references" / "more.md").write_text("```sh\nchrona schedule skills/chrona/examples/p.yaml\n```\n", encoding="utf-8")
+    (skill / "SKILL.md").write_text("```sh\nchrona validate examples/p.yaml\n```\n", encoding="utf-8")
+    (skill / "references" / "more.md").write_text("```sh\nchrona schedule examples/p.yaml\n```\n", encoding="utf-8")
     (skill / "notes.md").write_text("```sh\nchrona render ignored.yaml\n```\n", encoding="utf-8")
     (skill / "examples").mkdir()
     (skill / "examples" / "p.yaml").write_text("id: p\n", encoding="utf-8")
@@ -118,7 +118,7 @@ def test_skill_documents_are_discovered_and_the_skills_tree_reaches_the_fixture(
 def test_a_broken_skill_command_fails_the_execute_gate(tmp_path):
     root = _document_root(tmp_path, "text\n")
     (root / "skills" / "chrona").mkdir(parents=True)
-    (root / "skills" / "chrona" / "SKILL.md").write_text("```sh\nchrona validate skills/chrona/missing.yaml\n```\n", encoding="utf-8")
+    (root / "skills" / "chrona" / "SKILL.md").write_text("```sh\nchrona validate missing.yaml\n```\n", encoding="utf-8")
     program = "import sys; from pathlib import Path; sys.exit(0 if Path(sys.argv[2]).is_file() else 9)"
 
     with pytest.raises(DocumentedCommandError, match="E_DOCUMENTED_COMMAND_EXECUTION:" + __import__("re").escape(str(Path("skills/chrona/SKILL.md"))) + ":2:exit=9"):

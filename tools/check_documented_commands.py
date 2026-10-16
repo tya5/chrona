@@ -55,9 +55,11 @@ REQUIRES_PREFIX = "requires: clone "
 # document read. It is written into the execution workspace, never executed (#1307).
 FILE = re.compile(r"^<!-- chrona:doc-check file: (?P<name>[A-Za-z0-9._-]+) -->$")
 CLONE_ONLY_ROOTS = ("examples/",)
-# The skill's own commands name `skills/chrona/...`, the copy `chrona skill copy` writes; they run in the clone workspace
-# (the skill is not rewritten for this check) and are skipped in the wheel workspace, which has no such copy.
+# The skill's own commands name paths inside the copy `chrona skill copy` writes (`examples/launch.yaml`); they run in the
+# clone workspace with the skill directory as the working directory, and a command naming such a path is skipped in the
+# wheel workspace, which has no such copy.
 SKILL_ROOT = "skills/"
+SKILL_LOCAL_ROOTS = ("examples/",)
 EXPECT_ERROR = re.compile(r"^<!-- chrona:doc-check expect-error: (?P<code>E_[A-Z0-9_]+) -->$")
 EXPECT_YAML = re.compile(r"^<!-- chrona:doc-check expect-yaml: next -->$")
 SKIP_PREFIX = "<!-- chrona:doc-check"
@@ -345,14 +347,20 @@ def unshipped_paths(commands: tuple[DocumentedCommand, ...]) -> list[str]:
             continue
         for token in command.tokens[1:]:
             value = token.partition("=")[2] if token.startswith("--") else token
-            if value.startswith(CLONE_ONLY_ROOTS):
+            if value.startswith(CLONE_ONLY_ROOTS) and not _in_skill(command):
                 found.append(f"{command.path}:{command.line}:{value}")
                 break
     return found
 
 
+def _in_skill(command: DocumentedCommand) -> bool:
+    return command.path.parts[:2] == ("skills", "chrona")
+
+
 def _names_skill_copy(command: DocumentedCommand) -> bool:
-    return any((token.partition("=")[2] if token.startswith("--") else token).startswith(SKILL_ROOT) for token in command.tokens[1:])
+    return _in_skill(command) and any(
+        (token.partition("=")[2] if token.startswith("--") else token).startswith((*SKILL_LOCAL_ROOTS, SKILL_ROOT))
+        for token in command.tokens[1:])
 
 
 def check_shipped(commands: tuple[DocumentedCommand, ...]) -> None:
@@ -396,7 +404,8 @@ def execute(commands: tuple[DocumentedCommand, ...], root: Path, *, timeout_seco
                 continue
             try:
                 completed = subprocess.run(
-                    (*executable, *command.tokens[1:]), cwd=workspace, env=environment,
+                    (*executable, *command.tokens[1:]), cwd=workspace / "skills" / "chrona" if _in_skill(command) and not wheel else workspace,
+                    env=environment,
                     capture_output=True, text=True, timeout=timeout_seconds, check=False,
                 )
             except subprocess.TimeoutExpired as error:

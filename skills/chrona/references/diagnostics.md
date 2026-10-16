@@ -19,8 +19,8 @@ there, not former stderr JSON lines; warnings and notes keep exit 0.
 
 Every code below is checked by a test against the source, and each plan-level code is
 provoked by the test with a small synthetic plan, so a removed or renamed code fails the
-build. Codes this file does not list exist (the full list is `docs/diagnostics/inventory.md`
-in the repository); if you meet one, quote it to the user and do not guess a fix.
+build. Codes this file does not list exist (the full list is the diagnostics inventory
+in the chrona repository); if you meet one, quote it to the user and do not guess a fix.
 
 ## Plan errors (validate, schedule, render)
 
