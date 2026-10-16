@@ -28,6 +28,16 @@ def _with_set(value: dict, name: str) -> dict:
     return result
 
 
+def _without_pins(value: dict) -> dict:
+    """Authored asset lists carry no pins (#1567); the packaged set keeps its own identities."""
+    result = deepcopy(value)
+    for asset in result["body"]["environment"]["fontMetrics"].get("assets", ()):
+        for role in ("metrics", "font"):
+            if role in asset:
+                asset[role].pop("contentIdentity", None)
+    return result
+
+
 def _identity(value: dict) -> ClosureIdentity:
     return ClosureIdentity("render-context", value["id"], "r1", "sha256:" + "a" * 64)
 
@@ -41,7 +51,8 @@ def test_default_set_is_the_packaged_default_assets() -> None:
 @pytest.mark.parametrize(("path", "name"), [(BASIC, "chrona.noto-sans"), (SEVEN, "chrona.noto-sans+jp")])
 def test_set_context_equals_explicit_list_context(path: Path, name: str) -> None:
     explicit = _load(path)
-    named = _with_set(explicit, name)
+    named = _without_pins(expand_font_set(_with_set(explicit, name)))
+    explicit = _without_pins(explicit)
     assert parse_contract(_identity(named), named) == parse_contract(_identity(explicit), explicit)
 
 

@@ -20,6 +20,15 @@ from chrona.usecases.materialize import _OverlayBuilder, copy_context_closure, m
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def _without_pins(assets: list) -> list:
+    result = deepcopy(assets)
+    for asset in result:
+        for role in ("metrics", "font"):
+            if role in asset:
+                asset[role].pop("contentIdentity", None)
+    return result
+
+
 @pytest.mark.parametrize(
     ("example_name", "context_address", "slide_id", "font_set", "cjk"),
     [
@@ -78,7 +87,8 @@ def test_materializer_expands_font_set_without_rewriting_context_or_scene_proven
 
     expanded = expand_font_set(safe_load(named_bytes))
     expanded_assets = expanded["body"]["environment"]["fontMetrics"]["assets"]
-    assert expanded_assets == explicit_assets
+    # Authored lists carry no pins (#1567); compare the expanded set without its packaged identities.
+    assert _without_pins(expanded_assets) == _without_pins(explicit_assets)
     overlay = overlay_builder.finish()
     for asset in expanded_assets:
         record = asset["metrics"]
