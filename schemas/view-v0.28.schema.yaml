@@ -346,7 +346,7 @@ allOf:
           figureFormats:
             description: "Optional count figure text formats; targets must name declared count figures. Raw Summary values are unchanged."
             $ref: "urn:chrona:common-v0.1#/$defs/figureFormats"
-          heading: {$ref: "urn:chrona:common-v0.1#/$defs/viewHeading"}
+          heading: {$ref: "urn:chrona:common-v0.1#/$defs/viewHeadingWithParts"}
           slotHeadingText:
             description: "Optional literal caption replacements keyed by resolved Layout slot node ID. Each target must already declare a heading; only its text is replaced."
             type: object

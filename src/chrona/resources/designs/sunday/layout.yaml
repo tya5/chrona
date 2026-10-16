@@ -13,7 +13,8 @@ viewDefaults:
   heading:
     kicker: The plan,
     title: '{project}'
-    subtitle: "in {figure:group-count} panels"
+    subtitle:
+      - {text: "in {figure:group-count} panels", omitWhenZero: group-count}
     dateForm: day-month-year
   figureFormats:
     group-count: {form: english-words}
