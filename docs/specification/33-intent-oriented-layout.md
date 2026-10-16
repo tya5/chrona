@@ -36,12 +36,20 @@ member in place to Layout Profile v0.10 under Spec 56 section 3.2.
 
 ## 2. Resource and reuse model
 
-For explicitly absent Summary content (#1535), Layout removes source slots
+For explicitly absent Summary content (#1535), zero resolved View annotations,
+or zero resolved legend entries (#1597), Layout removes the corresponding source slots
 and ancestor containers whose content children are all removed, including their
 frames. Required/fixed sizing does not fabricate content. Mixed-content parents
 and unrelated decorative nodes remain. This is typed semantic absence, not an
 inference from empty strings or zero geometry. Internal tree normalization
 preserves authored resource identity and remaps resolved distance paths.
+
+Determine annotation and legend absence from selected presentation content after
+source validation and measurement, before allocation. Project note count is not
+the presence rule: literal View annotations count, while hidden or filtered-out
+annotations do not. An empty measurement placeholder does not reserve a slot.
+Nonempty sources retain their placement, suppression and failure contracts;
+a failed placement is not semantic absence and does not trigger reflow.
 
 The canonical resource is `chrona/layout-profile/v0.4` as defined by the replacement
 schema. A resource contains exactly one of:

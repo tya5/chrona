@@ -135,8 +135,14 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
     if layout_error is not None:
         raise layout_error
     _check_slot_heading_text(view, resolved_layout)
+    absent_sources = set()
     if summary.absent:
-        resolved_layout = omit_absent_layout_sources(resolved_layout, frozenset({"summary"}))
+        absent_sources.add("summary")
+    if not selected_content.annotations:
+        absent_sources.add("annotations")
+    if not selected_content.legend_entries:
+        absent_sources.add("legend")
+    resolved_layout = omit_absent_layout_sources(resolved_layout, frozenset(absent_sources))
     selected_content = bind_slot_heading_templates(resolved_layout, content=selected_content, view=view,
                                                   figures=dict(projection.figures), measured=measured)
     # A declared slot heading is part of its content-sized slot's measurement (#1064).
