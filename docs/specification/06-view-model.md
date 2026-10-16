@@ -218,7 +218,7 @@ in help and the first-project guide.
 Where a View addresses an object field, it MAY use `{fieldRole: responsible}` or
 `{fieldRole: phase}` instead of the direct field key. This applies to table and
 lane-table column sources, color sources, icon encodings and `rows.laneKeys`.
-Grouping declares `by: {fieldRole: responsible}`, `fallback: objectType|none`
+Grouping declares `by: {fieldRole: responsible}`, `fallback: objectType|none|hierarchy`
 and its ordinary `missing` label. The Project declares the role-to-field map
 (Spec 05 §10.1); entity fields and built-in/derived projection sources are not
 role targets. Role columns use the design's existing `field` column style.
@@ -232,11 +232,25 @@ remaining column reject with `E_VIEW_TABLE_COLUMNS_EMPTY`; an omitted
 `hierarchyColumn` is `E_VIEW_HIERARCHY_COLUMN_UNKNOWN`. No column is invented or
 silently substituted. Other target-reference validation remains unchanged.
 
+For the `hierarchy` fallback only, an unbound grouping role is handled by
+presenting selected non-group objects beneath their rootmost `type: group`
+ancestor from Project containment. Group objects supply header IDs and titles
+but are not temporal rows; objects without a group ancestor remain in one
+ungrouped section. Intermediate non-group ancestors do not become headers.
+This private projection source is not `by: hierarchy`: the authored
+`by: hierarchy` tree expansion, depth, and rollup policy remain unchanged.
+The handled grouping reference does not emit an unbound-role info diagnostic;
+other references to that role (including columns, color, icons, or lane keys)
+remain independently diagnosed and handled by their existing rules. A bound
+role still groups by its declared field and retains its existing diagnostics,
+titles, and output.
+
 A declared role whose field is absent on an item retains the consumer's existing
 missing-value/domain behavior, not the undeclared-role fallback. Every item's
 role value uses its own source Project's mapping, including Snapshot/scenario
 items. Group entity IDs keep existing entity-title resolution; ordinary cells
-retain their existing value formatting. Grouping, color eligibility and icon
+retain their existing value formatting. Root-group fallback headers use the
+corresponding Project group object's title and fields. Grouping, color eligibility and icon
 selection retain their existing primary-item scope. Resolve these semantic
 facts before Layout; Scene and adapters do not look up roles.
 

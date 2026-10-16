@@ -18,7 +18,9 @@ from chrona.presentation.review.profile_connections import validate_period_legen
 from chrona.presentation.review.figure_facts import projected_counts
 from chrona.presentation.review.annotation_expansion import expand_annotations
 from chrona.presentation.model.placement_candidates import legacy_candidate_order, parse_candidates
-from chrona.presentation.contracts.resources import ReviewDetailInput, SummaryProfileInput, ViewInput
+from chrona.presentation.contracts.resources import (
+    ReviewDetailInput, SummaryProfileInput, ViewInput, _PrivateGroupingMode,
+)
 from chrona.presentation.group_header_text import GroupHeaderTextError, HeaderTemplate, compose_group_header_runs, compose_group_headers
 from chrona.presentation.figure_text import FigureTextProgram
 from chrona.presentation.heading_text import HeadingTextPrograms, close_heading
@@ -478,11 +480,17 @@ def _group_header_facts(projection: ReviewProjection, project: Mapping[str, Any]
     if declared.secondary_field is not None:
         secondaries = {}
         for group_id in group_ids:
-            entity = entities.get(group_id, {}) if isinstance(entities, Mapping) else {}
+            if view.grouping is not None and view.grouping.by is _PrivateGroupingMode.PROJECT_ROOT_GROUP:
+                source_collection = "objects"
+                objects = project.get("objects", {})
+                entity = objects.get(group_id, {}) if isinstance(objects, Mapping) else {}
+            else:
+                source_collection = "entities"
+                entity = entities.get(group_id, {}) if isinstance(entities, Mapping) else {}
             fields = entity.get("fields", {}) if isinstance(entity, Mapping) else {}
             value = fields.get(declared.secondary_field) if isinstance(fields, Mapping) else None
             if not isinstance(value, str) or not value.strip():
-                raise ValueError(f"E_REVIEW_GROUP_HEADER_SECONDARY:{group_id}:{declared.secondary_field}: /entities/{_diagnostic_value(group_id)}/fields/{_diagnostic_value(declared.secondary_field)}={_diagnostic_value(value)}; expected nonblank string")
+                raise ValueError(f"E_REVIEW_GROUP_HEADER_SECONDARY:{group_id}:{declared.secondary_field}: /{source_collection}/{_diagnostic_value(group_id)}/fields/{_diagnostic_value(declared.secondary_field)}={_diagnostic_value(value)}; expected nonblank string")
             secondaries[group_id] = value
     return dict(group_ids=group_ids, titles=titles, secondaries=secondaries, text=declared.text,
                 first=declared.first, ordinal=declared.ordinal, figures=dict(projection.figures),

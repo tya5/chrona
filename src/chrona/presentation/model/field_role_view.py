@@ -7,7 +7,7 @@ from dataclasses import replace
 from typing import Any, TypeVar
 
 from chrona.presentation.contracts.resources import (
-    ContractError, TableColumn, ViewGrouping, ViewInput, ViewLaneColumn, freeze,
+    ContractError, TableColumn, ViewGrouping, ViewInput, ViewLaneColumn, _PrivateGroupingMode, freeze,
 )
 from chrona.presentation.model.field_roles import FieldRoleBindings
 from chrona.presentation.model.info_diagnostics import UnboundFieldRole
@@ -22,6 +22,9 @@ def resolve_role_grouping(grouping: ViewGrouping | None,
     if grouping is None or grouping.field_role is None:
         return grouping
     field = bindings.field_for(grouping.field_role)
+    if field is None and grouping.fallback == "hierarchy":
+        return replace(grouping, by=_PrivateGroupingMode.PROJECT_ROOT_GROUP,
+                       field=None, field_role=None, fallback=None)
     return replace(grouping, by="field" if field is not None else grouping.fallback,
                    field=field, field_role=None, fallback=None)
 
@@ -44,7 +47,9 @@ def resolve_field_role_view(view: ViewInput, project: Mapping[str, Any]
 
     grouping = view.grouping
     if grouping is not None:
-        unavailable(grouping.field_role, "/body/grouping/by/fieldRole")
+        if not (grouping.field_role is not None and bindings.field_for(grouping.field_role) is None
+                and grouping.fallback == "hierarchy"):
+            unavailable(grouping.field_role, "/body/grouping/by/fieldRole")
     grouping = resolve_role_grouping(grouping, bindings)
 
     def columns(values: tuple[_Column, ...], prefix: str) -> tuple[_Column, ...]:

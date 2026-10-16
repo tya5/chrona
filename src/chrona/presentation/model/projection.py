@@ -11,7 +11,7 @@ from typing import Any
 from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.relation_identity import relation_identity
-from chrona.presentation.contracts.resources import ViewInput
+from chrona.presentation.contracts.resources import ViewInput, _PrivateGroupingMode
 from chrona.presentation.model.actual_observation import finish_variance
 from chrona.presentation.model.date_basis import ItemDateBasis, endpoint_distance
 from chrona.presentation.model.field_roles import FieldRoleBindings
@@ -283,12 +283,22 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         view = replace(view, grouping=grouping)
     selected: list[ReviewItem] = []
     hierarchy = grouping is not None and grouping.by == "hierarchy"
+    root_grouping = (grouping is not None
+                     and grouping.by is _PrivateGroupingMode.PROJECT_ROOT_GROUP)
     hierarchy_entries = {entry.object_id: entry for entry in normalize_hierarchy(project)}
+    root_groups = {
+        object_id for object_id, item in project.get("objects", {}).items()
+        if item.get("type") == "group"
+    }
     hierarchy_root_ids: set[str] = set()
     declared = {object_id: index for index, object_id in enumerate(project["objects"])}
     for object_id, planned in placements.items():
         source_type = "point" if "at" in planned else "span"
         project_type = str(project["objects"][object_id].get("type", ""))
+        # The role fallback presents top-level group objects as headers, not as
+        # temporal rows, even when a group has a rollup placement.
+        if root_grouping and project_type == "group":
+            continue
         if not hierarchy and (object_id not in ids or source_type not in types
                               or (object_types and project_type not in object_types)
                               or project_type in excluded_object_types):
@@ -305,11 +315,13 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         critical = object_id in analysis.critical if analysis is not None else False
         link = _object_link(project["objects"][object_id].get("link"))
         entry = hierarchy_entries.get(object_id)
-        group_id = _group_id(project, object_id, source_type, grouping)
+        group_id = (_root_group_ancestor(hierarchy_entries.get(object_id), root_groups)
+                    if root_grouping else _group_id(project, object_id, source_type, grouping))
         selected.append(ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
             planned, actual, finish_delta, _roles(observation_state, finish_delta, critical),
-            group_id, str(project.get("entities", {}).get(group_id, {}).get("title", group_id)),
+            group_id, str(project.get("objects", {}).get(group_id, {}).get("title", group_id)
+                          if root_grouping else project.get("entities", {}).get(group_id, {}).get("title", group_id)),
             dict(project["objects"][object_id].get("fields", {})), object_id, "primary",
             parent_id=entry.parent_id if entry else None,
             hierarchy_depth=entry.depth if entry else 0,
@@ -804,6 +816,13 @@ def _group_id(project: dict[str, Any], object_id: str, source_type: str, groupin
     if grouping.by == "hierarchy":
         return ""
     return str(project["objects"][object_id].get("fields", {}).get(grouping.field or "", grouping.missing or "ungrouped"))
+
+
+def _root_group_ancestor(entry: HierarchyEntry | None, group_ids: set[str]) -> str:
+    """Return the rootmost group ancestor, or an empty ungrouped identity."""
+    if entry is None:
+        return ""
+    return next((ancestor for ancestor in entry.path[:-1] if ancestor in group_ids), "")
 
 
 def _expand_hierarchy_roots(items: list[ReviewItem], entries: dict[str, HierarchyEntry],
