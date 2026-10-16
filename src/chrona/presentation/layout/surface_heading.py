@@ -85,6 +85,8 @@ def _heading_warnings(text: tuple[TextPlacement, ...], request: SurfaceLayoutReq
 
 def place_heading(request: SurfaceLayoutRequest, slot: SlotPlacement, measured: MeasuredSources) -> tuple[TextPlacement, ...]:
     source = measured.inputs.get("title")
+    if source is not None and not source.text_runs():
+        return ()
     measurement = measured.measurements.get("title")
     if measurement is None:
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/measurements/title")

@@ -77,13 +77,13 @@ class HeadingTextPrograms:
         return frozenset(identifier for program in (self.title, self.subtitle, self.kicker)
                          if program is not None for identifier in program.figure_ids)
 
-    def bind(self, figures: Mapping[str, int], formats: Mapping[str, CountTextFormat]) -> tuple[str, str | None, str | None]:
+    def bind(self, figures: Mapping[str, int], formats: Mapping[str, CountTextFormat]) -> tuple[str | None, str | None, str | None]:
         values = {}
         for member in ("title", "subtitle", "kicker"):
             program = getattr(self, member)
             try:
                 values[member] = program.bind(figures, formats) if program is not None else None
-                if isinstance(program, ClosedHeadingProgram) and member != "title" and values[member] == "":
+                if isinstance(program, ClosedHeadingProgram) and values[member] == "":
                     values[member] = None
             except (CountTextError, FigureTextError) as error:
                 raise FigureTextReadError(error, f"/body/heading/{member}") from error

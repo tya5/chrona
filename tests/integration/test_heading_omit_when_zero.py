@@ -15,22 +15,25 @@ def _subtitle_role(parts):
     body = parts["theme"]["body"]
     body["roles"]["subtitle"] = deepcopy(body["roles"]["heading"])
     body["colorBindings"]["subtitle.fill"] = "text"
+    body["roles"]["kicker"] = deepcopy(body["roles"]["heading"])
+    body["colorBindings"]["kicker.fill"] = "text"
 
 
 @pytest.mark.parametrize("grouped", [False, True])
 @pytest.mark.parametrize("split", [False, True])
-def test_count_part_is_drawn_at_one_omitted_at_zero_before_measurement(tmp_path, monkeypatch, grouped, split):
+@pytest.mark.parametrize("member", ["title", "subtitle", "kicker"])
+def test_count_part_is_drawn_at_one_omitted_at_zero_before_measurement(tmp_path, monkeypatch, grouped, split, member):
     from chrona.presentation.layout import surface_render_plan as planner
     parts = _parts()
     _subtitle_role(parts)
     parts["view"]["body"]["heading"] = {
-        "title": "Plan", "subtitle": [{"text": "in {figure:groups} panels", "omitWhenZero": "groups"}]}
+        "title": "Plan", member: [{"text": "in {figure:groups} panels", "omitWhenZero": "groups"}]}
     if not grouped:
         parts["view"]["body"]["grouping"] = {"by": "none", "missing": "ungrouped"}
     if split:
         title = parts["layout"]["root"]["children"][0]
         parts["layout"]["root"]["children"][0:1] = [
-            dict(title, id=f"heading-{member}", source=f"heading.{member}") for member in ("title", "subtitle")]
+            dict(title, id=f"heading-{part}", source=f"heading.{part}") for part in dict.fromkeys(("title", member))]
     observed = []
     original = planner.measure_sources
     def measure(inputs, *args, **kwargs):
@@ -39,7 +42,7 @@ def test_count_part_is_drawn_at_one_omitted_at_zero_before_measurement(tmp_path,
     monkeypatch.setattr(planner, "measure_sources", measure)
     source = sr.project({"a": sr.span("a", date(2026, 2, 2), 5, owner="one")})
     rendered = sr.render(tmp_path, source, presentation=parts)
-    subtitles = [p.text for p in rendered.surface.primitives if p.scene_id == "subtitle"]
+    subtitles = [p.text for p in rendered.surface.primitives if p.scene_id == member]
     assert subtitles == (["in one panels"] if grouped else [])
     assert ("in one panels" in observed) == grouped
     assert not any("zero panels" in line for line in observed)
@@ -54,6 +57,19 @@ def test_zero_omission_preserves_literal_concatenation_and_other_parts(tmp_path)
         {"text": " / {{literal}}"}]}
     rendered = sr.render(tmp_path, sr.project({"a": sr.span("a", date(2026, 2, 2), 5)}), presentation=parts)
     assert next(p.text for p in rendered.surface.primitives if p.scene_id == "title") == "Synthetic / {literal}"
+
+
+@pytest.mark.parametrize("remaining", ["subtitle", "kicker"])
+def test_omitted_title_does_not_rename_or_remove_other_heading_members(tmp_path, remaining):
+    parts = _parts()
+    _subtitle_role(parts)
+    parts["view"]["body"]["grouping"] = {"by": "none", "missing": "ungrouped"}
+    parts["view"]["body"]["heading"] = {
+        "title": [{"text": "Absent", "omitWhenZero": "groups"}], remaining: "Remaining"}
+    rendered = sr.render(tmp_path, sr.project({"a": sr.span("a", date(2026, 2, 2), 5)}), presentation=parts)
+    texts = {p.scene_id: p.text for p in rendered.surface.primitives if p.kind == "Text"}
+    assert "title" not in texts
+    assert texts[remaining] == "Remaining"
 
 
 @pytest.mark.parametrize("figure,code", [
