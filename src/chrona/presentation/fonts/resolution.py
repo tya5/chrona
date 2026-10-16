@@ -24,12 +24,47 @@ from chrona.presentation.model.font_metrics import (
     FontFile, FontMetrics, FontMetricsCatalog, FontMetricsError, FontTabularWarning, _families,
     font_metrics_from_document, named_families, resolve_font_files, resolve_font_metrics, resolve_font_metrics_catalog,
 )
-from chrona.presentation.model.font_resources import FontAssetResolver
+from chrona.presentation.model.font_resources import FontAssetResolver, FontProviderUnavailable, resolve_font_resource
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 from chrona.resources import safe_load
 
 PACKAGED_FAMILY = "Noto Sans"
 _installed_cache: dict[tuple[str, int, int, int], tuple[FontMetrics, FontFile]] = {}
+
+# Platform families by script, not by preset or Project. Coverage in the closed
+# chain chooses the face; a Japanese fallback need not cover Korean text.
+CJK_FAMILIES = ("Noto Sans JP", "Noto Sans CJK JP", "Hiragino Sans", "Yu Gothic", "Meiryo",
+                "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei",
+                "Noto Sans CJK KR", "Malgun Gothic", "Apple SD Gothic Neo")
+
+
+def _cjk_faces(weight: int, index: InstalledFontIndex) -> list[tuple[FontMetrics, FontFile]]:
+    """Close optional package then OS CJK faces using existing resource owners."""
+    root = Path(str(files("chrona.resources")))
+    records = safe_load(root.joinpath("fonts", "font-sets.yaml").read_bytes())["sets"]["chrona.noto-sans+jp"]
+    nearest = 700 if weight >= 600 else 400
+    assets = [item for item in records if item["family"] == "Noto Sans JP" and item["weight"] == nearest]
+    descriptor = {"algorithm": "declared-metrics-v3", "missingFont": "diagnose", "assets": assets}
+    result = []
+    try:
+        resolve_font_resource(assets[0]["font"]["locator"], asset_root=root)
+        font_file = resolve_font_files(descriptor, asset_root=root)[0][0]
+        metric = resolve_font_metrics("Noto Sans JP", descriptor, weight=nearest, asset_root=root,
+                                      _allow_substitute=False, _require_numeric=False)
+        result.append((replace(metric, informational_fallback=True), font_file))
+    except FontProviderUnavailable:
+        pass
+    for family in CJK_FAMILIES:
+        if any(item.family.casefold() == family.casefold() for item, _ in result):
+            continue
+        face = index.find(family, weight)
+        if face is not None:
+            try:
+                metric, font_file = _installed_metric(face)
+                result.append((replace(metric, informational_fallback=True), font_file))
+            except (OSError, ValueError, FontImportError, FontMetricsError):
+                continue
+    return result
 
 
 def _installed_metric(face: InstalledFace) -> tuple[FontMetrics, FontFile]:
@@ -86,9 +121,13 @@ def resolve_theme_font_stacks(theme: Mapping[str, Any], descriptor: dict[str, An
     pending = {role: item for role, item in treatments.items() if not (
         len(named_families(item.family)) == 1
         and (named_families(item.family)[0].casefold(), item.weight) in declared.metrics)}
-    if not pending:
-        return None
     index = installed if installed is not None else installed_fonts()
+    cjk_by_weight = {weight: _cjk_faces(weight, index) for weight in {item.weight for item in treatments.values()}}
+    if not pending and not any(cjk_by_weight.values()):
+        return None
+    # Even one exact declared Latin face needs the general per-glyph closure.
+    automatic_roles = set(treatments) - set(pending)
+    pending = treatments
     metrics = dict(declared.metrics)
     extra_files: list[FontFile] = []
     notes: list[str] = []
@@ -115,15 +154,26 @@ def resolve_theme_font_stacks(theme: Mapping[str, Any], descriptor: dict[str, An
                 skipped.append(family)
         packaged_metric, packaged_file = _packaged(weight)
         fell_back = not found
-        stack = [item[0] for item in found]
-        if all(item.family.casefold() != PACKAGED_FAMILY.casefold() for item in stack):
+        stack = []
+        for metric, _ in found:
+            while metric is not None:
+                if all(item.content_identity != metric.content_identity for item in stack):
+                    stack.append(replace(metric, informational_fallback=True)
+                                 if metric.family in CJK_FAMILIES else metric)
+                metric = metric.substitute_metrics
+        if role not in automatic_roles and all(item.family.casefold() != PACKAGED_FAMILY.casefold() for item in stack):
             stack.append(packaged_metric)
+        # Preserve explicit stack precedence; append only unseen fallback faces.
+        for metric, font_file in cjk_by_weight[weight]:
+            if all(item.content_identity != metric.content_identity for item in stack):
+                stack.append(metric)
+                extra_files.append(font_file)
         chained = stack[-1]
         for item in reversed(stack[:-1]):
-            chained = replace(item, substitute_metrics=chained)
+            chained = replace(item, substitute_metrics=chained, substitutions=set())
         tried = tuple(families) + (() if PACKAGED_FAMILY.casefold() in {name.casefold() for name in families}
                                    else (PACKAGED_FAMILY,))
-        chained = replace(chained, tried_families=tried)
+        chained = replace(chained, tried_families=tried, substitutions=set())
         metrics[(treatment.family.strip().casefold() if "," in treatment.family else families[0].casefold(), weight)] = chained
         # Completed text carries the selected face name; viewer-fit must resolve
         # that name too, even when earlier requested families were unavailable.
@@ -133,7 +183,9 @@ def resolve_theme_font_stacks(theme: Mapping[str, Any], descriptor: dict[str, An
         extra_files.extend(item[1] for item in found if item[1] is not None)
         if any(item.family.casefold() == PACKAGED_FAMILY.casefold() for item in stack):
             extra_files.append(packaged_file)
-        if fell_back:
+        if role in automatic_roles:
+            pass  # No new diagnostic for text that never uses automatic fallback.
+        elif fell_back:
             notes.append(f"W_FONT_FALLBACK_PACKAGED:role={role};requested={treatment.family};face={packaged_metric.family}")
         else:
             notes.append(f"I_FONT_ROLE_RESOLVED:role={role};requested={treatment.family};face={chained.family}")

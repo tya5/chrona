@@ -685,8 +685,11 @@ def _text_layout(value: TextLayout) -> dict[str, Any]:
     if value.horizontal_scale != 1:
         result["horizontalScale"] = value.horizontal_scale
     if value.runs:
-        result["runs"] = [[{"text": run.text, "fontSize": run.font_size, "inlineSize": run.inline_size}
-                           for run in line] for line in value.runs]
+        result["runs"] = [[{"text": run.text, "fontSize": run.font_size, "inlineSize": run.inline_size,
+                             **({"family": run.family} if run.family is not None else {}),
+                             **({"weight": run.weight} if run.weight is not None else {}),
+                             **({"assetIdentity": run.asset_identity} if run.asset_identity is not None else {})}
+                            for run in line] for line in value.runs]
     if value.fit is not None:
         fit: dict[str, Any] = {"mode": value.fit.mode}
         if value.fit.line_inline_sizes:

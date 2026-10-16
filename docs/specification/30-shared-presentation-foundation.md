@@ -88,9 +88,15 @@ Installed fonts are a normal source on every render path (#1281, owner decision 
 is not a design goal of this path, and no packaged font is added). A Theme `fontFamily` is an ordered list; per role,
 Layout uses the first family that the Context declares or the machine has installed, else the packaged Noto Sans at the
 role's weight (reported as `W_FONT_FALLBACK_PACKAGED`; a resolved list is `I_FONT_ROLE_RESOLVED`), and a character the
-face lacks takes the next listed face that has it, the packaged face last, failing with `E_FONT_GLYPH_UNAVAILABLE` only
-when none does. Declared metrics keep precedence and stay exact and pinned: a role whose single family is declared,
-and a Context that declares everything it uses, resolve and render as before. Installed faces are found by scanning the
+face lacks takes the next listed face that has it, then packaged Noto Sans. Every
+Theme stack, including a single declared Latin face, also closes a CJK fallback
+(#1612): the optional Noto CJK provider first, then installed Japanese, Chinese
+and Korean families at CSS-matched weight. This is shared font policy, never a
+preset or Project switch. Only exhausted coverage fails with
+`E_FONT_GLYPH_UNAVAILABLE`; strict `--system-fonts` still refuses substitution.
+Declared metrics retain precedence and exact advances for covered characters;
+Latin-only text has no additional diagnostic or completed run fields.
+Installed faces are found by scanning the
 platform's font directories (fontconfig's file list on Linux when present) and matching family and weight by the CSS
 rule; they are measured from their own bytes and rasterized from the same files.
 Layout completes a viewer family list with the resolved measurement face first,
@@ -98,6 +104,14 @@ then the remaining Theme entries in their declared order, including any generic
 fallback (#1512). SVG serializes this list without embedding fonts; Typst uses
 native alternatives. PDF embeds the completed first face's exact bytes, and
 TikZ/fontspec selects that first face: neither format re-resolves the list.
+When CJK coverage uses a fallback, Layout completes face-bearing runs (family,
+actual weight, asset identity and measured advance), composing with small caps
+and text transforms. Scene projects these facts; adapters serialize the supplied
+faces without discovery or measurement. PNG and PDF draw from the same closed
+files; PDF embeds each measured run face, not the Latin parent face for CJK text.
+The substitution is `I_FONT_GLYPH_SUBSTITUTED`, with requested/used families,
+weight, codepoint and source text, not a warning. An absent optional provider
+permits OS fallback; malformed available resources still fail validation.
 Viewer alternatives do not change Layout measurement, geometry or glyph coverage.
 Output that uses an installed face depends on the fonts installed where it is rendered.
 

@@ -181,10 +181,17 @@ def _typst_line(layout: object, index: int) -> str:
     runs = getattr(layout, "runs", ())
     if not runs:
         return f'#("{_typst_string(layout.lines[index])}")'
-    body = "".join(
-        f'#("{_typst_string(run.text)}")' if run.font_size == layout.font_size
-        else f'#text(size: {_number(run.font_size)}pt)[#("{_typst_string(run.text)}")]'
-        for run in runs[index])
+    def serialize(run: object) -> str:
+        text = f'#("{_typst_string(run.text)}")'
+        options = []
+        if run.font_size != layout.font_size:
+            options.append(f"size: {_number(run.font_size)}pt")
+        if getattr(run, "family", None) is not None:
+            options.append(f'font: "{_typst_string(run.family)}"')
+        if getattr(run, "weight", None) is not None:
+            options.append(f"weight: {run.weight}")
+        return f"#text({', '.join(options)})[{text}]" if options else text
+    body = "".join(serialize(run) for run in runs[index])
     if any(run.font_size == layout.font_size for run in runs[index]):
         return body
     # A line of only small runs would put its top edge at the small cap height; a hidden zero-width capital at the role
@@ -192,15 +199,48 @@ def _typst_line(layout: object, index: int) -> str:
     return f'#box(width: 0pt, hide[#text(size: {_number(layout.font_size)}pt)[#("I")]])' + body
 
 
-def _tikz_line(layout: object, index: int) -> str:
+def _tikz_line(layout: object, index: int, font_files: Sequence[FontFile] | None = None) -> str:
     """The TikZ counterpart of `_typst_line`: a smaller run is a font-size group inside the node (#1532)."""
     runs = getattr(layout, "runs", ())
     if not runs:
         return _tex_string(layout.lines[index])
-    return "".join(
-        _tex_string(run.text) if run.font_size == layout.font_size
-        else f"{{\\fontsize{{{_number(run.font_size)}pt}}{{{_number(run.font_size * layout.line_height)}pt}}\\selectfont {_tex_string(run.text)}}}"
-        for run in runs[index])
+    def serialize(run: object) -> str:
+        size = (f"\\fontsize{{{_number(run.font_size)}pt}}"
+                f"{{{_number(run.font_size * layout.line_height)}pt}}\\selectfont ") \
+            if run.font_size != layout.font_size else ""
+        family = getattr(run, "family", None)
+        weight = getattr(run, "weight", None)
+        identity = getattr(run, "asset_identity", None)
+        face = ""
+        if identity is not None and font_files is not None:
+            selected_family = family if family is not None else str(getattr(layout, "family", "")).split(",", 1)[0].strip()
+            candidates = [item for item in font_files
+                          if item.content_identity == identity
+                          and item.family.casefold() == selected_family.casefold()
+                          and item.weight == weight]
+            if len(candidates) != 1:
+                raise _error("E_RENDER_FONT_CLOSURE",
+                             f"TikZ run requests an unregistered exact font asset {selected_family}/{weight}/{identity}")
+            selected = candidates[0]
+            path = Path(selected.path)
+            if (selected.index != 0 or path.suffix.lower() not in _LOADABLE_SUFFIXES
+                    or _UNSAFE_PATH.search(path.as_posix()) or not path.is_file()):
+                raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED",
+                             f"TikZ cannot load completed run face {selected_family}/{weight} by file path ({path.name!r}, face index {selected.index})")
+            directory = path.parent.as_posix().rstrip("/") + "/"
+            spacing = getattr(layout, "numeric_spacing", "proportional")
+            number = "Monospaced" if spacing == "tabular" else "Proportional"
+            face = (f"\\fontspec[Path=\\detokenize{{{directory}}}, Numbers={number}]"
+                    f"{{{path.name}}}")
+        elif family is not None or weight is not None:
+            selected_family = family if family is not None else str(getattr(layout, "family", "")).split(",", 1)[0].strip()
+            options = []
+            if weight is not None:
+                options.append(f"Weight={weight}")
+            face = f"\\fontspec[{','.join(options)}]{{{_tex_string(selected_family)}}}"
+        content = _tex_string(run.text)
+        return f"{{{size}{face}{content}}}" if size or face else content
+    return "".join(serialize(run) for run in runs[index])
 
 
 def _typst_rect_paint(node: ScenePrimitive) -> str:
@@ -661,7 +701,8 @@ def render_v05_tikz(surface: SceneSurface, font_files: Sequence[FontFile] | None
                 raise _error("E_PRESENTATION_PRIMITIVE_INVALID", _primitive_detail(node, "Text payload, textLayout, and baseline"))
             layout = node.text_layout
             parts.append(f"% font-asset: {_tex_string(layout.asset_identity)} baseline: {_number(node.baseline[0])},{_number(node.baseline[1])}")
-            text = _tikz_tracked_text(layout, r"\\".join(_tikz_line(layout, index) for index in range(len(layout.lines))))
+            text = _tikz_tracked_text(layout, r"\\".join(
+                _tikz_line(layout, index, font_files) for index in range(len(layout.lines))))
             rotation = f", rotate={_number(layout.rotation_degrees)}" if layout.rotation_degrees else ""
             # `inner sep=0pt` puts the text's own origin on the anchor; the default 0.333em padding would shift the run right
             # and, under a scale, about a pivot that is not the baseline start. Compression acts in the text's own frame, so it

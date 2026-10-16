@@ -142,10 +142,39 @@ def test_caption_cannot_borrow_the_mark_contrast_floor(tmp_path):
     assert all(item.floor == 4.5 and 3 < item.contrast_ratio < 4.5 and item.severity == "error" for item in findings)
 
 
-def test_unavailable_caption_glyphs_use_existing_typed_font_failure(tmp_path):
+def test_unavailable_caption_glyphs_use_existing_typed_font_failure(tmp_path, monkeypatch):
+    from chrona.presentation.fonts.installed import InstalledFontIndex, use_installed_fonts
+    from chrona.presentation.model import font_resources
+    from chrona.presentation.model.font_resources import FontProviderUnavailable
+
+    original = font_resources._package_root
+    def without_cjk(identity):
+        if identity == "chrona-fonts-noto-cjk":
+            raise FontProviderUnavailable(identity)
+        return original(identity)
+    monkeypatch.setattr(font_resources, "_package_root", without_cjk)
+    empty = tmp_path / "empty-font-index"
+    empty.mkdir()
+    (tmp_path / "render").mkdir()
     with pytest.raises(RenderFailed) as raised:
-        _render(tmp_path, parts=_caption_parts(text_format={"form": "kanji"}))
+        with use_installed_fonts(InstalledFontIndex([empty])):
+            _render(tmp_path / "render", parts=_caption_parts(text_format={"form": "kanji"}))
     assert raised.value.code == "E_FONT_GLYPH_UNAVAILABLE"
+
+
+def test_caption_uses_available_cjk_fallback_with_informational_substitution(tmp_path):
+    from tests.support import text_treatments as tt
+
+    if not tt.cjk_available():
+        pytest.skip("requires the optional chrona-fonts-noto-cjk package")
+    rendered = _render(tmp_path, parts=_caption_parts(text_format={"form": "kanji"}))
+    captions = _captions(rendered)
+    assert len(captions) == 2
+    assert {item.source_ref: item.text for item in captions} == {
+        "a": "九 days late", "g": "十 days late",
+    }
+    substitutions = [item for item in rendered.info_diagnostics if item.code == "I_FONT_GLYPH_SUBSTITUTED"]
+    assert substitutions
 
 
 def test_actual_pdf_carries_caption_copy_without_deadline_specific_adapter_logic(tmp_path):

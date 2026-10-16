@@ -125,6 +125,11 @@ discover host fonts or fall back to another family; unknown entries fail with
 `E_RENDER_FONT_CLOSURE`. It uses svglib's public font-map protocol, not private
 global maps.
 
+For completed fallback runs (#1612), this mapping applies to each run's supplied
+family/weight, not the parent text's Latin face. SVG spans and PDF subset
+inventory retain inherited faces for ordinary text and explicit faces for runs;
+the adapter never repeats Layout's glyph-coverage decision (Specification 30).
+
 ReportLab caches dynamic faces by registration and PostScript names. In every
 PDF render, namespace both internal embedding names by a digest of
 the exact single-face embedding payload before naming (including its selected

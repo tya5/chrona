@@ -5,7 +5,7 @@ from hashlib import sha256
 import pytest
 
 from chrona.presentation.renderers.v05_typeset import render_v05_tikz, render_v05_typst
-from chrona.presentation.scene.model import ScenePaint, ScenePrimitive, SceneSurface, SurfaceScaleManifest, TextLayout, PatternGeometry, PatternStroke
+from chrona.presentation.scene.model import ScenePaint, ScenePrimitive, SceneSurface, SurfaceScaleManifest, TextLayout, TextRun, PatternGeometry, PatternStroke
 from chrona.presentation.layout.pattern_placement import PatternTilePrimitive, PatternPathCommand
 
 
@@ -28,6 +28,19 @@ def test_typeset_adapters_project_completed_tracking_without_font_inference():
     assert r"\usepackage{letterspace}" not in tikz and r"\textls" not in tikz
     assert r"\addfontfeatures{LetterSpace=25}AB" in tikz
     assert r"\usepackage{fontspec}" in tikz and r"\fontspec[Numbers=Proportional]{Test Sans}" in tikz
+
+
+def test_typeset_adapters_serialize_completed_run_face_identity():
+    surface = _surface()
+    node = surface.primitives[0]
+    layout = replace(node.text_layout, lines=("A日",), runs=((
+        TextRun("A", 12, 8), TextRun("日", 12, 12, "Noto Sans JP", 700, "sha256:cjk"),
+    ),))
+    surface = replace(surface, primitives=(replace(node, text="A日", text_layout=layout),))
+    typst = render_v05_typst(surface)
+    tikz = render_v05_tikz(surface)
+    assert 'font: "Noto Sans JP", weight: 700' in typst
+    assert r"\fontspec[Weight=700]{Noto Sans JP}日" in tikz
 
 
 def test_typeset_adapters_use_the_completed_canvas_not_a_caller_supplied_viewport():
@@ -154,6 +167,28 @@ def test_tikz_names_the_face_by_file_path_when_the_closure_has_it(tmp_path):
     directory.mkdir()
     tikz = render_v05_tikz(_with_family("Noto Sans JP"), (_face(directory, "jp-regular.ttf", "Noto Sans JP"),))
     assert f"\\fontspec[Path=\\detokenize{{{directory.as_posix()}/}}, Numbers=Proportional]{{jp-regular.ttf}}" in tikz
+    assert "{Noto Sans JP}" not in tikz
+
+
+def test_tikz_names_a_completed_fallback_run_by_its_exact_closed_file(tmp_path):
+    from chrona.presentation.model.font_metrics import FontFile
+
+    directory = tmp_path / "pkg_fonts"
+    directory.mkdir()
+    primary = _face(directory, "primary.ttf", "Test Sans")
+    fallback_path = directory / "jp-regular.ttf"
+    fallback_path.write_bytes(b"\0")
+    fallback = FontFile(fallback_path, "sha256:cjk", "Noto Sans JP", 400)
+    surface = _surface()
+    node = surface.primitives[0]
+    layout = replace(node.text_layout, lines=("A日",), runs=((
+        TextRun("A", 12, 8, "Test Sans", 400, "sha256:test"),
+        TextRun("日", 12, 12, "Noto Sans JP", 400, "sha256:cjk"),
+    ),))
+    surface = replace(surface, primitives=(replace(node, text="A日", text_layout=layout),))
+    tikz = render_v05_tikz(surface, (primary, fallback))
+    assert (f"\\fontspec[Path=\\detokenize{{{directory.as_posix()}/}}, "
+            f"Numbers=Proportional]{{jp-regular.ttf}}") in tikz
     assert "{Noto Sans JP}" not in tikz
 
 
