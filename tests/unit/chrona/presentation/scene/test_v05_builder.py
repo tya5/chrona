@@ -18,7 +18,8 @@ from chrona.presentation.model.surface_content import RelationPresentationFact
 from chrona.presentation.model.projection import FoldedPointProjection, ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
 from chrona.presentation.model.theme_tokens import ThemeTokenView
-from chrona.presentation.scene.model import DecorationDisposition, ScenePrimitive, SceneSurface, SymbolGeometry, TextLayout
+from chrona.presentation.scene.model import DecorationDisposition, ScenePrimitive, SceneSurface, SymbolGeometry, TextLayout, TextRun
+from chrona.presentation.scene.serialization import _text_layout
 from chrona.presentation.scene.v05_builder import SceneBuildError
 from chrona.presentation.surface_pipeline import build_surface_input as _build_surface_input, compose_review_surface
 
@@ -88,6 +89,18 @@ def test_scene_text_layout_rejects_an_unpaired_orientation_and_rotation() -> Non
     with pytest.raises(ValueError, match="E_PRESENTATION_TEXT_LAYOUT_INVALID"):
         TextLayout((0, 0, 1, 1), (0, 0), ("x",), "Test", 400, 12, 1.2,
                    "sha256:test", orientation="rotate-cw", rotation_degrees=-90)
+
+
+def test_scene_text_run_serializes_optional_face_identity_only_when_present():
+    layout = TextLayout((0, 0, 1, 1), (0, 0), ("A日",), "Primary", 400, 12, 1.2, "sha256:primary",
+                        runs=((TextRun("A", 12, 8),
+                               TextRun("日", 12, 12, "Noto Sans JP", 700, "sha256:cjk")),))
+    serialized = _text_layout(layout)["runs"][0]
+    assert serialized == [
+        {"text": "A", "fontSize": 12, "inlineSize": 8},
+        {"text": "日", "fontSize": 12, "inlineSize": 12, "family": "Noto Sans JP",
+         "weight": 700, "assetIdentity": "sha256:cjk"},
+    ]
 
 
 def test_scene_rejects_a_clip_that_does_not_reference_a_preceding_same_slot_host():
