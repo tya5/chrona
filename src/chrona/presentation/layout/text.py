@@ -356,6 +356,35 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
             text, font_size=font_size * factor, font_metrics=font_metrics, letter_spacing=letter_spacing,
             numeric_spacing=treatment.numeric_spacing)) for text, factor in small_caps_runs(line, caps))
             for line in (lines or (content,)))
+    select_face = getattr(font_metrics, "glyph_face", None)
+    if callable(select_face) and any(
+        getattr(select_face(character), "informational_fallback", False)
+        and select_face(character).content_identity != font_metrics.content_identity
+        for line in resolved_lines for character in line
+    ):
+        # Discovery is already closed. Split only affected text into exact
+        # measured faces, composing with existing size runs and transforms.
+        completed = []
+        for line in (lines or (content,)):
+            pieces = small_caps_runs(line, caps) if caps is not None else ((paint_text(line, text_transform=treatment.transform), 1.0),)
+            selected = []
+            for text, factor in pieces:
+                groups = []
+                for character in text:
+                    face = select_face(character)
+                    if groups and groups[-1][1] is face:
+                        groups[-1] = (groups[-1][0] + character, face)
+                    else:
+                        groups.append((character, face))
+                for text, face in groups:
+                    selected.append(TextRunPlacement(
+                        text, font_size * factor,
+                        measure_text_width(text, font_size=font_size * factor,
+                                           font_metrics=scaled_metric(face, treatment.horizontal_scale),
+                                           letter_spacing=letter_spacing, numeric_spacing=treatment.numeric_spacing),
+                        face.family, face.weight, face.content_identity))
+            completed.append(tuple(selected))
+        runs = tuple(completed)
     scale = float(treatment.horizontal_scale)
     rotation = {"horizontal": 0, "rotate-cw": 90, "rotate-ccw": -90}.get(orientation)
     if rotation is None:

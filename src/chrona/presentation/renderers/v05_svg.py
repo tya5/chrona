@@ -383,10 +383,21 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             # A small-caps line is its measured runs, each at its own size (#1285); anything else is the line itself.
             if not layout.runs:
                 return escape(lines[index])
-            return "".join(
-                escape(run.text) if run.font_size == layout.font_size
-                else f'<tspan font-size="{number(run.font_size)}">{escape(run.text)}</tspan>'
-                for run in layout.runs[index])
+            def run_markup(run: object) -> str:
+                family = getattr(run, "family", None)
+                weight = getattr(run, "weight", None)
+                identity = getattr(run, "asset_identity", None)
+                attrs = []
+                if run.font_size != layout.font_size:
+                    attrs.append(f'font-size="{number(run.font_size)}"')
+                if family is not None:
+                    attrs.append(f'font-family="{escape(family, quote=True)}"')
+                if weight is not None:
+                    attrs.append(f'font-weight="{weight}"')
+                if identity is not None:
+                    attrs.append(f'data-asset-identity="{escape(identity, quote=True)}"')
+                return escape(run.text) if not attrs else f'<tspan {" ".join(attrs)}>{escape(run.text)}</tspan>'
+            return "".join(run_markup(run) for run in layout.runs[index])
 
         body = (line_text(0) + pad if len(lines) == 1 else "".join(
             f'<tspan x="{number(node.baseline[0])}" dy="{0 if index == 0 else number(layout.font_size * layout.line_height)}"'

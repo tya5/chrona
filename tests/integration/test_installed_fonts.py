@@ -201,7 +201,11 @@ def test_the_resolver_is_shared_by_the_context_path_and_leaves_fully_declared_th
     stacked = resolve_theme_font_stacks(resolved(_parts()), descriptor, asset_root=PACKAGED,
                                         installed=InstalledFontIndex([]))
 
-    assert declared_only is None
+    if tt.cjk_available():
+        assert declared_only is not None and declared_only.notes == ()
+        assert declared_only.metrics.select("Noto Sans", 400).width("Latin", 14) > 0
+    else:
+        assert declared_only is None
     assert stacked is not None and any(item.startswith("W_FONT_FALLBACK_PACKAGED") for item in stacked.notes)
     assert {item.family for item in stacked.font_files} >= {"Noto Sans"}
 
@@ -220,11 +224,20 @@ def test_a_character_the_first_face_lacks_takes_the_next_face_that_has_it(tmp_pa
 
     assert layout.family == "Hiragino Sans, Missing Family, Yu Gothic, Noto Sans JP"
     assert layout.bounds[2] > 0
-    assert rendered.font_warnings
-    assert len(rendered.font_warnings) == len(set(rendered.font_warnings))
+    assert any(item.code == "I_FONT_GLYPH_SUBSTITUTED" for item in rendered.info_diagnostics)
+    assert not rendered.font_warnings
 
 
-def test_text_no_face_of_the_stack_or_the_package_covers_fails_naming_the_character(tmp_path):
+def test_text_no_face_of_the_stack_or_the_package_covers_fails_naming_the_character(tmp_path, monkeypatch):
+    from chrona.presentation.model import font_resources
+    from chrona.presentation.model.font_resources import FontProviderUnavailable
+
+    original = font_resources._package_root
+    def without_cjk(identity):
+        if identity == "chrona-fonts-noto-cjk":
+            raise FontProviderUnavailable(identity)
+        return original(identity)
+    monkeypatch.setattr(font_resources, "_package_root", without_cjk)
     empty = tmp_path / "empty"
     empty.mkdir()
     (tmp_path / "run").mkdir()

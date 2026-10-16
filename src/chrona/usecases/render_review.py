@@ -37,7 +37,7 @@ from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
 from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
-from chrona.presentation.model.info_diagnostics import PresentationInfo, UnboundSummarySource
+from chrona.presentation.model.info_diagnostics import PresentationInfo, UnboundSummarySource, FontGlyphFallback
 from chrona.presentation.model.field_role_view import resolve_field_role_view
 from chrona.presentation.contracts.resources import ContractError, ViewAllPeriods, ViewPeriod
 from chrona.presentation.model.preset_target import PresetVisualProfileFallback
@@ -441,6 +441,11 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         surface = replace(surface, diagnostics=(*surface.diagnostics, *unread_roles))
     if resolution is not None and resolution.notes:
         surface = replace(surface, diagnostics=(*surface.diagnostics, *resolution.notes))
+    glyph_info = tuple(FontGlyphFallback(item.requested_family, item.fallback_family, item.weight,
+                                         item.codepoint, item.text)
+                       for item in font_metrics.warnings if item.informational)
+    if glyph_info:
+        surface = replace(surface, info_diagnostics=(*surface.info_diagnostics, *glyph_info))
     try:
         validate_surface_visual_profile(surface, visual_profile)
     except VisualCapabilityError as error:
@@ -542,7 +547,7 @@ def _font_warnings(substitutions: tuple[FontGlyphSubstitution, ...], target_kind
     drawn = False if target_kind in {"png", "pdf"} else None
     return tuple(FontGlyphWarning(
         item.requested_family, item.fallback_family, item.weight, item.codepoint, item.text, drawn,
-    ) for item in substitutions)
+    ) for item in substitutions if not item.informational)
 
 
 def _scene_perceptibility_warnings(

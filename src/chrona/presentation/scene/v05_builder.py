@@ -75,7 +75,9 @@ def _scene_transform(text_transform: str) -> str:
 
 
 def _scene_runs(runs: tuple[Any, ...]) -> tuple[tuple[TextRun, ...], ...]:
-    return tuple(tuple(TextRun(run.text, run.font_size, run.inline_size) for run in line) for line in runs)
+    return tuple(tuple(TextRun(run.text, run.font_size, run.inline_size,
+                               getattr(run, "family", None), getattr(run, "weight", None),
+                               getattr(run, "asset_identity", None)) for run in line) for line in runs)
 
 
 def _heading_paint_role(tokens: ThemeTokenView, role: str = "heading") -> str:

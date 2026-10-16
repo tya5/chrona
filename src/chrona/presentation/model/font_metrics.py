@@ -75,6 +75,7 @@ class FontGlyphSubstitution:
     weight: int
     codepoint: int
     text: str
+    informational: bool = False
 
 
 @dataclass(frozen=True)
@@ -93,6 +94,14 @@ class FontMetrics:
     substitute_metrics: "FontMetrics | None" = None
     substitutions: set[FontGlyphSubstitution] = field(default_factory=set, compare=False, repr=False)
     tried_families: tuple[str, ...] = ()
+    informational_fallback: bool = False
+
+    def glyph_face(self, character: str) -> "FontMetrics":
+        """Select from this already closed stack; discovery never occurs in Layout."""
+        face = self
+        while ord(character) not in face.advances and face.substitute_metrics is not None:
+            face = face.substitute_metrics
+        return face if ord(character) in face.advances else self
 
     @property
     def content_identity(self) -> str:
@@ -126,6 +135,7 @@ class FontMetrics:
                 if fallback is not None:
                     self.substitutions.add(FontGlyphSubstitution(
                         self.family, fallback.family, self.weight, codepoint, value,
+                        fallback.informational_fallback,
                     ))
                     total += fallback.advances[codepoint] * self.units_per_em / fallback.units_per_em
                     continue

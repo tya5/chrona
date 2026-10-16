@@ -353,6 +353,28 @@ class UnboundFieldRole:
         return self.code + ":" + json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))
 
 
-PresentationInfo = (SuppressedPlotLabels | DeadlineCaptionsDropped | PaintOmission | RelationRoutingSummary | RelationSearchBudgetHit
+@dataclass(frozen=True)
+class FontGlyphFallback:
+    """An automatically covered glyph with its exact measured face."""
+
+    requested_family: str
+    fallback_family: str
+    weight: int
+    codepoint: int
+    text: str
+
+    @property
+    def code(self) -> str:
+        return "I_FONT_GLYPH_SUBSTITUTED"
+
+    def payload(self) -> dict[str, object]:
+        return {"requestedFamily": self.requested_family, "fallbackFamily": self.fallback_family,
+                "weight": self.weight, "codepoint": f"U+{self.codepoint:04X}", "text": self.text}
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps(self.payload(), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+PresentationInfo = (FontGlyphFallback | SuppressedPlotLabels | DeadlineCaptionsDropped | PaintOmission | RelationRoutingSummary | RelationSearchBudgetHit
                     | RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession
                     | RelationHintReceipt | RelationHintSummary | UnboundSummarySource | UnboundFieldRole)
