@@ -53,6 +53,9 @@ or empty, so required slots reach normalization instead of failing as unknown
 sources; its natural measurement is zero without unused annotation typography.
 Nonempty sources retain their placement, suppression and failure contracts;
 a failed placement is not semantic absence and does not trigger reflow.
+Removed source subtrees have no frame/caption placement decision and emit no
+frame-omitted or slot-heading-omitted notice; those notices still apply to
+content-present nodes whose placement cannot fit.
 
 The canonical resource is `chrona/layout-profile/v0.4` as defined by the replacement
 schema. A resource contains exactly one of:
