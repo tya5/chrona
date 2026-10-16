@@ -19,6 +19,7 @@ from chrona.presentation.renderers.pdf_fonts import (
     pdf_embedding_bytes,
     pdf_font_bytes,
 )
+from chrona.presentation.renderers.pdf_svg import PDF_PAINT_GRAMMAR, lower_pdf_svg
 
 
 def _failure(code: str, detail: str) -> ValueError:
@@ -83,6 +84,7 @@ class ReportLabPdfRenderer:
                                         self._asset_resolver)
         svg = V05SvgRenderer(viewer_fit=False).render(surface).content
         characters = _svg_font_characters(svg)
+        svg = lower_pdf_svg(surface, svg)
         translated = False
         try:
             from reportlab import rl_config
@@ -115,7 +117,7 @@ class ReportLabPdfRenderer:
         except ImportError as error:
             raise _failure("E_RENDER_RASTERIZER_UNAVAILABLE", "target PDF requires installed svglib and reportlab adapters") from error
         prefix = (f"svglib-{self._descriptor['svglibVersion']}-reportlab-{self._descriptor['reportlabVersion']}-invariant"
-                  f"-{EMBEDDING_GRAMMAR}-fonttools-{version('fonttools')}")
+                  f"-{PDF_PAINT_GRAMMAR}-{EMBEDDING_GRAMMAR}-fonttools-{version('fonttools')}")
         if translated:
             prefix += f"-{CONVERSION_GRAMMAR}"
         return RenderArtifact("pdf", "application/pdf", content, _adapter_identity(prefix, identities))
