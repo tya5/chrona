@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import yaml
+import pytest
 
 from chrona.resources import default_preset_root
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
+from chrona.usecases.preset_library import list_builtin_presets
 
 
 PROJECT = """\
@@ -69,6 +71,34 @@ def _mark_signature(rendered):
         for item in rendered.surface.primitives
         if item.purpose in {"planned", "snapshot"}
     ))
+
+
+@pytest.mark.parametrize("preset", [entry["id"] for entry in list_builtin_presets()])
+@pytest.mark.parametrize("target_kind", ["svg", "png"])
+def test_every_named_preset_renders_actual_and_snapshot_without_profile_flag(tmp_path, preset, target_kind):
+    project, snapshot, actual = (tmp_path / name for name in ("project.yaml", "snapshot.yaml", "actual.yaml"))
+    _write_project(project, title="Current", start="2026-10-01", end="2026-10-10")
+    _write_project(snapshot, title="Baseline", start="2026-10-02", end="2026-10-08")
+    _write_actual(actual)
+    inputs = {path: path.read_bytes() for path in (project, snapshot, actual)}
+
+    result = render_draft(DraftRenderRequest(
+        project=project, target_kind=target_kind, preset=preset, actual=actual, snapshot=snapshot,
+    ))
+
+    if target_kind == "png":
+        assert result.artifact.content.startswith(b"\x89PNG\r\n\x1a\n")
+    else:
+        assert b"<svg" in result.artifact.content[:256]
+    assert {"actual-set", "snapshot-project"} <= result.rendered.read_inputs
+    ghosts = [item for item in result.rendered.surface.primitives if item.purpose == "snapshot"]
+    notices = [note for note in result.notes if note["code"] == "W_SNAPSHOT_NOT_DRAWN"]
+    if ghosts:
+        assert not notices
+    else:
+        assert len(notices) == 1 and notices[0]["severity"] == "warning"
+        assert "--snapshot" in notices[0]["message"]
+    assert {path: path.read_bytes() for path in inputs} == inputs
 
 
 def test_draft_snapshot_is_inert_until_the_explicit_view_selects_snapshot(tmp_path):
