@@ -6,12 +6,13 @@ Public base: 41e6c83a9f742af6e7a46209c4cec8f4bca91f0f (trusted-ready).
 [Owner rule and acceptance](https://github.com/tya5/chrona/issues/1634).
 The design plan was published in 783fe50cc; normative design and whole-
 architecture review were published in a9c0d3ec6c4b982c1f93249eec6acfcb814632b4;
-implementation plan in 00d66e8a5. F1 has a local candidate (82 focused tests and
-2 closure-boundary tests passed), not released. Exact trial calculation exposed
-an observed dependency miss (Nov10 predecessor finish / Nov9 successor start).
-The normative policy now reports observed-fixed endpoint misses without moving
-Actuals or rejecting the complete forecast; this correction is published before
-changing the candidate. [Reviewer answers](https://github.com/tya5/chrona/issues/1634#issuecomment-6230794260)
+implementation plan in 00d66e8a5; observed-endpoint correction in ad9dcfb0d before
+the corresponding code change. F1 is implemented on the feature branch, not
+released: 87 focused forecast/ordinary-projection/closure tests passed. Actual
+trial calculation returns all 25 objects, 6 moved, 22 unfinished, no fatal
+errors; the observed dependency miss is reported without changing either date.
+This is calculation evidence, not PNG or CLI acceptance. F2 projection/geometry
+is next. [Reviewer answers](https://github.com/tya5/chrona/issues/1634#issuecomment-6230794260)
 approve retained declared units, finish-only placement with an unobserved-start
 finding, and child-envelope precedence with a named group-observation finding.
 No further reviewer gate precedes normative publication.

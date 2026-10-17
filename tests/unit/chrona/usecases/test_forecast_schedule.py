@@ -148,12 +148,14 @@ def test_fixed_gate_miss_is_reported_without_moving_or_suppressing_it():
     assert result.analysis is None
 
 
-def test_completed_span_conflict_is_not_whitelisted_as_a_gate_miss():
+def test_completed_observed_endpoint_miss_is_reported_without_moving_facts():
     source = project({"p": span("2026-10-01", "2026-10-02"), "a": span()}, [relation("p", "a")], calendar=False)
     result = evaluate(source, actual(p={"start": "2026-10-07", "finish": "2026-10-09"},
                                      a={"start": "2026-10-07", "finish": "2026-10-08"}))
-    assert not result.ok and not result.items
-    assert any(item.id == "E_FIXED_TARGET_VIOLATION" and item.details["object"] == "a" for item in result.diagnostics)
+    assert result.ok
+    assert dates(result, "a") == {"start": "2026-10-07", "end": "2026-10-08"}
+    assert any(item.id == "E_FIXED_TARGET_VIOLATION" and item.details["object"] == "a" for item in result.findings)
+    assert result.analysis is None
 
 
 def test_latest_selector_preserves_first_tie_and_unmatched_input_order():
@@ -258,3 +260,24 @@ def test_injected_scheduler_gets_one_effective_copy_and_no_partial_result_escape
     assert scheduler.calls == 1
     assert not result.ok and not result.items
     assert result.diagnostics[0].id == "E_DERIVATION"
+
+
+def test_started_before_predecessor_finish_is_reported_and_successors_still_move():
+    source = project({"p": span("2026-10-01", "2026-10-02"), "a": span(), "b": task("1d")},
+                     [relation("p", "a"), relation("a", "b")], calendar=False)
+    result = evaluate(source, actual(p={"start": "2026-10-07", "finish": "2026-10-09"},
+                                     a={"start": "2026-10-08"}))
+    assert result.ok, result.diagnostics
+    assert dates(result, "a") == {"start": "2026-10-08", "end": "2026-10-10"}
+    assert dates(result, "b") == {"start": "2026-10-10", "end": "2026-10-11"}
+    assert any(item.id == "E_FIXED_TARGET_VIOLATION" and item.details["endpoint"] == "start" for item in result.findings)
+
+
+@pytest.mark.parametrize("observation,endpoint", [({"finish": "2026-10-12"}, "start"),
+                                                 ({"start": "2026-10-07"}, "end")])
+def test_unobserved_retained_or_computed_endpoint_conflict_remains_fatal(observation, endpoint):
+    edge = relation("p", "a", endpoint)
+    source = project({"p": span("2026-10-01", "2026-10-02"), "a": span()}, [edge], calendar=False)
+    result = evaluate(source, actual(p={"start": "2026-10-07", "finish": "2026-10-15"}, a=observation))
+    assert not result.ok and not result.items
+    assert any(item.id == "E_FIXED_TARGET_VIOLATION" and item.details["endpoint"] == endpoint for item in result.diagnostics)

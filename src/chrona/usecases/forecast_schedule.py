@@ -40,6 +40,8 @@ def forecast_schedule(
     diagnostics: list[Diagnostic] = []
     findings: list[Diagnostic] = []
     completed: dict[str, bool] = {}
+    reportable_targets = {(key, "at") for key, item in project["objects"].items()
+                          if item["schedule"]["mode"] == "fixed-point"}
     for object_id, item in objects.items():
         planned = ordinary.placements.get(object_id)
         if planned is None:
@@ -58,6 +60,8 @@ def forecast_schedule(
         if raw["mode"] == "rollup":
             continue
         if is_point:
+            if "at" in actual:
+                reportable_targets.add((object_id, "at"))
             if raw["mode"] != "fixed-point":
                 if "at" in actual:
                     item["schedule"] = {"mode": "fixed-point", "at": as_date(actual["at"])}
@@ -65,6 +69,9 @@ def forecast_schedule(
                     _floor(raw, "at", max(planned["at"], as_of))
             continue
         if "finish" in actual:
+            reportable_targets.add((object_id, "end"))
+            if "start" in actual:
+                reportable_targets.add((object_id, "start"))
             start = as_date(actual["start"]) if "start" in actual else planned["start"]
             end = as_date(actual["finish"])
             if "start" not in actual:
@@ -78,6 +85,7 @@ def forecast_schedule(
             diagnostics.append(Diagnostic("E_FORECAST_DURATION_UNAVAILABLE", "Fixed span has no positive inferred work effort", f"/objects/{object_id}/schedule"))
             continue
         if "start" in actual:
+            reportable_targets.add((object_id, "start"))
             start = as_date(actual["start"])
             arithmetic_start = calendar.next_working(start) if calendar is not None else start
             end = max(advance(arithmetic_start, amount, calendar), as_of)
@@ -93,11 +101,10 @@ def forecast_schedule(
         return _failure(tuple(diagnostics), tuple(findings), unmatched)
 
     scheduled = scheduler.schedule(effective)
-    fixed_points = {key for key, item in project["objects"].items() if item["schedule"]["mode"] == "fixed-point"}
     for diagnostic in scheduled.diagnostics:
         details = diagnostic.details or {}
         if (diagnostic.id == "E_FIXED_TARGET_VIOLATION"
-                and details.get("object") in fixed_points and details.get("endpoint") == "at"):
+                and (details.get("object"), details.get("endpoint")) in reportable_targets):
             findings.append(diagnostic)
         else:
             diagnostics.append(diagnostic)
@@ -107,6 +114,8 @@ def forecast_schedule(
         if (placement is None or set(placement) != expected
                 or any(type(value) is not date for value in placement.values())):
             diagnostics.append(Diagnostic("E_DERIVATION", "Forecast placement is missing or has the wrong endpoint kind", f"/objects/{object_id}/schedule"))
+    for object_id in scheduled.placements.keys() - objects.keys():
+        diagnostics.append(Diagnostic("E_DERIVATION", "Forecast placement has no source Project object", f"/objects/{object_id}"))
     if diagnostics:
         return _failure(tuple(diagnostics), tuple(findings), unmatched)
 
