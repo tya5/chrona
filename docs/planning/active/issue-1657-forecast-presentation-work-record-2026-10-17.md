@@ -1,6 +1,6 @@
 # Issue1657 — forecast label ownership and observed-start warnings
 
-Status: implementation and focused acceptance complete; official public-output and release gates pending. Baseline: main `aabc5e894`, with unchanged product
+Status: implementation and literal acceptance evidence complete; release gates pending. Baseline: main `aabc5e894`, with unchanged product
 source from trusted-ready `9f35dd457` after the legend fix.
 [Issue1657](https://github.com/tya5/chrona/issues/1657) is the next dev A item;
 issue1397's implemented slice is preserved separately and publications stay serial.
@@ -88,5 +88,6 @@ member name per object, visible baseline ghosts and required deltas retained.
 Its wireframes→visual-design warning states observed November9 start before
 observed November10 finish, overlapDays=1, severity warning, without the former
 E_FIXED_TARGET_VIOLATION. Neither source files nor examples were edited.
-The PR's official snapshot will supply the public SVG/Scene count table; final
-acceptance requires exact review-containing main release CI.
+PR1662's official snapshot39036008847 on `f6e245aa7` confirms all50 SVG+50
+Scene files byte-identical, same109 paths; only diagnostic inventory changes.
+Final acceptance requires exact review-containing main release CI.
