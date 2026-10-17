@@ -719,12 +719,12 @@ module reachability passes without an evaluator allowlist.
 
 ## S2 design and implementation plan
 
-Baseline: S1 PR1675 at `bfccc0377` on trusted-ready main890af301d. S1 release
+Baseline: S1 PR1675 at `89106fe86` on trusted-ready main890af301d. S1 release
 acceptance is not assumed. S2 design proceeds independently; its implementation
 and merge must retain the accepted S1 correction and public evidence.
-S1 CI39055638817 is red at the opted-in `glyph-gates` contrast gate; reproduction
-and readiness failures are consequences. The reviewer-owned explicit glyph-fill
-declaration adjustment is requested on Issue419; do not weaken the floor.
+The reviewer-approved glyph-fill declaration is integrated; current S1 CI
+39074991839 passes snapshot generation, with product checks still running.
+S2 retains that exact correction; no floor or Scheme change is needed.
 
 Use one optional `body.style` pinned reference in the live Context and one
 optional `resources.style` declaration in presets/libraries. Absent means no
@@ -825,7 +825,7 @@ The batched regression check passed338 tests; the subsequent contract/native
 batch passed203, and final ingress/consumer/legend checks passed33. Schema
 equivalence, inward imports,293-module reachability and primitive delivery pass.
 Actual SVG and PNG were rendered and inspected with a scoped title and fitting
-qualifier. The non-editable installed wheel passed26 native Style tests and
+qualifier. The non-editable installed wheel passed28 native Style tests and
 the general wheel smoke outside the checkout. Final-filter review added
 duplicate-column and positive-bounds suppressed-cell regressions; the latter
 failed before a narrow correction excluding completed suppressed text, as the

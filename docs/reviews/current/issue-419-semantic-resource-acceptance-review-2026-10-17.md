@@ -25,13 +25,13 @@ Do not count WIP publication as release acceptance.
 
 ### S2 installed-wheel evidence
 
-Source `e7e904ee0`; wheel SHA-256
-`b666525d11e466ea3e563851061b8860cf39c6933e220097db0cd74b82f7c22b`.
+Source `ae6aff19e`; wheel SHA-256
+`06fce22005c5f34e760e139a3838bc8276d6d07a8e012ba141297a91e3f63333`.
 Built with `pip wheel --no-deps . packages/chrona-fonts-noto-cjk`, then installed
 non-editably with `[dev,render]` into a separate worktree `.venv-wheel`.
 `chrona.__file__` resolves inside that environment's `site-packages`.
 The wheel interpreter passed both `test_style_resource_ingress.py` and
-`test_style_scoped_legends.py` (26 tests, `--import-mode=importlib`; only the
+`test_style_scoped_legends.py` (28 tests, `--import-mode=importlib`; only the
 repository test helpers were on `PYTHONPATH`). It also passed
 `tools/wheel_smoke.py` from `/tmp`, outside the checkout. This is local
 packaging evidence, not the exact-main three-OS release gate.
@@ -44,13 +44,22 @@ same-field columns, actual fill/Scene validation and suppression. No design
 or public-output policy changed.
 Combined ingress/legend/content/Scene regression check passed41 tests.
 
-The final 50-slide public batch is49 byte-identical SVG/Scene pairs and the
+The pre-approval 50-slide public batch is49 byte-identical SVG/Scene pairs and the
 known `glyph-gates` pair only. Both differing files are byte-identical to the
 previous S1 glyph-fill evidence: S2 introduces no additional public corpus
 delta. `regenerate_public_examples.py --check --jobs 4` still fails with
 `E_MATERIALIZER_MISMATCH` for that declared paint migration; an aggregating
 read-only materializer batch confirms all50 outcomes. No generated file was
-edited. This does not waive the unresolved S1 contrast gate.
+edited. After the approved declaration, a bounded glyph-gates regeneration
+produces SVG and Scene bytes identical to corrected S1; no additional S2 delta.
+
+S1 official PR snapshot [39074991839](https://github.com/tya5/chrona/actions/runs/39074991839)
+has109 paths, five changed and none retired: three diagnostic reports plus
+glyph-gates SVG/Scene. All49 other SVG/Scene pairs are byte-identical. The
+Scene changes only the two disclosed Actual outer-part paints and Theme
+provenance; no primitive is added/removed, and no geometry/routes/labels change.
+The snapshot generation/contrast gate passes; remaining PR checks and exact-main
+release must still pass before accepting S1.
 
 ## Literal issue acceptance
 
