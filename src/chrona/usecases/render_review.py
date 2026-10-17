@@ -42,6 +42,7 @@ from chrona.presentation.model.info_diagnostics import (
     ForecastInfo, FieldGroupingSummariesOmitted,
 )
 from chrona.usecases.forecast_schedule import forecast_schedule
+from chrona.usecases.profile_field_bindings import resolve_source_field_bindings
 from chrona.presentation.model.field_role_view import resolve_field_role_view
 from chrona.presentation.contracts.resources import ContractError, ViewAllPeriods, ViewPeriod
 from chrona.presentation.model.preset_target import PresetVisualProfileFallback
@@ -775,6 +776,9 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
     result = scheduler.schedule(project, extension_diagnostics=validate_profiles(project, manifests))
     if not result.ok:
         raise RenderRejected(result.diagnostics)
+    field_bindings, descriptor_diagnostics = resolve_source_field_bindings(project, manifests)
+    if descriptor_diagnostics:
+        raise RenderRejected(list(descriptor_diagnostics))
     ordering = period_range_diagnostics(project, result.placements)  # only placements can order a referenced period (#582)
     if ordering:
         raise RenderRejected(list(ordering))
@@ -793,11 +797,18 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
                        if snapshot_project is not None else None)
     if snapshot_result is not None and not snapshot_result.ok:
         raise RenderRejected(snapshot_result.diagnostics)
+    snapshot_field_bindings = None
+    if snapshot_project is not None:
+        snapshot_field_bindings, descriptor_diagnostics = resolve_source_field_bindings(
+            snapshot_project, snapshot_manifests)
+        if descriptor_diagnostics:
+            raise RenderRejected(list(descriptor_diagnostics))
     scenario_ids = ({view.comparison.scenario_id} if view.comparison.baseline == "scenario" else set())
     scenario_ids.update(item.scenario_id for row in view.rows.items for item in row.items if item.source_kind == "scenario")
     if None in scenario_ids:
         raise RenderFailed("E_SCENARIO_REQUIRED", "Scenario source requires a scenario id", "view")
     scenarios = {}
+    scenario_field_bindings = {}
     provenance = []
     for scenario_id in sorted(scenario_ids):
         try:
@@ -809,6 +820,10 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
                                              extension_diagnostics=validate_profiles(scenario_project, manifests))
         if not scenario_result.ok:
             raise RenderRejected(scenario_result.diagnostics)
+        source_bindings, descriptor_diagnostics = resolve_source_field_bindings(scenario_project, manifests)
+        if descriptor_diagnostics:
+            raise RenderRejected(list(descriptor_diagnostics))
+        scenario_field_bindings[scenario_id] = source_bindings
         scenarios[scenario_id] = (scenario_project, scenario_result.placements)
         provenance.append(resolved.provenance)
     projection = build_review_projection(
@@ -819,6 +834,9 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         analysis=result.analysis,
         snapshot_analysis=snapshot_result.analysis if snapshot_result is not None else None,
         forecast=forecast,
+        field_bindings=field_bindings,
+        snapshot_field_bindings=snapshot_field_bindings,
+        scenario_field_bindings=scenario_field_bindings,
     )
     if forecast is not None:
         _require_forecast_occurrence_coverage(view, projection)

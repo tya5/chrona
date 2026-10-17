@@ -38,7 +38,11 @@ from chrona.presentation.layout.surface_geometry import coordinate_for_date
 from chrona.presentation.layout.surface_deadlines import complete_deadline_host
 from chrona.presentation.layout.text import metric_for_role, measure_text_width
 from chrona.presentation.layout.lane_projection import (
-    folded_instance_id, lane_missing_actual_visible, close_lane_projection, lane_instance_owners,
+    folded_instance_id, lane_missing_actual_visible,
+)
+from chrona.presentation.layout.style_occurrences import StyleSourceOccurrences
+from chrona.presentation.layout.style_text import (
+    resolve_label_candidate_styles, resolve_text_style_intent,
 )
 from chrona.presentation.layout.surface_mark_visibility import (
     MarkOccurrence, MarkOccurrenceKind, outside_window_provenance,
@@ -183,22 +187,15 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
     contract = request.presentation_contract
     visibility_index = getattr(request, "mark_visibility_index", None)
     style_index = getattr(request.surface_content, "style_intents", None)
-    lane_style_sources = {}
-    if style_index is not None and style_index.intents and projection.lane_membership is not None:
-        closure = close_lane_projection(projection, as_of=contract.time.as_of)
-        for instance, (lane_id, member_id) in lane_instance_owners(projection, closure).items():
-            lane_style_sources[(lane_id, member_id, instance.object_id, instance.source_kind)] = MarkOccurrence(
-                MarkOccurrenceKind.LANE_SOURCE, instance.row_id, instance.item_id,
-                instance.object_id, instance.source_kind)
+    style_sources = (StyleSourceOccurrences.from_projection(projection, as_of=contract.time.as_of)
+                     if style_index is not None and style_index.intents else None)
 
     def prepared_style(item: Any, *, kind: MarkOccurrenceKind,
                        container_id: str, source_kind: str, member_id: str | None = None):
         if style_index is None or not style_index.intents:
             return None
         member = member_id or item.item_id or item.object_id
-        occurrence = (lane_style_sources[(container_id, member, item.object_id, source_kind)]
-                      if kind == MarkOccurrenceKind.LANE_FINAL else
-                      MarkOccurrence(kind, container_id, member, item.object_id, source_kind))
+        occurrence = style_sources.occurrence(kind, container_id, member, item.object_id, source_kind)
         return occurrence.style_intents(style_index)
     if getattr(projection, "window_mode", None) == WindowMode.EXPLICIT and visibility_index is None:
         raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/window",
@@ -334,12 +331,37 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
         deadline for deadline in getattr(projection, "deadlines", ())
         if projection.window[0] <= deadline.deadline <= projection.window[1]
     )
+    def folded_label_candidates():
+        return (("end", "start") if contract.labels.side == "auto" else (contract.labels.side,))
+
+    def folded_title_measures(folded):
+        instance_id = folded_instance_id(folded, folded.item)
+        key = (style_sources.label_key(folded.item, folded.group_id, "memberLabel", folded=True)
+               if style_sources is not None else None)
+        candidates = folded_label_candidates()
+        selected = (resolve_label_candidate_styles(key, candidates, style_index, request.theme_tokens)
+                    if key is not None else {})
+        base_role = "groupHeader"
+        return tuple((side, measure_label_footprint(
+            f"member-label:{instance_id}", folded.item.title or "",
+            (selected.get(side).role if selected.get(side) and selected[side].role else base_role),
+            "memberLabel", request)) for side in candidates)
+
     def forecast_label_measures(folded):
         instance_id = folded_instance_id(folded, folded.item)
-        title = measure_label_footprint(f"member-label:{instance_id}", folded.item.title or "",
-            "groupHeader", "memberLabel", request)
+        title_measures = tuple(measure for _, measure in folded_title_measures(folded))
+        title = replace(title_measures[0], size=(
+            max(measure.size[0] for measure in title_measures),
+            max(measure.size[1] for measure in title_measures)))
+        delta_role = request.surface_content.label_text_role or "text"
+        if style_sources is not None:
+            delta_key = style_sources.label_key(
+                folded.item, folded.group_id, finish_delta_semantic(folded.item), folded=True)
+            delta_intent = resolve_text_style_intent(delta_key, style_index, request.theme_tokens)
+            if delta_intent is not None and delta_intent.role:
+                delta_role = delta_intent.role
         delta = measure_label_footprint(f"variance:{instance_id}", finish_delta_text(folded.item),
-            request.surface_content.label_text_role or "text", finish_delta_semantic(folded.item), request)
+            delta_role, finish_delta_semantic(folded.item), request)
         return title, delta
 
     def folded_extent(folded: Any) -> tuple[float, float, float, float]:
@@ -389,11 +411,22 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             reach = geometry_sum((title.size[0], title.gap, delta.size[0], delta.gap))
             left, right = min(lefts) - reach, max(rights) + reach
         else:
-            width = measure_text_width(
-                folded.item.title or "", font_size=float(label_treatment.font_size),
-                font_metrics=metric_for_role(request.theme_tokens, "groupHeader", request.font_metrics),
-                letter_spacing=float(label_treatment.letter_spacing),
-                text_transform=label_treatment.transform, numeric_spacing="proportional")
+            styled_title = False
+            if style_sources is not None:
+                key = style_sources.label_key(folded.item, folded.group_id, "memberLabel", folded=True)
+                selected = resolve_label_candidate_styles(
+                    key, folded_label_candidates(), style_index, request.theme_tokens)
+                styled_title = any(intent is not None and intent.role not in (None, "groupHeader")
+                                   for intent in selected.values())
+            if styled_title:
+                title_measures = tuple(measure for _, measure in folded_title_measures(folded))
+                width = max((measure.size[0] for measure in title_measures), default=0.0)
+            else:
+                width = measure_text_width(
+                    folded.item.title or "", font_size=float(label_treatment.font_size),
+                    font_metrics=metric_for_role(request.theme_tokens, "groupHeader", request.font_metrics),
+                    letter_spacing=float(label_treatment.letter_spacing),
+                    text_transform=label_treatment.transform, numeric_spacing="proportional")
             span = (width + label_gap) if width > 0 else 0.0
             left, right = ((min(lefts) - span, max(rights)) if label_side == "start"
                            else (min(lefts), max(rights) + span))

@@ -539,8 +539,9 @@ now consume that same accessor, retaining order and existing null omission.
 Profile descriptors now reuse the extension-owned field resolver/catalogue;
 source-local immutable carriers and projection pass-through pass57 tests.
 The source adapter/catalogue batch passes35 tests, including ambiguity and
-delivery-authority controls. Adapter orchestration still waits for B's
-overlapping PR1674 files; no second definition merge is introduced.
+delivery-authority controls. After normal merging B's1674, render orchestration
+passes each source's exact bindings into projection, preserving boolean domain
+normalization and the shared evaluator; no second definition merge is introduced.
 Immutable and Draft closure retain source
 Project/extension-index edges to the exact verified package identity; snapshots
 resolve their own pins even across Stores sharing an ID/revision token.
@@ -571,7 +572,12 @@ metadata/paint completion and absent metadata without Style. Table typography
 now resolves before shared source sizing and final placement, with exact
 canonical/selected Scene identity. Native arbitrary-role font/paint and bounded
 capability controls pass161 tests; the source/Scene integration batch passes35
-tests. Label candidate/preflight typography remains pending. Module reachability (285 modules)
+tests. Label candidate/preflight typography is connected across ordinary,
+fixed-lane, folded and key-row paths; native ordinary/lane/folded tests verify
+candidate-specific font, source identity and canonical/selected Scene paint.
+The final focused label/solver/identity batch passes83 tests. Shared fact
+collection, complete role/fill orchestration and release checks remain pending.
+Module reachability (288 modules)
 and inward imports pass without an allowlist. Generic Draft integration tests now provide an explicit temporary
 Store containing the exact declared package bytes rather than bypass closure.
 The remaining Draft test callers share that Store fixture without changing

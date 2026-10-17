@@ -5,7 +5,7 @@ from dataclasses import replace
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.model.semantic_registry import ContrastClass, semantic_binding
+from chrona.presentation.model.semantic_registry import ContrastClass, inside_member_label_semantic, semantic_binding
 from chrona.presentation.model.surface_content import SurfaceContentInput, TableContent
 from chrona.presentation.model.style_rules import (
     OccurrenceStyleIndex, OccurrenceStyleIntent, StyleOccurrenceKey,
@@ -33,6 +33,20 @@ def resolve_text_style_intent(key: StyleOccurrenceKey | None, index: OccurrenceS
             f"cause={error.diagnostic_id}; detail={error.detail or ''}",
         ) from error
     return intent
+
+
+def resolve_label_candidate_styles(
+    key: StyleOccurrenceKey | None, candidates: tuple[str, ...],
+    index: OccurrenceStyleIndex, theme_tokens: Any,
+) -> dict[str, OccurrenceStyleIntent | None]:
+    """Complete each existing candidate's source-semantic treatment before fitting."""
+    return {
+        side: resolve_text_style_intent(
+            replace(key, semantic_id=inside_member_label_semantic(key.source_kind))
+            if key is not None and key.semantic_id == "memberLabel" and side == "inside" else key,
+            index, theme_tokens,
+        ) for side in candidates
+    }
 
 
 def resolve_table_cell_typography(content: SurfaceContentInput, table: TableContent,

@@ -1,7 +1,7 @@
 """Shared normalized and measured lane member-label intent."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from chrona.presentation.layout.chip_geometry import chip_padding
@@ -14,6 +14,8 @@ from chrona.presentation.model.projection import WindowMode
 from chrona.presentation.layout.surface_mark_visibility import (
     MarkOccurrence, MarkOccurrenceKind, ensure_item_mark_visibility_index,
 )
+from chrona.presentation.layout.style_occurrences import StyleSourceOccurrences
+from chrona.presentation.layout.style_text import resolve_label_candidate_styles
 
 
 @dataclass(frozen=True)
@@ -46,6 +48,7 @@ class MeasuredLaneMemberLabel:
     text_transform: str
     numeric_spacing: str
     chip_measurement: MeasuredLabelChip | None = None
+    candidate_measurements: tuple[tuple[str, MeasuredLaneMemberLabel], ...] = ()
 
 
 def _candidates(side: str, fallback: tuple[str, ...], preferred: str | None) -> tuple[str, ...]:
@@ -80,6 +83,10 @@ def measure_lane_member_labels(projection: Any, surface_content: Any, *,
         mark_visibility_index = ensure_item_mark_visibility_index(
             projection, as_of=surface_content.as_of, index=mark_visibility_index)
     labels = []
+    style_index = getattr(surface_content, "style_intents", None)
+    style_sources = (StyleSourceOccurrences.from_projection(
+        projection, as_of=getattr(surface_content, "as_of", None))
+        if style_index is not None and style_index.intents else None)
     for lane_row in projection.lane_rows:
         for item, member_id in zip(lane_row.items, lane_row.member_item_ids, strict=True):
             if not getattr(item, "member_label_eligible", True):
@@ -114,50 +121,71 @@ def measure_lane_member_labels(projection: Any, surface_content: Any, *,
             candidates = _candidates(surface_content.label_side,
                                      surface_content.label_fallback, preferred)
 
-            role = surface_content.label_text_role or "text"
-            treatment = theme_tokens.text_treatment(role)
-            metrics = metric_for_role(theme_tokens, role, font_metrics)
-            visuals = resolve_label_visual_advances(
-                placement_id, role, visual_requests=visual_requests,
-                icon_assets=icon_assets, theme_tokens=theme_tokens,
-            )
-            leading = geometry_sum(width + gap for visual, icon, width, gap in visuals
-                                   if visual.side == "leading")
-            trailing = geometry_sum(width + gap for visual, icon, width, gap in visuals
-                                    if visual.side == "trailing")
             content = " ".join(parts)
-            available = max(1.0, timeline_inline_size * 0.4 - leading - trailing)
-            lines = (wrap_text(content, available_inline=available,
-                               font_size=float(treatment.font_size), font_metrics=metrics,
-                               letter_spacing=float(treatment.letter_spacing),
-                               text_transform=treatment.transform,
-                               numeric_spacing=treatment.numeric_spacing)
-                     if wrap == "allow" else (content,))
-            text_width = max(measure_text_width(
-                line, font_size=float(treatment.font_size), font_metrics=metrics,
-                letter_spacing=float(treatment.letter_spacing),
-                text_transform=treatment.transform,
-                numeric_spacing=treatment.numeric_spacing,
-            ) for line in lines)
-            text_height = (float(treatment.font_size) * float(treatment.line_height) * len(lines))
-            chip_pad = chip_padding(theme_tokens, label_chip_semantic("memberLabel"),
-                                    float(treatment.font_size), text_height)
-            chip_measurement = measure_label_chip(theme_tokens, "memberLabel",
-                text_inline=leading + text_width + trailing, text_block=text_height,
-                font_size=float(treatment.font_size), padding=chip_pad)
-            width = (float(chip_measurement.footprint.inline_size) if chip_measurement is not None
-                     else leading + text_width + trailing + 2 * chip_pad[0])
-            height = (float(chip_measurement.footprint.block_size) if chip_measurement is not None
-                      else text_height + 2 * chip_pad[1])
-            text_inset = (chip_measurement.text_inline_inset if chip_measurement is not None else chip_pad[0])
-            labels.append(MeasuredLaneMemberLabel(
-                placement_id, item.object_id, lane_row.lane_id, member_id,
-                item.source_kind, content, candidates, wrap, lines,
-                width, height, text_inset + leading,
-                max(1.0, float(treatment.font_size) * 0.25),
-                visuals, chip_pad, leading, trailing, text_width,
-                treatment.family, int(treatment.weight), float(treatment.font_size),
-                float(treatment.line_height), float(treatment.letter_spacing),
-                treatment.transform, treatment.numeric_spacing, chip_measurement,
-            ))
+            candidate_styles = {}
+            if style_sources is not None:
+                key = style_sources.label_key(item, lane_row.lane_id, "memberLabel")
+                candidate_styles = resolve_label_candidate_styles(
+                    key, candidates, style_index, theme_tokens)
+
+            def measure_for_role(role: str) -> MeasuredLaneMemberLabel:
+                treatment = theme_tokens.text_treatment(role)
+                metrics = metric_for_role(theme_tokens, role, font_metrics)
+                visuals = resolve_label_visual_advances(
+                    placement_id, role, visual_requests=visual_requests,
+                    icon_assets=icon_assets, theme_tokens=theme_tokens,
+                )
+                leading = geometry_sum(width + gap for visual, icon, width, gap in visuals
+                                       if visual.side == "leading")
+                trailing = geometry_sum(width + gap for visual, icon, width, gap in visuals
+                                        if visual.side == "trailing")
+                available = max(1.0, timeline_inline_size * 0.4 - leading - trailing)
+                lines = (wrap_text(content, available_inline=available,
+                                   font_size=float(treatment.font_size), font_metrics=metrics,
+                                   letter_spacing=float(treatment.letter_spacing),
+                                   text_transform=treatment.transform,
+                                   numeric_spacing=treatment.numeric_spacing)
+                         if wrap == "allow" else (content,))
+                text_width = max(measure_text_width(
+                    line, font_size=float(treatment.font_size), font_metrics=metrics,
+                    letter_spacing=float(treatment.letter_spacing),
+                    text_transform=treatment.transform,
+                    numeric_spacing=treatment.numeric_spacing,
+                ) for line in lines)
+                text_height = float(treatment.font_size) * float(treatment.line_height) * len(lines)
+                chip_pad = chip_padding(theme_tokens, label_chip_semantic("memberLabel"),
+                                        float(treatment.font_size), text_height)
+                chip_measurement = measure_label_chip(theme_tokens, "memberLabel",
+                    text_inline=leading + text_width + trailing, text_block=text_height,
+                    font_size=float(treatment.font_size), padding=chip_pad)
+                width = (float(chip_measurement.footprint.inline_size) if chip_measurement is not None
+                         else leading + text_width + trailing + 2 * chip_pad[0])
+                height = (float(chip_measurement.footprint.block_size) if chip_measurement is not None
+                          else text_height + 2 * chip_pad[1])
+                text_inset = (chip_measurement.text_inline_inset
+                              if chip_measurement is not None else chip_pad[0])
+                return MeasuredLaneMemberLabel(
+                    placement_id, item.object_id, lane_row.lane_id, member_id,
+                    item.source_kind, content, candidates, wrap, lines,
+                    width, height, text_inset + leading,
+                    max(1.0, float(treatment.font_size) * 0.25),
+                    visuals, chip_pad, leading, trailing, text_width,
+                    treatment.family, int(treatment.weight), float(treatment.font_size),
+                    float(treatment.line_height), float(treatment.letter_spacing),
+                    treatment.transform, treatment.numeric_spacing, chip_measurement,
+                )
+
+            default_role = surface_content.label_text_role or "text"
+            candidate_roles = tuple((side, candidate_styles[side].role if candidate_styles.get(side)
+                                     and candidate_styles[side].role else default_role)
+                                    for side in candidates)
+            if any(role != default_role for _, role in candidate_roles):
+                leaves = tuple((side, measure_for_role(role)) for side, role in candidate_roles)
+                widest = max(leaves, key=lambda entry: entry[1].width)[1]
+                labels.append(replace(widest,
+                    width=max(measure.width for _, measure in leaves),
+                    height=max(measure.height for _, measure in leaves),
+                    candidate_measurements=leaves))
+            else:
+                labels.append(measure_for_role(default_role))
     return tuple(labels)

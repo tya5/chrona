@@ -24,7 +24,7 @@ def test_direct_field_reads_keep_projection_order_and_preserve_zero_and_false():
     )
 
     assert _observed_scale_values({"source": {"field": "risk"}}, projection) == (
-        "0", "False", "high",
+        "0", "false", "high",
     )
 
 
