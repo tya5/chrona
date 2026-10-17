@@ -30,7 +30,8 @@ def test_valid_typed_fields_pass():
 
 
 def test_unknown_field_is_pointed():
-    assert _run(_project(rsk="x")) == [("E_PROFILE_FIELD_UNKNOWN", "/objects/a/fields/rsk")]
+    assert _run(_project(**{"acme.rsk": "x"})) == [("E_PROFILE_FIELD_UNKNOWN", "/objects/a/fields/acme.rsk")]
+    assert _run(_project(owner="x")) == []  # bare legacy keys stay free-form
 
 
 def test_wrong_types_are_pointed():

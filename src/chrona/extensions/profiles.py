@@ -117,7 +117,8 @@ def validate_generic_profiles(project: dict[str, Any], package_manifests: dict[s
     """Check objects whose ``type`` names a profile of a declared, resolved package.
 
     One family of pointed diagnostics: ``E_PROFILE_PACKAGE_INVALID``,
-    ``E_PROFILE_FIELD_UNKNOWN``, ``E_PROFILE_FIELD_TYPE``,
+    ``E_PROFILE_FIELD_UNKNOWN`` (only for a namespaced, dotted key such as
+    ``acme.risk``; bare legacy keys stay free-form so existing Projects are unchanged), ``E_PROFILE_FIELD_TYPE``,
     ``E_PROFILE_FIELD_ENUM`` and ``E_PROFILE_FIELD_REQUIRED``. An absent field
     differs from an explicit ``null``: absent is valid unless required; null is
     valid only for an optional field. Objects with an undeclared ``type`` and
@@ -146,7 +147,7 @@ def validate_generic_profiles(project: dict[str, Any], package_manifests: dict[s
         path = f"/objects/{_pointer(object_id)}/fields"
         values = item.get("fields", {})
         for name in values:
-            if name not in profile_fields:
+            if name not in profile_fields and "." in name:  # only namespaced keys are claimed; bare keys stay free-form
                 near = get_close_matches(name, profile_fields, n=1)
                 hint = f"; did you mean {near[0]!r}" if near else ""
                 diagnostics.append(Diagnostic("E_PROFILE_FIELD_UNKNOWN", f"Field {name!r} is not declared by profile {item['type']!r}{hint}", f"{path}/{_pointer(name)}"))
