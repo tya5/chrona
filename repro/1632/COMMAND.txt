@@ -1,0 +1,3 @@
+chrona render repro/1632/u-5task-chain.yaml --preset sunday --output out.svg
+chrona render repro/1632/p-22task-chain.yaml --preset sunday --output out.svg
+(no Actual/Snapshot; --preset sunday only; view = design-default, grouped by responsible)
