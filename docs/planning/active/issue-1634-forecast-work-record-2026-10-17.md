@@ -72,6 +72,30 @@ cover zero-work/non-working duration and incomplete/composite Actuals. Their
 disposition, display/legend contract and whole-architecture review still precede
 normative design completion and the final implementation plan. No product code.
 
+### Scheduler feasibility trace
+
+The existing scheduler can consume a derived Project without a new port or a
+second dependency solver. The following normalization remains a design candidate,
+subject to the duration and incomplete-observation decisions above:
+
+| Source state | Effective scheduling input |
+| --- | --- |
+| Finished span, both Actual endpoints known | Fixed span at those exact observed endpoints; never move a fact to satisfy a dependency. |
+| Started span | Fixed observed start and retained-duration end, extended to at least explicit `asOf`. Incoming contradictions are findings, not permission to rewrite the observed start. |
+| Unstarted span | Scheduled amount with start floor at least the original planned start and `asOf`; replace authored date anchors only in this explicit derived input, retaining applicable bounds/calendar/dependencies. |
+| Scheduled point | Reuse the existing scheduled-point dependency rule and cutoff floor; an observed `at` supplies its completed fact. |
+| Fixed point / rollup | Preserve the fixed target; derive rollup envelopes from forecast children rather than adding a second group scheduler. |
+
+`_validate_fixed_targets` already returns placements with explicit endpoint
+findings. The forecast wrapper must whitelist only that known finding class
+and require a complete, kind-valid placement set; cycles, absent endpoints,
+invalid amounts/calendars and contradictory movable bounds remain fatal.
+Do not call an unsuccessful ordinary outcome successful, or reuse absent
+criticality analysis as if forecast float/critical-path facts were computed.
+The wrapper's source mappings must preserve original object/relation pointers
+in diagnostics; the derived Project is neither persisted nor exposed as a new
+Snapshot. These are scheduling/application contracts, not Layout conditions.
+
 ## Design and implementation publication order
 
 1. Complete normative Spec04/06 and CLI/Context/MCP contracts, diagnostics,
