@@ -29,7 +29,7 @@ the font slice, not this PDF completion.
 | 1 | Synthetic test: a Theme naming only a Latin family renders a CJK string through the fallback and records which face it used. | met | [Automatic CJK controls](../../../tests/integration/test_automatic_cjk_fonts.py) cover declared Latin-only Theme, mixed exact face runs, optional provider absent with injected OS faces, info substitution and PDF text/embedded Noto Sans JP program. | — |
 | 2 | All 15 presets render a Japanese CSV import to PNG, SVG and PDF with no glyph error, on macOS and on the Linux CI runner (Noto CJK package). View three PNGs and one rasterised PDF. | not met | Current macOS integration run:48passed, including all45 real outputs; no refusal exception. Root viewed default/executive/Marquee PNGs and rasterized Marquee PDF in `/tmp/chrona-1612-final-visual.aSJfqb`:74glows/74alpha images/74soft masks, Japanese text extractable and source vectors retained. Linux exact-head evidence pending. | — |
 | 3 | Public SVG/Scene byte-identical for Latin-only examples. | not met | Published font evidence: [artifact12078464991](https://github.com/tya5/chrona/actions/runs/38976260394/artifacts/12078464991) has all50SVG/50Scene byte-identical; [heading artifact12082313818](https://github.com/tya5/chrona/actions/runs/38984444157/artifacts/12082313818) has no font geometry change. Repeat against the post1623 ready base for the current PDF completion; prior placement changes must not be attributed to this adapter slice. | — |
-| 4 | Reviewer: please trace it and fix it in the face-run path, with a synthetic twin of a mixed Latin+CJK string checked for weight in PNG (and the same in PDF). | not met | [Required mixed-script PNG weight finding](https://github.com/tya5/chrona/issues/1612#issuecomment-6229304765). Reproduction and exact-face/full-output controls are pending; the45-output success does not prove this criterion. | — |
+| 4 | Reviewer: please trace it and fix it in the face-run path, with a synthetic twin of a mixed Latin+CJK string checked for weight in PNG (and the same in PDF). | met | Correction `ddc57bd2e`, [full PNG/PDF task twin](../../../tests/integration/test_mixed_script_raster_faces.py) `e7314d630`:2passed, portable provider-absent and native macOS Hiragino W4/W7. Actual table/member Latin crops equal their own same-position400/700 references and differ from the opposite weight; PDF extracted UX text maps to embedded400/700 programs. Native no-projection control fails at the regular crop. Root viewed the full native PNG; its regular UX prefix differs0pixels from Noto Sans400,114from700 and122from Hiragino. The raster chunk had substituted Hiragino Latin despite correct Scene400; completed-run x projection fixes it without changing Layout faces. | — |
 
 ## Architecture and current verification
 
@@ -41,7 +41,14 @@ and TikZ uses closed file paths. Strict system-font refusal is unchanged.
 Specs08/30/37/63 describe the contract. PDF-only halo lowering consumes completed
 regions and original native faces; it retains vector source paint, exact-face
 text and isolated Form resources. No preset, example or generated-output edits.
+Shared private run positioning retains serialized/inherited PDF aliases exactly;
+PNG without fallback runs returns its original input and adapter identity.
+Only halo clones are positioned before rasterization; PDF source is lowered once.
 Current focused evidence:76profile/closure,196schema/package,59existing PDF,
 37glow/registry/native-face/opacity and48CJK integration tests pass.
+Current raster correction controls:34projector/halo/registry/PDF-advance,
+61renderer/font/opacity,2mixed PNG/PDF cases; all48CJK tests rerun successfully.
+Root re-viewed the three PNGs and actual rasterized PDF after this correction;
+Marquee remains74glows/images/soft masks with extractable Japanese text.
 L1 schema equivalence:added1/delta3/equal35, frozen v0.1 unchanged.
 Full current-source release and public-output identity remain pending.
