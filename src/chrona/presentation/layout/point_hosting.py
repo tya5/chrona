@@ -69,7 +69,7 @@ def _occurrences(projection: Any, index: ItemMarkVisibilityIndex,
             result.append(PointHostOccurrence(instance, row_id,
                 f"{row_id}:{item.item_id or item.object_id}", item,
                 index.lookup(occurrence, projection=projection, as_of=as_of)))
-    elif projection.rows:
+    elif projection.has_rows:
         for row in projection.rows:
             for item in row.items:
                 item_id = item.item_id or item.object_id

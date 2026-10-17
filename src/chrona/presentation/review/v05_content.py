@@ -102,7 +102,7 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         if facet == "missingActual" and item.observation_state == ObservationState.DUE_UNOBSERVED:
             return "missingActualCell"
         return "tableCell"
-    if projection.rows:
+    if projection.has_rows:
         def row_cell(row: Any, column: Any, row_index: int) -> TableCellContent:
             if row.key_row:
                 # The key row names itself in the first column and leaves the others empty (#1501).
@@ -518,10 +518,10 @@ def _group_header_facts(projection: ReviewProjection, project: Mapping[str, Any]
     declared = view.grouping.header if view.grouping is not None else None
     if declared is None:
         return None
-    group_ids = tuple(dict.fromkeys(row.group_id for row in projection.rows if row.group_id))
+    group_ids = projection.group_ids
     entities = project.get("entities", {})
-    titles = {row.group_id: next((item.group_label for item in row.items if item.group_label), row.group_id)
-              for row in projection.rows if row.group_id}
+    titles = {group_id: next((item.group_label for item in projection.group_member_items(group_id)
+                              if item.group_label), group_id) for group_id in group_ids}
     secondaries: dict[str, str] | None = None
     if declared.secondary_field is not None:
         secondaries = {}
