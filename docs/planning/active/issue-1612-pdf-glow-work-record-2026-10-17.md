@@ -115,5 +115,11 @@ PNG-private input and PDF halo clone. Root inspected the real executive PNG:
 its mixed `UX` table prefix matches the independent Noto Sans400 reference
 exactly (bold differs114pixels; Hiragino differs122), while the pure-Latin
 control remains unchanged. Existing renderer/font/opacity controls:61passed.
-Independent portable PNG/PDF regression and exact final-head gates remain
-required. No public SVG/Scene serializer or Layout measurement changed.
+Shared-projector/PDF-halo controls:34passed. The independent imported-task
+PNG/PDF regression passes both portable renamed-face and real macOS Hiragino
+W4/W7 cases. Each table/member Latin crop distinguishes same-node400/700
+references; extracted PDF text is associated with its embedded font weight.
+The native no-projection control fails, proving that case detects the original
+defect (the portable case is a weight control, not a claimed reproduction).
+Exact final-head gates remain required. No public SVG/Scene serializer or
+Layout measurement changed.
