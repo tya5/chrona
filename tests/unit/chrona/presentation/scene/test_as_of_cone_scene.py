@@ -90,12 +90,14 @@ def test_an_unknown_fidelity_a_missing_ink_and_an_overstrong_opacity_fail_at_the
     assert (strong.value.diagnostic_id, strong.value.path) == ("E_PRESENTATION_PAINT_INVALID", "/body/roles/as-of-cone/opacity")
 
 
-def test_the_role_is_admitted_for_ink_strength_spread_extent_and_fidelity_only() -> None:
+def test_the_role_keeps_its_symbol_contract_and_admits_style_mark_geometry() -> None:
     for name in ("fill", "opacity", "coneSpread", "coneExtent", "gradientFidelity"):
         assert theme_role_property_consumer("as-of-cone", name) is not None
     for name in ("stroke", "strokeWidth", "dash", "pattern", "backgroundPaintOrder", "glowBlur", "shadowBlur",
-                 "gradientStart", "gradientAngle", "markPaintOrder"):
+                 "gradientStart", "gradientAngle", "markWidth"):
         assert theme_role_property_consumer("as-of-cone", name) is None
+    assert theme_role_property_consumer("as-of-cone", "markPaintOrder") == (
+        "Layout Style-selected mark geometry and Scene Symbol")
     assert theme_role_contract("as-of-cone").scene_kinds == frozenset(("Symbol",))
 
 

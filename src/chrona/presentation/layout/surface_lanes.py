@@ -183,6 +183,7 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
         icon_assets=icon_assets, visual_requests=visual_requests,
         progress_fill_source=surface_content.progress_fill_source,
         mark_visibility_index=mark_visibility_index,
+        style_intents=getattr(surface_content, "style_intents", None),
     )
     provisional_footprints = compose_lane_item_footprints(scale=provisional_scale, **footprint_inputs)
     point_facets = []

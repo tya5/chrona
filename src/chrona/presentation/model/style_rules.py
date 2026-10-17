@@ -1,9 +1,11 @@
 """Pure evaluation of typed Style rules against projected occurrence facts."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field, replace
 from datetime import date
 import math
+from types import MappingProxyType
 from typing import Any
 
 from chrona.presentation.model.semantic_registry import purposes, semantic_ids, semantic_binding
@@ -27,6 +29,7 @@ class StyleOccurrenceKey:
     row_id: str = ""
     member_id: str = ""
     column_id: str = ""
+    occurrence_kind: str = ""
 
 
 @dataclass(frozen=True)
@@ -72,6 +75,43 @@ class StyleEvaluationError(ValueError):
         self.rule_ids = tuple(sorted(set(rule_ids)))
         self.subject = subject
         super().__init__(detail or diagnostic_id)
+
+
+_EMPTY_STYLE_INTENTS: Mapping[str, OccurrenceStyleIntent] = MappingProxyType({})
+
+
+@dataclass(frozen=True, init=False)
+class OccurrenceStyleIndex:
+    """Immutable intent lookup keyed by exact source occurrence identity."""
+
+    intents: tuple[OccurrenceStyleIntent, ...]
+    _by_key: Mapping[StyleOccurrenceKey, OccurrenceStyleIntent] = field(repr=False, compare=False)
+    _by_occurrence: Mapping[StyleOccurrenceKey, Mapping[str, OccurrenceStyleIntent]] = field(repr=False, compare=False)
+
+    def __init__(self, intents: tuple[OccurrenceStyleIntent, ...] = ()) -> None:
+        frozen_intents = tuple(intents)
+        by_key: dict[StyleOccurrenceKey, OccurrenceStyleIntent] = {}
+        by_occurrence: dict[StyleOccurrenceKey, dict[str, OccurrenceStyleIntent]] = {}
+        for intent in frozen_intents:
+            if intent.key in by_key:
+                raise StyleEvaluationError("E_STYLE_RULE_CONFLICT", "duplicate Style occurrence identity",
+                                           "/", subject=intent.key)
+            by_key[intent.key] = intent
+            occurrence_key = replace(intent.key, semantic_id="")
+            by_occurrence.setdefault(occurrence_key, {})[intent.key.semantic_id] = intent
+        object.__setattr__(self, "intents", frozen_intents)
+        object.__setattr__(self, "_by_key", MappingProxyType(by_key))
+        object.__setattr__(self, "_by_occurrence", MappingProxyType({
+            key: MappingProxyType(values) for key, values in by_occurrence.items()
+        }))
+
+    def get(self, key: StyleOccurrenceKey) -> OccurrenceStyleIntent | None:
+        """Return the intent for one source occurrence, if Style matched it."""
+        return self._by_key.get(key)
+
+    def for_occurrence(self, key: StyleOccurrenceKey) -> Mapping[str, OccurrenceStyleIntent]:
+        """Return all semantic intents for the exact source occurrence key."""
+        return self._by_occurrence.get(replace(key, semantic_id=""), _EMPTY_STYLE_INTENTS)
 
 
 _FILLABLE_MARKS = frozenset({"planned", "forecast", "actual", "snapshot"})

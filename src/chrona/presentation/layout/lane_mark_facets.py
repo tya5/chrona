@@ -15,6 +15,7 @@ from chrona.presentation.layout.obstacles import (
 )
 from chrona.presentation.layout.surface_quality import IconPlacement, MarkPlacement, VisualRequest
 from chrona.presentation.model.semantic_registry import mark_style_role
+from chrona.presentation.model.style_rules import StyleOccurrenceKey
 
 
 def _candidate_input_error(owner: str, **operands: object) -> ValueError:
@@ -56,11 +57,16 @@ class LanePlainMarkProjection:
     paint_order: int
     corner_radius: float
     end_treatment: str
+    theme_role: str | None = None
+    style_occurrence_key: StyleOccurrenceKey | None = None
 
     def __post_init__(self) -> None:
         if (self.shape not in {"span", "open-span", "point"}
                 or not self.semantic_role or self.paint_order < 0
                 or not isfinite(self.corner_radius) or self.corner_radius < 0
+                or (self.theme_role is not None and not self.theme_role)
+                or (self.style_occurrence_key is not None
+                    and not isinstance(self.style_occurrence_key, StyleOccurrenceKey))
                 or self.end_treatment not in {"closed", "open"}
                 or (self.shape == "open-span") != (self.end_treatment == "open")):
             raise _candidate_input_error("LanePlainMarkProjection", shape=self.shape,
@@ -85,6 +91,8 @@ class LaneGlyphPartProjection:
     stroke_width: float | None = None
     line_cap: str | None = None
     line_join: str | None = None
+    theme_role: str | None = None
+    style_occurrence_key: StyleOccurrenceKey | None = None
 
     def __post_init__(self) -> None:
         if (self.part_index < 0 or not self.semantic_role or self.paint_order < 0
@@ -95,6 +103,9 @@ class LaneGlyphPartProjection:
                     not isfinite(self.stroke_width) or self.stroke_width <= 0))
                 or (self.line_cap is not None and self.line_cap not in {"butt", "round", "square"})
                 or (self.line_join is not None and self.line_join not in {"miter", "round", "bevel"})
+                or (self.theme_role is not None and not self.theme_role)
+                or (self.style_occurrence_key is not None
+                    and not isinstance(self.style_occurrence_key, StyleOccurrenceKey))
                 or (self.paint_mode != "stroke" and any(
                     value is not None for value in (self.stroke_width, self.line_cap, self.line_join)))
                 or not isfinite(self.corner_radius) or self.corner_radius < 0
@@ -454,7 +465,7 @@ def _compose_progress(closure: LaneProjectionClosure, items: Mapping[LaneProject
 
 def span_mark_footprint(mark: MarkPlacement, theme: Any) -> ObstacleRect:
     """Complete a span's visible paint bounds without changing semantic ports."""
-    width = _stroke_width(theme, mark.semantic_id)
+    width = _stroke_width(theme, mark.semantic_id, getattr(mark, "theme_role", None))
     footprint = _expanded_rect(_bounds(mark.bounds), width / 2 if width is not None else 0.0, mark.placement_id)
     return _clip_rect_footprint(footprint, mark.paint_clip)
 
@@ -473,8 +484,10 @@ def _mark_facets(item: Any, instance: LaneProjectionInstance, mark: MarkPlacemen
     if mark.mark_shape == "span" and not mark.symbol_parts:
         bounds = _bounds(mark.bounds)
         footprint = span_mark_footprint(mark, theme)
+        theme_role = getattr(mark, "theme_role", None)
         payload = LanePlainMarkProjection(mark.mark_shape, mark.semantic_id, mark.paint_order,
-                                          mark.corner_radius, mark.end_treatment)
+                                          mark.corner_radius, mark.end_treatment, theme_role,
+                                          getattr(mark, "style_occurrence_key", None))
         kind = "Symbol" if mark.path_commands else "Rect"
         commands = _commands(mark.path_commands) if mark.path_commands else (("rect", _rect_points(bounds)),)
         return (_facet(instance, item, mark, mark.placement_id, kind,
@@ -490,7 +503,8 @@ def _mark_facets(item: Any, instance: LaneProjectionInstance, mark: MarkPlacemen
             raise LayoutError("E_LAYOUT_LANE_FACET_UNAVAILABLE", mark.placement_id)
         bounds = _point_bounds(points)
         stroke_width = (part.stroke_width if part.stroke_width is not None else
-                        _stroke_width(theme, mark.semantic_id) if part.paint_mode == "stroke" else None)
+                        _stroke_width(theme, mark.semantic_id, getattr(mark, "theme_role", None))
+                        if part.paint_mode == "stroke" else None)
         if part.paint_mode == "stroke" and (stroke_width is None or stroke_width <= 0):
             raise LayoutError("E_LAYOUT_LANE_FACET_UNAVAILABLE", mark.placement_id,
                               detail="stroke glyph has no finite positive Theme width")
@@ -501,7 +515,8 @@ def _mark_facets(item: Any, instance: LaneProjectionInstance, mark: MarkPlacemen
             index, mark.semantic_id, mark.paint_order + index,
             part.paint_mode, part.paint_color,
             mark.mark_shape, mark.corner_radius, mark.end_treatment,
-            stroke_width, part.line_cap, part.line_join,
+            stroke_width, part.line_cap, part.line_join, getattr(mark, "theme_role", None),
+            getattr(mark, "style_occurrence_key", None),
         )
         primitive_id = mark.placement_id if len(mark.symbol_parts) == 1 else f"{mark.placement_id}:part:{index}"
         result.append(_facet(instance, item, mark, primitive_id, "Symbol", commands,
@@ -615,8 +630,8 @@ def _facet(instance: LaneProjectionInstance, item: Any, mark: MarkPlacement | No
     )
 
 
-def _stroke_width(theme: Any, role: str) -> float | None:
-    role = mark_style_role(role)
+def _stroke_width(theme: Any, semantic_role: str, selected_theme_role: str | None = None) -> float | None:
+    role = selected_theme_role or mark_style_role(semantic_role)
     value = theme.optional_number(role, "strokeWidth")
     if value is None:
         return None

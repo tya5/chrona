@@ -11,6 +11,7 @@ from chrona.presentation.model.axis_color_scale import AxisBandFillSpec
 from chrona.presentation.model.date_basis import DisplayDateRange
 from chrona.presentation.model.placement_candidates import PlacementCandidate
 from chrona.presentation.model.projection import ObservationState, ReviewItem, display_finish_delta
+from chrona.presentation.model.style_rules import OccurrenceStyleIndex, StyleOccurrenceKey
 
 
 def _diagnostic_error(code: str, detail: str) -> ValueError:
@@ -102,6 +103,14 @@ class TableColumnContent:
     width: TableColumnWidth
     header_orientation: str = "horizontal"
     text_wrap: Literal["allow", "forbid"] = "forbid"
+    column_source: str | tuple[tuple[str, str], ...] | None = None
+
+    def __post_init__(self) -> None:
+        source = self.column_source
+        if isinstance(source, Mapping):
+            object.__setattr__(self, "column_source", tuple(sorted(source.items())))
+        elif isinstance(source, list):
+            object.__setattr__(self, "column_source", tuple(tuple(pair) for pair in source))
 
 
 @dataclass(frozen=True)
@@ -117,6 +126,8 @@ class TableCellContent:
     affix_suffix: str = ""
     # Forecast deltas are required full text; Layout must refuse truncation/overflow.
     required: bool = False
+    # Exact source row/member identity selected before table measurement.
+    style_key: StyleOccurrenceKey | None = None
 
 
 @dataclass(frozen=True)
@@ -303,6 +314,8 @@ class SurfaceContentInput:
     relation_overflow_declared: bool = False
     # Completed fill overrides for Actual marks, keyed by semantic source object.
     actual_variance_paints: tuple[tuple[str, str], ...] = ()
+    # Evaluated Style intent remains attached to exact source occurrence identity.
+    style_intents: OccurrenceStyleIndex = field(default_factory=OccurrenceStyleIndex)
 
 
 @dataclass(frozen=True)

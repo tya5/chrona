@@ -52,6 +52,17 @@ def cell_typography_role(column: Any) -> str:
     return "numeric" if column.format in {"signedDays", "signedNumber"} else "text"
 
 
+def _table_style_key(item: Any | None, row_id: str, column_id: str,
+                     semantic_id: str) -> StyleOccurrenceKey:
+    """Keep the actual table subject; aggregate/header cells are View facts."""
+    return StyleOccurrenceKey(
+        item.object_id if item is not None else row_id,
+        item.source_kind if item is not None else "view", semantic_id,
+        row_id, (item.item_id or item.object_id) if item is not None else "",
+        column_id, "table-cell",
+    )
+
+
 def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
                                 *, actual_set: Mapping[str, Any] | None = None,
                                 locale: str = "en-US") -> TableContent:
@@ -60,7 +71,7 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         return _lane_table_content(projection, project, view)
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
     columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width), column.header_orientation,
-                                       text_wrap=column.text_wrap)
+                                       text_wrap=column.text_wrap, column_source=column.source)
                     for column in view.table_columns)
     as_of = date.fromisoformat(str(actual_body["asOf"])) if isinstance(actual_body.get("asOf"), str) else None
     def cell_parts(item: Any, column: Any, row_index: int) -> tuple[str, str, str]:
@@ -112,7 +123,8 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
             if row.key_row:
                 # The key row names itself in the first column and leaves the others empty (#1501).
                 text = row.label if column.id == view.table_columns[0].id else ""
-                return TableCellContent(row.row_id, column.id, text, "tableCell", cell_typography_role(column))
+                return TableCellContent(row.row_id, column.id, text, "tableCell", cell_typography_role(column),
+                                        style_key=_table_style_key(None, row.row_id, column.id, "tableCell"))
             item = next(item for item in row.items if item.item_id == row.table_subject_id)
             header = (item.is_rollup and row.rollup_presentation == "header"
                       and column.id == view.hierarchy_column)
@@ -120,7 +132,9 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
                                     "groupHeader" if header else cell_semantic(item, column),
                                     "groupHeader" if header else cell_typography_role(column),
                                     *cell_affixes(item, column, row_index),
-                                    required=_is_forecast_delta(item, column.source))
+                                    required=_is_forecast_delta(item, column.source),
+                                    style_key=_table_style_key(item, row.row_id, column.id,
+                                                              "groupHeader" if header else cell_semantic(item, column)))
         cells = tuple(
             row_cell(row, column, row_index)
             for row_index, row in enumerate(projection.rows, 1) for column in view.table_columns)
@@ -133,7 +147,8 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         row_levels = tuple(TableRowLevel((row.row_id, row.table_subject_id), bool(row.group_id), row.depth)
                            for row in projection.rows)
     else:
-        cells = tuple(TableCellContent(item.object_id, column.id, cell(item, column, row_index), cell_semantic(item, column), cell_typography_role(column), *cell_affixes(item, column, row_index), required=_is_forecast_delta(item, column.source))
+        cells = tuple(TableCellContent(item.object_id, column.id, cell(item, column, row_index), cell_semantic(item, column), cell_typography_role(column), *cell_affixes(item, column, row_index), required=_is_forecast_delta(item, column.source),
+                                       style_key=_table_style_key(item, item.object_id, column.id, cell_semantic(item, column)))
                       for row_index, item in enumerate(projection.items, 1) for column in view.table_columns)
         table_cell_objects = tuple((item.object_id, column.id, item.object_id, True)
                                    for item in projection.items for column in view.table_columns)
@@ -174,7 +189,8 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
         raise ValueError(f"E_REVIEW_LANE_TABLE_PROJECTION: laneMembership={projection.lane_membership is not None}, laneRows={len(projection.lane_rows)}, laneTable={lane_table is not None}")
     declared = lane_table.columns  # #1517: empty keeps the single `Lane` column byte-for-byte
     columns = tuple(TableColumnContent("Lane" if column.source == "label" else column.id, column.id, column.align,
-                                       TableColumnWidth("content", "content"), text_wrap=lane_table.text_wrap)
+                                       TableColumnWidth("content", "content"), text_wrap=lane_table.text_wrap,
+                                       column_source=column.source if isinstance(column.source, Mapping) else None)
                     for column in declared) or (
         TableColumnContent("Lane", _default_lane_header(projection, lane_table), "start",
                            TableColumnWidth("content", "content"), text_wrap=lane_table.text_wrap),)
@@ -232,11 +248,14 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
                 if row.group_id in disambiguate_groups:
                     label = f"{label} — {first_title}"
         if not declared:
-            cells.append(TableCellContent(row.lane_id, "Lane", label, "tableCell"))
+            cells.append(TableCellContent(row.lane_id, "Lane", label, "tableCell",
+                                          style_key=_table_style_key(None, row.lane_id, "Lane", "tableCell")))
         for column in declared:
             if column.source == "label":
-                cells.append(TableCellContent(row.lane_id, "Lane", label, "tableCell", column.text_role or "text"))
+                cells.append(TableCellContent(row.lane_id, "Lane", label, "tableCell", column.text_role or "text",
+                                              style_key=_table_style_key(None, row.lane_id, "Lane", "tableCell")))
                 continue
+            founder = None
             if column.source == "rowIndex":
                 value: Any = row_number
             else:
@@ -245,10 +264,12 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
             cells.append(TableCellContent(row.lane_id, column.id,
                                           display_value(value, column.missing, "text", transform=column.transform)
                                           + (column.suffix or ""),
-                                          "tableCell", column.text_role or "text"))
+                                          "tableCell", column.text_role or "text",
+                                          style_key=_table_style_key(founder, row.lane_id, column.id, "tableCell")))
         if show_count:
             member_count = len(lane.member_item_ids)
-            cells.append(TableCellContent(row.lane_id, "Items", str(member_count), "tableCell", "numeric"))
+            cells.append(TableCellContent(row.lane_id, "Items", str(member_count), "tableCell", "numeric",
+                                          style_key=_table_style_key(None, row.lane_id, "Items", "tableCell")))
         levels.append(TableRowLevel((row.lane_id,), bool(row.group_id)))
     return TableContent(columns, tuple(cells), (), None, tuple(levels))
 

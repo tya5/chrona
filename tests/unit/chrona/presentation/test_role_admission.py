@@ -53,7 +53,7 @@ def _resolve(theme):
     ("variance-behind", "strokeWidth"), ("annotation", "strokeWidth"),
     ("axisMonth", "stroke"), ("groupHeader", "markHeight"),
     ("annotation-note-text", "annotationContainer"), ("baseline", "strokeWidth"),
-    ("fiscalAxis", "annotationContainer"), ("customLegend", "markHeight"),
+    ("fiscalAxis", "annotationContainer"), ("customLegend", "markWidth"),
     ("group:team-a", "stroke"), ("group:bad.key", "fill"),
     ("group:team-a", "fontSize"),
     ("period-band:frost", "markHeight"),

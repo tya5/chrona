@@ -18,6 +18,7 @@ from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.projection_window import require_positive_projection_window
 from chrona.presentation.layout.semantic_mark_facets import select_item_mark_facets
 from chrona.presentation.model.projection import ReviewProjection, WindowMode
+from chrona.presentation.model.style_rules import StyleOccurrenceKey, OccurrenceStyleIndex
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.window_label_admission import WindowLabelAdmission, complete_window_label_admission
 
@@ -42,6 +43,24 @@ class MarkOccurrence:
     item_id: str
     object_id: str
     source_kind: str
+
+    def style_key(self, semantic_id: str) -> StyleOccurrenceKey:
+        """Join source facts to Style without parsing a serialized placement ID.
+
+        Fixed-lane final aliases must first be joined back to their source
+        occurrence by the existing lane-owner map.
+        """
+        if self.kind == MarkOccurrenceKind.LANE_FINAL:
+            raise ValueError("lane Style identity requires the original source occurrence")
+        return StyleOccurrenceKey(
+            self.object_id, self.source_kind, semantic_id,
+            "" if self.kind == MarkOccurrenceKind.AUTO else self.container_id,
+            self.item_id, occurrence_kind=self.kind.value,
+        )
+
+    def style_intents(self, index: OccurrenceStyleIndex):
+        """Return all facet intents for this exact source occurrence."""
+        return index.for_occurrence(self.style_key(""))
 
 
 @dataclass(frozen=True)

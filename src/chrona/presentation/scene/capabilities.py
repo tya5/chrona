@@ -1,8 +1,9 @@
 """The closed renderer-neutral presentation capability ceiling."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import StrEnum
+from functools import lru_cache
 from re import fullmatch
 from chrona.presentation.model.semantic_registry import (
     is_annotation_artwork_role, is_frame_glyph_role, period_variant_role_base,
@@ -163,6 +164,19 @@ _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
     "stampPlacement", "coneSpread", "coneExtent", "radialCenterInline", "radialCenterBlock",
     "radialRadiusInline", "radialRadiusBlock", "radialInnerStop", "edgeRules", "doubleRuleGap",
 ))
+# Properties completed by the Layout mark-role geometry composer. Keep this
+# finite family shared by canonical mark registrations and Style-selected
+# Theme roles; it is not a general admission for arbitrary Theme properties.
+_MARK_GEOMETRY_PROPERTIES = frozenset((
+    "markHeight", "markOffset", "markPaintOrder", "markCornerRadius",
+    "symbolHeight", "symbolOffset", "cornerRadius", "align",
+))
+_STYLE_MARK_PROPERTIES = _MARK_GEOMETRY_PROPERTIES | frozenset(("symbol",))
+_STYLE_MARK_CONSUMER = "Layout Style-selected mark geometry and Scene Symbol"
+_RESERVED_GENERATED_ROLE_PREFIXES = (
+    "group:", "period-band:", "period-label:", "region-frame-",
+    "frame-glyph", "annotation-artwork",
+)
 _LAYOUT_POLICY = frozenset(("backgroundTreatment", "backgroundPaintOrder", "patternMode"))
 # A box role's viewer-fit mode (#1050): Layout measures the per-line widths, the SVG adapter serialises them.
 _VIEWER_FIT = frozenset(("viewerFit", "viewerFitAdjust"))
@@ -277,12 +291,10 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              scene_kinds=frozenset(("Text",)))
     register("background", "Scene canvas", _CANVAS_PAINT, scene_kinds=frozenset(("Canvas",)))
     register("planned actual snapshot scenario",
-             "Layout marks and Scene Rect/Symbol", _PATTERNED_RECT_PAINT | frozenset((
-                 "markHeight", "markOffset", "align", "markPaintOrder", "markCornerRadius",
-                 "symbolHeight", "symbolOffset", "cornerRadius")),
+             "Layout marks and Scene Rect/Symbol", _PATTERNED_RECT_PAINT | _MARK_GEOMETRY_PROPERTIES,
              scene_kinds=frozenset(("Rect", "Symbol")))
-    register("missing-actual", "Layout mark and Scene Rect", _PATTERNED_RECT_PAINT | frozenset((
-        "markHeight", "markOffset", "align", "markPaintOrder", "markCornerRadius", "cornerRadius")), scene_kinds=frozenset(("Rect",)))
+    register("missing-actual", "Layout mark and Scene Rect",
+             _PATTERNED_RECT_PAINT | _MARK_GEOMETRY_PROPERTIES, scene_kinds=frozenset(("Rect",)))
     register("network-node", "Scene Rect", _PATTERNED_RECT_PAINT, scene_kinds=frozenset(("Rect",)))
     register("milestone", "Scene Symbol", _PATTERNED_RECT_PAINT, scene_kinds=frozenset(("Symbol",)))
     register("gate", "Scene Symbol", _PATTERNED_RECT_PAINT, scene_kinds=frozenset(("Symbol",)))
@@ -390,6 +402,24 @@ _CATALOG_PATTERN_ROLES = frozenset((
 ))
 
 
+@lru_cache(maxsize=256)
+def _canonical_role_contract(role: str) -> RolePropertyContract | None:
+    """Derive Style mark properties from the registered scene-kind contract."""
+    contract = _ROLE_PROPERTY_CONTRACTS.get(role)
+    if contract is None or not contract.scene_kinds & {"Rect", "Symbol"}:
+        return contract
+    added = _STYLE_MARK_PROPERTIES - contract.properties
+    if not added:
+        return contract
+    owners = dict(contract.property_owners)
+    owners.update((name, _STYLE_MARK_CONSUMER) for name in added)
+    return replace(
+        contract,
+        properties=contract.properties | _STYLE_MARK_PROPERTIES,
+        property_owners=tuple(sorted(owners.items())),
+    )
+
+
 def theme_role_contract(role: str) -> RolePropertyContract | None:
     """Expose the finite known-role entry for structural consumer checks."""
     # The suffix is the shared common-v0.1 slug lexeme selected by frame.paint.
@@ -402,7 +432,7 @@ def theme_role_contract(role: str) -> RolePropertyContract | None:
     period_role = period_variant_role_base(role)
     if period_role is not None:
         return _ROLE_PROPERTY_CONTRACTS[period_role]
-    return _ROLE_PROPERTY_CONTRACTS.get(role)
+    return _canonical_role_contract(role)
 
 
 def theme_role_property_consumer(role: str, property_name: str) -> str | None:
@@ -413,7 +443,11 @@ def theme_role_property_consumer(role: str, property_name: str) -> str | None:
     """
     contract = theme_role_contract(role)
     if contract is not None:
-        return contract.consumer if property_name in contract.properties else None
+        if property_name in contract.properties and contract.owner_of(property_name) == _STYLE_MARK_CONSUMER:
+            return _STYLE_MARK_CONSUMER
+        if property_name in contract.properties:
+            return contract.consumer
+        return None
     # The registered group colour namespace takes precedence over both
     # open-name producers; it is not an arbitrary axis/legend role.
     if role.startswith("group:"):
@@ -422,6 +456,10 @@ def theme_role_property_consumer(role: str, property_name: str) -> str | None:
                 else None)
     if role.startswith(("period-band:", "period-label:")):
         return None
+    if role.startswith(_RESERVED_GENERATED_ROLE_PREFIXES):
+        return None
+    if property_name in _STYLE_MARK_PROPERTIES:
+        return _STYLE_MARK_CONSUMER
     if property_name in _OPEN_AXIS_PROPERTIES:
         return "View-named axis-tier or table column text measurement"
     if property_name in _OPEN_LEGEND_PROPERTIES:

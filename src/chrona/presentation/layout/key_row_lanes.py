@@ -52,7 +52,11 @@ def assign_key_row_lanes(review_rows: tuple[Any, ...], *, request: Any, scale: A
                 item=item, instance_id=f"{row.row_id}:{item.item_id or item.object_id}", source_kind=item.source_kind,
                 frame=probe, as_of=as_of, theme_tokens=theme, slot_id=slot_id, emit_missing_actual=True,
                 emit_diagnostics=False,
-                selection=admitted_source_selection(visibility) if visibility is not None else None)
+                selection=admitted_source_selection(visibility) if visibility is not None else None,
+                style_intents=(MarkOccurrence(MarkOccurrenceKind.ROW, row.row_id,
+                                             item.item_id or item.object_id, item.object_id,
+                                             item.source_kind).style_intents(request.surface_content.style_intents)
+                               if getattr(request.surface_content, "style_intents", None) is not None else None))
             for mark in composition.marks:
                 lefts.append(float(mark.bounds.inline))
                 rights.append(float(mark.bounds.inline) + float(mark.bounds.inline_size))

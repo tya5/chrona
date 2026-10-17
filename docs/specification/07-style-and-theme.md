@@ -121,6 +121,11 @@ their declared types without boolean/number coercion. Snapshot facts use the
 Snapshot Project's own pinned declarations; scenario facts use the primary
 declarations after overlays. Object ID alone is not occurrence identity: source,
 row/member, semantic and column identities remain distinct.
+An occurrence also distinguishes its source container kind, such as an
+ordinary row and a folded group. Its semantic is the original canonical host
+binding, not a logical placement-name alias: existing primary points use
+`gate` when the base Theme declares that treatment, while forecast points keep
+`forecast`. The selected Style role cannot redefine that semantic identity.
 
 The first encoding channel is `fill`, on supported member marks and table cells.
 Its source, scale and domain use the existing colour-encoding contract (Spec60).
@@ -137,6 +142,13 @@ mark and stroke attributes must enter Layout before measurement, fitting and
 routing. Scene keeps canonical `visualRole` and purpose; optional paired
 `semanticId`/`themeRole` record the vocabulary binding and selected treatment.
 Adapters serialize completed paint and geometry, never evaluate predicates.
+Theme capability admission recognizes the implemented Style-selected mark
+geometry and point-symbol consumers for ordinary authored role names and
+existing Rect/Symbol role contracts. This does not relax generated namespaces,
+specialized fill-only state roles, unknown properties or catalogue-pattern
+applicability. A selected role must supply the bindings its actual primitive
+family uses; incomplete treatment fails with `E_STYLE_ROLE_INCOMPATIBLE`
+before measurement rather than inheriting the old role's geometry.
 
 ### 4.2 Inputs
 
