@@ -897,7 +897,7 @@ def test_vertical_summary_ignores_unpainted_bands_and_succeeds_for_tiny_host():
                                      ("table", "timeline", "timeline-axis")])
 @pytest.mark.parametrize("label_side", ["auto", "inside"])
 def test_native_captions_close_one_shared_row_floor_from_actual_headers_and_axis(headed, label_side, monkeypatch):
-    from chrona.presentation.layout import surface_composer, surface_preparation
+    from chrona.presentation.layout import surface_annotations, surface_composer, surface_preparation
 
     request = _axis_request((AxisTier("month", 1, "grid-major"), AxisTier("quarter", 1, "labels",
         AxisLabelIntent("quarter", (), "center", "thin-with-record", "horizontal", "en-US"))))
@@ -928,14 +928,15 @@ def test_native_captions_close_one_shared_row_floor_from_actual_headers_and_axis
     monkeypatch.setattr(surface_preparation, "prepare_table_header_seed", observed)
     domains = []
     for name in ("SurfaceMemberLabelContext", "SurfaceRoutesContext", "SurfaceAnnotationContext"):
-        original = getattr(surface_composer, name)
+        owner = surface_annotations if name == "SurfaceAnnotationContext" else surface_composer
+        original = getattr(owner, name)
 
         def observed_context(*args, _original=original, _name=name, **kwargs):
             context = _original(*args, **kwargs)
             domains.append((_name, context))
             return context
 
-        monkeypatch.setattr(surface_composer, name, observed_context)
+        monkeypatch.setattr(owner, name, observed_context)
     placed = surface_composer.compose_surface_layout(request).placement
     assert len(seeds) == 1
     header, = (text for text in placed.text if text.placement_id == "column:name")

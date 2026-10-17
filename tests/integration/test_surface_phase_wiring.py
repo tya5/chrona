@@ -79,12 +79,12 @@ def test_routes_and_labels_use_isolated_trials_from_one_pre_route_inventory(tmp_
         return result
 
     monkeypatch.setattr(surface_composer, "compose_routes_and_member_labels", plan_spy)
-    original_selection = surface_composer.select_completed_route_label_plan
+    original_selection = surface_route_label_plan.select_completed_route_label_plan
     def selection_spy(*args):
         result, annotations = original_selection(*args)
         seen["selected_index_id"] = id(result.obstacles)
         return result, annotations
-    monkeypatch.setattr(surface_composer, "select_completed_route_label_plan", selection_spy)
+    monkeypatch.setattr(surface_route_label_plan, "select_completed_route_label_plan", selection_spy)
     example = ROOT / "examples/halcyon-1"
     monkeypatch.setattr(sys, "argv", ["chrona", "render", str(example / "project.yaml"),
                                       "--actual", str(example / "actual.yaml"),

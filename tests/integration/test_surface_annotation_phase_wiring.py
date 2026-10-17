@@ -89,14 +89,14 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
         return result
 
     monkeypatch.setattr(surface_composer, "compose_routes_and_member_labels", plan_spy)
-    original_selection = surface_composer.select_completed_route_label_plan
+    original_selection = surface_route_label_plan.select_completed_route_label_plan
     def selection_spy(*args):
         result, annotations = original_selection(*args)
         seen["selected_index"] = result.obstacles
         seen["selected_routes"] = {item.relation_id: item.points for item in result.routes.relations}
         call["selected_annotations"] = annotations
         return result, annotations
-    monkeypatch.setattr(surface_composer, "select_completed_route_label_plan", selection_spy)
+    monkeypatch.setattr(surface_route_label_plan, "select_completed_route_label_plan", selection_spy)
     original_complete = surface_composer.complete_surface_layout
 
     def completion_spy(context):
@@ -108,7 +108,7 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
         return original_complete(context)
 
     monkeypatch.setattr(surface_composer, "complete_surface_layout", completion_spy)
-    original = surface_composer.place_annotations
+    original = surface_annotations.place_annotations
 
     def annotations_spy(context):
         events.append("annotations")
@@ -119,7 +119,7 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
         call["batch"] = batch
         return batch
 
-    monkeypatch.setattr(surface_composer, "place_annotations", annotations_spy)
+    monkeypatch.setattr(surface_annotations, "place_annotations", annotations_spy)
     example = ROOT / "examples/halcyon-1"
     monkeypatch.setattr(sys, "argv", [
         "chrona", "render", str(example / "project.yaml"), "--actual", str(example / "actual.yaml"),

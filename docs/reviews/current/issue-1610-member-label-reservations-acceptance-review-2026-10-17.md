@@ -69,3 +69,9 @@ The private annotation owner completes each option against its own index;
 the392-line composer emits only the selected batch and one final completion.
 No threshold relaxation, example tuning or old compatibility hook is added.
 Fresh exact-head CI and unchanged snapshot identity remain required before merge.
+
+The extracted annotation owner also required four test files to observe their
+actual owners instead of removed composer imports. Terminal CI38999649423 had
+13 such AttributeErrors and12545 passes; no additional failure class. All four
+affected files pass67 focused tests with their geometry assertions unchanged.
+This correction changes tests only, not product code or public artifact bytes.

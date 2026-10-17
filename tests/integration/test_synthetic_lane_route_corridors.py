@@ -53,12 +53,12 @@ def _render_and_compare(tmp_path, source, monkeypatch, *, entry=None, unroutable
         captured["reference"] = options.first
         return options
     monkeypatch.setattr(composer, "compose_routes_and_member_labels", observe)
-    select = composer.select_completed_route_label_plan
+    select = label_plan.select_completed_route_label_plan
     def observe_selection(*args):
         selected, annotations = select(*args)
         captured["selected"] = selected
         return selected, annotations
-    monkeypatch.setattr(composer, "select_completed_route_label_plan", observe_selection)
+    monkeypatch.setattr(label_plan, "select_completed_route_label_plan", observe_selection)
     parts = _parts(entry=entry, unroutable=unroutable)
     if label_sides:
         parts["view"]["body"]["visibility"]["fallback"]["labels"] = label_sides
