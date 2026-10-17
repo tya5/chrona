@@ -2,13 +2,13 @@
 
 ## Baseline and design plan
 
-Ready base: `8fc5364c3022676b680268005417239eb094a5ca`.
+Ready base: `fa262ebab648229138eb34c33bf6a821f6450e96` (PR1623 landed).
 The font and measured-run corrections are published in PRs1619/1621;
 [release38985610444](https://github.com/tya5/chrona/actions/runs/38985610444) passed.
 [Current acceptance](../../reviews/current/issue-1612-automatic-cjk-fonts-acceptance-review-2026-10-17.md)
 now has45/45 macOS outputs after the PDF correction; Linux and mixed-face
-acceptance remain pending. PR1623 lands first;
-the PDF work has no overlapping product files.
+acceptance remain pending. The PDF/PNG branch follows that ready main without
+conflicts; the prior placement/date changes are not part of this adapter delta.
 
 | Literal issue acceptance | Current disposition |
 | --- | --- |
@@ -115,7 +115,10 @@ PNG-private input and PDF halo clone. Root inspected the real executive PNG:
 its mixed `UX` table prefix matches the independent Noto Sans400 reference
 exactly (bold differs114pixels; Hiragino differs122), while the pure-Latin
 control remains unchanged. Existing renderer/font/opacity controls:61passed.
-Shared-projector/PDF-halo controls:34passed. The independent imported-task
+Shared-projector/PDF-halo controls:34passed; two additional registry controls pin
+the conditional PNG grammar identity and exact no-fallback input. Independent
+integration audit found no remaining ownership or alias-preservation blocker.
+The independent imported-task
 PNG/PDF regression passes both portable renamed-face and real macOS Hiragino
 W4/W7 cases. Each table/member Latin crop distinguishes same-node400/700
 references; extracted PDF text is associated with its embedded font weight.
@@ -123,3 +126,10 @@ The native no-projection control fails, proving that case detects the original
 defect (the portable case is a weight control, not a claimed reproduction).
 Exact final-head gates remain required. No public SVG/Scene serializer or
 Layout measurement changed.
+On the post1623 ready base, the combined profile/closure/glow, shared-projector
+and real mixed PNG/PDF batch passes86tests. Full release remains CI-owned.
+Post1623 full `tools.schema_equivalence --base-rev origin/main`: structural,
+corpus and diagnostic comparisons introduce no failure, but the command FAILS
+only its existing runtime gate (L2+L3 90.8s >60s). Do not call it a passing run
+or change the limit. CI conformance runs the same L2/L3 time gate on its runner;
+that result is required before release acceptance.

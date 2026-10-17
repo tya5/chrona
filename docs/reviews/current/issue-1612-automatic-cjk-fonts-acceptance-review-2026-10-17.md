@@ -16,6 +16,8 @@ now implements the published Specs08/63 design without a waiver. macOS passes
 all45 outputs; Linux exact-head CI, post1623 public byte comparison and the new
 review-containing main release remain pending. Earlier release evidence proves
 the font slice, not this PDF completion.
+Current adapter work follows post1623 ready main
+`fa262ebab648229138eb34c33bf6a821f6450e96` without conflicts.
 
 ## Literal issue acceptance
 
@@ -50,5 +52,10 @@ Current raster correction controls:34projector/halo/registry/PDF-advance,
 61renderer/font/opacity,2mixed PNG/PDF cases; all48CJK tests rerun successfully.
 Root re-viewed the three PNGs and actual rasterized PDF after this correction;
 Marquee remains74glows/images/soft masks with extractable Japanese text.
+Post1623 focused profile/closure/glow/projector/real mixed PNG/PDF batch:86passed;
+the conditional PNG adapter-identity controls are included.
 L1 schema equivalence:added1/delta3/equal35, frozen v0.1 unchanged.
+The post1623 full schema-equivalence command fails only the runtime gate:
+L2+L3 90.8s versus60s; structural/corpus/diagnostic comparisons introduce no
+failure. CI conformance must pass that unchanged gate; no local waiver.
 Full current-source release and public-output identity remain pending.
