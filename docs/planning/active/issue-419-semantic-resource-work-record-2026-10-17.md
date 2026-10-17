@@ -2,7 +2,7 @@
 
 Status: V1 implemented and focused verification passed; official count/CI and
 reviewer acceptance remain pending. Source base: published main
-`d0df1e8aa3268f4b7efdda8991c3febf03906193`.
+`358cda0fdbc1998e5250e9e54a63f57d51ccd9cf`.
 [Reviewed scope](https://github.com/tya5/chrona/issues/419#issuecomment-6234966527):
 dev A owns V1/S1/S2; dev B owns C1 and Issue344 Level 1.
 

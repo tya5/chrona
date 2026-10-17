@@ -28,14 +28,19 @@ V1 is partial delivery; no parent closure is claimed.
 
 Focused batches pass92 resource/closure/registry/Scene cases and52 diagnostic/
 boundary/docs cases (overlap); the final direct-type-import batch passes47.
+After normally merging Issue1397 and its trusted derived tip `358cda0fd`,
+the vocabulary/network integration batch passes31 tests.
 Schema equivalence passes:1 added schema,39 unchanged;577 documents/467 mapped/
-5 known invalid and739 unchanged probes; L2+L3=36.5s. Schema inventory,
+5 known invalid and739 unchanged probes; the post-merge rerun takes40.1s
+for L2+L3. Schema inventory,
 annotations/references, reachability, Theme consumers, text encoding and inward
 import checks pass. Built wheel resource/schema bytes match their source files.
 A fresh final-source wheel installed in an isolated venv imports from
 site-packages, loads all117 bindings through the unchanged read API, and runs
 `chrona --version`; its vocabulary identity is
 `sha256:c302c329c8fa1d34b983fd2c1badd479cbd54a3a423b290b32b2e06d67ea606d`.
+Independent installed-wheel checks confirm typed contract parsing, raw-byte
+identity refusal and all19 public registry helper signatures unchanged.
 
 Independent review corrected a mutable derived index; the import-direction
 gate found a bootstrap diagnostic-layer cycle. The published correction keeps
