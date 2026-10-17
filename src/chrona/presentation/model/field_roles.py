@@ -139,3 +139,9 @@ class FieldRoleBindings:
         if object_id is None:
             return None
         return self._descriptor_lookup.get(object_id, {}).get(field_name)
+
+    def descriptors_for(self, object_id: str | None) -> tuple[FieldDescriptor, ...]:
+        """Return declared fields for one exact source object in declaration order."""
+        if object_id is None:
+            return ()
+        return tuple(self._descriptor_lookup.get(object_id, {}).values())

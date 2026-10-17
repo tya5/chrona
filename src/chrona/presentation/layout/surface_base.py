@@ -30,7 +30,7 @@ from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
 from chrona.presentation.layout.mark_role_geometry import (
     resolve_occurrence_mark_frame, selected_mark_style_intents,
 )
-from chrona.presentation.layout.semantic_mark_facets import select_item_mark_facets
+from chrona.presentation.model.semantic_mark_facets import select_item_mark_facets
 from chrona.presentation.layout.surface_lanes import review_rows
 from chrona.presentation.layout.surface_geometry import bounds_from_rect, plot_rect, rect_from_bounds
 from chrona.presentation.layout.surface_quality import (

@@ -26,8 +26,10 @@ from chrona.presentation.figure_text import FigureTextProgram
 from chrona.presentation.heading_text import HeadingTextPrograms, close_heading
 from chrona.presentation.model.color_scale import OTHER_LABEL, ResolvedColorScale, scale_text
 from chrona.presentation.model.style_rules import (
-    StyleFieldFact, StyleOccurrence, StyleOccurrenceKey, evaluate_style_rules,
+    OccurrenceStyleIndex, StyleFieldFact, StyleOccurrence, StyleOccurrenceKey, evaluate_style_rules,
 )
+from chrona.presentation.style import StyleRule
+from chrona.presentation.review.style_occurrences import collect_surface_style_facts
 from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.presentation.review.style_intent import lower_legacy_color_encoding
 from chrona.presentation.model.axis_names import axis_name_table
@@ -341,7 +343,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                   annotation_kind_colors: Mapping[str, str] | None = None,
                                   actual_variance_colors: Mapping[str, str] | None = None,
                                   dependency_critical_role_available: bool = False,
-                                  annotation_kind_also: Mapping[str, tuple[str, ...]] | None = None) -> SurfaceContentInput:
+                                  annotation_kind_also: Mapping[str, tuple[str, ...]] | None = None,
+                                  style_rules: tuple[StyleRule, ...] = (),
+                                  gate_declared: bool = False) -> SurfaceContentInput:
     """Normalize current Project/View/profile facts without legacy Settings."""
     if table is None:
         table = normalize_v05_table_content(projection, project, view, actual_set=actual_set, locale=locale)
@@ -518,7 +522,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         scale_paints = tuple(paints)
         used = _used_scale_values(color_scale, projection)
         scale_legend_paints = tuple((ref, color) for ref, _label, color in color_scale.legend_items(used))
-    return SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
+    content = SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
                                show_member_labels=label_placement in {"plot", "legacy"}, label_placement=label_placement, label_content=label_content,
                                label_side=label_side,
                                label_overflow=label_overflow, relation_overflow=relation_overflow,
@@ -560,6 +564,12 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                                   for target in (annotation_kind_also or {}).get(item.kind, ())))),
                                actual_variance_paints=select_actual_variance_paints(
                                    projection, actual_variance_colors or {}))
+    if style_rules:
+        facts = collect_surface_style_facts(projection, content, gate_declared=gate_declared)
+        rules = (*encoding_rules, *style_rules) if color_scale is not None else style_rules
+        content = replace(content, style_intents=OccurrenceStyleIndex(evaluate_style_rules(
+            rules, facts.occurrences, field_catalogue=facts.field_catalogue)))
+    return content
 
 
 def _group_header_facts(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> dict[str, Any] | None:

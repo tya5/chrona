@@ -43,6 +43,44 @@ class StyleFieldFact:
     aliases: tuple[str, ...] = ()
 
 
+def field_facts_for_item(item: Any) -> tuple[StyleFieldFact, ...]:
+    """Snapshot typed field facts through one ReviewItem's source-local accessor.
+
+    Declarations are included even when a value is absent or null. Legacy and
+    undeclared fields remain opaque (``kind=None``); values are never used to
+    infer their type. Style's predicate vocabulary is scalar-only, so a present
+    nonscalar retains presence but has no scalar value to compare.
+    """
+    bindings = item.field_bindings
+    object_id = item.object_id
+    fields = item.fields
+    descriptors = bindings.descriptors_for(object_id)
+    descriptor_by_name = {descriptor.name: descriptor for descriptor in descriptors}
+    aliases_by_name: dict[str, list[str]] = {}
+    for role, field_name in bindings.bindings:
+        aliases_by_name.setdefault(field_name, []).append(role)
+
+    names = list(descriptor_by_name)
+    if isinstance(fields, Mapping):
+        names.extend(name for name in fields if isinstance(name, str) and name not in descriptor_by_name)
+
+    facts = []
+    for name in names:
+        read = bindings.read_result(fields, {"field": name}, object_id=object_id)
+        value = read.value if (read.value is None or isinstance(read.value, (str, bool, int, float))) else None
+        descriptor = descriptor_by_name.get(name)
+        facts.append(StyleFieldFact(
+            name=name,
+            kind=descriptor.kind if descriptor is not None else None,
+            present=read.present,
+            value=value,
+            cardinality=descriptor.cardinality if descriptor is not None else "one",
+            enum_values=descriptor.enum_values if descriptor is not None else (),
+            aliases=tuple(aliases_by_name.get(name, ())),
+        ))
+    return tuple(facts)
+
+
 @dataclass(frozen=True)
 class StyleOccurrence:
     key: StyleOccurrenceKey

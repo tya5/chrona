@@ -27,7 +27,7 @@ from chrona.presentation.layout.lane_projection import (
 )
 from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
 from chrona.presentation.layout.lane_label_intent import measure_lane_member_labels
-from chrona.presentation.layout.semantic_mark_facets import mark_placement_facet
+from chrona.presentation.model.semantic_mark_facets import mark_placement_facet
 from chrona.presentation.layout.lane_label_preflight import lane_label_row_requirements
 from chrona.presentation.layout.surface_quality import ScalePlacement
 from chrona.presentation.layout.lane_mark_facets import (

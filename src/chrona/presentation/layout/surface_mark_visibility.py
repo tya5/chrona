@@ -16,7 +16,7 @@ from chrona.presentation.layout.mark_facet_visibility import (
 )
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.projection_window import require_positive_projection_window
-from chrona.presentation.layout.semantic_mark_facets import select_item_mark_facets
+from chrona.presentation.model.semantic_mark_facets import select_item_mark_facets
 from chrona.presentation.model.projection import ReviewProjection, WindowMode
 from chrona.presentation.model.style_rules import StyleOccurrenceKey, OccurrenceStyleIndex
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject

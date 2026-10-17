@@ -1,7 +1,6 @@
 """Native Layout/Scene evidence for Style-selected member-label typography."""
 from __future__ import annotations
 
-from dataclasses import replace
 from datetime import date
 from pathlib import Path
 
@@ -9,13 +8,7 @@ import pytest
 
 from chrona.presentation.contracts.resources import ClosureIdentity, parse_contract
 from chrona.presentation.layout import surface_count_closure
-from chrona.presentation.layout.style_occurrences import StyleSourceOccurrences
-from chrona.presentation.model.semantic_registry import (
-    inside_member_label_semantic, semantic_binding,
-)
-from chrona.presentation.model.style_rules import (
-    OccurrenceStyleIndex, StyleOccurrence, evaluate_style_rules,
-)
+from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.usecases import render_review as render_review_usecase
 from tests.support import synthetic_review as sr
 
@@ -74,30 +67,6 @@ def _source(mode: str):
     raise AssertionError(mode)
 
 
-def _label_facts(projection):
-    sources = StyleSourceOccurrences.from_projection(projection, as_of=None)
-    facts = []
-
-    def add(item, container_id, *, folded=False):
-        outside = sources.label_key(item, container_id, "memberLabel", folded=folded)
-        inside = replace(outside, semantic_id=inside_member_label_semantic(outside.source_kind))
-        for key in (outside, inside):
-            binding = semantic_binding(key.semantic_id)
-            facts.append(StyleOccurrence(key, binding.purpose, binding.primitive_kind))
-
-    if sources.lane_mode:
-        for row in projection.lane_rows:
-            for item in row.items:
-                add(item, row.lane_id)
-    else:
-        for row in projection.rows:
-            for item in row.items:
-                add(item, row.row_id)
-        for folded in projection.folded_points:
-            add(folded.item, folded.group_id, folded=True)
-    return tuple(facts)
-
-
 def _render(tmp_path, monkeypatch, *, mode: str, styled: bool):
     parts, rules = _parts()
     if mode == "ordinary":
@@ -123,11 +92,12 @@ def _render(tmp_path, monkeypatch, *, mode: str, styled: bool):
         return result
 
     def normalize(*args, **kwargs):
-        content = _ORIGINAL_NORMALIZE(*args, **kwargs)
         if not styled:
-            return content
-        facts = _label_facts(args[0])
-        return replace(content, style_intents=OccurrenceStyleIndex(evaluate_style_rules(rules, facts)))
+            return _ORIGINAL_NORMALIZE(*args, **kwargs)
+        return _ORIGINAL_NORMALIZE(
+            *args, **kwargs, style_rules=rules,
+            gate_declared="gate" in parts["theme"]["body"]["roles"],
+        )
 
     monkeypatch.setattr(surface_count_closure, "compose_surface_layout", compose)
     monkeypatch.setattr(render_review_usecase, "normalize_v05_surface_content", normalize)
@@ -196,5 +166,10 @@ def test_selected_member_label_roles_reach_layout_and_scene(tmp_path, monkeypatc
     plain_scene = next(item for item in control.surface.primitives
                        if item.scene_id == plain[0].placement_id)
     assert plain_scene.theme_role is None and plain_scene.semantic_id is None
-    assert not any("W_THEME_ROLE_UNREAD" in str(item) and "style-" in str(item)
+    assert not any("W_THEME_ROLE_UNREAD" in str(item) and label.theme_role in str(item)
+                   for item in rendered.surface.diagnostics)
+    if mode == "folded":
+        # Folded title ladders never admit an inside candidate; its separately
+        # authored role remains truthfully unused rather than creating a fact.
+        assert any("W_THEME_ROLE_UNREAD" in str(item) and "style-inside-label" in str(item)
                    for item in rendered.surface.diagnostics)

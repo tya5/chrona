@@ -1,7 +1,7 @@
 # Issue419 — semantic mapping resource
 
-Status: V1 implemented; reviewer-required rationale retained and official
-artifact equivalence verified. Final current-base CI and release remain pending.
+Status: V1 merged as `ff9abcbbb` (PR1668); rationale and final-head artifact
+equivalence verified, all PR checks green. Post-merge release remains pending.
 Source base: trusted-ready published main
 `7872cd47ab7e79de3cda96c8da9e5b88cfc87c3a`.
 [Reviewed scope](https://github.com/tya5/chrona/issues/419#issuecomment-6234966527):
@@ -591,7 +591,12 @@ tests. Label candidate/preflight typography is connected across ordinary,
 fixed-lane, folded and key-row paths; native ordinary/lane/folded tests verify
 candidate-specific font, source identity and canonical/selected Scene paint.
 The final focused label/solver/identity batch passes83 tests. Shared fact
-collection, complete role/fill orchestration and release checks remain pending.
+collection now uses the model-owned temporal selector and exact mark/cell/text
+keys. Native tests pass parsed rules through normalization, not completed-index
+injection. The collector/normalization/native batch passes176 tests; typed-field
+Context ingress also verifies enum/alias matching, absent booleans and pointed
+type/unknown failures. Scalar field facts retain declarations and source aliases
+without inferring schemas. Complete fill orchestration and release checks remain pending.
 Module reachability (288 modules)
 and inward imports pass without an allowlist. Generic Draft integration tests now provide an explicit temporary
 Store containing the exact declared package bytes rather than bypass closure.

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from datetime import date
-from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -13,9 +12,6 @@ from chrona.presentation.layout.surface_mark_visibility import (
 )
 from chrona.presentation.model.mark_semantics import canonical_mark_semantic
 from chrona.presentation.model.semantic_registry import semantic_binding
-from chrona.presentation.model.style_rules import (
-    OccurrenceStyleIndex, StyleOccurrence, evaluate_style_rules,
-)
 from chrona.usecases import render_review as render_review_usecase
 from chrona.presentation.layout import surface_count_closure
 from tests.support import synthetic_review as sr
@@ -73,10 +69,9 @@ def _source_for(mode: str):
     raise AssertionError(mode)
 
 
-def _style_index(projection, parts, rules):
+def _source_keys(projection, parts):
     visibility = build_item_mark_visibility_index(projection, as_of=None)
     gate_declared = "gate" in parts["theme"]["body"]["roles"]
-    facts = []
     source_keys = {}
     for occurrence, entry in visibility.entries.items():
         if occurrence.kind == MarkOccurrenceKind.LANE_FINAL:
@@ -85,12 +80,9 @@ def _style_index(projection, parts, rules):
             facet = visible.source
             semantic = canonical_mark_semantic(facet.semantic_id, facet.shape,
                                                gate_declared=gate_declared)
-            binding = semantic_binding(semantic)
             key = occurrence.style_key(semantic)
-            facts.append(StyleOccurrence(key, binding.purpose, binding.primitive_kind))
             source_keys.setdefault(semantic, []).append(key)
-    intents = evaluate_style_rules(rules, tuple(facts))
-    return OccurrenceStyleIndex(intents), source_keys
+    return source_keys
 
 
 def _render_capture(tmp_path, monkeypatch, *, mode, parts, rules, styled):
@@ -112,12 +104,13 @@ def _render_capture(tmp_path, monkeypatch, *, mode, parts, rules, styled):
     expected_keys = {}
 
     def normalize_with_style(*args, **kwargs):
-        content = _ORIGINAL_NORMALIZE_V05_SURFACE_CONTENT(*args, **kwargs)
         if not styled:
-            return content
-        index, keys = _style_index(args[0], parts, rules)
-        expected_keys.update(keys)
-        return replace(content, style_intents=index)
+            return _ORIGINAL_NORMALIZE_V05_SURFACE_CONTENT(*args, **kwargs)
+        expected_keys.update(_source_keys(args[0], parts))
+        return _ORIGINAL_NORMALIZE_V05_SURFACE_CONTENT(
+            *args, **kwargs, style_rules=rules,
+            gate_declared="gate" in parts["theme"]["body"]["roles"],
+        )
 
     monkeypatch.setattr(surface_count_closure, "compose_surface_layout", capture_compose)
     monkeypatch.setattr(render_review_usecase, "normalize_v05_surface_content", normalize_with_style)

@@ -30,7 +30,7 @@ from chrona.presentation.layout.mark_role_geometry import (
     resolve_occurrence_mark_frame, selected_mark_style_intents,
 )
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
-from chrona.presentation.layout.semantic_mark_facets import (
+from chrona.presentation.model.semantic_mark_facets import (
     ItemMarkFacetSelection, MarkFacetAbsence, select_item_mark_facets,
 )
 from chrona.presentation.layout.mark_facet_visibility import (

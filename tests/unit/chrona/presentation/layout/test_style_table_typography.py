@@ -5,6 +5,7 @@ from dataclasses import replace
 
 import pytest
 
+from chrona.presentation.contracts.resources import ClosureIdentity, parse_contract
 from chrona.presentation.layout import surface_render_plan as planner
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.style_text import resolve_table_cell_typography
@@ -40,24 +41,41 @@ def _presentation_with_large_text_role():
     binding["contrastTreatment"] = "required"
     body["roles"][role] = binding
     body["colorBindings"][f"{role}.fill"] = "text"
-    return parts, role
+    style = {
+        "version": "chrona/style/v0.2", "kind": "style", "id": "synthetic-table-style",
+        "body": {"rules": [
+            {"id": "table-emphasis", "when": {"semantic": "tableCell"},
+             "then": {"role": role}},
+        ]},
+    }
+    rules = parse_contract(
+        ClosureIdentity("style", "synthetic-table-style", "test-v1", "sha256:" + "0" * 64),
+        style,
+    ).rules
+    return parts, role, rules
 
 
 def test_plan_measures_and_places_table_cell_with_same_selected_role(tmp_path, monkeypatch):
     captured = {}
     original = planner.prepare_surface_render_plan
-    presentation, selected_role = _presentation_with_large_text_role()
+    presentation, selected_role, rules = _presentation_with_large_text_role()
+    original_normalize = usecase.normalize_v05_surface_content
+
+    def normalize_with_style(*args, **kwargs):
+        return original_normalize(*args, **kwargs, style_rules=rules,
+                                  gate_declared="gate" in presentation["theme"]["body"]["roles"])
 
     def prepare(value):
         cell = next(item for item in value.table.cells if item.style_key is not None)
         key = cell.style_key
-        baseline = original(value)
-        index = OccurrenceStyleIndex((_intent(key, role=selected_role),))
-        styled_input = replace(value, content=replace(value.content, style_intents=index))
-        selected = original(styled_input)
-        captured.update(value=styled_input, baseline=baseline, selected=selected, key=key)
+        baseline_input = replace(value, content=replace(
+            value.content, style_intents=OccurrenceStyleIndex()))
+        baseline = original(baseline_input)
+        selected = original(value)
+        captured.update(value=value, baseline=baseline, selected=selected, key=key)
         return selected
 
+    monkeypatch.setattr(usecase, "normalize_v05_surface_content", normalize_with_style)
     monkeypatch.setattr(usecase, "prepare_surface_render_plan", prepare)
     rendered = sr.render(tmp_path, sr.chain_project(groups=1, per_group=2), presentation=presentation)
 

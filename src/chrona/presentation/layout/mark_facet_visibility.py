@@ -7,7 +7,7 @@ from enum import StrEnum
 from typing import NoReturn
 
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.semantic_mark_facets import (
+from chrona.presentation.model.semantic_mark_facets import (
     ItemMarkFacetSelection, LogicalMarkFacet,
 )
 from chrona.presentation.model.projection import WindowMode
