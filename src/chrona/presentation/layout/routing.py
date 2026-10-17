@@ -8,9 +8,10 @@ import json
 from math import hypot, isfinite
 
 from chrona.presentation.layout.model import geometry_sum
-from chrona.presentation.layout.obstacles import ObstacleSegment, SurfaceObstacleIndex
+from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacleIndex
 from chrona.presentation.layout.ports import ConnectorEgress
 from chrona.presentation.layout.route_search import RelationExpansionBudget, RouteSearchFailure
+from chrona.presentation.layout.route_quality_bounds import rectangular_detour_lower_bound
 from chrona.presentation.layout.relation_shapes import (
     RelationShapeChannels, first_fit_port_pairs, relation_shape_candidates, shape_channels,
     supplemental_relation_channel_candidates,
@@ -453,6 +454,7 @@ def select_relation_route(
     preferred_routes: tuple[tuple[tuple[ConnectorEgress, ConnectorEgress], tuple[tuple[float, float], ...]], ...] = (),
     protected: bool = False,
     endpoint_preserving_prepare: bool = False,
+    protected_quality_barriers: Callable[[ConnectorEgress, ConnectorEgress], tuple[ObstacleRect, ...]] | None = None,
     label_repair_obstacle_ids: frozenset[str] = frozenset(),
     route_stroke_width: float = 0.0,
 ) -> RelationRouteSelection:
@@ -607,9 +609,15 @@ def select_relation_route(
         shapes = relation_shape_candidates(source.exposed_port, target.exposed_port,
                                            bounds=bounds, channels=protected_channels)
         candidates = _chain(shapes, protected_candidates(source, target, port_ids))
-        quality_impossible = (max_bends < int(source.semantic_port[0] != target.semantic_port[0]
-                                             and source.semantic_port[1] != target.semantic_port[1])
-                              and (prepare is None or endpoint_preserving_prepare))
+        quality_impossible = False
+        if prepare is None or endpoint_preserving_prepare:
+            quality_impossible = max_bends < int(source.semantic_port[0] != target.semantic_port[0]
+                                                 and source.semantic_port[1] != target.semantic_port[1])
+            if protected_quality_barriers is not None:
+                direct = sum(abs(a - b) for a, b in zip(source.semantic_port, target.semantic_port))
+                lower = rectangular_detour_lower_bound(source.semantic_port, target.semantic_port,
+                    protected_quality_barriers(source, target))
+                quality_impossible |= direct > 0 and lower > direct * max_detour_ratio
         measured, points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
             port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
             max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
