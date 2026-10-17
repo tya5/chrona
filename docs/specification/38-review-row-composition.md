@@ -420,7 +420,7 @@ content or explicitly retired.
 columns (that field of the lane's first member, the member a `label: lane` singleton reads), each with optional `missing`,
 `align`, `textRole` and, on a field column, `transform: initials` (Spec 46 "Cell transform"). A misdeclaration (no or
 several label columns, a repeated or reserved id, `transform` on a non-field source) is `E_VIEW_LANE_TABLE_COLUMNS`.
-`count` still appends `Items`. Absent `columns`, the table is the single `Lane` column and output is byte-identical.
+`count` still appends `Items`. Absent `columns`, the table is the single default column (id `Lane`). Its header reads `Task` when every lane is generated, one per object (no lane key, one member each, `label` not `group`), and `Lane` otherwise (#1633). Adding `columns` leaves output byte-identical (#1517).
 Lane `packing` is not touched; `tableColumns` stay invalid in lane mode.
 
 Where a group header already names the group, or grouping is absent, a

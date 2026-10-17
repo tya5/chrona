@@ -231,12 +231,13 @@ def test_absent_shape_preserves_characterized_scene_and_svg_bytes(tmp_path):
     # Empty-legend normalization changes only slots and empty sibling origins;
     # completed primitives, diagnostics and SVG bytes remain characterized.
     # #1649: an empty notes source is likewise absent; only the Scene's slot list changes (SVG bytes identical).
-    assert len(scene) == 26211
+    # #1633: generated one-per-object lanes head the default lane column `Task` (was `Lane`).
+    assert len(scene) == 26209
     # Only the packaged View's provenance contentIdentity differs from ready main
     # (calendar-days -> working-days); the rendered SVG remains byte-identical.
-    assert sha256(scene).hexdigest() == "eda1818e897066f97772be105bbcab4aa74b5c196ec831d04fb8003b8c749a3a"
+    assert sha256(scene).hexdigest() == "108ca5dcbc9e1d3e1c33ca8c247e90a38b6c5b6841cbb5afa4d80a39c05f3d2b"
     assert len(rendered.artifact.content) == 8173
-    assert sha256(rendered.artifact.content).hexdigest() == "3f700aae2dd6cc1e5d42370babe2805a2231ec2c8a643eb07dc1317cc4cc7437"
+    assert sha256(rendered.artifact.content).hexdigest() == "f5031fb8939295b170a188ec7971b109dc5f8372f7011a21e40584d32451964a"
 
 
 def test_absent_shape_and_explicit_rectangle_are_scene_and_svg_byte_identical(tmp_path):
