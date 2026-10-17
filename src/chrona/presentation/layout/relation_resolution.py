@@ -21,8 +21,9 @@ class RelationObstacleDomain:
 
 
 def relaxed_domain(obstacles: SurfaceObstacleIndex, stage: RelationResolutionStage,
-                   endpoint_host_ids: frozenset[str]) -> RelationObstacleDomain:
-    """Filter geometry once, for both search and completed-route validation."""
+                   endpoint_host_ids: frozenset[str],
+                   required_label_obstacle_ids: frozenset[str] = frozenset()) -> RelationObstacleDomain:
+    """Filter geometry once, retaining explicit required-label obstacles in staged searches."""
     if not isinstance(stage, RelationResolutionStage):
         raise ValueError("search domain requires a typed resolution stage")
     if stage is RelationResolutionStage.NORMAL:
@@ -32,6 +33,9 @@ def relaxed_domain(obstacles: SurfaceObstacleIndex, stage: RelationResolutionSta
         raise ValueError("a terminal fallback is not a search domain")
     filtered = SurfaceObstacleIndex()
     for item in obstacles.all():
+        if item.placement_id in required_label_obstacle_ids:
+            filtered.add(item)
+            continue
         if item.obstacle_class in {"label-visual", "relation-label"}:
             continue
         if item.obstacle_class == "text" and (
@@ -95,6 +99,7 @@ class RelationSearchResolution:
 def search_relation_resolution(mode: RelationUnroutableMode, *,
                               obstacles: SurfaceObstacleIndex,
                               endpoint_host_ids: frozenset[str],
+                              required_label_obstacle_ids: frozenset[str] = frozenset(),
                               attempt: Callable[[RelationObstacleDomain],
                                                 RelationRouteSelection | RelationRouteAttemptOutcome],
                               ) -> RelationSearchResolution:
@@ -115,7 +120,8 @@ def search_relation_resolution(mode: RelationUnroutableMode, *,
                     RelationResolutionStage.TEXT, RelationResolutionStage.MARKS))
     attempts = []
     for stage in stages:
-        selected = attempt(relaxed_domain(obstacles, stage, endpoint_host_ids))
+        selected = attempt(relaxed_domain(obstacles, stage, endpoint_host_ids,
+                                          required_label_obstacle_ids))
         attempts.append(StagedRouteAttempt(stage, selected))
         if selected.selected_pair is not None:
             return RelationSearchResolution(tuple(attempts))

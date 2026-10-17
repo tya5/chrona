@@ -12,9 +12,9 @@ from tests.support import synthetic_review as sr
 from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 
-# All four entries/indexes/leaders remain present. Empty-legend normalization
-# changes only slot metadata; every visible SVG byte remains characterized.
-NO_SUPPRESSION_SCENE_SHA256 = "0762c2b7b447ee89029e44bbd472f874c0009e620a0d876c68ffd14f3613216f"
+# All four entries/indexes/leaders remain present. The packaged working-day
+# policy changes only View provenance; visible SVG bytes remain characterized.
+NO_SUPPRESSION_SCENE_SHA256 = "618006d76c288bcd38d49fa54276d35a1094a2e760b0fd48aca3dee75201b0cf"
 NO_SUPPRESSION_SVG_SHA256 = "3e9593666a8f1e60d9180ca6f9697e0ff912626fbe565080edbf5a57d9c5c5ce"
 
 

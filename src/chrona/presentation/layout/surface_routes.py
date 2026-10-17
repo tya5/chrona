@@ -89,6 +89,8 @@ class SurfaceRoutesContext:
     plot_bounds: tuple[float, float, float, float] | None = None
     temporal_endpoints: tuple[TemporalEndpointPlacement, ...] = ()
     progress_pass: str = "relations"
+    required_label_obstacle_ids: frozenset[str] = frozenset()
+    label_repair_obstacle_ids: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -148,6 +150,15 @@ def _lane_fallback_clears_required_labels(points: tuple[tuple[float, float], ...
 
 # Row members that are comparison marks (baseline ghosts, scenario ghosts); relations never end on them.
 COMPARISON_SOURCE_KINDS = frozenset({"snapshot", "scenario"})
+LABEL_INK_OBSTACLE_CLASSES = ("text", "label-visual", "relation-label")
+
+
+def route_clears_retained_label_ink(points: tuple[tuple[float, float], ...],
+                                   obstacles: SurfaceObstacleIndex, stroke_width: float) -> bool:
+    """Check the painted stroke against retained label footprints, without host exemptions."""
+    return all(not obstacles.collisions(ObstacleSegment(start, end, stroke_width),
+        classes=LABEL_INK_OBSTACLE_CLASSES, regions=("timeline", "group-header"))
+        for start, end in zip(points, points[1:]) if start != end)
 
 
 def corner_arc_blocker(obstacles: SurfaceObstacleIndex, hosts: frozenset[str], width: float,
@@ -371,18 +382,23 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                       domain: RelationObstacleDomain | None = None):
         index = domain.obstacles if domain is not None else obstacles
         required_ids = domain.required_primary_mark_ids if domain is not None else None
+        protect_label_ink = domain is None or domain.stage not in {
+            RelationResolutionStage.OVERLAP, RelationResolutionStage.STUB}
         def clear(path):
             return terminal_runs_preserved(tuple(points), path,
                 start_minimum=start_minimum or None, end_minimum=end_minimum or None
                 ) and clears_primary_marks(path, width, required_ids, source_egress, target_egress) and all(
                 not index.egress_collisions(ObstacleSegment(a, b), host_ids=(*hosts, *physical_ids),
                     classes=route_classes, regions=("timeline", "group-header"))
-                for a, b, physical_ids in split_route_at_physical_corridors(path, source_egress, target_egress))
+                for a, b, physical_ids in split_route_at_physical_corridors(path, source_egress, target_egress)) and (
+                    not protect_label_ink or route_clears_retained_label_ink(path, index, width))
         reduced = remove_substroke_jogs(tuple(points), width, accept=clear)
         def clear_reduction(path):
             if route_self_overlaps(path) or not clear(path):
                 return False
             drawn, start, end = complete_centred_terminals(path, marker_start, marker_end, width)
+            if protect_label_ink and not route_clears_retained_label_ink(drawn, index, width):
+                return False
             if any(hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 < width
                    for a, b in zip(drawn, drawn[1:])):
                 return False
@@ -424,6 +440,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 for egress in (source_egress, target_egress))
                 and (not clears_primary_marks(reduced, width, required_ids, source_egress, target_egress)
                      or not clears_primary_marks(drawn, width, required_ids, source_egress, target_egress))):
+            return None
+        if protect_label_ink and not route_clears_retained_label_ink(drawn, index, width):
             return None
         if plot_clip is not None and not relation_geometry_inside_plot(plot_clip, drawn,
                 marker_start=first, marker_end=last, stroke_width=width):
@@ -695,6 +713,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         target_host_id=target_mark.placement_id if target_mark else None,
                         relation_scene_id=scene_id, max_bends=context.layout_manifest.relation_max_bends,
                         max_detour_ratio=context.layout_manifest.relation_max_detour_ratio, classes=route_classes,
+                        label_repair_obstacle_ids=context.label_repair_obstacle_ids,
+                        route_stroke_width=dependency_stroke,
                         prepare=lambda candidate, source_exit, target_entry: prepare_route(candidate, dependency_stroke,
                             (*source_exit.host_ids, *target_entry.host_ids), source_exit.side, target_entry.side,
                             source_egress=source_exit, target_egress=target_entry,
@@ -727,7 +747,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                                                        used_back_route, back_route_reason[0])
 
                 resolution = search_relation_resolution(context.layout_manifest.relation_unroutable,
-                    obstacles=obstacles, endpoint_host_ids=endpoint_hosts, attempt=attempt_route)
+                    obstacles=obstacles, endpoint_host_ids=endpoint_hosts,
+                    required_label_obstacle_ids=context.required_label_obstacle_ids,
+                    attempt=attempt_route)
                 receipt = resolution.accepted or (resolution.attempts[-1] if resolution.attempts else None)
                 domain = attempted_domains[receipt.stage] if receipt is not None else normal_domain
                 outcome = receipt.selection if receipt is not None else None
@@ -894,7 +916,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 completed_start = orient_terminal(completed_start, points, source_egress.side, source=True)
                 completed_end = orient_terminal(completed_end, points, target_egress.side, source=False)
                 arc_blocked = corner_arc_blocker(domain.obstacles, frozenset((*source_egress.host_ids, *target_egress.host_ids)),
-                                                 dependency_stroke, route_classes)
+                    dependency_stroke, tuple(dict.fromkeys((*route_classes, *LABEL_INK_OBSTACLE_CLASSES))))
 
                 placed = RelationPlacement(scene_id, source_port_id, target_port_id, tuple(points),
                     semantic_id=relation.semantic_id, corner_radius=radius,

@@ -5,7 +5,7 @@ from datetime import date
 from decimal import Decimal
 from collections.abc import Mapping
 from math import isfinite
-from typing import Any, Callable, NamedTuple
+from typing import TYPE_CHECKING, Any, Callable, NamedTuple
 
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.surface_marks import (
@@ -70,6 +70,9 @@ from chrona.presentation.layout.surface_geometry import (
     HOSTED_TEXT_PAINT_ORDER,
     bounds_from_rect as _bounds, coordinate_for_date as _coordinate,
 )
+
+if TYPE_CHECKING:
+    from chrona.presentation.layout.surface_route_label_plan import RouteLabelOptions, RouteLabelPlan
 
 
 ANNOTATION_PAINT_ORDER = 400
@@ -208,6 +211,25 @@ class SurfaceAnnotationContext:
 
 
 @dataclass(frozen=True)
+class SurfaceAnnotationOptionContext:
+    """Shared completed inputs for evaluating each route/label option."""
+    request: SurfaceLayoutRequest
+    projection: Any
+    layout_manifest: Any
+    contract: Any
+    review_rows: tuple[Any, ...]
+    rows: tuple[RowPlacement, ...]
+    by_source: Mapping[str, SlotPlacement]
+    scale: ScalePlacement
+    start: date
+    end: date
+    timeline: SlotPlacement
+    timeline_bounds: tuple[float, float, float, float]
+    mark_by_id: Mapping[str, MarkPlacement]
+    metric_for: Callable[[str], Any]
+
+
+@dataclass(frozen=True)
 class SurfaceAnnotationBatch:
     text: tuple[TextPlacement, ...]
     shapes: tuple[ShapePlacement, ...]
@@ -275,6 +297,38 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
         if obstacle.placement_id not in original_ids:
             original_index.add(obstacle)
     return batch
+
+
+def complete_route_label_options(options: "RouteLabelOptions", context: SurfaceAnnotationOptionContext
+                                 ) -> tuple["RouteLabelPlan", SurfaceAnnotationBatch]:
+    """Complete annotations against each option's private route inventory, then select once."""
+    from chrona.presentation.layout.surface_route_label_plan import select_completed_route_label_plan
+
+    def complete(plan: "RouteLabelPlan") -> SurfaceAnnotationBatch:
+        index = plan.obstacles
+
+        def register_rect(placement_id: str, obstacle_class: str, region_id: str, bounds: Rect) -> None:
+            inline, block, inline_size, block_size = _bounds(bounds)
+            if inline_size > 0 and block_size > 0:
+                index.add(SurfaceObstacle(placement_id, obstacle_class, region_id,
+                    ObstacleRect(inline, block, inline + inline_size, block + block_size)))
+
+        def register_port(placement_id: str, point: tuple[float, float], region_id: str) -> None:
+            index.add(SurfaceObstacle(placement_id, "port", region_id,
+                ObstacleRect(point[0] - 0.01, point[1] - 0.01,
+                             point[0] + 0.01, point[1] + 0.01)))
+
+        routes = plan.routes
+        return place_annotations(SurfaceAnnotationContext(
+            context.request, context.projection, context.layout_manifest, context.contract,
+            context.review_rows, context.rows, context.by_source, context.scale,
+            context.start, context.end, context.timeline, context.timeline_bounds, context.mark_by_id,
+            routes.comparison_clusters, routes.instance_rows, context.metric_for, index,
+            register_rect, register_port))
+
+    first = complete(options.first)
+    retry = complete(options.retry) if options.retry is not None else None
+    return select_completed_route_label_plan(options, first, retry)
 
 
 def _place_annotations_once(context: SurfaceAnnotationContext,
