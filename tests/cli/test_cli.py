@@ -497,14 +497,15 @@ def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_pat
     assert float(svg.attrib["height"].removesuffix("px")) == pytest.approx(canvas["blockSize"], abs=0.01)
 
     slots = {slot["id"]: slot["bounds"] for slot in surface["slots"]}
-    assert {"title", "timeline-axis", "legend", "notes", "table", "timeline"} <= slots.keys()
+    assert {"title", "timeline-axis", "legend", "table", "timeline"} <= slots.keys()
+    assert "notes" not in slots  # an empty notes source reserves nothing (#1649)
     assert all(bounds["block"] + bounds["blockSize"] <= canvas["blockSize"] + 0.01
                for bounds in slots.values())
     table, timeline = slots["table"], slots["timeline"]
     table_end = table["block"] + table["blockSize"]
     timeline_end = timeline["block"] + timeline["blockSize"]
     assert timeline_end == pytest.approx(table_end, abs=0.01)
-    assert slots["notes"]["block"] >= table_end - 0.01
+    assert slots["legend"]["block"] >= table_end - 0.01
     assert len(surface["rows"]) == 3
     assert all(row["bounds"]["block"] + row["bounds"]["blockSize"] <= timeline_end + 0.01
                for row in surface["rows"])

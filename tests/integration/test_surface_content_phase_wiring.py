@@ -42,7 +42,7 @@ def test_content_phases_follow_routes_and_relation_labels_in_source_order(tmp_pa
     trials = events.count("routes")
     assert trials in {1, 2}
     assert events[:2 * trials] == ["routes", "relation-labels"] * trials
-    assert events[2 * trials:] == ["legend", "notes", "footer", "summary"]
+    assert events[2 * trials:] == ["legend", "footer", "summary"]  # #1649: an empty notes source has no phase
 
 
 def test_source_content_phases_take_no_obstacle_index() -> None:
