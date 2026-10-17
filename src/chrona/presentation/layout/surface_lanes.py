@@ -43,7 +43,7 @@ from chrona.presentation.layout.surface_quality import (
     completed_symbol_primitive_ids,
 )
 from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
-from chrona.presentation.model.semantic_registry import semantic_binding, FORECAST_DELTA_SEMANTICS
+from chrona.presentation.model.semantic_registry import semantic_binding, forecast_delta_semantic_ids
 
 
 @dataclass(frozen=True)
@@ -310,7 +310,7 @@ def build_lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: l
 
     for placed in text:
         if (placed.lane_row_id is None or placed.overflow == "suppressed"
-                or placed.semantic_id not in ({"memberLabel", "finishDelta"} | FORECAST_DELTA_SEMANTICS)):
+                or placed.semantic_id not in ("memberLabel", "finishDelta", *forecast_delta_semantic_ids())):
             continue
         if placed.lane_member_id is None:
             raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", placed.placement_id)

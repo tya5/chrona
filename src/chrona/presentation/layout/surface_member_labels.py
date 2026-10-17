@@ -19,7 +19,7 @@ from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip
 from chrona.presentation.layout.label_footprint_measurement import measure_label_footprint
-from chrona.presentation.model.semantic_registry import semantic_binding, FORECAST_DELTA_SEMANTICS
+from chrona.presentation.model.semantic_registry import semantic_binding, forecast_delta_semantic_ids
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, GroupPlacement, IconPlacement, LaneLabelSuppression,
@@ -177,7 +177,7 @@ def _member_association_outcome(candidate: LabelPlacement | None, association: M
 
 def _finish_delta_anchor_diagnostic(request: LabelRequest, candidate: LabelPlacement) -> str | None:
     """Project the selector's completed obstruction evidence, never re-query geometry."""
-    if request.semantic_id not in ({"finishDelta"} | FORECAST_DELTA_SEMANTICS):
+    if request.semantic_id not in ("finishDelta", *forecast_delta_semantic_ids()):
         return None
     preferred = next((item for item in candidate.canonical_obstructions if item.side == "end"), None)
     if preferred is None:

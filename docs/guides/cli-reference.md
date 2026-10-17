@@ -235,7 +235,7 @@ list every builtin preset id with a one-line description
 
 draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix, from the files you pass
 
-`chrona render --actual --detail --emit-scene --font-metrics --format --icon-catalog --layout --locale --output --preset --previous-scene --progress --relations --scheme --snapshot --summary --system-fonts --theme --typesetter-adapter-grammar --typesetter-engine --typesetter-version --view --viewport --visual-profile -o`
+`chrona render --actual --detail --emit-scene --font-metrics --forecast --format --icon-catalog --layout --locale --output --preset --previous-scene --progress --relations --scheme --snapshot --summary --system-fonts --theme --typesetter-adapter-grammar --typesetter-engine --typesetter-version --view --viewport --visual-profile -o`
 
 - `project`: Draft Project YAML path, or a terse .chrona plan
 - `--preset`: Presentation preset YAML path, or a builtin catalogue id (see `chrona preset list`); omit it to use bundled chrona-default-draft; explicit resource flags override its members
@@ -244,7 +244,8 @@ draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix, 
 - `--scheme`: Color Scheme YAML path
 - `--layout`: Layout Profile YAML path
 - `--actual`: Actual Set YAML path
-- `--snapshot`: baseline Snapshot Project YAML path; drawn only when the View compares against a snapshot (otherwise a warning says it was not drawn)
+- `--snapshot`: baseline Snapshot Project YAML path; forecast retains its ghost, otherwise the View comparison controls it
+- `--forecast`: derive forecast bars and estimated finish deltas from Actual; choose a forecast-capable preset such as technical-print or target-b
 - `--summary`: Summary Profile YAML path
 - `--detail`: Review Detail Profile YAML path
 - `--icon-catalog`: explicit local icon catalog YAML path; repeatable
@@ -295,9 +296,10 @@ draw the same slide in several color schemes for comparison
 
 draw a slide from a guided authoring workspace (a draft)
 
-`chrona render-workspace --format --locale --output --provenance --typesetter-adapter-grammar --typesetter-engine --typesetter-version --viewport --visual-profile -o`
+`chrona render-workspace --forecast --format --locale --output --provenance --typesetter-adapter-grammar --typesetter-engine --typesetter-version --viewport --visual-profile -o`
 
 - `workspace`: guided authoring workspace YAML path
+- `--forecast`: derive the explicit forecast from the workspace Actual input
 - `--viewport`: Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600xauto)
 - `--locale`: render locale: en-US or ja-JP (default: en-US)
 - `--format`: output target (default: infer from .svg/.png/.pdf/.typ/.tex; SVG without a suffix)

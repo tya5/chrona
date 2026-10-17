@@ -290,12 +290,14 @@ def axis_label_semantic_ids() -> tuple[str, ...]:
     return ("axisLabel", "axisLabel2", "axisLabel3")
 
 
-FORECAST_DELTA_SEMANTICS = frozenset({"forecastFinishDelta", "forecastVarianceAhead", "forecastVarianceBehind"})
+def forecast_delta_semantic_ids() -> tuple[str, ...]:
+    """The closed semantic family for forecast-derived finish-delta labels."""
+    return ("forecastFinishDelta", "forecastVarianceAhead", "forecastVarianceBehind")
 
 
 def label_chip_semantic(label_semantic_id: str) -> str | None:
     """Return the chip semantic a label may carry, keyed by the label's own semantic (#428)."""
-    if label_semantic_id in FORECAST_DELTA_SEMANTICS:
+    if label_semantic_id in forecast_delta_semantic_ids():
         return "finishDeltaChip"
     return {"asOfLabel": "asOfLabelChip", "memberLabel": "memberLabelChip",
             "finishDelta": "finishDeltaChip",

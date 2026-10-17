@@ -64,7 +64,9 @@ $defs:
     required: [placementId, instanceId, facet, sourceRef, sourceKind, semanticRole, reason]
     additionalProperties: false
     allOf:
-      - if: {properties: {facet: {const: forecast}}, required: [facet]}
+      - description: "A forecast omission retains planned paint semantics."
+        examples: [{facet: forecast, semanticRole: planned}]
+        if: {properties: {facet: {const: forecast}}, required: [facet]}
         then: {properties: {semanticRole: {const: planned}}}
     properties:
       placementId: {$ref: "#/$defs/string"}
