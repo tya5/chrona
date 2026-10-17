@@ -31,6 +31,7 @@ No project/preset-ID branch, core half-open date change or schema migration.
 Eight legacy declarations now select working-days; explicit calendar-days
 still produces the intended civil delta. Exact-head PR CI run
 [39002549459](https://github.com/tya5/chrona/actions/runs/39002549459) is green.
-The exact-main three-OS release [39003719153](https://github.com/tya5/chrona/actions/runs/39003719153)
-is live; its result is pending, so release acceptance and issue closure remain
-pending.
+The exact review-containing main `fa262ebab648229138eb34c33bf6a821f6450e96`
+passed [three-OS release39003719153](https://github.com/tya5/chrona/actions/runs/39003719153),
+including full pytest, conformance, wheel/smoke and newest-Python materializers.
+The issue was closed on 2026-10-17 after literal acceptance and release verification.
