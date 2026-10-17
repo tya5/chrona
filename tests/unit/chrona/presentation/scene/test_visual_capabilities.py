@@ -8,6 +8,11 @@ from chrona.presentation.scene.visual_capabilities import (
     DROP_SHADOW,
     LINEAR_GRADIENT,
     PNG_PROFILE,
+    PDF_PROFILE,
+    GLOW,
+    LINE_CAP,
+    LINE_JOIN,
+    MARK_GEOMETRY_CAPABILITIES,
     SVG_PROFILE,
     SVG_ICON_PROFILE,
     VisualCapabilityError,
@@ -41,7 +46,9 @@ def test_rich_profiles_are_exact_target_contracts():
     (SVG_ICON_PROFILE, "png", "chrona-output/visual/v0.7-png"),
     ("chrona-output/visual/v0.7-png", "svg", SVG_ICON_PROFILE),
     (SVG_ICON_PROFILE, "svg", SVG_ICON_PROFILE),
-    (SVG_ICON_PROFILE, "pdf", BASELINE_PROFILE),
+    (SVG_ICON_PROFILE, "pdf", PDF_PROFILE),
+    (PDF_PROFILE, "png", "chrona-output/visual/v0.7-png"),
+    (SVG_PROFILE, "pdf", BASELINE_PROFILE),
     (BASELINE_PROFILE, "png", BASELINE_PROFILE),
 ])
 def test_preference_uses_only_registered_same_version_target_peers(preferred, target, selected):
@@ -53,6 +60,19 @@ def test_unknown_preference_is_not_a_suffix_guess_or_silent_baseline():
     from chrona.presentation.scene.visual_capabilities import preferred_target_visual_profile
     with pytest.raises(VisualCapabilityError, match="E_VISUAL_CAPABILITY_PROFILE"):
         preferred_target_visual_profile("chrona-output/visual/v99.9-svg", "png")
+
+
+def test_pdf_profile_admits_only_proven_capabilities_and_retains_optional_omission():
+    profile = resolve_visual_profile(PDF_PROFILE, "pdf")
+    assert profile.capabilities == MARK_GEOMETRY_CAPABILITIES | {GLOW, LINE_CAP, LINE_JOIN}
+    assert profile.optional_omission
+    assert first_supporting_visual_profile("pdf", frozenset({GLOW})) == PDF_PROFILE
+    assert first_supporting_visual_profile("pdf", frozenset({LINE_CAP, LINE_JOIN})) == PDF_PROFILE
+    for target in ("svg", "png", "typst", "tikz"):
+        with pytest.raises(VisualCapabilityError, match="E_VISUAL_CAPABILITY_PROFILE"):
+            resolve_visual_profile(PDF_PROFILE, target)
+    with pytest.raises(VisualCapabilityError, match="E_VISUAL_CAPABILITY_UNSUPPORTED"):
+        validate_surface_visual_profile(_surface(), profile)
 
 
 def test_required_completed_treatment_is_rejected_by_baseline_before_adapter():

@@ -14,7 +14,7 @@ from chrona.presentation.scene.model import ScenePrimitive
 from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, resolve_scene_paint
 from chrona.presentation.scene.v05_builder import _visible_extent
 from chrona.presentation.scene.visual_capabilities import (
-    BASELINE_PROFILE, SVG_PROFILE, resolve_visual_profile,
+    BASELINE_PROFILE, PDF_PROFILE, SVG_PROFILE, resolve_visual_profile,
 )
 
 CANVAS = (0.0, 0.0, 400.0, 300.0)
@@ -105,6 +105,16 @@ def test_the_rich_svg_profile_paints_the_glow() -> None:
     result = _resolve(_tokens(**GLOW), resolve_visual_profile(SVG_PROFILE, "svg"))
 
     assert result.paint.glow is not None and result.omissions == ()
+
+
+def test_pdf_glow_profile_paints_required_glow_but_explicit_baseline_still_refuses() -> None:
+    result = _resolve(_tokens(**GLOW, glowFidelity="must"), resolve_visual_profile(PDF_PROFILE, "pdf"))
+    assert result.paint.glow is not None and result.omissions == ()
+    with pytest.raises(ScenePaintError) as error:
+        _resolve(_tokens(**GLOW, glowFidelity="must"), resolve_visual_profile(BASELINE_PROFILE, "pdf"))
+    assert error.value.diagnostic_id == "E_VISUAL_CAPABILITY_UNSUPPORTED"
+    optional = _resolve(_tokens(**GLOW, glowFidelity="soft"), resolve_visual_profile(BASELINE_PROFILE, "pdf"))
+    assert optional.omissions[0].paintable_profile == PDF_PROFILE
 
 
 def test_a_decorative_optional_glow_is_omitted_under_the_baseline_and_names_the_painting_profile() -> None:

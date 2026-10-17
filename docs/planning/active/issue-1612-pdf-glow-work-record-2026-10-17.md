@@ -54,3 +54,15 @@ as `a2918bf202b51e974813b02c6649af63f9fe1d8a`.
 
 Update this record and the existing acceptance review in place. Publish the design,
 implementation and final review as coherent commits; no additional per-slice plans.
+
+## Current implementation evidence
+
+Profile/closure admission controls: `pytest -q` for
+`test_visual_capabilities.py`, `test_glow.py` and `test_draft_closure.py`:
+76 passed. The PDF peer is selected only by the existing same-version preference
+rule; an explicit baseline still refuses required glow. Draft pins halo evidence
+inside the ReportLab descriptor; a vector-only PDF never verifies that engine.
+Vocabulary/schema-parts/package controls:196 passed. Schema equivalence against
+`origin/main` (L1):PASS, added1/delta3/equal35; four exact allowed delta paths,
+zero stale entries pruned. Frozen vocabulary v0.1 is unchanged.
+PDF serialization and the45-output acceptance gate remain in progress, not met.
