@@ -26,6 +26,7 @@ SVG_PROFILE = "chrona-output/visual/v0.6-svg"
 PNG_PROFILE = "chrona-output/visual/v0.6-png"
 SVG_ICON_PROFILE = "chrona-output/visual/v0.7-svg"
 PNG_ICON_PROFILE = "chrona-output/visual/v0.7-png"
+PDF_PROFILE = "chrona-output/visual/v0.7-pdf"
 RICH_CAPABILITIES = admitted_capability_ids(LINEAR_GRADIENT, RADIAL_GRADIENT, DROP_SHADOW, GLOW, WOBBLE, LINE_CAP, LINE_JOIN)
 MARK_GEOMETRY_CAPABILITIES = admitted_capability_ids(MARKER_GEOMETRY, PATTERN_GEOMETRY, SYMBOL_OUTLINE)
 ICON_CAPABILITIES = admitted_capability_ids(ICON_VECTOR, ICON_RASTER)
@@ -76,13 +77,17 @@ def resolve_visual_profile(identifier: str, target_kind: str) -> VisualProfile:
         return VisualProfile(identifier, target_kind, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES | ICON_CAPABILITIES, False)
     if identifier == PNG_ICON_PROFILE and target_kind == "png":
         return VisualProfile(identifier, target_kind, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES | ICON_CAPABILITIES, False)
+    if identifier == PDF_PROFILE and target_kind == "pdf":
+        return VisualProfile(identifier, target_kind,
+                             MARK_GEOMETRY_CAPABILITIES | admitted_capability_ids(GLOW, LINE_CAP, LINE_JOIN), True)
     raise VisualCapabilityError("E_VISUAL_CAPABILITY_PROFILE", "/body/target/visualProfile",
                                 f"{identifier} is not available for {target_kind}")
 
 
 def first_supporting_visual_profile(target_kind: str, required: frozenset[str]) -> str | None:
     """Suggest the earliest exact same-target profile admitting a treatment."""
-    profiles = {"svg": (SVG_PROFILE, SVG_ICON_PROFILE), "png": (PNG_PROFILE, PNG_ICON_PROFILE)}
+    profiles = {"svg": (SVG_PROFILE, SVG_ICON_PROFILE), "png": (PNG_PROFILE, PNG_ICON_PROFILE),
+                "pdf": (PDF_PROFILE,)}
     for identifier in profiles.get(target_kind, ()):
         profile = resolve_visual_profile(identifier, target_kind)
         if required.issubset(profile.capabilities):
@@ -95,7 +100,7 @@ def preferred_target_visual_profile(identifier: str, target_kind: str) -> str:
     if identifier == BASELINE_PROFILE:
         return identifier
     families = ({"svg": SVG_PROFILE, "png": PNG_PROFILE},
-                {"svg": SVG_ICON_PROFILE, "png": PNG_ICON_PROFILE})
+                {"svg": SVG_ICON_PROFILE, "png": PNG_ICON_PROFILE, "pdf": PDF_PROFILE})
     for family in families:
         if identifier in family.values():
             selected = family.get(target_kind, BASELINE_PROFILE)

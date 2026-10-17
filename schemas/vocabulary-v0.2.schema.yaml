@@ -1,0 +1,17 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:vocabulary-v0.2"
+title: "Chrona Shared Vocabulary v0.2"
+description: >-
+  Versioned finite vocabularies shared by live schemas. Definitions are referenced
+  by `urn:chrona:vocabulary-v0.2#/$defs/<name>` and frozen in the schema inventory.
+$defs:
+  visualProfile:
+    description: "Exact renderer-neutral visual capability profile."
+    examples: ["chrona-output/visual/v0.7-pdf"]
+    enum:
+      - chrona-output/visual/v0.5-baseline
+      - chrona-output/visual/v0.6-svg
+      - chrona-output/visual/v0.6-png
+      - chrona-output/visual/v0.7-svg
+      - chrona-output/visual/v0.7-png
+      - chrona-output/visual/v0.7-pdf

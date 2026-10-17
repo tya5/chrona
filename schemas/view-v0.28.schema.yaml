@@ -442,7 +442,7 @@ allOf:
                 text: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/text"}
                 affixes: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/affixes"}
                 transform:
-                  description: "A closed cell transform applied to the column's text before it is measured (#1373): `initials` shows the upper-cased first letter or digit of each word of a text value (words split on whitespace and hyphens; `Ana Maria Lopez` reads `AML`). Valid only on a `field` or `title` source with the `text` format (`E_VIEW_COLUMN_TRANSFORM`). A value with no letter or digit reads as absent, so `missing` applies. Absent, the cell is the formatted text."
+                  description: "A closed cell transform applied to the column's text before it is measured (#1373): `initials` abbreviates a text value of two or more words to the upper-cased first letter or digit of each (words split on whitespace and hyphens; `Ana Maria Lopez` reads `AML`) and shows a one-word value whole (`Raj`; an unspaced CJK name is one word). Valid only on a `field` or `title` source with the `text` format (`E_VIEW_COLUMN_TRANSFORM`). A value with no letter or digit reads as absent, so `missing` applies. Absent, the cell is the formatted text."
                   examples: [initials]
                   enum: [initials]
                 suffix: {description: "A literal appended to the 1-based row number of a `rowIndex` column (#1545), e.g. `.` reads `1.`; Layout measures the full text. No format language. Valid only on a `rowIndex` source (`E_VIEW_COLUMN_SUFFIX`). Absent, the cell is the bare number.", examples: ["."], type: string, minLength: 1, maxLength: 8}

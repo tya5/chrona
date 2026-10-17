@@ -45,11 +45,12 @@ record.
 | derived-theme | theme-v0.16.schema.yaml |
 | view | view-v0.28.schema.yaml |
 | schema-part-vocabulary | vocabulary-v0.1.schema.yaml |
+| schema-part-vocabulary | vocabulary-v0.2.schema.yaml |
 
-The three `schema-part-*` entries, `presentation-resource-foundation` and
+The four `schema-part-*` entries, `presentation-resource-foundation` and
 `revision-store-resource-reference` are shared parts:
 other live schemas reference their definitions by URN (`urn:chrona:common-v0.1`,
-`urn:chrona:vocabulary-v0.1`, `urn:chrona:graphics-v0.1`, and the two older parts), so
+`urn:chrona:vocabulary-v0.1`, `urn:chrona:vocabulary-v0.2`, `urn:chrona:graphics-v0.1`, and the two older parts), so
 a pattern, enum or drawing shape is written once. A part's definitions are frozen by
 digest in the inventory. Spec 56 section 7 gives the rules, and
 `python -m tools.schema_equivalence --base-rev origin/main` is the gate that proves a

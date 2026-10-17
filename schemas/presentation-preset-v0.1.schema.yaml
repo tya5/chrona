@@ -52,7 +52,7 @@ properties:
         properties:
           preferred:
             description: "Exact visual capability profile preferred by this preset; it must serve the selected target."
-            $ref: "urn:chrona:vocabulary-v0.1#/$defs/visualProfile"
+            $ref: "urn:chrona:vocabulary-v0.2#/$defs/visualProfile"
       compatibleColorSchemes:
         type: array
         description: "Color Scheme resources compatible with this preset."

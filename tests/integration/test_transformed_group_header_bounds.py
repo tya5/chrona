@@ -65,7 +65,7 @@ def test_uppercase_compressed_header_width_matches_the_same_painted_text(tmp_pat
 
 def test_role_marked_ellipsis_uses_transformed_width_and_band_end(tmp_path):
     source = _source_with_title("i" * 200)
-    transformed = _render(tmp_path, _transformed_parts(marked=True, transform="uppercase", tab=600),
+    transformed = _render(tmp_path, _transformed_parts(marked=True, transform="uppercase", tab=150),
                           source=source, name="transformed-ellipsis")
     scene_id = "group-header:team-0#run0"
     header = _by_id(transformed)[scene_id]
@@ -75,7 +75,7 @@ def test_role_marked_ellipsis_uses_transformed_width_and_band_end(tmp_path):
     # Re-render the exact visible source without a transform: its measured width must be identical to the transformed
     # run, even after the bounded ellipsis decision.
     reference_source = _source_with_title(header.text)
-    reference = _render(tmp_path, _transformed_parts(marked=True, transform="none", tab=600),
+    reference = _render(tmp_path, _transformed_parts(marked=True, transform="none", tab=150),
                         source=reference_source, name="plain-ellipsis-reference")
     assert _by_id(reference)[scene_id].bounds[2] == pytest.approx(header.bounds[2], abs=1e-6)
     band_id = "group-header-band:team-0"

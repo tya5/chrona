@@ -215,7 +215,7 @@ def _load_primary_project(args: argparse.Namespace) -> dict[str, Any]:
 
 
 VISUAL_PROFILES = ("chrona-output/visual/v0.5-baseline", "chrona-output/visual/v0.6-svg", "chrona-output/visual/v0.6-png",
-                   "chrona-output/visual/v0.7-svg", "chrona-output/visual/v0.7-png")
+                   "chrona-output/visual/v0.7-svg", "chrona-output/visual/v0.7-png", "chrona-output/visual/v0.7-pdf")
 
 # `chrona --help` lists the commands by task. A command missing here lands in "More commands" (a test keeps it empty).
 COMMAND_GROUPS: tuple[tuple[str, tuple[str, ...]], ...] = (
@@ -301,7 +301,7 @@ def _parser() -> JsonArgumentParser:
     parser.add_argument("--version", action="version", version=_version_text())
     sub = parser.add_subparsers(dest="command", required=True, parser_class=JsonArgumentParser, metavar="COMMAND")
     commands = {
-        "validate": "check a Project (a YAML file or a saved snapshot) and list its mistakes",
+        "validate": "check a Project (a YAML file or a saved snapshot) or an Actual Set file and list its mistakes",
         "schedule": "compute the dates of a Project from its dependencies and working calendars",
     }
     for name, help_text in commands.items():
@@ -417,7 +417,10 @@ def _parser() -> JsonArgumentParser:
 
     command = sub.add_parser("import", help="turn a CSV or TSV table into Project YAML (and an Actual Set)",
                              description="turn a CSV or TSV table (one row per task, gate or group) into Project YAML; every row error is reported "
-                                         "with its row and column in one run, and an existing file is never replaced")
+                                         "with its row and column in one run, and an existing file is never replaced. Columns (only id is required): id, title, "
+                                         "type (task, gate, group), start, end (exclusive), finish (inclusive), duration, parent, predecessors, "
+                                         "deadline, calendar, progress, actual_start, actual_finish; any other column is kept as a text field. "
+                                         "Guide: docs/guides/csv-import.md")
     command.add_argument("table", help="CSV or TSV file (a .tsv suffix selects tabs)")
     command.add_argument("--output", "-o", required=True, help="where to write the Project YAML; an existing file is not replaced")
     command.add_argument("--actual-output", help="where to write an Actual Set built from the progress and actual_* columns; an existing file is not replaced")
@@ -429,7 +432,8 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--columns", help="YAML mapping of your header names to the column vocabulary")
     command.add_argument("--role", action="append", default=[], metavar="ROLE=HEADER",
                          help="bind a Project field role (responsible, phase) to an extra column of the table, such as "
-                              "--role responsible=team; repeatable, one header per role")
+                              "--role responsible=team; repeatable, one header per role; responsible makes the column's values the owners "
+                              "(lanes), phase the sections")
     command.add_argument("--delimiter", choices=("comma", "tab", "semicolon"), help="cell delimiter (default: tab for .tsv, else comma)")
     command = sub.add_parser("init", help="create a new editable project in a new directory")
     command.add_argument("directory", nargs="?", default=".")
@@ -982,6 +986,9 @@ def _run(args: argparse.Namespace) -> None:
         print(json.dumps(output, indent=2, default=_json_default))
         return
     project = _load_primary_project(args)
+    if args.command == "validate" and _is_actual_set(project):
+        _validate_actual_set(project)
+        return
     if args.command == "validate":
         validation = validate_project_mapping(project)
         if not validation.ok:
@@ -992,6 +999,26 @@ def _run(args: argparse.Namespace) -> None:
     if not outcome.ok:
         _reject(_with_source_ranges(args, outcome.diagnostics))
     print(json.dumps(_with_warning_positions(args, outcome), indent=2, default=_json_default))
+
+
+def _is_actual_set(value: Any) -> bool:
+    """An Actual Set is told from a Project by its kind or version, not by trial validation (#1630)."""
+    return isinstance(value, dict) and (value.get("kind") == "actual-set"
+                                        or str(value.get("version", "")).startswith("chrona/actual-set/"))
+
+
+def _validate_actual_set(value: dict[str, Any]) -> None:
+    """`chrona validate actual.yaml`: the Actual Set schema and intervals, not its ids (a render checks those against a Project)."""
+    from chrona.presentation.contracts.resources import ClosureIdentity, ContractError, parse_contract
+    identity = ClosureIdentity("actual-set", str(value.get("id", "actual-set")), "", "")
+    try:
+        parse_contract(identity, value)
+    except ContractError as error:
+        violation = getattr(error, "violation", None)
+        code = "E_SCHEMA" if violation is not None else str(error.diagnostic_id).split(":")[0]
+        message = violation.message if violation is not None else (error.detail or str(error.diagnostic_id))
+        _reject([Diagnostic(code, message, error.source_ref)])
+    print(json.dumps({"status": "ok", "diagnostics": [], "resource": "actual-set"}))
 
 
 def _write_result(destination: Path, result: dict[str, Any]) -> None:

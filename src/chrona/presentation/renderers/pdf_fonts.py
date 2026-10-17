@@ -1,6 +1,7 @@
 """Deterministic CFF-to-glyf translation for the PDF adapter."""
 from __future__ import annotations
 
+import logging
 from copy import deepcopy
 from hashlib import sha256
 from io import BytesIO
@@ -15,8 +16,14 @@ from fontTools.ttLib import TTFont
 from chrona.presentation.model.font_metrics import FontFile
 
 
+# fontTools reports routine subsetting notes ("meta NOT subset", "fsSelection bit 5 ...") as warnings; with no handler
+# the stdlib last-resort handler prints them to stderr, where every other line is JSON. A NullHandler is the library
+# convention and keeps them out of the CLI's streams (a host that configures logging still receives them).
+logging.getLogger("fontTools").addHandler(logging.NullHandler())
+
 CONVERSION_GRAMMAR = "cff-cu2qu-v1"
 EMBEDDING_GRAMMAR = "pdf-closed-face-v1"
+PDF_RASTER_FONT_GRAMMAR = "pdf-native-raster-face-alias-v1"
 _OUTLINE_TOLERANCE_EM = 0.001
 
 
@@ -79,6 +86,59 @@ def _check_embedding_permissions(item: FontFile, font: TTFont) -> None:
     reason = _invalid_fs_type(version, fs_type)
     if reason is not None:
         raise _failure(item, reason)
+
+
+def pdf_raster_font_bytes(item: FontFile, alias: str) -> bytes:
+    """Extract and privately rename the exact native face used for PDF glow rasterization.
+
+    Unlike :func:`pdf_font_bytes`, this payload remains in its source outline
+    format: resvg consumes the aliased native face to paint the completed glow
+    source alpha. Only the family/full/typographic-family labels and the
+    deterministic PostScript name are changed.
+    """
+    if not isinstance(alias, str) or not alias or "\x00" in alias:
+        raise _failure(item, "private raster font alias must be a non-empty string without NUL")
+    try:
+        source_bytes = item.path.read_bytes()
+    except OSError as error:
+        raise _failure(item, f"cannot read selected font bytes ({type(error).__name__})") from error
+    source_identity = "sha256:" + sha256(source_bytes).hexdigest()
+    if source_identity != item.content_identity:
+        raise _failure(item, "selected font bytes changed after face resolution")
+
+    try:
+        font = TTFont(BytesIO(source_bytes), fontNumber=item.index, recalcTimestamp=False)
+    except Exception as error:
+        raise _failure(item, f"cannot open selected collection face {item.index} ({type(error).__name__})") from error
+    try:
+        _check_embedding_permissions(item, font)
+        if "name" not in font:
+            raise _failure(item, "selected face has no name table for private raster aliasing")
+
+        names = font["name"]
+        # The long CSS alias remains the family/full/typographic-family name.
+        # PostScript names have a 63-character limit, so derive a stable short
+        # identifier without changing the shared CSS family alias contract.
+        ps_alias = "ChronaHalo-" + sha256(alias.encode("utf-8")).hexdigest()[:52]
+        for name_id, value in ((1, alias), (4, alias), (16, alias), (6, ps_alias)):
+            records = [record for record in names.names if record.nameID == name_id]
+            if records:
+                for record in records:
+                    names.setName(value, name_id, record.platformID,
+                                  record.platEncID, record.langID)
+            else:
+                names.setName(value, name_id, 3, 1, 0x0409)
+
+        font.recalcTimestamp = False
+        output = BytesIO()
+        font.save(output, reorderTables=True)
+        return output.getvalue()
+    except PdfFontConversionError:
+        raise
+    except Exception as error:
+        raise _failure(item, f"native raster font alias serialization failed ({type(error).__name__})") from error
+    finally:
+        font.close()
 
 
 def _table_values(table: Any) -> dict[str, Any]:
