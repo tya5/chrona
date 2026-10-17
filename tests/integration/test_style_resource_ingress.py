@@ -2,10 +2,12 @@
 from collections.abc import Mapping
 from datetime import date
 from hashlib import sha256
+import sys
 
 import pytest
 import yaml
 
+from chrona.app.cli import main
 from chrona.presentation.model.closure import ClosureError, resolve_draft_render, resolve_render_context
 from chrona.presentation.scene.serialization import scene_document, validate_scene_document
 from chrona.presentation.style import bind_style_rules, parse_style_rules
@@ -102,6 +104,38 @@ def test_draft_style_changes_treatment_and_is_read_and_pinned(tmp_path):
     assert draft.closure.context.style.id == "authored-style"
     assert draft.closure.style.rules[0].rule_id == "planned-treatment"
     _assert_style(_render(draft))
+
+
+def test_cli_render_explicit_style_changes_the_native_output(tmp_path, monkeypatch, capsys):
+    _draft, values = _inputs(tmp_path, rules=_rules())
+    # Give the Style-selected role a visibly different paint from planned, so
+    # this exercises resource ingress through the real CLI rather than merely
+    # proving that the command accepts the option.
+    values["theme"]["body"]["colorBindings"]["authored-mark.fill"] = "negative"
+    theme_path = sr._write(tmp_path / "theme.yaml", values["theme"])
+    project_path = tmp_path / "project.yaml"
+    view_path = tmp_path / "view.yaml"
+    style_path = tmp_path / "style.yaml"
+    scheme_path = tmp_path / "scheme.yaml"
+    layout_path = tmp_path / "layout.yaml"
+
+    def render(output, *, with_style):
+        argv = ["chrona", "render", str(project_path), "--view", str(view_path),
+                "--theme", str(theme_path), "--scheme", str(scheme_path),
+                "--layout", str(layout_path), "--output", str(output)]
+        if with_style:
+            argv.extend(("--style", str(style_path)))
+        monkeypatch.setattr(sys, "argv", argv)
+        main()
+        capsys.readouterr()
+        return output.read_text(encoding="utf-8").lower()
+
+    baseline = render(tmp_path / "baseline.svg", with_style=False)
+    styled = render(tmp_path / "styled.svg", with_style=True)
+    assert baseline != styled
+    assert "#3986e6" in baseline
+    assert "#b91c1c" not in baseline
+    assert "#b91c1c" in styled
 
 
 def test_pinned_style_uses_verified_store_reader_and_reaches_render(tmp_path):
