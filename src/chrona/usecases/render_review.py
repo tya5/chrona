@@ -37,7 +37,7 @@ from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
 from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
-from chrona.presentation.model.info_diagnostics import PresentationInfo, UnboundSummarySource, FontGlyphFallback
+from chrona.presentation.model.info_diagnostics import PresentationInfo, UnboundSummarySource, FontGlyphFallback, ScaleValuesFolded
 from chrona.presentation.model.field_role_view import resolve_field_role_view
 from chrona.presentation.contracts.resources import ContractError, ViewAllPeriods, ViewPeriod
 from chrona.presentation.model.preset_target import PresetVisualProfileFallback
@@ -53,6 +53,9 @@ from chrona.core.figures import FigureCounts, FigureResolution, resolve_figures
 from chrona.core.periods import period_range_diagnostics, resolve_periods
 from chrona.core.temporal import Calendar
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
+from chrona.presentation.model.color_separability import MINIMUM_CATEGORY_DELTA_E, MINIMUM_RESERVED_CHROMA, chroma, delta_e_2000
+from chrona.presentation.model.point_paint import resolve_point_paint_role
+from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.presentation.model.axis_color_scale import (
     AxisBandScaleError, resolve_axis_band_scales, validate_axis_band_fill_targets,
 )
@@ -298,11 +301,15 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     omitted_metrics = omitted_metrics | frozenset(unavailable_metrics)
     if request.progress is not None:
         request.progress.phase("layout")
+    legend_colors = _legend_colors(theme, profile_connections.detail)
     color_scale = resolve_color_scale(view.color_encoding, theme["body"].get("colorScales"),
                                       theme["body"].get("categorySlots"),
                                       color_vision=tuple(theme["body"].get("colorVision", ())),
-                                      observed=_observed_scale_values(view.color_encoding, projection))
-    group_tints, group_tint_collisions = _resolve_group_tints(view, projection, theme)
+                                      observed=_observed_scale_values(view.color_encoding, projection),
+                                      reserved=tuple(c for c in legend_colors if chroma(c) >= MINIMUM_RESERVED_CHROMA),
+                                      other_color=_other_color(theme, legend_colors))
+    group_tints, group_tint_collisions, _group_tint_scale = _resolve_group_tints(view, projection, theme)
+    profile_info += tuple(_scale_folded_info(scale) for scale in (color_scale, _group_tint_scale) if scale is not None and scale.folded)
     if render_closure.actual_set is not None:
         ledger.actual()
     if render_closure.snapshot is not None:
@@ -636,12 +643,63 @@ def _annotation_kind_also(theme: Mapping[str, Any]) -> dict[str, tuple[str, ...]
     return {str(kind): tuple(str(item) for item in entry["colorAlso"]) for kind, entry in kinds.items() if entry.get("colorAlso")}
 
 
+def _other_color(theme: Mapping[str, Any], legend_colors: tuple[str, ...]) -> str | None:
+    """The first neutral candidate no non-category legend entry already uses, so "Other" is its own colour (#1628)."""
+    candidates = theme["body"].get("otherColors") or ()
+    for candidate in candidates:
+        if all(delta_e_2000(candidate, used) >= MINIMUM_CATEGORY_DELTA_E for used in legend_colors):
+            return candidate
+    return candidates[-1] if candidates else None
+
+
+def _tint_other_color(theme: Mapping[str, Any], *, scale_id: str) -> str | None:
+    """Folded group tints take a light neutral ground that keeps header text readable, apart from the scale's own tints (#1628)."""
+    body = theme["body"]
+    slots = (body.get("colorScales", {}).get(scale_id) or {}).get("palette") or ()
+    used = tuple(body["categorySlots"][slot] for slot in slots if slot in body.get("categorySlots", {}))
+    candidates = body.get("tintOtherColors") or ()
+    for candidate in candidates:
+        if all(delta_e_2000(candidate, colour) >= MINIMUM_CATEGORY_DELTA_E for colour in used):
+            return candidate
+    return candidates[-1] if candidates else _other_color(theme, ())
+
+
+def _legend_colors(theme: Mapping[str, Any], detail: Any) -> tuple[str, ...]:
+    """Colours of the Detail legend's non-category entries (Planned, Milestone, Dependency, Today ...).
+
+    A categorical scale must not reuse their hue, nor may its "Other" share one (#1628).
+    """
+    if detail is None:
+        return ()
+    body = theme["body"]
+    roles, values = body.get("roles", {}), body.get("values", {})
+    colours: list[str] = []
+    for entry in detail.legend:
+        role = entry.role
+        if role in ("asOf", "deadlineMark"):
+            role = semantic_binding(role).scene_role
+        else:
+            role = resolve_point_paint_role(role, gate_declared="gate" in roles, legend=True)
+        binding = roles.get(role, {})
+        for channel in ("fill", "stroke"):
+            token = values.get(binding.get(channel)) if isinstance(binding.get(channel), str) else None
+            colour = token.get("value") if isinstance(token, Mapping) and token.get("type") == "color" else None
+            if isinstance(colour, str) and colour not in colours:
+                colours.append(colour)
+                break
+    return tuple(colours)
+
+
+def _scale_folded_info(scale: Any) -> ScaleValuesFolded:
+    return ScaleValuesFolded(scale.scale_id, scale.source_field, scale.palette_size, scale.folded)
+
+
 def _resolve_group_tints(view: Any, projection: Any, theme: Mapping[str, Any]
-                         ) -> tuple[tuple[tuple[str, str], ...], tuple[Any, ...]]:
+                         ) -> tuple[tuple[tuple[str, str], ...], tuple[Any, ...], Any]:
     """Resolve the View's per-group tint scale to one colour per group, in display order (#583)."""
     tint = view.grouping.tint if view.grouping is not None else None
     if tint is None:
-        return (), ()
+        return (), (), None
     groups = tuple(dict.fromkeys(row.group_id for row in projection.rows if row.group_id))
     source_field = view.grouping.field or getattr(view.grouping.by, "value", view.grouping.by)
     scale = resolve_color_scale(
@@ -649,10 +707,11 @@ def _resolve_group_tints(view: Any, projection: Any, theme: Mapping[str, Any]
          "domain": list(tint.domain) if tint.domain is not None else "firstAppearance"},
         theme["body"].get("colorScales"), theme["body"].get("categorySlots"),
         source_ref="/body/grouping/tint",
-        color_vision=tuple(theme["body"].get("colorVision", ())), observed=groups)
+        color_vision=tuple(theme["body"].get("colorVision", ())), observed=groups,
+        other_color=_tint_other_color(theme, scale_id=tint.scale))
     if scale is None:
-        return (), ()
-    return tuple((group, scale.color_for(group, {scale.source_field: group})) for group in groups), scale.collisions
+        return (), (), None
+    return tuple((group, scale.color_for(group, {scale.source_field: group})) for group in groups), scale.collisions, scale
 
 
 def _observed_scale_values(encoding: Any, projection: Any) -> tuple[str, ...]:

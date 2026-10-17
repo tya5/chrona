@@ -32,6 +32,7 @@ Application Architecture decides which component evaluates or transports each sp
 | Profile Registry | Resolve supported core and extension profiles, typed fields, and schemas | Arbitrary executable extension behavior |
 | Temporal Engine | Parse and operate on temporal values and calendars | Project mutation policy or visual layout |
 | Scheduling Engine | Validate and derive planned placements under the Scheduling Model | Actual-driven rescheduling or presentation decisions |
+| Forecast Coordinator (#1634, designed; implementation pending) | Normalize explicit forecast inputs, reuse the injected Scheduler and return a separate typed forecast outcome | A second dependency solver, canonical writes, changing ordinary scheduler success, or geometry |
 | Transform / Predicate Engine | Evaluate declarative selection, grouping, ordering, and comparison predicates | Host-language expression execution or geometry |
 | View Engine | Build a semantic View Projection from explicit state and View Context | Colours, fonts, primitive coordinates, or project mutation |
 | Style Resolver | Resolve semantic selectors to visual roles | Scheduling, geometry, or literal token values |
@@ -69,7 +70,7 @@ Dependencies point toward lower-level semantics and then outward toward presenta
 | Named Snapshot and Actual input references | Their specified persistence model | Explicitly named, immutable or independently observed input; never inferred as “latest” |
 | Federation Plan and child export | Parent plan / child Revision Store | Immutable, read-only export consumed through a parent-owned pinned plan reference; never merged into parent canonical data |
 | View, Style, Theme, and Scene-profile definitions | Their respective specifications | Declarative versioned data; serialization syntax may evolve independently |
-| Schedule result, View Projection, resolved Style/Theme, Scene, SVG, canvas store | Runtime Coordinator / adapters | Derived cache or output only; invalidated when any declared input changes |
+| Schedule result, forecast result, View Projection, resolved Style/Theme, Scene, SVG, canvas store | Runtime Coordinator / adapters | Derived cache or output only; invalidated when any declared input changes |
 | Diagnostics, manifests, and trace data | Runtime Coordinator | Inspectable output; not a substitute for canonical source |
 
 The Revision Store resolves a Snapshot identity for every reproducible load and returns a
@@ -96,6 +97,17 @@ Store. Raw paths are Draft evaluation inputs for `validate`, `schedule`, and min
 `render`; they are not a reproducible revision comparison.
 
 ## 5. Read evaluation flow
+
+The explicit forecast branch (#1634, designed; implementation pending) starts
+after ordinary scheduling succeeds. The Forecast Coordinator receives the
+original placements, named Actual Set and explicit cutoff; it constructs a
+non-persistent effective Project and invokes the same Scheduler port. The
+Scheduling Engine itself still receives no View or Actual resource. A typed
+forecast outcome uses Spec04's source/observed-endpoint classifier to separate
+complete placements with reportable fixed-target findings from
+fatal/incomplete evaluation; it never rewrites `ScheduleOutcome.ok`. Projection
+receives ordinary and forecast facts separately. Shared observation selection
+is renderer-neutral and preserves ordinary latest/unmatched behavior.
 
 ### 5.1 Evaluation request
 

@@ -300,6 +300,22 @@ uses it to diagnose distinctions the requested output cannot preserve; it does n
 the target `kind` to infer unrecorded defaults. No target-specific options belong in a
 Render Context until a target-capability specification defines their portable meaning.
 
+### 5.3.1 Explicit forecast control (#1634; designed, implementation pending)
+
+Render Context v0.17 gains optional boolean `body.forecast`, runtime false when
+absent. This is a behavior-preserving optional widening: no existing valid
+Context changes behavior. A schema default alone does not implement omission.
+True selects Specification 04 §17.1 and Specification 06 §8.5, requiring the
+named Actual input and its explicit `asOf`; it never reads a clock or a working
+tree default. Invalid types retain the normal Context schema diagnostic.
+
+Draft CLI and MCP normalize their forecast boolean into this one Context
+control, omitting it when false. Immutable rendering reads the Context only;
+there is no competing `RenderRequest` switch. Preserve exact authored Context
+identity: explicitly writing false can change its resource digest even though
+the rendered geometry is unchanged. Omitted Draft control keeps prior bytes.
+Forecasting introduces no persisted forecast resource or Snapshot-save operation.
+
 ### 5.4 Render Context v0.2 federation extension
 
 `chrona/view/v0.2` preserves the v0.1 fields and adds required

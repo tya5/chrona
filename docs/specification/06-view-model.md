@@ -528,6 +528,68 @@ the planned end and uses `asOf` once that end has passed. Genuinely unobserved w
 subject to the selected missing-Actual scope. The selected Actual with an invalid zero-length
 cutoff remains absent with its established invalid-open-Actual diagnostic (#1582).
 
+### 8.5 Explicit forecast presentation (#1634; designed, implementation pending)
+
+Specification 04 §17.1 defines the separate forecast schedule. Only an explicit
+Render Context forecast request activates it. Original planned placements,
+Actuals, observation state and observed variance remain distinct facts; progress,
+source-plan figures, ordering, periods and source-plan deadline verdicts are not
+silently reinterpreted as forecasts. This is not automatic Actual-driven mutation.
+
+For selected primary temporal items represented in the View's rows, the forecast
+replaces the ordinary primary mark. Comparison-only members and context-only
+hierarchy headers are not additional primary items. Forecast marks retain the
+Project object identity, carry purpose `forecast`, and use the existing planned
+paint vocabulary; no Theme needs a copied per-project forecast style. Layout
+uses their completed geometry for tracks, packing, ports and dependency routes.
+It does not pack forecast bars using stale original intervals. Label-window
+admission, mark visibility and lane-label preflight use those same active
+intervals, not the stale planned facet. Source-date
+bindings and explicitly planned annotation anchors remain source-plan facts.
+Critical/float/driving decoration may use computed forecast analysis only; absent
+analysis is not borrowed from the original plan.
+
+Forecast comparison uses the supplied Snapshot, or the original primary plan if
+none was supplied. A selected item missing a same-kind baseline placement is
+`E_FORECAST_BASELINE_UNAVAILABLE`, not zero variance or an invented baseline.
+For this explicit mode, `finishDelta` presentation consumers select the separate
+forecast comparison fact: forecast exclusive `end` minus baseline `end`, or `at`
+minus baseline `at` for points, using the View's `deltaUnit`. Both table source
+forms, plot text and variance paint use that same selection. Observed variance
+facts and figures remain unchanged. Unfinished values append `*` (for example
+`+4d*`); completed values do not. Completion follows Spec04 §17.1, not progress.
+Rollup estimates reflect unfinished descendants.
+
+A supplied Snapshot remains a separate baseline ghost. The forecast comparison
+layer requires it independently of the ordinary Actual-comparison baseline.
+Use a declared `ghost` policy; otherwise forecast mode requires a visible ghost
+for the supplied Snapshot, even when its placement equals the forecast. This
+explicit forecast-only override of the ordinary omitted/changed-only policy
+does not create a ghost without a supplied Snapshot. It keeps the owner's
+baseline-visible promise without changing ordinary View defaults.
+Do not emit a duplicate ghost already represented in the same explicit row.
+Explicit rows must provide a compatible baseline track or refuse the forecast.
+Derived windows include forecast endpoints and drawn baseline ghosts; explicit
+windows remain authoritative and retain ordinary clipping diagnostics.
+
+Forecast requires a table-timeline View with a declared per-item `finishDelta`
+channel and a Layout legend slot. Unsupported presentation is
+`E_FORECAST_PRESENTATION_REQUIRED`, with the missing capability named; do not
+invent a slot, change View selection, unhide rollups or synthesize adapter text.
+The content layer replaces the ordinary planned legend key with a `forecast`
+key, or adds it when absent, labelled `Forecast (* estimated)` by default.
+`wording.legend.forecast` may provide declared wording; its swatch reuses planned
+paint. Do not leave a misleading current-plan key for the replacement bars.
+
+Every selected primary temporal item needs a complete, visible forecast delta.
+Table cells use measured full comparison text; plot deltas are independent
+required text requests, not optional parts of a suppressible title. Reuse
+Layout's existing required-text/atomic-table refusal behavior if they cannot
+fit, including under an explicit window; never silently ellipsise away `*`,
+suppress a required delta, or remove a row to obtain success. Optional titles
+keep their existing policy. Scene and adapters receive completed placements and
+paint only; they do not calculate dates, choose fonts or place the legend.
+
 ## 9. Annotations and Layout Intent
 
 Semantic annotations remain Project data and are selected with their anchors. Presentation annotations are View-local callouts, highlights, notes, or explanatory arrows. They MAY anchor to a selected object, relation, group, or temporal coordinate. The View owns the stable anchor and logical placement preference; Layout owns every concrete offset, coordinate, collision decision, and connector route. Scene projects completed Layout geometry and Rendering serializes it. Deleting a presentation annotation MUST NOT alter a Project object, semantic annotation, or dependency.
@@ -744,7 +806,8 @@ View evaluation SHOULD report stable diagnostics for unknown Project, Snapshot, 
 This document does not own the YAML resource envelope, reference normalization, colors,
 typography, line styles, scene primitives or coordinates, SVG/tldraw adaptation, or
 resource leveling. Snapshot capture and annotation mutation are Command Model concerns;
-Actual-driven rescheduling and DateTime scheduling remain out of scope.
+Automatic Actual-driven changes to the authored plan and DateTime scheduling
+remain out of scope. Explicit forecast presentation is defined in §8.5.
 
 ## 12. Boundary to Subsequent Documents
 
