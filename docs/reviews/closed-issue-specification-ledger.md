@@ -8,6 +8,7 @@ normative specification.
 | Issue | State | Evidence |
 | ---: | --- | --- |
 | #1606 | closed | [Literal acceptance review](../archive/reviews/issue-1606-pdf-alpha-advances-acceptance-review-2026-10-17.md), all three rows met; exact review-containing main `3e79f971abd7f793d48bd16d575c4346abb8030b` passed [release38979541954](https://github.com/tya5/chrona/actions/runs/38979541954). |
+| #1608 | closed | [Literal acceptance review](../archive/reviews/issue-1608-heading-omit-zero-acceptance-review-2026-10-17.md), all three rows met; exact review-containing main `8c4d17f917b29600fd72e5b514ad06d31242ca33` passed [release38985610444](https://github.com/tya5/chrona/actions/runs/38985610444). |
 | #1490 | closed | [Literal acceptance review](../archive/reviews/issue-1490-temporal-inline-capacity-acceptance-review-2026-10-15.md), all rows met; exact review-containing main787eeea8f passed [release38733015984](https://github.com/tya5/chrona/actions/runs/38733015984). |
 | #1533 | closed | [Literal acceptance review](../archive/reviews/issue-1533-draft-snapshot-acceptance-review-2026-10-15.md), all rows met; exact review-containing main787eeea8f passed [release38733015984](https://github.com/tya5/chrona/actions/runs/38733015984). |
 | #1535 | closed | [Literal acceptance review](../archive/reviews/issue-1535-preset-summary-countdown-acceptance-review-2026-10-15.md), all rows met; exact review-containing main1deffc014 passed [release38722752962](https://github.com/tya5/chrona/actions/runs/38722752962). |
