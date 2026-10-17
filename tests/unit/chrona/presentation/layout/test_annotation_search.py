@@ -229,8 +229,8 @@ def test_routed_tail_fair_scheduler_does_not_let_blocked_egress_starve_sibling(m
         if start == first.exposed_port:
             # The first egress has a finite-looking but blocked prefix much
             # larger than the total search cap.
-            path = (start, (end[0], start[1]), end)
-            return iter((path for _ in range(64)))
+            return iter((start, (30 + number / 100, start[1]),
+                         (30 + number / 100, end[1]), end) for number in range(64))
         return iter(((start, (start[0], 30), (end[0], 30), end),))
 
     monkeypatch.setattr(search, "strict_route_candidates", candidates)
