@@ -346,21 +346,26 @@ _WORD_BREAKS = re.compile(r"[\s\u2010\u2011-]+")
 
 
 def initials(text: str) -> str:
-    """The upper-cased first letter or digit of each word of ``text`` (#1373): deterministic, locale-independent.
+    """The abbreviation of a multi-word name; a single word is shown whole (#1629).
 
-    Words split on Unicode whitespace and hyphens. A word's initial is its first letter or digit (leading
-    punctuation is skipped) with any combining marks that follow it; a word without one adds nothing. Case
-    uses the Unicode default mapping of ``str.upper``, never a locale tailoring. Unspaced CJK text is one word.
+    Words split on Unicode whitespace and hyphens, and a word is one with a letter or digit. With two or more words
+    the result is the upper-cased first letter or digit of each (leading punctuation is skipped, combining marks that
+    follow it stay), by the Unicode default mapping of ``str.upper``, never a locale tailoring. With exactly one word
+    the result is that word as written, so `Raj`, `pm`, an unspaced CJK name and `QT` are not cut to one letter. A text
+    without a letter or digit gives the empty string.
     """
-    parts = []
+    parts, words = [], []
     for word in _WORD_BREAKS.split(unicodedata.normalize("NFC", text)):
         start = next((index for index, char in enumerate(word) if unicodedata.category(char)[0] in "LN"), None)
         if start is None:
             continue
+        words.append(word)
         end = start + 1
         while end < len(word) and unicodedata.category(word[end])[0] == "M":
             end += 1
         parts.append(word[start:end].upper())
+    if len(words) == 1:
+        return words[0]
     return unicodedata.normalize("NFC", "".join(parts))
 
 
