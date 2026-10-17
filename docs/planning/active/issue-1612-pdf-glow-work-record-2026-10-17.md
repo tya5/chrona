@@ -65,4 +65,16 @@ inside the ReportLab descriptor; a vector-only PDF never verifies that engine.
 Vocabulary/schema-parts/package controls:196 passed. Schema equivalence against
 `origin/main` (L1):PASS, added1/delta3/equal35; four exact allowed delta paths,
 zero stale entries pruned. Frozen vocabulary v0.1 is unchanged.
-PDF serialization and the45-output acceptance gate remain in progress, not met.
+PDF serialization is implemented:37 focused glow/registry/native-face/opacity
+tests and59 existing PDF controls pass. Completed aligned strokes and rotated
+text retain their geometry; every admitted cap/join remains a native PDF operator.
+The no-glow path does not verify resvg. Independent architecture audit found no
+remaining blocker; it checked exact-face closure and isolated Form resources.
+
+macOS: `pytest -q tests/integration/test_automatic_cjk_fonts.py` passes48tests,
+including all45 real preset/target outputs without the Marquee refusal exception.
+Root viewed default, executive and Marquee PNGs and the actual rasterized Marquee
+PDF in `/tmp/chrona-1612-final-visual.aSJfqb`. Its Japanese text is extractable;
+74completed glows produce74alpha images/soft masks, with source vectors retained.
+Linux exact-head CI, post1623 public byte comparison and review-containing
+three-OS release are still required; the issue is not accepted or closed.

@@ -4,7 +4,6 @@ from chrona.presentation.fonts.installed import InstalledFontIndex, use_installe
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
 from chrona.usecases.preset_library import list_builtin_presets
 from chrona.usecases.table_import import import_table
-from chrona.usecases.render_review import RenderFailed
 from tests.integration.test_installed_fonts import _parts, _render, _header, _source, renamed, CJK_FONTS
 from tests.support.text_treatments import cjk_available
 
@@ -52,14 +51,6 @@ def test_every_preset_renders_japanese_csv_import(tmp_path, preset, target):
     project.write_bytes(imported.project_yaml)
     actual.write_bytes(imported.actual_yaml)
     with use_installed_fonts(InstalledFontIndex([])):
-        if preset == "marquee" and target == "pdf":
-            # Existing required-glow refusal, independently reproduced on the
-            # untouched Latin baseline. Acceptance disposition is still open.
-            with pytest.raises(RenderFailed) as caught:
-                render_draft(DraftRenderRequest(project=project, actual=actual, preset=preset, target_kind=target))
-            assert caught.value.code == "E_VISUAL_CAPABILITY_UNSUPPORTED"
-            assert caught.value.source_ref == "/body/roles/kicker/glowBlur"
-            return
         result = render_draft(DraftRenderRequest(project=project, actual=actual, preset=preset, target_kind=target))
     assert result.artifact.content.startswith({"png": b"\x89PNG", "pdf": b"%PDF", "svg": b"<svg"}[target])
     assert not any(item.get("code") == "W_FONT_GLYPH_SUBSTITUTED" for item in result.notes)

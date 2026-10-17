@@ -11,10 +11,11 @@ The exact review-containing main is `8c4d17f917b29600fd72e5b514ad06d31242ca33`
 [Design, architecture review and implementation plan](https://github.com/tya5/chrona/issues/1612#issuecomment-6225435042).
 The exact-main [three-OS release38985610444](https://github.com/tya5/chrona/actions/runs/38985610444)
 passed on the final source, including the merged face-closure correction.
-Acceptance remains incomplete only because criterion 2's marquee PDF still
-has the independently reproduced required-glow refusal; the requested
-disposition at [issue comment6225539132](https://github.com/tya5/chrona/issues/1612#issuecomment-6225539132)
-is unanswered and no waiver is applied.
+The [PDF completion work record](../../planning/active/issue-1612-pdf-glow-work-record-2026-10-17.md)
+now implements the published Specs08/63 design without a waiver. macOS passes
+all45 outputs; Linux exact-head CI, post1623 public byte comparison and the new
+review-containing main release remain pending. Earlier release evidence proves
+the font slice, not this PDF completion.
 
 ## Literal issue acceptance
 
@@ -26,26 +27,20 @@ is unanswered and no waiver is applied.
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
 | 1 | Synthetic test: a Theme naming only a Latin family renders a CJK string through the fallback and records which face it used. | met | [Automatic CJK controls](../../../tests/integration/test_automatic_cjk_fonts.py) cover declared Latin-only Theme, mixed exact face runs, optional provider absent with injected OS faces, info substitution and PDF text/embedded Noto Sans JP program. | — |
-| 2 | All 15 presets render a Japanese CSV import to PNG, SVG and PDF with no glyph error, on macOS and on the Linux CI runner (Noto CJK package). View three PNGs and one rasterised PDF. | not met | macOS matrix and [Linux exact-head CI](https://github.com/tya5/chrona/actions/runs/38976260394): 44 successful outputs; marquee PDF retains the independently reproduced required-glow refusal. [Disposition requested](https://github.com/tya5/chrona/issues/1612#issuecomment-6225539132); no waiver applied. Root viewed target-b, Sunday and Marquee PNGs plus rasterized target-b PDF in `/private/tmp/chrona-1612-visual.AI6mTk`. | — |
-| 3 | Public SVG/Scene byte-identical for Latin-only examples. | met | Font implementation [artifact12078464991](https://github.com/tya5/chrona/actions/runs/38976260394/artifacts/12078464991) against ready `6bb56c205`: 109 paths each, 0 added/retired; all 50 SVGs and 50 Scenes are byte-identical. Final heading-integration [artifact12082313818](https://github.com/tya5/chrona/actions/runs/38984444157/artifacts/12082313818), based on `0b7ad6558`, adds no font primitives, routes or labels; its six Scene changes are Layout provenance-only. | — |
+| 2 | All 15 presets render a Japanese CSV import to PNG, SVG and PDF with no glyph error, on macOS and on the Linux CI runner (Noto CJK package). View three PNGs and one rasterised PDF. | not met | Current macOS integration run:48passed, including all45 real outputs; no refusal exception. Root viewed default/executive/Marquee PNGs and rasterized Marquee PDF in `/tmp/chrona-1612-final-visual.aSJfqb`:74glows/74alpha images/74soft masks, Japanese text extractable and source vectors retained. Linux exact-head evidence pending. | — |
+| 3 | Public SVG/Scene byte-identical for Latin-only examples. | not met | Published font evidence: [artifact12078464991](https://github.com/tya5/chrona/actions/runs/38976260394/artifacts/12078464991) has all50SVG/50Scene byte-identical; [heading artifact12082313818](https://github.com/tya5/chrona/actions/runs/38984444157/artifacts/12082313818) has no font geometry change. Repeat against the post1623 ready base for the current PDF completion; prior placement changes must not be attributed to this adapter slice. | — |
 
-## Programme-level criteria (optional)
+## Architecture and current verification
 
 Font ingress closes provider/OS metrics and exact files. Layout completes
 per-glyph faces and advances; Scene projects them; adapters serialize without
 font discovery or measurement. PDF-private aliases preserve exact assets even
 when names/weights coincide, default SVG namespaces and clipping remain intact,
 and TikZ uses closed file paths. Strict system-font refusal is unchanged.
-Specs08/30/37 and optional Scene run fields describe the contract. No preset,
-example or generated-output edits are part of this implementation.
-Reconciled focused run:206 passed; separate strict closure/small-caps/viewer-fit
-batch:85 passed. Schema equivalence: additive1/equal37;576 documents/739 probes;
-L2+L3=27.6s within60s. The no-provider caption test and covered-caption/info
-control added 25 focused passes. [Post-integration audit](https://github.com/tya5/chrona/issues/1612#issuecomment-6226118182)
-found that independent headings and native network text dropped measured face
-runs; PR #1621 now carries the shared Layout completion correction and
-synthetic controls. The exact-main release passed all three full pytest suites,
-conformance, wheel-size and installed-wheel smoke, plus MCP-floor and
-newest-Python reproduction checks. The release matrix included the 45
-preset/target CJK cases with the optional provider installed. This does not
-waive the separately recorded marquee PDF refusal.
+Specs08/30/37/63 describe the contract. PDF-only halo lowering consumes completed
+regions and original native faces; it retains vector source paint, exact-face
+text and isolated Form resources. No preset, example or generated-output edits.
+Current focused evidence:76profile/closure,196schema/package,59existing PDF,
+37glow/registry/native-face/opacity and48CJK integration tests pass.
+L1 schema equivalence:added1/delta3/equal35, frozen v0.1 unchanged.
+Full current-source release and public-output identity remain pending.

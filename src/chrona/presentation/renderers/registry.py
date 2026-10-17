@@ -1,4 +1,4 @@
-"""Target-kind renderer selection and optional CairoSVG conversion."""
+"""Target-kind selection and closed-font raster/vector serialization."""
 from __future__ import annotations
 
 from hashlib import sha256
@@ -16,6 +16,7 @@ from chrona.presentation.renderers.v05_typeset import V05TikzRenderer, V05TypstR
 from chrona.presentation.renderers.pdf_fonts import (
     CONVERSION_GRAMMAR,
     EMBEDDING_GRAMMAR,
+    PDF_RASTER_FONT_GRAMMAR,
     PdfFontConversionError,
     pdf_embedding_bytes,
     pdf_font_bytes,
@@ -85,8 +86,21 @@ class ReportLabPdfRenderer:
         files, identities = _font_files(self._font_metrics, self._asset_root, self._font_files_override,
                                         self._asset_resolver)
         svg = V05SvgRenderer(viewer_fit=False).render(surface).content
-        svg, pdf_aliases = _pdf_private_svg(surface, svg, files)
+        has_glow = any(getattr(getattr(item, "paint", None), "glow", None) is not None
+                       for item in getattr(surface, "primitives", ()))
+        glow_descriptor = _verify_pdf_glow_rasterizer(self._descriptor) if has_glow else None
+        svg, pdf_aliases = _pdf_private_svg(surface, svg, files, force_asset_aliases=has_glow)
         characters = _svg_font_characters(svg)
+        glow_identity = ""
+        if has_glow:
+            from chrona.presentation.renderers.pdf_glow import PDF_GLOW_GRAMMAR, lower_pdf_glows
+            try:
+                svg = lower_pdf_glows(surface, svg, files, pdf_aliases or {})
+            except PdfFontConversionError as error:
+                raise _failure("E_RENDER_FONT_CLOSURE", str(error)) from error
+            glow_identity = (f"-{PDF_GLOW_GRAMMAR}-{PDF_RASTER_FONT_GRAMMAR}"
+                             f"-resvg-py-{glow_descriptor['version']}"
+                             f"-resvg-{glow_descriptor['resvgVersion']}-dpi96")
         svg = lower_pdf_svg(surface, svg)
         translated = False
         try:
@@ -117,7 +131,8 @@ class ReportLabPdfRenderer:
                     raise _failure("E_RENDER_FONT_CLOSURE", f"PDF cannot embed {item.family}/{item.weight} from "
                                    f"{item.path.name}: {error}; render SVG or PNG if embedding is unavailable") from error
             rl_config.invariant = 1
-            content = render_pdf_vector(svg, font_map=_ClosedPdfFontMap(mapping))
+            content = render_pdf_vector(svg, font_map=_ClosedPdfFontMap(mapping),
+                                        preserve_image_alpha=has_glow)
         except PdfFontConversionError as error:
             raise _failure("E_RENDER_FONT_CLOSURE", str(error)) from error
         except ImportError as error:
@@ -126,6 +141,7 @@ class ReportLabPdfRenderer:
                   f"-{PDF_PAINT_GRAMMAR}-{PDF_OPACITY_GRAMMAR}-{EMBEDDING_GRAMMAR}-fonttools-{version('fonttools')}")
         if translated:
             prefix += f"-{CONVERSION_GRAMMAR}"
+        prefix += glow_identity
         return RenderArtifact("pdf", "application/pdf", content, _adapter_identity(prefix, identities))
 
 
@@ -153,13 +169,14 @@ def _pdf_private_font_alias(identity: str, family: str, weight: int, index: int 
     return "ChronaClosedFace-" + sha256(key).hexdigest()
 
 
-def _pdf_private_svg(surface: object, svg: bytes, files: tuple[FontFile, ...]):
+def _pdf_private_svg(surface: object, svg: bytes, files: tuple[FontFile, ...], *,
+                     force_asset_aliases: bool = False):
     """Use exact asset aliases in a private PDF SVG copy; public SVG stays unchanged."""
     primitives = getattr(surface, "primitives", ())
     layouts = {item.scene_id: item.text_layout for item in primitives
                if item.kind == "Text" and item.text_layout is not None}
-    if not any(getattr(run, "asset_identity", None) is not None
-               for layout in layouts.values() for line in layout.runs for run in line):
+    if not force_asset_aliases and not any(getattr(run, "asset_identity", None) is not None
+                                          for layout in layouts.values() for line in layout.runs for run in line):
         return svg, None
 
     aliases: dict[tuple[str, str, int], str] = {}
@@ -297,6 +314,17 @@ def _verify_resvg(descriptor: dict[str, Any]) -> None:
     if (descriptor.get("engine") != "resvg-py" or descriptor.get("version") != resvg_py.__version__
             or descriptor.get("resvgVersion") != resvg_py.__resvg_version__):
         raise _failure("E_RENDER_RASTERIZER_IDENTITY", f"descriptor engine/version/resvgVersion must match installed resvg_py ({resvg_py.__version__!r}, {resvg_py.__resvg_version__!r})")
+
+
+def _verify_pdf_glow_rasterizer(descriptor: dict[str, Any]) -> dict[str, Any]:
+    """Verify the optional halo engine only when completed PDF paint uses it."""
+    glow = descriptor.get("glowRasterizer")
+    if not isinstance(glow, dict):
+        raise _failure("E_RENDER_RASTERIZER_IDENTITY", "PDF glow requires a pinned glowRasterizer descriptor")
+    if isinstance(glow.get("dpi"), bool) or glow.get("dpi") != 96:
+        raise _failure("E_RENDER_RASTERIZER_IDENTITY", "PDF glowRasterizer must use 96 dpi")
+    _verify_resvg(glow)
+    return glow
 
 
 def _verify_reportlab(descriptor: dict[str, Any]) -> None:

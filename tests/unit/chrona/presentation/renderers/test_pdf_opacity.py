@@ -1,7 +1,9 @@
 """Isolated PDF paint opacity, including overlapping compound primitives."""
+from base64 import b64encode
 from io import BytesIO
 from pathlib import Path
 
+from PIL import Image
 from pypdf import PdfReader
 import pypdfium2
 import pytest
@@ -57,6 +59,62 @@ def test_nested_groups_preserve_combined_alpha_clip_transform_and_painter_order(
     assert image.getpixel((30, 20)) == pytest.approx((191, 191, 191), abs=2)
     assert image.getpixel((60, 20)) == (255, 255, 255)
     assert image.getpixel((22, 32)) == (255, 0, 0)
+
+
+@pytest.mark.parametrize(("outer", "inner", "expected"), ((0.7, 0.5, 166), (0.2, 0.8, 214)))
+def test_unequal_nested_alpha_uses_each_forms_own_extgstate_resources(outer, inner, expected):
+    svg = _svg(f'<g opacity="{outer}"><g opacity="{inner}">'
+               '<rect x="10" y="10" width="70" height="70" fill="black"/>'
+               '</g></g>')
+    pdf = render_pdf_vector(svg, font_map=None)
+    reader = PdfReader(BytesIO(pdf))
+    page_resources = reader.pages[0]["/Resources"]
+    page_alpha = {float(item.get("/ca", 1)) for item in page_resources["/ExtGState"].values()}
+
+    forms = []
+    def collect(resources):
+        for reference in resources.get("/XObject", {}).values():
+            item = reference.get_object()
+            if item.get("/Subtype") != "/Form":
+                continue
+            forms.append(item)
+            nested = item.get("/Resources")
+            if nested is not None:
+                collect(nested)
+
+    collect(page_resources)
+    assert len(forms) == 2
+    assert outer in page_alpha
+    assert all("/Resources" in form and "/Font" in form["/Resources"]
+               and "/ProcSet" in form["/Resources"] for form in forms)
+    assert any(inner in {float(item.get("/ca", 1))
+                         for item in form["/Resources"].get("/ExtGState", {}).values()}
+               for form in forms)
+    assert any("/XObject" in form["/Resources"] for form in forms)
+    assert _image(pdf).getpixel((30, 30)) == pytest.approx((expected, expected, expected), abs=2)
+
+
+def test_private_rgba_image_keeps_soft_mask_and_combines_with_group_opacity():
+    png = BytesIO()
+    Image.new("RGBA", (2, 2), (255, 0, 0, 128)).save(png, format="PNG")
+    uri = "data:image/png;base64," + b64encode(png.getvalue()).decode("ascii")
+    svg = _svg(f'<g opacity="0.5"><image x="10" y="10" width="60" height="60" '
+               f'href="{uri}"/></g>')
+    pdf = render_pdf_vector(svg, font_map=None, preserve_image_alpha=True)
+    reader = PdfReader(BytesIO(pdf))
+
+    images = []
+    def collect(resources):
+        for reference in resources.get("/XObject", {}).values():
+            item = reference.get_object()
+            if item.get("/Subtype") == "/Image":
+                images.append(item)
+            elif item.get("/Subtype") == "/Form":
+                collect(item.get("/Resources", {}))
+
+    collect(reader.pages[0]["/Resources"])
+    assert images and any("/SMask" in item for item in images)
+    assert _image(pdf).getpixel((30, 30)) == pytest.approx((255, 191, 191), abs=3)
 
 
 @pytest.mark.parametrize("opacity,expected", [(0, 255), (1, 0)])
