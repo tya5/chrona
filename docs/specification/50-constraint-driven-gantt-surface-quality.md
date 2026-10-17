@@ -399,6 +399,9 @@ validators. No project coordinates, new quality threshold or expansion quota
 is introduced. Layout checks completed reduced and terminal-adjusted route
 stroke against retained text/label-visual footprints, not just its centreline;
 staged recovery still removes only the obstacle classes its contract permits.
+Initial as-of/deadline rule obstacles likewise carry the exact stroke width
+resolved from their semantic Theme role, so labels avoid painted rule ink
+rather than only the centreline.
 First-fit fallback uses an obstacle-independent Manhattan/minimum-turn lower
 bound instead of preparing the exact reverse bound. It retains canonical
 prefix histories and existing expansion quotas; it does not collapse different
