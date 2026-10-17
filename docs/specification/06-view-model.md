@@ -357,7 +357,22 @@ A `table-timeline` View MAY give a fixed-unit `axis.tiers[]` band tier `fillScal
 
 A `table-timeline` View MAY declare `deadlines: {show: slipped | all}` to draw each object's Project `deadline` (Spec 05 section 9). A deadline is drawn as a **tick** at its date, centred on the object's planned mark, and, when the planned finish is later than the deadline, a **run** from the tick to that finish (`at` of a point, `end` of a span, the date `W_DEADLINE` compares: Spec 04 section 10). `slipped` draws only the deadlines the plan misses; `all` draws every deadline, the missed ones with their run, so a kept promise reads as slack. Slipped and kept differ by shape (the run), not only by colour. The Core decides which deadlines slipped (`deadline_statuses`); a deadline equal to the finish is kept. The View selects; the Project owns the date; the Theme owns paint and reach (Spec 07, role `deadline-mark`); Layout owns the geometry (Spec 50 section 3.4). Without the optional caption below, no text is drawn.
 
-A deadline outside the View window draws nothing and is recorded as the Scene diagnostic `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>`. A planned point folded into a group header hosts the same date-scaled tick/run as an ordinary point; Layout reserves its complete painted envelope while packing the header, before placing labels. A Theme that omits the role while a View shows deadlines fails with `E_THEME_ROLE_REQUIRED` at `/body/roles/deadline-mark`. The member is optional and additive in `chrona/view/v0.28`; a `dependency-network` View, which has no timeline, MUST NOT declare it. A View without `deadlines` renders as before. An author explains the mark with a Detail Profile legend entry whose role is `deadlineMark`.
+A timeline deadline outside the View window draws nothing and is recorded as the Scene diagnostic `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>`. A planned point folded into a group header hosts the same date-scaled tick/run as an ordinary point; Layout reserves its complete painted envelope while packing the header, before placing labels. A Theme that omits the role while a View shows deadlines fails with `E_THEME_ROLE_REQUIRED` at `/body/roles/deadline-mark`. The member is optional and additive in `chrona/view/v0.28`. A View without `deadlines` renders as before. An author explains the mark with a Detail Profile legend entry whose role is `deadlineMark`.
+
+A `dependency-network` View MAY declare the same `deadlines` member. It shows
+a node-attached deadline footer, not a date-positioned timeline run. View
+closes the selected node's promised date as ISO `YYYY-MM-DD`, its Core verdict
+and optional bound caption before Layout. A kept deadline has a vertical tick;
+a slipped deadline has an L-shaped indicator with a horizontal foot. This is a
+categorical shape distinction: neither its position nor length encodes a date
+or duration. The ISO date is always visible for a shown deadline; an opted-in
+slipped caption follows it, separated by one space. Unit words remain author
+copy. No timeline window hides a network deadline or produces an outside-window
+notice. Layout measures the entire footer before sizing nodes, ports and route
+obstacles; natural growth uses existing network overflow diagnostics, not a
+post-route overlay. Only selected primary nodes acquire footers. Absent
+deadlines/hidden overrides preserve the old node exactly; no new schema version,
+generic annotation scope or network surface redesign is introduced.
 
 Optional `deadlines.overrides` maps Project object ids to `{show: all | slipped | hidden}`.
 The per-object rule replaces `deadlines.show`, including allowing a kept deadline
@@ -385,6 +400,10 @@ formats the Core's existing late-day count before Layout; no new figure scope
 or domain date calculation is introduced. Kept deadlines have no caption.
 Absent caption preserves existing output. Theme text treatment is Spec07;
 placement, optional omission and counted diagnostics are Spec50 section3.4.
+On a dependency network, that same already-bound caption is part of the
+measured footer instead of the timeline's late two-anchor placement. The node
+grows for its complete date/caption content; it is not silently dropped and
+does not produce `I_LAYOUT_DEADLINE_CAPTION_DROPPED`.
 
 ### 7.4 Heading templates (#991)
 

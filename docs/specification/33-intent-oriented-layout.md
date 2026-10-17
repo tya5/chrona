@@ -645,6 +645,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_backgrounds` | Complete source-bound row/group/axis/calendar background geometry from completed extents and overlay intervals. |
 | `surface_periods` | Complete named-period band geometry (#582) from the View-selected periods, the completed scale and the Theme treatment; clip to the window and plot and record a period with no extent. |
 | `surface_deadlines` | Complete a deadline tick and, for a slipped deadline, a run to the planned finish (#822) from the View-shown deadlines, completed ordinary/folded planned marks, the scale and Theme reach; expose the painted envelope to folded packing and record deadlines outside the window. |
+| `dependency_network` | Measure a selected node's closed deadline footer, complete its categorical tick/L glyph and full painted envelope, and include both before node dimensions, ports, obstacles and routes; Scene receives completed text/shapes only. |
 | `surface_visuals` | Reserve and place text/mark/axis label visuals. |
 | `surface_completion` | Complete slot ownership, overflow evidence, canvas bounds, lane row anchors and catalogue patterns for final Rect shapes and span marks, and assemble the final placement. |
 | `surface_geometry` | Pure rectangle/date conversions and shared precision/paint-order constants. |

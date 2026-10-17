@@ -1,6 +1,7 @@
 # Issue1397 — remaining deadline presentation
 
-Status: overrides/folded implementation verified; network design correction in progress.
+Status: overrides/folded implementation verified; network correction designed,
+architecture review complete; amended implementation plan below awaits publication.
 Current published baseline: trusted-ready main `690f3549ff0b61ee15ed85885ad18aacd7cabf31`.
 Authority: [reviewer assignment](https://github.com/tya5/chrona/issues/1397#issuecomment-6233959539),
 which reopens the earlier row4/5 dispositions. Rows1/3 are released; row2 remains
@@ -44,10 +45,9 @@ No project condition, copied preset, source mutation or generic figure scope.
 Network row4 has a valid general use case: a dependency graph reader needs the
 promised date and whether the plan misses it, without a time axis. The earlier
 [deferral proposal](https://github.com/tya5/chrona/issues/1397#issuecomment-6234014932)
-is not a sufficient disposition: absence of a time axis forbids a date-scaled
-run, not a node-attached deadline indicator. No reviewer answer is needed to
-investigate that existing authorized use case. Product changes remain paused
-until the following correction is designed, reviewed and published.
+is withdrawn: absence of a time axis forbids a date-scaled run, not a node-attached
+deadline indicator. No new approval is required for this existing authorized use
+case. Product changes remain paused until this correction is published.
 
 ### Network correction design plan
 
@@ -67,6 +67,27 @@ until the following correction is designed, reviewed and published.
   omission output, schema equivalence and actual SVG/PNG in both writing axes.
   Official public counts and full exact-main release remain mandatory.
 
+### Selected network correction and architecture review
+
+Spec06/07/33/50 now define an in-node ISO-date footer with a categorical tick
+(kept) or L glyph (slipped), plus the existing optional author-bound late copy.
+The glyph never pretends to encode temporal position or duration. Its em-based
+size/gap and full outline/wobble envelope are measured with the date text before
+node dimensions, ports and routing; native network overflow remains visible.
+View attaches only selected Core deadline facts/copy to typed network nodes;
+Layout measures/composes, Scene projects completed text/shapes, adapters remain
+unchanged. Unknown override IDs and Core warnings retain their existing scope.
+The same deadline role/ground-text semantic is reused; no new registry meaning,
+public slot, Project field, date-format DSL or package/corpus copy is introduced.
+Spec04/05 own unchanged truth; Spec49 preserves semantic/primitive admission;
+Spec56 allows this additive optional View behavior without a version bump.
+The old network prohibition is intentionally removed, not kept as compatibility.
+Network captions grow their host rather than use timeline late-caption omission.
+Independent review requires separate tick/foot paths and per-segment outline
+grounds (not an opaque L bounding square), explicit semantic/subject identities,
+unchanged positive markReach constraints and full baseline-bearing bounds. These
+are incorporated into Spec50 before code; no architecture blocker remains.
+
 ## Implementation plan
 
 1. **Selection:** View schema/contracts and `render_review._shown_deadlines`;
@@ -78,7 +99,16 @@ until the following correction is designed, reviewed and published.
    and final placements; reserve inline/block extents before emitting marks.
    Cover kept/slipped, outlines/wobble, multiple/shared points, captions, off-window,
    identity/provenance and unchanged no-deadlines output. Inspect neutral PNGs.
-3. **One implementation PR:** code, schema migrations, concise literal review
+3. **Network:** schema admission; typed node/deadline content in projection and
+   application; `surface_source_inputs`, `dependency_network` and shared
+   renderer-neutral deadline ink completion; passive network projection in
+   `v05_builder`. Factor common ink/outline bounds instead of duplicating them.
+   Neutral tests cover kept/slipped/missing/hidden/override selection, ISO dates,
+   caption formats, outside-window independence, outlines/wobble/zero ink,
+   full node/text/port/route envelopes, both flow axes and unchanged omission.
+   Inspect actual SVG/PNG and Scene provenance, run schema equivalence and
+   focused network/forecast/deadline suites, then the official public count batch.
+4. **One implementation PR:** code, schema migrations, concise literal review
    and normative changes together. Run schema equivalence against ready main,
    focused suites and conformance; consume one official public snapshot with
    per-slide counts, not hand-edited generated files. Three-OS CI supplies full

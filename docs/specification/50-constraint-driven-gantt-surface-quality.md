@@ -1196,7 +1196,7 @@ its own ground (#1013; Specification 46 section 8), so a translucent band is rea
 as the colour it makes and a Theme need not paint it opaque; only a host whose
 paint cannot be read stays `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`.
 
-A shown deadline (#822; Spec 06 section 7.3) completes `Path` shapes from the View-shown deadlines the use case
+A table-timeline deadline (#822; Spec 06 section 7.3) completes `Path` shapes from the View-shown deadlines the use case
 carries on the projection, each with the Core's slipped verdict (`ReviewDeadline`; Layout compares no dates to judge
 lateness). For every completed planned/forecast mark of the object (a snapshot or scenario mark never hosts one),
 including a point folded into a group header, the tick is the vertical segment at the deadline date, mapped through the scale that
@@ -1243,6 +1243,35 @@ TextPlacements use identity `deadline-caption:<mark instance>`, object sourceRef
 slot timeline and explicit subjects for primitive provenance. They do not set
 the existing paint-host field merely to express attachment. Scene projects
 completed bounds/baseline/font identity and applies the ground-text gate.
+
+On a dependency network, View supplies a selected node's closed ISO-date text,
+optional already-bound late caption and Core slipped verdict. Layout measures
+that footer under `deadline-caption` (or `text`) independently of the node title.
+The categorical glyph occupies a square whose side is `deadline-mark.markReach`
+times the footer's measured line block size: a vertical tick when kept, the
+same tick plus an equal-length horizontal foot when slipped. Emit these as
+separate straight Path strokes, not one L Path with a square outline. Neither dimension
+depends on the promised date, finish or days late. Reuse the shared deadline
+stroke/outline/wobble envelope, reserving the whole square plus its ink margin
+for either state; a zero-stroke-width glyph contributes no ink or gap. Theme
+markReach retains its existing strictly positive range.
+The gap to text is one footer-font em. Node content is a title above this full
+footer; inline size is the maximum row width and block size is their combined
+height, subject to the existing node minima. Include actual text bounds and
+baseline bearings when closing this content envelope, not just nominal line
+heights; normalize and center its full footprint in the node. Without a footer,
+preserve existing node/title placement exactly.
+Complete node dimensions before ports, route obstacles, canvas and overflow.
+Stroke identities are `deadline-network-tick:<object>` and, only when slipped,
+`deadline-network-slip:<object>`; their existing per-segment grounds use
+`deadline-outline:<stroke identity>`. Text is `deadline-network-label:<object>`.
+Use existing semantics `deadlineMark`, `deadlineMarkOutline` and `deadlineCaption`,
+object sourceRef/subjects and native network slot ownership. All
+outline grounds precede glyph foregrounds above their node; text is a separate
+ground-text primitive. Scene emits these completed placements, never content
+selection or position. Missing required measurements fail with the existing
+network measurement diagnostic. No timeline window/caption-drop policy applies;
+normal network natural-growth/visible-overflow policy preserves the footer.
 
 A selected period's label (`label: {placement, overflow}`) is one request to the shared label engine that places the
 as-of and member labels, built in the first pre-route phase: `top` and `bottom` anchor a zero-height strip on the plot
