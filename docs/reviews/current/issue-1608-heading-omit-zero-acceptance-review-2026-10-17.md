@@ -10,7 +10,8 @@ with ready base `3e79f971a`. Integrated product head `bf41f0a22` passed
 and [frozen shared-schema integration](https://github.com/tya5/chrona/issues/1608#issuecomment-6226005448).
 Ingress validates typed parts; Layout binds raw guards before measurement and
 includes their late-count dependencies. No Scene or adapter policy is added.
-Proposed three-design YAML adoption awaits the reviewer's acceptance in the PR.
+The reviewer [accepted all three shared-design YAML declarations and disclosed
+public deltas](https://github.com/tya5/chrona/pull/1621#issuecomment-6226945825).
 The [integration correction](https://github.com/tya5/chrona/issues/1608#issuecomment-6226118452)
 shares existing Layout fallback-run completion with measured sources and carries
 those facts through independent heading and network projections. It changes no
@@ -44,6 +45,6 @@ now corrected; the annotation validator passes locally. No behavior gate is waiv
 Schema equivalence after reconciliation: two explicit widening deltas, 36 equal
 schemas, 576 documents/739 probes; L2+L3 20.7 seconds within its 60-second gate.
 The proven-stale I1583 schema delta was pruned; frozen definitions are unchanged.
-Product-head PR CI passed. Reviewer acceptance of the three proposed shared
-Layout YAML changes and the exact review-containing main three-OS release
-remain required before issue closure.
+Product-head PR CI passed and shared-design YAML adoption is accepted.
+After reconciliation to ready main `0b7ad6558`, current-head PR CI and the exact
+review-containing main three-OS release remain required before issue closure.
