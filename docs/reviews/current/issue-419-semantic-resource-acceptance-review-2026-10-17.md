@@ -58,8 +58,9 @@ and [mark paint preflight](../../../tests/integration/test_style_mark_paint_pref
 They are not published release evidence.
 
 CI [39077516079](https://github.com/tya5/chrona/actions/runs/39077516079),
-head `474f3f92d`, passes snapshot/contrast, public reproduction, MCP and
-conformance; pytest shards are pending. Its official snapshot has109 paths,
+head `474f3f92d`, passes snapshot/contrast, public reproduction, MCP,
+conformance and all three pytest shards. Only `derived-ready` failed because
+main advanced during the run. Its official snapshot has109 paths,
 all byte-identical to the preceding reviewed snapshot:49 unchanged SVG/Scene
 pairs, the disclosed glyph-gates pair, three diagnostic reports, no retired
 paths. The official glyph SVG equals the PNG-inspected source.
@@ -70,8 +71,9 @@ production fallbacks. The shared catalogue preserves PR1676's
 Inventory, schema, paint-capability, documented-command and caller focused
 checks pass. Optional TikZ compilation is not claimed and remains out of scope.
 
-C1 merged in PR1678 at `348fa338c`; its trusted generated tip must be normally
-integrated and the final S1 head retested before merging. C1's state-to-role
+C1 merged in PR1678 at `348fa338c`; its trusted generated tip `ba46a837b`
+(`derived-main` success) is normally integrated for the final S1 re-run.
+Current-head CI and artifact review remain required. C1's state-to-role
 evidence finding remains a separate final review item with dev B. S1 is not
 release-accepted until current-head CI, official artifact review and exact-main
 three-OS release succeed. Parent419 stays open for S2 and C1 as well.
