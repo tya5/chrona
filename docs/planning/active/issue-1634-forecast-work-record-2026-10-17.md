@@ -21,15 +21,18 @@ checks header lanes and required pre-route obstacles. Optional-title policy is
 independent. Per-occurrence table coverage and forecast Scene identity are closed.
 #1632 code PR #1644 landed as ccf93c0e4 and is merged into this candidate;
 its acceptance review PR #1645 and exact-main release gate remain pending.
-The actual trial PNGs were rendered and viewed at WIP ccc4acf24: target-b
+The actual trial PNGs were rendered and viewed at WIP ccc4acf24 and repeated
+after integration at cec49ac99 (PNG/Scene byte-identical): target-b
 shows 25 forecast/ghost objects and table deltas; technical-print shows 22
 selected forecast/ghost objects and independent deltas. Required estimates and
 the truthful legend are visible; optional title suppression and preset contrast
 findings are separate. These are candidate image checks, not release acceptance.
-The no-flag trial matrix is byte-identical to exact main 9735e254f in separate
+The no-flag trial matrix is byte-identical to exact main ccf93c0e4 in separate
 project venvs: target-b and technical-print, each SVG/Scene/PNG (six pairs).
-This proves that matrix, not all public contexts. Next: repeat final forecast
-trial images on the integrated candidate, publish the single feature PR and
+This proves that matrix, not all public contexts. Post-integration focused tests:
+83 forecast/routing, 244 CLI/MCP/closure, and 158 Layout/Scene/geometry-guard tests
+passed; all-layer schema equivalence passes. Independent integration audit found
+no code or ownership blocker. Next: publish the single feature PR and
 inspect its full public artifact comparison, then complete release acceptance.
 [Reviewer answers](https://github.com/tya5/chrona/issues/1634#issuecomment-6230794260)
 approve retained declared units, finish-only placement with an unobserved-start
