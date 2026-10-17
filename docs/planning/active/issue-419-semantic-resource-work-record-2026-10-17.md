@@ -14,7 +14,8 @@ dev A owns V1/S1/S2; dev B owns C1 and Issue344 Level 1.
   current: Scene kind checks and Layout/Theme resolution consume them.
 - Spec49 owns the closed semantic→Theme→placement→Scene contract. Spec06/60
   expose one planned-mark colour encoding. Project `fields` and field roles
-  already reach projection; issue344's typed declaration is future work.
+  already reach projection. Issue344 generalizes existing profile-v0.3 field
+  definitions and package validation; it does not add Project `fieldDefinitions`.
 - The remaining Style proposal is recorded here only; Spec49 documents the
   implemented V1 vocabulary, not prospective Style behavior. Keep the existing View
   `colorEncoding` input accepted and lower it into the same typed intent used
@@ -86,6 +87,16 @@ counts and design-conformance review, followed by CI's full release gate.
 Final schema spellings and exact owned files are finalized in the implementation
 plan; no draft numeric budgets or project-specific predicates become acceptance
 requirements.
+
+S1 readiness review found two seams to complete before code: the existing
+`FieldRoleBindings.read()` collapses absence and null, while legacy colour
+encoding reads the primary Project's field directly; S1 needs presence-aware,
+source-specific projected facts through the shared accessor. Coordinate that
+accessor with Issue344; do not create another declaration/evaluation engine.
+Occurrence role intent must also reach Layout's mark geometry and table text
+measurement before placement. A Scene-only role replacement cannot implement
+the approved contract. Preserve exact column-source and occurrence identities
+during normalization rather than recovering them from rendered text.
 
 Reviewer confirmed this amendment in
 [comment 6234922800](https://github.com/tya5/chrona/issues/419#issuecomment-6234922800)
