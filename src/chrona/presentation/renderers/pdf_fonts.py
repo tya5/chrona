@@ -1,6 +1,7 @@
 """Deterministic CFF-to-glyf translation for the PDF adapter."""
 from __future__ import annotations
 
+import logging
 from copy import deepcopy
 from hashlib import sha256
 from io import BytesIO
@@ -14,6 +15,11 @@ from fontTools.ttLib import TTFont
 
 from chrona.presentation.model.font_metrics import FontFile
 
+
+# fontTools reports routine subsetting notes ("meta NOT subset", "fsSelection bit 5 ...") as warnings; with no handler
+# the stdlib last-resort handler prints them to stderr, where every other line is JSON. A NullHandler is the library
+# convention and keeps them out of the CLI's streams (a host that configures logging still receives them).
+logging.getLogger("fontTools").addHandler(logging.NullHandler())
 
 CONVERSION_GRAMMAR = "cff-cu2qu-v1"
 EMBEDDING_GRAMMAR = "pdf-closed-face-v1"

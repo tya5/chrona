@@ -17,14 +17,20 @@ from tests.support import synthetic_review as sr
     ("Ana Maria Lopez", "AML"),                    # one letter per whitespace-separated word
     ("fw-team", "FT"),                             # hyphen is a word break
     ("Jean\u2010Luc\u2011Picard", "JLP"),          # U+2010 and U+2011 hyphens are word breaks
-    ("alice", "A"),                                # a single word gives one letter, upper-cased
+    ("alice", "alice"),                            # a single word is shown whole, as written (#1629)
+    ("Raj", "Raj"), ("pm", "pm"), ("QT", "QT"),
+    ("Priya Raman", "PR"),                         # two words: initials
+    ("\u4f50\u85e4", "\u4f50\u85e4"),                # one unspaced CJK word is whole (#1629)
+    ("\u4f50\u85e4\u5065\u592a\u90ce", "\u4f50\u85e4\u5065\u592a\u90ce"),
+    (" Raj ", "Raj"),                              # edge whitespace is not part of the word
+    ("e\u0301mile", "\u00e9mile"),                 # one word: whole, NFC
     ("  Ana \t\n Lopez  ", "AL"),                  # runs and edges of whitespace add no word
     ("\u00e9mile zola", "\u00c9Z"),                # non-ASCII letters upper-case by the Unicode default mapping
-    ("e\u0301mile", "\u00c9"),                     # a combining mark stays with its letter (NFC result)
+    ("e\u0301mile zola", "\u00c9Z"),               # a combining mark stays with its letter (NFC result)
     ("(Ken) \"Ito\"", "KI"),                       # leading punctuation is skipped
     ("3rd floor", "3F"),                           # a digit is an initial
     ("\u5c71\u7530 \u592a\u90ce", "\u5c71\u592a"), # CJK with a separator: first character of each word
-    ("\u5c71\u7530\u592a\u90ce", "\u5c71"),        # unspaced CJK is one word: its first character
+    ("\u5c71\u7530\u592a\u90ce", "\u5c71\u7530\u592a\u90ce"),  # unspaced CJK is one word: shown whole
     ("\u5c71\u7530\u3000\u592a\u90ce", "\u5c71\u592a"),  # U+3000 ideographic space is whitespace
     ("istanbul izmir", "II"),                      # no locale tailoring: i is always I
     ("", ""), ("   ", ""), ("- -", ""), ("(!)", ""),  # no letter or digit: empty
