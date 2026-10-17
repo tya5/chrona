@@ -449,6 +449,33 @@ do not reinterpret a Store address as a Project-relative file or ignore its
 identity. Complete that provider/ingress design before adding Draft package
 loading; this remains a required S1 integration item, not accepted work.
 
+Draft provider design and implementation amendment: inject the existing
+`SnapshotReader` port into explicit/guided Draft ingress and `DraftRenderRequest`.
+Local Project bytes stay Draft; referenced packages are read from their named
+immutable Stores through the same closure loader and source edges as Context
+rendering. CLI `render`/`render-workspace` expose optional `--store-config`;
+their outer adapter may use the existing project-local Store-config discovery,
+never source-file address fallback. A package-provider reference uses the
+existing packaged reader. Library callers supply their reader; an unresolved
+declared package fails with the established Store-config/closure diagnostic,
+not an empty definition catalogue. No declarations means unchanged rendering.
+Migration: Draft renders that previously ignored declared extensions must now
+provide a resolvable Store configuration/reader; supplied identities and Store
+integrity are always enforced. Do not invent a new local package declaration.
+Agent tools retain workspace access boundaries: inject only their existing
+authorized reader, never discover or open a Store outside the allowed scope.
+
+Architecture review: Spec13 owns reference closure; Spec15 keeps mutable Draft
+separate from immutable evaluation; extension validation remains in Issue344.
+Presentation receives only the core reader port, with provider/config selection
+in outer adapters; no presentation→operational/storage import is introduced.
+Implement in one S1b unit: closure resolvers and source edges; shared request
+port; operational reader reuse and CLI/agent adapter wiring; Spec13/15 and CLI
+reference evidence. Test declared/undeclared packages, cross-store snapshot
+pins, package provider, absent config, hash mismatch, required identity and
+workspace boundary refusal, plus unchanged no-extension output. Publish this
+amendment before provider code; retain the same eventual S1 PR.
+
 ## V1 equivalence inventory (117-entry baseline)
 
 This inventory groups entries by the mechanism families in
