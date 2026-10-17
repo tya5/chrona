@@ -29,15 +29,6 @@ def _compact_path(raw: tuple[tuple[float, float], ...]) -> tuple[tuple[float, fl
     return tuple(points)
 
 
-def _topology_search_error(**operands: object) -> ValueError:
-    fields = []
-    for name, value in operands.items():
-        shown = repr(value).replace("\n", " ").replace("\r", " ")[:96]
-        fields.append(f"{name}={shown}")
-    return ValueError("E_LAYOUT_ANNOTATION_SEARCH_INPUT: bounded topology search "
-                      + ", ".join(fields))
-
-
 @dataclass(frozen=True)
 class AnnotationRouteTrial:
     points: tuple[tuple[float, float], ...]
@@ -127,7 +118,7 @@ def strict_route_candidates(start: tuple[float, float], end: tuple[float, float]
                             candidate_limit: int = 1024,
                             interleave_axial: bool = False
                             ) -> Iterator[tuple[tuple[float, float], ...]]:
-    """Yield strict routes lazily; optional axial interleave is fallback-only."""
+    """Yield finite strict corridors lazily, with optional axial-family interleave."""
     left, top, right, bottom = bounds
     xs = {start[0], end[0]}
     ys = {start[1], end[1]}
@@ -216,47 +207,6 @@ def strict_route_candidates(start: tuple[float, float], end: tuple[float, float]
         yield path
         if yielded > candidate_limit:
             return
-
-
-def route_strict_bounded(start: tuple[float, float], end: tuple[float, float],
-                         index: SurfaceObstacleIndex, *,
-                         bounds: tuple[float, float, float, float],
-                         port_ids: tuple[str, ...] = (), limit: int = 1024,
-                         max_bends: int, max_detour_ratio: float,
-                         rule_host_id: str | None = None
-                         ) -> tuple[AnnotationRouteTrial | None, int, bool]:
-    """Search finite obstacle-envelope corridors, returning tried states and exhaustion.
-
-    Axis candidates come from the endpoints and every expanded obstacle envelope;
-    no nearest-axis truncation is used. Paths are yielded in deterministic order
-    and the separate connector-state budget applies to examined paths.
-    """
-    if limit < 1:
-        raise _topology_search_error(state_limit=limit, start=start, end=end,
-                                     bounds=bounds, max_bends=max_bends,
-                                     max_detour_ratio=max_detour_ratio)
-    # Keep this exact prefix for the established path; opposite-side fallback
-    # consumes the same iterator fairly across its egress/edge alternatives.
-    candidates = tuple(strict_route_candidates(
-        start, end, index, bounds=bounds, max_bends=max_bends,
-        max_detour_ratio=max_detour_ratio, candidate_limit=limit))
-    examined = min(len(candidates), limit)
-    exhausted = len(candidates) > limit
-    valid = []
-    for points in candidates[:limit]:
-        if (all(a != b and (a[0] == b[0] or a[1] == b[1])
-                for a, b in zip(points, points[1:]))
-                and relation_route_quality(points, max_bends=max_bends,
-                                   max_detour_ratio=max_detour_ratio)
-                and not any(index.collisions(ObstacleSegment(a, b), port_ids=port_ids,
-                                             rule_host_id=rule_host_id)
-                            for a, b in zip(points, points[1:]))):
-            length = geometry_sum(abs(b[0] - a[0]) + abs(b[1] - a[1])
-                                  for a, b in zip(points, points[1:]))
-            valid.append(((len(points) - 2, length, points),
-                          AnnotationRouteTrial(points, (), "strict")))
-    return (min(valid, key=lambda item: item[0])[1] if valid else None,
-            examined, exhausted)
 
 
 def _sparse_elbows(start: tuple[float, float], end: tuple[float, float],

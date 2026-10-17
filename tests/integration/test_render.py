@@ -152,14 +152,14 @@ def test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic(monkeyp
     repeated = compositions[1].placement
     decisions = {item.source_ref: item for item in placement.decisions
                  if item.decision_id.startswith("annotation:")}
-    # Changed dependency/label geometry can make the preferred direct TVAC
-    # tail free. Require a connected tail, not the historical routed shape;
+    # Changed dependency/label geometry can change the TVAC/station topology.
+    # Require a connected tail, not a historical direct or routed shape;
     # both topologies receive the same full geometric safety checks below.
     # The neutral test_annotation_search fixtures separately require and bound
     # routed-tail search when a direct tail is obstructed.
     assert set(decisions) == {"window-note", "tvac-note", "station-note"}
     assert decisions["window-note"].selected_topology == "direct-tail"
-    assert decisions["station-note"].selected_topology == "direct-tail"
+    assert decisions["station-note"].selected_topology in {"direct-tail", "routed-tail"}
     assert decisions["tvac-note"].selected_topology in {"direct-tail", "routed-tail"}
     assert all(0 < item.search_count <= 3 * 1024 for item in decisions.values())
     assert all(item.box_positions_examined <= item.box_position_limit == 1024
