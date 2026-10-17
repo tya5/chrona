@@ -12,7 +12,7 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "
 
 def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
     events: list[str] = []
-    trial_events: list[tuple[str, int, int]] = []
+    trial_events: list[tuple[str, int, int, bool]] = []
     member_requests: dict[int, list[str]] = {}
     trial_initial_ids: dict[int, set[str]] = {}
     trial_final_ids: dict[int, set[str]] = {}
@@ -35,7 +35,7 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
             identity = id(obstacles)
             ids = {item.placement_id for item in obstacles.all()}
             trial_initial_ids.setdefault(identity, ids)
-            trial_events.append((_name, identity, len(ids)))
+            trial_events.append((_name, identity, len(ids), False))
             result = _original(*args, **kwargs)
             trial_final_ids[identity] = {item.placement_id for item in obstacles.all()}
             return result
@@ -43,13 +43,13 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
         monkeypatch.setattr(surface_route_label_plan, attribute, owner_spy)
     original_labels = surface_route_label_plan.place_member_labels
 
-    def trial_labels(context, requests, obstacles):
+    def trial_labels(context, requests, obstacles, *, reserve_only=False):
         identity = id(obstacles)
         ids = {item.placement_id for item in obstacles.all()}
         trial_initial_ids.setdefault(identity, ids)
-        trial_events.append(("member-labels", identity, len(ids)))
+        trial_events.append(("member-labels", identity, len(ids), reserve_only))
         member_requests.setdefault(identity, []).extend(item.placement_id for item in requests)
-        result = original_labels(context, requests, obstacles)
+        result = original_labels(context, requests, obstacles, reserve_only=reserve_only)
         trial_final_ids[identity] = {item.placement_id for item in obstacles.all()}
         return result
 
@@ -99,22 +99,22 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
     main()
 
     assert events == ["legend", "notes", "summary", "annotations"]
-    trial_ids = {identity for _, identity, _ in trial_events}
-    assert len(trial_ids) in {1, 2}
-    for identity in trial_ids:
-        phases = [name for name, index_id, _ in trial_events if index_id == identity]
-        assert phases in (["routes", "relation-labels"],
-                         ["routes", "member-labels", "relation-labels"],
-                         ["member-labels", "routes", "relation-labels"],
-                         ["member-labels", "routes", "member-labels", "relation-labels"])
-        counts = [count for _, index_id, count in trial_events if index_id == identity]
-        assert counts == sorted(counts)
-        assert len(member_requests.get(identity, ())) == len(set(member_requests.get(identity, ())))
+    probes = [(identity, ids) for name, identity, ids, reserve_only in trial_events
+              if name == "member-labels" and reserve_only]
+    route_trials = [(identity, ids) for name, identity, ids, _ in trial_events if name == "routes"]
+    final_label_trials = [(identity, ids) for name, identity, ids, reserve_only in trial_events
+                          if name == "member-labels" and not reserve_only]
+    assert len(probes) == 1, "one private reservation probe is shared by the bounded route trials"
+    assert 1 <= len(route_trials) <= 3
+    assert len(final_label_trials) == len(route_trials)
+    for identity, _ in route_trials:
         assert seen["clean_ids"] <= trial_initial_ids[identity]
-        assert trial_initial_ids[identity] <= trial_final_ids[identity]
+    for identity, _ in final_label_trials:
+        assert seen["clean_ids"] <= trial_initial_ids[identity]
+        assert len(member_requests.get(identity, ())) == len(set(member_requests.get(identity, ())))
     assert id(seen["selected_index"]) == seen["annotations-before"][0] == seen["annotations-after"][0]
-    assert seen["clean_id"] not in trial_ids
-    assert id(seen["selected_index"]) in trial_ids
+    assert seen["clean_id"] not in {identity for _, identity, _, _ in trial_events}
+    assert id(seen["selected_index"]) in {identity for identity, _ in final_label_trials}
     assert call["completed_routes"] == seen["selected_routes"]
     batch = call["batch"]
     assert batch.text and batch.relations  # this slide has annotation text and leaders

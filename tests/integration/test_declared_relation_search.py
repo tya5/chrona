@@ -3,7 +3,6 @@ import json
 
 import pytest
 
-from chrona.presentation.layout import surface_lane_route_plan as lane_plan
 from chrona.presentation.layout import surface_route_label_plan as label_plan
 from chrona.presentation.layout import surface_routes
 from chrona.presentation.model.info_diagnostics import RelationRoutingSummary, RelationSearchBudgetHit
@@ -25,7 +24,6 @@ def test_declared_policy_controls_real_pass_order_and_info_projection(tmp_path, 
     def observe(context):
         calls.append((context.progress_pass, tuple(item.semantic_id for item in context.text)))
         return original_routes(context)
-    monkeypatch.setattr(lane_plan, "compose_surface_routes", observe)
     monkeypatch.setattr(label_plan, "compose_surface_routes", observe)
     results = []
     original_select = surface_routes.select_relation_route
@@ -39,11 +37,11 @@ def test_declared_policy_controls_real_pass_order_and_info_projection(tmp_path, 
     payloads = [item for item in warning_payloads(rendered) if item["code"] == "I_LAYOUT_RELATION_ROUTING"]
     if policy == "best":
         assert infos == payloads == []
-        if lane:
-            assert calls[0][0] == "lane-rehearsal"
+        assert calls and calls[0][0] == "route-label-reserved"
+        assert len(calls) <= 3
         return
-    assert [name for name, _ in calls] == ["route-label-baseline"]
-    assert not ({"memberLabel", "finishDelta"} & set(calls[0][1]))
+    assert calls and calls[0][0] == "route-label-reserved"
+    assert len(calls) <= 3
     assert len(infos) == len(payloads) == 1
     info, payload = infos[0], payloads[0]
     assert info.relation_instances == len(results) == 2
@@ -80,18 +78,15 @@ def test_budget_hit_facts_survive_all_real_passes_and_project_to_scene_cli(tmp_p
         result = original_routes(context)
         seen.extend(item for item in result.routing_info if isinstance(item, RelationSearchBudgetHit))
         return result
-    monkeypatch.setattr(lane_plan, "compose_surface_routes", observe)
     monkeypatch.setattr(label_plan, "compose_surface_routes", observe)
     rendered = sr.render(tmp_path, sr.chain_project(groups=1, per_group=3), presentation=parts)
     facts = [item for item in rendered.info_diagnostics if isinstance(item, RelationSearchBudgetHit)]
     assert facts == seen and facts
     assert all(item.budget == item.expansions == 1 for item in facts)
-    passes = {item.pass_name for item in facts}
-    assert "route-label-baseline" in passes
-    if lane and policy == "best":
-        assert "lane-rehearsal" in passes
-    if policy == "first-fit":
-        assert passes == {"route-label-baseline"}
+    passes = {item.pass_name.split(":", 1)[0] for item in facts}
+    assert "route-label-reserved" in passes
+    assert len(passes) <= 3
+    assert not any("lane-rehearsal" in name for name in passes)
     assert [item for item in rendered.scene.diagnostics
             if item.startswith("I_LAYOUT_RELATION_SEARCH_BUDGET:")] == [item.scene_diagnostic() for item in facts]
     payloads = [item for item in warning_payloads(rendered) if item["code"] == facts[0].code]
