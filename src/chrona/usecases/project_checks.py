@@ -23,6 +23,7 @@ from chrona.core.diagnostics import Diagnostic
 from chrona.core.periods import period_range_diagnostics
 from chrona.core.source_ranges import attach_ranges
 from chrona.core.validation import load_yaml, validate_project
+from chrona.extensions.profiles import check_project_extensions
 from chrona.scheduling.dependency_cycles import dependency_cycle_diagnostics
 from chrona.scheduling.scheduler import schedule
 from chrona.usecases.failure_report import diagnostic_record
@@ -74,24 +75,26 @@ def _not_a_mapping(project: object) -> Diagnostic | None:
     return Diagnostic("E_SCHEMA", f"a Project must be a YAML mapping with version, project and objects; found {found}", "/")
 
 
-def validate_project_mapping(project: dict[str, Any]) -> ProjectValidation:
+def validate_project_mapping(project: dict[str, Any], *, base_dir: Path | None = None) -> ProjectValidation:
+    """Validate a Project; ``base_dir`` (the Project file's directory) resolves ``path`` extensions (#1682)."""
     refused = _not_a_mapping(project)
     if refused is not None:
         return ProjectValidation((refused,))
-    diagnostics = tuple(validate_project(project))
+    diagnostics = tuple(validate_project(project, extension_diagnostics=check_project_extensions(project, base_dir=base_dir)
+                                         if base_dir is not None and isinstance(project.get("extensions"), list) else None))
     if not diagnostics:  # a cycle is only meaningful in a Project whose relations and objects Core accepted
         diagnostics = dependency_cycle_diagnostics(project)
     return ProjectValidation(diagnostics)
 
 
 def validate_project_file(path: str | Path) -> ProjectValidation:
-    outcome = validate_project_mapping(load_yaml(path))
+    outcome = validate_project_mapping(load_yaml(path), base_dir=Path(path).parent)
     return ProjectValidation(attach_ranges(outcome.diagnostics, Path(path).read_text(encoding="utf-8"))) if outcome.diagnostics else outcome
 
 
-def schedule_project_mapping(project: dict[str, Any]) -> ProjectSchedule:
+def schedule_project_mapping(project: dict[str, Any], *, base_dir: Path | None = None) -> ProjectSchedule:
     """Schedule a Project, serializing the completed result without deriving analysis again."""
-    checked = validate_project_mapping(project)  # also refuses a file that is not a mapping (#782, D8)
+    checked = validate_project_mapping(project, base_dir=base_dir)  # also refuses a file that is not a mapping (#782, D8)
     if not checked.ok:
         return ProjectSchedule(checked.diagnostics, {}, None)
     result = schedule(project)
@@ -113,7 +116,7 @@ def schedule_project_mapping(project: dict[str, Any]) -> ProjectSchedule:
 
 
 def schedule_project_file(path: str | Path) -> ProjectSchedule:
-    outcome = schedule_project_mapping(load_yaml(path))
+    outcome = schedule_project_mapping(load_yaml(path), base_dir=Path(path).parent)
     if not outcome.diagnostics:
         return outcome
     return replace(outcome, diagnostics=attach_ranges(outcome.diagnostics, Path(path).read_text(encoding="utf-8")))
