@@ -42,6 +42,10 @@ encoded fill swatches. Existing View encoding legend policy is unchanged.
 After selecting the final route/label option, recompose filtered Style entries
 inside the conservatively allocated legend/footer slots; do not shrink those
 slots or restart row, route or annotation layout.
+All scale-derived finite keys use their completed category colour as key ink.
+For a `rule-pair` key that colour is its stroke; width/opacity come from the
+canonical scale-legend Theme role. This also corrects the older View key's
+ignored colour override; it does not change the chart encoding's channel.
 `showScope` opts into an extra qualifier, exactly `when ` plus canonical selector
 JSON (all selector keys and compound predicates follow its canonical order).
 No independent formatter or executable language is introduced. Allocate using
