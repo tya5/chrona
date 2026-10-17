@@ -387,6 +387,18 @@ tries finite straight/L/Z/U proposals from completed row gaps and obstacle-edge
 channels before that pair's bounded search; the first fully accepted completed
 route wins. Proposal generation builds no visibility graph. Both paths retain
 terminal, bounds, obstacle, self-overlap, bend and detour validation.
+When those basic proposals fail, first-fit also tries at most eight paired
+row-contact/outward-channel proposals before the pair's bounded search (#1610).
+Keep the basic proposal order unchanged. Combine the two nearest interior
+row contacts at each endpoint with the nearest vertically clear existing
+column on each side of the endpoint span. Contacts come from completed row
+gaps and obstacle edges plus their declared clearance and the existing route
+grid offset. Filter supplemental paths against retained label footprints using
+the relation's actual stroke width, then apply the ordinary completed-route
+validators. No project coordinates, new quality threshold or expansion quota
+is introduced. Layout checks completed reduced and terminal-adjusted route
+stroke against retained text/label-visual footprints, not just its centreline;
+staged recovery still removes only the obstacle classes its contract permits.
 First-fit fallback uses an obstacle-independent Manhattan/minimum-turn lower
 bound instead of preparing the exact reverse bound. It retains canonical
 prefix histories and existing expansion quotas; it does not collapse different
