@@ -1,0 +1,11 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: mobile-release-observed
+body:
+  asOf: '2026-11-10'
+  observations:
+    - {id: kickoff-1, sequence: 1, projectObjectId: kickoff, actual: {at: '2026-11-02'}}
+    - {id: ux-research-1, sequence: 1, projectObjectId: ux-research, actual: {start: '2026-11-02', finish: '2026-11-06', progress: 1}}
+    - {id: wireframes-1, sequence: 1, projectObjectId: wireframes, actual: {start: '2026-11-06', finish: '2026-11-10', progress: 1}}
+    - {id: api-auth-1, sequence: 1, projectObjectId: api-auth, actual: {start: '2026-11-06', openUntil: asOf, progress: 0.2}}
+    - {id: visual-design-1, sequence: 1, projectObjectId: visual-design, actual: {start: '2026-11-09', openUntil: asOf, progress: 0.3}}

@@ -1,0 +1,26 @@
+id,title,type,start,end,duration,parent,predecessors,deadline,owner
+kickoff,Kickoff,gate,2026-11-02,,,,,,pm
+design,Design,group,,,,,,,
+ux-research,UXリサーチ,task,2026-11-02,,4wd,design,kickoff,,佐藤
+wireframes,Wireframes,task,,,5wd,design,ux-research,,Mika
+visual-design,ビジュアルデザイン,task,,,6wd,design,wireframes,,Mika
+design-system,Design system tokens,task,,,4wd,design,wireframes,,Ken
+copywriting,コピーライティング (日本語/English),task,,,3wd,design,wireframes,,田中
+design-freeze,Design freeze,gate,,,,design,"visual-design, design-system, copywriting",2026-12-04,pm
+build,Build,group,,,,,,,
+api-auth,Auth API (OAuth2 + SSO),task,,,6wd,build,kickoff +3wd,,Raj
+api-payments,決済API,task,,,8wd,build,api-auth,,Raj
+ios-app,iOS app shell,task,,,10wd,build,design-system,,Lena
+android-app,Android アプリ,task,,,10wd,build,design-system,,鈴木
+push-notif,Push notifications,task,,,4wd,build,"ios-app, android-app",,Lena
+offline-sync,オフライン同期,task,,,7wd,build,api-payments,,鈴木
+analytics,Analytics SDK integration,task,,,3wd,build,ios-app,,Ken
+localization,Localization (ja/en),task,,,4wd,build,"copywriting, ios-app",,田中
+release,Release,group,,,,,,,
+qa-regression,QA regression,task,,,8wd,release,"push-notif, offline-sync, analytics",,QA team
+beta-testflight,TestFlight / 社内ベータ,task,,,5wd,release,qa-regression.start +3wd,,Lena
+perf-tuning,Performance tuning,task,,,4wd,release,qa-regression.start +2wd,,Raj
+store-assets,ストア掲載素材,task,,,3wd,release,"visual-design, localization",,Mika
+store-review,App Store / Google Play review,task,,,5wd,release,"qa-regression, store-assets, beta-testflight",,pm
+marketing-launch,Marketing launch campaign,task,,,5wd,release,store-review.start,,田中
+public-launch,Public launch v1.0,gate,,,,release,"store-review, perf-tuning",2027-02-26,pm
