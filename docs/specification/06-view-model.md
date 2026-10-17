@@ -357,7 +357,20 @@ A `table-timeline` View MAY give a fixed-unit `axis.tiers[]` band tier `fillScal
 
 A `table-timeline` View MAY declare `deadlines: {show: slipped | all}` to draw each object's Project `deadline` (Spec 05 section 9). A deadline is drawn as a **tick** at its date, centred on the object's planned mark, and, when the planned finish is later than the deadline, a **run** from the tick to that finish (`at` of a point, `end` of a span, the date `W_DEADLINE` compares: Spec 04 section 10). `slipped` draws only the deadlines the plan misses; `all` draws every deadline, the missed ones with their run, so a kept promise reads as slack. Slipped and kept differ by shape (the run), not only by colour. The Core decides which deadlines slipped (`deadline_statuses`); a deadline equal to the finish is kept. The View selects; the Project owns the date; the Theme owns paint and reach (Spec 07, role `deadline-mark`); Layout owns the geometry (Spec 50 section 3.4). Without the optional caption below, no text is drawn.
 
-A deadline outside the View window draws nothing and is recorded as the Scene diagnostic `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>`; a planned mark folded into a group header is not decorated and is recorded as `I_LAYOUT_DEADLINE_FOLDED:<object>`. A Theme that omits the role while a View shows deadlines fails with `E_THEME_ROLE_REQUIRED` at `/body/roles/deadline-mark`. The member is optional and additive in `chrona/view/v0.28`; a `dependency-network` View, which has no timeline, MUST NOT declare it. A View without `deadlines` renders as before. An author explains the mark with a Detail Profile legend entry whose role is `deadlineMark`.
+A deadline outside the View window draws nothing and is recorded as the Scene diagnostic `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>`. A planned point folded into a group header hosts the same date-scaled tick/run as an ordinary point; Layout reserves its complete painted envelope while packing the header, before placing labels. A Theme that omits the role while a View shows deadlines fails with `E_THEME_ROLE_REQUIRED` at `/body/roles/deadline-mark`. The member is optional and additive in `chrona/view/v0.28`; a `dependency-network` View, which has no timeline, MUST NOT declare it. A View without `deadlines` renders as before. An author explains the mark with a Detail Profile legend entry whose role is `deadlineMark`.
+
+Optional `deadlines.overrides` maps Project object ids to `{show: all | slipped | hidden}`.
+The per-object rule replaces `deadlines.show`, including allowing a kept deadline
+under a global `slipped` rule. `hidden` omits the object's mark and caption but
+does not remove its Core deadline warning. Unlisted objects inherit the global
+rule; an empty map is identical to an absent map. Overrides neither select an
+otherwise unselected object nor synthesize a deadline for an object without one.
+An undeclared object id fails with `E_VIEW_DEADLINE_OBJECT_UNKNOWN` at
+`/body/deadlines/overrides/<id>` before filtering, even for `hidden`.
+The entire `deadlines` fragment remains one View-default override unit.
+These additive rules retain View v0.28. The former folded-only omission and
+`I_LAYOUT_DEADLINE_FOLDED` are retired for drawable folded occurrences; no
+compatibility switch preserves that omission.
 
 An optional `deadlines.caption: {template, format?}` (#1397) draws copy beside
 each slipped run; the bare tick/run treatment described above draws no text.

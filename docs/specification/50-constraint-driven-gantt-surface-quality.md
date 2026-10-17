@@ -1198,14 +1198,19 @@ paint cannot be read stays `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`.
 
 A shown deadline (#822; Spec 06 section 7.3) completes `Path` shapes from the View-shown deadlines the use case
 carries on the projection, each with the Core's slipped verdict (`ReviewDeadline`; Layout compares no dates to judge
-lateness). For every completed planned mark of the object (semantic `planned`; a snapshot or scenario mark and a point folded
-into a group header never host one) the tick is the vertical segment at the deadline date, mapped through the scale that
+lateness). For every completed planned/forecast mark of the object (a snapshot or scenario mark never hosts one),
+including a point folded into a group header, the tick is the vertical segment at the deadline date, mapped through the scale that
 places marks, centred on the mark and `markReach` times its block size tall (placement id `deadline-tick:<mark instance>`);
 a slipped deadline adds the run, the horizontal segment from the tick's lower end to the planned finish clipped to the plot's
 inline end (`deadline-run:<mark instance>`). Both carry `sourceRef` the object id, semantic `deadlineMark`, slot `timeline`
 and paint order the mark base plus Theme `markPaintOrder`. A deadline outside the View window (the closed range, both
-edges inclusive) is recorded as `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>` and a folded header point as
-`I_LAYOUT_DEADLINE_FOLDED:<object>`. The paths are registered as `rule` obstacles, so annotation candidates avoid them as they
+edges inclusive) is recorded as `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>`.
+Folded-header packing includes the tick/run maximum painted envelope (stroke,
+optional outline and declared wobble) in each occurrence's inline extent and
+block allocation, together with its existing mark/title/delta extent. Shared
+and repeated occurrences retain their own placement identities and subjects;
+no deadline date or lateness verdict is inferred from compact-header geometry.
+The paths are registered as `rule` obstacles, so annotation candidates avoid them as they
 avoid the as-of rule. Member names also avoid these `rule` obstacles (#1610);
 relation routes retain their existing rule-crossing policy.
 Contrast is gated as a `mark` role at 3:1 over the primitive beneath its centre.
@@ -1232,7 +1237,8 @@ is used. Caption placement cannot change prior content. If both candidates
 fail, only the caption is omitted: typed info
 `I_LAYOUT_DEADLINE_CAPTION_DROPPED:surface=table-timeline;count=<positive count>`
 counts omitted drawable host occurrences and carries their subjects.
-Outside-window/folded deadlines do not contribute to this count. Accepted
+Outside-window deadlines do not contribute to this count; drawable folded
+occurrences use the same caption attempts and counted omission rule. Accepted
 TextPlacements use identity `deadline-caption:<mark instance>`, object sourceRef,
 slot timeline and explicit subjects for primitive provenance. They do not set
 the existing paint-host field merely to express attachment. Scene projects
