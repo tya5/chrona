@@ -5,9 +5,13 @@
 Public base: 41e6c83a9f742af6e7a46209c4cec8f4bca91f0f (trusted-ready).
 [Owner rule and acceptance](https://github.com/tya5/chrona/issues/1634).
 The design plan was published in 783fe50cc; normative design and whole-
-architecture review were published in a9c0d3ec6c4b982c1f93249eec6acfcb814632b4.
-The implementation plan below is the next publication; no forecast product code
-is published yet. [Reviewer answers](https://github.com/tya5/chrona/issues/1634#issuecomment-6230794260)
+architecture review were published in a9c0d3ec6c4b982c1f93249eec6acfcb814632b4;
+implementation plan in 00d66e8a5. F1 has a local candidate (82 focused tests and
+2 closure-boundary tests passed), not released. Exact trial calculation exposed
+an observed dependency miss (Nov10 predecessor finish / Nov9 successor start).
+The normative policy now reports observed-fixed endpoint misses without moving
+Actuals or rejecting the complete forecast; this correction is published before
+changing the candidate. [Reviewer answers](https://github.com/tya5/chrona/issues/1634#issuecomment-6230794260)
 approve retained declared units, finish-only placement with an unobserved-start
 finding, and child-envelope precedence with a named group-observation finding.
 No further reviewer gate precedes normative publication.
@@ -56,7 +60,7 @@ return to the living design and architecture review before code resumes.
 
 | Slice | Owned files / responsibility | Focused evidence and acceptance |
 | --- | --- | --- |
-| F1 evaluation | New `usecases/forecast_schedule.py` and neutral typed forecast model; neutral latest-observation selection shared with `presentation/model/actual_observation.py`; existing Core temporal arithmetic and injected Scheduler. | New unit tests cover all literal working-day states/chain; declared d/w/wd retention, fixed-span inference/zero effort, nonworking Actual start, finish-only valid/invalid endpoints, rollup findings, latest/unmatched observations, fixed-point finding vs fatal completed-span conflict, immutability and unavailable analysis. No presentation import in scheduling/neutral facts. |
+| F1 evaluation | New `usecases/forecast_schedule.py` and neutral typed forecast model; neutral latest-observation selection shared with `presentation/model/projection.py`; existing Core temporal arithmetic and injected Scheduler. | New unit tests cover all literal working-day states/chain; declared d/w/wd retention, fixed-span inference/zero effort, nonworking Actual start, finish-only valid/invalid endpoints, rollup findings, latest/unmatched observations, authored-gate/observed-fixed dependency findings versus unknown/incomplete fatal outcomes, retained explicit bounds, immutability and unavailable analysis. Test the same observed-start overlap shape as trial3 without project names. No presentation import in scheduling/neutral facts. |
 | F2 projection and completed geometry | `model/projection.py`, semantic facets/registry, `review/v05_content.py`, Layout member labels/window admission/lane-label preflight, typed completed mark metadata, Scene model/projection and `scene-v0.7` schema. Original facts remain separate from active forecast placement/delta. | Model and integration tests cover Snapshot/no-Snapshot deltas, point/rollup completion, equal-placement ghost, both table source forms and paint, active packing/window/label visibility, required plot text before routes, table/legend/capability refusals, lane-primary inventory and outside-window forecast identity. Existing no-forecast characterization remains unchanged. |
 | F3 common ingress | `presentation/contracts/resources.py`, `model/closure.py`, `usecases/draft_render.py`, `usecases/render_review.py`, `app/cli.py`, SDK-free `app/agent_tools.py`, Context v0.17 schema and schema admission fixtures. | CLI render/render-workspace and MCP render_draft (including scoped Snapshot path) reach the same use case. Immutable CLI/MCP read Context only. Absent/false/type errors, exact identity, Actual/asOf requirements and default-preset refusal have tests. Run schema equivalence against ready main and document the precise optional Context and forecast Scene admission deltas. |
 | F4 end-to-end and release | Packaged skill's weekly-update section, forecast integration/byte tests and one concise acceptance review. Reviewer owns shared-design YAML; no copied Theme or edited public mirrors. | Render actual trial target-b + packaged technical-print as PNG/Scene; inspect all selected item deltas, required legend/ghost and as-of movement (started bars retain Actual start; fixed targets stay fixed). Compare no-flag artifacts to the ready base in a batch. Official CI supplies public SVG/Scene counts, three-OS full tests/conformance, wheel/smoke and public-materializer reproduction. |
@@ -68,6 +72,9 @@ Run focused tests for each slice, not a duplicate local full suite. Source and
 schema changes carry their admission fixtures; bot-owned generated outputs are
 never hand-edited. Runtime defaults are implemented, not delegated to schema
 annotations. Existing resources need no migration when forecast is absent.
+The relation-finding classifier is endpoint-specific: observed start/finish/at
+or an authored fixed-point target, never a computed unfinished end or retained
+unobserved start. Cover both allowed and rejected endpoints in F1 twins.
 
 Evidence must include working-calendar state twins, missed fixed targets,
 incomplete/zero-effort/rollup diagnostics, latest/unmatched observation identity,
