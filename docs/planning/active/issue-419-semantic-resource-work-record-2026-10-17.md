@@ -417,6 +417,24 @@ This is internal identity/composition, not a schema or scheduling change;
 Spec38 View membership, Spec49 canonical semantics and passive Scene ownership
 remain unchanged. Publish this detail before its implementation.
 
+Text completion: resolve table-cell role intents at the shared surface-plan
+entry, before source sizing, replacing both the table and content cell tuples
+with the same selected cells. Keep canonical cell semantics and explicit source
+keys; carry selected role/key through completed TextPlacement to Scene's paired
+metadata, not through a changed canonical visual role. Validate required text
+treatment there using the existing incompatible-role diagnostic. Unstyled
+cells retain their exact View/format roles. Member, folded and delta labels
+require their own text-semantic occurrence keys, constructed from source
+row/member facts (lane source owner, not final alias), never parsed IDs or mark
+keys. Resolve role intent before each packing/preflight and final measurement;
+existing host/candidate semantics remain independent of selected appearance.
+Implement table completion first, then label completion; test changed font
+metrics/row demand and native Scene paint/identity alongside unchanged controls.
+Architecture review: this joins Spec07/08/49's existing Layout-owned measurement
+and passive projection contracts, without new predicates, schemas, candidate
+policy, or domain-field ownership. The shared extension descriptor resolver
+preserves344's validator merge; no second definition interpretation is added.
+
 Canonical mark correction: logical temporal facets and realized vocabulary
 bindings are not interchangeable. Existing primary points use `gate` when the
 base Theme declares it; forecast points retain `forecast`, and comparison
