@@ -536,8 +536,12 @@ and inward imports pass. No rendered-output or full S1 acceptance is claimed.
 S1b integration: `FieldRoleBindings.read_result()` is the shared presence-aware
 lookup; `read()` remains its value-returning convenience. Observed scale values
 now consume that same accessor, retaining order and existing null omission.
-Profile descriptor extraction waits for dev B's overlapping344 PR; no duplicate
-definition merge is introduced. Immutable and Draft closure retain source
+Profile descriptors now reuse the extension-owned field resolver/catalogue;
+source-local immutable carriers and projection pass-through pass57 tests.
+The source adapter/catalogue batch passes35 tests, including ambiguity and
+delivery-authority controls. Adapter orchestration still waits for B's
+overlapping PR1674 files; no second definition merge is introduced.
+Immutable and Draft closure retain source
 Project/extension-index edges to the exact verified package identity; snapshots
 resolve their own pins even across Stores sharing an ID/revision token.
 Snapshot and scenario validation uses the proper source definitions before
@@ -563,8 +567,11 @@ they inject engine intents, not completed S2 resource ingress. Scene projects
 the completed canonical semantic and selected role, including folded/lane
 marks; paint lookup uses the selected role without changing host semantics.
 The Scene batch passes79 tests; six focused native/projection checks confirm
-metadata/paint completion and absent metadata without Style. Typography
-connections remain pending. Module reachability (285 modules)
+metadata/paint completion and absent metadata without Style. Table typography
+now resolves before shared source sizing and final placement, with exact
+canonical/selected Scene identity. Native arbitrary-role font/paint and bounded
+capability controls pass161 tests; the source/Scene integration batch passes35
+tests. Label candidate/preflight typography remains pending. Module reachability (285 modules)
 and inward imports pass without an allowlist. Generic Draft integration tests now provide an explicit temporary
 Store containing the exact declared package bytes rather than bypass closure.
 The remaining Draft test callers share that Store fixture without changing

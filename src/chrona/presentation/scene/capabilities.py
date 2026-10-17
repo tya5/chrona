@@ -150,6 +150,9 @@ _PATH_PAINT = frozenset(("stroke", "strokeWidth", "dash", "opacity", "shadowColo
 _TEXT_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "gradientAngle",
                          "gradientFidelity", "shadowColor", "shadowOffsetX", "shadowOffsetY",
                          "shadowBlur", "shadowOpacity", "shadowFidelity", "glowColor", "glowBlur", "glowOpacity", "glowFidelity"))
+_STYLE_TEXT_PROPERTIES = _TEXT_MEASUREMENT | frozenset(("fill", "contrastTreatment"))
+_STYLE_TEXT_ADDITIONS = frozenset(("fill", "contrastTreatment"))
+_STYLE_TEXT_CONSUMER = "Layout Style-selected text treatment and Scene Text paint/contrast"
 _SHARED_TEXT_ICON_PAINT = frozenset(("fill", "opacity"))
 _CANVAS_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "gradientAngle",
                            "gradientFidelity", "shadowColor", "shadowOffsetX", "shadowOffsetY",
@@ -404,18 +407,25 @@ _CATALOG_PATTERN_ROLES = frozenset((
 
 @lru_cache(maxsize=256)
 def _canonical_role_contract(role: str) -> RolePropertyContract | None:
-    """Derive Style mark properties from the registered scene-kind contract."""
+    """Derive Style treatment properties from the registered Scene-kind contract."""
     contract = _ROLE_PROPERTY_CONTRACTS.get(role)
-    if contract is None or not contract.scene_kinds & {"Rect", "Symbol"}:
+    if contract is None:
         return contract
-    added = _STYLE_MARK_PROPERTIES - contract.properties
+    added: set[str] = set()
+    if contract.scene_kinds & {"Rect", "Symbol"}:
+        added.update(_STYLE_MARK_PROPERTIES - contract.properties)
+    if "Text" in contract.scene_kinds:
+        added.update(_STYLE_TEXT_PROPERTIES - contract.properties)
     if not added:
         return contract
     owners = dict(contract.property_owners)
-    owners.update((name, _STYLE_MARK_CONSUMER) for name in added)
+    mark_properties = added & _STYLE_MARK_PROPERTIES
+    text_properties = added & _STYLE_TEXT_PROPERTIES
+    owners.update((name, _STYLE_MARK_CONSUMER) for name in mark_properties)
+    owners.update((name, _STYLE_TEXT_CONSUMER) for name in text_properties)
     return replace(
         contract,
-        properties=contract.properties | _STYLE_MARK_PROPERTIES,
+        properties=contract.properties | frozenset(added),
         property_owners=tuple(sorted(owners.items())),
     )
 
@@ -445,6 +455,8 @@ def theme_role_property_consumer(role: str, property_name: str) -> str | None:
     if contract is not None:
         if property_name in contract.properties and contract.owner_of(property_name) == _STYLE_MARK_CONSUMER:
             return _STYLE_MARK_CONSUMER
+        if property_name in contract.properties and contract.owner_of(property_name) == _STYLE_TEXT_CONSUMER:
+            return _STYLE_TEXT_CONSUMER
         if property_name in contract.properties:
             return contract.consumer
         return None
@@ -458,6 +470,8 @@ def theme_role_property_consumer(role: str, property_name: str) -> str | None:
         return None
     if role.startswith(_RESERVED_GENERATED_ROLE_PREFIXES):
         return None
+    if property_name in _STYLE_TEXT_ADDITIONS:
+        return _STYLE_TEXT_CONSUMER
     if property_name in _STYLE_MARK_PROPERTIES:
         return _STYLE_MARK_CONSUMER
     if property_name in _OPEN_AXIS_PROPERTIES:

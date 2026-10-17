@@ -185,3 +185,59 @@ def test_style_selected_mark_role_still_rejects_unsupported_properties(property_
         resolve_theme(theme, parts["scheme"], scheme_content_identity="sha256:" + "a" * 64)
     assert failure.value.diagnostic_id == "E_THEME_ROLE_PROPERTY_UNSUPPORTED"
     assert failure.value.source_ref == f"/body/roles/authored-mark-role/{property_name}"
+
+
+def test_style_selected_authored_text_role_admits_bounded_paint_and_contrast():
+    from copy import deepcopy
+
+    from chrona.presentation.color_scheme import resolve_theme
+    from tests.support import synthetic_review as sr
+
+    consumer = "Layout Style-selected text treatment and Scene Text paint/contrast"
+    for property_name in ("fill", "contrastTreatment"):
+        assert theme_role_property_consumer("authored-style-text", property_name) == consumer
+    assert theme_role_property_consumer("authored-style-text", "fontSize") == (
+        "View-named axis-tier or table column text measurement")
+
+    parts = sr.bundle("technical-print")
+    theme = deepcopy(parts["theme"])
+    theme["body"]["roles"]["authored-style-text"] = {
+        **{key: value for key, value in theme["body"]["roles"]["text"].items()
+           if key not in {"iconScale", "iconGap"}},
+        "contrastTreatment": "required",
+    }
+    theme["body"]["colorBindings"]["authored-style-text.fill"] = "text"
+
+    resolved = resolve_theme(theme, parts["scheme"], scheme_content_identity="sha256:" + "a" * 64)
+    role = resolved["body"]["roles"]["authored-style-text"]
+    assert role["fontSize"] == "size.body"
+    assert role["fill"].startswith("__scheme.")
+    assert role["contrastTreatment"] == "required"
+
+
+def test_style_text_role_contract_introspection_preserves_closed_role_boundaries():
+    consumer = "Layout Style-selected text treatment and Scene Text paint/contrast"
+    for role in ("member-label-inside-planned", "variance-behind", "axis-label2"):
+        contract = theme_role_contract(role)
+        assert contract is not None
+        for property_name in ("fontSize", "contrastTreatment"):
+            assert property_name in contract.properties
+            if contract.owner_of(property_name) == consumer:
+                assert theme_role_property_consumer(role, property_name) == consumer
+            else:
+                assert theme_role_property_consumer(role, property_name) == contract.consumer
+        assert contract.owner_of("fontSize") == consumer
+
+    # Generated variants and specialized fill-only state roles keep their
+    # original contracts instead of inheriting the authored text extension.
+    period_variant = theme_role_contract("period-label:frost")
+    assert period_variant == theme_role_contract("period-label")
+    assert theme_role_property_consumer("period-label:frost", "viewerFit") is None
+    assert theme_role_property_consumer("region-frame-main", "fontSize") is None
+    actual_variance = theme_role_contract("actual-behind")
+    assert actual_variance is not None and not actual_variance.scene_kinds
+    assert "fontSize" not in actual_variance.properties
+    assert theme_role_property_consumer("actual-behind", "contrastTreatment") is None
+
+    assert theme_role_property_consumer("authored-style-text", "arbitraryTextControl") is None
+    assert theme_role_property_consumer("authored-style-text", "pattern") is None

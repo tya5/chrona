@@ -229,7 +229,7 @@ def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | N
                         core, available - affix_width, typography_role, table.overflow, tokens, font_metrics)
                     if cut not in ("", "…"):   # an affix beside a bare ellipsis says nothing: keep the whole-string cut
                         resolved = cell.affix_prefix + cut + cell.affix_suffix
-            text.append(place_text(
+            placement = place_text(
                 placement_id=f"cell:{object_id}:{column_id}", source_ref=object_id, content=resolved,
                 inline=_aligned_inline(resolved, column_id, position[0] + indent, available,
                                        typography_role, "horizontal", measure_table_text, column_intents,
@@ -243,7 +243,13 @@ def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | N
                 overflow=overflow, collision_region="table",
                 collision_domain=CollisionDomain("table", f"row:{row.row_id}"), source_content=content,
                 available_inline_start=position[0] + indent, available_inline_size=available,
-                semantic_id=cell.semantic_id, lines=closed.fit.lines if closed is not None else None))
+                semantic_id=cell.semantic_id, lines=closed.fit.lines if closed is not None else None)
+            style_intent = (request.surface_content.style_intents.get(cell.style_key)
+                            if cell.style_key is not None else None)
+            if style_intent is not None and style_intent.role is not None:
+                placement = replace(placement, theme_role=style_intent.role,
+                                    style_occurrence_key=cell.style_key)
+            text.append(placement)
     warnings = tuple(warning for item in text if (warning := ellipsized_text_warning(
         item, theme_tokens=tokens, font_metrics=font_metrics, failure_kind="table-text")) is not None
     ) if seed.bounded_table is not None else ()

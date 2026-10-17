@@ -97,8 +97,8 @@ def _primary_mark_binding(mark: Any, source_kind: str):
     return semantic_binding("snapshot" if source_kind in {"snapshot", "scenario"} else "planned")
 
 
-def _mark_style_projection(mark: Any, fallback_binding: Any) -> tuple[Any, dict[str, str]]:
-    """Project Layout's exact Style occurrence identity without reclassifying the mark."""
+def _placement_style_projection(mark: Any, fallback_binding: Any) -> tuple[Any, dict[str, str]]:
+    """Project Layout's exact Style occurrence identity without reclassifying it."""
     theme_role = getattr(mark, "theme_role", None)
     occurrence_key = getattr(mark, "style_occurrence_key", None)
     if theme_role is None:
@@ -591,6 +591,10 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         placed = layout_text[scene_id]
         if placed.overflow == "suppressed":
             return
+        style_projection = {}
+        if getattr(placed, "theme_role", None) is not None:
+            binding, style_projection = _placement_style_projection(placed, None)
+            purpose, role = binding.purpose, binding.scene_role
         layout = TextLayout((float(placed.bounds.inline), float(placed.bounds.block),
                              float(placed.bounds.inline_size), float(placed.bounds.block_size)),
                             placed.baseline or (float(placed.bounds.inline), float(placed.bounds.block)),
@@ -599,14 +603,14 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                             _scene_transform(placed.text_transform), placed.numeric_spacing, placed.orientation,
                             placed.rotation_degrees, placed.horizontal_scale, placed.fit, _scene_runs(placed.runs))
         classification = contrast_binding(role)
-        treatment = (value.theme_tokens.contrast_treatment(role)
+        treatment = (value.theme_tokens.contrast_treatment(style_projection.get("theme_role", role))
                      if classification is not None and classification.contrast_class == ContrastClass.STATE_TEXT else None)
         primitives.append(ScenePrimitive(scene_id, PrimitiveKind.TEXT, placed.source_ref, "review", purpose, role, layout.bounds,
                                          text=placed.content, baseline=layout.baseline, text_layout=layout,
                                          href=href, link_title=link_title, table_row_id=table_row_id,
                                          table_column_id=table_column_id, paint_order=placed.paint_order,
                                          host_placement_id=placed.host_placement_id,
-                                         contrast_treatment=treatment))
+                                         contrast_treatment=treatment, **style_projection))
         if project_item is not None:
             record_project_primitives((scene_id,), project_item)
     def emit_semantic_text(scene_id: str, semantic_id: str, role: str | None = None,
@@ -726,7 +730,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         planned_fallback = (_primary_mark_binding(planned_mark, source_kind)
                             if planned_mark is not None
                             else semantic_binding("snapshot" if source_kind in {"snapshot", "scenario"} else "planned"))
-        planned_binding, planned_style = (_mark_style_projection(planned_mark, planned_fallback)
+        planned_binding, planned_style = (_placement_style_projection(planned_mark, planned_fallback)
                                           if planned_mark is not None else (planned_fallback, {}))
         planned_role = planned_binding.scene_role
         if planned_mark is not None:
@@ -760,7 +764,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         actual = item.actual or {}
         actual_mark = mark_placements.get(f"actual:{instance_id}")
         if actual_mark is not None:
-            actual_binding, actual_style = _mark_style_projection(actual_mark, semantic_binding("actual"))
+            actual_binding, actual_style = _placement_style_projection(actual_mark, semantic_binding("actual"))
             actual_ids = lane_scene_ids("mark", actual_mark.placement_id)
             actual_id = actual_ids[0] if actual_ids else actual_mark.placement_id
             bounds = (float(actual_mark.bounds.inline), float(actual_mark.bounds.block),
@@ -796,7 +800,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             missing_id = missing_ids[0] if missing_ids else missing_mark.placement_id
             bounds = (float(missing_mark.bounds.inline), float(missing_mark.bounds.block),
                       float(missing_mark.bounds.inline_size), float(missing_mark.bounds.block_size))
-            missing_binding, missing_style = _mark_style_projection(missing_mark, semantic_binding("missingActual"))
+            missing_binding, missing_style = _placement_style_projection(missing_mark, semantic_binding("missingActual"))
             primitives.append(_completed_host_primitive(missing_id, item.object_id, "object", missing_binding.purpose, missing_binding.scene_role,
                                              bounds, missing_mark, corner_radius=missing_mark.corner_radius, slot_id=missing_mark.slot_id,
                                              paint_order=missing_mark.paint_order, end_treatment=missing_mark.end_treatment,
@@ -828,7 +832,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             planned_mark = mark_placements.get(f"planned:{instance_id}")
             if planned_mark is not None:
                 fallback_binding = _primary_mark_binding(planned_mark, source_kind)
-                binding, style_projection = _mark_style_projection(planned_mark, fallback_binding)
+                binding, style_projection = _placement_style_projection(planned_mark, fallback_binding)
                 bounds = (float(planned_mark.bounds.inline), float(planned_mark.bounds.block),
                           float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
                 gate_role = (binding.scene_role if style_projection or planned_mark.semantic_id == "forecast" else
@@ -848,7 +852,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                     for index, part in enumerate(planned_mark.symbol_parts)), item)
             actual_mark = mark_placements.get(f"actual:{instance_id}")
             if actual_mark is not None:
-                binding, style_projection = _mark_style_projection(actual_mark, semantic_binding("actual"))
+                binding, style_projection = _placement_style_projection(actual_mark, semantic_binding("actual"))
                 bounds = (float(actual_mark.bounds.inline), float(actual_mark.bounds.block),
                           float(actual_mark.bounds.inline_size), float(actual_mark.bounds.block_size))
                 primitives.extend(_symbol_primitives(f"actual:{instance_id}", item.object_id, "object",

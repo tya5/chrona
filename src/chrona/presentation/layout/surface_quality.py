@@ -298,6 +298,9 @@ class TextPlacement:
     # One tuple of measured runs per line when the role is `small-caps` (#1285); empty otherwise.
     runs: tuple[tuple[TextRunPlacement, ...], ...] = ()
     subjects: tuple[DiagnosticSubject, ...] = ()
+    # Style-selected appearance stays separate from the canonical Scene role.
+    theme_role: str | None = None
+    style_occurrence_key: StyleOccurrenceKey | None = None
 
 
 @dataclass(frozen=True)
