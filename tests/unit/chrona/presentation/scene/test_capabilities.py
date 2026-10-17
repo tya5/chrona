@@ -92,9 +92,9 @@ def test_style_selected_mark_consumer_is_finite_and_respects_role_families():
     # explicitly owned by the Style mark consumer.
     assert theme_role_property_consumer("planned", "markHeight") == "Layout marks and Scene Rect/Symbol"
     assert theme_role_property_consumer("planned", "symbol") == consumer
-    assert theme_role_property_consumer("annotation-note-box", "markHeight") == consumer
-    assert theme_role_property_consumer("as-of-cone", "markPaintOrder") == consumer
-    for role in ("gate", "annotation-note-box", "as-of-cone"):
+    assert theme_role_property_consumer("annotation-note-box", "markHeight") is None
+    assert theme_role_property_consumer("as-of-cone", "markPaintOrder") is None
+    for role in ("gate",):
         contract = theme_role_contract(role)
         assert contract is not None
         assert "markHeight" in contract.properties
@@ -118,6 +118,27 @@ def test_style_selected_mark_consumer_is_finite_and_respects_role_families():
     ):
         assert theme_role_property_consumer(reserved, "markHeight") is None
         assert theme_role_property_consumer(reserved, "symbol") != consumer
+
+
+@pytest.mark.parametrize("role", [
+    "canvas-texture", "canvas-overlay", "canvas-overlay-gradient",
+    "as-of-cone", "annotation-note-box",
+])
+def test_registered_nonmark_roles_keep_their_declared_geometry_contract(role):
+    contract = theme_role_contract(role)
+
+    assert contract is not None
+    assert "markHeight" not in contract.properties
+    assert "markPaintOrder" not in contract.properties
+    assert "symbol" not in contract.properties
+    assert theme_role_property_consumer(role, "markHeight") is None
+
+
+def test_unregistered_authored_mark_role_keeps_bounded_style_geometry():
+    consumer = "Layout Style-selected mark geometry and Scene Symbol"
+
+    assert theme_role_property_consumer("authored-mark-role", "markHeight") == consumer
+    assert theme_role_property_consumer("authored-mark-role", "symbol") == consumer
 
 
 @pytest.mark.parametrize("role", ["actual-ahead", "actual-on-track", "actual-behind"])
