@@ -2,7 +2,7 @@
 
 ## Baseline and status
 
-Public base: trusted-ready 9735e254fa114113d0f2d319f62c543bc8333f72,
+Public base: cd4dae681c9fd09f2c26d0dd037fcdac8d97e82d,
 merged normally into the feature branch; design PR1642 is merged.
 [Owner rule and acceptance](https://github.com/tya5/chrona/issues/1634).
 The design plan was published in 783fe50cc; normative design and whole-
@@ -20,7 +20,7 @@ placement share exact text/icon/chip footprint measurement; the large-chip twin
 checks header lanes and required pre-route obstacles. Optional-title policy is
 independent. Per-occurrence table coverage and forecast Scene identity are closed.
 #1632 code PR #1644 landed as ccf93c0e4 and is merged into this candidate;
-its acceptance review PR #1645 and exact-main release gate remain pending.
+its acceptance review PR #1645 is merged; exact-main release acceptance remains pending.
 The actual trial PNGs were rendered and viewed at WIP ccc4acf24 and repeated
 after integration at cec49ac99 (PNG/Scene byte-identical): target-b
 shows 25 forecast/ghost objects and table deltas; technical-print shows 22
@@ -37,7 +37,7 @@ inspect its full public artifact comparison, then complete release acceptance.
 [Reviewer answers](https://github.com/tya5/chrona/issues/1634#issuecomment-6230794260)
 approve retained declared units, finish-only placement with an unobserved-start
 finding, and child-envelope precedence with a named group-observation finding.
-No further reviewer gate precedes normative publication.
+No owner decision is pending.
 
 ## Selected design and authority
 
