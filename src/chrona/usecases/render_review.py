@@ -56,7 +56,7 @@ from chrona.presentation.count_text import CountTextError
 from chrona.core.figures import FigureCounts, FigureResolution, resolve_figures
 from chrona.core.periods import period_range_diagnostics, resolve_periods
 from chrona.core.temporal import Calendar
-from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
+from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale, scale_text
 from chrona.presentation.model.color_separability import MINIMUM_CATEGORY_DELTA_E, MINIMUM_RESERVED_CHROMA, chroma, delta_e_2000
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.semantic_registry import semantic_binding
@@ -734,8 +734,8 @@ def _observed_scale_values(encoding: Any, projection: Any) -> tuple[str, ...]:
     field = source.get("field") if isinstance(source, Mapping) else None
     if not isinstance(field, str):
         return ()
-    return tuple(str(item.fields[field]) for item in projection.items
-                 if item.fields is not None and item.fields.get(field) is not None)
+    return tuple((scale_text(item.fields[field]) or str(item.fields[field]))
+                 for item in projection.items if item.fields is not None and item.fields.get(field) is not None)
 
 
 def _visual_request(visual: Any, projection: Any, index: int, closure: RenderClosure) -> VisualRequest:
