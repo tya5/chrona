@@ -10,6 +10,7 @@ from typing import Any
 
 from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
 from chrona.core.diagnostics import Diagnostic
+from chrona.core.observations import latest_observations
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.contracts.resources import ViewInput, _PrivateGroupingMode
 from chrona.presentation.model.actual_observation import finish_variance
@@ -268,7 +269,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     if view.comparison.actual == "required" and actual_set is None:
         raise ValueError("E_ACTUAL_REQUIRED: the View compares against actuals (comparison.actual is required) but no actual "
                          "file was given; pass --actual FILE, or change the View so actuals are not required")
-    latest, unmatched = _latest_observations(
+    latest, unmatched = latest_observations(
         (actual_set or {}).get("body", actual_set or {}).get("observations", []), placements)
     as_of_value = (actual_set or {}).get("body", actual_set or {}).get("asOf")
     as_of = date.fromisoformat(as_of_value) if isinstance(as_of_value, str) else as_of_value
@@ -748,17 +749,6 @@ def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[s
             declared_attaches_to=project["objects"][object_id].get("attachesTo"), field_bindings=bindings,
             date_basis=ItemDateBasis.from_project(project, object_id))
     return result
-
-
-def _latest_observations(observations: list[dict[str, Any]], placements: dict[str, dict[str, date]]) -> tuple[dict[str, dict[str, Any]], list[str]]:
-    latest, unmatched = {}, []
-    for observation in observations:
-        object_id = observation.get("projectObjectId")
-        if object_id not in placements:
-            unmatched.append(observation["id"])
-        elif object_id not in latest or observation["sequence"] > latest[object_id]["sequence"]:
-            latest[object_id] = observation
-    return latest, unmatched
 
 
 def _actual(observation: dict[str, Any] | None) -> dict[str, date | float | str] | None:
