@@ -20,7 +20,7 @@ the repair-only channel implementation.
 | ---: | --- | --- | --- | --- |
 | 1 | Trace posted; a synthetic twin of the crossing case. | met | [Trace](https://github.com/tya5/chrona/issues/1610#issuecomment-6225778103); [same-inventory obstruction controls](../../../tests/unit/chrona/presentation/layout/test_member_label_route_obstruction.py), [one-retry and full-placement preservation twins](../../../tests/unit/chrona/presentation/layout/test_surface_route_label_plan.py), and [actual stroke checks](../../../tests/unit/chrona/presentation/layout/test_surface_route_label_stroke.py). | — |
 | 2 | The two presets on the #1582 CSV draw no label crossed by a route or the as-of line, viewed as PNG. | met | Root viewed both final [CSV](https://github.com/tya5/chrona/issues/1582) PNGs in `/tmp/chrona-1610-current-matrix.1xD6Q4/{default,executive-light}.png`. Checkout screens and Customer dashboard are visible in both; the canonical actual-width audit finds0intersections (default13names/14dependency primitives, executive11/13). No pass-1 visible label is lost. | — |
-| 3 | Public SVG/Scene changes listed with counts. | not met | The prior up-front result and its39changed slides are rejected. Final on-demand implementation needs a fresh official snapshot, per-slide counts and HALCYON before/after routing measurement in [PR1623](https://github.com/tya5/chrona/pull/1623). | — |
+| 3 | Public SVG/Scene changes listed with counts. | met | [PR1623](https://github.com/tya5/chrona/pull/1623) lists every changed slide and routing measurement from [exact-head5210e849d artifact12087258176](https://github.com/tya5/chrona/actions/runs/38997760447/artifacts/12087258176): 109paths, none added/retired; SVG32changed/18identical; Scene34changed/16identical. No dependency primitive removed. Root viewed eight before/after PNG pairs; five approved HALCYON targets have no primitive/diagnostic changes. | — |
 
 ## Programme-level criteria (optional)
 
@@ -45,5 +45,8 @@ Real route-only/mixed-blocker attribution has11 passing controls; the final
 coordinator identity/repair-only checks add13 passing controls. Sequential
 HALCYON cProfile: main1call/0.546s routing, product2calls/9.955s; total
 profile3.096s→12.778s, wall3.153s→13.019s. Cost remains high and is disclosed,
-not described as improved. Exact-head CI, final public counts and the
-review-containing main three-OS release remain open.
+not described as improved. Public differences include labels lost or exchanged
+on HALCYON01/03 and the programme-board family; these are disclosed in the PR,
+not hidden by example edits. Mandatory as-of avoidance changes the ordinary
+pass; optional repair is checked against that completed first pass.
+Exact-head CI and the review-containing main three-OS release remain open.

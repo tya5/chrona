@@ -20,7 +20,7 @@ and [shipped target-b clarification](https://github.com/tya5/chrona/issues/1583#
 | ---: | --- | --- | --- | --- |
 | 1 | Synthetic tests: 5wd from Monday shows Friday; actual Friday finish shows variance 0; calendar-day (`d`) items unchanged; a holiday exception before the end. | met | [Date basis](../../../tests/unit/chrona/presentation/model/test_working_day_date_basis.py), [projection](../../../tests/unit/chrona/presentation/model/test_working_day_projection.py) and [packaged label controls](../../../tests/integration/test_packaged_working_day_labels.py): inclusive Friday, civil/working spans, holidays, calendarless behavior, Friday/weekend Actual zero, lanes/automatic and explicit calendar-days override. | — |
 | 2 | The #1582 CSV renders `05 Oct – 09 Oct` and `0` for `test-plan` in the default draft and `target-b`, viewed as PNG. | met | Root viewed all15preset Test plan rows from the unchanged [CSV](https://github.com/tya5/chrona/issues/1582) in `/tmp/chrona-1610-current-matrix.1xD6Q4/review-rows-{1,2,3}.png` at product712e7240f: default05Oct–09Oct/+0d, shipped target-b+0d, executive-light+0d; no invented Plan column. Each declared comparison shows its formatted zero, never-2d; Editorial declares no visible comparison. | — |
-| 3 | Public SVG/Scene changes are listed with counts in the PR. | not met | [PR1599](https://github.com/tya5/chrona/pull/1599) has the published core-stage counts. Final combined declarations/placement need a fresh official [PR1623](https://github.com/tya5/chrona/pull/1623) snapshot and count table; earlier-stage counts are not final evidence. | — |
+| 3 | Public SVG/Scene changes are listed with counts in the PR. | met | [PR1623](https://github.com/tya5/chrona/pull/1623) lists per-slide primitive/diagnostic counts for [exact-head5210e849d artifact12087258176](https://github.com/tya5/chrona/actions/runs/38997760447/artifacts/12087258176): 109paths, none added/retired; SVG32changed/18identical; Scene34changed/16identical. Combined placement/date evidence, not earlier-stage counts. | — |
 
 ## Programme-level criteria (optional)
 
@@ -28,5 +28,5 @@ The canonical calendar basis and shared date helper own arithmetic; View
 declares deltaUnit, Layout formats completed facts, Scene/adapters serialize.
 No project/preset-ID branch, core half-open date change or schema migration.
 Eight legacy declarations now select working-days; explicit calendar-days
-still produces the intended civil delta. Final exact-head CI, public counts
+still produces the intended civil delta. Final exact-head CI
 and the review-containing main three-OS release remain required before closure.
