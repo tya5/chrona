@@ -78,6 +78,31 @@ def _invalid(field: str, value: object, expected: str, *, owner: str = "Scene") 
     return ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: {owner}.{field}; expected {expected}; found {_brief(value)}")
 
 
+def _validate_style_semantic_metadata(scene_id: object, semantic_id: object, theme_role: object,
+                                     purpose: object, visual_role: object) -> None:
+    """Validate optional Style metadata against its canonical host binding."""
+    if semantic_id is None and theme_role is None:
+        return
+    owner = f"primitive {_brief(scene_id)}"
+    if semantic_id is None or theme_role is None:
+        raise _invalid("semantic_id/theme_role", (semantic_id, theme_role),
+                       "both absent or both non-empty strings", owner=owner)
+    if (not isinstance(semantic_id, str) or not semantic_id
+            or not isinstance(theme_role, str) or not theme_role):
+        raise _invalid("semantic_id/theme_role", (semantic_id, theme_role),
+                       "both absent or both non-empty strings", owner=owner)
+    try:
+        binding = semantic_binding(semantic_id)
+    except (TypeError, ValueError):
+        raise _invalid("semantic_id", semantic_id, "a registered semantic vocabulary identifier",
+                       owner=owner) from None
+    if purpose != binding.purpose or visual_role != binding.scene_role:
+        raise _invalid("semantic_id/purpose/visual_role",
+                       (semantic_id, purpose, visual_role),
+                       f"the vocabulary binding purpose={binding.purpose!r} and sceneRole={binding.scene_role!r}",
+                       owner=owner)
+
+
 def _paint_clip_contains(clip: PaintClip, bounds: object, points: object) -> bool:
     """Check completed absolute geometry against a supplied clip, without interpreting routes."""
     if not isinstance(bounds, tuple) or len(bounds) != 4 or not all(_finite_number(value) for value in bounds):
@@ -463,8 +488,13 @@ class ScenePrimitive:
     paint_clip: PaintClip | None = None
     # Transient finite-key ink projection; cleared before the completed Scene.
     legend_swatch_shape: str | None = None
+    # Optional Style appearance metadata; visual_role remains the host role.
+    semantic_id: str | None = None
+    theme_role: str | None = None
 
     def __post_init__(self) -> None:
+        _validate_style_semantic_metadata(self.scene_id, self.semantic_id, self.theme_role,
+                                          self.purpose, self.visual_role)
         if (self.legend_swatch_shape not in (None, "circle", "rule-pair")
                 or (self.legend_swatch_shape is not None and self.source_kind != "legend")):
             raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} legend_swatch_shape")

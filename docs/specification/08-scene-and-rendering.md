@@ -308,6 +308,21 @@ authority. The exact migration and diagnostic contract are recorded in the
 
 ### 3.3 Resolved presentation input and identity boundary
 
+Style-treated primitives in live Scene v0.7 carry optional paired `semanticId`
+and `themeRole` (#419). `semanticId` joins the exact closed host vocabulary;
+its purpose and canonical `visualRole` must match the primitive. `themeRole`
+records the selected appearance without changing those semantic/host fields.
+No Style metadata means unchanged prior serialization; Scene v0.6 is frozen.
+Before replay interprets this metadata, provenance must contain exactly the
+host vocabulary's ID, revision and content identity. Missing, duplicate or
+different vocabulary references are refused before semantic lookup.
+Contrast remains classified through the validated host binding, never by an
+arbitrary selected Theme role. Coverage counts `themeRole` when present and
+otherwise canonical `visualRole`, retaining purpose as its semantic join.
+Layout completes the selected typography, mark geometry and stroke extents
+before fit/routes; Scene carries the completed treatment and adapters only
+serialize paint/geometry.
+
 The Scene Builder receives one immutable **ResolvedPresentationInput**.  It is derived
 once by the coordinator from the View Projection, resolved Style/Theme, Detail,
 Layout, Render Context, and target capability declaration.  It contains semantic

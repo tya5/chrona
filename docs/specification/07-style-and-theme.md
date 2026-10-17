@@ -55,9 +55,10 @@ This boundary is normative. Moving a concern upward is allowed only when it does
 
 ## 4. Style model
 
-### 4.1 v0.1 persistent Style body
+### 4.1 Historical v0.1 Style proposal
 
-A Style is an ordered list of declarative rules. A rule matches only facts already
+The historical v0.1 proposal is not an accepted Style resource format. It described
+an ordered list of declarative rules. A rule matches only facts already
 exposed by the View Projection and adds named visual roles; it cannot set a colour,
 font, coordinate, or token value.
 
@@ -89,15 +90,60 @@ re-evaluate rules only for its affected View items and emit local `SceneDelta` u
 token updates. A rule set has no catch-all code expression and cannot depend on title
 text, geometry, renderer state, or local time.
 
+### 4.1.1 Style v0.2 rule contract (#419)
+
+`chrona/style/v0.2` replaces the historical source-order proposal. Its schema is
+[`style-v0.2.schema.yaml`](../../schemas/style-v0.2.schema.yaml). A resource has
+`body.rules`, each with a unique `id`, non-empty `when`, and `then` assigning
+exactly one Theme `role` or one `encode` outcome. Rules read original View facts;
+an assignment never changes what another rule matches. Source order is not
+precedence. Equal assignments coalesce; different roles or different encodings
+for the same channel on one occurrence fail with both rule IDs. Role and fill
+assignments are independent; fill overrides only the selected role's fill.
+
+The initial selectors are closed and combine by intersection:
+
+| Selector | Fact |
+| --- | --- |
+| `semantic` | Exact host semantic-vocabulary binding ID. |
+| `purpose` | Host purpose of the occurrence. |
+| `comparisonCategory` | View-computed `behind`, `on-track`, or `ahead`. |
+| `columnSource` | Exact shared View column-source form, not displayed text. |
+| `roles` | All listed roles must be present in the original Projection. |
+| `fields` | All typed scalar `source`/`equals` predicates must match. |
+
+`fields` predicates require profile-v0.3 declarations and scalar cardinality;
+arrays and resource references are not equality predicates. A `fieldRole` is
+an alias resolved through the source Project's shared field accessor, not a
+second evaluator. Missing fields do not match; explicit null remains present
+and is validated by the Project/profile owner. Predicate literals must match
+their declared types without boolean/number coercion. Snapshot facts use the
+Snapshot Project's own pinned declarations; scenario facts use the primary
+declarations after overlays. Object ID alone is not occurrence identity: source,
+row/member, semantic and column identities remain distinct.
+
+The first encoding channel is `fill`, on supported member marks and table cells.
+Its source, scale and domain use the existing colour-encoding contract (Spec60).
+Existing View `colorEncoding` remains accepted and lowers to the same intent;
+legacy opaque encoding fields do not become typed predicate declarations.
+Encoding paint identity is resolved source, scale, domain and channel, not
+legend wording. A scoped encoding requires a non-blank authored legend title.
+Its canonical selector is retained with legend provenance. `showScope` opts in
+to a derived visible qualifier; that qualifier is not forced and does not
+replace the title. New selectors/channels need their own contract.
+
+Style selects treatment, not concrete geometry. The selected Theme role's text,
+mark and stroke attributes must enter Layout before measurement, fitting and
+routing. Scene keeps canonical `visualRole` and purpose; optional paired
+`semanticId`/`themeRole` record the vocabulary binding and selected treatment.
+Adapters serialize completed paint and geometry, never evaluate predicates.
+
 ### 4.2 Inputs
 
-A Style receives the semantic View Projection. Its selectors may inspect only stable, declarative facts exposed by that projection, including:
-
-- object kind and identity;
-- profile and typed extension fields admitted by the Project schema;
-- view membership, grouping, and declared emphasis;
-- comparison facets such as `hasActual`, `hasBaseline`, `changedSinceBaseline`, or an explicitly computed plan/actual variance category;
-- relationship kind: semantic dependency, explanatory arrow, or annotation anchor.
+A Style receives the semantic View Projection. Only the six selectors in
+§4.1.1 are admitted initially; the broader facts discussed by the historical
+proposal are not implicit syntax. In particular, `facet`, `sourceType` and
+`relationKind` need a later named use case and additive contract.
 
 Selectors must not execute arbitrary host code, mutate the Project, inspect renderer-specific coordinates, or silently obtain data outside the View Context.
 
@@ -712,7 +758,8 @@ binding per property; cyclic or missing bases and undefined token names are erro
 
 The resolved output is a concrete scalar map for every selected role. No renderer may
 substitute a palette, default font, marker, or pattern when resolution is incomplete.
-Style resolution is source-order only; Theme resolution is base-first/property-local.
+Style v0.2 resolution is order-independent with explicit conflicts (§4.1.1);
+Theme resolution is base-first/property-local.
 
 Specification 29 owns the v0.2 resolved concrete Theme embedded in Presentation
 Settings. The one-way chain is `v0.1 values/roles → resolved concrete theme → Scene
@@ -826,7 +873,11 @@ Layout uses each role's effective
 font, scale, spacing and transformed text to close the shared baseline and
 row envelope. Scene only projects the completed placements and role paint.
 
-The next specification resolves styled semantic objects into a renderer-neutral Scene. Scene may choose a rectangle, path, marker, text run, or group and assign concrete coordinates; it must preserve the object's identity, relationship kind, resolved visual roles, and token references. It must not decide whether something is `behind`, a dependency, or an explanatory arrow.
+The next specification describes the renderer-neutral Scene. Layout completes
+the selected rectangles, paths, marks and measured text with concrete geometry;
+Scene carries those completed primitives and preserves identity, relationship
+kind and role metadata. Scene does not choose geometry or decide whether
+something is `behind`, a dependency, or an explanatory arrow.
 
 The resulting Scene can be rendered to SVG or used by an interactive editor, but neither output becomes the source of Chrona semantics.
 

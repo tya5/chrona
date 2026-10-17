@@ -11,8 +11,10 @@ from chrona.presentation.scene.model import (
     PatternGeometry, SceneIconPath, SceneLaneMember, SceneLaneWindowAbsence, SceneLaneObstacle, SceneLaneRectObstacle,
     SceneLaneSegmentObstacle, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish,
     TextLayout, requires_lane_member_provenance, MarkerGeometry, PathCommand, completed_marker_outline,
+    _validate_style_semantic_metadata,
 )
 from chrona.resources import schema_validator
+from chrona.resources.semantic_vocabulary import KIND as VOCABULARY_KIND, builtin_semantic_vocabulary
 from chrona.presentation.scene.pattern_host import completed_pattern_host_valid
 
 
@@ -34,7 +36,7 @@ def _brief(value: object) -> str:
 
 
 def serialize_scene(scene: InspectionScene) -> bytes:
-    """Return canonical UTF-8 scene-v0.6 JSON after typed and schema validation."""
+    """Return canonical UTF-8 Scene JSON after typed and schema validation."""
     document = scene_document(scene)
     validate_scene_document(document)
     try:
@@ -71,9 +73,13 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
     has_relation_endpoint_identity = any(
         primitive.from_instance_id is not None or primitive.to_instance_id is not None
         for surface in scene.surfaces for primitive in surface.primitives)
+    has_style_semantic_metadata = any(
+        primitive.semantic_id is not None or primitive.theme_role is not None
+        for surface in scene.surfaces for primitive in surface.primitives)
     return {
-        "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale or has_runs or has_fit or has_marker_axis or has_stroke_clip or has_paint_clip
-                    or has_relation_endpoint_identity or has_window_absences
+        "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale
+                    or has_runs or has_fit or has_marker_axis or has_stroke_clip or has_paint_clip
+                    or has_relation_endpoint_identity or has_window_absences or has_style_semantic_metadata
                     else "chrona/scene/v0.6"),
         "kind": "scene",
         "provenance": {
@@ -142,6 +148,27 @@ def validate_scene_document(document: Mapping[str, Any]) -> None:
         first = errors[0]
         path = "/" + "/".join(str(part)[:64] for part in first.absolute_path)
         raise _scene_error(f"{schema_name} rejected the document: {len(errors)} schema error(s), first at {path or '/'}")
+    styled = any("semanticId" in primitive or "themeRole" in primitive
+                 for surface in document.get("surfaces", ())
+                 for primitive in surface.get("primitives", ()))
+    if styled:
+        vocabulary = builtin_semantic_vocabulary()
+        references = [item for item in document["provenance"]["resources"]
+                      if item["kind"] == VOCABULARY_KIND]
+        expected = {"kind": VOCABULARY_KIND, "id": vocabulary.id,
+                    "revision": vocabulary.version.rsplit("/", 1)[-1],
+                    "contentIdentity": vocabulary.content_identity}
+        if references != [expected]:
+            raise _scene_error("E_RESOURCE_IDENTITY_MISMATCH: Style semantic metadata requires the exact host vocabulary provenance")
+    try:
+        for surface in document.get("surfaces", ()):
+            for primitive in surface.get("primitives", ()):
+                _validate_style_semantic_metadata(
+                    primitive.get("id"), primitive.get("semanticId"), primitive.get("themeRole"),
+                    primitive.get("purpose"), primitive.get("visualRole"),
+                )
+    except ValueError as error:
+        raise _scene_error(str(error)) from error
     if any(not _finite(primitive["paintClip"])
            for surface in document.get("surfaces", ())
            for primitive in surface.get("primitives", ()) if "paintClip" in primitive):
@@ -611,6 +638,7 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
         "visualRole": item.visual_role, "bounds": _bounds(item.bounds), "slotId": item.slot_id,
     }
     optional = {
+        "semanticId": item.semantic_id, "themeRole": item.theme_role,
         "text": item.text, "baseline": _point(item.baseline) if item.baseline is not None else None,
         "textLayout": _text_layout(item.text_layout) if item.text_layout is not None else None,
         "paint": _paint(item.paint) if item.paint is not None else None,
