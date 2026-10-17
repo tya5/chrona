@@ -116,7 +116,7 @@ def _pointer(text: str) -> str:
 def validate_generic_profiles(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]]) -> list[Diagnostic]:
     """Check objects whose ``type`` names a profile of a declared, resolved package.
 
-    One family of pointed diagnostics: ``E_PROFILE_PACKAGE_INVALID``,
+    One family of pointed diagnostics: ``E_PROFILE_PACKAGE_INVALID``, ``E_PROFILE_ID_DUPLICATE``,
     ``E_PROFILE_FIELD_UNKNOWN``, ``E_PROFILE_FIELD_TYPE``,
     ``E_PROFILE_FIELD_ENUM`` and ``E_PROFILE_FIELD_REQUIRED``. An absent field
     differs from an explicit ``null``: absent is valid unless required; null is
@@ -126,6 +126,11 @@ def validate_generic_profiles(project: dict[str, Any], package_manifests: dict[s
     diagnostics: list[Diagnostic] = []
     definitions: dict[str, dict[str, Any]] = {}
     declared = [item.get("packageId") for item in project.get("extensions", []) if isinstance(item, dict)]
+    owners: dict[str, str] = {}  # profile ID -> the package that first declares it (global uniqueness, Spec 11)
+    for index, package_id in enumerate(declared):
+        manifest = package_manifests.get(package_id)
+        if package_id == PACKAGE_ID and manifest is not None and isinstance(manifest.get("profiles"), dict):
+            owners.update({profile_id: package_id for profile_id in manifest["profiles"]})
     for index, package_id in enumerate(declared):
         manifest = package_manifests.get(package_id)
         if package_id == PACKAGE_ID or manifest is None:
@@ -138,7 +143,14 @@ def validate_generic_profiles(project: dict[str, Any], package_manifests: dict[s
             continue
         shared = manifest.get("fields", {})
         for profile_id, profile in manifest["profiles"].items():
-            definitions.setdefault(profile_id, {**shared, **profile.get("fields", {})})
+            if profile_id in owners and owners[profile_id] != package_id:
+                diagnostics.append(Diagnostic(
+                    "E_PROFILE_ID_DUPLICATE",
+                    f"Profile ID {profile_id!r} is declared by both package {owners[profile_id]!r} and package {package_id!r}; profile IDs are globally unique",
+                    f"/extensions/{index}"))
+                continue
+            owners[profile_id] = package_id
+            definitions[profile_id] = {**shared, **profile.get("fields", {})}
     for object_id, item in project.get("objects", {}).items():
         profile_fields = definitions.get(item.get("type"))
         if profile_fields is None:

@@ -55,3 +55,19 @@ def test_invalid_package_and_untouched_objects():
     other = _project(); other["objects"]["a"]["type"] = "task"; other["objects"]["a"]["fields"] = {"anything": 1}
     assert _run(other) == []
     assert validate_profiles(_project(), None) == []
+
+
+def test_duplicate_profile_id_across_packages_names_both_packages():
+    other = deepcopy(MANIFEST); other["packageId"] = "other-risk"
+    project = _project(); project["extensions"].append({"packageId": "other-risk"})
+    found = validate_profiles(project, {"acme-risk": MANIFEST, "other-risk": other})
+    assert [(d.id, d.path) for d in found] == [("E_PROFILE_ID_DUPLICATE", "/extensions/1")]
+    assert "'acme-risk'" in found[0].message and "'other-risk'" in found[0].message
+    assert "'acme-risk.item'" in found[0].message
+
+
+def test_duplicate_of_a_delivery_profile_id_is_reported():
+    delivery = {"packageId": "implementation-delivery", "profiles": {"acme-risk.item": {"extends": "task"}}}
+    project = _project(); project["extensions"].insert(0, {"packageId": "implementation-delivery"})
+    ids = [d.id for d in validate_profiles(project, {"implementation-delivery": delivery, "acme-risk": MANIFEST})]
+    assert "E_PROFILE_ID_DUPLICATE" in ids
