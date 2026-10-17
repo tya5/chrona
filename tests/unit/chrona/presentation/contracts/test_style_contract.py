@@ -107,3 +107,16 @@ def test_scoped_title_failure_crosses_contract_boundary_with_pointer():
         _parse(value)
     assert error.value.diagnostic_id == "E_STYLE_LEGEND_TITLE_REQUIRED"
     assert error.value.source_ref == "/body/rules/0/then/encode/legend/title"
+
+
+@pytest.mark.parametrize("title", ["", "  "])
+def test_global_blank_title_is_rejected_at_style_ingress_not_scene(title):
+    value = _document()
+    value["body"]["rules"][0]["when"] = {"semantic": "planned"}
+    value["body"]["rules"][0]["then"] = {"encode": {
+        "channel": "fill", "source": {"field": "risk"}, "scale": "risk", "domain": ["low"],
+        "legend": {"title": title}}}
+    with pytest.raises(ContractError) as error:
+        _parse(value)
+    assert error.value.diagnostic_id == "E_STYLE_LEGEND_TITLE_REQUIRED"
+    assert error.value.source_ref == "/body/rules/0/then/encode/legend/title"

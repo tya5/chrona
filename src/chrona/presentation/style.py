@@ -62,6 +62,26 @@ StyleOutcome = StyleRoleOutcome | StyleEncodingOutcome
 
 
 @dataclass(frozen=True)
+class StyleMatch:
+    """Passive provenance for authored Style rules that treated one occurrence."""
+
+    style_id: str
+    rule_ids: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class StyleLegendScope:
+    """Passive authored scope attached to a completed Style legend swatch."""
+
+    style_id: str
+    rule_id: str
+    scale_id: str
+    selector: str
+    title: str | None
+    show_scope: bool
+
+
+@dataclass(frozen=True)
 class StyleRule:
     rule_id: str
     selector: StyleSelector
@@ -250,6 +270,9 @@ def _parse_outcome(raw: Mapping[str, Any], source_ref: str) -> StyleOutcome:
         if not isinstance(raw_legend, Mapping):
             raise StyleRuleError("E_RESOURCE_SCHEMA", "legend must be an object", f"{source_ref}/encode/legend")
         title = _optional_string(raw_legend, "title", f"{source_ref}/encode/legend")
+        if title is not None and not title.strip():
+            raise StyleRuleError("E_STYLE_LEGEND_TITLE_REQUIRED", "A provided legend title must be non-blank",
+                                 f"{source_ref}/encode/legend/title")
         show_scope = raw_legend.get("showScope", False)
         if not isinstance(show_scope, bool):
             raise StyleRuleError("E_RESOURCE_SCHEMA", "showScope must be a boolean",

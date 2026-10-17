@@ -13,6 +13,7 @@ from chrona.presentation.scene.model import (
     TextLayout, requires_lane_member_provenance, MarkerGeometry, PathCommand, completed_marker_outline,
     _validate_style_semantic_metadata,
 )
+from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.resources import schema_validator
 from chrona.resources.semantic_vocabulary import KIND as VOCABULARY_KIND, builtin_semantic_vocabulary
 from chrona.presentation.scene.pattern_host import completed_pattern_host_valid
@@ -76,10 +77,14 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
     has_style_semantic_metadata = any(
         primitive.semantic_id is not None or primitive.theme_role is not None
         for surface in scene.surfaces for primitive in surface.primitives)
+    has_style_provenance_metadata = any(
+        primitive.style_match is not None or primitive.legend_scope is not None
+        for surface in scene.surfaces for primitive in surface.primitives)
     return {
         "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale
                     or has_runs or has_fit or has_marker_axis or has_stroke_clip or has_paint_clip
                     or has_relation_endpoint_identity or has_window_absences or has_style_semantic_metadata
+                    or has_style_provenance_metadata
                     else "chrona/scene/v0.6"),
         "kind": "scene",
         "provenance": {
@@ -160,6 +165,35 @@ def validate_scene_document(document: Mapping[str, Any]) -> None:
                     "contentIdentity": vocabulary.content_identity}
         if references != [expected]:
             raise _scene_error("E_RESOURCE_IDENTITY_MISMATCH: Style semantic metadata requires the exact host vocabulary provenance")
+    if any("styleMatch" in primitive or "legendScope" in primitive
+           for surface in document.get("surfaces", ())
+           for primitive in surface.get("primitives", ())):
+        style_ids = [item["id"] for item in document["provenance"]["resources"]
+                     if item["kind"] == "style"]
+        metadata_ids = [primitive.get("styleMatch", {}).get("styleId")
+                        for surface in document.get("surfaces", ())
+                        for primitive in surface.get("primitives", ()) if "styleMatch" in primitive]
+        metadata_ids.extend(primitive["legendScope"]["styleId"]
+                            for surface in document.get("surfaces", ())
+                            for primitive in surface.get("primitives", ()) if "legendScope" in primitive)
+        if len(style_ids) != 1 or set(metadata_ids) != {style_ids[0]}:
+            raise _scene_error("E_RESOURCE_IDENTITY_MISMATCH: Scene Style metadata must join exactly one pinned Style provenance resource")
+        for surface in document.get("surfaces", ()):
+            for primitive in surface.get("primitives", ()):
+                scope = primitive.get("legendScope")
+                if scope is None:
+                    continue
+                try:
+                    selector = json.loads(scope["selector"])
+                    canonical = json.dumps(selector, sort_keys=True, separators=(",", ":"),
+                                           ensure_ascii=False, allow_nan=False)
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    selector, canonical = None, None
+                if (not isinstance(selector, dict) or canonical != scope["selector"]
+                        or primitive["kind"] not in {"Rect", "Symbol", "Path"}
+                        or primitive["sourceKind"] != "legend"
+                        or primitive["purpose"] != semantic_binding("legendEntry").purpose):
+                    raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: legendScope requires canonical selector JSON on a Style legend swatch")
     try:
         for surface in document.get("surfaces", ()):
             for primitive in surface.get("primitives", ()):
@@ -639,6 +673,17 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
     }
     optional = {
         "semanticId": item.semantic_id, "themeRole": item.theme_role,
+        "styleMatch": ({"styleId": item.style_match.style_id,
+                        "ruleIds": list(item.style_match.rule_ids)}
+                       if item.style_match is not None else None),
+        "legendScope": ({"styleId": item.legend_scope.style_id,
+                         "ruleId": item.legend_scope.rule_id,
+                         "scaleId": item.legend_scope.scale_id,
+                         "selector": item.legend_scope.selector,
+                         **({"title": item.legend_scope.title}
+                            if item.legend_scope.title is not None else {}),
+                         "showScope": item.legend_scope.show_scope}
+                        if item.legend_scope is not None else None),
         "text": item.text, "baseline": _point(item.baseline) if item.baseline is not None else None,
         "textLayout": _text_layout(item.text_layout) if item.text_layout is not None else None,
         "paint": _paint(item.paint) if item.paint is not None else None,

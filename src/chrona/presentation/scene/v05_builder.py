@@ -529,11 +529,24 @@ def _compose_table_timeline_surface(value: SceneBuildInput,
     primitives: list[ScenePrimitive] = []
     fills_by_scene_id = style_fill_overrides if style_fill_overrides is not None else {}
     style_fills = getattr(value.surface_content, "style_fills", {})
+    style_matches = value.surface_content.style_matches
+    style_matches_by_scene_id: dict[str, Any] = {}
 
     def record_style_fill(placement: Any, primitive_ids: tuple[str, ...] | list[str]) -> None:
+        occurrence_key = placement.style_occurrence_key
         _record_style_fill_overrides(
-            fills_by_scene_id, style_fills,
-            getattr(placement, "style_occurrence_key", None), primitive_ids)
+            fills_by_scene_id, style_fills, occurrence_key, primitive_ids)
+        if occurrence_key is None:
+            return
+        match = style_matches.get(occurrence_key)
+        if match is not None:
+            for primitive_id in primitive_ids:
+                style_matches_by_scene_id[primitive_id] = match
+
+    style_legend_scopes = {
+        entry.source_identity: entry.style_scope
+        for entry in value.surface_content.legend_entries if entry.style_scope is not None
+    }
 
     primitive_provenance: list[PrimitiveProvenance] = []
     row_subjects = review_row_subjects(review_rows)
@@ -1300,6 +1313,19 @@ def _compose_table_timeline_surface(value: SceneBuildInput,
     canvas = placed_surface.canvas_bounds
     completed_primitives = _attach_completed_patterns(completed_primitives, placed_surface.patterns)
     completed_primitives = _attach_completed_strokes(completed_primitives, placed_surface.aligned_strokes)
+    completed_primitives = tuple(
+        replace(
+            primitive,
+            style_match=style_matches_by_scene_id.get(primitive.scene_id),
+            legend_scope=(style_legend_scopes.get(primitive.source_ref)
+                          if primitive.source_kind == "legend"
+                          and primitive.purpose == semantic_binding("legendEntry").purpose
+                          and primitive.kind in {PrimitiveKind.RECT, PrimitiveKind.SYMBOL,
+                                                 PrimitiveKind.PATH}
+                          else None),
+        )
+        for primitive in completed_primitives
+    )
     surface = SceneSurface("table-timeline", slots, rows, groups, scale, completed_primitives, columns=columns,
                         diagnostics=placed_surface.diagnostics,
                         canvas_bounds=(float(canvas.inline), float(canvas.block), float(canvas.inline_size),

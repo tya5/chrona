@@ -811,11 +811,18 @@ ledger/provenance and pointed failure transport. Native Store tests exercise
 actual treatment, exact pin/version rejection, explicit precedence and no-Style
 controls. Schema equivalence, inward imports and module reachability pass;
 official installed-wheel, generated-artifact and release gates remain pending.
-S2b's shared scale union is implemented with alias-order/prefix/value-diagnostic
-tests and legacy pointer controls; scoped legend provenance is still pending.
-The final combined Style/authoring/adapter focused batch passes229 tests.
-S2c completed scoped legends/provenance remain separate work;
-neither S2 nor parent419 is accepted by this source-ingress checkpoint.
+S2b/c are implemented on the WIP branch: shared source-alias scale union,
+stable rule/scale/value legend identity, completed-placement paint filtering,
+optional qualifier fitting, and passive Scene match/scope metadata. Layout
+keeps the allocated legend/footer slots fixed; Scene joins the completed
+source identity without parsing primitive IDs. Shared scales report folding
+once; declared Style roles count as Theme consumers even without a match.
+The batched regression check passed338 tests; the subsequent contract/native
+batch passed203, and final ingress/consumer/legend checks passed33. Schema
+equivalence, inward imports,293-module reachability and primitive delivery pass.
+Actual SVG and PNG were rendered and inspected with a scoped title and fitting
+qualifier. Official installed-wheel, artifact, reviewer and release evidence
+remain required; neither S2 nor parent419 is release-accepted.
 
 ## V1 equivalence inventory (117-entry baseline)
 

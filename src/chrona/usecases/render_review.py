@@ -338,7 +338,6 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                                       reserved=tuple(c for c in legend_colors if chroma(c) >= MINIMUM_RESERVED_CHROMA),
                                       other_color=_other_color(theme, legend_colors))
     group_tints, group_tint_collisions, _group_tint_scale = _resolve_group_tints(view, projection, theme)
-    profile_info += tuple(_scale_folded_info(scale) for scale in (color_scale, _group_tint_scale) if scale is not None and scale.folded)
     if render_closure.actual_set is not None:
         ledger.actual()
     if render_closure.snapshot is not None:
@@ -401,9 +400,15 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         scale_other_color=_other_color(theme, legend_colors))
     if render_closure.style is not None:
         ledger.style()
+    # A Style domain union replaces the provisional View map of that name;
+    # diagnostics describe the completed map once, not both generations.
+    if color_scale is not None:
+        color_scale = next((scale for scale in selected_content.style_fills.scales
+                            if scale.scale_id == color_scale.scale_id), color_scale)
     style_scales = tuple(scale for scale in selected_content.style_fills.scales
                          if scale is not color_scale)
-    profile_info += tuple(_scale_folded_info(scale) for scale in style_scales if scale.folded)
+    profile_info += tuple(_scale_folded_info(scale) for scale in (color_scale, _group_tint_scale, *style_scales)
+                          if scale is not None and scale.folded)
     try:
         validate_axis_band_fill_targets(selected_content.axis_tiers, ThemeTokenView(theme))
         axis_band_scale = resolve_axis_band_scales(
@@ -483,6 +488,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         theme["body"], (view, *((render_closure.view.view,) if field_role_info else ()),  # omitted unbound-role columns still read their roles (#1616)
                         layout, render_closure.detail_profile.detail if render_closure.detail_profile else None,
                         render_closure.summary_profile.summary if render_closure.summary_profile else None,
+                        render_closure.style.rules if render_closure.style is not None else (),
                         selected_content.style_intents.intents))
     if unread_roles:
         surface = replace(surface, diagnostics=(*surface.diagnostics, *unread_roles))

@@ -16,6 +16,7 @@ from chrona.presentation.style import (
     StyleFieldSource,
     StyleRoleOutcome,
     StyleRule,
+    StyleMatch,
     StyleSelector,
     StyleOutcome,
 )
@@ -152,6 +153,29 @@ class OccurrenceStyleIndex:
     def for_occurrence(self, key: StyleOccurrenceKey) -> Mapping[str, OccurrenceStyleIntent]:
         """Return all semantic intents for the exact source occurrence key."""
         return self._by_occurrence.get(replace(key, semantic_id=""), _EMPTY_STYLE_INTENTS)
+
+
+@dataclass(frozen=True, init=False)
+class StyleMatchIndex:
+    """Passive authored-rule provenance keyed by exact source occurrence."""
+
+    matches: tuple[tuple[StyleOccurrenceKey, StyleMatch], ...]
+    _by_key: Mapping[StyleOccurrenceKey, StyleMatch] = field(repr=False, compare=False)
+
+    def __init__(self, matches: tuple[tuple[StyleOccurrenceKey, StyleMatch], ...] = ()) -> None:
+        frozen = tuple(matches)
+        index = dict(frozen)
+        if len(index) != len(frozen):
+            raise ValueError("duplicate Style match occurrence")
+        for match in index.values():
+            if not match.style_id or not match.rule_ids or len(set(match.rule_ids)) != len(match.rule_ids):
+                raise ValueError("Style match needs one Style ID and unique authored rule IDs")
+        object.__setattr__(self, "matches", frozen)
+        object.__setattr__(self, "_by_key", MappingProxyType(index))
+
+    def get(self, key: StyleOccurrenceKey) -> StyleMatch | None:
+        """Return only the authored Style provenance for this exact occurrence."""
+        return self._by_key.get(key)
 
 
 _FILLABLE_MARKS = frozenset({"planned", "forecast", "actual", "snapshot"})

@@ -10,14 +10,17 @@ Its official artifact has109 paths: all50 SVGs are byte-identical; all50
 Scenes differ only by semantic-vocabulary provenance; no paths retired.
 The V1 release gate is not the S1 or parent-issue acceptance gate.
 
-S1 is PR #1675 at `bfccc0377`, not merged or release-accepted. Typed facts, parsed-rule
+S1 is PR #1675 at `06a99ee80`, not merged or release-accepted. Typed facts, parsed-rule
 evaluation, source-local identities, and role/fill composition are connected
 through normalization, Layout, and Scene. Selected-mark early paint preflight
 is connected; the final Style/native batch passes131 tests, with shared
 catalogue/part requirements, inward imports and292 reachable modules.
 S2a now wires optional pinned Style through Context/Draft and the normal
 `RenderRequest`, with [native Store evidence](../../../tests/integration/test_style_resource_ingress.py).
-Scoped legend/provenance and S2 official release evidence remain pending.
+S2 scoped legends and passive Scene provenance are implemented on the WIP
+branch. Final contract/native checks passed203 tests; final ingress/consumer/
+legend checks passed33. Actual SVG/PNG scope output was inspected. Official
+S2 installed-wheel, artifact, reviewer and release evidence remain pending.
 Do not count WIP publication as release acceptance.
 
 ## Literal issue acceptance
@@ -55,7 +58,7 @@ They are not published release evidence.
 Exact-main release run
 [39053236335](https://github.com/tya5/chrona/actions/runs/39053236335) passed on
 890af301d, including all three OSes, reproduction and MCP. S1 PR CI
-[39055638817](https://github.com/tya5/chrona/actions/runs/39055638817) fails at
+[39058512156](https://github.com/tya5/chrona/actions/runs/39058512156) fails at
 the opted-in glyph-gates contrast gate; reproduction/readiness failures follow
 the missing generated snapshot. Reviewer-owned explicit glyph colour approval
 is requested on419; do not weaken the threshold. Before accepting S1,

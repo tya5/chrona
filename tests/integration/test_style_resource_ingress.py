@@ -61,6 +61,8 @@ def _assert_style(rendered):
                 if node.source_ref == "one" and node.purpose == "planned"]
     assert selected
     assert all(node.theme_role == "authored-mark" for node in selected)
+    assert all(node.style_match is not None and node.style_match.rule_ids == ("planned-treatment",)
+               for node in selected)
     document = scene_document(rendered.scene)
     validate_scene_document(document)
     style, = [item for item in document["provenance"]["resources"] if item["kind"] == "style"]
@@ -237,3 +239,14 @@ def test_real_style_invalid_selector_retains_pointed_failure_before_placement(tm
     assert record["code"] == "E_STYLE_FACT_UNKNOWN"
     assert record["sourceRef"] == "/body/rules/0/when/semantic"
     assert record["details"]["ruleIds"] == ['style:["authored-style","bad-selector"]']
+
+
+def test_style_named_role_is_a_declared_consumer_even_without_current_matches(tmp_path):
+    draft, _ = _inputs(tmp_path, rules=[{
+        "id": "no-current-actual", "when": {"semantic": "actual"},
+        "then": {"role": "authored-mark"}}])
+    rendered = _render(draft)
+    assert "style" in rendered.read_inputs
+    assert not any(item.startswith("W_THEME_ROLE_UNREAD:") and "authored-mark" in item
+                   for item in rendered.surface.diagnostics)
+    assert not any(item.style_match is not None for item in rendered.surface.primitives)
