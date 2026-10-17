@@ -133,3 +133,10 @@ corpus and diagnostic comparisons introduce no failure, but the command FAILS
 only its existing runtime gate (L2+L3 90.8s >60s). Do not call it a passing run
 or change the limit. CI conformance runs the same L2/L3 time gate on its runner;
 that result is required before release acceptance.
+Official PR snapshot12090705310 at525559282 proves50SVG and50Scene files
+byte-identical to the post1623 base; all109paths retained. Only two inventory
+reports differ. Audit found the new native raster face identity check missing
+from the existing declared-value policy; classify it as deliberately pinned
+(`chrona identity bytes`), matching the other PDF font identity checks. No
+generated report edits. Eight policy/font controls pass; fresh CI must regenerate
+the classified report and revalidate the current head.
