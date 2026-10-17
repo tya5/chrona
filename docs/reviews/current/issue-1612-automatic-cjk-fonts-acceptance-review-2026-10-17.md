@@ -2,19 +2,7 @@
 
 # Issue #1612 — automatic CJK font closure
 
-Source `12ca1cc52e16d728b305e3df5663cfd695f20be1`, merged by
-[PR #1619](https://github.com/tya5/chrona/pull/1619) as `14820a9e3`; the
-measured-source heading/network face-closure correction merged by
-[PR #1621](https://github.com/tya5/chrona/pull/1621) as `3d8ab658`.
-The exact review-containing main is `8c4d17f917b29600fd72e5b514ad06d31242ca33`
-(baseline `6bb56c205`).
-[Design, architecture review and implementation plan](https://github.com/tya5/chrona/issues/1612#issuecomment-6225435042).
-The exact-main [three-OS release38985610444](https://github.com/tya5/chrona/actions/runs/38985610444)
-passed on the final source, including the merged face-closure correction.
-Acceptance remains incomplete only because criterion 2's marquee PDF still
-has the independently reproduced required-glow refusal; the requested
-disposition at [issue comment6225539132](https://github.com/tya5/chrona/issues/1612#issuecomment-6225539132)
-is unanswered and no waiver is applied.
+Source `12ca1cc52e16d728b305e3df5663cfd695f20be1`; font closure merged by [PR #1619](https://github.com/tya5/chrona/pull/1619) as `14820a9e3`, and heading/network face closure by [PR #1621](https://github.com/tya5/chrona/pull/1621) as `3d8ab658`. Current PDF completion is [PR #1635](https://github.com/tya5/chrona/pull/1635), head `9f4640c9e783e5bcea5eb55ee4969b614cd842ca`, based on ready main `fa262ebab648229138eb34c33bf6a821f6450e96`. See the [approved design and plan](https://github.com/tya5/chrona/issues/1612#issuecomment-6225435042) and [PDF glow work record](https://github.com/tya5/chrona/blob/9f4640c9e783e5bcea5eb55ee4969b614cd842ca/docs/planning/active/issue-1612-pdf-glow-work-record-2026-10-17.md). The issue remains open pending Linux pytest and exact-main release evidence; no waiver is applied.
 
 ## Literal issue acceptance
 
@@ -25,27 +13,13 @@ is unanswered and no waiver is applied.
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | Synthetic test: a Theme naming only a Latin family renders a CJK string through the fallback and records which face it used. | met | [Automatic CJK controls](../../../tests/integration/test_automatic_cjk_fonts.py) cover declared Latin-only Theme, mixed exact face runs, optional provider absent with injected OS faces, info substitution and PDF text/embedded Noto Sans JP program. | — |
-| 2 | All 15 presets render a Japanese CSV import to PNG, SVG and PDF with no glyph error, on macOS and on the Linux CI runner (Noto CJK package). View three PNGs and one rasterised PDF. | not met | macOS matrix and [Linux exact-head CI](https://github.com/tya5/chrona/actions/runs/38976260394): 44 successful outputs; marquee PDF retains the independently reproduced required-glow refusal. [Disposition requested](https://github.com/tya5/chrona/issues/1612#issuecomment-6225539132); no waiver applied. Root viewed target-b, Sunday and Marquee PNGs plus rasterized target-b PDF in `/private/tmp/chrona-1612-visual.AI6mTk`. | — |
-| 3 | Public SVG/Scene byte-identical for Latin-only examples. | met | Font implementation [artifact12078464991](https://github.com/tya5/chrona/actions/runs/38976260394/artifacts/12078464991) against ready `6bb56c205`: 109 paths each, 0 added/retired; all 50 SVGs and 50 Scenes are byte-identical. Final heading-integration [artifact12082313818](https://github.com/tya5/chrona/actions/runs/38984444157/artifacts/12082313818), based on `0b7ad6558`, adds no font primitives, routes or labels; its six Scene changes are Layout provenance-only. | — |
+| 1 | Synthetic test: a Theme naming only a Latin family renders a CJK string through the fallback and records which face it used. | met | [Automatic CJK controls](../../../tests/integration/test_automatic_cjk_fonts.py) cover Latin-only Theme, mixed exact face runs, provider-absent injected OS faces, info substitution and PDF text/embedded Noto Sans JP. | — |
+| 2 | All 15 presets render a Japanese CSV import to PNG, SVG and PDF with no glyph error, on macOS and on the Linux CI runner (Noto CJK package). View three PNGs and one rasterised PDF. | not met | macOS: [48 focused integration tests](../../../tests/integration/test_automatic_cjk_fonts.py) pass, including all 45 preset/target outputs; three PNGs and one rasterized PDF were viewed. [Exact-head Linux pytest](https://github.com/tya5/chrona/actions/runs/39004437658) remains pending. | — |
+| 3 | Public SVG/Scene byte-identical for Latin-only examples. | met | Current [artifact 12090094644](https://github.com/tya5/chrona/actions/runs/39004437658/artifacts/12090094644): 109 paths retained, 0 added/retired; all 50 SVGs and 50 Scenes are byte-identical to ready main `fa262ebab648229138eb34c33bf6a821f6450e96`; no primitive or Scene diagnostic changes across all 50 slides. Only diagnostics/inventory and declared-value inventory change; the latter deliberately pins the PDF raster identity. | — |
+| 4 | Reviewer: please trace it and fix it in the face-run path, with a synthetic twin of a mixed Latin+CJK string checked for weight in PNG (and the same in PDF). | met | [Mixed-script raster-face controls](https://github.com/tya5/chrona/blob/9f4640c9e783e5bcea5eb55ee4969b614cd842ca/tests/integration/test_mixed_script_raster_faces.py): portable provider-absent and native Hiragino 400/700 twins verify actual Latin crops against exact-weight references; PDF text extracts and maps to embedded 400/700 programs. The native no-projection control fails as expected. | — |
 
 ## Programme-level criteria (optional)
 
-Font ingress closes provider/OS metrics and exact files. Layout completes
-per-glyph faces and advances; Scene projects them; adapters serialize without
-font discovery or measurement. PDF-private aliases preserve exact assets even
-when names/weights coincide, default SVG namespaces and clipping remain intact,
-and TikZ uses closed file paths. Strict system-font refusal is unchanged.
-Specs08/30/37 and optional Scene run fields describe the contract. No preset,
-example or generated-output edits are part of this implementation.
-Reconciled focused run:206 passed; separate strict closure/small-caps/viewer-fit
-batch:85 passed. Schema equivalence: additive1/equal37;576 documents/739 probes;
-L2+L3=27.6s within60s. The no-provider caption test and covered-caption/info
-control added 25 focused passes. [Post-integration audit](https://github.com/tya5/chrona/issues/1612#issuecomment-6226118182)
-found that independent headings and native network text dropped measured face
-runs; PR #1621 now carries the shared Layout completion correction and
-synthetic controls. The exact-main release passed all three full pytest suites,
-conformance, wheel-size and installed-wheel smoke, plus MCP-floor and
-newest-Python reproduction checks. The release matrix included the 45
-preset/target CJK cases with the optional provider installed. This does not
-waive the separately recorded marquee PDF refusal.
+Font ingress closes provider/OS metrics and exact files; Layout completes per-glyph faces and advances; Scene projects them; adapters serialize without discovery or measurement. PDF uses private exact-face aliases and halo-only rasterization while retaining vector text/source paint and isolated alpha resources. Shared run positioning preserves inherited aliases; PNG without fallback runs receives the original SVG and unchanged identity. Strict system-font refusal remains unchanged. Specs08/30/37/63 describe the contract; no preset, example, or generated output was edited.
+
+PR #1635 evidence: 34 projector/halo/registry/PDF-advance tests, 61 renderer/font/opacity controls, and 48 CJK integration tests pass; actual PNG/PDF mixed-script controls pass and the no-projection control fails. Root viewed the current three PNGs and rasterized PDF; the Marquee PDF retains 74 glow halos, soft masks, extractable Japanese text, and vector source paint. CI conformance passes. Local schema equivalence reports L2+L3 at 90.8s against the 60s runtime gate; that local timing failure is disclosed, not waived. Linux pytest and the review-containing exact-main release are pending; no closure or archive is requested.

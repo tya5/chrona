@@ -2,7 +2,7 @@
 
 # Issue #1610 — on-demand member-label repair
 
-Ready base `5cc04dd5b59079650f27da6434b80ad9d8be9f8b`; [PR #1623](https://github.com/tya5/chrona/pull/1623) merged as `340b9e708b4047eb02f83295427e2756aa56a50d`. The ready derived-main tip is `fa262ebab648229138eb34c33bf6a821f6450e96`.
+Final ready base `8fc5364c3022676b680268005417239eb094a5ca`; [PR #1623](https://github.com/tya5/chrona/pull/1623) merged as `340b9e708b4047eb02f83295427e2756aa56a50d`. The ready derived-main tip is `fa262ebab648229138eb34c33bf6a821f6450e96`.
 
 ## Literal issue acceptance
 
