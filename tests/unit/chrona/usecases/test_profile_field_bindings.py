@@ -86,7 +86,7 @@ def test_catalogue_collision_diagnostics_are_preserved():
     _bindings, diagnostics = resolve_source_field_bindings(project, manifests)
 
     assert [(item.id, item.path) for item in diagnostics] == [
-        ("E_PROFILE_PACKAGE_INVALID", "/extensions/1"),
+        ("E_PROFILE_ID_DUPLICATE", "/extensions/1"),
     ]
 
 
