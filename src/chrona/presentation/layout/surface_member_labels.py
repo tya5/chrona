@@ -101,29 +101,40 @@ class SurfaceMemberLabelsBatch:
 def _route_blocked_candidate(context: SurfaceMemberLabelContext, request: LabelRequest,
                              selected: LabelPlacement | None,
                              obstacles: SurfaceObstacleIndex) -> MemberLabelReservation | None:
-    """Probe one name against its exact preceding inventory, removing only route ink."""
+    """Choose a route-minimal declared rung only for an initially suppressed name."""
     if (request.semantic_id != "memberLabel" or request.is_required_before_routes
-            or not request.candidates
-            or (selected is not None and selected.side == request.candidates[0])):
+            or not request.candidates or selected is not None):
         return None
     ink = obstacles.select(classes=("dependency-route",))
     if not ink:
         return None
-    probe_index = SurfaceObstacleIndex()
-    probe_index.extend(item for item in obstacles.all() if item.obstacle_class != "dependency-route")
-    original_ids = {item.placement_id for item in probe_index.all()}
-    probe = place_member_labels(context, (request,), probe_index, reserve_only=True)
-    if not probe.text:
+    preceding = SurfaceObstacleIndex()
+    preceding.extend(item for item in obstacles.all() if item.obstacle_class != "dependency-route")
+    original_ids = {item.placement_id for item in preceding.all()}
+    feasible: list[tuple[int, int, MemberLabelReservation]] = []
+    for rank, side in enumerate(request.candidates):
+        probe_index = preceding.copy()
+        candidate_request = replace(request, candidates=(side,), visible_fallback_side=None)
+        probe = place_member_labels(context, (candidate_request,), probe_index, reserve_only=True)
+        if not probe.text:
+            continue
+        text = probe.text[0]
+        if text.overflow != "fit" or text.selected_rung != side:
+            continue
+        footprints = tuple(item for item in probe_index.all() if item.placement_id not in original_ids)
+        intersecting = tuple(paint for paint in ink if any(
+            obstacles_intersect(paint.geometry, footprint.geometry,
+                                paint.clearance + footprint.clearance)
+            for footprint in footprints))
+        if not intersecting:
+            continue
+        route_owners = {("route", paint.route_owner_id) if paint.route_owner_id is not None
+                        else ("paint", paint.placement_id) for paint in intersecting}
+        reservation = MemberLabelReservation(replace(text, required=False), footprints)
+        feasible.append((len(route_owners), rank, reservation))
+    if not feasible:
         return None
-    text = probe.text[0]
-    rank = lambda side: request.candidates.index(side) if side in request.candidates else len(request.candidates)
-    if text.overflow != "fit" or (selected is not None and rank(text.selected_rung) >= rank(selected.side)):
-        return None
-    footprints = tuple(item for item in probe_index.all() if item.placement_id not in original_ids)
-    if not any(obstacles_intersect(paint.geometry, footprint.geometry, paint.clearance + footprint.clearance)
-               for paint in ink for footprint in footprints):
-        return None
-    return MemberLabelReservation(replace(text, required=False), footprints)
+    return min(feasible, key=lambda item: (item[0], item[1]))[2]
 
 
 def _lane_label_candidates(side: str, fallback: tuple[str, ...], preferred: str | None) -> tuple[str, ...]:
