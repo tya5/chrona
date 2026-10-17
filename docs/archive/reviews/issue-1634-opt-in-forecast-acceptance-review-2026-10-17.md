@@ -4,8 +4,9 @@
 
 Implementation reviewed: [PR #1646](https://github.com/tya5/chrona/pull/1646),
 code611e8e8501bfa982202c674e272e906a8358eb52; subsequent changes are documents.
-This review is a separate publication commit in the feature PR. Keep issue1634
-open until its exact review-containing main passes the required release gate.
+This review was a separate publication commit in the feature PR. Issue1634 is
+closed after [release39019665585](https://github.com/tya5/chrona/actions/runs/39019665585)
+passed on exact review-containing main `cf121865552017a2a97a13cd094bde641686c261`.
 
 ## Literal issue acceptance
 
@@ -31,8 +32,9 @@ reproduction. Superseded runs with cancelled shards are not green evidence.
 Focused integration groups: 83 forecast/routing, 244 CLI/MCP/closure and 158
 Layout/Scene/geometry-guard tests passed; schema equivalence L1/L2/L3 passes.
 Final semantic/vocabulary/forecast/Scene/label checks: 502 passed, 49 skipped.
-After landing, require three-OS full pytest/conformance/wheel-smoke plus public
-reproduction on the exact main SHA containing both implementation and this review.
+Release39019665585 passed three-OS full pytest/conformance/wheel-smoke, newest-Python
+public reproduction and MCP floor on the exact main SHA named above. Individual
+required step outcomes were inspected before closure.
 
 ## Architecture conclusion
 
