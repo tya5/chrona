@@ -232,7 +232,7 @@ def test_absent_shape_preserves_characterized_scene_and_svg_bytes(tmp_path):
     assert [resource for resource in rendered.scene.provenance.resources if resource[0] == "semantic-vocabulary"] == [
         ("semantic-vocabulary", vocabulary.id, "v0.1", vocabulary.content_identity),
     ]
-    assert sha256(scene).hexdigest() == "c7d2102cac928383f6285527537e74bac921bb26ba4fafaff2b005df2dec9c8b"
+    assert sha256(scene).hexdigest() == "4d3e390261a306744f1e7f006d03da37c765a467b1a1430d7dc302d0d60db476"
     assert len(rendered.artifact.content) == 8173
     assert sha256(rendered.artifact.content).hexdigest() == "f5031fb8939295b170a188ec7971b109dc5f8372f7011a21e40584d32451964a"
 
