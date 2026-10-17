@@ -10,6 +10,8 @@ from typing import Any
 
 from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
 from chrona.core.diagnostics import Diagnostic
+from chrona.core.forecast import ForecastItem, ForecastOutcome
+from chrona.core.observations import latest_observations
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.contracts.resources import ViewInput, _PrivateGroupingMode
 from chrona.presentation.model.actual_observation import finish_variance
@@ -47,6 +49,37 @@ def shared_track_member_key(member: Any, source_index: int) -> tuple[int, int, i
     if getattr(member, "track", "stacked") != "shared":
         return (1, source_index, source_index)
     return (0, _SHARED_TRACK_SOURCE_ORDER.get(getattr(member, "source_kind", ""), len(_SHARED_TRACK_SOURCE_ORDER)), source_index)
+
+
+@dataclass(frozen=True)
+class ForecastComparisonFact:
+    schedule: ForecastItem
+    finish_delta: int
+
+
+def active_placement(item: Any) -> Mapping[str, date]:
+    """Displayed temporal geometry, never a replacement for source-plan queries."""
+    forecast = getattr(item, "forecast", None)
+    return forecast.schedule.placement if forecast is not None else item.planned
+
+
+def display_finish_delta(item: Any) -> int | None:
+    forecast = getattr(item, "forecast", None)
+    return forecast.finish_delta if forecast is not None else item.finish_delta
+
+
+def finish_delta_text(item: Any) -> str | None:
+    value = display_finish_delta(item)
+    if value is None:
+        return None
+    forecast = getattr(item, "forecast", None)
+    return f"{value:+d}d" + ("*" if forecast is not None and not forecast.schedule.completed else "")
+
+
+def finish_delta_semantic(item: Any) -> str:
+    value = display_finish_delta(item)
+    semantic = "varianceBehind" if value is not None and value > 0 else "varianceAhead" if value is not None and value < 0 else "finishDelta"
+    return "forecast" + semantic[0].upper() + semantic[1:] if getattr(item, "forecast", None) is not None else semantic
 
 
 @dataclass(frozen=True)
@@ -91,6 +124,7 @@ class ReviewItem:
     field_bindings: FieldRoleBindings = FieldRoleBindings()
     date_basis: ItemDateBasis = ItemDateBasis()
     comparison_delta_unit: str = "calendar-days"
+    forecast: ForecastComparisonFact | None = None
 
     @property
     def at_delta(self) -> int | None:
@@ -227,6 +261,7 @@ class ReviewProjection:
     group_figures: tuple[tuple[str, tuple[tuple[str, int], ...]], ...] = ()
     unavailable_figures: tuple[Diagnostic, ...] = ()
     window_mode: WindowMode = WindowMode.SELECTED_PLANNED
+    forecast_findings: tuple[Diagnostic, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -263,12 +298,16 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
                             snapshot_placements: dict[str, dict[str, date]] | None = None,
                             scenarios: dict[str, tuple[dict[str, Any], dict[str, dict[str, date]]]] | None = None,
                             analysis: Any | None = None,
-                            snapshot_analysis: Any | None = None) -> ReviewProjection:
+                            snapshot_analysis: Any | None = None,
+                            forecast: ForecastOutcome | None = None) -> ReviewProjection:
     """Derive review facts; composition belongs to View, never Project."""
     if view.comparison.actual == "required" and actual_set is None:
         raise ValueError("E_ACTUAL_REQUIRED: the View compares against actuals (comparison.actual is required) but no actual "
                          "file was given; pass --actual FILE, or change the View so actuals are not required")
-    latest, unmatched = _latest_observations(
+    if forecast is not None and not forecast.ok:
+        raise ValueError("E_PRESENTATION_INPUT_INCOMPLETE: forecast outcome is unsuccessful")
+    active_analysis = forecast.analysis if forecast is not None else analysis
+    latest, unmatched = latest_observations(
         (actual_set or {}).get("body", actual_set or {}).get("observations", []), placements)
     as_of_value = (actual_set or {}).get("body", actual_set or {}).get("asOf")
     as_of = date.fromisoformat(as_of_value) if isinstance(as_of_value, str) else as_of_value
@@ -310,9 +349,9 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         date_basis = ItemDateBasis.from_project(project, object_id)
         finish_delta = _finish_delta(planned, actual, as_of, basis=date_basis,
                                      delta_unit=view.comparison.delta_unit or "calendar-days")
-        float_value = analysis.total_float.get(object_id) if analysis is not None else None
+        float_value = active_analysis.total_float.get(object_id) if active_analysis is not None else None
         total_float = float_value.value if float_value is not None else None
-        critical = object_id in analysis.critical if analysis is not None else False
+        critical = object_id in active_analysis.critical if active_analysis is not None else False
         link = _object_link(project["objects"][object_id].get("link"))
         entry = hierarchy_entries.get(object_id)
         group_id = (_root_group_ancestor(hierarchy_entries.get(object_id), root_groups)
@@ -335,6 +374,24 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             date_basis=date_basis, comparison_delta_unit=view.comparison.delta_unit or "calendar-days"))
     if not selected:
         raise ValueError("E_REVIEW_EMPTY: the View selects no object of the Project; check its selection against the Project objects")
+    if forecast is not None:
+        baseline = snapshot_placements if snapshot_project is not None else placements
+        displayed_ids = ({spec.source_object for row in view.rows.items for spec in row.items
+                          if spec.source_kind == "primary"} if explicit else {item.object_id for item in selected})
+        projected = []
+        for item in selected:
+            if item.object_id not in displayed_ids:
+                projected.append(item)
+                continue
+            predicted = forecast.items.get(item.object_id)
+            reference = (baseline or {}).get(item.object_id)
+            endpoint = "at" if item.source_type == "point" else "end"
+            if predicted is None or reference is None or endpoint not in reference or endpoint not in predicted.placement:
+                raise ValueError(f"E_FORECAST_BASELINE_UNAVAILABLE: {item.object_id}")
+            delta = endpoint_distance(reference[endpoint], predicted.placement[endpoint],
+                                      item.date_basis, item.comparison_delta_unit)
+            projected.append(replace(item, forecast=ForecastComparisonFact(predicted, delta)))
+        selected = projected
     if (grouping is not None and grouping.by == "field" and grouping.presentation == "header"
             and all(grouping.field not in (item.fields or {}) for item in selected)):
         # A header that distinguishes nothing is not drawn (Specification 45).
@@ -347,7 +404,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         _order(selected, view)
     snapshots = _snapshot_items(snapshot_project, snapshot_placements, snapshot_analysis)
     # `ghost-when-changed` without a snapshot baseline draws no ghost and is not an error (#429); `ghost` still needs one.
-    if view.comparison.baseline_marks == "ghost" and not explicit and (view.comparison.baseline != "snapshot" or not snapshots):
+    if forecast is None and view.comparison.baseline_marks == "ghost" and not explicit and (view.comparison.baseline != "snapshot" or not snapshots):
         raise ValueError("E_REVIEW_BASELINE_MARKS_SNAPSHOT: comparison.baselineMarks needs comparison.baseline snapshot "
                          "and a snapshot Project in the Render Context")
     scenario_items = {scenario_id: _snapshot_items(value[0], value[1], None, source_kind="scenario")
@@ -355,14 +412,21 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     if view.comparison.missing_actual_scope == "in-progress":
         selected = [replace(item, missing_actual_mark=_missing_actual_scope_mark(item)) for item in selected]
     rows, folded_points = _compose_rows(view, selected, snapshots, scenario_items, project)
+    if forecast is not None and explicit and snapshot_project is not None:
+        for row in rows:
+            for item in row.items:
+                if item.forecast is not None and not any(
+                    ghost.source_kind == "snapshot" and ghost.object_id == item.object_id for ghost in row.items
+                ):
+                    raise ValueError(f"E_FORECAST_PRESENTATION_REQUIRED: explicit row {row.row_id} needs a Snapshot track for {item.object_id}")
     lane_membership = _project_lane_membership(project, rows, view) if view.rows.mode == "lanes" else None
     lane_rows = _project_lane_rows(rows, lane_membership) if lane_membership is not None else ()
     if lane_membership is not None:
         lanes_by_id = {lane.lane_id: lane for lane in lane_membership.lanes}
         lane_membership = replace(lane_membership,
                                   lanes=tuple(lanes_by_id[row.lane_id] for row in lane_rows))
-    dates = [v for row in rows for item in row.items for v in item.planned.values()]
-    dates += [v for point in folded_points for v in point.item.planned.values()]
+    dates = [v for row in rows for item in row.items for v in active_placement(item).values()]
+    dates += [v for point in folded_points for v in active_placement(point.item).values()]
     if view.window.mode == "selected-comparison":
         dates += [v for row in rows for item in row.items for v in (item.actual or {}).values() if isinstance(v, date)]
     start, end = min(dates), max(dates)
@@ -387,8 +451,9 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows,
         view.comparison.facets, hierarchy, view.surface,
         _dependency_network_projection(project, selected, view),
-        frozenset(getattr(analysis, "driving_relations", ()),), folded_points,
-        lane_membership, lane_rows, window_mode=WindowMode(view.window.mode))
+        frozenset(getattr(active_analysis, "driving_relations", ()),), folded_points,
+        lane_membership, lane_rows, window_mode=WindowMode(view.window.mode),
+        forecast_findings=forecast.findings if forecast is not None else ())
 
 
 def _project_lane_rows(rows: tuple[ReviewRowProjection, ...], membership: LaneMembership
@@ -448,8 +513,9 @@ def _project_lane_membership(project: dict[str, Any], rows: tuple[ReviewRowProje
         if not row.items:
             continue
         item = row.items[0]
-        planned = (PlannedPoint(item.planned["at"]) if item.source_type == "point" else
-                   PlannedSpan(item.planned["start"], item.planned["end"]))
+        placement = active_placement(item)
+        planned = (PlannedPoint(placement["at"]) if item.source_type == "point" else
+                   PlannedSpan(placement["start"], placement["end"]))
         host_id = project["objects"][item.object_id].get("attachesTo")
         selected_host = primary.get(host_id) if item.source_type == "point" else None
         if selected_host is not None and selected_host.source_type != "span":
@@ -530,6 +596,8 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
                     and item.object_id in scenarios[view.comparison.scenario_id])
 
         def snapshot_ghost(item: ReviewItem) -> bool:
+            if item.forecast is not None:
+                return item.object_id in snapshots
             # `comparison.baselineMarks` (#991): a snapshot baseline draws one ghost per primary item (`ghost`), or
             # only for an item whose baseline placement differs from its current one (`ghost-when-changed`).
             if (view.comparison.baseline != "snapshot" or view.comparison.baseline_marks not in {"ghost", "ghost-when-changed"}
@@ -591,6 +659,7 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
                 raise ValueError(f"E_REVIEW_ITEM_TRACK: item {item_id!r} of row {row_id!r} has track {track!r}; use stacked or shared")
             intent = spec.presentation if spec.presentation is not None else row.presentation
             members.append(replace(base, item_id=item_id, source_kind=kind, track=track, scenario_id=spec.scenario_id,
+                                   forecast=base.forecast if kind == "primary" else None,
                                    presentation=dict(intent) if intent is not None else None))
         subject = row.table_subject or (members[0].item_id if members else "")
         if subject not in member_ids:
@@ -748,17 +817,6 @@ def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[s
             declared_attaches_to=project["objects"][object_id].get("attachesTo"), field_bindings=bindings,
             date_basis=ItemDateBasis.from_project(project, object_id))
     return result
-
-
-def _latest_observations(observations: list[dict[str, Any]], placements: dict[str, dict[str, date]]) -> tuple[dict[str, dict[str, Any]], list[str]]:
-    latest, unmatched = {}, []
-    for observation in observations:
-        object_id = observation.get("projectObjectId")
-        if object_id not in placements:
-            unmatched.append(observation["id"])
-        elif object_id not in latest or observation["sequence"] > latest[object_id]["sequence"]:
-            latest[object_id] = observation
-    return latest, unmatched
 
 
 def _actual(observation: dict[str, Any] | None) -> dict[str, date | float | str] | None:

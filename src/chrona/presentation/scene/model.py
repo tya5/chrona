@@ -19,7 +19,7 @@ from chrona.presentation.scene.pattern_host import completed_pattern_host_valid
 
 
 LANE_MEMBER_BINDING_IDS = (
-    "planned", "actual", "snapshot", "missingActual", "summaryBar", "progressFill",
+    "planned", "forecast", "actual", "snapshot", "missingActual", "summaryBar", "progressFill",
     "memberLabel", "memberLabelInsidePlanned", "memberLabelInsideActual",
     "memberLabelInsideSnapshot", "memberLabelInsideScenario", "finishDelta",
     "varianceAhead", "varianceBehind", "iconMark", "labelVisual",
@@ -27,7 +27,7 @@ LANE_MEMBER_BINDING_IDS = (
 LANE_MEMBER_PURPOSES = frozenset(semantic_binding(identifier).purpose
                                  for identifier in LANE_MEMBER_BINDING_IDS)
 PRIMARY_LANE_MARK_PURPOSES = frozenset(
-    semantic_binding(identifier).purpose for identifier in ("planned", "snapshot")
+    semantic_binding(identifier).purpose for identifier in ("planned", "forecast", "snapshot")
 )
 _LANE_PURPOSE_KINDS = frozenset(
     (scene_kind, semantic_binding(identifier).purpose)
@@ -680,6 +680,7 @@ class SceneLaneWindowAbsence:
                 or self.reason != "outside-window"
                 or (self.facet, self.semantic_role) not in {
                     ("planned", "planned"), ("planned", "snapshot"), ("planned", "scenario"),
+                    ("forecast", "planned"),
                     ("actual", "actual"), ("missing-actual", "missing-actual")}):
             raise _invalid("placement_id/instance_id/facet/source_ref/source_kind/semantic_role/reason",
                            (self.placement_id, self.instance_id, self.facet, self.source_ref,
@@ -706,7 +707,7 @@ class SceneLaneMember:
                 or not isinstance(self.window_absences, tuple)
                 or any(not isinstance(item, SceneLaneWindowAbsence) for item in self.window_absences)
                 or ((not self.emitted_primitive_ids or not self.primary_mark_ids)
-                    and not any(item.facet == "planned" for item in self.window_absences))
+                    and not any(item.facet in {"planned", "forecast"} for item in self.window_absences))
                 or any(not isinstance(item, str) or not item
                        for item in (*self.emitted_primitive_ids, *self.primary_mark_ids))
                 or len(set(self.emitted_primitive_ids)) != len(self.emitted_primitive_ids)

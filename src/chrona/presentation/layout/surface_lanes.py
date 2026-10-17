@@ -27,6 +27,7 @@ from chrona.presentation.layout.lane_projection import (
 )
 from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
 from chrona.presentation.layout.lane_label_intent import measure_lane_member_labels
+from chrona.presentation.layout.semantic_mark_facets import mark_placement_facet
 from chrona.presentation.layout.lane_label_preflight import lane_label_row_requirements
 from chrona.presentation.layout.surface_quality import ScalePlacement
 from chrona.presentation.layout.lane_mark_facets import (
@@ -42,7 +43,7 @@ from chrona.presentation.layout.surface_quality import (
     completed_symbol_primitive_ids,
 )
 from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
-from chrona.presentation.model.semantic_registry import semantic_binding
+from chrona.presentation.model.semantic_registry import semantic_binding, forecast_delta_semantic_ids
 
 
 @dataclass(frozen=True)
@@ -131,7 +132,7 @@ def resolved_lane_visual_requests(projection: Any, visual_requests: tuple[Any, .
         resolved.extend(replace(visual, selector=(("placementId", placement_id),)) for visual in visuals)
     for (instance, purpose), visual in mark_visuals.items():
         lane_id, item_id = owners[instance]
-        placement_id = f"{purpose}:{lane_id}:{item_id}"
+        placement_id = f"{mark_placement_facet(purpose)}:{lane_id}:{item_id}"
         resolved.append(replace(visual, selector=(("placementId", placement_id),)))
     return tuple(resolved)
 
@@ -217,7 +218,7 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
     for relation in point_host_plan.relations:
         label_facet = "actual" if relation.point.item.source_kind == "actual" else "planned"
         label_id = f"member-label:{relation.point.placement_key}"
-        if relation.facet == label_facet and label_id in measured_ids:
+        if mark_placement_facet(relation.facet) == label_facet and label_id in measured_ids:
             physical_label_rows[label_id] = relation.span.row_id
     row_padding = float(metric_values["timeline.row.paddingBlock"])
     lane_requirements = (lane_label_row_requirements(
@@ -309,7 +310,7 @@ def build_lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: l
 
     for placed in text:
         if (placed.lane_row_id is None or placed.overflow == "suppressed"
-                or placed.semantic_id not in {"memberLabel", "finishDelta"}):
+                or placed.semantic_id not in ("memberLabel", "finishDelta", *forecast_delta_semantic_ids())):
             continue
         if placed.lane_member_id is None:
             raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", placed.placement_id)

@@ -316,7 +316,8 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--scheme", help="Color Scheme YAML path")
     command.add_argument("--layout", help="Layout Profile YAML path")
     command.add_argument("--actual", help="Actual Set YAML path")
-    command.add_argument("--snapshot", help="baseline Snapshot Project YAML path; drawn only when the View compares against a snapshot (otherwise a warning says it was not drawn)")
+    command.add_argument("--snapshot", help="baseline Snapshot Project YAML path; forecast retains its ghost, otherwise the View comparison controls it")
+    command.add_argument("--forecast", action="store_true", help="derive forecast bars and estimated finish deltas from Actual; choose a forecast-capable preset such as technical-print or target-b")
     command.add_argument("--summary", help="Summary Profile YAML path")
     command.add_argument("--detail", help="Review Detail Profile YAML path")
     command.add_argument("--icon-catalog", action="append", default=[],
@@ -385,6 +386,7 @@ def _parser() -> JsonArgumentParser:
 
     command = sub.add_parser("render-workspace", help="draw a slide from a guided authoring workspace (a draft)")
     command.add_argument("workspace", help="guided authoring workspace YAML path")
+    command.add_argument("--forecast", action="store_true", help="derive the explicit forecast from the workspace Actual input")
     command.add_argument("--viewport", default=f"{DEFAULT_DRAFT_VIEWPORT[0]}xauto", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600xauto)")
     command.add_argument("--locale", choices=("en-US", "ja-JP"), default="en-US",
                          help="render locale: en-US or ja-JP (default: en-US)")
@@ -757,6 +759,7 @@ def _run_draft_render(args: argparse.Namespace) -> None:
         relations=getattr(args, "relations", None),
         previous_scene=getattr(args, "previous_scene", None),
         snapshot=getattr(args, "snapshot", None),
+        forecast=getattr(args, "forecast", False),
     ))
     _write_render_outputs(result.rendered, args)
     _emit_render_result(result.rendered, result.notes)
@@ -790,6 +793,7 @@ def _run_guided_draft_render(args: argparse.Namespace) -> None:
         workspace_path=Path(args.workspace), viewport=_parse_viewport(args.viewport),
         locale=args.locale, target_kind=target_kind, visual_profile=args.visual_profile,
         typesetter=_draft_typesetter_identity(args, target_kind),
+        forecast=getattr(args, "forecast", False),
     )
     args.draft_auto_block = draft.auto_block
     rendered = _render_review(draft.closure, args, asset_root=draft.asset_root,

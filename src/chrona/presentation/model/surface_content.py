@@ -10,7 +10,7 @@ from typing import Any, Literal, Mapping
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec
 from chrona.presentation.model.date_basis import DisplayDateRange
 from chrona.presentation.model.placement_candidates import PlacementCandidate
-from chrona.presentation.model.projection import ObservationState, ReviewItem
+from chrona.presentation.model.projection import ObservationState, ReviewItem, display_finish_delta
 
 
 def _diagnostic_error(code: str, detail: str) -> ValueError:
@@ -115,6 +115,8 @@ class TableCellContent:
     typography_role: str = "text"
     affix_prefix: str = ""
     affix_suffix: str = ""
+    # Forecast deltas are required full text; Layout must refuse truncation/overflow.
+    required: bool = False
 
 
 @dataclass(frozen=True)
@@ -327,7 +329,7 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
         return item.field_bindings.read(item.fields, source)
     if "facet" in source:
         return {"planned": item.planned, "actual": item.actual,
-                "finishDelta": item.finish_delta}.get(source["facet"])
+                "finishDelta": display_finish_delta(item)}.get(source["facet"])
     if "scenario" in source:
         if item.source_kind != "scenario" or item.scenario_id is None:
             return None
@@ -338,7 +340,7 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
     facet = source["comparisonFacet"]
     missing_actual = (True if item.observation_state == ObservationState.DUE_UNOBSERVED else
                       False if item.observation_state == ObservationState.RECORDED else None)
-    return {"finishDelta": item.finish_delta, "missingActual": missing_actual,
+    return {"finishDelta": display_finish_delta(item), "missingActual": missing_actual,
             "progress": (item.actual or {}).get("progress")}.get(facet)
 
 

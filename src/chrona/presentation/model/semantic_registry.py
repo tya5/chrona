@@ -82,6 +82,8 @@ def _binding(semantic_id: str, primitive_kind: str, purpose: str,
 _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for binding in (
     # Comparison marks.
     _binding("planned", "mark", "planned", "planned", "planned", ContrastClass.MARK),
+    # A forecast is distinct temporal truth, painted with the existing planned role.
+    _binding("forecast", "mark", "forecast", "planned", "planned"),
     _binding("actual", "mark", "actual", "actual", "actual", ContrastClass.MARK),
     _binding("snapshot", "mark", "snapshot", "snapshot", "snapshot", ContrastClass.MARK),
     # A gate (point mark) painted by its own Theme role when the Theme declares one (#991); its purpose stays `planned`.
@@ -201,6 +203,9 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("finishDelta", "label", "finish-delta", "variance-on-track", "variance-on-track"),
     _binding("varianceAhead", "label", "finish-delta", "variance-ahead", "variance-ahead"),
     _binding("varianceBehind", "label", "finish-delta", "variance-behind", "variance-behind"),
+    _binding("forecastFinishDelta", "label", "forecast-finish-delta", "variance-on-track", "variance-on-track"),
+    _binding("forecastVarianceAhead", "label", "forecast-finish-delta", "variance-ahead", "variance-ahead"),
+    _binding("forecastVarianceBehind", "label", "forecast-finish-delta", "variance-behind", "variance-behind"),
     _binding("milestoneDigestEntry", "label", "milestone-digest-entry", "text", "text", ContrastClass.GROUND_TEXT),
     # Relations.
     _binding("dependency", "line", "dependency", "dependency", "dependency"),
@@ -285,10 +290,18 @@ def axis_label_semantic_ids() -> tuple[str, ...]:
     return ("axisLabel", "axisLabel2", "axisLabel3")
 
 
+def forecast_delta_semantic_ids() -> tuple[str, ...]:
+    """The closed semantic family for forecast-derived finish-delta labels."""
+    return ("forecastFinishDelta", "forecastVarianceAhead", "forecastVarianceBehind")
+
+
 def label_chip_semantic(label_semantic_id: str) -> str | None:
     """Return the chip semantic a label may carry, keyed by the label's own semantic (#428)."""
+    if label_semantic_id in forecast_delta_semantic_ids():
+        return "finishDeltaChip"
     return {"asOfLabel": "asOfLabelChip", "memberLabel": "memberLabelChip",
-            "finishDelta": "finishDeltaChip", "periodLabel": "periodLabelChip"}.get(label_semantic_id)
+            "finishDelta": "finishDeltaChip",
+            "periodLabel": "periodLabelChip"}.get(label_semantic_id)
 
 
 def semantic_binding(semantic_id: str) -> SemanticBinding:
@@ -297,6 +310,11 @@ def semantic_binding(semantic_id: str) -> SemanticBinding:
         return _REGISTRY[semantic_id]
     except KeyError as error:
         raise ValueError(f"E_PRESENTATION_SEMANTIC_UNKNOWN:{semantic_id}") from error
+
+
+def mark_style_role(semantic_id: str) -> str:
+    """Resolve opt-in mark paint reuse without changing established role keys."""
+    return semantic_binding(semantic_id).theme_role if semantic_id == "forecast" else semantic_id
 
 
 def is_annotation_artwork_role(role: object) -> bool:

@@ -18,6 +18,7 @@ GROUND_TEXT_SEMANTICS = {
 }
 # Labels painted in the role of a classified state text: the classification is by that role, not by their own.
 LABELS_CLASSIFIED_BY_ROLE = {"finishDelta", "varianceAhead", "varianceBehind",
+                             "forecastFinishDelta", "forecastVarianceAhead", "forecastVarianceBehind",
                              "observationAttentionCell", "observationCriticalCell"}
 
 
@@ -43,6 +44,14 @@ def test_member_label_is_retained_as_text_and_member_leader_semantic_is_retired(
     assert semantic_binding("annotationCalloutLeader").purpose == "annotation-leader"
     with pytest.raises(ValueError, match="E_PRESENTATION_SEMANTIC_UNKNOWN"):
         semantic_binding("memberLabelLeader")
+
+
+def test_forecast_is_a_distinct_primary_mark_painted_with_the_planned_role():
+    forecast = semantic_binding("forecast")
+    assert (forecast.primitive_kind, forecast.purpose, forecast.scene_role, forecast.theme_role) == (
+        "mark", "forecast", "planned", "planned")
+    assert forecast.contrast_class is None
+    assert contrast_binding_for_primitive("planned", "Rect", "forecast").contrast_class == ContrastClass.MARK
 
 
 def test_network_node_labels_keep_shared_ink_and_existing_public_purpose():

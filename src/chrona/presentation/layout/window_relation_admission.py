@@ -14,7 +14,7 @@ def _outside(visibility: ItemMarkVisibility, endpoint: str) -> bool:
     if endpoint not in {"start", "at", "end", "finish"}:
         raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/relations",
                           detail="stage=relation-admission; reason=invalid-endpoint")
-    planned = next((facet for facet in visibility.facets if facet.source.facet == "planned"), None)
+    planned = next((facet for facet in visibility.facets if facet.source.facet in {"planned", "forecast"}), None)
     # No planned source facet is not evidence of window omission.
     return planned is not None and not (
         planned.start_port_visible if endpoint in {"start", "at"} else planned.end_port_visible)

@@ -6,8 +6,9 @@ import pytest
 from chrona.presentation.model.color_scale import ResolvedColorScale
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec, AxisBandScaleError
 from chrona.presentation.model.projection import (
-    ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection, ReviewLaneRowProjection,
+    ForecastComparisonFact, ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection, ReviewLaneRowProjection,
 )
+from chrona.core.forecast import ForecastItem
 from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, TableCellContent, TableContent
 from chrona.presentation.review.lane_membership import Lane, LaneAssignment, LaneMembership
 from chrona.presentation.table_presentation import BooleanPresencePresentation
@@ -988,6 +989,54 @@ def test_legend_entries_are_the_drawn_entries_detail_first_then_one_per_used_sca
                                           typed_view({"body": {"tableColumns": (), "visibility": {}}}),
                                           summary=EMPTY_SUMMARY, color_scale=color_scale, detail=detail)
     assert drawn.legend_entries == entries
+
+
+def test_forecast_delta_table_cells_are_required_and_mark_unfinished_estimates():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)},
+                      {"start": date(2026, 1, 2)}, 1, ())
+    item = replace(item, forecast=ForecastComparisonFact(
+        ForecastItem({"start": date(2026, 1, 2), "end": date(2026, 1, 7)}, completed=False), 2))
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 7)), (), ())
+    view = typed_view({"body": {"tableColumns": [
+        {"id": "Facet", "source": {"facet": "finishDelta"}, "format": "signedDays", "missing": "blank"},
+        {"id": "Comparison", "source": {"comparisonFacet": "finishDelta"}, "format": "signedDays", "missing": "blank"},
+    ], "visibility": {}}})
+
+    table = normalize_v05_table_content(projection, {}, view)
+
+    assert [(cell.content, cell.required, cell.semantic_id) for cell in table.cells] == [
+        ("+2d*", True, "tableVarianceBehind"), ("+2d*", True, "tableVarianceBehind")]
+
+
+def test_completed_forecast_delta_is_still_required_without_estimated_marker():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)},
+                      None, None, ())
+    item = replace(item, forecast=ForecastComparisonFact(
+        ForecastItem({"start": date(2026, 1, 1), "end": date(2026, 1, 7)}, completed=True), 2))
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 7)), (), ())
+    view = typed_view({"body": {"tableColumns": [
+        {"id": "Delta", "source": {"comparisonFacet": "finishDelta"}, "format": "signedDays", "missing": "blank"},
+    ], "visibility": {}}})
+    cell, = normalize_v05_table_content(projection, {}, view).cells
+    assert (cell.content, cell.required) == ("+2d", True)
+
+
+def test_forecast_legend_replaces_planned_key_or_adds_it_and_accepts_wording():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)},
+                      None, None, ())
+    item = replace(item, forecast=ForecastComparisonFact(
+        ForecastItem({"start": date(2026, 1, 1), "end": date(2026, 1, 6)}, completed=False), 1))
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 6)), (), ())
+    detail = ReviewDetailInput((), (), (LegendEntry("planned", "Planned", swatch_shape="mark"),), None)
+
+    entries = legend_entries(detail, {}, projection, None, closed_days_drawn=True)
+    assert entries == (SurfaceLegendEntry("forecast", "Forecast (* estimated)", swatch_shape="mark"),)
+    assert legend_entries(None, {}, projection, None, closed_days_drawn=True,
+                          forecast_label="Estimate") == (SurfaceLegendEntry("forecast", "Estimate"),)
+    view = replace(typed_view({"body": {"tableColumns": (), "visibility": {}}}),
+                   wording=freeze({"legend": {"forecast": "Forecasted finish"}}))
+    content = normalize_v05_surface_content(projection, {}, view, summary=EMPTY_SUMMARY)
+    assert content.legend_entries == (SurfaceLegendEntry("forecast", "Forecasted finish"),)
 
 
 def test_without_a_scale_or_a_detail_profile_there_are_no_legend_entries():

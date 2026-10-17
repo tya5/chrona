@@ -14,7 +14,7 @@ from chrona.presentation.layout.pattern_placement import PatternedPlacement
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, ContrastClass, PrimitiveKind, contrast_binding, contrast_bindings,
-    inside_member_label_semantic, period_variant_role_base, semantic_binding)
+    inside_member_label_semantic, period_variant_role_base, semantic_binding, forecast_delta_semantic_ids)
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.info_diagnostics import PaintOmission
@@ -88,6 +88,13 @@ def _heading_paint_role(tokens: ThemeTokenView, role: str = "heading") -> str:
             or tokens.optional_number(role, "glowOpacity") is not None):
         return role
     return tokens.title_paint_role(role)
+
+
+def _primary_mark_binding(mark: Any, source_kind: str):
+    """Bind Layout's explicit forecast purpose without changing stable IDs."""
+    if mark.semantic_id == "forecast":
+        return semantic_binding("forecast")
+    return semantic_binding("snapshot" if source_kind in {"snapshot", "scenario"} else "planned")
 
 
 def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFamily:
@@ -700,9 +707,11 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         source_kind = item.source_kind if projection.rows else "combined"
         href, link_title = link_for_item(item, source_kind)
         planned = item.planned
-        planned_binding = semantic_binding("snapshot" if source_kind in {"snapshot", "scenario"} else "planned")
-        planned_role = planned_binding.scene_role
         planned_mark = mark_placements.get(f"planned:{instance_id}")
+        planned_binding = (_primary_mark_binding(planned_mark, source_kind)
+                           if planned_mark is not None
+                           else semantic_binding("snapshot" if source_kind in {"snapshot", "scenario"} else "planned"))
+        planned_role = planned_binding.scene_role
         if planned_mark is not None:
             planned_ids = lane_scene_ids("mark", planned_mark.placement_id)
             planned_id = planned_ids[0] if planned_ids else planned_mark.placement_id
@@ -711,7 +720,9 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             if item.source_type == "point":
                 # A Theme that declares the `gate` role paints primary gates with it (#991); a baseline or
                 # scenario gate keeps its own role.
-                gate_role = resolve_point_paint_role(planned_role, gate_declared=value.theme_tokens.has_role("gate"))
+                gate_role = (planned_role if planned_mark.semantic_id == "forecast" else
+                             resolve_point_paint_role(planned_role,
+                                                      gate_declared=value.theme_tokens.has_role("gate")))
                 primitives.extend(_symbol_primitives(planned_id, item.object_id, "object", planned_binding.purpose, gate_role,
                                                     bounds, planned_mark.symbol_parts,
                                                     primitive_ids=planned_ids,
@@ -779,7 +790,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             emit_semantic_text(label_id, semantic_id, label_paint, href=href, link_title=link_title,
                                project_item=item)
         variance_id = f"variance:{instance_id}"
-        if source_kind == "combined" and item.finish_delta is not None and variance_id in layout_text:
+        if (source_kind == "combined" and item.finish_delta is not None and variance_id in layout_text
+                and layout_text[variance_id].semantic_id not in forecast_delta_semantic_ids()):
             role = (semantic_binding("varianceBehind").scene_role if item.finish_delta > 0
                     else semantic_binding("varianceAhead").scene_role if item.finish_delta < 0
                     else semantic_binding("finishDelta").scene_role)
@@ -792,14 +804,15 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             href, link_title = link_for_item(item, source_kind)
             planned_mark = mark_placements.get(f"planned:{instance_id}")
             if planned_mark is not None:
-                binding = semantic_binding("snapshot" if source_kind in {"snapshot", "scenario"} else "planned")
+                binding = _primary_mark_binding(planned_mark, source_kind)
                 bounds = (float(planned_mark.bounds.inline), float(planned_mark.bounds.block),
                           float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
+                gate_role = (binding.scene_role if planned_mark.semantic_id == "forecast" else
+                             resolve_point_paint_role(binding.scene_role,
+                                                      gate_declared=value.theme_tokens.has_role("gate")))
                 primitives.extend(_symbol_primitives(f"planned:{instance_id}", item.object_id, "object",
                                                     binding.purpose,
-                                                    resolve_point_paint_role(binding.scene_role,
-                                                        gate_declared=value.theme_tokens.has_role("gate"))
-                                                    if item.source_type == "point" else binding.scene_role,
+                                                    gate_role if item.source_type == "point" else binding.scene_role,
                                                     bounds, planned_mark.symbol_parts,
                                                     corner_radius=planned_mark.corner_radius,
                                                     path_commands=planned_mark.path_commands, href=href, link_title=link_title,
@@ -1058,8 +1071,15 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             ("summary:", "summaryMetric", None), ("note-index:", "noteIndex", None),
             ("relation-label:", "relationLabel", None),
         ))
+    primary_items = {item.object_id: item for item in projection.items}
     for placed in placed_surface.text:
         if placed.overflow == "suppressed":
+            continue
+        if placed.semantic_id in forecast_delta_semantic_ids():
+            item = primary_items.get(placed.source_ref)
+            href, title = link_for_item(item, item.source_kind) if item is not None else (None, None)
+            emit_semantic_text(placed.placement_id, placed.semantic_id, href=href,
+                               link_title=title, project_item=item)
             continue
         if placed.semantic_id == "deadlineCaption":
             emit_semantic_text(placed.placement_id, placed.semantic_id,
@@ -1194,7 +1214,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         emitted_by_member: dict[tuple[str, str], list[str]] = {}
         for primitive_id, owner in owner_by_primitive.items():
             emitted_by_member.setdefault(owner, []).append(primitive_id)
-        primary_purposes = {"planned", "snapshot"}
+        primary_purposes = {"planned", "forecast", "snapshot"}
         absences_by_member = project_lane_window_absences(placed_surface.lane_window_absences)
         member_values = []
         for row in projection.lane_rows:

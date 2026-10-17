@@ -40,6 +40,36 @@ def test_draft_closure_accepts_optional_review_inputs():
     assert draft.asset_root.name == "resources"
 
 
+def test_draft_forecast_flows_through_common_closure_and_snapshot_ingress(monkeypatch):
+    import chrona.presentation.model.closure as closure_module
+
+    root = _root()
+    paths = _paths(root)
+    original_parse = closure_module.parse_contract
+    context_values = []
+
+    def capture_context(identity, value):
+        if identity.kind == "render-context":
+            context_values.append(value)
+        return original_parse(identity, value)
+
+    monkeypatch.setattr(closure_module, "parse_contract", capture_context)
+    baseline = resolve_draft_render(**paths)
+    forecast = resolve_draft_render(**paths, forecast=True)
+
+    assert baseline.closure.context.forecast is False
+    assert forecast.closure.context.forecast is True
+    assert "forecast" not in context_values[0]["body"]
+    assert context_values[1]["body"]["forecast"] is True
+
+    snapshot_path = root / "tests/fixtures/controller-z/project.yaml"
+    forecast_with_snapshot = resolve_draft_render(
+        **paths, forecast=True, snapshot_project_path=snapshot_path)
+    assert forecast_with_snapshot.closure.snapshot_project is not None
+    assert forecast_with_snapshot.closure.context.snapshot is None
+    assert forecast_with_snapshot.closure.context.forecast is True
+
+
 def test_draft_snapshot_project_is_typed_without_fabricating_snapshot_reference(tmp_path):
     root = _root()
     project_path = _paths(root)["project_path"]

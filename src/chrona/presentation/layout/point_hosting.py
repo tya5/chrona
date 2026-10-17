@@ -12,6 +12,7 @@ from chrona.presentation.layout.mark_facet_visibility import (
     FacetDisposition, ItemMarkVisibility,
 )
 from chrona.presentation.layout.model import LayoutError, PointHostMode
+from chrona.presentation.layout.semantic_mark_facets import mark_placement_facet
 from chrona.presentation.layout.surface_mark_visibility import (
     ItemMarkVisibilityIndex, MarkOccurrence, MarkOccurrenceKind,
     ensure_item_mark_visibility_index,
@@ -29,10 +30,10 @@ class PointHostOccurrence:
     visibility: ItemMarkVisibility = field(compare=False, repr=False)
 
     def source_mark_id(self, facet: str) -> str:
-        return f"{facet}:{self.visibility.instance_id}"
+        return f"{mark_placement_facet(facet)}:{self.visibility.instance_id}"
 
     def final_mark_id(self, facet: str) -> str:
-        return f"{facet}:{self.placement_key}"
+        return f"{mark_placement_facet(facet)}:{self.placement_key}"
 
 
 @dataclass(frozen=True)
@@ -109,7 +110,7 @@ def resolve_point_host_plan(projection: Any, *, as_of: date | None,
             source = visible.source
             if (visible.disposition == FacetDisposition.OMITTED
                     or source.shape not in {"span", "open-span"}
-                    or source.facet not in {"planned", "actual"}):
+                    or source.facet not in {"planned", "forecast", "actual"}):
                 continue
             key = (occurrence.item.object_id, occurrence.instance.source_kind,
                    occurrence.item.scenario_id, source.facet)
@@ -119,7 +120,7 @@ def resolve_point_host_plan(projection: Any, *, as_of: date | None,
         for visible in point.visibility.facets:
             source = visible.source
             if (visible.disposition == FacetDisposition.OMITTED or source.shape != "point"
-                    or source.facet not in {"planned", "actual"}):
+                    or source.facet not in {"planned", "forecast", "actual"}):
                 continue
             targets = (point.item.declared_attaches_to, point.item.parent_id)
             for target in dict.fromkeys(targets):

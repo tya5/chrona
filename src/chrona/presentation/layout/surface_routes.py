@@ -52,7 +52,7 @@ from chrona.presentation.layout.surface_quality import (
     SurfaceLayoutRequest, TextPlacement, TemporalEndpointPlacement,
 )
 from chrona.presentation.layout.text import metric_for_role, measure_text_width, place_text
-from chrona.presentation.model.semantic_registry import semantic_binding
+from chrona.presentation.model.semantic_registry import semantic_binding, forecast_delta_semantic_ids
 from chrona.presentation.model.info_diagnostics import (
     RelationRoutingSummary, RelationSearchBudgetHit, RelationResolutionInfo, RelationResolutionSummary,
     RelationPolicySupersession, RelationHintReceipt, RelationHintSummary,
@@ -142,7 +142,7 @@ def _lane_fallback_clears_required_labels(points: tuple[tuple[float, float], ...
     labels = tuple(ObstacleRect(float(item.bounds.inline), float(item.bounds.block),
         float(item.bounds.inline + item.bounds.inline_size),
         float(item.bounds.block + item.bounds.block_size)) for item in text
-        if item.semantic_id in {"memberLabel", "finishDelta"} and item.required
+        if item.semantic_id in ("memberLabel", "finishDelta", *forecast_delta_semantic_ids()) and item.required
         and item.overflow != "suppressed")
     return all(not obstacles_intersect(ObstacleSegment(start, end), label)
         for start, end in zip(points, points[1:]) for label in labels)

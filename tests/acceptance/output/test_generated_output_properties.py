@@ -29,7 +29,7 @@ SVG = "{http://www.w3.org/2000/svg}"
 
 MARK_PURPOSES = frozenset({"planned", "actual", "missingActual", "baseline", "milestone"})
 # Text that is allowed inside the plot area by design, and so must clear the marks.
-PLOT_TEXT_PURPOSES = frozenset({"member-label", "finish-delta", "as-of-label", "group-header"})
+PLOT_TEXT_PURPOSES = frozenset({"member-label", "finish-delta", "forecast-finish-delta", "as-of-label", "group-header"})
 SLOT_PURPOSES = {
     "title": {"title-text"},
     "table": {"table-column-label", "table-cell"},

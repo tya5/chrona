@@ -27,9 +27,10 @@ bound/protected/grouped tests, and 73 completion/entry/wiring tests passed.
 
 ## Programme-level criteria (optional)
 
-Release acceptance remains pending the three-OS full pytest/conformance,
-wheel-smoke and public-materializer gate on exact published main containing
-this review. Keep issue1632 open until that run passes; cite it in the closing comment.
+Released on exact review-containing main `cd4dae681c9fd09f2c26d0dd037fcdac8d97e82d`:
+[run39016025968](https://github.com/tya5/chrona/actions/runs/39016025968) passed
+three-OS full pytest/conformance/wheel and newest-Python public reproduction.
+The reviewer confirmed the actual trial and closed issue1632 with that evidence.
 
 ## Architecture conclusion
 

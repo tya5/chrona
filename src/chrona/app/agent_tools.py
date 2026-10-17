@@ -393,6 +393,8 @@ def _render_draft(call: _Call, arguments: dict[str, Any]) -> ToolResult:
         view=_optional_path(call, arguments, "view"), theme=_optional_path(call, arguments, "theme"),
         scheme=_optional_path(call, arguments, "scheme"), layout=_optional_path(call, arguments, "layout"),
         actual=_optional_path(call, arguments, "actual"),
+        snapshot=_optional_path(call, arguments, "snapshot"),
+        forecast=arguments.get("forecast", False),
         viewport=viewport, locale=arguments.get("locale", "en-US"),
     )
     rendered = render_draft(request)
@@ -613,6 +615,10 @@ _TOOLS: tuple[ToolSpec, ...] = (
         _input_schema({
             "project": _WORKSPACE_PATH_PROPERTY,
             "actual": {**_WORKSPACE_PATH_PROPERTY, "description": "Actual Set YAML to draw progress over the plan."},
+            "snapshot": {**_WORKSPACE_PATH_PROPERTY,
+                         "description": "Optional baseline Project YAML, scoped to this workspace, equivalent to --snapshot."},
+            "forecast": {"type": "boolean", "default": False,
+                         "description": "Opt in to forecast unfinished work from the supplied Actual Set and its asOf."},
             "preset": {"type": "string", "minLength": 1, "maxLength": 512,
                        "description": "A builtin preset id (see list_presets) or a workspace path ending .yaml or .yml."},
             "view": _WORKSPACE_PATH_PROPERTY, "theme": _WORKSPACE_PATH_PROPERTY,

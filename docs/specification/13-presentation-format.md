@@ -300,7 +300,7 @@ uses it to diagnose distinctions the requested output cannot preserve; it does n
 the target `kind` to infer unrecorded defaults. No target-specific options belong in a
 Render Context until a target-capability specification defines their portable meaning.
 
-### 5.3.1 Explicit forecast control (#1634; designed, implementation pending)
+### 5.3.1 Explicit forecast control (#1634)
 
 Render Context v0.17 gains optional boolean `body.forecast`, runtime false when
 absent. This is a behavior-preserving optional widening: no existing valid

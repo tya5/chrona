@@ -5,7 +5,7 @@ from decimal import Decimal
 from collections.abc import Mapping
 from typing import Any, Callable
 
-from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_marks import (
     MARK_GEOMETRY_ROLES, progress_fill_bounds,
 )
@@ -15,7 +15,7 @@ from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.surface_periods import compose_period_decoration
 from chrona.presentation.layout.mark_geometry import complete_point_outline, symbol_parts
 from chrona.presentation.model.point_paint import resolve_point_paint_role
-from chrona.presentation.model.semantic_registry import semantic_binding
+from chrona.presentation.model.semantic_registry import semantic_binding, mark_style_role
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.layout.surface_quality import (
@@ -53,6 +53,7 @@ def _legacy_swatch_size(legend_size: float) -> float:
 
 
 def _swatch_paint_role(role: str, tokens: Any) -> str:
+    role = mark_style_role(role)
     if role in ("asOf", "deadlineMark"):
         return semantic_binding(role).scene_role
     return resolve_point_paint_role(role, gate_declared=tokens.has_role("gate"), legend=True)
@@ -82,6 +83,7 @@ def swatch_extent(role: str, tokens: Any, mark_block_size: float, legend_size: f
     # Detail's per-entry value wins; otherwise the Theme's one shared default
     # applies equally to authored and generated keys. Resolve it here so every
     # measurement and drawing path consumes the same dispatch bucket.
+    role = mark_style_role(role)
     if shape is None:
         shape = tokens.legend_swatch_shape()
     legacy = _legacy_swatch_size(legend_size)
@@ -226,7 +228,7 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
         return swatch_extent(entry.role, request.theme_tokens, mark_block_size, legend_size, entry.swatch_shape)
 
     def emit_swatch(entry: SurfaceLegendEntry, x: float, y: float, width: float, height: float, bucket: str) -> None:
-        role = entry.role
+        role = mark_style_role(entry.role)
         swatch_id = entry.swatch_placement_id
         if bucket in ("circle", "rule-pair"):
             if entry.source_ref is not None and request.theme_tokens.background(role)[0] == "none":
@@ -314,6 +316,8 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
         disposition = "fit"
         ellipsized = False
         if natural_width > available and legend.overflow == "ellipsize-with-source":
+            if entry.role == "forecast":
+                raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", entry.text_placement_id)
             content = ellipsize_text(label, available_inline=available, font_size=legend_size,
                                      font_metrics=metric_for("legend"),
                                      letter_spacing=float(legend_treatment.letter_spacing),

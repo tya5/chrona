@@ -89,6 +89,7 @@ chrona render examples/launch.yaml --actual examples/actual.yaml --snapshot exam
 
 Here plan and baseline are one file; in an update, your edited plan and the step 1 copy. Use a new
 output name each time. A dashed outline is where the baseline had an item that moved.
+For a forecast instead of editing dates, use `chrona render project.yaml --actual actual.yaml --snapshot baseline.yaml --forecast --preset target-b --output forecast.svg`. It uses `body.asOf` without changing Project, Actual or baseline files or saving a Snapshot. Unfinished Δ carries `*` against the baseline (the original plan when omitted); progress is not remaining effort. `technical-print` and MCP `render_draft` support forecast too. Omit the flag for the unchanged ordinary plan/actual render.
 
 ## If the chrona MCP server is connected
 

@@ -205,7 +205,7 @@ def resolve_profile_connections(view: ViewInput, summary: SummaryProfileInput | 
     if legend_wording:
         declared_roles = {entry.role for entry in (detail.legend if detail is not None else ())}
         for role in legend_wording:
-            if role not in declared_roles:
+            if role not in declared_roles and role != "forecast":
                 pointer = f"/body/wording/legend/{_pointer_token(str(role))}"
                 raise ProfileConnectionError("E_VIEW_WORDING_UNKNOWN", f"legend wording role {role!r} is not declared by the selected Detail Profile", pointer)
         if detail is not None:
