@@ -387,16 +387,8 @@ tries finite straight/L/Z/U proposals from completed row gaps and obstacle-edge
 channels before that pair's bounded search; the first fully accepted completed
 route wins. Proposal generation builds no visibility graph. Both paths retain
 terminal, bounds, obstacle, self-overlap, bend and detour validation.
-When those basic proposals fail, first-fit also tries at most eight paired
-row-contact/outward-channel proposals before the pair's bounded search (#1610).
-Keep the basic proposal order unchanged. Combine the two nearest interior
-row contacts at each endpoint with the nearest vertically clear existing
-column on each side of the endpoint span. Contacts come from completed row
-gaps and obstacle edges plus their declared clearance and the existing route
-grid offset. Filter supplemental paths against retained label footprints using
-the relation's actual stroke width, then apply the ordinary completed-route
-validators. No project coordinates, new quality threshold or expansion quota
-is introduced. Layout checks completed reduced and terminal-adjusted route
+The existing first-fit proposal family and order remain unchanged (#1610).
+Layout checks completed reduced and terminal-adjusted route
 stroke against retained text/label-visual footprints, not just its centreline;
 staged recovery still removes only the obstacle classes its contract permits.
 Initial as-of/deadline rule obstacles likewise carry the exact stroke width
@@ -426,8 +418,13 @@ remove or suppress those placements. Carry their explicit Layout obstacle
 identities through relaxation, rather than inferring priority from every
 completed Text's `required` flag. Explicit unsafe overlap/stub completion keeps
 its existing contract below. Existing typed required-label failure behavior
-remains authoritative. Run the normal route-first pipeline, including member
-names, relation labels and annotations, without optional reservations. The
+remains authoritative. Run the normal policy-specific pipeline, including member
+names, relation labels and annotations, without new optional reservations.
+Under `best`, existing lane names precede routes and the existing bounded lane
+corridor planner remains a preflight; under `first-fit`, optional names follow
+routes. The on-demand pass does not change those initial phases or search
+proposals and replaces the former post-route lost-name retry, not the lane
+preflight. It adds at most one post-route repair, never another recovery loop. The
 as-of line and other `rule` geometry obstruct member names.
 
 Reserve on demand only when a completed route blocked an earlier candidate
@@ -889,8 +886,9 @@ Lane membership is already fixed from Project/View data (Spec 38) before this
 placement phase. A label that cannot fit is suppressed with a source-keyed
 count; its absence does not add, merge or split lanes. Only labels actually
 placed become route obstacles.
-The member-name reservation contract above replaces #687's route-corridor
-rehearsal with bounded on-demand repair after route-first placement. Required
+The member-name reservation contract above retains #687's existing `best`
+lane-corridor preflight and adds bounded on-demand repair after the normal
+completed placement. It does not run that preflight again during repair. Required
 text remains an immutable obstacle; optional reservations may be discarded
 only by retaining the entire first completed pass. This never changes lane membership, adds
 a candidate to the declared ladder, or permits a final name to cross route ink.
