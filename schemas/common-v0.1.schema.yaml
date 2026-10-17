@@ -195,6 +195,33 @@ $defs:
       subtitle: {description: "The subtitle template, drawn under the title in the Theme's `subtitle` typography role.", type: string, minLength: 1, examples: ["as of {asOf}"]}
       dateForm: {description: "The form of {asOf}; absent is the localized date.", enum: [localized-date, day-month, day-month-year]}
       text: {$ref: "#/$defs/tableTextWrap"}
+  viewHeadingWithParts:
+    description: "Heading templates with optional ordered conditional parts; scalar shorthand remains the frozen viewHeading contract."
+    type: object
+    minProperties: 1
+    additionalProperties: false
+    properties:
+      kicker: {$ref: "#/$defs/headingText"}
+      title: {$ref: "#/$defs/headingText"}
+      subtitle: {$ref: "#/$defs/headingText"}
+      dateForm: {$ref: "#/$defs/viewHeading/properties/dateForm"}
+      text: {$ref: "#/$defs/viewHeading/properties/text"}
+  headingText:
+    description: "A template string or ordered template parts, concatenated verbatim. A guarded part is omitted silently when its declared global count figure is zero."
+    examples: ["{project}", [{text: "in {figure:group-count} panels", omitWhenZero: group-count}]]
+    oneOf:
+      - {$ref: "#/$defs/viewHeading/properties/title"}
+      - type: array
+        description: "Ordered heading fragments with literal spacing and optional count guards."
+        minItems: 1
+        items:
+          description: "One heading fragment, optionally omitted at raw count zero."
+          type: object
+          required: [text]
+          additionalProperties: false
+          properties:
+            text: {description: "Heading template with the existing semantic and figure placeholders; separators and spaces are literal.", type: string, minLength: 1}
+            omitWhenZero: {description: "Declared global count figure whose raw zero value omits this part before text measurement.", $ref: "#/$defs/profileFigureIdentity"}
   groupHeaderPresentation:
     description: "Group-header text template; usable only with presentation header and grouping by field or object type."
     type: object

@@ -17,7 +17,7 @@ from chrona.core.store_address import StoreAddressError, check_store_address
 from chrona.resources import schema_validator
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
 from chrona.presentation.group_header_text import GroupHeaderTextError, parse_template
-from chrona.presentation.heading_text import heading_figure_ids, validate_heading_template
+from chrona.presentation.heading_text import HeadingPart, heading_figure_ids, validate_heading_template
 from chrona.presentation.table_presentation import (
     AFFIX_STATES, SIGNED_FORMATS, BooleanPresencePresentation, CellAffix, ColumnAffixes,
 )
@@ -300,10 +300,10 @@ class ViewSelection:
 class ViewHeading:
     """View-declared heading templates (#991, #1189) for a table-timeline surface."""
 
-    title: str | None = None
-    subtitle: str | None = None
+    title: str | tuple[HeadingPart, ...] | None = None
+    subtitle: str | tuple[HeadingPart, ...] | None = None
     date_form: str = "localized-date"
-    kicker: str | None = None
+    kicker: str | tuple[HeadingPart, ...] | None = None
     text_wrap: str = "forbid"
 
 
@@ -1334,25 +1334,62 @@ def _view_heading(raw: Any, figures: tuple[FigureSpec, ...] = ()) -> ViewHeading
     """Type the optional heading templates and reject any unknown placeholder (#991, #1189)."""
     if raw is None:
         return None
-    heading = ViewHeading(str(raw["title"]) if "title" in raw else None,
-                          str(raw["subtitle"]) if "subtitle" in raw else None,
-                          str(raw.get("dateForm", "localized-date")),
-                          str(raw["kicker"]) if "kicker" in raw else None,
-                          str(raw.get("text", {}).get("wrap", "forbid")))
     declared = {item.figure_id: item for item in figures}
-    for member, template in (("kicker", heading.kicker), ("title", heading.title), ("subtitle", heading.subtitle)):
-        if template is not None:
-            path = f"/body/heading/{member}"
+
+    def part_source(value: Any, member: str) -> str | tuple[HeadingPart, ...] | None:
+        if value is None:
+            return None
+        path = f"/body/heading/{member}"
+        if isinstance(value, str):
+            parts = (HeadingPart(value),)
+            result: str | tuple[HeadingPart, ...] = value
+        elif isinstance(value, (tuple, list)):
+            closed_parts = []
+            for index, item in enumerate(value):
+                if not isinstance(item, Mapping) or not isinstance(item.get("text"), str):
+                    raise ContractError("E_VIEW_HEADING_TEMPLATE", "heading part requires text", f"{path}/{index}")
+                guard = item.get("omitWhenZero")
+                if guard is not None and not isinstance(guard, str):
+                    raise ContractError("E_VIEW_HEADING_TEMPLATE", "omitWhenZero must name a figure",
+                                        f"{path}/{index}/omitWhenZero")
+                closed_parts.append(HeadingPart(item["text"], guard))
+            parts = tuple(closed_parts)
+            result = parts
+        else:
+            raise ContractError("E_VIEW_HEADING_TEMPLATE", "heading must be a string or ordered parts", path)
+
+        for index, part in enumerate(parts):
+            template_path = path if isinstance(value, str) else f"{path}/{index}/text"
             try:
-                validate_heading_template(template)
-                references = heading_figure_ids(template)
+                validate_heading_template(part.text)
+                references = heading_figure_ids(part.text)
             except GroupHeaderTextError as error:
-                raise ContractError(error.code, error.detail, path) from error
+                raise ContractError(error.code, error.detail, template_path) from error
             for identifier in sorted(references):
                 if identifier not in declared:
-                    raise ContractError("E_VIEW_FIGURE_UNKNOWN", f"heading names undeclared figure {identifier!r}", path)
+                    raise ContractError("E_VIEW_FIGURE_UNKNOWN", f"heading names undeclared figure {identifier!r}",
+                                        template_path)
                 if declared[identifier].scope != "global":
-                    raise ContractError("E_FIGURE_SCOPE_UNAVAILABLE", f"heading has no current group for figure {identifier!r}", path)
+                    raise ContractError("E_FIGURE_SCOPE_UNAVAILABLE", f"heading has no current group for figure {identifier!r}",
+                                        template_path)
+            if part.omit_when_zero is not None:
+                guard = part.omit_when_zero
+                guard_path = f"{path}/{index}/omitWhenZero" if not isinstance(value, str) else f"{path}/omitWhenZero"
+                if guard not in declared:
+                    raise ContractError("E_VIEW_FIGURE_UNKNOWN", f"heading names undeclared figure {guard!r}", guard_path)
+                if declared[guard].scope != "global":
+                    raise ContractError("E_FIGURE_SCOPE_UNAVAILABLE", f"heading has no current group for figure {guard!r}",
+                                        guard_path)
+                if declared[guard].kind != "count":
+                    raise ContractError("E_VIEW_FIGURE_INVALID", f"omitWhenZero requires a count figure, found {declared[guard].kind!r}",
+                                        guard_path)
+        return result
+
+    heading = ViewHeading(part_source(raw.get("title"), "title"),
+                          part_source(raw.get("subtitle"), "subtitle"),
+                          str(raw.get("dateForm", "localized-date")),
+                          part_source(raw.get("kicker"), "kicker"),
+                          str(raw.get("text", {}).get("wrap", "forbid")))
     return heading
 
 
