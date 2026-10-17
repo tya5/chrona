@@ -49,4 +49,3 @@ def test_nonforecast_snapshot_label_eligibility_is_unchanged(tmp_path):
     labels = _member_labels(ordinary)
     assert {item.source_ref for item in labels} == {"a", "b"}
     assert not any(item.purpose == "forecast" for item in ordinary.surface.primitives)
-

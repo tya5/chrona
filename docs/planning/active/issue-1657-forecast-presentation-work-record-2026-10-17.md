@@ -1,6 +1,6 @@
 # Issue1657 — forecast label ownership and observed-start warnings
 
-Status: design complete; implementation plan finalized. Baseline: main `aabc5e894`, with unchanged product
+Status: implementation and focused acceptance complete; official public-output and release gates pending. Baseline: main `aabc5e894`, with unchanged product
 source from trusted-ready `9f35dd457` after the legend fix.
 [Issue1657](https://github.com/tya5/chrona/issues/1657) is the next dev A item;
 issue1397's implemented slice is preserved separately and publications stay serial.
@@ -77,3 +77,16 @@ source data or ordinary scheduling success contract changes.
 Focused tests run in this worktree's `.venv`; CI supplies full pytest,
 conformance/wheel, public materializer reproduction and MCP. Inspect one official
 public SVG/Scene batch with counts and the actual trial PNG before acceptance.
+
+## Current verification
+
+The combined scheduling, warning transport, render/occurrence, projection and
+lane-label batch passes118 tests. An additional end-to-end render test proves
+one-day observed overlap warning severity and Scene/CLI diagnostic identity.
+The exact immutable trial3 technical-print PNG was rendered and viewed: one
+member name per object, visible baseline ghosts and required deltas retained.
+Its wireframes→visual-design warning states observed November9 start before
+observed November10 finish, overlapDays=1, severity warning, without the former
+E_FIXED_TARGET_VIOLATION. Neither source files nor examples were edited.
+The PR's official snapshot will supply the public SVG/Scene count table; final
+acceptance requires exact review-containing main release CI.
