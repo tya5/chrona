@@ -177,7 +177,17 @@ def test_selected_mark_role_is_completed_in_layout_for_source_occurrences(tmp_pa
     else:
         assert float(mark.bounds.inline_size) == pytest.approx(float(baseline.bounds.inline_size))
 
-    # This test establishes completed Layout geometry/identity only; Scene paint is intentionally outside its claim.
     assert rendered.surface is not None
+    projected = [primitive for primitive in rendered.surface.primitives
+                 if primitive.theme_role == "style-plan"]
+    assert projected
+    binding = semantic_binding(key.semantic_id)
+    assert all(primitive.semantic_id == key.semantic_id
+               and primitive.visual_role == binding.scene_role
+               and primitive.purpose == binding.purpose
+               and primitive.source_ref == key.subject_id
+               and primitive.paint is not None for primitive in projected)
+    assert not any(primitive.theme_role is not None or primitive.semantic_id is not None
+                   for primitive in control.surface.primitives)
     assert not any("W_THEME_ROLE_UNREAD" in str(item) and "style-plan" in str(item)
                    for item in rendered.surface.diagnostics)

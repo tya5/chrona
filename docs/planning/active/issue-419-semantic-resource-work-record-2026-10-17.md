@@ -515,8 +515,12 @@ Bounded Theme capability admission and introspection agree for arbitrary
 authored mark roles, without widening reserved generated-role namespaces.
 The final focused model/Layout/content/capability/integration batch passes332
 tests. Three native Theme/render tests cover ordinary, lane and folded marks;
-they inject engine intents, not completed S2 resource ingress. Typography and
-Scene-producer connections remain pending. Module reachability (285 modules)
+they inject engine intents, not completed S2 resource ingress. Scene projects
+the completed canonical semantic and selected role, including folded/lane
+marks; paint lookup uses the selected role without changing host semantics.
+The Scene batch passes79 tests; six focused native/projection checks confirm
+metadata/paint completion and absent metadata without Style. Typography
+connections remain pending. Module reachability (285 modules)
 and inward imports pass without an allowlist. Generic Draft integration tests now provide an explicit temporary
 Store containing the exact declared package bytes rather than bypass closure.
 The remaining Draft test callers share that Store fixture without changing
@@ -561,8 +565,8 @@ no-Style bytes and retained mark contrast under an arbitrary appearance role.
 Scene delivery has247 owned fields; schema/inward-import gates pass. Schema
 equivalence passes2 added schemas and1 reviewed optional Scene widening,
 578 documents/468 mapped,5 known invalid and739 probes (L2+L3 14.6s).
-Selected-role Scene production, typography and full Style ingress remain
-required; carrier tests and injected-intent geometry tests are not S1 acceptance.
+Typography and full Style ingress remain required; carrier tests and
+injected-intent composition tests are not S1 acceptance.
 The shared evaluator is now connected through legacy View colour encoding;
 module reachability passes without an evaluator allowlist.
 
