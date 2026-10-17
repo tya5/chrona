@@ -385,23 +385,62 @@ def _group_starts(review_rows: tuple[Any, ...]) -> tuple[int, ...]:
     )
 
 
+def empty_group_slots(review_rows: tuple[Any, ...], group_order: tuple[str, ...]) -> tuple[tuple[int, str], ...]:
+    """Group containers that hold no ordinary row, as (index of the row they precede, group id).
+
+    View resolved the order; a group whose points were all folded into its header keeps its place there
+    (an index equal to ``len(review_rows)`` means after the last row).
+    """
+    first_row = {}
+    for index, row in enumerate(review_rows):
+        if row.group_id:
+            first_row.setdefault(row.group_id, index)
+    slots: list[tuple[int, str]] = []
+    pending: list[str] = []
+    for group_id in group_order:
+        if group_id in first_row:
+            slots.extend((first_row[group_id], waiting) for waiting in pending)
+            pending = []
+        else:
+            pending.append(group_id)
+    slots.extend((len(review_rows), waiting) for waiting in pending)
+    return tuple(slots)
+
+
+def empty_group_header_blocks(*, slots: tuple[tuple[int, str], ...], row_placements: tuple[RowPlacement, ...],
+                              timeline_bounds: tuple[float, float, float, float], group_header_size: float
+                              ) -> tuple[tuple[int, str, float], ...]:
+    """Block origin of every row-less group header: just above the group that follows it, else after the last row."""
+    result = []
+    for position, (index, group_id) in enumerate(slots):
+        ordinal = len([other for other, _ in slots[:position] if other == index])
+        count = len([other for other, _ in slots if other == index])
+        if index < len(row_placements):
+            block = row_placements[index].bounds[1] - group_header_size * (count - ordinal + 1)
+        else:
+            end = (row_placements[-1].bounds[1] + row_placements[-1].bounds[3]) if row_placements else timeline_bounds[1]
+            block = end + group_header_size * ordinal
+        result.append((index, group_id, block))
+    return tuple(result)
+
+
 def row_block_slack(*, review_rows: tuple[Any, ...], timeline_block_size: float, group_header_size: float,
-                    required_block_sizes: tuple[float, ...]) -> float:
+                    required_block_sizes: tuple[float, ...], empty_groups: int = 0) -> float:
     """The timeline block left once every row requirement and group header is closed (negative: rows overflow)."""
-    return (timeline_block_size - group_header_size * len(_group_starts(review_rows))
+    return (timeline_block_size - group_header_size * (len(_group_starts(review_rows)) + empty_groups)
             - geometry_sum(required_block_sizes))
 
 
 def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, float, float, float],
                group_header_size: float, required_block_sizes: tuple[float, ...],
-               distribution: str) -> tuple[RowPlacement, ...]:
+               distribution: str, empty_groups: tuple[tuple[int, str], ...] = ()) -> tuple[RowPlacement, ...]:
     """Allocate completed row requirements and only then distribute surplus."""
     if len(required_block_sizes) != len(review_rows) or any(size <= 0 for size in required_block_sizes):
         raise LayoutError("E_LAYOUT_ROW_REQUIREMENT", "/layoutManifest/timeline")
     if distribution not in {"pack", "fill"}:
         raise LayoutError("E_LAYOUT_ROW_DISTRIBUTION", "/layoutManifest/reviewSurface/rowDistribution")
     group_starts = _group_starts(review_rows)
-    available = timeline_bounds[3] - group_header_size * len(group_starts)
+    available = timeline_bounds[3] - group_header_size * (len(group_starts) + len(empty_groups))
     required = geometry_sum(required_block_sizes)
     # Requirements remain P1 geometry.  A requested timeline is a minimum
     # allocation, not a refusal boundary: surplus can be distributed only when
@@ -411,6 +450,7 @@ def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, fl
     cursor = timeline_bounds[1]
     placements: list[RowPlacement] = []
     for index, row in enumerate(review_rows):
+        cursor += group_header_size * len([other for other, _ in empty_groups if other == index])
         if index in group_starts:
             cursor += group_header_size
         height = required_block_sizes[index] + surplus

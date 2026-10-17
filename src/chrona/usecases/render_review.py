@@ -716,7 +716,7 @@ def _resolve_group_tints(view: Any, projection: Any, theme: Mapping[str, Any]
     tint = view.grouping.tint if view.grouping is not None else None
     if tint is None:
         return (), (), None
-    groups = tuple(dict.fromkeys(row.group_id for row in projection.rows if row.group_id))
+    groups = projection.group_ids
     source_field = view.grouping.field or getattr(view.grouping.by, "value", view.grouping.by)
     scale = resolve_color_scale(
         {"scale": tint.scale, "target": "group", "source": {"field": source_field},
@@ -1019,7 +1019,7 @@ def _resolved_group_figures(project: dict[str, Any], placements: dict[str, dict[
     specs = tuple(item for item in view.figures if item.scope == "group")
     if not specs:
         return ()
-    group_ids = tuple(dict.fromkeys(row.group_id for row in projection.rows if row.group_id))
+    group_ids = projection.group_ids
     if not group_ids:
         raise RenderRejected([Diagnostic("E_FIGURE_GROUP_UNAVAILABLE",
                                          f"Figure {item.figure_id} requires a current group, but the View projects none",
@@ -1028,8 +1028,8 @@ def _resolved_group_figures(project: dict[str, Any], placements: dict[str, dict[
     values = []
     diagnostics = []
     for group_id in group_ids:
-        member_ids = {item.object_id for row in projection.rows if row.group_id == group_id
-                      for item in row.items if item.source_kind in {"primary", "combined"}}
+        member_ids = {item.object_id for item in projection.group_member_items(group_id)
+                      if item.source_kind in {"primary", "combined"}}
         members = tuple(item for item in projection.items
                         if item.source_kind == "primary" and item.object_id in member_ids)
         starts = tuple(item.planned.get("start", item.planned.get("at")) for item in members)

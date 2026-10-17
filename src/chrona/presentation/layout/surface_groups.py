@@ -135,6 +135,10 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
     """
     labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
               for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
+    for folded in getattr(request.projection, "folded_points", ()):
+        # A group whose points were all folded has no ordinary row to name it (#1660).
+        labels.setdefault(folded.group_id, next((item.group_label for item in folded.all_items if item.group_label),
+                                                folded.group_id))
     # A View-declared header template replaces the title text only (#583).
     labels.update(dict(request.surface_content.group_headers))
     marked = dict(request.surface_content.group_header_runs)
