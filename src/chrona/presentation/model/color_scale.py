@@ -40,6 +40,16 @@ def distinct_palette(palette: tuple[str, ...], categories: Mapping[str, object],
     return tuple(kept)
 
 
+def scale_text(value: object) -> str | None:
+    """The domain text of one declared field value: a string, or a boolean as ``true``/``false`` (#344).
+
+    Number and date sources are not admitted (binning is deferred); they return ``None``.
+    """
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return value if isinstance(value, str) else None
+
+
 class ColorScaleError(ValueError):
     """A closed scale cannot resolve one declared presentation input."""
 
@@ -128,11 +138,12 @@ class ResolvedColorScale:
     def color_for(self, object_id: str, fields: Mapping[str, object] | None) -> str:
         """Resolve one selected object's declared scalar value without fallback."""
         value = fields.get(self.source_field) if isinstance(fields, Mapping) else None
-        if not isinstance(value, str) or value not in self.domain:
+        text = scale_text(value)
+        if text is None or text not in self.domain:
             raise ColorScaleError("E_PRESENTATION_SCALE_VALUE",
                                   f"object={_brief(object_id)}, field={_brief(self.source_field)}, value={_brief(value)}; expected domain {_domain_summary(self.domain)}",
                                   self.encoding_source_ref)
-        return dict(self.colors)[value]
+        return dict(self.colors)[text]
 
 
 def resolve_color_scale(encoding: Mapping[str, object] | None,

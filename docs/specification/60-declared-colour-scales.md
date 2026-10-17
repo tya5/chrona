@@ -29,6 +29,11 @@ The source also admits `{fieldRole: ...}` under
 is resolved against the primary Project before scale evaluation; a bound field
 still obeys this specification's ordinary domain and missing-value rules.
 
+A field declared by a resolved profile package (Spec 17, `E_PROFILE_FIELD_*`) is read by the same
+`{field: ...}` accessor. Admitted source values are strings and booleans; a boolean matches the domain
+text `true` or `false`. Number and date sources are not admitted (binning is deferred) and fail with
+`E_PRESENTATION_SCALE_VALUE`.
+
 ## 2. Total mapping and diagnostics
 
 For every View domain value, Theme must provide exactly one mapping to a Scheme
