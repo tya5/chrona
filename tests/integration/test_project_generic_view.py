@@ -109,7 +109,8 @@ def test_first_appearance_domain_takes_palette_slots_in_projection_order(tmp_pat
                 fills.setdefault(owner, set()).add(item["paint"]["fill"])
     assert len(fills) > 3
     distinct = {owner: next(iter(values)) for owner, values in fills.items() if len(values) == 1}
-    assert len(set(distinct.values())) == 3  # three palette slots, reused cyclically
+    # three palette slots, then one neutral Other for the rest: no hue is reused (#1628)
+    assert len(set(distinct.values())) == 4
 
 
 def test_labels_both_requires_a_table_title_column(tmp_path, monkeypatch, capsys):

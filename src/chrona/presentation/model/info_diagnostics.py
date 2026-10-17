@@ -375,6 +375,32 @@ class FontGlyphFallback:
         return self.code + ":" + json.dumps(self.payload(), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
-PresentationInfo = (FontGlyphFallback | SuppressedPlotLabels | DeadlineCaptionsDropped | PaintOmission | RelationRoutingSummary | RelationSearchBudgetHit
+@dataclass(frozen=True)
+class ScaleValuesFolded:
+    """Categorical values beyond a colour scale's distinct hues, drawn as one neutral "Other" (#1628)."""
+
+    scale_id: str
+    source_field: str
+    palette_size: int
+    values: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if (not self.scale_id or not self.source_field or not self.values
+                or isinstance(self.palette_size, bool) or not isinstance(self.palette_size, int) or self.palette_size < 1):
+            raise _diagnostic_error("ScaleValuesFolded requires a scale, a field, a positive palette size and folded values")
+
+    @property
+    def code(self) -> str:
+        return "I_PRESENTATION_SCALE_FOLDED"
+
+    def payload(self) -> dict[str, object]:
+        return {"scaleId": self.scale_id, "field": self.source_field, "distinctColors": self.palette_size,
+                "foldedCount": len(self.values), "folded": list(self.values)}
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps(self.payload(), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+PresentationInfo = (ScaleValuesFolded | FontGlyphFallback | SuppressedPlotLabels | DeadlineCaptionsDropped | PaintOmission | RelationRoutingSummary | RelationSearchBudgetHit
                     | RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession
                     | RelationHintReceipt | RelationHintSummary | UnboundSummarySource | UnboundFieldRole)

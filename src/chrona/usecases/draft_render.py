@@ -21,7 +21,7 @@ from chrona.presentation.contracts import TypesetterIdentity
 from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, ClosureError, resolve_draft_render
 from chrona.presentation.model.info_diagnostics import (
     RelationHintReceipt, RelationHintSummary,
-    PaintOmission, SuppressedPlotLabels, DeadlineCaptionsDropped, RelationRoutingSummary, RelationSearchBudgetHit,
+    PaintOmission, ScaleValuesFolded, SuppressedPlotLabels, DeadlineCaptionsDropped, RelationRoutingSummary, RelationSearchBudgetHit,
     RelationResolutionInfo, RelationResolutionSummary,
     RelationPolicySupersession, UnboundFieldRole, FontGlyphFallback,
 )
@@ -271,6 +271,10 @@ def warning_payloads(rendered: RenderedReview) -> list[dict[str, Any]]:
                              "count": info.count,
                              "message": f"{info.count} {label_kind} on {info.surface_id} were left out because "
                                         "they do not fit"})
+        elif isinstance(info, ScaleValuesFolded):
+            payloads.append({"code": info.code, "severity": "info", **info.payload(),
+                "message": f"{len(info.values)} values of {info.source_field} exceed the {info.palette_size} distinct "
+                           f"colors of scale {info.scale_id}; they share one neutral Other entry"})
         elif isinstance(info, PaintOmission):
             message = (f"{info.treatment} on {info.role} was omitted by {info.visual_profile}; "
                        + (f"use {info.paintable_profile} to paint it"
