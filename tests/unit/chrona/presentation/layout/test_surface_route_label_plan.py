@@ -11,7 +11,7 @@ from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.surface_annotations import SurfaceAnnotationBatch
 from chrona.presentation.layout.surface_member_labels import MemberLabelReservation, SurfaceMemberLabelsBatch
-from chrona.presentation.layout.surface_quality import CollisionDomain, TextPlacement
+from chrona.presentation.layout.surface_quality import CollisionDomain, PathCommand, TextPlacement
 from chrona.presentation.layout.surface_routes import SurfaceRelationLabelsBatch, SurfaceRoutesBatch, SurfaceRoutesContext
 from chrona.presentation.layout import surface_route_label_plan as plan
 from chrona.presentation.model.info_diagnostics import RelationSearchBudgetHit, RelationResolutionInfo, RelationResolutionStage
@@ -332,7 +332,34 @@ def test_real_owners_reserve_centered_name_before_rerouting_vertical_dependency(
     assert chosen.routes.relations[0].points[0] == baseline.routes.relations[0].points[0]
     assert chosen.routes.relations[0].points[-1] == baseline.routes.relations[0].points[-1]
     assert first.routes.relations[0].points == baseline.routes.relations[0].points
+    logical_routes = {item.relation_id.removesuffix(
+        f":stub-{getattr(item, 'fragment_endpoint', None)}")
+        if getattr(item, "fragment_endpoint", None) else item.relation_id
+        for item in chosen.routes.relations if not item.suppressed}
+    route_paint = chosen.obstacles.select(classes=("dependency-route",))
+    assert len(route_paint) > 1
+    assert route_paint and all(item.route_owner_id in logical_routes for item in route_paint)
     bounds = chosen.members.text[0].bounds
     assert not chosen.obstacles.collisions(ObstacleRect(float(bounds.inline), float(bounds.block),
         float(bounds.inline + bounds.inline_size), float(bounds.block + bounds.block_size)),
         classes=("dependency-route",), regions=("timeline",))
+
+
+def test_completed_stub_fragments_and_flattened_arcs_keep_one_logical_route_owner():
+    from chrona.presentation.layout.surface_routes import _register_route_paint
+
+    index = SurfaceObstacleIndex()
+    owner = "relation:logical-instance"
+    curve = (PathCommand("move", ((0, 0),)), PathCommand("line", ((10, 0),)),
+        PathCommand("quadratic", ((12, 0), (10, 2))), PathCommand("line", ((10, 10),)))
+    _register_route_paint(index, f"{owner}:stub-source", ((0, 0), (10, 0), (10, 10)), 1,
+        curve, route_owner_id=owner)
+    _register_route_paint(index, f"{owner}:stub-target", ((20, 0), (30, 0), (30, 10)), 1,
+        tuple(PathCommand(command.kind, tuple((x + 20, y) for x, y in command.points))
+              for command in curve), route_owner_id=owner)
+
+    route_paint = index.select(classes=("dependency-route",))
+    assert any(":stub-source:segment:" in item.placement_id for item in route_paint)
+    assert any(":stub-target:segment:" in item.placement_id for item in route_paint)
+    assert any(":arc:" in item.placement_id for item in route_paint)
+    assert {item.route_owner_id for item in route_paint} == {owner}
