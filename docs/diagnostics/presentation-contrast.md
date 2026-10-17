@@ -5428,7 +5428,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/03-launch-campaign.scene.json` | `cell:review-lane:["generated","","shipment"]:Lane` | `text` | 108.079, 442.200 | `canvas` | canvas | `#FFFFFF` | fill | 18.883 | 4.500 | info |
 | `examples/halcyon-1/generated/03-launch-campaign.scene.json` | `cell:review-lane:["generated","","tvac"]:Lane` | `text` | 143.870, 266.200 | `canvas` | canvas | `#FFFFFF` | fill | 18.883 | 4.500 | info |
 | `examples/halcyon-1/generated/03-launch-campaign.scene.json` | `cell:review-lane:["generated","","vibration"]:Lane` | `text` | 129.233, 222.200 | `canvas` | canvas | `#FFFFFF` | fill | 18.883 | 4.500 | info |
-| `examples/halcyon-1/generated/03-launch-campaign.scene.json` | `column:Lane` | `text` | 79.869, 126.700 | `canvas` | canvas | `#FFFFFF` | fill | 18.883 | 4.500 | info |
+| `examples/halcyon-1/generated/03-launch-campaign.scene.json` | `column:Lane` | `text` | 78.910, 126.700 | `canvas` | canvas | `#FFFFFF` | fill | 18.883 | 4.500 | info |
 | `examples/halcyon-1/generated/03-launch-campaign.scene.json` | `title` | `text` | 144.150, 84.132 | `canvas` | canvas | `#FFFFFF` | fill | 18.883 | 4.500 | info |
 | `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `actual:tvac:tvac` | `actual` | 1127.663, 121.000 | `planned:tvac:tvac` | flat | `#5FA8FF` | stroke | 7.607 | 3.000 | info |
 | `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `as-of-label` | `text` | 1199.774, 100.625 | `chip:as-of-label` | flat | `#2E3F5E` | fill | 9.223 | 4.500 | info |
@@ -6552,7 +6552,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `cell:review-lane:["generated","","vibration"]:Items` | `text` | 267.832, 1214.300 | `group:` | flat | `#E3E5E9` | fill | 8.683 | 4.500 | info |
 | `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `cell:review-lane:["generated","","vibration"]:Lane` | `text` | 85.233, 1214.300 | `group:` | flat | `#E3E5E9` | fill | 8.683 | 4.500 | info |
 | `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `column:Items` | `text` | 253.090, 75.100 | `canvas` | canvas | `#F5F5F1` | fill | 10.019 | 4.500 | info |
-| `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `column:Lane` | `text` | 35.869, 75.100 | `canvas` | canvas | `#F5F5F1` | fill | 10.019 | 4.500 | info |
+| `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `column:Lane` | `text` | 34.910, 75.100 | `canvas` | canvas | `#F5F5F1` | fill | 10.019 | 4.500 | info |
 | `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `title` | `text` | 82.975, 35.818 | `canvas` | canvas | `#F5F5F1` | fill | 10.019 | 4.500 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `actual:review-lane:["generated","ait","integration"]:integration` | `actual` | 1408.385, 553.250 | `planned:review-lane:["generated","ait","integration"]:integration` | flat | `#2C2138` | fill | 7.730 | 3.000 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `actual:review-lane:["generated","ait","integration"]:tvac` | `actual` | 1506.798, 553.250 | `planned:review-lane:["generated","ait","integration"]:tvac` | flat | `#2C2138` | fill | 7.730 | 3.000 | info |
