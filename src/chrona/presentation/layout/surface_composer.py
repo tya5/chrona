@@ -249,12 +249,16 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
 
     pre_route, post_route = member_label_requests.routing_phases()
     place_label_phase(pre_route)
+    required_label_obstacle_ids = frozenset(
+        obstacle_id for label in pre_route
+        for obstacle_id in (label.placement_id, f"label-footprint:{label.placement_id}"))
 
     route_label_plan = compose_routes_and_member_labels(RouteLabelPlanContext(
         member_label_context, post_route, tuple(text), surface_obstacles,
         lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
             tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot),
-            temporal_endpoints=mark_batch.temporal_endpoints)))
+            temporal_endpoints=mark_batch.temporal_endpoints,
+            required_label_obstacle_ids=required_label_obstacle_ids)))
     surface_obstacles = route_label_plan.obstacles
     routes_batch = route_label_plan.routes
     relations = list(routes_batch.relations)

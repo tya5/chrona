@@ -6,6 +6,7 @@ import pytest
 
 from chrona.app.cli import main
 from chrona.presentation.layout import surface_annotations, surface_composer, surface_route_label_plan
+from chrona.presentation.layout.surface_member_labels import SurfaceMemberLabelRequests
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 
@@ -18,6 +19,17 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
     trial_final_ids: dict[int, set[str]] = {}
     seen: dict[str, object] = {}
     call: dict[str, object] = {}
+    original_phases = SurfaceMemberLabelRequests.routing_phases
+
+    def phases_spy(requests):
+        required, optional = original_phases(requests)
+        seen["required_obstacle_ids"] = frozenset(
+            obstacle_id for label in required
+            for obstacle_id in (label.placement_id, f"label-footprint:{label.placement_id}"))
+        seen["optional_label_ids"] = {label.placement_id for label in optional}
+        return required, optional
+
+    monkeypatch.setattr(SurfaceMemberLabelRequests, "routing_phases", phases_spy)
 
     def spy(name: str, original):
         def wrapper(*args, **kwargs):
@@ -31,6 +43,9 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
         original = getattr(surface_route_label_plan, attribute)
 
         def owner_spy(*args, _original=original, _name=name, **kwargs):
+            if _name == "routes":
+                assert args[0].required_label_obstacle_ids == seen["required_obstacle_ids"]
+                assert args[0].required_label_obstacle_ids.isdisjoint(seen["optional_label_ids"])
             obstacles = args[0].obstacles
             identity = id(obstacles)
             ids = {item.placement_id for item in obstacles.all()}

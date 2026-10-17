@@ -89,6 +89,7 @@ class SurfaceRoutesContext:
     plot_bounds: tuple[float, float, float, float] | None = None
     temporal_endpoints: tuple[TemporalEndpointPlacement, ...] = ()
     progress_pass: str = "relations"
+    required_label_obstacle_ids: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -727,7 +728,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                                                        used_back_route, back_route_reason[0])
 
                 resolution = search_relation_resolution(context.layout_manifest.relation_unroutable,
-                    obstacles=obstacles, endpoint_host_ids=endpoint_hosts, attempt=attempt_route)
+                    obstacles=obstacles, endpoint_host_ids=endpoint_hosts,
+                    required_label_obstacle_ids=context.required_label_obstacle_ids,
+                    attempt=attempt_route)
                 receipt = resolution.accepted or (resolution.attempts[-1] if resolution.attempts else None)
                 domain = attempted_domains[receipt.stage] if receipt is not None else normal_domain
                 outcome = receipt.selection if receipt is not None else None
