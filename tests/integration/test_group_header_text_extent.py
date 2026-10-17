@@ -171,9 +171,10 @@ def test_text_band_clamps_long_header_at_table_edge(tmp_path):
     text = items["group-header:team-0"]
     table = next(slot.bounds for slot in rendered.surface.slots if slot.slot_id == "table")
     assert band.bounds[0] >= table[0]
-    assert band.bounds[0] + band.bounds[2] == pytest.approx(table[0] + table[2])
-    assert text.bounds[0] + text.bounds[2] > band.bounds[0] + band.bounds[2]
-    assert text.text == "A deliberately long group header that reaches the table edge"
+    assert band.bounds[0] + band.bounds[2] <= table[0] + table[2] + 1e-6
+    assert band.bounds[0] + band.bounds[2] == pytest.approx(text.bounds[0] + text.bounds[2])
+    assert text.bounds[0] + text.bounds[2] <= band.bounds[0] + band.bounds[2] + 1e-6  # the label gives way (#1629)
+    assert text.text.endswith("\u2026") and text.text != "A deliberately long group header that reaches the table edge"
     _assert_svg_bounds(rendered, "group-header-band:team-0")
 
 

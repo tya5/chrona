@@ -1,6 +1,6 @@
 # Portable Visual Capabilities
 
-**Status:** Delivered (corrected v0.6 target-fidelity contract); PDF v0.7 extension designed (#1612).
+**Status:** Delivered (corrected v0.6 target-fidelity contract); PDF v0.7 extension implemented (#1612, release acceptance pending).
 **Owns:** renderer-neutral visual capability profiles, completed Scene visual
 effects, fidelity, limits, and target admission. It does not own geometry,
 semantic selection, Layout, concrete color literals, package acquisition, or

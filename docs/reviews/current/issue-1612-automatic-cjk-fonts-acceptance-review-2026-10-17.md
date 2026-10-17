@@ -2,22 +2,7 @@
 
 # Issue #1612 — automatic CJK font closure
 
-Source `12ca1cc52e16d728b305e3df5663cfd695f20be1`, merged by
-[PR #1619](https://github.com/tya5/chrona/pull/1619) as `14820a9e3`; the
-measured-source heading/network face-closure correction merged by
-[PR #1621](https://github.com/tya5/chrona/pull/1621) as `3d8ab658`.
-The exact review-containing main is `8c4d17f917b29600fd72e5b514ad06d31242ca33`
-(baseline `6bb56c205`).
-[Design, architecture review and implementation plan](https://github.com/tya5/chrona/issues/1612#issuecomment-6225435042).
-The exact-main [three-OS release38985610444](https://github.com/tya5/chrona/actions/runs/38985610444)
-passed on the final source, including the merged face-closure correction.
-The [PDF completion work record](../../planning/active/issue-1612-pdf-glow-work-record-2026-10-17.md)
-now implements the published Specs08/63 design without a waiver. macOS passes
-all45 outputs; Linux exact-head CI, post1623 public byte comparison and the new
-review-containing main release remain pending. Earlier release evidence proves
-the font slice, not this PDF completion.
-Current adapter work follows post1623 ready main
-`fa262ebab648229138eb34c33bf6a821f6450e96` without conflicts.
+Source `12ca1cc52e16d728b305e3df5663cfd695f20be1`; font closure merged by [PR #1619](https://github.com/tya5/chrona/pull/1619) as `14820a9e3`, and heading/network face closure by [PR #1621](https://github.com/tya5/chrona/pull/1621) as `3d8ab658`. PDF completion merged as `315b9b32b84b8769926a8b751bdef99b1d935f22` in [PR #1635](https://github.com/tya5/chrona/pull/1635), head `9f4640c9e783e5bcea5eb55ee4969b614cd842ca`, based on ready main `fa262ebab648229138eb34c33bf6a821f6450e96`. See the [approved design and plan](https://github.com/tya5/chrona/issues/1612#issuecomment-6225435042) and [PDF glow work record](https://github.com/tya5/chrona/blob/9f4640c9e783e5bcea5eb55ee4969b614cd842ca/docs/planning/active/issue-1612-pdf-glow-work-record-2026-10-17.md). All four literal criteria are met. The issue remains open pending the review-containing exact-main three-OS release; no waiver is applied.
 
 ## Literal issue acceptance
 
@@ -28,34 +13,13 @@ Current adapter work follows post1623 ready main
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | Synthetic test: a Theme naming only a Latin family renders a CJK string through the fallback and records which face it used. | met | [Automatic CJK controls](../../../tests/integration/test_automatic_cjk_fonts.py) cover declared Latin-only Theme, mixed exact face runs, optional provider absent with injected OS faces, info substitution and PDF text/embedded Noto Sans JP program. | — |
-| 2 | All 15 presets render a Japanese CSV import to PNG, SVG and PDF with no glyph error, on macOS and on the Linux CI runner (Noto CJK package). View three PNGs and one rasterised PDF. | not met | [Automatic CJK integration controls](../../../tests/integration/test_automatic_cjk_fonts.py):48passed on macOS, including all45 real outputs; no refusal exception. Root viewed default/executive/Marquee PNGs and rasterized Marquee PDF in `/tmp/chrona-1612-final-visual.aSJfqb`:74glows/74alpha images/74soft masks, Japanese text extractable and source vectors retained. Linux exact-head evidence pending. | — |
-| 3 | Public SVG/Scene byte-identical for Latin-only examples. | not met | Published font evidence: [artifact12078464991](https://github.com/tya5/chrona/actions/runs/38976260394/artifacts/12078464991) has all50SVG/50Scene byte-identical; [heading artifact12082313818](https://github.com/tya5/chrona/actions/runs/38984444157/artifacts/12082313818) has no font geometry change. Repeat against the post1623 ready base for the current PDF completion; prior placement changes must not be attributed to this adapter slice. | — |
-| 4 | Reviewer: please trace it and fix it in the face-run path, with a synthetic twin of a mixed Latin+CJK string checked for weight in PNG (and the same in PDF). | met | Correction `ddc57bd2e`, [full PNG/PDF task twin](../../../tests/integration/test_mixed_script_raster_faces.py) `e7314d630`:2passed, portable provider-absent and native macOS Hiragino W4/W7. Actual table/member Latin crops equal their own same-position400/700 references and differ from the opposite weight; PDF extracted UX text maps to embedded400/700 programs. Native no-projection control fails at the regular crop. Root viewed the full native PNG; its regular UX prefix differs0pixels from Noto Sans400,114from700 and122from Hiragino. The raster chunk had substituted Hiragino Latin despite correct Scene400; completed-run x projection fixes it without changing Layout faces. | — |
+| 1 | Synthetic test: a Theme naming only a Latin family renders a CJK string through the fallback and records which face it used. | met | [Automatic CJK controls](../../../tests/integration/test_automatic_cjk_fonts.py) cover Latin-only Theme, mixed exact face runs, provider-absent injected OS faces, info substitution and PDF text/embedded Noto Sans JP. | — |
+| 2 | All 15 presets render a Japanese CSV import to PNG, SVG and PDF with no glyph error, on macOS and on the Linux CI runner (Noto CJK package). View three PNGs and one rasterised PDF. | met | macOS: [48 focused integration tests](../../../tests/integration/test_automatic_cjk_fonts.py) pass, including all 45 preset/target outputs; three PNGs and one rasterized PDF were viewed. [Exact-head Linux pytest](https://github.com/tya5/chrona/actions/runs/39004437658) passed all three shards (4201, 4195 and 4210 passes), with the CJK provider installed and no preset-target refusal exception. | — |
+| 3 | Public SVG/Scene byte-identical for Latin-only examples. | met | Current [artifact 12090094644](https://github.com/tya5/chrona/actions/runs/39004437658/artifacts/12090094644): 109 paths retained, 0 added/retired; all 50 SVGs and 50 Scenes are byte-identical to ready main `fa262ebab648229138eb34c33bf6a821f6450e96`; no primitive or Scene diagnostic changes across all 50 slides. Only diagnostics/inventory and declared-value inventory change; the latter deliberately pins the PDF raster identity. | — |
+| 4 | Reviewer: please trace it and fix it in the face-run path, with a synthetic twin of a mixed Latin+CJK string checked for weight in PNG (and the same in PDF). | met | [Mixed-script raster-face controls](https://github.com/tya5/chrona/blob/9f4640c9e783e5bcea5eb55ee4969b614cd842ca/tests/integration/test_mixed_script_raster_faces.py): portable provider-absent and native Hiragino 400/700 twins verify actual Latin crops against exact-weight references; PDF text extracts and maps to embedded 400/700 programs. The native no-projection control fails as expected. | — |
 
 ## Programme-level criteria (optional)
 
-Font ingress closes provider/OS metrics and exact files. Layout completes
-per-glyph faces and advances; Scene projects them; adapters serialize without
-font discovery or measurement. PDF-private aliases preserve exact assets even
-when names/weights coincide, default SVG namespaces and clipping remain intact,
-and TikZ uses closed file paths. Strict system-font refusal is unchanged.
-Specs08/30/37/63 describe the contract. PDF-only halo lowering consumes completed
-regions and original native faces; it retains vector source paint, exact-face
-text and isolated Form resources. No preset, example or generated-output edits.
-Shared private run positioning retains serialized/inherited PDF aliases exactly;
-PNG without fallback runs returns its original input and adapter identity.
-Only halo clones are positioned before rasterization; PDF source is lowered once.
-Current focused evidence:76profile/closure,196schema/package,59existing PDF,
-37glow/registry/native-face/opacity and48CJK integration tests pass.
-Current raster correction controls:34projector/halo/registry/PDF-advance,
-61renderer/font/opacity,2mixed PNG/PDF cases; all48CJK tests rerun successfully.
-Root re-viewed the three PNGs and actual rasterized PDF after this correction;
-Marquee remains74glows/images/soft masks with extractable Japanese text.
-Post1623 focused profile/closure/glow/projector/real mixed PNG/PDF batch:86passed;
-the conditional PNG adapter-identity controls are included.
-L1 schema equivalence:added1/delta3/equal35, frozen v0.1 unchanged.
-The post1623 full schema-equivalence command fails only the runtime gate:
-L2+L3 90.8s versus60s; structural/corpus/diagnostic comparisons introduce no
-failure. CI head525559282 passes that unchanged gate in16.3s; no local waiver.
-Full current-source release and public-output identity remain pending.
+Font ingress closes provider/OS metrics and exact files; Layout completes per-glyph faces and advances; Scene projects them; adapters serialize without discovery or measurement. PDF uses private exact-face aliases and halo-only rasterization while retaining vector text/source paint and isolated alpha resources. Shared run positioning preserves inherited aliases; PNG without fallback runs receives the original SVG and unchanged identity. Strict system-font refusal remains unchanged. Specs08/30/37/63 describe the contract; no preset, example, or generated output was edited.
+
+PR #1635 evidence: 34 projector/halo/registry/PDF-advance tests, 61 renderer/font/opacity controls, and 48 CJK integration tests pass; actual PNG/PDF mixed-script controls pass and the no-projection control fails. Root viewed the current three PNGs and rasterized PDF; the Marquee PDF retains 74 glow halos, soft masks, extractable Japanese text, and vector source paint. CI conformance passes. Local schema equivalence reports L2+L3 at 90.8s against the 60s runtime gate; that local timing failure is disclosed, not waived. Exact-head Linux pytest/conformance/MCP/materializer checks passed; the review-containing exact-main three-OS release remains required before closure.
