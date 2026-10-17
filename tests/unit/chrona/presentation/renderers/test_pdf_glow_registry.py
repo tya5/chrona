@@ -106,3 +106,27 @@ def test_pdf_admitted_stroke_finishes_remain_native(cap, cap_number, join, join_
     assert any(operator == b"J" and tuple(operands) == (cap_number,) for operands, operator in operations)
     assert any(operator == b"j" and tuple(operands) == (join_number,) for operands, operator in operations)
     assert not reader.pages[0]["/Resources"].get("/XObject")
+
+
+def test_glow_halo_preserves_vector_relation_and_completed_terminal():
+    import resvg_py
+    from chrona.presentation.layout.relation_terminals import marker_geometry
+
+    node = ScenePrimitive("route", "Path", "route", "relation", "dependency", "dependency", (10, 10, 60, 40),
+                          points=((10, 10), (70, 10), (70, 50)),
+                          marker_end=marker_geometry({"shape": "triangle", "headLength": 8, "headWidth": 6},
+                                                     stroke_width=3),
+                          paint=ScenePaint(None, "#224466", 3, (), 1,
+                                           glow=Glow("#FFD24A", 3, 0.8, "required", (0, 0, 90, 70))))
+    descriptor = {**_descriptor(), "glowRasterizer": {
+        "engine": "resvg-py", "version": resvg_py.__version__,
+        "resvgVersion": resvg_py.__resvg_version__, "dpi": 96}}
+    artifact = registry.ReportLabPdfRenderer(descriptor, None, None, font_files=()).render(_surface(node))
+    reader = PdfReader(BytesIO(artifact.content))
+    operations = ContentStream(reader.pages[0].get_contents(), reader).operations
+    assert any(operator == b"l" and tuple(operands) == (70, 50) for operands, operator in operations)
+    # The terminal is a filled vector contour, not absorbed into the halo image.
+    assert any(operator in {b"f", b"f*"} for _, operator in operations)
+    images = [reference.get_object() for reference in reader.pages[0]["/Resources"]["/XObject"].values()
+              if reference.get_object().get("/Subtype") == "/Image"]
+    assert len(images) == 1 and "/SMask" in images[0]
