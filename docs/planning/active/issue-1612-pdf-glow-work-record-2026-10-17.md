@@ -132,7 +132,11 @@ Post1623 full `tools.schema_equivalence --base-rev origin/main`: structural,
 corpus and diagnostic comparisons introduce no failure, but the command FAILS
 only its existing runtime gate (L2+L3 90.8s >60s). Do not call it a passing run
 or change the limit. CI conformance runs the same L2/L3 time gate on its runner;
-that result is required before release acceptance.
+that result is required before release acceptance. CI head525559282 passes
+the unchanged schema gate in16.3s. Its conformance log identifies exactly two
+failed checks: declared-value classification and literal-review structure/link.
+Restore the required Programme heading and the row2 test link; no criterion or
+test is waived. The corrected head must pass both checks and the full CI gate.
 Official PR snapshot12090705310 at525559282 proves50SVG and50Scene files
 byte-identical to the post1623 base; all109paths retained. Only two inventory
 reports differ. Audit found the new native raster face identity check missing
