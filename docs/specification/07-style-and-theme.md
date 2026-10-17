@@ -133,6 +133,9 @@ Existing View `colorEncoding` remains accepted and lowers to the same intent;
 legacy opaque encoding fields do not become typed predicate declarations.
 Encoding paint identity is resolved source, scale, domain and channel, not
 legend wording. A scoped encoding requires a non-blank authored legend title.
+Any provided legend title must be non-blank; a global encoding may omit it
+to show values alone. Reject blank titles at the Style resource pointer,
+not during Scene provenance validation.
 Its canonical selector is retained with legend provenance. `showScope` opts in
 to a derived visible qualifier; that qualifier is not forced and does not
 replace the title. New selectors/channels need their own contract.

@@ -788,6 +788,8 @@ label selection: only entry composition changes, with no layout retry cycle.
 Finite-key review found `rule-pair` ignoring completed scale colour. Spec28
 makes that colour the key ink for both View and Style, retaining shared Theme
 width/opacity. This is a common legend correction, not project-specific tuning.
+Style title admission and passive Scene metadata must agree: a supplied title
+is non-blank, while a global encoding may omit it (Spec07).
 Bounded independent review found the existing field-keyed scale completion
 insufficient for source aliases; S2b replaces that grouping, retaining one
 resolver and source-local diagnostics. No other blocking contract gap remains.
