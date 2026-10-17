@@ -9,10 +9,11 @@ from typing import Mapping
 
 from chrona.presentation.model.font_metrics import FontFile
 from chrona.presentation.renderers.pdf_fonts import PdfFontConversionError, pdf_raster_font_bytes
+from chrona.presentation.renderers.svg_text_runs import position_completed_text_runs
 from chrona.presentation.scene.model import SceneSurface
 
 
-PDF_GLOW_GRAMMAR = "pdf-resvg-completed-glow-v1"
+PDF_GLOW_GRAMMAR = "pdf-resvg-completed-glow-v2"
 _SVG_NS = "http://www.w3.org/2000/svg"
 _NS = {"s": _SVG_NS}
 
@@ -175,6 +176,13 @@ def lower_pdf_glows(surface: SceneSurface, svg: bytes, files: tuple[FontFile, ..
             halo_owner = etree.fromstring(etree.tostring(owner))
             halo_owner.attrib.pop("opacity", None)
             halo_owner.attrib.pop("clip-path", None)
+            layout = getattr(primitive, "text_layout", None)
+            if layout is not None and layout.runs:
+                text_nodes = [node for node in halo_owner.iter()
+                              if tag(node) == "text" and node.get("data-scene-id") == scene_id]
+                if len(text_nodes) != 1:
+                    fail("E_PRESENTATION_PRIMITIVE_INVALID", f"PDF glow text scene_id={scene_id!r} has {len(text_nodes)} source nodes")
+                position_completed_text_runs(text_nodes[0], layout)
             halo_root.append(halo_owner)
             font_files = font_paths(primitive, temp_root, font_path_cache) if getattr(primitive, "text_layout", None) is not None else []
             try:

@@ -88,7 +88,7 @@ def test_glowing_pdf_contains_only_halo_image_with_soft_mask_and_keeps_vector_so
     assert (images[0]["/Width"], images[0]["/Height"]) == (38, 38)
     assert any(operator == b"re" and tuple(operands) == (30, 30, 20, 20)
                for operands, operator in ContentStream(page.get_contents(), reader).operations)
-    assert "pdf-resvg-completed-glow-v1" in artifact.adapter_identity
+    assert "pdf-resvg-completed-glow-v2" in artifact.adapter_identity
     assert "pdf-native-raster-face-alias-v1" in artifact.adapter_identity
     assert f"resvg-py-{resvg_py.__version__}-resvg-{resvg_py.__resvg_version__}-dpi96" in artifact.adapter_identity
 

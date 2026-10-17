@@ -57,15 +57,18 @@ class ResvgPngRenderer:
         files, identities = _font_files(self._font_metrics, self._asset_root, self._font_files_override,
                                         self._asset_resolver)
         svg = V05SvgRenderer(viewer_fit=False).render(surface).content
+        from chrona.presentation.renderers.svg_text_runs import RASTER_TEXT_RUN_GRAMMAR, lower_png_text_runs
+        raster_svg = lower_png_text_runs(surface, svg)
+        run_identity = f"-{RASTER_TEXT_RUN_GRAMMAR}" if raster_svg != svg else ""
         try:
             import resvg_py
-            content = resvg_py.svg_to_bytes(svg_string=svg.decode("utf-8"), dpi=self._descriptor["dpi"],
+            content = resvg_py.svg_to_bytes(svg_string=raster_svg.decode("utf-8"), dpi=self._descriptor["dpi"],
                                             font_files=list(dict.fromkeys(str(item.path) for item in files)),
                                             skip_system_fonts=True)
         except ImportError as error:
             raise _failure("E_RENDER_RASTERIZER_UNAVAILABLE", "target PNG requires the installed resvg_py adapter") from error
         return RenderArtifact("png", "image/png", content, _adapter_identity(
-            f"resvg-py-{self._descriptor['version']}-resvg-{self._descriptor['resvgVersion']}", identities))
+            f"resvg-py-{self._descriptor['version']}-resvg-{self._descriptor['resvgVersion']}{run_identity}", identities))
 
 
 class ReportLabPdfRenderer:

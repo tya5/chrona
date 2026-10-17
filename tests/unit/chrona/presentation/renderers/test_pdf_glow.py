@@ -66,7 +66,7 @@ def test_pdf_glow_preserves_fractional_clip_grid_nested_alpha_and_vector_source(
     primitive = _primitive("glowing-rect", (15.25, 10.5, 65.1, 60.25))
     surface = SimpleNamespace(primitives=(primitive,))
     lowered = lower_pdf_glows(surface, source, (), {})
-    assert PDF_GLOW_GRAMMAR == "pdf-resvg-completed-glow-v1"
+    assert PDF_GLOW_GRAMMAR == "pdf-resvg-completed-glow-v2"
 
     root = etree.fromstring(lowered)
     image = root.find(".//s:image", NS)
@@ -109,10 +109,11 @@ def test_pdf_glow_uses_closed_native_aliases_for_distinct_same_family_weight_fac
     }
     layout = SimpleNamespace(
         asset_identity=regular.content_identity, family="Shared Face", weight=400,
+        baseline=(8, 48), horizontal_scale=1.0, font_size=30, line_height=1.2, letter_spacing=0,
         runs=((SimpleNamespace(text="WWWW", family="Shared Face", weight=400,
-                               asset_identity=regular.content_identity),
+                               asset_identity=regular.content_identity, font_size=30, inline_size=122),
                SimpleNamespace(text="WWWW", family="Shared Face", weight=400,
-                               asset_identity=mono.content_identity)),),
+                               asset_identity=mono.content_identity, font_size=30, inline_size=72)),),
     )
     primitive = _primitive("glowing-text", (0, 0, 250, 70), layout)
     surface = SimpleNamespace(primitives=(primitive,))
@@ -124,11 +125,14 @@ def test_pdf_glow_uses_closed_native_aliases_for_distinct_same_family_weight_fac
         <feMerge><feMergeNode in="halo"/><feMergeNode in="halo"/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter></defs>
       <text data-scene-id="glowing-text" x="8" y="48" font-size="30" filter="url(#glow)" font-family="ChronaClosedFace-primary">
-        <tspan>WWWW</tspan><tspan x="130" font-family="ChronaClosedFace-override">WWWW</tspan>
+        <tspan>WWWW</tspan><tspan font-family="ChronaClosedFace-override">WWWW</tspan>
       </text>
     </svg>'''.encode()
     reference = etree.fromstring(svg.replace(b"ChronaClosedFace-primary", b"Noto Sans").replace(
         b"ChronaClosedFace-override", b"Noto Sans Mono"))
+    reference_spans = reference.xpath(".//s:text/s:tspan", namespaces=NS)
+    reference_spans[0].set("x", "8")
+    reference_spans[1].set("x", "130")
     reference_filter = reference.xpath(".//s:filter[@id='glow']", namespaces=NS)[0]
     reference_source = reference_filter.xpath(".//s:feMergeNode[@in='SourceGraphic']", namespaces=NS)[0]
     reference_source.getparent().remove(reference_source)
@@ -145,6 +149,11 @@ def test_pdf_glow_uses_closed_native_aliases_for_distinct_same_family_weight_fac
     assert actual_halo.tobytes() == expected.tobytes()
     assert b'font-family="ChronaClosedFace-primary"' in lowered
     assert b'font-family="ChronaClosedFace-override"' in lowered
+    # Only the halo clone is positioned here. The original vector source keeps
+    # its run attributes for the later, single PDF text-lowering pass.
+    source_spans = lowered_root.xpath(".//s:text/s:tspan", namespaces=NS)
+    assert [span.get("x") for span in source_spans] == [None, None]
+    assert [span.text for span in source_spans] == ["WWWW", "WWWW"]
 
 
 def test_no_glow_is_byte_identical_and_owner_transform_fails_closed():

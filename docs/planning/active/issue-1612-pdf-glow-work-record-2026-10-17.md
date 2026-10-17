@@ -6,14 +6,14 @@ Ready base: `8fc5364c3022676b680268005417239eb094a5ca`.
 The font and measured-run corrections are published in PRs1619/1621;
 [release38985610444](https://github.com/tya5/chrona/actions/runs/38985610444) passed.
 [Current acceptance](../../reviews/current/issue-1612-automatic-cjk-fonts-acceptance-review-2026-10-17.md)
-is44/45 outputs: Marquee PDF refuses required glow, independently of language.
-Complete that output, not a waiver or a flattened page. PR1623 lands first;
+now has45/45 macOS outputs after the PDF correction; Linux and mixed-face
+acceptance remain pending. PR1623 lands first;
 the PDF work has no overlapping product files.
 
 | Literal issue acceptance | Current disposition |
 | --- | --- |
 | Synthetic test: a Theme naming only a Latin family renders a CJK string through the fallback and records which face it used. | Met by published font controls; retain them. |
-| All 15 presets render a Japanese CSV import to PNG, SVG and PDF with no glyph error, on macOS and on the Linux CI runner (Noto CJK package). View three PNGs and one rasterised PDF. | Not met: Marquee PDF still refuses. Re-run all45 without the refusal exception. |
+| All 15 presets render a Japanese CSV import to PNG, SVG and PDF with no glyph error, on macOS and on the Linux CI runner (Noto CJK package). View three PNGs and one rasterised PDF. | macOS45 outputs and required image review pass; Linux exact-head evidence remains pending. |
 | Public SVG/Scene byte-identical for Latin-only examples. | Published font evidence met; repeat against the ready base after PR1623. |
 | Reviewer: please trace it and fix it in the face-run path, with a synthetic twin of a mixed Latin+CJK string checked for weight in PNG (and the same in PDF). | Not met: [mixed-script PNG weight finding](https://github.com/tya5/chrona/issues/1612#issuecomment-6229304765); trace exact completed faces through the full PNG and PDF, including provider-absent Hiragino. No speculative font substitution. |
 
@@ -109,3 +109,11 @@ PDF in `/tmp/chrona-1612-final-visual.aSJfqb`. Its Japanese text is extractable;
 74completed glows produce74alpha images/soft masks, with source vectors retained.
 Linux exact-head CI, post1623 public byte comparison and review-containing
 three-OS release are still required; the issue is not accepted or closed.
+
+The mixed-face correction is implemented in the shared renderer projector,
+PNG-private input and PDF halo clone. Root inspected the real executive PNG:
+its mixed `UX` table prefix matches the independent Noto Sans400 reference
+exactly (bold differs114pixels; Hiragino differs122), while the pure-Latin
+control remains unchanged. Existing renderer/font/opacity controls:61passed.
+Independent portable PNG/PDF regression and exact final-head gates remain
+required. No public SVG/Scene serializer or Layout measurement changed.
