@@ -142,3 +142,9 @@ def test_encoding_pointer_is_runtime_provenance_not_scale_identity():
         grouped.color_for("group-a", {"owner": "other"})
     assert caught.value.code == "E_PRESENTATION_SCALE_VALUE"
     assert caught.value.source_ref == "/body/grouping/tint"
+
+
+def test_scale_text_admits_strings_and_booleans_only():
+    from chrona.presentation.model.color_scale import scale_text
+    assert (scale_text("high"), scale_text(True), scale_text(False)) == ("high", "true", "false")
+    assert (scale_text(3), scale_text(1.5), scale_text(None), scale_text("2026-01-01".encode())) == (None, None, None, None)
