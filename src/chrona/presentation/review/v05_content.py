@@ -25,6 +25,11 @@ from chrona.presentation.group_header_text import GroupHeaderTextError, HeaderTe
 from chrona.presentation.figure_text import FigureTextProgram
 from chrona.presentation.heading_text import HeadingTextPrograms, close_heading
 from chrona.presentation.model.color_scale import OTHER_LABEL, ResolvedColorScale
+from chrona.presentation.model.style_rules import (
+    StyleFieldFact, StyleOccurrence, StyleOccurrenceKey, evaluate_style_rules,
+)
+from chrona.presentation.model.semantic_registry import semantic_binding
+from chrona.presentation.review.style_intent import lower_legacy_color_encoding
 from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec, AxisBandScaleError
 
@@ -464,9 +469,32 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     scale_paints: tuple[tuple[str, str], ...] = ()
     scale_legend_paints: tuple[tuple[str, str], ...] = ()
     if color_scale is not None:
-        scale_paints = tuple((item.object_id, color_scale.color_for(item.object_id, item.fields))
-                             for item in projection.items if item.source_kind in {"primary", "combined"}
-                             and color_scale.covers(item.fields))
+        encoding_rules = lower_legacy_color_encoding({
+            "source": {"field": color_scale.source_field}, "scale": color_scale.scale_id,
+            "domain": "firstAppearance" if color_scale.derived else color_scale.domain,
+            "target": color_scale.target_role,
+        })
+        paints = []
+        for item in projection.items:
+            if item.source_kind not in {"primary", "combined"}:
+                continue
+            # These are source-fact intents, before one source is expanded into
+            # repeated Layout occurrences. Keep the established source order
+            # and scale admission; the common evaluator owns selector matching.
+            field = item.field_bindings.read_result(item.fields, {"field": color_scale.source_field})
+            occurrences = tuple(
+                StyleOccurrence(
+                    StyleOccurrenceKey(item.object_id, item.source_kind, rule.selector.semantic,
+                                       member_id=item.item_id or item.object_id),
+                    semantic_binding(rule.selector.semantic).purpose, "mark",
+                    fields=(StyleFieldFact(field.field_name, None, field.present, field.value),),
+                )
+                for rule in encoding_rules
+            )
+            intents = evaluate_style_rules(encoding_rules, occurrences)
+            if any(intent.fill is not None for intent in intents) and color_scale.covers(item.fields):
+                paints.append((item.object_id, color_scale.color_for(item.object_id, item.fields)))
+        scale_paints = tuple(paints)
         used = _used_scale_values(color_scale, projection)
         scale_legend_paints = tuple((ref, color) for ref, _label, color in color_scale.legend_items(used))
     return SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,

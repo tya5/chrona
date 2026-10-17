@@ -67,20 +67,26 @@ def pack_extent_lanes(extents: list[tuple[float, float]]) -> list[int]:
     return lanes
 
 
-def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
-    """Close each Theme mark role to lane-relative Layout geometry."""
+def resolve_mark_geometries(
+    theme_tokens: Any,
+    *,
+    theme_role_by_geometry_role: Mapping[str, str] | None = None,
+) -> dict[str, MarkGeometry]:
+    """Close canonical mark roles to lane-relative geometry from selected Theme roles."""
     def aligned_offset(height: float, alignment: str) -> float:
         return 0.0 if alignment == "start" else 1.0 - height if alignment == "end" else (1.0 - height) / 2
 
+    selected_roles = dict(theme_role_by_geometry_role or {})
     result = {}
     actual_explicit_offset = False
     for role in MARK_GEOMETRY_ROLES:
-        height, offset, paint_order, corner_radius = theme_tokens.mark_geometry(role)
-        symbol_height, symbol_offset = theme_tokens.symbol_geometry(role)
+        theme_role = selected_roles.get(role, role)
+        height, offset, paint_order, corner_radius = theme_tokens.mark_geometry(theme_role)
+        symbol_height, symbol_offset = theme_tokens.symbol_geometry(theme_role)
         if role == "actual":
             actual_explicit_offset = offset is not None
         alignment_reader = getattr(theme_tokens, "mark_alignment", None)
-        alignment = alignment_reader(role) if alignment_reader is not None else "center"
+        alignment = alignment_reader(theme_role) if alignment_reader is not None else "center"
         completed_offset = float(offset) if offset is not None else aligned_offset(float(height), alignment)
         if offset is None:
             if symbol_height is None:
@@ -92,7 +98,7 @@ def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
             float(height), completed_offset, paint_order, float(corner_radius),
             None if symbol_height is None else float(symbol_height),
             None if symbol_offset is None else float(symbol_offset),
-            physical_corner_radius=theme_tokens.optional_token(role, "cornerRadius", "radius"))
+            physical_corner_radius=theme_tokens.optional_token(theme_role, "cornerRadius", "radius"))
     if actual_explicit_offset:
         result["actual"] = _default_actual_symbol(result["actual"], result["planned"])
     return result

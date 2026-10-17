@@ -29,6 +29,14 @@ The source also admits `{fieldRole: ...}` under
 is resolved against the primary Project before scale evaluation; a bound field
 still obeys this specification's ordinary domain and missing-value rules.
 
+The accepted View input lowers to the shared typed Style evaluator, not a
+second selector engine. Its target denotes the canonical Scene role: `planned`
+therefore admits planned and forecast mark semantics, but not `gate` merely
+because that semantic has the planned purpose. This internal lowering does not
+require an authored scoped-legend title on the existing View input. Domain
+derivation, Theme/Scheme scale completion and missing-value diagnostics retain
+the rules below.
+
 ## 2. Total mapping and diagnostics
 
 For every View domain value, Theme must provide exactly one mapping to a Scheme

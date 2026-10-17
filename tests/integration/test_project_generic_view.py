@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from hashlib import sha256
 import sys
 from pathlib import Path
 
@@ -9,6 +10,7 @@ import pytest
 import yaml
 
 from chrona.app.cli import main
+from chrona.storage.snapshot_paths import snapshot_directory
 
 ROOT = Path(__file__).resolve().parents[2]
 HALCYON = ROOT / "examples/halcyon-1"
@@ -48,11 +50,32 @@ def _render(tmp_path: Path, monkeypatch, *, project: dict | None = None, view_ed
         theme = _load(theme_path)
         theme_edit(theme["body"])
         _dump(theme_path, theme)
-    project_path = _dump(tmp_path / "project.yaml", project) if project else HALCYON / "project.yaml"
+    project_value = project if project is not None else _load(HALCYON / "project.yaml")
+    store_root = tmp_path / "store"
+    store_config = tmp_path / "store-config.yaml"
+    store_config.write_text(yaml.safe_dump({
+        "version": "chrona/store-config/v0.1",
+        "stores": [{"provider": "local", "identity": "halcyon-1-example", "root": "store",
+                    "integrity": "required"}],
+    }, sort_keys=False), encoding="utf-8")
+    # HALCYON's Project extension is an immutable local-snapshot reference.
+    # Stage the exact published package bytes under its declared address and
+    # complete the reference with the digest required by the configured Store.
+    for extension in project_value.get("extensions", ()):
+        reference = extension.get("resource", {})
+        address = reference["address"]
+        revision = reference["revision"]["token"]
+        package_bytes = (HALCYON / address).read_bytes()
+        package_path = snapshot_directory(store_root, revision) / address
+        package_path.parent.mkdir(parents=True, exist_ok=True)
+        package_path.write_bytes(package_bytes)
+        reference["contentIdentity"] = f"sha256:{sha256(package_bytes).hexdigest()}"
+    project_path = _dump(tmp_path / "project.yaml", project_value)
     scene_path = tmp_path / "scene.json"
     monkeypatch.setattr(sys, "argv", [
         "chrona", "render", str(project_path), "--preset", str(preset / "preset.yaml"),
-        "--output", str(tmp_path / "out.svg"), "--emit-scene", str(scene_path),
+        "--store-config", str(store_config), "--output", str(tmp_path / "out.svg"),
+        "--emit-scene", str(scene_path),
     ])
     main()
     return json.loads(scene_path.read_text(encoding="utf-8"))["surfaces"][0]

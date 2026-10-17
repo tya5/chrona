@@ -448,6 +448,18 @@ scheduling. The focused Draft/app/closure/accessor batch passes280 tests;
 real CLI/MCP provider tests pass15 (overlap), including provenance, containment
 and hash rejection. No Project-relative Store fallback is implemented.
 
+S1c integration in progress: existing View colour encoding now lowers to the
+shared evaluator before source paint completion. Canonical Scene-role selectors
+retain planned/forecast eligibility without admitting gates by shared purpose;
+scale domain, order and diagnostics remain owned by the existing resolver.
+The mark geometry resolver accepts selected Theme roles while preserving
+canonical geometry keys and planned/actual symbol fallback. Occurrence-frame,
+preflight, typography and Scene-producer connections are not yet complete.
+The focused evaluator/content/geometry and legacy encoding batch passes151
+tests; module reachability (283 modules) and inward imports pass without an
+allowlist. Generic Draft integration tests now provide an explicit temporary
+Store containing the exact declared package bytes rather than bypass closure.
+
 Draft provider design and implementation amendment: inject the existing
 `SnapshotReader` port into explicit/guided Draft ingress and `DraftRenderRequest`.
 Local Project bytes stay Draft; referenced packages are read from their named
