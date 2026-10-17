@@ -727,13 +727,12 @@ module reachability passes without an evaluator allowlist.
 
 ## S2 design and implementation plan
 
-Baseline: S1 PR1675 at `efebe4a3a` on trusted-ready maind11fd42b0. S1 release
+Baseline: S1 PR1675 at `6a54df93f` on trusted-ready mainba46a837b. S1 release
 acceptance is not assumed. S2 design proceeds independently; its implementation
 and merge must retain the accepted S1 correction and public evidence.
-The reviewer-approved glyph-fill declaration is integrated. S1 CI
-39074991839 passed snapshot generation and reproduction, but exposed legacy
-caller/test/inventory failures. Those corrections are retained in S2; current
-S1 CI39076342187 is running on the reconciled main base.
+The reviewer-approved glyph-fill declaration and caller/inventory corrections
+are integrated. S1 head474f passed all product gates; only the main-base gate
+failed after C1 landed. Current S1 CI39078531975 tests the reconciled base.
 S2 retains that exact correction; no floor or Scheme change is needed.
 
 Use one optional `body.style` pinned reference in the live Context and one
@@ -824,7 +823,9 @@ Draft/CLI/MCP input, preset/library/workspace copy and materialization, read
 ledger/provenance and pointed failure transport. Native Store tests exercise
 actual treatment, exact pin/version rejection, explicit precedence and no-Style
 controls. Schema equivalence, inward imports and module reachability pass;
-official installed-wheel, generated-artifact and release gates remain pending.
+Installed-wheel evidence is in the acceptance review; official artifact,
+reviewer and release gates remain pending. A real CLI SVG test verifies the
+explicit Style changes paint; the ingress module passes14 tests.
 S2b/c are implemented on the WIP branch: shared source-alias scale union,
 stable rule/scale/value legend identity, completed-placement paint filtering,
 optional qualifier fitting, and passive Scene match/scope metadata. Layout

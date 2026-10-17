@@ -8,9 +8,10 @@ V1 is merged at `ff9abcbbb`. Approved PR #1668 (`1ffa261d3`) passed all checks
 in [run 39051896543](https://github.com/tya5/chrona/actions/runs/39051896543).
 Its official artifact has109 paths: all50 SVGs are byte-identical; all50
 Scenes differ only by semantic-vocabulary provenance; no paths retired.
-The V1 release gate is not the S1 or parent-issue acceptance gate.
+Exact-main release [39053236335](https://github.com/tya5/chrona/actions/runs/39053236335)
+passed all three OSes on `890af301d`. This is not S1 or parent-issue acceptance.
 
-S1 is PR1675 at `efebe4a3a`, not merged or release-accepted. Typed facts, parsed-rule
+S1 is PR1675 at `6a54df93f`, not merged or release-accepted. Typed facts, parsed-rule
 evaluation, source-local identities, and role/fill composition are connected
 through normalization, Layout, and Scene. Selected-mark early paint preflight
 is connected; the final Style/native batch passes131 tests, with shared
@@ -43,6 +44,9 @@ published S2 rule. The scoped-legend module passes15 tests, including repeated
 same-field columns, actual fill/Scene validation and suppression. No design
 or public-output policy changed.
 Combined ingress/legend/content/Scene regression check passed41 tests.
+The native CLI test now renders both the no-Style and explicit `--style`
+paths and verifies their actual SVG paint differs; the complete ingress module
+passes14 tests.
 
 The pre-approval 50-slide public batch is49 byte-identical SVG/Scene pairs and the
 known `glyph-gates` pair only. Both differing files are byte-identical to the
@@ -70,7 +74,7 @@ release must still pass before accepting S1.
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | --- | --- | --- | --- | --- |
-| 1 | The semantic vocabulary is a versioned resource with a schema. | met | [Vocabulary resource](../../../src/chrona/resources/semantic-vocabulary.yaml), [schema](../../../schemas/semantic-vocabulary-v0.1.schema.yaml), immutable loader and typed-ingress tests. Official V1 PR evidence is above; exact-main release [39053236335](https://github.com/tya5/chrona/actions/runs/39053236335) passed. | — |
+| 1 | The semantic vocabulary is a versioned resource with a schema. | met | [Vocabulary resource](../../../src/chrona/resources/semantic-vocabulary.yaml), [schema](../../../schemas/semantic-vocabulary-v0.1.schema.yaml), immutable loader and typed-ingress tests. V1 official artifact and exact-main release evidence are above. | — |
 | 2 | A design set can introduce a visual distinction the product did not anticipate, without a code change. | not met | S1 implements Style evaluation and composition on its WIP branch; [S2 resource ingress](../../planning/active/issue-419-semantic-resource-work-record-2026-10-17.md#architecture-review-and-proposed-implementation-sequence) and published end-to-end evidence remain required. | — |
 | 3 | The presentation coverage report derives distinctions from resources rather than from source. | not met | [C1](../../planning/active/issue-419-semantic-resource-work-record-2026-10-17.md#architecture-review-and-proposed-implementation-sequence) remains dev B's scope; the current report is not resource-derived. | — |
 | 4 | No field in the registry is unread. | met | The [117-entry inventory](../../planning/active/issue-419-semantic-resource-work-record-2026-10-17.md#v1-equivalence-inventory-117-entry-baseline), registry/Scene/contrast/reachability tests, and independent digest cover all fields. V1 official artifact shows provenance-only Scene changes. | — |
@@ -98,32 +102,23 @@ generated outputs were not edited. Focused native tests include
 and [mark paint preflight](../../../tests/integration/test_style_mark_paint_preflight.py).
 They are not published release evidence.
 
-CI39074991839 passes snapshot generation, contrast, public reproduction and
-MCP. Conformance exposed an old starter caller without its explicit package
-Store, a diagnostic-identity read miscounted as exception construction, and
-the stale CLI reference. Shard1 also exposed remaining package-reader callers
-and old Layout test stubs without typed surface content. All three shard
-failures are accounted for by those callers/stubs, the stale CLI reference,
-the inventoried Scene semantic echo and the stale as-of-cone mark-property
-expectation. The corrections keep
-package pins and production behavior unchanged: focused caller tests20,
-Layout tests29, inventory tests17 and starter tests3 pass; documented commands
-pass with `--check --execute`. Generated diagnostic anchors are left to CI.
-Schema inventory tests18, cone/capability/canvas tests64 and additional preset
-font tests16 pass. The normally merged PR1676 diagnostic contract is retained
-by the shared catalogue; source-isolation/profile checks24 pass. A consolidated
-current-base CI re-run is still required; these fixes do not establish a green
-S1 release gate.
-Additional shape/renderer fixtures pass23 tests (the macOS-specific font cases
-also pass2 separately). The opt-in Tectonic helper resolves the pinned package;
-compilation is not claimed: its baseline visual profile independently refuses
-the declared line-cap capability. Optional TikZ work remains outside this slice.
+CI [39077516079](https://github.com/tya5/chrona/actions/runs/39077516079),
+head `474f3f92d`, passes snapshot/contrast, public reproduction, MCP,
+conformance and all three pytest shards. Only `derived-ready` failed because
+main advanced during the run. Its official snapshot has109 paths,
+all byte-identical to the preceding reviewed snapshot:49 unchanged SVG/Scene
+pairs, the disclosed glyph-gates pair, three diagnostic reports, no retired
+paths. The official glyph SVG equals the PNG-inspected source.
 
-Exact-main release run
-[39053236335](https://github.com/tya5/chrona/actions/runs/39053236335) passed all
-three OSes for V1; that is not S1 release evidence. The earlier S1 contrast
-failure is corrected by the approved declaration published in PR1675. Before accepting S1,
-obtain green CI on its updated PR, publish its implementation and review,
-inspect official batched SVG/Scene and PNG
-evidence, and verify the exact-main three-OS release. Keep #419 open until S1,
-S2 and C1 satisfy their respective acceptance rows.
+Caller repairs retain exact package closure and typed Layout content, not
+production fallbacks. The shared catalogue preserves PR1676's
+`E_PROFILE_ID_DUPLICATE`; all29 field-binding/source/catalogue tests pass.
+Inventory, schema, paint-capability, documented-command and caller focused
+checks pass. Optional TikZ compilation is not claimed and remains out of scope.
+
+C1 merged in PR1678 at `348fa338c`; its trusted generated tip `ba46a837b`
+(`derived-main` success) is normally integrated for the final S1 re-run.
+Current-head CI and artifact review remain required. C1's state-to-role
+evidence finding remains a separate final review item with dev B. S1 is not
+release-accepted until current-head CI, official artifact review and exact-main
+three-OS release succeed. Parent419 stays open for S2 and C1 as well.
