@@ -51,7 +51,7 @@ def test_profile_id_collision_is_pointed_and_removed_independent_of_order(packag
 
     assert "shared.profile" not in catalogue
     assert [(item.id, item.path) for item in diagnostics] == [
-        ("E_PROFILE_PACKAGE_INVALID", "/extensions/1"),
+        ("E_PROFILE_ID_DUPLICATE", "/extensions/1"),
     ]
     assert "both" in diagnostics[0].message
 

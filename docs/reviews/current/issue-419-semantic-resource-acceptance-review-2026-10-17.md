@@ -56,6 +56,27 @@ generated outputs were not edited. Focused native tests include
 and [mark paint preflight](../../../tests/integration/test_style_mark_paint_preflight.py).
 They are not published release evidence.
 
+CI39074991839 passes snapshot generation, contrast, public reproduction and
+MCP. Conformance exposed an old starter caller without its explicit package
+Store, a diagnostic-identity read miscounted as exception construction, and
+the stale CLI reference. Shard1 also exposed remaining package-reader callers
+and old Layout test stubs without typed surface content. All three shard
+failures are accounted for by those callers/stubs, the stale CLI reference,
+the inventoried Scene semantic echo and the stale as-of-cone mark-property
+expectation. The corrections keep
+package pins and production behavior unchanged: focused caller tests20,
+Layout tests29, inventory tests17 and starter tests3 pass; documented commands
+pass with `--check --execute`. Generated diagnostic anchors are left to CI.
+Schema inventory tests18, cone/capability/canvas tests64 and additional preset
+font tests16 pass. The normally merged PR1676 diagnostic contract is retained
+by the shared catalogue; source-isolation/profile checks24 pass. A consolidated
+current-base CI re-run is still required; these fixes do not establish a green
+S1 release gate.
+Additional shape/renderer fixtures pass23 tests (the macOS-specific font cases
+also pass2 separately). The opt-in Tectonic helper resolves the pinned package;
+compilation is not claimed: its baseline visual profile independently refuses
+the declared line-cap capability. Optional TikZ work remains outside this slice.
+
 Exact-main release run
 [39053236335](https://github.com/tya5/chrona/actions/runs/39053236335) passed all
 three OSes for V1; that is not S1 release evidence. The earlier S1 contrast

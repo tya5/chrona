@@ -9,6 +9,7 @@ from xml.etree import ElementTree
 import yaml
 
 from chrona.app.cli import main
+from tests.support.draft_packages import stage_project_package_store
 
 ROOT = Path(__file__).resolve().parents[2]
 HALCYON = ROOT / "examples/halcyon-1"
@@ -53,9 +54,13 @@ def _render(tmp_path: Path, monkeypatch, points: str | None = None, *,
         actual_path.write_text(yaml.safe_dump(actual, sort_keys=False), encoding="utf-8")
     scene = tmp_path / "scene.json"
     svg = tmp_path / "out.svg"
-    monkeypatch.setattr(sys, "argv", ["chrona", "render", str(project_path), "--actual", str(actual_path),
-                                      "--preset", str(preset / "preset.yaml"), "--output", str(svg),
-                                      "--emit-scene", str(scene)])
+    render_argv = ["chrona", "render", str(project_path), "--actual", str(actual_path),
+                   "--preset", str(preset / "preset.yaml")]
+    if project.get("extensions"):
+        store_config = stage_project_package_store(tmp_path / "package-store", project, HALCYON)
+        render_argv += ["--store-config", str(store_config)]
+    render_argv += ["--output", str(svg), "--emit-scene", str(scene)]
+    monkeypatch.setattr(sys, "argv", render_argv)
     main()
     return json.loads(scene.read_text(encoding="utf-8"))["surfaces"][0], svg.read_text(encoding="utf-8")
 

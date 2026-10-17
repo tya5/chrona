@@ -11,6 +11,7 @@ import yaml
 
 from chrona.app.cli import main
 from chrona.core.attachments import attachment_warnings
+from tests.support.draft_packages import stage_project_package_store
 from chrona.scheduling.scheduler import schedule
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
@@ -67,7 +68,9 @@ def test_render_reports_the_outside_span_warning(tmp_path, monkeypatch, capsys):
     project["objects"]["campaign-readiness"]["schedule"]["at"] = "2027-12-01"
     path = tmp_path / "project.yaml"
     path.write_text(yaml.safe_dump(project, sort_keys=False), encoding="utf-8")
-    monkeypatch.setattr(sys, "argv", ["chrona", "render", str(path), "--output", str(tmp_path / "out.svg")])
+    store_config = stage_project_package_store(tmp_path / "package-store", project, HALCYON.parent)
+    monkeypatch.setattr(sys, "argv", ["chrona", "render", str(path), "--store-config", str(store_config),
+                                       "--output", str(tmp_path / "out.svg")])
     main()
     output = capsys.readouterr()
     assert output.err == ""

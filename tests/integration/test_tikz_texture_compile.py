@@ -8,28 +8,38 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from PIL import Image, ImageChops
 import pytest
+import yaml
 
 from chrona.presentation.fonts.installed import InstalledFontIndex, use_installed_fonts
 from chrona.presentation.layout.pattern_placement import PatternPathCommand, PatternTilePrimitive
 from chrona.presentation.renderers import v05_typeset
 from chrona.presentation.renderers.v05_typeset import render_v05_tikz
 from chrona.presentation.scene.model import PatternGeometry, ScenePaint, ScenePrimitive, SceneSurface, SurfaceScaleManifest
+from chrona.operational.store_config import load_store_config
+from chrona.operational.store_reads import DraftExtensionPackageReader
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
 from tests.integration.test_tikz_font_resolution import needs_cjk
 from tests.support import typeset_compile as tc
+from tests.support.draft_packages import stage_project_package_store
 
 HALCYON = Path(__file__).resolve().parents[2] / "examples" / "halcyon-1"
 
 
 def _titlecard() -> str:
     with use_installed_fonts(InstalledFontIndex((), files=())):
-        rendered = render_draft(DraftRenderRequest(
-            project=HALCYON / "project.yaml", actual=HALCYON / "actual.yaml", target_kind="tikz", preset="titlecard",
-            visual_profile="chrona-output/visual/v0.5-baseline", typesetter_engine="tectonic", typesetter_version="0.17.0",
-            typesetter_adapter_grammar="chrona-tikz/v0.1"))
+        project_path = HALCYON / "project.yaml"
+        project = yaml.safe_load(project_path.read_bytes())
+        with TemporaryDirectory(prefix="chrona-tikz-texture-package-store-") as directory:
+            config = stage_project_package_store(Path(directory), project, HALCYON)
+            package_reader = DraftExtensionPackageReader(lambda: load_store_config(str(config)))
+            rendered = render_draft(DraftRenderRequest(
+                project=project_path, actual=HALCYON / "actual.yaml", target_kind="tikz", preset="titlecard",
+                visual_profile="chrona-output/visual/v0.5-baseline", typesetter_engine="tectonic", typesetter_version="0.17.0",
+                typesetter_adapter_grammar="chrona-tikz/v0.1", package_reader=package_reader))
     return rendered.artifact.content.decode("utf-8")
 
 
