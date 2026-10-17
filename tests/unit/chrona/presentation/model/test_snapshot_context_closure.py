@@ -74,7 +74,8 @@ def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path,
 
     resources = closure.resolve_render_context(context_ref, LocalSnapshotReader(tmp_path, "test")).resources
 
-    assert [(item.kind, item.revision) for item in resources][-2:] == [("snapshot-ref", "current"), ("snapshot-project", "historic")]
+    assert [(item.kind, item.revision) for item in resources if item.kind in {"snapshot-ref", "snapshot-project"}] == [
+        ("snapshot-ref", "current"), ("snapshot-project", "historic")]
 
 
 @pytest.mark.parametrize(

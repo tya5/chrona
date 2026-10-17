@@ -38,6 +38,7 @@ record.
 | inspection-scene | scene-v0.7.schema.yaml |
 | revision-store-resource-reference | revision-store-resource-ref-v0.1.schema.yaml |
 | revision-store-resource-reference | revision-store-resource-ref-v0.2.schema.yaml |
+| semantic-vocabulary | semantic-vocabulary-v0.1.schema.yaml |
 | snapshot-ref | snapshot-ref-v0.3.schema.yaml |
 | store-config | store-config-v0.1.schema.yaml |
 | summary-profile | summary-profile-v0.2.schema.yaml |

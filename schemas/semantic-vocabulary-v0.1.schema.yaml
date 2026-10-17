@@ -1,0 +1,33 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:semantic-vocabulary-v0.1"
+title: "Chrona Semantic Vocabulary v0.1"
+description: "Closed, ordered host-owned semantic mappings used by presentation resources."
+allOf:
+  - $ref: "urn:chrona:presentation-resource-v0.1"
+  - type: object
+    description: "Semantic vocabulary envelope with a closed, validated binding list."
+    properties:
+      version: {description: "Semantic vocabulary contract version.", const: chrona/semantic-vocabulary/v0.1}
+      kind: {description: "The semantic vocabulary resource kind.", const: semantic-vocabulary}
+      id: {description: "The identifier of the wheel-owned core vocabulary.", const: chrona-core}
+      body:
+        type: object
+        description: "Ordered semantic mappings admitted by the presentation system."
+        required: [bindings]
+        additionalProperties: false
+        properties:
+          bindings:
+            type: array
+            minItems: 1
+            description: "Mappings in stable semantic declaration order."
+            items:
+              type: object
+              required: [semanticId, primitiveFamily, purpose, sceneRole, themeRole, contrastClass]
+              additionalProperties: false
+              properties:
+                semanticId: {description: "Closed semantic lookup identifier.", type: string, minLength: 1}
+                primitiveFamily: {description: "Primitive family the semantic may produce.", enum: [mark, line, decoration, label, icon]}
+                purpose: {description: "Scene purpose carried by the completed primitive.", type: string, minLength: 1}
+                sceneRole: {description: "Completed Scene paint role.", type: string, minLength: 1}
+                themeRole: {description: "Theme role used to resolve paint and typography.", type: string, minLength: 1}
+                contrastClass: {description: "Optional completed-paint contrast policy class.", enum: [state-text, decoration, mark, ground-text, null], type: [string, 'null']}

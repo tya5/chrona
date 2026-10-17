@@ -15,6 +15,7 @@ from chrona.presentation.count_text import CountTextError, CountTextFormat
 from chrona.presentation.deadline_text import DeadlineCaptionText, compile_deadline_caption
 from chrona.core.store_address import StoreAddressError, check_store_address
 from chrona.resources import schema_validator
+from chrona.resources.semantic_vocabulary import SemanticVocabularyBinding
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
 from chrona.presentation.group_header_text import GroupHeaderTextError, parse_template
 from chrona.presentation.heading_text import HeadingPart, heading_figure_ids, validate_heading_template
@@ -578,6 +579,13 @@ class LayoutProfileContract(ResourceContract):
 
 
 @dataclass(frozen=True)
+class SemanticVocabularyContract(ResourceContract):
+    """The host-owned vocabulary explicitly consumed by a render closure."""
+
+    bindings: tuple[SemanticVocabularyBinding, ...]
+
+
+@dataclass(frozen=True)
 class IconPath:
     """Renderer-neutral, importer-normalized path in a catalog entry."""
 
@@ -837,6 +845,7 @@ _SCHEMAS = {
     ("theme", "chrona/theme/v0.16"): "theme-v0.16.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.10"): "layout-profile-v0.10.schema.yaml",
+    ("semantic-vocabulary", "chrona/semantic-vocabulary/v0.1"): "semantic-vocabulary-v0.1.schema.yaml",
     ("icon-catalog", "chrona/icon-catalog/v0.3"): "icon-catalog-v0.3.schema.yaml",
     ("icon-catalog", "chrona/icon-catalog/v0.5"): "icon-catalog-v0.5.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.3"): "actual-set-v0.3.schema.yaml",
@@ -1632,6 +1641,13 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
         return ColorSchemeContract(identity, version, frozen)
     if identity.kind == "layout-profile":
         return LayoutProfileContract(identity, version, frozen)
+    if identity.kind == "semantic-vocabulary":
+        from chrona.resources.semantic_vocabulary import SemanticVocabularyError, validate_semantic_vocabulary
+        try:
+            bindings = validate_semantic_vocabulary(value)
+        except SemanticVocabularyError as error:
+            raise ContractError(error.diagnostic_id, error.detail, error.source_ref) from error
+        return SemanticVocabularyContract(identity, version, bindings)
     if identity.kind == "icon-catalog":
         return _icon_catalog_contract(identity, version, body)
     if identity.kind == "render-context":

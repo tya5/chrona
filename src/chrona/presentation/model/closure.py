@@ -25,7 +25,7 @@ from chrona.presentation.contracts import (
     PresentationPresetContract,
     ProfilePackageContract, ProjectContract, RenderContextContract,
     ResolvedThemeContract, ResourceContract, ReviewDetailProfileContract,
-    SnapshotRefContract, SummaryProfileContract, TypesetterIdentity, ViewContract,
+    SemanticVocabularyContract, SnapshotRefContract, SummaryProfileContract, TypesetterIdentity, ViewContract,
     PresentationIngressRejected, PresentationResourceSource, collect_presentation_contracts,
     freeze, parse_contract, validate_icon_catalog_entry, validate_theme_asset_entry, IconRasterSource,
 )
@@ -107,6 +107,25 @@ class RenderClosure:
             detail=(f"resource kind={item.kind} id={item.id}; expected contract={expected.__name__}; "
                     f"found contract={type(item.contract).__name__}"),
         )
+
+    def require_semantic_vocabulary(self) -> None:
+        """Reject a closure that does not name the vocabulary used by host lookups."""
+        from chrona.resources.semantic_vocabulary import builtin_semantic_vocabulary
+        resource = self.resource("semantic-vocabulary")
+        if resource is None:
+            raise ClosureError("E_CLOSURE_REQUIRED", "/resources/semantic-vocabulary",
+                               "the closure has no host semantic vocabulary")
+        if not isinstance(resource.contract, SemanticVocabularyContract):
+            raise self._kind_error(resource, SemanticVocabularyContract)
+        expected = builtin_semantic_vocabulary()
+        if (resource.id != expected.id or resource.revision != "v0.1"
+                or resource.contract.version != expected.version
+                or resource.content_identity != expected.content_identity
+                or resource.contract.identity != ClosureIdentity(resource.kind, resource.id,
+                                                                resource.revision, resource.content_identity)
+                or resource.contract.bindings != expected.bindings):
+            raise ClosureError("E_RESOURCE_IDENTITY_MISMATCH", "/resources/semantic-vocabulary",
+                               "the closure vocabulary differs from the host lookup authority")
 
     @property
     def project(self) -> ProjectContract:
@@ -596,6 +615,7 @@ def _draft_render_from_resources(
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA", detail=error.detail) from error
     if not isinstance(context, RenderContextContract):  # defensive contract boundary
         raise _closure_kind_error("draft render context", "RenderContextContract", context)
+    resources.append(_builtin_vocabulary_resource())
     return DraftRender(RenderClosure(context, tuple(resources), resolved_theme, icon_assets, provenance,
                                     previous_scene_bytes),
                        font_asset_root or asset_root, auto_block=viewport[1] is None, font_resolution=resolution)
@@ -898,8 +918,21 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
         icon_assets = ()
     previous_scene_bytes = (_read_previous_scene(context_contract.previous_scene, reader)
                             if context_contract.previous_scene is not None else None)
+    resources.append(_builtin_vocabulary_resource())
     return RenderClosure(context_contract, tuple(resources), resolved_theme, icon_assets,
                          previous_scene_bytes=previous_scene_bytes)
+
+
+def _builtin_vocabulary_resource() -> ClosureResource:
+    """Close the same immutable wheel resource that owns all runtime bindings."""
+    from chrona.resources.semantic_vocabulary import SemanticVocabularyError, builtin_semantic_vocabulary
+    try:
+        value = builtin_semantic_vocabulary()
+        identity = ClosureIdentity("semantic-vocabulary", value.id, "v0.1", value.content_identity)
+        contract = parse_contract(identity, value.to_envelope())
+    except (SemanticVocabularyError, ContractError) as error:
+        raise ClosureError(error.diagnostic_id, error.source_ref, error.detail) from error
+    return ClosureResource(identity.kind, identity.id, identity.revision, identity.content_identity, contract)
 
 
 def _read_previous_scene(pin: ArtifactPin, reader: SnapshotReader) -> bytes:

@@ -32,6 +32,7 @@ SCHEMAS = (
     "view-v0.28.schema.yaml",
     "vocabulary-v0.1.schema.yaml",
     "vocabulary-v0.2.schema.yaml",
+    "semantic-vocabulary-v0.1.schema.yaml",
     "layout-profile-v0.10.schema.yaml",
     "scene-v0.6.schema.yaml",
     "scene-v0.7.schema.yaml",
@@ -90,6 +91,14 @@ def test_unregistered_example_is_rejected_naming_the_available_ids():
 
 def test_axis_name_table_catalog_is_packaged_from_one_source_authority():
     assert axis_name_tables_resource().read_bytes() == (ROOT / "src/chrona/resources/axis-name-tables-v0.1.yaml").read_bytes()
+
+
+def test_semantic_vocabulary_and_schema_are_packaged_from_one_source_authority():
+    vocabulary = RESOURCES.joinpath("semantic-vocabulary.yaml")
+    schema = schema_resource("semantic-vocabulary-v0.1.schema.yaml")
+
+    assert vocabulary.read_bytes() == (ROOT / "src/chrona/resources/semantic-vocabulary.yaml").read_bytes()
+    assert schema.read_bytes() == (ROOT / "schemas/semantic-vocabulary-v0.1.schema.yaml").read_bytes()
 
 
 def test_minimal_init_template_is_a_wheel_owned_non_corpus_resource():

@@ -1,27 +1,29 @@
 # Issue419 — semantic mapping resource
 
-Status: design amendment applied per reviewer direction; implementation planning
-may proceed from this record. Baseline: published main
-`aabc5e894af50555892c0007e48efb24c268f2f3`.
-[Owner scope](https://github.com/tya5/chrona/issues/419#issuecomment-6234067417):
-design record only, after issue1657 (implementation now published in PR1662).
+Status: V1 implemented; reviewer-required rationale retained and official
+artifact equivalence verified. Final current-base CI and release remain pending.
+Source base: trusted-ready published main
+`2d6767bb234b351a80f98c156df6474e3360436c`.
+[Reviewed scope](https://github.com/tya5/chrona/issues/419#issuecomment-6234966527):
+dev A owns V1/S1/S2; dev B owns C1 and Issue344 Level 1.
 
 ## Published baseline and open questions
 
-- `semantic_registry.py` has117 actual `_binding` declarations, not123; verify
-  the complete inventory and field consumers are recorded below.
+- The pre-V1 registry had117 actual `_binding` declarations, not123; the
+  frozen equivalence inventory and field consumers are recorded below.
   The issue's older claim that primitive kind and Theme role are unread is not
   current: Scene kind checks and Layout/Theme resolution consume them.
 - Spec49 owns the closed semantic→Theme→placement→Scene contract. Spec06/60
   expose one planned-mark colour encoding. Project `fields` and field roles
-  already reach projection; issue344's typed declaration is future work.
-- Issue419's selected proposal is recorded here only; Spec49 remains unchanged
-  until a normative change is implemented. Keep the existing View
+  already reach projection. Issue344 generalizes existing profile-v0.3 field
+  definitions and package validation; it does not add Project `fieldDefinitions`.
+- The remaining Style proposal is recorded here only; Spec49 documents the
+  implemented V1 vocabulary, not prospective Style behavior. Keep the existing View
   `colorEncoding` input accepted and lower it into the same typed intent used
   by Style. This work does not retire that syntax or require incompatible
   Context/preset migration.
 
-## Literal acceptance (parent remains open during design-only scope)
+## Literal acceptance (parent remains open during partial delivery)
 
 1. The semantic vocabulary is a versioned resource with a schema.
 2. A design set can introduce a visual distinction the product did not anticipate, without a code change.
@@ -32,8 +34,8 @@ design record only, after issue1657 (implementation now published in PR1662).
 7. The 31-of-40 figure, or its successor, is visible in a committed, checked document.
 
 Rows5–7 are the consolidated issue433 acceptance, not optional follow-ups.
-The current deliverable specifies how to achieve these; it does not mark them
-implemented or close the parent.
+V1 addresses rows1/4; its release acceptance remains separate from the
+unfinished Style and coverage rows. Do not close the parent for V1 alone.
 
 ## Design plan and publication boundary
 
@@ -87,6 +89,21 @@ Final schema spellings and exact owned files are finalized in the implementation
 plan; no draft numeric budgets or project-specific predicates become acceptance
 requirements.
 
+S1 readiness review found two seams to complete before code: the existing
+`FieldRoleBindings.read()` collapses absence and null, while legacy colour
+encoding reads the primary Project's field directly; S1 needs presence-aware,
+source-specific projected facts through the shared accessor. Coordinate that
+accessor with Issue344; do not create another declaration/evaluation engine.
+Occurrence role intent must also reach Layout's mark geometry and table text
+measurement before placement. A Scene-only role replacement cannot implement
+the approved contract. Preserve exact column-source and occurrence identities
+during normalization rather than recovering them from rendered text.
+Carry typed occurrence identity through marks, cells and labels; object ID
+alone aliases comparison and repeated occurrences. A selected Theme role must
+not replace the vocabulary's semantic identity or weaken its contrast class.
+Complete the role's typography, mark geometry and stroke extents before fit
+and routing, then preserve that completed role/paint through placement to Scene.
+
 Reviewer confirmed this amendment in
 [comment 6234922800](https://github.com/tya5/chrona/issues/419#issuecomment-6234922800)
 and stated no additional review is needed if applied as written in
@@ -130,6 +147,7 @@ body:
       then: {role: variance-behind}
     - id: payload-risk
       when:
+        purpose: planned
         fields: [{source: {fieldRole: responsible}, equals: payload}]
       then:
         encode:
@@ -231,9 +249,14 @@ the generated checked report supplies the successor measurement.
 RC promises versioned resource envelope/identity, vocabulary semantic IDs,
 purposes, Theme-role names and existing `colorEncoding`. Style v0.2 is an RC
 promise only if V1, S1 and S2 land before the RC trial; otherwise it remains
-experimental. V1 must precede RC. Dev A owns V1/S1/S2. Dev B begins C1 after V1
-and owns Issue344 Level 1 in the meantime, using the same accessor described
-above. Python types, factory grouping, cache representation, inventory order
+experimental. V1 must precede RC. Dev A owns V1/S1/S2. Dev B owns Issue344
+Level 1 and may begin C1 independently whenever that work is parked or done:
+V1 preserves the registry's Python read APIs. Any necessary signature change
+must update C1 callers atomically. Both lanes use the same field accessor.
+S2 may mechanically update example resource references, pins and renamed
+members, listing them in its PR count table; changes to what a slide shows
+remain reviewer-owned ([owner clarification](https://github.com/tya5/chrona/issues/419#issuecomment-6235010287)).
+Python types, factory grouping, cache representation, inventory order
 and physical packaging are internal. Focused neutral tests, public materializer
 evidence and the release CI gate are required at each implementation boundary.
 
@@ -248,7 +271,70 @@ an authored title for a scoped key.
 values and explicit references/errors, not semantic inference from folders or a
 reason to mix Theme values with View facts.
 
-## Current registry inventory (117 entries)
+## V1 implementation plan
+
+Baseline: the117 bindings inspected on the reviewed design base remain the
+same on current main. The amendment `ae75ab664` merged in PR1664 as `d0df1e8aa`
+before product implementation. Reconcile the next
+code PR with the latest trusted-ready main after PR1661. This plan is
+published separately before code, without creating another design authority.
+
+- **Resource/schema:** one wheel-owned `semantic-vocabulary.yaml`, version
+  `chrona/semantic-vocabulary/v0.1`, kind `semantic-vocabulary`, id `chrona-core`.
+  Ordered `body.bindings` records carry exactly `semanticId`, `primitiveFamily`,
+  `purpose`, `sceneRole`, `themeRole`, `contrastClass` (nullable). Preserve all117
+  values and order; classification metadata belongs to C1, not V1. The new
+  schema reuses the presentation envelope and existing shared definitions where
+  applicable; register its lifecycle in the schema inventory without modifying
+  frozen shared parts. No runtime Python copy of the records remains.
+- **Loader/registry:** resource location and validation in `chrona.resources`,
+  immutable cached records consumed by `model/semantic_registry.py`. Retain
+  existing internal lookup/family helpers, enum meaning and contrast dispatch;
+  derived indexes are not a second authority. A test-only frozen baseline
+  proves every old value/order, rather than generating its expectation from
+  the new resource under test.
+  Architecture boundary: `chrona.resources` must not import
+  `chrona.schema_diagnostics`, which already depends on resource loading.
+  Bootstrap resource errors carry the validator's native message and JSON
+  pointer; rich authored-ingress explanation remains in the existing contract
+  boundary. The schema still owns structural validation. Import-direction and
+  focused diagnostic tests must pass before accepting the loader.
+- **Identity/closure:** one typed `SemanticVocabularyContract`, registered in
+  `contracts/resources.py` and exported through `contracts/__init__.py`.
+  Normal and Draft closure append the same validated wheel-owned resource;
+  Scene provenance records kind/id/version-revision/content identity. Identity
+  is SHA-256 of loaded resource bytes, as for existing untransformed resources
+  (Spec13), not a hash of a differently serialized mapping. The resource is
+  host-owned, not an authored Context override, implicit directory scan or
+  package registration hook. Existing Contexts need no syntax migration.
+- **Failures:** reject absent bytes, wrong envelope id/kind/version, malformed
+  fields/enums, duplicate semantic IDs before map construction, and mismatched
+  expected content identity. Retain existing version/schema/closure identity
+  diagnostics at their normal boundaries. Resource-load failure uses
+  `E_SEMANTIC_VOCABULARY_RESOURCE`; duplicate ID uses
+  `E_SEMANTIC_VOCABULARY_DUPLICATE_ID` at its binding's `semanticId` pointer.
+  No fallback to a Python table or partially loaded registry is allowed.
+- **Tests/evidence:** schema/loader negatives;117-value and accessor equality;
+  all fields' existing consumers; immutable/mutable-input isolation; normal and
+  Draft closure identity; source/wheel resource equality; Scene schema and
+  vocabulary reachability; focused Layout/Scene/contrast regressions. Official
+  materializers must retain paths and primitive/purpose/role counts and SVG
+  visual bytes. Scene resource-provenance additions are intended, counted
+  separately from geometry/paint changes. Do not edit bot-owned public outputs.
+  Refresh affected `tests/fixtures` mirrors with the standard materializer and
+  exact synthetic Scene characterizations for the intentional provenance delta;
+  SVG bytes and every non-provenance Scene fact must remain unchanged.
+- **Publication:** one V1 code PR contains resource, schema, loader, closure,
+  tests and implemented Spec13/49/56 updates, followed by its concise slice
+  acceptance evidence. Reviewer reviews the PR/count table; exact-head CI and
+  exact-main three-OS release precede slice acceptance. Parent419 remains open
+  for S1/S2 and dev B's C1. Any discovered contract gap returns to this record
+  and architecture review before code resumes.
+
+Current verification, artifact counts, CI findings and release status are
+recorded once in the [literal acceptance review](../../reviews/current/issue-419-semantic-resource-acceptance-review-2026-10-17.md).
+
+## V1 equivalence inventory (117-entry baseline)
 
 This inventory groups entries by the mechanism families in
 `presentation/model/semantic_registry.py`, not by primitive kind. Counts by

@@ -10,6 +10,7 @@ import pytest
 from chrona.presentation.model.closure import ClosureError
 from chrona.presentation.scene.contrast_policy import evaluate_scene_contrast
 from chrona.presentation.scene.serialization import scene_document, serialize_scene
+from chrona.resources.semantic_vocabulary import builtin_semantic_vocabulary
 from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
 from tests.support.legacy_axis import use_legacy_six_tier_axis
@@ -107,15 +108,13 @@ def test_default_and_explicit_raw_chip_output_are_byte_identical(tmp_path):
     raw = _render(tmp_path, "raw")
     explicit_raw = _render(tmp_path, "explicit-raw", viewer_fit="raw")
     assert raw.artifact.content == explicit_raw.artifact.content
-    # #1296 pads the selected-planned window; removing only that rule reproduces
-    # both old hashes. Raw and explicit-raw bytes remain exactly identical.
     assert sha256(raw.artifact.content).hexdigest() == "83b5b75f6f548316bc3f3f3f66daf512c007d16adfcb293ed2c31667d59074ec"
-    # Empty-legend normalization changes only slots and empty sibling origins;
-    # completed primitives, diagnostics and SVG bytes remain characterized.
-    # Only the packaged View's provenance contentIdentity differs from ready main
-    # (calendar-days -> working-days); the rendered SVG remains byte-identical.
-    assert sha256(serialize_scene(raw.scene)).hexdigest() == "c008bfc047f3aa1e709d420d165ddbf83009dab50e13256412f8935a6e05b1c7"
-    # #1649: an empty notes source is absent, so the Scene hash dropped its slot; SVG bytes are unchanged.
+    # Scene provenance now includes the wheel-owned vocabulary; geometry, paint and SVG bytes remain characterized.
+    vocabulary = builtin_semantic_vocabulary()
+    assert [resource for resource in raw.scene.provenance.resources if resource[0] == "semantic-vocabulary"] == [
+        ("semantic-vocabulary", vocabulary.id, "v0.1", vocabulary.content_identity),
+    ]
+    assert sha256(serialize_scene(raw.scene)).hexdigest() == "18b4961876255081a6a15f59ecd498e697be6fde4705d91c4cd43559e734ee6c"
     labels = [item for item in raw.surface.primitives if item.kind == "Text" and item.purpose == "member-label"]
     assert labels and any(len(item.text_layout.lines) > 1 for item in labels)
     assert "<tspan" in raw.artifact.content.decode("utf-8")
