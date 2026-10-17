@@ -585,23 +585,36 @@ policies. The local corridor is based on the source mark and selected box
 attachment point, not the full box extent; see the
 [#466 corridor amendment](../design/issue-466-connector-corridor-amendment-2026-09-26.md).
 
+After the direct-tail search, both ordinary and opposite-side strict routed
+tails use one finite search owner (#1610). Layout lazily admits body-valid
+boxes in their existing fine/coarse order and round-robins the finite
+egress/attachment route streams across admitted boxes. Each stream lazily
+interleaves its existing X-first and Y-first low-bend corridor families before
+its higher-bend XY family. One aggregate 1024-state budget applies to the
+candidate search; it MUST NOT be multiplied per box, egress, or attachment.
+The independent declared box-position limit remains unchanged. This replaces
+the ordinary search's prior depth-first prefix, which could spend its entire
+budget on one blocked attachment before examining its siblings. That prefix
+is intentionally not a compatibility promise.
+
+Among valid routes actually examined within that bounded prefix, select the
+earliest admitted box and then the existing bend/length/source/attachment/
+coordinate rank. Retain a completed valid fit when later exploration reaches
+the cap; exhaustion diagnoses absence of a fit within the examined prefix,
+not failure to exhaustively optimize an already valid route. Source egress,
+pending body, tip, triangle, full-route quality, declared obstacle and as-of
+checks remain mandatory. Failed trials add no completed inventory entries.
+
 The opposite-side as-of fallback is a separate strict route mode. Its route
 query MAY exempt only the identified as-of rule obstacle by its inventory ID;
 body, source corridor, tip, and both triangle edges retain the complete
 obstacle checks. The completed routed centerline MUST cross that exact rule
 once, transversely through the rule segment's interior; a touch, collinear
 overlap, endpoint contact, multiple crossing, or crossing another rule is not
-a fit. Layout lazily admits body-valid boxes in their unchanged coarse order
-and round-robins the existing finite egress/edge strict-route candidate
-streams across those boxes. It uses one aggregate 1024-state budget per
-candidate search; it MUST NOT multiply the budget per box, egress, or edge.
-Within this fallback only, each stream lazily interleaves its existing
-X-first and Y-first low-bend corridor families before its existing higher-bend
-XY family. The ordinary anchor-side strict-route prefix and its ordering,
-examined count, and exhaustion semantics remain unchanged.
-Among fits in the bounded prefix, Layout selects the earliest coarse box and
-then the existing route rank within that box. Existing route quality, bend,
-detour, and obstacle checks continue to apply.
+a fit. It uses the common bounded scheduler above on the unchanged
+opposite-side coarse boxes, with these additional exact-rule validations.
+Ordinary routes retain the full rule inventory and stay on the anchor side;
+sharing the scheduler MUST NOT grant them an opposite-side rule exemption.
 
 When a hosted annotation number refers to a Theme glyph mark, Layout MUST
 resolve its abstract mark host to an actual emitted lane-facet primitive ID
