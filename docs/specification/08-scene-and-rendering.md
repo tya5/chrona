@@ -172,8 +172,15 @@ including overlapping fill/stroke, terminal outlines and pattern children.
 The adapter uses isolated transparency Form XObjects, preserving nested alpha,
 clips, transforms, painter order and the closed font mapping; it must not
 approximate group opacity by assigning alpha independently to each child.
-Its identity includes `pdf-isolated-opacity-v1`. Opaque spans retain the normal
+Each transparency form owns the resources its stream references, including
+its own ExtGState alpha dictionary and nested XObjects. It must not resolve
+form-local alpha names through the page's dictionary: unequal nested opacities
+multiply independently, rather than accidentally squaring the page opacity.
+This corrects the v1 form-resource omission (#1612); PDF identity now includes
+`pdf-isolated-opacity-v2`. Opaque spans retain the normal
 vector conversion path; neither page rasterization nor Layout changes are needed.
+Spec63 §7.1 admits private alpha-masked glow halos under the PDF v0.7 profile;
+their source and halo share this same isolated-opacity owner.
 For completed text runs, the PDF-private SVG places each run at the prefix sum
 of its measured `inlineSize` plus between-run letter spacing, divided by the
 existing horizontal scale in the text's pre-transform frame. Baselines, line
