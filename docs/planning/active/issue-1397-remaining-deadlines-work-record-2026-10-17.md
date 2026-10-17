@@ -1,7 +1,8 @@
 # Issue1397 — remaining deadline presentation
 
-Status: overrides/folded implementation verified; network correction designed,
-architecture review complete; amended implementation plan below awaits publication.
+Status: overrides/folded implementation verified; network correction implemented
+against the pre-code design/architecture/implementation publication `c8aaf8604`.
+Focused verification passes; official snapshot and exact-main release remain pending.
 Current published baseline: trusted-ready main `690f3549ff0b61ee15ed85885ad18aacd7cabf31`.
 Authority: [reviewer assignment](https://github.com/tya5/chrona/issues/1397#issuecomment-6233959539),
 which reopens the earlier row4/5 dispositions. Rows1/3 are released; row2 remains
@@ -19,9 +20,9 @@ retains all five issue rows and their evidence.
 
 1. Inspect Spec06 selection, Spec33/50 Layout geometry, network surface authority,
    the View schema/default closure and existing folded point allocation.
-2. Decide a project-independent use case and contract for each row. A network
-   date mark needs a meaningful position rule; if none follows from current
-   semantics, propose a precise deferral rather than repurposing graph geometry.
+2. Decide a project-independent use case and contract for each row: date-scaled
+   marks on timelines, and a categorical indicator with a visible promised date
+   on dependency nodes, never a fabricated temporal graph position.
 3. Keep Core deadline verdict/date facts immutable, View selection independent
    of geometry, Layout the only geometry owner, and Scene/adapters projections.
    Check forecast, shared/folded occurrences, captions, paint/contrast and labels.
@@ -47,7 +48,7 @@ promised date and whether the plan misses it, without a time axis. The earlier
 [deferral proposal](https://github.com/tya5/chrona/issues/1397#issuecomment-6234014932)
 is withdrawn: absence of a time axis forbids a date-scaled run, not a node-attached
 deadline indicator. No new approval is required for this existing authorized use
-case. Product changes remain paused until this correction is published.
+case. The correction was published as `c8aaf8604` before network product changes.
 
 ### Network correction design plan
 
