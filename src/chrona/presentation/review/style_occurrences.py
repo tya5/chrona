@@ -125,7 +125,8 @@ def _comparison_category(item: Any | None) -> str | None:
 
 
 def _occurrence(key: StyleOccurrenceKey, item: Any | None, *,
-                column_source: str | tuple[tuple[str, str], ...] | None = None) -> StyleOccurrence:
+                column_source: str | tuple[tuple[str, str], ...] | None = None,
+                mark_shape: str | None = None) -> StyleOccurrence:
     binding = semantic_binding(key.semantic_id)
     return StyleOccurrence(
         key,
@@ -135,6 +136,7 @@ def _occurrence(key: StyleOccurrenceKey, item: Any | None, *,
         _comparison_category(item),
         column_source,
         field_facts_for_item(item) if item is not None else (),
+        mark_shape,
     )
 
 
@@ -270,7 +272,7 @@ def collect_surface_style_facts(
         for facet in selection.facets:
             semantic_id = canonical_mark_semantic(
                 facet.semantic_id, facet.shape, gate_declared=gate_declared)
-            add(_occurrence(source.key(semantic_id), item))
+            add(_occurrence(source.key(semantic_id), item, mark_shape=facet.shape))
 
     for occurrence in _cell_occurrences(projection, content):
         add(occurrence)

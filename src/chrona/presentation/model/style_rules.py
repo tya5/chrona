@@ -90,6 +90,8 @@ class StyleOccurrence:
     comparison_category: str | None = None
     column_source: str | tuple[tuple[str, str], ...] | None = None
     fields: tuple[StyleFieldFact, ...] = ()
+    # Existing source-facet shape, not a selector or completed geometry.
+    mark_shape: str | None = None
 
 
 @dataclass(frozen=True)

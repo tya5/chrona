@@ -18,9 +18,10 @@ from chrona.presentation.model.semantic_registry import (
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.info_diagnostics import PaintOmission
+from chrona.presentation.model.theme_paint import ThemePaintError, mark_paint_family
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, PrimitiveProvenance, review_row_subjects
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, ThemeTokenView
-from chrona.presentation.scene.pattern_geometry import pattern_geometry, pattern_kind, project_pattern_placement
+from chrona.presentation.scene.pattern_geometry import pattern_geometry, project_pattern_placement
 from chrona.presentation.scene.model import DecorationDisposition, ImageFill, ImageTile, SceneColumn, SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, SymbolGeometry, TextLayout, TextRun, ScenePaint
 from chrona.presentation.scene.model import (
     SceneLaneMember, SceneLaneObstacle, SceneLaneRectObstacle, SceneLaneSegmentObstacle,
@@ -130,7 +131,10 @@ def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView, *, paint_ro
     if primitive.paint_channels == "stroke":
         return PaintFamily.PATH
     if primitive.pattern is not None and primitive.pattern.primitives:
-        return PaintFamily.SOLID
+        try:
+            return mark_paint_family(tokens, paint_role, has_completed_catalog_pattern=True)
+        except ThemePaintError as error:
+            raise ValueError(f"{error.diagnostic_id}: {error.detail or error.path}") from error
     if primitive.kind == PrimitiveKind.TEXT:
         return PaintFamily.TEXT
     if primitive.kind == PrimitiveKind.PATH:
@@ -140,19 +144,19 @@ def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView, *, paint_ro
         if treatment == "none":
             raise SceneBuildError("E_THEME_BACKGROUND_ABSENT", f"/body/roles/{primitive.visual_role}")
         return PaintFamily.OUTLINE if treatment == "outline" else PaintFamily.SOLID
-    pattern = tokens.optional_pattern(paint_role)
-    if pattern is not None and pattern_kind(pattern) == "outline":
-        return PaintFamily.OUTLINE
-    if pattern is not None and pattern_kind(pattern) == "diagonal-hatch":
-        return PaintFamily.HATCH
-    if primitive.kind == PrimitiveKind.SYMBOL and primitive.glyph_paint_mode == "stroke":
-        # Preserve explicit outline overrides above, then require only the
-        # channel the completed catalogue part actually paints.
-        return PaintFamily.PATH
-    if primitive.purpose == "region-frame" and tokens.optional_color(paint_role, "fill") is None:
+    try:
+        family = mark_paint_family(
+            tokens, paint_role,
+            glyph_paint_mode=(primitive.glyph_paint_mode
+                              if primitive.kind == PrimitiveKind.SYMBOL else None),
+        )
+    except ThemePaintError as error:
+        raise ValueError(f"{error.diagnostic_id}: {error.detail or error.path}") from error
+    if (family == PaintFamily.SOLID and primitive.purpose == "region-frame"
+            and tokens.optional_color(paint_role, "fill") is None):
         # A frame role that declares no fill is an outline panel (#889).
         return PaintFamily.OUTLINE
-    return PaintFamily.SOLID
+    return family
 
 
 def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose: str, visual_role: str,

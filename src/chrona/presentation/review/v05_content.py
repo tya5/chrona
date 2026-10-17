@@ -31,6 +31,8 @@ from chrona.presentation.model.style_rules import (
 from chrona.presentation.style import StyleRule
 from chrona.presentation.review.style_occurrences import collect_surface_style_facts
 from chrona.presentation.model.style_fills import complete_style_fills
+from chrona.presentation.model.style_mark_paint import validate_style_mark_paint
+from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.review.style_intent import lower_legacy_color_encoding
 from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec, AxisBandScaleError
@@ -555,6 +557,10 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                               reserved=scale_reserved, other_color=scale_other_color,
                               source_refs={rule.rule_id: rule.source_ref
                                            for rule in (*encoding_rules, *style_rules)}))
+        if theme is not None:
+            validate_style_mark_paint(
+                intents, facts.occurrences, content.style_fills, ThemeTokenView(theme),
+                source_refs={rule.rule_id: rule.source_ref for rule in (*encoding_rules, *style_rules)})
     return content
 
 

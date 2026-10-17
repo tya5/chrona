@@ -9,6 +9,7 @@ from chrona.presentation.model.style_rules import (
     OccurrenceStyleIndex, OccurrenceStyleIntent, StyleOccurrenceKey,
 )
 from chrona.presentation.model.semantic_registry import inside_member_label_semantic
+from chrona.presentation.model.theme_tokens import ThemeTokenView
 
 
 @dataclass(frozen=True)
@@ -64,6 +65,16 @@ def _inputs(items):
 
 
 class _RoleTheme(_Theme):
+    def __init__(self):
+        self._paint = ThemeTokenView({
+            "version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme",
+            "body": {"values": {"ink": {"type": "color", "value": "#000000"}},
+                     "roles": {"style-wide-label": {"fill": "ink"}}},
+        })
+
+    def __getattr__(self, name):
+        return getattr(self._paint, name)
+
     def text_treatment(self, role):
         size = Decimal(20 if role == "style-wide-label" else 10)
         return SimpleNamespace(family="Test", weight=400, font_size=size,

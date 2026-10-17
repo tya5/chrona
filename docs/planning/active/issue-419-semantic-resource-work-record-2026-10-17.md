@@ -651,9 +651,15 @@ native batch passes54 tests and paint/contrast batch71. Public batch:49/50 SVG
 and Scene pairs unchanged; `glyph-gates` changes8 inherited glyph fills, no
 geometry/routes/labels, and adds1 mark-contrast warning. Its PNG was inspected;
 retain the Spec60 migration and warning in the S1 PR review rather than hiding
-them with corpus edits. Generated evidence remains bot-owned. Mark paint
-preflight and release checks remain pending.
-Module reachability (291 modules)
+them with corpus edits. Generated evidence remains bot-owned. Selected mark
+paint now validates closed Theme channels before Layout/source sizing through
+the same family classifier and channel resolver as Scene. Source-facet shape
+is a neutral completion fact, not a new selector; no Project fields enter
+Layout or Scene. Native negatives retain the authored rule pointer and occurrence.
+Stroke-only glyphs and catalogue-pattern bindings have focused controls. The
+final Style/native batch passes131 tests, with292 reachable modules and inward
+imports. Official S1 CI/artifact review and exact-main release remain pending.
+Module reachability (292 modules)
 and inward imports pass without an allowlist. Generic Draft integration tests now provide an explicit temporary
 Store containing the exact declared package bytes rather than bypass closure.
 The remaining Draft test callers share that Store fixture without changing

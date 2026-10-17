@@ -108,3 +108,38 @@ def resolve_theme_paint_inputs(
         raise ThemePaintError("E_PRESENTATION_PAINT_INVALID", path)
 
     return ThemePaintInputs(fill, stroke, width, dash, opacity, solid_override)
+
+
+def mark_paint_family(tokens: ThemeTokenView, role: str, *,
+                      glyph_paint_mode: str | None = None,
+                      has_completed_catalog_pattern: bool = False) -> PaintFamily:
+    """Classify the shared mark-role pattern/part branch used by Layout and Scene.
+
+    Shape/background/path dispatch remains with its owning caller.  A completed
+    catalogue pattern is already geometry and makes its host a solid substrate;
+    otherwise the Theme's inline outline/hatch treatment precedes glyph part
+    paint mode, matching Scene's former mark branch.
+    """
+    if has_completed_catalog_pattern:
+        return PaintFamily.SOLID
+    pattern = tokens.optional_pattern(role)
+    if pattern is not None:
+        kind = pattern.get("kind") if isinstance(pattern, Mapping) else None
+        if kind == "outline":
+            return PaintFamily.OUTLINE
+        if kind == "diagonal-hatch":
+            return PaintFamily.HATCH
+        if kind == "catalog":
+            return PaintFamily.SOLID
+        shown = repr(kind)
+        if isinstance(kind, str) and len(kind) > 64:
+            shown = repr(kind[:64] + "…")
+        elif not isinstance(kind, (str, int, float, bool, type(None))):
+            shown = f"<{type(kind).__name__}>"
+        raise ThemePaintError(
+            "E_THEME_TOKEN_TYPE", f"/body/roles/{role}/pattern",
+            f"pattern.kind={shown}; expected one of ['diagonal-hatch', 'outline']",
+        )
+    if glyph_paint_mode == "stroke":
+        return PaintFamily.PATH
+    return PaintFamily.SOLID
