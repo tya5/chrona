@@ -21,6 +21,18 @@ change. Design a separate derived schedule, not post-Layout geometry shifts or
 mutations to the Project/Snapshot. Reuse existing calendar/dependency rules;
 keep forecast intent and estimated delta facts out of Scene/adapters.
 
+Baseline architecture constraints (also checked at merged main340b9e708):
+`_place_scheduled` treats anchors as authoritative; an as-of start floor alone
+cannot move every existing span, nor extend an active anchored end. Forecast
+therefore needs an explicit effective-schedule normalization, not hidden source
+Project rewrites or a second ad-hoc dependency solver. `working_days_in` counts
+`[start,end)`, whereas `advance(..., Nwd)` counts work-date transitions after its
+start; actual non-working starts and zero-work fixed spans need deliberate rules.
+Ordinary `_project_review` rejects any scheduler diagnostic, including a missed
+fixed target. Preserve that behavior: a separate typed forecast outcome must
+distinguish complete placements plus reported fixed-target findings from fatal
+or incomplete schedules. A broad diagnostic-ignore switch is not acceptable.
+
 Design questions to resolve before implementation:
 
 - Keep progress observed-only (recommended); no percent-to-duration inference.
