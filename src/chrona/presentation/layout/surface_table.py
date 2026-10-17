@@ -246,7 +246,7 @@ def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | N
                 semantic_id=cell.semantic_id, lines=closed.fit.lines if closed is not None else None)
             style_intent = (request.surface_content.style_intents.get(cell.style_key)
                             if cell.style_key is not None else None)
-            if style_intent is not None and style_intent.role is not None:
+            if style_intent is not None:
                 placement = replace(placement, theme_role=style_intent.role,
                                     style_occurrence_key=cell.style_key)
             text.append(placement)

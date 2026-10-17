@@ -30,7 +30,7 @@ def _style_rules(rules):
 def _render_with_style(tmp_path, monkeypatch, project, rules):
     def normalize(*args, **kwargs):
         return _ORIGINAL_NORMALIZE_V05_SURFACE_CONTENT(
-            *args, **kwargs, style_rules=rules, gate_declared=False,
+            *args, **kwargs, style_rules=rules,
         )
 
     monkeypatch.setattr(render_review_usecase, "normalize_v05_surface_content", normalize)

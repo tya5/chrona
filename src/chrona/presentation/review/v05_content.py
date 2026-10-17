@@ -26,11 +26,11 @@ from chrona.presentation.figure_text import FigureTextProgram
 from chrona.presentation.heading_text import HeadingTextPrograms, close_heading
 from chrona.presentation.model.color_scale import OTHER_LABEL, ResolvedColorScale, scale_text
 from chrona.presentation.model.style_rules import (
-    OccurrenceStyleIndex, StyleFieldFact, StyleOccurrence, StyleOccurrenceKey, evaluate_style_rules,
+    OccurrenceStyleIndex, StyleOccurrenceKey, evaluate_style_rules,
 )
 from chrona.presentation.style import StyleRule
 from chrona.presentation.review.style_occurrences import collect_surface_style_facts
-from chrona.presentation.model.semantic_registry import semantic_binding
+from chrona.presentation.model.style_fills import complete_style_fills
 from chrona.presentation.review.style_intent import lower_legacy_color_encoding
 from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec, AxisBandScaleError
@@ -345,7 +345,10 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                   dependency_critical_role_available: bool = False,
                                   annotation_kind_also: Mapping[str, tuple[str, ...]] | None = None,
                                   style_rules: tuple[StyleRule, ...] = (),
-                                  gate_declared: bool = False) -> SurfaceContentInput:
+                                  gate_declared: bool = False,
+                                  theme: Mapping[str, Any] | None = None,
+                                  scale_reserved: tuple[str, ...] = (),
+                                  scale_other_color: str | None = None) -> SurfaceContentInput:
     """Normalize current Project/View/profile facts without legacy Settings."""
     if table is None:
         table = normalize_v05_table_content(projection, project, view, actual_set=actual_set, locale=locale)
@@ -491,35 +494,14 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     legend = legend_entries(detail, project, projection, color_scale, closed_days_drawn=bool(calendar_closed),
                             forecast_label=forecast_label)
     detail_content = normalize_v05_review_detail_profile(detail, projection.items)
-    scale_paints: tuple[tuple[str, str], ...] = ()
     scale_legend_paints: tuple[tuple[str, str], ...] = ()
+    encoding_rules = ()
     if color_scale is not None:
         encoding_rules = lower_legacy_color_encoding({
             "source": {"field": color_scale.source_field}, "scale": color_scale.scale_id,
             "domain": "firstAppearance" if color_scale.derived else color_scale.domain,
             "target": color_scale.target_role,
         })
-        paints = []
-        for item in projection.items:
-            if item.source_kind not in {"primary", "combined"}:
-                continue
-            # These are source-fact intents, before one source is expanded into
-            # repeated Layout occurrences. Keep the established source order
-            # and scale admission; the common evaluator owns selector matching.
-            field = item.field_bindings.read_result(item.fields, {"field": color_scale.source_field})
-            occurrences = tuple(
-                StyleOccurrence(
-                    StyleOccurrenceKey(item.object_id, item.source_kind, rule.selector.semantic,
-                                       member_id=item.item_id or item.object_id),
-                    semantic_binding(rule.selector.semantic).purpose, "mark",
-                    fields=(StyleFieldFact(field.field_name, None, field.present, field.value),),
-                )
-                for rule in encoding_rules
-            )
-            intents = evaluate_style_rules(encoding_rules, occurrences)
-            if any(intent.fill is not None for intent in intents) and color_scale.covers(item.fields):
-                paints.append((item.object_id, color_scale.color_for(item.object_id, item.fields)))
-        scale_paints = tuple(paints)
         used = _used_scale_values(color_scale, projection)
         scale_legend_paints = tuple((ref, color) for ref, _label, color in color_scale.legend_items(used))
     content = SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
@@ -543,8 +525,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                link_mode=link_mode, title_link_columns=title_link_columns,
                                attached_labels=_attached_labels(projection, locale),
                                table_cell_objects=table_cell_objects,
-                               scale_target_role=color_scale.target_role if color_scale else None,
-                               scale_paints=scale_paints, scale_legend_paints=scale_legend_paints,
+                               scale_legend_paints=scale_legend_paints,
                                progress_fill_source=view.progress_fill,
                                table_hierarchy_column=view.hierarchy_column,
                                table_indent_under_headers=table.indent_under_headers,
@@ -564,11 +545,16 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                                   for target in (annotation_kind_also or {}).get(item.kind, ())))),
                                actual_variance_paints=select_actual_variance_paints(
                                    projection, actual_variance_colors or {}))
-    if style_rules:
+    if style_rules or encoding_rules:
         facts = collect_surface_style_facts(projection, content, gate_declared=gate_declared)
-        rules = (*encoding_rules, *style_rules) if color_scale is not None else style_rules
-        content = replace(content, style_intents=OccurrenceStyleIndex(evaluate_style_rules(
-            rules, facts.occurrences, field_catalogue=facts.field_catalogue)))
+        intents = OccurrenceStyleIndex(evaluate_style_rules(
+            (*encoding_rules, *style_rules), facts.occurrences, field_catalogue=facts.field_catalogue))
+        content = replace(content, style_intents=intents,
+                          style_fills=complete_style_fills(
+                              intents, facts.occurrences, theme=theme, legacy_scale=color_scale,
+                              reserved=scale_reserved, other_color=scale_other_color,
+                              source_refs={rule.rule_id: rule.source_ref
+                                           for rule in (*encoding_rules, *style_rules)}))
     return content
 
 

@@ -143,7 +143,7 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
         finish, finish_omitted = _stroke_finish(tokens, role, visual_profile)
     except ThemeTokenError as error:
         raise ScenePaintError(error.diagnostic_id, error.path) from error
-    if family == PaintFamily.OUTLINE:
+    if family == PaintFamily.OUTLINE and not solid_override:
         fill = None
     paint = ScenePaint(fill, stroke, float(width) if width is not None else None, dash,
                        1.0 if opacity is None else float(opacity), gradient, shadow, finish, glow=glow, wobble=wobble)

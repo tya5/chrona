@@ -109,7 +109,6 @@ def _render_capture(tmp_path, monkeypatch, *, mode, parts, rules, styled):
         expected_keys.update(_source_keys(args[0], parts))
         return _ORIGINAL_NORMALIZE_V05_SURFACE_CONTENT(
             *args, **kwargs, style_rules=rules,
-            gate_declared="gate" in parts["theme"]["body"]["roles"],
         )
 
     monkeypatch.setattr(surface_count_closure, "compose_surface_layout", capture_compose)

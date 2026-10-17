@@ -96,7 +96,6 @@ def _render(tmp_path, monkeypatch, *, mode: str, styled: bool):
             return _ORIGINAL_NORMALIZE(*args, **kwargs)
         return _ORIGINAL_NORMALIZE(
             *args, **kwargs, style_rules=rules,
-            gate_declared="gate" in parts["theme"]["body"]["roles"],
         )
 
     monkeypatch.setattr(surface_count_closure, "compose_surface_layout", compose)

@@ -6,7 +6,7 @@ from datetime import date
 import pytest
 
 from chrona.presentation.model.color_scale import ColorScaleError, ResolvedColorScale
-from chrona.presentation.model.projection import ReviewItem, ReviewProjection
+from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.presentation.model.style_rules import (
     StyleFieldFact, StyleOccurrence, StyleOccurrenceKey, evaluate_style_rules,
@@ -100,12 +100,15 @@ def _surface_item(object_id: str, *, value: str | None, source_kind: str = "prim
     fields = {} if value is None else {"phase": value}
     return ReviewItem(
         object_id, object_id.upper(), "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)},
-        None, None, ("planned",), fields=fields, source_kind=source_kind,
+        None, None, ("planned",), fields=fields, source_kind=source_kind, item_id=object_id,
     )
 
 
 def _surface_content(items: tuple[ReviewItem, ...], scale: ResolvedColorScale):
-    projection = ReviewProjection(items, (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    projection = ReviewProjection(
+        items, (date(2026, 1, 1), date(2026, 1, 2)), (), (),
+        rows=tuple(ReviewRowProjection(item.object_id, item.title, "", item.item_id, (item,))
+                   for item in items), rows_resolved=True)
     return normalize_v05_surface_content(
         projection, {"relations": (), "annotations": {}}, _surface_view(),
         summary=SummaryContent(()), color_scale=scale,
@@ -124,7 +127,8 @@ def test_v05_surface_color_intent_preserves_source_order_and_excludes_non_primar
         _surface_item("first", value="review", source_kind="combined"),
     ), scale)
 
-    assert content.scale_paints == (("second", "#445566"), ("first", "#112233"))
+    assert tuple((key.subject_id, color) for key, color in content.style_fills.fills) == (
+        ("second", "#445566"), ("first", "#112233"))
 
 
 def test_v05_surface_first_appearance_scale_omits_items_missing_the_derived_field():
@@ -137,7 +141,7 @@ def test_v05_surface_first_appearance_scale_omits_items_missing_the_derived_fiel
         _surface_item("present", value="build"),
     ), scale)
 
-    assert content.scale_paints == (("present", "#445566"),)
+    assert tuple((key.subject_id, color) for key, color in content.style_fills.fills) == (("present", "#445566"),)
 
 
 def test_v05_surface_explicit_scale_still_reports_an_item_missing_its_field():

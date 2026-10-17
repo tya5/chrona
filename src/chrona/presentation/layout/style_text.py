@@ -11,10 +11,11 @@ from chrona.presentation.model.style_rules import (
     OccurrenceStyleIndex, OccurrenceStyleIntent, StyleOccurrenceKey,
 )
 from chrona.presentation.model.theme_tokens import ThemeTokenError
+from chrona.presentation.model.theme_paint import PaintFamily, ThemePaintError, resolve_theme_paint_inputs
 
 
 def resolve_text_style_intent(key: StyleOccurrenceKey | None, index: OccurrenceStyleIndex,
-                              theme_tokens: Any) -> OccurrenceStyleIntent | None:
+                              theme_tokens: Any, *, fill_override: str | None = None) -> OccurrenceStyleIntent | None:
     """Validate one exact text occurrence's selected treatment before fitting."""
     intent = index.get(key) if key is not None else None
     if intent is None or intent.role is None:
@@ -22,10 +23,10 @@ def resolve_text_style_intent(key: StyleOccurrenceKey | None, index: OccurrenceS
     role = intent.role
     try:
         theme_tokens.text_treatment(role)
-        theme_tokens.color(role, "fill")
+        resolve_theme_paint_inputs(theme_tokens, role, PaintFamily.TEXT, fill_override=fill_override)
         if semantic_binding(key.semantic_id).contrast_class is ContrastClass.STATE_TEXT:
             theme_tokens.contrast_treatment(role)
-    except ThemeTokenError as error:
+    except (ThemeTokenError, ThemePaintError) as error:
         raise LayoutError(
             "E_STYLE_ROLE_INCOMPATIBLE", error.path, key.subject_id,
             f"ruleIds={','.join(intent.role_rule_ids)}; subject={key!r}; "
@@ -65,7 +66,8 @@ def resolve_table_cell_typography(content: SurfaceContentInput, table: TableCont
     changed = False
     for cell in table.cells:
         key = cell.style_key
-        intent = resolve_text_style_intent(key, index, theme_tokens)
+        intent = resolve_text_style_intent(key, index, theme_tokens,
+                                           fill_override=content.style_fills.get(key))
         if intent is None:
             cells.append(cell)
             continue

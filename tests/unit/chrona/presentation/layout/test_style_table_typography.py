@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from types import SimpleNamespace
 
 import pytest
 
@@ -18,6 +19,7 @@ from chrona.presentation.model.semantic_registry import (
     ContrastClass, semantic_binding, semantic_ids,
 )
 from chrona.presentation.model.surface_content import TableCellContent
+from chrona.presentation.model.style_fills import StyleFillIndex
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.usecases import render_review as usecase
 from tests.support import synthetic_review as sr
@@ -62,8 +64,7 @@ def test_plan_measures_and_places_table_cell_with_same_selected_role(tmp_path, m
     original_normalize = usecase.normalize_v05_surface_content
 
     def normalize_with_style(*args, **kwargs):
-        return original_normalize(*args, **kwargs, style_rules=rules,
-                                  gate_declared="gate" in presentation["theme"]["body"]["roles"])
+        return original_normalize(*args, **kwargs, style_rules=rules)
 
     def prepare(value):
         cell = next(item for item in value.table.cells if item.style_key is not None)
@@ -124,7 +125,7 @@ def test_plan_measures_and_places_table_cell_with_same_selected_role(tmp_path, m
 def test_unstyled_table_resolution_preserves_content_and_table_identity():
     cell = TableCellContent("item", "title", "A", "tableCell", style_key=None)
     index = OccurrenceStyleIndex()
-    content = type("Content", (), {"style_intents": index, "table_cells": (cell,)})()
+    content = SimpleNamespace(style_intents=index, table_cells=(cell,), style_fills=StyleFillIndex())
     table = type("Table", (), {"cells": (cell,)})()
     tokens = ThemeTokenView({
         "version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme",
@@ -139,7 +140,7 @@ def test_selected_role_without_complete_text_treatment_is_incompatible():
     key = StyleOccurrenceKey("item", "primary", "tableCell", "row", "member", "title", "table-cell")
     cell = TableCellContent("item", "title", "A", "tableCell", style_key=key)
     index = OccurrenceStyleIndex((_intent(key, role="missing-font-role"),))
-    content = type("Content", (), {"style_intents": index, "table_cells": (cell,)})()
+    content = SimpleNamespace(style_intents=index, table_cells=(cell,), style_fills=StyleFillIndex())
     table = type("Table", (), {"cells": (cell,)})()
     tokens = ThemeTokenView({
         "version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme",
@@ -158,7 +159,7 @@ def test_selected_role_without_scene_text_fill_is_incompatible():
     key = StyleOccurrenceKey("item", "primary", "tableCell", "row", "member", "title", "table-cell")
     cell = TableCellContent("item", "title", "A", "tableCell", style_key=key)
     index = OccurrenceStyleIndex((_intent(key, role="text-no-fill"),))
-    content = type("Content", (), {"style_intents": index, "table_cells": (cell,)})()
+    content = SimpleNamespace(style_intents=index, table_cells=(cell,), style_fills=StyleFillIndex())
     table = type("Table", (), {"cells": (cell,)})()
     values = {
         "family": {"type": "fontFamily", "value": "sans"},
@@ -189,7 +190,7 @@ def test_selected_state_text_role_requires_contrast_treatment():
     key = StyleOccurrenceKey("item", "primary", semantic, "row", "member", "title", "table-cell")
     cell = TableCellContent("item", "title", "A", semantic, style_key=key)
     index = OccurrenceStyleIndex((_intent(key, role="text-without-contrast"),))
-    content = type("Content", (), {"style_intents": index, "table_cells": (cell,)})()
+    content = SimpleNamespace(style_intents=index, table_cells=(cell,), style_fills=StyleFillIndex())
     table = type("Table", (), {"cells": (cell,)})()
     values = {
         "family": {"type": "fontFamily", "value": "sans"},

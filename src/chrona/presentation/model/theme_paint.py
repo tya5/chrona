@@ -75,7 +75,8 @@ def resolve_theme_paint_inputs(
 
     solid_override = (fill_override is not None and part_color is None
                       and part_mode != "stroke"
-                      and family not in {PaintFamily.OUTLINE, PaintFamily.PATH})
+                      and family != PaintFamily.PATH
+                      and not (family == PaintFamily.OUTLINE and part_mode is not None))
     if solid_override:
         fill = fill_override
     path = f"/body/roles/{role}"

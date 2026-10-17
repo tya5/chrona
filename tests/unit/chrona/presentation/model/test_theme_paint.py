@@ -46,7 +46,7 @@ def test_fill_override_is_only_a_solid_channel_override():
     outline = resolve_theme_paint_inputs(tokens, "role", PaintFamily.OUTLINE,
                                          fill_override="#abcdef")
     assert (solid.fill, solid.solid_override) == ("#abcdef", True)
-    assert (outline.fill, outline.solid_override) == (None, False)
+    assert (outline.fill, outline.solid_override) == ("#abcdef", True)
 
 
 def test_required_channel_diagnostics_keep_scene_pointer_and_code():
@@ -59,7 +59,7 @@ def test_required_channel_diagnostics_keep_scene_pointer_and_code():
 @pytest.mark.parametrize("family,part_mode,part_color", [
     (PaintFamily.SOLID, "fill", "#fedcba"),
     (PaintFamily.SOLID, "stroke", None),
-    (PaintFamily.OUTLINE, None, None),
+    (PaintFamily.OUTLINE, "fill", None),
     (PaintFamily.PATH, None, None),
 ])
 def test_encoded_fill_cannot_replace_explicit_parts_or_stroke_channels(family, part_mode, part_color):

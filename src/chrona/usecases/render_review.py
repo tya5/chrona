@@ -380,7 +380,13 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         group_tints=group_tints, annotation_kind_colors=_annotation_kind_colors(theme),
         actual_variance_colors=resolve_actual_variance_colors(ThemeTokenView(theme)),
         dependency_critical_role_available=ThemeTokenView(theme).has_role("dependency-critical"),
-        annotation_kind_also=_annotation_kind_also(theme))
+        annotation_kind_also=_annotation_kind_also(theme), theme=theme,
+        gate_declared=ThemeTokenView(theme).has_role("gate"),
+        scale_reserved=tuple(c for c in legend_colors if chroma(c) >= MINIMUM_RESERVED_CHROMA),
+        scale_other_color=_other_color(theme, legend_colors))
+    style_scales = tuple(scale for scale in selected_content.style_fills.scales
+                         if scale is not color_scale)
+    profile_info += tuple(_scale_folded_info(scale) for scale in style_scales if scale.folded)
     try:
         validate_axis_band_fill_targets(selected_content.axis_tiers, ThemeTokenView(theme))
         axis_band_scale = resolve_axis_band_scales(
@@ -475,6 +481,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     except VisualCapabilityError as error:
         raise RenderFailed(error.diagnostic_id, error.message, "presentation", error.path) from error
     collisions = ((color_scale.collisions if color_scale is not None else ())
+                  + tuple(collision for scale in style_scales for collision in scale.collisions)
                   + group_tint_collisions + axis_band_scale.collisions)
     scene = _inspection_scene(render_closure, surface, projection, surface_content,
                               (surface.canvas_bounds[2], surface.canvas_bounds[3]),

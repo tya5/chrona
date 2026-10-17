@@ -12,6 +12,7 @@ from chrona.presentation.model.date_basis import DisplayDateRange
 from chrona.presentation.model.placement_candidates import PlacementCandidate
 from chrona.presentation.model.projection import ObservationState, ReviewItem, display_finish_delta
 from chrona.presentation.model.style_rules import OccurrenceStyleIndex, StyleOccurrenceKey
+from chrona.presentation.model.style_fills import StyleFillIndex
 
 
 def _diagnostic_error(code: str, detail: str) -> ValueError:
@@ -280,10 +281,8 @@ class SurfaceContentInput:
     # identity only: Scene uses it to attach presentation metadata and never to
     # infer geometry or re-resolve a View row.
     table_cell_objects: tuple[tuple[str, str, str, bool], ...] = ()
-    # Completed data-dependent paint selected before Scene construction.  The
-    # value is keyed by semantic source object, never by geometry or renderer.
-    scale_target_role: str | None = None
-    scale_paints: tuple[tuple[str, str], ...] = ()
+    # Concrete channels retain full source occurrence identity before Layout.
+    style_fills: StyleFillIndex = field(default_factory=StyleFillIndex)
     scale_legend_paints: tuple[tuple[str, str], ...] = ()
     progress_fill_source: str | None = None
     table_hierarchy_column: str | None = None
