@@ -37,7 +37,10 @@ from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
 from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
-from chrona.presentation.model.info_diagnostics import PresentationInfo, UnboundSummarySource, FontGlyphFallback, ScaleValuesFolded, ForecastInfo
+from chrona.presentation.model.info_diagnostics import (
+    PresentationInfo, UnboundSummarySource, FontGlyphFallback, ScaleValuesFolded,
+    ForecastInfo, FieldGroupingSummariesOmitted,
+)
 from chrona.usecases.forecast_schedule import forecast_schedule
 from chrona.presentation.model.field_role_view import resolve_field_role_view
 from chrona.presentation.contracts.resources import ContractError, ViewAllPeriods, ViewPeriod
@@ -290,6 +293,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         request.progress.phase("schedule")
     projection, scenario_provenance, attachments, deadlines = _project_review(project, view, render_closure, manifests, request.scheduler)
     profile_info += tuple(ForecastInfo(item) for item in projection.forecast_findings)
+    if projection.omitted_group_summary_count:
+        profile_info += (FieldGroupingSummariesOmitted(projection.omitted_group_summary_count),)
     unavailable = {item.details["figure"]: item.id for item in projection.unavailable_figures}
     unavailable_metrics = []
     if profile_connections.summary is not None:

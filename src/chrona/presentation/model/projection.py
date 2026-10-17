@@ -262,6 +262,7 @@ class ReviewProjection:
     unavailable_figures: tuple[Diagnostic, ...] = ()
     window_mode: WindowMode = WindowMode.SELECTED_PLANNED
     forecast_findings: tuple[Diagnostic, ...] = ()
+    omitted_group_summary_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -330,6 +331,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         if item.get("type") == "group"
     }
     hierarchy_root_ids: set[str] = set()
+    omitted_group_summary_count = 0
     declared = {object_id: index for index, object_id in enumerate(project["objects"])}
     for object_id, planned in placements.items():
         source_type = "point" if "at" in planned else "span"
@@ -341,6 +343,10 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         if not hierarchy and (object_id not in ids or source_type not in types
                               or (object_types and project_type not in object_types)
                               or project_type in excluded_object_types):
+            continue
+        if (grouping is not None and grouping.by == "field" and grouping.field_role is not None
+                and project_type == "group"):
+            omitted_group_summary_count += 1
             continue
         if hierarchy and object_id in ids and source_type in types and (not object_types or project_type in object_types) and project_type not in excluded_object_types:
             hierarchy_root_ids.add(object_id)
@@ -397,11 +403,11 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         # A header that distinguishes nothing is not drawn (Specification 45).
         selected = [replace(item, group_id="", group_label="") for item in selected]
     if hierarchy and not explicit:
-        selected = _expand_hierarchy_roots(selected, hierarchy_entries, hierarchy_root_ids, view)
+        selected = _expand_hierarchy_roots(selected, hierarchy_entries, hierarchy_root_ids, view, project)
         selected = [replace(item, temporal_paint=not (
             item.is_rollup and grouping.rollup in {"header", "none"})) for item in selected]
     elif not explicit:
-        _order(selected, view)
+        _order(selected, view, project)
     snapshots = _snapshot_items(snapshot_project, snapshot_placements, snapshot_analysis)
     # `ghost-when-changed` without a snapshot baseline draws no ghost and is not an error (#429); `ghost` still needs one.
     if forecast is None and view.comparison.baseline_marks == "ghost" and not explicit and (view.comparison.baseline != "snapshot" or not snapshots):
@@ -453,7 +459,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         _dependency_network_projection(project, selected, view),
         frozenset(getattr(active_analysis, "driving_relations", ()),), folded_points,
         lane_membership, lane_rows, window_mode=WindowMode(view.window.mode),
-        forecast_findings=forecast.findings if forecast is not None else ())
+        forecast_findings=forecast.findings if forecast is not None else (),
+        omitted_group_summary_count=omitted_group_summary_count)
 
 
 def _project_lane_rows(rows: tuple[ReviewRowProjection, ...], membership: LaneMembership
@@ -844,7 +851,7 @@ def _finish_delta(planned: dict[str, date], actual: dict[str, date | float] | No
     return finish_variance(planned, actual, as_of, basis=basis, delta_unit=delta_unit)
 
 
-def _order(rows: list[ReviewItem], view: ViewInput) -> None:
+def _order(rows: list[ReviewItem], view: ViewInput, project: Mapping[str, Any]) -> None:
     ordering = view.ordering
     def value(item: ReviewItem, field: str) -> Any:
         return {"id": item.object_id, "title": item.title, "plannedStart": item.planned.get("start", item.planned.get("at")), "plannedEnd": item.planned.get("end", item.planned.get("at")), "plannedFinish": item.planned.get("end", item.planned.get("at")), "source": item.source_index}[field]
@@ -863,7 +870,20 @@ def _order(rows: list[ReviewItem], view: ViewInput) -> None:
         rows.sort(key=lambda item: (item.group_id not in earliest, earliest.get(item.group_id, date.min), item.group_id))
         return
     group_order = view.grouping.order if view.grouping is not None else ()
-    rows.sort(key=lambda item: (group_order.index(item.group_id) if item.group_id in group_order else len(group_order), item.group_id))
+    if group_order:
+        rows.sort(key=lambda item: (group_order.index(item.group_id) if item.group_id in group_order else len(group_order), item.group_id))
+    elif (view.grouping is not None
+          and view.grouping.by is _PrivateGroupingMode.PROJECT_ROOT_GROUP):
+        declared_group_order = {
+            object_id: index for index, (object_id, obj) in enumerate(
+                (entry for entry in project.get("objects", {}).items() if entry[1].get("type") == "group"))
+        }
+        rows.sort(key=lambda item: (
+            0 if not item.group_id else 1,
+            declared_group_order.get(item.group_id, len(declared_group_order)),
+            item.group_id))
+    else:
+        rows.sort(key=lambda item: (len(group_order), item.group_id))
 
 
 def _group_id(project: dict[str, Any], object_id: str, source_type: str, grouping: Any) -> str:
@@ -884,7 +904,8 @@ def _root_group_ancestor(entry: HierarchyEntry | None, group_ids: set[str]) -> s
 
 
 def _expand_hierarchy_roots(items: list[ReviewItem], entries: dict[str, HierarchyEntry],
-                            candidate_ids: set[str], view: ViewInput) -> list[ReviewItem]:
+                            candidate_ids: set[str], view: ViewInput,
+                            project: Mapping[str, Any]) -> list[ReviewItem]:
     """Expand View-selected roots without giving View authority over tree truth."""
     item_by_id = {item.object_id: item for item in items}
     grouping = view.grouping
@@ -909,12 +930,12 @@ def _expand_hierarchy_roots(items: list[ReviewItem], entries: dict[str, Hierarch
         if limit != "all" and relative_depth >= limit:
             return
         child_items = [item_by_id[child] for child in children.get(object_id, ()) if child in item_by_id]
-        _order(child_items, view)
+        _order(child_items, view, project)
         for child in child_items:
             visit(child.object_id, relative_depth + 1)
 
     root_items = [item_by_id[root] for root in roots]
-    _order(root_items, view)
+    _order(root_items, view, project)
     for root in root_items:
         visit(root.object_id, 0)
     return output
