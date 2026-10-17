@@ -9,13 +9,19 @@ import yaml
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.layout import route_search, routing
 from chrona.presentation.layout import surface_route_label_plan, surface_routes
+from chrona.resources import builtin_preset_source_root, safe_load
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
-from tests.support.sunday_owner_chain import sunday_owner_chain_project
+from tests.support.sunday_owner_chain import (
+    sunday_owner_chain_comparisons, sunday_owner_chain_project,
+)
 
 
-@pytest.mark.parametrize(("chained", "expected_relations"), ((False, 0), (True, 21)))
+@pytest.mark.parametrize(
+    ("chained", "comparisons", "expected_relations"),
+    ((False, False, 0), (True, False, 21), (True, True, 21)),
+)
 def test_sunday_owner_chain_routes_are_visible_with_bounded_search(
-    tmp_path, monkeypatch, chained, expected_relations,
+    tmp_path, monkeypatch, chained, comparisons, expected_relations,
 ):
     source = sunday_owner_chain_project(chained=chained)
     objects = source["objects"]
@@ -67,10 +73,26 @@ def test_sunday_owner_chain_routes_are_visible_with_bounded_search(
 
     project_path = tmp_path / "project.yaml"
     project_path.write_text(yaml.safe_dump(source, sort_keys=False), encoding="utf-8")
+    request = DraftRenderRequest(project=project_path, target_kind="svg", preset="sunday")
+    if comparisons:
+        snapshot, actual_set = sunday_owner_chain_comparisons(source)
+        snapshot_path = tmp_path / "snapshot.yaml"
+        actual_path = tmp_path / "actual.yaml"
+        snapshot_path.write_text(yaml.safe_dump(snapshot, sort_keys=False), encoding="utf-8")
+        actual_path.write_text(yaml.safe_dump(actual_set, sort_keys=False), encoding="utf-8")
+
+        design_root = builtin_preset_source_root("presets/bundles/design-default")
+        view = safe_load(design_root.joinpath("view.yaml").read_bytes())
+        view["body"]["comparison"]["baseline"] = "snapshot"
+        view_path = tmp_path / "view.yaml"
+        view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+        request = DraftRenderRequest(
+            project=project_path, target_kind="svg", preset="sunday", view=view_path,
+            actual=actual_path, snapshot=snapshot_path,
+        )
+
     wall_start, cpu_start = perf_counter(), process_time()
-    rendered = render_draft(DraftRenderRequest(
-        project=project_path, target_kind="svg", preset="sunday",
-    )).rendered
+    rendered = render_draft(request).rendered
     wall_seconds, cpu_seconds = perf_counter() - wall_start, process_time() - cpu_start
 
     assert counters["label_trials"] <= 2
@@ -90,8 +112,14 @@ def test_sunday_owner_chain_routes_are_visible_with_bounded_search(
     assert all(primitive.source_ref is not None for primitive in route_primitives)
     assert not [diagnostic for diagnostic in rendered.scene.diagnostics
                 if diagnostic.startswith("W_LAYOUT_RELATION_SUPPRESSED:")]
+    if comparisons:
+        assert {item.source_ref for item in rendered.surface.primitives
+                if item.purpose == "snapshot"} == set(objects)
+        assert {item.source_ref for item in rendered.surface.primitives
+                if item.purpose == "actual"} == {"task-00", "task-01", "task-02"}
 
     print(
-        f"Sunday chained={chained} owners={len(owners)} relations={len(relations)} "
+        f"Sunday chained={chained} comparisons={comparisons} "
+        f"owners={len(owners)} relations={len(relations)} "
         f"counts={counters} wall={wall_seconds:.2f}s cpu={cpu_seconds:.2f}s"
     )
