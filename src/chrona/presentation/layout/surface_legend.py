@@ -204,9 +204,12 @@ def legend_source_input(entries: tuple[SurfaceLegendEntry, ...], *, tokens: Any,
     row_block = Decimal(0)
     if line:
         # The height of one drawn row, as `place_legend` draws it: the label line box or the tallest swatch (#1649).
-        row_block = Decimal(str(max([legend_size * float(treatment.line_height)]
-            + [swatch_extent(entry.role, tokens, mark_block_size, legend_size, entry.swatch_shape)[1]
-               for entry in entries])))
+        # The label line box is the exact product the measurement's one-row minimum uses, not its float product: a
+        # float 12 * 1.4 is 16.799999999999997, below the minimum 16.8, and the slot would then be allocated less than
+        # its own minimum and warn W_LAYOUT_VISIBLE_OVERFLOW though the row fits (#1649).
+        row_block = max([treatment.font_size * treatment.line_height]
+                        + [Decimal(str(swatch_extent(entry.role, tokens, mark_block_size, legend_size,
+                                                     entry.swatch_shape)[1])) for entry in entries])
     return SourceInput(runs=runs, typography_role="legend", run_flow="line" if line else "stack",
                        run_gap=Decimal(str(gap)), min_inline=min_inline, row_block=row_block)
 
