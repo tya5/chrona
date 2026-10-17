@@ -97,6 +97,11 @@ Occurrence role intent must also reach Layout's mark geometry and table text
 measurement before placement. A Scene-only role replacement cannot implement
 the approved contract. Preserve exact column-source and occurrence identities
 during normalization rather than recovering them from rendered text.
+Carry typed occurrence identity through marks, cells and labels; object ID
+alone aliases comparison and repeated occurrences. A selected Theme role must
+not replace the vocabulary's semantic identity or weaken its contrast class.
+Complete the role's typography, mark geometry and stroke extents before fit
+and routing, then preserve that completed role/paint through placement to Scene.
 
 Reviewer confirmed this amendment in
 [comment 6234922800](https://github.com/tya5/chrona/issues/419#issuecomment-6234922800)
