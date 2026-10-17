@@ -248,6 +248,57 @@ an authored title for a scoped key.
 values and explicit references/errors, not semantic inference from folders or a
 reason to mix Theme values with View facts.
 
+## V1 implementation plan
+
+Baseline: the117 bindings inspected on the reviewed design base remain the
+same on current main. The amendment `ae75ab664` is published in PR1664;
+land that documentation before product implementation. Reconcile the next
+code PR with the latest trusted-ready main after PR1661. This plan is
+published separately before code, without creating another design authority.
+
+- **Resource/schema:** one wheel-owned `semantic-vocabulary.yaml`, version
+  `chrona/semantic-vocabulary/v0.1`, kind `semantic-vocabulary`, id `chrona-core`.
+  Ordered `body.bindings` records carry exactly `semanticId`, `primitiveFamily`,
+  `purpose`, `sceneRole`, `themeRole`, `contrastClass` (nullable). Preserve all117
+  values and order; classification metadata belongs to C1, not V1. The new
+  schema reuses the presentation envelope and existing shared definitions where
+  applicable; register its lifecycle in the schema inventory without modifying
+  frozen shared parts. No runtime Python copy of the records remains.
+- **Loader/registry:** resource location and validation in `chrona.resources`,
+  immutable cached records consumed by `model/semantic_registry.py`. Retain
+  existing internal lookup/family helpers, enum meaning and contrast dispatch;
+  derived indexes are not a second authority. A test-only frozen baseline
+  proves every old value/order, rather than generating its expectation from
+  the new resource under test.
+- **Identity/closure:** one typed `SemanticVocabularyContract`, registered in
+  `contracts/resources.py` and exported through `contracts/__init__.py`.
+  Normal and Draft closure append the same validated wheel-owned resource;
+  Scene provenance records kind/id/version-revision/content identity. Identity
+  is SHA-256 of loaded resource bytes, as for existing untransformed resources
+  (Spec13), not a hash of a differently serialized mapping. The resource is
+  host-owned, not an authored Context override, implicit directory scan or
+  package registration hook. Existing Contexts need no syntax migration.
+- **Failures:** reject absent bytes, wrong envelope id/kind/version, malformed
+  fields/enums, duplicate semantic IDs before map construction, and mismatched
+  expected content identity. Retain existing version/schema/closure identity
+  diagnostics at their normal boundaries. Resource-load failure uses
+  `E_SEMANTIC_VOCABULARY_RESOURCE`; duplicate ID uses
+  `E_SEMANTIC_VOCABULARY_DUPLICATE_ID` at its binding's `semanticId` pointer.
+  No fallback to a Python table or partially loaded registry is allowed.
+- **Tests/evidence:** schema/loader negatives;117-value and accessor equality;
+  all fields' existing consumers; immutable/mutable-input isolation; normal and
+  Draft closure identity; source/wheel resource equality; Scene schema and
+  vocabulary reachability; focused Layout/Scene/contrast regressions. Official
+  materializers must retain paths and primitive/purpose/role counts and SVG
+  visual bytes. Scene resource-provenance additions are intended, counted
+  separately from geometry/paint changes. Do not edit examples/generated files.
+- **Publication:** one V1 code PR contains resource, schema, loader, closure,
+  tests and implemented Spec13/49/56 updates, followed by its concise slice
+  acceptance evidence. Reviewer reviews the PR/count table; exact-head CI and
+  exact-main three-OS release precede slice acceptance. Parent419 remains open
+  for S1/S2 and dev B's C1. Any discovered contract gap returns to this record
+  and architecture review before code resumes.
+
 ## Current registry inventory (117 entries)
 
 This inventory groups entries by the mechanism families in
