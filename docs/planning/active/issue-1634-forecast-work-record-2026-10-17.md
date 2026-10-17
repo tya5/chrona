@@ -43,7 +43,15 @@ Design questions to resolve before implementation:
   calendars, movable bounds versus preserved fixed points, and rollup treatment.
 - Distinguish estimated forecast deltas from ordinary observed `finishDelta`;
   preserve Snapshot ghosts and use the original plan when no Snapshot exists.
-- Coordinate forecast legend/style with reviewer-owned shared-design YAML.
+- Define forecast visibility for every selected primary item without silently
+  bypassing View selection. Existing disabled labels, missing delta columns and
+  non-temporal rollups do not guarantee a visible estimate. Keep observed delta
+  facts distinct from the selected forecast comparison used by text consumers.
+- Close the legend capability gap before implementation: mission-light,
+  control-room-dark and print-mono have no legend slot; adding an entry alone
+  cannot render a legend. Choose measured profile support or an explicit
+  capability refusal, preserving default-path bytes, and coordinate shared-design
+  forecast paint/wording with the reviewer. Adapters cannot synthesize a legend.
 - Decide saving a forecast as a Snapshot; recommend no implicit save or source
   rewrite, with any explicit export requiring its own identity contract.
 
