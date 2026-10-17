@@ -614,7 +614,7 @@ def select_relation_route(
             quality_impossible = max_bends < int(source.semantic_port[0] != target.semantic_port[0]
                                                  and source.semantic_port[1] != target.semantic_port[1])
             if protected_quality_barriers is not None:
-                direct = sum(abs(a - b) for a, b in zip(source.semantic_port, target.semantic_port))
+                direct = geometry_sum(abs(a - b) for a, b in zip(source.semantic_port, target.semantic_port))
                 lower = rectangular_detour_lower_bound(source.semantic_port, target.semantic_port,
                     protected_quality_barriers(source, target))
                 quality_impossible |= direct > 0 and lower > direct * max_detour_ratio
