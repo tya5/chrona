@@ -7,6 +7,15 @@ from typing import Any
 
 
 @dataclass(frozen=True)
+class FieldRead:
+    """One source-local field lookup, keeping absence distinct from null."""
+
+    field_name: str | None
+    present: bool
+    value: Any
+
+
+@dataclass(frozen=True)
 class FieldRoleBindings:
     """Immutable role-to-object-field bindings from one source Project.
 
@@ -40,15 +49,27 @@ class FieldRoleBindings:
         """Read a direct-field or semantic-role source without changing fields.
 
         An undeclared role and a declared field whose value is absent both read
-        as ``None``; callers can use :meth:`field_for` to distinguish them.
+        as ``None``; callers needing that distinction should use
+        :meth:`read_result`.
         """
-        if fields is None:
-            return None
+        return self.read_result(fields, source).value
+
+    def read_result(self, fields: Mapping[str, Any] | None,
+                    source: Mapping[str, Any]) -> FieldRead:
+        """Resolve and read one direct field or role, preserving presence.
+
+        ``field_name`` is ``None`` when a role is undeclared or the source does
+        not identify a field. Otherwise ``present`` distinguishes a missing key
+        from a key explicitly mapped to ``None``; ``value`` is the raw value.
+        """
         if "field" in source:
-            key = source.get("field")
+            field_name = source.get("field")
         elif "fieldRole" in source:
             role = source.get("fieldRole")
-            key = self.field_for(role) if isinstance(role, str) else None
+            field_name = self.field_for(role) if isinstance(role, str) else None
         else:
-            return None
-        return fields.get(key) if isinstance(key, str) else None
+            field_name = None
+        if not isinstance(field_name, str):
+            return FieldRead(None, False, None)
+        present = fields is not None and field_name in fields
+        return FieldRead(field_name, present, fields[field_name] if present else None)

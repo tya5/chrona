@@ -170,10 +170,31 @@ Resolution MUST:
    branch, current working tree, or unsnapshotted Draft;
 3. verify SHA-256, envelope kind/ID, Project ID, and supported version;
 4. recursively resolve declared resource/package edges in deterministic field order;
-5. reject a cycle, duplicate `(kind, id)` with different identities, missing object,
+5. reject a cycle, duplicate `(kind, id)` with different identities (except the
+   explicitly source-scoped profile packages below), missing object,
    unavailable revision, or a Snapshot/Actual whose Project ID differs from the primary
    Project; and
 6. emit the normalized closure as evaluation evidence before scheduling or rendering.
+
+Primary and Snapshot Projects may explicitly pin different immutable revisions
+of the same profile package. Resolve and validate every declared Store reference
+before deduplicating equal full resource identities. Keep distinct pinned package
+identities in the closure and select declarations through the owning Project's
+extension reference, not a global package-ID map. Within one Project, conflicting
+declarations for one package remain an identity error; missing or ambiguous
+package matches are closure errors. Each resolved package's `packageId` must equal
+that source's extension declaration. This exception does not permit multiple
+unscoped Views, Themes or other resources with one identity name.
+
+Explicit and guided Draft ingress close declared extension packages through an
+injected `SnapshotReader` using these same reference and source-identity rules.
+A local Draft Project remains mutable; its package references are not interpreted
+as files beside that Project. Missing provider configuration is a Store-config
+error, not permission to ignore declarations. CLI Draft rendering accepts
+`--store-config` or discovers the existing project-local configuration; package
+provider references use the packaged Store. Agent rendering uses only its
+workspace-contained Store configuration. Library callers supply a reader when
+their Draft declares packages. Projects without extensions need no reader.
 
 A federation edge is resolved only from an explicit typed, pinned Federation Plan export
 reference. The resolver verifies the export's repository locator, kind, declared child

@@ -12,7 +12,7 @@ It writes nothing, prints nothing and exits nothing. No argument lowers integrit
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from chrona.core.validation import load_yaml
 from chrona.operational.baselines import compare_baseline
@@ -63,6 +63,36 @@ class SharedDesignReader(PackageAwareReader):
                                     f"reference {reference.get('id')!r} names")
         required = self._config.integrity[other] == "required" and not self._allow_missing
         return LocalSnapshotReader(root, other[1], require_content_identity=required).read(reference)
+
+
+class DraftExtensionPackageReader:
+    """Read Draft Project package pins through their named immutable Store.
+
+    The Store configuration is loaded only when a non-package reference is
+    actually read. This keeps Drafts with no extension packages independent of
+    workspace Store configuration while preserving the same routing and
+    integrity rules as immutable Context closure.
+    """
+
+    def __init__(self, config_loader: Callable[[], ConfiguredStoreReader] | None = None) -> None:
+        self._config_loader = config_loader
+        self._config: ConfiguredStoreReader | None = None
+
+    def read(self, reference: dict[str, Any]) -> bytes:
+        if is_package_reference(reference):
+            return read_package_reference(reference)
+        if self._config_loader is None:
+            raise SnapshotReadError(
+                "E_STORE_CONFIG_REQUIRED",
+                "Draft extension package references require a configured Store",
+            )
+        if self._config is None:
+            self._config = self._config_loader()
+        try:
+            reader, _root = snapshot_reader_for(self._config, reference)
+        except StableFailure as error:
+            raise SnapshotReadError(error.code, error.message) from error
+        return reader.read(reference)
 
 
 def snapshot_reader_for(

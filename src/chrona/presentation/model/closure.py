@@ -78,6 +78,15 @@ class ClosureResource:
 
 
 @dataclass(frozen=True)
+class ProfilePackageSourceEdge:
+    """One Project extension's verified edge to its exact closed package identity."""
+
+    project_identity: ClosureIdentity
+    extension_index: int
+    package_identity: ClosureIdentity
+
+
+@dataclass(frozen=True)
 class IconAsset:
     """Verified catalog asset bytes; no host path crosses this closure boundary."""
 
@@ -96,6 +105,7 @@ class RenderClosure:
     icon_assets: tuple[IconAsset, ...] = ()
     guided_provenance: "GuidedAuthoringProvenance | None" = None
     previous_scene_bytes: bytes | None = None
+    profile_package_edges: tuple[ProfilePackageSourceEdge, ...] = ()
 
     def resource(self, kind: str) -> ClosureResource | None:
         return next((item for item in self.resources if item.kind == kind), None)
@@ -190,6 +200,16 @@ class RenderClosure:
             raise self._kind_error(item, ProfilePackageContract)
         return values  # type: ignore[return-value]
 
+    def profile_packages_for(self, project: ProjectContract) -> tuple[ProfilePackageContract, ...]:
+        """Resolve this Project's declared package pins, not a global package-id map."""
+        if not isinstance(project, ProjectContract):
+            raise _closure_kind_error("profile package source", "ProjectContract", project)
+        if not any(item.kind in {"project", "snapshot-project"}
+                   and isinstance(item.contract, ProjectContract)
+                   and item.contract.identity == project.identity for item in self.resources):
+            raise ClosureError("E_CLOSURE_REQUIRED", detail="the Project is not one of this closure's declared sources")
+        return _project_profile_packages(project, self.resources, self.profile_package_edges)
+
     @property
     def icon_catalogs(self) -> tuple[IconCatalogContract, ...]:
         """Ordered catalog set closed by the Context, never a global registry."""
@@ -260,6 +280,7 @@ def resolve_draft_render(
     relations: Literal["none", "semantic"] | None = None,
     previous_scene_path: Path | None = None,
     snapshot_project_path: Path | None = None,
+    package_reader: SnapshotReader | None = None,
     forecast: bool = False,
 ) -> DraftRender:
     """Build a typed, in-memory closure from explicit authoring inputs.
@@ -295,6 +316,15 @@ def resolve_draft_render(
     sources.extend(_load_draft_source(kind, path) for kind, path in optional if path is not None)
     sources.extend(_load_draft_source("icon-catalog", path) for path in selected_catalog_paths)
     resources = _collect_presentation_resources(sources)
+    package_edges: list[ProfilePackageSourceEdge] = []
+    primary_project = next((item.contract for item in resources if item.kind == "project"), None)
+    if isinstance(primary_project, ProjectContract):
+        package_sources, edges = _project_package_sources(primary_project, package_reader)
+        package_edges.extend(edges)
+        if package_sources:
+            resources = _deduplicate_exact_profile_packages(
+                _collect_presentation_resources([*sources, *package_sources]))
+        _project_profile_packages(primary_project, resources, tuple(package_edges))
     if snapshot_project_path is not None:
         snapshot_project = _load_draft_resource("project", snapshot_project_path)
         if snapshot_project.id != resources[0].id:
@@ -303,6 +333,15 @@ def resolve_draft_render(
                 detail=(f"the snapshot project id {snapshot_project.id!r} is not the context project id "
                         f"{resources[0].id!r}"),
             )
+        if not isinstance(snapshot_project.contract, ProjectContract):
+            raise _closure_kind_error("snapshot project", "ProjectContract", snapshot_project.contract)
+        package_sources, edges = _project_package_sources(snapshot_project.contract, package_reader)
+        package_edges.extend(edges)
+        if package_sources:
+            for package in _deduplicate_exact_profile_packages(_collect_presentation_resources(package_sources)):
+                if not any(_same_resource_identity(package, item) for item in resources):
+                    resources.append(package)
+        _project_profile_packages(snapshot_project.contract, resources, tuple(package_edges))
         resources.append(ClosureResource(
             "snapshot-project", snapshot_project.id, snapshot_project.revision,
             snapshot_project.content_identity, snapshot_project.contract))
@@ -320,7 +359,8 @@ def resolve_draft_render(
                                         system_fonts=system_fonts, system_font_resolver=system_font_resolver,
                                         previous_scene_bytes=(previous_scene_path.read_bytes()
                                                               if previous_scene_path is not None else None),
-                                        forecast=forecast)
+                                        forecast=forecast,
+                                        profile_package_edges=tuple(package_edges))
     return replace(draft, preset_visual_profile_fallback=profile_fallback)
 
 
@@ -427,6 +467,7 @@ def resolve_guided_draft_render(
     *, workspace_path: Path, viewport: tuple[int, int | None] = DEFAULT_DRAFT_VIEWPORT,
     locale: str = "en-US", target_kind: str = "svg", visual_profile: str | None = None, typesetter: TypesetterIdentity | None = None,
     forecast: bool = False,
+    package_reader: SnapshotReader | None = None,
 ) -> DraftRender:
     """Resolve one guided Draft without creating files or a second render pipeline."""
     workspace_resource = _load_draft_resource("authoring-workspace", workspace_path)
@@ -458,6 +499,14 @@ def resolve_guided_draft_render(
     catalog_paths = tuple(_declared_child(preset_path.parent, str(item["path"])) for item in catalog_declarations)
     sources.extend(_load_draft_source("icon-catalog", path) for path in catalog_paths)
     resources = _collect_presentation_resources(sources)
+    package_edges: tuple[ProfilePackageSourceEdge, ...] = ()
+    primary_project = next((item.contract for item in resources if item.kind == "project"), None)
+    if isinstance(primary_project, ProjectContract):
+        package_sources, package_edges = _project_package_sources(primary_project, package_reader)
+        if package_sources:
+            resources = _deduplicate_exact_profile_packages(
+                _collect_presentation_resources([*sources, *package_sources]))
+        _project_profile_packages(primary_project, resources, package_edges)
     catalog_resources = tuple(resource for resource in resources if resource.kind == "icon-catalog")
     if any(resource.id != declaration["id"] for resource, declaration in zip(catalog_resources, catalog_declarations)):
         raise ClosureError("E_AUTHORING_PRESET_RESOURCE", detail="the icon catalog files do not carry the ids the preset declares for them, in order")
@@ -467,6 +516,7 @@ def resolve_guided_draft_render(
     draft = _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
                                         visual_profile=visual_profile, typesetter=typesetter, provenance=provenance,
                                         forecast=forecast,
+                                        profile_package_edges=package_edges,
                                         icon_assets=_load_draft_icon_assets(catalog_resources, catalog_paths,
                                                                             _draft_view(resources), _draft_theme_refs(resources)))
     return replace(draft, preset_visual_profile_fallback=profile_fallback)
@@ -537,6 +587,7 @@ def _draft_render_from_resources(
     system_font_resolver: SystemFontResolver | None = None,
     previous_scene_bytes: bytes | None = None,
     forecast: bool = False,
+    profile_package_edges: tuple[ProfilePackageSourceEdge, ...] = (),
 ) -> DraftRender:
     by_kind = {item.kind: item for item in resources}
 
@@ -617,7 +668,7 @@ def _draft_render_from_resources(
         raise _closure_kind_error("draft render context", "RenderContextContract", context)
     resources.append(_builtin_vocabulary_resource())
     return DraftRender(RenderClosure(context, tuple(resources), resolved_theme, icon_assets, provenance,
-                                    previous_scene_bytes),
+                                    previous_scene_bytes, profile_package_edges),
                        font_asset_root or asset_root, auto_block=viewport[1] is None, font_resolution=resolution)
 
 
@@ -778,6 +829,90 @@ def _collect_presentation_resources(sources: list[PresentationResourceSource]) -
             for contract in collection.contracts]
 
 
+def _same_resource_identity(left: ClosureResource, right: ClosureResource) -> bool:
+    return (left.kind, left.id, left.revision, left.content_identity) == (
+        right.kind, right.id, right.revision, right.content_identity)
+
+
+def _deduplicate_exact_profile_packages(resources: list[ClosureResource]) -> list[ClosureResource]:
+    """Deduplicate shared package bytes after every declared reference was read."""
+    unique: list[ClosureResource] = []
+    for resource in resources:
+        if (resource.kind != "profile-package"
+                or not any(_same_resource_identity(resource, item) for item in unique)):
+            unique.append(resource)
+    return unique
+
+
+def _project_profile_packages(project: ProjectContract,
+                               resources: list[ClosureResource] | tuple[ClosureResource, ...],
+                               edges: tuple[ProfilePackageSourceEdge, ...]
+                               ) -> tuple[ProfilePackageContract, ...]:
+    """Resolve packages through retained source/index/full-identity closure edges."""
+    packages: list[ProfilePackageContract] = []
+    for index, extension in enumerate(project.extensions):
+        reference = extension.get("resource")
+        if reference is None:
+            continue
+        edge = next((item for item in edges
+                     if item.project_identity == project.identity and item.extension_index == index), None)
+        package_id = reference.get("id") if isinstance(reference, Mapping) else None
+        if edge is None:
+            raise ClosureError("E_CLOSURE_REQUIRED",
+                               detail=f"the extension names profile-package {package_id!r} at its declared pin, which the closure does not contain")
+        package_resource = next((item for item in resources
+                                 if ClosureIdentity(item.kind, item.id, item.revision, item.content_identity)
+                                 == edge.package_identity), None)
+        if package_resource is None:
+            raise ClosureError("E_CLOSURE_REQUIRED", detail=f"the closure does not contain the verified profile-package identity for {package_id!r}")
+        if not isinstance(package_resource.contract, ProfilePackageContract):
+            raise _closure_kind_error(f"profile package id={package_resource.id}",
+                                      "ProfilePackageContract", package_resource.contract)
+        if package_resource.contract.package_id != extension.get("packageId"):
+            raise ClosureError("E_CLOSURE_ID",
+                               detail=(f"profile-package {package_id!r} declares packageId "
+                                       f"{package_resource.contract.package_id!r}, the extension says "
+                                       f"{extension.get('packageId')!r}"))
+        packages.append(package_resource.contract)
+    return tuple(packages)
+
+
+def _project_package_sources(project: ProjectContract, reader: SnapshotReader | None,
+                             decoded_resources: Mapping[str, Any] | None = None
+                             ) -> tuple[list[PresentationResourceSource], tuple[ProfilePackageSourceEdge, ...]]:
+    """Read each source pin before deduplication and retain its exact resolved identity edge."""
+    sources: list[PresentationResourceSource] = []
+    edges: list[ProfilePackageSourceEdge] = []
+    seen_package_ids: dict[str, tuple[Any, ...]] = {}
+    for index, extension in enumerate(project.extensions):
+        reference = extension.get("resource")
+        if reference is None:
+            continue
+        if reader is None:
+            raise ClosureError("E_STORE_CONFIG_REQUIRED", f"/extensions/{index}/resource",
+                               "the Project declares a pinned profile-package but no package reader was supplied")
+        source = _load_reference_source(reference, reader, "profile-package", decoded_resources)
+        package_id = extension.get("packageId")
+        if isinstance(package_id, str):
+            key = _package_reference_key(reference)
+            previous = seen_package_ids.setdefault(package_id, key)
+            if previous != key:
+                raise ClosureError("E_CLOSURE_ID", f"/extensions/{index}/packageId",
+                                   f"Project declares packageId {package_id!r} at conflicting pinned references")
+        sources.append(source)
+        edges.append(ProfilePackageSourceEdge(project.identity, index, source.identity))
+    return sources, tuple(edges)
+
+
+def _package_reference_key(reference: Mapping[str, Any]) -> tuple[Any, ...]:
+    store = reference.get("store")
+    revision = reference.get("revision")
+    return (reference.get("kind"), reference.get("id"),
+            store.get("provider") if isinstance(store, Mapping) else None,
+            store.get("identity") if isinstance(store, Mapping) else None,
+            reference.get("address"),
+            revision.get("token") if isinstance(revision, Mapping) else None,
+            reference.get("contentIdentity"))
 def _draft_shape_error(kind: str, value: object) -> ClosureError:
     """A declared Draft file that is not a mapping with an id: say which, instead of only the code (#782)."""
     code = "E_" + kind.upper().replace("-", "_") + "_SCHEMA"
@@ -873,28 +1008,34 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
                    for reference, kind in optional if reference is not None)
     initial = collect_presentation_contracts(tuple(sources))
     project = next((contract for contract in initial.contracts if isinstance(contract, ProjectContract)), None)
+    package_edges: list[ProfilePackageSourceEdge] = []
     if project is not None:
-        for extension in project.extensions:
-            package_reference = extension.get("resource")
-            if package_reference is not None:
-                sources.append(_load_reference_source(package_reference, reader, "profile-package", decoded_resources))
-    resources = _collect_presentation_resources(sources)
-    for extension in resources[0].contract.extensions:
-        package_reference = extension.get("resource")
-        if package_reference is not None:
-            package = next((item for item in resources if item.kind == "profile-package" and item.id == package_reference.get("id")), None)
-            if package is None:
-                raise ClosureError("E_CLOSURE_REQUIRED", detail=f"the extension names profile-package {package_reference.get('id')!r}, which the closure does not contain")
-            if package.contract.package_id != extension.get("packageId"):
-                raise ClosureError("E_CLOSURE_ID", detail=f"profile-package {package_reference.get('id')!r} declares packageId {package.contract.package_id!r}, the extension says {extension.get('packageId')!r}")
+        package_sources, edges = _project_package_sources(project, reader, decoded_resources)
+        sources.extend(package_sources)
+        package_edges.extend(edges)
+    resources = _deduplicate_exact_profile_packages(_collect_presentation_resources(sources))
+    primary_project = next((item.contract for item in resources if item.kind == "project"), None)
+    if isinstance(primary_project, ProjectContract):
+        _project_profile_packages(primary_project, resources, tuple(package_edges))
     if context_contract.snapshot is not None:
         snapshot = _load_reference(context_contract.snapshot.as_reader_reference(), reader, "snapshot-ref", decoded_resources)
         snapshot_project = _load_reference(snapshot.contract.project.as_reader_reference(), reader, "project", decoded_resources)
         if snapshot_project.id != resources[0].id:
             raise ClosureError("E_CLOSURE_ID", detail=f"the snapshot project id {snapshot_project.id!r} is not the context project id {resources[0].id!r}")
+        snapshot_project_contract = snapshot_project.contract
+        if not isinstance(snapshot_project_contract, ProjectContract):
+            raise _closure_kind_error("snapshot project", "ProjectContract", snapshot_project_contract)
+        snapshot_package_sources, snapshot_edges = _project_package_sources(
+            snapshot_project_contract, reader, decoded_resources)
+        package_edges.extend(snapshot_edges)
+        if snapshot_package_sources:
+            for package in _deduplicate_exact_profile_packages(_collect_presentation_resources(snapshot_package_sources)):
+                if not any(_same_resource_identity(package, item) for item in resources):
+                    resources.append(package)
+        _project_profile_packages(snapshot_project_contract, resources, tuple(package_edges))
         resources.extend((snapshot, ClosureResource(
             "snapshot-project", snapshot_project.id, snapshot_project.revision,
-            snapshot_project.content_identity, snapshot_project.contract)))
+            snapshot_project.content_identity, snapshot_project_contract)))
     if context_contract.target.capabilities != tuple(sorted(context_contract.target.capabilities)):
         raise ClosureError("E_TARGET_CAPABILITY_ORDER", detail=f"target.capabilities must be sorted, got {list(context_contract.target.capabilities)}")
     theme, scheme = resources[2], resources[3]
@@ -920,7 +1061,8 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
                             if context_contract.previous_scene is not None else None)
     resources.append(_builtin_vocabulary_resource())
     return RenderClosure(context_contract, tuple(resources), resolved_theme, icon_assets,
-                         previous_scene_bytes=previous_scene_bytes)
+                         previous_scene_bytes=previous_scene_bytes,
+                         profile_package_edges=tuple(package_edges))
 
 
 def _builtin_vocabulary_resource() -> ClosureResource:

@@ -292,8 +292,10 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     except VisualCapabilityError as error:
         raise RenderFailed(error.diagnostic_id, error.message, "presentation", error.path) from error
     ledger.required()
-    manifests = {item.package_id: item.profile_input for item in render_closure.profile_packages}
-    if manifests:
+    packages = render_closure.profile_packages
+    manifests = {item.package_id: item.profile_input
+                 for item in render_closure.profile_packages_for(render_closure.project)} if packages else {}
+    if packages:
         ledger.packages()
     if request.progress is not None:
         request.progress.phase("schedule")
@@ -731,11 +733,14 @@ def _resolve_group_tints(view: Any, projection: Any, theme: Mapping[str, Any]
 def _observed_scale_values(encoding: Any, projection: Any) -> tuple[str, ...]:
     """Source values of the selected primary items, in projection order, for a derived domain."""
     source = encoding.get("source") if isinstance(encoding, Mapping) else None
-    field = source.get("field") if isinstance(source, Mapping) else None
-    if not isinstance(field, str):
+    if not isinstance(source, Mapping):
         return ()
-    return tuple(str(item.fields[field]) for item in projection.items
-                 if item.fields is not None and item.fields.get(field) is not None)
+    values: list[str] = []
+    for item in projection.items:
+        result = item.field_bindings.read_result(item.fields, source)
+        if result.value is not None:
+            values.append(str(result.value))
+    return tuple(values)
 
 
 def _visual_request(visual: Any, projection: Any, index: int, closure: RenderClosure) -> VisualRequest:
@@ -779,7 +784,12 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
             raise RenderRejected(forecast.diagnostics)
         _require_forecast_presentation(view, closure.layout_profile.layout_input)
     snapshot_project = closure.snapshot_project.scheduler_input if closure.snapshot_project is not None else None
-    snapshot_result = scheduler.schedule(snapshot_project) if snapshot_project is not None else None
+    snapshot_manifests = ({item.package_id: item.profile_input
+                          for item in closure.profile_packages_for(closure.snapshot_project)}
+                         if snapshot_project is not None and closure.profile_packages else {})
+    snapshot_result = (scheduler.schedule(snapshot_project,
+                                         extension_diagnostics=validate_profiles(snapshot_project, snapshot_manifests))
+                       if snapshot_project is not None else None)
     if snapshot_result is not None and not snapshot_result.ok:
         raise RenderRejected(snapshot_result.diagnostics)
     scenario_ids = ({view.comparison.scenario_id} if view.comparison.baseline == "scenario" else set())
@@ -794,7 +804,8 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
             scenario_project = resolved.project
         except ScenarioError as error:
             raise RenderFailed(error.diagnostic.id, error.diagnostic.message, "scenario") from error
-        scenario_result = scheduler.schedule(scenario_project)
+        scenario_result = scheduler.schedule(scenario_project,
+                                             extension_diagnostics=validate_profiles(scenario_project, manifests))
         if not scenario_result.ok:
             raise RenderRejected(scenario_result.diagnostics)
         scenarios[scenario_id] = (scenario_project, scenario_result.placements)

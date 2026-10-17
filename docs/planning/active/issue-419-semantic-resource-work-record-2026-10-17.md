@@ -431,7 +431,7 @@ closure/preset/legend slice. Scalar equality introduces no array-membership
 or resource-reference predicates; other field consumers retain their contracts.
 
 S1a verification: typed ingress, immutable values and pure occurrence evaluation
-are implemented; render orchestration and S1b–d remain incomplete. The focused
+are implemented; full Style-to-Layout orchestration remains incomplete. The focused
 contract/model/schema-accounting batch passes187 tests, including quoted and
 unquoted YAML date normalization through the existing ingress helper. Schema equivalence
 passes with2 added schemas,39 unchanged,578 documents/468 mapped,5 previously
@@ -443,11 +443,13 @@ S1b integration: `FieldRoleBindings.read_result()` is the shared presence-aware
 lookup; `read()` remains its value-returning convenience. Observed scale values
 now consume that same accessor, retaining order and existing null omission.
 Profile descriptor extraction waits for dev B's overlapping344 PR; no duplicate
-definition merge is introduced. Immutable snapshot closure resolves each
-source's own package pins. Direct Draft has no package-reference reader today:
-do not reinterpret a Store address as a Project-relative file or ignore its
-identity. Complete that provider/ingress design before adding Draft package
-loading; this remains a required S1 integration item, not accepted work.
+definition merge is introduced. Immutable and Draft closure retain source
+Project/extension-index edges to the exact verified package identity; snapshots
+resolve their own pins even across Stores sharing an ID/revision token.
+Snapshot and scenario validation uses the proper source definitions before
+scheduling. The focused Draft/app/closure/accessor batch passes280 tests;
+real CLI/MCP provider tests pass15 (overlap), including provenance, containment
+and hash rejection. No Project-relative Store fallback is implemented.
 
 Draft provider design and implementation amendment: inject the existing
 `SnapshotReader` port into explicit/guided Draft ingress and `DraftRenderRequest`.
@@ -477,7 +479,18 @@ port; operational reader reuse and CLI/agent adapter wiring; Spec13/15 and CLI
 reference evidence. Test declared/undeclared packages, cross-store snapshot
 pins, package provider, absent config, hash mismatch, required identity and
 workspace boundary refusal, plus unchanged no-extension output. Publish this
-amendment before provider code; retain the same eventual S1 PR.
+amendment before provider code; it is published at `dd793d584`/`f8cbc5672`.
+Retain the same eventual S1 PR.
+
+S1d carrier verification: paired Scene metadata, canonical host identity and
+pinned-vocabulary replay checks pass14 focused cases, including unchanged
+no-Style bytes and retained mark contrast under an arbitrary appearance role.
+Scene delivery has247 owned fields; schema/inward-import gates pass. Schema
+equivalence passes2 added schemas and1 reviewed optional Scene widening,
+578 documents/468 mapped,5 known invalid and739 probes (L2+L3 14.6s).
+Completed Layout production, role compatibility and the actual evaluator
+consumer remain required. Module reachability currently rejects the unconnected
+evaluator; do not add an allowlist or treat partial carrier tests as S1 acceptance.
 
 ## V1 equivalence inventory (117-entry baseline)
 

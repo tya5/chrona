@@ -61,11 +61,17 @@ not understate a write, whatever it overwrites); `idempotentHint: true` and `ope
   or `working-days` with the effective object's calendar identifier) and `warnings`
   (a `W_DEADLINE` per object planned after its `deadline`, Spec 04 Section 10; empty when none; the plan is still
   scheduled).
-- `render_draft {project, actual?, preset?, view?, theme?, scheme?, layout?, viewport?, locale?, format?, inline?}`:
+- `render_draft {project, actual?, preset?, view?, theme?, scheme?, layout?, storeConfig?, viewport?, locale?, format?, inline?}`:
   `preset` is a builtin id or a workspace path ending `.yaml` or `.yml` (a value that contains `/` and ends
   otherwise is `E_MCP_PATH_SYNTAX`); `viewport` defaults to `1600xauto`, `locale` to `en-US`, `format` (`svg` or `png`, the artifact
   that `contentIdentity` and `byteLength` describe) to `svg`, `inline` to `image`. Result: `format`, `contentIdentity`
   (`sha256:` of the artifact bytes), `byteLength`, `pngAvailable`, `warnings`.
+  Declared extension package references use the same pinned Store reader as
+  immutable rendering. `storeConfig` has the Store tools' existing workspace-path
+  shape and defaults to `.chrona/store.yaml`; it is opened only when a
+  non-package reference is read. All roots must pass the same workspace
+  containment check before any Store bytes are read. Packaged references need
+  no workspace configuration; Projects without extensions remain unchanged.
 - `list_presets {}`: result `presets` (`id`, and `gallerySet` when a gallery set shows the preset, in the order of `chrona preset list`) and `default`
   (`chrona-default-draft`).
 
