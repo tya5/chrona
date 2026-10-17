@@ -28,6 +28,7 @@ class ForecastOutcome:
     unmatched_actual_ids: tuple[str, ...] = ()
     moved_count: int = 0
     analysis: Any | None = None
+    warnings: tuple[Diagnostic, ...] = ()
 
     @property
     def ok(self) -> bool:

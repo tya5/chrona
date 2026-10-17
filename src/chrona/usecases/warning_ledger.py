@@ -7,6 +7,7 @@ import json
 from typing import Any, Iterable, Mapping
 
 from chrona.usecases.diagnostic_messages import describe_warning, warning_message
+from chrona.core.diagnostics import Diagnostic
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 
 
@@ -57,6 +58,7 @@ def collect_render_warnings(
     glyph_warnings: Iterable[Any], fit_warnings: Iterable[Any],
     perceptibility_warnings: Iterable[Any], scale_collisions: Iterable[Any],
     attachment_warnings: Iterable[Any], deadline_warnings: Iterable[Any] = (),
+    forecast_warnings: Iterable[Diagnostic] = (),
     contrast_warnings: Iterable[Any] = (),
     surface_provenance: Iterable[DiagnosticProvenance] = (),
     canvas_warning: Any | None = None,
@@ -166,4 +168,12 @@ def collect_render_warnings(
         # A family that says what is wrong carries its own message; the catalogue does not replace it.
         records.append(_record(item.id, {"sourceRef": item.path}, sourceRef=item.path, message=item.message,
                                **item.details))
+    for item in forecast_warnings:
+        details = dict(item.details or {})
+        identity_fields = {key: details.get(key) for key in ("object", "relation", "endpoint")}
+        records.append(_record(
+            item.id, identity_fields, sourceRef=details.get("object"),
+            relation=details.get("relation"), endpoint=details.get("endpoint"),
+            details=details, message=item.message, **({"path": item.path} if item.path else {}),
+        ))
     return tuple(_described(record) for record in records)

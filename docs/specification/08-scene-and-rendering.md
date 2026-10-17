@@ -1025,6 +1025,13 @@ the completed preliminary Scene before their findings are added to the final
 diagnostic list, avoiding a diagnostic feedback loop. Typed `fitWarnings`
 remain additional detail, not a substitute for the Scene warning record.
 
+Observed-start forecast misses (`W_FORECAST_OBSERVED_START_BEFORE_BOUND`, Spec04
+§17.1) enter this same warning ledger, with warning severity and a stable
+relation/object/endpoint identity. They are not informational `ForecastInfo`
+records. Their structured dates/day distances and producer wording survive
+both transports; a successful render retains the observed coordinate. Genuine
+fixed-gate findings and all unrelated failure dispositions remain unchanged.
+
 ## 8. Renderer interface and targets
 
 A renderer consumes a completed Scene plus its resolved token values and returns a target artifact and diagnostics. Renderers may add target-specific metadata, but they must preserve Scene identity and source metadata wherever the target permits.

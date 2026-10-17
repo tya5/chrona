@@ -497,6 +497,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         glyph_warnings=glyph_warnings, fit_warnings=surface.fit_warnings,
         perceptibility_warnings=perceptibility_warnings, scale_collisions=collisions,
         attachment_warnings=attachments, deadline_warnings=deadlines,
+        forecast_warnings=projection.forecast_warnings,
         contrast_warnings=contrast_warnings,
         surface_provenance=surface.diagnostic_provenance,
         canvas_warning=surface.canvas_warning,

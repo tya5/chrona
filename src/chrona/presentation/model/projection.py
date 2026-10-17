@@ -125,6 +125,8 @@ class ReviewItem:
     date_basis: ItemDateBasis = ItemDateBasis()
     comparison_delta_unit: str = "calendar-days"
     forecast: ForecastComparisonFact | None = None
+    # View-owned content eligibility, independent of temporal mark visibility.
+    member_label_eligible: bool = True
 
     @property
     def at_delta(self) -> int | None:
@@ -263,6 +265,7 @@ class ReviewProjection:
     window_mode: WindowMode = WindowMode.SELECTED_PLANNED
     forecast_findings: tuple[Diagnostic, ...] = ()
     omitted_group_summary_count: int = 0
+    forecast_warnings: tuple[Diagnostic, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -460,6 +463,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         frozenset(getattr(active_analysis, "driving_relations", ()),), folded_points,
         lane_membership, lane_rows, window_mode=WindowMode(view.window.mode),
         forecast_findings=forecast.findings if forecast is not None else (),
+        forecast_warnings=forecast.warnings if forecast is not None else (),
         omitted_group_summary_count=omitted_group_summary_count)
 
 
@@ -630,6 +634,7 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
             rollup_presentation=(view.grouping.rollup or "none"
                                  if item.is_rollup else "none"))
             for item in selected)
+        rows = _forecast_member_label_ownership(rows)
         if view.rows.mode == "lanes":
             # Lane packing decides attachment only when that rule is declared.
             return rows, ()
@@ -674,7 +679,22 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
         output.append(ReviewRowProjection(row_id, row.label or members[0].title,
             row.group or "", subject, tuple(members), depth=row.depth, parent_row_id=row.parent_row))
     _validate_explicit_row_hierarchy(output)
-    return tuple(output), ()
+    return _forecast_member_label_ownership(tuple(output)), ()
+
+
+def _forecast_member_label_ownership(rows: tuple[ReviewRowProjection, ...]) -> tuple[ReviewRowProjection, ...]:
+    """A forecast primary owns its name; its paired baseline keeps paint only."""
+    output = []
+    for row in rows:
+        primary_ids = {item.object_id for item in row.items if item.forecast is not None}
+        if not primary_ids:
+            output.append(row)
+            continue
+        items = tuple(replace(item, member_label_eligible=False)
+                      if item.source_kind == "snapshot" and item.object_id in primary_ids
+                      else item for item in row.items)
+        output.append(replace(row, items=items))
+    return tuple(output)
 
 
 def _fold_automatic_points(rows: tuple[ReviewRowProjection, ...], view: ViewInput,
