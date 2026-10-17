@@ -47,7 +47,23 @@ Aliases are normalized once and are prohibited in Layout, Scene, renderer, mater
 
 ## 3. Semantic registry and theme contract
 
-The registry owns canonical primitive semantics. Its entries declare `semantic_id`, primitive kind, Scene purpose, canonical theme binding, whether a binding is required, and materializer evidence requirement.
+The host-owned `chrona/semantic-vocabulary/v0.1` resource is the sole binding
+authority (#419 V1). Its `body.bindings` is an ordered list of `semanticId`,
+`primitiveFamily`, `purpose`, `sceneRole`, `themeRole` and nullable
+`contrastClass` records. Families are `mark`, `line`, `decoration`, `label`,
+and `icon`; these are semantic families, not adapter primitive kinds. The
+Python registry validates this resource and derives immutable lookup indexes;
+it does not retain a parallel binding table. Existing consumers continue to
+own required-role activation, primitive completion and materializer checks.
+
+The installed resource has kind `semantic-vocabulary` and id `chrona-core`.
+Duplicate semantic IDs, malformed records, unsupported versions, absent bytes
+or mismatched identity fail before a usable registry or Scene is produced.
+Normal and Draft closure record the exact same vocabulary content identity;
+the render checks that the closed vocabulary is the host lookup authority.
+This is not an authored Context override or package registration extension.
+The initial117 records retain all prior values and declaration order. The
+selected examples below are explanatory; the packaged resource is exhaustive.
 
 | Semantic id | Primitive | Scene purpose | Canonical theme binding |
 | --- | --- | --- | --- |
@@ -55,7 +71,7 @@ The registry owns canonical primitive semantics. Its entries declare `semantic_i
 | `actual` | Rect/Symbol | `actual` | `actual` |
 | `asOf` | Path/Text | `as-of`, `as-of-label` | `asOf` |
 | `deadlineMark` | Path | `deadline-mark` | `deadline-mark` (contrast class `mark`; the role is required when a View shows deadlines) |
-| `deadlineMarkOutline` | Rect | `deadline-mark-outline` | `background` (completed opaque ground under the deadline stroke, not independently contrast-classified; Spec07 outlineWidth) |
+| `deadlineMarkOutline` | Rect | `deadline-outline` | `background` (completed opaque ground under the deadline stroke, not independently contrast-classified; Spec07 outlineWidth) |
 | `deadlineCaption` | Text | `deadline-caption` | `deadline-caption` when it binds fill, otherwise the explicit `text` alternative; ground text at4.5:1. Typography follows Spec07. |
 | `groupHeader` | Rect/Text | `group-header-band`, `group-header` | `groupHeader` |
 | `slotHeading` | Text | `slot-heading` | `slot-heading` (ground text; the role is opt-in and the `text` role applies without it, #1064) |

@@ -209,7 +209,7 @@ class ClosureReadLedger:
         self.read: set[str] = set()
 
     def required(self) -> None:
-        self.read.update({"project", "view", "layout-profile", "theme", "color-scheme"})
+        self.read.update({"project", "view", "layout-profile", "theme", "color-scheme", "semantic-vocabulary"})
 
     def actual(self) -> None:
         self.read.add("actual-set")
@@ -256,6 +256,10 @@ def render_review(request: RenderRequest) -> RenderedReview:
 def _render_review(request: RenderRequest) -> RenderedReview:
     """Render one closure, in the one order the pipeline has."""
     render_closure, ledger = request.closure, ClosureReadLedger(request.closure)
+    try:
+        render_closure.require_semantic_vocabulary()
+    except ClosureError as error:
+        raise RenderFailed(error.diagnostic_id, error.detail, "presentation", error.source_ref) from error
     previous_scene = None
     if render_closure.previous_scene_bytes is not None:
         previous_scene = decode_previous_scene(render_closure.previous_scene_bytes,

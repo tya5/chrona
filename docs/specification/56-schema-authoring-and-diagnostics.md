@@ -329,6 +329,14 @@ current contracts.
 
 ## 6. Evidence and migration gates
 
+The live `semantic-vocabulary-v0.1.schema.yaml` (#419 V1) validates the host
+mapping resource under the shared presentation envelope. Its immutable loader
+also rejects duplicate semantic IDs with a binding pointer before creating an
+index; schema validity alone is not sufficient. This registration preserves
+the117 existing binding values; Style rules and coverage classification are
+separate slices. Source/wheel equality, normal/Draft closure identity and
+materializer provenance/visual diffs are required alongside the schema tests.
+
 Implementation requires:
 
 1. annotation-lint failures for missing description/example and an all-live

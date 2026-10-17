@@ -191,6 +191,15 @@ The layout-metrics artifact follows the same rule. Its `id`, revision, content i
 metric algorithm version, and declared font/metric payload are part of the closure; an
 installed font or host default is never a substitute.
 
+The host semantic vocabulary (#419 V1; Spec49) is also explicit in normal and
+Draft closure and Scene resource provenance. The installed
+`semantic-vocabulary` / `chrona-core` resource uses schema version
+`chrona/semantic-vocabulary/v0.1`, version revision `v0.1`, and the SHA-256 of
+its exact loaded bytes. It is a wheel-owned engine input, not an authored Store
+reference or an overridable Context member. The vocabulary used by host lookups
+must match the closed resource. Existing Context syntax and visual paint/
+geometry do not change; the added provenance entry is intentional evidence.
+
 ### 5.2 Reference examples
 
 A Project/Snapshot reference identifies both a logical source and its immutable

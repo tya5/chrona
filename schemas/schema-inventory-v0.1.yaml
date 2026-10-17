@@ -93,6 +93,10 @@ schemas:
   - {file: review-detail-profile-v0.1.schema.yaml, kind: review-detail-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: scene-v0.6.schema.yaml, kind: inspection-scene, state: transitioning, consumers: [src/chrona/presentation/scene/serialization.py], successor: scene-v0.7.schema.yaml, removalSlice: issue-496-scene-v06-retirement}
   - {file: scene-v0.7.schema.yaml, kind: inspection-scene, state: live, consumers: [src/chrona/presentation/scene/serialization.py]}
+  - file: semantic-vocabulary-v0.1.schema.yaml
+    kind: semantic-vocabulary
+    state: live
+    consumers: [src/chrona/resources/semantic_vocabulary.py]
   - file: revision-store-resource-ref-v0.1.schema.yaml
     kind: revision-store-resource-reference
     state: live

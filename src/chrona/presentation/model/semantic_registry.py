@@ -14,6 +14,10 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from enum import Enum
 from re import fullmatch
+from types import MappingProxyType
+from typing import Mapping
+
+from chrona.resources.semantic_vocabulary import builtin_semantic_vocabulary
 
 
 class PrimitiveKind(str, Enum):
@@ -79,192 +83,14 @@ def _binding(semantic_id: str, primitive_kind: str, purpose: str,
     return SemanticBinding(semantic_id, primitive_kind, purpose, scene_role, theme_role, contrast_class)
 
 
-_REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for binding in (
-    # Comparison marks.
-    _binding("planned", "mark", "planned", "planned", "planned", ContrastClass.MARK),
-    # A forecast is distinct temporal truth, painted with the existing planned role.
-    _binding("forecast", "mark", "forecast", "planned", "planned"),
-    _binding("actual", "mark", "actual", "actual", "actual", ContrastClass.MARK),
-    _binding("snapshot", "mark", "snapshot", "snapshot", "snapshot", ContrastClass.MARK),
-    # A gate (point mark) painted by its own Theme role when the Theme declares one (#991); its purpose stays `planned`.
-    _binding("gate", "mark", "planned", "gate", "gate", ContrastClass.MARK),
-    _binding("missingActual", "mark", "missingActual", "missing-actual", "missing-actual", ContrastClass.MARK),
-    _binding("summaryBar", "mark", "summary-bar", "summary-bar", "summaryBar", ContrastClass.MARK),
-    _binding("progressFill", "mark", "progress-fill", "progress-fill", "progressFill", ContrastClass.MARK),
-    _binding("iconMark", "icon", "icon-mark", "icon-mark", "icon-mark"),
-    _binding("labelVisual", "icon", "label-visual", "text", "text"),
-    # Time decorations.
-    # Public Scene role remains hyphenated; theme authoring resolves the canonical asOf binding.
-    _binding("asOf", "line", "as-of", "as-of", "asOf"),
-    _binding("asOfLabel", "label", "as-of-label", "text", "text", ContrastClass.GROUND_TEXT),
-    # The as-of light cone (#890): a translucent gradient polygon from the marker, under every mark. Deliberately
-    # not contrast-classified (a faint light is the point); the gates composite it as the ground of what lies on it.
-    _binding("asOfCone", "decoration", "as-of-cone", "as-of-cone", "as-of-cone"),
-    # A Project deadline (#822): a tick at the promised date and, when the planned finish is later, a run to it.
-    # One role paints both, so a Theme gives them one ink; the run is what tells a missed promise from a kept one.
-    _binding("deadlineMark", "line", "deadline-mark", "deadline-mark", "deadline-mark", ContrastClass.MARK),
-    # A deadline outline is its actual painted ground, not another message.
-    _binding("deadlineMarkOutline", "decoration", "deadline-outline", "deadline-mark-outline", "background"),
-    # Label chips (#428): a background drawn from a label's own measured box,
-    # one binding per label semantic, Theme role ``<label purpose>-chip``.
-    _binding("asOfLabelChip", "decoration", "label-chip", "as-of-label-chip", "as-of-label-chip"),
-    _binding("memberLabelChip", "decoration", "label-chip", "member-label-chip", "member-label-chip"),
-    _binding("finishDeltaChip", "decoration", "label-chip", "finish-delta-chip", "finish-delta-chip"),
-    _binding("calendarClosed", "decoration", "calendar-closed", "calendar-closed", "calendarClosed", ContrastClass.DECORATION),
-    # A calendar-exception day drawn in its own colour when the Theme declares a `calendar-exception` background (#991).
-    _binding("calendarException", "decoration", "calendar-exception", "calendar-exception", "calendarException",
-             ContrastClass.DECORATION),
-    # A named Project period (#582): a band across the plot, selected by the View and painted by the Theme.
-    _binding("periodBand", "decoration", "period-band", "period-band", "period-band", ContrastClass.DECORATION),
-    _binding("periodLabel", "label", "period-label", "period-label", "period-label", ContrastClass.STATE_TEXT),
-    _binding("periodLabelChip", "decoration", "label-chip", "period-label-chip", "period-label-chip"),
-    # Canvas texture (#587): ground under every primitive. Deliberately not
-    # contrast-classified: a faint texture is the point, and the gates treat its
-    # substrate and ink as the ground of what lies on it instead.
-    _binding("canvasTexture", "decoration", "canvas-texture", "canvas-texture", "canvas-texture"),
-    # Fixed above-content overlays are distinct from the canvas ground and have
-    # their contrast effect evaluated over covered content (Spec 46, #888).
-    _binding("canvasOverlay", "decoration", "canvas-overlay", "canvas-overlay", "canvas-overlay"),
-    _binding("canvasOverlayGradient", "decoration", "canvas-overlay-gradient", "canvas-overlay-gradient", "canvas-overlay-gradient"),
-    # Region frame (#889): the panel Layout completes behind a framed Layout Profile node. Ground like the
-    # texture and for the same reason not contrast-classified: what lies on it is gated against its fill.
-    _binding("regionFrame", "decoration", "region-frame", "region-frame", "region-frame"),
-    # A sparse catalogue border is ground only where its completed ink touches content.
-    _binding("frameGlyph", "decoration", "frame-glyph", "frame-glyph", "frame-glyph"),
-    # Axis.
-    _binding("axisBand", "label", "axis-band", "axis-band", "axis", ContrastClass.GROUND_TEXT),
-    _binding("axisBandDecoration", "decoration", "axis-band", "axis-band-decoration", "axis-band-decoration", ContrastClass.DECORATION),
-    _binding("axisLabel", "label", "axis-label", "text", "axis", ContrastClass.GROUND_TEXT),
-    # Second band tier (#426): a View may declare a second band tier, each
-    # in its own Layout-assigned lane; the second ordinal resolves through
-    # its own semantic id so a Theme can bind it a distinct fill. Two
-    # ordinals meet the literal two-band-tier acceptance; a third is a
-    # small, visible follow-up if a View ever needs it. (A third band id is
-    # deliberately not pre-registered: the corpus-wide decoration contrast
-    # witness in tools/presentation_contrast.py requires every registered
-    # DECORATION-classified role to be painted somewhere in committed public
-    # evidence, and no committed slide needs a third band.)
-    _binding("axisBandDecoration2", "decoration", "axis-band", "axis-band-decoration2", "axis-band-decoration2", ContrastClass.DECORATION),
-    # Second and third labels tier (#426; ground text since #980, and the
-    # decoration witness above counts DECORATION roles only, so it does not
-    # constrain how many are registered):
-    # distinct scene roles (not the shared "text" role axisLabel uses), so a
-    # Theme can bind a labels tier its own colour, not only its own font
-    # (font already varies per tier through the typographyRole passed
-    # explicitly to place_text, independent of scene role). A tier that
-    # leaves typographyRole at its default keeps the shared "axisLabel" id
-    # every committed View already uses, so two fully-styled tiers (neither
-    # left at the default) need both of these ordinals at once.
-    _binding("axisLabel2", "label", "axis-label", "axis-label2", "axis2", ContrastClass.GROUND_TEXT),
-    _binding("axisLabel3", "label", "axis-label", "axis-label3", "axis3", ContrastClass.GROUND_TEXT),
-    _binding("axisGrid", "line", "axis-grid", "axis-major", "axis-major"),
-    _binding("axisGridMinor", "line", "axis-grid", "axis-minor", "axis-minor"),
-    # Axis cells and the axis/plot boundary (#426 rows 6-7).
-    _binding("axisRule", "line", "axis-rule", "axis-rule", "axis-rule"),
-    _binding("axisCellSeparator", "line", "axis-cell-separator", "axis-cell-separator", "axis-cell-separator"),
-    # Grouping.
-    _binding("groupBand", "decoration", "group-decoration", "group-band", "group-band", ContrastClass.DECORATION),
-    _binding("rowBand", "decoration", "row-decoration", "row-band", "row-band", ContrastClass.DECORATION),
-    _binding("rowRule", "decoration", "row-rule", "row-rule", "row-rule", ContrastClass.DECORATION),
-    # The rule under the table's column headers, across the table width only (#1545).
-    _binding("tableColumnRule", "decoration", "table-column-rule", "tableColumnRule", "tableColumnRule", ContrastClass.DECORATION),
-    _binding("groupHeaderBand", "decoration", "group-header-band", "group-header-band", "group-header-band", ContrastClass.DECORATION),
-    _binding("groupHeaderStrip", "decoration", "group-header-strip", "group-header-strip", "group-header-strip", ContrastClass.DECORATION),
-    # A patterned tab on each group header (#882), a Theme role Layout completes beside the header text.
-    _binding("groupTab", "decoration", "group-tab", "group-tab", "group-tab", ContrastClass.DECORATION),
-    _binding("groupHeader", "decoration", "group-header", "group-header", "groupHeader", ContrastClass.GROUND_TEXT),
-    _binding("groupDetail", "label", "group-detail", "text", "text", ContrastClass.GROUND_TEXT),
-    _binding("observationSource", "label", "observation-source", "text", "text", ContrastClass.GROUND_TEXT),
-    _binding("observationColumnLabel", "label", "observation-column-label", "text", "text", ContrastClass.GROUND_TEXT),
-    _binding("observationCell", "label", "observation-cell", "text", "text", ContrastClass.GROUND_TEXT),
-    # Emphasis is classified by the existing state-text role, like finishDelta.
-    _binding("observationAttentionCell", "label", "observation-cell", "variance-ahead", "variance-ahead"),
-    _binding("observationCriticalCell", "label", "observation-cell", "variance-behind", "variance-behind"),
-    # Table.
-    _binding("titleText", "label", "title-text", "heading", "heading", ContrastClass.GROUND_TEXT),
-    _binding("kickerText", "label", "kicker-text", "kicker", "kicker", ContrastClass.GROUND_TEXT),
-    # The subtitle line a View's `heading.subtitle` declares (#991), in the Theme's `subtitle` typography role.
-    _binding("subtitleText", "label", "subtitle-text", "subtitle", "subtitle", ContrastClass.GROUND_TEXT),
-    # The caption a Layout Profile slot declares (#1064), in the Theme's `slot-heading` text role (`text` when absent).
-    _binding("slotHeading", "label", "slot-heading", "slot-heading", "slot-heading", ContrastClass.GROUND_TEXT),
-    _binding("deadlineCaption", "label", "deadline-caption", "text", "text", ContrastClass.GROUND_TEXT),
-    _binding("tableColumnLabel", "label", "table-column-label", "text", "text", ContrastClass.GROUND_TEXT),
-    _binding("tableCell", "label", "table-cell", "text", "text", ContrastClass.GROUND_TEXT),
-    _binding("tableVarianceAhead", "label", "table-cell", "variance-ahead", "variance-ahead", ContrastClass.STATE_TEXT),
-    _binding("tableVarianceOnTrack", "label", "table-cell", "variance-on-track", "variance-on-track", ContrastClass.STATE_TEXT),
-    _binding("tableVarianceBehind", "label", "table-cell", "variance-behind", "variance-behind", ContrastClass.STATE_TEXT),
-    _binding("missingActualCell", "label", "table-cell", "missing-actual-cell", "missing-actual-cell", ContrastClass.STATE_TEXT),
-    # Plot labels.
-    _binding("memberLabel", "label", "member-label", "text", "text", ContrastClass.GROUND_TEXT),
-    _binding("memberLabelInsidePlanned", "label", "member-label", "member-label-inside-planned", "member-label-inside-planned", ContrastClass.GROUND_TEXT),
-    _binding("memberLabelInsideActual", "label", "member-label", "member-label-inside-actual", "member-label-inside-actual", ContrastClass.GROUND_TEXT),
-    _binding("memberLabelInsideSnapshot", "label", "member-label", "member-label-inside-snapshot", "member-label-inside-snapshot", ContrastClass.GROUND_TEXT),
-    _binding("memberLabelInsideScenario", "label", "member-label", "member-label-inside-scenario", "member-label-inside-scenario", ContrastClass.GROUND_TEXT),
-    _binding("finishDelta", "label", "finish-delta", "variance-on-track", "variance-on-track"),
-    _binding("varianceAhead", "label", "finish-delta", "variance-ahead", "variance-ahead"),
-    _binding("varianceBehind", "label", "finish-delta", "variance-behind", "variance-behind"),
-    _binding("forecastFinishDelta", "label", "forecast-finish-delta", "variance-on-track", "variance-on-track"),
-    _binding("forecastVarianceAhead", "label", "forecast-finish-delta", "variance-ahead", "variance-ahead"),
-    _binding("forecastVarianceBehind", "label", "forecast-finish-delta", "variance-behind", "variance-behind"),
-    _binding("milestoneDigestEntry", "label", "milestone-digest-entry", "text", "text", ContrastClass.GROUND_TEXT),
-    # Relations.
-    _binding("dependency", "line", "dependency", "dependency", "dependency"),
-    _binding("dependencyHalo", "decoration", "dependency-halo", "dependency-halo", "dependency-halo", ContrastClass.DECORATION),
-    _binding("dependency-critical", "line", "dependency", "dependency-critical", "dependency-critical"),
-    # A relation label is label text: its ink is the text role's, like every other label (#880). Its visual role
-    # used to be "annotation", whose fill every Theme binds to a ground colour (it paints annotation boxes), so the
-    # label read as ghost text. Its typography is still the Theme's "annotation" role (the theme-role field).
-    _binding("relationLabel", "label", "relation-label", "text", "annotation", ContrastClass.GROUND_TEXT),
-    _binding("networkNode", "mark", "network-node", "network-node", "network-node", ContrastClass.MARK),
-    # Preserve the public network-label purpose while separating its shared ink from title ink.
-    _binding("networkLabel", "label", "title-text", "text", "text", ContrastClass.GROUND_TEXT),
-    _binding("networkEdge", "line", "network-edge", "network-edge", "network-edge"),
-    _binding("criticalEdge", "line", "critical-edge", "critical-edge", "critical-edge"),
-    # Legend, notes and annotations.
-    # The swatch's own theme role is "legend-swatch" (size/spacing), separate
-    # from "legendLabel"'s "legend" (text) role; its drawn primitive is
-    # dispatched per entry role by Layout, not fixed by this binding (#427).
-    _binding("legendEntry", "decoration", "legend-swatch", "legend-swatch", "legend-swatch"),
-    _binding("scaleLegendEntry", "decoration", "legend-swatch", "planned", "planned"),
-    _binding("legendLabel", "label", "legend-label", "text", "legend", ContrastClass.GROUND_TEXT),
-    _binding("projectNote", "label", "project-note", "text", "annotation", ContrastClass.GROUND_TEXT),
-    _binding("annotationListText", "label", "annotation-list-text", "text", "annotation", ContrastClass.GROUND_TEXT),
-    _binding("noteIndex", "label", "note-index", "note-index", "note-index", ContrastClass.GROUND_TEXT),
-    _binding("annotationCalloutBox", "decoration", "annotation-box", "annotation-callout-box", "annotation-callout-box"),
-    _binding("annotationCalloutText", "label", "annotation-text", "annotation-callout-text", "annotation-callout-text", ContrastClass.GROUND_TEXT),
-    _binding("annotationCalloutLeader", "line", "annotation-leader", "annotation-callout-leader", "annotation-callout-leader"),
-    _binding("annotationHighlightBox", "decoration", "annotation-box", "annotation-highlight-box", "annotation-highlight-box"),
-    _binding("annotationHighlightText", "label", "annotation-text", "annotation-highlight-text", "annotation-highlight-text", ContrastClass.GROUND_TEXT),
-    _binding("annotationNoteBox", "decoration", "annotation-box", "annotation-note-box", "annotation-note-box", ContrastClass.DECORATION),
-    _binding("annotationNoteText", "label", "annotation-text", "annotation-note-text", "annotation-note-text", ContrastClass.STATE_TEXT),
-    _binding("annotationNoteLeader", "line", "annotation-leader", "annotation-note-leader", "annotation-note-leader"),
-    _binding("annotationArrowBox", "decoration", "annotation-box", "annotation-arrow-box", "annotation-arrow-box"),
-    _binding("annotationArrowText", "label", "annotation-text", "annotation-arrow-text", "annotation-arrow-text", ContrastClass.GROUND_TEXT),
-    _binding("annotationArrowLeader", "line", "annotation-leader", "annotation-arrow-leader", "annotation-arrow-leader"),
-    # Annotation kind header (#584): a title bar, the header text and an accent edge, painted from one
-    # role set shared by every kind (the kind colour replaces the fill). The text is judged against the
-    # bar (or the note box) it lies on; the bar and the accent are decorations.
-    _binding("annotationKindBar", "decoration", "annotation-kind-bar", "annotation-kind-bar", "annotation-kind-bar", ContrastClass.DECORATION),
-    _binding("annotationKindAccent", "decoration", "annotation-kind-accent", "annotation-kind-accent", "annotation-kind-accent", ContrastClass.DECORATION),
-    _binding("annotationKindStamp", "decoration", "annotation-kind-stamp", "annotation-kind-stamp", "annotation-kind-stamp", ContrastClass.DECORATION),
-    # Vector artwork behind an annotation container (#848): catalogue glyph parts painted over the note box.
-    _binding("annotationArtwork", "decoration", "annotation-artwork", "annotation-artwork", "annotation-artwork", ContrastClass.DECORATION),
-    # The ink of a per-side box border (#1049), one role per logical side; a kind-painted side uses annotationKindAccent.
-    _binding("annotationBorderStart", "decoration", "annotation-border-start", "annotation-border-start", "annotation-border-start", ContrastClass.DECORATION),
-    _binding("annotationBorderEnd", "decoration", "annotation-border-end", "annotation-border-end", "annotation-border-end", ContrastClass.DECORATION),
-    _binding("annotationBorderTop", "decoration", "annotation-border-top", "annotation-border-top", "annotation-border-top", ContrastClass.DECORATION),
-    _binding("annotationBorderBottom", "decoration", "annotation-border-bottom", "annotation-border-bottom", "annotation-border-bottom", ContrastClass.DECORATION),
-    _binding("annotationKindLabel", "label", "annotation-kind-label", "annotation-kind-label", "annotation-kind-label", ContrastClass.STATE_TEXT),
-    _binding("annotationKindSecondary", "label", "annotation-kind-secondary", "annotation-kind-secondary", "annotation-kind-secondary", ContrastClass.STATE_TEXT),
-    _binding("annotationHeading", "label", "annotation-heading", "annotation-heading", "annotation-heading", ContrastClass.STATE_TEXT),
-    # Summary panels.
-    _binding("summaryHeader", "label", "summary-header", "text", "summary", ContrastClass.GROUND_TEXT),
-    _binding("summaryMetric", "label", "summary-metric", "text", "summary", ContrastClass.GROUND_TEXT),
-    _binding("summaryFigureValue", "label", "summary-figure-value", "metric", "metric", ContrastClass.GROUND_TEXT),
-    _binding("summaryFigureCaption", "label", "summary-figure-caption", "subtitle", "subtitle", ContrastClass.GROUND_TEXT),
-    _binding("summaryCaption", "label", "summary-caption", "summary-caption", "summary-caption", ContrastClass.GROUND_TEXT),
-    _binding("summaryUnit", "label", "summary-unit", "summary-unit", "summary-unit", ContrastClass.GROUND_TEXT),
-)}
+_REGISTRY: Mapping[str, SemanticBinding] = MappingProxyType({
+    binding.semantic_id: binding
+    for row in builtin_semantic_vocabulary().bindings
+    for binding in (_binding(
+        row.semantic_id, row.primitive_family, row.purpose, row.scene_role, row.theme_role,
+        ContrastClass(row.contrast_class) if row.contrast_class is not None else None,
+    ),)
+})
 
 
 _SCENE_ROLES = frozenset(binding.scene_role for binding in _REGISTRY.values())
