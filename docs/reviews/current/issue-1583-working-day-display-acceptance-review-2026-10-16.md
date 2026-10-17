@@ -2,37 +2,31 @@
 
 # Issue #1583 — working-day display and comparison
 
-Product source `fa14587ab`, reconciled source `5c79ac909`, ready base
-`9edbfface85256e7c5541dd6fef0beb60379d536` (includes #1594/#1597/#1596).
-[Approved design/implementation plan](https://github.com/tya5/chrona/issues/1583#issuecomment-6203710183)
-and [calendarless policy](https://github.com/tya5/chrona/issues/1583#issuecomment-6217533121).
-This is not release acceptance: final-head CI, row2 disposition
-and exact-main three-OS release remain required.
+Core date handling is published in PR1599; the remaining packaged declarations
+are integrated in [PR1623](https://github.com/tya5/chrona/pull/1623), based on ready
+`9d888beb7468739b68e35de8b1d0ade79cf0ff56`.
+[Approved design/implementation plan](https://github.com/tya5/chrona/issues/1583#issuecomment-6203710183),
+[calendarless policy](https://github.com/tya5/chrona/issues/1583#issuecomment-6217533121),
+and [shipped target-b clarification](https://github.com/tya5/chrona/issues/1583#issuecomment-6222305552).
 
 ## Literal issue acceptance
 
 ### Issue #1583
 
 - Source: [Issue #1583](https://github.com/tya5/chrona/issues/1583)
-- Observed: 2026-10-16
+- Observed: 2026-10-17
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | Synthetic tests: 5wd from Monday shows Friday; actual Friday finish shows variance 0; calendar-day (`d`) items unchanged; a holiday exception before the end. | met | [Date basis tests](../../../tests/unit/chrona/presentation/model/test_working_day_date_basis.py) and [projection/table tests](../../../tests/unit/chrona/presentation/model/test_working_day_projection.py): working/civil spans, holiday/override/calendarless/signed distance controls, Friday Actual zero, Actual weekend civil closure, source-local snapshot/scenario calendars, raw dates unchanged. [Defaults tests](../../../tests/integration/test_view_defaults.py) preserve explicit calendar-days. | — |
-| 2 | The #1582 CSV renders `05 Oct – 09 Oct` and `0` for `test-plan` in the default draft and `target-b`, viewed as PNG. | not met | Root viewed exact-CSV default draft PNG with05Oct–09Oct/+0d and target-b with+0d. Target-b ships no Plan column; a scratch authored View adding its existing dateRange/inclusive column also visibly shows05Oct–09Oct/+0d. [Reviewer clarification requested](https://github.com/tya5/chrona/issues/1583#issuecomment-6217961113); no silent design change or acceptance relaxation. | — |
-| 3 | Public SVG/Scene changes are listed with counts in the PR. | met | [PR count table](https://github.com/tya5/chrona/pull/1599), [source4ff4ba2e1 artifact12054151992](https://github.com/tya5/chrona/actions/runs/38918644054/artifacts/12054151992):109 paths before/after,0 added/retired;5 SVG/9 Scene/3 reports changed. Each HALCYON21–25 has4 changed variance Text records, no primitive additions/removals;4 roadmap Scenes change metadata only;41 other contexts unchanged. All route/mark/annotation geometry and diagnostics unchanged; SVG non-text elements independently identical. Refresh audit on the final reconciled head. | — |
+| 1 | Synthetic tests: 5wd from Monday shows Friday; actual Friday finish shows variance 0; calendar-day (`d`) items unchanged; a holiday exception before the end. | met | [Date basis](../../../tests/unit/chrona/presentation/model/test_working_day_date_basis.py), [projection](../../../tests/unit/chrona/presentation/model/test_working_day_projection.py) and [packaged label controls](../../../tests/integration/test_packaged_working_day_labels.py): inclusive Friday, civil/working spans, holidays, calendarless behavior, Friday/weekend Actual zero, lanes/automatic and explicit calendar-days override. | — |
+| 2 | The #1582 CSV renders `05 Oct – 09 Oct` and `0` for `test-plan` in the default draft and `target-b`, viewed as PNG. | met | Root viewed all15preset Test plan rows from the unchanged [CSV](https://github.com/tya5/chrona/issues/1582) in `/tmp/chrona-1583-current-matrix.jMwREa/review-rows-{1,2,3}.png`: default05Oct–09Oct/+0d, shipped target-b+0d, executive-light+0d; no invented Plan column. Each declared comparison shows its formatted zero, never-2d; Editorial declares no visible comparison. | — |
+| 3 | Public SVG/Scene changes are listed with counts in the PR. | not met | [PR1599](https://github.com/tya5/chrona/pull/1599) has the published core-stage counts. Final combined declarations/placement need a fresh official [PR1623](https://github.com/tya5/chrona/pull/1623) snapshot and count table; earlier-stage counts are not final evidence. | — |
 
 ## Programme-level criteria (optional)
 
-Architecture review: Core half-open dates remain unchanged. One source-local
-typed basis and shared date helper feed canonical projection comparison facts
-and pre-Layout display ranges. Scene/adapters perform no calendar arithmetic.
-Calendarless presentation counts civil days without warning. Specifications06/24
-and shared vocabulary express the contract; default policy is declared in YAML,
-never selected by preset ID. Latest reconciliation passes101 date/default/
-routing/coverage/empty-slot/PDF controls and33 snapshot tests. Schema equivalence
-against ready9edbfface passes (delta1/equal37,575 corpus documents,739 probes;
-L2+L3=21.1s within60s). Direct source comparison and independent review found no
-integration blocker; Layout pruning and PDF serialization remain downstream
-of the unchanged date-policy ownership. Literal row2 remains not met pending
-the linked reviewer decision; reconciliation does not waive it.
+The canonical calendar basis and shared date helper own arithmetic; View
+declares deltaUnit, Layout formats completed facts, Scene/adapters serialize.
+No project/preset-ID branch, core half-open date change or schema migration.
+Eight legacy declarations now select working-days; explicit calendar-days
+still produces the intended civil delta. Final exact-head CI, public counts
+and the review-containing main three-OS release remain required before closure.
