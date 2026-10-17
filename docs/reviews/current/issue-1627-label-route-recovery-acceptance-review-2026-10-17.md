@@ -48,6 +48,12 @@ The ready-main wallboard legend-overflow warning is unchanged by this fix
 
 210 focused cases pass across two batches and the point-test expectation
 rerun; 38 documentation/ledger checks and the literal-review validator pass.
+All 125 CLI characterization cases pass after fixture `7722c10a6`: the default
+HALCYON render now suppresses one member name rather than four (one variance
+warning remains), and its recovery receipt is 8 fallback/16 settled instead of
+7/17. Only that expected stdout changes; CLI envelopes/file controls stay exact.
+CI39024533939 failed this stale fixture alone; derived-ready cascaded that
+failure. All other pytest shards, conformance and public reproduction passed.
 Require exact-head PR checks and three-OS full
 pytest/conformance/wheel plus public reproduction on exact main containing this
 review; keep issue1627 open until complete.
