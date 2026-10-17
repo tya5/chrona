@@ -1,6 +1,6 @@
 # Portable Visual Capabilities
 
-**Status:** Delivered (corrected v0.6 target-fidelity contract); PDF v0.7 extension implemented (#1612, release acceptance pending).
+**Status:** Delivered (corrected v0.6 target-fidelity contract and PDF v0.7 extension, #1612). The review-containing main `2ff197828dd1b8ef1f2573202d201129a6d00b9b` passed [three-OS release acceptance](https://github.com/tya5/chrona/actions/runs/39007088159).
 **Owns:** renderer-neutral visual capability profiles, completed Scene visual
 effects, fidelity, limits, and target admission. It does not own geometry,
 semantic selection, Layout, concrete color literals, package acquisition, or
