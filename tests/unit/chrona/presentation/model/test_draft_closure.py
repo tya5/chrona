@@ -451,5 +451,25 @@ def test_preset_preferred_visual_profile_applies_unless_a_flag_is_given(preset_w
     assert png.closure.context.target.visual_profile == "chrona-output/visual/v0.7-png"
     assert png.preset_visual_profile_fallback.preferred_profile == "chrona-output/visual/v0.7-svg"
     assert png.preset_visual_profile_fallback.selected_profile == "chrona-output/visual/v0.7-png"
+    pdf = resolve_draft_render(project_path=root / "project.yaml", preset_path=preset,
+                              preset_root=root, target_kind="pdf")
+    assert pdf.closure.context.target.visual_profile == "chrona-output/visual/v0.7-pdf"
+    assert pdf.preset_visual_profile_fallback.selected_profile == "chrona-output/visual/v0.7-pdf"
+    baseline_pdf = resolve_draft_render(project_path=root / "project.yaml", preset_path=preset,
+                                       preset_root=root, target_kind="pdf",
+                                       visual_profile="chrona-output/visual/v0.5-baseline")
+    assert baseline_pdf.closure.context.target.visual_profile == "chrona-output/visual/v0.5-baseline"
+    assert baseline_pdf.preset_visual_profile_fallback is None
     assert preferred.preset_visual_profile_fallback is None
     assert explicit.preset_visual_profile_fallback is None
+
+
+def test_pdf_draft_pins_glow_rasterizer_only_for_the_glow_profile():
+    from chrona.presentation.model.closure import _draft_rasterizer, _draft_resvg_rasterizer
+
+    baseline = _draft_rasterizer("pdf", "chrona-output/visual/v0.5-baseline")
+    glow = _draft_rasterizer("pdf", "chrona-output/visual/v0.7-pdf")
+    assert "glowRasterizer" not in baseline
+    assert glow == {**baseline, "glowRasterizer": _draft_resvg_rasterizer()}
+    assert glow["glowRasterizer"]["dpi"] == 96
+    assert _draft_rasterizer("png", "chrona-output/visual/v0.7-png") == _draft_resvg_rasterizer()

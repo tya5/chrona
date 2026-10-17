@@ -215,7 +215,7 @@ def _load_primary_project(args: argparse.Namespace) -> dict[str, Any]:
 
 
 VISUAL_PROFILES = ("chrona-output/visual/v0.5-baseline", "chrona-output/visual/v0.6-svg", "chrona-output/visual/v0.6-png",
-                   "chrona-output/visual/v0.7-svg", "chrona-output/visual/v0.7-png")
+                   "chrona-output/visual/v0.7-svg", "chrona-output/visual/v0.7-png", "chrona-output/visual/v0.7-pdf")
 
 # `chrona --help` lists the commands by task. A command missing here lands in "More commands" (a test keeps it empty).
 COMMAND_GROUPS: tuple[tuple[str, tuple[str, ...]], ...] = (

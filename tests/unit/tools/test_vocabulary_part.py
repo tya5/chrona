@@ -19,8 +19,10 @@ from tools.schema_inventory import definition_digest, load_inventory, validate_f
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 SCHEMAS = ROOT / "schemas"
 VOCABULARY = "vocabulary-v0.1.schema.yaml"
+VISUAL_VOCABULARY = "vocabulary-v0.2.schema.yaml"
 COMMON = "common-v0.1.schema.yaml"
 VOCABULARY_ID = "urn:chrona:vocabulary-v0.1"
+VISUAL_VOCABULARY_ID = "urn:chrona:vocabulary-v0.2"
 ENTRIES = load_inventory(SCHEMAS / "schema-inventory-v0.1.yaml")
 LIVE = tuple(entry["file"] for entry in ENTRIES if entry["state"] == "live")
 PARTS = frozenset(SCHEMA_PARTS)
@@ -32,6 +34,10 @@ def _schema(name: str) -> dict[str, Any]:
 
 def _defs() -> dict[str, Any]:
     return schema_document(VOCABULARY)["$defs"]
+
+
+def _visual_defs() -> dict[str, Any]:
+    return schema_document(VISUAL_VOCABULARY)["$defs"]
 
 
 def _walk(node: Any, path: tuple[Any, ...] = ()) -> Iterator[tuple[tuple[Any, ...], Any]]:
@@ -48,8 +54,8 @@ def _pointer(path: tuple[Any, ...]) -> str:
     return "".join("/" + str(token).replace("~", "~0").replace("/", "~1") for token in path)
 
 
-def _sites(name: str, definition: str) -> list[str]:
-    target = f"{VOCABULARY_ID}#/$defs/{definition}"
+def _sites(name: str, definition: str, vocabulary_id: str = VOCABULARY_ID) -> list[str]:
+    target = f"{vocabulary_id}#/$defs/{definition}"
     return [_pointer(path) for path, node in _walk(_schema(name)) if isinstance(node, dict) and node.get("$ref") == target]
 
 
@@ -144,7 +150,7 @@ def test_no_live_entry_outside_the_parts_copies_a_shared_vocabulary():
 
 VISUAL_PROFILES = [
     "chrona-output/visual/v0.5-baseline", "chrona-output/visual/v0.6-svg", "chrona-output/visual/v0.6-png",
-    "chrona-output/visual/v0.7-svg", "chrona-output/visual/v0.7-png",
+    "chrona-output/visual/v0.7-svg", "chrona-output/visual/v0.7-png", "chrona-output/visual/v0.7-pdf",
 ]
 VISUAL_PROFILE_SITES = {
     "render-context-v0.17.schema.yaml": "/properties/body/properties/target/properties/visualProfile",
@@ -152,13 +158,23 @@ VISUAL_PROFILE_SITES = {
 }
 
 
-def test_visual_profile_enum_is_the_five_published_profiles_in_order():
-    assert _defs()["visualProfile"]["enum"] == VISUAL_PROFILES
+def test_visual_profile_vocabulary_v02_is_registered_and_v01_remains_frozen():
+    assert VISUAL_VOCABULARY in SCHEMA_PARTS
+    entry = next(item for item in ENTRIES if item["file"] == VISUAL_VOCABULARY)
+    assert entry["state"] == "live" and entry["kind"] == "schema-part-vocabulary"
+    assert set(_visual_defs()) == {"visualProfile"}
+    assert schema_document(VISUAL_VOCABULARY)["$id"] == VISUAL_VOCABULARY_ID
+    assert _defs()["visualProfile"]["enum"] == VISUAL_PROFILES[:-1]
+    assert _visual_defs()["visualProfile"]["enum"] == VISUAL_PROFILES
+
+
+def test_visual_profile_enum_is_the_six_published_profiles_in_order():
+    assert _visual_defs()["visualProfile"]["enum"] == VISUAL_PROFILES
 
 
 @pytest.mark.parametrize(("name", "pointer"), sorted(VISUAL_PROFILE_SITES.items()))
 def test_each_visual_profile_site_references_the_definition_and_accepts_exactly_it(name, pointer):
-    assert pointer in _sites(name, "visualProfile")
+    assert pointer in _sites(name, "visualProfile", VISUAL_VOCABULARY_ID)
     validator = _site_validator(name, pointer)
     assert [value for value in VISUAL_PROFILES if not validator.is_valid(value)] == []
     for value in ("chrona-output/visual/v0.8-svg", "chrona-output/visual/v0.5-baseline ", "", None, 5):
@@ -166,14 +182,14 @@ def test_each_visual_profile_site_references_the_definition_and_accepts_exactly_
 
 
 def test_preset_library_references_the_visual_profile_for_its_preferred_profile():
-    sites = _sites("preset-library-v0.2.schema.yaml", "visualProfile")
+    sites = _sites("preset-library-v0.2.schema.yaml", "visualProfile", VISUAL_VOCABULARY_ID)
     assert len(sites) == 1 and sites[0].endswith("/properties/visualProfile/properties/preferred")
 
 
 def test_visual_profile_code_twins_equal_the_schema_vocabulary():
-    declared = set(_defs()["visualProfile"]["enum"])
+    declared = set(_visual_defs()["visualProfile"]["enum"])
     constants = {visual_capabilities.BASELINE_PROFILE, visual_capabilities.SVG_PROFILE, visual_capabilities.PNG_PROFILE,
-                 visual_capabilities.SVG_ICON_PROFILE, visual_capabilities.PNG_ICON_PROFILE}
+                 visual_capabilities.SVG_ICON_PROFILE, visual_capabilities.PNG_ICON_PROFILE, visual_capabilities.PDF_PROFILE}
     assert constants == declared
 
     from chrona.app.cli import _add_draft_target_arguments
@@ -183,10 +199,25 @@ def test_visual_profile_code_twins_equal_the_schema_vocabulary():
     assert set(choices) == declared and len(choices) == len(declared)
 
 
+def test_render_context_glow_rasterizer_reuses_resvg_descriptor_and_is_optional():
+    pointer = "/properties/body/properties/environment/properties/rasterizer/oneOf/1/properties/glowRasterizer"
+    validator = _site_validator("render-context-v0.17.schema.yaml", pointer)
+    assert validator.is_valid({"engine": "resvg-py", "version": "0.45.1", "resvgVersion": "0.45.1", "dpi": 96})
+    assert not validator.is_valid({"engine": "reportlab", "version": "0.45.1", "resvgVersion": "0.45.1", "dpi": 96})
+    assert not validator.is_valid({"engine": "resvg-py", "version": "0.45.1", "dpi": 96})
+    schema = _schema("render-context-v0.17.schema.yaml")
+    env = schema["properties"]["body"]["properties"]["environment"]
+    assert "glowRasterizer" not in env.get("required", []), "no-glow existing Contexts remain valid"
+    reportlab = env["properties"]["rasterizer"]["oneOf"][1]
+    assert "glowRasterizer" not in reportlab.get("required", [])
+    assert reportlab["properties"]["glowRasterizer"]["$ref"] == "#/$defs/resvgRasterizer"
+    assert env["properties"]["rasterizer"]["oneOf"][0]["$ref"] == "#/$defs/resvgRasterizer"
+
+
 def test_every_declared_visual_profile_resolves_for_a_target():
     # The profile is usable, not merely spelled: each one resolves for at least one target route.
     targets = ("svg", "png", "pdf", "typst", "tikz")
-    for profile in _defs()["visualProfile"]["enum"]:
+    for profile in _visual_defs()["visualProfile"]["enum"]:
         resolved = []
         for target in targets:
             try:
@@ -222,7 +253,7 @@ def test_every_declared_value_reader_follows_a_part_reference_including_corpus_c
     from tools import corpus_coverage, presentation_coverage
 
     schema = {"$id": "urn:test", "type": "object", "properties": {
-        "profile": {"$ref": f"{VOCABULARY_ID}#/$defs/visualProfile"},
+        "profile": {"$ref": f"{VISUAL_VOCABULARY_ID}#/$defs/visualProfile"},
         "provider": {"$ref": "urn:chrona:revision-store-resource-ref-v0.1#/properties/store/properties/provider"},
         "local": {"$ref": "#/$defs/mode"}},
         "$defs": {"mode": {"enum": ["a", "b"]}}}
@@ -240,7 +271,7 @@ def test_vocabulary_inventory_reads_a_declared_value_through_a_part_reference(tm
 
     (tmp_path / "schemas").mkdir()
     (tmp_path / "schemas" / "site.schema.yaml").write_text(yaml.safe_dump({
-        "$id": "urn:test-site", "properties": {"profile": {"description": "x", "$ref": f"{VOCABULARY_ID}#/$defs/visualProfile"},
+        "$id": "urn:test-site", "properties": {"profile": {"description": "x", "$ref": f"{VISUAL_VOCABULARY_ID}#/$defs/visualProfile"},
                                                 "broken": {"$ref": "urn:chrona:missing-v9#/$defs/nope"}}}), encoding="utf-8")
     entry = VocabularyEntry("schemas/site.schema.yaml", "/properties/profile", "test", "finite", tuple(VISUAL_PROFILES))
     assert declared_values(tmp_path, entry) == tuple(sorted(VISUAL_PROFILES))

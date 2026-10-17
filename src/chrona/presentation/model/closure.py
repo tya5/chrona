@@ -16,7 +16,7 @@ import yaml
 
 from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
 from chrona.presentation.scene.capabilities import theme_catalog_pattern_consumer
-from chrona.presentation.scene.visual_capabilities import preferred_target_visual_profile
+from chrona.presentation.scene.visual_capabilities import PDF_PROFILE, preferred_target_visual_profile
 from chrona.presentation.model.preset_target import PresetVisualProfileFallback
 from chrona.presentation.icons import IconNormalizationError, IconPathCommand, NormalizedIconPath, NormalizedVectorIcon, validate_png
 from chrona.presentation.contracts import (
@@ -573,7 +573,7 @@ def _draft_render_from_resources(
                 "locale": locale,
                 "fontMetrics": font_metrics if font_metrics is not None else _packaged_font_metrics(asset_root),
                 "scenePrecision": 3,
-                **({"rasterizer": _draft_rasterizer(target_kind)} if target_kind in {"png", "pdf"} else {}),
+                **({"rasterizer": _draft_rasterizer(target_kind, visual_profile)} if target_kind in {"png", "pdf"} else {}),
                 **({"typesetter": typesetter_environment} if typesetter_environment else {}),
             },
             "target": {"kind": target_kind, "capabilities": list(_DRAFT_CAPABILITIES) if target_kind == "svg" else [], "visualProfile": visual_profile,
@@ -787,17 +787,24 @@ def _packaged_font_metrics(asset_root: Path) -> dict[str, Any]:
     return value
 
 
-def _draft_rasterizer(target_kind: str) -> dict[str, Any]:
-    if target_kind == "png":
-        try:
-            import resvg_py
-            return {"engine": "resvg-py", "version": resvg_py.__version__, "resvgVersion": resvg_py.__resvg_version__, "dpi": 96}
-        except ImportError:
-            return {"engine": "resvg-py", "version": "unavailable", "resvgVersion": "unavailable", "dpi": 96}
+def _draft_resvg_rasterizer() -> dict[str, Any]:
     try:
-        return {"engine": "reportlab", "svglibVersion": version("svglib"), "reportlabVersion": version("reportlab"), "invariant": True}
+        import resvg_py
+        return {"engine": "resvg-py", "version": resvg_py.__version__, "resvgVersion": resvg_py.__resvg_version__, "dpi": 96}
+    except ImportError:
+        return {"engine": "resvg-py", "version": "unavailable", "resvgVersion": "unavailable", "dpi": 96}
+
+
+def _draft_rasterizer(target_kind: str, visual_profile: str) -> dict[str, Any]:
+    if target_kind == "png":
+        return _draft_resvg_rasterizer()
+    try:
+        descriptor = {"engine": "reportlab", "svglibVersion": version("svglib"), "reportlabVersion": version("reportlab"), "invariant": True}
     except Exception:
-        return {"engine": "reportlab", "svglibVersion": "unavailable", "reportlabVersion": "unavailable", "invariant": True}
+        descriptor = {"engine": "reportlab", "svglibVersion": "unavailable", "reportlabVersion": "unavailable", "invariant": True}
+    if visual_profile == PDF_PROFILE:
+        descriptor["glowRasterizer"] = _draft_resvg_rasterizer()
+    return descriptor
 
 
 def _draft_typesetter(target_kind: str, typesetter: TypesetterIdentity | None) -> dict[str, Any] | None:

@@ -29,7 +29,7 @@ properties:
           required: [preferred]
           additionalProperties: false
           properties:
-            preferred: {description: Visual output profile preferred for this preset., $ref: "urn:chrona:vocabulary-v0.1#/$defs/visualProfile"}
+            preferred: {description: Visual output profile preferred for this preset., $ref: "urn:chrona:vocabulary-v0.2#/$defs/visualProfile"}
         members:
           type: object
           description: Resource references that make up this preset.

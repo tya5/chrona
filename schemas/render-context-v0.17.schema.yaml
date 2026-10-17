@@ -57,15 +57,7 @@ properties:
             description: "Raster output engine and version evidence."
             examples: [{engine: resvg-py, version: "0.45.1", resvgVersion: "0.45.1", dpi: 96}, {engine: reportlab, svglibVersion: "1.5.1", reportlabVersion: "4.2.0", invariant: true}]
             oneOf:
-              - type: object
-                description: "resvg-py rasterizer evidence."
-                required: [engine, version, resvgVersion, dpi]
-                additionalProperties: false
-                properties:
-                  engine: {description: "Selects the resvg-py engine.", const: resvg-py}
-                  version: {description: "Installed Python adapter version.", type: string, minLength: 1}
-                  resvgVersion: {description: "Underlying resvg version.", type: string, minLength: 1}
-                  dpi: {description: "Positive raster dots per inch.", type: number, exclusiveMinimum: 0}
+              - $ref: "#/$defs/resvgRasterizer"
               - type: object
                 description: "ReportLab rasterizer evidence."
                 required: [engine, svglibVersion, reportlabVersion, invariant]
@@ -75,6 +67,10 @@ properties:
                   svglibVersion: {description: "Installed svglib version.", type: string, minLength: 1}
                   reportlabVersion: {description: "Installed ReportLab version.", type: string, minLength: 1}
                   invariant: {description: "Requires deterministic ReportLab output mode.", const: true}
+                  glowRasterizer:
+                    description: "Optional resvg-py engine and version evidence used only for PDF glow serialization."
+                    examples: [{engine: resvg-py, version: "0.45.1", resvgVersion: "0.45.1", dpi: 96}]
+                    $ref: "#/$defs/resvgRasterizer"
           typesetter:
             type: object
             description: "Text typesetting engine and adapter grammar evidence."
@@ -98,7 +94,7 @@ properties:
             uniqueItems: true
           visualProfile:
             description: "Exact renderer-neutral visual capability profile."
-            $ref: "urn:chrona:vocabulary-v0.1#/$defs/visualProfile"
+            $ref: "urn:chrona:vocabulary-v0.2#/$defs/visualProfile"
           textMode: {description: "Text placement mode required for typeset targets.", const: positioned}
     allOf:
       - description: "SVG targets do not select a rasterizer or typesetter."
@@ -124,6 +120,16 @@ properties:
             environment: {allOf: [{required: [typesetter]}, {not: {required: [rasterizer]}}, {properties: {typesetter: {properties: {engine: {const: tectonic}, adapterGrammar: {const: chrona-tikz/v0.1}}}}}]}
             target: {required: [textMode]}
 $defs:
+  resvgRasterizer:
+    type: object
+    description: "resvg-py rasterizer engine evidence."
+    required: [engine, version, resvgVersion, dpi]
+    additionalProperties: false
+    properties:
+      engine: {description: "Selects the resvg-py engine.", const: resvg-py}
+      version: {description: "Installed Python adapter version.", type: string, minLength: 1}
+      resvgVersion: {description: "Underlying resvg version.", type: string, minLength: 1}
+      dpi: {description: "Positive raster dots per inch.", type: number, exclusiveMinimum: 0}
   artifactPin:
     type: object
     description: "Identity-neutral immutable Store pin for exact Scene artifact bytes."
