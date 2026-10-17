@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import math
+from copy import deepcopy
 from datetime import date
 from difflib import get_close_matches
 import re
@@ -113,6 +114,24 @@ def _pointer(text: str) -> str:
     return text.replace("~", "~0").replace("/", "~1")
 
 
+def resolve_profile_field_definitions(
+    manifest: dict[str, Any], profile_id: str
+) -> dict[str, Any] | None:
+    """Return the effective field definitions for one profile in a package.
+
+    Package-wide fields are the base definitions and fields declared by the
+    selected profile override same-named package-wide fields. This is a
+    shallow merge in terms of schema semantics, but the returned value is a
+    deep copy so callers cannot mutate the manifest through nested values.
+    Unknown profile IDs return ``None``; profile inheritance is intentionally
+    not resolved here.
+    """
+    profile = manifest.get("profiles", {}).get(profile_id)
+    if profile is None:
+        return None
+    return deepcopy({**manifest.get("fields", {}), **profile.get("fields", {})})
+
+
 def validate_generic_profiles(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]]) -> list[Diagnostic]:
     """Check objects whose ``type`` names a profile of a declared, resolved package.
 
@@ -136,9 +155,10 @@ def validate_generic_profiles(project: dict[str, Any], package_manifests: dict[s
                 errors, resource_kind="profile", resource_identity=package_id).message
             diagnostics.append(Diagnostic("E_PROFILE_PACKAGE_INVALID", f"Profile package {package_id} is invalid: {detail}", f"/extensions/{index}"))
             continue
-        shared = manifest.get("fields", {})
-        for profile_id, profile in manifest["profiles"].items():
-            definitions.setdefault(profile_id, {**shared, **profile.get("fields", {})})
+        for profile_id in manifest["profiles"]:
+            profile_fields = resolve_profile_field_definitions(manifest, profile_id)
+            if profile_fields is not None:
+                definitions.setdefault(profile_id, profile_fields)
     for object_id, item in project.get("objects", {}).items():
         profile_fields = definitions.get(item.get("type"))
         if profile_fields is None:
