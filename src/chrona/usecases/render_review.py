@@ -1037,9 +1037,18 @@ def _shown_deadlines(project: dict[str, Any], placements: dict[str, dict[str, An
     """
     if view.deadlines is None:
         return ()
+    overrides = dict(view.deadlines.overrides)
+    objects = project.get("objects", {})
+    for object_id in overrides:
+        if object_id not in objects:
+            known = ", ".join(objects) if objects else "none"
+            raise RenderFailed("E_VIEW_DEADLINE_OBJECT_UNKNOWN",
+                               f"deadline override names object {object_id}, which the Project does not declare (declared: {known})",
+                               "view", f"/body/deadlines/overrides/{object_id}")
     shown = []
     for item in deadline_statuses(project, placements):
-        if not item.slipped and view.deadlines.show != "all":
+        show = overrides.get(item.object_id, view.deadlines.show)
+        if show == "hidden" or (not item.slipped and show != "all"):
             continue
         caption = None
         if item.slipped and view.deadlines.caption is not None:

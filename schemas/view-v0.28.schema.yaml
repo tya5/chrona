@@ -360,6 +360,17 @@ allOf:
             additionalProperties: false
             properties:
               show: {description: "Which deadlines are drawn: only those the plan misses (slipped), or every deadline (all), the missed ones with their run.", enum: [slipped, all]}
+              overrides:
+                description: "Per-object rules replacing show; hidden omits the mark and caption without changing the Core deadline warning. Keys must name Project objects."
+                examples: [{release: {show: all}, internal: {show: hidden}}]
+                type: object
+                propertyNames: {$ref: "urn:chrona:common-v0.1#/$defs/identifier"}
+                additionalProperties:
+                  type: object
+                  required: [show]
+                  additionalProperties: false
+                  properties:
+                    show: {description: "Replaces the global rule for this object only.", enum: [slipped, all, hidden]}
               caption:
                 description: "Optional slipped-deadline copy. The only placeholder is {daysLate}; unit words and locale are author text."
                 examples: [{template: "{daysLate} days late", format: {form: digits}}]
