@@ -463,11 +463,13 @@ Text, and contrast reads their actual fill rather than their enclosing bounds.
 
 **Deadline mark (#822).** Theme role `deadline-mark` paints a deadline's tick and run (Spec 06 section 7.3) as Scene
 `Path` primitives: `stroke`, `strokeWidth`, `dash` and `opacity` as for `as-of`, plus `markReach` (a named number, `0 < reach
-<= 4`: the tick's block extent as a ratio of the planned mark's, centred on it, so a reach above 1 stands above and
+<= 4`: the tick's block extent as a ratio of the primary planned/forecast mark's, centred on it, so a reach above 1 stands above and
 below the bar) and `markPaintOrder` (a non-negative integer added to the mark base). The role is required when a View shows
 deadlines (`E_THEME_ROLE_REQUIRED`); there is no fallback to another role. Its contrast class is `mark` (3:1, Spec 49), judged
 against the ground under each primitive's centre, so a tick that crosses a bar must be visible on the bar and every
 primitive on the row ground. `markReach` is added in place to the live Theme schemas (Spec 56 section 3.2).
+Forecast deadline runs use this same role and stroke; the forecast delta/legend
+identifies the estimate (Spec06 §8.5). No estimated-only Theme role is required.
 
 Optional `outlineWidth` (#1397) names a nonnegative physical-pixel margin around
 the tick and run strokes; absent/zero preserves flat output. Layout completes

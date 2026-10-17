@@ -1,7 +1,7 @@
 # Issue 1680 — forecast deadline
 
-Status: finish-basis design reviewed; estimated paint remains open.
-Implementation waits for Issue419 S2 to merge and the complete design to publish.
+Status: design and architecture review complete; no implementation started.
+Implementation waits for Issue419 S2 to merge and the final plan to publish.
 Published baseline: main `cd36227548aa349ed1fe3cb261184ef2b73ecd37`.
 [Issue](https://github.com/tya5/chrona/issues/1680);
 [preceding Style work](issue-419-semantic-resource-work-record-2026-10-17.md).
@@ -13,8 +13,8 @@ Verified in published code: Core `deadline_statuses` owns the verdict;
 `render_review._project_review` supplies original planned placements to both
 shown deadlines and warnings, while the projection's primary temporal geometry
 can use forecast placements. Layout consumes the completed verdict/finish.
-Spec04 §10 and Spec06 §7.3/§8.5 currently retain planned-only deadline semantics;
-the issue therefore needs an explicit normative correction, not a Layout fix.
+The published main has planned-only semantics in Spec04 §10, Spec06 §7.3/§8.5
+and Spec50 §3.4; this branch supplies the explicit normative correction before code.
 The trial-5 observations are reported evidence, not yet independently reproduced:
 [inputs at 9fa6062de](https://github.com/tya5/chrona/tree/9fa6062de/trial-5).
 
@@ -44,29 +44,31 @@ select a forecast. For each other Project object use its original plan.
 Window clipping, zero paint and adapter omission do not change the basis.
 Repeated primary occurrences share one object status. Core alone compares
 `at`/exclusive `end` in calendar days, in Project order; warnings and shown
-deadlines consume that same status. The selected forecast warning names its
-basis; ordinary plan messages/details and standalone schedule behavior remain
+deadlines consume that same status. Explicit forecast-render warnings name
+forecast/planned and carry `finishBasis`; ordinary no-forecast messages/details and standalone schedule behavior remain
 unchanged. Deadline visibility/overrides filter marks, never warnings.
 
 Bounded source/architecture review on S2 `b201711c4` confirms primary fact
 ownership, combined/explicit rows and folded-member closure. No second forecast
-or date evaluator is needed. Before code, publish the explicit forecast
-exception in Spec04 §10, Spec06 §7.3/§8.5 and Spec50 §3.4; those passages
-currently promise planned-only verdicts or runs to the planned finish.
+or date evaluator is needed. Normative authority is Spec04 §10, Spec06
+§7.3/§8.5, Spec07 deadline paint and Spec50 §3.4, corrected together here.
 
-Resolve before code (D2 and final review):
+### Paint decision (D2) and architecture review
 
-- Resolve the requested estimated-run treatment against Spec06 §8.5's existing
-  planned-paint plus `*` convention. The [reviewer question](https://github.com/tya5/chrona/issues/1680#issuecomment-6243035188)
-  is open; no new role, colour, dash or implicit caption has been selected.
-- Review shared network deadlines (forecast remains unsupported there),
-  folded packing, outlines, captions, contrast and Theme capability ownership.
+[Reviewer decision](https://github.com/tya5/chrona/issues/1680#issuecomment-6243271356):
+retain `deadline-mark`; no estimated colour/dash/role or implicit caption.
+Existing forecast delta/legend identifies an estimate. Literal criteria1–3
+remain unchanged; the issue's original estimated-paint clause is withdrawn.
 
-Architecture checks: Core compares dates; projection selects source facts;
-View selects shown deadlines; Theme owns paint; Layout completes geometry and
-ink envelopes; Scene/adapters do not infer basis or recompute lateness. Reuse
-the existing deadline composition for ordinary/folded hosts. No project-name
-branches, trial-data patches, duplicate evaluator or new scheduling constraint.
+Accepted against Specs04/06/07/13/49/50/56 and Scene Specs08/46: Core compares
+dates; projection selects source facts; View selects shown deadlines; Theme
+owns paint; Layout completes existing geometry/envelopes. Ordinary/folded hosts
+reuse one composition; captions receive the selected calendar-day count and
+outlines/contrast remain unchanged. Network forecast remains unsupported and
+network plan deadlines unchanged. Scene/adapters do not infer basis or compare
+dates; no Scene fields, resource identities or schema versions change.
+Migration is the intended correction to opt-in forecast runs/warnings only;
+no compatibility switch, source-plan mutation or project-specific rule.
 
 ## Planned publication and evidence
 
