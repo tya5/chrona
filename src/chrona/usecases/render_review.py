@@ -796,6 +796,8 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         snapshot_analysis=snapshot_result.analysis if snapshot_result is not None else None,
         forecast=forecast,
     )
+    if forecast is not None:
+        _require_forecast_occurrence_coverage(view, projection)
     global_figures, group_figures = (), ()
     late_ids = {item.figure_id for item in deferred_layout_figures(view.figures)}
     figure_diagnostics = []
@@ -854,6 +856,29 @@ def _require_forecast_presentation(view: ViewInput, layout: Mapping[str, Any]) -
                            "Forecast requires " + ", ".join(missing) +
                            "; choose a capable View/Layout (for example technical-print or target-b)",
                            "presentation", "/body/forecast")
+
+
+def _require_forecast_occurrence_coverage(view: ViewInput, projection: Any) -> None:
+    """A declared cell covers its exact subject, never every item in the row."""
+    labels = view.visibility.labels
+    if (isinstance(labels, Mapping) and labels.get("placement") in {"plot", "both"}
+            and "finishDelta" in labels.get("content", ())):
+        return
+    for row in projection.rows:
+        for item in row.items:
+            if (item.forecast is not None and item.temporal_paint
+                    and (item.item_id or item.object_id) != row.table_subject_id):
+                occurrence = f"{row.row_id}:{item.item_id or item.object_id}"
+                raise RenderFailed("E_FORECAST_PRESENTATION_REQUIRED",
+                    f"Forecast occurrence {occurrence!r} has no delta cell; declare a plot finishDelta channel",
+                    "presentation", "/body/rows")
+    for folded in projection.folded_points:
+        for item in folded.all_items:
+            if item.forecast is not None and item.temporal_paint:
+                occurrence = f"group-header:{folded.group_id}:{item.item_id or item.object_id}"
+                raise RenderFailed("E_FORECAST_PRESENTATION_REQUIRED",
+                    f"Folded forecast occurrence {occurrence!r} has no table cell; declare a plot finishDelta channel",
+                    "presentation", "/body/rows/points")
 
 
 def _complete_annotation_headers(content: SurfaceContentInput, theme: Mapping[str, Any],

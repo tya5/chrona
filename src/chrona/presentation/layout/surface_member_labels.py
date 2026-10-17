@@ -11,30 +11,28 @@ from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, BELOW_PLOT_
 from chrona.presentation.layout.labels import (
     LabelPlacement, LabelRect, LabelRequest, MemberNameAssociation, place_label, place_member_name,
 )
-from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
+from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.obstacles import (
     ROUTE_RESERVE_CLASS, ObstacleRect, SurfaceObstacle, SurfaceObstacleIndex, obstacles_intersect,
 )
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
-from chrona.presentation.layout.chip_geometry import chip_padding
-from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip, measure_label_chip
-from chrona.presentation.model.semantic_registry import label_chip_semantic, semantic_binding, FORECAST_DELTA_SEMANTICS
-from chrona.presentation.model.theme_tokens import RectangleChipShape
+from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip
+from chrona.presentation.layout.label_footprint_measurement import measure_label_footprint
+from chrona.presentation.model.semantic_registry import semantic_binding, FORECAST_DELTA_SEMANTICS
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, GroupPlacement, IconPlacement, LaneLabelSuppression,
     MarkPlacement, PlacementDecision, RowPlacement, ScalePlacement, ShapePlacement,
     SlotPlacement, SurfaceLayoutRequest, TextPlacement,
 )
-from chrona.presentation.layout.surface_visuals import measure_candidate_visuals
 from chrona.presentation.layout.surface_geometry import (
     HOSTED_TEXT_PAINT_ORDER, bounds_from_rect, coordinate_for_date,
 )
 from chrona.presentation.layout.surface_lanes import lane_owner
 from chrona.presentation.layout.key_row_lanes import key_row_label_ladder
 from chrona.presentation.layout.lane_mark_facets import span_mark_footprint
-from chrona.presentation.layout.text import metric_for_role, measure_text_width, place_text, wrap_text
+from chrona.presentation.layout.text import place_text
 from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
 from chrona.presentation.model.projection import WindowMode, active_placement, finish_delta_text, finish_delta_semantic
@@ -382,6 +380,38 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
     forecast_requests = []
     if contract.labels.enabled and "finishDelta" in contract.labels.content:
+        for folded in projection.folded_points:
+            group = groups.get(folded.group_id)
+            for item in folded.all_items:
+                if item.forecast is None or not item.temporal_paint:
+                    continue
+                instance_id = f"group-header:{folded.group_id}:{item.item_id or item.object_id}"
+                placement_id = f"variance:{instance_id}"
+                endpoint = active_placement(item).get("at")
+                if (projection.window_mode == WindowMode.EXPLICIT
+                        and not projection.window[0] <= endpoint < projection.window[1]):
+                    raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/placement/{placement_id}")
+                mark = marks.get(f"planned:{instance_id}")
+                if mark is None or group is None or group.header_bounds is None:
+                    raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/placement/{placement_id}")
+                # Keep the independent required delta outside the folded title's
+                # full measured inline reservation, whichever side fits.
+                title_footprint = measure_label_footprint(
+                    f"member-label:{instance_id}", folded.item.title or "", "groupHeader", "memberLabel",
+                    request, available_inline=timeline_bounds[2] * 0.4)
+                title_reach = title_footprint.size[0] + title_footprint.gap
+                anchor = LabelRect(*bounds_from_rect(mark.bounds))
+                anchor = LabelRect(anchor.x - title_reach, anchor.y,
+                                   anchor.width + 2 * title_reach, anchor.height)
+                candidates = tuple(side for side in (request.surface_content.label_fallback or
+                    ("end", "start", "above", "below")) if side not in {"suppress", "inside"})
+                forecast_requests.append(LabelRequest(
+                    placement_id, item.object_id, finish_delta_text(item), anchor, candidates,
+                    request.surface_content.label_text_role or "text", "group-header-point",
+                    CollisionDomain("group-header", folded.group_id), "diagnose",
+                    bounds=LabelRect(*bounds_from_rect(group.header_bounds)),
+                    semantic_id=finish_delta_semantic(item), required_before_routes=True,
+                    subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
         for row in projection.rows:
             for item in row.items:
                 if getattr(item, "forecast", None) is None or not getattr(item, "temporal_paint", True):
@@ -459,52 +489,26 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                              or label_request.is_required_before_routes):
             continue
         placement_obstacles = obstacles.copy(geometry_overrides=paint_footprints)
-        label_treatment = request.theme_tokens.text_treatment(label_request.typography_role)
-        label_metrics = metric_for_role(request.theme_tokens, label_request.typography_role, request.font_metrics)
-        font_size, line_height = label_treatment.font_size, label_treatment.line_height
         lane_measure = measured_lane.get(label_request.placement_id)
-        visuals = (lane_measure.visuals if lane_measure is not None else
-            measure_candidate_visuals(label_request.placement_id, label_request.typography_role, request).visuals)
+        measurement = measure_label_footprint(
+            label_request.placement_id, label_request.content, label_request.typography_role,
+            label_request.semantic_id, request, wrap=label_request.wrap,
+            available_inline=timeline_rect.width * 0.4, lane_measure=lane_measure,
+            chip_measurement_override=(context.as_of_chip_measurement
+                if label_request.semantic_id == "asOfLabel" else None))
+        label_treatment = measurement.treatment
+        label_metrics = measurement.metrics
+        font_size = label_treatment.font_size
+        visuals = measurement.visuals
         if not reserve_only:
             handled.update(visual.source_ref for visual, _, _, _ in visuals)
-        leading = geometry_sum(width + gap for visual, _, width, gap in visuals if visual.side == "leading")
-        trailing = geometry_sum(width + gap for visual, _, width, gap in visuals if visual.side == "trailing")
-        chip_semantic = label_chip_semantic(label_request.semantic_id) or ""
-        chip_role = semantic_binding(chip_semantic).theme_role if chip_semantic else None
-        chip = request.theme_tokens.label_chip(chip_role) if chip_role else None
-        nonrect_chip = chip is not None and not isinstance(
-            request.theme_tokens.label_chip_shape(chip_role), RectangleChipShape)
-        # New completed geometry must measure the same typography as its Text.
-        # Legacy rectangular/no-chip paths retain their established arithmetic.
-        numeric_spacing = label_treatment.numeric_spacing if nonrect_chip else "proportional"
-        available = max(1.0, timeline_rect.width * 0.4 - leading - trailing)
-        lines = (lane_measure.lines if lane_measure is not None else
-            wrap_text(label_request.content, available_inline=available, font_size=float(font_size),
-                      font_metrics=label_metrics, letter_spacing=float(label_treatment.letter_spacing),
-                      text_transform=label_treatment.transform, numeric_spacing=numeric_spacing)
-            if label_request.wrap == "allow" else (label_request.content,))
+        leading, trailing = measurement.leading, measurement.trailing
+        chip_semantic, chip = measurement.chip_semantic, measurement.chip
+        lines = measurement.lines
+        label_size = measurement.size
+        chip_pad, chip_measurement = measurement.chip_padding, measurement.chip_measurement
+        text_insets = measurement.text_insets
         placement_bounds = label_request.bounds or timeline_rect
-        text_width = (lane_measure.text_width if lane_measure is not None else
-            max(measure_text_width(line, font_size=float(font_size), font_metrics=label_metrics,
-                letter_spacing=float(label_treatment.letter_spacing),
-                text_transform=label_treatment.transform, numeric_spacing=numeric_spacing) for line in lines))
-        label_size = (leading + text_width + trailing, float(font_size) * float(line_height) * len(lines))
-        chip_pad = chip_padding(request.theme_tokens, chip_semantic, float(font_size), label_size[1])
-        if lane_measure is not None:
-            chip_measurement = lane_measure.chip_measurement
-        elif label_request.semantic_id == "asOfLabel" and context.as_of_chip_measurement is not None:
-            chip_measurement = context.as_of_chip_measurement
-        else:
-            chip_measurement = measure_label_chip(request.theme_tokens, label_request.semantic_id,
-                text_inline=label_size[0], text_block=label_size[1], font_size=float(font_size), padding=chip_pad)
-        label_size = (label_size[0] + 2 * chip_pad[0], label_size[1] + 2 * chip_pad[1])
-        if lane_measure is not None:
-            label_size = (lane_measure.width, lane_measure.height)
-            chip_pad = lane_measure.chip_padding
-        if chip_measurement is not None:
-            label_size = (float(chip_measurement.footprint.inline_size), float(chip_measurement.footprint.block_size))
-        text_insets = ((chip_measurement.text_inline_inset, chip_measurement.text_block_inset)
-                       if chip_measurement is not None else chip_pad)
         if label_request.bounds is not None and chip is not None:
             if chip_measurement is None:
                 placement_bounds = LabelRect(placement_bounds.x - chip_pad[0], placement_bounds.y - chip_pad[1],

@@ -2,38 +2,35 @@
 
 ## Baseline and status
 
-Public base: 3721c6a18a1a4510a2493b156445bafd1b8eff7f (trusted-ready; design PR1642 merged).
+Public base: trusted-ready 9735e254fa114113d0f2d319f62c543bc8333f72,
+merged normally into the feature branch; design PR1642 is merged.
 [Owner rule and acceptance](https://github.com/tya5/chrona/issues/1634).
 The design plan was published in 783fe50cc; normative design and whole-
 architecture review were published in a9c0d3ec6c4b982c1f93249eec6acfcb814632b4;
 implementation plan in 00d66e8a5; observed-endpoint correction in ad9dcfb0d before
-the corresponding code change. F1 is implemented on the feature branch, not
-released: 87 focused forecast/ordinary-projection/closure tests passed. Actual
-trial calculation returns all 25 objects, 6 moved, 22 unfinished, no fatal
-errors; the observed dependency miss is reported without changing either date.
-F2 candidate now separates source facts from active placements/deltas, registers
-forecast Scene/lane/window identities, and completes independent required plot
-deltas and full table/legend text. Focused groups: 314 passed and 92 passed;
-schema equivalence passes all three layers, including the optional Context
-field and two Scene admission deltas. Four stale merged L1 entries were retired
-with the verifier's historical proof. F3 common ingress and typed findings are
-implemented as a WIP candidate: ingress-focused tests passed (260), followed by
-required-label/Scene checks (101) and render integration checks (52).
-No PNG, main-byte or release acceptance is claimed. Boundary review found
-folded group-header points omit required deltas and lose forecast Scene identity;
-resolve this against the existing presentation contract before acceptance.
+the corresponding code change. Occurrence coverage was corrected in cab0ae646
+before its implementation. F1–F3 are implemented on the feature branch, not
+released. Actual trial calculation returns all 25 objects, 6 moved, 22 unfinished,
+no fatal errors; the observed dependency miss is reported without changing dates.
+Schema equivalence passes all layers for the declared Context/Scene widening.
+Focused ingress/projection groups passed (260/314/92); latest completed-label,
+Scene, folded/shared-row and tint checks: 110 passed. Skill checks: 51 passed;
+the weekly forecast example and validator are complete. Folded packing and final
+placement share exact text/icon/chip footprint measurement; the large-chip twin
+checks header lanes and required pre-route obstacles. Optional-title policy is
+independent. Per-occurrence table coverage and forecast Scene identity are closed.
 #1632 remains dev A row 1; its PR #1644 is in CI. During that verified wait,
-complete occurrence coverage under the published Spec06 correction: folded
-points use declared required header plot deltas, explicit table cells cover
-only their actual subject, and missing declared coverage refuses the occurrence.
+F4 evidence preparation continues without another feature PR.
 The actual trial PNGs were rendered and viewed at WIP 2f9f36b3f: target-b
 shows 25 forecast/ghost objects and table deltas; technical-print shows 22
 selected forecast/ghost objects and independent deltas. Required estimates and
 the truthful legend are visible; optional title suppression and preset contrast
 findings are separate. These are candidate image checks, not release acceptance.
-Next: implement/test complete folded placement and identity, occurrence checks,
-update the skill, compare base bytes and repeat final trial images on the
-integrated candidate. Current ready main 9735e254f was merged normally.
+The no-flag trial matrix is byte-identical to exact main 9735e254f in separate
+project venvs: target-b and technical-print, each SVG/Scene/PNG (six pairs).
+This proves that matrix, not all public contexts. Next: repeat final forecast
+trial images on the integrated candidate, publish the single feature PR and
+inspect its full public artifact comparison, then complete release acceptance.
 [Reviewer answers](https://github.com/tya5/chrona/issues/1634#issuecomment-6230794260)
 approve retained declared units, finish-only placement with an unobserved-start
 finding, and child-envelope precedence with a named group-observation finding.

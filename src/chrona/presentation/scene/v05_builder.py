@@ -804,14 +804,15 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             href, link_title = link_for_item(item, source_kind)
             planned_mark = mark_placements.get(f"planned:{instance_id}")
             if planned_mark is not None:
-                binding = semantic_binding("snapshot" if source_kind in {"snapshot", "scenario"} else "planned")
+                binding = _primary_mark_binding(planned_mark, source_kind)
                 bounds = (float(planned_mark.bounds.inline), float(planned_mark.bounds.block),
                           float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
+                gate_role = (binding.scene_role if planned_mark.semantic_id == "forecast" else
+                             resolve_point_paint_role(binding.scene_role,
+                                                      gate_declared=value.theme_tokens.has_role("gate")))
                 primitives.extend(_symbol_primitives(f"planned:{instance_id}", item.object_id, "object",
                                                     binding.purpose,
-                                                    resolve_point_paint_role(binding.scene_role,
-                                                        gate_declared=value.theme_tokens.has_role("gate"))
-                                                    if item.source_type == "point" else binding.scene_role,
+                                                    gate_role if item.source_type == "point" else binding.scene_role,
                                                     bounds, planned_mark.symbol_parts,
                                                     corner_radius=planned_mark.corner_radius,
                                                     path_commands=planned_mark.path_commands, href=href, link_title=link_title,

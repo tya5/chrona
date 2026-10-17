@@ -7,7 +7,7 @@ from datetime import date
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Callable
 
-from chrona.presentation.layout.model import LayoutError, Rect
+from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.point_hosting import resolve_point_host_plan
 from chrona.presentation.layout.point_host_geometry import (
     complete_hosted_point_geometry, translate_point_block, validate_hosted_point_collisions,
@@ -27,7 +27,8 @@ from chrona.presentation.layout.filled_contour import (
     ContourUnionError, intersect_visible_host_contour, union_filled_contours,
 )
 from chrona.presentation.layout.rounded_outline import rounded_rect_commands
-from chrona.presentation.model.projection import WindowMode, shared_track_member_key, active_placement
+from chrona.presentation.model.projection import WindowMode, shared_track_member_key, active_placement, finish_delta_text, finish_delta_semantic
+from chrona.presentation.layout.label_footprint_measurement import measure_label_footprint
 from chrona.presentation.layout.surface_geometry import coordinate_for_date
 from chrona.presentation.layout.text import metric_for_role, measure_text_width
 from chrona.presentation.layout.lane_projection import (
@@ -365,6 +366,14 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
     folded_by_group: dict[str, list[Any]] = {}
     for folded in getattr(projection, "folded_points", ()):
         folded_by_group.setdefault(folded.group_id, []).append(folded)
+    def forecast_label_measures(folded):
+        instance_id = folded_instance_id(folded, folded.item)
+        title = measure_label_footprint(f"member-label:{instance_id}", folded.item.title or "",
+            "groupHeader", "memberLabel", request)
+        delta = measure_label_footprint(f"variance:{instance_id}", finish_delta_text(folded.item),
+            request.surface_content.label_text_role or "text", finish_delta_semantic(folded.item), request)
+        return title, delta
+
     def folded_extent(folded: Any) -> tuple[float, float]:
         """Inline extent of a folded point: its marks plus the title label on the placed side."""
         label_treatment = request.theme_tokens.text_treatment("groupHeader")
@@ -387,6 +396,10 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                 rights.append(float(mark.bounds.inline) + float(mark.bounds.inline_size))
         if not lefts:
             return (0.0, 0.0)
+        if folded.item.forecast is not None:
+            title, delta = forecast_label_measures(folded)
+            reach = geometry_sum((title.size[0], title.gap, delta.size[0], delta.gap))
+            return (min(lefts) - reach, max(rights) + reach)
         width = measure_text_width(
             folded.item.title or "", font_size=float(label_treatment.font_size),
             font_metrics=metric_for_role(request.theme_tokens, "groupHeader", request.font_metrics),
@@ -403,7 +416,11 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             folded = folded_points[0]
             raise LayoutError("E_REVIEW_POINT_GROUP_HEADER_UNAVAILABLE",
                               f"/projection/foldedPoints/{folded.item.object_id}")
-        pitch = allocation.outer_extent if allocation is not None else mark_block_size
+        base_pitch = allocation.outer_extent if allocation is not None else mark_block_size
+        pitch = base_pitch
+        if any(point.item.forecast is not None for point in folded_points):
+            pitch = max(pitch, *(measure.size[1] for point in folded_points
+                if point.item.forecast is not None for measure in forecast_label_measures(point)))
         track_inset = -allocation.outer_bounds[0] if allocation is not None else 0.0
         ordered_points = sorted(
             folded_points, key=lambda point: (active_placement(point.item).get("at"), point.item.object_id))
@@ -423,7 +440,7 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
         first_block = float(group.header_bounds.block) + max(
             0.0, (float(group.header_bounds.block_size) - occupied) / 2)
         for folded in ordered_points:
-            block = first_block + lane_of[id(folded)] * pitch + track_inset
+            block = first_block + lane_of[id(folded)] * pitch + (pitch - base_pitch) / 2 + track_inset
             members = sorted(enumerate(folded.all_items),
                              key=lambda pair: shared_track_member_key(pair[1], pair[0]))
             for _, item in members:
