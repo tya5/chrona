@@ -160,8 +160,8 @@ to override one member of a preset. Contexts and Stores are the pinned-evidence 
 Color Scheme, Layout and fonts, each pinned by a content identity) lives in a **Store**
 named by a **Store configuration** (`.chrona/store.yaml`); a reference file points at one resource in it. `render_review` renders a
 Context's reference exactly; `compare_baseline` compares a named baseline with a candidate Project.
-Both only read and refuse a Store root outside the workspace or bytes that do not match the pinned
-identity. Do not edit a Store file, unpin a reference or change `integrity` to make a call pass: that
+Both only read and refuse a Store root outside the workspace or bytes that do not match their
+pinned identity. Do not edit a Store file, unpin a reference or change `integrity` to make a call pass: that
 is the user's. Without the tools, `chrona render-review` and `chrona baseline-compare` do the same.
 
 ## Start from a spreadsheet
