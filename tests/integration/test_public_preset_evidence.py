@@ -8,6 +8,7 @@ import yaml
 from chrona.app.cli import main
 from chrona.presentation.contracts import ClosureIdentity, PresentationPresetContract, ViewContract, parse_contract
 from tests.support import synthetic_review as sr
+from tests.support.draft_packages import stage_project_package_store
 from tests.support.preset_policy import assert_view_copy_except_axis as _assert_view_copy_except_axis
 
 
@@ -100,15 +101,18 @@ def test_legend_swatch_marks_are_never_checked_against_the_timeline_bottom(tmp_p
     spurious W_LAYOUT_MARK_OVERFLOW with available block clamped to 0 -- found
     building the Editorial and Technical print presets' legends (I429-2)."""
     output = tmp_path / "editorial.svg"
+    project_path = ROOT / "examples/halcyon-1/project.yaml"
+    project = yaml.safe_load(project_path.read_bytes())
+    store_config = stage_project_package_store(tmp_path / "project-store", project, project_path.parent)
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(ROOT / "examples/halcyon-1/project.yaml"),
+        "chrona", "render", str(project_path),
         "--actual", str(ROOT / "examples/halcyon-1/actual.yaml"),
         "--view", str(ROOT / "examples/halcyon-1/views/editorial.yaml"),
         "--theme", str(ROOT / "src/chrona/resources/presets/bundles/editorial/theme.yaml"),
         "--scheme", str(ROOT / "src/chrona/resources/presets/bundles/editorial/scheme.yaml"),
         "--layout", str(ROOT / "examples/halcyon-1/layouts/editorial.yaml"),
         "--detail", str(ROOT / "src/chrona/resources/presets/bundles/editorial/detail.yaml"),
-        "--output", str(output),
+        "--store-config", str(store_config), "--output", str(output),
     ])
     main()
     output = capsys.readouterr()

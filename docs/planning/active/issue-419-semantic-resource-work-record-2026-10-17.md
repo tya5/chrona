@@ -459,6 +459,10 @@ The focused evaluator/content/geometry and legacy encoding batch passes151
 tests; module reachability (283 modules) and inward imports pass without an
 allowlist. Generic Draft integration tests now provide an explicit temporary
 Store containing the exact declared package bytes rather than bypass closure.
+The remaining Draft test callers share that Store fixture without changing
+Project pins. Focused migration batches pass147 preset/default tests,11 surface
+wiring tests,21 cache/CLI checks (overlap), and41 render-library tests; the cache
+key includes package bytes. Corpus-marked tests remain for planned CI gates.
 
 Draft provider design and implementation amendment: inject the existing
 `SnapshotReader` port into explicit/guided Draft ingress and `DraftRenderRequest`.

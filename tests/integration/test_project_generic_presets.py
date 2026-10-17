@@ -10,6 +10,7 @@ import yaml
 
 from chrona.app.cli import main
 from chrona.usecases.local_authoring import initialize_project
+from tests.support.draft_packages import stage_project_package_store
 
 ROOT = Path(__file__).resolve().parents[2]
 BUNDLES = ROOT / "src/chrona/resources/presets/bundles"
@@ -47,8 +48,14 @@ def _render(tmp_path: Path, monkeypatch, preset_id: str, project: Path) -> tuple
     monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(preset)])
     main()
     scene_path, svg_path = tmp_path / f"{preset_id}.json", tmp_path / f"{preset_id}.svg"
+    project_value = yaml.safe_load(project.read_bytes())
+    store_args = []
+    if any(extension.get("resource", {}).get("store", {}).get("provider") == "local"
+           for extension in project_value.get("extensions", ())):
+        store_config = stage_project_package_store(tmp_path / "project-store", project_value, project.parent)
+        store_args = ["--store-config", str(store_config)]
     monkeypatch.setattr(sys, "argv", ["chrona", "render", str(project), "--preset", str(preset / "preset.yaml"),
-                                      "--output", str(svg_path), "--emit-scene", str(scene_path)])
+                                      *store_args, "--output", str(svg_path), "--emit-scene", str(scene_path)])
     main()
     return json.loads(scene_path.read_text(encoding="utf-8"))["surfaces"][0], svg_path.read_bytes()
 

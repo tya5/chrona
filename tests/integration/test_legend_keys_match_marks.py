@@ -12,7 +12,9 @@ import subprocess
 import sys
 
 import pytest
+import yaml
 
+from tests.support.draft_packages import stage_project_package_store
 from tests.support.legend_keys import legend_key_findings
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -20,9 +22,13 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def _scene(tmp_path: Path, *preset: str) -> dict:
     output = tmp_path / "scene.json"
+    project_path = ROOT / "examples/halcyon-1/project.yaml"
+    project = yaml.safe_load(project_path.read_bytes())
+    store_config = stage_project_package_store(tmp_path / "project-store", project, project_path.parent)
     result = subprocess.run(
-        [sys.executable, "-c", "from chrona.app.cli import main; main()", "render", str(ROOT / "examples/halcyon-1/project.yaml"),
-         "--actual", str(ROOT / "examples/halcyon-1/actual.yaml"), "--output", str(tmp_path / "out.svg"), "--emit-scene", str(output), *preset],
+        [sys.executable, "-c", "from chrona.app.cli import main; main()", "render", str(project_path),
+         "--actual", str(ROOT / "examples/halcyon-1/actual.yaml"), "--store-config", str(store_config),
+         "--output", str(tmp_path / "out.svg"), "--emit-scene", str(output), *preset],
         cwd=tmp_path, capture_output=True, text=True, timeout=600)
     assert result.returncode == 0, result.stdout
     return json.loads(output.read_text(encoding="utf-8"))
