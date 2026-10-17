@@ -24,20 +24,20 @@ body:
     id: chrona-builtin-editorial
     kind: theme
     store:
-      provider: local
-      identity: halcyon-1-example
-    address: themes/editorial.yaml
+      provider: package
+      identity: chrona.resources
+    address: presets/bundles/editorial/theme.yaml
     revision:
-      token: example-v1
+      token: bundled
   colorScheme:
     id: chrona-builtin-editorial
     kind: color-scheme
     store:
-      provider: local
-      identity: halcyon-1-example
-    address: schemes/editorial.yaml
+      provider: package
+      identity: chrona.resources
+    address: presets/bundles/editorial/scheme.yaml
     revision:
-      token: example-v1
+      token: bundled
   layout:
     id: chrona-builtin-editorial
     kind: layout-profile
@@ -61,11 +61,11 @@ body:
       id: chrona-builtin-editorial-detail
       kind: review-detail-profile
       store:
-        provider: local
-        identity: halcyon-1-example
-      address: profiles/editorial-detail.yaml
+        provider: package
+        identity: chrona.resources
+      address: presets/bundles/editorial/detail.yaml
       revision:
-        token: example-v1
+        token: bundled
   environment:
     viewport:
       inlineSize: 1600

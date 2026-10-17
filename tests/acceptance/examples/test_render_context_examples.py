@@ -9,6 +9,7 @@ from chrona.presentation.model.font_resources import resolve_font_resource
 
 
 ROOT = Path(__file__).resolve().parents[3]
+PACKAGE_ROOT = ROOT / "src/chrona/resources"
 
 
 def test_current_example_contexts_bind_exact_source_bytes():
@@ -30,7 +31,9 @@ def test_current_example_contexts_bind_exact_source_bytes():
         references.extend(body["inputs"].values())
         example_root = path.parents[1]
         for reference in references:
-            payload = (example_root / reference["address"]).read_bytes()
+            store = reference["store"]
+            root = PACKAGE_ROOT if (store["provider"], store["identity"]) == ("package", "chrona.resources") else example_root
+            payload = (root / reference["address"]).read_bytes()
             if "contentIdentity" in reference:
                 assert reference["contentIdentity"] == "sha256:" + sha256(payload).hexdigest()
         for font_asset in body["environment"]["fontMetrics"]["assets"]:

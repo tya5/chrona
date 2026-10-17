@@ -38,26 +38,30 @@ def _assert_packaged_view_contract(path: Path, expected_id: str) -> dict:
 def test_editorial_non_view_corpus_copies_match_and_packaged_view_is_independent():
     """Packaged Views own general policy; authored corpus Views remain independent.
 
-    Theme/Scheme/profile retain byte guards; Layout permits only its declared cap.
+    HALCYON reads the packaged Editorial Theme, Scheme and detail profile in place (#1397), so the
+    corpus keeps no copy of them; its Layout permits only the packaged table cap.
     """
     bundle = ROOT / "src/chrona/resources/presets/bundles/editorial"
     corpus = ROOT / "examples/halcyon-1"
-    pairs = {
-        "theme.yaml": corpus / "themes/editorial.yaml",
-        "layout.yaml": corpus / "layouts/editorial.yaml",
-        "scheme.yaml": corpus / "schemes/editorial.yaml",
-        "detail.yaml": corpus / "profiles/editorial-detail.yaml",
+    packaged = {
+        "theme": "theme.yaml",
+        "colorScheme": "scheme.yaml",
     }
-    for bundle_name, corpus_path in pairs.items():
-        bundle_path = bundle / bundle_name
-        assert bundle_path.is_file() and corpus_path.is_file()
-        if bundle_name == "layout.yaml":
-            packaged_layout = yaml.safe_load(bundle_path.read_bytes())
-            corpus_layout = yaml.safe_load(corpus_path.read_bytes())
-            assert sr.find_node(packaged_layout, "table").pop("maxInlineShare") == 0.4
-            assert packaged_layout == corpus_layout
-        else:
-            assert bundle_path.read_bytes() == corpus_path.read_bytes(), (bundle_name, corpus_path)
+    for context_name in ("13-gallery-editorial.yaml", "16-gallery-editorial-lanes.yaml"):
+        body = yaml.safe_load((corpus / "contexts" / context_name).read_bytes())["body"]
+        slots = {slot: body[slot] for slot in packaged} | {"detailProfile": body["inputs"]["detailProfile"]}
+        for slot, reference in slots.items():
+            name = packaged.get(slot, "detail.yaml")
+            assert reference["store"] == {"provider": "package", "identity": "chrona.resources"}, (context_name, slot)
+            assert reference["address"] == f"presets/bundles/editorial/{name}", (context_name, slot)
+            assert reference["revision"] == {"token": "bundled"}, (context_name, slot)
+            assert reference["id"] == yaml.safe_load((bundle / name).read_bytes())["id"], (context_name, slot)
+    for name in ("themes/editorial.yaml", "schemes/editorial.yaml", "profiles/editorial-detail.yaml"):
+        assert not (corpus / name).exists(), name
+    packaged_layout = yaml.safe_load((bundle / "layout.yaml").read_bytes())
+    corpus_layout = yaml.safe_load((corpus / "layouts/editorial.yaml").read_bytes())
+    assert sr.find_node(packaged_layout, "table").pop("maxInlineShare") == 0.4
+    assert packaged_layout == corpus_layout
     _assert_packaged_view_contract(bundle / "view.yaml", "chrona-preset-editorial")
     _assert_view_copy_except_axis(bundle / "view.yaml", corpus / "views/editorial.yaml")
 
@@ -100,10 +104,10 @@ def test_legend_swatch_marks_are_never_checked_against_the_timeline_bottom(tmp_p
         "chrona", "render", str(ROOT / "examples/halcyon-1/project.yaml"),
         "--actual", str(ROOT / "examples/halcyon-1/actual.yaml"),
         "--view", str(ROOT / "examples/halcyon-1/views/editorial.yaml"),
-        "--theme", str(ROOT / "examples/halcyon-1/themes/editorial.yaml"),
-        "--scheme", str(ROOT / "examples/halcyon-1/schemes/editorial.yaml"),
+        "--theme", str(ROOT / "src/chrona/resources/presets/bundles/editorial/theme.yaml"),
+        "--scheme", str(ROOT / "src/chrona/resources/presets/bundles/editorial/scheme.yaml"),
         "--layout", str(ROOT / "examples/halcyon-1/layouts/editorial.yaml"),
-        "--detail", str(ROOT / "examples/halcyon-1/profiles/editorial-detail.yaml"),
+        "--detail", str(ROOT / "src/chrona/resources/presets/bundles/editorial/detail.yaml"),
         "--output", str(output),
     ])
     main()
@@ -168,6 +172,13 @@ def test_readable_default_resources_are_selected_from_the_packaged_authority():
             migrated["roles"]["group-header-band"]["backgroundPaintOrder"] = 9
             migrated["colorBindings"].pop("row-band.fill")
             migrated["colorBindings"]["row-rule.stroke"] = "neutral"
+            # The packaged default alone declares the shared deadline-mark role (#1397 row 2).
+            for value, number in (("deadline-mark-width", 2), ("deadline-mark-reach", 1.7), ("deadline-mark-order", 5)):
+                migrated["values"][value] = {"type": "number", "value": number}
+            migrated["roles"]["deadline-mark"] = {
+                "strokeWidth": "deadline-mark-width", "markReach": "deadline-mark-reach",
+                "markPaintOrder": "deadline-mark-order"}
+            migrated["colorBindings"]["deadline-mark.stroke"] = "text"
             assert declared == expected  # keep every unaffected Theme declaration
     assert resources["view"] == {
         "id": "chrona-preset-editorial-readable-default", "kind": "view",

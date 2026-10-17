@@ -18,6 +18,15 @@ body:
     dash.as-of:
       type: dashPattern
       value: [9, 7]
+    deadline-mark-width:
+      type: number
+      value: 2
+    deadline-mark-reach:
+      type: number
+      value: 1.7
+    deadline-mark-order:
+      type: number
+      value: 5
     sans:
       type: fontFamily
       value: Noto Sans, sans-serif
@@ -391,6 +400,10 @@ body:
     as-of:
       strokeWidth: stroke-width
       dash: dash.as-of
+    deadline-mark:
+      strokeWidth: deadline-mark-width
+      markReach: deadline-mark-reach
+      markPaintOrder: deadline-mark-order
     network-edge:
       strokeWidth: stroke-width
     critical-edge:
@@ -471,6 +484,7 @@ body:
     calendar-closed.fill: text
     calendar-exception.fill: warning
     as-of.stroke: accent
+    deadline-mark.stroke: text
     note-index.fill: accent
     planned.fill: surface
     planned.stroke: text

@@ -19,8 +19,8 @@ from chrona.presentation.scene.serialization import scene_document
 from tests.support import synthetic_review as sr
 
 BUNDLES = Path(__file__).resolve().parents[2] / "src/chrona/resources/presets/bundles"
-# `editorial` and the bundled default are mirrored byte for byte under examples/halcyon-1 (reviewer-owned), so they wait for the mirror
-PRESETS = ["mission-light", "print-mono", "executive-light", "elevated-light", "technical-print", "control-room-dark"]
+PRESETS = ["mission-light", "print-mono", "executive-light", "elevated-light", "technical-print", "control-room-dark",
+           "editorial", "chrona-default-draft"]
 
 
 def _source() -> dict:
