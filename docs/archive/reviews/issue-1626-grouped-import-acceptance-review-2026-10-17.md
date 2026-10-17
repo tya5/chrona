@@ -5,7 +5,7 @@
 Implementation: [PR #1650](https://github.com/tya5/chrona/pull/1650), head
 `a4bc049e6d7ba65a6b2d341c281e69bc19d0962a`; squash commit
 `ba895af3a52075b1f6bfbb6dcf130dd451a89026` has the same tree. Published on
-ready main `cf1218655`. This review is present on exact review-containing main
+ready base `cf1218655`. This review is present on exact review-containing main
 `98cf1ce517dafd82cc0e887cc16b859a40b67e15`; see the [closure record](https://github.com/tya5/chrona/issues/1626#issuecomment-6232842711).
 
 Final PR CI [39021307150](https://github.com/tya5/chrona/actions/runs/39021307150)
