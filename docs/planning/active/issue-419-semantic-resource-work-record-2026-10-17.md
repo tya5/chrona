@@ -367,6 +367,22 @@ Resolve each snapshot's own pinned packages; scenarios retain primary package
 identity and validate after overlays. Do not infer declarations from values or
 invent profile inheritance in presentation code.
 
+Source-scoped package identity correction: Spec13 §5.1 currently rejects any
+duplicate `(kind, id)` with different identities, which conflicts with primary
+and snapshot Projects pinning different revisions of the same package. Amend
+that rule with the immutable-closure implementation: profile-package resources
+may coexist at distinct full identities only when explicitly pinned by distinct
+source Projects. Validate every declared Store reference before deduplication;
+deduplicate equal full identities, never merely package IDs. Each source resolves
+its own extension reference and packageId; an ambiguous or missing match is an
+existing closure identity/required error. Within one source, conflicting package
+declarations remain invalid. Other resource duplicate rules are unchanged.
+This keeps identity resolution in closure and definition interpretation in
+the extension owner; Style receives neither a global package-id merge nor
+unverified declarations. Verify the rule through real contract ingress, not
+only mocked collector tests. Publish this correction before accepting the
+snapshot closure implementation; no new Scene resource kind is needed.
+
 Retain Scene `visualRole` as the canonical semantic/host role: changing it
 would alter host, pattern and contrast classification. Add optional paired
 `semanticId` and `themeRole` on Style-treated primitives in live Scene v0.7.
@@ -422,6 +438,16 @@ passes with2 added schemas,39 unchanged,578 documents/468 mapped,5 previously
 invalid documents and739 probes; L2+L3 takes15.4s. The added Style conformance
 fixture covers the new resource kind. Schema inventory, annotations/references,
 and inward imports pass. No rendered-output or full S1 acceptance is claimed.
+
+S1b integration: `FieldRoleBindings.read_result()` is the shared presence-aware
+lookup; `read()` remains its value-returning convenience. Observed scale values
+now consume that same accessor, retaining order and existing null omission.
+Profile descriptor extraction waits for dev B's overlapping344 PR; no duplicate
+definition merge is introduced. Immutable snapshot closure resolves each
+source's own package pins. Direct Draft has no package-reference reader today:
+do not reinterpret a Store address as a Project-relative file or ignore its
+identity. Complete that provider/ingress design before adding Draft package
+loading; this remains a required S1 integration item, not accepted work.
 
 ## V1 equivalence inventory (117-entry baseline)
 
