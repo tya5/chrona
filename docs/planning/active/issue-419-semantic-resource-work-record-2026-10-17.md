@@ -476,6 +476,37 @@ this removes a Review-to-Layout dependency without moving geometry upward or
 adding another evaluator. Verify native rule-to-render paths, not injected
 completed indexes alone, plus independent forecast/delta and no-Style controls.
 
+Fill completion: complete matched encoding intents through Spec60's existing
+scale resolver and source accessor before Layout. Retain concrete colours in
+an immutable full-occurrence-key index, not an object-ID override; repeated
+rows, snapshot sources and table columns must remain independent. Existing View
+encodings use this same completion and keep their domain, eligibility and legend
+policy. A Style encoding does not invent a target role: make the scale resolver's
+legacy target metadata optional internally, while View schema admission still
+requires it. Scene joins placement keys to concrete colours using the actual
+emitted primitive IDs; it does not evaluate fields, rules or scales. Do not
+serialize internal occurrence keys or add another Scene schema member.
+
+Required paint bindings must be checked with the selected geometry before
+measurement. Extract the existing finite Theme paint-channel requirements into
+a model-owned pure contract shared by Layout preflight and Scene completion;
+keep Scene effects, capability omissions and ScenePaint construction in Scene.
+Preserve outline, catalogue-part and ink-only pattern requirements rather than
+requiring a fill on every mark. A completed fill may satisfy an inherited fill
+requirement, but cannot replace explicit glyph-part colours or stroke-only
+channels. Incompatibility reports the existing `E_STYLE_ROLE_INCOMPATIBLE` with
+rule and occurrence identity. No-Style paint validation and diagnostics stay
+unchanged. This closes the gap between early geometry checks and late paint
+checks without a Layout-to-Scene dependency or a second paint validator.
+
+Architecture review: the contract follows Spec04/07/08/49/60: View owns facts,
+Style intent, Theme/Scheme channels, Layout geometry and Scene projection/effects.
+Implement shared paint inputs first, then occurrence-keyed scale completion and
+placement projection; remove the parallel object-ID legacy override when the
+shared path is connected. Verify native role+fill, fill-only cells, repeated rows,
+snapshot sources, outlined/stroke-only marks and unchanged legacy controls in one
+focused batch. S2 resource ingress/scoped legends and C1 coverage remain separate.
+
 Canonical mark correction: logical temporal facets and realized vocabulary
 bindings are not interchangeable. Existing primary points use `gate` when the
 base Theme declares it; forecast points retain `forecast`, and comparison

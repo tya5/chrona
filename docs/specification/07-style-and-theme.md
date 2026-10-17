@@ -150,6 +150,16 @@ applicability. A selected role must supply the bindings its actual primitive
 family uses; incomplete treatment fails with `E_STYLE_ROLE_INCOMPATIBLE`
 before measurement rather than inheriting the old role's geometry.
 
+Theme/Scheme completes matched fill encodings into concrete colours keyed by
+the full source occurrence before Layout. Completed placements retain that key
+for passive Scene projection; internal keys are not serialized Scene fields.
+Required paint-channel validation is one pure presentation-model contract shared
+by Layout and Scene, not two validators. Its requirements follow the actual
+primitive family and catalogue parts: outline/stroke-only parts do not acquire
+an implicit fill, explicit part colours are retained, and an encoded fill may
+satisfy the inherited fill requirement. Scene alone completes paint effects and
+adapter capability omissions; adapters never reinterpret an encoding.
+
 ### 4.2 Inputs
 
 A Style receives the semantic View Projection. Only the six selectors in

@@ -37,6 +37,14 @@ require an authored scoped-legend title on the existing View input. Domain
 derivation, Theme/Scheme scale completion and missing-value diagnostics retain
 the rules below.
 
+Style encodings use the same scale resolver (Spec07), with eligibility already
+established by their source occurrence. The resolver's legacy `target` metadata
+is optional internally and does not select paint; View input still requires its
+declared target. Complete concrete colours against original source facts and
+retain full occurrence identity, including repeated row, snapshot and column
+identity. Do not flatten completed colours into an object-ID-only map or make
+the selected Theme role determine scale identity.
+
 A field declared by a resolved profile package (Spec 17, `E_PROFILE_FIELD_*`) is read by the same
 `{field: ...}` accessor. Admitted source values are strings and booleans; a boolean matches the domain
 text `true` or `false`. Number and date sources are not admitted (binning is deferred) and fail with
