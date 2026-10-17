@@ -33,6 +33,10 @@ Archive only after parent closure.
 Schema equivalence passes: one additive View schema, 38 unchanged; existing
 corpus verdicts and 739 diagnostic probes remain stable. Three stale merged
 forecast delta entries were retired with proof by `--prune-stale`.
+Final focused batch: 96 tests passed across deadline marks/presets/captions,
+overrides, folded geometry/lanes and text/Layout caption units; 13 docs/ledger
+tests and the literal-review/import-direction checks passed. Implementation
+commits are `ab703dbde` (selection) and `e104ec0ed` (folded geometry).
 Independent architecture audit confirms shared Layout geometry, immutable
 override normalization, preserved Core warnings, global outline paint order and
 unchanged Scene/adapter ownership. Existing insufficient-header capacity keeps
