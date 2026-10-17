@@ -172,7 +172,7 @@ def build_item_mark_visibility_index(
                                   detail="stage=index; reason=duplicate-lane-alias")
             entries[final_occurrence] = visibility
             label_entries[final_occurrence] = label_entries[source_occurrence]
-    elif projection.rows:
+    elif projection.has_rows:
         for row in projection.rows:
             for item in row.items:
                 item_id = item.item_id or item.object_id

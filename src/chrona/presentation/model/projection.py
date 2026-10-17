@@ -276,6 +276,28 @@ class ReviewProjection:
     forecast_findings: tuple[Diagnostic, ...] = ()
     omitted_group_summary_count: int = 0
     forecast_warnings: tuple[Diagnostic, ...] = ()
+    # True when View folding has resolved the ordinary row set, so an empty `rows` means "no ordinary rows" rather than
+    # "no row input". Legacy projections that carry only `items` leave it False (#1660).
+    rows_resolved: bool = False
+    # Declared group containers in display order, including groups whose points were all folded into the header.
+    group_order: tuple[str, ...] = ()
+
+    @property
+    def has_rows(self) -> bool:
+        """Whether Layout reads View-resolved rows instead of deriving one automatic row per item."""
+        return self.rows_resolved or bool(self.rows)
+
+    @property
+    def group_ids(self) -> tuple[str, ...]:
+        """Group containers in display order, including groups that hold only folded points."""
+        return self.group_order or tuple(dict.fromkeys(row.group_id for row in self.rows if row.group_id))
+
+    def group_member_items(self, group_id: str) -> tuple[ReviewItem, ...]:
+        """Primary members of one group: its ordinary rows, or its folded points when it has none."""
+        ordinary = tuple(item for row in self.rows if row.group_id == group_id for item in row.items)
+        if ordinary:
+            return ordinary
+        return tuple(item for point in self.folded_points if point.group_id == group_id for item in point.all_items)
 
 
 @dataclass(frozen=True)
@@ -431,6 +453,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     if view.comparison.missing_actual_scope == "in-progress":
         selected = [replace(item, missing_actual_mark=_missing_actual_scope_mark(item)) for item in selected]
     rows, folded_points = _compose_rows(view, selected, snapshots, scenario_items, project)
+    group_order = _group_order(selected, rows) if folded_points else ()
     if forecast is not None and explicit and snapshot_project is not None:
         for row in rows:
             for item in row.items:
@@ -474,7 +497,19 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         lane_membership, lane_rows, window_mode=WindowMode(view.window.mode),
         forecast_findings=forecast.findings if forecast is not None else (),
         forecast_warnings=forecast.warnings if forecast is not None else (),
-        omitted_group_summary_count=omitted_group_summary_count)
+        omitted_group_summary_count=omitted_group_summary_count,
+        rows_resolved=True, group_order=group_order)
+
+
+def _group_order(selected: list[ReviewItem], rows: tuple[ReviewRowProjection, ...]) -> tuple[str, ...]:
+    """Group containers in declared display order, kept for groups whose points were all folded into the header."""
+    order: list[str] = []
+    for item in selected:
+        if item.group_id and item.group_id not in order:
+            order.append(item.group_id)
+    known = set(order)
+    order.extend(row.group_id for row in rows if row.group_id and row.group_id not in known)
+    return tuple(order)
 
 
 def _project_lane_rows(rows: tuple[ReviewRowProjection, ...], membership: LaneMembership

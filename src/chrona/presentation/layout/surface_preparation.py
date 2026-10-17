@@ -16,7 +16,9 @@ from chrona.presentation.layout.surface_axis import (
     AxisVerticalSummary, SurfaceAxisFrame, SurfaceAxisMeasurement, SurfaceAxisPreparation,
     measure_surface_axis, prepare_surface_axis, summarize_surface_axis_vertical,
 )
-from chrona.presentation.layout.presentation import MarkGeometry, required_row_block_extents
+from chrona.presentation.layout.presentation import (
+    MarkGeometry, empty_group_slots, required_row_block_extents,
+)
 from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
 from chrona.presentation.layout.surface_mark_visibility import ensure_request_mark_visibility_index
 from chrona.presentation.layout.surface_quality import SlotPlacement, SurfaceLayoutRequest
@@ -27,10 +29,10 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
                                        mark_band_allocation: MarkBandAllocation | None = None,
                                        text_line_block: float = 0.0) -> Decimal:
     """Return the minimum timeline block extent for explicit review rows."""
-    rows = _review_rows(projection) or tuple(
+    rows = (_review_rows(projection) if projection.has_rows else tuple(
         type("_Row", (), {"group_id": item.group_id, "items": (item,)})()
         for item in projection.items
-    )
+    ))
     if getattr(projection, "lane_membership", None) is not None:
         # The View fixes lane count before measurement. Its full mark-facet
         # subtrack extent is closed after the inline scale exists; one mark
@@ -49,6 +51,8 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
         if row.group_id != previous:
             headers += 1 if row.group_id and group_presentation == "header" else 0
             previous = row.group_id
+    if group_presentation == "header":
+        headers += len(empty_group_slots(tuple(rows), getattr(projection, "group_order", ())))
     return Decimal(str(geometry_sum(requirements))) + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
 
 
