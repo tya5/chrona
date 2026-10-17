@@ -445,6 +445,22 @@ and passive projection contracts, without new predicates, schemas, candidate
 policy, or domain-field ownership. The shared extension descriptor resolver
 preserves344's validator merge; no second definition interpretation is added.
 
+Candidate text semantics: a member title is one text occurrence, including any
+appended delta; detached deltas use their existing sign/forecast semantic.
+For candidate-dependent inside/outside member bindings, evaluate immutable
+source facts for the finite existing semantic alternatives before fitting.
+Each existing candidate consumes its own canonical semantic's intent and is
+measured with that treatment before admission; retain the existing candidate
+order. Preflight bounds cover those same admitted candidate treatments; final
+placement carries the chosen key. Do not reevaluate against Style-produced
+roles or use the generic member key as inside-semantic metadata.
+Complete authored text roles also need bounded fill and state contrast
+treatment admission alongside already-supported text-measurement properties.
+Extend the same ordinary authored-role consumer contract, keeping reserved
+generated namespaces and canonical primitive/contrast classification unchanged.
+Test an arbitrary custom text role through native Theme ingress, not only an
+existing named role. This is a missing consumer connection, not new syntax.
+
 Canonical mark correction: logical temporal facets and realized vocabulary
 bindings are not interchangeable. Existing primary points use `gate` when the
 base Theme declares it; forecast points retain `forecast`, and comparison
