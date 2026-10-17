@@ -2,51 +2,25 @@
 
 ## Baseline and status
 
-Public base: cd4dae681c9fd09f2c26d0dd037fcdac8d97e82d,
-merged normally into the feature branch; design PR1642 is merged.
-[Owner rule and acceptance](https://github.com/tya5/chrona/issues/1634).
-The design plan was published in 783fe50cc; normative design and whole-
-architecture review were published in a9c0d3ec6c4b982c1f93249eec6acfcb814632b4;
-implementation plan in 00d66e8a5; observed-endpoint correction in ad9dcfb0d before
-the corresponding code change. Occurrence coverage was corrected in cab0ae646
-before its implementation. F1–F3 are implemented on the feature branch, not
-released. Actual trial calculation returns all 25 objects, 6 moved, 22 unfinished,
-no fatal errors; the observed dependency miss is reported without changing dates.
-Schema equivalence passes all layers for the declared Context/Scene widening.
-Focused ingress/projection groups passed (260/314/92); latest completed-label,
-Scene, folded/shared-row and tint checks: 110 passed. Skill checks: 51 passed;
-the weekly forecast example and validator are complete. Folded packing and final
-placement share exact text/icon/chip footprint measurement; the large-chip twin
-checks header lanes and required pre-route obstacles. Optional-title policy is
-independent. Per-occurrence table coverage and forecast Scene identity are closed.
-#1632 code PR #1644 landed as ccf93c0e4 and is merged into this candidate;
-its acceptance review PR #1645 is merged; exact-main release acceptance remains pending.
-The actual trial PNGs were rendered and viewed at WIP ccc4acf24 and repeated
-after integration at cec49ac99 (PNG/Scene byte-identical): target-b
-shows 25 forecast/ghost objects and table deltas; technical-print shows 22
-selected forecast/ghost objects and independent deltas. Required estimates and
-the truthful legend are visible; optional title suppression and preset contrast
-findings are separate. These are candidate image checks, not release acceptance.
-The no-flag trial matrix is byte-identical to exact main ccf93c0e4 in separate
-project venvs: target-b and technical-print, each SVG/Scene/PNG (six pairs).
-This proves that matrix, not all public contexts. Post-integration focused tests:
-83 forecast/routing, 244 CLI/MCP/closure, and 158 Layout/Scene/geometry-guard tests
-passed; all-layer schema equivalence passes. Independent integration audit found
-no code or ownership blocker. Next: publish the single feature PR and
-inspect its full public artifact comparison, then complete release acceptance.
-[Reviewer answers](https://github.com/tya5/chrona/issues/1634#issuecomment-6230794260)
-approve retained declared units, finish-only placement with an unobserved-start
-finding, and child-envelope precedence with a named group-observation finding.
-No owner decision is pending.
+Public ready base: c3383c36033dd82a1fc119ef4f336e7c04f01e43, normally merged
+into PR1646. Implementation611e8e850 completes F1–F3; the required release gate
+remains pending. Pre-code design/architecture PR1642 and implementation plan
+00d66e8a5 are public; observed-endpoint, occurrence and semantic-identity
+corrections preceded their corresponding code.
+[Literal acceptance and evidence](../../reviews/current/issue-1634-opt-in-forecast-acceptance-review-2026-10-17.md)
+records the actual trial PNG checks, all50SVG+50Scene default-off byte checks,
+focused tests and schema equivalence. Publish the review as a separate commit in
+the same feature PR, avoiding a second main/release cycle for unchanged code.
+No owner decision is pending. Issue1632 is independently released and closed.
 
 ## Selected design and authority
 
 | Contract | Current authority |
 | --- | --- |
-| States, effort, calendars, fixed targets and failures | [Spec04 §17.1](../../specification/04-scheduling-model.md#171-explicit-forecast-1634-designed-implementation-pending) |
-| Facts, estimated deltas, ghosts and required presentation | [Spec06 §8.5](../../specification/06-view-model.md#85-explicit-forecast-presentation-1634-designed-implementation-pending) |
-| One Context control and omission/identity | [Spec13 §5.3.1](../../specification/13-presentation-format.md#531-explicit-forecast-control-1634-designed-implementation-pending) |
-| CLI/MCP ingress | [Spec08](../../specification/08-scene-and-rendering.md#explicit-forecast-ingress-1634-designed-implementation-pending) |
+| States, effort, calendars, fixed targets and failures | [Spec04 §17.1](../../specification/04-scheduling-model.md#171-explicit-forecast-1634) |
+| Facts, estimated deltas, ghosts and required presentation | [Spec06 §8.5](../../specification/06-view-model.md#85-explicit-forecast-presentation-1634) |
+| One Context control and omission/identity | [Spec13 §5.3.1](../../specification/13-presentation-format.md#531-explicit-forecast-control-1634) |
+| CLI/MCP ingress | [Spec08](../../specification/08-scene-and-rendering.md#explicit-forecast-ingress-1634) |
 | Component boundary and required text | [Spec09](../../specification/09-application-architecture.md#5-read-evaluation-flow), [Spec33](../../specification/33-intent-oriented-layout.md#9-diagnostics) |
 | Whole-architecture review | [Current review](../../reviews/current/issue-1634-forecast-architecture-review-2026-10-17.md) |
 
@@ -81,6 +55,13 @@ commits in order; publish the complete opt-in feature as one code PR, not a
 partially wired flag or a separate landing for every module. New contract gaps
 return to the living design and architecture review before code resumes.
 
+Semantic-identity correction: publish Spec08 and the architecture review before
+changing the three forecast registry bindings to `forecast-finish-delta`.
+Update forecast-only assertions, retain the global uniqueness acceptance test,
+and run vocabulary, forecast, Scene and label guards. Re-render the two actual
+forecast PNGs/Scenes and compare the official default-off public artifact batch.
+No Theme/schema migration, geometry change or ordinary-delta renaming is needed.
+
 | Slice | Owned files / responsibility | Focused evidence and acceptance |
 | --- | --- | --- |
 | F1 evaluation | New `usecases/forecast_schedule.py` and neutral typed forecast model; neutral latest-observation selection shared with `presentation/model/projection.py`; existing Core temporal arithmetic and injected Scheduler. | New unit tests cover all literal working-day states/chain; declared d/w/wd retention, fixed-span inference/zero effort, nonworking Actual start, finish-only valid/invalid endpoints, rollup findings, latest/unmatched observations, authored-gate/observed-fixed dependency findings versus unknown/incomplete fatal outcomes, retained explicit bounds, immutability and unavailable analysis. Test the same observed-start overlap shape as trial3 without project names. No presentation import in scheduling/neutral facts. |
@@ -97,8 +78,9 @@ This correction changes no schema, preset, solver, source selection or layer
 ownership; publish it before the corresponding product changes.
 
 Publication boundaries: completed design/review, this implementation plan,
-feature commits and code PR, then the literal acceptance/release review. Close
-only after its exact review-containing main has the required release evidence.
+feature commits, then a separate acceptance-review publication commit in the
+same feature PR. Close only after its exact review-containing main has the
+required release evidence. This batches publication, not verification gates.
 Run focused tests for each slice, not a duplicate local full suite. Source and
 schema changes carry their admission fixtures; bot-owned generated outputs are
 never hand-edited. Runtime defaults are implemented, not delegated to schema
@@ -114,15 +96,15 @@ window and label admission, Snapshot-equal-plan ghost visibility, required delta
 and CLI/MCP normalization parity. Review actual PNGs and official public
 SVG/Scene counts as a batch; tests alone do not establish acceptance.
 
-## Literal issue acceptance (all pending)
+## Literal issue acceptance (reviewed; release pending)
 
-- [ ] Design and specification published before code: Spec 04 and 06 sections for the forecast layer, and the CLI/Context field.
-- [ ] Synthetic tests:
+- [x] Design and specification published before code: Spec 04 and 06 sections for the forecast layer, and the CLI/Context field.
+- [x] Synthetic tests:
   - finished, started-late, started-overrunning and not-started items with a successor chain, on a working-day calendar;
   - a `fixed-point` gate missed by a forecast successor is diagnosed.
-- [ ] Without `--forecast`, output is byte-identical to main.
-- [ ] Trial 3's plan with its `actual.yaml` and `baseline.yaml`, rendered with `--forecast` in target-b and one generic preset: unfinished items carry an estimated Δ finish against the baseline, and no unfinished bar sits before as-of. Viewed as PNG.
-- [ ] The skill's "Update the plan after a week of work" section mentions `--forecast`.
+- [x] Without `--forecast`, output is byte-identical to main.
+- [x] Trial 3's plan with its `actual.yaml` and `baseline.yaml`, rendered with `--forecast` in target-b and one generic preset: unfinished items carry an estimated Δ finish against the baseline, and no unfinished bar sits before as-of. Viewed as PNG.
+- [x] The skill's "Update the plan after a week of work" section mentions `--forecast`.
 
 Exact trial inputs and commands are public at
 [dbbce45e/trial3](https://github.com/tya5/chrona/tree/dbbce45e60392b7b0be788f841fe2673f4830944/trial3).

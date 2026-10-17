@@ -276,7 +276,7 @@ flag MUST NOT override `comparison.baseline`. Without the flag no Snapshot
 Project is supplied and existing output is unchanged. This input is not an
 MCP or preset-library member.
 
-### Explicit forecast ingress (#1634; designed, implementation pending)
+### Explicit forecast ingress (#1634)
 
 Draft `render` and `render-workspace` accept boolean `--forecast`. The SDK-free
 MCP `render_draft` tool accepts the equivalent boolean `forecast`; it also gains
@@ -332,7 +332,7 @@ Actual point remains `actual` even when they share geometry or paint.  `sceneId`
 derived from `projectionInstanceId` plus the primitive-purpose suffix.  Array order,
 coordinates, renderer element IDs, and display text are not identity inputs.
 
-For explicit forecasts (#1634; designed, implementation pending), register
+For explicit forecasts (#1634), register
 semantic facet and primitive purpose `forecast` with the existing `planned`
 visual/paint role. It is a primary temporal mark in lane inventories and
 `primaryMarkIds`, not a Snapshot or Actual mark. Its projection identity includes
@@ -345,6 +345,15 @@ Scene v0.7's lane window-absence contract admits `facet: forecast` paired with
 this completed omission evidence for explicit windows. Scene/adapters neither
 infer the forecast identity nor choose visibility or geometry. This is an
 additive opt-in Scene admission change, not a new primitive kind.
+
+Forecast plot-delta semantics `forecastFinishDelta`, `forecastVarianceAhead`
+and `forecastVarianceBehind` use primitive purpose `forecast-finish-delta`
+with the existing on-track/ahead/behind variance paint roles. Ordinary deltas
+retain purpose `finish-delta`. Each registered semantic keeps a unique
+`(purpose, scene_role)` binding: sharing paint does not alias semantic identity.
+Layout selects the completed label; Scene projects its registered binding and
+adapters serialize it without inferring forecast status. Table-cell semantics
+and all default-off output remain unchanged.
 
 A semantic relation Path MAY carry paired `fromInstanceId` and `toInstanceId`
 in Scene v0.7. These non-empty opaque IDs are Layout's resolved endpoint

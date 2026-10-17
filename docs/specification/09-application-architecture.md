@@ -32,7 +32,7 @@ Application Architecture decides which component evaluates or transports each sp
 | Profile Registry | Resolve supported core and extension profiles, typed fields, and schemas | Arbitrary executable extension behavior |
 | Temporal Engine | Parse and operate on temporal values and calendars | Project mutation policy or visual layout |
 | Scheduling Engine | Validate and derive planned placements under the Scheduling Model | Actual-driven rescheduling or presentation decisions |
-| Forecast Coordinator (#1634, designed; implementation pending) | Normalize explicit forecast inputs, reuse the injected Scheduler and return a separate typed forecast outcome | A second dependency solver, canonical writes, changing ordinary scheduler success, or geometry |
+| Forecast Coordinator (#1634) | Normalize explicit forecast inputs, reuse the injected Scheduler and return a separate typed forecast outcome | A second dependency solver, canonical writes, changing ordinary scheduler success, or geometry |
 | Transform / Predicate Engine | Evaluate declarative selection, grouping, ordering, and comparison predicates | Host-language expression execution or geometry |
 | View Engine | Build a semantic View Projection from explicit state and View Context | Colours, fonts, primitive coordinates, or project mutation |
 | Style Resolver | Resolve semantic selectors to visual roles | Scheduling, geometry, or literal token values |
@@ -98,7 +98,7 @@ Store. Raw paths are Draft evaluation inputs for `validate`, `schedule`, and min
 
 ## 5. Read evaluation flow
 
-The explicit forecast branch (#1634, designed; implementation pending) starts
+The explicit forecast branch (#1634) starts
 after ordinary scheduling succeeds. The Forecast Coordinator receives the
 original placements, named Actual Set and explicit cutoff; it constructs a
 non-persistent effective Project and invokes the same Scheduler port. The

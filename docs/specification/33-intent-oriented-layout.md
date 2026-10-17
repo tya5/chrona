@@ -733,7 +733,7 @@ plot/item/delta labels follow completed routes, then relation labels and
 annotations. Only selected completed batches enter the final inventory;
 terminal label suppression never changes lane membership (Spec 38).
 
-Forecast comparison text (#1634, designed; implementation pending) uses this
+Forecast comparison text (#1634) uses this
 existing required-text path. A required plot delta is a separate request from
 the optional member title, enters the hard obstacle inventory before routes,
 and cannot be removed by a relaxed domain or discarded repair pass. Reuse the
