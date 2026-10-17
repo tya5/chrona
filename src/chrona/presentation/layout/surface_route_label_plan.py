@@ -107,13 +107,21 @@ def _trial(context: RouteLabelPlanContext, reservations: tuple[MemberLabelReserv
     return _run_trial(context, reservations, requests, progress_pass=progress_pass)
 
 
+def _visible_text_preserved(reference: tuple[TextPlacement, ...], candidate: tuple[TextPlacement, ...]) -> bool:
+    """A stable placement identity must retain its actual text, not just its ID."""
+    visible = lambda texts: {item.placement_id: item.content for item in texts
+                             if item.overflow != "suppressed"}
+    before, after = visible(reference), visible(candidate)
+    return all(identifier in after and after[identifier] == content
+               for identifier, content in before.items())
+
+
 def _preserves(reference: RouteLabelPlan, candidate: RouteLabelPlan) -> bool:
     baseline, selected = _relation_status(reference.routes), _relation_status(candidate.routes)
     if baseline.keys() != selected.keys() or any(selected[key] > baseline[key] for key in baseline):
         return False
-    visible = lambda batch: {item.placement_id for item in batch.text if item.overflow != "suppressed"}
-    return (visible(reference.members) <= visible(candidate.members)
-            and visible(reference.relation_labels) <= visible(candidate.relation_labels))
+    return (_visible_text_preserved(reference.members.text, candidate.members.text)
+            and _visible_text_preserved(reference.relation_labels.text, candidate.relation_labels.text))
 
 
 def compose_routes_and_member_labels(context: RouteLabelPlanContext) -> RouteLabelOptions:
@@ -129,8 +137,7 @@ def compose_routes_and_member_labels(context: RouteLabelPlanContext) -> RouteLab
 
 
 def _annotations_preserved(first: SurfaceAnnotationBatch, retry: SurfaceAnnotationBatch) -> bool:
-    visible_text = lambda batch: {item.placement_id for item in batch.text if item.overflow != "suppressed"}
-    if not visible_text(first) <= visible_text(retry):
+    if not _visible_text_preserved(first.text, retry.text):
         return False
     for attribute, identity in (("shapes", "placement_id"), ("icons", "placement_id"),
                                 ("relations", "relation_id")):
@@ -149,9 +156,10 @@ def _annotations_preserved(first: SurfaceAnnotationBatch, retry: SurfaceAnnotati
         if previous.selected_topology in connected and current.selected_topology not in connected:
             return False
         ladder = previous.requested_ladder
-        if (previous.selected_rung in ladder and current.selected_rung in ladder
-                and ladder.index(current.selected_rung) > ladder.index(previous.selected_rung)):
-            return False
+        if previous.selected_rung in ladder:
+            if (current.requested_ladder != ladder or current.selected_rung not in ladder
+                    or ladder.index(current.selected_rung) > ladder.index(previous.selected_rung)):
+                return False
     return True
 
 

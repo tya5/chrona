@@ -50,3 +50,13 @@ on HALCYON01/03 and the programme-board family; these are disclosed in the PR,
 not hidden by example edits. Mandatory as-of avoidance changes the ordinary
 pass; optional repair is checked against that completed first pass.
 Exact-head CI and the review-containing main three-OS release remain open.
+
+Final guard audit also requires unchanged content under a retained text ID and
+the same known annotation ladder with a valid, non-later selected rung.
+The coordinator's19 focused controls pass, including same-ID member/relation
+label and note substitutions. Combined guard/causality/stroke/HALCYON-tail
+controls pass39tests. A wider local run has71passes and6 failures
+against stale public expected bytes; CI applies the generated snapshot before
+those materializer comparisons. Do not treat that local run as green.
+Review head8ca2f18b0's official snapshot12088291049 is byte-identical to the
+109paths above. Recheck that identity on the guard-containing head before merge.

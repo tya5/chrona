@@ -60,7 +60,8 @@ def _assert_selected_inventory(result, expected, facts):
 
 
 def _install(monkeypatch, *, repair=False, retry_bad=False, lose_member_label=False,
-             lose_relation_label=False):
+             lose_relation_label=False, change_member_content=False,
+             change_relation_content=False):
     calls = []
     name_calls = []
     required = SurfaceObstacle("required", "text", "timeline", ObstacleRect(120, 30, 140, 40))
@@ -82,6 +83,8 @@ def _install(monkeypatch, *, repair=False, retry_bad=False, lose_member_label=Fa
             if lose_member_label and request.placement_id == "b" and len(name_calls) > 1:
                 texts.append(replace(text, overflow="suppressed", required=False))
                 continue
+            if change_member_content and request.placement_id == "b" and len(name_calls) > 1:
+                text = replace(text, content="Changed member name")
             obstacles.add(SurfaceObstacle(text.placement_id, "text", "timeline", box))
             obstacles.add(SurfaceObstacle(f"label-footprint:{text.placement_id}", "label-visual", "timeline", box))
             texts.append(text)
@@ -111,7 +114,10 @@ def _install(monkeypatch, *, repair=False, retry_bad=False, lose_member_label=Fa
     def relation_labels(context, _routes):
         if lose_relation_label and context.progress_pass == "route-label-recovery":
             return SurfaceRelationLabelsBatch((), (), ())
-        return SurfaceRelationLabelsBatch((replace(_text("relation-label:r"), semantic_id="relationLabel"),), (), ())
+        text = replace(_text("relation-label:r"), semantic_id="relationLabel")
+        if change_relation_content and context.progress_pass == "route-label-recovery":
+            text = replace(text, content="Changed relation label")
+        return SurfaceRelationLabelsBatch((text,), (), ())
 
     monkeypatch.setattr(plan, "place_member_labels", names)
     monkeypatch.setattr(plan, "compose_surface_routes", routes)
@@ -168,13 +174,29 @@ def test_completed_candidate_falls_back_to_the_unchanged_baseline_when_it_regres
     assert annotations == _empty_annotations()
 
 
+@pytest.mark.parametrize("changed", ("member-label", "relation-label"))
+def test_candidate_with_same_visible_label_identity_but_changed_content_falls_back(monkeypatch, changed):
+    context, _calls, facts = _install(monkeypatch, repair=True,
+        change_member_content=changed == "member-label",
+        change_relation_content=changed == "relation-label")
+    options = plan.compose_routes_and_member_labels(context)
+    assert options.retry is not None
+    result, _annotations = plan.select_completed_route_label_plan(
+        options, _empty_annotations(), _empty_annotations())
+    _assert_selected_inventory(result, options.first, facts)
+    if changed == "member-label":
+        assert next(item for item in result.members.text if item.placement_id == "b").content == "Name"
+    else:
+        assert result.relation_labels.text[0].content == "Name"
+
+
 @pytest.mark.parametrize("lost", ("note", "callout", "connector"))
 def test_candidate_that_loses_a_visible_annotation_component_falls_back(monkeypatch, lost):
     context, calls, facts = _install(monkeypatch, repair=True)
     options = plan.compose_routes_and_member_labels(context)
     assert options.retry is not None and len(calls) == 2
     if lost == "note":
-        first = _annotations(text=(SimpleNamespace(placement_id="annotation-note-text:n", overflow="fit"),))
+        first = _annotations(text=(SimpleNamespace(placement_id="annotation-note-text:n", content="Note", overflow="fit"),))
         retry = _empty_annotations()
     elif lost == "callout":
         first = _annotations(shapes=(SimpleNamespace(placement_id="annotation-callout:n", suppressed=False),))
@@ -188,7 +210,7 @@ def test_candidate_that_loses_a_visible_annotation_component_falls_back(monkeypa
     assert not result.obstacles.has("a")
 
 
-@pytest.mark.parametrize("topology", ("disconnected", "later-rung"))
+@pytest.mark.parametrize("topology", ("disconnected", "later-rung", "changed-ladder", "unknown-rung"))
 def test_candidate_cannot_drop_a_connected_annotation_or_move_it_later(monkeypatch, topology):
     context, calls, facts = _install(monkeypatch, repair=True)
     options = plan.compose_routes_and_member_labels(context)
@@ -197,12 +219,40 @@ def test_candidate_cannot_drop_a_connected_annotation_or_move_it_later(monkeypat
         selected_topology="direct-tail", requested_ladder=("plot-near", "rail"), selected_rung="plot-near")
     retry_decision = SimpleNamespace(decision_id="annotation:n", outcome="placed",
         selected_topology=None if topology == "disconnected" else "direct-tail",
-        requested_ladder=("plot-near", "rail"),
-        selected_rung="rail" if topology == "later-rung" else "plot-near")
-    first = _annotations(text=(SimpleNamespace(placement_id="annotation-note-text:n", overflow="fit"),),
+        requested_ladder=(("plot-near", "other") if topology == "changed-ladder"
+                          else ("plot-near", "rail")),
+        selected_rung=("rail" if topology == "later-rung" else
+                       "unknown" if topology == "unknown-rung" else "plot-near"))
+    first = _annotations(text=(SimpleNamespace(placement_id="annotation-note-text:n", content="Note", overflow="fit"),),
                          decisions=(first_decision,))
-    retry = _annotations(text=(SimpleNamespace(placement_id="annotation-note-text:n", overflow="fit"),),
+    retry = _annotations(text=(SimpleNamespace(placement_id="annotation-note-text:n", content="Note", overflow="fit"),),
                          decisions=(retry_decision,))
+    result, selected_annotations = plan.select_completed_route_label_plan(options, first, retry)
+    _assert_selected_inventory(result, options.first, facts)
+    assert selected_annotations is first
+
+
+def test_legacy_annotation_decision_without_a_known_selected_rung_remains_accepted(monkeypatch):
+    context, _calls, facts = _install(monkeypatch, repair=True)
+    options = plan.compose_routes_and_member_labels(context)
+    first_decision = SimpleNamespace(decision_id="annotation:n", outcome="placed",
+        selected_topology=None, requested_ladder=(), selected_rung=None)
+    retry_decision = SimpleNamespace(decision_id="annotation:n", outcome="placed",
+        selected_topology=None, requested_ladder=("rail",), selected_rung="rail")
+    first = _annotations(decisions=(first_decision,))
+    retry = _annotations(decisions=(retry_decision,))
+    result, selected_annotations = plan.select_completed_route_label_plan(options, first, retry)
+    _assert_selected_inventory(result, options.retry, facts)
+    assert selected_annotations is retry
+
+
+def test_candidate_with_same_visible_note_identity_but_changed_content_falls_back(monkeypatch):
+    context, _calls, facts = _install(monkeypatch, repair=True)
+    options = plan.compose_routes_and_member_labels(context)
+    first = _annotations(text=(SimpleNamespace(placement_id="annotation-note-text:n",
+        content="Keep this note", overflow="fit"),))
+    retry = _annotations(text=(SimpleNamespace(placement_id="annotation-note-text:n",
+        content="Changed note", overflow="fit"),))
     result, selected_annotations = plan.select_completed_route_label_plan(options, first, retry)
     _assert_selected_inventory(result, options.first, facts)
     assert selected_annotations is first
