@@ -31,6 +31,46 @@ def _measured(*ids):
                                             "Test Sans", 400, 14.0, 1.0, "sha256:test") for item in ids)})
 
 
+def _deadline_network(*, slipped=True):
+    base = _network(("a", "b"), (("ab", "a", "b"),))
+    return SimpleNamespace(
+        nodes=tuple(SimpleNamespace(
+            object_id=node.object_id, title=node.title, order_key=node.order_key,
+            critical=node.critical, source_kind=node.source_kind,
+            deadline=(SimpleNamespace(object_id=node.object_id, label=f"2026-03-0{5 if node.object_id == 'a' else 6}",
+                                      slipped=slipped if node.object_id == "a" else False)
+                      if node.object_id == "a" else None)) for node in base.nodes),
+        edges=base.edges,
+    )
+
+
+def _deadline_measured(*ids):
+    measured = _measured("a", "b")
+    runs = tuple(MeasuredTextRun(object_id, f"2026-03-0{5 if object_id == 'a' else 6}",
+                                 "deadline-caption", Decimal(45), Decimal(16), Decimal(12),
+                                 "Test Sans", 400, 14.0, 1.2, "sha256:test")
+                 for object_id in ids)
+    return replace(measured, run_measurements={**measured.run_measurements, "network-deadlines": runs})
+
+
+class _DeadlineTheme:
+    def deadline_mark(self, role):
+        assert role == "deadline-mark"
+        return Decimal("1.5"), 3
+
+    def number(self, role, prop):
+        assert (role, prop) == ("deadline-mark", "strokeWidth")
+        return Decimal(2)
+
+    def deadline_outline_width(self, role):
+        assert role == "deadline-mark"
+        return Decimal(1)
+
+    def wobble_intent(self, role):
+        assert role == "deadline-mark"
+        return SimpleNamespace(amplitude=Decimal("0.5"))
+
+
 def test_network_layout_does_not_reopen_common_projection_or_view_authoring():
     source = Path(__import__("chrona.presentation.layout.dependency_network", fromlist=["*"]).__file__).read_text(encoding="utf-8")
     assert all(fragment not in source for fragment in (
@@ -149,6 +189,68 @@ def test_network_layout_completes_rect_pattern_on_each_exact_node_placement():
     )
     assert all(pattern.pattern.region == node.bounds
                for pattern, node in zip(layout.patterns, layout.nodes, strict=True))
+
+
+@pytest.mark.parametrize("slipped, expected_foreground", [(True, 2), (False, 1)])
+def test_network_deadline_footer_is_measured_before_nodes_ports_and_per_stroke_grounds(slipped, expected_foreground):
+    layout = compose_dependency_network_layout(
+        _deadline_network(slipped=slipped),
+        title_bounds=Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(40)),
+        bounds=Rect(Decimal(0), Decimal(40), Decimal(400), Decimal(160)),
+        measured_sources=_deadline_measured("a"), flow_direction="horizontal",
+        theme_tokens=_DeadlineTheme(),
+    )
+    by_id = {shape.placement_id: shape for shape in layout.shapes}
+    foreground = [shape for shape in layout.shapes if shape.semantic_id == "deadlineMark"]
+    grounds = [shape for shape in layout.shapes if shape.semantic_id == "deadlineMarkOutline"]
+    assert len(foreground) == len(grounds) == expected_foreground
+    assert all(shape.paint_order == 212 for shape in grounds)
+    assert all(shape.paint_order == 213 for shape in foreground)
+    assert {shape.placement_id for shape in grounds} == {
+        f"deadline-outline:{shape.placement_id}" for shape in foreground}
+    assert "deadline-network-tick:a" in by_id
+    assert ("deadline-network-slip:a" in by_id) is slipped
+
+    nodes = {node.object_id: node for node in layout.nodes}
+    texts = {text.placement_id: text for text in layout.text}
+    footer = texts["deadline-network-label:a"]
+    assert footer.content == "2026-03-05"
+    assert footer.semantic_id == "deadlineCaption"
+    assert footer.bounds.inline >= nodes["a"].bounds.inline
+    assert footer.bounds.inline + footer.bounds.inline_size <= nodes["a"].bounds.inline + nodes["a"].bounds.inline_size
+    assert nodes["a"].bounds.block_size > nodes["b"].bounds.block_size
+    assert nodes["b"].input_port[0] == float(nodes["b"].bounds.inline)
+    assert nodes["a"].output_port[0] == float(nodes["a"].bounds.inline + nodes["a"].bounds.inline_size)
+    assert layout.relations[0].points[0][0] == nodes["a"].output_port[0]
+
+
+def test_network_zero_width_deadline_keeps_date_without_glyph_or_em_gap():
+    class ZeroInk(_DeadlineTheme):
+        def number(self, role, prop):
+            return Decimal(0)
+
+        def wobble_intent(self, role):
+            return None
+
+    measured = _deadline_measured("a")
+    layout = compose_dependency_network_layout(
+        _deadline_network(), title_bounds=Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(40)),
+        bounds=Rect(Decimal(0), Decimal(40), Decimal(400), Decimal(160)),
+        measured_sources=measured, flow_direction="horizontal", theme_tokens=ZeroInk(),
+    )
+    footer = next(item for item in layout.text if item.placement_id == "deadline-network-label:a")
+    assert footer.bounds.inline_size == Decimal(45)
+    assert layout.shapes == ()
+
+
+def test_network_deadline_requires_its_separate_closed_measurement():
+    measured = _measured("a", "b")
+    with pytest.raises(LayoutError, match="E_LAYOUT_NETWORK_MEASUREMENT"):
+        compose_dependency_network_layout(
+            _deadline_network(), title_bounds=Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(40)),
+            bounds=Rect(Decimal(0), Decimal(40), Decimal(400), Decimal(160)),
+            measured_sources=measured, flow_direction="horizontal", theme_tokens=_DeadlineTheme(),
+        )
 
 
 def test_network_text_placements_carry_the_measured_horizontal_scale():

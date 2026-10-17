@@ -178,6 +178,15 @@ class FoldedPointProjection:
 
 
 @dataclass(frozen=True)
+class NetworkDeadlineContent:
+    """View-selected, already formatted deadline footer facts for a network node."""
+
+    object_id: str
+    label: str
+    slipped: bool
+
+
+@dataclass(frozen=True)
 class DependencyNetworkNode:
     """View-selected graph fact; Layout alone assigns geometry."""
 
@@ -186,6 +195,7 @@ class DependencyNetworkNode:
     order_key: tuple[Any, ...]
     critical: bool
     source_kind: str
+    deadline: NetworkDeadlineContent | None = None
 
 
 @dataclass(frozen=True)

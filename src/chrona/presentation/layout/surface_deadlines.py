@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.deadline_captions import DeadlineCaptionAnchor
@@ -51,16 +51,70 @@ class DeadlineHostGeometry:
     painted_bounds: Rect | None
 
 
+@dataclass(frozen=True)
+class DeadlineInkStyle:
+    """Shared Theme-owned deadline stroke envelope used by both surface owners."""
+
+    reach: Decimal
+    paint_order: int
+    stroke_width: Decimal
+    outline_width: Decimal
+    wobble_amplitude: Decimal
+
+    @property
+    def margin(self) -> float:
+        return (float(self.stroke_width) / 2 + float(self.outline_width) + float(self.wobble_amplitude)
+                if self.stroke_width > 0 else 0.0)
+
+
+@dataclass(frozen=True)
+class DeadlineInkGeometry:
+    """Maximum painted envelope and optional opaque grounds for completed deadline strokes."""
+
+    outlines: tuple[ShapePlacement, ...]
+    painted_bounds: Rect | None
+
+
+def deadline_ink_style(theme_tokens: object, role: str = "deadline-mark") -> DeadlineInkStyle:
+    """Close shared reach/order/stroke/outline/wobble facts for deadline ink."""
+    reach, order = theme_tokens.deadline_mark(role)
+    stroke_width = theme_tokens.number(role, "strokeWidth")
+    outline_width = theme_tokens.deadline_outline_width(role)
+    wobble = theme_tokens.wobble_intent(role)
+    amplitude = wobble.amplitude if wobble is not None else Decimal(0)
+    return DeadlineInkStyle(reach, order, stroke_width, outline_width, amplitude)
+
+
+def complete_deadline_ink(shapes: tuple[ShapePlacement, ...], style: DeadlineInkStyle, *,
+                          outline_placement_id: Callable[[ShapePlacement], str] | None = None) -> DeadlineInkGeometry:
+    """Complete the common stroke envelope and per-segment opaque outline grounds."""
+    margin = style.margin
+    outline_id = outline_placement_id or (lambda shape: shape.placement_id + ":outline")
+    outlines = tuple(
+        replace(ground, placement_id=outline_id(shape))
+        for shape in shapes
+        if style.outline_width > 0 and style.stroke_width > 0
+        and (ground := _outline(shape, margin)) is not None
+    )
+    painted = None
+    if shapes and style.stroke_width > 0:
+        bounds = [shape.bounds for shape in shapes]
+        left = min(float(bound.inline) for bound in bounds) - margin
+        top_bound = min(float(bound.block) for bound in bounds) - margin
+        right = max(float(bound.inline + bound.inline_size) for bound in bounds) + margin
+        bottom_bound = max(float(bound.block + bound.block_size) for bound in bounds) + margin
+        painted = Rect(Decimal(str(left)), Decimal(str(top_bound)),
+                       Decimal(str(right - left)), Decimal(str(bottom_bound - top_bound)))
+    return DeadlineInkGeometry(outlines, painted)
+
+
 def complete_deadline_host(*, base: SurfaceBaseGeometry, theme_tokens: object,
                            deadline: ReviewDeadline, host: MarkPlacement,
                            paint_order_base: int) -> DeadlineHostGeometry:
     """Complete one host through the shared final-paint/folded-packing path."""
-    reach, order = theme_tokens.deadline_mark(semantic_binding(DEADLINE_SEMANTIC).theme_role)
-    outline_width = float(theme_tokens.deadline_outline_width("deadline-mark"))
-    stroke_width = float(theme_tokens.number("deadline-mark", "strokeWidth"))
-    wobble = theme_tokens.wobble_intent("deadline-mark")
-    margin = (stroke_width / 2 + outline_width + (float(wobble.amplitude) if wobble is not None else 0)
-              if stroke_width > 0 else 0.0)
+    style = deadline_ink_style(theme_tokens, semantic_binding(DEADLINE_SEMANTIC).theme_role)
+    reach, order = style.reach, style.paint_order
+    margin = style.margin
     right_edge = float(base.plot.inline + base.plot.inline_size)
     x = coordinate_for_date(deadline.deadline, base.scale)
     finish = min(coordinate_for_date(deadline.finish, base.scale), right_edge)
@@ -84,21 +138,8 @@ def complete_deadline_host(*, base: SurfaceBaseGeometry, theme_tokens: object,
             caption = DeadlineCaptionAnchor(
                 f"deadline-caption:{instance}", deadline.object_id, host.placement_id,
                 deadline.caption, x, finish, bottom, margin, host.subjects)
-    outlines = tuple(ground for shape in shapes
-                     if outline_width and stroke_width > 0
-                     and (ground := _outline(shape, margin)) is not None)
-
-    # Expand path bounds by the maximum stroke, outline and declared wobble ink.
-    painted = None
-    if stroke_width > 0:
-        bounds = [shape.bounds for shape in shapes]
-        left = min(float(bound.inline) for bound in bounds) - margin
-        top_bound = min(float(bound.block) for bound in bounds) - margin
-        right = max(float(bound.inline + bound.inline_size) for bound in bounds) + margin
-        bottom_bound = max(float(bound.block + bound.block_size) for bound in bounds) + margin
-        painted = Rect(Decimal(str(left)), Decimal(str(top_bound)),
-                       Decimal(str(right - left)), Decimal(str(bottom_bound - top_bound)))
-    return DeadlineHostGeometry(tuple(shapes), outlines, caption, painted)
+    ink = complete_deadline_ink(tuple(shapes), style)
+    return DeadlineHostGeometry(tuple(shapes), ink.outlines, caption, ink.painted_bounds)
 
 
 def compose_deadline_marks(*, base: SurfaceBaseGeometry, theme_tokens: object, deadlines: tuple[ReviewDeadline, ...],

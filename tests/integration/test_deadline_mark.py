@@ -28,7 +28,7 @@ from tests.support import synthetic_review as sr
 
 WINDOW = {"mode": "explicit", "start": "2026-01-01", "end": "2026-04-01"}
 _TIMELINE_ONLY = ("tableColumns", "hierarchyColumn", "backgroundDecoration", "axis", "markers", "periods", "shading",
-                  "timePresentation", "annotations", "annotationPresentation", "deadlines")
+                  "timePresentation", "annotations", "annotationPresentation")
 
 
 def _source(**deadlines: str) -> dict:
@@ -315,7 +315,7 @@ def test_a_malformed_member_is_a_schema_error_with_its_pointer(tmp_path, entry):
     assert raised.value.source_ref.startswith("/body/deadlines")
 
 
-def test_the_dependency_network_surface_has_no_timeline_to_draw_a_deadline_on():
+def test_the_dependency_network_surface_accepts_its_native_deadline_member():
     view = _parts(None)["view"]
     body = view["body"]
     body["surface"] = "dependency-network"
@@ -325,7 +325,7 @@ def test_the_dependency_network_surface_has_no_timeline_to_draw_a_deadline_on():
     without = [error.message for error in validator.iter_errors(view)]
     body["deadlines"] = {"show": "all"}
     with_deadlines = [error.message for error in validator.iter_errors(view)]
-    assert len(with_deadlines) == len(without) + 1, "the prohibition must add exactly one finding for `deadlines`"
+    assert with_deadlines == without
 
 
 # --- Scene and gates ------------------------------------------------------------------------------------

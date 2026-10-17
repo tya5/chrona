@@ -701,7 +701,6 @@ allOf:
                   - {required: [axis]}
                   - {required: [markers]}
                   - {required: [periods]}
-                  - {required: [deadlines]}
                   - {required: [shading]}
                   - {required: [timePresentation]}
                   - {required: [annotations]}
