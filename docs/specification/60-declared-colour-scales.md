@@ -45,6 +45,12 @@ retain full occurrence identity, including repeated row, snapshot and column
 identity. Do not flatten completed colours into an object-ID-only map or make
 the selected Theme role determine scale identity.
 
+An admitted fill encoding applies to inherited glyph-part fill as well as an
+ordinary host, replacing an inherited gradient or hollow host fill; explicit
+glyph colours and stroke-only parts remain unchanged (Spec07). Earlier View
+completion skipped every catalogue part, including inherited fill. The shared
+path corrects that omission rather than retaining a separate legacy paint rule.
+
 A field declared by a resolved profile package (Spec 17, `E_PROFILE_FIELD_*`) is read by the same
 `{field: ...}` accessor. Admitted source values are strings and booleans; a boolean matches the domain
 text `true` or `false`. Number and date sources are not admitted (binning is deferred) and fail with

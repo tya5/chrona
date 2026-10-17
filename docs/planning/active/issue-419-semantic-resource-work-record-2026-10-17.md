@@ -498,6 +498,12 @@ behavior, not a reason to silently drop an encoding. It cannot fill an explicit
 stroke-only primitive or replace catalogue part colours/outline-part intent.
 Actual-variance fallback retains its prior outline policy; it is not an explicit
 Style encoding. Test both source paths through the same paint contract.
+Catalogue parts without explicit colour inherit the encoded fill; the old View
+implementation skipped all catalogue parts. Correct that omission in the shared
+path, rather than retaining separate legacy paint eligibility. Explicit parts
+remain protected. Spec60 records this intentional migration effect; inherited
+gradients are replaced, not retained over an encoded solid. This changes paint,
+not glyph geometry, View membership, source values or scheduling.
 Incompatibility reports the existing `E_STYLE_ROLE_INCOMPATIBLE` with
 rule and occurrence identity. No-Style paint validation and diagnostics stay
 unchanged. This closes the gap between early geometry checks and late paint
