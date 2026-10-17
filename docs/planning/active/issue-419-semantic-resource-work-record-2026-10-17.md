@@ -3,7 +3,7 @@
 Status: V1 implemented; reviewer-required rationale retained and official
 artifact equivalence verified. Final current-base CI and release remain pending.
 Source base: trusted-ready published main
-`8f425600eec47bb46c2f24fa0b82f38b1687bfad`.
+`7872cd47ab7e79de3cda96c8da9e5b88cfc87c3a`.
 [Reviewed scope](https://github.com/tya5/chrona/issues/419#issuecomment-6234966527):
 dev A owns V1/S1/S2; dev B owns C1 and Issue344 Level 1.
 

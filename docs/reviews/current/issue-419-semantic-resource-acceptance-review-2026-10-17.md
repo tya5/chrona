@@ -92,11 +92,12 @@ not establish final-base CI success. Main `e71c8de3d` (Issue1660 and its trusted
 derived evidence) is normally merged before the next final V1 push.
 The post-merge vocabulary/closure, all-point folded-row and Editorial deadline
 integration batch passes37 tests on this base.
-Reviewer PR1672 and its trusted derived main `8f425600e` are now normally
-merged; the vocabulary/closure/Editorial batch passes29 tests there. The
+Reviewer PR1672 and dev B PR1667 are normally merged through trusted-ready
+main `7872cd47a`. Run39048874465 passed every product check; only derived-ready
+rejected its obsolete main base after1667 landed. The
 preceding exact-head artifact on8b87c3482 (run39047413632) independently retains
 the same109 paths,50 identical SVGs and vocabulary-only delta in50 Scenes;
-two inventories change and0 paths retire. Final CI follows this new ready base.
+two inventories change and0 paths retire. Final CI follows the new ready base.
 The post-correction broad focused batch passes85 cases; seven public-example
 checks still read unsynchronized committed Scenes locally and require the CI
 derived snapshot. No public generated file was patched to satisfy them.
