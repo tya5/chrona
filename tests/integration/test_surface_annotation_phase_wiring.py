@@ -130,8 +130,8 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
     ])
     main()
 
-    assert events[:3] == ["legend", "notes", "summary"]
-    assert events[3:] in (["annotations"], ["annotations", "annotations"])
+    assert events[:2] == ["legend", "summary"]  # #1649: no notes, no notes phase
+    assert events[2:] in (["annotations"], ["annotations", "annotations"])
     probes = [(identity, ids) for name, identity, ids, reserve_only in trial_events
               if name == "member-labels" and reserve_only]
     route_trials = [(identity, ids) for name, identity, ids, _ in trial_events if name == "routes"]

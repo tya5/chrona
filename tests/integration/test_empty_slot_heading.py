@@ -95,12 +95,11 @@ def _render_consumed_note(tmp_path, name, *, headed):
 def test_consumed_project_note_does_not_reserve_a_heading_in_empty_notes_slot(tmp_path):
     plain = _render_consumed_note(tmp_path, "notes-plain", headed=False)
     headed = _render_consumed_note(tmp_path, "notes-headed", headed=True)
-    plain_slot = next(slot for slot in plain.surface.slots if slot.slot_id == "notes")
-    headed_slot = next(slot for slot in headed.surface.slots if slot.slot_id == "notes")
-
-    assert headed_slot.bounds == plain_slot.bounds
+    # An empty notes source has no allocated slot (#1649), as an empty legend has none (#1597).
+    assert "notes" not in {slot.slot_id for slot in plain.surface.slots}
+    assert "notes" not in {slot.slot_id for slot in headed.surface.slots}
     assert "slot-heading:notes" not in {item.scene_id for item in headed.surface.primitives}
-    assert "I_LAYOUT_SLOT_HEADING_OMITTED:notes:no-content" in headed.surface.diagnostics
+    assert not any(item.startswith("I_LAYOUT_SLOT_HEADING_OMITTED:notes:") for item in headed.surface.diagnostics)
     assert headed.scene.manifest.content_family_counts.annotations == 1
     assert headed.scene.manifest.content_family_counts.notes == 0
     assert headed.artifact.content == plain.artifact.content

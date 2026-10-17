@@ -17,7 +17,8 @@ from chrona.presentation.layout.slot_heading import bind_slot_heading_templates,
 from chrona.presentation.layout.sources import MeasuredSources, resolve_theme_metrics, measure_sources
 from chrona.presentation.layout.source_sizing import SourceSizingSession
 from chrona.presentation.layout.source_presence import omit_absent_layout_sources
-from chrona.presentation.layout.surface_legend import LegendArrangement, legend_arrangement, legend_source_input
+from chrona.presentation.layout.surface_legend import (
+    LegendArrangement, legend_arrangement, legend_source_input, wrapped_legend_line_block)
 from chrona.presentation.layout.surface_preparation import SurfacePreRowGeometry, prepare_surface_content, prepare_surface_natural_candidate
 from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest, VisualRequest
 from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
@@ -142,10 +143,13 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         absent_sources.add("annotations")
     if not selected_content.legend_entries:
         absent_sources.add("legend")
+    if not selected_content.notes:
+        absent_sources.add("notes")  # an empty notes source reserves no block and no gap (#1649)
     selected_content = bind_slot_heading_templates(resolved_layout, content=selected_content, view=view,
                                                   figures=dict(projection.figures), measured=measured)
     resolved_layout = omit_absent_layout_sources(resolved_layout, frozenset(absent_sources))
     # A declared slot heading is part of its content-sized slot's measurement (#1064).
+    measured_before_headings = measured
     measured = reserve_slot_heading_blocks(measured, resolved_layout, ThemeTokenView(theme), content=selected_content,
                                            font_metrics=font_metrics)
     viewport = {"inlineSize": value.viewport_inline, "blockSize": value.viewport_block}
@@ -164,6 +168,22 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         resolved_layout, viewport_inline=viewport["inlineSize"], measurements=measurements,
         sizing=sizing_context(viewport["blockSize"]) if source_sizing.active else None,
     ).to_integral_value(rounding=ROUND_CEILING))) if value.content_sized else viewport["blockSize"]
+    if value.content_sized:
+        narrowed = _narrow_wrapped_legend(
+            resolved_layout, measured_before_headings, measured, viewport_inline=viewport["inlineSize"],
+            floor=natural_block_floor, measurements=measurements,
+            sizing=sizing_context(natural_block_floor) if source_sizing.active else None)
+        if narrowed is not None:
+            # The legend is reserved the rows it wraps to at its resolved inline size (#1649); the floor follows.
+            measured = reserve_slot_heading_blocks(narrowed, resolved_layout, ThemeTokenView(theme),
+                                                   content=selected_content, font_metrics=font_metrics)
+            measurements = _slot_measurements(resolved_layout.profile["root"], measured)
+            source_sizing = SourceSizingSession(resolved_layout, measured, theme=theme,
+                                               font_metrics=font_metrics, content=selected_content)
+            natural_block_floor = max(1, int(measure_natural_normal_flow_block(
+                resolved_layout, viewport_inline=viewport["inlineSize"], measurements=measurements,
+                sizing=sizing_context(viewport["blockSize"]) if source_sizing.active else None,
+            ).to_integral_value(rounding=ROUND_CEILING)))
     capacity_short_sources = ()
     # An as-of chip placed `below-plot` (#1063) needs its block under the last row, so the timeline asks for it too.
     try:
@@ -279,6 +299,50 @@ def _below_plot_reserve(view: Any, *, actual_set: Any, projection: Any, theme_to
 def _layout_slot_sources(node: Mapping[str, Any]) -> frozenset[str]:
     own = frozenset((node["source"],)) if node.get("kind") == "slot" else frozenset()
     return own.union(*(_layout_slot_sources(child) for child in node.get("children", ())))
+
+def _narrow_wrapped_legend(resolved_layout: ResolvedLayoutProfile, unheaded: MeasuredSources,
+                           measured: MeasuredSources, *, viewport_inline: int, floor: int,
+                           measurements: Mapping[str, Any], sizing: Any) -> MeasuredSources | None:
+    """Return the sources with a `line` legend measured at its resolved inline size, or None to keep the stack.
+
+    Which inline size the legend slot gets is known only after a solve, so the conservative stack (every entry on
+    its own row) is solved once to find it; a legend whose width is not known keeps the conservative height
+    (#497, #1273, #1649). The narrowed block is exactly the rows `place_legend` draws at that width.
+    """
+    legend = unheaded.inputs.get("legend")
+    node = _legend_slot(resolved_layout.profile["root"])
+    if legend is None or node is None or legend.run_flow != "line" or not legend.runs:
+        return None
+    try:
+        manifest = solve_layout(resolved_layout, viewport_inline=viewport_inline, viewport_block=floor,
+                                measurements=measurements, content_sized=True, sizing=sizing)
+    except LayoutError:
+        return None
+    decision = next((item for item in manifest.decisions if item.node_id == node["id"]), None)
+    sizes = tuple(run.inline_size for run in unheaded.run_measurements.get("legend", ()))
+    if decision is None or len(sizes) != len(legend.runs) or "legend" not in measured.measurements:
+        return None
+    caption_inline = measured.measurements["legend"].preferred_inline - unheaded.measurements["legend"].preferred_inline
+    block = wrapped_legend_line_block(
+        sizes, gap=legend.run_gap, row_block=legend.row_block,
+        item_min_inline=legend_arrangement(resolved_layout).item_min_inline_size,
+        available_inline=decision.bounds.inline_size - caption_inline)
+    current = unheaded.measurements["legend"]
+    if block >= current.preferred_block:
+        return None
+    narrowed = replace(current, preferred_block=block, max_block=block * 2)
+    return replace(unheaded, measurements={**unheaded.measurements, "legend": narrowed})
+
+
+def _legend_slot(node: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    if node.get("kind") == "slot":
+        return node if node.get("source") == "legend" else None
+    for child in node.get("children", ()):
+        found = _legend_slot(child)
+        if found is not None:
+            return found
+    return None
+
 
 def _slot_measurements(root: Mapping[str, Any], measured: Any) -> dict[str, Any]:
     measurements: dict[str, Any] = {}

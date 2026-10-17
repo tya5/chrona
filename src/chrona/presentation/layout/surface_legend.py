@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, replace
 from decimal import Decimal
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any, Callable
 
 from chrona.presentation.layout.model import LayoutError, Rect
@@ -201,8 +201,30 @@ def legend_source_input(entries: tuple[SurfaceLegendEntry, ...], *, tokens: Any,
                                        for entry in entries])
         return SourceInput(runs=runs, typography_role="legend", run_flow="grid", run_gap=Decimal(str(gap)),
                            columns=arrangement.columns, row_block=Decimal(str(row_block)))
+    row_block = Decimal(0)
+    if line:
+        # The height of one drawn row, as `place_legend` draws it: the label line box or the tallest swatch (#1649).
+        row_block = Decimal(str(max([legend_size * float(treatment.line_height)]
+            + [swatch_extent(entry.role, tokens, mark_block_size, legend_size, entry.swatch_shape)[1]
+               for entry in entries])))
     return SourceInput(runs=runs, typography_role="legend", run_flow="line" if line else "stack",
-                       run_gap=Decimal(str(gap)), min_inline=min_inline)
+                       run_gap=Decimal(str(gap)), min_inline=min_inline, row_block=row_block)
+
+
+def wrapped_legend_line_block(entry_inline_sizes: Sequence[Decimal], *, gap: Decimal, row_block: Decimal,
+                              item_min_inline: Decimal | None, available_inline: Decimal) -> Decimal:
+    """Return the block a `line` legend draws at a known inline size: the rows it wraps to (#1649).
+
+    This is the wrapping rule of `place_legend`'s `inline` direction: an entry starts a new row only when the
+    slot declares `itemMinInlineSize` and less than that is left on the current row. Without it the legend is
+    one row. Each entry advances by its swatch, label gap, label and the entry gap (a `line` measurement's run).
+    """
+    rows, used = 1, Decimal(0)
+    for size in entry_inline_sizes:
+        if item_min_inline is not None and used > 0 and available_inline - used < item_min_inline:
+            rows, used = rows + 1, Decimal(0)
+        used += size + gap
+    return rows * row_block + (rows - 1) * gap
 
 
 def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
