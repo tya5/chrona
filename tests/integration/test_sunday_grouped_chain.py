@@ -30,9 +30,8 @@ def _project(*, chained: bool) -> dict:
         objects[f"task-{index:02}"] = {
             "type": "task", "title": f"Synthetic task {index:02}",
             "parent": f"group-{index % 3}",
-            # The owner buckets sort on either side of the unassigned
-            # hierarchy rollups, so all three required rollup bars separate
-            # the Actor and Worker rows without special-casing this fixture.
+            # Mixed owner buckets exercise role-bound grouping without
+            # assigning a responsible owner to hierarchy summaries.
             "fields": {"owner": (f"Actor-{index % 9:02}" if index % 9 < 4
                                   else f"Worker-{index % 9:02}")},
             "schedule": schedule,
@@ -51,7 +50,8 @@ def _project(*, chained: bool) -> dict:
 
 @pytest.mark.parametrize("mode", ("relax", "suppress"))
 @pytest.mark.parametrize("chained", (False, True), ids=("unchained", "chained"))
-def test_sunday_grouped_scheduled_chain_routes(tmp_path, monkeypatch, mode, chained):
+@pytest.mark.parametrize("role_grouping", (True, False), ids=("role", "direct-field"))
+def test_sunday_grouped_scheduled_chain_routes(tmp_path, monkeypatch, mode, chained, role_grouping):
     source = _project(chained=chained)
     assert len(source["objects"]) == 25
     assert len({item.get("fields", {}).get("owner") for item in source["objects"].values()
@@ -61,7 +61,7 @@ def test_sunday_grouped_scheduled_chain_routes(tmp_path, monkeypatch, mode, chai
     relations = source["relations"]
     assert len(relations) == (21 if chained else 0)
 
-    # The only override is the requested unroutable policy; all other Sunday
+    # The only Layout override is the unroutable policy; all other Sunday
     # profile values remain the packaged values.
     layout_root = builtin_preset_source_root("designs/sunday")
     layout = safe_load(layout_root.joinpath("layout.yaml").read_bytes())
@@ -70,6 +70,17 @@ def test_sunday_grouped_scheduled_chain_routes(tmp_path, monkeypatch, mode, chai
     layout_path.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
     project_path = tmp_path / "project.yaml"
     project_path.write_text(yaml.safe_dump(source, sort_keys=False), encoding="utf-8")
+    view_path = None
+    if not role_grouping:
+        # Keep the original required-rollup-bar barrier witness under an
+        # explicit field contract; bound-role grouping now omits those bars.
+        view_root = builtin_preset_source_root("presets/bundles/design-default")
+        view = safe_load(view_root.joinpath("view.yaml").read_bytes())
+        view["body"]["grouping"]["by"] = "field"
+        view["body"]["grouping"]["field"] = "owner"
+        view["body"]["grouping"].pop("fallback", None)
+        view_path = tmp_path / "direct-field-view.yaml"
+        view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
 
     counters = {"expansions": 0, "unbounded_generators": 0, "barrier_bounds": 0}
     original_candidates = route_search.orthogonal_route_candidates
@@ -103,7 +114,7 @@ def test_sunday_grouped_scheduled_chain_routes(tmp_path, monkeypatch, mode, chai
 
     start_wall, start_cpu = perf_counter(), process_time()
     rendered = render_draft(DraftRenderRequest(
-        project=project_path, target_kind="svg", preset="sunday", layout=layout_path,
+        project=project_path, target_kind="svg", preset="sunday", layout=layout_path, view=view_path,
     )).rendered
     wall_seconds, cpu_seconds = perf_counter() - start_wall, process_time() - start_cpu
 
@@ -114,16 +125,25 @@ def test_sunday_grouped_scheduled_chain_routes(tmp_path, monkeypatch, mode, chai
     assert emitted_ids == expected_ids
     assert len(route_primitives) == len(relations)
     diagnostics = tuple(rendered.scene.diagnostics)
+    summary_ids = {identity for identity, obj in source["objects"].items() if obj["type"] == "group"}
+    emitted_summaries = {item.source_ref for item in rendered.surface.primitives
+                         if item.source_kind == "object" and item.source_ref in summary_ids}
+    if role_grouping:
+        assert 'I_VIEW_FIELD_GROUP_SUMMARIES_OMITTED:{"count":3}' in diagnostics
+        assert not emitted_summaries
+    else:
+        assert not any(item.startswith("I_VIEW_FIELD_GROUP_SUMMARIES_OMITTED:") for item in diagnostics)
+        assert emitted_summaries == summary_ids
     assert not any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
     assert not any(item.startswith("W_LAYOUT_CRITICAL_RELATION_SEARCH_DOMAIN_EXHAUSTED:")
                    for item in diagnostics)
     if mode == "suppress":
         assert not any(item.startswith("W_SCENE_RELATION_THROUGH_MARK:") for item in diagnostics)
         assert counters["expansions"] <= routing.RELATION_SEARCH_EXPANSIONS * max(1, len(relations))
-        if chained:
+        if chained and not role_grouping:
             assert counters["barrier_bounds"] > 0
             assert any(item.startswith("I_LAYOUT_CRITICAL_RELATION_QUALITY_FALLBACK:")
                        for item in diagnostics)
 
-    print(f"Sunday grouped mode={mode} chained={chained} relations={len(relations)} "
+    print(f"Sunday grouped mode={mode} chained={chained} role={role_grouping} relations={len(relations)} "
           f"routing={counters} wall={wall_seconds:.2f}s cpu={cpu_seconds:.2f}s")

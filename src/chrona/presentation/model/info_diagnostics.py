@@ -395,6 +395,27 @@ class UnboundFieldRole:
 
 
 @dataclass(frozen=True)
+class FieldGroupingSummariesOmitted:
+    """Selected group-summary objects omitted from role-bound field grouping."""
+
+    count: int
+
+    def __post_init__(self) -> None:
+        if isinstance(self.count, bool) or not isinstance(self.count, int) or self.count < 1:
+            raise _diagnostic_error("FieldGroupingSummariesOmitted requires a positive count")
+
+    @property
+    def code(self) -> str:
+        return "I_VIEW_FIELD_GROUP_SUMMARIES_OMITTED"
+
+    def payload(self) -> dict[str, object]:
+        return {"count": self.count}
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))
+
+
+@dataclass(frozen=True)
 class FontGlyphFallback:
     """An automatically covered glyph with its exact measured face."""
 
@@ -444,4 +465,5 @@ class ScaleValuesFolded:
 
 PresentationInfo = (ScaleValuesFolded | FontGlyphFallback | SuppressedPlotLabels | DeadlineCaptionsDropped | PaintOmission | ForecastInfo | RelationRoutingSummary | RelationSearchBudgetHit
                     | RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession
+                    | FieldGroupingSummariesOmitted
                     | RelationHintReceipt | RelationHintSummary | UnboundSummarySource | UnboundFieldRole)
