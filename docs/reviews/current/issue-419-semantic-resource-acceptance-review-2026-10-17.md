@@ -10,7 +10,7 @@ Its official artifact has109 paths: all50 SVGs are byte-identical; all50
 Scenes differ only by semantic-vocabulary provenance; no paths retired.
 The V1 release gate is not the S1 or parent-issue acceptance gate.
 
-S1 is published WIP based on `678ea6356`, not merged or release-accepted. Typed facts, parsed-rule
+S1 is PR1675, not merged or release-accepted. Typed facts, parsed-rule
 evaluation, source-local identities, and role/fill composition are connected
 through normalization, Layout, and Scene. Selected-mark early paint preflight
 is connected; the final Style/native batch passes131 tests, with shared
@@ -40,11 +40,16 @@ not establish that ingress. Do not count WIP publication as release acceptance.
 
 ### S1 implementation evidence and gates
 
-The current local public batch has49/50 SVG/Scene pairs byte-identical.
-`glyph-gates` changes eight inherited glyph fills, with no geometry, route or
-label changes, and adds one mark-contrast warning. Root inspected its PNG.
-This intentional paint migration follows [Specification 60](../../specification/60-declared-colour-scales.md);
-no examples or generated outputs were edited. Focused native tests include
+The local public batch has49/50 SVG/Scene pairs byte-identical.
+The reviewer-approved [outer glyph colour declaration](https://github.com/tya5/chrona/issues/419#issuecomment-6242158446)
+restores planned glyph ink. Compared with main, two Actual outer parts on
+`glyph-gates` change from `#35D0A0` to `#5FA8FF` because they share the symbol;
+all other primitives, geometry, routes and labels are unchanged. Actual Scene
+contrast evaluation reports149 findings and zero errors. Baseline glyph and
+Scheme remain unchanged, and no contentIdentity pin needs updating.
+Focused fill/early-paint checks pass8 tests. This intentional paint migration
+follows [Specification 60](../../specification/60-declared-colour-scales.md);
+generated outputs were not edited. Focused native tests include
 [mark composition](../../../tests/integration/test_style_mark_composition.py),
 [label composition](../../../tests/integration/test_style_label_composition.py),
 [fill composition](../../../tests/integration/test_style_fill_composition.py),
@@ -52,9 +57,10 @@ and [mark paint preflight](../../../tests/integration/test_style_mark_paint_pref
 They are not published release evidence.
 
 Exact-main release run
-[39053236335](https://github.com/tya5/chrona/actions/runs/39053236335) is still
-in progress: macOS is green; Ubuntu and Windows remain live. Do not claim the
-release passed. Before accepting S1, publish its implementation and review,
+[39053236335](https://github.com/tya5/chrona/actions/runs/39053236335) passed all
+three OSes for V1; that is not S1 release evidence. The earlier S1 contrast
+failure is corrected locally by the approved declaration. Before accepting S1,
+obtain green CI on its updated PR, publish its implementation and review,
 inspect official batched SVG/Scene and PNG
 evidence, and verify the exact-main three-OS release. Keep #419 open until S1,
 S2 and C1 satisfy their respective acceptance rows.

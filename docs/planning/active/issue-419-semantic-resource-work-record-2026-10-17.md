@@ -651,10 +651,14 @@ scale target metadata is optional; legacy View controls pass35 tests. Full-key
 fill completion and native mark/cell Scene projection are connected; selected
 text checks use that completed fill before source sizing. The final fill/legacy/
 native batch passes54 tests and paint/contrast batch71. Public batch:49/50 SVG
-and Scene pairs unchanged; `glyph-gates` changes8 inherited glyph fills, no
-geometry/routes/labels, and adds1 mark-contrast warning. Its PNG was inspected;
-retain the Spec60 migration and warning in the S1 PR review rather than hiding
-them with corpus edits. Generated evidence remains bot-owned. Selected mark
+and Scene pairs unchanged. The reviewer approved the explicit outer glyph
+colour in [comment6242158446](https://github.com/tya5/chrona/issues/419#issuecomment-6242158446).
+That exact declaration restores planned glyph ink; compared with main, two
+Actual outer parts change from teal to accent because they share that symbol.
+No geometry/routes/labels change; actual Scene contrast reports149 findings,
+zero errors. Baseline glyph and Scheme stay unchanged; no stored hash pin needs
+updating. The approved YAML is the only corpus source edit; generated evidence
+remains bot-owned. Selected mark
 paint now validates closed Theme channels before Layout/source sizing through
 the same family classifier and channel resolver as Scene. Source-facet shape
 is a neutral completion fact, not a new selector; no Project fields enter
