@@ -103,7 +103,8 @@ after ordinary scheduling succeeds. The Forecast Coordinator receives the
 original placements, named Actual Set and explicit cutoff; it constructs a
 non-persistent effective Project and invokes the same Scheduler port. The
 Scheduling Engine itself still receives no View or Actual resource. A typed
-forecast outcome separates complete placements with fixed-target findings from
+forecast outcome uses Spec04's source/observed-endpoint classifier to separate
+complete placements with reportable fixed-target findings from
 fatal/incomplete evaluation; it never rewrites `ScheduleOutcome.ok`. Projection
 receives ordinary and forecast facts separately. Shared observation selection
 is renderer-neutral and preserves ordinary latest/unmatched behavior.

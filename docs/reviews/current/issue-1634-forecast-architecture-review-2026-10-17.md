@@ -8,7 +8,7 @@ the separately published implementation plan. Public baseline
 | Boundary | Consistency check |
 | --- | --- |
 | Core / Actual | Spec04 §17.1 is explicit derived evaluation. Original Project, placements, Actual endpoints/progress and Snapshot stay immutable. Declared amount units are retained; only fixed spans infer effort. Nonworking starts retain their observed date; finish-only and conflicting rollup observations produce findings without fabricating Actual facts. |
-| Scheduler / application | Spec09 gives orchestration to the Forecast Coordinator, not a second solver or the ordinary engine. Only authored fixed-point target findings are admitted with complete placements, not every error sharing the diagnostic code; ordinary success and unavailable analysis are not rewritten. |
+| Scheduler / application | Spec09 gives orchestration to the Forecast Coordinator, not a second solver or the ordinary engine. Complete authored fixed-point/observed-fixed endpoint findings are reported, not repaired. Other failures and explicit bounds remain fatal; classification uses the source/observation and effective endpoint, not only the diagnostic code. Ordinary success and unavailable analysis are not rewritten. |
 | Observation selection | One neutral latest selector preserves ordinary positive-sequence/unmatched behavior. Scheduling never imports presentation or selects observations through a View. |
 | View / comparison | Spec06 §8.5 keeps original facts and a separate forecast fact. Text and variance paint select the same active comparison. A supplied Snapshot stays visible even at equal placement: an explicit forecast-only override of omitted/changed-only ghost policy, not a change to ordinary defaults. Explicit rows, point endpoints and missing baselines are explicit. |
 | View / geometry | Source selection/order and source-date bindings retain their meaning. Active forecast intervals drive geometry/packing, label-window admission and lane-label preflight; derived windows include forecast/ghost endpoints. Explicit windows remain authoritative. |
@@ -21,10 +21,16 @@ the separately published implementation plan. Public baseline
 Three independent read-only reviews covered scheduler states, presentation and
 whole-architecture closure. Resolved findings: retain declared units per the
 reviewer answer; finish-only/rollup findings are nonfatal; narrow the fixed-target
-exception; register Scene forecast/lane/window identities; rebase label admission
+classification; register Scene forecast/lane/window identities; rebase label admission
 to active geometry; name technical-print as the public generic preset; and make
 Snapshot ghost retention an explicit forecast-only override. No unresolved design
-gate remains. Local documentation guards: 28 passed; `git diff --check` clean.
+gate remains. Trial3's wireframes Actual ends Nov10 while visual-design Actual
+starts Nov9: this established the general observed-fixed finding policy before
+changing that code. Actual truth, forecast propagation and ordinary scheduling
+are separate; neither source dates nor relations are silently edited. Synthetic
+twins must cover completed spans, observed starts and observed points, alongside
+fatal unknown-target/incomplete outcomes. Local documentation guards: 28 passed;
+`git diff --check` clean.
 
 Release is separate: every literal criterion, original-trial PNG evidence,
 public artifact counts and exact review-containing three-OS CI.

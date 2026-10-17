@@ -415,10 +415,18 @@ The application constructs non-persistent effective scheduling input and reuses
 the injected Scheduler. It does not add a second dependency solver. Only in
 that derived input may stale span anchors/fixed spans become movable schedules;
 observed coordinates and fixed-point targets remain fixed. A complete result
-with `E_FIXED_TARGET_VIOLATION` findings targeting authored `fixed-point.at`
-is renderable as a forecast, with every finding reported against its original
-object/relation. This exception does not admit fixed-span or completed-Actual
-endpoint conflicts merely because they share the diagnostic code. Other scheduler errors,
+with `E_FIXED_TARGET_VIOLATION` findings targeting an authored `fixed-point.at`
+or an endpoint frozen by a selected Actual occurrence is renderable, with every
+finding reported against its original object/relation. Only supplied observed
+`start`, `finish` (the placed `end`) and point `at` qualify; an unfinished span's
+computed end and a finish-only span's unobserved retained start do not qualify.
+An observed start may precede its predecessor's
+observed finish: that is a reported dependency miss, not permission to rewrite
+observations or refuse the entire forecast. Downstream unstarted work still
+propagates from these retained placements. This exception is classified by the
+known effective fixed object/endpoint and observation, never the diagnostic code
+alone; it does not ignore arbitrary fixed-span conflicts. Retained explicit
+min/max bounds remain feasibility checks. Other scheduler errors,
 missing/kind-invalid placements and cycles remain fatal. Ordinary scheduling's
 success contract is unchanged. Absent forecast float/driving analysis is
 unavailable, never replaced with the original plan's analysis.
