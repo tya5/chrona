@@ -801,7 +801,10 @@ ledger/provenance and pointed failure transport. Native Store tests exercise
 actual treatment, exact pin/version rejection, explicit precedence and no-Style
 controls. Schema equivalence, inward imports and module reachability pass;
 official installed-wheel, generated-artifact and release gates remain pending.
-S2b scale completion and S2c scoped legends/provenance remain separate work;
+S2b's shared scale union is implemented with alias-order/prefix/value-diagnostic
+tests and legacy pointer controls; scoped legend provenance is still pending.
+The final combined Style/authoring/adapter focused batch passes229 tests.
+S2c completed scoped legends/provenance remain separate work;
 neither S2 nor parent419 is accepted by this source-ingress checkpoint.
 
 ## V1 equivalence inventory (117-entry baseline)
