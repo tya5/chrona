@@ -627,8 +627,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_mark_visibility` | Close selected source mark occurrences and window admission once, with typed source/final lane aliases; no membership or Scene geometry repair. |
 | `surface_member_labels` | Build requests and place member/item labels. |
 | `surface_lanes` | Adapt/preflight fixed lanes; emit lane facets and close host identities. |
-| `surface_lane_route_plan` | Plan the route corridors member names must keep clear by rehearsing the name and route phases on private index copies; return corridors only. |
-| `surface_route_label_plan` | Coordinate one optional member-name recovery trial; return the selected completed route/label batches and their matching index without replay. |
+| `surface_route_label_plan` | Own provisional member-name reservations, bounded route/reference/release trials and final revalidation; return the selected completed batches and matching index without replay. |
 | `surface_routes` | Place dependency paths/ports and relation labels. |
 | `surface_annotations` | Place annotation boxes, text, visuals and connectors. |
 | `surface_legend` | Place legend entries and role-derived swatches. |
@@ -644,7 +643,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_composer` | Invoke typed phase batches in order and construct final Layout output. |
 | `surface_preparation` | Close candidate-specific inline, heading, axis, table-header and shared row-floor geometry before row placement; derive natural demand and final host admission from the same measured prefix. |
 
-Each module owns its named concern and reads closed inputs plus preceding typed Layout results; shared mutable surface state is limited to the obstacle index. The policy coordinators use private index copies: `surface_lane_route_plan` returns only rehearsed corridors, while `surface_route_label_plan` returns the selected completed batches and their matching index under the bounded recovery rule below. `surface_legend` and `surface_content` complete named sources in allocated slots outside obstacle-candidate phases; fixed host backgrounds complete when their extents are known. The #466 phase order governs obstacle-sensitive candidates, not these placements. Ownership names guide internal issue coordination and are not public import contracts. Module moves themselves preserve behavior and introduce no placement policy.
+Each module owns its named concern and reads closed inputs plus preceding typed Layout results; shared mutable surface state is limited to the obstacle index. The route/member-name coordinator uses private index copies and returns selected completed batches with their matching index under Spec 50's bounded reservation rule. A separate lane corridor planner must not preempt those reservations. `surface_legend` and `surface_content` complete named sources in allocated slots outside obstacle-candidate phases; fixed host backgrounds complete when their extents are known. The #466 phase order governs obstacle-sensitive candidates, not these placements. Ownership names guide internal issue coordination and are not public import contracts.
 
 The calendar join has one direction: `surface_axis` returns ordered closed-date intervals and axis facts; `surface_backgrounds` converts those intervals into Theme-treated shapes at the current calendar insertion phase. A folded mark may enlarge a completed group-header host. `surface_marks` returns the replacement group extent as a typed fact, and `surface_backgrounds` applies that fact to the already placed header band with a pure replacement operation; the coordinator retains the established emission order. No module duplicates the other's placement or mutates a shared group/shape collection across phases.
 
@@ -720,28 +719,18 @@ date and may use a finite, recorded corridor to the comparison-host boundary.
 Only those named siblings are exempt on that corridor; the route after egress
 queries the entire inventory. See the [#466 comparison-egress correction](../design/issue-466-general-placement-comparison-egress-correction-2026-09-26.md).
 
-Text measurement precedes allocation, but optional plot-label *placement*
-follows semantic dependency routing. Required text and rule labels enter the
-shared obstacle inventory before relations. Accepted relation segments then
-constrain optional plot/item/delta labels, followed by relation labels and
-annotations. This finite monotone phase order prioritizes visible semantic
-connections without allowing label/route overlap or changing declared route
-quality and overflow limits. See the [#466 route-priority correction](../design/issue-466-general-placement-route-priority-correction-2026-09-26.md).
-
-If this order suppresses a post-route member name, Layout may make one private
-feasibility retry: place only the lost-name requests using their unchanged
-declared ladders, then route and place the remaining labels. Select that
-completed trial only if it strictly reduces the lost-name set, preserves every
-relation identity without degrading its status, and loses no relation-label
-identity. Otherwise retain the normal route-first result and its diagnostics.
-Reuse the chosen completed batches and inventory; do not replay or iterate the
-winning branch. This recovery does not waive safety or route-quality limits.
-
-Fixed-lane member names and selected deltas are the route-independent
-exception: their finite candidates resolve after lane geometry but before
-semantic relations, and only accepted labels enter the route obstacle set.
-Their terminal suppression is counted without altering membership (Specs 38
-and 50). Relation labels still follow their completed routes.
+Text measurement precedes allocation. Required text and rule labels enter the
+shared obstacle inventory before relations. Member names, in automatic and
+fixed-lane rows alike, use the single provisional reservation, bounded release
+and final revalidation owner defined by [Spec 50 §3.3](50-constraint-driven-gantt-surface-quality.md#33-relations)
+(#1610). Required attached-point, key-row and other route-independent labels
+remain hard obstacles in every trial; only optional member-name reservations
+may be released. That contract supersedes the earlier route-first/lost-name recovery
+and separate lane corridor rehearsal; it changes neither declared candidate
+order nor association, safety, route quality or overflow limits. Other optional
+plot/item/delta labels follow completed routes, then relation labels and
+annotations. Only selected completed batches enter the final inventory;
+terminal label suppression never changes lane membership (Spec 38).
 
 After canonical side candidates fail, optional plot/item/delta and relation labels may use
 a finite side-relative displacement with at most 512 actual collision queries.
