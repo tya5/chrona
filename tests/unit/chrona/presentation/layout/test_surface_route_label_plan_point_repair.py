@@ -89,9 +89,12 @@ def test_route_repair_for_span_to_point_preserves_the_at_arrival_and_optional_na
     assert options.retry is not None
     # In this fixture the below rung intersects more incoming route instances;
     # the candidate ranking must reserve the lower-disruption above rung.
-    assert [item.text.placement_id for item in options.first.members.route_blocked_candidates] == [
-        "member-label:neutral-b"]
-    assert options.first.members.route_blocked_candidates[0].text.selected_rung == "above"
+    proposals = options.first.members.route_blocked_candidates
+    assert [item.text.placement_id for item in proposals] == [
+        "member-label:neutral-b", "member-label:neutral-b"]
+    assert [item.text.selected_rung for item in proposals] == ["above", "below"]
+    admitted = plan._admissible_reservations(options.first, proposals)
+    assert len(admitted) == 1 and admitted[0].text.selected_rung == "above"
     assert [item.overflow for item in options.retry.members.text] == ["fit", "fit"]
     selected, _ = plan.select_completed_route_label_plan(options, _empty_annotations(), _empty_annotations())
     assert [item.overflow for item in selected.members.text] == ["fit", "fit"]
