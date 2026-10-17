@@ -1,7 +1,8 @@
 # Issue419 — semantic mapping resource
 
-Status: selected design draft; no product implementation authorized before reviewer
-review. Baseline: published main `aabc5e894af50555892c0007e48efb24c268f2f3`.
+Status: design amendment applied per reviewer direction; implementation planning
+may proceed from this record. Baseline: published main
+`aabc5e894af50555892c0007e48efb24c268f2f3`.
 [Owner scope](https://github.com/tya5/chrona/issues/419#issuecomment-6234067417):
 design record only, after issue1657 (implementation now published in PR1662).
 
@@ -14,10 +15,11 @@ design record only, after issue1657 (implementation now published in PR1662).
 - Spec49 owns the closed semantic→Theme→placement→Scene contract. Spec06/60
   expose one planned-mark colour encoding. Project `fields` and field roles
   already reach projection; issue344's typed declaration is future work.
-- The [Spec49 design draft](../../specification/49-semantic-presentation-contract.md#issue419-design-draft--resource-vocabulary-and-declarative-style)
-  selects separate host vocabulary and authored Style resources, closed facts,
-  role-or-encoding outcomes, explicit conflicts, scoped legends and derived
-  coverage. It is a proposal, not a new live contract.
+- Issue419's selected proposal is recorded here only; Spec49 remains unchanged
+  until a normative change is implemented. Keep the existing View
+  `colorEncoding` input accepted and lower it into the same typed intent used
+  by Style. This work does not retire that syntax or require incompatible
+  Context/preset migration.
 
 ## Literal acceptance (parent remains open during design-only scope)
 
@@ -37,18 +39,19 @@ implemented or close the parent.
 
 1. Inventory all current bindings, grouped by mechanism; trace meaning, role,
    paint and every field consumer. Separate stale measurements from current facts.
-2. Draft one versioned mapping resource/schema shape, YAML-addable distinctions
-   and a closed predicate vocabulary combined with existing colour encoding.
+2. Define the versioned mapping resource/schema shape, YAML-addable
+   distinctions and closed predicate vocabulary. Preserve existing View
+   `colorEncoding` as an accepted input to the same typed intent.
 3. Specify the single typed-field connection for issue344, RC public/internal
    contracts, conflict and missing-fact behavior, provenance and scoped legends.
 4. Compare only needed lessons from official Vega-Lite encoding/conditions and
    design-token specifications; review whole-architecture ownership against
    Spec04/06/07/08/33/49/56/60/62 and adjacent designs.
-5. Publish the selected design in a clearly non-normative Spec49 draft section;
-   record migration and independently reviewable implementation slices here.
-   No schema, runtime, examples or generated changes in this design publication.
-6. Post one current Status linking the record and draft. Await reviewer before
-   product implementation; unresolved design choices stay explicit.
+5. Keep this work record as the proposal; update normative specifications only
+   alongside the implementation slice that changes their contract. No schema,
+   runtime, examples or generated changes in this design amendment.
+6. Post one current Status linking this record. Implementation may proceed
+   within the reviewed boundaries below; deferred choices remain explicit.
 
 Evidence: complete117-entry inventory; synthetic YAML use cases for role and
 scoped encoding outcomes; literal acceptance→planned test/report mapping;
@@ -58,44 +61,192 @@ public-output/full release CI rather than an unneeded local full suite.
 
 ## Architecture review and proposed implementation sequence
 
-The draft preserves Spec07's Style/Theme split and Spec49's completed-placement
-boundary; it does not place predicates in Theme or geometry in Style/Scene.
-Spec06/60's field/domain/scale split becomes one typed intent path rather than
-a second encoding evaluator. Spec04 dates and observed facts remain unchanged.
-Spec56 controls new kind registration, identity, shared schema vocabulary and
-incompatible syntax migration. Spec59/62's package non-authority must be amended
-only to admit supported Style members, not new host meanings. Issue344's future
-typed Project fields use the same source accessor; no profile-specific backdoor.
-Coverage433 is derived from vocabulary+actual Scenes and does not infer model
-cardinality from role counts. Rule evaluation and scoped legend correctness
-are release gates, not optional local styling polish.
+The proposal preserves Spec07's Style/Theme split and Spec49's
+completed-placement boundary; it does not place predicates in Theme or
+geometry in Style/Scene. Existing View `colorEncoding` remains valid and lowers
+to the same typed intent; no incompatible syntax or atomic resource migration
+is required. Spec04 dates and observed facts remain unchanged. Spec56 controls
+resource identity and shared schema vocabulary. Issue344's typed Project field
+uses the same source accessor; no profile-specific backdoor. Coverage433 is
+derived from vocabulary plus actual Scenes and does not infer model cardinality
+from role counts.
 
-These are proposed reviewable slices, **not authorization to implement**:
+These are the reviewed implementation slices. V1 may begin after this amended
+record is published; subsequent slices follow the stated dependency order:
 
 | Slice | Owners / changes | Acceptance evidence and publication |
 | --- | --- | --- |
 | V1 | schemas/resource registration, semantic registry loader, wheel resource, Spec49/56 | All117 binding records equal old values; every field has a consumer; unknown/missing/duplicate/version/identity negatives; full materializer counts. Publish resource replacement without two authorities. Rows1/4. |
 | S1 | View facts, Style evaluator/contracts, Theme-role compatibility, Spec06/07/60 | Neutral unseen field combination, role and encoding outcomes, conflicts/missing/type errors, repeated/source-specific occurrences; geometry uses resolved typography/strokes. Rows2/3. |
-| S2 | closure, Context/preset references, shipped resources and legend composition | One encoding IR, exact pins/copy/wheel closure, scope-labelled realized swatches, zero-match and conflicting scopes, all affected shipped resources migrate atomically. No partially materializable release or legacy second evaluator. Rows2/3. |
+| S2 | closure, Style references, shipped resource support and legend composition | Same typed intent for Style and existing View `colorEncoding`; exact pins/copy/wheel closure; scoped swatches retain canonical selector in Scene/provenance. A scoped legend requires its title. The derived scope qualifier is opt-in, not forced; an unrenderable optional qualifier does not refuse otherwise valid encoding. No atomic migration or second evaluator. Rows2/3. |
 | C1 | coverage/classification resources, tools, checked reports | Derive every registered/drawn purpose; state/role cardinalities distinct, unclassified purpose fails, intentional equivalences and current single-role fraction visible. Rows3/5/6/7. |
 
 Each code publication needs focused neutral tests, official batched SVG/Scene
 counts and design-conformance review, followed by CI's full release gate.
-Final schema spellings, exact owned files and migration version are finalized in
-the implementation plan after reviewer approval; no draft numeric budgets or
-project-specific predicates become acceptance requirements.
+Final schema spellings and exact owned files are finalized in the implementation
+plan; no draft numeric budgets or project-specific predicates become acceptance
+requirements.
 
-Reviewer decisions requested: approve the separate vocabulary/Style boundary,
-closed initial selectors/channel, fail-on-conflict and scoped legend contract,
-RC public surface, and the atomic migration order. If changed, update this
-record and Spec49 draft before product code; Git preserves superseded text.
+Reviewer confirmed this amendment in
+[comment 6234922800](https://github.com/tya5/chrona/issues/419#issuecomment-6234922800)
+and stated no additional review is needed if applied as written in
+[comment 6234966527](https://github.com/tya5/chrona/issues/419#issuecomment-6234966527).
+The reviewed inventory verification remains:117 unique rows exactly match the
+117 AST bindings. This amendment changes documentation only; no
+product/schema/examples/generated changes.
 
-Independent design review tightened scope identity/title rules, the original
-Projection owner of role predicates, the intentional View→Style encoding/domain
-declaration migration, and the exact corpus single-role fraction. All are now
-explicit in the draft. Verification:117 unique inventory rows exactly match
-the117 AST bindings;13 docs tests, literal-review validation and all38
-conformance checks pass. No product/schema/examples/generated changes.
+## Selected resource and Style contract
+
+The host vocabulary (`chrona/semantic-vocabulary/v0.1`, kind
+`semantic-vocabulary`) and authored Style (`chrona/style/v0.2`, kind `style`)
+are separate resources using the shared envelope and exact pinned references.
+The bundled
+vocabulary replaces the Python binding table and declares semantic ID,
+primitive family, purpose, Scene role, Theme role, contrast class and state
+classification. It declares host-produced meanings, not geometry. Style rules
+produce either a Theme-role reference or a color-scale encoding over
+View-projected facts. A design may add rules over admitted facts and Theme roles,
+but cannot invent schedule facts, Scene kinds, purposes, adapter capabilities,
+or weaker contrast requirements. Custom Theme role names remain constrained by
+primitive-family and contrast compatibility.
+
+Resource identity, duplicate IDs, unsupported versions, missing referenced
+bytes and identity mismatches fail closure. The vocabulary is explicit in
+resolved closure/provenance, including when the wheel-owned default applies.
+Context/preset references use existing pinning rules; they need not all migrate
+atomically. Package support may carry supported declarative Style resources,
+but packages cannot register host meanings or arbitrary geometry.
+
+The illustrative YAML shape is:
+
+```yaml
+version: chrona/style/v0.2
+kind: style
+id: review-treatment
+body:
+  rules:
+    - id: behind-cell
+      when: {purpose: table-cell, columnSource: finishDelta, comparisonCategory: behind}
+      then: {role: variance-behind}
+    - id: payload-risk
+      when:
+        fields: [{source: {fieldRole: responsible}, equals: payload}]
+      then:
+        encode:
+          channel: fill
+          source: {field: risk}
+          scale: risk
+          domain: [low, high]
+          legend: {title: 'Risk — payload team'}
+```
+
+This is a design example, not an accepted schema instance. Initial selector
+keys are exactly `semantic`, `purpose`, `comparisonCategory`, `columnSource`,
+`roles`, and `fields`, with these initial use cases and focused test subjects:
+
+| Selector | Existing meaning or author use case |
+| --- | --- |
+| `semantic` | Target `forecast` separately from `planned` while retaining their existing shared Theme role. |
+| `purpose` | Apply a treatment to planned marks across admitted span/point semantics. |
+| `comparisonCategory` | Treat behind/on-track/ahead table occurrences as the current variance bindings do. |
+| `columnSource` | Limit the variance treatment to `finishDelta` cells, as the example above does. |
+| `roles` | Select the original scheduling-derived critical fact without reading a Theme name. |
+| `fields` | Scope a risk encoding to the responsible payload team through the existing field-role alias. |
+
+Defer `facet`, `sourceType`, and `relationKind` until named use cases are
+approved. Predicates are intersection-only. `roles` reads only original View
+Projection facts, never a Theme name or another rule's output. `fields` use the
+existing typed source accessor. Missing optional facts do not match; unknown
+selectors, undeclared fields/roles, wrong scalar types and incompatible targets
+are pointed closure errors. No expression language, path traversal, arbitrary
+negation, callbacks, coordinates, time, or numeric ordering is introduced.
+
+Each rule has a unique ID and exactly one role or encoding outcome. The first
+encoding channel is `fill` only. Its targets are admitted fillable semantic
+families (planned/actual/snapshot member marks and table cells); a stroke-only
+relation is not a fill target. Another channel requires its own reviewed
+contract. Existing
+Spec60 domain ordering, palette folding, separability and Theme scale-to-Scheme
+mapping are reused. Existing View `colorEncoding` stays accepted and lowers to
+the same typed intent as Style; there is no second evaluator and no retirement
+or incompatible migration of the existing syntax. A matching encoding with a
+missing source value retains Spec60's explicit refusal. Role and encoding may
+coexist when they target distinct paint channels; conflicting assignments to
+the same occurrence/channel fail with both rule IDs and occurrence identity.
+Identical assignments coalesce with all matched rule IDs retained. Different
+role assignments or different encodings of the same channel fail; input order
+does not select a winner. No match retains existing semantic paint; there is no implicit catch-all or
+specificity/last-wins precedence.
+
+View owns occurrence selection, stable object/relation/column identity and
+immutable facts. Style evaluates those facts into occurrence-keyed role/encoding
+intent and matched-rule IDs. Theme/Scheme completes paint and typed typography/
+mark attributes before Layout measurement and placement. Scene emits completed
+geometry and paint relations; adapters do not interpret raw fields or authored
+rules. Text/stroke changes therefore enter Layout before fit/routing.
+Issue344's typed Project fields use this same field accessor: schema validates
+namespaced ID/type/allowed values, View projects the field on its source
+occurrence, and Style refers to it through `source: {field: ...}`. Do not add a
+profile-specific lookup path. `fieldRole` remains a Project-owned alias into
+that accessor, not a second evaluator. Until that field support exists, only fields
+admitted by the live Project contract are usable. Multi-source comparisons
+retain source identity; absence is distinct from null or invalid value.
+
+## Scoped legends, diagnostics and coverage
+
+Derived scale entries come from values actually painted after rule matching and
+conflict resolution, in domain order. Identity includes Style/rule/scale/scope
+and value. A non-global rule requires an authored non-empty legend title; the
+canonical normalized selector is available beside swatches in Scene and
+provenance. A visible qualifier derived from that selector is an opt-in legend
+member, not mandatory output. If the optional qualifier cannot be rendered,
+that alone does not refuse the encoding. A scoped key must not be described as
+global. Scope identity is the canonical normalized `when` JSON under pinned
+Style/rule identity, not title text or current match count. Rules with no
+realized matches produce no misleading scale entry. Global means the rule uses
+only `purpose` and/or `semantic`; any additional fact selector is scoped even
+when all current occurrences match. Swatches use the completed paint, including
+palette-folded Other. Semantic legend keys remain
+separate.
+
+Failure diagnostics distinguish invalid vocabulary/rules, unknown facts,
+conflicts, incompatible role/target and missing required legend title, and carry
+resource pointer, rule IDs and subject identity. Existing scale errors remain
+Spec60 errors. Successful provenance reports matched rules without warning on
+intentional non-matches.
+
+Coverage is derived from vocabulary plus committed Scene outputs, not a curated
+source list. Every registered purpose requires a classification, even if not
+currently drawn. Report drawn-purpose realized role counts and slides, model
+state cardinality separately, realized state/role pairs, intentional
+equivalences or gaps, and unpainted purposes. The Issue433 numerator is the
+number of distinct drawn purposes with exactly one realized visual role; its
+denominator is all distinct purposes actually drawn. Registered-but-unpainted
+purposes remain separate rows, not zero-role denominator entries. The current
+117-entry inventory and 31/40 historical figure are baseline evidence only;
+the generated checked report supplies the successor measurement.
+
+## RC, ownership and release conditions
+
+RC promises versioned resource envelope/identity, vocabulary semantic IDs,
+purposes, Theme-role names and existing `colorEncoding`. Style v0.2 is an RC
+promise only if V1, S1 and S2 land before the RC trial; otherwise it remains
+experimental. V1 must precede RC. Dev A owns V1/S1/S2. Dev B begins C1 after V1
+and owns Issue344 Level 1 in the meantime, using the same accessor described
+above. Python types, factory grouping, cache representation, inventory order
+and physical packaging are internal. Focused neutral tests, public materializer
+evidence and the release CI gate are required at each implementation boundary.
+
+## Prior-art lessons
+
+[Vega-Lite conditions](https://vega.github.io/vega-lite/docs/condition.html)
+separate predicates from field/value encodings; retain that separation, not an
+expression language. Its [legends](https://vega.github.io/vega-lite/docs/legend.html)
+follow resolved scales; Chrona additionally records predicate scope and requires
+an authored title for a scoped key.
+[DTCG format](https://www.designtokens.org/tr/2025.10/format/) contributes typed
+values and explicit references/errors, not semantic inference from folders or a
+reason to mix Theme values with View facts.
 
 ## Current registry inventory (117 entries)
 
