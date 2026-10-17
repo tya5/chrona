@@ -590,6 +590,19 @@ suppress a required delta, or remove a row to obtain success. Optional titles
 keep their existing policy. Scene and adapters receive completed placements and
 paint only; they do not calculate dates, choose fonts or place the legend.
 
+Channel coverage is per selected temporal occurrence, not merely the presence
+of a delta column somewhere in the View. An explicit row's table channel
+covers its `tableSubject` only; another primary item in that row needs the
+declared plot delta channel. A point folded into a group header has no table
+cell: with a declared plot delta channel, Layout places its independent required
+delta on that header track and includes its full footprint in header packing.
+It retains forecast mark identity and the same pre-route required-text guards
+as a row delta. A table-only folded point, or another uncovered occurrence,
+is `E_FORECAST_PRESENTATION_REQUIRED` naming that occurrence and missing
+channel. Do not invent a table row or an undeclared plot destination, unfold
+the point, or omit its delta. An eligible but spatially unplaceable declared
+channel still uses the required-text refusal, not a capability error.
+
 ## 9. Annotations and Layout Intent
 
 Semantic annotations remain Project data and are selected with their anchors. Presentation annotations are View-local callouts, highlights, notes, or explanatory arrows. They MAY anchor to a selected object, relation, group, or temporal coordinate. The View owns the stable anchor and logical placement preference; Layout owns every concrete offset, coordinate, collision decision, and connector route. Scene projects completed Layout geometry and Rendering serializes it. Deleting a presentation annotation MUST NOT alter a Project object, semantic annotation, or dependency.

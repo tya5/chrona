@@ -22,9 +22,18 @@ required-label/Scene checks (101) and render integration checks (52).
 No PNG, main-byte or release acceptance is claimed. Boundary review found
 folded group-header points omit required deltas and lose forecast Scene identity;
 resolve this against the existing presentation contract before acceptance.
-Work is parked at the reviewer's reordered board: #1632 is now dev A row 1.
-Resume by closing this presentation gap, checking per-occurrence delta coverage,
-updating the skill, and running the two actual trial PNGs and base comparison.
+#1632 remains dev A row 1; its PR #1644 is in CI. During that verified wait,
+complete occurrence coverage under the published Spec06 correction: folded
+points use declared required header plot deltas, explicit table cells cover
+only their actual subject, and missing declared coverage refuses the occurrence.
+The actual trial PNGs were rendered and viewed at WIP 2f9f36b3f: target-b
+shows 25 forecast/ghost objects and table deltas; technical-print shows 22
+selected forecast/ghost objects and independent deltas. Required estimates and
+the truthful legend are visible; optional title suppression and preset contrast
+findings are separate. These are candidate image checks, not release acceptance.
+Next: implement/test complete folded placement and identity, occurrence checks,
+update the skill, compare base bytes and repeat final trial images on the
+integrated candidate. Current ready main 9735e254f was merged normally.
 [Reviewer answers](https://github.com/tya5/chrona/issues/1634#issuecomment-6230794260)
 approve retained declared units, finish-only placement with an unobserved-start
 finding, and child-envelope precedence with a named group-observation finding.
@@ -78,6 +87,14 @@ return to the living design and architecture review before code resumes.
 | F2 projection and completed geometry | `model/projection.py`, semantic facets/registry, `review/v05_content.py`, Layout member labels/window admission/lane-label preflight, typed completed mark metadata, Scene model/projection and `scene-v0.7` schema. Original facts remain separate from active forecast placement/delta. | Model and integration tests cover Snapshot/no-Snapshot deltas, point/rollup completion, equal-placement ghost, both table source forms and paint, active packing/window/label visibility, required plot text before routes, table/legend/capability refusals, lane-primary inventory and outside-window forecast identity. Existing no-forecast characterization remains unchanged. |
 | F3 common ingress | `presentation/contracts/resources.py`, `model/closure.py`, `usecases/draft_render.py`, `usecases/render_review.py`, `app/cli.py`, SDK-free `app/agent_tools.py`, Context v0.17 schema and schema admission fixtures. | CLI render/render-workspace and MCP render_draft (including scoped Snapshot path) reach the same use case. Immutable CLI/MCP read Context only. Absent/false/type errors, exact identity, Actual/asOf requirements and default-preset refusal have tests. Run schema equivalence against ready main and document the precise optional Context and forecast Scene admission deltas. |
 | F4 end-to-end and release | Packaged skill's weekly-update section, forecast integration/byte tests and one concise acceptance review. Reviewer owns shared-design YAML; no copied Theme or edited public mirrors. | Render actual trial target-b + packaged technical-print as PNG/Scene; inspect all selected item deltas, required legend/ghost and as-of movement (started bars retain Actual start; fixed targets stay fixed). Compare no-flag artifacts to the ready base in a batch. Official CI supplies public SVG/Scene counts, three-OS full tests/conformance, wheel/smoke and public-materializer reproduction. |
+
+F2/F3 coverage completion: validate actual projected row subjects and folded
+occurrences in `render_review.py`; extend `surface_marks.py` header footprint
+packing and `surface_member_labels.py` required requests, then project completed
+forecast marks/text in Scene. Tests cover folded plot success, missing channel,
+hard collision refusal, shared-row subject coverage, and default-off identity.
+This correction changes no schema, preset, solver, source selection or layer
+ownership; publish it before the corresponding product changes.
 
 Publication boundaries: completed design/review, this implementation plan,
 feature commits and code PR, then the literal acceptance/release review. Close
