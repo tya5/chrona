@@ -160,6 +160,79 @@ colours are retained. An encoded fill may satisfy the inherited fill requirement
 Actual-variance fallback retains its existing outline policy. Scene alone completes paint effects and
 adapter capability omissions; adapters never reinterpret an encoding.
 
+### 4.1.1 Style v0.2 rule contract (#419)
+
+`chrona/style/v0.2` replaces the historical source-order proposal. Its schema is
+[`style-v0.2.schema.yaml`](../../schemas/style-v0.2.schema.yaml). A resource has
+`body.rules`, each with a unique `id`, non-empty `when`, and `then` assigning
+exactly one Theme `role` or one `encode` outcome. Rules read original View facts;
+an assignment never changes what another rule matches. Source order is not
+precedence. Equal assignments coalesce; different roles or different encodings
+for the same channel on one occurrence fail with both rule IDs. Role and fill
+assignments are independent; fill overrides only the selected role's fill.
+
+The initial selectors are closed and combine by intersection:
+
+| Selector | Fact |
+| --- | --- |
+| `semantic` | Exact host semantic-vocabulary binding ID. |
+| `purpose` | Host purpose of the occurrence. |
+| `comparisonCategory` | View-computed `behind`, `on-track`, or `ahead`. |
+| `columnSource` | Exact shared View column-source form, not displayed text. |
+| `roles` | All listed roles must be present in the original Projection. |
+| `fields` | All typed scalar `source`/`equals` predicates must match. |
+
+`fields` predicates require profile-v0.3 declarations and scalar cardinality;
+arrays and resource references are not equality predicates. A `fieldRole` is
+an alias resolved through the source Project's shared field accessor, not a
+second evaluator. Missing fields do not match; explicit null remains present
+and is validated by the Project/profile owner. Predicate literals must match
+their declared types without boolean/number coercion. Snapshot facts use the
+Snapshot Project's own pinned declarations; scenario facts use the primary
+declarations after overlays. Object ID alone is not occurrence identity: source,
+row/member, semantic and column identities remain distinct.
+An occurrence also distinguishes its source container kind, such as an
+ordinary row and a folded group. Its semantic is the original canonical host
+binding, not a logical placement-name alias: existing primary points use
+`gate` when the base Theme declares that treatment, while forecast points keep
+`forecast`. The selected Style role cannot redefine that semantic identity.
+
+The first encoding channel is `fill`, on supported member marks and table cells.
+Its source, scale and domain use the existing colour-encoding contract (Spec60).
+Existing View `colorEncoding` remains accepted and lowers to the same intent;
+legacy opaque encoding fields do not become typed predicate declarations.
+Encoding paint identity is resolved source, scale, domain and channel, not
+legend wording. A scoped encoding requires a non-blank authored legend title.
+Its canonical selector is retained with legend provenance. `showScope` opts in
+to a derived visible qualifier; that qualifier is not forced and does not
+replace the title. New selectors/channels need their own contract.
+
+Style selects treatment, not concrete geometry. The selected Theme role's text,
+mark and stroke attributes must enter Layout before measurement, fitting and
+routing. Scene keeps canonical `visualRole` and purpose; optional paired
+`semanticId`/`themeRole` record the vocabulary binding and selected treatment.
+Adapters serialize completed paint and geometry, never evaluate predicates.
+Theme capability admission recognizes the implemented Style-selected mark
+geometry and point-symbol consumers for ordinary authored role names and
+existing Rect/Symbol role contracts. This does not relax generated namespaces,
+specialized fill-only state roles, unknown properties or catalogue-pattern
+applicability. A selected role must supply the bindings its actual primitive
+family uses; incomplete treatment fails with `E_STYLE_ROLE_INCOMPATIBLE`
+before measurement rather than inheriting the old role's geometry.
+
+Theme/Scheme completes matched fill encodings into concrete colours keyed by
+the full source occurrence before Layout. Completed placements retain that key
+for passive Scene projection; internal keys are not serialized Scene fields.
+Required paint-channel validation is one pure presentation-model contract shared
+by Layout and Scene, not two validators. Its requirements follow the actual
+primitive family and catalogue parts. An explicit encoding fills an admitted
+host even when its inherited Theme pattern is hollow/outline, retaining stroke;
+this preserves existing View colour encoding. Explicit stroke-only primitives
+and catalogue outline/stroke parts do not acquire a fill, and explicit part
+colours are retained. An encoded fill may satisfy the inherited fill requirement.
+Actual-variance fallback retains its existing outline policy. Scene alone completes paint effects and
+adapter capability omissions; adapters never reinterpret an encoding.
+
 ### 4.2 Inputs
 
 A Style receives the semantic View Projection. Only the six selectors in
