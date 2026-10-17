@@ -400,6 +400,7 @@ def test_synthetic_full_and_thin_column_style_views_render_identical_svg(tmp_pat
     for column in thin["view"]["body"]["tableColumns"]:
         source = column["source"]
         name = source if isinstance(source, str) else next(iter(source))
+        name = "field" if name == "fieldRole" else name  # Spec 06 §6.2: role columns use the field style.
         styles[name] = {field: deepcopy(column[field]) for field in fields if field in column}
         for field in fields:
             column.pop(field, None)

@@ -35,7 +35,7 @@ _RESERVED_DEVICE_NAMES = frozenset(
 # A host path that survives the exact-string pass: a Windows drive or UNC path, or a POSIX path under a
 # top-level directory that only a host has. A JSON pointer or a workspace-relative path never matches.
 _HOST_PATH = re.compile(
-    r"[A-Za-z]:[\\/][^\s'\"<>|*?]*"
+    r"(?<![\w.~-])[A-Za-z]:[\\/][^\s'\"<>|*?]*"
     r"|\\\\[^\s'\"\\]+\\[^\s'\"<>|*?]*"
     r"|(?<![\w.~-])/(?:Users|home|private|var|tmp|opt|usr|etc|mnt|Volumes)(?![\w.~-])"
     r"(?:/[^\s'\"<>:,;()\[\]{}]*)?"
