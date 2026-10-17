@@ -176,17 +176,23 @@ def test_every_closed_count_source_reaches_the_summary_svg(tmp_path, source, exp
     assert f">{expected}<".encode() in rendered.artifact.content
 
 
-def test_finish_delta_counts_use_observed_signs_not_a_forecast(tmp_path):
+@pytest.mark.parametrize(("delta_unit", "late_finish", "early_finish"), [
+    ("calendar-days", "2026-02-16", "2026-03-15"),
+    ("working-days", "2026-02-17", "2026-03-13"),
+])
+def test_finish_delta_counts_use_observed_signs_not_a_forecast(tmp_path, delta_unit, late_finish, early_finish):
     actual = deepcopy(ACTUAL)
     actual["body"]["observations"] = [
         {"id": "a-observed", "sequence": 1, "projectObjectId": "a",
-         "actual": {"start": "2026-01-05", "finish": "2026-02-16"}},
+         "actual": {"start": "2026-01-05", "finish": late_finish}},
         {"id": "build-observed", "sequence": 1, "projectObjectId": "build",
-         "actual": {"start": "2026-03-02", "finish": "2026-03-15"}},
+         "actual": {"start": "2026-03-02", "finish": early_finish}},
     ]
     figures = tuple({"id": name, "kind": "count", "source": name}
                     for name in ("knownFinishVariance", "behind", "ahead"))
-    rendered = _render(tmp_path, _parts(*figures),
+    parts = _parts(*figures)
+    parts["view"]["body"]["comparison"]["deltaUnit"] = delta_unit
+    rendered = _render(tmp_path, parts,
                        _summary(*(_metric(f["id"], metric_id=f["id"]) for f in figures)), actual=actual)
     texts = _texts(rendered)
     assert texts["summary:key:knownFinishVariance:value"] == "2"

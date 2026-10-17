@@ -1,10 +1,10 @@
-"""One real routing pass and producer-owned counts through Scene and CLI."""
+"""Real routing passes and producer-owned counts through Scene and CLI."""
 import json
 
 import pytest
 
-from chrona.presentation.layout import surface_lane_route_plan as lane_plan
 from chrona.presentation.layout import surface_route_label_plan as label_plan
+from chrona.presentation.layout import surface_lane_route_plan as lane_plan
 from chrona.presentation.layout import surface_routes
 from chrona.presentation.model.info_diagnostics import RelationRoutingSummary, RelationSearchBudgetHit
 from chrona.usecases.draft_render import warning_payloads
@@ -39,21 +39,31 @@ def test_declared_policy_controls_real_pass_order_and_info_projection(tmp_path, 
     payloads = [item for item in warning_payloads(rendered) if item["code"] == "I_LAYOUT_RELATION_ROUTING"]
     if policy == "best":
         assert infos == payloads == []
-        if lane:
-            assert calls[0][0] == "lane-rehearsal"
+        passes = [name.split(":", 1)[0] for name, _ in calls]
+        lane_passes = [name for name in passes if name.startswith("lane-")]
+        assert lane_passes == sorted(lane_passes, key=("lane-rehearsal", "lane-reference",
+                                                       "lane-reservation-rehearsal").index)
+        baseline_index = passes.index("route-label-baseline")
+        assert passes[:baseline_index] == lane_passes
+        assert passes[baseline_index:] in (["route-label-baseline"],
+                                          ["route-label-baseline", "route-label-recovery"])
         return
-    assert [name for name, _ in calls] == ["route-label-baseline"]
+    passes = [name.split(":", 1)[0] for name, _ in calls]
+    assert passes[0] == "route-label-baseline"
+    assert passes in (["route-label-baseline"],
+                      ["route-label-baseline", "route-label-recovery"])
     assert not ({"memberLabel", "finishDelta"} & set(calls[0][1]))
-    assert len(infos) == len(payloads) == 1
-    info, payload = infos[0], payloads[0]
-    assert info.relation_instances == len(results) == 2
-    assert info.shape_settled == sum(item.settled_by_shape and not item.search_used for item in results)
-    assert info.fallback_search == sum(item.search_used for item in results)
-    assert payload["severity"] == "info"
-    assert payload["shapeSettled"] == info.shape_settled
+    assert len(infos) == len(payloads) == len(calls)
+    assert sum(info.relation_instances for info in infos) == len(results)
+    assert sum(info.shape_settled for info in infos) == sum(
+        item.settled_by_shape and not item.search_used for item in results)
+    assert sum(info.fallback_search for info in infos) == sum(item.search_used for item in results)
+    assert all(payload["severity"] == "info" for payload in payloads)
+    assert [payload["shapeSettled"] for payload in payloads] == [info.shape_settled for info in infos]
     scene_info = [item for item in rendered.scene.diagnostics if item.startswith("I_LAYOUT_RELATION_ROUTING:")]
-    assert scene_info == [info.scene_diagnostic()]
-    assert json.loads(scene_info[0].split(":", 1)[1])["fallbackSearch"] == info.fallback_search
+    assert scene_info == [info.scene_diagnostic() for info in infos]
+    assert [json.loads(item.split(":", 1)[1])["fallbackSearch"] for item in scene_info] == [
+        info.fallback_search for info in infos]
     assert rendered.artifact.content.startswith(b"<svg")
 
 
@@ -74,6 +84,7 @@ def test_budget_hit_facts_survive_all_real_passes_and_project_to_scene_cli(tmp_p
                                            "search": policy, "searchBudget": 1}
     # Negative control: force the actual fallback iterator rather than a shape.
     monkeypatch.setattr(routing, "relation_shape_candidates", lambda *args, **kwargs: iter(()))
+    monkeypatch.setattr(routing, "supplemental_relation_channel_candidates", lambda *args, **kwargs: iter(()))
     original_routes = surface_routes.compose_surface_routes
     seen = []
     def observe(context):
@@ -86,12 +97,16 @@ def test_budget_hit_facts_survive_all_real_passes_and_project_to_scene_cli(tmp_p
     facts = [item for item in rendered.info_diagnostics if isinstance(item, RelationSearchBudgetHit)]
     assert facts == seen and facts
     assert all(item.budget == item.expansions == 1 for item in facts)
-    passes = {item.pass_name for item in facts}
-    assert "route-label-baseline" in passes
-    if lane and policy == "best":
-        assert "lane-rehearsal" in passes
+    passes = {item.pass_name.split(":", 1)[0] for item in facts}
     if policy == "first-fit":
-        assert passes == {"route-label-baseline"}
+        assert "route-label-baseline" in passes
+        assert passes <= {"route-label-baseline", "route-label-recovery"}
+        assert not any(name.startswith("lane-") for name in passes)
+    else:
+        assert {"lane-rehearsal", "lane-reference", "lane-reservation-rehearsal",
+                "route-label-baseline"} <= passes
+        assert passes <= {"lane-rehearsal", "lane-reference", "lane-reservation-rehearsal",
+                          "route-label-baseline", "route-label-recovery"}
     assert [item for item in rendered.scene.diagnostics
             if item.startswith("I_LAYOUT_RELATION_SEARCH_BUDGET:")] == [item.scene_diagnostic() for item in facts]
     payloads = [item for item in warning_payloads(rendered) if item["code"] == facts[0].code]

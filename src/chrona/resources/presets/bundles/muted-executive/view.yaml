@@ -27,7 +27,7 @@ body:
     baselineMarks: ghost-when-changed
     actual: optional
     observationSelection: latest
-    deltaUnit: calendar-days
+    deltaUnit: working-days
     facets:
     - planned
   visibility:

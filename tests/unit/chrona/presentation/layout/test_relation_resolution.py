@@ -16,7 +16,7 @@ PAIR = (ConnectorEgress("end", (10., 50.), (10., 50.), ()),
         ConnectorEgress("start", (90., 50.), (90., 50.), ()))
 
 
-def _resolve(mode, index, *, hosts=frozenset(), reject=False, budget=None):
+def _resolve(mode, index, *, hosts=frozenset(), required_labels=frozenset(), reject=False, budget=None):
     def attempt(domain):
         return select_relation_route((PAIR,), obstacles=domain.obstacles,
             bounds=(0., 0., 100., 100.), source_host_id=None, target_host_id=None,
@@ -26,7 +26,8 @@ def _resolve(mode, index, *, hosts=frozenset(), reject=False, budget=None):
                                     row_edges=(), classes=("mark", "text", "label-visual")),
             search_budget=budget, accept=lambda points: not reject,
             rank=lambda points, source, target: (len(points), points))
-    return search_relation_resolution(mode, obstacles=index, endpoint_host_ids=hosts, attempt=attempt)
+    return search_relation_resolution(mode, obstacles=index, endpoint_host_ids=hosts,
+        required_label_obstacle_ids=required_labels, attempt=attempt)
 
 
 @pytest.mark.parametrize("obstacle_class,identity,stage", (
@@ -66,8 +67,41 @@ def test_suppress_executes_only_normal_attempt():
 
 @pytest.mark.parametrize("mode,stage", ((Mode.OVERLAP, Stage.OVERLAP), (Mode.STUB, Stage.STUB)))
 def test_direct_modes_do_not_search(mode, stage):
-    result = _resolve(mode, SurfaceObstacleIndex())
+    result = _resolve(mode, SurfaceObstacleIndex(), required_labels=frozenset({"hard-text"}))
     assert not result.attempts and result.terminal_fallback is stage
+
+
+@pytest.mark.parametrize("stage", (Stage.LABEL_VISUALS, Stage.TEXT, Stage.MARKS))
+def test_staged_relaxation_preserves_only_explicit_required_label_obstacles(stage):
+    index = SurfaceObstacleIndex()
+    for identity, obstacle_class in (
+            ("required-text", "text"),
+            ("label-footprint:required-text", "label-visual"),
+            ("optional-text", "text"),
+            ("label-footprint:optional-text", "label-visual")):
+        index.add(SurfaceObstacle(identity, obstacle_class, "timeline",
+                                  ObstacleRect(0., 0., 10., 10.)))
+    protected = frozenset({"required-text", "label-footprint:required-text"})
+
+    domain = relaxed_domain(index, stage, frozenset(), protected)
+
+    assert domain.obstacles.has("required-text")
+    assert domain.obstacles.has("label-footprint:required-text")
+    if stage is Stage.LABEL_VISUALS:
+        assert domain.obstacles.has("optional-text")
+        assert not domain.obstacles.has("label-footprint:optional-text")
+    else:
+        assert not domain.obstacles.has("optional-text")
+        assert not domain.obstacles.has("label-footprint:optional-text")
+
+
+def test_normal_domain_retains_all_labels_and_empty_protection_preserves_existing_relaxation():
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("required-text", "text", "timeline", ObstacleRect(0., 0., 1., 1.)))
+    index.add(SurfaceObstacle("label-footprint:required-text", "label-visual", "timeline",
+                              ObstacleRect(0., 0., 1., 1.)))
+    assert relaxed_domain(index, Stage.NORMAL, frozenset()).obstacles.all() == index.all()
+    assert not relaxed_domain(index, Stage.TEXT, frozenset()).obstacles.all()
 
 
 def test_normal_success_never_retries():

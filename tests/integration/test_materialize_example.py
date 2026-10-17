@@ -175,7 +175,9 @@ def test_controller_executive_public_evidence_exercises_inside_and_fallback_labe
     materialize(ROOT / "tests/fixtures/controller-z/manifest.yaml", "executive", tmp_path / "controller", write=False)
     artifact = (tmp_path / "controller/review.svg").read_text(encoding="utf-8")
     assert 'data-scene-id="member-label:firmware:firmware"' in artifact
-    assert 'data-scene-id="member-label:dvt:dvt"' in artifact and 'opacity="1" fill="#000000">DVT Qualification' in artifact
+    # DVT uses its declared exterior fallback when the completed route blocks
+    # the inside slot; the retained name uses the ordinary exterior text ink.
+    assert 'data-scene-id="member-label:dvt:dvt"' in artifact and 'opacity="1" fill="#172033">DVT Qualification' in artifact
     assert 'data-scene-id="member-label:evb-arrival:evb-arrival"' in artifact and 'opacity="1" fill="#172033">EVB Arrival' in artifact
 
 

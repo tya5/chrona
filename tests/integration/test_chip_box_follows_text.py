@@ -112,7 +112,9 @@ def test_default_and_explicit_raw_chip_output_are_byte_identical(tmp_path):
     assert sha256(raw.artifact.content).hexdigest() == "83b5b75f6f548316bc3f3f3f66daf512c007d16adfcb293ed2c31667d59074ec"
     # Empty-legend normalization changes only slots and empty sibling origins;
     # completed primitives, diagnostics and SVG bytes remain characterized.
-    assert sha256(serialize_scene(raw.scene)).hexdigest() == "5d59bf22ae3af2581d3e7ad4164a65619ec5e4fae61b72aabc9ce49cbda9884d"
+    # Only the packaged View's provenance contentIdentity differs from ready main
+    # (calendar-days -> working-days); the rendered SVG remains byte-identical.
+    assert sha256(serialize_scene(raw.scene)).hexdigest() == "3c7c2d7cf5afb5f934ef59204a471431387326f79ff6cdb00b5a8550ae3fe172"
     labels = [item for item in raw.surface.primitives if item.kind == "Text" and item.purpose == "member-label"]
     assert labels and any(len(item.text_layout.lines) > 1 for item in labels)
     assert "<tspan" in raw.artifact.content.decode("utf-8")

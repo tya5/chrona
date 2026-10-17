@@ -231,7 +231,9 @@ def test_absent_shape_preserves_characterized_scene_and_svg_bytes(tmp_path):
     # Empty-legend normalization changes only slots and empty sibling origins;
     # completed primitives, diagnostics and SVG bytes remain characterized.
     assert len(scene) == 26368
-    assert sha256(scene).hexdigest() == "c520bade9cec4442304def89bf5a024cb6238e9c64640cfb8795d16bae02dead"
+    # Only the packaged View's provenance contentIdentity differs from ready main
+    # (calendar-days -> working-days); the rendered SVG remains byte-identical.
+    assert sha256(scene).hexdigest() == "749ff3ec6310b40e352c09f4ed1e467a5f4a1b44642381453647327ccf7fe4cd"
     assert len(rendered.artifact.content) == 8173
     assert sha256(rendered.artifact.content).hexdigest() == "3f700aae2dd6cc1e5d42370babe2805a2231ec2c8a643eb07dc1317cc4cc7437"
 

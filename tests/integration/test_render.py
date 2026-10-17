@@ -26,6 +26,7 @@ from chrona.presentation.scene.serialization import serialize_scene
 from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
 from chrona.app.cli import _emit_render_result
 from chrona.resources import default_preset_resource, default_preset_root
+from tests.support import synthetic_review as sr
 
 
 def _root() -> Path:
@@ -302,30 +303,18 @@ def test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic(monkeyp
 
 
 def test_suppressed_plot_labels_have_one_completed_info_count(capsys, tmp_path):
-    # #487 corrected the table's `minmax`/content-minimum and its flex-allocation
-    # basis (ADR-0032), which changes which member label this `elevated-light`
-    # draft suppresses (`structure:structure` before #487, `launch:launch`
-    # after) because the table's corrected width gives the plot different room.
-    # The mechanism under test here -- exactly one completed info count and its
-    # JSON emission -- is unaffected; only the specific suppressed label id is.
-    root = _root()
-    example = root / "examples/halcyon-1"
-    preset = root / "src/chrona/resources/presets/bundles/elevated-light"
-    legacy_view = yaml.safe_load((preset / "view.yaml").read_text(encoding="utf-8"))
-    legacy_view["body"]["rows"]["mode"] = "automatic"
-    for key in ("packing", "laneTable", "laneKeys"):
-        legacy_view["body"]["rows"].pop(key, None)
-    legacy_view_path = tmp_path / "elevated-automatic-view.yaml"
-    legacy_view_path.write_text(yaml.safe_dump(legacy_view, sort_keys=False), encoding="utf-8")
-    rendered = render_review(_draft_request(
-        project_path=example / "project.yaml", actual_path=example / "actual.yaml",
-        scheme_path=root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
-        view_path=legacy_view_path, theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
+    parts = sr.bundle()
+    parts["view"] = sr.lane_view(parts["view"])
+    parts["view"]["body"]["window"] = {
+        "mode": "explicit", "start": "2026-01-05", "end": "2026-03-01"}
+    source = sr.bunched_project()
+    sr.add_notes(source, parts["view"], ["g0-t2", "g1-t3", "g2-t1"],
+        [sr.candidate("plot-near", connector="leader"),
+         sr.candidate("plot-no-tail", connector="none")])
+    rendered = sr.render(tmp_path, source, presentation=parts)
     visible_labels = {item.scene_id for item in rendered.surface.primitives if item.kind == "Text"}
     per_id = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics
               if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:")}
-    # The automatic View keeps the same suppression mechanism, while its
-    # lane migrated selection produces a different count of constrained rows.
     assert per_id
     assert not per_id & visible_labels
     assert rendered.scene.diagnostics.count(
@@ -383,8 +372,8 @@ def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
                                          theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
     assert "W_LAYOUT_LABEL_SUPPRESSED:variance:detector:detector" in tuned.scene.diagnostics
     member_suppressed = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in tuned.scene.diagnostics)
-    assert member_suppressed >= 1  # the variance suppression above is not counted
-    assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={member_suppressed}" in tuned.scene.diagnostics
+    assert member_suppressed == 0
+    assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in tuned.scene.diagnostics)
     # HALCYON is evidence here, not the rule: which names the placement policy suppresses depends
     # on the corpus data (#575), so no name is pinned. The aggregate must still count members
     # only; the synthetic proof is test_fill_lanes_count_every_packed_name_as_shown_or_suppressed.

@@ -78,7 +78,8 @@ def test_unclaimed_heading_part_is_not_an_active_late_read(tmp_path, monkeypatch
 @pytest.mark.parametrize("search", ["best", "first-fit"])
 def test_mismatched_trial_is_discarded_and_progress_is_published_only_for_accepted_trial(tmp_path, monkeypatch, search):
     from chrona.presentation.layout import surface_annotations, surface_count_closure as closure
-    from chrona.presentation.layout import surface_lane_route_plan as lane_plan, surface_route_label_plan as label_plan, surface_routes
+    from chrona.presentation.layout import surface_lane_route_plan as lane_plan
+    from chrona.presentation.layout import surface_route_label_plan as label_plan, surface_routes
     from chrona.presentation.model.info_diagnostics import RelationRoutingSummary, RelationSearchBudgetHit
     completed = _capture(monkeypatch)
     source, parts = _fixture()
