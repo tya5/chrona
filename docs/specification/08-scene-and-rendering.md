@@ -130,6 +130,16 @@ family/weight, not the parent text's Latin face. SVG spans and PDF subset
 inventory retain inherited faces for ordinary text and explicit faces for runs;
 the adapter never repeats Layout's glyph-coverage decision (Specification 30).
 
+PNG rasterization must also preserve these completed face boundaries. In a
+PNG-private SVG copy, position fallback runs at Layout's completed prefix
+advances (including completed letter spacing and horizontal scale); do not let
+the raster engine shape a mixed-script chunk through a different fallback face.
+Reuse the same geometry-only run projection as PDF, preserving explicit face
+attributes, lines, transforms and paint. Do not measure text, discover faces or
+apply PDF embedding-permission restrictions to PNG. Public SVG/Scene and PNG
+without completed fallback faces remain unchanged. The raster-run grammar
+participates in adapter identity when used.
+
 ReportLab caches dynamic faces by registration and PostScript names. In every
 PDF render, namespace both internal embedding names by a digest of
 the exact single-face embedding payload before naming (including its selected
@@ -172,8 +182,15 @@ including overlapping fill/stroke, terminal outlines and pattern children.
 The adapter uses isolated transparency Form XObjects, preserving nested alpha,
 clips, transforms, painter order and the closed font mapping; it must not
 approximate group opacity by assigning alpha independently to each child.
-Its identity includes `pdf-isolated-opacity-v1`. Opaque spans retain the normal
+Each transparency form owns the resources its stream references, including
+its own ExtGState alpha dictionary and nested XObjects. It must not resolve
+form-local alpha names through the page's dictionary: unequal nested opacities
+multiply independently, rather than accidentally squaring the page opacity.
+This corrects the v1 form-resource omission (#1612); PDF identity now includes
+`pdf-isolated-opacity-v2`. Opaque spans retain the normal
 vector conversion path; neither page rasterization nor Layout changes are needed.
+Spec63 §7.1 admits private alpha-masked glow halos under the PDF v0.7 profile;
+their source and halo share this same isolated-opacity owner.
 For completed text runs, the PDF-private SVG places each run at the prefix sum
 of its measured `inlineSize` plus between-run letter spacing, divided by the
 existing horizontal scale in the text's pre-transform frame. Baselines, line

@@ -1,6 +1,6 @@
 # Portable Visual Capabilities
 
-**Status:** Delivered (corrected v0.6 target-fidelity contract)
+**Status:** Delivered (corrected v0.6 target-fidelity contract); PDF v0.7 extension designed (#1612).
 **Owns:** renderer-neutral visual capability profiles, completed Scene visual
 effects, fidelity, limits, and target admission. It does not own geometry,
 semantic selection, Layout, concrete color literals, package acquisition, or
@@ -97,16 +97,20 @@ IDs and limits; it is an immutable evaluation input. The valid identifiers are:
 | `chrona-output/visual/v0.5-baseline` | SVG, PNG, PDF, Typst, TikZ | none |
 | `chrona-output/visual/v0.6-svg` | SVG | all initial v0.6 IDs, `effect.glow`, `stroke.wobble` and `paint.radial-gradient` |
 | `chrona-output/visual/v0.6-png` | PNG through pinned resvg | all initial v0.6 IDs, `effect.glow`, `stroke.wobble` and `paint.radial-gradient` |
+| `chrona-output/visual/v0.7-pdf` | PDF through ReportLab; pinned resvg for glow halos only | baseline mark geometry, `effect.glow`, `stroke.line-cap`, `stroke.line-join` |
 
-PDF, Typst, and TikZ have no v0.6 profile. PDF's current svglib/ReportLab route
-does not preserve the required drop-shadow; it must reject a rich profile before
-serialization rather than silently dropping treatment. A future PDF profile
-requires independent per-capability evidence and a new profile identifier.
+PDF, Typst, and TikZ have no v0.6 profile. The PDF v0.7 profile does not admit
+drop-shadow, linear/radial gradients, wobble or icons. Required unsupported
+treatments still fail before serialization; a version or target peer does not
+imply another profile's capability set. Caps and joins use native PDF operators.
 
 Each requested gradient, shadow, glow, wobble, and stroke finish independently declares either
 `required` or `decorative-optional`; it is not one role-wide value. A baseline
-profile permits deterministic omission only for an unsupported
+profile and the PDF v0.7 profile permit deterministic omission only for an unsupported
 `decorative-optional` treatment.
+The PDF profile keeps this omission policy so registering its target peer does
+not turn existing optional gradient, shadow or wobble omissions into failures.
+It admits frame-glyph caps/joins and glow rather than omitting that artwork.
 
 Shipped Draft preset-library entries must render a fresh starter project under
 the default Draft target/profile. An unsupported decorative effect may be
@@ -115,7 +119,7 @@ treatment. An explicit Draft profile always wins and retains exact target and
 required-capability validation. Without an explicit profile, a preset's declared
 preference applies when compatible with the requested target. Otherwise the
 closed profile registry chooses its same-version target peer (v0.6 or v0.7
-SVG/PNG), or the baseline when that version has no registered target peer.
+SVG/PNG, and v0.7 PDF), or the baseline when that version has no registered target peer.
 Never infer compatibility from an identifier suffix or upgrade to another
 version. Unknown profiles remain errors, not baseline fallbacks.
 Ordinary and guided Draft ingress report this choice as typed
@@ -194,7 +198,7 @@ not admit it. Scene completes `Glow(color, blur, opacity, fidelity, region)`:
 grown by three blur on every side and intersected with the canvas, so the halo
 never leaves the slide and is no part of the primitive's bounds, collision or
 hosting. `effect.glow` is in the rich profiles (`v0.6-svg`, `v0.6-png`, `v0.7-svg`,
-`v0.7-png`) and not in the baseline: a `decorative-optional` glow is omitted there
+`v0.7-png`, `v0.7-pdf`) and not in the baseline: a `decorative-optional` glow is omitted there
 with `I_VISUAL_TREATMENT_OMITTED:...;treatment=glow;...;paintable=<first rich
 profile of the target>`, a `required` glow is `E_VISUAL_CAPABILITY_UNSUPPORTED`
 at `/body/roles/<role>/glowBlur`. SVG draws it as one filter per glowing element
@@ -204,6 +208,48 @@ for transformed text, the filter belongs to an untransformed parent so the
 completed surface-space region and blur are not scaled or rotated again.
 PNG is that SVG through resvg. The drop-shadow filter is unchanged. A Scene that
 carries a glow is written as `chrona/scene/v0.7` (optional `paint.glow`).
+
+### 7.1 PDF glow serialization (#1612)
+
+The PDF profile serializes the same completed glow; it does not flatten a page
+or replace source text with an image. In a PDF-private copy, pinned resvg paints
+only the double halo, excluding `SourceGraphic`; the original source remains
+vector paint in its original order, including selectable embedded text.
+The halo is a private adapter intermediate, not a public Image primitive or a
+new authoring capability. Scene, public SVG and PNG data are unchanged.
+
+Rasterization uses 96 dpi and one SVG unit per pixel. Integer pixel bounds
+cover the completed region (`floor` of origin, `ceil` of its far edges); the
+original fractional filter region still clips the halo. Adapters never measure
+text, grow a glow region, select fonts, or discover installed files. Each face
+comes from the completed font closure, including its exact content identity and
+collection index. Private font-name aliases may change names only, preserving
+native outlines, metrics and shaping data; distinct assets with the same public
+family/weight must remain distinct. PDF embedding permission checks still apply.
+Before rasterizing a text halo, its private clone uses the same completed-run
+positioning as PNG/PDF (Spec08 §2.3). The source vector remains untouched until
+ordinary PDF text lowering, so its face attributes are projected exactly once.
+This geometry-only correction changes the halo grammar identity; it adds no
+font selection or measurement to the adapter.
+
+Halo and source share the original clip, transform and isolated overall opacity
+exactly once. Source-internal opacity remains part of its alpha input; outer
+opacity must not be baked into the halo and then applied again. Transparent PNG
+halos use PDF soft masks, never opaque inline-image substitutes. Unknown or
+incomplete completed paint fails before artifact creation, not by losing a filter.
+
+When a PDF actually carries glow, its ReportLab environment descriptor must
+also pin `glowRasterizer` with `engine: resvg-py`, installed `version` and
+`resvgVersion`, and `dpi: 96`. Draft closure supplies this descriptor for the
+new PDF profile; exact Contexts remain explicit. Missing/mismatched engine
+evidence diagnoses `E_RENDER_RASTERIZER_IDENTITY`; unavailable dependencies use
+`E_RENDER_RASTERIZER_UNAVAILABLE`, and unresolved/changed font assets use
+`E_RENDER_FONT_CLOSURE`. The used rasterizer versions, glow/alpha/alias grammar
+and original font identities participate in the PDF adapter identity. No-glow
+PDFs require no glow engine and retain vector serialization; the independent
+nested-opacity correction and PDF identity revision are specified in Spec08
+§2.4. Previously correct no-glow content is unchanged; incorrectly composed
+unequal nested opacity intentionally changes to its declared result.
 
 The explicit #1237 exception admits only these four properties on `heading`,
 `kicker`, and `frame-glyph`/`frame-glyph-<slug>`; it does not add gradient or

@@ -175,6 +175,7 @@ SCHEMA_PARTS: tuple[str, ...] = (
     "revision-store-resource-ref-v0.1.schema.yaml",
     "revision-store-resource-ref-v0.2.schema.yaml",
     "vocabulary-v0.1.schema.yaml",
+    "vocabulary-v0.2.schema.yaml",
 )
 """Schema files that other schemas may reference by their `urn:chrona:` `$id`.
 

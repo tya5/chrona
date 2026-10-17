@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from lxml.etree import _Element as Element
 
 from chrona.presentation.renderers.pattern_repeat import repeat_cells
+from chrona.presentation.renderers.svg_text_runs import position_completed_text_runs
 from chrona.presentation.scene.model import ScenePrimitive, SceneSurface, completed_marker_outline
 
 PDF_PAINT_GRAMMAR = "pdf-scene-paint-v1"
@@ -114,52 +115,6 @@ def _lower_pattern(element: Element, node: ScenePrimitive,
     return group
 
 
-def _lower_text_runs(element: Element, layout: object) -> None:
-    """Place completed measured runs explicitly for PDF's independent text engine."""
-    lines = layout.runs
-    if not lines:
-        return
-    x = float(element.get("x", layout.baseline[0]))
-    scale = float(layout.horizontal_scale)
-    if scale <= 0:
-        raise _invalid(f"small-caps text {element.get('data-scene-id')!r} has invalid horizontal scale")
-    # The public SVG leaves runs inline for resvg/browser shaping. svglib instead
-    # lays each tspan out using ReportLab's font metrics, so place every run at
-    # the prefix sum of Layout's completed metrics in this PDF-only copy.
-    # Retain completed face attributes (including render-local PDF aliases),
-    # rather than restoring a family name or selecting a face here.
-    original_runs = iter(child for child in element.iter()
-                         if child is not element and child.tag.endswith("}tspan")
-                         and len(child) == 0 and child.get("x") is None)
-    run_attributes = [dict(child.attrib) for child in original_runs]
-    run_offset = 0
-    element.text = None
-    for child in tuple(element):
-        element.remove(child)
-    namespace = element.tag.partition("}")[0] + "}" if "}" in element.tag else ""
-    xml_space = "{http://www.w3.org/XML/1998/namespace}space"
-    for line_index, runs in enumerate(lines):
-        line = element.makeelement(namespace + "tspan", {})
-        if len(lines) > 1:
-            line.set("x", _number(x))
-            line.set("dy", _number(0 if line_index == 0 else layout.font_size * layout.line_height))
-            element.append(line)
-        else:
-            line = element
-        advance = 0.0
-        for run_index, run in enumerate(runs):
-            position = x + (advance + run_index * layout.letter_spacing) / scale
-            has_span = run.font_size != layout.font_size or any(
-                getattr(run, name, None) is not None for name in ("family", "weight", "asset_identity"))
-            attributes = run_attributes[run_offset].copy() if has_span and run_offset < len(run_attributes) else {}
-            run_offset += int(has_span)
-            attributes.update({"x": _number(position), "font-size": _number(run.font_size), xml_space: "preserve"})
-            span = line.makeelement(namespace + "tspan", attributes)
-            span.text = run.text
-            line.append(span)
-            advance += run.inline_size
-
-
 def lower_pdf_svg(surface: SceneSurface, svg: bytes) -> bytes:
     """Materialize markers and patterned Rects without changing completed facts.
 
@@ -192,7 +147,7 @@ def lower_pdf_svg(surface: SceneSurface, svg: bytes) -> bytes:
         for element in root.iter(_NS + "text"):
             layout = text_layouts.get(element.get("data-scene-id"))
             if layout is not None:
-                _lower_text_runs(element, layout)
+                position_completed_text_runs(element, layout)
     parents = {child: parent for parent in root.iter() for child in parent}
     marker_hits: set[str] = set()
     pattern_hits: set[str] = set()

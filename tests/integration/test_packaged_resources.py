@@ -31,6 +31,7 @@ SCHEMAS = (
     "render-context-v0.17.schema.yaml",
     "view-v0.28.schema.yaml",
     "vocabulary-v0.1.schema.yaml",
+    "vocabulary-v0.2.schema.yaml",
     "layout-profile-v0.10.schema.yaml",
     "scene-v0.6.schema.yaml",
     "scene-v0.7.schema.yaml",
