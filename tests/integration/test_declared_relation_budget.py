@@ -1,8 +1,8 @@
 """Producer-owned budget exhaustion through all real routing passes, Scene and CLI."""
 import pytest
 
-from chrona.presentation.layout import surface_lane_route_plan as lane_plan
 from chrona.presentation.layout import surface_route_label_plan as label_plan
+from chrona.presentation.layout import surface_lane_route_plan as lane_plan
 from chrona.presentation.layout import surface_routes
 from chrona.presentation.model.info_diagnostics import RelationSearchBudgetHit
 from chrona.usecases.draft_render import warning_payloads
@@ -27,10 +27,11 @@ def test_budget_hit_facts_survive_all_real_passes_and_project_to_scene_cli(tmp_p
     facts = [item for item in rendered.info_diagnostics if isinstance(item, RelationSearchBudgetHit)]
     assert facts == seen and facts
     assert all(item.budget == item.expansions == 1 for item in facts)
-    passes = {item.pass_name for item in facts}
-    assert "route-label-baseline" in passes
-    if lane:
-        assert "lane-rehearsal" in passes
+    passes = {item.pass_name.split(":", 1)[0] for item in facts}
+    assert {"lane-rehearsal", "lane-reference", "lane-reservation-rehearsal",
+            "route-label-baseline"} <= passes
+    assert passes <= {"lane-rehearsal", "lane-reference", "lane-reservation-rehearsal",
+                      "route-label-baseline", "route-label-recovery"}
     assert [item for item in rendered.scene.diagnostics
             if item.startswith("I_LAYOUT_RELATION_SEARCH_BUDGET:")] == [item.scene_diagnostic() for item in facts]
     payloads = [item for item in warning_payloads(rendered) if item["code"] == facts[0].code]

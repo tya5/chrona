@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, replace
+from itertools import chain as _chain
 import json
 from math import hypot, isfinite
 
@@ -12,6 +13,7 @@ from chrona.presentation.layout.ports import ConnectorEgress
 from chrona.presentation.layout.route_search import RelationExpansionBudget, RouteSearchFailure
 from chrona.presentation.layout.relation_shapes import (
     RelationShapeChannels, first_fit_port_pairs, relation_shape_candidates, shape_channels,
+    supplemental_relation_channel_candidates,
 )
 
 
@@ -451,6 +453,8 @@ def select_relation_route(
     preferred_routes: tuple[tuple[tuple[ConnectorEgress, ConnectorEgress], tuple[tuple[float, float], ...]], ...] = (),
     protected: bool = False,
     endpoint_preserving_prepare: bool = False,
+    label_repair_obstacle_ids: frozenset[str] = frozenset(),
+    route_stroke_width: float = 0.0,
 ) -> RelationRouteSelection:
     """Measure eligibility, then select by the caller's stable rank when supplied.
 
@@ -471,6 +475,12 @@ def select_relation_route(
                                    max_bends=max_bends, max_detour_ratio=max_detour_ratio)
     if search_policy not in {"best", "first-fit"}:
         raise _route_attempt_error("search policy", search_policy=search_policy)
+    repair_active = (search_policy == "first-fit" and bool(label_repair_obstacle_ids)
+                     and any(obstacles.has(identifier) for identifier in label_repair_obstacle_ids))
+    if repair_active and (isinstance(route_stroke_width, bool)
+            or not isinstance(route_stroke_width, (int, float))
+            or not isfinite(route_stroke_width) or route_stroke_width < 0):
+        raise _route_attempt_error("route stroke width", route_stroke_width=route_stroke_width)
     phases = (("best", port_pairs),)
     if search_policy == "first-fit":
         phases = (("first-fit", first_fit_port_pairs(port_pairs)), ("best", port_pairs))
@@ -527,8 +537,13 @@ def select_relation_route(
                 continue
             pair_limit = quota + int(pair_index < remainder)
             if phase == "first-fit":
-                shapes = relation_shape_candidates(
-                    source.exposed_port, target.exposed_port, bounds=bounds, channels=channels)
+                shapes = relation_shape_candidates(source.exposed_port, target.exposed_port,
+                                                   bounds=bounds, channels=channels)
+                if repair_active:
+                    shapes = _chain(shapes, supplemental_relation_channel_candidates(
+                        source.exposed_port, target.exposed_port, bounds=bounds, channels=channels,
+                        obstacles=obstacles, route_stroke_width=float(route_stroke_width),
+                        grid_offset=ROUTE_GRID_OFFSET, classes=classes, regions=regions))
                 shaped, shaped_points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
                     port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
                     max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
@@ -589,10 +604,9 @@ def select_relation_route(
         if blockers:
             attempts.append(RouteAttemptEvidence(source.side, target.side, "egress-collision", blocker_ids=blockers))
             continue
-        from itertools import chain
         shapes = relation_shape_candidates(source.exposed_port, target.exposed_port,
                                            bounds=bounds, channels=protected_channels)
-        candidates = chain(shapes, protected_candidates(source, target, port_ids))
+        candidates = _chain(shapes, protected_candidates(source, target, port_ids))
         quality_impossible = (max_bends < int(source.semantic_port[0] != target.semantic_port[0]
                                              and source.semantic_port[1] != target.semantic_port[1])
                               and (prepare is None or endpoint_preserving_prepare))

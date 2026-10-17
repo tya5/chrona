@@ -193,6 +193,12 @@ class LabelRequest:
     lane_member_id: str | None = None
     lane_source_kind: str | None = None
     subjects: tuple[DiagnosticSubject, ...] = ()
+    required_before_routes: bool = False
+
+    @property
+    def is_required_before_routes(self) -> bool:
+        return (self.required_before_routes or self.rule_host_obstacle_id is not None
+                or self.overflow == "diagnose")
 
 
 def _intersects(a: LabelRect, b: LabelRect) -> bool:

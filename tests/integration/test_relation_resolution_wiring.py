@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from chrona.presentation.layout import surface_lane_route_plan, surface_route_label_plan, surface_routes
+from chrona.presentation.layout import surface_route_label_plan, surface_routes
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacle
 from chrona.presentation.layout.relation_resolution import RelationResolutionStage
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding
@@ -58,7 +58,6 @@ def test_completed_search_domains_reach_real_scene_and_svg(
         return result
 
     monkeypatch.setattr(surface_route_label_plan, "compose_surface_routes", blocked)
-    monkeypatch.setattr(surface_lane_route_plan, "compose_surface_routes", blocked)
     monkeypatch.setattr(surface_routes, "search_relation_resolution", observed)
     if unavailable_overlap:
         monkeypatch.setattr(surface_routes, "complete_fixed_connector", lambda *args, **kwargs: None)

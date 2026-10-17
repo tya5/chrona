@@ -380,13 +380,29 @@ admission still apply. No previous-render state is needed.
 **Declared routing policy (#1430).**
 `relationRouting.search` selects `first-fit` or `best`, never by project size.
 `best` retains the existing pair order, exact reverse bound, canonical path
-histories, per-pair quotas, completed-route ranking and bounded label recovery.
+histories, per-pair quotas and completed-route ranking.
 `first-fit` orders admitted source sides end/start/above/below and target sides
 start/end/above/below, retaining stable full/minimum-stub ties. For each pair it
 tries finite straight/L/Z/U proposals from completed row gaps and obstacle-edge
 channels before that pair's bounded search; the first fully accepted completed
 route wins. Proposal generation builds no visibility graph. Both paths retain
 terminal, bounds, obstacle, self-overlap, bend and detour validation.
+The existing first-fit proposal family and order remain unchanged (#1610).
+Only the single on-demand member-name repair described below may append up to
+eight paired row-contact/outward-channel proposals after the basic proposals
+and before the pair's bounded search. This is not part of the ordinary first
+pass. Use the two nearest interior row contacts at each endpoint and the
+nearest vertically clear existing column on each side of the endpoint span;
+contacts come from completed row gaps and obstacle edges with their existing
+clearance/grid offset. Every proposal passes the ordinary stroke, terminal,
+bend, detour, obstacle and completed-route validators. No project coordinates,
+new quality threshold, expansion quota or additional routing pass is added.
+Layout checks completed reduced and terminal-adjusted route
+stroke against retained text/label-visual footprints, not just its centreline;
+staged recovery still removes only the obstacle classes its contract permits.
+Initial as-of/deadline rule obstacles likewise carry the exact stroke width
+resolved from their semantic Theme role, so labels avoid painted rule ink
+rather than only the centreline.
 First-fit fallback uses an obstacle-independent Manhattan/minimum-turn lower
 bound instead of preparing the exact reverse bound. It retains canonical
 prefix histories and existing expansion quotas; it does not collapse different
@@ -399,13 +415,55 @@ the same completed-route validators. An accepted fast route never invokes
 rescue. Rescue does not replay surface composition or label recovery. Both
 phases share the explicit `searchBudget`; an exhausted ceiling stops rescue.
 The routing summary counts the relation once, not once per search phase.
-Under `first-fit`, required labels precede routing; member names and finish
-deltas yield to completed routes. Skip lane-route rehearsal and post-route
-label recovery; do not replay composition in Scene or adapters.
+Required labels precede routing. Under both search policies, member names use
+the reservation/revalidation contract below; ordinary finish deltas follow
+completed routes. Do not replay composition in Scene or adapters.
+
+**Member-name reservations (#1610).** First classify and complete required
+route-independent labels, including required attached-point and key-row labels.
+Their full footprints remain hard obstacles during normal and staged searches
+in every trial and reference; optional-reservation release/fallback MUST NOT
+remove or suppress those placements. Carry their explicit Layout obstacle
+identities through relaxation, rather than inferring priority from every
+completed Text's `required` flag. Explicit unsafe overlap/stub completion keeps
+its existing contract below. Existing typed required-label failure behavior
+remains authoritative. Run the normal policy-specific pipeline, including member
+names, relation labels and annotations, without new optional reservations.
+Under `best`, existing lane names precede routes and the existing bounded lane
+corridor planner remains a preflight; under `first-fit`, optional names follow
+routes. The on-demand pass does not change those initial phases or search
+proposals and replaces the former post-route lost-name retry, not the lane
+preflight. It adds at most one post-route repair, never another recovery loop. The
+as-of line and other `rule` geometry obstruct member names.
+
+Reserve on demand only when a completed route blocked an earlier candidate
+of a member name that was suppressed or selected a later declared candidate.
+The placement owner retains this obstruction evidence; the coordinator must
+not infer it from a different, globally route-free label inventory. Reserve
+only the first such feasible candidate per affected name, including its full
+measured paint footprint. Candidate order, viewport, association and reach
+remain unchanged. If no name qualifies, return the first completed pass
+without another routing pass or changed search policy.
+
+One Layout coordinator owns this policy for automatic and fixed-lane rows.
+At most one extra routing/placement pass runs, avoiding those provisional
+boxes and retaining required labels. Revalidate names against completed ink.
+Keep the second pass only if every member/relation label and annotation
+placed in pass 1 remains placed, no relation is lost or degraded, and no
+completed annotation connector loses its connected topology. Otherwise return
+the original completed pass; do not selectively release reserves or run a
+third trial. Compare stable placement and logical relation identities, including
+stub fragments and declared recovery stages. Reuse the selected completed
+batches and their matching obstacle index, without replay or ghost placements.
+Reservations are private Layout facts, not emitted text or diagnostics.
+Each attempted pass retains its recorded routing facts and existing budgets;
+first-fit's cheap/exact phases still share one attempt ceiling. This adds no
+label candidate, routing policy, safety exemption or search-budget increase.
+Suppression of an otherwise placeable name is not a successful readability repair.
 
 Omitted `search` means `first-fit`. Authors requiring legacy ranked output
-declare `best`; its canonical manifest representation and output remain
-unchanged. The five approved HALCYON targets explicitly declare `best` before
+declare `best`; its canonical manifest representation remains unchanged.
+The five approved HALCYON targets explicitly declare `best` before
 this default changes. No authored example is edited by dev A.
 
 **Previous-Scene reuse (#1300).** With an explicit previous-Scene input,
@@ -501,12 +559,11 @@ never execute a recovery stage. Each attempted stage has fresh per-instance/pass
 search state and budget; first-fit cheap/exact phases share that stage's ceiling.
 No surface replay or reset of a ceiling within one stage is permitted.
 
-Under `best`, successful non-normal recovery in a lane rehearsal is still
-degraded for the existing corridor planner. If moving optional names can restore
-a normal route without suppressing any shown name, prefer that normal completion
-before unsafe recovery. The reference and reservation trials retain their own
-budgets and common validators. `first-fit` still skips this rehearsal; explicit
-`overlap` and `stub` intentionally select their fixed completion policies.
+The member-reservation coordinator rejects a non-normal completion when the
+first completed pass had a normal route. Its at-most-two passes
+retain common validators and their own recorded budgets. Explicit `overlap`
+and `stub` still intentionally select their fixed completion policies; final
+member-name revalidation does not exempt their ink.
 
 If all relax searches fail, attempt the preferred fixed overlap shape, then
 paired terminal stubs when full-route endpoint egress cannot be completed.
@@ -838,24 +895,12 @@ Lane membership is already fixed from Project/View data (Spec 38) before this
 placement phase. A label that cannot fit is suppressed with a source-keyed
 count; its absence does not add, merge or split lanes. Only labels actually
 placed become route obstacles.
-The order is names, then routes, then post-route labels and relation labels
-(#687). A name can leave a dependency no corridor (names in stacked lane rows
-form a wall across the channel; this is the usual cause, not a name at a port),
-so before the names are placed Layout rehearses the name and route phases on
-private copies of the obstacle index. For each relation that rehearsal
-suppresses or completes only as the visible direct fallback, and that has a
-route when no member name is present, that route's segments are reserved as a
-corridor (obstacle class `route-reserve`, one stroke width plus the router's
-grid offset on each side) which member names avoid and routes, relation labels
-and annotations ignore. The corridors are kept only if a second rehearsal
-leaves a strict subset of those relations lost and suppresses no name that is
-shown without them; otherwise nothing is reserved and the order is exactly as
-before. A name that yields takes the next legal candidate of its declared
-ladder under the unchanged association, host and reach rules, or is suppressed
-with its typed fact; the declared ladder is never extended. A route still never
-crosses a required label and a name never crosses a corridor. Reserving every
-relation port, ranking `above`/`below` over `end`, and placing routes first were
-measured and rejected (see the #687 design).
+The member-name reservation contract above retains #687's existing `best`
+lane-corridor preflight and adds bounded on-demand repair after the normal
+completed placement. It does not run that preflight again during repair. Required
+text remains an immutable obstacle; optional reservations may be discarded
+only by retaining the entire first completed pass. This never changes lane membership, adds
+a candidate to the declared ladder, or permits a final name to cross route ink.
 For lane mode only, a declared `visible-overflow` direct fallback is permitted
 only if the completed path clears every required placed lane/member label.
 Otherwise Layout suppresses it with the same generic warning and typed
@@ -1118,7 +1163,8 @@ inline end (`deadline-run:<mark instance>`). Both carry `sourceRef` the object i
 and paint order the mark base plus Theme `markPaintOrder`. A deadline outside the View window (the closed range, both
 edges inclusive) is recorded as `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>` and a folded header point as
 `I_LAYOUT_DEADLINE_FOLDED:<object>`. The paths are registered as `rule` obstacles, so annotation candidates avoid them as they
-avoid the as-of rule; member labels and relation routes treat a rule as they treat the as-of rule and may cross it.
+avoid the as-of rule. Member names also avoid these `rule` obstacles (#1610);
+relation routes retain their existing rule-crossing policy.
 Contrast is gated as a `mark` role at 3:1 over the primitive beneath its centre.
 With the optional Spec07 `outlineWidth`, Layout also completes a
 `deadlineMarkOutline` Rect for each nonzero painted stroke, preserving its
