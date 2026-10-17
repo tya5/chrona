@@ -1,0 +1,25 @@
+version: chrona/profile/v0.3
+packageId: atlas-delivery
+requires:
+  projectFormat: timeline/v0.7
+profiles:
+  work:
+    extends: task
+    fields:
+      risk:
+        type: enum
+        enumValues: [low, medium, high]
+        required: true
+      external:
+        type: boolean
+      owner:
+        type: string
+        required: true
+  checkpoint:
+    extends: milestone
+    fields:
+      owner:
+        type: string
+        required: true
+      external:
+        type: boolean

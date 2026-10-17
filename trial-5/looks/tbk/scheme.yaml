@@ -1,0 +1,48 @@
+version: chrona/color-scheme/v0.2
+kind: color-scheme
+id: target-b
+body:
+  colors:
+    surface: '#FFFFFF'
+    surfaceRaised: '#EEF2F7'
+    text: '#101828'
+    textMuted: '#5B6B7F'
+    accent: '#1D5FD1'
+    positive: '#0E8A6C'
+    negative: '#C0392B'
+    warning: '#C77A12'
+    neutral: '#C6CFDA'
+    rule: '#D5DCE6'
+    insideLabelPlanned: '#101828'
+    insideLabelActual: '#FFFFFF'
+    insideLabelSnapshot: '#000000'
+    insideLabelScenario: '#000000'
+  suitability:
+    background: light
+    colorVision:
+    - none-claimed
+    print: print-friendly
+  provenance:
+    kind: chrona-authored
+    source: Chrona HALCYON-1 example, mission-light
+    license: MIT
+  categories:
+    default: '#E8EFFA'
+    period: '#1D5FD1'
+    exception: '#F8E4C9'
+    bar: '#C7D6F3'
+    barEdge: '#3F6FD0'
+    actualInk: '#101828'
+    asofChip: '#B8761F'
+    asofInk: '#FFFFFF'
+    relationInk: '#7C8999'
+    closed: '#F4F6F9'
+    series-1: '#E8EFFA'
+    series-2: '#E4F4EE'
+    series-3: '#FBF0E1'
+    series-4: '#F1E9F8'
+    series-5: '#FDEBEA'
+    series-6: '#D2E9F2'
+    riskLow: '#9FD8C2'
+    riskMedium: '#F3C77A'
+    riskHigh: '#E5786D'

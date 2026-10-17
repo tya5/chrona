@@ -1,0 +1,19 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: atlas-observed
+body:
+  asOf: '2026-12-15'
+  observations:
+    - {id: o-kickoff, sequence: 1, projectObjectId: kickoff, actual: {at: '2026-11-02'}}
+    - {id: o-research, sequence: 1, projectObjectId: research, actual: {start: '2026-11-02', finish: '2026-11-13'}}
+    - {id: o-ux, sequence: 1, projectObjectId: ux-flows, actual: {start: '2026-11-13', finish: '2026-11-24'}}
+    - {id: o-proto, sequence: 1, projectObjectId: prototype, actual: {start: '2026-11-24', finish: '2026-12-03'}}
+    - {id: o-visual, sequence: 1, projectObjectId: visual, actual: {start: '2026-11-24', openUntil: asOf, progress: 0.7}}
+    - {id: o-usab, sequence: 1, projectObjectId: usability, actual: {start: '2026-12-03', openUntil: asOf, progress: 0.5}}
+    - {id: o-api, sequence: 1, projectObjectId: api-spec, actual: {start: '2026-11-02', finish: '2026-11-09'}}
+    - {id: o-auth, sequence: 1, projectObjectId: auth, actual: {start: '2026-11-09', finish: '2026-11-30'}}
+    - {id: o-catalog, sequence: 1, projectObjectId: catalog, actual: {start: '2026-11-09', finish: '2026-11-24'}}
+    - {id: o-notif, sequence: 1, projectObjectId: notif, actual: {start: '2026-11-10', finish: '2026-11-18'}}
+    - {id: o-pay, sequence: 1, projectObjectId: payments, actual: {start: '2026-11-30', openUntil: asOf, progress: 0.3}}
+    - {id: o-tp, sequence: 1, projectObjectId: test-plan, actual: {start: '2026-11-09', finish: '2026-11-13'}}
+    - {id: o-auto, sequence: 1, projectObjectId: automation, actual: {start: '2026-11-16', openUntil: asOf, progress: 0.6}}

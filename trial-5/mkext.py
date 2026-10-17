@@ -1,0 +1,6 @@
+p='looks/ext/view.yaml'; s=open(p).read()
+s=s.replace("scale: risk\n    target: planned\n    source: {field: risk}\n    domain: [low, medium, high]","scale: ext\n    target: planned\n    source: {field: external}\n    domain: ['true', 'false']")
+open(p,'w').write(s)
+p='looks/ext/theme.yaml'; s=open(p).read()
+s=s.replace("    risk:\n      slots: {low: riskLow, medium: riskMedium, high: riskHigh}\n","    ext:\n      slots: {'true': riskHigh, 'false': riskLow}\n")
+open(p,'w').write(s)

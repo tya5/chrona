@@ -1,0 +1,754 @@
+version: timeline/v0.7
+project:
+  id: atlas-launch
+  title: Atlas mobile app launch
+  calendar: office
+extensions:
+- packageId: atlas-delivery
+  path: extensions/atlas.yaml
+  revision: git:0123456789abcdef0123456789abcdef01234567
+fieldRoles:
+  responsible: owner
+calendars:
+  office:
+    working_days:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+    exceptions:
+    - date: '2026-11-26'
+      working: false
+    - date: '2026-11-27'
+      working: false
+    - date: '2026-12-24'
+      working: false
+    - date: '2026-12-25'
+      working: false
+    - date: '2026-12-28'
+      working: false
+    - date: '2026-12-29'
+      working: false
+    - date: '2026-12-30'
+      working: false
+    - date: '2026-12-31'
+      working: false
+    - date: '2027-01-01'
+      working: false
+    - date: '2027-01-18'
+      working: false
+    - date: '2027-02-15'
+      working: false
+entities:
+  design:
+    type: team
+    title: Design
+  backend:
+    type: team
+    title: Backend
+  mobile:
+    type: team
+    title: Mobile
+  qa:
+    type: team
+    title: Quality
+objects:
+  kickoff:
+    type: checkpoint
+    title: Kickoff
+    fields:
+      owner: design
+      risk: low
+    schedule:
+      mode: fixed-point
+      at: '2026-11-02'
+  design-freeze:
+    type: checkpoint
+    title: Design freeze
+    fields:
+      owner: design
+      risk: low
+    schedule:
+      mode: scheduled-point
+  feature-complete:
+    type: checkpoint
+    title: Feature complete
+    fields:
+      owner: mobile
+      risk: low
+    schedule:
+      mode: scheduled-point
+  beta:
+    type: checkpoint
+    title: Beta release
+    fields:
+      owner: qa
+      risk: low
+    schedule:
+      mode: scheduled-point
+    deadline: '2027-01-29'
+  launch:
+    type: checkpoint
+    title: Public launch
+    fields:
+      owner: mobile
+      external: true
+      risk: high
+    schedule:
+      mode: scheduled-point
+    deadline: '2027-02-26'
+  research:
+    type: work
+    title: User research
+    fields:
+      owner: design
+      risk: low
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 8wd
+  ux-flows:
+    type: work
+    title: UX flows
+    fields:
+      owner: design
+      risk: medium
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 6wd
+  visual:
+    type: work
+    title: Visual design system
+    fields:
+      owner: design
+      risk: medium
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 10wd
+  prototype:
+    type: work
+    title: Clickable prototype
+    fields:
+      owner: design
+      risk: low
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 5wd
+  usability:
+    type: work
+    title: Usability test round
+    fields:
+      owner: design
+      risk: high
+      external: true
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 4wd
+  design-handoff:
+    type: work
+    title: Design handoff
+    fields:
+      owner: design
+      risk: low
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 2wd
+  api-spec:
+    type: work
+    title: API specification
+    fields:
+      owner: backend
+      risk: low
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 5wd
+  auth:
+    type: work
+    title: Authentication service
+    fields:
+      owner: backend
+      risk: high
+      external: true
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 10wd
+  catalog:
+    type: work
+    title: Catalog service
+    fields:
+      owner: backend
+      risk: medium
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 12wd
+  payments:
+    type: work
+    title: Payments integration
+    fields:
+      owner: backend
+      risk: high
+      external: true
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 15wd
+  notif:
+    type: work
+    title: Push notification service
+    fields:
+      owner: backend
+      risk: medium
+      external: true
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 6wd
+  perf:
+    type: work
+    title: Backend load testing
+    fields:
+      owner: backend
+      risk: high
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 5wd
+  app-shell:
+    type: work
+    title: App shell and navigation
+    fields:
+      owner: mobile
+      risk: low
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 8wd
+  login-ui:
+    type: work
+    title: Login and onboarding screens
+    fields:
+      owner: mobile
+      risk: medium
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 6wd
+  browse-ui:
+    type: work
+    title: Browse and search screens
+    fields:
+      owner: mobile
+      risk: medium
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 10wd
+  checkout-ui:
+    type: work
+    title: Checkout flow
+    fields:
+      owner: mobile
+      risk: high
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 8wd
+  offline:
+    type: work
+    title: Offline mode
+    fields:
+      owner: mobile
+      risk: high
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 7wd
+  push-ui:
+    type: work
+    title: Notification settings
+    fields:
+      owner: mobile
+      risk: low
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 3wd
+  test-plan:
+    type: work
+    title: Test plan
+    fields:
+      owner: qa
+      risk: low
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 4wd
+  automation:
+    type: work
+    title: Test automation suite
+    fields:
+      owner: qa
+      risk: medium
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 15wd
+  regression:
+    type: work
+    title: Regression pass
+    fields:
+      owner: qa
+      risk: medium
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 8wd
+  security:
+    type: work
+    title: External security audit
+    fields:
+      owner: qa
+      risk: high
+      external: true
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 10wd
+  beta-test:
+    type: work
+    title: Closed beta testing
+    fields:
+      owner: qa
+      risk: medium
+      external: true
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 10wd
+  store-review:
+    type: work
+    title: App store review
+    fields:
+      owner: mobile
+      risk: high
+      external: true
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 5wd
+  bugfix:
+    type: work
+    title: Release bug-fix sprint
+    fields:
+      owner: mobile
+      risk: medium
+    calendar: office
+    schedule:
+      mode: scheduled
+      amount: 8wd
+relations:
+- id: kickoff-to-research
+  type: dependency
+  from:
+    object: kickoff
+    endpoint: at
+  to:
+    object: research
+    endpoint: start
+  lag: 0d
+- id: research-to-ux-flows
+  type: dependency
+  from:
+    object: research
+    endpoint: end
+  to:
+    object: ux-flows
+    endpoint: start
+  lag: 0d
+- id: ux-flows-to-visual
+  type: dependency
+  from:
+    object: ux-flows
+    endpoint: end
+  to:
+    object: visual
+    endpoint: start
+  lag: 0d
+- id: ux-flows-to-prototype
+  type: dependency
+  from:
+    object: ux-flows
+    endpoint: end
+  to:
+    object: prototype
+    endpoint: start
+  lag: 0d
+- id: prototype-to-usability
+  type: dependency
+  from:
+    object: prototype
+    endpoint: end
+  to:
+    object: usability
+    endpoint: start
+  lag: 0d
+- id: visual-to-design-handoff
+  type: dependency
+  from:
+    object: visual
+    endpoint: end
+  to:
+    object: design-handoff
+    endpoint: start
+  lag: 0d
+- id: usability-to-design-handoff
+  type: dependency
+  from:
+    object: usability
+    endpoint: end
+  to:
+    object: design-handoff
+    endpoint: start
+  lag: 0d
+- id: kickoff-to-api-spec
+  type: dependency
+  from:
+    object: kickoff
+    endpoint: at
+  to:
+    object: api-spec
+    endpoint: start
+  lag: 0d
+- id: api-spec-to-auth
+  type: dependency
+  from:
+    object: api-spec
+    endpoint: end
+  to:
+    object: auth
+    endpoint: start
+  lag: 0d
+- id: api-spec-to-catalog
+  type: dependency
+  from:
+    object: api-spec
+    endpoint: end
+  to:
+    object: catalog
+    endpoint: start
+  lag: 0d
+- id: auth-to-payments
+  type: dependency
+  from:
+    object: auth
+    endpoint: end
+  to:
+    object: payments
+    endpoint: start
+  lag: 0d
+- id: api-spec-to-notif
+  type: dependency
+  from:
+    object: api-spec
+    endpoint: end
+  to:
+    object: notif
+    endpoint: start
+  lag: 0d
+- id: catalog-to-perf
+  type: dependency
+  from:
+    object: catalog
+    endpoint: end
+  to:
+    object: perf
+    endpoint: start
+  lag: 0d
+- id: payments-to-perf
+  type: dependency
+  from:
+    object: payments
+    endpoint: end
+  to:
+    object: perf
+    endpoint: start
+  lag: 0d
+- id: design-handoff-to-app-shell
+  type: dependency
+  from:
+    object: design-handoff
+    endpoint: end
+  to:
+    object: app-shell
+    endpoint: start
+  lag: 0d
+- id: app-shell-to-login-ui
+  type: dependency
+  from:
+    object: app-shell
+    endpoint: end
+  to:
+    object: login-ui
+    endpoint: start
+  lag: 0d
+- id: auth-to-login-ui
+  type: dependency
+  from:
+    object: auth
+    endpoint: end
+  to:
+    object: login-ui
+    endpoint: start
+  lag: 0d
+- id: app-shell-to-browse-ui
+  type: dependency
+  from:
+    object: app-shell
+    endpoint: end
+  to:
+    object: browse-ui
+    endpoint: start
+  lag: 0d
+- id: catalog-to-browse-ui
+  type: dependency
+  from:
+    object: catalog
+    endpoint: end
+  to:
+    object: browse-ui
+    endpoint: start
+  lag: 0d
+- id: browse-ui-to-checkout-ui
+  type: dependency
+  from:
+    object: browse-ui
+    endpoint: end
+  to:
+    object: checkout-ui
+    endpoint: start
+  lag: 0d
+- id: payments-to-checkout-ui
+  type: dependency
+  from:
+    object: payments
+    endpoint: end
+  to:
+    object: checkout-ui
+    endpoint: start
+  lag: 0d
+- id: browse-ui-to-offline
+  type: dependency
+  from:
+    object: browse-ui
+    endpoint: end
+  to:
+    object: offline
+    endpoint: start
+  lag: 0d
+- id: notif-to-push-ui
+  type: dependency
+  from:
+    object: notif
+    endpoint: end
+  to:
+    object: push-ui
+    endpoint: start
+  lag: 0d
+- id: app-shell-to-push-ui
+  type: dependency
+  from:
+    object: app-shell
+    endpoint: end
+  to:
+    object: push-ui
+    endpoint: start
+  lag: 0d
+- id: api-spec-to-test-plan
+  type: dependency
+  from:
+    object: api-spec
+    endpoint: end
+  to:
+    object: test-plan
+    endpoint: start
+  lag: 0d
+- id: test-plan-to-automation
+  type: dependency
+  from:
+    object: test-plan
+    endpoint: end
+  to:
+    object: automation
+    endpoint: start
+  lag: 0d
+- id: checkout-ui-to-regression
+  type: dependency
+  from:
+    object: checkout-ui
+    endpoint: end
+  to:
+    object: regression
+    endpoint: start
+  lag: 0d
+- id: offline-to-regression
+  type: dependency
+  from:
+    object: offline
+    endpoint: end
+  to:
+    object: regression
+    endpoint: start
+  lag: 0d
+- id: login-ui-to-regression
+  type: dependency
+  from:
+    object: login-ui
+    endpoint: end
+  to:
+    object: regression
+    endpoint: start
+  lag: 0d
+- id: payments-to-security
+  type: dependency
+  from:
+    object: payments
+    endpoint: end
+  to:
+    object: security
+    endpoint: start
+  lag: 0d
+- id: beta-to-beta-test
+  type: dependency
+  from:
+    object: beta
+    endpoint: at
+  to:
+    object: beta-test
+    endpoint: start
+  lag: 0d
+- id: regression-to-store-review
+  type: dependency
+  from:
+    object: regression
+    endpoint: end
+  to:
+    object: store-review
+    endpoint: start
+  lag: 0d
+- id: security-to-store-review
+  type: dependency
+  from:
+    object: security
+    endpoint: end
+  to:
+    object: store-review
+    endpoint: start
+  lag: 0d
+- id: beta-test-to-bugfix
+  type: dependency
+  from:
+    object: beta-test
+    endpoint: end
+  to:
+    object: bugfix
+    endpoint: start
+  lag: 0d
+- id: design-handoff-to-design-freeze
+  type: dependency
+  from:
+    object: design-handoff
+    endpoint: end
+  to:
+    object: design-freeze
+    endpoint: at
+  lag: 0d
+- id: checkout-ui-to-feature-complete
+  type: dependency
+  from:
+    object: checkout-ui
+    endpoint: end
+  to:
+    object: feature-complete
+    endpoint: at
+  lag: 0d
+- id: offline-to-feature-complete
+  type: dependency
+  from:
+    object: offline
+    endpoint: end
+  to:
+    object: feature-complete
+    endpoint: at
+  lag: 0d
+- id: push-ui-to-feature-complete
+  type: dependency
+  from:
+    object: push-ui
+    endpoint: end
+  to:
+    object: feature-complete
+    endpoint: at
+  lag: 0d
+- id: login-ui-to-feature-complete
+  type: dependency
+  from:
+    object: login-ui
+    endpoint: end
+  to:
+    object: feature-complete
+    endpoint: at
+  lag: 0d
+- id: perf-to-feature-complete
+  type: dependency
+  from:
+    object: perf
+    endpoint: end
+  to:
+    object: feature-complete
+    endpoint: at
+  lag: 0d
+- id: feature-complete-to-beta
+  type: dependency
+  from:
+    object: feature-complete
+    endpoint: at
+  to:
+    object: beta
+    endpoint: at
+  lag: 0d
+- id: automation-to-beta
+  type: dependency
+  from:
+    object: automation
+    endpoint: end
+  to:
+    object: beta
+    endpoint: at
+  lag: 0d
+- id: store-review-to-launch
+  type: dependency
+  from:
+    object: store-review
+    endpoint: end
+  to:
+    object: launch
+    endpoint: at
+  lag: 0d
+- id: bugfix-to-launch
+  type: dependency
+  from:
+    object: bugfix
+    endpoint: end
+  to:
+    object: launch
+    endpoint: at
+  lag: 0d
