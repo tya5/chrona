@@ -1,27 +1,27 @@
 # Issue419 — semantic mapping resource
 
-Status: design amendment applied per reviewer direction; implementation planning
-may proceed from this record. Baseline: published main
-`aabc5e894af50555892c0007e48efb24c268f2f3`.
-[Owner scope](https://github.com/tya5/chrona/issues/419#issuecomment-6234067417):
-design record only, after issue1657 (implementation now published in PR1662).
+Status: V1 implemented and focused verification passed; official count/CI and
+reviewer acceptance remain pending. Source base: published main
+`d0df1e8aa3268f4b7efdda8991c3febf03906193`.
+[Reviewed scope](https://github.com/tya5/chrona/issues/419#issuecomment-6234966527):
+dev A owns V1/S1/S2; dev B owns C1 and Issue344 Level 1.
 
 ## Published baseline and open questions
 
-- `semantic_registry.py` has117 actual `_binding` declarations, not123; verify
-  the complete inventory and field consumers are recorded below.
+- The pre-V1 registry had117 actual `_binding` declarations, not123; the
+  frozen equivalence inventory and field consumers are recorded below.
   The issue's older claim that primitive kind and Theme role are unread is not
   current: Scene kind checks and Layout/Theme resolution consume them.
 - Spec49 owns the closed semantic→Theme→placement→Scene contract. Spec06/60
   expose one planned-mark colour encoding. Project `fields` and field roles
   already reach projection; issue344's typed declaration is future work.
-- Issue419's selected proposal is recorded here only; Spec49 remains unchanged
-  until a normative change is implemented. Keep the existing View
+- The remaining Style proposal is recorded here only; Spec49 documents the
+  implemented V1 vocabulary, not prospective Style behavior. Keep the existing View
   `colorEncoding` input accepted and lower it into the same typed intent used
   by Style. This work does not retire that syntax or require incompatible
   Context/preset migration.
 
-## Literal acceptance (parent remains open during design-only scope)
+## Literal acceptance (parent remains open during partial delivery)
 
 1. The semantic vocabulary is a versioned resource with a schema.
 2. A design set can introduce a visual distinction the product did not anticipate, without a code change.
@@ -32,8 +32,8 @@ design record only, after issue1657 (implementation now published in PR1662).
 7. The 31-of-40 figure, or its successor, is visible in a committed, checked document.
 
 Rows5–7 are the consolidated issue433 acceptance, not optional follow-ups.
-The current deliverable specifies how to achieve these; it does not mark them
-implemented or close the parent.
+V1 addresses rows1/4; its release acceptance remains separate from the
+unfinished Style and coverage rows. Do not close the parent for V1 alone.
 
 ## Design plan and publication boundary
 
@@ -130,6 +130,7 @@ body:
       then: {role: variance-behind}
     - id: payload-risk
       when:
+        purpose: planned
         fields: [{source: {fieldRole: responsible}, equals: payload}]
       then:
         encode:
@@ -251,8 +252,8 @@ reason to mix Theme values with View facts.
 ## V1 implementation plan
 
 Baseline: the117 bindings inspected on the reviewed design base remain the
-same on current main. The amendment `ae75ab664` is published in PR1664;
-land that documentation before product implementation. Reconcile the next
+same on current main. The amendment `ae75ab664` merged in PR1664 as `d0df1e8aa`
+before product implementation. Reconcile the next
 code PR with the latest trusted-ready main after PR1661. This plan is
 published separately before code, without creating another design authority.
 
@@ -305,7 +306,17 @@ published separately before code, without creating another design authority.
   for S1/S2 and dev B's C1. Any discovered contract gap returns to this record
   and architecture review before code resumes.
 
-## Current registry inventory (117 entries)
+V1 focused evidence: the independent117-row digest matches before/after;
+92 resource/closure/registry/Scene tests and52 diagnostic/boundary/docs tests
+pass (overlap). Schema equivalence passes with one added schema,39 unchanged,
+577 documents/467 mapped/5 known invalid and739 unchanged probes; L2+L3=36.5s.
+Schema inventory/annotations/references, reachability, Theme consumers,
+encoding and inward import checks pass. Actual wheel resource/schema bytes
+equal their source authorities. Independent review corrected the mutable
+derived index and the bootstrap diagnostic-layer dependency; neither requires
+a fallback table. Official materializer counts and release gates remain pending.
+
+## V1 equivalence inventory (117-entry baseline)
 
 This inventory groups entries by the mechanism families in
 `presentation/model/semantic_registry.py`, not by primitive kind. Counts by
