@@ -29,12 +29,7 @@ allOf:
                 $ref: "urn:chrona:common-v0.1#/$defs/projectFieldReference"
               domain:
                 description: "Closed set of values admitted by the scale, or firstAppearance to derive it from the selected items in projection order."
-                oneOf:
-                  - type: array
-                    minItems: 1
-                    uniqueItems: true
-                    items: {description: "One admitted source value.", type: string, minLength: 1}
-                  - {description: "Distinct source values of the selected primary items, in projection order.", const: firstAppearance}
+                $ref: "urn:chrona:common-v0.1#/$defs/colorEncodingDomain"
           progressFill:
             type: object
             description: "Optional display-only fraction submark source for completed planned or actual marks."
@@ -431,21 +426,7 @@ allOf:
                 endDisplay: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/endDisplay"}
                 style: {description: "Named Layout column style resolved at ingress; explicit presentation fields win.", type: string, minLength: 1}
                 source:
-                  oneOf:
-                    - {enum: [id, title, objectType, entity, rowIndex, wbsCode, path, totalFloat]}
-                    - {$ref: "urn:chrona:common-v0.1#/$defs/projectFieldReference"}
-                    - type: object
-                      required: [comparisonFacet]
-                      additionalProperties: false
-                      properties: {comparisonFacet: {enum: [startDelta, finishDelta, atDelta, progress, missingActual]}}
-                    - type: object
-                      required: [facet]
-                      additionalProperties: false
-                      properties: {facet: {enum: [planned, actual, finishDelta]}}
-                    - type: object
-                      required: [scenario]
-                      additionalProperties: false
-                      properties: {scenario: {enum: [id, title]}}
+                  $ref: "urn:chrona:common-v0.1#/$defs/tableColumnSource"
                 format: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/format"}
                 missing: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/missing"}
                 missingBy: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/missingBy"}

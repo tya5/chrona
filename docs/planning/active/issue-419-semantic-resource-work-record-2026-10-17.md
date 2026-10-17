@@ -414,6 +414,15 @@ implementation plan before S1 product changes. S2 remains the subsequent
 closure/preset/legend slice. Scalar equality introduces no array-membership
 or resource-reference predicates; other field consumers retain their contracts.
 
+S1a verification: typed ingress, immutable values and pure occurrence evaluation
+are implemented; render orchestration and S1b–d remain incomplete. The focused
+contract/model/schema-accounting batch passes187 tests, including quoted and
+unquoted YAML date normalization through the existing ingress helper. Schema equivalence
+passes with2 added schemas,39 unchanged,578 documents/468 mapped,5 previously
+invalid documents and739 probes; L2+L3 takes15.4s. The added Style conformance
+fixture covers the new resource kind. Schema inventory, annotations/references,
+and inward imports pass. No rendered-output or full S1 acceptance is claimed.
+
 ## V1 equivalence inventory (117-entry baseline)
 
 This inventory groups entries by the mechanism families in

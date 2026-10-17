@@ -40,6 +40,7 @@ def _walk(node: Any) -> Iterator[Any]:
 
 # category -> why a site of that shape does not reference `common#identifier`.
 ALLOWED_SHAPES: dict[str, str] = {
+    "host-vocabulary-id": "the wheel-owned host vocabulary has the single fixed identity chrona-core; it is not an authored free identifier",
     "non-empty-string": "an authored identifier that has only ever been `minLength: 1`: committed and user documents use spaces, punctuation and non-ASCII, "
                         "and `identifier` also refuses control characters, so referencing it would newly reject an input (N1, B5 not unified)",
     "unconstrained-string": "Project relation ids have no length rule at all; tightening even to non-empty changes what Project accepts",
@@ -79,7 +80,10 @@ ID_SITES: dict[tuple[str, str], int] = {
     # R6 ports/terminals and #1292 absence placement/instance IDs are Layout-generated, not authored.
     ("scene-v0.7.schema.yaml", "scene-text"): 33,
     ("snapshot-ref-v0.3.schema.yaml", "non-empty-string"): 1,
+    ("semantic-vocabulary-v0.1.schema.yaml", "host-vocabulary-id"): 1,
+    ("semantic-vocabulary-v0.1.schema.yaml", "non-empty-string"): 1,
     ("summary-profile-v0.2.schema.yaml", "non-empty-string"): 3,
+    ("style-v0.2.schema.yaml", "non-empty-string"): 1,
     ("theme-asset-source-v0.2.schema.yaml", "portable-name"): 1,
     ("theme-v0.15.schema.yaml", "non-empty-string"): 1,
     ("theme-v0.16.schema.yaml", "non-empty-string"): 2,
@@ -91,6 +95,8 @@ ID_SITES: dict[tuple[str, str], int] = {
 
 def _category(node: dict[str, Any]) -> str:
     shape = {key: value for key, value in node.items() if key not in {"description", "examples"}}
+    if shape == {"const": "chrona-core"}:
+        return "host-vocabulary-id"
     if shape == {"$ref": f"{COMMON_ID}#/$defs/identifier"}:
         return "identifier"
     if shape == {"type": "string", "minLength": 1}:

@@ -47,6 +47,8 @@ schemas:
       groupTintPresentation: "sha256:960a377472b608f544f256ea168bdb5df89642e368b6212e5db24b8c72e55e27"
       groupPresentation: "sha256:61b58cc43fde669693e6e643515f17be6593930e82aba0087375da55f1d331cb"
       colorEncodingPresentation: "sha256:49d1c09755c074eee8f23b7f6e14ea11a3185edf7aa291c5900d5880f824bd99"
+      colorEncodingDomain: "sha256:db1e9e110d9be70a570cd3a913766f7369a4e68b3d04e234b075052f1aee461f"
+      tableColumnSource: "sha256:29480c1adbb6b216e70d176438db25cc5d02d3df2d35561ab40d11ce5e56c6ed"
       figureFormats: "sha256:611a87c7b1db2e492138275a7c56f8703ec153fef3951342ec865bd3496e0900"
       countTextFormat: "sha256:8515a3cf4ca7c5d277d4ed313267a338bf1693f9bbc9655fdc4325b00feb0222"
       sha256Identity: "sha256:6ed99335d07cf1464ffaf44ded7d8b62f9bcae658d1d25910cfe1bc583cd48ff"
@@ -112,6 +114,7 @@ schemas:
   - {file: snapshot-ref-v0.2.schema.yaml, kind: snapshot-ref, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: snapshot-ref-v0.3.schema.yaml, removalSlice: issue-731-snapshot-ref-v0.2-retained-for-reads}
   - {file: snapshot-ref-v0.3.schema.yaml, kind: snapshot-ref, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: store-config-v0.1.schema.yaml, kind: store-config, state: live, consumers: [src/chrona/operational/store_config.py]}
+  - {file: style-v0.2.schema.yaml, kind: style, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: summary-profile-v0.2.schema.yaml, kind: summary-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: theme-v0.15.schema.yaml, kind: theme, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: theme-v0.16.schema.yaml, kind: derived-theme, state: live, consumers: [src/chrona/presentation/contracts/resources.py, src/chrona/presentation/model/theme_inheritance.py]}

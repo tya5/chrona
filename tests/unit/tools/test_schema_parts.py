@@ -360,6 +360,12 @@ PROBES: dict[str, tuple[list[Any], list[Any]]] = {
     "groupPresentation": (["band", "header"], ["none", "alternate", "Band", None, 3]),
     "colorEncodingPresentation": ([{}, {"scale": "delivery", "target": "planned"}, {"scale": "delivery"}, {"target": "planned"}],
                                   [{"scale": ""}, {"target": "actual"}, {"unknown": True}, {"scale": "delivery", "target": "planned", "extra": True}, None]),
+    "colorEncodingDomain": (["firstAppearance", ["low", "high"]],
+                            ["other", [], ["same", "same"], [""], [1], None]),
+    "tableColumnSource": (["title", "totalFloat", {"field": "risk"}, {"fieldRole": "responsible"},
+                           {"comparisonFacet": "finishDelta"}, {"facet": "actual"}, {"scenario": "title"}],
+                          ["finishDelta", {}, {"field": "risk", "extra": True}, {"comparisonFacet": "unknown"},
+                           {"facet": "forecast"}, {"scenario": "unknown"}, None]),
     "profileFigureFact": (["asOf", {"period": "launch", "side": "start"}, {"period": "launch", "side": "last"},
                             {"object": "task", "endpoint": "end"}, {"group": "firstPlannedStart"}],
                            ["today", {"period": "launch"}, {"period": "launch", "side": "middle"},
@@ -467,7 +473,7 @@ ADOPTERS = frozenset({
     "command-request-v0.3.schema.yaml", "example-registry-v0.1.schema.yaml", "icon-catalog-v0.5.schema.yaml",
     "layout-profile-v0.10.schema.yaml", "presentation-materialization-receipt-v0.1.schema.yaml", "presentation-preset-v0.1.schema.yaml",
     "preset-library-v0.2.schema.yaml", "profile-v0.3.schema.yaml", "project-v0.7.schema.yaml",
-    "render-context-v0.17.schema.yaml", "scene-v0.7.schema.yaml", "summary-profile-v0.2.schema.yaml", "theme-asset-source-v0.2.schema.yaml",
+    "render-context-v0.17.schema.yaml", "scene-v0.7.schema.yaml", "style-v0.2.schema.yaml", "summary-profile-v0.2.schema.yaml", "theme-asset-source-v0.2.schema.yaml",
     "theme-v0.16.schema.yaml", "view-v0.28.schema.yaml",
 })
 
@@ -477,7 +483,7 @@ ADOPTERS = frozenset({
 # `fractionalTrack` is deliberately referenced by absolute self-URN from the new width branches so
 # dereferenced diagnostics retain the same named union branch as other registered-part references.
 PARTS_REFERENCING_COMMON: dict[str, set[str]] = {
-    "common-v0.1.schema.yaml": {"fractionalTrack"},
+    "common-v0.1.schema.yaml": {"fractionalTrack", "projectFieldReference"},
     "revision-store-resource-ref-v0.2.schema.yaml": {"storeAddress"},
 }
 

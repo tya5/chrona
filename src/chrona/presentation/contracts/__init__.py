@@ -26,6 +26,7 @@ from chrona.presentation.contracts.resources import (
     ResourceContract,
     ReviewDetailProfileContract,
     SemanticVocabularyContract,
+    StyleContract,
     SnapshotRefContract,
     SummaryProfileContract,
     ThemeContract,
@@ -48,6 +49,6 @@ from chrona.presentation.contracts.diagnostics import (
 __all__ = [
     "ArtifactPin", "ActualSetContract", "AuthoringWorkspaceContract", "ClosureIdentity", "ColorSchemeContract", "ContractError", "SchemaContractError", "SchemaErrorExplanations", "LayoutProfileContract", "IconCatalogContract", "IconEntry", "IconPath", "IconRasterSource", "PresentationPresetContract", "ProfilePackageContract",
     "ProjectContract", "RenderContextContract", "RenderEnvironment", "RenderTarget", "TypesetterIdentity", "ResourceReference", "ResolvedThemeContract", "ResourceContract", "ThemeContract",
-    "ReviewDetailProfileContract", "SemanticVocabularyContract", "SnapshotRefContract", "SummaryProfileContract", "ViewContract", "freeze", "parse_contract", "validate_icon_catalog_entry", "validate_theme_asset_entry", "explain_schema_errors", "explain_resource_schema_errors",
+    "ReviewDetailProfileContract", "SemanticVocabularyContract", "StyleContract", "SnapshotRefContract", "SummaryProfileContract", "ViewContract", "freeze", "parse_contract", "validate_icon_catalog_entry", "validate_theme_asset_entry", "explain_schema_errors", "explain_resource_schema_errors",
     "PresentationContractCollection", "PresentationDiagnostic", "PresentationIngressRejected", "PresentationResourceSource", "collect_presentation_contracts",
 ]

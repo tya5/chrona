@@ -16,6 +16,7 @@ from chrona.presentation.deadline_text import DeadlineCaptionText, compile_deadl
 from chrona.core.store_address import StoreAddressError, check_store_address
 from chrona.resources import schema_validator
 from chrona.resources.semantic_vocabulary import SemanticVocabularyBinding
+from chrona.presentation.style import StyleRule, StyleRuleError, parse_style_rules
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
 from chrona.presentation.group_header_text import GroupHeaderTextError, parse_template
 from chrona.presentation.heading_text import HeadingPart, heading_figure_ids, validate_heading_template
@@ -586,6 +587,13 @@ class SemanticVocabularyContract(ResourceContract):
 
 
 @dataclass(frozen=True)
+class StyleContract(ResourceContract):
+    """Schema-admitted immutable rules; projection and Theme resolve their intent."""
+
+    rules: tuple[StyleRule, ...]
+
+
+@dataclass(frozen=True)
 class IconPath:
     """Renderer-neutral, importer-normalized path in a catalog entry."""
 
@@ -846,6 +854,7 @@ _SCHEMAS = {
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.10"): "layout-profile-v0.10.schema.yaml",
     ("semantic-vocabulary", "chrona/semantic-vocabulary/v0.1"): "semantic-vocabulary-v0.1.schema.yaml",
+    ("style", "chrona/style/v0.2"): "style-v0.2.schema.yaml",
     ("icon-catalog", "chrona/icon-catalog/v0.3"): "icon-catalog-v0.3.schema.yaml",
     ("icon-catalog", "chrona/icon-catalog/v0.5"): "icon-catalog-v0.5.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.3"): "actual-set-v0.3.schema.yaml",
@@ -1635,6 +1644,14 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
         return ProjectContract(identity, version, frozen, tuple(extensions), field_roles)
     if identity.kind == "view":
         return ViewContract(identity, version, _view_input(body, version))
+    if identity.kind == "style":
+        try:
+            # Match schema ingress normalization so YAML dates reach the typed
+            # parser as the same ISO scalar the schema validated.
+            rules = parse_style_rules(_schema_value(body))
+        except StyleRuleError as error:
+            raise ContractError(error.diagnostic_id, error.detail, error.source_ref) from error
+        return StyleContract(identity, version, rules)
     if identity.kind == "theme":
         return ThemeContract(identity, version, frozen)
     if identity.kind == "color-scheme":
