@@ -56,7 +56,7 @@ from chrona.presentation.count_text import CountTextError
 from chrona.core.figures import FigureCounts, FigureResolution, resolve_figures
 from chrona.core.periods import period_range_diagnostics, resolve_periods
 from chrona.core.temporal import Calendar
-from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
+from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale, scale_text
 from chrona.presentation.model.color_separability import MINIMUM_CATEGORY_DELTA_E, MINIMUM_RESERVED_CHROMA, chroma, delta_e_2000
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.semantic_registry import semantic_binding
@@ -740,7 +740,7 @@ def _observed_scale_values(encoding: Any, projection: Any) -> tuple[str, ...]:
     for item in projection.items:
         result = item.field_bindings.read_result(item.fields, source)
         if result.value is not None:
-            values.append(str(result.value))
+            values.append(scale_text(result.value) or str(result.value))
     return tuple(values)
 
 

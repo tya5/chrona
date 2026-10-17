@@ -24,7 +24,7 @@ from chrona.presentation.contracts.resources import (
 from chrona.presentation.group_header_text import GroupHeaderTextError, HeaderTemplate, compose_group_header_runs, compose_group_headers
 from chrona.presentation.figure_text import FigureTextProgram
 from chrona.presentation.heading_text import HeadingTextPrograms, close_heading
-from chrona.presentation.model.color_scale import OTHER_LABEL, ResolvedColorScale
+from chrona.presentation.model.color_scale import OTHER_LABEL, ResolvedColorScale, scale_text
 from chrona.presentation.model.style_rules import (
     StyleFieldFact, StyleOccurrence, StyleOccurrenceKey, evaluate_style_rules,
 )
@@ -275,7 +275,7 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
 
 
 def _used_scale_values(color_scale: ResolvedColorScale, projection: ReviewProjection) -> set[Any]:
-    return {item.fields.get(color_scale.source_field) for item in projection.items
+    return {scale_text(item.fields.get(color_scale.source_field)) for item in projection.items
             if isinstance(item.fields, Mapping) and item.source_kind in {"primary", "combined"}}
 
 
