@@ -149,6 +149,19 @@ def _indents_under_headers(view: ViewInput) -> bool:
             and not any(row.depth > 0 or row.parent_row is not None for row in view.rows.items))
 
 
+def _default_lane_header(projection: ReviewProjection, lane_table: Any) -> str:
+    """Header of the default (no `columns`) lane column (#1633).
+
+    `Task` when every lane is generated, one per object, and the cell names that object; `Lane` otherwise
+    (declared lane keys, shared lanes or group-titled cells). The column id stays `Lane`.
+    """
+    membership = projection.lane_membership
+    if (lane_table.label.value != "group" and membership is not None and membership.lanes
+            and all(lane.explicit_key is None and len(lane.member_item_ids) == 1 for lane in membership.lanes)):
+        return "Task"
+    return "Lane"
+
+
 def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> TableContent:
     """Build exact lane summary cells solely from the immutable membership projection."""
     lane_table = view.rows.lane_table
@@ -158,7 +171,8 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
     columns = tuple(TableColumnContent("Lane" if column.source == "label" else column.id, column.id, column.align,
                                        TableColumnWidth("content", "content"), text_wrap=lane_table.text_wrap)
                     for column in declared) or (
-        TableColumnContent("Lane", "Lane", "start", TableColumnWidth("content", "content"), text_wrap=lane_table.text_wrap),)
+        TableColumnContent("Lane", _default_lane_header(projection, lane_table), "start",
+                           TableColumnWidth("content", "content"), text_wrap=lane_table.text_wrap),)
     show_count = (lane_table.count is True or (lane_table.count == "auto"
                   and any(len(lane.member_item_ids) > 1 for lane in projection.lane_membership.lanes)))
     if show_count:
