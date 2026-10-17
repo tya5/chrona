@@ -13,7 +13,7 @@ from types import SimpleNamespace
 import pytest
 
 from chrona.core.deadlines import deadline_warnings
-from chrona.presentation.layout.surface_deadlines import compose_deadline_marks
+from chrona.presentation.layout.surface_deadlines import compose_deadline_marks, complete_deadline_host
 from chrona.presentation.layout.surface_quality import MarkPlacement
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.model.closure import ClosureError
@@ -237,13 +237,19 @@ def test_a_reach_outside_the_closed_range_is_refused(tmp_path, reach):
     assert raised.value.code == "E_THEME_TOKEN_TYPE" and raised.value.source_ref == "/body/roles/deadline-mark/markReach"
 
 
-def test_a_folded_header_point_is_recorded_and_not_decorated():
+def test_a_folded_header_point_hosts_the_same_deadline_tick_and_run():
     class Tokens:
         def deadline_mark(self, role):
             return Decimal("1.5"), 5
 
         def deadline_outline_width(self, role):
             return Decimal(0)
+
+        def number(self, role, token):
+            return Decimal(2)
+
+        def wobble_intent(self, role):
+            return None
 
     base = SimpleNamespace(plot=Rect(Decimal(0), Decimal(0), Decimal(100), Decimal(50)), scale=SimpleNamespace(
         domain_start=date(2026, 1, 1), domain_end=date(2026, 1, 11), range_start=0.0, range_end=100.0, origin=0.0,
@@ -253,7 +259,34 @@ def test_a_folded_header_point_is_recorded_and_not_decorated():
     batch = compose_deadline_marks(
         base=base, theme_tokens=Tokens(), marks=(folded,), window=(date(2026, 1, 1), date(2026, 1, 11)), paint_order_base=100,
         deadlines=(ReviewDeadline("x", date(2026, 1, 5), date(2026, 1, 8), True, 3),))
-    assert batch.shapes == () and batch.diagnostics == ("I_LAYOUT_DEADLINE_FOLDED:x",)
+    assert [item.placement_id for item in batch.shapes] == [
+        "deadline-tick:group-header:grp:x", "deadline-run:group-header:grp:x"]
+    assert batch.diagnostics == ()
+
+
+def test_zero_width_deadline_has_no_outline_or_reserved_ink_envelope():
+    class Tokens:
+        def deadline_mark(self, role):
+            return Decimal("1.5"), 5
+
+        def deadline_outline_width(self, role):
+            return Decimal(2)
+
+        def number(self, role, token):
+            return Decimal(0)
+
+        def wobble_intent(self, role):
+            return None
+
+    base = SimpleNamespace(plot=Rect(Decimal(0), Decimal(0), Decimal(100), Decimal(50)), scale=SimpleNamespace(
+        domain_start=date(2026, 1, 1), domain_end=date(2026, 1, 11), range_start=0.0, range_end=100.0,
+        origin=0.0, unit_ratio=10.0))
+    host = MarkPlacement("planned:group-header:grp:x", "x", Rect(Decimal(0), Decimal(0), Decimal(5), Decimal(5)),
+                         (0, 0), (0, 0), semantic_id="planned")
+    geometry = complete_deadline_host(
+        base=base, theme_tokens=Tokens(), host=host,
+        deadline=ReviewDeadline("x", date(2026, 1, 5), date(2026, 1, 8), True, 3), paint_order_base=100)
+    assert geometry.shapes and geometry.outlines == () and geometry.painted_bounds is None
 
 
 def test_the_mark_is_drawn_in_lane_rows_and_in_automatic_rows_alike(tmp_path):
@@ -475,15 +508,28 @@ def test_only_a_planned_mark_hosts_a_deadline_never_a_snapshot_or_scenario_mark(
         def deadline_outline_width(self, role):
             return Decimal(0)
 
+        def number(self, role, token):
+            return Decimal(2)
+
+        def wobble_intent(self, role):
+            return None
+
     base = SimpleNamespace(plot=Rect(Decimal(0), Decimal(0), Decimal(100), Decimal(50)), scale=SimpleNamespace(
         domain_start=date(2026, 1, 1), domain_end=date(2026, 1, 11), range_start=0.0, range_end=100.0, origin=0.0,
         unit_ratio=10.0))
     bounds = Rect(Decimal(10), Decimal(10), Decimal(20), Decimal(8))
     marks = (MarkPlacement("snapshot:row:x", "x", bounds, (0, 0), (0, 0), semantic_id="snapshot"),
-             MarkPlacement("planned:row:x", "x", bounds, (0, 0), (0, 0), semantic_id="planned", slot_id="timeline"))
+             MarkPlacement("planned:row:x", "x", bounds, (0, 0), (0, 0), semantic_id="planned", slot_id="timeline"),
+             MarkPlacement("planned:group-header:g:x", "x", bounds, (0, 0), (0, 0),
+                           semantic_id="planned", slot_id="timeline"),
+             MarkPlacement("forecast:group-header:g:x", "x", bounds, (0, 0), (0, 0),
+                           semantic_id="forecast", slot_id="timeline"))
     batch = compose_deadline_marks(
         base=base, theme_tokens=Tokens(), marks=marks, window=(date(2026, 1, 1), date(2026, 1, 11)), paint_order_base=100,
         deadlines=(ReviewDeadline("x", date(2026, 1, 5), date(2026, 1, 8), True, 3),))
-    assert [item.placement_id for item in batch.shapes] == ["deadline-tick:row:x", "deadline-run:row:x"]
+    assert [item.placement_id for item in batch.shapes] == [
+        "deadline-tick:row:x", "deadline-run:row:x",
+        "deadline-tick:group-header:g:x", "deadline-run:group-header:g:x",
+        "deadline-tick:forecast:group-header:g:x", "deadline-run:forecast:group-header:g:x"]
     assert batch.shapes[0].bounds.inline == Decimal("40.0")
     assert batch.shapes[0].bounds.block_size == Decimal("12.0")  # 8 * the reach of 1.5

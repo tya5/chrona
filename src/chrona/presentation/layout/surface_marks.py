@@ -30,6 +30,7 @@ from chrona.presentation.layout.rounded_outline import rounded_rect_commands
 from chrona.presentation.model.projection import WindowMode, shared_track_member_key, active_placement, finish_delta_text, finish_delta_semantic
 from chrona.presentation.layout.label_footprint_measurement import measure_label_footprint
 from chrona.presentation.layout.surface_geometry import coordinate_for_date
+from chrona.presentation.layout.surface_deadlines import complete_deadline_host
 from chrona.presentation.layout.text import metric_for_role, measure_text_width
 from chrona.presentation.layout.lane_projection import (
     folded_instance_id, lane_missing_actual_visible,
@@ -366,6 +367,10 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
     folded_by_group: dict[str, list[Any]] = {}
     for folded in getattr(projection, "folded_points", ()):
         folded_by_group.setdefault(folded.group_id, []).append(folded)
+    shown_deadlines = tuple(
+        deadline for deadline in getattr(projection, "deadlines", ())
+        if projection.window[0] <= deadline.deadline <= projection.window[1]
+    )
     def forecast_label_measures(folded):
         instance_id = folded_instance_id(folded, folded.item)
         title = measure_label_footprint(f"member-label:{instance_id}", folded.item.title or "",
@@ -374,12 +379,15 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             request.surface_content.label_text_role or "text", finish_delta_semantic(folded.item), request)
         return title, delta
 
-    def folded_extent(folded: Any) -> tuple[float, float]:
-        """Inline extent of a folded point: its marks plus the title label on the placed side."""
+    def folded_extent(folded: Any) -> tuple[float, float, float, float]:
+        """Full inline/block footprint of a folded occurrence and its displayed deadlines."""
         label_treatment = request.theme_tokens.text_treatment("groupHeader")
         label_gap = max(1.0, float(label_treatment.font_size) * 0.25)
         label_side = contract.labels.side
-        lefts, rights = [], []
+        lefts, rights, deadline_lefts, deadline_rights = [], [], [], []
+        track_top = float(allocation.outer_bounds[0]) if allocation is not None else 0.0
+        track_bottom = (float(allocation.outer_bounds[1]) if allocation is not None
+                        else float(mark_block_size))
         probe = MarkBandFrame(scale, 0.0, mark_block_size, role_geometries, allocation)
         for item in folded.all_items:
             visibility = prepared_visibility(
@@ -394,21 +402,39 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             for mark in composition.marks:
                 lefts.append(float(mark.bounds.inline))
                 rights.append(float(mark.bounds.inline) + float(mark.bounds.inline_size))
+                if mark.semantic_id not in {"planned", "forecast"}:
+                    continue
+                for deadline in shown_deadlines:
+                    if deadline.object_id != mark.source_ref:
+                        continue
+                    geometry = complete_deadline_host(
+                        base=base, theme_tokens=request.theme_tokens, deadline=deadline, host=mark,
+                        paint_order_base=MARK_PAINT_ORDER_BASE)
+                    bounds = geometry.painted_bounds
+                    if bounds is None:
+                        continue
+                    deadline_lefts.append(float(bounds.inline))
+                    deadline_rights.append(float(bounds.inline + bounds.inline_size))
+                    track_top = min(track_top, float(bounds.block))
+                    track_bottom = max(track_bottom, float(bounds.block + bounds.block_size))
         if not lefts:
-            return (0.0, 0.0)
+            return (0.0, 0.0, track_top, track_bottom)
         if folded.item.forecast is not None:
             title, delta = forecast_label_measures(folded)
             reach = geometry_sum((title.size[0], title.gap, delta.size[0], delta.gap))
-            return (min(lefts) - reach, max(rights) + reach)
-        width = measure_text_width(
-            folded.item.title or "", font_size=float(label_treatment.font_size),
-            font_metrics=metric_for_role(request.theme_tokens, "groupHeader", request.font_metrics),
-            letter_spacing=float(label_treatment.letter_spacing),
-            text_transform=label_treatment.transform, numeric_spacing="proportional")
-        span = (width + label_gap) if width > 0 else 0.0
-        if label_side == "start":
-            return (min(lefts) - span, max(rights))
-        return (min(lefts), max(rights) + span)
+            left, right = min(lefts) - reach, max(rights) + reach
+        else:
+            width = measure_text_width(
+                folded.item.title or "", font_size=float(label_treatment.font_size),
+                font_metrics=metric_for_role(request.theme_tokens, "groupHeader", request.font_metrics),
+                letter_spacing=float(label_treatment.letter_spacing),
+                text_transform=label_treatment.transform, numeric_spacing="proportional")
+            span = (width + label_gap) if width > 0 else 0.0
+            left, right = ((min(lefts) - span, max(rights)) if label_side == "start"
+                           else (min(lefts), max(rights) + span))
+        if deadline_lefts:
+            left, right = min(left, min(deadline_lefts)), max(right, max(deadline_rights))
+        return (left, right, track_top, track_bottom)
 
     for group_id, folded_points in folded_by_group.items():
         group = group_by_id.get(group_id)
@@ -417,15 +443,16 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             raise LayoutError("E_REVIEW_POINT_GROUP_HEADER_UNAVAILABLE",
                               f"/projection/foldedPoints/{folded.item.object_id}")
         base_pitch = allocation.outer_extent if allocation is not None else mark_block_size
-        pitch = base_pitch
+        track_extents = {id(point): folded_extent(point) for point in folded_points}
+        pitch = max(base_pitch, *(bottom - top for _, _, top, bottom in track_extents.values()))
         if any(point.item.forecast is not None for point in folded_points):
             pitch = max(pitch, *(measure.size[1] for point in folded_points
                 if point.item.forecast is not None for measure in forecast_label_measures(point)))
-        track_inset = -allocation.outer_bounds[0] if allocation is not None else 0.0
         ordered_points = sorted(
             folded_points, key=lambda point: (active_placement(point.item).get("at"), point.item.object_id))
         lane_of = dict(zip((id(point) for point in ordered_points),
-                           pack_extent_lanes([folded_extent(point) for point in ordered_points])))
+                           pack_extent_lanes([(track_extents[id(point)][0], track_extents[id(point)][1])
+                                              for point in ordered_points])))
         occupied = (max(lane_of.values()) + 1) * pitch
         if occupied > float(group.header_bounds.block_size):
             expanded = Rect(group.header_bounds.inline, group.header_bounds.block,
@@ -440,7 +467,10 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
         first_block = float(group.header_bounds.block) + max(
             0.0, (float(group.header_bounds.block_size) - occupied) / 2)
         for folded in ordered_points:
-            block = first_block + lane_of[id(folded)] * pitch + (pitch - base_pitch) / 2 + track_inset
+            _, _, footprint_top, footprint_bottom = track_extents[id(folded)]
+            footprint_height = footprint_bottom - footprint_top
+            block = (first_block + lane_of[id(folded)] * pitch
+                     + (pitch - footprint_height) / 2 - footprint_top)
             members = sorted(enumerate(folded.all_items),
                              key=lambda pair: shared_track_member_key(pair[1], pair[0]))
             for _, item in members:
