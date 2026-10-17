@@ -276,7 +276,7 @@ flag MUST NOT override `comparison.baseline`. Without the flag no Snapshot
 Project is supplied and existing output is unchanged. This input is not an
 MCP or preset-library member.
 
-### Explicit forecast ingress (#1634; designed, implementation pending)
+### Explicit forecast ingress (#1634)
 
 Draft `render` and `render-workspace` accept boolean `--forecast`. The SDK-free
 MCP `render_draft` tool accepts the equivalent boolean `forecast`; it also gains
@@ -332,7 +332,7 @@ Actual point remains `actual` even when they share geometry or paint.  `sceneId`
 derived from `projectionInstanceId` plus the primitive-purpose suffix.  Array order,
 coordinates, renderer element IDs, and display text are not identity inputs.
 
-For explicit forecasts (#1634; designed, implementation pending), register
+For explicit forecasts (#1634), register
 semantic facet and primitive purpose `forecast` with the existing `planned`
 visual/paint role. It is a primary temporal mark in lane inventories and
 `primaryMarkIds`, not a Snapshot or Actual mark. Its projection identity includes

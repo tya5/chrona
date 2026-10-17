@@ -379,7 +379,7 @@ dependency solver inputs in Core v0.1.
 Progress-driven changes to remaining effort remain deferred. Explicit forecasting is
 a separate derived evaluation, not a change to the authored plan.
 
-### 17.1 Explicit forecast (#1634; designed, implementation pending)
+### 17.1 Explicit forecast (#1634)
 
 A forecast requires an explicitly selected Actual Set and its `asOf`. It uses the
 same latest resolved observation as ordinary comparison; `asOf` is a cutoff for

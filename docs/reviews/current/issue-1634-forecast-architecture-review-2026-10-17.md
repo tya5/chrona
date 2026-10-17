@@ -1,8 +1,8 @@
 # Issue #1634 — forecast architecture review
 
-Status: design and implementation plan published; PR1646 requires the semantic-
-identity correction below before release. Public baseline
-cd4dae681c9fd09f2c26d0dd037fcdac8d97e82d.
+Status: design and implementation plan published; the semantic-identity correction
+below was published in e0c26e3d4 before implementation611e8e850. PR1646 release
+remains pending. Public ready baseline c3383c36033dd82a1fc119ef4f336e7c04f01e43.
 [Current work record](../../planning/active/issue-1634-forecast-work-record-2026-10-17.md).
 
 | Boundary | Consistency check |

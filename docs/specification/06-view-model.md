@@ -528,7 +528,7 @@ the planned end and uses `asOf` once that end has passed. Genuinely unobserved w
 subject to the selected missing-Actual scope. The selected Actual with an invalid zero-length
 cutoff remains absent with its established invalid-open-Actual diagnostic (#1582).
 
-### 8.5 Explicit forecast presentation (#1634; designed, implementation pending)
+### 8.5 Explicit forecast presentation (#1634)
 
 Specification 04 §17.1 defines the separate forecast schedule. Only an explicit
 Render Context forecast request activates it. Original planned placements,
