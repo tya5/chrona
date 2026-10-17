@@ -392,6 +392,28 @@ Spec06/07/08/46/49/60 with implementation; replace the historical v0.1
 source-order Style rule rather than retaining two live evaluators. Additive
 optional Scene fields leave v0.6 frozen and follow Spec56's widening rule.
 
+## S1 implementation plan
+
+| Unit / owned files | Focused acceptance and publication |
+| --- | --- |
+| S1a: `schemas/style-v0.2.schema.yaml`, shared `common` definitions and schema inventory; contracts and new model evaluator | Six selectors, exact column sources, intersection, original facts, independent role/fill outcomes, deterministic conflict/coalescing, source identities, immutable inputs; parser negatives and schema equivalence. Publish contract/model before integrating owners. |
+| S1b: shared field accessor, projection and render orchestration | Reuse the resolved descriptor authority from Issue344 after its overlapping PR lands. Test declared/opaque fields, aliases per source, absent/null, literal types, snapshot pins and scenarios. No second field engine. |
+| S1c: content, `surface_marks`/`mark_geometry`, lane footprint/label owners, table/text placements | Selected role affects actual geometry/measurement before routing; test custom mark height/stroke and text size in ordinary, lane and folded cases. Scene receives completed roles/paint. |
+| S1d: Scene model/serialization/contrast and effective-role report handoff | Paired metadata round-trip, pinned vocabulary and wrong-purpose/identity negatives; arbitrary role cannot erase contrast or host semantics. SVG/PDF serialize the same completed output. Coordinate report lookup with dev B. |
+| S1 gate: existing literal review plus one code PR | Neutral unseen field combination demonstrates a new authored distinction. Run focused and structural tests, schema equivalence, batched official SVG/Scene counts, actual PNG inspection, reviewer review and exact-main three-OS release. Parent remains open for S2/C1. |
+
+Pointed failures: existing structural/version and Spec60 scale diagnostics,
+plus `E_STYLE_RULE_ID_DUPLICATE`, `E_STYLE_FACT_UNKNOWN`, `E_STYLE_FACT_TYPE`,
+`E_STYLE_RULE_CONFLICT`, `E_STYLE_ROLE_INCOMPATIBLE`, `E_STYLE_TARGET` and
+`E_STYLE_LEGEND_TITLE_REQUIRED`. Include resource pointer, rule IDs and subject
+identity where established. Scoped encodings require their authored title at
+admission; S2 composes scope provenance and optional visible qualifier.
+S1a–d are coherent commits in one S1 PR, not four main synchronization cycles.
+The S1 contract/architecture review is published as `9a9063ca5`; publish this
+implementation plan before S1 product changes. S2 remains the subsequent
+closure/preset/legend slice. Scalar equality introduces no array-membership
+or resource-reference predicates; other field consumers retain their contracts.
+
 ## V1 equivalence inventory (117-entry baseline)
 
 This inventory groups entries by the mechanism families in
