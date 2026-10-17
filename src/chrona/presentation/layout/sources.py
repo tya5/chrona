@@ -11,12 +11,14 @@ from chrona.presentation.layout.model import CountDependentHeadingFitError, Layo
 from chrona.presentation.layout.presentation import (
     header_group_cell_indent, measure_table_columns, place_table_columns, table_cell_indent, table_content_inline_size, table_text_measurer,
 )
-from chrona.presentation.layout.text import fit_text_lines, measure_text_width, metric_for_role, paint_text
+from chrona.presentation.layout.text import (completed_fallback_face_runs, fit_text_lines,
+                                             measure_text_width, metric_for_role, paint_text)
 from chrona.presentation.layout.text_stack import MeasuredTextStack, measure_text_stack
 from chrona.presentation.layout.table_measurement import BoundedTableMeasurement, measure_bounded_table
 from chrona.presentation.layout.summary_flow import MeasuredSummary, measure_summary
 from chrona.presentation.model.surface_content import AxisTier, SummaryContent, TableContent
 from chrona.presentation.model.theme_tokens import ThemeTokenView
+from chrona.presentation.layout.surface_quality import TextRunPlacement
 
 
 @dataclass(frozen=True)
@@ -51,6 +53,7 @@ class MeasuredTextRun:
     horizontal_scale: float = 1.0
     lines: tuple[str, ...] = ()
     overflow: str = "fit"
+    fallback_runs: tuple[tuple[TextRunPlacement, ...], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -238,6 +241,7 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
         heading_floor_references: list[tuple[Decimal, frozenset[str]]] = []
         heading_shortage = False
         for run in runs:
+            fallback_source_lines = (run.content,)
             treatment = typography.text_treatment(run.typography_role)
             run_metrics = metric_for_role(typography, run.typography_role, font_metrics)
             family, weight, run_size, run_line_height = (treatment.family, treatment.weight,
@@ -273,12 +277,21 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                     raise LayoutError("E_LAYOUT_TEXT_OVERFLOW", f"/sources/{source}", run.source_ref,
                                       "mandatory ellipsis and inline reservation cannot fit")
                 if fit.content != run.content:
+                    fallback_source_lines = tuple(fit.lines)
                     measured_runs[-1] = replace(
                         measured_runs[-1], content=paint_text(fit.content, text_transform=treatment.transform),
                         inline_size=Decimal(str(fit.inline_size)) + run.inline_advance,
                         block_size=run_size * run_line_height * len(fit.lines),
                         lines=tuple(paint_text(line, text_transform=treatment.transform) for line in fit.lines),
                         overflow="ellipsized" if fit.ellipsized else "fit")
+            closed_run = measured_runs[-1]
+            fallback_runs = completed_fallback_face_runs(
+                fallback_source_lines, font_size=float(run_size), font_metrics=run_metrics,
+                letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+                numeric_spacing=treatment.numeric_spacing,
+                horizontal_scale=float(treatment.horizontal_scale))
+            if fallback_runs:
+                measured_runs[-1] = replace(closed_run, fallback_runs=fallback_runs)
         run_measurements[source] = tuple(measured_runs)
         grid_block: Decimal | None = None
         if value.run_flow == "grid" and measured_runs and value.columns:

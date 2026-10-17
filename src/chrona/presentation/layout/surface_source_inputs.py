@@ -116,6 +116,11 @@ def _title_source(project: dict[str, Any], heading: HeadingContent | None) -> So
     """The title slot's content: one `heading` line, plus a `subtitle` line when the View declares one (#991)."""
     title = heading.title if heading is not None else project["project"].get("title", "Chrona")
     subtitle = heading.subtitle if heading is not None else None
+    if title is None:
+        runs = tuple(SourceTextRun(text, role, part) for part, text, role in (
+            ("kicker", heading.kicker, "kicker"), ("subtitle", subtitle, "subtitle")) if text is not None)
+        return SourceInput(tuple(run.content for run in runs), typography_role="heading", runs=runs,
+                           run_flow="block", text_wrap=heading.text_wrap, content_present=bool(runs))
     if heading is not None and heading.kicker is not None:
         runs = (SourceTextRun(heading.kicker, "kicker", "kicker"), SourceTextRun(title, "heading", "title"))
         if subtitle is not None:

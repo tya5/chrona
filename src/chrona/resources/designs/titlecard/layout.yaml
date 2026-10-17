@@ -14,7 +14,10 @@ viewDefaults:
   heading:
     kicker: 第弐面
     title: 計画表、{project}
-    subtitle: "SCHEDULE · {figure:selected-count} WORK PACKAGES · {figure:group-count} SECTIONS · BASELINE / PLAN / ACTUAL"
+    subtitle:
+      - {text: "SCHEDULE · {figure:selected-count} WORK PACKAGES"}
+      - {text: " · {figure:group-count} SECTIONS", omitWhenZero: group-count}
+      - {text: " · BASELINE / PLAN / ACTUAL"}
     dateForm: day-month-year
   figureFormats:
     note-count: {form: digits, minimumDigits: 2}

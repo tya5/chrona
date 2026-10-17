@@ -302,7 +302,7 @@ def _place_node_text(node: NetworkNodePlacement, measured: MeasuredTextRun) -> T
         font_size=measured.font_size, line_height=measured.line_height,
         letter_spacing=measured.letter_spacing, text_transform=measured.text_transform,
         numeric_spacing=measured.numeric_spacing, horizontal_scale=measured.horizontal_scale,
-        font_asset_identity=measured.font_asset_identity, collision_region="network",
+        font_asset_identity=measured.font_asset_identity, runs=measured.fallback_runs, collision_region="network",
         collision_domain=CollisionDomain("network", "nodes"), slot_id="network", semantic_id="networkLabel")
 
 
@@ -315,7 +315,7 @@ def _place_title(measured: MeasuredTextRun, bounds: Rect) -> TextPlacement:
         font_size=measured.font_size, line_height=measured.line_height,
         letter_spacing=measured.letter_spacing, text_transform=measured.text_transform,
         numeric_spacing=measured.numeric_spacing, horizontal_scale=measured.horizontal_scale,
-        font_asset_identity=measured.font_asset_identity, collision_region="network-title",
+        font_asset_identity=measured.font_asset_identity, runs=measured.fallback_runs, collision_region="network-title",
         collision_domain=CollisionDomain("network-title", "content"), slot_id="title", semantic_id="titleText")
 
 
