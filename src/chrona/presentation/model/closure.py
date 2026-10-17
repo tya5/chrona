@@ -1077,6 +1077,18 @@ def _builtin_vocabulary_resource() -> ClosureResource:
     return ClosureResource(identity.kind, identity.id, identity.revision, identity.content_identity, contract)
 
 
+def _builtin_vocabulary_resource() -> ClosureResource:
+    """Close the same immutable wheel resource that owns all runtime bindings."""
+    from chrona.resources.semantic_vocabulary import SemanticVocabularyError, builtin_semantic_vocabulary
+    try:
+        value = builtin_semantic_vocabulary()
+        identity = ClosureIdentity("semantic-vocabulary", value.id, "v0.1", value.content_identity)
+        contract = parse_contract(identity, value.to_envelope())
+    except (SemanticVocabularyError, ContractError) as error:
+        raise ClosureError(error.diagnostic_id, error.source_ref, error.detail) from error
+    return ClosureResource(identity.kind, identity.id, identity.revision, identity.content_identity, contract)
+
+
 def _read_previous_scene(pin: ArtifactPin, reader: SnapshotReader) -> bytes:
     try:
         payload = reader.read(pin.as_reader_reference())

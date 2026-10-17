@@ -3,7 +3,7 @@
 Status: V1 merged as `ff9abcbbb` (PR1668); rationale and final-head artifact
 equivalence verified, all PR checks green. Post-merge release remains pending.
 Source base: trusted-ready published main
-`7872cd47ab7e79de3cda96c8da9e5b88cfc87c3a`.
+`890af301d31ab3896296caefaa5864691e60d69a`.
 [Reviewed scope](https://github.com/tya5/chrona/issues/419#issuecomment-6234966527):
 dev A owns V1/S1/S2; dev B owns C1 and Issue344 Level 1.
 
