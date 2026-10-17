@@ -19,7 +19,7 @@ from chrona.presentation.layout.mark_aware_scale import (
 from chrona.presentation.layout.obstacles import obstacle_envelope
 from chrona.presentation.layout.presentation import (
     MarkBandFrame, MarkGeometry, TrackPlacement, place_mark_tracks,
-    place_rows, required_row_block_extents, row_block_slack, table_text_line_block,
+    empty_group_header_blocks, empty_group_slots, place_rows, required_row_block_extents, row_block_slack, table_text_line_block,
 )
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve, measure_as_of_chip
 from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip
@@ -250,10 +250,10 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
     slots = allocation.slots
     by_source = {slot.source_ref: slot for slot in slots}
     table, timeline = by_source["table"], by_source["timeline"]
-    review_row_values = review_rows(projection) or tuple(
+    review_row_values = (review_rows(projection) if projection.has_rows else tuple(
         type("_Row", (), {"row_id": item.object_id, "label": item.title,
                           "group_id": item.group_id, "table_subject_id": item.object_id,
-                          "items": (item,)})() for item in projection.items)
+                          "items": (item,)})() for item in projection.items))
     timeline_bounds = bounds_from_rect(timeline.bounds)
     capacity = request.temporal_capacity
     if capacity is None:
@@ -318,6 +318,8 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
         headers = sum(bool(row.group_id) and bool(group_header_size)
                       and (index == 0 or review_row_values[index - 1].group_id != row.group_id)
                       for index, row in enumerate(review_row_values))
+        if group_header_size:
+            headers += len(empty_group_slots(review_row_values, projection.group_order))
         natural_block = (Decimal(str(geometry_sum(requirements)))
                          + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0))
     return SurfaceInlineGeometry(
@@ -361,6 +363,7 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
     row_padding, text_line_block = inline.row_padding, inline.text_line_block
     requirements = inline.row_requirements
     lane_subtracks = request.fixed_lane_preflight.subtracks if projection.lane_membership is not None else None
+    empty_slots = empty_group_slots(review_row_values, projection.group_order) if group_header_size else ()
     foot_reserve = 0.0
     foot_fallback = False
     content = request.surface_content
@@ -374,7 +377,8 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
         wanted = (below_plot_reserve(request.theme_tokens, chip_measurement=as_of_chip_measurement)
                   if as_of_chip_measurement is not None else below_plot_reserve(request.theme_tokens))
         slack = row_block_slack(review_rows=review_row_values, timeline_block_size=row_content_bounds[3],
-                                group_header_size=group_header_size, required_block_sizes=requirements)
+                                group_header_size=group_header_size, required_block_sizes=requirements,
+                                empty_groups=len(empty_slots))
         if slack >= wanted:
             foot_reserve = wanted
         else:
@@ -382,7 +386,7 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
     row_bounds = (*row_content_bounds[:3], row_content_bounds[3] - foot_reserve)
     raw_rows = place_rows(review_rows=review_row_values, timeline_bounds=row_bounds,
                           group_header_size=group_header_size, required_block_sizes=requirements,
-                          distribution=layout_manifest.row_distribution)
+                          distribution=layout_manifest.row_distribution, empty_groups=empty_slots)
     rows = tuple(
         RowPlacement(item.row_id, item.table_subject_id, placement.group_id or "",
                      rect_from_bounds(placement.bounds), depth=int(getattr(item, "depth", 0)))
@@ -390,7 +394,19 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
     )
     table_bounds = bounds_from_rect(table.bounds)
     groups: list[GroupPlacement] = []
-    for row in rows:
+    empty_blocks = empty_group_header_blocks(slots=empty_slots, row_placements=raw_rows,
+                                             timeline_bounds=row_bounds, group_header_size=group_header_size)
+
+    def empty_group(block: float, group_id: str) -> GroupPlacement:
+        header = Rect(Decimal(str(table_bounds[0])), Decimal(str(block)),
+                      Decimal(str(timeline_bounds[0] + timeline_bounds[2] - table_bounds[0])),
+                      Decimal(str(group_header_size)))
+        return GroupPlacement(group_id, Rect(Decimal(str(timeline_bounds[0])), header.block,
+                                             Decimal(str(timeline_bounds[2])), header.block_size), header)
+
+    for index, row in enumerate(rows):
+        groups.extend(empty_group(block, group_id)
+                      for at, group_id, block in empty_blocks if at == index)
         if groups and groups[-1].group_id == row.group_id:
             previous = groups[-1]
             content = Rect(previous.content_bounds.inline, previous.content_bounds.block,
@@ -407,6 +423,7 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
                 content = Rect(row.bounds.inline, header.block, row.bounds.inline_size,
                                row.bounds.block_size + Decimal(str(group_header_size)))
             groups.append(GroupPlacement(row.group_id, content, header))
+    groups.extend(empty_group(block, group_id) for at, group_id, block in empty_blocks if at >= len(rows))
     groups = tuple(groups)
     tracks = (place_lane_mark_tracks(review_rows=review_row_values, row_placements=raw_rows,
                                      plan=lane_subtracks, mark_block_size=mark_block_size)
