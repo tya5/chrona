@@ -39,6 +39,17 @@ def _reservation(identifier):
     ))
 
 
+def _reservation_at(identifier, bounds):
+    left, top, right, bottom = bounds
+    text = replace(_text(identifier), bounds=Rect(Decimal(str(left)), Decimal(str(top)),
+        Decimal(str(right - left)), Decimal(str(bottom - top))))
+    geometry = ObstacleRect(left, top, right, bottom)
+    return MemberLabelReservation(text, (
+        SurfaceObstacle(identifier, "text", "timeline", geometry),
+        SurfaceObstacle(f"label-footprint:{identifier}", "label-visual", "timeline", geometry),
+    ))
+
+
 def _annotations(*, text=(), shapes=(), relations=(), icons=(), decisions=()):
     return SurfaceAnnotationBatch(tuple(text), tuple(shapes), tuple(relations), tuple(icons), tuple(decisions),
         (), (), (), frozenset(), frozenset(), frozenset())
@@ -70,7 +81,7 @@ def _install(monkeypatch, *, repair=False, retry_bad=False, lose_member_label=Fa
     facts = []
 
     def names(_context, requests, obstacles, *, reserve_only=False):
-        name_calls.append(None)
+        name_calls.append(tuple(item.placement_id for item in requests))
         texts = []
         blocked = []
         for request in requests:
@@ -125,11 +136,11 @@ def _install(monkeypatch, *, repair=False, retry_bad=False, lose_member_label=Fa
     context = plan.RouteLabelPlanContext(None, (_request("a"), _request("b")), (), clean,
         lambda obstacles, texts: SurfaceRoutesContext(None, None, (), (), (), (), (0, 0, 200, 100),
             None, {}, texts, obstacles))
-    return context, calls, facts
+    return context, calls, facts, name_calls
 
 
 def test_unblocked_baseline_needs_one_trial_and_emits_no_ghosts(monkeypatch):
-    context, calls, facts = _install(monkeypatch)
+    context, calls, facts, _name_calls = _install(monkeypatch)
     options = plan.compose_routes_and_member_labels(context)
     result, annotations = plan.select_completed_route_label_plan(options, _empty_annotations())
     assert options.retry is None and calls == ["route-label-baseline"]
@@ -140,11 +151,12 @@ def test_unblocked_baseline_needs_one_trial_and_emits_no_ghosts(monkeypatch):
 
 
 def test_one_recovery_reserves_only_the_route_blocked_candidate_and_emits_no_ghosts(monkeypatch):
-    context, calls, facts = _install(monkeypatch, repair=True)
+    context, calls, facts, name_calls = _install(monkeypatch, repair=True)
     options = plan.compose_routes_and_member_labels(context)
     assert options.retry is not None
     result, annotations = plan.select_completed_route_label_plan(options, _empty_annotations(), _empty_annotations())
     assert calls == ["route-label-baseline", "route-label-recovery"]
+    assert name_calls == [("a", "b"), ("b", "a")]
     assert not result.routes.relations[0].suppressed
     assert [item.overflow for item in result.members.text] == ["fit", "fit"]
     assert result.obstacles.has("a") and result.obstacles.has("label-footprint:a")
@@ -159,9 +171,31 @@ def test_one_recovery_reserves_only_the_route_blocked_candidate_and_emits_no_gho
     assert annotations == _empty_annotations()
 
 
+def test_proposal_admission_uses_later_completed_visible_text_and_keeps_declared_alternative():
+    obstacles = SurfaceObstacleIndex()
+    # This is a later-completed variance label retained by the retry. CDR's
+    # lower-cost `end` rung overlaps it; its declared `start` rung is clear.
+    obstacles.extend((
+        SurfaceObstacle("variance:bus-test", "text", "timeline",
+                        ObstacleRect(657.769, 302.6, 691.369, 322.2)),
+        SurfaceObstacle("label-footprint:variance:bus-test", "label-visual", "timeline",
+                        ObstacleRect(657.769, 302.6, 691.369, 322.2)),
+    ))
+    first = SimpleNamespace(obstacles=obstacles)
+    proposals = (_reservation_at("member-label:cdr", (616.933, 315.6, 766.678, 336.6)),
+                 _reservation_at("member-label:cdr", (449.688, 315.6, 599.433, 336.6)))
+
+    admitted = plan._admissible_reservations(first, proposals)
+
+    assert len(admitted) == 1
+    assert admitted[0].obstacles[0].geometry == ObstacleRect(449.688, 315.6, 599.433, 336.6)
+    obstacles.add(SurfaceObstacle("later-text", "text", "timeline", ObstacleRect(440, 310, 610, 340)))
+    assert plan._admissible_reservations(first, proposals) == ()
+
+
 @pytest.mark.parametrize("reason", ("route", "member-label", "relation-label"))
 def test_completed_candidate_falls_back_to_the_unchanged_baseline_when_it_regresses(monkeypatch, reason):
-    context, calls, facts = _install(monkeypatch, repair=True, retry_bad=reason == "route",
+    context, calls, facts, _name_calls = _install(monkeypatch, repair=True, retry_bad=reason == "route",
         lose_member_label=reason == "member-label", lose_relation_label=reason == "relation-label")
     options = plan.compose_routes_and_member_labels(context)
     result, annotations = plan.select_completed_route_label_plan(options, _empty_annotations(), _empty_annotations())
@@ -176,7 +210,7 @@ def test_completed_candidate_falls_back_to_the_unchanged_baseline_when_it_regres
 
 @pytest.mark.parametrize("changed", ("member-label", "relation-label"))
 def test_candidate_with_same_visible_label_identity_but_changed_content_falls_back(monkeypatch, changed):
-    context, _calls, facts = _install(monkeypatch, repair=True,
+    context, _calls, facts, _name_calls = _install(monkeypatch, repair=True,
         change_member_content=changed == "member-label",
         change_relation_content=changed == "relation-label")
     options = plan.compose_routes_and_member_labels(context)
@@ -192,7 +226,7 @@ def test_candidate_with_same_visible_label_identity_but_changed_content_falls_ba
 
 @pytest.mark.parametrize("lost", ("note", "callout", "connector"))
 def test_candidate_that_loses_a_visible_annotation_component_falls_back(monkeypatch, lost):
-    context, calls, facts = _install(monkeypatch, repair=True)
+    context, calls, facts, _name_calls = _install(monkeypatch, repair=True)
     options = plan.compose_routes_and_member_labels(context)
     assert options.retry is not None and len(calls) == 2
     if lost == "note":
@@ -212,7 +246,7 @@ def test_candidate_that_loses_a_visible_annotation_component_falls_back(monkeypa
 
 @pytest.mark.parametrize("topology", ("disconnected", "later-rung", "changed-ladder", "unknown-rung"))
 def test_candidate_cannot_drop_a_connected_annotation_or_move_it_later(monkeypatch, topology):
-    context, calls, facts = _install(monkeypatch, repair=True)
+    context, calls, facts, _name_calls = _install(monkeypatch, repair=True)
     options = plan.compose_routes_and_member_labels(context)
     assert options.retry is not None and len(calls) == 2
     first_decision = SimpleNamespace(decision_id="annotation:n", outcome="placed",
@@ -233,7 +267,7 @@ def test_candidate_cannot_drop_a_connected_annotation_or_move_it_later(monkeypat
 
 
 def test_legacy_annotation_decision_without_a_known_selected_rung_remains_accepted(monkeypatch):
-    context, _calls, facts = _install(monkeypatch, repair=True)
+    context, _calls, facts, _name_calls = _install(monkeypatch, repair=True)
     options = plan.compose_routes_and_member_labels(context)
     first_decision = SimpleNamespace(decision_id="annotation:n", outcome="placed",
         selected_topology=None, requested_ladder=(), selected_rung=None)
@@ -247,7 +281,7 @@ def test_legacy_annotation_decision_without_a_known_selected_rung_remains_accept
 
 
 def test_candidate_with_same_visible_note_identity_but_changed_content_falls_back(monkeypatch):
-    context, _calls, facts = _install(monkeypatch, repair=True)
+    context, _calls, facts, _name_calls = _install(monkeypatch, repair=True)
     options = plan.compose_routes_and_member_labels(context)
     first = _annotations(text=(SimpleNamespace(placement_id="annotation-note-text:n",
         content="Keep this note", overflow="fit"),))

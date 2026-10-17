@@ -100,14 +100,14 @@ class SurfaceMemberLabelsBatch:
 
 def _route_blocked_candidate(context: SurfaceMemberLabelContext, request: LabelRequest,
                              selected: LabelPlacement | None,
-                             obstacles: SurfaceObstacleIndex) -> MemberLabelReservation | None:
-    """Choose a route-minimal declared rung only for an initially suppressed name."""
+                             obstacles: SurfaceObstacleIndex) -> tuple[MemberLabelReservation, ...]:
+    """Return ordered route-minimal declared rungs for an initially suppressed name."""
     if (request.semantic_id != "memberLabel" or request.is_required_before_routes
             or not request.candidates or selected is not None):
-        return None
+        return ()
     ink = obstacles.select(classes=("dependency-route",))
     if not ink:
-        return None
+        return ()
     preceding = SurfaceObstacleIndex()
     preceding.extend(item for item in obstacles.all() if item.obstacle_class != "dependency-route")
     original_ids = {item.placement_id for item in preceding.all()}
@@ -133,8 +133,8 @@ def _route_blocked_candidate(context: SurfaceMemberLabelContext, request: LabelR
         reservation = MemberLabelReservation(replace(text, required=False), footprints)
         feasible.append((len(route_owners), rank, reservation))
     if not feasible:
-        return None
-    return min(feasible, key=lambda item: (item[0], item[1]))[2]
+        return ()
+    return tuple(item[2] for item in sorted(feasible, key=lambda item: (item[0], item[1])))
 
 
 def _lane_label_candidates(side: str, fallback: tuple[str, ...], preferred: str | None) -> tuple[str, ...]:
@@ -606,9 +606,8 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                 final_association if candidate is not None and candidate.final_rung else association,
                 overflow=effective_overflow, placement_id=label_request.placement_id)
         if not reserve_only:
-            blocked = _route_blocked_candidate(context, label_request, candidate, obstacles)
-            if blocked is not None:
-                route_blocked_candidates.append(blocked)
+            route_blocked_candidates.extend(
+                _route_blocked_candidate(context, label_request, candidate, obstacles))
         ladder = label_request.candidates + ((label_request.visible_fallback_side,)
             if label_request.visible_fallback_side is not None and
             label_request.visible_fallback_side not in label_request.candidates else ())
