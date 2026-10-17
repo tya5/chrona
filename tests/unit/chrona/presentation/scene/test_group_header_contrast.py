@@ -150,8 +150,11 @@ def test_a_patterned_mark_on_a_patterned_host_is_judged_on_the_host_ink_too():
     kinds = {(item.paint_channel, item.ground_kind) for item in findings}
     assert {("fill", "pattern-host-substrate"), ("stroke", "pattern-host-substrate"),
             ("fill", "pattern-host-ink"), ("stroke", "pattern-host-ink")} <= kinds
-    assert any(item.severity == "error" and item.ground_kind == "pattern-host-ink" and item.paint_channel == "fill"
-               for item in findings)
+    # #1658: the mark's own ink (#102A5C) clears the floor on the host ink, so its fill matching that ink
+    # is not a failure; the pair is still measured.
+    host_ink_fill, = [item for item in findings
+                      if item.ground_kind == "pattern-host-ink" and item.paint_channel == "fill"]
+    assert host_ink_fill.contrast_ratio == 1.0 and host_ink_fill.severity == "info"
 
 
 def test_the_registry_resolves_ground_text_by_purpose_and_never_by_role():

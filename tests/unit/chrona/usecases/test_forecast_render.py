@@ -79,4 +79,36 @@ def test_forecast_retains_snapshot_ghost_even_for_primary_comparison_view(tmp_pa
     result = render_draft(replace(request, forecast=True, snapshot=request.project))
     ghosts = {primitive.source_ref for primitive in result.rendered.surface.primitives if primitive.purpose == "snapshot"}
     assert ghosts == {"a", "b"}
+    labels = [primitive for primitive in result.rendered.surface.primitives if primitive.purpose == "member-label"]
+    assert {primitive.source_ref for primitive in labels} == {"a", "b"}
+    assert len(labels) == 2
+    assert all(primitive.source_kind != "snapshot" for primitive in labels)
+    deltas = [primitive for primitive in result.rendered.surface.primitives
+              if primitive.purpose == "forecast-finish-delta"]
+    assert {primitive.source_ref for primitive in deltas} == {"a", "b"}
     assert not any(note["code"] == "W_DRAFT_SNAPSHOT_NOT_DRAWN" for note in result.notes)
+
+
+def test_observed_overlap_warning_survives_forecast_render_and_scene(tmp_path):
+    request = _request(tmp_path)
+    actual = yaml.safe_load(request.actual.read_text(encoding="utf-8"))
+    actual["body"]["observations"] = [
+        {"id": "a-1", "projectObjectId": "a", "sequence": 1,
+         "actual": {"start": "2026-01-05", "finish": "2026-01-09"}},
+        {"id": "b-1", "projectObjectId": "b", "sequence": 1,
+         "actual": {"start": "2026-01-08"}},
+    ]
+    request.actual.write_text(yaml.safe_dump(actual, sort_keys=False), encoding="utf-8")
+
+    result = render_draft(replace(request, forecast=True, snapshot=request.project))
+    payloads = warning_payloads(result.rendered)
+    warnings = [item for item in payloads if item["code"] == "W_FORECAST_OBSERVED_START_BEFORE_BOUND"]
+    assert len(warnings) == 1
+    warning = warnings[0]
+    assert warning["severity"] == "warning"
+    assert warning["details"]["object"] == "b"
+    assert warning["details"]["placed"] == "2026-01-08"
+    assert warning["details"]["from"]["value"] == "2026-01-09"
+    assert warning["details"]["overlapDays"] == 1
+    assert not any(item["code"] == "E_FIXED_TARGET_VIOLATION" for item in payloads)
+    assert warning["diagnostic"] in result.rendered.scene.diagnostics

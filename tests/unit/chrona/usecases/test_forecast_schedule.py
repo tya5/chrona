@@ -154,7 +154,8 @@ def test_completed_observed_endpoint_miss_is_reported_without_moving_facts():
                                      a={"start": "2026-10-07", "finish": "2026-10-08"}))
     assert result.ok
     assert dates(result, "a") == {"start": "2026-10-07", "end": "2026-10-08"}
-    assert any(item.id == "E_FIXED_TARGET_VIOLATION" and item.details["object"] == "a" for item in result.findings)
+    assert not any(item.id == "E_FIXED_TARGET_VIOLATION" and item.details["object"] == "a"
+                   for item in result.findings)
     assert result.analysis is None
 
 
@@ -270,7 +271,70 @@ def test_started_before_predecessor_finish_is_reported_and_successors_still_move
     assert result.ok, result.diagnostics
     assert dates(result, "a") == {"start": "2026-10-08", "end": "2026-10-10"}
     assert dates(result, "b") == {"start": "2026-10-10", "end": "2026-10-11"}
-    assert any(item.id == "E_FIXED_TARGET_VIOLATION" and item.details["endpoint"] == "start" for item in result.findings)
+    warning, = result.warnings
+    assert warning.id == "W_FORECAST_OBSERVED_START_BEFORE_BOUND"
+    assert warning.details["relation"] == "p-a"
+    assert warning.details["placed"] == "2026-10-08"
+    assert warning.details["from"] == {"object": "p", "endpoint": "end", "value": "2026-10-09"}
+    assert warning.details["required"] == "2026-10-09"
+    assert warning.details["beforeBoundDays"] == warning.details["overlapDays"] == 1
+    assert warning.details["sourceDateBasis"] == "observed"
+    assert "started" in warning.message and "2026-10-09" in warning.message
+    assert not any(item.id == "E_FIXED_TARGET_VIOLATION" and item.details["endpoint"] == "start"
+                   for item in (*result.diagnostics, *result.findings))
+
+
+def test_observed_start_warning_identifies_forecast_finish_without_inventing_overlap():
+    source = project({"p": span("2026-10-01", "2026-10-03"), "a": span()},
+                     [{**relation("p", "a"), "lag": "2d"}], calendar=False)
+    result = evaluate(source, actual("2026-10-09", a={"start": "2026-10-12"}))
+    assert result.ok, result.diagnostics
+    warning, = result.warnings
+    assert warning.details["from"]["value"] == "2026-10-11"
+    assert warning.details["sourceDateBasis"] == "forecast"
+    assert warning.details["beforeBoundDays"] == 1
+    assert "overlapDays" not in warning.details
+    assert "forecast finish" in warning.message
+
+
+@pytest.mark.parametrize("source_endpoint,lag,target_start", [
+    ("start", "0d", "2026-10-08"),
+    ("end", "2d", "2026-10-11"),
+])
+def test_observed_start_bound_warning_does_not_call_ss_or_lag_only_misses_overlap(
+    source_endpoint, lag, target_start,
+):
+    source = project({"p": task("1d", anchor={"start": "2026-10-05"}), "a": task("1d")}, calendar=False)
+    source["relations"] = [{"id": "p-a", "type": "dependency",
+                            "from": {"object": "p", "endpoint": source_endpoint},
+                            "to": {"object": "a", "endpoint": "start"}, "lag": lag}]
+    result = evaluate(source, actual("2026-10-09", a={"start": target_start}))
+    assert result.ok, result.diagnostics
+    warning, = result.warnings
+    assert warning.details["sourceDateBasis"] == "forecast"
+    assert "overlapDays" not in warning.details
+    assert "misses dependency bound" in warning.message
+
+
+def test_observed_start_with_incomplete_scheduler_evidence_remains_fatal():
+    from chrona.core.diagnostics import Diagnostic
+    from chrona.core.ports import ScheduleOutcome
+
+    source = project({"p": span("2026-10-01", "2026-10-02"), "a": span()},
+                     [relation("p", "a")], calendar=False)
+    observed = actual(p={"finish": "2026-10-09"}, a={"start": "2026-10-08"})
+    ordinary = ReferenceScheduler().schedule(source)
+    malformed = Diagnostic("E_FIXED_TARGET_VIOLATION", "incomplete", "/relations/p-a",
+                           details={"object": "a", "endpoint": "start", "placed": "2026-10-08"})
+
+    class MalformedEvidenceScheduler:
+        def schedule(self, effective):
+            complete = ReferenceScheduler().schedule(effective)
+            return ScheduleOutcome(complete.placements, (malformed,), complete.analysis)
+
+    result = forecast_schedule(source, ordinary, observed, MalformedEvidenceScheduler())
+    assert not result.ok and result.diagnostics == (malformed,)
+    assert not result.warnings
 
 
 @pytest.mark.parametrize("observation,endpoint", [({"finish": "2026-10-12"}, "start"),
