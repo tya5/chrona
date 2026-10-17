@@ -491,10 +491,14 @@ Required paint bindings must be checked with the selected geometry before
 measurement. Extract the existing finite Theme paint-channel requirements into
 a model-owned pure contract shared by Layout preflight and Scene completion;
 keep Scene effects, capability omissions and ScenePaint construction in Scene.
-Preserve outline, catalogue-part and ink-only pattern requirements rather than
-requiring a fill on every mark. A completed fill may satisfy an inherited fill
-requirement, but cannot replace explicit glyph-part colours or stroke-only
-channels. Incompatibility reports the existing `E_STYLE_ROLE_INCOMPATIBLE` with
+Preserve catalogue-part and ink-only pattern requirements rather than requiring
+a fill on every mark. An explicit fill on an admitted host replaces its inherited
+Theme fill or hollow outline, retaining stroke: this is existing View encoding
+behavior, not a reason to silently drop an encoding. It cannot fill an explicit
+stroke-only primitive or replace catalogue part colours/outline-part intent.
+Actual-variance fallback retains its prior outline policy; it is not an explicit
+Style encoding. Test both source paths through the same paint contract.
+Incompatibility reports the existing `E_STYLE_ROLE_INCOMPATIBLE` with
 rule and occurrence identity. No-Style paint validation and diagnostics stay
 unchanged. This closes the gap between early geometry checks and late paint
 checks without a Layout-to-Scene dependency or a second paint validator.

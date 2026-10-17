@@ -155,9 +155,12 @@ the full source occurrence before Layout. Completed placements retain that key
 for passive Scene projection; internal keys are not serialized Scene fields.
 Required paint-channel validation is one pure presentation-model contract shared
 by Layout and Scene, not two validators. Its requirements follow the actual
-primitive family and catalogue parts: outline/stroke-only parts do not acquire
-an implicit fill, explicit part colours are retained, and an encoded fill may
-satisfy the inherited fill requirement. Scene alone completes paint effects and
+primitive family and catalogue parts. An explicit encoding fills an admitted
+host even when its inherited Theme pattern is hollow/outline, retaining stroke;
+this preserves existing View colour encoding. Explicit stroke-only primitives
+and catalogue outline/stroke parts do not acquire a fill, and explicit part
+colours are retained. An encoded fill may satisfy the inherited fill requirement.
+Actual-variance fallback retains its existing outline policy. Scene alone completes paint effects and
 adapter capability omissions; adapters never reinterpret an encoding.
 
 ### 4.2 Inputs
