@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import tools.check_semantic_registry_reachability as reachability
+from chrona.presentation.model.semantic_registry import forecast_delta_semantic_ids
 from tools.check_semantic_registry_reachability import missing_semantic_ids, reachable_semantic_ids
 
 
@@ -33,3 +34,7 @@ def test_mark_icon_is_reachable_but_corpus_evidence_is_a_separate_question():
 
 def test_table_state_semantics_are_reachable_from_the_normalized_content_producer():
     assert {"tableVarianceAhead", "tableVarianceOnTrack", "tableVarianceBehind", "missingActualCell"} <= reachable_semantic_ids(_root())
+
+
+def test_forecast_delta_semantic_family_is_reachable_through_its_registry_factory():
+    assert set(forecast_delta_semantic_ids()) <= reachable_semantic_ids(_root())

@@ -14,7 +14,7 @@ from chrona.presentation.layout.pattern_placement import PatternedPlacement
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, ContrastClass, PrimitiveKind, contrast_binding, contrast_bindings,
-    inside_member_label_semantic, period_variant_role_base, semantic_binding, FORECAST_DELTA_SEMANTICS)
+    inside_member_label_semantic, period_variant_role_base, semantic_binding, forecast_delta_semantic_ids)
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.info_diagnostics import PaintOmission
@@ -791,7 +791,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                project_item=item)
         variance_id = f"variance:{instance_id}"
         if (source_kind == "combined" and item.finish_delta is not None and variance_id in layout_text
-                and layout_text[variance_id].semantic_id not in FORECAST_DELTA_SEMANTICS):
+                and layout_text[variance_id].semantic_id not in forecast_delta_semantic_ids()):
             role = (semantic_binding("varianceBehind").scene_role if item.finish_delta > 0
                     else semantic_binding("varianceAhead").scene_role if item.finish_delta < 0
                     else semantic_binding("finishDelta").scene_role)
@@ -1075,7 +1075,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     for placed in placed_surface.text:
         if placed.overflow == "suppressed":
             continue
-        if placed.semantic_id in FORECAST_DELTA_SEMANTICS:
+        if placed.semantic_id in forecast_delta_semantic_ids():
             item = primary_items.get(placed.source_ref)
             href, title = link_for_item(item, item.source_kind) if item is not None else (None, None)
             emit_semantic_text(placed.placement_id, placed.semantic_id, href=href,
