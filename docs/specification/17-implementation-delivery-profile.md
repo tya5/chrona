@@ -78,6 +78,14 @@ its typed fields violate this specification:
 | `IDP-PROFILE-005` | An artifact/evidence field does not declare `resourceReference` with `many` cardinality. |
 | `IDP-PROFILE-006` | A standard profile has the wrong parent or an undeclared standard field. |
 
+Every other resolved profile package (#344) is checked against the same field definitions with
+generic diagnostics, each pointing at `/objects/<id>/fields[/<name>]`: `E_PROFILE_PACKAGE_INVALID`
+(manifest fails `profile-v0.3`), `E_PROFILE_FIELD_UNKNOWN` (field not declared by the object's profile),
+`E_PROFILE_FIELD_TYPE` (value is not the declared scalar, array or reference shape),
+`E_PROFILE_FIELD_ENUM` (value outside `enumValues`) and `E_PROFILE_FIELD_REQUIRED` (required field absent
+or null). An absent optional field is valid and an explicit `null` is valid only for an optional field.
+Objects whose `type` names no declared profile are not checked. The delivery package keeps its `IDP-*` codes.
+
 Typed-field Command execution is introduced by IDP-5. Evidence references are validated
 for shape only (section 8).
 
