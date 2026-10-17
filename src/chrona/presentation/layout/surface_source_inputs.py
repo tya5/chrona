@@ -51,12 +51,13 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
     """
     lane_mode = view.rows.mode is ViewRowMode.LANES
     rows = projection.lane_rows if lane_mode else projection.rows or ()
-    row_count = len(rows) or len(projection.items)
+    resolved = getattr(projection, "rows_resolved", False)
+    row_count = len(rows) if resolved else len(rows) or len(projection.items)
     if lane_mode and (not rows or table is None):
         raise LayoutError("E_LAYOUT_LANE_TABLE_ENVELOPE", "/body/rows/laneTable")
     table_lines = (tuple(cell.content for cell in table.cells if cell.column_id == "Lane")
                    if lane_mode and table is not None else
-                   tuple(row.label for row in rows) or tuple(item.title for item in projection.items))
+                   tuple(row.label for row in rows) or (() if resolved else tuple(item.title for item in projection.items)))
     span_days = max(1, (projection.window[1] - projection.window[0]).days)
     network = getattr(projection, "network", None)
     notes = tuple(text for _, text in content.notes)
