@@ -154,4 +154,3 @@ def test_none_candidate_geometry_matches_existing_solver_behavior():
                              gap=2, maximum_end_gap=20) == place_member_name(
         anchor, (5, 4), ("end", "start"), bounds=bounds,
         gap=2, maximum_end_gap=20, candidate_geometries=None)
-

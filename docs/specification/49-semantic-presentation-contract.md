@@ -11,6 +11,10 @@ authoring input → ingress adapter → PresentationContract → LayoutPlacement
 
 No later stage may reinterpret raw authoring spelling, infer an undeclared semantic role, or select a theme fallback.
 
+Geometry-free temporal facet selection belongs to the presentation model and
+is shared by original Style fact collection and Layout composition. It does
+not measure, clip, place or route: those decisions remain Layout-owned.
+
 ## 1. PresentationContract
 
 `PresentationContract` is an immutable, typed model built once after schema validation. It contains only canonical semantics:

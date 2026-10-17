@@ -461,6 +461,21 @@ generated namespaces and canonical primitive/contrast classification unchanged.
 Test an arbitrary custom text role through native Theme ingress, not only an
 existing named role. This is a missing consumer connection, not new syntax.
 
+Source-fact completion: move the existing geometry-free temporal facet selector
+from Layout into the presentation model and update its callers, without a
+compatibility facade. Review normalization and Layout consume that single
+selection; Layout retains window clipping, measurement, completed placement and
+routes. Collect immutable original mark, cell and admitted text alternatives
+with the same source keys before evaluating Style. Typed field facts and aliases
+come from the source bindings, including absent declarations; do not infer a
+schema from values. Normalization accepts already-parsed internal Style rules
+and the existing gate-declaration fact; resource reference ingress remains S2.
+Implement the shared selector move, then fact collection/evaluation, then fill
+completion through the existing scale resolver. Review against Spec04/07/49:
+this removes a Review-to-Layout dependency without moving geometry upward or
+adding another evaluator. Verify native rule-to-render paths, not injected
+completed indexes alone, plus independent forecast/delta and no-Style controls.
+
 Canonical mark correction: logical temporal facets and realized vocabulary
 bindings are not interchangeable. Existing primary points use `gate` when the
 base Theme declares it; forecast points retain `forecast`, and comparison
