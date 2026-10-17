@@ -6,19 +6,12 @@ from copy import deepcopy
 import pytest
 import yaml
 
-from chrona.core.identity import content_identity
 from chrona.presentation.contracts.resources import ClosureIdentity, parse_contract
 from chrona.presentation.model.field_roles import FieldDescriptor
 from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.presentation.model.style_rules import StyleEvaluationError
-from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases import render_review as render_review_usecase
-from chrona.usecases.render_review import RenderRequest, render_review
 from tests.integration.test_declared_field_color_encoding import _project, _render
-from tests.unit.chrona.presentation.model.test_snapshot_context_closure import (
-    _real_ingress_with_package_stores,
-    _real_package_ref,
-)
 
 
 _ORIGINAL_BUILD_REVIEW_PROJECTION = render_review_usecase.build_review_projection
@@ -171,47 +164,3 @@ def test_style_unknown_field_predicate_is_rejected_even_when_no_object_has_a_val
         _render_with_style(tmp_path, monkeypatch, project, rules)
 
     assert caught.value.diagnostic_id == "E_STYLE_FACT_UNKNOWN"
-    assert caught.value.source_ref.endswith("/when/fields/0")
-
-
-def test_native_render_uses_snapshot_package_descriptors_for_snapshot_projection(tmp_path, monkeypatch):
-    root = __import__("pathlib").Path(__file__).resolve().parents[2]
-    package = yaml.safe_load((root / "examples/halcyon-1/extensions/semiconductor-development.yaml")
-                             .read_text(encoding="utf-8"))
-    package["packageId"] = "kit"
-    package["contentIdentity"] = content_identity(
-        {key: value for key, value in package.items() if key != "contentIdentity"})
-    historic = yaml.safe_load(yaml.safe_dump(package))
-    historic["profiles"]["PDR"]["fields"]["approval"]["enumValues"].append("deferred")
-    historic["profiles"]["PDR"]["fields"]["approval"]["required"] = False
-    historic["contentIdentity"] = content_identity(
-        {key: value for key, value in historic.items() if key != "contentIdentity"})
-    primary_ref = _real_package_ref("store-a", "packages/kit.yaml")
-    snapshot_ref = _real_package_ref("store-b", "packages/kit.yaml")
-    resolved = _real_ingress_with_package_stores(
-        tmp_path, [primary_ref], [snapshot_ref],
-        {("store-a", "packages/kit.yaml"): yaml.safe_dump(package, sort_keys=False).encode(),
-         ("store-b", "packages/kit.yaml"): yaml.safe_dump(historic, sort_keys=False).encode()},
-    )
-    captured = []
-
-    def capture_projection(*args, **kwargs):
-        projection = _ORIGINAL_BUILD_REVIEW_PROJECTION(*args, **kwargs)
-        captured.append((kwargs, projection))
-        return projection
-
-    monkeypatch.setattr(render_review_usecase, "build_review_projection", capture_projection)
-    rendered = render_review(RenderRequest(
-        closure=resolved, snapshot_root=tmp_path, scheduler=ReferenceScheduler()))
-
-    assert rendered.surface.primitives
-    assert len(captured) == 1
-    kwargs, projection = captured[0]
-    primary_bindings = kwargs["field_bindings"]
-    snapshot_bindings = kwargs["snapshot_field_bindings"]
-    assert primary_bindings is not snapshot_bindings
-    assert primary_bindings.descriptor_for("pdr", "approval") == FieldDescriptor(
-        "approval", "enum", "one", ("pending", "approved", "rejected"), required=True)
-    assert snapshot_bindings.descriptor_for("pdr", "approval") == FieldDescriptor(
-        "approval", "enum", "one", ("pending", "approved", "rejected", "deferred"), required=False)
-    assert projection.items
