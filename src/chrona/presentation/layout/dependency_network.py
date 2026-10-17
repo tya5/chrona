@@ -20,6 +20,10 @@ from chrona.presentation.layout.surface_quality import SlotPlacement, SurfaceLay
 from chrona.presentation.layout.slot_heading import complete_slot_headings, content_slot
 from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.layout.surface_heading import place_surface_headings
+from chrona.presentation.layout.surface_deadlines import (
+    DeadlineInkStyle, complete_deadline_ink, deadline_ink_style,
+)
+from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
 
 
 @dataclass(frozen=True)
@@ -53,6 +57,7 @@ class DependencyNetworkLayout:
     diagnostics: tuple[str, ...] = ()
     canvas_overlays: CanvasOverlays | None = None
     canvas_warning: CanvasViewportWarning | None = None
+    shapes: tuple[ShapePlacement, ...] = ()
 
 
 def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None, bounds: Rect,
@@ -88,15 +93,29 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None
         title_placement = _place_title(_title_measurement(measured_sources), title_bounds)
         heading_text = (title_placement,)
     measured = _node_measurements(nodes, measured_sources)
+    deadline_contents = {node.object_id: node.deadline for node in nodes
+                         if getattr(node, "deadline", None) is not None}
+    deadline_measured = _deadline_measurements(deadline_contents, measured_sources) if deadline_contents else {}
+    deadline_style = deadline_ink_style(theme_tokens) if deadline_contents else None
     ranks = _ranks(nodes, edges)
     by_rank: dict[int, list[Any]] = {}
     for node in sorted(nodes, key=lambda item: (ranks[item.object_id], item.order_key, item.object_id)):
         by_rank.setdefault(ranks[node.object_id], []).append(node)
     placed = _place_nodes(by_rank, ranks, measured, bounds, min_inline, min_block, gap,
-                          flow_direction == "horizontal")
-    node_text = tuple(_place_node_text(node, measured[node.object_id]) for node in placed)
-    text = heading_text + node_text
-    _assert_surface_quality(placed, node_text)
+                          flow_direction == "horizontal", deadline_measured, deadline_style)
+    if deadline_contents:
+        node_text, deadline_text, deadline_shapes = _place_node_contents(
+            placed, measured, deadline_contents, deadline_measured, deadline_style)
+        text = heading_text + node_text + deadline_text
+        deadline_ink = complete_deadline_ink(
+            deadline_shapes, deadline_style,
+            outline_placement_id=lambda shape: f"deadline-outline:{shape.placement_id}")
+        deadline_shapes = (*deadline_ink.outlines, *deadline_shapes)
+    else:
+        node_text = tuple(_place_node_text(node, measured[node.object_id]) for node in placed)
+        text = heading_text + node_text
+        deadline_shapes = ()
+    _assert_surface_quality(placed, node_text + (deadline_text if deadline_contents else ()))
     requested_canvas = canvas_bounds or (_union(title_bounds, bounds) if title_bounds is not None else bounds)
     canvas = _completed_canvas(requested_canvas, title_bounds, tuple(node.bounds for node in placed),
                                tuple(item.bounds for item in text))
@@ -140,7 +159,7 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None
         stroke_shapes = (texture.shape, *stroke_shapes)
     strokes = complete_aligned_strokes((), stroke_shapes, (), theme_tokens)
     return DependencyNetworkLayout(tuple(placed), text, relations, canvas, warnings, patterns, texture, strokes,
-                                   canvas_overlays=canvas_overlays)
+                                   canvas_overlays=canvas_overlays, shapes=tuple(deadline_shapes))
 
 
 def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> DependencyNetworkLayout:
@@ -196,7 +215,8 @@ def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> Depende
     placed = replace(placed,
         nodes=tuple(replace(node, slot_id=slots["network"].slot_id) for node in placed.nodes),
         text=tuple(replace(item, slot_id=slot_owners[item.slot_id]) for item in placed.text),
-        relations=tuple(replace(item, slot_id=slots["network"].slot_id) for item in placed.relations))
+        relations=tuple(replace(item, slot_id=slots["network"].slot_id) for item in placed.relations),
+        shapes=tuple(replace(item, slot_id=slots["network"].slot_id) for item in placed.shapes))
     if headings.text:
         placed = replace(placed, text=(*headings.text, *placed.text))
     warning = canvas_viewport_warning(
@@ -230,6 +250,15 @@ def _node_measurements(nodes: tuple[Any, ...], measured_sources: MeasuredSources
     return found
 
 
+def _deadline_measurements(contents: Mapping[str, Any], measured_sources: MeasuredSources) -> Mapping[str, MeasuredTextRun]:
+    found = {item.source_ref: item for item in measured_sources.run_measurements.get("network-deadlines", ())
+             if item.source_ref is not None}
+    missing = sorted(object_id for object_id in contents if object_id not in found)
+    if missing:
+        raise LayoutError("E_LAYOUT_NETWORK_MEASUREMENT", "/measuredSources/network-deadlines/" + missing[0])
+    return found
+
+
 def _ranks(nodes: tuple[Any, ...], edges: tuple[Any, ...]) -> Mapping[str, int]:
     incoming = {node.object_id: [] for node in nodes}
     outgoing = {node.object_id: [] for node in nodes}
@@ -255,10 +284,16 @@ def _ranks(nodes: tuple[Any, ...], edges: tuple[Any, ...]) -> Mapping[str, int]:
 def _place_nodes(by_rank: Mapping[int, list[Any]], ranks: Mapping[str, int],
                  measured: Mapping[str, MeasuredTextRun], bounds: Rect,
                  min_inline: Decimal, min_block: Decimal, gap: Decimal,
-                 horizontal: bool) -> list[NetworkNodePlacement]:
-    dimensions = {node.object_id: (max(min_inline, measured[node.object_id].inline_size),
-                                   max(min_block, measured[node.object_id].block_size))
-                  for members in by_rank.values() for node in members}
+                 horizontal: bool, deadline_measured: Mapping[str, MeasuredTextRun] | None = None,
+                 deadline_style: DeadlineInkStyle | None = None) -> list[NetworkNodePlacement]:
+    if deadline_measured:
+        dimensions = {node.object_id: _node_content_size(
+            measured[node.object_id], deadline_measured.get(node.object_id), deadline_style,
+            min_inline, min_block) for members in by_rank.values() for node in members}
+    else:
+        dimensions = {node.object_id: (max(min_inline, measured[node.object_id].inline_size),
+                                       max(min_block, measured[node.object_id].block_size))
+                      for members in by_rank.values() for node in members}
     rank_ids = tuple(sorted(by_rank))
     extent = {rank: max(dimensions[node.object_id][0 if horizontal else 1] for node in members)
               for rank, members in by_rank.items()}
@@ -289,6 +324,107 @@ def _place_nodes(by_rank: Mapping[int, list[Any]], ranks: Mapping[str, int],
             result.append(NetworkNodePlacement(node.object_id, ranks[node.object_id], rect,
                                                 input_port, output_port, node.critical))
     return result
+
+
+def _deadline_footer_size(measured: MeasuredTextRun, style: DeadlineInkStyle | None) -> tuple[Decimal, Decimal, Decimal, Decimal]:
+    """Return footer inline/block demand, glyph side, and the measured text gap."""
+    if style is None or style.stroke_width <= 0:
+        _, _, text_height = _text_vertical_envelope(measured)
+        return measured.inline_size, text_height, Decimal(0), Decimal(0)
+    side = style.reach * measured.block_size
+    margin = Decimal(str(style.margin))
+    painted_side = side + 2 * margin
+    gap = Decimal(str(measured.font_size))
+    _, _, text_height = _text_vertical_envelope(measured)
+    return painted_side + gap + measured.inline_size, max(painted_side, text_height), side, gap
+
+
+def _node_content_size(title: MeasuredTextRun, footer: MeasuredTextRun | None,
+                       style: DeadlineInkStyle | None, min_inline: Decimal,
+                       min_block: Decimal) -> tuple[Decimal, Decimal]:
+    if footer is None:
+        return max(min_inline, title.inline_size), max(min_block, title.block_size)
+    footer_inline, footer_block, _, _ = _deadline_footer_size(footer, style)
+    _, _, title_height = _text_vertical_envelope(title)
+    return max(min_inline, title.inline_size, footer_inline), max(min_block, title_height + footer_block)
+
+
+def _text_vertical_envelope(measured: MeasuredTextRun) -> tuple[Decimal, Decimal, Decimal]:
+    """Return measured Text bounds relative to the line origin, including baseline bearings."""
+    top = measured.baseline - Decimal(str(measured.font_size))
+    bottom = top + measured.block_size
+    envelope_top = min(Decimal(0), top)
+    envelope_bottom = max(measured.block_size, bottom)
+    return envelope_top, envelope_bottom, envelope_bottom - envelope_top
+
+
+def _place_node_contents(nodes: list[NetworkNodePlacement], titles: Mapping[str, MeasuredTextRun],
+                          contents: Mapping[str, Any], footers: Mapping[str, MeasuredTextRun],
+                          style: DeadlineInkStyle | None) -> tuple[tuple[TextPlacement, ...],
+                                                                  tuple[TextPlacement, ...],
+                                                                  tuple[ShapePlacement, ...]]:
+    title_text: list[TextPlacement] = []
+    footer_text: list[TextPlacement] = []
+    shapes: list[ShapePlacement] = []
+    for node in nodes:
+        title = titles[node.object_id]
+        footer = footers.get(node.object_id)
+        if footer is None:
+            title_text.append(_place_node_text(node, title))
+            continue
+        footer_inline, footer_block, side, gap = _deadline_footer_size(footer, style)
+        title_top, _, title_block = _text_vertical_envelope(title)
+        footer_top, _, _ = _text_vertical_envelope(footer)
+        content_block = title_block + footer_block
+        block_start = node.bounds.block + (node.bounds.block_size - content_block) / 2
+        title_inline = node.bounds.inline + (node.bounds.inline_size - title.inline_size) / 2
+        title_text.append(_place_node_text_at(node, title, title_inline, block_start - title_top))
+
+        footer_inline_start = node.bounds.inline + (node.bounds.inline_size - footer_inline) / 2
+        glyph_margin = Decimal(str(style.margin)) if style is not None and style.stroke_width > 0 else Decimal(0)
+        row_block = block_start + title_block
+        if side > 0:
+            x = footer_inline_start + glyph_margin
+            y = row_block + (footer_block - side - 2 * glyph_margin) / 2 + glyph_margin
+            bottom = y + side
+            paint_order = 210 + (style.paint_order if style is not None else 0)
+            subject = DiagnosticSubject.project_object(node.object_id, titles[node.object_id].content)
+            shapes.append(ShapePlacement(
+                f"deadline-network-tick:{node.object_id}", node.object_id, "Path",
+                Rect(x, y, Decimal(0), side),
+                ((float(x), float(y)), (float(x), float(bottom))),
+                slot_id=node.slot_id, paint_order=paint_order, semantic_id="deadlineMark", subjects=(subject,)))
+            if contents[node.object_id].slipped:
+                shapes.append(ShapePlacement(
+                    f"deadline-network-slip:{node.object_id}", node.object_id, "Path",
+                    Rect(x, bottom, side, Decimal(0)),
+                    ((float(x), float(bottom)), (float(x + side), float(bottom))),
+                    slot_id=node.slot_id, paint_order=paint_order, semantic_id="deadlineMark", subjects=(subject,)))
+        text_x = footer_inline_start + (side + 2 * glyph_margin + gap if side > 0 else Decimal(0))
+        footer_baseline = row_block - footer_top + footer.baseline
+        text_y = footer_baseline - Decimal(str(footer.font_size))
+        subject = DiagnosticSubject.project_object(node.object_id, titles[node.object_id].content)
+        footer_text.append(TextPlacement(
+            f"deadline-network-label:{node.object_id}", node.object_id, footer.content,
+            Rect(text_x, text_y, footer.inline_size, footer.block_size), footer.typography_role,
+            baseline=(float(text_x), float(footer_baseline)), lines=(footer.content,),
+            font_family=footer.font_family, font_weight=footer.font_weight,
+            font_size=footer.font_size, line_height=footer.line_height,
+            letter_spacing=footer.letter_spacing, text_transform=footer.text_transform,
+            numeric_spacing=footer.numeric_spacing, horizontal_scale=footer.horizontal_scale,
+            font_asset_identity=footer.font_asset_identity, runs=footer.fallback_runs,
+            collision_region="network", collision_domain=CollisionDomain("network", "nodes"),
+            slot_id=node.slot_id, semantic_id="deadlineCaption", subjects=(subject,)))
+    return tuple(title_text), tuple(footer_text), tuple(shapes)
+
+
+def _place_node_text_at(node: NetworkNodePlacement, measured: MeasuredTextRun,
+                        inline: Decimal, block: Decimal) -> TextPlacement:
+    baseline = block + measured.baseline
+    return replace(_place_node_text(node, measured),
+                   bounds=Rect(inline, baseline - Decimal(str(measured.font_size)),
+                               measured.inline_size, measured.block_size),
+                   baseline=(float(inline), float(baseline)))
 
 
 def _place_node_text(node: NetworkNodePlacement, measured: MeasuredTextRun) -> TextPlacement:
@@ -358,8 +494,10 @@ def _assert_surface_quality(nodes: list[NetworkNodePlacement], text: tuple[TextP
             raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/network")
         if any(intersects(node.bounds, other.bounds) for other in nodes[index + 1:]):
             raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/network")
-    for label, node in zip(text, nodes, strict=True):
-        if not _contains(node.bounds, label.bounds):
+    by_id = {node.object_id: node for node in nodes}
+    for label in text:
+        node = by_id.get(label.source_ref)
+        if node is not None and not _contains(node.bounds, label.bounds):
             raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", f"/projection/network/nodes/{node.object_id}")
 
 

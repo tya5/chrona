@@ -25,6 +25,19 @@ def surface_source_inputs(project, view, projection, summary, *, content, table,
                           content=content, table=table, heading=heading, view_heading=view_heading)
 
 
+def network_deadline_source_input(projection: Any, theme: Mapping[str, Any]) -> SourceInput:
+    """Supplemental measured node-footer runs; this is not an authorable Layout source."""
+    network = getattr(projection, "network", None)
+    tokens = ThemeTokenView(theme)
+    role = "deadline-caption" if tokens.has_role("deadline-caption") else "text"
+    runs = tuple(
+        SourceTextRun(node.deadline.label, role, node.object_id)
+        for node in getattr(network, "nodes", ())
+        if node.deadline is not None
+    )
+    return SourceInput(runs=runs, typography_role=role, content_present=bool(runs))
+
+
 def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
                    summary: SummaryContent, annotation_input: SourceInput | None = None, *,
                    content: SurfaceContentInput,

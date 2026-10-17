@@ -122,7 +122,10 @@ def test_deadline_shapes_inherit_typed_host_subject_for_ticks_and_runs():
         plot=Rect(Decimal(0), Decimal(0), Decimal(100), Decimal(100)),
         scale=ScalePlacement("surface", "time", date(2026, 1, 1), date(2026, 1, 11), 0, 100, 0, 10),
     )
-    theme = SimpleNamespace(deadline_mark=lambda _role: (.8, 4), deadline_outline_width=lambda _role: 0)
+    theme = SimpleNamespace(
+        deadline_mark=lambda _role: (.8, 4), deadline_outline_width=lambda _role: 0,
+        number=lambda _role, _member: 1, wobble_intent=lambda _role: None,
+    )
 
     result = compose_deadline_marks(base=base, theme_tokens=theme,
         deadlines=(ReviewDeadline("project/11", deadline_day, finish_day, True, 3),),
