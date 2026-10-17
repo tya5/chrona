@@ -434,6 +434,23 @@ Before Scene production is accepted, test point/span/forecast/comparison
 bindings with and without the existing gate declaration, exact Style identity,
 and unchanged unstyled output. Other S1c identity/frame work remains reusable.
 
+Theme capability correction: the live Theme schema already admits arbitrary
+role names and mark/symbol properties, and the generic token readers consume
+them, but the capability projection rejects their combination. Admit the
+bounded mark-geometry and `symbol` properties through a named Style-selected
+mark consumer for ordinary authored role names and existing Rect/Symbol role
+contracts. Reuse one property-family definition with the canonical mark
+registrations, not a second name table or a validator bypass. Keep reserved
+generated namespaces and specialized fill-only state contracts unchanged;
+unknown properties and unsupported catalogue-pattern applicability still fail.
+Assignment completion still requires the exact bindings used by its canonical
+primitive family and returns `E_STYLE_ROLE_INCOMPATIBLE` when incomplete.
+Review against Spec07/49/56 and the existing consumer gate: no schema or new
+syntax is needed; this connects already admitted data to implemented generic
+consumers without weakening scheduling, canonical Scene kinds or contrast.
+Verify real custom-role Theme ingress and the neutral YAML→Style→Layout path,
+not only manually assembled token views; retain the unrelated rejection tests.
+
 Architecture review: this implements Spec07/49's Style→Theme→Layout boundary,
 uses Spec13 resource closure, preserves Spec04 scheduling and Spec08/46 passive
 Scene/adapters, and shares Issue344's declarations/accessor. Update normative
