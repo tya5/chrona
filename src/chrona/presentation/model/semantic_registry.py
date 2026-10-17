@@ -203,6 +203,9 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("finishDelta", "label", "finish-delta", "variance-on-track", "variance-on-track"),
     _binding("varianceAhead", "label", "finish-delta", "variance-ahead", "variance-ahead"),
     _binding("varianceBehind", "label", "finish-delta", "variance-behind", "variance-behind"),
+    _binding("forecastFinishDelta", "label", "finish-delta", "variance-on-track", "variance-on-track"),
+    _binding("forecastVarianceAhead", "label", "finish-delta", "variance-ahead", "variance-ahead"),
+    _binding("forecastVarianceBehind", "label", "finish-delta", "variance-behind", "variance-behind"),
     _binding("milestoneDigestEntry", "label", "milestone-digest-entry", "text", "text", ContrastClass.GROUND_TEXT),
     # Relations.
     _binding("dependency", "line", "dependency", "dependency", "dependency"),
@@ -287,10 +290,16 @@ def axis_label_semantic_ids() -> tuple[str, ...]:
     return ("axisLabel", "axisLabel2", "axisLabel3")
 
 
+FORECAST_DELTA_SEMANTICS = frozenset({"forecastFinishDelta", "forecastVarianceAhead", "forecastVarianceBehind"})
+
+
 def label_chip_semantic(label_semantic_id: str) -> str | None:
     """Return the chip semantic a label may carry, keyed by the label's own semantic (#428)."""
+    if label_semantic_id in FORECAST_DELTA_SEMANTICS:
+        return "finishDeltaChip"
     return {"asOfLabel": "asOfLabelChip", "memberLabel": "memberLabelChip",
-            "finishDelta": "finishDeltaChip", "periodLabel": "periodLabelChip"}.get(label_semantic_id)
+            "finishDelta": "finishDeltaChip",
+            "periodLabel": "periodLabelChip"}.get(label_semantic_id)
 
 
 def semantic_binding(semantic_id: str) -> SemanticBinding:

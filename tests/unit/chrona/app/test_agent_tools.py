@@ -56,7 +56,7 @@ BAD_SCHEDULE = "version: timeline/v0.7\nobjects: {a: {type: task, title: A, sche
 FILES = {
     "small.yaml": SMALL, "cycle.yaml": CYCLE, "bad.yaml": BAD_SCHEDULE,
     "broken.yaml": "a: [\n", "not-a-mapping.yaml": "- a\n- b\n", "empty.yaml": "",
-    "plans/nested.yaml": SMALL,
+    "plans/nested.yaml": SMALL, "snapshot.yaml": SMALL,
 }
 SPECS = {spec.name: spec for spec in tool_specs()}
 VALIDATORS = {name: Draft202012Validator(spec.output_schema, format_checker=FormatChecker()) for name, spec in SPECS.items()}
@@ -137,7 +137,7 @@ def test_no_tool_accepts_an_integrity_font_or_filesystem_override():
         "render_review": {"contextReference", "storeConfig", "inline"},
         "compare_baseline": {"baselineReference", "candidateReference", "storeConfig"},
         "render_draft": {"project", "actual", "preset", "view", "theme", "scheme", "layout", "viewport", "locale",
-                         "format", "inline"},
+                         "snapshot", "forecast", "format", "inline"},
     }
 
 
@@ -173,6 +173,7 @@ def test_an_unknown_tool_is_a_protocol_error(scope):
     ("render_draft", {"project": "small.yaml", "system_fonts": True}),
     ("render_draft", {"project": "small.yaml", "allow_missing_content_identity": True}),
     ("render_draft", {"project": "small.yaml", "font_metrics": "m.json"}),
+    ("render_draft", {"project": "small.yaml", "forecast": "yes"}),
 ])
 def test_malformed_arguments_are_a_protocol_error(scope, name, arguments):
     with pytest.raises(InvalidArgumentsError):
@@ -413,6 +414,48 @@ def test_render_draft_actual_view_theme_scheme_and_layout_are_workspace_paths(sc
     result = run(scope, "render_draft", project="small.yaml", view="looks/view.yaml", theme="looks/theme.yaml",
                  scheme="looks/scheme.yaml", layout="looks/layout.yaml", inline="none")
     assert result.structured["status"] == "ok"
+
+
+def test_render_draft_forwards_forecast_and_workspace_snapshot_without_mutating_context(scope, workspace, monkeypatch):
+    captured = []
+
+    def fake_render(request):
+        captured.append(request)
+        return SimpleNamespace(
+            artifact=RenderArtifact("svg", "image/svg+xml", b"<svg/>", "test"),
+            rendered=SimpleNamespace(warning_records=(), preset_visual_profile_fallback=None, info_diagnostics=()),
+        )
+
+    monkeypatch.setattr(agent_tools, "render_draft", fake_render)
+    monkeypatch.setattr(agent_tools, "warning_payloads", lambda _rendered: [])
+    monkeypatch.setattr(agent_tools, "_rasterizer_importable", lambda: False)
+    result = run(scope, "render_draft", project="small.yaml", snapshot="snapshot.yaml",
+                 forecast=True, inline="none")
+    assert result.structured["status"] == "ok"
+    assert len(captured) == 1
+    request = captured[0]
+    assert request.forecast is True
+    assert Path(request.snapshot) == workspace / "snapshot.yaml"
+    assert Path(request.snapshot).is_relative_to(scope.root)
+    assert result.attachments == ()
+
+
+def test_render_draft_forecast_defaults_false_and_snapshot_is_optional(scope, workspace, monkeypatch):
+    captured = []
+
+    def fake_render(request):
+        captured.append(request)
+        return SimpleNamespace(
+            artifact=RenderArtifact("svg", "image/svg+xml", b"<svg/>", "test"),
+            rendered=SimpleNamespace(warning_records=(), preset_visual_profile_fallback=None, info_diagnostics=()),
+        )
+
+    monkeypatch.setattr(agent_tools, "render_draft", fake_render)
+    monkeypatch.setattr(agent_tools, "warning_payloads", lambda _rendered: [])
+    monkeypatch.setattr(agent_tools, "_rasterizer_importable", lambda: False)
+    result = run(scope, "render_draft", project="small.yaml", inline="none")
+    assert result.structured["status"] == "ok"
+    assert captured[0].forecast is False and captured[0].snapshot is None
 
 
 def test_a_workspace_preset_cannot_name_a_member_outside_its_directory(scope, workspace):
@@ -693,7 +736,7 @@ def test_no_cap_note_appears_when_nothing_is_omitted(scope, monkeypatch):
 # --- path scoping through every path argument ----------------------------------------------------------------
 
 PATH_ARGUMENTS = [("validate_project", "project"), ("schedule_project", "project"), ("render_draft", "project"),
-                  ("render_draft", "actual"), ("render_draft", "view"), ("render_draft", "theme"),
+                  ("render_draft", "actual"), ("render_draft", "snapshot"), ("render_draft", "view"), ("render_draft", "theme"),
                   ("render_draft", "scheme"), ("render_draft", "layout"), ("render_draft", "preset")]
 ESCAPES = [("../outside.yaml", "E_MCP_PATH_SYNTAX"), ("plans/../../outside.yaml", "E_MCP_PATH_SYNTAX"),
            ("/etc/hosts", "E_MCP_PATH_SYNTAX"), ("C:/Windows/x.yaml", "E_MCP_PATH_SYNTAX"),

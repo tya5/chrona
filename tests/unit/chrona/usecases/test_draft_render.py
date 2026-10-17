@@ -60,6 +60,51 @@ def test_typesetter_identity_defaults_from_the_target():
     assert typesetter_identity(None, "0.13.1", None, "typst").version == "0.13.1"
 
 
+@pytest.mark.parametrize(("forecast", "expected"), [(False, False), (True, True)])
+def test_draft_request_forwards_forecast_to_common_closure(monkeypatch, project, forecast, expected):
+    import chrona.usecases.draft_render as owner
+
+    seen = {}
+
+    def capture(**kwargs):
+        seen.update(kwargs)
+        raise RuntimeError("stop after closure admission")
+
+    monkeypatch.setattr(owner, "resolve_preset_argument", lambda _value: (pathlib.Path("preset.yaml"), None))
+    monkeypatch.setattr(owner, "resolve_draft_render", capture)
+
+    with pytest.raises(RuntimeError, match="stop after closure admission"):
+        render_draft(DraftRenderRequest(project=project, target_kind="svg", forecast=forecast))
+
+    assert seen["forecast"] is expected
+
+
+def test_forecast_snapshot_is_not_reported_as_undrawn():
+    from types import SimpleNamespace
+    from chrona.usecases.draft_render import _undrawn_input_notes
+
+    request = DraftRenderRequest(project="project.yaml", target_kind="svg",
+                                 snapshot="snapshot.yaml", forecast=True)
+    assert _undrawn_input_notes(request, SimpleNamespace()) == ()
+
+
+def test_forecast_findings_are_rendered_as_informational_payloads():
+    from types import SimpleNamespace
+    from chrona.core.diagnostics import Diagnostic
+    from chrona.presentation.model.info_diagnostics import ForecastInfo
+
+    rendered = SimpleNamespace(
+        warning_records=(), preset_visual_profile_fallback=None,
+        info_diagnostics=(ForecastInfo(Diagnostic(
+            "E_FIXED_TARGET_VIOLATION", "Forecast misses fixed target", "/objects/release")),),
+    )
+
+    assert warning_payloads(rendered) == [{
+        "code": "E_FIXED_TARGET_VIOLATION", "severity": "info",
+        "message": "Forecast misses fixed target", "path": "/objects/release",
+    }]
+
+
 def test_a_preset_value_is_a_path_only_with_a_separator_or_yaml_suffix():
     assert looks_like_preset_path("dir/preset.yaml") and looks_like_preset_path("p.yml")
     assert not looks_like_preset_path("editorial")

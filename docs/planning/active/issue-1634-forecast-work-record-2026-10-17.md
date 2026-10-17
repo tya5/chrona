@@ -14,11 +14,17 @@ errors; the observed dependency miss is reported without changing either date.
 F2 candidate now separates source facts from active placements/deltas, registers
 forecast Scene/lane/window identities, and completes independent required plot
 deltas and full table/legend text. Focused groups: 314 passed and 92 passed;
-schema equivalence L1 passes the two declared Scene admission deltas. Four stale
-merged L1 entries were retired with the verifier's historical proof. The first
-full equivalence run failed only the then-undeclared Scene delta; rerun all
-layers after F3's Context widening. No PNG, ingress, byte or release acceptance
-is claimed yet. F3 common ingress is next.
+schema equivalence passes all three layers, including the optional Context
+field and two Scene admission deltas. Four stale merged L1 entries were retired
+with the verifier's historical proof. F3 common ingress and typed findings are
+implemented as a WIP candidate: ingress-focused tests passed (260), followed by
+required-label/Scene checks (101) and render integration checks (52).
+No PNG, main-byte or release acceptance is claimed. Boundary review found
+folded group-header points omit required deltas and lose forecast Scene identity;
+resolve this against the existing presentation contract before acceptance.
+Work is parked at the reviewer's reordered board: #1632 is now dev A row 1.
+Resume by closing this presentation gap, checking per-occurrence delta coverage,
+updating the skill, and running the two actual trial PNGs and base comparison.
 [Reviewer answers](https://github.com/tya5/chrona/issues/1634#issuecomment-6230794260)
 approve retained declared units, finish-only placement with an unobserved-start
 finding, and child-envelope precedence with a named group-observation finding.

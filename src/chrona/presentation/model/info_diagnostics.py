@@ -4,6 +4,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 import json
+from typing import ClassVar
+
+from chrona.core.diagnostics import Diagnostic
 
 
 def _shown(value: object) -> str:
@@ -13,6 +16,44 @@ def _shown(value: object) -> str:
 
 def _diagnostic_error(detail: str) -> ValueError:
     return ValueError(f"E_PRESENTATION_INFO_INVALID: {detail}")
+
+
+@dataclass(frozen=True)
+class ForecastInfo:
+    """One published informational finding produced by the forecast analysis."""
+
+    diagnostic: Diagnostic
+
+    _ALLOWED_CODES: ClassVar[frozenset[str]] = frozenset({
+        "I_FORECAST_MOVED",
+        "I_FORECAST_START_UNOBSERVED",
+        "I_FORECAST_ROLLUP_OBSERVATION_CONFLICT",
+        "E_FIXED_TARGET_VIOLATION",
+    })
+
+    def __post_init__(self) -> None:
+        if (not isinstance(self.diagnostic, Diagnostic)
+                or self.diagnostic.id not in self._ALLOWED_CODES):
+            identifier = getattr(self.diagnostic, "id", None)
+            raise _diagnostic_error(
+                f"ForecastInfo diagnosticId={_shown(identifier)}; expected one of "
+                f"{tuple(sorted(self._ALLOWED_CODES))!r}")
+
+    @property
+    def code(self) -> str:
+        return self.diagnostic.id
+
+    def payload(self) -> dict[str, object]:
+        result: dict[str, object] = {"message": self.diagnostic.message}
+        if self.diagnostic.path is not None:
+            result["path"] = self.diagnostic.path
+        if self.diagnostic.details is not None:
+            result["details"] = dict(self.diagnostic.details)
+        return result
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps(
+            self.payload(), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
 @dataclass(frozen=True)
@@ -401,6 +442,6 @@ class ScaleValuesFolded:
         return self.code + ":" + json.dumps(self.payload(), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
-PresentationInfo = (ScaleValuesFolded | FontGlyphFallback | SuppressedPlotLabels | DeadlineCaptionsDropped | PaintOmission | RelationRoutingSummary | RelationSearchBudgetHit
+PresentationInfo = (ScaleValuesFolded | FontGlyphFallback | SuppressedPlotLabels | DeadlineCaptionsDropped | PaintOmission | ForecastInfo | RelationRoutingSummary | RelationSearchBudgetHit
                     | RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession
                     | RelationHintReceipt | RelationHintSummary | UnboundSummarySource | UnboundFieldRole)

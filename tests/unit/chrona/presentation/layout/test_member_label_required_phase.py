@@ -58,7 +58,7 @@ def test_forecast_delta_is_required_separate_from_optional_name_and_before_route
     before, after = requests.routing_phases(first_fit=True)
     assert len(before) == 1 and len(after) == 1
     delta, name = before[0], after[0]
-    assert delta.content == "+2d*" and delta.semantic_id == "finishDelta"
+    assert delta.content == "+2d*" and delta.semantic_id == "forecastVarianceBehind"
     assert delta.overflow == "diagnose" and delta.required_before_routes
     assert name.content == "Review gate" and name.overflow == "suppress"
     assert delta.placement_id == "variance:child-row:gate"
@@ -165,6 +165,17 @@ def test_reserve_only_uses_rule_obstacle_and_registers_full_candidate_footprint(
     assert footprint.geometry.left < footprint.geometry.right
     assert not index.collisions(footprint.geometry, classes=("rule",))
     assert not batch.diagnostics
+
+
+def test_generic_required_text_translates_diagnose_into_bounded_refusal_not_suppression():
+    context = _placement_context()
+    request = replace(_request("variance:a", "finishDelta"), content="+2d*", overflow="diagnose")
+    placed = place_member_labels(context, (request,), SurfaceObstacleIndex())
+    assert placed.text[0].required and placed.text[0].content == "+2d*"
+    blocked = SurfaceObstacleIndex()
+    blocked.add(SurfaceObstacle("block", "mark", "timeline", ObstacleRect(0, 0, 200, 100)))
+    with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_UNPLACEABLE"):
+        place_member_labels(context, (request,), blocked)
 
 
 def test_final_ordinary_member_label_avoids_asof_rule():

@@ -1,0 +1,66 @@
+"""Common opt-in ingress reaches completed Layout/Scene, not an adapter shift."""
+from dataclasses import replace
+
+import yaml
+import pytest
+
+from chrona.usecases.draft_render import DraftRenderRequest, render_draft, warning_payloads
+from chrona.usecases.render_review import RenderFailed, RenderRejected
+
+
+def _request(tmp_path):
+    project = {"version": "timeline/v0.7", "project": {"id": "forecast-render", "calendar": "weekdays"},
+               "calendars": {"weekdays": {"working_days": ["mon", "tue", "wed", "thu", "fri"]}},
+               "objects": {
+                   "a": {"type": "task", "title": "Design", "schedule": {"mode": "fixed-span", "start": "2026-01-05", "end": "2026-01-07"}},
+                   "b": {"type": "task", "title": "Build", "schedule": {"mode": "scheduled", "amount": "2wd"}}},
+               "relations": [{"id": "a-b", "type": "dependency", "from": {"object": "a", "endpoint": "end"},
+                              "to": {"object": "b", "endpoint": "start"}}]}
+    actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "observed",
+              "body": {"asOf": "2026-01-09", "observations": [
+                  {"id": "a-1", "projectObjectId": "a", "sequence": 1, "actual": {"start": "2026-01-08"}}]}}
+    path, actual_path = tmp_path / "project.yaml", tmp_path / "actual.yaml"
+    path.write_text(yaml.safe_dump(project, sort_keys=False), encoding="utf-8")
+    actual_path.write_text(yaml.safe_dump(actual), encoding="utf-8")
+    return DraftRenderRequest(path, "svg", preset="technical-print", actual=actual_path)
+
+
+def test_forecast_draft_completes_truthful_marks_required_deltas_and_info(tmp_path):
+    result = render_draft(replace(_request(tmp_path), forecast=True))
+    surface = result.rendered.surface
+    marks = [primitive for primitive in surface.primitives if primitive.purpose == "forecast"]
+    assert {mark.source_ref for mark in marks} == {"a", "b"}
+    assert all(mark.visual_role == "planned" for mark in marks)
+    deltas = [primitive for primitive in surface.primitives if primitive.purpose == "finish-delta"]
+    assert len(deltas) == 2
+    assert all(primitive.text.endswith("*") for primitive in deltas)
+    payloads = warning_payloads(result.rendered)
+    moved = [item for item in payloads if item["code"] == "I_FORECAST_MOVED"]
+    assert len(moved) == 1 and moved[0]["details"]["count"] == 2
+    assert "Forecast (* estimated)" in result.artifact.content.decode()
+
+
+def test_omitted_and_false_forecast_keep_artifact_bytes(tmp_path):
+    request = _request(tmp_path)
+    omitted = render_draft(request)
+    explicit_false = render_draft(replace(request, forecast=False))
+    assert omitted.artifact.content == explicit_false.artifact.content
+    assert not any(primitive.purpose == "forecast" for primitive in omitted.rendered.surface.primitives)
+
+
+def test_forecast_requires_actual_and_a_capable_view_without_changing_default_preset(tmp_path):
+    request = _request(tmp_path)
+    with pytest.raises(RenderRejected) as missing:
+        render_draft(replace(request, actual=None, forecast=True))
+    assert missing.value.diagnostics[0].id == "E_FORECAST_ACTUAL_REQUIRED"
+    with pytest.raises(RenderFailed) as incapable:
+        render_draft(replace(request, preset=None, forecast=True))
+    assert incapable.value.code == "E_FORECAST_PRESENTATION_REQUIRED"
+
+
+def test_forecast_retains_snapshot_ghost_even_for_primary_comparison_view(tmp_path):
+    request = _request(tmp_path)
+    result = render_draft(replace(request, forecast=True, snapshot=request.project))
+    ghosts = {primitive.source_ref for primitive in result.rendered.surface.primitives if primitive.purpose == "snapshot"}
+    assert ghosts == {"a", "b"}
+    assert not any(note["code"] == "W_DRAFT_SNAPSHOT_NOT_DRAWN" for note in result.notes)

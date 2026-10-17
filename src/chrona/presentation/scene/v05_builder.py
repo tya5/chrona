@@ -14,7 +14,7 @@ from chrona.presentation.layout.pattern_placement import PatternedPlacement
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, ContrastClass, PrimitiveKind, contrast_binding, contrast_bindings,
-    inside_member_label_semantic, period_variant_role_base, semantic_binding)
+    inside_member_label_semantic, period_variant_role_base, semantic_binding, FORECAST_DELTA_SEMANTICS)
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.info_diagnostics import PaintOmission
@@ -790,7 +790,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             emit_semantic_text(label_id, semantic_id, label_paint, href=href, link_title=link_title,
                                project_item=item)
         variance_id = f"variance:{instance_id}"
-        if source_kind == "combined" and item.finish_delta is not None and variance_id in layout_text:
+        if (source_kind == "combined" and item.finish_delta is not None and variance_id in layout_text
+                and layout_text[variance_id].semantic_id not in FORECAST_DELTA_SEMANTICS):
             role = (semantic_binding("varianceBehind").scene_role if item.finish_delta > 0
                     else semantic_binding("varianceAhead").scene_role if item.finish_delta < 0
                     else semantic_binding("finishDelta").scene_role)
@@ -1069,8 +1070,15 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             ("summary:", "summaryMetric", None), ("note-index:", "noteIndex", None),
             ("relation-label:", "relationLabel", None),
         ))
+    primary_items = {item.object_id: item for item in projection.items}
     for placed in placed_surface.text:
         if placed.overflow == "suppressed":
+            continue
+        if placed.semantic_id in FORECAST_DELTA_SEMANTICS:
+            item = primary_items.get(placed.source_ref)
+            href, title = link_for_item(item, item.source_kind) if item is not None else (None, None)
+            emit_semantic_text(placed.placement_id, placed.semantic_id, href=href,
+                               link_title=title, project_item=item)
             continue
         if placed.semantic_id == "deadlineCaption":
             emit_semantic_text(placed.placement_id, placed.semantic_id,

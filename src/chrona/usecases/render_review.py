@@ -37,7 +37,8 @@ from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
 from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
-from chrona.presentation.model.info_diagnostics import PresentationInfo, UnboundSummarySource, FontGlyphFallback, ScaleValuesFolded
+from chrona.presentation.model.info_diagnostics import PresentationInfo, UnboundSummarySource, FontGlyphFallback, ScaleValuesFolded, ForecastInfo
+from chrona.usecases.forecast_schedule import forecast_schedule
 from chrona.presentation.model.field_role_view import resolve_field_role_view
 from chrona.presentation.contracts.resources import ContractError, ViewAllPeriods, ViewPeriod
 from chrona.presentation.model.preset_target import PresetVisualProfileFallback
@@ -288,6 +289,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     if request.progress is not None:
         request.progress.phase("schedule")
     projection, scenario_provenance, attachments, deadlines = _project_review(project, view, render_closure, manifests, request.scheduler)
+    profile_info += tuple(ForecastInfo(item) for item in projection.forecast_findings)
     unavailable = {item.details["figure"]: item.id for item in projection.unavailable_figures}
     unavailable_metrics = []
     if profile_connections.summary is not None:
@@ -747,6 +749,11 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
     if ordering:
         raise RenderRejected(list(ordering))
     actual = closure.actual_set.observations_input if closure.actual_set is not None else None
+    forecast = forecast_schedule(project, result, actual, scheduler) if getattr(closure.context, "forecast", False) else None
+    if forecast is not None:
+        if not forecast.ok:
+            raise RenderRejected(forecast.diagnostics)
+        _require_forecast_presentation(view, closure.layout_profile.layout_input)
     snapshot_project = closure.snapshot_project.scheduler_input if closure.snapshot_project is not None else None
     snapshot_result = scheduler.schedule(snapshot_project) if snapshot_project is not None else None
     if snapshot_result is not None and not snapshot_result.ok:
@@ -775,6 +782,7 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         scenarios=scenarios,
         analysis=result.analysis,
         snapshot_analysis=snapshot_result.analysis if snapshot_result is not None else None,
+        forecast=forecast,
     )
     global_figures, group_figures = (), ()
     late_ids = {item.figure_id for item in deferred_layout_figures(view.figures)}
@@ -805,6 +813,35 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
                          unavailable_figures=unavailable_figures,
                          deadlines=_shown_deadlines(project, result.placements, view))
     return projection, tuple(provenance), attachment_warnings(project, result.placements), deadline_warnings(project, result.placements)
+
+
+def _require_forecast_presentation(view: ViewInput, layout: Mapping[str, Any]) -> None:
+    """Check declared capabilities, never invent a View selection or Layout slot."""
+    missing = []
+    if view.surface != "table-timeline":
+        missing.append("table-timeline surface")
+    labels = view.visibility.labels
+    plot_delta = (isinstance(labels, Mapping) and labels.get("placement") in {"plot", "both"}
+                  and "finishDelta" in labels.get("content", ()))
+    table_delta = (view.rows.mode != "lanes" and any(
+        isinstance(column.source, Mapping) and
+        (column.source.get("facet") == "finishDelta" or column.source.get("comparisonFacet") == "finishDelta")
+        for column in view.table_columns))
+    if not (plot_delta or table_delta):
+        missing.append("per-item finishDelta channel")
+    pending = [layout.get("root", {})]
+    legend = False
+    while pending:
+        node = pending.pop()
+        legend |= node.get("kind") == "slot" and node.get("source") == "legend"
+        pending.extend(node.get("children", ()))
+    if not legend:
+        missing.append("legend slot")
+    if missing:
+        raise RenderFailed("E_FORECAST_PRESENTATION_REQUIRED",
+                           "Forecast requires " + ", ".join(missing) +
+                           "; choose a capable View/Layout (for example technical-print or target-b)",
+                           "presentation", "/body/forecast")
 
 
 def _complete_annotation_headers(content: SurfaceContentInput, theme: Mapping[str, Any],

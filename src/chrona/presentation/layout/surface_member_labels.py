@@ -19,7 +19,7 @@ from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.layout.chip_geometry import chip_padding
 from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip, measure_label_chip
-from chrona.presentation.model.semantic_registry import label_chip_semantic, semantic_binding
+from chrona.presentation.model.semantic_registry import label_chip_semantic, semantic_binding, FORECAST_DELTA_SEMANTICS
 from chrona.presentation.model.theme_tokens import RectangleChipShape
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.surface_quality import (
@@ -37,7 +37,7 @@ from chrona.presentation.layout.lane_mark_facets import span_mark_footprint
 from chrona.presentation.layout.text import metric_for_role, measure_text_width, place_text, wrap_text
 from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
-from chrona.presentation.model.projection import WindowMode, active_placement, finish_delta_text
+from chrona.presentation.model.projection import WindowMode, active_placement, finish_delta_text, finish_delta_semantic
 
 
 @dataclass(frozen=True)
@@ -179,7 +179,7 @@ def _member_association_outcome(candidate: LabelPlacement | None, association: M
 
 def _finish_delta_anchor_diagnostic(request: LabelRequest, candidate: LabelPlacement) -> str | None:
     """Project the selector's completed obstruction evidence, never re-query geometry."""
-    if request.semantic_id != "finishDelta":
+    if request.semantic_id not in ({"finishDelta"} | FORECAST_DELTA_SEMANTICS):
         return None
     preferred = next((item for item in candidate.canonical_obstructions if item.side == "end"), None)
     if preferred is None:
@@ -404,8 +404,12 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     ("end", "start", "above", "below")) if side not in {"suppress", "inside"})
                 forecast_requests.append(LabelRequest(
                     placement_id, item.object_id, finish_delta_text(item), LabelRect(*bounds_from_rect(mark.bounds)),
-                    candidates, "summary", "plot-label", CollisionDomain("timeline", "overlay"),
-                    "diagnose", bounds=row_bands.get(physical_row), semantic_id="finishDelta",
+                    candidates, request.surface_content.label_text_role or "text", "plot-label", CollisionDomain("timeline", "overlay"),
+                    "diagnose", bounds=row_bands.get(physical_row), semantic_id=finish_delta_semantic(item),
+                    lane_row_id=physical_row if projection.lane_membership is not None else None,
+                    lane_member_id=(row.items[0].item_id or row.items[0].object_id)
+                        if projection.lane_membership is not None else None,
+                    lane_source_kind=item.source_kind if projection.lane_membership is not None else None,
                     required_before_routes=True,
                     subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
     requests = forecast_requests + requests
@@ -576,7 +580,8 @@ def place_member_labels(context: SurfaceMemberLabelContext,
             candidate = (place_label(label_request.anchor, label_size, label_request.candidates,
                 bounds=placement_bounds, obstacles=placement_obstacles, gap=label_gap,
                 inside_host_obstacle_id=label_request.inside_host_obstacle_id,
-                required=not reserve_only and label_request.overflow == "diagnose", overflow=effective_overflow,
+                required=not reserve_only and label_request.overflow == "diagnose",
+                overflow="suppress" if effective_overflow == "diagnose" else effective_overflow,
                 visible_fallback_side=effective_visible_fallback,
                 rule_host_obstacle_id=label_request.rule_host_obstacle_id,
                 search_side_neighborhood=(label_request.rule_host_obstacle_id is None), classes=label_classes)

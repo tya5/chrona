@@ -20,6 +20,7 @@ properties:
       theme: {description: "Pinned Theme input.", $ref: "#/$defs/themeRef"}
       colorScheme: {description: "Pinned Color Scheme input.", $ref: "#/$defs/colorSchemeRef"}
       layout: {description: "Pinned Layout Profile input.", $ref: "#/$defs/layoutRef"}
+      forecast: {description: "Select forecast display semantics for this render; omitted means false.", type: boolean}
       inputs:
         type: object
         description: "Optional comparison and profile resources used by materialization."

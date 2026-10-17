@@ -76,6 +76,12 @@ def finish_delta_text(item: Any) -> str | None:
     return f"{value:+d}d" + ("*" if forecast is not None and not forecast.schedule.completed else "")
 
 
+def finish_delta_semantic(item: Any) -> str:
+    value = display_finish_delta(item)
+    semantic = "varianceBehind" if value is not None and value > 0 else "varianceAhead" if value is not None and value < 0 else "finishDelta"
+    return "forecast" + semantic[0].upper() + semantic[1:] if getattr(item, "forecast", None) is not None else semantic
+
+
 @dataclass(frozen=True)
 class ReviewItem:
     """One selected source object as displayed by a ReviewRow."""
@@ -255,6 +261,7 @@ class ReviewProjection:
     group_figures: tuple[tuple[str, tuple[tuple[str, int], ...]], ...] = ()
     unavailable_figures: tuple[Diagnostic, ...] = ()
     window_mode: WindowMode = WindowMode.SELECTED_PLANNED
+    forecast_findings: tuple[Diagnostic, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -445,7 +452,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         view.comparison.facets, hierarchy, view.surface,
         _dependency_network_projection(project, selected, view),
         frozenset(getattr(active_analysis, "driving_relations", ()),), folded_points,
-        lane_membership, lane_rows, window_mode=WindowMode(view.window.mode))
+        lane_membership, lane_rows, window_mode=WindowMode(view.window.mode),
+        forecast_findings=forecast.findings if forecast is not None else ())
 
 
 def _project_lane_rows(rows: tuple[ReviewRowProjection, ...], membership: LaneMembership

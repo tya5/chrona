@@ -18,6 +18,7 @@ GROUND_TEXT_SEMANTICS = {
 }
 # Labels painted in the role of a classified state text: the classification is by that role, not by their own.
 LABELS_CLASSIFIED_BY_ROLE = {"finishDelta", "varianceAhead", "varianceBehind",
+                             "forecastFinishDelta", "forecastVarianceAhead", "forecastVarianceBehind",
                              "observationAttentionCell", "observationCriticalCell"}
 
 

@@ -24,6 +24,7 @@ from chrona.presentation.model.info_diagnostics import (
     PaintOmission, ScaleValuesFolded, SuppressedPlotLabels, DeadlineCaptionsDropped, RelationRoutingSummary, RelationSearchBudgetHit,
     RelationResolutionInfo, RelationResolutionSummary,
     RelationPolicySupersession, UnboundFieldRole, FontGlyphFallback,
+    ForecastInfo,
 )
 from chrona.presentation.model.render_progress import RenderProgress
 from chrona.resources import default_preset_resource, default_preset_root
@@ -63,6 +64,7 @@ class DraftRenderRequest:
     progress: RenderProgress | None = field(default=None, compare=False, repr=False)
     previous_scene: str | Path | None = None
     snapshot: str | Path | None = None
+    forecast: bool = False
 
 
 @dataclass(frozen=True)
@@ -155,6 +157,7 @@ def render_draft(request: DraftRenderRequest) -> DraftRenderResult:
                 project_path=Path(request.project),
                 previous_scene_path=_optional_path(request.previous_scene),
                 snapshot_project_path=_optional_path(request.snapshot),
+                forecast=request.forecast,
                 preset_path=preset_path if preset_path is not None else Path(str(default)),
                 preset_root=None if preset_path is not None else Path(str(default_preset_root())),
                 view_path=_optional_path(request.view), theme_path=_optional_path(request.theme),
@@ -207,7 +210,9 @@ def _typesetter_version_notes(request: DraftRenderRequest) -> tuple[dict[str, An
 
 def _undrawn_input_notes(request: DraftRenderRequest, closure: Any) -> tuple[dict[str, Any], ...]:
     """Warn when `--snapshot` was supplied but the chosen View does not draw a snapshot baseline (#1585)."""
-    if not request.snapshot:
+    # Forecast mode explicitly retains a supplied Snapshot as its own baseline
+    # ghost, independently of the ordinary View comparison baseline.
+    if not request.snapshot or request.forecast:
         return ()
     comparison = closure.view.view.comparison
     if comparison.baseline == "snapshot" and comparison.baseline_marks in {"ghost", "ghost-when-changed"}:
@@ -236,6 +241,8 @@ def warning_payloads(rendered: RenderedReview) -> list[dict[str, Any]]:
         if isinstance(info, FontGlyphFallback):
             payloads.append({"code": info.code, "severity": "info", **info.payload(),
                              "message": f"{info.requested_family} uses {info.fallback_family} for U+{info.codepoint:04X}"})
+        elif isinstance(info, ForecastInfo):
+            payloads.append({"code": info.code, "severity": "info", **info.payload()})
         elif isinstance(info, UnboundFieldRole):
             payloads.append({"code": info.code, "severity": "info", **info.payload(),
                 "message": f"Project does not declare field role {info.role!r}; "

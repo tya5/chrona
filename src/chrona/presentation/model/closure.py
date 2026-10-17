@@ -241,6 +241,7 @@ def resolve_draft_render(
     relations: Literal["none", "semantic"] | None = None,
     previous_scene_path: Path | None = None,
     snapshot_project_path: Path | None = None,
+    forecast: bool = False,
 ) -> DraftRender:
     """Build a typed, in-memory closure from explicit authoring inputs.
 
@@ -299,7 +300,8 @@ def resolve_draft_render(
                                         font_asset_root=(font_metrics_path.parent.resolve() if font_metrics_path else None),
                                         system_fonts=system_fonts, system_font_resolver=system_font_resolver,
                                         previous_scene_bytes=(previous_scene_path.read_bytes()
-                                                              if previous_scene_path is not None else None))
+                                                              if previous_scene_path is not None else None),
+                                        forecast=forecast)
     return replace(draft, preset_visual_profile_fallback=profile_fallback)
 
 
@@ -405,6 +407,7 @@ def _draft_preset_catalog_paths(preset: Any, preset_path: Path,
 def resolve_guided_draft_render(
     *, workspace_path: Path, viewport: tuple[int, int | None] = DEFAULT_DRAFT_VIEWPORT,
     locale: str = "en-US", target_kind: str = "svg", visual_profile: str | None = None, typesetter: TypesetterIdentity | None = None,
+    forecast: bool = False,
 ) -> DraftRender:
     """Resolve one guided Draft without creating files or a second render pipeline."""
     workspace_resource = _load_draft_resource("authoring-workspace", workspace_path)
@@ -444,6 +447,7 @@ def resolve_guided_draft_render(
     provenance = GuidedAuthoringProvenance(workspace_resource.content_identity, preset_resource.content_identity, binding_identity)
     draft = _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
                                         visual_profile=visual_profile, typesetter=typesetter, provenance=provenance,
+                                        forecast=forecast,
                                         icon_assets=_load_draft_icon_assets(catalog_resources, catalog_paths,
                                                                             _draft_view(resources), _draft_theme_refs(resources)))
     return replace(draft, preset_visual_profile_fallback=profile_fallback)
@@ -513,6 +517,7 @@ def _draft_render_from_resources(
     system_fonts: bool = False,
     system_font_resolver: SystemFontResolver | None = None,
     previous_scene_bytes: bytes | None = None,
+    forecast: bool = False,
 ) -> DraftRender:
     by_kind = {item.kind: item for item in resources}
 
@@ -556,6 +561,7 @@ def _draft_render_from_resources(
             "theme": _draft_reference(by_kind["theme"]),
             "colorScheme": _draft_reference(by_kind["color-scheme"]),
             "layout": _draft_reference(by_kind["layout-profile"]),
+            **({"forecast": True} if forecast else {}),
             "inputs": {
                 **({"previousScene": {
                     "store": {"provider": "local", "identity": "draft"},
