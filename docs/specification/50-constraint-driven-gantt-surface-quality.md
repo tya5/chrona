@@ -701,6 +701,18 @@ checking other admitted pairs for eligible routes. This proof concerns quality
 only: failure to find a safe candidate still requires natural domain exhaustion.
 Best retains its existing cross-pair ranking; first-fit retains candidate order.
 
+A required primary-mark interior can also certify a completed-length lower
+bound (#1632). When the endpoints straddle a rectangular interior and both lie
+inside its other-axis interval, any safe orthogonal route must go around one
+of its two sides. Use the smaller side excursion plus the endpoint distance
+on the straddled axis, conservatively allowing collision/float tolerance.
+Take the maximum of individual bounds, never their sum. Layout supplies the
+same required interiors as final mark-clearance validation, excluding the
+pair's authorized endpoint/corridor hosts; generic obstacle envelopes are not
+certificates. Apply this proof only to endpoint-preserving completion and only
+to quality infeasibility. It neither skips safety validation nor certifies
+absence of a safe path; all other pairs and natural exhaustion remain required.
+
 If no completed hard-safe route is admitted after natural exhaustion, emit
 `W_LAYOUT_CRITICAL_RELATION_SEARCH_DOMAIN_EXHAUSTED` with relation identity and
 failure evidence, alongside the ordinary suppression diagnostic. This means
