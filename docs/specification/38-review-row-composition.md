@@ -454,6 +454,15 @@ lane count is the clique number of the extents and the row height is that many m
 or end side inside their lane and use `visible-overflow`: a label that cannot clear its neighbours is drawn
 overlapping, never suppressed. A View with no point draws no key row. Other policies and the default are unchanged.
 
+**Group-header points and an empty ordinary row set (#1660).** With `rows.points: group-header`, View folding owns row
+membership: a folded point has only its group-header occurrence, never also an ordinary row, mark or table cell. A group
+whose points are all folded leaves no ordinary row, and a View whose points are all folded resolves an empty ordinary row
+set. That is a resolved result, not a missing one: the projection marks it with `rows_resolved`, so Layout never derives
+rows from `items` again, and a projection without the marker (legacy, items only) keeps its one-row-per-item reading.
+View also carries the declared group order (`group_order`), so a group with no ordinary row is still a container: Layout
+places its header band in that order, with its label, its folded occurrences, routes and Project provenance, as for a
+group that also holds ordinary rows. Layout does not decide membership.
+
 ## 4. Diagnostics and validation
 
 The v0.2 View validator diagnoses empty/duplicate rows, unknown source objects,

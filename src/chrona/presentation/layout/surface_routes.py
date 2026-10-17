@@ -593,7 +593,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 window_rejected[0] = False
                 source_mark, target_mark = relation_marks.get(source_id), relation_marks.get(target_id)
                 scene_id = (f"relation:{relation_id}:{source_id}:{target_id}"
-                            if projection.rows else f"relation:{relation_id}")
+                            if projection.has_rows else f"relation:{relation_id}")
                 declared_order[scene_id] = declared_index
                 if explicit_window:
                     proofs = tuple(proof for instance, endpoint in (
