@@ -780,6 +780,8 @@ omission-preserving optional additions, Spec07 the single evaluator and channel
 semantics, Spec28 flat legend content, Spec49 Layout completion, Spec08/46 passive
 Scene and contrast. Update these living contracts before product changes. Do not
 copy public designs or repair a contrast finding by changing core thresholds.
+S2c keeps the conservative legend/footer allocation fixed after final route and
+label selection: only entry composition changes, with no layout retry cycle.
 Bounded independent review found the existing field-keyed scale completion
 insufficient for source aliases; S2b replaces that grouping, retaining one
 resolver and source-local diagnostics. No other blocking contract gap remains.

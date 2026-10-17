@@ -39,6 +39,9 @@ Source sizing may reserve potential entries. Layout filters them against final
 visible placements and effective paint channels, then places only values
 actually painted; explicit glyph colours and stroke-only parts do not create
 encoded fill swatches. Existing View encoding legend policy is unchanged.
+After selecting the final route/label option, recompose filtered Style entries
+inside the conservatively allocated legend/footer slots; do not shrink those
+slots or restart row, route or annotation layout.
 `showScope` opts into an extra qualifier, exactly `when ` plus canonical selector
 JSON (all selector keys and compound predicates follow its canonical order).
 No independent formatter or executable language is introduced. Allocate using
