@@ -5,8 +5,11 @@ import yaml
 
 from chrona.presentation.model.closure import resolve_draft_render
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
+from chrona.operational.store_config import load_store_config
+from chrona.operational.store_reads import DraftExtensionPackageReader
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderRequest, render_review
+from tests.support.draft_packages import stage_project_package_store
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
@@ -46,12 +49,15 @@ def test_crowded_halcyon_plot_selects_declared_rail_with_named_diagnostic(tmp_pa
     theme_path = tmp_path / "crowded-theme.yaml"
     theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
 
+    project = yaml.safe_load((example / "project.yaml").read_text(encoding="utf-8"))
+    store_config = stage_project_package_store(tmp_path / "package-store", project, example)
+    package_reader = DraftExtensionPackageReader(lambda: load_store_config(str(store_config)))
     draft = resolve_draft_render(
         project_path=example / "project.yaml", view_path=view_path,
         theme_path=theme_path,
         scheme_path=example / "schemes/control-room-dark.yaml",
         layout_path=layout_path, actual_path=example / "actual.yaml",
-        viewport=(2100, 1080),
+        viewport=(2100, 1080), package_reader=package_reader,
     )
     original = builder.compose_surface_layout
     compositions = []

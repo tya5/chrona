@@ -17,6 +17,7 @@ from chrona.presentation.layout.surface_quality import (
 )
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
 from chrona.presentation.model.projection import ReviewDeadline
+from chrona.presentation.model.surface_content import SummaryContent, SurfaceContentInput
 
 
 class _Metric:
@@ -90,8 +91,17 @@ def test_progress_fill_uses_exact_projection_item_subject_not_source_or_mark_ins
 def test_member_chip_inherits_label_request_subject_not_label_or_row_id():
     subject = DiagnosticSubject.project_object("project-owner-9", "Declared table subject")
     timeline = SlotPlacement("timeline", "timeline", Rect(Decimal(0), Decimal(0), Decimal(100), Decimal(100)))
+    surface_content = SurfaceContentInput(
+        table_columns=(), table_cells=(), relations=(), annotations=(), show_member_labels=False,
+        label_placement="none", label_content=(), label_side="auto", label_overflow="visible-overflow",
+        relation_overflow="visible-overflow", group_presentation="band", axis_tiers=(),
+        axis_fiscal_start_month=1, as_of=None, as_of_label="As of", annotation_numbered=False,
+        calendar_closed=(), calendar_exceptions=(), notes=(), legend_entries=(), coverage_text="",
+        summary=SummaryContent(()), template_values=(), group_details=(), milestones=(),
+        observation_columns=(), observation_rows=(),
+    )
     request = SimpleNamespace(theme_tokens=_Theme(), font_metrics=_Metric(), visual_requests=(), icon_assets={},
-                              fixed_lane_preflight=None)
+                              fixed_lane_preflight=None, surface_content=surface_content)
     context = SurfaceMemberLabelContext(
         request=request, projection=SimpleNamespace(lane_membership=None),
         layout_manifest=SimpleNamespace(member_names={}, row_distribution="auto"),

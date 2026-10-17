@@ -7,16 +7,20 @@ from __future__ import annotations
 from pathlib import Path
 import subprocess
 import sys
+from tempfile import TemporaryDirectory
 
 import pytest
 import yaml
 
 from chrona.presentation.contracts.font_sets import draft_font_metrics
 from chrona.presentation.fonts.installed import InstalledFontIndex, use_installed_fonts
+from chrona.operational.store_config import load_store_config
+from chrona.operational.store_reads import DraftExtensionPackageReader
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
 from chrona.usecases.failure_report import StableFailure
 from chrona.usecases.preset_library import copy_builtin_preset, list_builtin_presets
 from chrona.usecases.render_review import RenderFailed
+from tests.support.draft_packages import stage_project_package_store
 from tests.support import text_treatments as tt
 
 DECLARING = ("titlecard", "yuya")
@@ -130,9 +134,19 @@ def test_a_missing_provider_with_an_installed_cjk_face_renders_with_the_skip_war
 @pytest.mark.parametrize("identifier", DECLARING)
 def test_a_missing_provider_and_no_cjk_face_still_refuses_the_glyph(starter, no_provider, identifier):
     root = starter if identifier == "titlecard" else Path(__file__).resolve().parents[2] / "examples" / "halcyon-1"
-    with use_installed_fonts(NO_FONTS), pytest.raises(RenderFailed) as caught:
-        render_draft(DraftRenderRequest(project=root / "project.yaml", actual=root / "actual.yaml",
-                                        target_kind="svg", preset=identifier))
+    project_path = root / "project.yaml"
+    if identifier == "yuya":
+        project = yaml.safe_load(project_path.read_text(encoding="utf-8"))
+        with TemporaryDirectory(prefix="chrona-fontset-package-store-") as directory:
+            config = stage_project_package_store(Path(directory), project, root)
+            reader = DraftExtensionPackageReader(lambda: load_store_config(str(config)))
+            with use_installed_fonts(NO_FONTS), pytest.raises(RenderFailed) as caught:
+                render_draft(DraftRenderRequest(project=project_path, actual=root / "actual.yaml",
+                                                target_kind="svg", preset=identifier, package_reader=reader))
+    else:
+        with use_installed_fonts(NO_FONTS), pytest.raises(RenderFailed) as caught:
+            render_draft(DraftRenderRequest(project=project_path, actual=root / "actual.yaml",
+                                            target_kind="svg", preset=identifier))
     assert "E_FONT_GLYPH_UNAVAILABLE" in caught.value.code + caught.value.message
 
 
@@ -156,7 +170,12 @@ def test_a_missing_provider_only_drops_its_assets_from_the_descriptor():
 @needs_cjk
 def test_yuya_renders_the_halcyon_slip_suffix_without_an_installed_cjk_face():
     root = Path(__file__).resolve().parents[2] / "examples" / "halcyon-1"
+    project_path = root / "project.yaml"
+    project = yaml.safe_load(project_path.read_text(encoding="utf-8"))
     with use_installed_fonts(NO_FONTS):
-        rendered = render_draft(DraftRenderRequest(project=root / "project.yaml", actual=root / "actual.yaml",
-                                                   target_kind="svg", preset="yuya"))
+        with TemporaryDirectory(prefix="chrona-fontset-package-store-") as directory:
+            config = stage_project_package_store(Path(directory), project, root)
+            reader = DraftExtensionPackageReader(lambda: load_store_config(str(config)))
+            rendered = render_draft(DraftRenderRequest(project=project_path, actual=root / "actual.yaml",
+                                                       target_kind="svg", preset="yuya", package_reader=reader))
     assert rendered.artifact.content

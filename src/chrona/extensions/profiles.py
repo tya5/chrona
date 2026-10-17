@@ -156,6 +156,15 @@ def resolve_profile_field_catalogue(
         if isinstance(extension, dict)
     ]
 
+    # Delivery owns its declared profile names; its definition validation keeps
+    # the established IDP diagnostics, independently of generic field parsing.
+    for _, package_id in declared:
+        manifest = package_manifests.get(package_id) if isinstance(package_id, str) else None
+        if package_id == PACKAGE_ID and isinstance(manifest, dict):
+            profiles = manifest.get("profiles")
+            if isinstance(profiles, dict):
+                owners.update({profile_id: package_id for profile_id in profiles})
+
     for index, package_id in declared:
         if not isinstance(package_id, str):
             continue
@@ -185,7 +194,7 @@ def resolve_profile_field_catalogue(
                 conflicted.add(profile_id)
                 catalogue.pop(profile_id, None)
                 diagnostics.append(Diagnostic(
-                    "E_PROFILE_PACKAGE_INVALID",
+                    "E_PROFILE_ID_DUPLICATE",
                     f"Profile ID {profile_id!r} is declared by both {previous_owner!r} and {package_id!r}",
                     f"/extensions/{index}",
                 ))
@@ -200,7 +209,7 @@ def resolve_profile_field_catalogue(
 def validate_generic_profiles(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]] | None) -> list[Diagnostic]:
     """Check objects whose ``type`` names a profile of a declared, resolved package.
 
-    One family of pointed diagnostics: ``E_PROFILE_PACKAGE_INVALID``,
+    One family of pointed diagnostics: ``E_PROFILE_PACKAGE_INVALID``, ``E_PROFILE_ID_DUPLICATE``,
     ``E_PROFILE_FIELD_UNKNOWN``, ``E_PROFILE_FIELD_TYPE``,
     ``E_PROFILE_FIELD_ENUM`` and ``E_PROFILE_FIELD_REQUIRED``. An absent field
     differs from an explicit ``null``: absent is valid unless required; null is

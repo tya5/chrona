@@ -175,6 +175,13 @@ def _calls(tree: ast.AST, path: str, *, layer: str) -> Iterable[DiagnosticSite]:
         if isinstance(node.func, ast.Attribute) and node.func.attr in {
                 "startswith", "endswith", "removeprefix", "removesuffix"}:
             continue
+        if (isinstance(node.func, ast.Name) and node.func.id == "getattr"
+                and len(node.args) >= 2
+                and isinstance(node.args[1], ast.Constant)
+                and node.args[1].value in {"diagnostic_id", "code"}):
+            # A fallback code here supplies an identity for an already-created
+            # error; it is not a new diagnostic construction site.
+            continue
         code_index = next((index for index, value in enumerate(node.args) if _literal_code(value)), None)
         if code_index is None:
             continue

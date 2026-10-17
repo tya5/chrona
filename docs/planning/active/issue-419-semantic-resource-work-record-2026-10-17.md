@@ -368,12 +368,20 @@ invent profile inheritance in presentation code.
 Descriptor completion rejects ambiguity within one source Project: profile IDs
 are globally unique (Spec11 §4.1), so two declared packages claiming the same
 profile are invalid, not first-package precedence. The extension-owned
-catalogue returns `E_PROFILE_PACKAGE_INVALID` at the conflicting extension;
+catalogue returns `E_PROFILE_ID_DUPLICATE` at the conflicting extension;
 generic validation and source descriptor collection use that same catalogue.
 Distinct primary/snapshot sources keep independent catalogues and may pin
 different definitions. Resolve declarations before Style matching, including
 absent values. This corrects an existing `setdefault` ambiguity without adding
 inheritance or changing valid packages; test collision and source isolation.
+
+Current-main reconciliation: PR1676 publishes this dedicated duplicate-ID
+diagnostic in Spec17. Preserve it while retaining one shared catalogue for
+validation and source descriptors; do not restore first-wins field resolution.
+Delivery profile ownership remains protected, with delivery validation owned
+by the existing IDP validator. Verify both generic and delivery collisions,
+invalid package handling and source isolation before republishing S1. This
+integration changes neither Style selectors nor valid-package interpretation.
 
 Source-scoped package identity correction: Spec13 §5.1 currently rejects any
 duplicate `(kind, id)` with different identities, which conflicts with primary
