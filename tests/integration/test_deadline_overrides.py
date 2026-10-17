@@ -9,7 +9,7 @@ from chrona.usecases.draft_render import warning_payloads
 from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
 
-from test_deadline_mark import MIXED, _marks, _parts, _render, _runs, _source, _ticks
+from tests.integration.test_deadline_mark import MIXED, _marks, _parts, _render, _runs, _source, _ticks
 
 
 def _with_overrides(show: str, overrides: dict[str, str], *, caption: bool = False) -> dict:

@@ -43,4 +43,4 @@ unchanged Scene/adapter ownership. Existing insufficient-header capacity keeps
 `W_LAYOUT_GROUP_HEADER_OVERFLOW`, not a new fitting exception. The unrelated
 all-point row-resurrection defect is [issue1660](https://github.com/tya5/chrona/issues/1660),
 reproduced without deadlines on preceding main; mixed-plan acceptance does not
-claim to resolve it. Public snapshot counts and exact-main release are pending.
+claim to resolve it. Official PR1661 snapshot on `ec017e8c9` ([run39035427008](https://github.com/tya5/chrona/actions/runs/39035427008)) contains the same109 paths: all50 SVG and50 Scene files are byte-identical; only diagnostic inventory and presentation-coverage reports change. No public primitives/routes/labels are added, removed or changed. The MCP-floor import guard exposed an unqualified new-test helper import; it is now package-qualified, without product changes. Exact-main release remains pending.
