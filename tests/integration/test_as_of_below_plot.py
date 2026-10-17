@@ -77,7 +77,7 @@ def test_the_slot_below_moves_down_by_exactly_the_reserved_block(tmp_path, rows)
     below = _render(tmp_path / "below", placement="below-plot", rows=rows, detail=detail)
     foot_slots, below_slots = _parts(foot)[2], _parts(below)[2]
     reserved = _reserved(below)
-    for slot_id in ("legend", "notes", "group-details"):
+    for slot_id in ("legend", "group-details"):  # an empty notes source has no slot (#1649)
         # A4: exactly the reserved block, up to the whole-unit rounding of a content-sized surface extent.
         assert below_slots[slot_id].bounds[1] - foot_slots[slot_id].bounds[1] == pytest.approx(reserved, abs=1.0)
     assert below.surface.canvas_bounds[3] - foot.surface.canvas_bounds[3] == pytest.approx(reserved, abs=1.0)

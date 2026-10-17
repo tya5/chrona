@@ -114,7 +114,8 @@ def test_default_and_explicit_raw_chip_output_are_byte_identical(tmp_path):
     # completed primitives, diagnostics and SVG bytes remain characterized.
     # Only the packaged View's provenance contentIdentity differs from ready main
     # (calendar-days -> working-days); the rendered SVG remains byte-identical.
-    assert sha256(serialize_scene(raw.scene)).hexdigest() == "3c7c2d7cf5afb5f934ef59204a471431387326f79ff6cdb00b5a8550ae3fe172"
+    assert sha256(serialize_scene(raw.scene)).hexdigest() == "c008bfc047f3aa1e709d420d165ddbf83009dab50e13256412f8935a6e05b1c7"
+    # #1649: an empty notes source is absent, so the Scene hash dropped its slot; SVG bytes are unchanged.
     labels = [item for item in raw.surface.primitives if item.kind == "Text" and item.purpose == "member-label"]
     assert labels and any(len(item.text_layout.lines) > 1 for item in labels)
     assert "<tspan" in raw.artifact.content.decode("utf-8")
