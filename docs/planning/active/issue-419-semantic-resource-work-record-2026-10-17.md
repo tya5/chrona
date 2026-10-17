@@ -709,6 +709,87 @@ injected-intent composition tests are not S1 acceptance.
 The shared evaluator is now connected through legacy View colour encoding;
 module reachability passes without an evaluator allowlist.
 
+## S2 design and implementation plan
+
+Baseline: S1 PR1675 at `bfccc0377` on trusted-ready main890af301d. S1 release
+acceptance is not assumed. S2 design proceeds independently; its implementation
+and merge must retain the accepted S1 correction and public evidence.
+S1 CI39055638817 is red at the opted-in `glyph-gates` contrast gate; reproduction
+and readiness failures are consequences. The reviewer-owned explicit glyph-fill
+declaration adjustment is requested on Issue419; do not weaken the floor.
+
+Use one optional `body.style` pinned reference in the live Context and one
+optional `resources.style` declaration in presets/libraries. Absent means no
+authored rules, not a hidden default Style. This completes Spec13's historical
+single-Style shape without requiring a corpus-wide migration or a plural rule
+merge protocol. Draft/library/CLI/MCP/workspace inputs admit the corresponding
+optional Style path (`--style` on explicit Draft commands). An explicit Style
+overrides a preset Style through existing resource precedence. Theme overrides
+do not silently discard Style; incompatible selected roles diagnose normally.
+Every declared preset resource is still validated, even when overridden.
+
+Resolve Style immediately after View through the existing verified reader;
+retain its full identity in closure, cache inputs, read ledger and Scene resource
+provenance. No directory scan, ID-only lookup, executable extension or second
+evaluator. Loading qualifies authored rule identities by Style ID plus local
+rule ID, disjoint from the internal View-encoding namespace, while diagnostics
+retain both authored ID and exact rule pointer. Resource duplicate/mismatch,
+unsupported version and Store-containment failures keep their existing owners.
+
+Within one render, one named first-appearance scale maps a domain value to one
+colour. Complete its domain from matched source values in stable View occurrence
+order, retaining the preclosed View domain as a prefix. Different source-local
+field aliases must not split that shared mapping; reads and value diagnostics
+remain source-specific. Independent palettes use independent scale IDs.
+Complete once per scale ID; incompatible domain policies diagnose with
+`E_PRESENTATION_SCALE_MAPPING` (Spec60), not separate contradictory maps.
+
+Keep legend metadata separate from encoding paint identity. Each Style legend
+entry retains Style/rule/scale identity, canonical selector JSON, authored title
+and domain value (including folded Other); its stable source identity does not
+depend on title or current match count. A scoped entry displays `title: value`
+in the existing flat legend; global entries use the value, optionally prefixed
+by an authored title. No new legend group/container policy. `showScope` supplies
+an optional qualifier, exactly `when ` followed by canonical selector JSON:
+there is no second formatter or selector language. Allocate/measure the primary
+label normally, and include
+the qualifier only if it can be measured and fits the final allocation; failure
+of that optional text alone does not reject or hide the primary entry.
+
+Source sizing may conservatively include all potential entries. Layout filters
+Style entries using final visible mark/text placements and the shared paint
+channel contract, then composes the final legend inside that allocated slot.
+Only actually painted values create entries; omitted/suppressed text or marks,
+explicit glyph colours and stroke-only parts cannot manufacture a fill swatch.
+This avoids Scene-driven selection or a render/measurement retry cycle. Existing
+View encoding legends retain their policy. Scene receives completed geometry,
+concrete colours and passive scope metadata only.
+
+Add optional `styleMatch: {styleId, ruleIds}` on treated Scene primitives and
+`legendScope: {styleId, ruleId, scaleId, selector, title?, showScope}` on Style
+legend swatch primitives; their text joins by the same stable source identity.
+`selector` is canonical JSON provenance, not executable input;
+its Style ID joins the pinned resource provenance. Preserve canonical purpose,
+role and contrast. Scene replay validates these closed metadata shapes and
+references; adapters serialize completed output without evaluating selectors.
+No Style keeps prior metadata absent and output unchanged.
+
+Architecture review: Spec13 owns pins/closure, Spec15 Draft precedence, Spec56
+omission-preserving optional additions, Spec07 the single evaluator and channel
+semantics, Spec28 flat legend content, Spec49 Layout completion, Spec08/46 passive
+Scene and contrast. Update these living contracts before product changes. Do not
+copy public designs or repair a contrast finding by changing core thresholds.
+Bounded independent review found the existing field-keyed scale completion
+insufficient for source aliases; S2b replaces that grouping, retaining one
+resolver and source-local diagnostics. No other blocking contract gap remains.
+
+| Implementation slice | Owned surfaces and independent evidence |
+| --- | --- |
+| S2a: resource ingress | Context/preset/library/workspace schemas and typed contracts; closure/Draft/cache/CLI/MCP/copy/wheel owners. Exact pins, explicit precedence, changed Style cache identity, no-Style controls, real Store and installed-wheel tests. |
+| S2b: scope completion | Shared Style normalization, complete scale provenance and potential legend entries. Source-alias union, View domain prefix, incompatible-policy negatives, scoped title negatives, domain order/Other, identity independent of display text, no-match controls and common View/Style conflict tests. |
+| S2c: Layout and Scene | Final placement-key filtering, optional qualifier fitting, completed legend paint and passive metadata/replay. Native repeated/source/column distinctions, suppressed/stroke-only controls, real SVG/PNG and metadata round-trip tests. |
+| S2 gate | One S2 PR after S1, focused checks and schema equivalence; batched official artifacts, literal acceptance update, reviewer review and exact-main three-OS release. C1 remains dev B's owner; parent closure requires its rows too. |
+
 ## V1 equivalence inventory (117-entry baseline)
 
 This inventory groups entries by the mechanism families in

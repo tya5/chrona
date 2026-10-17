@@ -94,6 +94,24 @@ Store identity, normalized address, immutable revision, and content identity. A 
 verifies all of these values; it does not search a directory to find a matching ID.
 Duplicate `(kind, id)` pairs in an evaluation are invalid.
 
+### Style resource selection (#419 S2; implementation pending)
+
+The live Context admits optional `body.style`, one ordinary pinned reference
+whose kind is `style`. Omission means no authored Style rules and preserves the
+existing render; historical v0.1's mandatory/loose-path Style example is not a
+second accepted input. Presets and libraries may declare optional
+`resources.style` through their existing safe path/ID/kind contract. Explicit
+Draft Style input takes precedence over that declaration; a Theme override does
+not silently remove Style. Every declared preset member is validated normally.
+CLI, MCP, workspace, resource-copy and wheel paths use that same optional edge.
+
+Closure verifies Style bytes/identity and records the effective resource in
+the read ledger, cache inputs and Scene provenance. Parsed rules enter the
+single Style evaluator; their resource-qualified internal identities cannot
+alias lowered View-encoding rules. Authored rule IDs and exact resource pointers
+remain available in diagnostics. These are omission-preserving optional schema
+additions, not a required migration of existing Contexts or designs.
+
 ### Previous Scene artifact input (#1300)
 
 Render Context v0.17 optionally accepts `body.inputs.previousScene`, an immutable
