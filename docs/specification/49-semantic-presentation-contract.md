@@ -272,7 +272,12 @@ scoped, even if every current occurrence happens to match. Scope identity is
 the canonical normalized `when` JSON value (sorted keys, normalized set operands)
 within the pinned Style/rule identity; it never depends on current match count
 or human title text. That same selector is available for inspection beside the
-authored legend title. Swatches use completed paint, including the same palette-folded Other entry;
+authored legend title. A scoped legend also renders a qualifier derived from
+the canonical selector's fact clauses (field/role/category names and literal
+values), not only an author-chosen title: for example `responsible = payload`.
+The title cannot hide or replace that qualifier. If its scope cannot be rendered
+within the existing legend contract, refuse the scoped encoding rather than
+emit an unqualified key. Swatches use completed paint, including the same palette-folded Other entry;
 rules with no realized matches create no misleading entries. Existing semantic
 legend keys remain separate and do not enumerate an encoding's domain.
 
