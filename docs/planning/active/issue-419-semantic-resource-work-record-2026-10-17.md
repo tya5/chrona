@@ -619,6 +619,9 @@ Canonical mark semantics remain separate from selected Theme treatment;
 selected geometry and stack allocation precede footprint and port completion.
 Bounded Theme capability admission and introspection agree for arbitrary
 authored mark roles, without widening reserved generated-role namespaces.
+Registered non-mark roles keep their original contract even when their Scene
+primitive is Rect/Symbol; the vocabulary's semantic family, not geometry kind,
+controls mark-property admission. Canvas/Theme/Style regression batch:108 passed.
 The final focused model/Layout/content/capability/integration batch passes332
 tests. Three native Theme/render tests cover ordinary, lane and folded marks;
 they inject engine intents, not completed S2 resource ingress. Scene projects

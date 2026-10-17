@@ -7,7 +7,18 @@ from functools import lru_cache
 from re import fullmatch
 from chrona.presentation.model.semantic_registry import (
     is_annotation_artwork_role, is_frame_glyph_role, period_variant_role_base,
+    semantic_binding, semantic_ids,
 )
+
+
+_MARK_THEME_ROLES = frozenset(
+    binding.theme_role for semantic_id in semantic_ids()
+    if (binding := semantic_binding(semantic_id)).primitive_kind == "mark"
+)
+_NON_MARK_ONLY_THEME_ROLES = frozenset(
+    binding.theme_role for semantic_id in semantic_ids()
+    if (binding := semantic_binding(semantic_id)).primitive_kind != "mark"
+) - _MARK_THEME_ROLES
 
 
 class CapabilityDisposition(StrEnum):
@@ -412,7 +423,8 @@ def _canonical_role_contract(role: str) -> RolePropertyContract | None:
     if contract is None:
         return contract
     added: set[str] = set()
-    if contract.scene_kinds & {"Rect", "Symbol"}:
+    if (contract.scene_kinds & {"Rect", "Symbol"}
+            and role not in _NON_MARK_ONLY_THEME_ROLES):
         added.update(_STYLE_MARK_PROPERTIES - contract.properties)
     if "Text" in contract.scene_kinds:
         added.update(_STYLE_TEXT_PROPERTIES - contract.properties)
