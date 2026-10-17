@@ -404,6 +404,8 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
     body = context["body"]
     revision = body["project"]["revision"]["token"]
     references = [body[name] for name in ("project", "view", "theme", "colorScheme", "layout")]
+    if "style" in body:
+        references.insert(2, body["style"])
     inputs = body.get("inputs", {})
     references.extend(value for key, value in inputs.items() if key != "iconCatalogs")
     copied_payloads = { _reference_key(item): _copy_reference(example, item, snapshot, overlay=overlay_builder, stores=stores)

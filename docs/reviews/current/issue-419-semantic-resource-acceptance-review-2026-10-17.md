@@ -10,14 +10,15 @@ Its official artifact has109 paths: all50 SVGs are byte-identical; all50
 Scenes differ only by semantic-vocabulary provenance; no paths retired.
 The V1 release gate is not the S1 or parent-issue acceptance gate.
 
-S1 is published WIP based on `678ea6356`, not merged or release-accepted. Typed facts, parsed-rule
+S1 is PR #1675 at `bfccc0377`, not merged or release-accepted. Typed facts, parsed-rule
 evaluation, source-local identities, and role/fill composition are connected
 through normalization, Layout, and Scene. Selected-mark early paint preflight
 is connected; the final Style/native batch passes131 tests, with shared
 catalogue/part requirements, inward imports and292 reachable modules.
-Style resource-reference ingress is intentionally S2 and
-is not yet wired to `RenderRequest`; injected parsed-rule composition tests do
-not establish that ingress. Do not count WIP publication as release acceptance.
+S2a now wires optional pinned Style through Context/Draft and the normal
+`RenderRequest`, with [native Store evidence](../../../tests/integration/test_style_resource_ingress.py).
+Scoped legend/provenance and S2 official release evidence remain pending.
+Do not count WIP publication as release acceptance.
 
 ## Literal issue acceptance
 
@@ -28,7 +29,7 @@ not establish that ingress. Do not count WIP publication as release acceptance.
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | --- | --- | --- | --- | --- |
-| 1 | The semantic vocabulary is a versioned resource with a schema. | met | [Vocabulary resource](../../../src/chrona/resources/semantic-vocabulary.yaml), [schema](../../../schemas/semantic-vocabulary-v0.1.schema.yaml), immutable loader and typed-ingress tests. Official V1 PR evidence is above; exact-main release remains pending. | — |
+| 1 | The semantic vocabulary is a versioned resource with a schema. | met | [Vocabulary resource](../../../src/chrona/resources/semantic-vocabulary.yaml), [schema](../../../schemas/semantic-vocabulary-v0.1.schema.yaml), immutable loader and typed-ingress tests. Official V1 PR evidence is above; exact-main release [39053236335](https://github.com/tya5/chrona/actions/runs/39053236335) passed. | — |
 | 2 | A design set can introduce a visual distinction the product did not anticipate, without a code change. | not met | S1 implements Style evaluation and composition on its WIP branch; [S2 resource ingress](../../planning/active/issue-419-semantic-resource-work-record-2026-10-17.md#architecture-review-and-proposed-implementation-sequence) and published end-to-end evidence remain required. | — |
 | 3 | The presentation coverage report derives distinctions from resources rather than from source. | not met | [C1](../../planning/active/issue-419-semantic-resource-work-record-2026-10-17.md#architecture-review-and-proposed-implementation-sequence) remains dev B's scope; the current report is not resource-derived. | — |
 | 4 | No field in the registry is unread. | met | The [117-entry inventory](../../planning/active/issue-419-semantic-resource-work-record-2026-10-17.md#v1-equivalence-inventory-117-entry-baseline), registry/Scene/contrast/reachability tests, and independent digest cover all fields. V1 official artifact shows provenance-only Scene changes. | — |
@@ -52,9 +53,12 @@ and [mark paint preflight](../../../tests/integration/test_style_mark_paint_pref
 They are not published release evidence.
 
 Exact-main release run
-[39053236335](https://github.com/tya5/chrona/actions/runs/39053236335) is still
-in progress: macOS is green; Ubuntu and Windows remain live. Do not claim the
-release passed. Before accepting S1, publish its implementation and review,
+[39053236335](https://github.com/tya5/chrona/actions/runs/39053236335) passed on
+890af301d, including all three OSes, reproduction and MCP. S1 PR CI
+[39055638817](https://github.com/tya5/chrona/actions/runs/39055638817) fails at
+the opted-in glyph-gates contrast gate; reproduction/readiness failures follow
+the missing generated snapshot. Reviewer-owned explicit glyph colour approval
+is requested on419; do not weaken the threshold. Before accepting S1,
 inspect official batched SVG/Scene and PNG
 evidence, and verify the exact-main three-OS release. Keep #419 open until S1,
 S2 and C1 satisfy their respective acceptance rows.

@@ -7,7 +7,7 @@ does not evaluate rules or resolve Project fields.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import json
 import math
 from typing import Any
@@ -67,6 +67,19 @@ class StyleRule:
     selector: StyleSelector
     outcome: StyleOutcome
     source_ref: str
+    style_id: str | None = None
+    authored_rule_id: str | None = None
+
+
+def bind_style_rules(style_id: str, rules: tuple[StyleRule, ...]) -> tuple[StyleRule, ...]:
+    """Qualify immutable rule identities without losing authored diagnostics.
+
+    JSON tuple framing cannot alias a lowered View rule or another resource's
+    local ID. Neither display labels nor host paths are identity inputs.
+    """
+    return tuple(replace(rule, rule_id="style:" + _canonical_json([style_id, rule.rule_id]),
+                         style_id=style_id, authored_rule_id=rule.rule_id)
+                 for rule in rules)
 
 
 class StyleRuleError(ValueError):

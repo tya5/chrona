@@ -136,7 +136,7 @@ def test_no_tool_accepts_an_integrity_font_or_filesystem_override():
         "check_command": {"command", "storeConfig"}, "apply_command": {"command", "storeConfig"},
         "render_review": {"contextReference", "storeConfig", "inline"},
         "compare_baseline": {"baselineReference", "candidateReference", "storeConfig"},
-        "render_draft": {"project", "actual", "preset", "view", "theme", "scheme", "layout", "viewport", "locale",
+        "render_draft": {"project", "actual", "preset", "view", "style", "theme", "scheme", "layout", "viewport", "locale",
                          "snapshot", "forecast", "format", "inline", "storeConfig"},
     }
 
@@ -339,6 +339,15 @@ def test_render_draft_defaults_to_a_png_preview_and_identifies_the_svg(scope, mo
     assert cli(monkeypatch, capsys, workspace, "render", "small.yaml", "--output", "out.svg")[0] == 0
     svg = (workspace / "out.svg").read_bytes()
     assert structured["contentIdentity"] == sha(svg) and structured["byteLength"] == len(svg)
+
+
+def test_render_draft_accepts_an_explicit_style_resource(scope, workspace):
+    (workspace / "style.yaml").write_text(
+        "version: chrona/style/v0.2\nkind: style\nid: empty-style\nbody:\n  rules: []\n",
+        encoding="utf-8",
+    )
+    result = run(scope, "render_draft", project="small.yaml", style="style.yaml", inline="none")
+    assert result.structured["status"] == "ok"
 
 
 def test_render_draft_png_bytes_equal_the_cli_png(scope, monkeypatch, capsys, workspace):

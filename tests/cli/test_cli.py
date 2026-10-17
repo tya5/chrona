@@ -267,7 +267,7 @@ def test_cli_collapses_a_warning_that_repeats_with_the_same_cause_into_one_row_w
 
 def test_render_parsers_expose_scene_emission_only_on_explicit_and_immutable_routes():
     parser = cli._parser()
-    draft = parser.parse_args(["render", "project.yaml", "--view", "view.yaml", "--theme", "theme.yaml",
+    draft = parser.parse_args(["render", "project.yaml", "--view", "view.yaml", "--style", "style.yaml", "--theme", "theme.yaml",
                                "--scheme", "scheme.yaml", "--layout", "layout.yaml", "--output", "out.svg",
                                "--emit-scene", "out.scene.json"])
     immutable = parser.parse_args(["render-review", "--context-reference", "context.yaml", "--snapshot-root", "snap",
@@ -275,6 +275,7 @@ def test_render_parsers_expose_scene_emission_only_on_explicit_and_immutable_rou
                                    "--emit-scene", "out.scene.json"])
     workspace = parser.parse_args(["render-workspace", "workspace.yaml", "--output", "out.svg"])
     assert draft.emit_scene == immutable.emit_scene == "out.scene.json"
+    assert draft.style == "style.yaml"
     assert not hasattr(workspace, "emit_scene")
 
 
@@ -329,7 +330,7 @@ def test_cli_render_parser_advertises_the_bundled_default_preset():
 def test_cli_draft_snapshot_is_a_project_path_forwarded_without_policy_override(monkeypatch):
     parsed = cli._parser().parse_args([
         "render", "project.yaml", "--snapshot", "baseline/project.yaml",
-        "--view", "explicit-view.yaml", "--output", "out.svg"])
+        "--view", "explicit-view.yaml", "--style", "explicit-style.yaml", "--output", "out.svg"])
     requests = []
     rendered = object()
 
@@ -343,6 +344,7 @@ def test_cli_draft_snapshot_is_a_project_path_forwarded_without_policy_override(
     cli._run_draft_render(parsed)
     assert requests[0].snapshot == "baseline/project.yaml"
     assert requests[0].view == "explicit-view.yaml"
+    assert requests[0].style == "explicit-style.yaml"
 
 
 @pytest.mark.parametrize(("suffix", "target"), [

@@ -1,7 +1,8 @@
 # Issue419 — semantic mapping resource
 
 Status: V1 merged as `ff9abcbbb` (PR1668); rationale and final-head artifact
-equivalence verified, all PR checks green. Post-merge release remains pending.
+equivalence verified, all PR checks green. Exact-main release39053236335 on
+890af301d passed three OSes, reproduction and MCP.
 Source base: trusted-ready published main
 `890af301d31ab3896296caefaa5864691e60d69a`.
 [Reviewed scope](https://github.com/tya5/chrona/issues/419#issuecomment-6234966527):
@@ -793,6 +794,15 @@ must exercise the actual failure report, not only the evaluator exception.
 | S2b: scope completion | Shared Style normalization, complete scale provenance and potential legend entries. Source-alias union, View domain prefix, incompatible-policy negatives, scoped title negatives, domain order/Other, identity independent of display text, no-match controls and common View/Style conflict tests. |
 | S2c: Layout and Scene | Final placement-key filtering, optional qualifier fitting, completed legend paint and passive metadata/replay. Native repeated/source/column distinctions, suppressed/stroke-only controls, real SVG/PNG and metadata round-trip tests. |
 | S2 gate | One S2 PR after S1, focused checks and schema equivalence; batched official artifacts, literal acceptance update, reviewer review and exact-main three-OS release. C1 remains dev B's owner; parent closure requires its rows too. |
+
+S2a is implemented on the WIP branch: optional pinned Context Style, explicit
+Draft/CLI/MCP input, preset/library/workspace copy and materialization, read
+ledger/provenance and pointed failure transport. Native Store tests exercise
+actual treatment, exact pin/version rejection, explicit precedence and no-Style
+controls. Schema equivalence, inward imports and module reachability pass;
+official installed-wheel, generated-artifact and release gates remain pending.
+S2b scale completion and S2c scoped legends/provenance remain separate work;
+neither S2 nor parent419 is accepted by this source-ingress checkpoint.
 
 ## V1 equivalence inventory (117-entry baseline)
 
