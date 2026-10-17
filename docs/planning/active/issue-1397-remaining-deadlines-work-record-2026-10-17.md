@@ -64,6 +64,11 @@ the schema prohibition remains. This is separate from implementable overrides.
    only after the exact review-containing main release. Row2 and unapproved
    network disposition keep the parent issue open. No `examples/**` edits.
 
+Independent baseline defect: [issue1660](https://github.com/tya5/chrona/issues/1660)
+records all-point folding resurrecting ordinary rows, reproduced on published
+main without deadlines. Its fix needs resolved-empty row/group ownership, not
+a deadline condition. The mixed task/point acceptance does not claim to fix it.
+
 Each implementation slice requires neutral rule tests, batch SVG/Scene counts,
 actual PNG inspection for visible geometry, conformance and the repository's
 required exact-review-containing main three-OS release before acceptance.
