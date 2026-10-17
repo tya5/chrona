@@ -54,7 +54,7 @@ earlier slot, or from the colour of a non-category legend entry (Planned, Milest
 Today and the other Detail legend keys), are not assigned.  Domain values beyond the
 remaining distinct slots, in source order, share one neutral colour and one legend
 entry labelled `Other`; the Scheme may declare it as category `other`, otherwise it is
-a muted-text blend that no other legend entry uses.  The render reports it as the info
+a muted-text blend that no other legend entry uses.  A tint scale (group band and header fill, `grouping.tint`) instead folds to a neutral ground of the same Scheme (`category:other`, `surfaceRaised`, `neutral` or `surface`, the first that keeps `text` at contrast 4.5 and is separable from the scale's own tints), so header text stays readable; the dark mark neutral is for marks only.  The render reports it as the info
 diagnostic `I_PRESENTATION_SCALE_FOLDED` (scale, field, distinct colours, folded count
 and values).  Explicit `slots` mappings are never folded.  A Theme that needs more
 distinct values declares a larger palette.

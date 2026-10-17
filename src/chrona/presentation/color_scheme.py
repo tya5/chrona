@@ -452,6 +452,19 @@ def _other_candidates(colors: Mapping[str, str]) -> list[str]:
     return [str(declared), *blends] if declared is not None else blends
 
 
+def _tint_other_candidates(colors: Mapping[str, str]) -> list[str]:
+    """Light neutral grounds for the folded "Other" of a tint scale, preferred first (#1628).
+
+    A tint paints row bands and header fills under text, so only grounds that keep `text` readable
+    (contrast of at least 4.5) qualify; the dark mark neutral never does.
+    """
+    declared = colors.get("category:other")
+    grounds = [str(colors[name]) for name in ("surfaceRaised", "neutral", "surface")]
+    if declared is not None:
+        grounds.insert(0, str(declared))
+    return [ground for ground in grounds if _contrast(str(colors["text"]), ground) >= 4.5]
+
+
 def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme_content_identity: str) -> dict[str, Any]:
     """Produce the only concrete Theme value permitted to reach presentation adapters."""
     if theme.get("version") != "chrona/theme/v0.15" or theme.get("kind") != "theme":
@@ -540,4 +553,4 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
     suitability = scheme.get("body", {}).get("suitability", {}) if isinstance(scheme.get("body"), Mapping) else {}
     claimed = suitability.get("colorVision", ()) if isinstance(suitability, Mapping) else ()
     color_vision = [str(item) for item in claimed if item != "none-claimed"]
-    return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "id": theme.get("id"), "body": {"values": values, "roles": roles, "metrics": dict(body.get("metrics", {})), "colorScales": resolved_scales, **({"markStack": body["markStack"]} if "markStack" in body else {}), **({"annotationKinds": annotation_kinds} if annotation_kinds else {}), **({"contrastPolicy": contrast_policy} if contrast_policy else {}), "categorySlots": {key.removeprefix("category:"): value for key, value in colors.items() if key.startswith("category:")}, "otherColors": _other_candidates(colors), "colorVision": color_vision}}
+    return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "id": theme.get("id"), "body": {"values": values, "roles": roles, "metrics": dict(body.get("metrics", {})), "colorScales": resolved_scales, **({"markStack": body["markStack"]} if "markStack" in body else {}), **({"annotationKinds": annotation_kinds} if annotation_kinds else {}), **({"contrastPolicy": contrast_policy} if contrast_policy else {}), "categorySlots": {key.removeprefix("category:"): value for key, value in colors.items() if key.startswith("category:")}, "otherColors": _other_candidates(colors), "tintOtherColors": _tint_other_candidates(colors), "colorVision": color_vision}}
