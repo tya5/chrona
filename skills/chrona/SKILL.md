@@ -58,10 +58,11 @@ chrona render my-plan/project.yaml --output my-plan/plan.svg
 (observed progress for the same ids) and refuses to write into a directory that already
 exists. Edit `project.yaml`, then repeat `validate`, `schedule` and `render`. Pass
 `--actual my-plan/actual.yaml` to `render` to draw progress over the plan. `--output` is
-required, and its suffix picks the format: use `.svg`, or `.png` (needs `pip install
-'chrona[render]'`). Other suffixes need options this skill does not cover.
+required, and its suffix picks the format: `.svg`, `.png` and `.pdf` (need `pip install
+'chrona[render]'`), or `.typ` (Typst source: it names the installed font family, so compile it
+where that font exists). `chrona validate my-plan/actual.yaml` checks an Actual Set too.
 
-The result of `validate` and `schedule` is JSON on standard output. A command that
+The result of every command is JSON on standard output. A command that
 rejects the plan prints `{"status": "rejected", "diagnostics": [...]}` and exits 1; a bad
 file, flag or output suffix exits 2; success exits 0.
 
@@ -75,7 +76,7 @@ Plain files, no Store. Run from the skill directory; the worked files are `examp
    `actual` is: `start` and `finish` (the day **after** the last day worked) for a finished task; `start`,
    `openUntil: asOf` and `progress` below 1, no `finish`, for an open one; `at` for a gate. Next week append
    observations with a higher `sequence` (the highest wins). No command writes one; a sheet with
-   `progress`/`actual_*` columns can go through `chrona import`.
+   `progress`/`actual_*` columns can go through `chrona import` (below).
 3. **Move `asOf`** (`body.asOf`) to the day the observations are true on. Before any actual exists use the
    plan's first day (or today); it draws the TODAY marker and never changes a plan date.
 4. **Re-plan** in `project.yaml`: edit `at` of a `fixed-point` gate, `start`/`end` (`end` exclusive) of a
@@ -155,46 +156,44 @@ to override one member of a preset. Contexts and Stores are the pinned-evidence 
 
 ## Pinned evidence from a Store (only when the user asks)
 
-`render` draws a draft of a Project file. An immutable **Render Context** (the closed list of
-Project, View, Theme, Color Scheme, Layout and fonts, each pinned by a content identity) lives in a
-**Store** named by a **Store configuration** (`.chrona/store.yaml`); a reference file points at one
-resource in it. `render_review` renders a Context's reference exactly (its own format and viewport);
-`compare_baseline` compares a named baseline reference with a candidate Project's. Both only read,
-refuse a Store root outside the workspace and refuse bytes that do not match the pinned identity.
-Do not edit a Store file, unpin a reference or change a Store's `integrity` to make a call pass: that
+`render` draws a draft of a Project file. An immutable **Render Context** (Project, View, Theme,
+Color Scheme, Layout and fonts, each pinned by a content identity) lives in a **Store**
+named by a **Store configuration** (`.chrona/store.yaml`); a reference file points at one resource in it. `render_review` renders a
+Context's reference exactly; `compare_baseline` compares a named baseline with a candidate Project.
+Both only read and refuse a Store root outside the workspace or bytes that do not match the pinned
+identity. Do not edit a Store file, unpin a reference or change `integrity` to make a call pass: that
 is the user's. Without the tools, `chrona render-review` and `chrona baseline-compare` do the same.
+
+## Start from a spreadsheet
+
+Export CSV (or TSV), then `chrona import plan.csv --output project.yaml` (add `--actual-output actual.yaml
+--as-of DATE` for `progress`/`actual_*` columns, `--calendar "standard mon-fri"` for `wd` durations). One row
+per task, gate or group; only `id` is required. Columns: `title`, `type` (task, gate, group), `start`, `end`
+(exclusive), `finish` (inclusive), `duration`, `parent`, `predecessors`, `deadline`, `calendar`, `progress`,
+`actual_start`, `actual_finish`; any other column is a text field. `chrona import --help` has the details.
+`--role responsible=team` binds an extra column as the owner: a lane-grouping preset (`executive-light`,
+`target-b`) then draws one lane per owner and a group is a plain row, not a lane. It never overwrites a file.
 
 ## Warnings and diagnostics
 
-Errors are JSON on standard output with exit 1 or 2. A render that succeeds can still
-print warnings (`W_...`) and notes (`I_...`) as JSON lines on standard error with exit 0:
-something was clipped, suppressed or substituted. Read the code in
+Errors are JSON on standard output with exit 1 or 2. A render that succeeds exits 0 and prints
+`{"status": "ok", "diagnostics": [], "warnings": [...]}` on standard output (standard error stays empty):
+read `warnings` for `W_...` and `I_...` entries, such as something clipped, suppressed or substituted. Read the code in
 [references/diagnostics.md](references/diagnostics.md); shorten a title, widen `--viewport`, or
-accept it. If that file does not list a code, rerun the smallest plan that shows it, quote the
+accept it. `.typ` or `.tex` of a preset with viewer-fit (`target-b`, `sunday`) warns `W_VIEWER_FIT_NOT_HONOURED`: harmless, that text is drawn plain. If that file does not list a code, rerun the smallest plan that shows it, quote the
 whole diagnostic to the user, and do not guess a fix.
 
 ## What chrona does not do
 
-No resource leveling at this surface, no interactive editing, no cycle analysis (a cycle is
-rejected). A `deadline` is a promise, not a bound: `chrona schedule` still places everything and
-lists a `W_DEADLINE` for each object planned after it (`render` repeats it on standard error);
+No resource leveling, no interactive editing, no cycle analysis (a cycle is rejected). A `deadline` is a promise, not a bound: `chrona schedule` still places everything and
+lists a `W_DEADLINE` for each object planned after it (`render` lists it in `warnings`);
 `validate` does not judge it. A View can draw it (`deadlines: {show: slipped}`), and a terse plan
 states it with a last clause, `deadline 2027-06-30`.
 
-## Install and refresh this skill
+## Install, refresh, and where the rules live
 
-This skill ships inside the chrona package, so it always matches the installed command.
-`chrona skill copy DIR` (or `--output DIR`) copies it into an empty or absent directory and never
-overwrites. Point it at the skills directory your agent host reads (for example `.claude/skills/chrona`):
-
-```bash
-chrona skill copy agent-skills/chrona
-```
-
-After upgrading, copy into a new directory, compare with `diff -r`, and replace the old one.
-`E_SKILL_OUTPUT_EXISTS` means the directory is not empty; choose a new one.
-
-## Where the rules live
-
-This skill teaches the workflow. Spec 05 (project format), Spec 04 (scheduling) and Specs 06, 07
-and 33 (view, theme, layout) in the chrona repository's specification directory state the rules.
+This skill ships inside the chrona package, so it matches the installed command. `chrona skill copy DIR`
+copies it into an empty or absent directory (point it at the skills directory your agent host reads, for
+example `.claude/skills/chrona`) and never overwrites; `E_SKILL_OUTPUT_EXISTS` means the directory is not
+empty. After upgrading, copy into a new directory, compare with `diff -r`, and replace the old one. The
+rules are in Spec 05 (project format), Spec 04 (scheduling) and Specs 06, 07 and 33 (view, theme, layout).
