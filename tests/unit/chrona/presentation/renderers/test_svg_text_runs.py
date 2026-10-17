@@ -1,5 +1,7 @@
 """Private raster/PDF positioning follows Layout's completed fallback runs."""
 from lxml import etree
+from types import SimpleNamespace
+import pytest
 
 from chrona.presentation.renderers.svg_text_runs import (
     RASTER_TEXT_RUN_GRAMMAR,
@@ -7,6 +9,7 @@ from chrona.presentation.renderers.svg_text_runs import (
     position_completed_text_runs,
 )
 from chrona.presentation.renderers.pdf_svg import lower_pdf_svg
+from chrona.presentation.renderers import registry
 from chrona.presentation.renderers.v05_svg import render_v05_svg
 from chrona.presentation.scene.model import TextLayout, TextRun
 from tests.unit.chrona.presentation.renderers.test_pdf_text_run_advances import _surface
@@ -154,3 +157,33 @@ def test_png_projection_visits_every_fallback_text_after_rebuilding_earlier_node
                   if any(span.get("data-asset-identity") == "sha256:fallback"
                          for span in node.iter(NS + "tspan"))}
     assert positioned == {"small-caps", "second-label"}
+
+
+@pytest.mark.parametrize("has_fallback", [False, True], ids=["small-caps-no-fallback", "completed-fallback"])
+def test_png_registry_identity_tracks_only_fallback_run_projection(monkeypatch, has_fallback):
+    from dataclasses import replace
+    import resvg_py
+
+    no_fallback = replace(_mixed_layout(runs=False), lines=("UX RESEARCH",), text_transform="small-caps",
+                          runs=((TextRun("UX ", 14, 18.4), TextRun("RESEARCH", 14, 42)),))
+    surface = _surface(_mixed_layout() if has_fallback else no_fallback)
+    descriptor = {"dpi": 96, "version": "test-resvg", "resvgVersion": "test-engine"}
+    captured: list[str] = []
+
+    monkeypatch.setattr(registry, "_verify_resvg", lambda _: None)
+    monkeypatch.setattr(registry, "_font_files", lambda *args: ((), ("sha256:font",)))
+    monkeypatch.setattr(registry, "V05SvgRenderer", lambda viewer_fit: SimpleNamespace(
+        render=lambda surface: SimpleNamespace(content=render_v05_svg(surface, viewer_fit=False).encode())))
+    monkeypatch.setattr(resvg_py, "svg_to_bytes", lambda **kwargs: captured.append(kwargs["svg_string"]) or b"PNG")
+
+    original = render_v05_svg(surface, viewer_fit=False).encode()
+    artifact = registry.ResvgPngRenderer("png", descriptor, None, None).render(surface)
+    assert len(captured) == 1
+    if has_fallback:
+        assert captured[0].encode() == lower_png_text_runs(surface, original)
+        assert captured[0].encode() != original
+        assert f"-{RASTER_TEXT_RUN_GRAMMAR}-" in artifact.adapter_identity
+    else:
+        assert captured[0].encode() == original
+        assert f"-{RASTER_TEXT_RUN_GRAMMAR}-" not in artifact.adapter_identity
+    assert artifact.adapter_identity.endswith("-fonts-font")
