@@ -7,7 +7,7 @@ from typing import Any, Mapping
 
 from chrona.presentation.model.actual_variance_paint import select_actual_variance_paints
 from chrona.presentation.model.date_basis import ItemDateBasis, date_range_display
-from chrona.presentation.model.projection import ObservationState, ReviewProjection
+from chrona.presentation.model.projection import ObservationState, ReviewProjection, display_finish_delta
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
     AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, SurfaceLegendEntry, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, initials, table_value,
@@ -81,7 +81,10 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         if column.suffix is not None:
             core += column.suffix  # a literal after the row number, measured with it (#1545)
         affix = column.affixes.for_state(affix_state(value, column.format)) if column.affixes is not None else None
-        return (affix.prefix, core, affix.suffix) if affix is not None else ("", core, "")
+        prefix, suffix = (affix.prefix, affix.suffix) if affix is not None else ("", "")
+        if _is_estimated_forecast_delta(item, column.source):
+            suffix += "*"
+        return prefix, core, suffix
 
     def cell(item: Any, column: Any, row_index: int) -> str:
         prefix, core, suffix = cell_parts(item, column, row_index)
@@ -94,7 +97,7 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         source = column.source
         facet = (source.get("comparisonFacet") if isinstance(source, Mapping) else None)
         if facet == "finishDelta" or (isinstance(source, Mapping) and source.get("facet") == "finishDelta"):
-            delta = item.finish_delta
+            delta = display_finish_delta(item)
             return "tableVarianceBehind" if isinstance(delta, int) and delta > 0 else ("tableVarianceAhead" if isinstance(delta, int) and delta < 0 else ("tableVarianceOnTrack" if delta == 0 else "tableCell"))
         if facet == "missingActual" and item.observation_state == ObservationState.DUE_UNOBSERVED:
             return "missingActualCell"
@@ -111,7 +114,8 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
             return TableCellContent(row.row_id, column.id, cell(item, column, row_index),
                                     "groupHeader" if header else cell_semantic(item, column),
                                     "groupHeader" if header else cell_typography_role(column),
-                                    *cell_affixes(item, column, row_index))
+                                    *cell_affixes(item, column, row_index),
+                                    required=_is_forecast_delta(item, column.source))
         cells = tuple(
             row_cell(row, column, row_index)
             for row_index, row in enumerate(projection.rows, 1) for column in view.table_columns)
@@ -124,7 +128,7 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         row_levels = tuple(TableRowLevel((row.row_id, row.table_subject_id), bool(row.group_id), row.depth)
                            for row in projection.rows)
     else:
-        cells = tuple(TableCellContent(item.object_id, column.id, cell(item, column, row_index), cell_semantic(item, column), cell_typography_role(column), *cell_affixes(item, column, row_index))
+        cells = tuple(TableCellContent(item.object_id, column.id, cell(item, column, row_index), cell_semantic(item, column), cell_typography_role(column), *cell_affixes(item, column, row_index), required=_is_forecast_delta(item, column.source))
                       for row_index, item in enumerate(projection.items, 1) for column in view.table_columns)
         table_cell_objects = tuple((item.object_id, column.id, item.object_id, True)
                                    for item in projection.items for column in view.table_columns)
@@ -238,8 +242,24 @@ def _used_scale_values(color_scale: ResolvedColorScale, projection: ReviewProjec
 CALENDAR_CLOSED_LEGEND_ROLE = "calendar-closed"
 
 
+def _is_finish_delta_source(source: Any) -> bool:
+    return (isinstance(source, Mapping)
+            and (source.get("facet") == "finishDelta" or source.get("comparisonFacet") == "finishDelta"))
+
+
+def _is_forecast_delta(item: Any, source: Any) -> bool:
+    return getattr(item, "forecast", None) is not None and _is_finish_delta_source(source)
+
+
+def _is_estimated_forecast_delta(item: Any, source: Any) -> bool:
+    forecast = getattr(item, "forecast", None)
+    return (forecast is not None and not forecast.schedule.completed
+            and _is_finish_delta_source(source))
+
+
 def legend_entries(detail: ReviewDetailInput | None, project: Mapping[str, Any], projection: ReviewProjection,
-                   color_scale: ResolvedColorScale | None, *, closed_days_drawn: bool) -> tuple[SurfaceLegendEntry, ...]:
+                   color_scale: ResolvedColorScale | None, *, closed_days_drawn: bool,
+                   forecast_label: str | None = None) -> tuple[SurfaceLegendEntry, ...]:
     """Return typed legend entries exactly as Layout measures and draws them (#497, #871).
 
     The Detail Profile's own entries come first; a colour scale then adds one entry per
@@ -251,6 +271,17 @@ def legend_entries(detail: ReviewDetailInput | None, project: Mapping[str, Any],
     entries = tuple(SurfaceLegendEntry(item.role, item.label, item.source_ref, item.swatch_shape)
                     for item in detail.legend
                     if closed_days_drawn or item.role != CALENDAR_CLOSED_LEGEND_ROLE) if detail is not None else ()
+    if any(getattr(item, "forecast", None) is not None for item in getattr(projection, "items", ())):
+        forecast_entry = SurfaceLegendEntry("forecast", forecast_label or "Forecast (* estimated)")
+        planned_index = next((index for index, entry in enumerate(entries) if entry.role == "planned"), None)
+        if planned_index is None:
+            entries = (*entries, forecast_entry)
+        else:
+            planned_entry = entries[planned_index]
+            entries = (*entries[:planned_index],
+                       SurfaceLegendEntry("forecast", forecast_label or "Forecast (* estimated)",
+                                          swatch_shape=planned_entry.swatch_shape),
+                       *entries[planned_index + 1:])
     if color_scale is None:
         return entries
     used = _used_scale_values(color_scale, projection)
@@ -411,7 +442,10 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     notes = tuple((str(key), str(value.get("text", ""))) for key, value in project_notes.items()
                  if key not in consumed_note_ids)
     calendar_closed, calendar_exceptions = calendar_closures(project, projection, view)
-    legend = legend_entries(detail, project, projection, color_scale, closed_days_drawn=bool(calendar_closed))
+    legend_wording = (view.wording or {}).get("legend", {})
+    forecast_label = legend_wording.get("forecast") if isinstance(legend_wording, Mapping) else None
+    legend = legend_entries(detail, project, projection, color_scale, closed_days_drawn=bool(calendar_closed),
+                            forecast_label=forecast_label)
     detail_content = normalize_v05_review_detail_profile(detail, projection.items)
     scale_paints: tuple[tuple[str, str], ...] = ()
     scale_legend_paints: tuple[tuple[str, str], ...] = ()

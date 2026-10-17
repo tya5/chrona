@@ -37,7 +37,7 @@ from chrona.presentation.layout.lane_mark_facets import span_mark_footprint
 from chrona.presentation.layout.text import metric_for_role, measure_text_width, place_text, wrap_text
 from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
-from chrona.presentation.model.projection import WindowMode
+from chrona.presentation.model.projection import WindowMode, active_placement, finish_delta_text
 
 
 @dataclass(frozen=True)
@@ -257,7 +257,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
                 lane = lane_owner(review_row, item) if projection.lane_membership is not None else None
                 instance_id = layout_id if projection.rows else item.object_id
-                planned = item.planned
+                planned = active_placement(item)
                 start_at, end_at = planned.get("start", planned.get("at")), planned.get("end", planned.get("at"))
                 if not isinstance(start_at, date) and not isinstance(end_at, date):
                     continue
@@ -269,7 +269,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     continue
                 if attached is None and "title" in contract.labels.content:
                     components.append(("title", item.title))
-                if attached is None and "finishDelta" in contract.labels.content and item.finish_delta is not None:
+                if (attached is None and getattr(item, "forecast", None) is None
+                        and "finishDelta" in contract.labels.content and item.finish_delta is not None):
                     components.append(("finishDelta", f"{item.finish_delta:+d}d"))
                 if not components:
                     continue
@@ -351,6 +352,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
         for item in review_row.items:
             if not getattr(item, "temporal_paint", True):
                 continue
+            if getattr(item, "forecast", None) is not None:
+                continue  # A forecast delta is a separate required request below.
             layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
             instance_id = layout_id if projection.rows else item.object_id
             if not projection.rows and item.source_kind != "combined":
@@ -377,6 +380,35 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     "summary", f"variance:{instance_id}", CollisionDomain("timeline", "overlay"),
                     request.surface_content.label_overflow, semantic_id="finishDelta",
                     subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
+    forecast_requests = []
+    if contract.labels.enabled and "finishDelta" in contract.labels.content:
+        for row in projection.rows:
+            for item in row.items:
+                if getattr(item, "forecast", None) is None or not getattr(item, "temporal_paint", True):
+                    continue
+                endpoint = active_placement(item).get("end", active_placement(item).get("at"))
+                stable_instance = f"{row.row_id}:{item.item_id or item.object_id}"
+                placement_id = f"variance:{stable_instance}"
+                if projection.window_mode == WindowMode.EXPLICIT:
+                    inside = (projection.window[0] <= endpoint < projection.window[1] if item.source_type == "point"
+                              else projection.window[0] < endpoint <= projection.window[1])
+                    if not inside:
+                        raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/placement/{placement_id}")
+                physical_row = (projection.lane_membership.assignment_for(
+                    row.items[0].item_id or row.items[0].object_id).lane_id
+                    if projection.lane_membership is not None else row.row_id)
+                mark = marks.get(f"planned:{physical_row}:{item.item_id or item.object_id}")
+                if mark is None:
+                    raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/placement/{placement_id}")
+                candidates = tuple(side for side in (request.surface_content.label_fallback or
+                    ("end", "start", "above", "below")) if side not in {"suppress", "inside"})
+                forecast_requests.append(LabelRequest(
+                    placement_id, item.object_id, finish_delta_text(item), LabelRect(*bounds_from_rect(mark.bounds)),
+                    candidates, "summary", "plot-label", CollisionDomain("timeline", "overlay"),
+                    "diagnose", bounds=row_bands.get(physical_row), semantic_id="finishDelta",
+                    required_before_routes=True,
+                    subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
+    requests = forecast_requests + requests
     pre_route = tuple(item for item in requests if item.rule_host_obstacle_id is not None or
         item.required_before_routes or
         (projection.lane_membership is not None and item.semantic_id == "memberLabel"))

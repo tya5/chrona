@@ -63,10 +63,13 @@ $defs:
     type: object
     required: [placementId, instanceId, facet, sourceRef, sourceKind, semanticRole, reason]
     additionalProperties: false
+    allOf:
+      - if: {properties: {facet: {const: forecast}}, required: [facet]}
+        then: {properties: {semanticRole: {const: planned}}}
     properties:
       placementId: {$ref: "#/$defs/string"}
       instanceId: {$ref: "#/$defs/string"}
-      facet: {description: "Original source facet, never a cut-edge substitute.", enum: [planned, actual, missing-actual]}
+      facet: {description: "Original source facet, never a cut-edge substitute.", enum: [planned, forecast, actual, missing-actual]}
       sourceRef: {$ref: "#/$defs/string"}
       sourceKind: {$ref: "#/$defs/string"}
       semanticRole: {description: "Original expected semantic mark role.", enum: [planned, snapshot, scenario, actual, missing-actual]}

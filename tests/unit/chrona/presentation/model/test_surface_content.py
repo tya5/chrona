@@ -1,8 +1,12 @@
+from dataclasses import replace
 from datetime import date
 
 import pytest
 
-from chrona.presentation.model.projection import ObservationState, ReviewItem
+from chrona.core.forecast import ForecastItem
+from chrona.presentation.model.projection import (
+    ForecastComparisonFact, ObservationState, ReviewItem, display_finish_delta, finish_delta_text,
+)
 from chrona.presentation.model.surface_content import display_value, table_value
 from chrona.presentation.table_presentation import BooleanPresencePresentation
 
@@ -25,6 +29,19 @@ def test_typed_table_facets_are_formatted_by_the_view_contract():
     assert display_value(table_value(item, {}, {"facet": "planned"}), "blank", "dateRange") == "01 Jan – 05 Jan"
     assert display_value(table_value(item, {}, {"facet": "actual"}), "in-progress", "date") == "2026-01-08"
     assert display_value(table_value(item, {}, {"facet": "finishDelta"}), "blank", "signedDays") == "+3d"
+
+
+@pytest.mark.parametrize("source", ({"facet": "finishDelta"}, {"comparisonFacet": "finishDelta"}))
+def test_forecast_table_delta_sources_select_estimate_without_replacing_observed_fact(source):
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)},
+                      {"start": date(2026, 1, 2), "finish": date(2026, 1, 8)}, 3, ())
+    item = replace(item, forecast=ForecastComparisonFact(
+        ForecastItem({"start": date(2026, 1, 2), "end": date(2026, 1, 9)}, completed=False), 4))
+    assert item.finish_delta == 3
+    assert display_finish_delta(item) == 4
+    assert finish_delta_text(item) == "+4d*"
+    assert table_value(item, {}, source) == 4
+    assert table_value(item, {}, {"facet": "planned"}) == item.planned
 
 
 def test_in_flight_actual_renders_as_an_open_date_range():

@@ -82,6 +82,8 @@ def _binding(semantic_id: str, primitive_kind: str, purpose: str,
 _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for binding in (
     # Comparison marks.
     _binding("planned", "mark", "planned", "planned", "planned", ContrastClass.MARK),
+    # A forecast is distinct temporal truth, painted with the existing planned role.
+    _binding("forecast", "mark", "forecast", "planned", "planned"),
     _binding("actual", "mark", "actual", "actual", "actual", ContrastClass.MARK),
     _binding("snapshot", "mark", "snapshot", "snapshot", "snapshot", ContrastClass.MARK),
     # A gate (point mark) painted by its own Theme role when the Theme declares one (#991); its purpose stays `planned`.
@@ -297,6 +299,11 @@ def semantic_binding(semantic_id: str) -> SemanticBinding:
         return _REGISTRY[semantic_id]
     except KeyError as error:
         raise ValueError(f"E_PRESENTATION_SEMANTIC_UNKNOWN:{semantic_id}") from error
+
+
+def mark_style_role(semantic_id: str) -> str:
+    """Resolve opt-in mark paint reuse without changing established role keys."""
+    return semantic_binding(semantic_id).theme_role if semantic_id == "forecast" else semantic_id
 
 
 def is_annotation_artwork_role(role: object) -> bool:

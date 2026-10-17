@@ -8,6 +8,8 @@ from chrona.presentation.layout.lane_projection import close_lane_projection
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.projection import ObservationState
+from chrona.presentation.model.projection import ForecastComparisonFact
+from chrona.core.forecast import ForecastItem
 
 
 def _item(object_id, *, item_id=None, attached_to=None, source_kind="primary",
@@ -60,6 +62,14 @@ def test_closure_derives_expected_set_and_rejects_inconsistent_review_roles():
     broken = _projection(ReviewRowProjection("row", "Row", "g", "item", (invalid,)))
     with pytest.raises(LayoutError):
         close_lane_projection(broken, as_of=date(2026, 1, 3))
+
+
+def test_forecast_primary_inventory_has_truthful_purpose_and_planned_paint_role():
+    item = replace(_item("item"), forecast=ForecastComparisonFact(
+        ForecastItem({"start": date(2026, 1, 10), "end": date(2026, 1, 12)}, False), 9))
+    projection = _projection(ReviewRowProjection("row", "Row", "g", "item", (item,)))
+    mark, = close_lane_projection(projection, as_of=None).expected_marks
+    assert (mark.purpose, mark.role, mark.placement_id) == ("forecast", "planned", "planned:row:item")
 
 
 def test_attached_host_must_resolve_to_exactly_one_selected_instance_in_same_row():

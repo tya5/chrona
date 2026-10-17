@@ -23,6 +23,7 @@ from chrona.presentation.layout.window_span_geometry import (
     complete_clipped_span_geometry,
 )
 from chrona.presentation.model.point_paint import resolve_point_paint_role
+from chrona.presentation.model.semantic_registry import mark_style_role
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.semantic_mark_facets import (
     ItemMarkFacetSelection, MarkFacetAbsence, select_item_mark_facets,
@@ -192,13 +193,14 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
         raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/items",
                           detail="stage=composition; reason=selection-mismatch")
     for facet in selection.facets:
-        placement_id = f"{facet.facet}:{instance_id}"
+        geometry_role = mark_style_role(facet.semantic_id)
+        placement_id = facet.placement_id(instance_id)
         if facet.shape == "point":
             at = facet.at
             assert at is not None
             x = _coordinate(at, frame.inline_scale)
             # Point symbols retain each semantic role's own size and offset (#1066).
-            symbol_block, symbol_size = frame.symbol_bounds(facet.semantic_id)
+            symbol_block, symbol_size = frame.symbol_bounds(geometry_role)
             bounds = Rect(Decimal(str(x - symbol_size / 2)), Decimal(str(symbol_block)),
                           Decimal(str(symbol_size)), Decimal(str(symbol_size)))
             port = (x, symbol_block + symbol_size / 2)
@@ -214,7 +216,7 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
         finish = facet.finish
         assert start is not None and finish is not None
         x1, x2 = _coordinate(start, frame.inline_scale), _coordinate(finish, frame.inline_scale)
-        block, size = role_bounds[facet.semantic_id]
+        block, size = role_bounds[geometry_role]
         if facet.geometry == "end-tick":
             width = max(1.0, size * 1.5)
             y = block
@@ -297,7 +299,8 @@ def compose_mark_placement(*, frame: MarkBandFrame, placement_id: str, source_re
                            shape: str, semantic_id: str, theme_tokens: object, slot_id: str,
                            paint_order_base: int = 100, end_treatment: str = "closed") -> MarkPlacement:
     """Complete a mark's outline, role paint order, and symbol in one frame-aware path."""
-    geometry = frame.role_geometries[semantic_id]
+    geometry_role = mark_style_role(semantic_id)
+    geometry = frame.role_geometries[geometry_role]
     radius = min(geometry.corner_radius * float(min(bounds.inline_size, bounds.block_size)),
                  float(min(bounds.inline_size, bounds.block_size)) / 2)
     radius = resolve_corner_radius(geometry.physical_corner_radius,
@@ -305,7 +308,7 @@ def compose_mark_placement(*, frame: MarkBandFrame, placement_id: str, source_re
                                   legacy_radius=radius)
     token = None
     if shape == "point":
-        variant = "baseline" if semantic_id in {"snapshot", "scenario"} else semantic_id
+        variant = "baseline" if geometry_role in {"snapshot", "scenario"} else geometry_role
         token = theme_tokens.variant_symbol(variant)
     commands = (rounded_diamond_path(inline=float(bounds.inline), block=float(bounds.block),
                                      inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
@@ -332,7 +335,7 @@ def compose_mark_placement(*, frame: MarkBandFrame, placement_id: str, source_re
         if shape == "point" and any(part.paint_mode == "fill" for part in completed_symbols):
             completed_symbols = complete_point_outline(
                 completed_symbols, paint_role=resolve_point_paint_role(
-                    semantic_id, gate_declared=theme_tokens.has_role("gate")),
+                    geometry_role, gate_declared=semantic_id != "forecast" and theme_tokens.has_role("gate")),
                 theme_tokens=theme_tokens)
     return MarkPlacement(placement_id, source_ref, bounds, start_port, end_port,
                          mark_shape=shape, corner_radius=radius, path_commands=commands,

@@ -13,8 +13,8 @@ from typing import Any
 
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.model.actual_observation import in_progress_actual
-from chrona.presentation.layout.semantic_mark_facets import due_end_missing_actual_selected
-from chrona.presentation.model.projection import ObservationState, ReviewProjection
+from chrona.presentation.layout.semantic_mark_facets import due_end_missing_actual_selected, mark_placement_facet
+from chrona.presentation.model.projection import ObservationState, ReviewProjection, active_placement
 
 
 def folded_instance_id(folded: Any, item: Any) -> str:
@@ -157,10 +157,11 @@ def close_lane_projection(
             instance.source_kind, "planned")
         if item.source_type not in {"point", "span"}:
             raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", f"{path}/source_type")
-        planned_complete = (isinstance(item.planned.get("at"), date)
+        placement = active_placement(item)
+        planned_complete = (isinstance(placement.get("at"), date)
                             if item.source_type == "point" else
-                            isinstance(item.planned.get("start"), date)
-                            and isinstance(item.planned.get("end"), date))
+                            isinstance(placement.get("start"), date)
+                            and isinstance(placement.get("end"), date))
         if not planned_complete:
             raise LayoutError("E_LAYOUT_LANE_EXPECTED_MARK_INVALID", f"{path}/planned")
         if instance.source_kind == "actual":
@@ -169,7 +170,8 @@ def close_lane_projection(
                                   detail="selected Actual source has no recorded payload")
             intentional_absences.append(LaneIntentionalAbsence(instance, "planned", "actual-source-only"))
         else:
-            _expect_mark(expected_marks, instance, planned_role, "planned")
+            _expect_mark(expected_marks, instance, planned_role,
+                         "forecast" if getattr(item, "forecast", None) is not None else "planned")
 
         if instance.source_kind not in {"actual", "combined", "primary"}:
             continue
@@ -280,4 +282,4 @@ def _expect_mark(target: list[ExpectedLaneMark], instance: LaneProjectionInstanc
     # instance remains the identity authority; consumers must not parse this
     # serialization back into source identities.
     target.append(ExpectedLaneMark(instance, role, purpose,
-                                   f"{purpose}:{instance.placement_key}"))
+                                   f"{mark_placement_facet(purpose)}:{instance.placement_key}"))

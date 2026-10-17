@@ -27,7 +27,7 @@ from chrona.presentation.layout.filled_contour import (
     ContourUnionError, intersect_visible_host_contour, union_filled_contours,
 )
 from chrona.presentation.layout.rounded_outline import rounded_rect_commands
-from chrona.presentation.model.projection import WindowMode, shared_track_member_key
+from chrona.presentation.model.projection import WindowMode, shared_track_member_key, active_placement
 from chrona.presentation.layout.surface_geometry import coordinate_for_date
 from chrona.presentation.layout.text import metric_for_role, measure_text_width
 from chrona.presentation.layout.lane_projection import (
@@ -256,7 +256,7 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
     def completed_marks(composition, visibility, instance_id):
         if visibility is None:
             return composition.marks
-        facets = {f"{facet.source.facet}:{instance_id}": facet for facet in visibility.facets}
+        facets = {facet.source.placement_id(instance_id): facet for facet in visibility.facets}
         result = []
         for mark in composition.marks:
             facet = facets.get(mark.placement_id)
@@ -302,12 +302,12 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                 source_kind=source_kind, as_of=contract.time.as_of)
             if not getattr(item, "temporal_paint", True):
                 if source_kind in {"primary", "combined"}:
-                    start = item.planned.get("start")
-                    end = item.planned.get("end")
+                    start = active_placement(item).get("start")
+                    end = active_placement(item).get("end")
                     if not isinstance(start, date) or not isinstance(end, date):
                         raise LayoutError("E_PRESENTATION_PLACEMENT_REQUIRED", "/projection/items")
                     facet = (next((facet for facet in visibility.facets
-                                   if facet.source.facet == "planned"), None)
+                                   if facet.source.facet in {"planned", "forecast"}), None)
                              if visibility is not None else None)
                     if visibility is not None and facet is None:
                         raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/items",
@@ -406,7 +406,7 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
         pitch = allocation.outer_extent if allocation is not None else mark_block_size
         track_inset = -allocation.outer_bounds[0] if allocation is not None else 0.0
         ordered_points = sorted(
-            folded_points, key=lambda point: (point.item.planned.get("at"), point.item.object_id))
+            folded_points, key=lambda point: (active_placement(point.item).get("at"), point.item.object_id))
         lane_of = dict(zip((id(point) for point in ordered_points),
                            pack_extent_lanes([folded_extent(point) for point in ordered_points])))
         occupied = (max(lane_of.values()) + 1) * pitch
@@ -488,14 +488,14 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             source_kind=subject.source_kind if projection.rows else "combined",
             as_of=contract.time.as_of)
         planned_visibility = (next((facet for facet in visibility.facets
-                                    if facet.source.facet == "planned"), None)
+                                    if facet.source.facet in {"planned", "forecast"}), None)
                               if visibility is not None else None)
         if visibility is not None and planned_visibility is None:
             raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/items",
                               detail="stage=summary; reason=unaccounted-facet")
         if planned_visibility is not None and planned_visibility.disposition == FacetDisposition.OMITTED:
             continue
-        start_at, end_at = subject.planned.get("start"), subject.planned.get("end")
+        start_at, end_at = active_placement(subject).get("start"), active_placement(subject).get("end")
         if not isinstance(start_at, date) or not isinstance(end_at, date):
             continue
         x1, x2 = coordinate_for_date(start_at, scale), coordinate_for_date(end_at, scale)

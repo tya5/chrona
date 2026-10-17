@@ -1,5 +1,6 @@
 from dataclasses import replace
 from datetime import date
+from decimal import Decimal
 
 import pytest
 
@@ -7,6 +8,7 @@ from chrona.presentation.layout.lane_window_marks import (
     complete_lane_window_placement_absences,
     complete_lane_window_mark_account, validate_lane_window_emission,
     validate_lane_window_mark_account,
+    complete_lane_window_handoff,
 )
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.surface_mark_visibility import (
@@ -17,6 +19,11 @@ from chrona.presentation.model.projection import (
     ReviewRowProjection, WindowMode,
 )
 from chrona.presentation.review.lane_membership import Lane, LaneAssignment, LaneMembership
+from chrona.core.forecast import ForecastItem
+from chrona.presentation.model.projection import ForecastComparisonFact
+from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.surface_quality import MarkPlacement, VisualRequest
+from chrona.presentation.layout.surface_lanes import resolved_lane_visual_requests
 
 
 def _fixture(*, mode=WindowMode.EXPLICIT, window=(date(2026, 2, 3), date(2026, 2, 5)),
@@ -49,6 +56,30 @@ def _account(projection, index):
 def _validate(account, projection, index):
     validate_lane_window_mark_account(account, projection=projection, as_of=None,
                                       visibility_index=index)
+
+
+@pytest.mark.parametrize("outside", [False, True])
+def test_forecast_lane_window_handoff_joins_physical_slot_without_losing_semantic_facet(outside):
+    projection, _ = _fixture(source_kind="primary")
+    start, end = (date(2026, 2, 1), date(2026, 2, 2)) if outside else (date(2026, 2, 3), date(2026, 2, 4))
+    item = replace(projection.rows[0].items[0], forecast=ForecastComparisonFact(
+        ForecastItem({"start": start, "end": end}, False), 2))
+    projection = replace(projection, rows=(replace(projection.rows[0], items=(item,)),),
+                         lane_rows=(replace(projection.lane_rows[0], items=(item,)),))
+    index = build_item_mark_visibility_index(projection, as_of=None)
+    mark = MarkPlacement("planned:lane:item", "object", Rect(*(Decimal(value) for value in (0, 0, 10, 10))),
+                         (0., 5.), (10., 5.), semantic_id="forecast", lane_row_id="lane",
+                         lane_member_id="item", lane_source_kind="primary")
+    absences, empty = complete_lane_window_handoff(projection=projection, marks=() if outside else (mark,),
+                                                  as_of=None, visibility_index=index)
+    assert bool(absences) == outside and bool(empty) == outside
+    if outside:
+        assert absences[0].expected.purpose == "forecast"
+        assert absences[0].expected.role == "planned"
+    else:
+        visual = VisualRequest("mark", (("object", "object"), ("facet", "planned")), ref="icon")
+        resolved, = resolved_lane_visual_requests(projection, (visual,), as_of=None)
+        assert dict(resolved.selector) == {"placementId": "planned:lane:item"}
 
 
 def test_partial_omission_retains_original_inventory_and_membership_without_reselection(monkeypatch):

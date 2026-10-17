@@ -12,6 +12,7 @@ from chrona.presentation.layout.group_tags import (
 from chrona.presentation.layout.model import LayoutDecision, LayoutError, LayoutManifest, Rect, geometry_sum
 from chrona.presentation.layout.lane_preflight import lane_inline_frame_for_manifest
 from chrona.presentation.layout.lane_projection import LaneProjectionInstance, lane_missing_actual_visible
+from chrona.presentation.model.projection import active_placement
 from chrona.presentation.layout.lane_subtracks import LaneSubtrackPlan
 from chrona.presentation.layout.mark_aware_scale import (
     PointMarkFootprint, inset_scale_for_point_facets, point_facet_insets)
@@ -198,7 +199,7 @@ def _provisional_point_facets(*, projection: Any, rows: tuple[Any, ...], scale: 
             if mark.mark_shape != "point":
                 continue
             anchor = ((item.actual or {}).get("at") if mark.semantic_id == "actual"
-                      else item.planned.get("at"))
+                      else active_placement(item).get("at"))
             if isinstance(anchor, date):
                 for facet in _mark_facets(item, instance, mark, theme_tokens):
                     left, _, right, _ = obstacle_envelope(facet.visible_footprint)

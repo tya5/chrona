@@ -2,7 +2,7 @@
 
 ## Baseline and status
 
-Public base: 41e6c83a9f742af6e7a46209c4cec8f4bca91f0f (trusted-ready).
+Public base: 3721c6a18a1a4510a2493b156445bafd1b8eff7f (trusted-ready; design PR1642 merged).
 [Owner rule and acceptance](https://github.com/tya5/chrona/issues/1634).
 The design plan was published in 783fe50cc; normative design and whole-
 architecture review were published in a9c0d3ec6c4b982c1f93249eec6acfcb814632b4;
@@ -11,8 +11,15 @@ the corresponding code change. F1 is implemented on the feature branch, not
 released: 87 focused forecast/ordinary-projection/closure tests passed. Actual
 trial calculation returns all 25 objects, 6 moved, 22 unfinished, no fatal
 errors; the observed dependency miss is reported without changing either date.
-This is calculation evidence, not PNG or CLI acceptance. F2 projection/geometry
-is next. [Reviewer answers](https://github.com/tya5/chrona/issues/1634#issuecomment-6230794260)
+F2 candidate now separates source facts from active placements/deltas, registers
+forecast Scene/lane/window identities, and completes independent required plot
+deltas and full table/legend text. Focused groups: 314 passed and 92 passed;
+schema equivalence L1 passes the two declared Scene admission deltas. Four stale
+merged L1 entries were retired with the verifier's historical proof. The first
+full equivalence run failed only the then-undeclared Scene delta; rerun all
+layers after F3's Context widening. No PNG, ingress, byte or release acceptance
+is claimed yet. F3 common ingress is next.
+[Reviewer answers](https://github.com/tya5/chrona/issues/1634#issuecomment-6230794260)
 approve retained declared units, finish-only placement with an unobserved-start
 finding, and child-envelope precedence with a named group-observation finding.
 No further reviewer gate precedes normative publication.

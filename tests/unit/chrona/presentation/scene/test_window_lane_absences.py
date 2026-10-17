@@ -65,6 +65,31 @@ def test_absent_metadata_keeps_existing_v06_document_and_strict_validation():
         SceneLaneMember("lane", "member", (), ())
 
 
+def test_forecast_omission_is_primary_proof_and_round_trips_as_v07():
+    scene = _scene()
+    absence = _absence(facet="forecast", semantic_role="planned")
+    member = SceneLaneMember("lane", "member", (), (), (absence,))
+    forecast_scene = replace(scene.surfaces[0], lane_members=(member,))
+    document = scene_document(replace(scene, surfaces=(forecast_scene,)))
+    proof = document["surfaces"][0]["laneMembers"][0]["windowAbsences"][0]
+    assert proof["facet"] == "forecast" and proof["semanticRole"] == "planned"
+    validate_scene_document(document)
+
+
+def test_forecast_primary_purpose_is_valid_in_lane_inventory():
+    scene = _scene(omitted=False)
+    surface = scene.surfaces[0]
+    primitive = replace(surface.primitives[0], purpose="forecast", visual_role="planned")
+    document = scene_document(replace(scene, surfaces=(replace(surface, primitives=(primitive,)),)))
+    assert document["surfaces"][0]["laneMembers"][0]["primaryMarkIds"] == ["mark"]
+    validate_scene_document(document)
+
+
+def test_forecast_window_absence_requires_planned_semantic_role():
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        _absence(facet="forecast", semantic_role="snapshot")
+
+
 @pytest.mark.parametrize("field,value", [
     ("placement_id", ""), ("source_ref", ""), ("reason", "capacity"),
     ("facet", "label"), ("semantic_role", "actual"),
@@ -83,7 +108,8 @@ def test_actual_absence_cannot_excuse_missing_primary_and_omission_cannot_also_b
         SceneLaneMember("lane", "member", (), (), (_absence(), _absence(placement_id="other")))
 
 
-@pytest.mark.parametrize("mutation", ["remove-proof", "actual-only", "duplicate", "wrong-reason", "v06"])
+@pytest.mark.parametrize("mutation", ["remove-proof", "actual-only", "forecast-wrong-role",
+                                       "duplicate", "wrong-reason", "v06"])
 def test_raw_document_cannot_bypass_typed_omission_rules(mutation):
     document = deepcopy(scene_document(_scene()))
     member = document["surfaces"][0]["laneMembers"][0]
@@ -91,6 +117,8 @@ def test_raw_document_cannot_bypass_typed_omission_rules(mutation):
         del member["windowAbsences"]
     elif mutation == "actual-only":
         member["windowAbsences"][0].update(facet="actual", semanticRole="actual")
+    elif mutation == "forecast-wrong-role":
+        member["windowAbsences"][0].update(facet="forecast", semanticRole="snapshot")
     elif mutation == "duplicate":
         member["windowAbsences"].append({**member["windowAbsences"][0], "placementId": "other"})
     elif mutation == "wrong-reason":

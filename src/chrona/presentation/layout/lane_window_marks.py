@@ -14,6 +14,7 @@ from chrona.presentation.layout.lane_projection import (
 )
 from chrona.presentation.layout.mark_facet_visibility import FacetDisposition
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.semantic_mark_facets import mark_placement_facet
 from chrona.presentation.layout.surface_mark_visibility import (
     ItemMarkVisibilityIndex, MarkOccurrence, MarkOccurrenceKind,
 )
@@ -136,7 +137,7 @@ def complete_lane_window_handoff(
         if original is not final:
             _invalid("placement-owner-mismatch")
         facet = next(item for item in original.facets if item.source.facet == mark.purpose)
-        expected_keys.append((f"{mark.purpose}:{lane_id}:{occurrence_id}", instance.object_id,
+        expected_keys.append((f"{mark_placement_facet(mark.purpose)}:{lane_id}:{occurrence_id}", instance.object_id,
                               lane_id, member_id, instance.source_kind, facet.source.semantic_id))
         admitted_rows.add(lane_id)
     # The surface also owns legend/decorative marks. Validate every typed lane

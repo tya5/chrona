@@ -69,7 +69,7 @@ def compose_deadline_marks(*, base: SurfaceBaseGeometry, theme_tokens: object, d
     planned: dict[str, list[MarkPlacement]] = {}
     folded: set[str] = set()
     for mark in marks:
-        if mark.semantic_id != "planned":
+        if mark.semantic_id not in {"planned", "forecast"}:
             continue
         if mark.placement_id.startswith(_FOLDED_PREFIX):
             folded.add(mark.source_ref)

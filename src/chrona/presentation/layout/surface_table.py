@@ -214,6 +214,11 @@ def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | N
             else:
                 resolved, overflow = _resolve_table_text(
                     content, available, typography_role, table.overflow, tokens, font_metrics)
+            if getattr(cell, "required", False) and (
+                    (closed is not None and (closed.fit.ellipsized or closed.fit.inline_size > available))
+                    or (closed is None and (resolved != content or measure_table_text(content, typography_role, "horizontal") > available))):
+                raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", f"/table/cells/{object_id}/{column_id}",
+                                  detail="required comparison text must fit in full")
             if closed is None and overflow == "ellipsized" and (cell.affix_prefix or cell.affix_suffix):
                 # The state's affix survives an ellipsis (#588): only the formatted core is cut, within the
                 # width the affixes leave; when they alone do not fit, the whole string stays ellipsized.

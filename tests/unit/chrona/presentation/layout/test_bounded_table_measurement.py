@@ -66,6 +66,13 @@ def test_indivisible_long_unit_keeps_source_and_selects_ellipsis(wrap):
     assert cell.source_content == "X" * 1000
 
 
+def test_required_comparison_cell_refuses_the_ordinary_ellipsis_path():
+    table = content("+" + "9" * 1000 + "d*", "forbid")
+    table = replace(table, cells=(replace(table.cells[0], required=True), *table.cells[1:]))
+    with pytest.raises(LayoutError, match="E_LAYOUT_TABLE_OVERFLOW"):
+        close(table)
+
+
 def test_cjk_wrap_uses_existing_character_boundaries_without_ellipsis():
     result, _ = close(content("開発計画" * 100))
     assert len(result.cells[0].fit.lines) > 1

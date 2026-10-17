@@ -138,6 +138,14 @@ def test_scene_roles_are_registry_owned_without_direct_variance_or_scale_role_li
     assert '"tableCell", href=href' not in source
 
 
+def test_primary_mark_scene_binding_uses_layout_forecast_semantic_and_keeps_other_bindings():
+    from chrona.presentation.scene.v05_builder import _primary_mark_binding
+
+    assert _primary_mark_binding(SimpleNamespace(semantic_id="forecast"), "primary") == semantic_binding("forecast")
+    assert _primary_mark_binding(SimpleNamespace(semantic_id="planned"), "primary") == semantic_binding("planned")
+    assert _primary_mark_binding(SimpleNamespace(semantic_id="planned"), "snapshot") == semantic_binding("snapshot")
+
+
 def _manifest(*sources):
     rect = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(1000))
     bounds = {

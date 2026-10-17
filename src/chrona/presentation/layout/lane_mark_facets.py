@@ -14,6 +14,7 @@ from chrona.presentation.layout.obstacles import (
     ObstacleGeometry, ObstacleRect, ObstacleSegment, obstacle_envelope,
 )
 from chrona.presentation.layout.surface_quality import IconPlacement, MarkPlacement, VisualRequest
+from chrona.presentation.model.semantic_registry import mark_style_role
 
 
 def _candidate_input_error(owner: str, **operands: object) -> ValueError:
@@ -615,6 +616,7 @@ def _facet(instance: LaneProjectionInstance, item: Any, mark: MarkPlacement | No
 
 
 def _stroke_width(theme: Any, role: str) -> float | None:
+    role = mark_style_role(role)
     value = theme.optional_number(role, "strokeWidth")
     if value is None:
         return None

@@ -11,7 +11,12 @@ from datetime import date
 from typing import Any, Literal
 
 from chrona.presentation.model.actual_observation import in_progress_actual
-from chrona.presentation.model.projection import ObservationState
+from chrona.presentation.model.projection import ObservationState, active_placement
+
+
+def mark_placement_facet(facet: str) -> str:
+    """Physical primary slot naming; semantic purpose remains on the typed facet."""
+    return "planned" if facet == "forecast" else facet
 
 
 @dataclass(frozen=True)
@@ -34,6 +39,9 @@ class LogicalMarkFacet:
     finish: date | None = None
     at: date | None = None
     end_treatment: str = "closed"
+
+    def placement_id(self, instance_id: str) -> str:
+        return f"{mark_placement_facet(self.facet)}:{instance_id}"
 
 
 @dataclass(frozen=True)
@@ -63,17 +71,20 @@ def select_item_mark_facets(*, item: Any, source_kind: str,
     facets: list[LogicalMarkFacet] = []
     diagnostics: list[str] = []
     absences: list[MarkFacetAbsence] = []
-    planned = item.planned
+    planned = active_placement(item)
     actual = item.actual or {}
     missing_eligible = bool(emit_missing_actual)
 
     planned_semantic = "snapshot" if source_kind in {"snapshot", "scenario"} else "planned"
+    primary_facet = "forecast" if getattr(item, "forecast", None) is not None else "planned"
+    if primary_facet == "forecast":
+        planned_semantic = "forecast"
     if source_kind == "actual":
         absences.append(MarkFacetAbsence("planned", "actual-only-member"))
     elif item.source_type == "point":
-        facets.append(LogicalMarkFacet("planned", planned_semantic, "point", at=planned["at"]))
+        facets.append(LogicalMarkFacet(primary_facet, planned_semantic, "point", at=planned["at"]))
     else:
-        facets.append(LogicalMarkFacet("planned", planned_semantic, "span",
+        facets.append(LogicalMarkFacet(primary_facet, planned_semantic, "span",
                                        start=planned["start"], finish=planned["end"]))
 
     open_actual = (in_progress_actual(actual, as_of)
@@ -112,7 +123,7 @@ def select_item_mark_facets(*, item: Any, source_kind: str,
                 diagnostics.append(f"W_LAYOUT_ACTUAL_INCOMPLETE:{item.object_id}")
             absences.append(MarkFacetAbsence("actual", "incomplete-observation"))
         elif due_end_missing_actual_selected(item, emit_missing_actual=emit_missing_actual):
-            anchor = planned.get("end", planned.get("at"))
+            anchor = item.planned.get("end", item.planned.get("at"))
             if isinstance(anchor, date):
                 facets.append(LogicalMarkFacet("missing-actual", "missing-actual", "span",
                                                geometry="end-tick", start=anchor, finish=anchor))

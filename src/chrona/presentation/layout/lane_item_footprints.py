@@ -37,7 +37,7 @@ from chrona.presentation.layout.surface_mark_visibility import (
     ItemMarkVisibilityIndex, MarkOccurrence, MarkOccurrenceKind,
     ensure_item_mark_visibility_index,
 )
-from chrona.presentation.model.projection import ReviewProjection
+from chrona.presentation.model.projection import ReviewProjection, active_placement
 
 
 def compose_lane_item_footprints(
@@ -124,7 +124,7 @@ def compose_lane_item_footprints(
             emit_missing_actual=lane_missing_actual_visible(projection), emit_diagnostics=False,
             selection=admitted_source_selection(visibility),
         )
-        facets = {f"{facet.source.facet}:{instance.placement_key}": facet for facet in visibility.facets}
+        facets = {facet.source.placement_id(instance.placement_key): facet for facet in visibility.facets}
         completed_marks = []
         for mark in composition.marks:
             original_marks[mark.placement_id] = mark
@@ -166,12 +166,12 @@ def compose_lane_item_footprints(
                 point_anchor = None
                 if mark.mark_shape == "point":
                     candidate = ((item.actual or {}).get("at") if mark.semantic_id == "actual"
-                                 else item.planned.get("at"))
+                                 else active_placement(item).get("at"))
                     point_anchor = candidate if isinstance(candidate, date) else None
                 collected[instance].append(LaneFacetFootprint(
                     facet.facet_id, footprint, facet.overlay_with, point_anchor,
                     mark.placement_id, float(mark.bounds.block + mark.bounds.block_size / 2),
-                    facet.purpose in {"planned", "actual", "snapshot", "scenario", "missing-actual"},
+                    facet.purpose in {"planned", "forecast", "actual", "snapshot", "scenario", "missing-actual"},
                     facet.purpose,
                 ))
                 facet_purposes[instance][facet.purpose].append(facet.facet_id)
@@ -184,7 +184,7 @@ def compose_lane_item_footprints(
     for instance in closure.instances:
         if items[instance].source_kind != "combined":
             continue
-        planned_ids = tuple(facet_purposes[instance].get("planned", ()))
+        planned_ids = tuple(facet_purposes[instance].get("planned", ())) + tuple(facet_purposes[instance].get("forecast", ()))
         observed_ids = tuple(facet_purposes[instance].get("actual", ())) + tuple(
             facet_purposes[instance].get("missing-actual", ()))
         # Each mark's hosted icon follows that exact mark into the already

@@ -7,7 +7,7 @@ from typing import Any
 
 from chrona.presentation.layout.mark_facet_visibility import FacetDisposition, ItemMarkVisibility
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.model.projection import WindowMode
+from chrona.presentation.model.projection import WindowMode, active_placement
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,9 +28,9 @@ class WindowLabelAdmission:
                      if kind != "finishDelta" or not self.delta_outside)
 
     def __post_init__(self) -> None:
-        if (self.host_facet not in {"actual", "planned"}
+        if (self.host_facet not in {"actual", "planned", "forecast"}
                 or type(self.host_outside) is not bool or type(self.delta_outside) is not bool
-                or self.delta_anchor_facet not in {None, "actual", "planned"}
+                or self.delta_anchor_facet not in {None, "actual", "planned", "forecast"}
                 or (self.delta_anchor is not None and type(self.delta_anchor) is not date)
                 or (self.delta_anchor is None) != (self.delta_anchor_facet is None)
                 or (self.delta_anchor is None and self.delta_outside)):
@@ -107,11 +107,16 @@ def complete_window_label_admission(item: Any, visibility: ItemMarkVisibility, *
                                     window_mode: WindowMode,
                                     window: tuple[date, date]) -> WindowLabelAdmission:
     host_facet = "actual" if visibility.selection.source_kind == "actual" else "planned"
+    if getattr(item, "forecast", None) is not None:
+        host_facet = "forecast"
     host = next((facet for facet in visibility.facets if facet.source.facet == host_facet), None)
     actual_finish = (item.actual or {}).get("finish")
     anchor = actual_finish if isinstance(actual_finish, date) else item.planned.get(
         "end", item.planned.get("at"))
     anchor_facet = "actual" if isinstance(actual_finish, date) else "planned"
+    if getattr(item, "forecast", None) is not None:
+        anchor = active_placement(item).get("end", active_placement(item).get("at"))
+        anchor_facet = "forecast"
     if not isinstance(anchor, date):
         anchor, anchor_facet = None, None
     explicit = window_mode == WindowMode.EXPLICIT

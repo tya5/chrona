@@ -45,13 +45,16 @@ class BoundedTableMeasurement:
 
 
 def _fit_table_text(content: str, *, available: float, role: str, wrap: str,
-                     tokens: Any, font_metrics: Any, prefix: str = "", suffix: str = "") -> TextLineFit:
+                     tokens: Any, font_metrics: Any, prefix: str = "", suffix: str = "",
+                     required: bool = False) -> TextLineFit:
     treatment = tokens.text_treatment(role)
     metrics = metric_for_role(tokens, role, font_metrics)
     kwargs = dict(font_size=float(treatment.font_size), font_metrics=metrics,
                   letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
                   numeric_spacing=treatment.numeric_spacing)
     fit = fit_text_lines(content, available_inline=available, wrap=wrap, **kwargs)
+    if required and (fit is None or fit.ellipsized):
+        raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/table/cells", detail="required comparison text cannot be truncated")
     if (prefix or suffix) and (fit is None or fit.ellipsized):
         if not content.startswith(prefix) or not content.endswith(suffix) or len(prefix) + len(suffix) > len(content):
             raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/table/cells", detail="affixes disagree with source text")
@@ -132,7 +135,8 @@ def measure_bounded_table(table: TableContent, *, available_inline: float | Deci
         fit = _fit_table_text(cell.content, available=widths[cell.column_id] - indent - inset,
                               role=cell.typography_role, wrap=column.text_wrap,
                               tokens=tokens, font_metrics=font_metrics,
-                              prefix=cell.affix_prefix, suffix=cell.affix_suffix)
+                              prefix=cell.affix_prefix, suffix=cell.affix_suffix,
+                              required=getattr(cell, "required", False))
         block = treatment.font_size * treatment.line_height * len(fit.lines)
         cells.append(MeasuredTableText(cell.column_id, cell.object_id, cell.content, cell.typography_role,
                                        "horizontal", fit, block, str(metrics.content_identity)))
