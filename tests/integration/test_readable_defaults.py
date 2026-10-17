@@ -13,6 +13,7 @@ import yaml
 
 from chrona.app.cli import main
 from chrona.core.relation_identity import relation_identity
+from tests.support.draft_packages import stage_project_package_store
 from tests.support.preset_checks import MINIMUM_BAND_CONTRAST, band_contrasts as _band_contrasts, primitives as _primitives
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -64,6 +65,11 @@ def _render_project(tmp_path: Path, monkeypatch, name: str, project: Path,
                     actual: Path | None = None, *extra: str) -> tuple[dict, Path]:
     scene_path = tmp_path / f"{name}.scene.json"
     argv = ["chrona", "render", str(project)]
+    project_value = yaml.safe_load(project.read_bytes())
+    if any(extension.get("resource", {}).get("store", {}).get("provider") == "local"
+           for extension in project_value.get("extensions", ())):
+        store_config = stage_project_package_store(tmp_path / f"{name}-project-store", project_value, project.parent)
+        argv.extend(("--store-config", str(store_config)))
     if actual is not None:
         argv.extend(("--actual", str(actual)))
     argv.extend((*extra,

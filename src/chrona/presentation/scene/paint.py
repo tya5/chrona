@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from enum import StrEnum
 from math import cos, radians, sin
 from typing import Mapping
 
 from chrona.presentation.layout.canvas_overlays import RadialOverlayPlacement
 from chrona.presentation.model.info_diagnostics import PaintOmission
+from chrona.presentation.model.theme_paint import (
+    PaintFamily,
+    ThemePaintError,
+    resolve_theme_paint_inputs,
+)
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 from chrona.presentation.scene.model import (
     DropShadow,
@@ -32,15 +36,6 @@ from chrona.presentation.scene.visual_capabilities import (
     VisualProfile,
     first_supporting_visual_profile,
 )
-
-
-class PaintFamily(StrEnum):
-    TEXT = "text"
-    SOLID = "solid"
-    OUTLINE = "outline"
-    HATCH = "hatch"
-    PATH = "path"
-    CANVAS = "canvas"
 
 
 class ScenePaintError(ValueError):
@@ -124,51 +119,19 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                         catalog_glyph_line_cap: str | None = None,
                         catalog_glyph_line_join: str | None = None) -> PaintResolution:
     """Resolve one closed role into renderer-neutral channels, without defaults."""
-    fill_required = family in {PaintFamily.TEXT, PaintFamily.SOLID, PaintFamily.CANVAS} and not ink_only_pattern
-    stroke_required = family in {PaintFamily.OUTLINE, PaintFamily.HATCH, PaintFamily.PATH}
     try:
-        fill = tokens.optional_color(role, "fill")
-        stroke = tokens.optional_color(role, "stroke")
-        width = tokens.optional_number(role, "strokeWidth")
-        binding = tokens._body["roles"].get(role)
-        dash = tokens.dash(role) if isinstance(binding, Mapping) and "dash" in binding else ()
-        opacity = tokens.optional_number(role, "opacity")
-    except ThemeTokenError as error:
-        raise ScenePaintError(error.diagnostic_id, error.path) from error
-    # A completed Style selection changes only inherited fill. Explicit glyph
-    # colours and stroke-only/outline parts retain their declared channels.
-    solid_override = (fill_override is not None and part_color is None
-                      and part_mode != "stroke"
-                      and family not in {PaintFamily.OUTLINE, PaintFamily.PATH})
-    if solid_override:
-        fill = fill_override
+        channels = resolve_theme_paint_inputs(
+            tokens, role, family, fill_override=fill_override,
+            part_mode=part_mode, part_color=part_color,
+            catalog_pattern=catalog_pattern, ink_only_pattern=ink_only_pattern,
+            pattern_has_substrate=pattern_has_substrate,
+            catalog_glyph_stroke_width=catalog_glyph_stroke_width,
+        )
+    except ThemePaintError as error:
+        raise ScenePaintError(error.diagnostic_id, error.path, error.detail) from error
+    fill, stroke, width = channels.fill, channels.stroke, channels.stroke_width
+    dash, opacity, solid_override = channels.dash, channels.opacity, channels.solid_override
     path = f"/body/roles/{role}"
-    if fill_required and fill is None:
-        raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/fill")
-    if stroke_required and stroke is None:
-        raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/stroke")
-    if stroke is None and (catalog_pattern or catalog_glyph_stroke_width is not None):
-        raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/stroke")
-    if stroke is None and (width is not None or dash):
-        raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path)
-    if stroke is not None and width is None and not (catalog_pattern or catalog_glyph_stroke_width is not None
-                                                    or part_mode == "fill"):
-        raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/strokeWidth")
-    if ink_only_pattern and (not catalog_pattern or fill is not None):
-        raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path)
-    if ink_only_pattern and pattern_has_substrate:
-        raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path,
-                              "ink-only pattern cannot contain substrate operations")
-    if catalog_pattern and fill is None and not ink_only_pattern:
-        raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/fill")
-    if catalog_pattern and not ink_only_pattern and opacity not in (None, 1, 1.0):
-        raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"{path}/opacity")
-    if width is not None and width <= 0:
-        raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"{path}/strokeWidth")
-    if opacity is not None and (opacity < 0 or opacity > 1):
-        raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"{path}/opacity")
-    if fill is None and stroke is None:
-        raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path)
     try:
         # A selected solid fill replaces, rather than tints, the base gradient.
         # Do not resolve a replaced effect or report its capability omission.
@@ -180,7 +143,7 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
         finish, finish_omitted = _stroke_finish(tokens, role, visual_profile)
     except ThemeTokenError as error:
         raise ScenePaintError(error.diagnostic_id, error.path) from error
-    if family == PaintFamily.OUTLINE:
+    if family == PaintFamily.OUTLINE and not solid_override:
         fill = None
     paint = ScenePaint(fill, stroke, float(width) if width is not None else None, dash,
                        1.0 if opacity is None else float(opacity), gradient, shadow, finish, glow=glow, wobble=wobble)

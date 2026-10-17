@@ -102,10 +102,10 @@ def _domain_summary(domain: tuple[str, ...]) -> str:
 
 @dataclass(frozen=True)
 class ResolvedColorScale:
-    """One immutable, explicit mapping for an eligible mark role."""
+    """One immutable mapping; legacy View target metadata does not choose paint."""
 
     scale_id: str
-    target_role: str
+    target_role: str | None
     source_field: str
     domain: tuple[str, ...]
     colors: tuple[tuple[str, str], ...]
@@ -154,7 +154,7 @@ def resolve_color_scale(encoding: Mapping[str, object] | None,
                         observed: tuple[str, ...] = (),
                         reserved: tuple[str, ...] = (),
                         other_color: str | None = None) -> ResolvedColorScale | None:
-    """Resolve one View encoding against exact Theme and Scheme declarations.
+    """Resolve an admitted encoding against exact Theme and Scheme declarations.
 
     Domain values whose colours a reader cannot separate, under normal vision
     or a vision the Scheme claims, are returned as non-fatal collisions.
@@ -187,7 +187,7 @@ def resolve_color_scale(encoding: Mapping[str, object] | None,
             return None
     if not isinstance(scale_id, str):
         raise _invalid_mapping(f"encoding.scale={_brief(scale_id)}; expected a string scale id", source_ref)
-    if not isinstance(target, str):
+    if "target" in encoding and not isinstance(target, str):
         raise _invalid_mapping(f"encoding.target={_brief(target)}; expected a string target role", source_ref)
     if not isinstance(source, Mapping):
         raise _invalid_mapping(f"encoding.source={_brief(source)}; expected a mapping with a string field", source_ref)

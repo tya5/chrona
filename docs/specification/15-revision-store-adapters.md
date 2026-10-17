@@ -141,6 +141,10 @@ database records are all invalid federation inputs.
 2. Every reproducible evaluation names immutable inputs and exact content identities.
 3. Revision tokens are opaque outside the Store that issued them.
 4. A mutable Draft is not silently substituted for an immutable Snapshot.
+   Draft rendering may consume declared immutable package references through a
+   supplied Store reader; this does not make the local Draft Project immutable
+   or cacheable as a Snapshot. Store selection, identity checks and configured
+   integrity still apply to those package reads.
 5. Canonical mutation has compare-and-set semantics or an explicit, auditable merge.
 6. Git-specific features are optional capabilities, not semantic requirements.
 

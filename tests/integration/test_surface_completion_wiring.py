@@ -3,9 +3,11 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 from chrona.app.cli import main
 from chrona.presentation.layout import surface_annotations, surface_completion, surface_composer
+from tests.support.draft_packages import stage_project_package_store
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 
@@ -45,8 +47,12 @@ def test_completion_runs_once_after_annotations_with_every_batch(tmp_path, monke
     monkeypatch.setattr(surface_annotations, "place_annotations", annotations_spy)
     monkeypatch.setattr(surface_composer, "complete_surface_layout", completion_spy)
     example = ROOT / "examples/halcyon-1"
+    project_path = example / "project.yaml"
+    project = yaml.safe_load(project_path.read_bytes())
+    store_config = stage_project_package_store(tmp_path / "project-store", project, example)
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(example / "project.yaml"), "--actual", str(example / "actual.yaml"),
+        "chrona", "render", str(project_path), "--actual", str(example / "actual.yaml"),
+        "--store-config", str(store_config),
         "--view", str(example / "views/02-programme-board.yaml"), "--theme", str(example / "themes/wallboard.yaml"),
         "--scheme", str(example / "schemes/control-room-dark.yaml"), "--layout", str(example / "layouts/wallboard.yaml"),
         "--summary", str(example / "profiles/summary.yaml"), "--detail", str(example / "profiles/detail.yaml"),

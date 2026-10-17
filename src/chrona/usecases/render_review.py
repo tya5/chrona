@@ -42,6 +42,7 @@ from chrona.presentation.model.info_diagnostics import (
     ForecastInfo, FieldGroupingSummariesOmitted,
 )
 from chrona.usecases.forecast_schedule import forecast_schedule
+from chrona.usecases.profile_field_bindings import resolve_source_field_bindings
 from chrona.presentation.model.field_role_view import resolve_field_role_view
 from chrona.presentation.contracts.resources import ContractError, ViewAllPeriods, ViewPeriod
 from chrona.presentation.model.preset_target import PresetVisualProfileFallback
@@ -292,8 +293,10 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     except VisualCapabilityError as error:
         raise RenderFailed(error.diagnostic_id, error.message, "presentation", error.path) from error
     ledger.required()
-    manifests = {item.package_id: item.profile_input for item in render_closure.profile_packages}
-    if manifests:
+    packages = render_closure.profile_packages
+    manifests = {item.package_id: item.profile_input
+                 for item in render_closure.profile_packages_for(render_closure.project)} if packages else {}
+    if packages:
         ledger.packages()
     if request.progress is not None:
         request.progress.phase("schedule")
@@ -377,7 +380,13 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         group_tints=group_tints, annotation_kind_colors=_annotation_kind_colors(theme),
         actual_variance_colors=resolve_actual_variance_colors(ThemeTokenView(theme)),
         dependency_critical_role_available=ThemeTokenView(theme).has_role("dependency-critical"),
-        annotation_kind_also=_annotation_kind_also(theme))
+        annotation_kind_also=_annotation_kind_also(theme), theme=theme,
+        gate_declared=ThemeTokenView(theme).has_role("gate"),
+        scale_reserved=tuple(c for c in legend_colors if chroma(c) >= MINIMUM_RESERVED_CHROMA),
+        scale_other_color=_other_color(theme, legend_colors))
+    style_scales = tuple(scale for scale in selected_content.style_fills.scales
+                         if scale is not color_scale)
+    profile_info += tuple(_scale_folded_info(scale) for scale in style_scales if scale.folded)
     try:
         validate_axis_band_fill_targets(selected_content.axis_tiers, ThemeTokenView(theme))
         axis_band_scale = resolve_axis_band_scales(
@@ -456,7 +465,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     unread_roles = unread_theme_diagnostics(
         theme["body"], (view, *((render_closure.view.view,) if field_role_info else ()),  # omitted unbound-role columns still read their roles (#1616)
                         layout, render_closure.detail_profile.detail if render_closure.detail_profile else None,
-                        render_closure.summary_profile.summary if render_closure.summary_profile else None))
+                        render_closure.summary_profile.summary if render_closure.summary_profile else None,
+                        selected_content.style_intents.intents))
     if unread_roles:
         surface = replace(surface, diagnostics=(*surface.diagnostics, *unread_roles))
     if resolution is not None and resolution.notes:
@@ -471,6 +481,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     except VisualCapabilityError as error:
         raise RenderFailed(error.diagnostic_id, error.message, "presentation", error.path) from error
     collisions = ((color_scale.collisions if color_scale is not None else ())
+                  + tuple(collision for scale in style_scales for collision in scale.collisions)
                   + group_tint_collisions + axis_band_scale.collisions)
     scene = _inspection_scene(render_closure, surface, projection, surface_content,
                               (surface.canvas_bounds[2], surface.canvas_bounds[3]),
@@ -731,11 +742,14 @@ def _resolve_group_tints(view: Any, projection: Any, theme: Mapping[str, Any]
 def _observed_scale_values(encoding: Any, projection: Any) -> tuple[str, ...]:
     """Source values of the selected primary items, in projection order, for a derived domain."""
     source = encoding.get("source") if isinstance(encoding, Mapping) else None
-    field = source.get("field") if isinstance(source, Mapping) else None
-    if not isinstance(field, str):
+    if not isinstance(source, Mapping):
         return ()
-    return tuple((scale_text(item.fields[field]) or str(item.fields[field]))
-                 for item in projection.items if item.fields is not None and item.fields.get(field) is not None)
+    values: list[str] = []
+    for item in projection.items:
+        result = item.field_bindings.read_result(item.fields, source)
+        if result.value is not None:
+            values.append(scale_text(result.value) or str(result.value))
+    return tuple(values)
 
 
 def _visual_request(visual: Any, projection: Any, index: int, closure: RenderClosure) -> VisualRequest:
@@ -769,6 +783,9 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
     result = scheduler.schedule(project, extension_diagnostics=validate_profiles(project, manifests))
     if not result.ok:
         raise RenderRejected(result.diagnostics)
+    field_bindings, descriptor_diagnostics = resolve_source_field_bindings(project, manifests)
+    if descriptor_diagnostics:
+        raise RenderRejected(list(descriptor_diagnostics))
     ordering = period_range_diagnostics(project, result.placements)  # only placements can order a referenced period (#582)
     if ordering:
         raise RenderRejected(list(ordering))
@@ -779,14 +796,26 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
             raise RenderRejected(forecast.diagnostics)
         _require_forecast_presentation(view, closure.layout_profile.layout_input)
     snapshot_project = closure.snapshot_project.scheduler_input if closure.snapshot_project is not None else None
-    snapshot_result = scheduler.schedule(snapshot_project) if snapshot_project is not None else None
+    snapshot_manifests = ({item.package_id: item.profile_input
+                          for item in closure.profile_packages_for(closure.snapshot_project)}
+                         if snapshot_project is not None and closure.profile_packages else {})
+    snapshot_result = (scheduler.schedule(snapshot_project,
+                                         extension_diagnostics=validate_profiles(snapshot_project, snapshot_manifests))
+                       if snapshot_project is not None else None)
     if snapshot_result is not None and not snapshot_result.ok:
         raise RenderRejected(snapshot_result.diagnostics)
+    snapshot_field_bindings = None
+    if snapshot_project is not None:
+        snapshot_field_bindings, descriptor_diagnostics = resolve_source_field_bindings(
+            snapshot_project, snapshot_manifests)
+        if descriptor_diagnostics:
+            raise RenderRejected(list(descriptor_diagnostics))
     scenario_ids = ({view.comparison.scenario_id} if view.comparison.baseline == "scenario" else set())
     scenario_ids.update(item.scenario_id for row in view.rows.items for item in row.items if item.source_kind == "scenario")
     if None in scenario_ids:
         raise RenderFailed("E_SCENARIO_REQUIRED", "Scenario source requires a scenario id", "view")
     scenarios = {}
+    scenario_field_bindings = {}
     provenance = []
     for scenario_id in sorted(scenario_ids):
         try:
@@ -794,9 +823,14 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
             scenario_project = resolved.project
         except ScenarioError as error:
             raise RenderFailed(error.diagnostic.id, error.diagnostic.message, "scenario") from error
-        scenario_result = scheduler.schedule(scenario_project)
+        scenario_result = scheduler.schedule(scenario_project,
+                                             extension_diagnostics=validate_profiles(scenario_project, manifests))
         if not scenario_result.ok:
             raise RenderRejected(scenario_result.diagnostics)
+        source_bindings, descriptor_diagnostics = resolve_source_field_bindings(scenario_project, manifests)
+        if descriptor_diagnostics:
+            raise RenderRejected(list(descriptor_diagnostics))
+        scenario_field_bindings[scenario_id] = source_bindings
         scenarios[scenario_id] = (scenario_project, scenario_result.placements)
         provenance.append(resolved.provenance)
     projection = build_review_projection(
@@ -807,6 +841,9 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         analysis=result.analysis,
         snapshot_analysis=snapshot_result.analysis if snapshot_result is not None else None,
         forecast=forecast,
+        field_bindings=field_bindings,
+        snapshot_field_bindings=snapshot_field_bindings,
+        scenario_field_bindings=scenario_field_bindings,
     )
     if forecast is not None:
         _require_forecast_occurrence_coverage(view, projection)

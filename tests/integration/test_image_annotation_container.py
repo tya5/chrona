@@ -22,6 +22,7 @@ from chrona.presentation.model.closure import resolve_draft_render
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderFailed, RenderRequest, render_review
+from tests.support.draft_packages import stage_project_package_store
 
 
 def _root() -> Path:
@@ -165,11 +166,15 @@ def test_the_image_notes_slide_rasterizes_reproducibly_with_its_image_tiles(tmp_
     from chrona.app.cli import main
 
     example = _root() / "examples/halcyon-1"
+    project_path = example / "project.yaml"
+    project = yaml.safe_load(project_path.read_bytes())
+    store_config = stage_project_package_store(tmp_path / "project-store", project, example)
     outputs = []
     for name in ("a.png", "b.png", "c.svg"):
         output = tmp_path / name
         monkeypatch.setattr(sys, "argv", [
-            "chrona", "render", str(example / "project.yaml"), "--actual", str(example / "actual.yaml"),
+            "chrona", "render", str(project_path), "--actual", str(example / "actual.yaml"),
+            "--store-config", str(store_config),
             "--view", str(example / "views/15-gallery-image-notes.yaml"),
             "--theme", str(example / "themes/wallboard-image-notes.yaml"),
             "--scheme", str(example / "schemes/control-room-dark.yaml"),

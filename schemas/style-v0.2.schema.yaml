@@ -1,0 +1,110 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://chrona.dev/schemas/style-v0.2.schema.yaml"
+title: "Chrona Style v0.2"
+description: "Conditional visual intents resolved against each projected mark before Layout."
+allOf:
+  - $ref: "urn:chrona:presentation-resource-v0.1"
+  - description: "Style rules extending the shared presentation resource."
+    type: object
+    properties:
+      version: {description: "This Style document contract version.", const: "chrona/style/v0.2"}
+      kind: {description: "Resource kind identifying this document as a Style.", const: style}
+      body:
+        description: "Per-occurrence style rules evaluated in source order, not as precedence; an empty list leaves all original Theme roles in effect."
+        type: object
+        required: [rules]
+        additionalProperties: false
+        properties:
+          rules:
+            description: "Conditional visual intents evaluated in source order, not as precedence, against projected evidence before Layout."
+            examples:
+              - [{id: planned-mark, when: {semantic: planned, purpose: planned, roles: [planned]}, then: {role: planned}}]
+              - [{id: color-owner, when: {fields: [{source: {field: owner}, equals: Planning}]}, then: {encode: {channel: fill, source: {field: owner}, scale: owner-colors, domain: firstAppearance, legend: {title: Owner, showScope: true}}}}]
+            type: array
+            items:
+              description: "One identified rule selecting original facts and declaring a role or fill encoding, without source-order precedence."
+              examples:
+                - {id: planned-mark, when: {semantic: planned, purpose: planned, roles: [planned]}, then: {role: planned}}
+              type: object
+              required: [id, when, then]
+              additionalProperties: false
+              properties:
+                id: {description: "Stable identity used in Style diagnostics; unique within this Style.", type: string, minLength: 1}
+                when:
+                  description: "Conjunction of one or more selectors over original semantic and projected evidence."
+                  examples: [{semantic: planned, purpose: planned, roles: [critical]}, {columnSource: {field: owner}}]
+                  type: object
+                  minProperties: 1
+                  additionalProperties: false
+                  properties:
+                    semantic: {description: "Original semantic identity of the projected mark.", type: string, minLength: 1}
+                    purpose: {description: "Original declared purpose of the projected mark.", type: string, minLength: 1}
+                    comparisonCategory: {description: "Projected comparison classification.", $ref: "#/$defs/comparisonCategory"}
+                    columnSource: {description: "Exact source declaration of a View table column.", $ref: "urn:chrona:common-v0.1#/$defs/tableColumnSource"}
+                    roles:
+                      description: "One or more original projection roles, before any Style role selection."
+                      type: array
+                      minItems: 1
+                      uniqueItems: true
+                      items: {description: "One original projection role.", $ref: "#/$defs/projectedStyleRole"}
+                    fields:
+                      description: "Project object-field equality predicates combined with the other selectors."
+                      examples: [[{source: {field: owner}, equals: Planning}]]
+                      type: array
+                      minItems: 1
+                      items:
+                        description: "One equality test on a declared Project object field or closed field role."
+                        type: object
+                        required: [source, equals]
+                        additionalProperties: false
+                        properties:
+                          source: {description: "Project object-field name or closed field role to read.", $ref: "urn:chrona:common-v0.1#/$defs/projectFieldReference"}
+                          equals:
+                            description: "Scalar value that must equal the selected field value."
+                            examples: [Planning, true, 3]
+                            oneOf:
+                              - {type: string}
+                              - {type: boolean}
+                              - {type: number}
+                then:
+                  description: "Visual role selection or declarative fill encoding; exactly one action is required."
+                  examples: [{role: variance-behind}, {encode: {channel: fill, source: {field: owner}, scale: owner-colors, domain: firstAppearance}}]
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    role: {description: "Named Theme role selected for this projected occurrence.", type: string, minLength: 1}
+                    encode:
+                      description: "Fill encoding evaluated from the selected Project field; a Theme supplies the named scale."
+                      type: object
+                      required: [channel, source, scale, domain]
+                      additionalProperties: false
+                      properties:
+                        channel: {description: "Encoded visual channel.", const: fill}
+                        source: {description: "Project object-field name or closed field role supplying the value.", $ref: "urn:chrona:common-v0.1#/$defs/projectFieldReference"}
+                        scale: {description: "Named Theme colour scale to apply.", type: string, minLength: 1}
+                        domain: {description: "Closed source-value domain or firstAppearance in projection order.", $ref: "urn:chrona:common-v0.1#/$defs/colorEncodingDomain"}
+                        legend:
+                          description: "Optional legend presentation; a scoped legend title is checked by the typed Style parser."
+                          examples: [{title: Owner, showScope: true}]
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            title: {description: "Optional nonblank author title for the legend.", type: string}
+                            showScope: {description: "Whether to render an additional derived scope qualifier; it never replaces the authored title. Omitted means no visible qualifier.", type: boolean}
+                  oneOf:
+                    - description: "Role-selection action excludes fill encoding."
+                      required: [role]
+                      not: {required: [encode]}
+                    - description: "Fill-encoding action excludes role selection."
+                      required: [encode]
+                      not: {required: [role]}
+    required: [version, kind, body]
+$defs:
+  comparisonCategory:
+    description: "Closed projected comparison classification used by Style selectors."
+    examples: [behind, on-track, ahead]
+    enum: [behind, on-track, ahead]
+  projectedStyleRole:
+    description: "Closed set of original projection roles admitted by Style selectors."
+    examples: [planned, actual, missing-actual, variance-behind, variance-ahead, variance-on-track, critical]
+    enum: [planned, actual, missing-actual, variance-behind, variance-ahead, variance-on-track, critical]

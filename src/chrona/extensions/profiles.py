@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import math
+from copy import deepcopy
 from datetime import date
 from difflib import get_close_matches
 import re
@@ -113,7 +114,99 @@ def _pointer(text: str) -> str:
     return text.replace("~", "~0").replace("/", "~1")
 
 
-def validate_generic_profiles(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]]) -> list[Diagnostic]:
+def resolve_profile_field_definitions(
+    manifest: dict[str, Any], profile_id: str
+) -> dict[str, Any] | None:
+    """Return the effective field definitions for one profile in a package.
+
+    Package-wide fields are the base definitions and fields declared by the
+    selected profile override same-named package-wide fields. This is a
+    shallow merge in terms of schema semantics, but the returned value is a
+    deep copy so callers cannot mutate the manifest through nested values.
+    Unknown profile IDs return ``None``; profile inheritance is intentionally
+    not resolved here.
+    """
+    profile = manifest.get("profiles", {}).get(profile_id)
+    if profile is None:
+        return None
+    return deepcopy({**manifest.get("fields", {}), **profile.get("fields", {})})
+
+
+def resolve_profile_field_catalogue(
+    project: dict[str, Any],
+    package_manifests: dict[str, dict[str, Any]] | None,
+) -> tuple[dict[str, dict[str, Any]], list[Diagnostic]]:
+    """Resolve this Project's effective profile fields and package diagnostics.
+
+    Each source Project gets its own catalogue. Profile field merging remains
+    owned by :func:`resolve_profile_field_definitions`; this function only
+    selects declarations from that Project's already-resolved manifests and
+    rejects ambiguous profile IDs across packages.
+    """
+    if package_manifests is None:
+        return {}, []
+
+    catalogue: dict[str, dict[str, Any]] = {}
+    owners: dict[str, str] = {}
+    conflicted: set[str] = set()
+    diagnostics: list[Diagnostic] = []
+    declared = [
+        (index, extension.get("packageId"))
+        for index, extension in enumerate(project.get("extensions", []))
+        if isinstance(extension, dict)
+    ]
+
+    # Delivery owns its declared profile names; its definition validation keeps
+    # the established IDP diagnostics, independently of generic field parsing.
+    for _, package_id in declared:
+        manifest = package_manifests.get(package_id) if isinstance(package_id, str) else None
+        if package_id == PACKAGE_ID and isinstance(manifest, dict):
+            profiles = manifest.get("profiles")
+            if isinstance(profiles, dict):
+                owners.update({profile_id: package_id for profile_id in profiles})
+
+    for index, package_id in declared:
+        if not isinstance(package_id, str):
+            continue
+        manifest = package_manifests.get(package_id)
+        if manifest is None:
+            continue
+
+        errors = tuple(schema_validator("profile-v0.3.schema.yaml").iter_errors(manifest))
+        if errors or manifest.get("packageId") != package_id:
+            # The delivery package retains its established IDP diagnostics.
+            if package_id != PACKAGE_ID:
+                detail = f"packageId must be {package_id!r}" if not errors else explain_errors(
+                    errors, resource_kind="profile", resource_identity=package_id).message
+                diagnostics.append(Diagnostic(
+                    "E_PROFILE_PACKAGE_INVALID",
+                    f"Profile package {package_id} is invalid: {detail}",
+                    f"/extensions/{index}",
+                ))
+            continue
+
+        for profile_id in manifest["profiles"]:
+            profile_fields = resolve_profile_field_definitions(manifest, profile_id)
+            if profile_fields is None:
+                continue
+            previous_owner = owners.get(profile_id)
+            if previous_owner is not None and previous_owner != package_id:
+                conflicted.add(profile_id)
+                catalogue.pop(profile_id, None)
+                diagnostics.append(Diagnostic(
+                    "E_PROFILE_ID_DUPLICATE",
+                    f"Profile ID {profile_id!r} is declared by both {previous_owner!r} and {package_id!r}",
+                    f"/extensions/{index}",
+                ))
+                continue
+            owners[profile_id] = package_id
+            if profile_id not in conflicted:
+                catalogue[profile_id] = profile_fields
+
+    return catalogue, diagnostics
+
+
+def validate_generic_profiles(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]] | None) -> list[Diagnostic]:
     """Check objects whose ``type`` names a profile of a declared, resolved package.
 
     One family of pointed diagnostics: ``E_PROFILE_PACKAGE_INVALID``, ``E_PROFILE_ID_DUPLICATE``,
@@ -123,36 +216,21 @@ def validate_generic_profiles(project: dict[str, Any], package_manifests: dict[s
     valid only for an optional field. Objects with an undeclared ``type`` and
     the delivery package (validated with IDP-* codes) are not touched.
     """
-    diagnostics: list[Diagnostic] = []
-    definitions: dict[str, dict[str, Any]] = {}
-    declared = [item.get("packageId") for item in project.get("extensions", []) if isinstance(item, dict)]
-    owners: dict[str, str] = {}  # profile ID -> the package that first declares it (global uniqueness, Spec 11)
-    for index, package_id in enumerate(declared):
-        manifest = package_manifests.get(package_id)
-        if package_id == PACKAGE_ID and manifest is not None and isinstance(manifest.get("profiles"), dict):
-            owners.update({profile_id: package_id for profile_id in manifest["profiles"]})
-    for index, package_id in enumerate(declared):
-        manifest = package_manifests.get(package_id)
-        if package_id == PACKAGE_ID or manifest is None:
-            continue
-        errors = tuple(schema_validator("profile-v0.3.schema.yaml").iter_errors(manifest))
-        if errors or manifest.get("packageId") != package_id:
-            detail = f"packageId must be {package_id!r}" if not errors else explain_errors(
-                errors, resource_kind="profile", resource_identity=package_id).message
-            diagnostics.append(Diagnostic("E_PROFILE_PACKAGE_INVALID", f"Profile package {package_id} is invalid: {detail}", f"/extensions/{index}"))
-            continue
-        shared = manifest.get("fields", {})
-        for profile_id, profile in manifest["profiles"].items():
-            if profile_id in owners and owners[profile_id] != package_id:
-                diagnostics.append(Diagnostic(
-                    "E_PROFILE_ID_DUPLICATE",
-                    f"Profile ID {profile_id!r} is declared by both package {owners[profile_id]!r} and package {package_id!r}; profile IDs are globally unique",
-                    f"/extensions/{index}"))
-                continue
-            owners[profile_id] = package_id
-            definitions[profile_id] = {**shared, **profile.get("fields", {})}
+    definitions, diagnostics = resolve_profile_field_catalogue(project, package_manifests)
+    delivery_declared = any(
+        isinstance(extension, dict) and extension.get("packageId") == PACKAGE_ID
+        for extension in project.get("extensions", [])
+    )
+    delivery_profile_ids: set[str] = set()
+    delivery_manifest = (package_manifests or {}).get(PACKAGE_ID) if delivery_declared else None
+    delivery_profiles = delivery_manifest.get("profiles") if isinstance(delivery_manifest, dict) else None
+    if isinstance(delivery_profiles, dict):
+        delivery_profile_ids = {profile_id for profile_id in delivery_profiles if isinstance(profile_id, str)}
     for object_id, item in project.get("objects", {}).items():
-        profile_fields = definitions.get(item.get("type"))
+        profile_id = item.get("type")
+        if profile_id in delivery_profile_ids:
+            continue
+        profile_fields = definitions.get(profile_id)
         if profile_fields is None:
             continue
         path = f"/objects/{_pointer(object_id)}/fields"

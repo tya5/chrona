@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from chrona.presentation.layout.semantic_mark_facets import select_item_mark_facets
+from chrona.presentation.model.semantic_mark_facets import select_item_mark_facets
 from chrona.presentation.layout.mark_geometry import compose_item_marks
 from chrona.presentation.layout import mark_geometry
 from chrona.presentation.layout.model import LayoutError

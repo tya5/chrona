@@ -24,8 +24,13 @@ from chrona.presentation.layout.window_span_geometry import (
 )
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.semantic_registry import mark_style_role
+from chrona.presentation.model.style_rules import OccurrenceStyleIntent
+from chrona.presentation.model.theme_tokens import ThemeTokenError
+from chrona.presentation.layout.mark_role_geometry import (
+    resolve_occurrence_mark_frame, selected_mark_style_intents,
+)
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
-from chrona.presentation.layout.semantic_mark_facets import (
+from chrona.presentation.model.semantic_mark_facets import (
     ItemMarkFacetSelection, MarkFacetAbsence, select_item_mark_facets,
 )
 from chrona.presentation.layout.mark_facet_visibility import (
@@ -167,7 +172,8 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
                        theme_tokens: object, slot_id: str, paint_order_base: int = 100,
                        emit_missing_actual: bool = True,
                        emit_diagnostics: bool = True,
-                       selection: ItemMarkFacetSelection | None = None) -> MarkItemComposition:
+                       selection: ItemMarkFacetSelection | None = None,
+                       style_intents: Mapping[str, OccurrenceStyleIntent] | None = None) -> MarkItemComposition:
     """Complete planned and observed marks for one selected Review item.
 
     The caller owns candidate identity and the mark-band frame. This function
@@ -192,23 +198,31 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
           or selection.missing_actual_eligible != bool(emit_missing_actual)):
         raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/items",
                           detail="stage=composition; reason=selection-mismatch")
+
+    selected_intents = selected_mark_style_intents(selection, theme_tokens, style_intents)
+    selected_frame = resolve_occurrence_mark_frame(frame, theme_tokens, selected_intents)
     for facet in selection.facets:
         geometry_role = mark_style_role(facet.semantic_id)
+        intent = selected_intents.get(facet.semantic_id)
+        composition_frame = selected_frame
         placement_id = facet.placement_id(instance_id)
         if facet.shape == "point":
             at = facet.at
             assert at is not None
             x = _coordinate(at, frame.inline_scale)
             # Point symbols retain each semantic role's own size and offset (#1066).
-            symbol_block, symbol_size = frame.symbol_bounds(geometry_role)
+            symbol_block, symbol_size = composition_frame.symbol_bounds(geometry_role)
             bounds = Rect(Decimal(str(x - symbol_size / 2)), Decimal(str(symbol_block)),
                           Decimal(str(symbol_size)), Decimal(str(symbol_size)))
             port = (x, symbol_block + symbol_size / 2)
             marks.append(compose_mark_placement(
-                frame=frame, placement_id=placement_id, source_ref=item.object_id,
+                frame=composition_frame, placement_id=placement_id, source_ref=item.object_id,
                 bounds=bounds, start_port=port, end_port=port, shape="point",
                 semantic_id=facet.semantic_id, theme_tokens=theme_tokens, slot_id=slot_id,
                 paint_order_base=paint_order_base,
+                selected_theme_role=intent.role if intent is not None else None,
+                style_occurrence_key=intent.key if intent is not None else None,
+                style_rule_ids=intent.role_rule_ids if intent is not None else (),
             ))
             continue
 
@@ -216,7 +230,8 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
         finish = facet.finish
         assert start is not None and finish is not None
         x1, x2 = _coordinate(start, frame.inline_scale), _coordinate(finish, frame.inline_scale)
-        block, size = role_bounds[geometry_role]
+        block, size = (role_bounds[geometry_role] if composition_frame is frame
+                       else composition_frame.role_bounds(geometry_role))
         if facet.geometry == "end-tick":
             width = max(1.0, size * 1.5)
             y = block
@@ -236,10 +251,13 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
             end_port = (x2, block + size / 2)
         bounds = Rect(Decimal(str(x1)), Decimal(str(y)), Decimal(str(width)), Decimal(str(size)))
         marks.append(compose_mark_placement(
-            frame=frame, placement_id=placement_id, source_ref=item.object_id,
+            frame=composition_frame, placement_id=placement_id, source_ref=item.object_id,
             bounds=bounds, start_port=start_port, end_port=end_port, shape=facet.shape,
             semantic_id=facet.semantic_id, theme_tokens=theme_tokens, slot_id=slot_id,
             paint_order_base=paint_order_base, end_treatment=facet.end_treatment,
+            selected_theme_role=intent.role if intent is not None else None,
+            style_occurrence_key=intent.key if intent is not None else None,
+            style_rule_ids=intent.role_rule_ids if intent is not None else (),
         ))
 
     subject = DiagnosticSubject.project_object(item.object_id, getattr(item, "title", None))
@@ -297,7 +315,10 @@ def symbol_parts(value: Mapping[str, object], bounds: tuple[float, float, float,
 def compose_mark_placement(*, frame: MarkBandFrame, placement_id: str, source_ref: str,
                            bounds: Rect, start_port: tuple[float, float], end_port: tuple[float, float],
                            shape: str, semantic_id: str, theme_tokens: object, slot_id: str,
-                           paint_order_base: int = 100, end_treatment: str = "closed") -> MarkPlacement:
+                           paint_order_base: int = 100, end_treatment: str = "closed",
+                           selected_theme_role: str | None = None,
+                           style_occurrence_key: Any | None = None,
+                           style_rule_ids: tuple[str, ...] = ()) -> MarkPlacement:
     """Complete a mark's outline, role paint order, and symbol in one frame-aware path."""
     geometry_role = mark_style_role(semantic_id)
     geometry = frame.role_geometries[geometry_role]
@@ -308,8 +329,17 @@ def compose_mark_placement(*, frame: MarkBandFrame, placement_id: str, source_re
                                   legacy_radius=radius)
     token = None
     if shape == "point":
-        variant = "baseline" if geometry_role in {"snapshot", "scenario"} else geometry_role
-        token = theme_tokens.variant_symbol(variant)
+        if selected_theme_role is not None:
+            try:
+                token = theme_tokens.symbol(selected_theme_role)
+            except ThemeTokenError as error:
+                raise LayoutError(
+                    "E_STYLE_ROLE_INCOMPATIBLE", error.path, source_ref,
+                    f"ruleIds={','.join(style_rule_ids)}; subject={style_occurrence_key!r}; source={source_ref!r}; "
+                    f"themeRole={selected_theme_role!r}; cause={error.diagnostic_id}; detail={error.detail or ''}") from error
+        else:
+            variant = "baseline" if geometry_role in {"snapshot", "scenario"} else geometry_role
+            token = theme_tokens.variant_symbol(variant)
     commands = (rounded_diamond_path(inline=float(bounds.inline), block=float(bounds.block),
                                      inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
                 if shape == "point" and radius > 0 and token is not None and token.get("shape") == "diamond" else ())
@@ -333,15 +363,18 @@ def compose_mark_placement(*, frame: MarkBandFrame, placement_id: str, source_re
         except ValueError as error:
             raise LayoutError("E_LAYOUT_LANE_FOOTPRINT_UNAVAILABLE", placement_id) from error
         if shape == "point" and any(part.paint_mode == "fill" for part in completed_symbols):
+            paint_role = (selected_theme_role if selected_theme_role is not None else
+                          resolve_point_paint_role(
+                              geometry_role,
+                              gate_declared=semantic_id != "forecast" and theme_tokens.has_role("gate")))
             completed_symbols = complete_point_outline(
-                completed_symbols, paint_role=resolve_point_paint_role(
-                    geometry_role, gate_declared=semantic_id != "forecast" and theme_tokens.has_role("gate")),
-                theme_tokens=theme_tokens)
+                completed_symbols, paint_role=paint_role, theme_tokens=theme_tokens)
     return MarkPlacement(placement_id, source_ref, bounds, start_port, end_port,
                          mark_shape=shape, corner_radius=radius, path_commands=commands,
                          slot_id=slot_id, semantic_id=semantic_id,
                          paint_order=paint_order_base + geometry.paint_order,
-                         end_treatment=end_treatment, symbol_parts=completed_symbols)
+                         end_treatment=end_treatment, symbol_parts=completed_symbols,
+                         theme_role=selected_theme_role, style_occurrence_key=style_occurrence_key)
 
 
 @dataclass(frozen=True)

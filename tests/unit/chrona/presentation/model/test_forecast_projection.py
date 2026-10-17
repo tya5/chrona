@@ -6,7 +6,7 @@ import pytest
 
 from chrona.presentation.contracts.resources import ViewComparison, ViewInput, ViewRows, ViewVisibility, ViewWindow
 from chrona.presentation.model.projection import active_placement, build_review_projection, display_finish_delta, finish_delta_text
-from chrona.presentation.layout.semantic_mark_facets import select_item_mark_facets
+from chrona.presentation.model.semantic_mark_facets import select_item_mark_facets
 from chrona.presentation.layout.mark_geometry import compose_item_marks
 from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry
 from chrona.presentation.layout.surface_quality import ScalePlacement

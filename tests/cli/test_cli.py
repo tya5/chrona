@@ -30,6 +30,18 @@ from chrona.core.identity import content_identity
 from chrona.resources import builtin_preset_library_resource
 from chrona.usecases.preset_library import PRESET_DESCRIPTIONS
 from tests.support import synthetic_review as sr
+from tests.support.draft_packages import stage_project_package_store
+
+
+def _draft_store_args(project_path: Path, tmp_path: Path) -> list[str]:
+    """Configure exact local extension bytes for a Draft CLI render, when needed."""
+    resolved = project_path if project_path.is_absolute() else Path(__file__).resolve().parents[2] / project_path
+    project = yaml.safe_load(resolved.read_text(encoding="utf-8"))
+    if not any(extension.get("resource", {}).get("store", {}).get("provider") == "local"
+               for extension in project.get("extensions", ())):
+        return []
+    config = stage_project_package_store(tmp_path / "package-store", project, resolved.parent)
+    return ["--store-config", str(config)]
 
 
 def test_cli_init_reports_available_and_deferred_example_slides(tmp_path, monkeypatch, capsys):
@@ -378,7 +390,8 @@ def test_cli_infers_png_bytes_and_rejects_explicit_svg_png_mismatch(tmp_path, mo
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     output = tmp_path / "board.png"
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(root / "examples/halcyon-1/project.yaml"), "--output", str(output),
+        "chrona", "render", str(root / "examples/halcyon-1/project.yaml"),
+        *_draft_store_args(root / "examples/halcyon-1/project.yaml", tmp_path), "--output", str(output),
     ])
     main()
     assert output.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
@@ -412,6 +425,7 @@ def test_cli_halcyon_default_draft_has_coherent_slots_and_auto_axis(tmp_path, mo
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     output, scene_path = tmp_path / "plan.svg", tmp_path / "plan.scene.json"
     argv = ["chrona", "render", str(root / "examples/halcyon-1/project.yaml"),
+            *_draft_store_args(root / "examples/halcyon-1/project.yaml", tmp_path),
             "--output", str(output), "--emit-scene", str(scene_path)]
     if viewport is not None:
         argv.extend(("--viewport", viewport))
@@ -665,7 +679,7 @@ def _axis_warnings(tmp_path, monkeypatch, capsys, preset_id, preset, label, proj
     argv = ["chrona", "render", str(project)]
     if actual is not None:
         argv += ["--actual", str(actual)]
-    monkeypatch.setattr(sys, "argv", argv + [
+    monkeypatch.setattr(sys, "argv", argv + _draft_store_args(project, tmp_path) + [
         "--preset", str(preset / "preset.yaml"), "--output", str(output), "--emit-scene", str(scene_path), *extra,
     ])
     capsys.readouterr()
@@ -736,6 +750,7 @@ def test_cli_content_sized_table_slot_holds_the_print_theme_delta_column(tmp_pat
     capsys.readouterr()
     monkeypatch.setattr(sys, "argv", [
         "chrona", "render", "examples/halcyon-1/project.yaml", "--actual", "examples/halcyon-1/actual.yaml",
+        *_draft_store_args(Path("examples/halcyon-1/project.yaml"), tmp_path),
         "--preset", str(preset / "preset.yaml"), "--output", str(output), "--emit-scene", str(scene_path),
     ])
     main()
@@ -774,6 +789,7 @@ def test_cli_row_height_is_derived_from_the_table_text_it_holds(tmp_path, monkey
     capsys.readouterr()
     monkeypatch.setattr(sys, "argv", [
         "chrona", "render", "examples/halcyon-1/project.yaml", "--actual", "examples/halcyon-1/actual.yaml",
+        *_draft_store_args(Path("examples/halcyon-1/project.yaml"), tmp_path),
         "--preset", str(preset / "preset.yaml"), "--output", str(output), "--emit-scene", str(scene_path),
     ])
     main()

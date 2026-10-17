@@ -93,7 +93,7 @@ def test_attached_host_must_resolve_to_exactly_one_selected_instance_in_same_row
 def test_due_end_scope_agrees_between_lane_inventory_and_source_selection(
     source_kind, source_type, mark_scope, facet_visible, expected_missing,
 ):
-    from chrona.presentation.layout.semantic_mark_facets import select_item_mark_facets
+    from chrona.presentation.model.semantic_mark_facets import select_item_mark_facets
 
     item = replace(_item("item", source_kind=source_kind,
                          state=ObservationState.DUE_UNOBSERVED),

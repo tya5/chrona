@@ -87,6 +87,10 @@ effect and the later package's duplicate is not used), `E_PROFILE_FIELD_UNKNOWN`
 `E_PROFILE_FIELD_ENUM` (value outside `enumValues`) and `E_PROFILE_FIELD_REQUIRED` (required field absent
 or null). An absent optional field is valid and an explicit `null` is valid only for an optional field.
 Objects whose `type` names no declared profile are not checked. The delivery package keeps its `IDP-*` codes.
+Within one Project, two declared packages MUST NOT claim the same profile ID
+(Spec11 §4.1). Report `E_PROFILE_PACKAGE_INVALID` at the conflicting extension;
+declaration order MUST NOT silently choose a field schema. Independent source
+Projects resolve their own packages and descriptor catalogues.
 
 Typed-field Command execution is introduced by IDP-5. Evidence references are validated
 for shape only (section 8).

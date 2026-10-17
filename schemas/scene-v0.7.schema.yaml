@@ -95,7 +95,7 @@ $defs:
     type: object
     required: [id, kind, sourceRef, sourceKind, purpose, visualRole, bounds, slotId]
     additionalProperties: false
-    dependentRequired: {fromInstanceId: [toInstanceId], toInstanceId: [fromInstanceId]}
+    dependentRequired: {fromInstanceId: [toInstanceId], toInstanceId: [fromInstanceId], semanticId: [themeRole], themeRole: [semanticId]}
     if: {required: [strokeClip]}
     then:
       required: [paint]
@@ -150,6 +150,8 @@ $defs:
       sourceKind: {$ref: "#/$defs/string"}
       purpose: {$ref: "#/$defs/string"}
       visualRole: {$ref: "#/$defs/string"}
+      semanticId: {description: "Canonical host semantic selected by Style; checked against the pinned vocabulary.", $ref: "#/$defs/string"}
+      themeRole: {description: "Appearance Theme role selected by Style, separate from canonical visualRole.", $ref: "#/$defs/string"}
       bounds: {$ref: "#/$defs/bounds"}
       slotId: {$ref: "#/$defs/string"}
       text: {$ref: "#/$defs/text"}

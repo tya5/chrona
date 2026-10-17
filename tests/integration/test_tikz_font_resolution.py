@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
 import yaml
@@ -16,7 +17,10 @@ from chrona.usecases.draft_render import DraftRenderRequest, render_draft
 from chrona.usecases.render_review import RenderFailed
 from tests.support import text_treatments as tt
 from tests.support import synthetic_review as sr
+from tests.support.draft_packages import stage_project_package_store
 from tests.support import typeset_compile as tc
+from chrona.operational.store_config import load_store_config
+from chrona.operational.store_reads import DraftExtensionPackageReader
 
 HALCYON = Path(__file__).resolve().parents[2] / "examples" / "halcyon-1"
 NO_FONTS = InstalledFontIndex((), files=())
@@ -24,12 +28,25 @@ needs_cjk = pytest.mark.skipif(not tt.cjk_available(), reason="requires the chro
 
 
 def _tikz(preset: str = "yuya", *, project: Path | None = None) -> str:
-    rendered = render_draft(DraftRenderRequest(
-        project=project or HALCYON / "project.yaml",
-        actual=HALCYON / "actual.yaml" if project is None else None,
-        target_kind="tikz", preset=preset,
-        visual_profile="chrona-output/visual/v0.5-baseline", typesetter_engine="tectonic", typesetter_version="0.17.0",
-        typesetter_adapter_grammar="chrona-tikz/v0.1"))
+    project_path = project or HALCYON / "project.yaml"
+    source = yaml.safe_load(project_path.read_text(encoding="utf-8"))
+    if source.get("extensions"):
+        with TemporaryDirectory(prefix="chrona-tikz-package-store-") as directory:
+            config = stage_project_package_store(Path(directory), source, project_path.parent)
+            reader = DraftExtensionPackageReader(lambda: load_store_config(str(config)))
+            rendered = render_draft(DraftRenderRequest(
+                project=project_path,
+                actual=HALCYON / "actual.yaml" if project is None else None,
+                target_kind="tikz", preset=preset,
+                visual_profile="chrona-output/visual/v0.5-baseline", typesetter_engine="tectonic", typesetter_version="0.17.0",
+                typesetter_adapter_grammar="chrona-tikz/v0.1", package_reader=reader))
+    else:
+        rendered = render_draft(DraftRenderRequest(
+            project=project_path,
+            actual=HALCYON / "actual.yaml" if project is None else None,
+            target_kind="tikz", preset=preset,
+            visual_profile="chrona-output/visual/v0.5-baseline", typesetter_engine="tectonic", typesetter_version="0.17.0",
+            typesetter_adapter_grammar="chrona-tikz/v0.1"))
     return rendered.artifact.content.decode("utf-8")
 
 

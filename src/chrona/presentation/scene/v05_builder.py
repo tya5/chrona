@@ -18,9 +18,10 @@ from chrona.presentation.model.semantic_registry import (
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.info_diagnostics import PaintOmission
+from chrona.presentation.model.theme_paint import ThemePaintError, mark_paint_family
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, PrimitiveProvenance, review_row_subjects
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, ThemeTokenView
-from chrona.presentation.scene.pattern_geometry import pattern_geometry, pattern_kind, project_pattern_placement
+from chrona.presentation.scene.pattern_geometry import pattern_geometry, project_pattern_placement
 from chrona.presentation.scene.model import DecorationDisposition, ImageFill, ImageTile, SceneColumn, SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, SymbolGeometry, TextLayout, TextRun, ScenePaint
 from chrona.presentation.scene.model import (
     SceneLaneMember, SceneLaneObstacle, SceneLaneRectObstacle, SceneLaneSegmentObstacle,
@@ -97,35 +98,65 @@ def _primary_mark_binding(mark: Any, source_kind: str):
     return semantic_binding("snapshot" if source_kind in {"snapshot", "scenario"} else "planned")
 
 
-def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFamily:
+def _placement_style_projection(mark: Any, fallback_binding: Any) -> tuple[Any, dict[str, str]]:
+    """Project Layout's exact Style occurrence identity without reclassifying it."""
+    theme_role = getattr(mark, "theme_role", None)
+    occurrence_key = getattr(mark, "style_occurrence_key", None)
+    if theme_role is None:
+        return fallback_binding, {}
+    if occurrence_key is None:
+        raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", getattr(mark, "placement_id", "/marks"),
+                              "a selected Theme role requires its Layout occurrence key")
+    semantic_id = occurrence_key.semantic_id
+    return semantic_binding(semantic_id), {"semantic_id": semantic_id, "theme_role": theme_role}
+
+
+def _record_style_fill_overrides(target: dict[str, str], style_fills: Any,
+                                occurrence_key: Any,
+                                primitive_ids: tuple[str, ...] | list[str]) -> None:
+    """Join concrete fills to actual Scene IDs through completed Layout keys."""
+    if occurrence_key is None:
+        return
+    fill = style_fills.get(occurrence_key)
+    if fill is None:
+        return
+    for primitive_id in primitive_ids:
+        target[primitive_id] = fill
+
+
+def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView, *, paint_role: str | None = None) -> PaintFamily:
+    paint_role = paint_role or primitive.visual_role
     if primitive.paint_channels == "fill":
         return PaintFamily.SOLID
     if primitive.paint_channels == "stroke":
         return PaintFamily.PATH
     if primitive.pattern is not None and primitive.pattern.primitives:
-        return PaintFamily.SOLID
+        try:
+            return mark_paint_family(tokens, paint_role, has_completed_catalog_pattern=True)
+        except ThemePaintError as error:
+            raise ValueError(f"{error.diagnostic_id}: {error.detail or error.path}") from error
     if primitive.kind == PrimitiveKind.TEXT:
         return PaintFamily.TEXT
     if primitive.kind == PrimitiveKind.PATH:
         return PaintFamily.PATH
     if primitive.purpose in {"group-decoration", "row-decoration", "group-header-band", "group-header-strip", "group-tab", "calendar-closed", "calendar-exception", "period-band"}:
-        treatment, _ = tokens.background(primitive.visual_role)
+        treatment, _ = tokens.background(paint_role)
         if treatment == "none":
             raise SceneBuildError("E_THEME_BACKGROUND_ABSENT", f"/body/roles/{primitive.visual_role}")
         return PaintFamily.OUTLINE if treatment == "outline" else PaintFamily.SOLID
-    pattern = tokens.optional_pattern(primitive.visual_role)
-    if pattern is not None and pattern_kind(pattern) == "outline":
-        return PaintFamily.OUTLINE
-    if pattern is not None and pattern_kind(pattern) == "diagonal-hatch":
-        return PaintFamily.HATCH
-    if primitive.kind == PrimitiveKind.SYMBOL and primitive.glyph_paint_mode == "stroke":
-        # Preserve explicit outline overrides above, then require only the
-        # channel the completed catalogue part actually paints.
-        return PaintFamily.PATH
-    if primitive.purpose == "region-frame" and tokens.optional_color(primitive.visual_role, "fill") is None:
+    try:
+        family = mark_paint_family(
+            tokens, paint_role,
+            glyph_paint_mode=(primitive.glyph_paint_mode
+                              if primitive.kind == PrimitiveKind.SYMBOL else None),
+        )
+    except ThemePaintError as error:
+        raise ValueError(f"{error.diagnostic_id}: {error.detail or error.path}") from error
+    if (family == PaintFamily.SOLID and primitive.purpose == "region-frame"
+            and tokens.optional_color(paint_role, "fill") is None):
         # A frame role that declares no fill is an outline panel (#889).
         return PaintFamily.OUTLINE
-    return PaintFamily.SOLID
+    return family
 
 
 def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose: str, visual_role: str,
@@ -217,8 +248,7 @@ def _completed_shape_primitive(placement: ShapePlacement, source_kind: str, purp
 
 def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visual_profile: VisualProfile | None = None,
                             viewport: tuple[float, float] = (0.0, 0.0),
-                            *, scale_target_role: str | None = None,
-                            scale_paints: Mapping[str, str] | None = None,
+                            *, style_fill_overrides: Mapping[str, str] | None = None,
                             scale_legend_paints: Mapping[str, str] | None = None,
                             group_tints: Mapping[str, str] | None = None,
                             annotation_kind_paints: Mapping[str, str] | None = None,
@@ -234,7 +264,8 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
     clip_hosts = frozenset(item.clip_source_id for item in surface.primitives if item.clip_source_id)
     try:
         resolved = tuple(_complete_shape_channels(_complete_primitive_paint(
-            primitive, tokens, visual_profile, scale_target_role, scale_paints or {}, scale_legend_paints or {},
+            primitive, tokens, visual_profile,
+            (style_fill_overrides or {}).get(primitive.scene_id), scale_legend_paints or {},
             group_tints or {}, surface.canvas_bounds or (0.0, 0.0, *viewport), annotation_kind_paints or {},
             clip_hosts, axis_band_paints or {}, actual_variance_paints or {}))
                          for primitive in surface.primitives)
@@ -303,7 +334,7 @@ def _complete_wobble(primitive: ScenePrimitive, paint: ScenePaint, clip_host: bo
             return replace(paint, wobble=None)
     except WobbleLimitError as error:
         raise SceneBuildError("E_VISUAL_CAPABILITY_LIMIT",
-                              f"/body/roles/{primitive.visual_role}/wobbleWavelength",
+                              f"/body/roles/{primitive.theme_role or primitive.visual_role}/wobbleWavelength",
                               f"the wobbled outline of {primitive.scene_id} has {error} points, over "
                               f"{MAX_OUTLINE_POINTS}") from error
     return replace(paint, wobble=replace(wobble, closed=closed, outline=outline))
@@ -325,7 +356,7 @@ def _require_followable_paint(primitive: ScenePrimitive) -> None:
 
 
 def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView, visual_profile: VisualProfile | None,
-                              scale_target_role: str | None, scale_paints: Mapping[str, str],
+                              style_fill_override: str | None,
                               scale_legend_paints: Mapping[str, str],
                               group_tints: Mapping[str, str] = {},
                               canvas: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
@@ -350,20 +381,24 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
         if primitive.paint is None:
             raise SceneBuildError("E_PRESENTATION_PAINT_INVALID", f"/body/roles/{primitive.visual_role}")
         return primitive, ()
+    paint_role = primitive.theme_role or primitive.visual_role
     ink_only_pattern = bool(primitive.pattern and primitive.pattern.primitives
-                            and is_ink_only_surface_pattern(tokens, primitive.visual_role))
+                            and is_ink_only_surface_pattern(tokens, paint_role))
     if ink_only_pattern:
-        admission = resolve_surface_pattern_admission(tokens, primitive.visual_role, visual_profile=visual_profile)
+        admission = resolve_surface_pattern_admission(tokens, paint_role, visual_profile=visual_profile)
         if not admission.admitted:
             return None, admission.omissions
-    family = _paint_family(primitive, tokens)
-    paint_role = primitive.visual_role
+    family = _paint_family(primitive, tokens, paint_role=paint_role)
+    fill_override = style_fill_override
+    if primitive.source_kind == "legend":
+        fill_override = scale_legend_paints.get(primitive.source_ref, fill_override)
+    if (fill_override is None and actual_variance_paints is not None
+            and primitive.theme_role is None and primitive.purpose == "actual" and paint_role == "actual"
+            and family != PaintFamily.OUTLINE):
+        fill_override = actual_variance_paints.get(primitive.source_ref)
     resolution = resolve_scene_paint(tokens, paint_role, family,
                                      visual_profile=visual_profile, gradient_bounds=primitive.bounds,
-                                     fill_override=(actual_variance_paints.get(primitive.source_ref)
-                                                    if actual_variance_paints is not None
-                                                    and primitive.purpose == "actual" and paint_role == "actual"
-                                                    else None),
+                                     fill_override=fill_override,
                                      glow_extent=_visible_extent(primitive), canvas_bounds=canvas,
                                      part_mode=primitive.glyph_paint_mode,
                                      part_color=primitive.glyph_paint_color,
@@ -376,14 +411,7 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
                                      catalog_glyph_line_cap=primitive.glyph_line_cap,
                                      catalog_glyph_line_join=primitive.glyph_line_join)
     paint = resolution.paint
-    if primitive.glyph_paint_mode is None:
-        override = (scale_paints.get(primitive.source_ref)
-                    if primitive.visual_role == scale_target_role else None)
-        if primitive.source_kind == "legend":
-            override = scale_legend_paints.get(primitive.source_ref, override)
-        completed = replace(paint, fill=override) if override is not None else paint
-    else:
-        completed = paint
+    completed = paint
     tint = (group_tints.get(primitive.source_ref)
             if primitive.purpose in {"group-decoration", "group-header-band"} else None)
     if tint is not None:
@@ -417,7 +445,7 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
         completed = replace(completed, stroke_width=primitive.stroke_clip.stroke_width)
     # A completed stroke-only child shares its host role, not its fill content.
     treatment = (None if primitive.paint_channels == "stroke"
-                 else tokens.optional_pattern(primitive.visual_role))
+                 else tokens.optional_pattern(paint_role))
     result = replace(primitive, paint=completed,
                      pattern=(primitive.pattern if primitive.pattern is not None and primitive.pattern.primitives
                               else pattern_geometry(treatment) if treatment is not None else None),
@@ -442,9 +470,10 @@ def project_review_surface(value: SceneBuildInput) -> SceneSurface:
     """Dispatch a typed surface intent to an adapter of completed Layout output."""
     surface = getattr(value.projection, "surface", "table-timeline")
     if surface == "table-timeline":
-        return _complete_surface_paint(_compose_table_timeline_surface(value), value.theme_tokens, value.visual_profile, value.viewport,
-                                       scale_target_role=value.surface_content.scale_target_role,
-                                       scale_paints=dict(value.surface_content.scale_paints),
+        style_fill_overrides: dict[str, str] = {}
+        projected = _compose_table_timeline_surface(value, style_fill_overrides)
+        return _complete_surface_paint(projected, value.theme_tokens, value.visual_profile, value.viewport,
+                                       style_fill_overrides=style_fill_overrides,
                                        scale_legend_paints=dict(value.surface_content.scale_legend_paints),
                                        group_tints=dict(value.surface_content.group_tints),
                                        annotation_kind_paints=dict(value.surface_content.annotation_kind_paints),
@@ -455,7 +484,8 @@ def project_review_surface(value: SceneBuildInput) -> SceneSurface:
     raise SceneBuildError("E_PRESENTATION_SURFACE_UNSUPPORTED", "/projection/surface")
 
 
-def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
+def _compose_table_timeline_surface(value: SceneBuildInput,
+                                    style_fill_overrides: dict[str, str] | None = None) -> SceneSurface:
     """Build the core, fully measured table/timeline surface from the frozen closure."""
     projection = value.projection
     composition = value.completion
@@ -497,6 +527,14 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                  placed_surface.scale.range_start, placed_surface.scale.range_end,
                                  placed_surface.scale.origin, placed_surface.scale.unit_ratio)
     primitives: list[ScenePrimitive] = []
+    fills_by_scene_id = style_fill_overrides if style_fill_overrides is not None else {}
+    style_fills = getattr(value.surface_content, "style_fills", {})
+
+    def record_style_fill(placement: Any, primitive_ids: tuple[str, ...] | list[str]) -> None:
+        _record_style_fill_overrides(
+            fills_by_scene_id, style_fills,
+            getattr(placement, "style_occurrence_key", None), primitive_ids)
+
     primitive_provenance: list[PrimitiveProvenance] = []
     row_subjects = review_row_subjects(review_rows)
     table_subjects = {
@@ -576,6 +614,11 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         placed = layout_text[scene_id]
         if placed.overflow == "suppressed":
             return
+        record_style_fill(placed, (scene_id,))
+        style_projection = {}
+        if getattr(placed, "theme_role", None) is not None:
+            binding, style_projection = _placement_style_projection(placed, None)
+            purpose, role = binding.purpose, binding.scene_role
         layout = TextLayout((float(placed.bounds.inline), float(placed.bounds.block),
                              float(placed.bounds.inline_size), float(placed.bounds.block_size)),
                             placed.baseline or (float(placed.bounds.inline), float(placed.bounds.block)),
@@ -584,14 +627,14 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                             _scene_transform(placed.text_transform), placed.numeric_spacing, placed.orientation,
                             placed.rotation_degrees, placed.horizontal_scale, placed.fit, _scene_runs(placed.runs))
         classification = contrast_binding(role)
-        treatment = (value.theme_tokens.contrast_treatment(role)
+        treatment = (value.theme_tokens.contrast_treatment(style_projection.get("theme_role", role))
                      if classification is not None and classification.contrast_class == ContrastClass.STATE_TEXT else None)
         primitives.append(ScenePrimitive(scene_id, PrimitiveKind.TEXT, placed.source_ref, "review", purpose, role, layout.bounds,
                                          text=placed.content, baseline=layout.baseline, text_layout=layout,
                                          href=href, link_title=link_title, table_row_id=table_row_id,
                                          table_column_id=table_column_id, paint_order=placed.paint_order,
                                          host_placement_id=placed.host_placement_id,
-                                         contrast_treatment=treatment))
+                                         contrast_treatment=treatment, **style_projection))
         if project_item is not None:
             record_project_primitives((scene_id,), project_item)
     def emit_semantic_text(scene_id: str, semantic_id: str, role: str | None = None,
@@ -708,9 +751,11 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         href, link_title = link_for_item(item, source_kind)
         planned = item.planned
         planned_mark = mark_placements.get(f"planned:{instance_id}")
-        planned_binding = (_primary_mark_binding(planned_mark, source_kind)
-                           if planned_mark is not None
-                           else semantic_binding("snapshot" if source_kind in {"snapshot", "scenario"} else "planned"))
+        planned_fallback = (_primary_mark_binding(planned_mark, source_kind)
+                            if planned_mark is not None
+                            else semantic_binding("snapshot" if source_kind in {"snapshot", "scenario"} else "planned"))
+        planned_binding, planned_style = (_placement_style_projection(planned_mark, planned_fallback)
+                                          if planned_mark is not None else (planned_fallback, {}))
         planned_role = planned_binding.scene_role
         if planned_mark is not None:
             planned_ids = lane_scene_ids("mark", planned_mark.placement_id)
@@ -720,52 +765,65 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             if item.source_type == "point":
                 # A Theme that declares the `gate` role paints primary gates with it (#991); a baseline or
                 # scenario gate keeps its own role.
-                gate_role = (planned_role if planned_mark.semantic_id == "forecast" else
+                gate_role = (planned_role if planned_style or planned_mark.semantic_id == "forecast" else
                              resolve_point_paint_role(planned_role,
                                                       gate_declared=value.theme_tokens.has_role("gate")))
-                primitives.extend(_symbol_primitives(planned_id, item.object_id, "object", planned_binding.purpose, gate_role,
-                                                    bounds, planned_mark.symbol_parts,
-                                                    primitive_ids=planned_ids,
-                                                    corner_radius=planned_mark.corner_radius,
-                                                    path_commands=planned_mark.path_commands,
-                                                    href=href, link_title=link_title, slot_id=planned_mark.slot_id,
-                                                    paint_order=planned_mark.paint_order, end_treatment=planned_mark.end_treatment))
+                emitted = _symbol_primitives(planned_id, item.object_id, "object", planned_binding.purpose, gate_role,
+                                             bounds, planned_mark.symbol_parts,
+                                             primitive_ids=planned_ids,
+                                             corner_radius=planned_mark.corner_radius,
+                                             path_commands=planned_mark.path_commands,
+                                             href=href, link_title=link_title, slot_id=planned_mark.slot_id,
+                                             paint_order=planned_mark.paint_order, end_treatment=planned_mark.end_treatment,
+                                             **planned_style)
+                primitives.extend(emitted)
+                record_style_fill(planned_mark, tuple(item.scene_id for item in emitted))
                 record_project_primitives(planned_ids or (planned_id,), item)
             else:
                 primitives.append(_completed_host_primitive(planned_id, item.object_id, "object", planned_binding.purpose, planned_role,
                                                  bounds, planned_mark,
                                                  corner_radius=planned_mark.corner_radius,
                                                  href=href, link_title=link_title, slot_id=planned_mark.slot_id,
-                                                 paint_order=planned_mark.paint_order, end_treatment=planned_mark.end_treatment))
+                                                 paint_order=planned_mark.paint_order, end_treatment=planned_mark.end_treatment,
+                                                 **planned_style))
+                record_style_fill(planned_mark, (planned_id,))
                 record_project_primitives((planned_id,), item)
         actual = item.actual or {}
-        actual_binding = semantic_binding("actual")
         actual_mark = mark_placements.get(f"actual:{instance_id}")
         if actual_mark is not None:
+            actual_binding, actual_style = _placement_style_projection(actual_mark, semantic_binding("actual"))
             actual_ids = lane_scene_ids("mark", actual_mark.placement_id)
             actual_id = actual_ids[0] if actual_ids else actual_mark.placement_id
             bounds = (float(actual_mark.bounds.inline), float(actual_mark.bounds.block),
                       float(actual_mark.bounds.inline_size), float(actual_mark.bounds.block_size))
             if item.source_type == "span":
                 if actual_mark.mark_shape == "open-span":
-                    primitives.extend(_symbol_primitives(actual_id, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
-                                                        bounds, actual_mark.symbol_parts,
-                                                        primitive_ids=actual_ids,
-                                                        corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
-                                                        paint_clip=actual_mark.paint_clip,
-                                                        paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
+                    emitted = _symbol_primitives(actual_id, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
+                                                 bounds, actual_mark.symbol_parts,
+                                                 primitive_ids=actual_ids,
+                                                 corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
+                                                 paint_clip=actual_mark.paint_clip,
+                                                 paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment,
+                                                 **actual_style)
+                    primitives.extend(emitted)
+                    record_style_fill(actual_mark, tuple(item.scene_id for item in emitted))
                     record_project_primitives(actual_ids or (actual_id,), item)
                 else:
                     primitives.append(_completed_host_primitive(actual_id, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
                                                      bounds, actual_mark, corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
-                                                     paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
+                                                     paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment,
+                                                     **actual_style))
+                    record_style_fill(actual_mark, (actual_id,))
                     record_project_primitives((actual_id,), item)
             else:
-                primitives.extend(_symbol_primitives(actual_id, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
-                                                    bounds, actual_mark.symbol_parts, corner_radius=actual_mark.corner_radius,
-                                                    primitive_ids=actual_ids,
-                                                    path_commands=actual_mark.path_commands, slot_id=actual_mark.slot_id,
-                                                    paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
+                emitted = _symbol_primitives(actual_id, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
+                                             bounds, actual_mark.symbol_parts, corner_radius=actual_mark.corner_radius,
+                                             primitive_ids=actual_ids,
+                                             path_commands=actual_mark.path_commands, slot_id=actual_mark.slot_id,
+                                             paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment,
+                                             **actual_style)
+                primitives.extend(emitted)
+                record_style_fill(actual_mark, tuple(item.scene_id for item in emitted))
                 record_project_primitives(actual_ids or (actual_id,), item)
         missing_mark = mark_placements.get(f"missing-actual:{instance_id}")
         if missing_mark is not None and (projection.lane_membership is not None or
@@ -774,10 +832,12 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             missing_id = missing_ids[0] if missing_ids else missing_mark.placement_id
             bounds = (float(missing_mark.bounds.inline), float(missing_mark.bounds.block),
                       float(missing_mark.bounds.inline_size), float(missing_mark.bounds.block_size))
-            missing_binding = semantic_binding("missingActual")
+            missing_binding, missing_style = _placement_style_projection(missing_mark, semantic_binding("missingActual"))
             primitives.append(_completed_host_primitive(missing_id, item.object_id, "object", missing_binding.purpose, missing_binding.scene_role,
                                              bounds, missing_mark, corner_radius=missing_mark.corner_radius, slot_id=missing_mark.slot_id,
-                                             paint_order=missing_mark.paint_order, end_treatment=missing_mark.end_treatment))
+                                             paint_order=missing_mark.paint_order, end_treatment=missing_mark.end_treatment,
+                                             **missing_style))
+            record_style_fill(missing_mark, (missing_id,))
             record_project_primitives((missing_id,), item)
         label_id = f"member-label:{instance_id}"
         if label_id in layout_text and layout_text[label_id].overflow != "suppressed":
@@ -804,34 +864,40 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             href, link_title = link_for_item(item, source_kind)
             planned_mark = mark_placements.get(f"planned:{instance_id}")
             if planned_mark is not None:
-                binding = _primary_mark_binding(planned_mark, source_kind)
+                fallback_binding = _primary_mark_binding(planned_mark, source_kind)
+                binding, style_projection = _placement_style_projection(planned_mark, fallback_binding)
                 bounds = (float(planned_mark.bounds.inline), float(planned_mark.bounds.block),
                           float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
-                gate_role = (binding.scene_role if planned_mark.semantic_id == "forecast" else
+                gate_role = (binding.scene_role if style_projection or planned_mark.semantic_id == "forecast" else
                              resolve_point_paint_role(binding.scene_role,
                                                       gate_declared=value.theme_tokens.has_role("gate")))
-                primitives.extend(_symbol_primitives(f"planned:{instance_id}", item.object_id, "object",
-                                                    binding.purpose,
-                                                    gate_role if item.source_type == "point" else binding.scene_role,
-                                                    bounds, planned_mark.symbol_parts,
-                                                    corner_radius=planned_mark.corner_radius,
-                                                    path_commands=planned_mark.path_commands, href=href, link_title=link_title,
-                                                    slot_id=planned_mark.slot_id, paint_order=planned_mark.paint_order,
-                                                    end_treatment=planned_mark.end_treatment))
+                emitted = _symbol_primitives(f"planned:{instance_id}", item.object_id, "object",
+                                             binding.purpose,
+                                             gate_role if item.source_type == "point" else binding.scene_role,
+                                             bounds, planned_mark.symbol_parts,
+                                             corner_radius=planned_mark.corner_radius,
+                                             path_commands=planned_mark.path_commands, href=href, link_title=link_title,
+                                             slot_id=planned_mark.slot_id, paint_order=planned_mark.paint_order,
+                                             end_treatment=planned_mark.end_treatment, **style_projection)
+                primitives.extend(emitted)
+                record_style_fill(planned_mark, tuple(item.scene_id for item in emitted))
                 folded_id = f"planned:{instance_id}"
                 record_project_primitives(tuple(
                     f"{folded_id}:part{index}" if part.paint_mode is not None else folded_id
                     for index, part in enumerate(planned_mark.symbol_parts)), item)
             actual_mark = mark_placements.get(f"actual:{instance_id}")
             if actual_mark is not None:
-                binding = semantic_binding("actual")
+                binding, style_projection = _placement_style_projection(actual_mark, semantic_binding("actual"))
                 bounds = (float(actual_mark.bounds.inline), float(actual_mark.bounds.block),
                           float(actual_mark.bounds.inline_size), float(actual_mark.bounds.block_size))
-                primitives.extend(_symbol_primitives(f"actual:{instance_id}", item.object_id, "object",
-                                                    binding.purpose, binding.scene_role, bounds, actual_mark.symbol_parts,
-                                                    corner_radius=actual_mark.corner_radius,
-                                                    path_commands=actual_mark.path_commands, slot_id=actual_mark.slot_id,
-                                                    paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
+                emitted = _symbol_primitives(f"actual:{instance_id}", item.object_id, "object",
+                                             binding.purpose, binding.scene_role, bounds, actual_mark.symbol_parts,
+                                             corner_radius=actual_mark.corner_radius,
+                                             path_commands=actual_mark.path_commands, slot_id=actual_mark.slot_id,
+                                             paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment,
+                                             **style_projection)
+                primitives.extend(emitted)
+                record_style_fill(actual_mark, tuple(item.scene_id for item in emitted))
                 folded_id = f"actual:{instance_id}"
                 record_project_primitives(tuple(
                     f"{folded_id}:part{index}" if part.paint_mode is not None else folded_id

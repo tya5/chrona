@@ -38,7 +38,7 @@ from chrona.app.agent_workspace import WorkspaceScope
 from chrona.operational.store_commands import (
     StoreRootOutsideWorkspace, open_store_reader, parse_command_request, run_store_command,
 )
-from chrona.operational.store_reads import compare_store_baseline, load_reference, snapshot_reader_for
+from chrona.operational.store_reads import DraftExtensionPackageReader, compare_store_baseline, load_reference, snapshot_reader_for
 from chrona.resources import validator_for_schema
 from chrona.usecases.context_review import render_context_closure, resolve_context_closure
 from chrona.usecases.draft_render import DEFAULT_VIEWPORT, DraftRenderRequest, render_draft, warning_payloads
@@ -396,6 +396,8 @@ def _render_draft(call: _Call, arguments: dict[str, Any]) -> ToolResult:
         snapshot=_optional_path(call, arguments, "snapshot"),
         forecast=arguments.get("forecast", False),
         viewport=viewport, locale=arguments.get("locale", "en-US"),
+        package_reader=DraftExtensionPackageReader(lambda: _open_contained_store(
+            call, call.scope.resolve_path(arguments.get("storeConfig", DEFAULT_STORE_CONFIG), "/storeConfig"))),
     )
     rendered = render_draft(request)
     artifact = rendered.artifact
@@ -614,6 +616,7 @@ _TOOLS: tuple[ToolSpec, ...] = (
         "plan is a result, and a warning means something was clipped, suppressed or substituted.",
         _input_schema({
             "project": _WORKSPACE_PATH_PROPERTY,
+            "storeConfig": _STORE_CONFIG_PROPERTY,
             "actual": {**_WORKSPACE_PATH_PROPERTY, "description": "Actual Set YAML to draw progress over the plan."},
             "snapshot": {**_WORKSPACE_PATH_PROPERTY,
                          "description": "Optional baseline Project YAML, scoped to this workspace, equivalent to --snapshot."},

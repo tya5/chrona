@@ -11,9 +11,11 @@ import pytest
 from tests.support.render_cache import (
     RenderCache, RenderCacheError, RenderResult, digest_files, make_key, render_uncached,
 )
+import tests.support.render_cache as render_cache_module
 
 HALCYON = "examples/halcyon-1/project.yaml"
 HALCYON_ACTUAL = "examples/halcyon-1/actual.yaml"
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_each_render_key_renders_at_most_once(render_cache):
@@ -81,6 +83,30 @@ def test_digest_changes_when_one_byte_of_an_input_changes(tmp_path):
     assert digest_files([first, second]) != before
 
 
+def test_local_extension_bytes_are_part_of_the_render_key(tmp_path, monkeypatch):
+    root = tmp_path / "repo"
+    project_dir = root / "examples" / "sample"
+    project_dir.mkdir(parents=True)
+    resources = root / "src" / "chrona" / "resources"
+    resources.mkdir(parents=True)
+    package = project_dir / "extensions" / "profile.yaml"
+    package.parent.mkdir()
+    package.write_bytes(b"version: one\n")
+    project = project_dir / "project.yaml"
+    project.write_text(
+        "version: timeline/v0.7\nextensions:\n"
+        "- resource:\n    store: {provider: local, identity: sample}\n"
+        "    address: extensions/profile.yaml\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(render_cache_module, "ROOT", root)
+    monkeypatch.setattr(render_cache_module, "ALLOWED_ROOTS", (root / "examples", resources))
+
+    before = make_key("examples/sample/project.yaml")
+    package.write_bytes(b"version: two\n")
+    assert make_key("examples/sample/project.yaml").digest != before.digest
+
+
 def test_input_outside_committed_roots_is_refused(render_cache, tmp_path):
     project = tmp_path / "project.yaml"
     project.write_text("x: 1\n", encoding="utf-8")
@@ -122,11 +148,19 @@ def test_a_key_already_logged_is_never_rendered_again(tmp_path):
 
 def test_two_renders_of_one_input_are_byte_identical(tmp_path):
     """The cache makes one render stand for many, so determinism is asserted explicitly."""
+    import yaml
+
+    from tests.support.draft_packages import stage_project_package_store
+
+    project_path = ROOT / HALCYON
+    project = yaml.safe_load(project_path.read_text(encoding="utf-8"))
+    store_config = stage_project_package_store(tmp_path / "package-store", project, project_path.parent)
     outputs = []
     for name in ("first", "second"):
         directory: Path = tmp_path / name
         directory.mkdir()
-        render_uncached(["render", HALCYON, "--actual", HALCYON_ACTUAL, "--output", str(directory / "out.svg"),
+        render_uncached(["render", HALCYON, "--actual", HALCYON_ACTUAL,
+                         "--store-config", str(store_config), "--output", str(directory / "out.svg"),
                          "--emit-scene", str(directory / "scene.json")])
         outputs.append(((directory / "out.svg").read_bytes(), (directory / "scene.json").read_bytes()))
     assert outputs[0] == outputs[1]

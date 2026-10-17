@@ -9,6 +9,7 @@ import pytest
 import yaml
 
 from chrona.app.cli import main
+from tests.support.draft_packages import stage_project_package_store
 
 ROOT = Path(__file__).resolve().parents[2]
 HALCYON = ROOT / "examples/halcyon-1"
@@ -48,11 +49,14 @@ def _render(tmp_path: Path, monkeypatch, *, project: dict | None = None, view_ed
         theme = _load(theme_path)
         theme_edit(theme["body"])
         _dump(theme_path, theme)
-    project_path = _dump(tmp_path / "project.yaml", project) if project else HALCYON / "project.yaml"
+    project_value = project if project is not None else _load(HALCYON / "project.yaml")
+    store_config = stage_project_package_store(tmp_path / "packages", project_value, HALCYON)
+    project_path = _dump(tmp_path / "project.yaml", project_value)
     scene_path = tmp_path / "scene.json"
     monkeypatch.setattr(sys, "argv", [
         "chrona", "render", str(project_path), "--preset", str(preset / "preset.yaml"),
-        "--output", str(tmp_path / "out.svg"), "--emit-scene", str(scene_path),
+        "--store-config", str(store_config), "--output", str(tmp_path / "out.svg"),
+        "--emit-scene", str(scene_path),
     ])
     main()
     return json.loads(scene_path.read_text(encoding="utf-8"))["surfaces"][0]

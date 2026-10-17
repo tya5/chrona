@@ -1,4 +1,4 @@
-"""Renderer-neutral temporal facet selection for one projected review item.
+"""Model-owned, renderer-neutral temporal facet selection for one projected review item.
 
 This module decides which date-bearing facets exist. It deliberately has no
 scale, Theme, frame, or coordinate inputs; Layout geometry consumes the

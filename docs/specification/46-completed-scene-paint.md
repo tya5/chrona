@@ -13,6 +13,14 @@ After closure resolution, Scene converts a selected semantic role into a
 `visualRole` remains Scene provenance and inspection metadata, not a lookup key
 for an adapter.
 
+For Style v0.2 treatment (#419), the selected `themeRole` supplies paint while
+canonical `visualRole` and vocabulary `semanticId` retain host semantics.
+Layout has already consumed that treatment's geometry-affecting text/mark/
+stroke attributes before placement and routing; Scene paint completion does
+not choose or resize geometry. Spec08 owns the paired metadata and pinned
+vocabulary validation. An adapter still receives only completed paint and
+geometry, not a Theme lookup or Style evaluator.
+
 This does not restore the removed `ScenePrimitive.color` escape hatch. A
 `ScenePaint` is derived internally from a validated resolved Theme only, is
 immutable, and cannot be supplied by Project, View, Layout, or an adapter.

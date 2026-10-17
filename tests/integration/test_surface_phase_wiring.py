@@ -3,9 +3,11 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 from chrona.app.cli import main
 from chrona.presentation.layout import surface_composer, surface_route_label_plan
+from tests.support.draft_packages import stage_project_package_store
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 
@@ -86,8 +88,12 @@ def test_routes_and_labels_use_isolated_trials_from_one_pre_route_inventory(tmp_
         return result, annotations
     monkeypatch.setattr(surface_route_label_plan, "select_completed_route_label_plan", selection_spy)
     example = ROOT / "examples/halcyon-1"
-    monkeypatch.setattr(sys, "argv", ["chrona", "render", str(example / "project.yaml"),
+    project_path = example / "project.yaml"
+    project = yaml.safe_load(project_path.read_bytes())
+    store_config = stage_project_package_store(tmp_path / "project-store", project, example)
+    monkeypatch.setattr(sys, "argv", ["chrona", "render", str(project_path),
                                       "--actual", str(example / "actual.yaml"),
+                                      "--store-config", str(store_config),
                                       "--output", str(tmp_path / "out.svg")])
     main()
 

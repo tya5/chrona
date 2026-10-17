@@ -13,7 +13,7 @@ from typing import Any
 
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.model.actual_observation import in_progress_actual
-from chrona.presentation.layout.semantic_mark_facets import due_end_missing_actual_selected, mark_placement_facet
+from chrona.presentation.model.semantic_mark_facets import due_end_missing_actual_selected, mark_placement_facet
 from chrona.presentation.model.projection import ObservationState, ReviewProjection, active_placement
 
 

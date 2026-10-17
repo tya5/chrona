@@ -1,15 +1,9 @@
 from copy import deepcopy
-from pathlib import Path
 from xml.etree import ElementTree
 
 from tools import check_starter_perceptibility as gate
-from chrona.presentation.model.closure import resolve_draft_render
-from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.presentation.scene.paint_analysis import composited_contrast
 from chrona.presentation.scene.serialization import scene_document
-from chrona.resources import default_preset_resource, default_preset_root
-from chrona.scheduling.scheduler import ReferenceScheduler
-from chrona.usecases.render_review import RenderRequest, render_review
 
 
 def test_real_bundled_starter_has_no_perceptibility_error(capsys):
@@ -31,17 +25,7 @@ def test_starter_gate_fails_a_serialized_text_intersection(monkeypatch, capsys):
 
 
 def test_closed_day_chart_and_key_paint_are_perceptible_and_match_svg():
-    root = Path(gate.__file__).resolve().parents[1]
-    draft = resolve_draft_render(
-        project_path=root / "examples/halcyon-1/project.yaml",
-        preset_path=Path(str(default_preset_resource())),
-        preset_root=Path(str(default_preset_root())),
-    )
-    rendered = render_review(RenderRequest(
-        draft.closure, draft.asset_root, ReferenceScheduler(),
-        renderer=V05SvgRenderer(), asset_root=draft.asset_root,
-        draft_auto_block=draft.auto_block,
-    ))
+    rendered = gate.starter_rendered_review()
     document = scene_document(rendered.scene)
     primitives = document["surfaces"][0]["primitives"]
     chart = [item for item in primitives if item["id"].startswith("calendar-closed:")]

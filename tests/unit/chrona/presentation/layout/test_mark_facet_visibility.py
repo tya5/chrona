@@ -3,7 +3,7 @@ from datetime import date
 
 import pytest
 
-from chrona.presentation.layout.semantic_mark_facets import (
+from chrona.presentation.model.semantic_mark_facets import (
     ItemMarkFacetSelection,
     LogicalMarkFacet,
     MarkFacetAbsence,

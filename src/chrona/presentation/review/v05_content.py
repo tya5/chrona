@@ -25,6 +25,15 @@ from chrona.presentation.group_header_text import GroupHeaderTextError, HeaderTe
 from chrona.presentation.figure_text import FigureTextProgram
 from chrona.presentation.heading_text import HeadingTextPrograms, close_heading
 from chrona.presentation.model.color_scale import OTHER_LABEL, ResolvedColorScale, scale_text
+from chrona.presentation.model.style_rules import (
+    OccurrenceStyleIndex, StyleOccurrenceKey, evaluate_style_rules,
+)
+from chrona.presentation.style import StyleRule
+from chrona.presentation.review.style_occurrences import collect_surface_style_facts
+from chrona.presentation.model.style_fills import complete_style_fills
+from chrona.presentation.model.style_mark_paint import validate_style_mark_paint
+from chrona.presentation.model.theme_tokens import ThemeTokenView
+from chrona.presentation.review.style_intent import lower_legacy_color_encoding
 from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec, AxisBandScaleError
 
@@ -47,6 +56,17 @@ def cell_typography_role(column: Any) -> str:
     return "numeric" if column.format in {"signedDays", "signedNumber"} else "text"
 
 
+def _table_style_key(item: Any | None, row_id: str, column_id: str,
+                     semantic_id: str) -> StyleOccurrenceKey:
+    """Keep the actual table subject; aggregate/header cells are View facts."""
+    return StyleOccurrenceKey(
+        item.object_id if item is not None else row_id,
+        item.source_kind if item is not None else "view", semantic_id,
+        row_id, (item.item_id or item.object_id) if item is not None else "",
+        column_id, "table-cell",
+    )
+
+
 def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
                                 *, actual_set: Mapping[str, Any] | None = None,
                                 locale: str = "en-US") -> TableContent:
@@ -55,7 +75,7 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         return _lane_table_content(projection, project, view)
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
     columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width), column.header_orientation,
-                                       text_wrap=column.text_wrap)
+                                       text_wrap=column.text_wrap, column_source=column.source)
                     for column in view.table_columns)
     as_of = date.fromisoformat(str(actual_body["asOf"])) if isinstance(actual_body.get("asOf"), str) else None
     def cell_parts(item: Any, column: Any, row_index: int) -> tuple[str, str, str]:
@@ -107,7 +127,8 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
             if row.key_row:
                 # The key row names itself in the first column and leaves the others empty (#1501).
                 text = row.label if column.id == view.table_columns[0].id else ""
-                return TableCellContent(row.row_id, column.id, text, "tableCell", cell_typography_role(column))
+                return TableCellContent(row.row_id, column.id, text, "tableCell", cell_typography_role(column),
+                                        style_key=_table_style_key(None, row.row_id, column.id, "tableCell"))
             item = next(item for item in row.items if item.item_id == row.table_subject_id)
             header = (item.is_rollup and row.rollup_presentation == "header"
                       and column.id == view.hierarchy_column)
@@ -115,7 +136,9 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
                                     "groupHeader" if header else cell_semantic(item, column),
                                     "groupHeader" if header else cell_typography_role(column),
                                     *cell_affixes(item, column, row_index),
-                                    required=_is_forecast_delta(item, column.source))
+                                    required=_is_forecast_delta(item, column.source),
+                                    style_key=_table_style_key(item, row.row_id, column.id,
+                                                              "groupHeader" if header else cell_semantic(item, column)))
         cells = tuple(
             row_cell(row, column, row_index)
             for row_index, row in enumerate(projection.rows, 1) for column in view.table_columns)
@@ -128,7 +151,8 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         row_levels = tuple(TableRowLevel((row.row_id, row.table_subject_id), bool(row.group_id), row.depth)
                            for row in projection.rows)
     else:
-        cells = tuple(TableCellContent(item.object_id, column.id, cell(item, column, row_index), cell_semantic(item, column), cell_typography_role(column), *cell_affixes(item, column, row_index), required=_is_forecast_delta(item, column.source))
+        cells = tuple(TableCellContent(item.object_id, column.id, cell(item, column, row_index), cell_semantic(item, column), cell_typography_role(column), *cell_affixes(item, column, row_index), required=_is_forecast_delta(item, column.source),
+                                       style_key=_table_style_key(item, item.object_id, column.id, cell_semantic(item, column)))
                       for row_index, item in enumerate(projection.items, 1) for column in view.table_columns)
         table_cell_objects = tuple((item.object_id, column.id, item.object_id, True)
                                    for item in projection.items for column in view.table_columns)
@@ -169,7 +193,8 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
         raise ValueError(f"E_REVIEW_LANE_TABLE_PROJECTION: laneMembership={projection.lane_membership is not None}, laneRows={len(projection.lane_rows)}, laneTable={lane_table is not None}")
     declared = lane_table.columns  # #1517: empty keeps the single `Lane` column byte-for-byte
     columns = tuple(TableColumnContent("Lane" if column.source == "label" else column.id, column.id, column.align,
-                                       TableColumnWidth("content", "content"), text_wrap=lane_table.text_wrap)
+                                       TableColumnWidth("content", "content"), text_wrap=lane_table.text_wrap,
+                                       column_source=column.source if isinstance(column.source, Mapping) else None)
                     for column in declared) or (
         TableColumnContent("Lane", _default_lane_header(projection, lane_table), "start",
                            TableColumnWidth("content", "content"), text_wrap=lane_table.text_wrap),)
@@ -227,11 +252,14 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
                 if row.group_id in disambiguate_groups:
                     label = f"{label} — {first_title}"
         if not declared:
-            cells.append(TableCellContent(row.lane_id, "Lane", label, "tableCell"))
+            cells.append(TableCellContent(row.lane_id, "Lane", label, "tableCell",
+                                          style_key=_table_style_key(None, row.lane_id, "Lane", "tableCell")))
         for column in declared:
             if column.source == "label":
-                cells.append(TableCellContent(row.lane_id, "Lane", label, "tableCell", column.text_role or "text"))
+                cells.append(TableCellContent(row.lane_id, "Lane", label, "tableCell", column.text_role or "text",
+                                              style_key=_table_style_key(None, row.lane_id, "Lane", "tableCell")))
                 continue
+            founder = None
             if column.source == "rowIndex":
                 value: Any = row_number
             else:
@@ -240,10 +268,12 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
             cells.append(TableCellContent(row.lane_id, column.id,
                                           display_value(value, column.missing, "text", transform=column.transform)
                                           + (column.suffix or ""),
-                                          "tableCell", column.text_role or "text"))
+                                          "tableCell", column.text_role or "text",
+                                          style_key=_table_style_key(founder, row.lane_id, column.id, "tableCell")))
         if show_count:
             member_count = len(lane.member_item_ids)
-            cells.append(TableCellContent(row.lane_id, "Items", str(member_count), "tableCell", "numeric"))
+            cells.append(TableCellContent(row.lane_id, "Items", str(member_count), "tableCell", "numeric",
+                                          style_key=_table_style_key(None, row.lane_id, "Items", "tableCell")))
         levels.append(TableRowLevel((row.lane_id,), bool(row.group_id)))
     return TableContent(columns, tuple(cells), (), None, tuple(levels))
 
@@ -315,7 +345,12 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                   annotation_kind_colors: Mapping[str, str] | None = None,
                                   actual_variance_colors: Mapping[str, str] | None = None,
                                   dependency_critical_role_available: bool = False,
-                                  annotation_kind_also: Mapping[str, tuple[str, ...]] | None = None) -> SurfaceContentInput:
+                                  annotation_kind_also: Mapping[str, tuple[str, ...]] | None = None,
+                                  style_rules: tuple[StyleRule, ...] = (),
+                                  gate_declared: bool = False,
+                                  theme: Mapping[str, Any] | None = None,
+                                  scale_reserved: tuple[str, ...] = (),
+                                  scale_other_color: str | None = None) -> SurfaceContentInput:
     """Normalize current Project/View/profile facts without legacy Settings."""
     if table is None:
         table = normalize_v05_table_content(projection, project, view, actual_set=actual_set, locale=locale)
@@ -461,15 +496,17 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     legend = legend_entries(detail, project, projection, color_scale, closed_days_drawn=bool(calendar_closed),
                             forecast_label=forecast_label)
     detail_content = normalize_v05_review_detail_profile(detail, projection.items)
-    scale_paints: tuple[tuple[str, str], ...] = ()
     scale_legend_paints: tuple[tuple[str, str], ...] = ()
+    encoding_rules = ()
     if color_scale is not None:
-        scale_paints = tuple((item.object_id, color_scale.color_for(item.object_id, item.fields))
-                             for item in projection.items if item.source_kind in {"primary", "combined"}
-                             and color_scale.covers(item.fields))
+        encoding_rules = lower_legacy_color_encoding({
+            "source": {"field": color_scale.source_field}, "scale": color_scale.scale_id,
+            "domain": "firstAppearance" if color_scale.derived else color_scale.domain,
+            "target": color_scale.target_role,
+        })
         used = _used_scale_values(color_scale, projection)
         scale_legend_paints = tuple((ref, color) for ref, _label, color in color_scale.legend_items(used))
-    return SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
+    content = SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
                                show_member_labels=label_placement in {"plot", "legacy"}, label_placement=label_placement, label_content=label_content,
                                label_side=label_side,
                                label_overflow=label_overflow, relation_overflow=relation_overflow,
@@ -490,8 +527,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                link_mode=link_mode, title_link_columns=title_link_columns,
                                attached_labels=_attached_labels(projection, locale),
                                table_cell_objects=table_cell_objects,
-                               scale_target_role=color_scale.target_role if color_scale else None,
-                               scale_paints=scale_paints, scale_legend_paints=scale_legend_paints,
+                               scale_legend_paints=scale_legend_paints,
                                progress_fill_source=view.progress_fill,
                                table_hierarchy_column=view.hierarchy_column,
                                table_indent_under_headers=table.indent_under_headers,
@@ -511,6 +547,21 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                                   for target in (annotation_kind_also or {}).get(item.kind, ())))),
                                actual_variance_paints=select_actual_variance_paints(
                                    projection, actual_variance_colors or {}))
+    if style_rules or encoding_rules:
+        facts = collect_surface_style_facts(projection, content, gate_declared=gate_declared)
+        intents = OccurrenceStyleIndex(evaluate_style_rules(
+            (*encoding_rules, *style_rules), facts.occurrences, field_catalogue=facts.field_catalogue))
+        content = replace(content, style_intents=intents,
+                          style_fills=complete_style_fills(
+                              intents, facts.occurrences, theme=theme, legacy_scale=color_scale,
+                              reserved=scale_reserved, other_color=scale_other_color,
+                              source_refs={rule.rule_id: rule.source_ref
+                                           for rule in (*encoding_rules, *style_rules)}))
+        if theme is not None:
+            validate_style_mark_paint(
+                intents, facts.occurrences, content.style_fills, ThemeTokenView(theme),
+                source_refs={rule.rule_id: rule.source_ref for rule in (*encoding_rules, *style_rules)})
+    return content
 
 
 def _group_header_facts(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> dict[str, Any] | None:

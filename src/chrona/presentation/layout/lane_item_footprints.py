@@ -38,6 +38,7 @@ from chrona.presentation.layout.surface_mark_visibility import (
     ensure_item_mark_visibility_index,
 )
 from chrona.presentation.model.projection import ReviewProjection, active_placement
+from chrona.presentation.model.style_rules import OccurrenceStyleIndex
 
 
 def compose_lane_item_footprints(
@@ -54,6 +55,7 @@ def compose_lane_item_footprints(
     visual_requests: Sequence[VisualRequest] = (),
     progress_fill_source: str | None = None,
     mark_visibility_index: ItemMarkVisibilityIndex | None = None,
+    style_intents: OccurrenceStyleIndex | None = None,
 ) -> tuple[LaneItemFootprints, ...]:
     """Return all visible mark facets grouped by fixed data-only membership.
 
@@ -115,6 +117,8 @@ def compose_lane_item_footprints(
             MarkOccurrenceKind.LANE_SOURCE, instance.row_id, instance.item_id,
             instance.object_id, instance.source_kind,
         )
+        occurrence_styles = (occurrence.style_intents(style_intents)
+                             if style_intents is not None else None)
         visibility = mark_visibility_index.lookup(
             occurrence, projection=projection, as_of=as_of)
         composition = compose_item_marks(
@@ -123,6 +127,7 @@ def compose_lane_item_footprints(
             theme_tokens=theme_tokens, slot_id=slot_id,
             emit_missing_actual=lane_missing_actual_visible(projection), emit_diagnostics=False,
             selection=admitted_source_selection(visibility),
+            style_intents=occurrence_styles,
         )
         facets = {facet.source.placement_id(instance.placement_key): facet for facet in visibility.facets}
         completed_marks = []

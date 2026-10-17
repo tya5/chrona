@@ -137,7 +137,7 @@ def test_no_tool_accepts_an_integrity_font_or_filesystem_override():
         "render_review": {"contextReference", "storeConfig", "inline"},
         "compare_baseline": {"baselineReference", "candidateReference", "storeConfig"},
         "render_draft": {"project", "actual", "preset", "view", "theme", "scheme", "layout", "viewport", "locale",
-                         "snapshot", "forecast", "format", "inline"},
+                         "snapshot", "forecast", "format", "inline", "storeConfig"},
     }
 
 

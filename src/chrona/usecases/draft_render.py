@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
-from chrona.core.ports import RenderArtifact
+from chrona.core.ports import RenderArtifact, SnapshotReader
 from chrona.presentation.contracts import TypesetterIdentity
 from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, ClosureError, resolve_draft_render
 from chrona.presentation.model.info_diagnostics import (
@@ -65,6 +65,7 @@ class DraftRenderRequest:
     previous_scene: str | Path | None = None
     snapshot: str | Path | None = None
     forecast: bool = False
+    package_reader: SnapshotReader | None = field(default=None, compare=False, repr=False)
 
 
 @dataclass(frozen=True)
@@ -158,6 +159,7 @@ def render_draft(request: DraftRenderRequest) -> DraftRenderResult:
                 previous_scene_path=_optional_path(request.previous_scene),
                 snapshot_project_path=_optional_path(request.snapshot),
                 forecast=request.forecast,
+                package_reader=request.package_reader,
                 preset_path=preset_path if preset_path is not None else Path(str(default)),
                 preset_root=None if preset_path is not None else Path(str(default_preset_root())),
                 view_path=_optional_path(request.view), theme_path=_optional_path(request.theme),

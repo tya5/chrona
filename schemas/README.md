@@ -41,6 +41,7 @@ record.
 | semantic-vocabulary | semantic-vocabulary-v0.1.schema.yaml |
 | snapshot-ref | snapshot-ref-v0.3.schema.yaml |
 | store-config | store-config-v0.1.schema.yaml |
+| style | style-v0.2.schema.yaml |
 | summary-profile | summary-profile-v0.2.schema.yaml |
 | theme | theme-v0.15.schema.yaml |
 | derived-theme | theme-v0.16.schema.yaml |

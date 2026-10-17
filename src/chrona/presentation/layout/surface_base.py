@@ -1,7 +1,8 @@
 """Owns validated surface slots and row inputs; reads the completed request and Layout manifest."""
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
+from types import MappingProxyType
 from datetime import date
 from decimal import Decimal
 from collections.abc import Mapping
@@ -26,6 +27,10 @@ from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip
 from chrona.presentation.layout.surface_lanes import place_lane_mark_tracks
 from chrona.presentation.layout.surface_marks import folded_instance_id, resolve_mark_geometries, resolve_mark_band
 from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
+from chrona.presentation.layout.mark_role_geometry import (
+    resolve_occurrence_mark_frame, selected_mark_style_intents,
+)
+from chrona.presentation.model.semantic_mark_facets import select_item_mark_facets
 from chrona.presentation.layout.surface_lanes import review_rows
 from chrona.presentation.layout.surface_geometry import bounds_from_rect, plot_rect, rect_from_bounds
 from chrona.presentation.layout.surface_quality import (
@@ -77,6 +82,7 @@ class SurfaceInlineGeometry:
     row_padding: float
     text_line_block: float
     natural_block_requirement: Decimal
+    occurrence_frames: Mapping[str, MarkBandFrame] = field(default_factory=dict)
 
 
 def _layout_manifest(request: SurfaceLayoutRequest) -> LayoutManifest:
@@ -168,6 +174,7 @@ def _provisional_point_facets(*, projection: Any, rows: tuple[Any, ...], scale: 
                               role_geometries: Mapping[str, MarkGeometry],
                               mark_band_allocation: MarkBandAllocation | None = None,
                               mark_visibility_index: ItemMarkVisibilityIndex | None = None,
+                              style_intents: Any = None,
                               ) -> tuple[PointMarkFootprint, ...]:
     """Measure visible point-mark horizontal footprints for completed base scale."""
     frame = MarkBandFrame.zero_origin(scale, mark_block_size, role_geometries, mark_band_allocation)
@@ -180,18 +187,20 @@ def _provisional_point_facets(*, projection: Any, rows: tuple[Any, ...], scale: 
         kind = (occurrence_kind if occurrence_kind is not None else
                 MarkOccurrenceKind.LANE_SOURCE if projection.lane_membership is not None else
                 MarkOccurrenceKind.ROW if projection.rows else MarkOccurrenceKind.AUTO)
-        visibility = (mark_visibility_index.lookup(
-            MarkOccurrence(
+        occurrence = MarkOccurrence(
                 kind, (container_id if container_id is not None else
                        row_id if projection.rows else item.object_id),
                 item.item_id or item.object_id, item.object_id, source_kind,
-            ), projection=projection, as_of=as_of,
+            )
+        visibility = (mark_visibility_index.lookup(
+            occurrence, projection=projection, as_of=as_of,
         ) if mark_visibility_index is not None else None)
         composition = compose_item_marks(
             item=item, instance_id=instance_id, source_kind=source_kind, frame=frame,
             as_of=as_of, theme_tokens=theme_tokens, slot_id=slot_id,
             emit_missing_actual=emit_missing_actual, emit_diagnostics=False,
             selection=admitted_source_selection(visibility) if visibility is not None else None,
+            style_intents=occurrence.style_intents(style_intents) if style_intents is not None else None,
         )
         instance = LaneProjectionInstance(row_id, item.item_id or item.object_id,
                                           item.object_id, item.source_kind)
@@ -280,6 +289,7 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
             role_geometries=role_geometries,
             mark_band_allocation=mark_band_allocation,
             mark_visibility_index=request.mark_visibility_index,
+            style_intents=getattr(request.surface_content, "style_intents", None),
         )
         capacity.require_usable(*point_facet_insets(provisional_scale, point_facets),
                                 provisional=provisional_scale)
@@ -288,6 +298,28 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
         review_row_values, request=request, scale=scale, as_of=request.surface_content.as_of,
         slot_id=timeline.slot_id, mark_block_size=mark_block_size, role_geometries=role_geometries,
         mark_band_allocation=mark_band_allocation)
+    occurrence_frames = {}
+    style_index = getattr(request.surface_content, "style_intents", None)
+    if style_index is not None and style_index.intents and projection.lane_membership is None:
+        prototype = MarkBandFrame.zero_origin(scale, mark_block_size, role_geometries, mark_band_allocation)
+        for row in review_row_values:
+            for item in row.items:
+                source_kind = item.source_kind if projection.rows else "combined"
+                occurrence = MarkOccurrence(
+                    MarkOccurrenceKind.ROW if projection.rows else MarkOccurrenceKind.AUTO,
+                    row.row_id if projection.rows else item.object_id,
+                    item.item_id or item.object_id, item.object_id, source_kind)
+                visibility = (request.mark_visibility_index.lookup(
+                    occurrence, projection=projection, as_of=request.surface_content.as_of)
+                    if request.mark_visibility_index is not None else None)
+                selection = (admitted_source_selection(visibility) if visibility is not None else
+                             select_item_mark_facets(item=item, source_kind=source_kind,
+                                                     as_of=request.surface_content.as_of))
+                intents = selected_mark_style_intents(selection, request.theme_tokens,
+                                                      occurrence.style_intents(style_index))
+                selected = resolve_occurrence_mark_frame(prototype, request.theme_tokens, intents)
+                if selected is not prototype:
+                    occurrence_frames[f"{row.row_id}:{item.item_id or item.object_id}"] = selected
     row_padding = float(metric_values["timeline.row.paddingBlock"])
     text_line_block = table_text_line_block(
         request.theme_tokens, (cell.typography_role for cell in request.surface_content.table_cells))
@@ -313,6 +345,7 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
             role_geometries=role_geometries, text_line_block=text_line_block,
             mark_band_allocation=mark_band_allocation,
             row_text_blocks=row_text_blocks,
+            occurrence_frames=occurrence_frames,
             as_of=request.surface_content.as_of,
         )
         headers = sum(bool(row.group_id) and bool(group_header_size)
@@ -329,6 +362,7 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
         mark_band_allocation, group_header_size,
         group_tag_column_size(request.theme_tokens) if group_tags else 0.0,
         tuple(requirements), row_padding, text_line_block, natural_block,
+        MappingProxyType(occurrence_frames),
     )
 
 
@@ -431,6 +465,7 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
               place_mark_tracks(review_rows=review_row_values, row_placements=raw_rows,
                                 mark_block_size=mark_block_size, role_geometries=role_geometries,
                                 mark_band_allocation=mark_band_allocation,
+                                occurrence_frames=inline.occurrence_frames,
                                 as_of=request.surface_content.as_of))
     return SurfaceBaseGeometry(
         request, projection, layout_manifest, measured_sources, metric_values, decisions,
