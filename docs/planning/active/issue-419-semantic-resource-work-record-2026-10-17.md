@@ -727,13 +727,12 @@ module reachability passes without an evaluator allowlist.
 
 ## S2 design and implementation plan
 
-Baseline: S1 PR1675 at `6a54df93f` on trusted-ready mainba46a837b. S1 release
-acceptance is not assumed. S2 design proceeds independently; its implementation
-and merge must retain the accepted S1 correction and public evidence.
-The reviewer-approved glyph-fill declaration and caller/inventory corrections
-are integrated. S1 head474f passed all product gates; only the main-base gate
-failed after C1 landed. Current S1 CI39078531975 tests the reconciled base.
-S2 retains that exact correction; no floor or Scheme change is needed.
+Implementation baseline: S1 code at `6a54df93f`, with C1 from trusted-ready
+mainba46a837b. S1 release acceptance is not assumed. S2 retains the approved
+glyph-fill declaration, caller/inventory corrections and public evidence;
+no contrast floor or Scheme change is needed. The current publication/CI
+state is maintained in the [issue Status](https://github.com/tya5/chrona/issues/419#issuecomment-6242217538),
+not duplicated here after each main-only synchronization.
 
 Use one optional `body.style` pinned reference in the live Context and one
 optional `resources.style` declaration in presets/libraries. Absent means no
@@ -836,7 +835,7 @@ The batched regression check passed338 tests; the subsequent contract/native
 batch passed203, and final ingress/consumer/legend checks passed33. Schema
 equivalence, inward imports,293-module reachability and primitive delivery pass.
 Actual SVG and PNG were rendered and inspected with a scoped title and fitting
-qualifier. The non-editable installed wheel passed28 native Style tests and
+qualifier. The non-editable installed wheel passed29 native Style tests and
 the general wheel smoke outside the checkout. Final-filter review added
 duplicate-column and positive-bounds suppressed-cell regressions; the latter
 failed before a narrow correction excluding completed suppressed text, as the

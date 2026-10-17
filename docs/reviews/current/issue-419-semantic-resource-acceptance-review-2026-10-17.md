@@ -11,7 +11,7 @@ Scenes differ only by semantic-vocabulary provenance; no paths retired.
 Exact-main release [39053236335](https://github.com/tya5/chrona/actions/runs/39053236335)
 passed all three OSes on `890af301d`. This is not S1 or parent-issue acceptance.
 
-S1 is PR1675 at `6a54df93f`, not merged or release-accepted. Typed facts, parsed-rule
+S1 is PR1675, not merged or release-accepted. Typed facts, parsed-rule
 evaluation, source-local identities, and role/fill composition are connected
 through normalization, Layout, and Scene. Selected-mark early paint preflight
 is connected; the final Style/native batch passes131 tests, with shared
@@ -26,14 +26,15 @@ Do not count WIP publication as release acceptance.
 
 ### S2 installed-wheel evidence
 
-Source `ae6aff19e`; wheel SHA-256
-`06fce22005c5f34e760e139a3838bc8276d6d07a8e012ba141297a91e3f63333`.
-Built with `pip wheel --no-deps . packages/chrona-fonts-noto-cjk`, then installed
+Source `b201711c4`; wheel SHA-256
+`7f45ef93469206b1af933709e004cc07c51a53ff2c34741c121963ccf04eb2da`.
+Built with `pip wheel --no-deps --wheel-dir .venv-wheel/wheels .`, then installed
 non-editably with `[dev,render]` into a separate worktree `.venv-wheel`.
 `chrona.__file__` resolves inside that environment's `site-packages`.
 The wheel interpreter passed both `test_style_resource_ingress.py` and
-`test_style_scoped_legends.py` (28 tests, `--import-mode=importlib`; only the
-repository test helpers were on `PYTHONPATH`). It also passed
+`test_style_scoped_legends.py` (29 tests, `--import-mode=importlib`; only the
+repository test helpers were on `PYTHONPATH`), including real CLI SVG treatment.
+It also passed
 `tools/wheel_smoke.py` from `/tmp`, outside the checkout. This is local
 packaging evidence, not the exact-main three-OS release gate.
 
