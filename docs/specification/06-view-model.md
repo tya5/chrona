@@ -254,6 +254,19 @@ corresponding Project group object's title and fields. Grouping, color eligibili
 selection retain their existing primary-item scope. Resolve these semantic
 facts before Layout; Scene and adapters do not look up roles.
 
+When a bound field-role grouping is resolved to its Project field, selected
+`type: group` summary objects are omitted from those field-grouped rows rather
+than receiving the missing-value group as ordinary bars. The projection reports
+their omitted count as `I_VIEW_FIELD_GROUP_SUMMARIES_OMITTED`; member objects
+retain their field groups. This omission is specific to role-bound grouping:
+direct-field grouping and `grouping.by: none` keep their declared behavior.
+
+The private root-group context used by the `hierarchy` fallback orders groups
+by Project object declaration order when the View declares neither `order` nor
+`order.by`. An explicit group `order` or `order.by: earliestPlannedStart`
+continues to take precedence. This default does not change other grouping
+orders.
+
 Existing View inputs without role references retain their behavior and bytes.
 The generic preset intentionally adopts role references: without Project roles,
 its visible output falls back, but its required info diagnostics are new input

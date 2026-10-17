@@ -26,7 +26,8 @@ def resolve_role_grouping(grouping: ViewGrouping | None,
         return replace(grouping, by=_PrivateGroupingMode.PROJECT_ROOT_GROUP,
                        field=None, field_role=None, fallback=None)
     return replace(grouping, by="field" if field is not None else grouping.fallback,
-                   field=field, field_role=None, fallback=None)
+                   field=field, field_role=grouping.field_role if field is not None else None,
+                   fallback=None)
 
 
 def resolve_field_role_view(view: ViewInput, project: Mapping[str, Any]
