@@ -232,9 +232,14 @@ the generated checked report supplies the successor measurement.
 RC promises versioned resource envelope/identity, vocabulary semantic IDs,
 purposes, Theme-role names and existing `colorEncoding`. Style v0.2 is an RC
 promise only if V1, S1 and S2 land before the RC trial; otherwise it remains
-experimental. V1 must precede RC. Dev A owns V1/S1/S2. Dev B begins C1 after V1
-and owns Issue344 Level 1 in the meantime, using the same accessor described
-above. Python types, factory grouping, cache representation, inventory order
+experimental. V1 must precede RC. Dev A owns V1/S1/S2. Dev B owns Issue344
+Level 1 and may begin C1 independently whenever that work is parked or done:
+V1 preserves the registry's Python read APIs. Any necessary signature change
+must update C1 callers atomically. Both lanes use the same field accessor.
+S2 may mechanically update example resource references, pins and renamed
+members, listing them in its PR count table; changes to what a slide shows
+remain reviewer-owned ([owner clarification](https://github.com/tya5/chrona/issues/419#issuecomment-6235010287)).
+Python types, factory grouping, cache representation, inventory order
 and physical packaging are internal. Focused neutral tests, public materializer
 evidence and the release CI gate are required at each implementation boundary.
 
