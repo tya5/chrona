@@ -419,7 +419,7 @@ Required labels precede routing. Under both search policies, member names use
 the reservation/revalidation contract below; ordinary finish deltas follow
 completed routes. Do not replay composition in Scene or adapters.
 
-**Member-name reservations (#1610).** First classify and complete required
+**Member-name reservations (#1610, #1627).** First classify and complete required
 route-independent labels, including required attached-point and key-row labels.
 Their full footprints remain hard obstacles during normal and staged searches
 in every trial and reference; optional-reservation release/fallback MUST NOT
@@ -436,18 +436,41 @@ proposals and replaces the former post-route lost-name retry, not the lane
 preflight. It adds at most one post-route repair, never another recovery loop. The
 as-of line and other `rule` geometry obstruct member names.
 
-Reserve on demand only when a completed route blocked an earlier candidate
-of a member name that was suppressed or selected a later declared candidate.
-The placement owner retains this obstruction evidence; the coordinator must
-not infer it from a different, globally route-free label inventory. Reserve
-only the first such feasible candidate per affected name, including its full
-measured paint footprint. Candidate order, viewport, association and reach
-remain unchanged. If no name qualifies, return the first completed pass
-without another routing pass or changed search policy.
+Reserve on demand only for an initially suppressed optional member name when
+completed route paint blocked an otherwise legal declared candidate. Do not
+retry merely to improve the rung of an already-visible name: this intentionally
+retires the former preferred-rung repair for visible fallback placements.
+The placement owner retains the exact preceding inventory and obstruction
+evidence; the coordinator must not infer eligibility from a different, globally
+route-free label inventory. Probe each existing declared candidate against that
+same inventory with only dependency-route ink removed, retaining viewport,
+association, reach, required text, marks and rules. Select the feasible footprint
+intersecting the fewest distinct completed route instances; declared candidate
+rank breaks ties. This is a repair-disruption preference, not a safety waiver.
+Keep that ordered set as private proposals until the first label batch is
+complete. Admission then rejects any proposal whose full paint footprint
+intersects completed first-pass visible text or its label visuals, including
+ordinary finish deltas placed later than that name. Select the first admissible
+proposal in the existing cost/rank order, or reserve nothing for that name.
+This retention check does not replace the exact preceding eligibility inventory
+or re-rank candidates; it closes proposals against the text the retry must keep.
+Internal route-paint obstacles carry their logical route-instance owner; all
+segments, flattened arcs and stub fragments of that instance count once.
+An ownerless paint obstacle counts separately, without guessing an owner from
+its placement-id spelling. Ports and host geometry are not route paint.
+Reserve one full measured paint footprint per affected name. Final placement
+keeps its original declared candidate order and every existing validator.
+If no name qualifies, return the first completed pass without another routing
+pass or changed search policy. No additional route-search loop is introduced.
 
 One Layout coordinator owns this policy for automatic and fixed-lane rows.
 At most one extra routing/placement pass runs, avoiding those provisional
 boxes and retaining required labels. Revalidate names against completed ink.
+In the retry only, revalidate initially visible text requests before initially
+suppressed requests, preserving relative request order within each class and
+every request's original candidate ladder. This protects existing visibility,
+not baseline coordinates; final geometry and obstacles must be the actual
+completed retry, never saved ghost boxes. The initial pass is unchanged.
 Keep the second pass only if every member/relation label and annotation
 placed in pass 1 remains placed, no relation is lost or degraded, and no
 completed annotation connector loses its connected topology. Otherwise return
@@ -459,6 +482,10 @@ Reservations are private Layout facts, not emitted text or diagnostics.
 Each attempted pass retains its recorded routing facts and existing budgets;
 first-fit's cheap/exact phases still share one attempt ceiling. This adds no
 label candidate, routing policy, safety exemption or search-budget increase.
+Optional-name coverage is not promised to match the retired preferred-rung
+repair: a custom layout may retain suppressions when recovering them would
+require targeted preferred-rung reservations for already-visible names. Count diagnostics still report only
+the actual suppressed member names, not ordinary finish-delta/relation text.
 Suppression of an otherwise placeable name is not a successful readability repair.
 
 Omitted `search` means `first-fit`. Authors requiring legacy ranked output

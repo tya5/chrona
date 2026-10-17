@@ -67,6 +67,19 @@ def test_paint_geometry_query_copy_preserves_logical_inventory_and_memo_scope() 
     assert logical_scope[1] != painted_scope[1]
 
 
+def test_route_owner_is_separate_from_host_and_survives_obstacle_copy():
+    index = SurfaceObstacleIndex()
+    route = SurfaceObstacle("relation:one:segment:0", "dependency-route", "timeline",
+        ObstacleSegment((0, 0), (10, 0)), host_id="mark:host", route_owner_id="relation:one")
+    index.add(route)
+
+    clone = index.copy()
+
+    copied, = clone.all()
+    assert copied.route_owner_id == "relation:one"
+    assert copied.host_id == "mark:host"
+
+
 def test_label_query_uses_visible_mark_footprint_to_reject_stroke_overlap() -> None:
     """A candidate outside logical bounds can still collide with the painted stroke."""
     logical = SurfaceObstacleIndex()

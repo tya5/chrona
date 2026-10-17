@@ -1,9 +1,10 @@
 # Issue #1634 — forecast architecture review
 
 Status: design and implementation plan published; the semantic-identity correction
-below was published in e0c26e3d4 before implementation611e8e850. PR1646 release
-remains pending. Public ready baseline c3383c36033dd82a1fc119ef4f336e7c04f01e43.
-[Current work record](../../planning/active/issue-1634-forecast-work-record-2026-10-17.md).
+below was published in e0c26e3d4 before implementation611e8e850. PR1646 is merged;
+issue1634 is closed after [release39019665585](https://github.com/tya5/chrona/actions/runs/39019665585)
+passed on exact ready main `cf121865552017a2a97a13cd094bde641686c261`.
+[Archived work record](../planning/issue-1634-forecast-work-record-2026-10-17.md).
 
 | Boundary | Consistency check |
 | --- | --- |

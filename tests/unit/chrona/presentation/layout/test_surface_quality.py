@@ -101,6 +101,30 @@ def test_suppressed_member_count_matches_completed_placements_and_individual_fac
         SuppressedPlotLabels("table-timeline", 0)
 
 
+@pytest.mark.parametrize("member_count", (0, 1))
+def test_suppression_count_excludes_nonmember_text_and_is_absent_at_zero(member_count):
+    members = tuple(TextPlacement(f"member-label:{index}", f"member:{index}", "Name",
+                                 _rect(index, 0, 1, 1), "text", overflow="suppressed",
+                                 required=False, semantic_id="memberLabel")
+                    for index in range(member_count))
+    other = (
+        TextPlacement("variance:v", "v", "+1d", _rect(3, 0, 1, 1), "text",
+                      overflow="suppressed", required=False, semantic_id="finishDelta"),
+        TextPlacement("relation-label:r", "r", "Link", _rect(4, 0, 1, 1), "text",
+                      overflow="suppressed", required=False, semantic_id="relationLabel"),
+    )
+    warnings = tuple(f"W_LAYOUT_LABEL_SUPPRESSED:{item.placement_id}" for item in members) + (
+        "W_LAYOUT_LABEL_SUPPRESSED:variance:v", "W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:r",
+    )
+    expected = (SuppressedPlotLabels("table-timeline", member_count),) if member_count else ()
+    SurfacePlacement(text=(*members, *other), diagnostics=warnings,
+                     info_diagnostics=expected).assert_valid()
+    with pytest.raises(ValueError, match="E_LAYOUT_SUPPRESSION_COUNT_INVALID"):
+        SurfacePlacement(text=(*members, *other), diagnostics=warnings,
+                         info_diagnostics=(SuppressedPlotLabels("table-timeline", member_count + 2),)
+                         ).assert_valid()
+
+
 def test_relation_label_content_preserves_signed_calendar_provenance_and_omits_zero_lag():
     positive = RelationPresentationFact("r", "a", "start", "b", "start",
                                         {"value": "2wd", "calendar": "range"}, "range",
