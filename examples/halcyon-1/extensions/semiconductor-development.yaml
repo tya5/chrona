@@ -37,6 +37,19 @@ profiles:
         - rejected
         required: true
 fields:
+  # Plan columns that every HALCYON object carries, gates included (#344 validates profile-typed objects).
+  owner:
+    type: string
+    cardinality: one
+  team:
+    type: string
+    cardinality: one
+  phase:
+    type: string
+    cardinality: one
+  review:
+    type: string
+    cardinality: one
   model:
     type: string
     required: true
