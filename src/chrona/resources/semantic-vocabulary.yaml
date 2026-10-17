@@ -3,12 +3,14 @@ kind: semantic-vocabulary
 id: chrona-core
 body:
   bindings:
+    # Comparison marks.
     - semanticId: "planned"
       primitiveFamily: "mark"
       purpose: "planned"
       sceneRole: "planned"
       themeRole: "planned"
       contrastClass: "mark"
+    # A forecast is distinct temporal truth, painted with the existing planned role.
     - semanticId: "forecast"
       primitiveFamily: "mark"
       purpose: "forecast"
@@ -27,6 +29,7 @@ body:
       sceneRole: "snapshot"
       themeRole: "snapshot"
       contrastClass: "mark"
+    # A gate (point mark) painted by its own Theme role when the Theme declares one (#991); its purpose stays `planned`.
     - semanticId: "gate"
       primitiveFamily: "mark"
       purpose: "planned"
@@ -63,6 +66,8 @@ body:
       sceneRole: "text"
       themeRole: "text"
       contrastClass: null
+    # Time decorations.
+    # Public Scene role remains hyphenated; theme authoring resolves the canonical asOf binding.
     - semanticId: "asOf"
       primitiveFamily: "line"
       purpose: "as-of"
@@ -75,24 +80,31 @@ body:
       sceneRole: "text"
       themeRole: "text"
       contrastClass: "ground-text"
+    # The as-of light cone (#890): a translucent gradient polygon from the marker, under every mark. Deliberately
+    # not contrast-classified (a faint light is the point); the gates composite it as the ground of what lies on it.
     - semanticId: "asOfCone"
       primitiveFamily: "decoration"
       purpose: "as-of-cone"
       sceneRole: "as-of-cone"
       themeRole: "as-of-cone"
       contrastClass: null
+    # A Project deadline (#822): a tick at the promised date and, when the planned finish is later, a run to it.
+    # One role paints both, so a Theme gives them one ink; the run is what tells a missed promise from a kept one.
     - semanticId: "deadlineMark"
       primitiveFamily: "line"
       purpose: "deadline-mark"
       sceneRole: "deadline-mark"
       themeRole: "deadline-mark"
       contrastClass: "mark"
+    # A deadline outline is its actual painted ground, not another message.
     - semanticId: "deadlineMarkOutline"
       primitiveFamily: "decoration"
       purpose: "deadline-outline"
       sceneRole: "deadline-mark-outline"
       themeRole: "background"
       contrastClass: null
+    # Label chips (#428): a background drawn from a label's own measured box,
+    # one binding per label semantic, Theme role ``<label purpose>-chip``.
     - semanticId: "asOfLabelChip"
       primitiveFamily: "decoration"
       purpose: "label-chip"
@@ -117,12 +129,14 @@ body:
       sceneRole: "calendar-closed"
       themeRole: "calendarClosed"
       contrastClass: "decoration"
+    # A calendar-exception day drawn in its own colour when the Theme declares a `calendar-exception` background (#991).
     - semanticId: "calendarException"
       primitiveFamily: "decoration"
       purpose: "calendar-exception"
       sceneRole: "calendar-exception"
       themeRole: "calendarException"
       contrastClass: "decoration"
+    # A named Project period (#582): a band across the plot, selected by the View and painted by the Theme.
     - semanticId: "periodBand"
       primitiveFamily: "decoration"
       purpose: "period-band"
@@ -141,12 +155,17 @@ body:
       sceneRole: "period-label-chip"
       themeRole: "period-label-chip"
       contrastClass: null
+    # Canvas texture (#587): ground under every primitive. Deliberately not
+    # contrast-classified: a faint texture is the point, and the gates treat its
+    # substrate and ink as the ground of what lies on it instead.
     - semanticId: "canvasTexture"
       primitiveFamily: "decoration"
       purpose: "canvas-texture"
       sceneRole: "canvas-texture"
       themeRole: "canvas-texture"
       contrastClass: null
+    # Fixed above-content overlays are distinct from the canvas ground and have
+    # their contrast effect evaluated over covered content (Spec 46, #888).
     - semanticId: "canvasOverlay"
       primitiveFamily: "decoration"
       purpose: "canvas-overlay"
@@ -159,18 +178,22 @@ body:
       sceneRole: "canvas-overlay-gradient"
       themeRole: "canvas-overlay-gradient"
       contrastClass: null
+    # Region frame (#889): the panel Layout completes behind a framed Layout Profile node. Ground like the
+    # texture and for the same reason not contrast-classified: what lies on it is gated against its fill.
     - semanticId: "regionFrame"
       primitiveFamily: "decoration"
       purpose: "region-frame"
       sceneRole: "region-frame"
       themeRole: "region-frame"
       contrastClass: null
+    # A sparse catalogue border is ground only where its completed ink touches content.
     - semanticId: "frameGlyph"
       primitiveFamily: "decoration"
       purpose: "frame-glyph"
       sceneRole: "frame-glyph"
       themeRole: "frame-glyph"
       contrastClass: null
+    # Axis.
     - semanticId: "axisBand"
       primitiveFamily: "label"
       purpose: "axis-band"
@@ -189,12 +212,31 @@ body:
       sceneRole: "text"
       themeRole: "axis"
       contrastClass: "ground-text"
+    # Second band tier (#426): a View may declare a second band tier, each
+    # in its own Layout-assigned lane; the second ordinal resolves through
+    # its own semantic id so a Theme can bind it a distinct fill. Two
+    # ordinals meet the literal two-band-tier acceptance; a third is a
+    # small, visible follow-up if a View ever needs it. (A third band id is
+    # deliberately not pre-registered: the corpus-wide decoration contrast
+    # witness in tools/presentation_contrast.py requires every registered
+    # DECORATION-classified role to be painted somewhere in committed public
+    # evidence, and no committed slide needs a third band.)
     - semanticId: "axisBandDecoration2"
       primitiveFamily: "decoration"
       purpose: "axis-band"
       sceneRole: "axis-band-decoration2"
       themeRole: "axis-band-decoration2"
       contrastClass: "decoration"
+    # Second and third labels tier (#426; ground text since #980, and the
+    # decoration witness above counts DECORATION roles only, so it does not
+    # constrain how many are registered):
+    # distinct scene roles (not the shared "text" role axisLabel uses), so a
+    # Theme can bind a labels tier its own colour, not only its own font
+    # (font already varies per tier through the typographyRole passed
+    # explicitly to place_text, independent of scene role). A tier that
+    # leaves typographyRole at its default keeps the shared "axisLabel" id
+    # every committed View already uses, so two fully-styled tiers (neither
+    # left at the default) need both of these ordinals at once.
     - semanticId: "axisLabel2"
       primitiveFamily: "label"
       purpose: "axis-label"
@@ -219,6 +261,7 @@ body:
       sceneRole: "axis-minor"
       themeRole: "axis-minor"
       contrastClass: null
+    # Axis cells and the axis/plot boundary (#426 rows 6-7).
     - semanticId: "axisRule"
       primitiveFamily: "line"
       purpose: "axis-rule"
@@ -231,6 +274,7 @@ body:
       sceneRole: "axis-cell-separator"
       themeRole: "axis-cell-separator"
       contrastClass: null
+    # Grouping.
     - semanticId: "groupBand"
       primitiveFamily: "decoration"
       purpose: "group-decoration"
@@ -249,6 +293,7 @@ body:
       sceneRole: "row-rule"
       themeRole: "row-rule"
       contrastClass: "decoration"
+    # The rule under the table's column headers, across the table width only (#1545).
     - semanticId: "tableColumnRule"
       primitiveFamily: "decoration"
       purpose: "table-column-rule"
@@ -267,6 +312,7 @@ body:
       sceneRole: "group-header-strip"
       themeRole: "group-header-strip"
       contrastClass: "decoration"
+    # A patterned tab on each group header (#882), a Theme role Layout completes beside the header text.
     - semanticId: "groupTab"
       primitiveFamily: "decoration"
       purpose: "group-tab"
@@ -303,6 +349,7 @@ body:
       sceneRole: "text"
       themeRole: "text"
       contrastClass: "ground-text"
+    # Emphasis is classified by the existing state-text role, like finishDelta.
     - semanticId: "observationAttentionCell"
       primitiveFamily: "label"
       purpose: "observation-cell"
@@ -315,6 +362,7 @@ body:
       sceneRole: "variance-behind"
       themeRole: "variance-behind"
       contrastClass: null
+    # Table.
     - semanticId: "titleText"
       primitiveFamily: "label"
       purpose: "title-text"
@@ -327,12 +375,14 @@ body:
       sceneRole: "kicker"
       themeRole: "kicker"
       contrastClass: "ground-text"
+    # The subtitle line a View's `heading.subtitle` declares (#991), in the Theme's `subtitle` typography role.
     - semanticId: "subtitleText"
       primitiveFamily: "label"
       purpose: "subtitle-text"
       sceneRole: "subtitle"
       themeRole: "subtitle"
       contrastClass: "ground-text"
+    # The caption a Layout Profile slot declares (#1064), in the Theme's `slot-heading` text role (`text` when absent).
     - semanticId: "slotHeading"
       primitiveFamily: "label"
       purpose: "slot-heading"
@@ -381,6 +431,7 @@ body:
       sceneRole: "missing-actual-cell"
       themeRole: "missing-actual-cell"
       contrastClass: "state-text"
+    # Plot labels.
     - semanticId: "memberLabel"
       primitiveFamily: "label"
       purpose: "member-label"
@@ -453,6 +504,7 @@ body:
       sceneRole: "text"
       themeRole: "text"
       contrastClass: "ground-text"
+    # Relations.
     - semanticId: "dependency"
       primitiveFamily: "line"
       purpose: "dependency"
@@ -471,6 +523,9 @@ body:
       sceneRole: "dependency-critical"
       themeRole: "dependency-critical"
       contrastClass: null
+    # A relation label is label text: its ink is the text role's, like every other label (#880). Its visual role
+    # used to be "annotation", whose fill every Theme binds to a ground colour (it paints annotation boxes), so the
+    # label read as ghost text. Its typography is still the Theme's "annotation" role (the theme-role field).
     - semanticId: "relationLabel"
       primitiveFamily: "label"
       purpose: "relation-label"
@@ -483,6 +538,7 @@ body:
       sceneRole: "network-node"
       themeRole: "network-node"
       contrastClass: "mark"
+    # Preserve the public network-label purpose while separating its shared ink from title ink.
     - semanticId: "networkLabel"
       primitiveFamily: "label"
       purpose: "title-text"
@@ -501,6 +557,10 @@ body:
       sceneRole: "critical-edge"
       themeRole: "critical-edge"
       contrastClass: null
+    # Legend, notes and annotations.
+    # The swatch's own theme role is "legend-swatch" (size/spacing), separate
+    # from "legendLabel"'s "legend" (text) role; its drawn primitive is
+    # dispatched per entry role by Layout, not fixed by this binding (#427).
     - semanticId: "legendEntry"
       primitiveFamily: "decoration"
       purpose: "legend-swatch"
@@ -603,6 +663,9 @@ body:
       sceneRole: "annotation-arrow-leader"
       themeRole: "annotation-arrow-leader"
       contrastClass: null
+    # Annotation kind header (#584): a title bar, the header text and an accent edge, painted from one
+    # role set shared by every kind (the kind colour replaces the fill). The text is judged against the
+    # bar (or the note box) it lies on; the bar and the accent are decorations.
     - semanticId: "annotationKindBar"
       primitiveFamily: "decoration"
       purpose: "annotation-kind-bar"
@@ -621,12 +684,14 @@ body:
       sceneRole: "annotation-kind-stamp"
       themeRole: "annotation-kind-stamp"
       contrastClass: "decoration"
+    # Vector artwork behind an annotation container (#848): catalogue glyph parts painted over the note box.
     - semanticId: "annotationArtwork"
       primitiveFamily: "decoration"
       purpose: "annotation-artwork"
       sceneRole: "annotation-artwork"
       themeRole: "annotation-artwork"
       contrastClass: "decoration"
+    # The ink of a per-side box border (#1049), one role per logical side; a kind-painted side uses annotationKindAccent.
     - semanticId: "annotationBorderStart"
       primitiveFamily: "decoration"
       purpose: "annotation-border-start"
@@ -669,6 +734,7 @@ body:
       sceneRole: "annotation-heading"
       themeRole: "annotation-heading"
       contrastClass: "state-text"
+    # Summary panels.
     - semanticId: "summaryHeader"
       primitiveFamily: "label"
       purpose: "summary-header"

@@ -38,7 +38,7 @@ import checks pass. Built wheel resource/schema bytes match their source files.
 A fresh final-source wheel installed in an isolated venv imports from
 site-packages, loads all117 bindings through the unchanged read API, and runs
 `chrona --version`; its vocabulary identity is
-`sha256:c302c329c8fa1d34b983fd2c1badd479cbd54a3a423b290b32b2e06d67ea606d`.
+`sha256:7fbb34ad6c0eb98ce3f6fe78dbef5cf44a4fdf99d54c1816457711ac7a31ff88`.
 Independent installed-wheel checks confirm typed contract parsing, raw-byte
 identity refusal and all19 public registry helper signatures unchanged.
 
@@ -47,7 +47,44 @@ gate found a bootstrap diagnostic-layer cycle. The published correction keeps
 native schema failures below rich ingress diagnostics; immutable indexes and
 the inward-dependency gate now pass. No Python fallback table remains.
 
-Official materializer counts, unchanged SVG/primitive geometry/paint evidence,
-the intended Scene resource-provenance additions, reviewer PR acceptance and
-exact-main three-OS release are pending. Parent419 remains open for S1/S2/C1.
-No examples or generated artifacts were edited.
+Last official artifact, before the comment-only reviewer correction: head
+`253b266b4` [snapshot39044257405](https://github.com/tya5/chrona/actions/runs/39044257405)
+has109 unchanged paths: all50 SVG byte-identical; all50 Scene JSONs differ only
+by one exact vocabulary provenance resource. No primitive, purpose, role,
+geometry, paint, route or label changed. Two of9 reports change (source-line
+inventory2551→2551bytes and diagnostics304701→305877); other7 are identical.
+
+The preceding run39042795786 had13 pytest failures:11 expected-byte/fixture failures and two
+schema index omissions; conformance, reproduction and MCP passed. Seven
+affected Controller fixtures were refreshed through the standard materializer:
+each SVG is byte-identical, each Scene differs only by the same provenance
+entry. Three synthetic Scene characterizations now retain full-byte hashes and
+assert the vocabulary identity; SVG hashes remain unchanged. Schema README and
+the fixed host-ID accounting are corrected. Unrelated older Aster/capabilities
+fixture differences were not absorbed. No product behavior or test comparison
+was weakened, and no public examples/bot-owned output was edited.
+The corrected focused batch passes39 characterization/materializer tests;
+schema identifier/part accounting passes141 tests, covering all13 CI failures.
+
+Corrected-head run39044257405 passes all three pytest shards, conformance,
+reproduction, MCP and derived preview. Only derived-ready rejects the advanced
+main after reviewer PR1669; there is no remaining failing product test. All52
+changed artifact payloads match the prior artifact byte-for-byte. After merging
+trusted-ready main `8c8a1e55b`, the vocabulary/closure/Editorial integration
+batch passes29 tests. Current-base CI, reviewer PR acceptance and exact-main
+three-OS release remain required. Parent419 remains open for S1/S2/C1.
+
+Reviewer approval requires keeping the original rationale at the new authority.
+All66 original comment lines across34 binding/group associations are preserved
+verbatim in YAML, including issue references. The117 parsed values/order retain
+digest `dca7540d246009b957bdb1dd4c8abecbb5a97174a594f1af48475cee0fbd97a8`.
+The raw identity above includes those comments. Seven fixture pairs were
+regenerated together with the standard materializer: SVG unchanged and Scene
+only the vocabulary identity changed. For all three synthetic characterizations,
+restoring only that old identity reproduces the preceding full-Scene SHA;
+their SVG hashes remain unchanged. A fresh wheel installed outside the checkout
+loads the new exact resource identity, all117 bindings and CLI version output.
+No schema member was added for rationale; final current-base CI/snapshot follows.
+The post-correction broad focused batch passes85 cases; seven public-example
+checks still read unsynchronized committed Scenes locally and require the CI
+derived snapshot. No public generated file was patched to satisfy them.

@@ -322,11 +322,13 @@ UNREFERENCED_REASONS: dict[str, str] = {
         "default-draft source (`examples/reachability.yaml`) and is still rendered explicitly by "
         "`tests/integration/test_readable_defaults.py`, not by a committed slide",
     "examples/halcyon-1/themes/editorial-readable-default.yaml":
-        "#574 resolves the bundled default from `presets/bundles/editorial-readable-default`; this copy is kept "
-        "byte-identical to it (drift guard in `tests/integration/test_public_preset_evidence.py`), not rendered by a committed slide",
+        "#574 resolves the bundled default from `presets/bundles/editorial-readable-default`; this independently "
+        "authored band-row variant is a test witness (`tests/integration/test_readable_defaults.py`, "
+        "`tests/integration/test_public_preset_evidence.py`), not rendered by a committed slide",
     "examples/halcyon-1/views/editorial-readable-default.yaml":
-        "#574 resolves the bundled default from `presets/bundles/editorial-readable-default`; this copy is kept "
-        "byte-identical to it (drift guard in `tests/integration/test_public_preset_evidence.py`), not rendered by a committed slide",
+        "#574 resolves the bundled default from `presets/bundles/editorial-readable-default`; this independently "
+        "authored band-row variant is a test witness (`tests/integration/test_readable_defaults.py`, "
+        "`tests/integration/test_public_preset_evidence.py`), not rendered by a committed slide",
 }
 
 
