@@ -1,6 +1,10 @@
-"""Declarative standard-profile resolution for the initial delivery package."""
+"""Declarative profile resolution: the delivery package plus every resolved profile package."""
 from __future__ import annotations
 
+import math
+from datetime import date
+from difflib import get_close_matches
+import re
 from typing import Any
 
 from chrona.core.diagnostics import Diagnostic
@@ -37,8 +41,13 @@ def resolve_profile_diagnostics(
 
 
 def validate_profiles(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]] | None) -> list[Diagnostic]:
+    """Validate objects against the delivery package (IDP-*) and every other resolved package (E_PROFILE_*)."""
     if package_manifests is None:
         return []
+    return [*_validate_delivery(project, package_manifests), *validate_generic_profiles(project, package_manifests)]
+
+
+def _validate_delivery(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]]) -> list[Diagnostic]:
     if PACKAGE_ID not in {item.get("packageId") for item in project.get("extensions", [])}:
         return []
     manifest = package_manifests.get(PACKAGE_ID)
@@ -93,3 +102,118 @@ def _validate_value(project: dict[str, Any], name: str, value: Any, spec: dict[s
             if reference.get("kind") not in spec.get("resourceKinds", []):
                 return [Diagnostic("IDP-EVIDENCE-002", "Evidence kind is not allowed for this field", path)]
     return []
+
+
+# --- Generic typed-field validation for every other resolved package (#344) ---
+
+_ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+def _pointer(text: str) -> str:
+    return text.replace("~", "~0").replace("/", "~1")
+
+
+def validate_generic_profiles(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]]) -> list[Diagnostic]:
+    """Check objects whose ``type`` names a profile of a declared, resolved package.
+
+    One family of pointed diagnostics: ``E_PROFILE_PACKAGE_INVALID``,
+    ``E_PROFILE_FIELD_UNKNOWN``, ``E_PROFILE_FIELD_TYPE``,
+    ``E_PROFILE_FIELD_ENUM`` and ``E_PROFILE_FIELD_REQUIRED``. An absent field
+    differs from an explicit ``null``: absent is valid unless required; null is
+    valid only for an optional field. Objects with an undeclared ``type`` and
+    the delivery package (validated with IDP-* codes) are not touched.
+    """
+    diagnostics: list[Diagnostic] = []
+    definitions: dict[str, dict[str, Any]] = {}
+    declared = [item.get("packageId") for item in project.get("extensions", []) if isinstance(item, dict)]
+    for index, package_id in enumerate(declared):
+        manifest = package_manifests.get(package_id)
+        if package_id == PACKAGE_ID or manifest is None:
+            continue
+        errors = tuple(schema_validator("profile-v0.3.schema.yaml").iter_errors(manifest))
+        if errors or manifest.get("packageId") != package_id:
+            detail = f"packageId must be {package_id!r}" if not errors else explain_errors(
+                errors, resource_kind="profile", resource_identity=package_id).message
+            diagnostics.append(Diagnostic("E_PROFILE_PACKAGE_INVALID", f"Profile package {package_id} is invalid: {detail}", f"/extensions/{index}"))
+            continue
+        shared = manifest.get("fields", {})
+        for profile_id, profile in manifest["profiles"].items():
+            definitions.setdefault(profile_id, {**shared, **profile.get("fields", {})})
+    for object_id, item in project.get("objects", {}).items():
+        profile_fields = definitions.get(item.get("type"))
+        if profile_fields is None:
+            continue
+        path = f"/objects/{_pointer(object_id)}/fields"
+        values = item.get("fields", {})
+        for name in values:
+            if name not in profile_fields:
+                near = get_close_matches(name, profile_fields, n=1)
+                hint = f"; did you mean {near[0]!r}" if near else ""
+                diagnostics.append(Diagnostic("E_PROFILE_FIELD_UNKNOWN", f"Field {name!r} is not declared by profile {item['type']!r}{hint}", f"{path}/{_pointer(name)}"))
+        for name, spec in profile_fields.items():
+            if name not in values:
+                if spec.get("required"):
+                    diagnostics.append(Diagnostic("E_PROFILE_FIELD_REQUIRED", f"Required field {name!r} is absent", path))
+            elif values[name] is None:
+                if spec.get("required"):
+                    diagnostics.append(Diagnostic("E_PROFILE_FIELD_REQUIRED", f"Required field {name!r} is null", f"{path}/{_pointer(name)}"))
+            else:
+                diagnostics.extend(_generic_value(project, name, values[name], spec, f"{path}/{_pointer(name)}"))
+    return diagnostics
+
+
+def _generic_value(project: dict[str, Any], name: str, value: Any, spec: dict[str, Any], path: str) -> list[Diagnostic]:
+    if spec.get("cardinality") == "many":
+        if not isinstance(value, list):
+            return [Diagnostic("E_PROFILE_FIELD_TYPE", f"{name} must be an array", path)]
+        found: list[Diagnostic] = []
+        for index, element in enumerate(value):
+            found.extend(_generic_scalar(project, name, element, spec, f"{path}/{index}"))
+        return found
+    return _generic_scalar(project, name, value, spec, path)
+
+
+def _generic_scalar(project: dict[str, Any], name: str, value: Any, spec: dict[str, Any], path: str) -> list[Diagnostic]:
+    kind = spec.get("type")
+    if kind == "enum":
+        allowed = spec.get("enumValues", [])
+        if not isinstance(value, str):
+            return [Diagnostic("E_PROFILE_FIELD_TYPE", f"{name} must be a string enum value", path)]
+        if value not in allowed:
+            near = get_close_matches(value, allowed, n=1)
+            hint = f"; did you mean {near[0]!r}" if near else ""
+            return [Diagnostic("E_PROFILE_FIELD_ENUM", f"{name} value {value!r} is outside {list(allowed)}{hint}", path)]
+        return []
+    if kind == "objectReference":
+        targets = spec.get("targetProfiles")
+        known = {**project.get("entities", {}), **project.get("objects", {})}
+        if not isinstance(value, str) or value not in known or (targets and known[value].get("type") not in targets):
+            return [Diagnostic("E_PROFILE_FIELD_TYPE", f"{name} must name an object or entity of profile {list(targets or [])}", path)]
+        return []
+    if kind == "resourceReference":
+        errors = tuple(schema_validator("revision-store-resource-ref-v0.1.schema.yaml").iter_errors(value))
+        if errors:
+            return [Diagnostic("E_PROFILE_FIELD_TYPE", f"{name} is not a valid resource reference", path)]
+        if value.get("kind") not in spec.get("resourceKinds", []):
+            return [Diagnostic("E_PROFILE_FIELD_TYPE", f"{name} resource kind {value.get('kind')!r} is not allowed", path)]
+        return []
+    ok = {
+        "string": isinstance(value, str),
+        "boolean": isinstance(value, bool),
+        "integer": isinstance(value, int) and not isinstance(value, bool),
+        "number": isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value),
+        "date": _is_date(value),
+    }.get(kind, True)
+    return [] if ok else [Diagnostic("E_PROFILE_FIELD_TYPE", f"{name} must be {kind}, found {type(value).__name__}", path)]
+
+
+def _is_date(value: Any) -> bool:
+    if isinstance(value, date) and not hasattr(value, "hour"):
+        return True
+    if not isinstance(value, str) or not _ISO_DATE.fullmatch(value):
+        return False
+    try:
+        date.fromisoformat(value)
+    except ValueError:
+        return False
+    return True

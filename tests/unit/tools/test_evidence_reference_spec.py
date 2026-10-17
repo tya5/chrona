@@ -20,7 +20,7 @@ SPEC = ROOT / "docs/specification/17-implementation-delivery-profile.md"
 SRC = ROOT / "src"
 
 # "path/relative/to/repo.py:qualified.name" of functions that handle an evidence reference WITHOUT opening its target.
-SHAPE_ONLY_FUNCTIONS = {"src/chrona/extensions/profiles.py:_validate_value"}
+SHAPE_ONLY_FUNCTIONS = {"src/chrona/extensions/profiles.py:_validate_value", "src/chrona/extensions/profiles.py:_generic_scalar"}
 # Functions that open (read, resolve or verify) the target of an evidence reference. Add one here only together with the
 # feature that consumes evidence, and change spec 17 section 8 in the same change (open through the shared Store
 # address guard and verify `contentIdentity`).
