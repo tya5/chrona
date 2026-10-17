@@ -23,7 +23,10 @@ from chrona.presentation.layout.surface_preparation import SurfacePreRowGeometry
 from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest, VisualRequest
 from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
 from chrona.presentation.layout.relation_hint_model import PreviousRouteHints
-from chrona.presentation.layout.surface_source_inputs import bind_heading_dependencies, surface_source_inputs, heading_part_sources
+from chrona.presentation.layout.surface_source_inputs import (
+    bind_heading_dependencies, heading_part_sources, network_deadline_source_input,
+    surface_source_inputs,
+)
 from chrona.presentation.model.font_metrics import FontMetricsError
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.render_progress import RenderProgress
@@ -126,6 +129,10 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         measurement_inputs = {source: value for source, value in source_inputs.items()
                               if (not source.startswith("heading.") or source in claimed_sources)
                               and (source != "title" or "title" in claimed_sources)}
+        if view.surface == "dependency-network":
+            # This run group is internal measurement input, not a Layout Profile
+            # source. It is added only after source admission has completed.
+            measurement_inputs["network-deadlines"] = network_deadline_source_input(projection, theme)
         measured = measure_sources(measurement_inputs, theme, font_metrics=font_metrics,
                                    required_metrics=required_metrics)
         # Omitted content remains available for notices, without demanding unused

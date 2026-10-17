@@ -1196,16 +1196,21 @@ its own ground (#1013; Specification 46 section 8), so a translucent band is rea
 as the colour it makes and a Theme need not paint it opaque; only a host whose
 paint cannot be read stays `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`.
 
-A shown deadline (#822; Spec 06 section 7.3) completes `Path` shapes from the View-shown deadlines the use case
+A table-timeline deadline (#822; Spec 06 section 7.3) completes `Path` shapes from the View-shown deadlines the use case
 carries on the projection, each with the Core's slipped verdict (`ReviewDeadline`; Layout compares no dates to judge
-lateness). For every completed planned mark of the object (semantic `planned`; a snapshot or scenario mark and a point folded
-into a group header never host one) the tick is the vertical segment at the deadline date, mapped through the scale that
+lateness). For every completed planned/forecast mark of the object (a snapshot or scenario mark never hosts one),
+including a point folded into a group header, the tick is the vertical segment at the deadline date, mapped through the scale that
 places marks, centred on the mark and `markReach` times its block size tall (placement id `deadline-tick:<mark instance>`);
 a slipped deadline adds the run, the horizontal segment from the tick's lower end to the planned finish clipped to the plot's
 inline end (`deadline-run:<mark instance>`). Both carry `sourceRef` the object id, semantic `deadlineMark`, slot `timeline`
 and paint order the mark base plus Theme `markPaintOrder`. A deadline outside the View window (the closed range, both
-edges inclusive) is recorded as `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>` and a folded header point as
-`I_LAYOUT_DEADLINE_FOLDED:<object>`. The paths are registered as `rule` obstacles, so annotation candidates avoid them as they
+edges inclusive) is recorded as `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>`.
+Folded-header packing includes the tick/run maximum painted envelope (stroke,
+optional outline and declared wobble) in each occurrence's inline extent and
+block allocation, together with its existing mark/title/delta extent. Shared
+and repeated occurrences retain their own placement identities and subjects;
+no deadline date or lateness verdict is inferred from compact-header geometry.
+The paths are registered as `rule` obstacles, so annotation candidates avoid them as they
 avoid the as-of rule. Member names also avoid these `rule` obstacles (#1610);
 relation routes retain their existing rule-crossing policy.
 Contrast is gated as a `mark` role at 3:1 over the primitive beneath its centre.
@@ -1232,11 +1237,41 @@ is used. Caption placement cannot change prior content. If both candidates
 fail, only the caption is omitted: typed info
 `I_LAYOUT_DEADLINE_CAPTION_DROPPED:surface=table-timeline;count=<positive count>`
 counts omitted drawable host occurrences and carries their subjects.
-Outside-window/folded deadlines do not contribute to this count. Accepted
+Outside-window deadlines do not contribute to this count; drawable folded
+occurrences use the same caption attempts and counted omission rule. Accepted
 TextPlacements use identity `deadline-caption:<mark instance>`, object sourceRef,
 slot timeline and explicit subjects for primitive provenance. They do not set
 the existing paint-host field merely to express attachment. Scene projects
 completed bounds/baseline/font identity and applies the ground-text gate.
+
+On a dependency network, View supplies a selected node's closed ISO-date text,
+optional already-bound late caption and Core slipped verdict. Layout measures
+that footer under `deadline-caption` (or `text`) independently of the node title.
+The categorical glyph occupies a square whose side is `deadline-mark.markReach`
+times the footer's measured line block size: a vertical tick when kept, the
+same tick plus an equal-length horizontal foot when slipped. Emit these as
+separate straight Path strokes, not one L Path with a square outline. Neither dimension
+depends on the promised date, finish or days late. Reuse the shared deadline
+stroke/outline/wobble envelope, reserving the whole square plus its ink margin
+for either state; a zero-stroke-width glyph contributes no ink or gap. Theme
+markReach retains its existing strictly positive range.
+The gap to text is one footer-font em. Node content is a title above this full
+footer; inline size is the maximum row width and block size is their combined
+height, subject to the existing node minima. Include actual text bounds and
+baseline bearings when closing this content envelope, not just nominal line
+heights; normalize and center its full footprint in the node. Without a footer,
+preserve existing node/title placement exactly.
+Complete node dimensions before ports, route obstacles, canvas and overflow.
+Stroke identities are `deadline-network-tick:<object>` and, only when slipped,
+`deadline-network-slip:<object>`; their existing per-segment grounds use
+`deadline-outline:<stroke identity>`. Text is `deadline-network-label:<object>`.
+Use existing semantics `deadlineMark`, `deadlineMarkOutline` and `deadlineCaption`,
+object sourceRef/subjects and native network slot ownership. All
+outline grounds precede glyph foregrounds above their node; text is a separate
+ground-text primitive. Scene emits these completed placements, never content
+selection or position. Missing required measurements fail with the existing
+network measurement diagnostic. No timeline window/caption-drop policy applies;
+normal network natural-growth/visible-overflow policy preserves the footer.
 
 A selected period's label (`label: {placement, overflow}`) is one request to the shared label engine that places the
 as-of and member labels, built in the first pre-route phase: `top` and `bottom` anchor a zero-height strip on the plot

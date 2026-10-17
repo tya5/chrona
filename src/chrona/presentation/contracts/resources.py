@@ -436,6 +436,7 @@ class ViewDeadlines:
 
     show: str
     caption: DeadlineCaptionText | None = None
+    overrides: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -1131,9 +1132,11 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
 def _view_deadlines(raw: Mapping[str, Any] | None) -> ViewDeadlines | None:
     if raw is None:
         return None
+    overrides = tuple((object_id, str(value["show"]))
+                      for object_id, value in raw.get("overrides", {}).items())
     caption = raw.get("caption")
     if caption is None:
-        return ViewDeadlines(str(raw["show"]))
+        return ViewDeadlines(str(raw["show"]), overrides=overrides)
     try:
         value = caption.get("format", {})
         text_format = CountTextFormat(str(value.get("form", "digits")),
@@ -1144,7 +1147,7 @@ def _view_deadlines(raw: Mapping[str, Any] | None) -> ViewDeadlines | None:
         program = compile_deadline_caption(str(caption["template"]), text_format)
     except GroupHeaderTextError as error:
         raise ContractError(error.code, error.detail, "/body/deadlines/caption/template") from error
-    return ViewDeadlines(str(raw["show"]), program)
+    return ViewDeadlines(str(raw["show"]), program, overrides)
 
 
 def _view_figure_formats(raw: Mapping[str, Any], figures: tuple[FigureSpec, ...]) -> FrozenDict:
