@@ -335,7 +335,10 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
                             scenarios: dict[str, tuple[dict[str, Any], dict[str, dict[str, date]]]] | None = None,
                             analysis: Any | None = None,
                             snapshot_analysis: Any | None = None,
-                            forecast: ForecastOutcome | None = None) -> ReviewProjection:
+                            forecast: ForecastOutcome | None = None,
+                            field_bindings: FieldRoleBindings | None = None,
+                            snapshot_field_bindings: FieldRoleBindings | None = None,
+                            scenario_field_bindings: Mapping[str, FieldRoleBindings] | None = None) -> ReviewProjection:
     """Derive review facts; composition belongs to View, never Project."""
     if view.comparison.actual == "required" and actual_set is None:
         raise ValueError("E_ACTUAL_REQUIRED: the View compares against actuals (comparison.actual is required) but no actual "
@@ -352,7 +355,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     types = set(view.selection.types) if view.selection and view.selection.types else {"span", "point"}
     object_types = set(view.selection.object_types) if view.selection else set()
     excluded_object_types = set(view.selection.excluded_object_types) if view.selection else set()
-    bindings = FieldRoleBindings.from_project(project)
+    bindings = field_bindings if field_bindings is not None else FieldRoleBindings.from_project(project)
     grouping = resolve_role_grouping(view.grouping, bindings)
     if grouping is not view.grouping:
         view = replace(view, grouping=grouping)
@@ -443,12 +446,14 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             item.is_rollup and grouping.rollup in {"header", "none"})) for item in selected]
     elif not explicit:
         _order(selected, view, project)
-    snapshots = _snapshot_items(snapshot_project, snapshot_placements, snapshot_analysis)
+    snapshots = _snapshot_items(snapshot_project, snapshot_placements, snapshot_analysis,
+                                field_bindings=snapshot_field_bindings)
     # `ghost-when-changed` without a snapshot baseline draws no ghost and is not an error (#429); `ghost` still needs one.
     if forecast is None and view.comparison.baseline_marks == "ghost" and not explicit and (view.comparison.baseline != "snapshot" or not snapshots):
         raise ValueError("E_REVIEW_BASELINE_MARKS_SNAPSHOT: comparison.baselineMarks needs comparison.baseline snapshot "
                          "and a snapshot Project in the Render Context")
-    scenario_items = {scenario_id: _snapshot_items(value[0], value[1], None, source_kind="scenario")
+    scenario_items = {scenario_id: _snapshot_items(value[0], value[1], None, source_kind="scenario",
+                                                  field_bindings=(scenario_field_bindings or {}).get(scenario_id))
                       for scenario_id, value in (scenarios or {}).items()}
     if view.comparison.missing_actual_scope == "in-progress":
         selected = [replace(item, missing_actual_mark=_missing_actual_scope_mark(item)) for item in selected]
@@ -868,11 +873,12 @@ def _validate_explicit_row_hierarchy(rows: list[ReviewRowProjection]) -> None:
 
 def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[str, date]] | None,
                     analysis: Any | None = None,
-                    source_kind: str = "snapshot") -> dict[str, ReviewItem]:
+                    source_kind: str = "snapshot", *,
+                    field_bindings: FieldRoleBindings | None = None) -> dict[str, ReviewItem]:
     if project is None or placements is None:
         return {}
     result: dict[str, ReviewItem] = {}
-    bindings = FieldRoleBindings.from_project(project)
+    bindings = field_bindings if field_bindings is not None else FieldRoleBindings.from_project(project)
     hierarchy_entries = {entry.object_id: entry for entry in normalize_hierarchy(project)}
     for object_id, planned in placements.items():
         source_type = "point" if "at" in planned else "span"

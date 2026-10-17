@@ -2,8 +2,26 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any
+
+
+@dataclass(frozen=True)
+class FieldDescriptor:
+    """Typed source-local declaration for one Project object field.
+
+    This is a detached snapshot of already-validated metadata. It does not
+    inspect or infer a declaration from an object's current value.
+    """
+
+    name: str
+    kind: str
+    cardinality: str = "one"
+    enum_values: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "enum_values", tuple(self.enum_values))
 
 
 @dataclass(frozen=True)
@@ -13,6 +31,7 @@ class FieldRead:
     field_name: str | None
     present: bool
     value: Any
+    descriptor: FieldDescriptor | None = None
 
 
 @dataclass(frozen=True)
@@ -25,19 +44,56 @@ class FieldRoleBindings:
     """
 
     bindings: tuple[tuple[str, str], ...] = ()
+    object_descriptors: tuple[tuple[str, tuple[FieldDescriptor, ...]], ...] = ()
+    _descriptor_lookup: Mapping[str, Mapping[str, FieldDescriptor]] = field(
+        init=False, repr=False, compare=False,
+    )
+
+    def __post_init__(self) -> None:
+        # Snapshot collection inputs so even direct construction cannot retain
+        # mutable binding/descriptor containers.
+        object.__setattr__(self, "bindings", tuple(tuple(pair) for pair in self.bindings))
+        raw = self.object_descriptors
+        entries = raw.items() if isinstance(raw, Mapping) else raw
+        frozen_entries = []
+        object_ids: set[str] = set()
+        for object_id, descriptors in entries:
+            if object_id in object_ids:
+                raise ValueError(f"duplicate object descriptor set for {object_id!r}")
+            object_ids.add(object_id)
+            frozen_descriptors = tuple(
+                descriptor if isinstance(descriptor, FieldDescriptor)
+                else FieldDescriptor(*descriptor)
+                for descriptor in descriptors
+            )
+            names = [descriptor.name for descriptor in frozen_descriptors]
+            if len(set(names)) != len(names):
+                raise ValueError(f"duplicate field descriptor for object {object_id!r}")
+            frozen_entries.append((object_id, frozen_descriptors))
+        object.__setattr__(self, "object_descriptors", tuple(frozen_entries))
+        lookup = {
+            object_id: MappingProxyType({descriptor.name: descriptor for descriptor in descriptors})
+            for object_id, descriptors in frozen_entries
+        }
+        object.__setattr__(self, "_descriptor_lookup", MappingProxyType(lookup))
 
     @classmethod
-    def from_project(cls, project: Mapping[str, Any]) -> "FieldRoleBindings":
+    def from_project(
+        cls,
+        project: Mapping[str, Any],
+        *,
+        object_descriptors: Mapping[str, Any] | tuple[tuple[str, Any], ...] = (),
+    ) -> "FieldRoleBindings":
         """Capture a Project's optional ``fieldRoles`` mapping immutably."""
         declared = project.get("fieldRoles", {})
         if not isinstance(declared, Mapping):
-            return cls()
+            return cls(object_descriptors=object_descriptors)
         pairs = tuple(sorted(
             (role, field_name)
             for role, field_name in declared.items()
             if isinstance(role, str) and isinstance(field_name, str)
         ))
-        return cls(pairs)
+        return cls(pairs, object_descriptors)
 
     def field_for(self, role: str) -> str | None:
         """Return the declared object-field key for ``role``, if any."""
@@ -55,7 +111,8 @@ class FieldRoleBindings:
         return self.read_result(fields, source).value
 
     def read_result(self, fields: Mapping[str, Any] | None,
-                    source: Mapping[str, Any]) -> FieldRead:
+                    source: Mapping[str, Any], *,
+                    object_id: str | None = None) -> FieldRead:
         """Resolve and read one direct field or role, preserving presence.
 
         ``field_name`` is ``None`` when a role is undeclared or the source does
@@ -72,4 +129,13 @@ class FieldRoleBindings:
         if not isinstance(field_name, str):
             return FieldRead(None, False, None)
         present = fields is not None and field_name in fields
-        return FieldRead(field_name, present, fields[field_name] if present else None)
+        descriptor = self.descriptor_for(object_id, field_name)
+        return FieldRead(field_name, present, fields[field_name] if present else None,
+                         descriptor)
+
+    def descriptor_for(self, object_id: str | None,
+                       field_name: str) -> FieldDescriptor | None:
+        """Return the declaration for this exact object and resolved field."""
+        if object_id is None:
+            return None
+        return self._descriptor_lookup.get(object_id, {}).get(field_name)
