@@ -2,7 +2,7 @@
 
 ## Baseline and design plan
 
-Ready base: `5cc04dd5b59079650f27da6434b80ad9d8be9f8b`.
+Ready base: `8fc5364c3022676b680268005417239eb094a5ca`.
 The font and measured-run corrections are published in PRs1619/1621;
 [release38985610444](https://github.com/tya5/chrona/actions/runs/38985610444) passed.
 [Current acceptance](../../reviews/current/issue-1612-automatic-cjk-fonts-acceptance-review-2026-10-17.md)
@@ -25,7 +25,8 @@ as `a2918bf202b51e974813b02c6649af63f9fe1d8a`.
 
 - Closure pins the optional halo engine and exact font files; Layout retains
   measurement/geometry (Specs30/33). Scene retains completed paint/profile
-  admission (Specs46/63). Only PDF syntax adaptation changes.
+  admission (Specs46/63). Adapter syntax adaptation changes; the mixed-run
+  correction also applies to the PNG-private intermediate.
 - The new registered PDF peer admits baseline geometry, glow and native cap/join.
   Optional omission remains allowed: elevated-light and Sunday depend on it.
   Explicit baseline and unsupported-required refusals remain exact. No preset IDs,
@@ -51,13 +52,35 @@ as `a2918bf202b51e974813b02c6649af63f9fe1d8a`.
   contract, publish the selected correction before implementation. PNG raster use
   must not inherit PDF-only embedding-permission refusals.
 
+### Selected mixed-run correction
+
+The actual imported task-table and member-label twin, with the optional CJK
+package disabled and the closed macOS Hiragino face present, reproduces the
+finding. Scene/SVG say Noto Sans400 for Latin, but resvg paints its mixed chunk
+with Hiragino's Latin glyphs: the `UX` crop equals an independent Hiragino400
+reference, not Noto Sans400/700. A pure-Latin control distinguishes400/700.
+Giving each run its completed x makes the mixed prefix pixel-identical to the
+independent Noto Sans400 reference. This is raster chunk fallback, not a changed
+Layout weight. Diagnostic: `/tmp/chrona-1612-weight-probe.OtjMsy/probe.py`;
+replace this local lead with committed portable regression evidence before release.
+
+Extract PDF's existing geometry-only run projection into a shared renderer
+helper. Use it for PNG-private fallback text and PDF halo clones; preserve PDF's
+existing vector lowering and never project its source twice. No new face alias
+infrastructure, host lookup, measurements, Scene/schema fields or permission
+checks are needed for PNG. Specs08 §2.3 and63 §7.1 are the normative correction.
+This preserves Layout ownership (Specs30/33), completed Scene faces and advances,
+and adapter-only serialization; public SVG/Scene and ordinary Latin PNG stay
+unchanged. Change the conditional PNG identity and halo grammar identity with
+the corrected bytes. No remaining architecture decision blocks this slice.
+
 ## Implementation plan and publication
 
 | Slice | Owners and evidence | Acceptance/publication boundary |
 | --- | --- | --- |
 | 1. Profile/closure | `visual_capabilities.py`, CLI choices, `closure.py`, vocabulary/Render Context schemas, inventory/registry; peer, omission, explicit baseline, unsupported-required and descriptor tests; schema equivalence. | One coherent commit after the published design; preserve all existing valid Contexts. |
 | 2. PDF serialization | Private glow/font-alias lowering; `pdf_fonts.py`, `pdf_opacity.py`, renderer registry. Test exact assets/collection index/permissions, RGBA/soft masks, completed region/patterns, source text, clips/transforms, unequal nested opacity and native cap/join. | No global library patches or source-file mutation; keep the existing no-glow dependency path. |
-| 2b. Mixed-run weight | Trace the reviewer strings through measured run assets/weights, SVG spans, actual full PNG and embedded PDF faces; provider and native OS cases. Choose the bounded owner correction only from that evidence and add a synthetic exact-face twin. | Complete design/whole-architecture review before code if a contract gap exists. This required finding keeps the issue open. |
+| 2b. Mixed-run weight | Shared completed-run helper, PNG-private serialization/identity and PDF halo clone/identity; synthetic task-table and member-label twins, provider/native cases, full PNG regular/bold references and matching PDF font resources; multiline/spacing/scale/rotation controls. | Publish this selected correction before code. Retain public SVG/Scene and pure-Latin PNG bytes; no double projection of PDF source. This required finding keeps the issue open. |
 | 3. Acceptance | Remove the Marquee refusal exception; run45 real outputs locally/CI, view three PNGs and a rasterized PDF, compare all public SVG/Scene bytes and inspect generated reports as a batch. | One PDF PR after1623, focused local tests; full three-OS/conformance/wheel/reproduction in CI. Close only after the literal review and its exact-main release pass. |
 
 Update this record and the existing acceptance review in place. Publish the design,

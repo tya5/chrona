@@ -130,6 +130,16 @@ family/weight, not the parent text's Latin face. SVG spans and PDF subset
 inventory retain inherited faces for ordinary text and explicit faces for runs;
 the adapter never repeats Layout's glyph-coverage decision (Specification 30).
 
+PNG rasterization must also preserve these completed face boundaries. In a
+PNG-private SVG copy, position fallback runs at Layout's completed prefix
+advances (including completed letter spacing and horizontal scale); do not let
+the raster engine shape a mixed-script chunk through a different fallback face.
+Reuse the same geometry-only run projection as PDF, preserving explicit face
+attributes, lines, transforms and paint. Do not measure text, discover faces or
+apply PDF embedding-permission restrictions to PNG. Public SVG/Scene and PNG
+without completed fallback faces remain unchanged. The raster-run grammar
+participates in adapter identity when used.
+
 ReportLab caches dynamic faces by registration and PostScript names. In every
 PDF render, namespace both internal embedding names by a digest of
 the exact single-face embedding payload before naming (including its selected

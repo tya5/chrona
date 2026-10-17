@@ -226,6 +226,11 @@ comes from the completed font closure, including its exact content identity and
 collection index. Private font-name aliases may change names only, preserving
 native outlines, metrics and shaping data; distinct assets with the same public
 family/weight must remain distinct. PDF embedding permission checks still apply.
+Before rasterizing a text halo, its private clone uses the same completed-run
+positioning as PNG/PDF (Spec08 §2.3). The source vector remains untouched until
+ordinary PDF text lowering, so its face attributes are projected exactly once.
+This geometry-only correction changes the halo grammar identity; it adds no
+font selection or measurement to the adapter.
 
 Halo and source share the original clip, transform and isolated overall opacity
 exactly once. Source-internal opacity remains part of its alpha input; outer
