@@ -398,6 +398,25 @@ and folded hosts; completed placements retain the selected Theme role. Do not
 mutate the global registry or replace roles only after geometry is complete.
 No Style means no new primitive metadata and unchanged prior behavior.
 
+S1c composition detail: retain the source container kind in occurrence keys,
+so an ordinary row and a folded group cannot alias. Fixed-lane final aliases
+reuse their original source row/member key through the existing lane-owner
+join; generated placement IDs are not parsed. Table cells retain the actual
+subject item key and the exact immutable View column source before measurement.
+Store evaluated intents in one immutable index on `SurfaceContentInput`.
+Resolve each occurrence's selected mark roles into its own canonical-role
+frame and recompute the existing mark-stack allocation there; never merge
+different occurrences into one global role override. Provisional footprints
+and final composition consume the same index. Extract shared mark-role
+geometry from the surface owner to avoid a composition/import cycle.
+For an explicitly selected role, required geometry/text bindings and a point
+symbol must exist on that role; incompatible treatment is the planned
+`E_STYLE_ROLE_INCOMPATIBLE`, not implicit inheritance from the old role.
+Unstyled marks keep their existing variant-symbol and alignment fallbacks.
+This is internal identity/composition, not a schema or scheduling change;
+Spec38 View membership, Spec49 canonical semantics and passive Scene ownership
+remain unchanged. Publish this detail before its implementation.
+
 Architecture review: this implements Spec07/49's Style→Theme→Layout boundary,
 uses Spec13 resource closure, preserves Spec04 scheduling and Spec08/46 passive
 Scene/adapters, and shares Issue344's declarations/accessor. Update normative
