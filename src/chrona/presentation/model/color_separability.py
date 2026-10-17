@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from itertools import combinations
 
 MINIMUM_CATEGORY_DELTA_E = 5.0
+# CIELAB chroma below which a colour is a grey and carries no hue to reserve (#1628).
+MINIMUM_RESERVED_CHROMA = 12.0
 SIMULATED_VISIONS = ("protanopia", "deuteranopia", "tritanopia")
 
 _MACHADO = {
@@ -103,6 +105,12 @@ def _ciede2000(first: tuple[float, float, float], second: tuple[float, float, fl
     r_t = -math.sin(math.radians(2 * delta_theta)) * r_c
     return math.sqrt((delta_l / s_l) ** 2 + (delta_c / s_c) ** 2 + (delta_hp / s_h) ** 2
                      + r_t * (delta_c / s_c) * (delta_hp / s_h))
+
+
+def chroma(hex_colour: str) -> float:
+    """CIELAB chroma of an sRGB colour: how far it is from grey."""
+    _, a, b = _lab(_linear(hex_colour))
+    return math.hypot(a, b)
 
 
 def delta_e_2000(first: str, second: str, *, vision: str = "normal") -> float:
