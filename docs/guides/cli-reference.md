@@ -155,7 +155,7 @@ print the canonical identity of one YAML or JSON document
 
 ## chrona import
 
-turn a CSV or TSV table (one row per task, gate or group) into Project YAML; every row error is reported with its row and column in one run, and an existing file is never replaced
+turn a CSV or TSV table (one row per task, gate or group) into Project YAML; every row error is reported with its row and column in one run, and an existing file is never replaced. Columns (only id is required): id, title, type (task, gate, group), start, end (exclusive), finish (inclusive), duration, parent, predecessors, deadline, calendar, progress, actual_start, actual_finish; any other column is kept as a text field. Guide: docs/guides/csv-import.md
 
 `chrona import --actual-output --as-of --calendar --columns --delimiter --output --project-id --role --title -o`
 
@@ -167,7 +167,7 @@ turn a CSV or TSV table (one row per task, gate or group) into Project YAML; eve
 - `--calendar`: declare a working calendar such as 'standard mon-fri except 2027-04-02'; repeatable; the first is the project default
 - `--as-of`: observation date (YYYY-MM-DD) of the Actual Set
 - `--columns`: YAML mapping of your header names to the column vocabulary
-- `--role`: bind a Project field role (responsible, phase) to an extra column of the table, such as --role responsible=team; repeatable, one header per role
+- `--role`: bind a Project field role (responsible, phase) to an extra column of the table, such as --role responsible=team; repeatable, one header per role; responsible makes the column's values the owners (lanes), phase the sections
 - `--delimiter`: cell delimiter (default: tab for .tsv, else comma)
 
 ## chrona init
@@ -347,7 +347,7 @@ copy the agent skill into an empty directory
 
 ## chrona validate
 
-check a Project (a YAML file or a saved snapshot) and list its mistakes
+check a Project (a YAML file or a saved snapshot) or an Actual Set file and list its mistakes
 
 `chrona validate --allow-missing-content-identity --snapshot-reference --snapshot-root --store-identity`
 
