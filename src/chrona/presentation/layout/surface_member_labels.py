@@ -261,7 +261,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
     if contract.labels.enabled or attached_labels:
         for review_row in context.review_rows:
             for item in review_row.items:
-                if not getattr(item, "temporal_paint", True):
+                if (not getattr(item, "temporal_paint", True)
+                        or not getattr(item, "member_label_eligible", True)):
                     continue
                 layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
                 lane = lane_owner(review_row, item) if projection.lane_membership is not None else None
@@ -336,6 +337,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     required_before_routes=attached is not None or key_row,
                 subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
         for folded in getattr(projection, "folded_points", ()):
+            if not getattr(folded.item, "member_label_eligible", True):
+                continue
             instance_id = f"group-header:{folded.group_id}:{folded.item.item_id or folded.item.object_id}"
             host_kind = "actual" if folded.item.source_kind == "actual" else "planned"
             mark = marks.get(f"{host_kind}:{instance_id}")
