@@ -1,6 +1,7 @@
 # Issue 1680 — forecast deadline
 
-Status: design plan only. Implementation waits for Issue419 S2 to merge.
+Status: finish-basis design reviewed; estimated paint remains open.
+Implementation waits for Issue419 S2 to merge and the complete design to publish.
 Published baseline: main `cd36227548aa349ed1fe3cb261184ef2b73ecd37`.
 [Issue](https://github.com/tya5/chrona/issues/1680);
 [preceding Style work](issue-419-semantic-resource-work-record-2026-10-17.md).
@@ -34,14 +35,27 @@ and folded hosts, repeated primary occurrences, absent/completed forecast,
 hidden deadlines and selected/non-temporal/comparison-only items. Preserve
 ordinary scheduling warnings and no-forecast output; do not mutate source plans.
 
-Resolve before code:
+### Selected finish contract (D1)
 
-- Define which projected primary occurrences select forecast as the comparison
-  basis. Geometric clipping or adapter omission must not decide Core policy.
-- Specify one per-object effective finish/basis and one Core verdict consumed
-  by both the warning and every shown host; decide the fallback for objects
-  without an eligible forecast occurrence. Retain Project order and endpoint rules.
-- Define warning basis copy/details while retaining no-forecast diagnostics.
+Select forecast from final View rows and folded members only when the item has
+primary/combined source, `temporal_paint` eligibility and a forecast fact.
+Actual-only, Snapshot/scenario and context-only header occurrences do not
+select a forecast. For each other Project object use its original plan.
+Window clipping, zero paint and adapter omission do not change the basis.
+Repeated primary occurrences share one object status. Core alone compares
+`at`/exclusive `end` in calendar days, in Project order; warnings and shown
+deadlines consume that same status. The selected forecast warning names its
+basis; ordinary plan messages/details and standalone schedule behavior remain
+unchanged. Deadline visibility/overrides filter marks, never warnings.
+
+Bounded source/architecture review on S2 `b201711c4` confirms primary fact
+ownership, combined/explicit rows and folded-member closure. No second forecast
+or date evaluator is needed. Before code, publish the explicit forecast
+exception in Spec04 §10, Spec06 §7.3/§8.5 and Spec50 §3.4; those passages
+currently promise planned-only verdicts or runs to the planned finish.
+
+Resolve before code (D2 and final review):
+
 - Resolve the requested estimated-run treatment against Spec06 §8.5's existing
   planned-paint plus `*` convention. The [reviewer question](https://github.com/tya5/chrona/issues/1680#issuecomment-6243035188)
   is open; no new role, colour, dash or implicit caption has been selected.
