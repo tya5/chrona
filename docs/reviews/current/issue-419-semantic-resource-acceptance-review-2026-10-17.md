@@ -47,13 +47,13 @@ gate found a bootstrap diagnostic-layer cycle. The published correction keeps
 native schema failures below rich ingress diagnostics; immutable indexes and
 the inward-dependency gate now pass. No Python fallback table remains.
 
-Official head `a7b13433a` [snapshot39042795786](https://github.com/tya5/chrona/actions/runs/39042795786)
+Last audited head `253b266b4` [snapshot39044257405](https://github.com/tya5/chrona/actions/runs/39044257405)
 has109 unchanged paths: all50 SVG byte-identical; all50 Scene JSONs differ only
 by one exact vocabulary provenance resource. No primitive, purpose, role,
 geometry, paint, route or label changed. Two of9 reports change (source-line
 inventory2551→2551bytes and diagnostics304701→305877); other7 are identical.
 
-That run's13 pytest failures were11 expected-byte/fixture failures and two
+The preceding run39042795786 had13 pytest failures:11 expected-byte/fixture failures and two
 schema index omissions; conformance, reproduction and MCP passed. Seven
 affected Controller fixtures were refreshed through the standard materializer:
 each SVG is byte-identical, each Scene differs only by the same provenance
@@ -65,5 +65,10 @@ was weakened, and no public examples/bot-owned output was edited.
 The corrected focused batch passes39 characterization/materializer tests;
 schema identifier/part accounting passes141 tests, covering all13 CI failures.
 
-Corrected-head CI, reviewer PR acceptance and exact-main three-OS release
-remain pending. Parent419 remains open for S1/S2/C1.
+Corrected-head run39044257405 passes all three pytest shards, conformance,
+reproduction, MCP and derived preview. Only derived-ready rejects the advanced
+main after reviewer PR1669; there is no remaining failing product test. All52
+changed artifact payloads match the prior artifact byte-for-byte. After merging
+trusted-ready main `8c8a1e55b`, the vocabulary/closure/Editorial integration
+batch passes29 tests. Current-base CI, reviewer PR acceptance and exact-main
+three-OS release remain required. Parent419 remains open for S1/S2/C1.
