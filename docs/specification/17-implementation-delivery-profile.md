@@ -80,7 +80,9 @@ its typed fields violate this specification:
 
 Every other resolved profile package (#344) is checked against the same field definitions with
 generic diagnostics, each pointing at `/objects/<id>/fields[/<name>]`: `E_PROFILE_PACKAGE_INVALID`
-(manifest fails `profile-v0.3`), `E_PROFILE_FIELD_UNKNOWN` (field not declared by the object's profile),
+(manifest fails `profile-v0.3`), `E_PROFILE_ID_DUPLICATE` (a profile ID declared by two
+declared packages, naming both; profile IDs are globally unique per Spec 11; the first declaration stays in
+effect and the later package's duplicate is not used), `E_PROFILE_FIELD_UNKNOWN` (field not declared by the object's profile),
 `E_PROFILE_FIELD_TYPE` (value is not the declared scalar, array or reference shape),
 `E_PROFILE_FIELD_ENUM` (value outside `enumValues`) and `E_PROFILE_FIELD_REQUIRED` (required field absent
 or null). An absent optional field is valid and an explicit `null` is valid only for an optional field.
