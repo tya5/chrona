@@ -32,8 +32,9 @@ project venvs: target-b and technical-print, each SVG/Scene/PNG (six pairs).
 This proves that matrix, not all public contexts. Post-integration focused tests:
 83 forecast/routing, 244 CLI/MCP/closure, and 158 Layout/Scene/geometry-guard tests
 passed; all-layer schema equivalence passes. Independent integration audit found
-no code or ownership blocker. Next: publish the single feature PR and
-inspect its full public artifact comparison, then complete release acceptance.
+no ownership blocker. PR1646 is open at 58d334707. CI exposed a semantic-identity
+collision between three forecast plot labels and ordinary deltas; release is
+blocked until the Spec08 correction below is implemented and checked.
 [Reviewer answers](https://github.com/tya5/chrona/issues/1634#issuecomment-6230794260)
 approve retained declared units, finish-only placement with an unobserved-start
 finding, and child-envelope precedence with a named group-observation finding.
@@ -80,6 +81,13 @@ Publish this plan before product changes. Implement the following testable
 commits in order; publish the complete opt-in feature as one code PR, not a
 partially wired flag or a separate landing for every module. New contract gaps
 return to the living design and architecture review before code resumes.
+
+Semantic-identity correction: publish Spec08 and the architecture review before
+changing the three forecast registry bindings to `forecast-finish-delta`.
+Update forecast-only assertions, retain the global uniqueness acceptance test,
+and run vocabulary, forecast, Scene and label guards. Re-render the two actual
+forecast PNGs/Scenes and compare the official default-off public artifact batch.
+No Theme/schema migration, geometry change or ordinary-delta renaming is needed.
 
 | Slice | Owned files / responsibility | Focused evidence and acceptance |
 | --- | --- | --- |

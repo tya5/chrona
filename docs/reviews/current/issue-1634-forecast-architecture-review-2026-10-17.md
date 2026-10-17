@@ -1,8 +1,8 @@
 # Issue #1634 — forecast architecture review
 
-Status: design accepted for implementation planning; product code still requires
-the separately published implementation plan. Public baseline
-41e6c83a9f742af6e7a46209c4cec8f4bca91f0f.
+Status: design and implementation plan published; PR1646 requires the semantic-
+identity correction below before release. Public baseline
+cd4dae681c9fd09f2c26d0dd037fcdac8d97e82d.
 [Current work record](../../planning/active/issue-1634-forecast-work-record-2026-10-17.md).
 
 | Boundary | Consistency check |
@@ -32,6 +32,13 @@ are separate; neither source dates nor relations are silently edited. Synthetic
 twins must cover completed spans, observed starts and observed points, alongside
 fatal unknown-target/incomplete outcomes. Local documentation guards: 28 passed;
 `git diff --check` clean.
+
+Semantic-identity correction reviewed against Spec06 fact separation, Spec08
+identity and the global registry uniqueness invariant: forecast plot deltas need
+their own purpose, not aliases of ordinary delta bindings. Existing paint roles
+remain reusable. Layout/Scene/adapter ownership, geometry, table-cell semantics,
+schema admission and absent-flag output do not change. Publish this correction
+before changing registry bindings; retain the uniqueness guard unchanged.
 
 Release is separate: every literal criterion, original-trial PNG evidence,
 public artifact counts and exact review-containing three-OS CI.

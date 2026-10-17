@@ -346,6 +346,15 @@ this completed omission evidence for explicit windows. Scene/adapters neither
 infer the forecast identity nor choose visibility or geometry. This is an
 additive opt-in Scene admission change, not a new primitive kind.
 
+Forecast plot-delta semantics `forecastFinishDelta`, `forecastVarianceAhead`
+and `forecastVarianceBehind` use primitive purpose `forecast-finish-delta`
+with the existing on-track/ahead/behind variance paint roles. Ordinary deltas
+retain purpose `finish-delta`. Each registered semantic keeps a unique
+`(purpose, scene_role)` binding: sharing paint does not alias semantic identity.
+Layout selects the completed label; Scene projects its registered binding and
+adapters serialize it without inferring forecast status. Table-cell semantics
+and all default-off output remain unchanged.
+
 A semantic relation Path MAY carry paired `fromInstanceId` and `toInstanceId`
 in Scene v0.7. These non-empty opaque IDs are Layout's resolved endpoint
 instances, not port names or coordinates; Scene and adapters MUST NOT infer
