@@ -295,11 +295,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     primary_marks = tuple(mark for mark in marks if mark.placement_id.startswith("planned:")
                           and ":snapshot:" not in mark.placement_id and ":scenario:" not in mark.placement_id)
     primary_interiors: dict[tuple[float, frozenset[str] | None], tuple[tuple[str, ObstacleRect], ...]] = {}
-    def clears_primary_marks(points: tuple[tuple[float, float], ...], width: float,
-                             required_ids: frozenset[str] | None = None,
-                             source_egress: ConnectorEgress | None = None,
-                             target_egress: ConnectorEgress | None = None) -> bool:
-        """Reject positive-length crossings of any planned mark's stroked interior."""
+    def required_primary_interiors(width: float, required_ids: frozenset[str] | None):
+        """One authority for final clearance and certified quality barriers."""
         inset = width / 2
         key = (width, required_ids)
         if key not in primary_interiors:
@@ -310,10 +307,18 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 for mark in primary_marks if float(mark.bounds.inline_size) > width
                 and float(mark.bounds.block_size) > width
                 and (required_ids is None or mark.placement_id in required_ids))
+        return primary_interiors[key]
+
+    def clears_primary_marks(points: tuple[tuple[float, float], ...], width: float,
+                             required_ids: frozenset[str] | None = None,
+                             source_egress: ConnectorEgress | None = None,
+                             target_egress: ConnectorEgress | None = None) -> bool:
+        """Reject positive-length crossings of any planned mark's stroked interior."""
+        interiors = required_primary_interiors(width, required_ids)
         parts = split_route_at_physical_corridors(points, source_egress, target_egress)
         for left, right, physical_ids in parts:
             segment = ObstacleSegment(left, right)
-            for placement_id, rect in primary_interiors[key]:
+            for placement_id, rect in interiors:
                 if placement_id in physical_ids:
                     continue
                 if segment_length_inside_rect(segment, rect) > 1e-9:
@@ -700,8 +705,17 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                             primary_clear = clears_primary_marks(candidate, dependency_stroke,
                                                                  domain.required_primary_mark_ids)
                         return primary_clear and terminal_segments_fit(candidate, dependency_stroke)
+                    def quality_barriers(source_exit, target_entry):
+                        # Exempt the entire authorized host conservatively; the
+                        # final validator still enforces its segment-local use.
+                        hosts = frozenset(host for egress in (source_exit, target_entry)
+                            for host in (*egress.host_ids, *egress.corridor_host_ids))
+                        return tuple(rect for identifier, rect in required_primary_interiors(
+                            dependency_stroke, domain.required_primary_mark_ids) if identifier not in hosts)
+
                     selection = select_relation_route(pairs, obstacles=domain.obstacles,
                         endpoint_preserving_prepare=True,
+                        protected_quality_barriers=quality_barriers,
                         protected=(relation.critical and context.layout_manifest.relation_unroutable
                                    is RelationUnroutableMode.SUPPRESS),
                         preferred_routes=(tuple((candidate.pair, candidate.middle) for candidate in hint_proposal.candidates)

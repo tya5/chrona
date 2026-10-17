@@ -89,3 +89,63 @@ def test_blocked_egress_domain_is_exhausted_without_entering_search():
     assert selected.critical_evidence.exhausted
     assert selected.critical_evidence.expansions == 0
     assert not selected.search_used
+
+
+def _barrier_selection(*, prepare=None, preserves=False, barriers=True, extra_pair=False,
+                       accept=None):
+    rect = ObstacleRect(-10., 4., 10., 6.)
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("required", "mark", "timeline", rect))
+    start = ConnectorEgress("end", (0., 0.), (0., 0.), ())
+    target = ConnectorEgress("start", (0., 10.), (0., 10.), ())
+    pairs = ((start, target),)
+    if extra_pair:
+        pairs += ((start, ConnectorEgress("above", (-15., 0.), (-15., 0.), ())),)
+    return select_relation_route(pairs, obstacles=obstacles, bounds=(-20., -2., 20., 12.),
+        source_host_id=None, target_host_id=None, relation_scene_id="critical",
+        max_bends=4, max_detour_ratio=2., search_policy="first-fit", search_budget=1,
+        protected=True, prepare=prepare, accept=accept, endpoint_preserving_prepare=preserves,
+        protected_quality_barriers=(lambda source, target: (rect,)) if barriers else None)
+
+
+def test_required_interior_proves_detour_infeasible_without_exhausting_paths():
+    result = _barrier_selection()
+    evidence = result.critical_evidence
+    assert result.selected_pair is not None and result.budget_hit
+    assert not evidence.exhausted
+    assert evidence.quality_fallback.search_disposition == "quality-infeasible"
+    assert evidence.quality_fallback.length > 2 * evidence.quality_fallback.direct_length
+    assert evidence.expansions == 0  # A finite shape is already hard-safe.
+
+
+def test_detour_proof_still_searches_later_pairs_for_quality_eligible_path():
+    result = _barrier_selection(extra_pair=True)
+    assert result.selected_pair[1].semantic_port == (-15., 0.)
+    assert result.critical_evidence.quality_fallback is None
+
+
+def test_detour_proof_is_disabled_when_preparation_may_move_endpoints(monkeypatch):
+    from chrona.presentation.layout import routing
+
+    def unexpected_bound(*args):
+        raise AssertionError("opaque completion cannot use semantic-endpoint proof")
+    monkeypatch.setattr(routing, "rectangular_detour_lower_bound", unexpected_bound)
+    # An admissible completion moves the target to the same side of the barrier.
+    result = _barrier_selection(prepare=lambda points, source, target: ((0., 0.), (0., 2.)))
+    assert result.selected_pair is not None
+
+
+def test_detour_proof_remains_available_for_endpoint_preserving_completion():
+    result = _barrier_selection(prepare=lambda points, source, target: points, preserves=True)
+    assert result.critical_evidence.quality_fallback.search_disposition == "quality-infeasible"
+
+
+def test_detour_proof_does_not_claim_a_safe_path_when_full_validation_rejects(monkeypatch):
+    from chrona.presentation.layout import route_search
+
+    monkeypatch.setattr(route_search, "orthogonal_route_candidates", lambda *args, **kwargs:
+        iter((((0., 0.), (-12., 0.), (-12., 10.), (0., 10.)),)))
+    result = _barrier_selection(accept=lambda path: False)
+    assert result.selected_pair is None
+    assert result.critical_evidence.exhausted
+    assert result.critical_evidence.quality_fallback is None
