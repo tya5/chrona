@@ -364,6 +364,16 @@ Resolve each snapshot's own pinned packages; scenarios retain primary package
 identity and validate after overlays. Do not infer declarations from values or
 invent profile inheritance in presentation code.
 
+Descriptor completion rejects ambiguity within one source Project: profile IDs
+are globally unique (Spec11 §4.1), so two declared packages claiming the same
+profile are invalid, not first-package precedence. The extension-owned
+catalogue returns `E_PROFILE_PACKAGE_INVALID` at the conflicting extension;
+generic validation and source descriptor collection use that same catalogue.
+Distinct primary/snapshot sources keep independent catalogues and may pin
+different definitions. Resolve declarations before Style matching, including
+absent values. This corrects an existing `setdefault` ambiguity without adding
+inheritance or changing valid packages; test collision and source isolation.
+
 Source-scoped package identity correction: Spec13 §5.1 currently rejects any
 duplicate `(kind, id)` with different identities, which conflicts with primary
 and snapshot Projects pinning different revisions of the same package. Amend
