@@ -4,7 +4,7 @@
 
 Core date handling is published in PR1599; the remaining packaged declarations
 are integrated in [PR1623](https://github.com/tya5/chrona/pull/1623), based on ready
-`9d888beb7468739b68e35de8b1d0ade79cf0ff56`.
+`5cc04dd5b59079650f27da6434b80ad9d8be9f8b`.
 [Approved design/implementation plan](https://github.com/tya5/chrona/issues/1583#issuecomment-6203710183),
 [calendarless policy](https://github.com/tya5/chrona/issues/1583#issuecomment-6217533121),
 and [shipped target-b clarification](https://github.com/tya5/chrona/issues/1583#issuecomment-6222305552).

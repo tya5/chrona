@@ -2,7 +2,7 @@
 
 # Issue #1610 — on-demand member-label repair
 
-Ready base `9d888beb7468739b68e35de8b1d0ade79cf0ff56`;
+Ready base `5cc04dd5b59079650f27da6434b80ad9d8be9f8b`;
 [PR #1623](https://github.com/tya5/chrona/pull/1623).
 [Current design, architecture review and implementation plan](https://github.com/tya5/chrona/issues/1610#issuecomment-6227031513)
 implements the [revised reviewer rule](https://github.com/tya5/chrona/pull/1623#issuecomment-6228498163).
