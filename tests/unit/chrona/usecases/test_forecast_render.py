@@ -6,6 +6,7 @@ import pytest
 
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft, warning_payloads
 from chrona.usecases.render_review import RenderFailed, RenderRejected
+from chrona.presentation.model.semantic_registry import semantic_binding
 
 
 def _request(tmp_path):
@@ -31,13 +32,28 @@ def test_forecast_draft_completes_truthful_marks_required_deltas_and_info(tmp_pa
     marks = [primitive for primitive in surface.primitives if primitive.purpose == "forecast"]
     assert {mark.source_ref for mark in marks} == {"a", "b"}
     assert all(mark.visual_role == "planned" for mark in marks)
-    deltas = [primitive for primitive in surface.primitives if primitive.purpose == "finish-delta"]
+    deltas = [primitive for primitive in surface.primitives if primitive.purpose == "forecast-finish-delta"]
     assert len(deltas) == 2
     assert all(primitive.text.endswith("*") for primitive in deltas)
     payloads = warning_payloads(result.rendered)
     moved = [item for item in payloads if item["code"] == "I_FORECAST_MOVED"]
     assert len(moved) == 1 and moved[0]["details"]["count"] == 2
     assert "Forecast (* estimated)" in result.artifact.content.decode()
+
+
+def test_forecast_delta_purpose_is_distinct_but_reuses_ordinary_paint_roles():
+    for ordinary_id, forecast_id, role in (
+        ("finishDelta", "forecastFinishDelta", "variance-on-track"),
+        ("varianceAhead", "forecastVarianceAhead", "variance-ahead"),
+        ("varianceBehind", "forecastVarianceBehind", "variance-behind"),
+    ):
+        ordinary = semantic_binding(ordinary_id)
+        forecast = semantic_binding(forecast_id)
+        assert ordinary.purpose == "finish-delta"
+        assert forecast.purpose == "forecast-finish-delta"
+        assert forecast.purpose != ordinary.purpose
+        assert (forecast.scene_role, forecast.theme_role) == (role, role)
+        assert (forecast.scene_role, forecast.theme_role) == (ordinary.scene_role, ordinary.theme_role)
 
 
 def test_omitted_and_false_forecast_keep_artifact_bytes(tmp_path):

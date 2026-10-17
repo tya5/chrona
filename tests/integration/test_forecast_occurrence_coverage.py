@@ -132,7 +132,7 @@ def _forecast_marks(rendered):
 
 def _forecast_deltas(rendered):
     return [item for item in rendered.surface.primitives
-            if item.kind == "Text" and item.purpose == "finish-delta"]
+            if item.kind == "Text" and item.purpose == "forecast-finish-delta"]
 
 
 def test_folded_forecast_point_gets_required_plot_delta_and_keeps_its_fold(tmp_path):

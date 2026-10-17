@@ -203,9 +203,9 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("finishDelta", "label", "finish-delta", "variance-on-track", "variance-on-track"),
     _binding("varianceAhead", "label", "finish-delta", "variance-ahead", "variance-ahead"),
     _binding("varianceBehind", "label", "finish-delta", "variance-behind", "variance-behind"),
-    _binding("forecastFinishDelta", "label", "finish-delta", "variance-on-track", "variance-on-track"),
-    _binding("forecastVarianceAhead", "label", "finish-delta", "variance-ahead", "variance-ahead"),
-    _binding("forecastVarianceBehind", "label", "finish-delta", "variance-behind", "variance-behind"),
+    _binding("forecastFinishDelta", "label", "forecast-finish-delta", "variance-on-track", "variance-on-track"),
+    _binding("forecastVarianceAhead", "label", "forecast-finish-delta", "variance-ahead", "variance-ahead"),
+    _binding("forecastVarianceBehind", "label", "forecast-finish-delta", "variance-behind", "variance-behind"),
     _binding("milestoneDigestEntry", "label", "milestone-digest-entry", "text", "text", ContrastClass.GROUND_TEXT),
     # Relations.
     _binding("dependency", "line", "dependency", "dependency", "dependency"),
