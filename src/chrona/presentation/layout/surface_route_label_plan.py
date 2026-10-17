@@ -1,4 +1,4 @@
-"""Own provisional member-name reservations, bounded route repair and final labels."""
+"""Owns provisional member-name reservations, route repair and final labels; reads completed label requests and geometry."""
 from __future__ import annotations
 
 from dataclasses import dataclass, replace

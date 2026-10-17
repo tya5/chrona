@@ -128,7 +128,7 @@ def test_render_progress_preserves_artifact_scene_and_request_identity(project, 
     assert [event for event in events if event.phase != "routing"] == [
         RenderProgressEvent("schedule"), RenderProgressEvent("layout"), RenderProgressEvent("output")]
     routing = [event for event in events if event.phase == "routing"]
-    assert routing == [RenderProgressEvent("routing", k, int(with_relations), "route-label-baseline")
+    assert routing == [RenderProgressEvent("routing", k, int(with_relations), "route-label-reserved")
                        for k in range(int(with_relations) + 1)]
 
 

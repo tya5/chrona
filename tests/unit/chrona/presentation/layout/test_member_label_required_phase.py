@@ -10,7 +10,7 @@ from chrona.presentation.layout.surface_member_labels import (
     SurfaceMemberLabelContext, SurfaceMemberLabelRequests, build_member_label_requests,
     place_member_labels,
 )
-from chrona.presentation.layout.surface_quality import ScalePlacement, SlotPlacement
+from chrona.presentation.layout.surface_quality import MarkPlacement, ScalePlacement, SlotPlacement
 from tests.unit.chrona.presentation.layout.test_point_host_labels import _label_request_context
 
 
@@ -160,3 +160,21 @@ def test_reserve_only_does_not_register_unavailable_or_out_of_slot_candidates():
     assert not batch.text
     assert not any(item.placement_id.startswith("label-footprint:") for item in blocked.all())
     assert not batch.diagnostics
+
+
+def test_unavailable_optional_associated_reservation_does_not_apply_final_visible_overflow_failure():
+    context = _placement_context()
+    host = MarkPlacement("planned:a", "a", Rect(Decimal(80), Decimal(40), Decimal(10), Decimal(10)),
+                         (80, 45), (90, 45), semantic_id="planned")
+    context = replace(context, marks=(host,))
+    request = LabelRequest("member-label:a", "a", "Owner", LabelRect(80, 40, 10, 10),
+        ("end", "start"), "text", "plot-label", CollisionDomain("timeline", "overlay"),
+        "visible-overflow", semantic_id="memberLabel", inside_host_obstacle_id="planned:a")
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("as-of", "rule", "timeline", ObstacleRect(0, 0, 200, 100)))
+    before = index.all()
+
+    batch = place_member_labels(context, (request,), index, reserve_only=True)
+
+    assert not batch.text and not batch.diagnostics
+    assert index.all() == before

@@ -513,7 +513,7 @@ def place_member_labels(context: SurfaceMemberLabelContext,
         if association is not None:
             candidate = _member_association_outcome(candidate,
                 final_association if candidate is not None and candidate.final_rung else association,
-                overflow=label_request.overflow, placement_id=label_request.placement_id)
+                overflow=effective_overflow, placement_id=label_request.placement_id)
         ladder = label_request.candidates + ((label_request.visible_fallback_side,)
             if label_request.visible_fallback_side is not None and
             label_request.visible_fallback_side not in label_request.candidates else ())

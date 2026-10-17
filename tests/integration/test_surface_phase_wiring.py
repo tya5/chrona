@@ -11,18 +11,22 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "
 
 
 def test_routes_and_labels_use_isolated_trials_from_one_pre_route_inventory(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
-    trials: list[tuple[str, int, int]] = []
+    trials: list[tuple[str, int, int, bool]] = []
     trial_initial_ids: dict[int, set[str]] = {}
     trial_final_ids: dict[int, set[str]] = {}
+    trial_indexes: dict[int, object] = {}
     requested: dict[int, list[str]] = {}
     pre_requests: list[str] = []
+    probe_added_ids: dict[int, set[str]] = {}
+    route_trial_phases: list[list[str]] = []
     seen: dict[str, object] = {}
 
-    def record(name, obstacles):
+    def record(name, obstacles, *, reserve_only=False):
         identity = id(obstacles)
         ids = {item.placement_id for item in obstacles.all()}
         trial_initial_ids.setdefault(identity, ids)
-        trials.append((name, identity, len(ids)))
+        trial_indexes.setdefault(identity, obstacles)  # retain identities across isolated trial lifetimes
+        trials.append((name, identity, len(ids), reserve_only))
         return identity
 
     pre_label_owner = surface_composer.place_member_labels
@@ -38,21 +42,27 @@ def test_routes_and_labels_use_isolated_trials_from_one_pre_route_inventory(tmp_
 
     def routes(context):
         identity = record("routes", context.obstacles)
+        route_trial_phases.append(["routes"])
         result = route_owner(context)
         trial_final_ids[identity] = {item.placement_id for item in context.obstacles.all()}
         return result
 
     def relation_labels(context, batch):
         identity = record("relation-labels", context.obstacles)
+        route_trial_phases[-1].append("relation-labels")
         result = relation_label_owner(context, batch)
         trial_final_ids[identity] = {item.placement_id for item in context.obstacles.all()}
         return result
 
-    def post_labels(context, requests, obstacles):
-        identity = record("member-labels", obstacles)
-        requested.setdefault(identity, []).extend(item.placement_id for item in requests)
-        result = member_label_owner(context, requests, obstacles)
+    def post_labels(context, requests, obstacles, *, reserve_only=False):
+        identity = record("member-labels", obstacles, reserve_only=reserve_only)
+        if not reserve_only:
+            route_trial_phases[-1].append("member-labels")
+            requested.setdefault(identity, []).extend(item.placement_id for item in requests)
+        result = member_label_owner(context, requests, obstacles, reserve_only=reserve_only)
         trial_final_ids[identity] = {item.placement_id for item in obstacles.all()}
+        if reserve_only:
+            probe_added_ids[identity] = trial_final_ids[identity] - trial_initial_ids[identity]
         return result
 
     monkeypatch.setattr(surface_route_label_plan, "compose_surface_routes", routes)
@@ -76,20 +86,25 @@ def test_routes_and_labels_use_isolated_trials_from_one_pre_route_inventory(tmp_
                                       "--output", str(tmp_path / "out.svg")])
     main()
 
-    trial_ids = {identity for _, identity, _ in trials}
-    assert len(trial_ids) in {1, 2}
-    assert seen["pre_index_id"] not in trial_ids
-    assert seen["selected_index_id"] in trial_ids
+    probes = {identity for name, identity, _, reserve_only in trials
+              if name == "member-labels" and reserve_only}
+    route_ids = {identity for name, identity, _, _ in trials if name == "routes"}
+    final_label_ids = {identity for name, identity, _, reserve_only in trials
+                       if name == "member-labels" and not reserve_only}
+    assert len(probes) == 1, "the optional member-label probe is private and shared by bounded trials"
+    assert 1 <= len(route_ids) <= 3
+    assert probes.isdisjoint(route_ids | final_label_ids)
+    assert seen["pre_index_id"] not in {identity for _, identity, _, _ in trials}
+    assert seen["selected_index_id"] in final_label_ids
     assert "as-of-label" in pre_requests
     assert set(pre_requests).isdisjoint(seen["post_request_ids"])
-    for identity in trial_ids:
-        phases = [name for name, index_id, _ in trials if index_id == identity]
-        assert phases in (["routes", "relation-labels"],
-                         ["routes", "member-labels", "relation-labels"],
-                         ["member-labels", "routes", "relation-labels"],
-                         ["member-labels", "routes", "member-labels", "relation-labels"])
-        counts = [count for _, index_id, count in trials if index_id == identity]
-        assert counts == sorted(counts)
+    assert route_trial_phases == [["routes", "member-labels", "relation-labels"]] * len(route_ids)
+    for identity in final_label_ids:
         assert len(requested.get(identity, ())) == len(set(requested.get(identity, ())))
         assert seen["pre_index_ids"] <= trial_initial_ids[identity]
+    for identity in route_ids:
+        assert seen["pre_index_ids"] <= trial_initial_ids[identity]
+        assert trial_initial_ids[identity] <= trial_final_ids[identity]
+    for identity in final_label_ids:
+        assert probe_added_ids[next(iter(probes))].isdisjoint(trial_initial_ids[identity])
         assert trial_initial_ids[identity] <= trial_final_ids[identity]
