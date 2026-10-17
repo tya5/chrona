@@ -2,7 +2,7 @@
 
 ## Baseline and design plan
 
-Ready base: `9d888beb7468739b68e35de8b1d0ade79cf0ff56`.
+Ready base: `5cc04dd5b59079650f27da6434b80ad9d8be9f8b`.
 The font and measured-run corrections are published in PRs1619/1621;
 [release38985610444](https://github.com/tya5/chrona/actions/runs/38985610444) passed.
 [Current acceptance](../../reviews/current/issue-1612-automatic-cjk-fonts-acceptance-review-2026-10-17.md)
@@ -15,6 +15,7 @@ the PDF work has no overlapping product files.
 | Synthetic test: a Theme naming only a Latin family renders a CJK string through the fallback and records which face it used. | Met by published font controls; retain them. |
 | All 15 presets render a Japanese CSV import to PNG, SVG and PDF with no glyph error, on macOS and on the Linux CI runner (Noto CJK package). View three PNGs and one rasterised PDF. | Not met: Marquee PDF still refuses. Re-run all45 without the refusal exception. |
 | Public SVG/Scene byte-identical for Latin-only examples. | Published font evidence met; repeat against the ready base after PR1623. |
+| Reviewer: please trace it and fix it in the face-run path, with a synthetic twin of a mixed Latin+CJK string checked for weight in PNG (and the same in PDF). | Not met: [mixed-script PNG weight finding](https://github.com/tya5/chrona/issues/1612#issuecomment-6229304765); trace exact completed faces through the full PNG and PDF, including provider-absent Hiragino. No speculative font substitution. |
 
 ## Design and whole-architecture review
 
@@ -43,6 +44,12 @@ as `a2918bf202b51e974813b02c6649af63f9fe1d8a`.
   unavailable or mismatched engine evidence using the existing stable diagnostics.
   Reject whole-page rasterization, name-only face selection and new optional-effect
   failures. No independent numeric performance or visual-error threshold is added.
+- Mixed-run weight is an additional required correction, not waived by successful
+  output generation. Compare actual full PNG glyphs with the measured regular/bold
+  assets and the matching PDF. Keep Layout face choice/measurement authoritative;
+  do not move fallback selection into adapters. If the trace exposes a missing
+  contract, publish the selected correction before implementation. PNG raster use
+  must not inherit PDF-only embedding-permission refusals.
 
 ## Implementation plan and publication
 
@@ -50,6 +57,7 @@ as `a2918bf202b51e974813b02c6649af63f9fe1d8a`.
 | --- | --- | --- |
 | 1. Profile/closure | `visual_capabilities.py`, CLI choices, `closure.py`, vocabulary/Render Context schemas, inventory/registry; peer, omission, explicit baseline, unsupported-required and descriptor tests; schema equivalence. | One coherent commit after the published design; preserve all existing valid Contexts. |
 | 2. PDF serialization | Private glow/font-alias lowering; `pdf_fonts.py`, `pdf_opacity.py`, renderer registry. Test exact assets/collection index/permissions, RGBA/soft masks, completed region/patterns, source text, clips/transforms, unequal nested opacity and native cap/join. | No global library patches or source-file mutation; keep the existing no-glow dependency path. |
+| 2b. Mixed-run weight | Trace the reviewer strings through measured run assets/weights, SVG spans, actual full PNG and embedded PDF faces; provider and native OS cases. Choose the bounded owner correction only from that evidence and add a synthetic exact-face twin. | Complete design/whole-architecture review before code if a contract gap exists. This required finding keeps the issue open. |
 | 3. Acceptance | Remove the Marquee refusal exception; run45 real outputs locally/CI, view three PNGs and a rasterized PDF, compare all public SVG/Scene bytes and inspect generated reports as a batch. | One PDF PR after1623, focused local tests; full three-OS/conformance/wheel/reproduction in CI. Close only after the literal review and its exact-main release pass. |
 
 Update this record and the existing acceptance review in place. Publish the design,
