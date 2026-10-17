@@ -84,3 +84,20 @@ def test_an_empty_notes_source_reserves_nothing_and_a_non_empty_one_keeps_its_sl
 
     assert not any(item.source == "notes" for item in empty.surface.slots)
     assert any(item.source == "notes" and item.bounds[3] > 0 for item in noted.surface.slots)
+
+
+
+def test_wallboard_dark_legend_row_fits_its_slot_without_a_visible_overflow_warning(tmp_path):
+    # The legend's one-row reserve was the float product 12 * 1.4 = 16.799999999999997, below the slot's own
+    # Decimal one-row minimum 16.8, so the slot warned W_LAYOUT_VISIBLE_OVERFLOW for a row that fits (#1649).
+    parts = sr.bundle("wallboard-dark")
+    source = sr.with_calendar(sr.project({"a": sr.span("a", date(2026, 2, 2), 30), "g": sr.point("g", date(2026, 3, 9))}))
+    detail = {"version": "chrona/review-detail-profile/v0.1", "id": "legend-detail",
+              "body": {"legend": [{"role": role, "label": LABELS[role]} for role in ("planned", "actual")]}}
+    rendered = sr.render(tmp_path, source, presentation=parts, detail=detail, viewport=(1600, None))
+    slot, rows = _legend(rendered)
+
+    assert [item for item in rendered.scene.diagnostics
+            if item.startswith("W_LAYOUT_VISIBLE_OVERFLOW") and "legend" in item] == []
+    assert len(rows) == 1
+    assert slot.bounds[3] >= 16.8
