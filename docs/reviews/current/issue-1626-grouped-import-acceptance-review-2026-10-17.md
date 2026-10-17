@@ -26,6 +26,11 @@ diagnostic inventory tests passed. Require final-head PR checks, then three-OS f
 pytest/conformance/wheel and public reproduction on exact main containing this
 review. Keep issue1626 open until those gates pass.
 
+The Sunday role/direct-field matrix and quality-bound guards pass (34 focused
+tests). Role grouping verifies three omitted summaries; direct-field grouping
+retains the original required-barrier and quality-fallback witness. Both retain
+all route-completeness, suppression, crossing and expansion-safety checks.
+
 ## Architecture conclusion
 
 Role-origin normalization preserves the declared grouping contract; projection
