@@ -19,9 +19,9 @@ the weekly forecast example and validator are complete. Folded packing and final
 placement share exact text/icon/chip footprint measurement; the large-chip twin
 checks header lanes and required pre-route obstacles. Optional-title policy is
 independent. Per-occurrence table coverage and forecast Scene identity are closed.
-#1632 remains dev A row 1; its PR #1644 is in CI. During that verified wait,
-F4 evidence preparation continues without another feature PR.
-The actual trial PNGs were rendered and viewed at WIP 2f9f36b3f: target-b
+#1632 code PR #1644 landed as ccf93c0e4 and is merged into this candidate;
+its acceptance review PR #1645 and exact-main release gate remain pending.
+The actual trial PNGs were rendered and viewed at WIP ccc4acf24: target-b
 shows 25 forecast/ghost objects and table deltas; technical-print shows 22
 selected forecast/ghost objects and independent deltas. Required estimates and
 the truthful legend are visible; optional title suppression and preset contrast
