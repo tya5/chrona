@@ -319,7 +319,10 @@ published separately before code, without creating another design authority.
   vocabulary reachability; focused Layout/Scene/contrast regressions. Official
   materializers must retain paths and primitive/purpose/role counts and SVG
   visual bytes. Scene resource-provenance additions are intended, counted
-  separately from geometry/paint changes. Do not edit examples/generated files.
+  separately from geometry/paint changes. Do not edit bot-owned public outputs.
+  Refresh affected `tests/fixtures` mirrors with the standard materializer and
+  exact synthetic Scene characterizations for the intentional provenance delta;
+  SVG bytes and every non-provenance Scene fact must remain unchanged.
 - **Publication:** one V1 code PR contains resource, schema, loader, closure,
   tests and implemented Spec13/49/56 updates, followed by its concise slice
   acceptance evidence. Reviewer reviews the PR/count table; exact-head CI and
@@ -327,15 +330,8 @@ published separately before code, without creating another design authority.
   for S1/S2 and dev B's C1. Any discovered contract gap returns to this record
   and architecture review before code resumes.
 
-V1 focused evidence: the independent117-row digest matches before/after;
-92 resource/closure/registry/Scene tests and52 diagnostic/boundary/docs tests
-pass (overlap). Schema equivalence passes with one added schema,39 unchanged,
-577 documents/467 mapped/5 known invalid and739 unchanged probes; L2+L3=36.5s.
-Schema inventory/annotations/references, reachability, Theme consumers,
-encoding and inward import checks pass. Actual wheel resource/schema bytes
-equal their source authorities. Independent review corrected the mutable
-derived index and the bootstrap diagnostic-layer dependency; neither requires
-a fallback table. Official materializer counts and release gates remain pending.
+Current verification, artifact counts, CI findings and release status are
+recorded once in the [literal acceptance review](../../reviews/current/issue-419-semantic-resource-acceptance-review-2026-10-17.md).
 
 ## V1 equivalence inventory (117-entry baseline)
 

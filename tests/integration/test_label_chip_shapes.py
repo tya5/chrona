@@ -13,6 +13,7 @@ import pytest
 import yaml
 
 from chrona.presentation.scene.serialization import serialize_scene
+from chrona.resources.semantic_vocabulary import builtin_semantic_vocabulary
 from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
 from tests.support.legacy_axis import use_legacy_six_tier_axis
@@ -223,19 +224,15 @@ def test_default_burst_fit_keeps_circle_outline_and_svg_bytes(tmp_path):
 
 
 def test_absent_shape_preserves_characterized_scene_and_svg_bytes(tmp_path):
-    # #1296 intentionally pads selected-planned windows. Removing only that
-    # rule independently reproduces the preceding Scene/SVG hashes exactly.
-    # Keep actual current bytes frozen, without provenance/geometry normalization.
     rendered = _render_asof(tmp_path)
     scene = serialize_scene(rendered.scene)
-    # Empty-legend normalization changes only slots and empty sibling origins;
-    # completed primitives, diagnostics and SVG bytes remain characterized.
-    # #1649: an empty notes source is likewise absent; only the Scene's slot list changes (SVG bytes identical).
-    # #1633: generated one-per-object lanes head the default lane column `Task` (was `Lane`).
-    assert len(scene) == 26209
-    # Only the packaged View's provenance contentIdentity differs from ready main
-    # (calendar-days -> working-days); the rendered SVG remains byte-identical.
-    assert sha256(scene).hexdigest() == "108ca5dcbc9e1d3e1c33ca8c247e90a38b6c5b6841cbb5afa4d80a39c05f3d2b"
+    # Scene provenance now includes the wheel-owned vocabulary; geometry, paint and SVG bytes remain characterized.
+    assert len(scene) == 26369
+    vocabulary = builtin_semantic_vocabulary()
+    assert [resource for resource in rendered.scene.provenance.resources if resource[0] == "semantic-vocabulary"] == [
+        ("semantic-vocabulary", vocabulary.id, "v0.1", vocabulary.content_identity),
+    ]
+    assert sha256(scene).hexdigest() == "c7d2102cac928383f6285527537e74bac921bb26ba4fafaff2b005df2dec9c8b"
     assert len(rendered.artifact.content) == 8173
     assert sha256(rendered.artifact.content).hexdigest() == "f5031fb8939295b170a188ec7971b109dc5f8372f7011a21e40584d32451964a"
 

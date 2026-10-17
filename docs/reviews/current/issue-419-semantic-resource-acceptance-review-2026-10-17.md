@@ -47,7 +47,23 @@ gate found a bootstrap diagnostic-layer cycle. The published correction keeps
 native schema failures below rich ingress diagnostics; immutable indexes and
 the inward-dependency gate now pass. No Python fallback table remains.
 
-Official materializer counts, unchanged SVG/primitive geometry/paint evidence,
-the intended Scene resource-provenance additions, reviewer PR acceptance and
-exact-main three-OS release are pending. Parent419 remains open for S1/S2/C1.
-No examples or generated artifacts were edited.
+Official head `a7b13433a` [snapshot39042795786](https://github.com/tya5/chrona/actions/runs/39042795786)
+has109 unchanged paths: all50 SVG byte-identical; all50 Scene JSONs differ only
+by one exact vocabulary provenance resource. No primitive, purpose, role,
+geometry, paint, route or label changed. Two of9 reports change (source-line
+inventory2551→2551bytes and diagnostics304701→305877); other7 are identical.
+
+That run's13 pytest failures were11 expected-byte/fixture failures and two
+schema index omissions; conformance, reproduction and MCP passed. Seven
+affected Controller fixtures were refreshed through the standard materializer:
+each SVG is byte-identical, each Scene differs only by the same provenance
+entry. Three synthetic Scene characterizations now retain full-byte hashes and
+assert the vocabulary identity; SVG hashes remain unchanged. Schema README and
+the fixed host-ID accounting are corrected. Unrelated older Aster/capabilities
+fixture differences were not absorbed. No product behavior or test comparison
+was weakened, and no public examples/bot-owned output was edited.
+The corrected focused batch passes39 characterization/materializer tests;
+schema identifier/part accounting passes141 tests, covering all13 CI failures.
+
+Corrected-head CI, reviewer PR acceptance and exact-main three-OS release
+remain pending. Parent419 remains open for S1/S2/C1.

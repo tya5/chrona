@@ -8,13 +8,13 @@ from xml.etree import ElementTree
 
 from chrona.presentation.layout import surface_annotations
 from chrona.presentation.scene.serialization import serialize_scene
+from chrona.resources.semantic_vocabulary import builtin_semantic_vocabulary
 from tests.support import synthetic_review as sr
 from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 
-# All four entries/indexes/leaders remain present. The packaged working-day
-# policy changes only View provenance; visible SVG bytes remain characterized.
-NO_SUPPRESSION_SCENE_SHA256 = "0858ed098c36513b5ea1ca94e2f910644802fade40d17609562a3e0fe0a4acfc"
+# Scene provenance now includes the wheel-owned vocabulary; geometry, paint and SVG bytes remain characterized.
+NO_SUPPRESSION_SCENE_SHA256 = "3ffffd26d3cb541f97c033259906852194dd4fbc1c382a772255d96d13c0be1e"
 NO_SUPPRESSION_SVG_SHA256 = "3e9593666a8f1e60d9180ca6f9697e0ff912626fbe565080edbf5a57d9c5c5ce"
 
 
@@ -74,6 +74,10 @@ def test_unsuppressed_scene_and_svg_match_the_characterized_bytes(tmp_path):
     ids = _by_id(rendered)
     assert {f"note-index:note-{index}" for index in range(4)} <= ids.keys()
     assert {f"annotation-leader:note-{index}" for index in range(4)} <= ids.keys()
+    vocabulary = builtin_semantic_vocabulary()
+    assert [resource for resource in rendered.scene.provenance.resources if resource[0] == "semantic-vocabulary"] == [
+        ("semantic-vocabulary", vocabulary.id, "v0.1", vocabulary.content_identity),
+    ]
     assert hashlib.sha256(serialize_scene(rendered.scene)).hexdigest() == NO_SUPPRESSION_SCENE_SHA256
     assert hashlib.sha256(rendered.artifact.content).hexdigest() == NO_SUPPRESSION_SVG_SHA256
 
