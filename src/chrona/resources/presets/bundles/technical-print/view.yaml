@@ -95,7 +95,7 @@ body:
       - id: Task
         source: label
       - id: Owner
-        source: {field: owner}
+        source: {fieldRole: responsible}
         transform: initials
         textRole: tableCellMono
   markers:
