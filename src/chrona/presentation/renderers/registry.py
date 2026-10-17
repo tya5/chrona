@@ -1,6 +1,7 @@
 """Target-kind renderer selection and optional CairoSVG conversion."""
 from __future__ import annotations
 
+from hashlib import sha256
 from importlib.metadata import version
 from io import BytesIO
 from pathlib import Path
@@ -20,6 +21,7 @@ from chrona.presentation.renderers.pdf_fonts import (
     pdf_font_bytes,
 )
 from chrona.presentation.renderers.pdf_svg import PDF_PAINT_GRAMMAR, lower_pdf_svg
+from chrona.presentation.renderers.pdf_opacity import PDF_OPACITY_GRAMMAR, render_pdf_vector
 
 
 def _failure(code: str, detail: str) -> ValueError:
@@ -83,6 +85,7 @@ class ReportLabPdfRenderer:
         files, identities = _font_files(self._font_metrics, self._asset_root, self._font_files_override,
                                         self._asset_resolver)
         svg = V05SvgRenderer(viewer_fit=False).render(surface).content
+        svg, pdf_aliases = _pdf_private_svg(surface, svg, files)
         characters = _svg_font_characters(svg)
         svg = lower_pdf_svg(surface, svg)
         translated = False
@@ -90,9 +93,13 @@ class ReportLabPdfRenderer:
             from reportlab import rl_config
             from reportlab.pdfbase import pdfmetrics
             from reportlab.pdfbase.ttfonts import TTFError, TTFont
-            from reportlab.graphics import renderPDF
-            from svglib.svglib import svg2rlg
-            plans = [(item, pdf_font_bytes(item, characters.get((item.family, item.weight), frozenset())))
+            def face_name(item: FontFile) -> str:
+                if pdf_aliases is None:
+                    return item.family
+                return pdf_aliases.get((item.content_identity, item.family.casefold(), item.weight),
+                                       _pdf_private_font_alias(item.content_identity, item.family, item.weight,
+                                                               item.index))
+            plans = [(item, pdf_font_bytes(item, characters.get((face_name(item), item.weight), frozenset())))
                      for item in files]
             translated = any(converted is not None for _, converted in plans)
             mapping: dict[tuple[str, int], str] = {}
@@ -101,7 +108,7 @@ class ReportLabPdfRenderer:
                     payload, alias = pdf_embedding_bytes(item, converted)
                     registered = TTFont(alias, BytesIO(payload))
                     registered_name = alias
-                    key = (item.family.casefold(), item.weight)
+                    key = (face_name(item).casefold(), item.weight)
                     if key in mapping and mapping[key] != registered_name:
                         raise PdfFontConversionError(f"conflicting closed PDF faces for {item.family}/{item.weight}")
                     pdfmetrics.registerFont(registered)
@@ -110,14 +117,13 @@ class ReportLabPdfRenderer:
                     raise _failure("E_RENDER_FONT_CLOSURE", f"PDF cannot embed {item.family}/{item.weight} from "
                                    f"{item.path.name}: {error}; render SVG or PNG if embedding is unavailable") from error
             rl_config.invariant = 1
-            drawing = svg2rlg(BytesIO(svg), font_map=_ClosedPdfFontMap(mapping))
-            content = renderPDF.drawToString(drawing)
+            content = render_pdf_vector(svg, font_map=_ClosedPdfFontMap(mapping))
         except PdfFontConversionError as error:
             raise _failure("E_RENDER_FONT_CLOSURE", str(error)) from error
         except ImportError as error:
             raise _failure("E_RENDER_RASTERIZER_UNAVAILABLE", "target PDF requires installed svglib and reportlab adapters") from error
         prefix = (f"svglib-{self._descriptor['svglibVersion']}-reportlab-{self._descriptor['reportlabVersion']}-invariant"
-                  f"-{PDF_PAINT_GRAMMAR}-{EMBEDDING_GRAMMAR}-fonttools-{version('fonttools')}")
+                  f"-{PDF_PAINT_GRAMMAR}-{PDF_OPACITY_GRAMMAR}-{EMBEDDING_GRAMMAR}-fonttools-{version('fonttools')}")
         if translated:
             prefix += f"-{CONVERSION_GRAMMAR}"
         return RenderArtifact("pdf", "application/pdf", content, _adapter_identity(prefix, identities))
@@ -141,15 +147,90 @@ class _ClosedPdfFontMap:
             raise _failure("E_RENDER_FONT_CLOSURE", f"SVG requests an unregistered PDF face {font_name}/{weight}/{style}") from error
 
 
+def _pdf_private_font_alias(identity: str, family: str, weight: int, index: int = 0) -> str:
+    """Name one exact face privately for PDF's family/weight-only font-map protocol."""
+    key = f"{identity}\0{family.casefold()}\0{weight}\0{index}".encode("utf-8")
+    return "ChronaClosedFace-" + sha256(key).hexdigest()
+
+
+def _pdf_private_svg(surface: object, svg: bytes, files: tuple[FontFile, ...]):
+    """Use exact asset aliases in a private PDF SVG copy; public SVG stays unchanged."""
+    primitives = getattr(surface, "primitives", ())
+    layouts = {item.scene_id: item.text_layout for item in primitives
+               if item.kind == "Text" and item.text_layout is not None}
+    if not any(getattr(run, "asset_identity", None) is not None
+               for layout in layouts.values() for line in layout.runs for run in line):
+        return svg, None
+
+    aliases: dict[tuple[str, str, int], str] = {}
+
+    def alias(identity: str, family: str, weight: int) -> str:
+        matches = [item for item in files if item.content_identity == identity
+                   and item.family.casefold() == family.casefold() and item.weight == weight]
+        if len(matches) != 1:
+            raise _failure("E_RENDER_FONT_CLOSURE",
+                           f"PDF text requests an unregistered exact font asset {family}/{weight}/{identity}")
+        value = _pdf_private_font_alias(identity, family, weight, matches[0].index)
+        aliases[(identity, family.casefold(), weight)] = value
+        return value
+
+    # Keep the default SVG namespace: svglib's clip handling depends on it.
+    # Import lazily so the unchanged Latin-only PDF path keeps its old dependency path.
+    try:
+        from lxml import etree
+    except ImportError as error:
+        raise _failure("E_RENDER_RASTERIZER_UNAVAILABLE",
+                       "face-closed PDF rendering requires lxml namespace-preserving SVG serialization") from error
+    root = etree.fromstring(svg)
+    for text in root.iter():
+        if text.tag.rsplit("}", 1)[-1] != "text":
+            continue
+        layout = layouts.get(text.attrib.get("data-scene-id"))
+        if layout is None:
+            continue
+        family = _families(layout.family)[0]
+        weight = layout.weight
+        text.attrib["font-family"] = alias(layout.asset_identity, family, weight)
+        text.attrib["font-weight"] = str(weight)
+        for run in text.iter():
+            if run is text or run.tag.rsplit("}", 1)[-1] != "tspan":
+                continue
+            identity = run.attrib.get("data-asset-identity")
+            if identity is None:
+                continue
+            run_family = run.attrib.get("font-family", family)
+            run_weight = int(run.attrib.get("font-weight", weight))
+            run.attrib["font-family"] = alias(identity, run_family, run_weight)
+            run.attrib["font-weight"] = str(run_weight)
+    return etree.tostring(root, encoding="utf-8"), aliases
+
+
 def _svg_font_characters(svg: bytes) -> dict[tuple[str, int], frozenset[int]]:
     """Read completed text's selected face, never resolve or measure a font here."""
     characters: dict[tuple[str, int], set[int]] = {}
-    for node in ElementTree.fromstring(svg).iter():
-        if node.tag.rsplit("}", 1)[-1] != "text":
-            continue
-        # Layout puts the exact measured face first; the rest are viewer alternatives.
-        key = (_families(node.attrib["font-family"])[0], int(node.attrib["font-weight"]))
-        characters.setdefault(key, set()).update(ord(character) for character in "".join(node.itertext()))
+    def collect(node: ElementTree.Element, inherited: tuple[str, int] | None = None) -> None:
+        family = node.attrib.get("font-family")
+        weight = node.attrib.get("font-weight")
+        current = inherited
+        if family is not None or weight is not None:
+            if family is None and inherited is not None:
+                selected_family = inherited[0]
+            elif family is not None:
+                selected_family = _families(family)[0]
+            else:
+                selected_family = ""
+            selected_weight = int(weight) if weight is not None else (inherited[1] if inherited else 400)
+            current = (selected_family, selected_weight)
+        if node.tag.rsplit("}", 1)[-1] == "text" and current is None:
+            current = (_families(node.attrib["font-family"])[0], int(node.attrib["font-weight"]))
+        if current is not None:
+            bucket = characters.setdefault(current, set())
+            bucket.update(ord(character) for character in (node.text or ""))
+        for child in node:
+            collect(child, current)
+            if current is not None:
+                characters.setdefault(current, set()).update(ord(character) for character in (child.tail or ""))
+    collect(ElementTree.fromstring(svg))
     return {key: frozenset(values) for key, values in characters.items()}
 
 

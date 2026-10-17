@@ -28,7 +28,7 @@ properties:
         type: object
         propertyNames: {$ref: "urn:chrona:common-v0.1#/$defs/identifier"}
         additionalProperties: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation"}
-      heading: {$ref: "urn:chrona:common-v0.1#/$defs/viewHeading"}
+      heading: {$ref: "urn:chrona:common-v0.1#/$defs/viewHeadingWithParts"}
       grouping:
         description: "Group presentation defaults; keys and ordering remain in the View."
         type: object

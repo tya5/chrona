@@ -23,7 +23,7 @@ from chrona.presentation.table_presentation import BooleanPresencePresentation
 class HeadingContent:
     """Normalized kicker, title and subtitle text for one table-timeline heading."""
 
-    title: str
+    title: str | None
     subtitle: str | None = None
     kicker: str | None = None
     text_wrap: Literal["allow", "forbid"] = "forbid"

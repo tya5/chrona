@@ -68,6 +68,7 @@ def place_surface_headings(request: SurfaceLayoutRequest,
             letter_spacing=run.letter_spacing, text_transform=run.text_transform,
             numeric_spacing=run.numeric_spacing, horizontal_scale=run.horizontal_scale,
             font_asset_identity=run.font_asset_identity, collision_region=slot.slot_id,
+            runs=run.fallback_runs,
             slot_id=slot.slot_id,
             collision_domain=CollisionDomain(slot.slot_id, "content"),
             source_content=source.text_runs()[0].content,
@@ -84,6 +85,8 @@ def _heading_warnings(text: tuple[TextPlacement, ...], request: SurfaceLayoutReq
 
 def place_heading(request: SurfaceLayoutRequest, slot: SlotPlacement, measured: MeasuredSources) -> tuple[TextPlacement, ...]:
     source = measured.inputs.get("title")
+    if source is not None and not source.text_runs():
+        return ()
     measurement = measured.measurements.get("title")
     if measurement is None:
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/measurements/title")

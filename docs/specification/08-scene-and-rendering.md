@@ -125,6 +125,11 @@ discover host fonts or fall back to another family; unknown entries fail with
 `E_RENDER_FONT_CLOSURE`. It uses svglib's public font-map protocol, not private
 global maps.
 
+For completed fallback runs (#1612), this mapping applies to each run's supplied
+family/weight, not the parent text's Latin face. SVG spans and PDF subset
+inventory retain inherited faces for ordinary text and explicit faces for runs;
+the adapter never repeats Layout's glyph-coverage decision (Specification 30).
+
 ReportLab caches dynamic faces by registration and PostScript names. In every
 PDF render, namespace both internal embedding names by a digest of
 the exact single-face embedding payload before naming (including its selected
@@ -161,6 +166,19 @@ than substituting a plain fill. Every PDF adapter identity includes the grammar
 Raw viewer-fit text and exact render-local font mapping remain unchanged.
 For completed wobbled Paths, terminal axes follow the painted outline's first
 and last sub-paths, not the nominal route; wobble is never recomputed here.
+
+PDF overall paint opacity (#1606) is applied once to the composed primitive,
+including overlapping fill/stroke, terminal outlines and pattern children.
+The adapter uses isolated transparency Form XObjects, preserving nested alpha,
+clips, transforms, painter order and the closed font mapping; it must not
+approximate group opacity by assigning alpha independently to each child.
+Its identity includes `pdf-isolated-opacity-v1`. Opaque spans retain the normal
+vector conversion path; neither page rasterization nor Layout changes are needed.
+For completed text runs, the PDF-private SVG places each run at the prefix sum
+of its measured `inlineSize` plus between-run letter spacing, divided by the
+existing horizontal scale in the text's pre-transform frame. Baselines, line
+offsets, whitespace, run sizes and exact face identity are preserved. The adapter
+does not remeasure advances. Public SVG/PNG and Scene serialization are unchanged.
 
 ### 2.1 M27 public Review SVG binding
 

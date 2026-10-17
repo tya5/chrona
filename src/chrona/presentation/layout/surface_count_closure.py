@@ -6,8 +6,8 @@ from typing import Any, Literal
 
 from chrona.core.figures import FigureSpec, resolve_figures
 from chrona.presentation.count_text import CountTextError
-from chrona.presentation.figure_text import FigureTextProgram, FigureTextReadError, compile_figure_text
-from chrona.presentation.heading_text import HeadingTextPrograms
+from chrona.presentation.figure_text import FigureTextError, FigureTextProgram, FigureTextReadError, compile_figure_text
+from chrona.presentation.heading_text import ClosedHeadingProgram, HeadingTextPrograms
 from chrona.presentation.layout.dependency_network import DependencyNetworkLayout, compose_dependency_network_surface
 from chrona.presentation.layout.model import CountDependentHeadingFitError, LayoutError
 from chrona.presentation.layout.slot_heading import compile_slot_heading_programs, source_has_content
@@ -92,10 +92,10 @@ def inspect_count_reads(value: SurfaceRenderPlanInput) -> CountReadInput:
                     "heading.subtitle": "subtitle", "heading.kicker": "kicker"}[item.source]
             text = getattr(heading, part, None)
             present = text is not None
-            if isinstance(text, FigureTextProgram) and not text.figure_ids & late:
+            if isinstance(text, (FigureTextProgram, ClosedHeadingProgram)) and not text.figure_ids & late:
                 try:
                     present = bool(text.bind(dict(value.projection.figures), value.view.figure_formats))
-                except CountTextError as error:
+                except (CountTextError, FigureTextError) as error:
                     raise FigureTextReadError(error, f"/body/heading/{part}") from error
             elif text is not None and not isinstance(heading, HeadingTextPrograms):
                 present = bool(text)

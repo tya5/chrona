@@ -379,6 +379,19 @@ and the Theme's declared kicker gap. Without `kicker`, existing title/deck
 measurement, coordinates and output remain unchanged. This is an optional
 addition to `chrona/view/v0.28`, not a new schema version.
 
+**Conditional heading parts (#1608).** A kicker, title or subtitle may instead
+be an ordered list of `{text: <template>, omitWhenZero?: <count figure id>}`.
+Parts concatenate verbatim; no spaces, separators or placeholders are invented.
+`omitWhenZero` reads a declared global count's raw integer, not its formatted
+text. At zero Layout omits that part silently before measurement; otherwise it
+binds its existing template normally. Unknown guards are `E_VIEW_FIGURE_UNKNOWN`,
+group-scoped guards are `E_FIGURE_SCOPE_UNAVAILABLE`, and non-count guards are
+`E_VIEW_FIGURE_INVALID`, at the guard reference. Guards participate in the same
+deferred Layout-count closure as template reads. An entirely omitted heading
+member contributes no text. String shorthand retains its existing behavior.
+The shared heading schema admits this optional form in place for both Views and
+Layout `viewDefaults` (Spec 56 §3.2); Scene and adapters receive only completed text.
+
 ### 7.5 Slot caption copy (#1100)
 
 A View MAY declare `slotHeadingText: {<Layout slot node id>: <literal copy>}`. Each target must be a slot

@@ -60,6 +60,10 @@ referenced declared markers and attaches it only to the completed path endpoint.
 
 ### 2.2 Annotation anchor and leader contract
 
+Completed text runs may carry their exact family, weight and font asset identity
+(#1612; Specification 30). Layout selects and measures them; Scene only projects
+them. Runs without a distinct face retain their existing serialized shape.
+
 The Scene supports the existing View annotation contract for object anchors only:
 `anchor.kind: object` together with `id`, `facet`, and `endpoint`. It resolves that
 reference against projected planned/Actual marks through the existing annotation

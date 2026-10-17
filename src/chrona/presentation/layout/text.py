@@ -110,6 +110,49 @@ def metric_for_family(family: str, weight: int, font_metrics: Any, horizontal_sc
     return scaled_metric(select(family, weight) if callable(select) else font_metrics, horizontal_scale)
 
 
+def completed_fallback_face_runs(lines: tuple[str, ...], *, font_size: float, font_metrics: Any,
+                                letter_spacing: float, text_transform: str,
+                                numeric_spacing: str, horizontal_scale: float) -> tuple[tuple[TextRunPlacement, ...], ...]:
+    """Close exact per-glyph fallback faces for measured source lines, when needed.
+
+    ``lines`` are the untransformed measured source lines. Empty means the declared face
+    suffices, preserving the legacy serializer path (including its pre-existing small-caps
+    behavior). This helper selects no resources: ``glyph_face`` consults the font metrics
+    closure owned upstream.
+    """
+    resolved_lines = tuple(paint_text(line, text_transform=text_transform) for line in lines)
+    select_face = getattr(font_metrics, "glyph_face", None)
+    if not callable(select_face) or not any(
+        getattr(select_face(character), "informational_fallback", False)
+        and select_face(character).content_identity != font_metrics.content_identity
+        for line in resolved_lines for character in line
+    ):
+        return ()
+    completed = []
+    for line in lines:
+        pieces = (small_caps_runs(line, small_caps_scale(text_transform))
+                  if small_caps_scale(text_transform) is not None
+                  else ((paint_text(line, text_transform=text_transform), 1.0),))
+        selected = []
+        for content, factor in pieces:
+            groups: list[tuple[str, Any]] = []
+            for character in content:
+                face = select_face(character)
+                if groups and groups[-1][1] is face:
+                    groups[-1] = (groups[-1][0] + character, face)
+                else:
+                    groups.append((character, face))
+            for text, face in groups:
+                selected.append(TextRunPlacement(
+                    text, font_size * factor,
+                    measure_text_width(text, font_size=font_size * factor,
+                                       font_metrics=scaled_metric(face, horizontal_scale),
+                                       letter_spacing=letter_spacing, numeric_spacing=numeric_spacing),
+                    face.family, face.weight, face.content_identity))
+        completed.append(tuple(selected))
+    return tuple(completed)
+
+
 def measure_text_width(content: str, *, font_size: float, font_metrics: Any,
                        letter_spacing: float = 0, text_transform: str = "none",
                        numeric_spacing: str = "proportional") -> float:
@@ -356,6 +399,14 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
             text, font_size=font_size * factor, font_metrics=font_metrics, letter_spacing=letter_spacing,
             numeric_spacing=treatment.numeric_spacing)) for text, factor in small_caps_runs(line, caps))
             for line in (lines or (content,)))
+    fallback_runs = completed_fallback_face_runs(
+        tuple(lines or (content,)), font_size=font_size, font_metrics=font_metrics,
+        letter_spacing=letter_spacing, text_transform=treatment.transform,
+        numeric_spacing=treatment.numeric_spacing, horizontal_scale=float(treatment.horizontal_scale))
+    if fallback_runs:
+        # Discovery is already closed. Split only affected text into exact measured faces,
+        # composing with existing size runs and transforms.
+        runs = fallback_runs
     scale = float(treatment.horizontal_scale)
     rotation = {"horizontal": 0, "rotate-cw": 90, "rotate-ccw": -90}.get(orientation)
     if rotation is None:

@@ -284,6 +284,9 @@ class TextRun:
     text: str
     font_size: float
     inline_size: float
+    family: str | None = None
+    weight: int | None = None
+    asset_identity: str | None = None
 
 
 @dataclass(frozen=True)
