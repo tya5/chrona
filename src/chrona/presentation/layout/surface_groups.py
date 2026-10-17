@@ -125,8 +125,14 @@ def group_tag_bounds(tab: GroupTabSpec, column: tuple[float, float], rows: Rect)
 def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                                review_rows: tuple[Any, ...], groups: tuple[GroupPlacement, ...],
                                body_size: float,
-                               tag_column: tuple[float, float] | None = None) -> SurfaceGroupPresentation:
-    """Place declared group labels inside completed group-header bounds."""
+                               tag_column: tuple[float, float] | None = None,
+                               text_end_limit: Decimal | None = None) -> SurfaceGroupPresentation:
+    """Place declared group labels inside completed group-header bounds.
+
+    ``text_end_limit`` is the inline end of the table when the header band is drawn only as far as the table (a
+    ``text`` or ``table`` band extent, #1629): the label then gives way before that end, as it does beside a tab,
+    instead of running past the band it is drawn on.
+    """
     labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
               for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
     # A View-declared header template replaces the title text only (#583).
@@ -229,10 +235,13 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                             detail=(f"actual offset={label_inset}; required reservation={tab.reserved}; "
                                     f"available={group.header_bounds.inline_size}"))
                     size = max(Decimal(0), size - tab.reserved)
+            bounded = tab is not None or text_end_limit is not None
+            if text_end_limit is not None:
+                size = max(Decimal(0), min(size, text_end_limit - start - trailing_inset))
             if group.group_id in marked:
                 # Role-marked runs share the header's baseline, each measured with its own role (#1192).
                 placed, run_warnings = place_group_header_runs(
-                    group_id=group.group_id, runs=marked[group.group_id], start=start, size=size, bounded=tab is not None,
+                    group_id=group.group_id, runs=marked[group.group_id], start=start, size=size, bounded=bounded,
                     baseline_block=group_header_baseline(group.header_bounds),
                     header_block_size=float(group.header_bounds.block_size), theme_tokens=request.theme_tokens,
                     font_metrics=request.font_metrics)
@@ -241,8 +250,8 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                 retain_header_band_geometry(group, start, placed)
                 continue
             content, disposition = labels[group.group_id], "fit"
-            if tab is not None:
-                # A header without a tab keeps today's unbounded text. Beside a tab the text is bounded by the room the
+            if bounded:
+                # A header without a tab or a table-bounded band keeps today's unbounded text. Beside a tab the text is bounded by the room the
                 # tab leaves and is shortened with its source kept, never silently (#882, as the legend of #497).
                 treatment = request.theme_tokens.text_treatment("groupHeader")
                 metrics = metric_for_role(request.theme_tokens, "groupHeader", request.font_metrics)

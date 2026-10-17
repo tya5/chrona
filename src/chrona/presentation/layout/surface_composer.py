@@ -120,7 +120,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     table_rule_shapes = table_batch.shapes
     group_batch = compose_group_presentation(
         request=request, rows=rows, review_rows=review_rows, groups=groups, body_size=body_size,
-        tag_column=(base.table_bounds[0], base.group_tag_inline_size) if base.group_tag_inline_size else None)
+        tag_column=(base.table_bounds[0], base.group_tag_inline_size) if base.group_tag_inline_size else None,
+        text_end_limit=(Decimal(str(base.table_bounds[0])) + Decimal(str(base.table_bounds[2]))
+                        if base.layout_manifest.background_extents.get("groupHeaderBand") in {"text", "table"}
+                        else None))
     text.extend(group_batch.text)
     shapes: list[ShapePlacement] = []
     shapes.extend(compose_row_group_backgrounds(
