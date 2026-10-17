@@ -4,9 +4,10 @@
 
 Public base: 41e6c83a9f742af6e7a46209c4cec8f4bca91f0f (trusted-ready).
 [Owner rule and acceptance](https://github.com/tya5/chrona/issues/1634).
-The design plan was published in 783fe50cc; the normative design and whole-
-architecture review are complete for publication. No forecast product code or final implementation plan is
-published yet. [Reviewer answers](https://github.com/tya5/chrona/issues/1634#issuecomment-6230794260)
+The design plan was published in 783fe50cc; normative design and whole-
+architecture review were published in a9c0d3ec6c4b982c1f93249eec6acfcb814632b4.
+The implementation plan below is the next publication; no forecast product code
+is published yet. [Reviewer answers](https://github.com/tya5/chrona/issues/1634#issuecomment-6230794260)
 approve retained declared units, finish-only placement with an unobserved-start
 finding, and child-envelope precedence with a named group-observation finding.
 No further reviewer gate precedes normative publication.
@@ -46,27 +47,27 @@ The shipped default currently has no delta channel: test and document its typed
 refusal with guidance to use a forecast-capable preset; do not silently alter
 its declared View or ordinary output.
 
-## Design review and implementation publication order
+## Implementation plan
 
-1. Review the normative design against Core amount/authority rules, Actual
-   selection, Snapshot/scenario identity, Context/schema evolution, View
-   selection/explicit rows, lane packing, Layout text/route ownership and
-   source-plan deadline/annotation/figure consumers. Publish the completed
-   design/review before treating implementation planning as final.
-2. Finalize independently verifiable slices in this record: forecast evaluation
-   and neutral observation selection; projection/geometry/required comparison;
-   CLI/Context/MCP and schema admission; skill and release evidence. Name exact
-   owned files, migrations, tests and publication units after design review.
-3. Implement only the published plan. New contract gaps return to design before
-   code. Run focused local tests; use CI for full three-OS release evidence.
+Publish this plan before product changes. Implement the following testable
+commits in order; publish the complete opt-in feature as one code PR, not a
+partially wired flag or a separate landing for every module. New contract gaps
+return to the living design and architecture review before code resumes.
 
-Planned ownership: Core temporal/neutral observations retain date and selection
-primitives; usecases/forecast_schedule.py coordinates the Scheduler;
-render_review.py transports typed results/findings. Projection/semantic facets
-select data; Layout completes marks, tracks, ports, required text and routes.
-Context/Draft/SDK-free agent tools normalize ingress; Scene/adapters serialize.
-Schema additions use the existing version with tested omission, an exact L1
-admission delta and schema-equivalence evidence. No generated mirrors are edited.
+| Slice | Owned files / responsibility | Focused evidence and acceptance |
+| --- | --- | --- |
+| F1 evaluation | New `usecases/forecast_schedule.py` and neutral typed forecast model; neutral latest-observation selection shared with `presentation/model/actual_observation.py`; existing Core temporal arithmetic and injected Scheduler. | New unit tests cover all literal working-day states/chain; declared d/w/wd retention, fixed-span inference/zero effort, nonworking Actual start, finish-only valid/invalid endpoints, rollup findings, latest/unmatched observations, fixed-point finding vs fatal completed-span conflict, immutability and unavailable analysis. No presentation import in scheduling/neutral facts. |
+| F2 projection and completed geometry | `model/projection.py`, semantic facets/registry, `review/v05_content.py`, Layout member labels/window admission/lane-label preflight, typed completed mark metadata, Scene model/projection and `scene-v0.7` schema. Original facts remain separate from active forecast placement/delta. | Model and integration tests cover Snapshot/no-Snapshot deltas, point/rollup completion, equal-placement ghost, both table source forms and paint, active packing/window/label visibility, required plot text before routes, table/legend/capability refusals, lane-primary inventory and outside-window forecast identity. Existing no-forecast characterization remains unchanged. |
+| F3 common ingress | `presentation/contracts/resources.py`, `model/closure.py`, `usecases/draft_render.py`, `usecases/render_review.py`, `app/cli.py`, SDK-free `app/agent_tools.py`, Context v0.17 schema and schema admission fixtures. | CLI render/render-workspace and MCP render_draft (including scoped Snapshot path) reach the same use case. Immutable CLI/MCP read Context only. Absent/false/type errors, exact identity, Actual/asOf requirements and default-preset refusal have tests. Run schema equivalence against ready main and document the precise optional Context and forecast Scene admission deltas. |
+| F4 end-to-end and release | Packaged skill's weekly-update section, forecast integration/byte tests and one concise acceptance review. Reviewer owns shared-design YAML; no copied Theme or edited public mirrors. | Render actual trial target-b + packaged technical-print as PNG/Scene; inspect all selected item deltas, required legend/ghost and as-of movement (started bars retain Actual start; fixed targets stay fixed). Compare no-flag artifacts to the ready base in a batch. Official CI supplies public SVG/Scene counts, three-OS full tests/conformance, wheel/smoke and public-materializer reproduction. |
+
+Publication boundaries: completed design/review, this implementation plan,
+feature commits and code PR, then the literal acceptance/release review. Close
+only after its exact review-containing main has the required release evidence.
+Run focused tests for each slice, not a duplicate local full suite. Source and
+schema changes carry their admission fixtures; bot-owned generated outputs are
+never hand-edited. Runtime defaults are implemented, not delegated to schema
+annotations. Existing resources need no migration when forecast is absent.
 
 Evidence must include working-calendar state twins, missed fixed targets,
 incomplete/zero-effort/rollup diagnostics, latest/unmatched observation identity,
