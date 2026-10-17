@@ -426,39 +426,34 @@ remove or suppress those placements. Carry their explicit Layout obstacle
 identities through relaxation, rather than inferring priority from every
 completed Text's `required` flag. Explicit unsafe overlap/stub completion keeps
 its existing contract below. Existing typed required-label failure behavior
-remains authoritative. Then Layout reserves
-exactly the first feasible box of each optional member name, in stable request order,
-using the existing declared candidate ladder, viewport, mark association and
-mark/text/label-visual/rule obstacles. Completed routes are not yet present.
-Reserve the full measured paint footprint, not every candidate or only glyph
-bounds. The as-of line and other `rule` geometry obstruct member names.
-Reservations are provisional Layout facts, not emitted text or diagnostics.
-Routes avoid those boxes; names are revalidated against completed route ink
-before final placement. Candidate order, reach and association are unchanged.
+remains authoritative. Run the normal route-first pipeline, including member
+names, relation labels and annotations, without optional reservations. The
+as-of line and other `rule` geometry obstruct member names.
 
-One Layout coordinator owns this policy for automatic and fixed-lane rows;
-the earlier route-corridor rehearsal does not run ahead of member reservations.
-Normally only the reserved trial runs. If it suppresses/degrades a relation or
-relaxes through a reserved footprint, a route-independent unreserved reference
-may establish whether optional reservations caused a worse completion. The
-reference retains all required labels and removes only provisional optional
-member-name footprints. Release only
-reserves intersecting the affected reference route's completed segments/arcs
-with canonical stroke clearance, then retry routing once. If that retry still
-worsens any relation status or loses a visible relation-label identity versus
-the reference, discard the provisional reservation plan and use the reference
-with names placed in their existing order. A reservation MUST NOT add an
-unroutable relation: compare every stable relation identity against the same
-reference, ordering normal accepted routes before declared non-normal recovery
-stages, then suppressed/absent routes. In particular, an accepted route may
-never become suppressed or disappear. Intentional fixed overlap/stub policies
-retain their declared status in that comparison. At most three route trials run (reserved, conditional
-reference, conditional selective-release retry); reuse the selected completed
-result, not a replay. Each trial retains its routing facts and existing
-per-instance/pass budgets; cheap/exact phases still share one attempt ceiling.
-This is distinct from first-fit's internal ranked rescue and grants no safety,
-quality, or budget reset within an attempt. Suppression of an otherwise
-placeable name is not a successful readability repair.
+Reserve on demand only when a completed route blocked an earlier candidate
+of a member name that was suppressed or selected a later declared candidate.
+The placement owner retains this obstruction evidence; the coordinator must
+not infer it from a different, globally route-free label inventory. Reserve
+only the first such feasible candidate per affected name, including its full
+measured paint footprint. Candidate order, viewport, association and reach
+remain unchanged. If no name qualifies, return the first completed pass
+without another routing pass or changed search policy.
+
+One Layout coordinator owns this policy for automatic and fixed-lane rows.
+At most one extra routing/placement pass runs, avoiding those provisional
+boxes and retaining required labels. Revalidate names against completed ink.
+Keep the second pass only if every member/relation label and annotation
+placed in pass 1 remains placed, no relation is lost or degraded, and no
+completed annotation connector loses its connected topology. Otherwise return
+the original completed pass; do not selectively release reserves or run a
+third trial. Compare stable placement and logical relation identities, including
+stub fragments and declared recovery stages. Reuse the selected completed
+batches and their matching obstacle index, without replay or ghost placements.
+Reservations are private Layout facts, not emitted text or diagnostics.
+Each attempted pass retains its recorded routing facts and existing budgets;
+first-fit's cheap/exact phases still share one attempt ceiling. This adds no
+candidate, routing policy, safety exemption or search-budget increase.
+Suppression of an otherwise placeable name is not a successful readability repair.
 
 Omitted `search` means `first-fit`. Authors requiring legacy ranked output
 declare `best`; its canonical manifest representation remains unchanged.
@@ -558,8 +553,8 @@ never execute a recovery stage. Each attempted stage has fresh per-instance/pass
 search state and budget; first-fit cheap/exact phases share that stage's ceiling.
 No surface replay or reset of a ceiling within one stage is permitted.
 
-The member-reservation coordinator treats a non-normal completion as degraded
-when an unreserved reference can restore a normal route. Its bounded trials
+The member-reservation coordinator rejects a non-normal completion when the
+first completed pass had a normal route. Its at-most-two passes
 retain common validators and their own recorded budgets. Explicit `overlap`
 and `stub` still intentionally select their fixed completion policies; final
 member-name revalidation does not exempt their ink.
@@ -894,10 +889,10 @@ Lane membership is already fixed from Project/View data (Spec 38) before this
 placement phase. A label that cannot fit is suppressed with a source-keyed
 count; its absence does not add, merge or split lanes. Only labels actually
 placed become route obstacles.
-The member-name reservation contract above supersedes #687's route-corridor
-rehearsal and #1430's route-first optional member names. Required text remains
-an immutable obstacle; provisional optional names may yield only through the
-bounded release/revalidation owner. This never changes lane membership, adds
+The member-name reservation contract above replaces #687's route-corridor
+rehearsal with bounded on-demand repair after route-first placement. Required
+text remains an immutable obstacle; optional reservations may be discarded
+only by retaining the entire first completed pass. This never changes lane membership, adds
 a candidate to the declared ladder, or permits a final name to cross route ink.
 For lane mode only, a declared `visible-overflow` direct fallback is permitted
 only if the completed path clears every required placed lane/member label.
