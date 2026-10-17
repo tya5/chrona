@@ -142,7 +142,7 @@ id: review-treatment
 body:
   rules:
     - id: behind-cell
-      when: {purpose: table-cell, columnSource: finishDelta, comparisonCategory: behind}
+      when: {purpose: table-cell, columnSource: {comparisonFacet: finishDelta}, comparisonCategory: behind}
       then: {role: variance-behind}
     - id: payload-risk
       when:
@@ -187,9 +187,11 @@ Spec60 domain ordering, palette folding, separability and Theme scale-to-Scheme
 mapping are reused. Existing View `colorEncoding` stays accepted and lowers to
 the same typed intent as Style; there is no second evaluator and no retirement
 or incompatible migration of the existing syntax. A matching encoding with a
-missing source value retains Spec60's explicit refusal. Role and encoding may
-coexist when they target distinct paint channels; conflicting assignments to
-the same occurrence/channel fail with both rule IDs and occurrence identity.
+missing source value retains Spec60's explicit refusal. Role assignment selects
+the baseline Theme treatment; an encoding overrides only its named channel,
+as existing View `colorEncoding` already does. Role and fill are independent
+assignment axes; conflicting assignments on one axis fail with both rule IDs
+and occurrence identity.
 Identical assignments coalesce with all matched rule IDs retained. Different
 role assignments or different encodings of the same channel fail; input order
 does not select a winner. No match retains existing semantic paint; there is no implicit catch-all or
@@ -336,6 +338,59 @@ encoding and inward import checks pass. Actual wheel resource/schema bytes
 equal their source authorities. Independent review corrected the mutable
 derived index and the bootstrap diagnostic-layer dependency; neither requires
 a fallback table. Official materializer counts and release gates remain pending.
+
+## S1 implementation contract and architecture review
+
+S1 keeps the approved six selectors and independent role/fill outcomes; it
+does not add a predicate language or project declarations. The source example
+above now uses the exact View column source, not an ambiguous shorthand.
+`columnSource` accepts the shared View source shape; source mappings compare
+canonically, not by displayed text. `roles` requires all named original roles.
+`fields` requires all equality predicates; booleans do not equal numeric1.
+
+Use one frozen occurrence key carrying row/member, object, source kind, semantic
+facet and optional column identity. Evaluation reads immutable original facts
+only. Equal assignments coalesce while retaining every matched rule ID;
+different roles or different encodings on the same channel are errors, even if
+their concrete colours happen to agree. Rule order is not precedence. Encoding
+identity includes resolved field, scale and domain, not legend display copy.
+
+The shared field accessor must retain presence separately from value and carry
+the source profile's field descriptor. Style `when.fields` names must have a
+profile-v0.3 declaration; legacy opaque fields remain usable by existing View
+`colorEncoding` and by its equivalent encoding outcome. Both use the same
+accessor/encoding path, not a compatibility evaluator. Optional absence does
+not match; explicit null stays present. Project/profile validation, including
+null validity, belongs to Issue344's validator, not Style. Predicate literals
+must match the declared scalar/cardinality/enum contract without coercion.
+Resolve each snapshot's own pinned packages; scenarios retain primary package
+identity and validate after overlays. Do not infer declarations from values or
+invent profile inheritance in presentation code.
+
+Retain Scene `visualRole` as the canonical semantic/host role: changing it
+would alter host, pattern and contrast classification. Add optional paired
+`semanticId` and `themeRole` on Style-treated primitives in live Scene v0.7.
+The former joins the pinned host vocabulary; the latter records selected
+appearance. Derive contrast class from that vocabulary, never a duplicated
+Scene class or the arbitrary Theme role. Preserve purpose and all structural
+Scene behavior. Scene replay validates the vocabulary identity before semantic
+lookups; adapters still need only completed paint and geometry. Coverage counts
+the effective appearance role (`themeRole` when present, otherwise `visualRole`)
+while retaining canonical semantics; coordinate this input with dev B C1.
+
+Complete selected typography, mark/symbol geometry and stroke extents before
+Layout fitting, obstacles and routes. Propagate evaluated intent through
+`SurfaceContentInput` into marks, table cells and labels, including fixed lanes
+and folded hosts; completed placements retain the selected Theme role. Do not
+mutate the global registry or replace roles only after geometry is complete.
+No Style means no new primitive metadata and unchanged prior behavior.
+
+Architecture review: this implements Spec07/49's Style→Theme→Layout boundary,
+uses Spec13 resource closure, preserves Spec04 scheduling and Spec08/46 passive
+Scene/adapters, and shares Issue344's declarations/accessor. Update normative
+Spec06/07/08/46/49/60 with implementation; replace the historical v0.1
+source-order Style rule rather than retaining two live evaluators. Additive
+optional Scene fields leave v0.6 frozen and follow Spec56's widening rule.
 
 ## V1 equivalence inventory (117-entry baseline)
 
