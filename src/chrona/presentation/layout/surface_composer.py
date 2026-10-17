@@ -217,7 +217,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     lane_label_suppressions: list[LaneLabelSuppression] = []
     # One monotonically growing Layout inventory is shared by labels, semantic
     # routes and annotations. Background bands deliberately do not enter it.
-    surface_obstacles = seed_surface_obstacles(marks=marks, text=text, shapes=shapes)
+    surface_obstacles = seed_surface_obstacles(marks=marks, text=text, shapes=shapes,
+                                              theme_tokens=request.theme_tokens)
 
     def register_rect(placement_id: str, obstacle_class: str, region_id: str, bounds: Rect) -> None:
         inline, block, inline_size, block_size = _bounds(bounds)

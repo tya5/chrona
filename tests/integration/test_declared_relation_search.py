@@ -72,6 +72,7 @@ def test_budget_hit_facts_survive_all_real_passes_and_project_to_scene_cli(tmp_p
                                            "search": policy, "searchBudget": 1}
     # Negative control: force the actual fallback iterator rather than a shape.
     monkeypatch.setattr(routing, "relation_shape_candidates", lambda *args, **kwargs: iter(()))
+    monkeypatch.setattr(routing, "supplemental_relation_channel_candidates", lambda *args, **kwargs: iter(()))
     original_routes = surface_routes.compose_surface_routes
     seen = []
     def observe(context):

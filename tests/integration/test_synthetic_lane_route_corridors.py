@@ -43,7 +43,7 @@ def _parts(*, entry: str | None = None, unroutable="suppress"):
     return parts
 
 
-def _render_and_compare(tmp_path, source, monkeypatch, *, entry=None, unroutable="suppress"):
+def _render_and_compare(tmp_path, source, monkeypatch, *, entry=None, unroutable="suppress", label_sides=None):
     captured = {}
     original = composer.compose_routes_and_member_labels
     def observe(context):
@@ -54,7 +54,11 @@ def _render_and_compare(tmp_path, source, monkeypatch, *, entry=None, unroutable
         captured.update(reference=reference, selected=selected)
         return selected
     monkeypatch.setattr(composer, "compose_routes_and_member_labels", observe)
-    rendered = sr.render(tmp_path, source, presentation=_parts(entry=entry, unroutable=unroutable))
+    parts = _parts(entry=entry, unroutable=unroutable)
+    if label_sides:
+        parts["view"]["body"]["visibility"]["fallback"]["labels"] = label_sides
+        parts["layout"]["reviewSurface"]["rowDistribution"] = "fill"
+    rendered = sr.render(tmp_path, source, presentation=parts)
     reference, selected = captured["reference"], captured["selected"]
     assert label_plan._preserves(reference, selected)
     reference_names = {item.placement_id for item in reference.members.text
@@ -101,7 +105,15 @@ def test_reserved_trial_never_worsens_reference_routes_or_suppresses_reference_n
 
 
 def test_no_conflict_keeps_completed_primitives_equal_to_unreserved_reference(tmp_path, monkeypatch):
-    _, reference, selected = _render_and_compare(tmp_path, sr.chain_project(), monkeypatch)
+    source = sr.chain_project(groups=1, per_group=3)
+    for index, item in enumerate(source["objects"].values()):
+        item["title"] = str(index)
+    # Short above-bar names are genuinely clear of the outward dependency stroke;
+    # the former long end-side names were not an unobstructed control.
+    _, reference, selected = _render_and_compare(tmp_path, source, monkeypatch, label_sides=["above", "suppress"])
+    assert reference.routes.relations and all(not route.suppressed for route in reference.routes.relations)
+    assert all(item.overflow == "fit" for item in reference.members.text), [
+        (item.placement_id, item.content, item.overflow) for item in reference.members.text]
     reference_text = [(item.placement_id, item.bounds, item.host_placement_id)
                       for item in reference.members.text]
     selected_text = [(item.placement_id, item.bounds, item.host_placement_id)

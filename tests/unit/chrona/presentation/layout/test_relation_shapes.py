@@ -4,10 +4,11 @@ from collections import Counter
 import pytest
 
 from chrona.presentation.layout import route_search as search
-from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacle, SurfaceObstacleIndex
+from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.ports import ConnectorEgress
 from chrona.presentation.layout.relation_shapes import (
     RelationShapeChannels, first_fit_port_pairs, relation_shape_candidates, shape_channels,
+    supplemental_relation_channel_candidates,
 )
 from chrona.presentation.layout.routing import select_relation_route
 
@@ -60,6 +61,67 @@ def test_shape_order_has_at_most_seven_raw_proposals_and_no_diagonal_or_outside_
     assert aligned.count(aligned[0]) == 1
     outside = relation_shape_candidates((-1, 1), (9, 9), bounds=(0, 0, 10, 10), channels=channels)
     assert outside == ()
+
+
+def test_supplemental_outer_channel_is_bounded_and_preserves_base_candidates():
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("source-label", "text", "timeline", ObstacleRect(0.5, 1, 9, 2)))
+    obstacles.add(SurfaceObstacle("target-label", "label-visual", "timeline", ObstacleRect(0.5, 8, 9, 9)))
+    obstacles.add(SurfaceObstacle("middle-mark", "mark", "timeline", ObstacleRect(-2, 4.5, 2, 5.5)))
+    bounds = (-10, -2, 10, 12)
+    channels = shape_channels(obstacles, bounds=bounds)
+    base = relation_shape_candidates((0, 0), (0, 10), bounds=bounds, channels=channels)
+    proposals = tuple(supplemental_relation_channel_candidates((0, 0), (0, 10), bounds=bounds,
+        channels=channels, obstacles=obstacles, route_stroke_width=1.0))
+    assert len(proposals) <= 8
+    assert proposals
+    assert base == relation_shape_candidates((0, 0), (0, 10), bounds=bounds, channels=channels)
+
+    def accept(points):
+        return not any(obstacles.collisions(ObstacleSegment(a, b, 1.0),
+            classes=("text", "label-visual"), regions=("timeline", "group-header"))
+            for a, b in zip(points, points[1:]))
+
+    result = select_relation_route(((_port("end", (0, 0)), _port("start", (0, 10))),),
+        obstacles=obstacles, bounds=bounds, source_host_id=None, target_host_id=None,
+        relation_scene_id="relation:supplemental-channel", max_bends=4, max_detour_ratio=2,
+        search_policy="first-fit", channels=channels, route_stroke_width=1.0,
+        prepare=lambda points, source, target: points, accept=accept)
+    assert result.selected_pair is not None and result.settled_by_shape
+    assert result.points in proposals
+    assert result.points == ((0, 0), (0, 2.5), (-4, 2.5), (-4, 7.5), (0, 7.5), (0, 10))
+    assert not result.search_used
+    assert all(not obstacles.collisions(ObstacleSegment(a, b, 1.0),
+        classes=("text", "label-visual"), regions=("timeline", "group-header"))
+        for a, b in zip(result.points, result.points[1:]))
+
+
+def test_supplemental_channel_has_no_degenerate_vertical_span_with_one_contact_row():
+    proposals = tuple(supplemental_relation_channel_candidates((0, 0), (0, 10),
+        bounds=(-5, -5, 5, 15), channels=RelationShapeChannels((-5, 5), (0, 5, 10)),
+        obstacles=SurfaceObstacleIndex(), route_stroke_width=1.0))
+    assert proposals == ()
+
+
+def test_outward_channel_clearance_is_scoped_to_each_row_pair():
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("source-label", "text", "timeline",
+        ObstacleRect(947, 265, 1089, 284.6)))
+    obstacles.add(SurfaceObstacle("target-label", "label-visual", "timeline",
+        ObstacleRect(1044, 585, 1154, 604.6)))
+    channels = RelationShapeChannels((1070,), (274.8, 284.8, 583.0, 584.8, 594.8))
+    proposals = tuple(supplemental_relation_channel_candidates((944, 274.8), (944, 594.8),
+        bounds=(900, 200, 1200, 700), channels=channels, obstacles=obstacles,
+        route_stroke_width=1.0))
+    assert ((944, 274.8), (944, 286.6), (1070, 286.6), (1070, 583.0),
+            (944, 583.0), (944, 594.8)) in proposals
+    assert len(proposals) <= 8
+
+
+@pytest.mark.parametrize("width", [True, -1.0, float("nan"), float("inf")])
+def test_route_rejects_invalid_stroke_width(width):
+    with pytest.raises(ValueError, match="E_LAYOUT_ROUTE_ATTEMPT_INVALID"):
+        _select(route_stroke_width=width)
 
 
 def test_shape_settled_relation_never_builds_a_graph_or_invokes_search(monkeypatch):
