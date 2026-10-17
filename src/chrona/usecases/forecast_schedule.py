@@ -39,6 +39,7 @@ def forecast_schedule(
     children = children_by_parent(normalize_hierarchy(project))
     diagnostics: list[Diagnostic] = []
     findings: list[Diagnostic] = []
+    warnings: list[Diagnostic] = []
     completed: dict[str, bool] = {}
     reportable_targets = {(key, "at") for key, item in project["objects"].items()
                           if item["schedule"]["mode"] == "fixed-point"}
@@ -98,14 +99,27 @@ def forecast_schedule(
                                 "constraints": deepcopy(raw.get("constraints", {}))}
             _floor(item["schedule"], "start", max(planned["start"], as_of))
     if diagnostics:
-        return _failure(tuple(diagnostics), tuple(findings), unmatched)
+        return _failure(tuple(diagnostics), tuple(findings), unmatched, tuple(warnings))
 
     scheduled = scheduler.schedule(effective)
     for diagnostic in scheduled.diagnostics:
         details = diagnostic.details or {}
         if (diagnostic.id == "E_FIXED_TARGET_VIOLATION"
                 and (details.get("object"), details.get("endpoint")) in reportable_targets):
-            findings.append(diagnostic)
+            target_id, endpoint = details.get("object"), details.get("endpoint")
+            actual = (latest.get(target_id) or {}).get("actual", {}) if isinstance(target_id, str) else {}
+            if endpoint == "start" and isinstance(actual, Mapping) and "start" in actual:
+                warning = _observed_start_bound_warning(
+                    diagnostic, project, scheduled.placements, latest, as_date(actual["start"]),
+                )
+                if warning is None:
+                    # Do not turn malformed or incomplete Scheduler evidence into a
+                    # guessed warning; this target exception requires proof.
+                    diagnostics.append(diagnostic)
+                else:
+                    warnings.append(warning)
+            else:
+                findings.append(diagnostic)
         else:
             diagnostics.append(diagnostic)
     for object_id, planned in ordinary.placements.items():
@@ -117,7 +131,7 @@ def forecast_schedule(
     for object_id in scheduled.placements.keys() - objects.keys():
         diagnostics.append(Diagnostic("E_DERIVATION", "Forecast placement has no source Project object", f"/objects/{object_id}"))
     if diagnostics:
-        return _failure(tuple(diagnostics), tuple(findings), unmatched)
+        return _failure(tuple(diagnostics), tuple(findings), unmatched, tuple(warnings))
 
     for entry in reversed(normalize_hierarchy(project)):
         if objects[entry.object_id]["schedule"]["mode"] != "rollup":
@@ -135,12 +149,103 @@ def forecast_schedule(
     moved = sum(item.placement != ordinary.placements[key] for key, item in items.items())
     findings.append(Diagnostic("I_FORECAST_MOVED", f"Forecast moved {moved} Project objects", "/objects", details={"count": moved}))
     return ForecastOutcome(items, findings=tuple(findings), unmatched_actual_ids=tuple(sorted(unmatched)),
-                           moved_count=moved, analysis=scheduled.analysis)
+                           moved_count=moved, analysis=scheduled.analysis, warnings=tuple(warnings))
 
 
 def _failure(diagnostics: tuple[Diagnostic, ...], findings: tuple[Diagnostic, ...] = (),
-             unmatched=()) -> ForecastOutcome:
-    return ForecastOutcome(MappingProxyType({}), diagnostics, findings, tuple(sorted(unmatched)))
+             unmatched=(), warnings: tuple[Diagnostic, ...] = ()) -> ForecastOutcome:
+    return ForecastOutcome(MappingProxyType({}), diagnostics=diagnostics, findings=findings,
+                           unmatched_actual_ids=tuple(sorted(unmatched)), warnings=warnings)
+
+
+def _observed_start_bound_warning(
+    diagnostic: Diagnostic,
+    project: Mapping[str, Any],
+    placements: Mapping[str, Mapping[str, date]],
+    latest: Mapping[str, Mapping[str, Any]],
+    observed_start: date,
+) -> Diagnostic | None:
+    """Translate only a proved observed-start relation miss into a forecast warning.
+
+    Scheduler details remain the date authority. Project relations and selected
+    Actuals are checked as provenance, not used to solve the dependency again.
+    """
+    details = diagnostic.details
+    if not isinstance(details, Mapping):
+        return None
+    target_id = details.get("object")
+    relation_key = details.get("relation")
+    placed = _detail_date(details.get("placed"))
+    required = _detail_date(details.get("required"))
+    source = details.get("from")
+    if (not isinstance(target_id, str) or not isinstance(relation_key, str)
+            or details.get("endpoint") != "start" or placed != observed_start
+            or required is None or required <= placed or not isinstance(source, Mapping)):
+        return None
+    source_id, source_endpoint = source.get("object"), source.get("endpoint")
+    source_date = _detail_date(source.get("value"))
+    if (not isinstance(source_id, str) or source_endpoint not in {"start", "end", "at"}
+            or source_date is None):
+        return None
+    source_placement = placements.get(source_id)
+    if (source_placement is None or source_endpoint not in source_placement
+            or source_placement[source_endpoint] != source_date):
+        return None
+
+    relation = None
+    for index, candidate in enumerate(project.get("relations", ())):
+        candidate_key = candidate.get("id") or f"/relations/{index}"
+        if candidate_key == relation_key:
+            relation = candidate
+            break
+    if relation is None:
+        return None
+    source_ref = relation.get("from", {})
+    target_ref = relation.get("to", {})
+    if (source_ref.get("object") != source_id or source_ref.get("endpoint") != source_endpoint
+            or target_ref.get("object") != target_id or target_ref.get("endpoint") != "start"
+            or details.get("lag") != relation.get("lag", "0d")):
+        return None
+    target_observation = latest.get(target_id)
+    target_actual = (target_observation or {}).get("actual", {})
+    if (not isinstance(target_actual, Mapping) or "start" not in target_actual
+            or _detail_date(target_actual["start"]) != observed_start):
+        return None
+
+    source_observation = latest.get(source_id)
+    source_actual = (source_observation or {}).get("actual", {})
+    actual_endpoint = {"start": "start", "end": "finish", "at": "at"}[source_endpoint]
+    source_basis = ("observed" if isinstance(source_actual, Mapping)
+                    and _detail_date(source_actual.get(actual_endpoint)) == source_date else "forecast")
+    before_bound_days = (required - placed).days
+    evidence = dict(details)
+    evidence["beforeBoundDays"] = before_bound_days
+    evidence["sourceDateBasis"] = source_basis
+    overlap_days = ((source_date - placed).days
+                    if source_endpoint == "end" and source_date > placed else 0)
+    if overlap_days > 0:
+        evidence["overlapDays"] = overlap_days
+        basis_text = "observed" if source_basis == "observed" else "forecast"
+        message = (f"Work on {target_id} started on {placed.isoformat()}, {overlap_days} calendar day(s) "
+                   f"before predecessor {source_id}'s {basis_text} finish on {source_date.isoformat()}; "
+                   f"relation {relation_key} requires "
+                   f"{required.isoformat()} after lag {details['lag']}. The observed start is retained.")
+    else:
+        source_label = (f"predecessor {source_id}'s {source_basis} finish"
+                        if source_endpoint == "end" else f"{source_id}.{source_endpoint}")
+        message = (f"Observed start of {target_id} on {placed.isoformat()} misses dependency bound for "
+                   f"relation {relation_key}: {source_label} on {source_date.isoformat()} with lag "
+                   f"{details['lag']} requires {required.isoformat()} "
+                   f"({before_bound_days} calendar day(s) before the bound). The observed start is retained.")
+    return Diagnostic("W_FORECAST_OBSERVED_START_BEFORE_BOUND", message, diagnostic.path,
+                      details=evidence)
+
+
+def _detail_date(value: Any) -> date | None:
+    try:
+        return as_date(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _observation_diagnostic(code: str, message: str, observation: Mapping[str, Any], index: int) -> Diagnostic:

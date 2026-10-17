@@ -420,9 +420,21 @@ or an endpoint frozen by a selected Actual occurrence is renderable, with every
 finding reported against its original object/relation. Only supplied observed
 `start`, `finish` (the placed `end`) and point `at` qualify; an unfinished span's
 computed end and a finish-only span's unobserved retained start do not qualify.
-An observed start may precede its predecessor's
-observed finish: that is a reported dependency miss, not permission to rewrite
-observations or refuse the entire forecast. Downstream unstarted work still
+An observed start may precede its predecessor's observed or forecast finish:
+the application preserves it and publishes `W_FORECAST_OBSERVED_START_BEFORE_BOUND`,
+not `E_FIXED_TARGET_VIOLATION`, for that observed-start relation miss. This
+non-fatal warning retains the relation, object, endpoint, placed/source/required
+dates and lag from the Scheduler's evidence. `beforeBoundDays` is the calendar
+distance from the observed start to that relation's `required` date, not the
+aggregate `earliest` across other relations. `overlapDays` is positive only for
+a source `end` later than the observed start; SS or lag-only misses are not
+called overlapping work. `sourceDateBasis` identifies observed versus forecast
+source endpoint evidence. Wording says work started before the predecessor
+finished (or is forecast to finish) only for that true end→start overlap;
+otherwise it describes the relation-bound miss truthfully. An observed-start
+warning is not permission to rewrite observations or refuse the entire forecast.
+It travels separately from informational/fixed-gate findings and has warning
+severity in Scene/CLI. Downstream unstarted work still
 propagates from these retained placements. This exception is classified by the
 known effective fixed object/endpoint and observation, never the diagnostic code
 alone; it does not ignore arbitrary fixed-span conflicts. Retained explicit

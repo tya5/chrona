@@ -82,6 +82,8 @@ def measure_lane_member_labels(projection: Any, surface_content: Any, *,
     labels = []
     for lane_row in projection.lane_rows:
         for item, member_id in zip(lane_row.items, lane_row.member_item_ids, strict=True):
+            if not getattr(item, "member_label_eligible", True):
+                continue
             instance_id = (f"{lane_row.lane_id}:{item.item_id or item.object_id}"
                            if getattr(projection, "rows", ()) else item.object_id)
             placement_id = f"member-label:{instance_id}"
