@@ -17,15 +17,15 @@ body:
   theme:
     id: chrona-builtin-editorial
     kind: theme
-    store: {provider: local, identity: halcyon-1-example}
-    address: themes/editorial.yaml
-    revision: {token: example-v1}
+    store: {provider: package, identity: chrona.resources}
+    address: presets/bundles/editorial/theme.yaml
+    revision: {token: bundled}
   colorScheme:
     id: chrona-builtin-editorial
     kind: color-scheme
-    store: {provider: local, identity: halcyon-1-example}
-    address: schemes/editorial.yaml
-    revision: {token: example-v1}
+    store: {provider: package, identity: chrona.resources}
+    address: presets/bundles/editorial/scheme.yaml
+    revision: {token: bundled}
   layout:
     id: chrona-builtin-editorial
     kind: layout-profile
@@ -42,9 +42,9 @@ body:
     detailProfile:
       id: chrona-builtin-editorial-detail
       kind: review-detail-profile
-      store: {provider: local, identity: halcyon-1-example}
-      address: profiles/editorial-detail.yaml
-      revision: {token: example-v1}
+      store: {provider: package, identity: chrona.resources}
+      address: presets/bundles/editorial/detail.yaml
+      revision: {token: bundled}
   environment:
     viewport: {inlineSize: 2400, blockSize: 900}
     locale: en-US
