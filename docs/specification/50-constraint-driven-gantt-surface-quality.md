@@ -484,7 +484,7 @@ first-fit's cheap/exact phases still share one attempt ceiling. This adds no
 label candidate, routing policy, safety exemption or search-budget increase.
 Optional-name coverage is not promised to match the retired preferred-rung
 repair: a custom layout may retain suppressions when recovering them would
-require relocating already-visible names. Count diagnostics still report only
+require targeted preferred-rung reservations for already-visible names. Count diagnostics still report only
 the actual suppressed member names, not ordinary finish-delta/relation text.
 Suppression of an otherwise placeable name is not a successful readability repair.
 
