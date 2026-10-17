@@ -149,6 +149,10 @@ specialized fill-only state roles, unknown properties or catalogue-pattern
 applicability. A selected role must supply the bindings its actual primitive
 family uses; incomplete treatment fails with `E_STYLE_ROLE_INCOMPATIBLE`
 before measurement rather than inheriting the old role's geometry.
+Style evaluation failures retain their code and authored rule pointer through
+the shared CLI/MCP failure report. Its optional `details` carries `ruleIds`
+(resource-qualified IDs) and, when occurrence-specific, `subject` with the
+source occurrence key fields. Do not reduce them to a generic rejection.
 
 Theme/Scheme completes matched fill encodings into concrete colours keyed by
 the full source occurrence before Layout. Completed placements retain that key

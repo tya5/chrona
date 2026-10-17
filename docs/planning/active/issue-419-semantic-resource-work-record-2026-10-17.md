@@ -782,6 +782,10 @@ copy public designs or repair a contrast finding by changing core thresholds.
 Bounded independent review found the existing field-keyed scale completion
 insufficient for source aliases; S2b replaces that grouping, retaining one
 resolver and source-local diagnostics. No other blocking contract gap remains.
+Ingress review also found typed Style evaluation errors losing their code and
+pointer at the shared adapter failure boundary. S2a transports them through the
+existing diagnostic `details` field (Spec07); synthetic/native negative tests
+must exercise the actual failure report, not only the evaluator exception.
 
 | Implementation slice | Owned surfaces and independent evidence |
 | --- | --- |
