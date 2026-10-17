@@ -956,7 +956,11 @@ inline interval: band start through the last nonsuppressed measured text/run
 end, including the leading `labelInset` or existing tab reservation. It adds
 no trailing or symmetric padding unless the optional trailing inset below is
 declared, and clamps the interval to the table column.
-The existing text overflow policy and band block extent are unchanged. With
+A label that would end past the table column gives way with the ordinary
+ellipsis (with its source kept and `W_LAYOUT_TEXT_ELLIPSIZED`) at the table end
+for `text` and `table` band extents, measured as for every script, so a label
+never runs past the band it is drawn on (#1629); the band block extent is
+unchanged. With
 all runs suppressed the interval contains only its leading inset (zero width
 when that inset is zero); missing horizontal content bounds fail with
 `E_LAYOUT_BACKGROUND_EXTENT`. Folded-point completion updates only the text

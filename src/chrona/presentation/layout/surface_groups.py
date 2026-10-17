@@ -237,7 +237,7 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                     size = max(Decimal(0), size - tab.reserved)
             bounded = tab is not None or text_end_limit is not None
             if text_end_limit is not None:
-                size = max(Decimal(0), min(size, text_end_limit - start - trailing_inset))
+                size = max(Decimal(0), min(size, text_end_limit - start))
             if group.group_id in marked:
                 # Role-marked runs share the header's baseline, each measured with its own role (#1192).
                 placed, run_warnings = place_group_header_runs(
