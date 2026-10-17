@@ -464,6 +464,9 @@ provide a resolvable Store configuration/reader; supplied identities and Store
 integrity are always enforced. Do not invent a new local package declaration.
 Agent tools retain workspace access boundaries: inject only their existing
 authorized reader, never discover or open a Store outside the allowed scope.
+`render_draft` accepts the existing optional `storeConfig` argument shape used
+by Store tools, defaulting to workspace `.chrona/store.yaml`; use the same
+contained-Store opener before reading any non-package reference.
 
 Architecture review: Spec13 owns reference closure; Spec15 keeps mutable Draft
 separate from immutable evaluation; extension validation remains in Issue344.
