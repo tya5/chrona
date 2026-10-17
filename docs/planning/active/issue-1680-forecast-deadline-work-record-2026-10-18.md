@@ -1,7 +1,7 @@
 # Issue 1680 — forecast deadline
 
-Status: design and architecture review complete; no implementation started.
-Implementation waits for Issue419 S2 to merge and the final plan to publish.
+Status: design, architecture review and implementation plan complete; no code started.
+Implementation waits for Issue419 S2 to merge and baseline reconciliation.
 Published baseline: main `cd36227548aa349ed1fe3cb261184ef2b73ecd37`.
 [Issue](https://github.com/tya5/chrona/issues/1680);
 [preceding Style work](issue-419-semantic-resource-work-record-2026-10-17.md).
@@ -70,24 +70,22 @@ dates; no Scene fields, resource identities or schema versions change.
 Migration is the intended correction to opt-in forecast runs/warnings only;
 no compatibility switch, source-plan mutation or project-specific rule.
 
-## Planned publication and evidence
+## Implementation plan and publication
 
-1. Publish this design plan on a WIP branch; no product changes or new PR.
-2. After the open paint decision, complete the selected contract, review it
-   against Specs04/06/07/49/50 and publish normative corrections plus the
-   finalized implementation plan before code. Reconcile with merged S2 first.
-3. One implementation PR: Core verdict/warning and usecase projection together,
-   then completed paint/geometry transport and synthetic regressions. Owned
-   files: `core/deadlines.py`, `usecases/render_review.py`, projection/deadline
-   Layout models and shared deadline owners as required by the selected design.
-   No schema/resource migration is assumed; document one if the design needs it.
-4. Focused Core, forecast-render/warning, ordinary/folded deadline and network
-   regression tests; actual SVG/PNG late/kept proof; no-forecast public count
-   table; trial-5 PNG inspection. Batch materializers and generated review.
-   CI supplies full pytest/conformance, wheel and three-OS exact-main release.
-5. Keep one literal acceptance row per criterion in the release review. Publish
-   implementation/review, inspect official artifacts and exact-main release,
-   then close1680. Issue1679 follows; the reviewer board stays untouched.
+Design/architecture publication: `293d0cc52`, before this finalized plan.
+First reconcile the normative correction with merged S2 and create this
+worktree's Python venv (`.[dev,render]` and Noto CJK). No schema/resource migration.
 
-No implementation slice is approved by this plan alone. A discovered contract
-gap returns here and to the normative specification before implementation.
+| Commit slice (one atomic implementation PR) | Files and acceptance evidence |
+| --- | --- |
+| I1 Core status and warnings | `core/deadlines.py`, `tests/unit/chrona/core/test_deadlines.py`: typed selected basis; one comparison authority and warning formatter; point/span, equal/late, per-object fallback/order, explicit forecast/planned warning basis and unchanged ordinary payloads. |
+| I2 Projection integration | `presentation/model/projection.py`, `usecases/render_review.py`, model/usecase tests: one eligible forecast map from final rows/folded members, one Core status tuple for warnings and `_shown_deadlines`. Cover combined/explicit/actual-only/hidden rollup/repeated/omitted-window cases. Existing `ReviewDeadline.finish` carries geometry; no new Scene or unused paint fields. I1/I2 must not merge separately. |
+| I3 Render evidence | New `tests/integration/test_forecast_deadlines.py` plus existing forecast-render, deadline overrides/caption, ordinary/folded and network regression modules. Assert actual SVG/Scene tick/run endpoints, late/kept warnings, unchanged no-forecast bytes and unchanged Theme stroke/outline. No trial-specific product branches. |
+| Release gate | Official public materializer batch: no-forecast SVG/Scene count table, inspect intentional/diagnostic report diffs without editing generated paths. Render trial-5 inputs at the pinned evidence ref and inspect both late runs in PNG. CI supplies full pytest/conformance, installed-wheel and three-OS exact-main evidence. |
+
+Publish I1/I2/I3 as coherent commits on the WIP branch, then one PR after S2;
+the earlier design and plan commits stay independently reviewable. Write one
+short acceptance review with every literal row, exact commit, PR/CI links,
+count table and PNG evidence. Publish/release that review before closing1680.
+Issue1679 follows; the reviewer board stays untouched. A contract gap returns
+here and to the specification, is reviewed/published, then code resumes.
