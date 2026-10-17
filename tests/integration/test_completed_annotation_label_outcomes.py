@@ -54,6 +54,7 @@ def test_inside_route_collision_selects_declared_above_candidate_with_host_and_c
     from chrona.presentation.layout.surface_member_labels import place_member_labels
 
     context = _placement_context()
+    context.request.theme_tokens.optional_number = lambda *_args: None  # un-stroked span paint
     host = MarkPlacement("planned:a", "a", Rect(Decimal(50), Decimal(40), Decimal(100), Decimal(20)),
                          (50, 50), (150, 50), mark_shape="span", slot_id="timeline",
                          semantic_id="planned", paint_order=100)
