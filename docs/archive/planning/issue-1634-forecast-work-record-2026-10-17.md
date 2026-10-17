@@ -2,12 +2,13 @@
 
 ## Baseline and status
 
-Public ready base: c3383c36033dd82a1fc119ef4f336e7c04f01e43, normally merged
-into PR1646. Implementation611e8e850 completes F1–F3; the required release gate
-remains pending. Pre-code design/architecture PR1642 and implementation plan
+Released through PR1646 at main `3a67c5a6a`; issue1634 is closed.
+Exact ready main `cf121865552017a2a97a13cd094bde641686c261` passed
+[three-OS release39019665585](https://github.com/tya5/chrona/actions/runs/39019665585).
+Pre-code design/architecture PR1642 and implementation plan
 00d66e8a5 are public; observed-endpoint, occurrence and semantic-identity
 corrections preceded their corresponding code.
-[Literal acceptance and evidence](../../reviews/current/issue-1634-opt-in-forecast-acceptance-review-2026-10-17.md)
+[Literal acceptance and evidence](../reviews/issue-1634-opt-in-forecast-acceptance-review-2026-10-17.md)
 records the actual trial PNG checks, all50SVG+50Scene default-off byte checks,
 focused tests and schema equivalence. Publish the review as a separate commit in
 the same feature PR, avoiding a second main/release cycle for unchanged code.
@@ -22,7 +23,7 @@ No owner decision is pending. Issue1632 is independently released and closed.
 | One Context control and omission/identity | [Spec13 §5.3.1](../../specification/13-presentation-format.md#531-explicit-forecast-control-1634) |
 | CLI/MCP ingress | [Spec08](../../specification/08-scene-and-rendering.md#explicit-forecast-ingress-1634) |
 | Component boundary and required text | [Spec09](../../specification/09-application-architecture.md#5-read-evaluation-flow), [Spec33](../../specification/33-intent-oriented-layout.md#9-diagnostics) |
-| Whole-architecture review | [Current review](../../reviews/current/issue-1634-forecast-architecture-review-2026-10-17.md) |
+| Whole-architecture review | [Architecture review](../reviews/issue-1634-forecast-architecture-review-2026-10-17.md) |
 
 The application normalizes a non-persistent effective Project and reuses its
 injected Scheduler; ordinary ScheduleOutcome.ok is unchanged. Declared amounts

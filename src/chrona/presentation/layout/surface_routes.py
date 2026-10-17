@@ -59,6 +59,24 @@ from chrona.presentation.model.info_diagnostics import (
 )
 
 
+def _register_route_paint(obstacles: SurfaceObstacleIndex, placement_id: str,
+                          points: tuple[tuple[float, float], ...], stroke_width: float,
+                          commands: tuple[PathCommand, ...] = (), *, route_owner_id: str) -> None:
+    """Register route segments and flattened painted arcs under their logical instance."""
+    for index, (source, target) in enumerate(zip(points, points[1:])):
+        if source != target:
+            obstacles.add(SurfaceObstacle(f"{placement_id}:segment:{index}", "dependency-route",
+                "timeline", ObstacleSegment(source, target, stroke_width), route_owner_id=route_owner_id))
+    # The drawn arcs lie inside each turn: register their chords too so a label or later route
+    # in the elbow keeps its distance from the ink, not only from the polyline (#1046).
+    if any(command.kind == "quadratic" for command in commands):
+        drawn = flatten_path(commands)
+        for index, (source, target) in enumerate(zip(drawn, drawn[1:])):
+            if source != target:
+                obstacles.add(SurfaceObstacle(f"{placement_id}:arc:{index}", "dependency-route",
+                    "timeline", ObstacleSegment(source, target, stroke_width), route_owner_id=route_owner_id))
+
+
 def _stub_fragment_clears_physical_hosts(points, egress: ConnectorEgress, *, source: bool,
                                          obstacles: SurfaceObstacleIndex) -> bool:
     """Check a fallback fragment against mark obstacles, splitting only its endpoint corridor."""
@@ -256,21 +274,6 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
 
     def endpoint_host_neighbors(mark: MarkPlacement, endpoint: str) -> tuple[MarkPlacement, ...]:
         return physical_host_neighbors(mark, marks, endpoint)
-
-    def register_path(placement_id: str, points: tuple[tuple[float, float], ...], stroke_width: float,
-                      commands: tuple[PathCommand, ...] = ()) -> None:
-        for index, (source, target) in enumerate(zip(points, points[1:])):
-            if source != target:
-                obstacles.add(SurfaceObstacle(f"{placement_id}:segment:{index}", "dependency-route",
-                    "timeline", ObstacleSegment(source, target, stroke_width)))
-        # The drawn arcs lie inside each turn: register their chords too so a label or later route
-        # in the elbow keeps its distance from the ink, not only from the polyline (#1046).
-        if any(command.kind == "quadratic" for command in commands):
-            drawn = flatten_path(commands)
-            for index, (source, target) in enumerate(zip(drawn, drawn[1:])):
-                if source != target:
-                    obstacles.add(SurfaceObstacle(f"{placement_id}:arc:{index}", "dependency-route",
-                        "timeline", ObstacleSegment(source, target, stroke_width)))
 
     def register_port(placement_id: str, point: tuple[float, float]) -> None:
         obstacles.add(SurfaceObstacle(placement_id, "port", "timeline",
@@ -865,7 +868,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     for fragment in fragments:
                         declared_order[fragment.relation_id] = declared_index
                         relations.append(fragment)
-                        register_path(fragment.relation_id, fragment.points, dependency_stroke)
+                        _register_route_paint(obstacles, fragment.relation_id, fragment.points,
+                            dependency_stroke, route_owner_id=scene_id)
                     resolution_infos.append(RelationResolutionInfo("table-timeline", scene_id,
                         RelationResolutionStage.STUB, relation.critical))
                     continue
@@ -971,8 +975,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     # #1060: with `entry: side` a relation that still does not enter along the bar is reported
                     diagnostics.append(f"I_LAYOUT_RELATION_ENTRY_FALLBACK:{scene_id};reason={back_route_reason[0] or 'forward-entry-failed'}")
                 dependency_role = semantic_binding(placed.semantic_id).theme_role
-                register_path(scene_id, placed.points,
-                    float(request.theme_tokens.number(dependency_role, "strokeWidth")), placed.path_commands)
+                _register_route_paint(obstacles, scene_id, placed.points,
+                    float(request.theme_tokens.number(dependency_role, "strokeWidth")), placed.path_commands,
+                    route_owner_id=scene_id)
                 if fallback:
                     route_fallbacks.append(placed)
 

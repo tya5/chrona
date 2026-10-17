@@ -116,6 +116,27 @@ def _visible_text_preserved(reference: tuple[TextPlacement, ...], candidate: tup
                for identifier, content in before.items())
 
 
+def _admissible_reservations(first: RouteLabelPlan,
+                             proposals: tuple[MemberLabelReservation, ...]
+                             ) -> tuple[MemberLabelReservation, ...]:
+    """Keep the first declared-cost proposal clear of all completed visible text paint."""
+    selected: list[MemberLabelReservation] = []
+    selected_ids: set[str] = set()
+    for proposal in proposals:
+        identifier = proposal.text.placement_id
+        if identifier in selected_ids:
+            continue
+        conflicts = any(first.obstacles.collisions(
+            footprint.geometry, classes=("text", "label-visual"),
+            regions=(footprint.region_id,), clearance=footprint.clearance)
+            for footprint in proposal.obstacles
+            if footprint.obstacle_class in {"text", "label-visual"})
+        if not conflicts:
+            selected.append(proposal)
+            selected_ids.add(identifier)
+    return tuple(selected)
+
+
 def _preserves(reference: RouteLabelPlan, candidate: RouteLabelPlan) -> bool:
     baseline, selected = _relation_status(reference.routes), _relation_status(candidate.routes)
     if baseline.keys() != selected.keys() or any(selected[key] > baseline[key] for key in baseline):
@@ -128,10 +149,16 @@ def compose_routes_and_member_labels(context: RouteLabelPlanContext) -> RouteLab
     """Run normally first; only recorded route-blocked candidates trigger one retry."""
     first = _run_trial(context, (), context.post_route_requests,
                        progress_pass="route-label-baseline")
-    reserves = first.members.route_blocked_candidates
+    reserves = _admissible_reservations(first, first.members.route_blocked_candidates)
     if not reserves:
         return RouteLabelOptions(first)
-    retry = _run_trial(context, reserves, context.post_route_requests,
+    initially_visible = {item.placement_id for item in first.members.text
+                         if item.overflow != "suppressed"}
+    visible_requests = tuple(item for item in context.post_route_requests
+                             if item.placement_id in initially_visible)
+    suppressed_requests = tuple(item for item in context.post_route_requests
+                                if item.placement_id not in initially_visible)
+    retry = _run_trial(context, reserves, (*visible_requests, *suppressed_requests),
                        progress_pass="route-label-recovery", preserve=first)
     return RouteLabelOptions(first, retry)
 

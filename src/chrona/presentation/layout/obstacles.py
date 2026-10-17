@@ -69,13 +69,17 @@ class SurfaceObstacle:
     geometry: ObstacleGeometry
     clearance: float = 0.0
     host_id: str | None = None
+    route_owner_id: str | None = None
 
     def __post_init__(self) -> None:
         if (not self.placement_id or not self.obstacle_class or not self.region_id
-                or not isfinite(self.clearance) or self.clearance < 0):
+                or not isfinite(self.clearance) or self.clearance < 0
+                or (self.route_owner_id is not None
+                    and (not isinstance(self.route_owner_id, str) or not self.route_owner_id))):
             raise _obstacle_error("E_LAYOUT_OBSTACLE_INPUT", "SurfaceObstacle",
                                   placement_id=self.placement_id, obstacle_class=self.obstacle_class,
-                                  region_id=self.region_id, clearance=self.clearance)
+                                  region_id=self.region_id, clearance=self.clearance,
+                                  route_owner_id=self.route_owner_id)
 
 
 def _intersects(left: ObstacleGeometry, right: ObstacleGeometry, clearance: float) -> bool:

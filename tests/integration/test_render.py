@@ -17,7 +17,7 @@ import yaml
 from chrona.presentation.model.closure import resolve_draft_render
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, obstacles_intersect
-from chrona.presentation.model.info_diagnostics import PaintOmission
+from chrona.presentation.model.info_diagnostics import PaintOmission, SuppressedPlotLabels
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.scheduling.scheduler import ReferenceScheduler
@@ -370,24 +370,28 @@ def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
                   scheme_path=example / "schemes/mission-light.yaml")
     tuned = render_review(_draft_request(**inputs, view_path=legacy_view_path,
                                          theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
-    assert "W_LAYOUT_LABEL_SUPPRESSED:variance:detector:detector" in tuned.scene.diagnostics
-    member_suppressed = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in tuned.scene.diagnostics)
-    assert member_suppressed == 0
-    assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in tuned.scene.diagnostics)
-    # HALCYON is evidence here, not the rule: which names the placement policy suppresses depends
-    # on the corpus data (#575), so no name is pinned. The aggregate must still count members
-    # only; the synthetic proof is test_fill_lanes_count_every_packed_name_as_shown_or_suppressed.
+    assert any(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:variance:") for item in tuned.scene.diagnostics)
+
+    def assert_member_only_count(rendered):
+        members = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")
+                      for item in rendered.scene.diagnostics)
+        expected = (SuppressedPlotLabels("table-timeline", members),) if members else ()
+        assert tuple(item for item in rendered.info_diagnostics
+                     if isinstance(item, SuppressedPlotLabels)) == expected
+        assert tuple(item for item in rendered.scene.diagnostics
+                     if item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:")) == tuple(
+                         item.scene_diagnostic() for item in expected)
+
+    # Corpus coverage is not a fixed optional-name count: the retired visible
+    # preferred-rung repair is not a compatibility promise (Spec50). These
+    # renders prove aggregation excludes variance text; neutral placement tests
+    # separately prove mixed/non-member-only counts and zero-count omission.
+    assert_member_only_count(tuned)
     halcyon = render_review(_draft_request(**inputs, view_path=example / "views/01-mission-brief.yaml",
                                            theme_path=example / "themes/briefing.yaml",
                                            layout_path=example / "layouts/briefing.yaml",
                                            summary_path=example / "profiles/summary.yaml"))
-    halcyon_members = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")
-                          for item in halcyon.scene.diagnostics)
-    if halcyon_members:
-        assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={halcyon_members}" in halcyon.scene.diagnostics
-    else:
-        # Recovery can fit every name; the aggregate is absent, not a count of zero.
-        assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in halcyon.scene.diagnostics)
+    assert_member_only_count(halcyon)
     ordinary = render_review(_draft_request())
     assert not any(item.code == "I_LAYOUT_PLOT_LABELS_SUPPRESSED" for item in ordinary.info_diagnostics)
     assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in ordinary.scene.diagnostics)
