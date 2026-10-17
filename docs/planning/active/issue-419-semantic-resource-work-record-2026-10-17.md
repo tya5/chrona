@@ -417,6 +417,23 @@ This is internal identity/composition, not a schema or scheduling change;
 Spec38 View membership, Spec49 canonical semantics and passive Scene ownership
 remain unchanged. Publish this detail before its implementation.
 
+Canonical mark correction: logical temporal facets and realized vocabulary
+bindings are not interchangeable. Existing primary points use `gate` when the
+base Theme declares it; forecast points retain `forecast`, and comparison
+points retain their existing binding. Derive the Style semantic from that
+existing host-binding rule before evaluation, independently of the selected
+Style role. Preserve logical facet names and stable placement IDs. Use one
+shared model helper for this canonical binding; Layout joins its exact intent
+back to the logical geometry role, and Scene records the same binding rather
+than reinterpreting the selected role. Thus `semantic: gate` can target an
+existing gate, while legacy `target: planned` still excludes it. No new Theme
+predicate or point-target syntax is admitted. Review against Spec07/49/60:
+this moves the existing canonical host decision out of Scene, preserves
+unstyled paint/geometry and keeps Style separate from scheduling and fitting.
+Before Scene production is accepted, test point/span/forecast/comparison
+bindings with and without the existing gate declaration, exact Style identity,
+and unchanged unstyled output. Other S1c identity/frame work remains reusable.
+
 Architecture review: this implements Spec07/49's Style→Theme→Layout boundary,
 uses Spec13 resource closure, preserves Spec04 scheduling and Spec08/46 passive
 Scene/adapters, and shares Issue344's declarations/accessor. Update normative
