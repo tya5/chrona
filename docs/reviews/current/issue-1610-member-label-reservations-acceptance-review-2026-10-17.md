@@ -55,8 +55,17 @@ Final guard audit also requires unchanged content under a retained text ID and
 the same known annotation ladder with a valid, non-later selected rung.
 The coordinator's19 focused controls pass, including same-ID member/relation
 label and note substitutions. Combined guard/causality/stroke/HALCYON-tail
-controls pass39tests. A wider local run has71passes and6 failures
-against stale public expected bytes; CI applies the generated snapshot before
-those materializer comparisons. Do not treat that local run as green.
-Review head8ca2f18b0's official snapshot12088291049 is byte-identical to the
-109paths above. Recheck that identity on the guard-containing head before merge.
+controls pass39tests. Guard head05c69051a's official
+[artifact12087829631](https://github.com/tya5/chrona/actions/runs/38998671762/artifacts/12087829631)
+is byte-identical on all109paths to the inspected evidence above.
+
+CI38998671762's39 failing cases are accounted for:12 obsolete reservation test
+hooks,2 progress-name assertions,13 restored-lane/repair fact projections,
+3 packaged comparison mirrors,3 provenance-only Scene hashes,1 civil/working
+sign fixture,2 incidental suppression fixtures,2 ownership checks and1 completion
+wiring check. Tests now exercise the approved rule, retain exact SVG hashes and
+actual geometry assertions, and use deterministic synthetic suppression input.
+The private annotation owner completes each option against its own index;
+the392-line composer emits only the selected batch and one final completion.
+No threshold relaxation, example tuning or old compatibility hook is added.
+Fresh exact-head CI and unchanged snapshot identity remain required before merge.

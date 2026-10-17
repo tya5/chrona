@@ -16,7 +16,6 @@ from chrona.presentation.layout.surface_routes import SurfaceRoutesContext
 from chrona.presentation.layout.surface_lane_route_plan import LaneRoutePlanContext, plan_lane_route_reservations
 from chrona.presentation.layout.surface_route_label_plan import (
     RouteLabelPlanContext, compose_routes_and_member_labels,
-    select_completed_route_label_plan,
 )
 from chrona.presentation.layout.surface_base import prepare_surface_base
 from chrona.presentation.layout.surface_content import (
@@ -29,7 +28,9 @@ from chrona.presentation.layout.slot_heading import (SlotHeadings, content_slot,
 from chrona.presentation.layout.surface_completion import (
     SurfaceCompletionContext, SurfaceLayoutComposition, complete_surface_layout,
 )
-from chrona.presentation.layout.surface_annotations import SurfaceAnnotationContext, place_annotations
+from chrona.presentation.layout.surface_annotations import (
+    SurfaceAnnotationOptionContext, complete_route_label_options,
+)
 from chrona.presentation.layout.surface_table import compose_table
 from chrona.presentation.layout.surface_heading import place_surface_headings
 from chrona.presentation.layout.surface_groups import (compose_group_presentation, translate_group_header_text)
@@ -306,35 +307,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
                             "timeline-axis": axis_slot}
     if annotation_slot is not None:
         annotation_by_source["annotations"] = content_slot(annotation_slot, headings.reserved("annotations"))
-    def annotations_for(plan):
-        index = plan.obstacles
-
-        def register_candidate_rect(placement_id: str, obstacle_class: str,
-                                    region_id: str, bounds: Rect) -> None:
-            inline, block, inline_size, block_size = _bounds(bounds)
-            if inline_size > 0 and block_size > 0:
-                index.add(SurfaceObstacle(placement_id, obstacle_class, region_id,
-                                          ObstacleRect(inline, block, inline + inline_size,
-                                                       block + block_size)))
-
-        def register_candidate_port(placement_id: str, point: tuple[float, float],
-                                    region_id: str) -> None:
-            index.add(SurfaceObstacle(placement_id, "port", region_id,
-                                      ObstacleRect(point[0] - 0.01, point[1] - 0.01,
-                                                   point[0] + 0.01, point[1] + 0.01)))
-
-        routes = plan.routes
-        return place_annotations(SurfaceAnnotationContext(
-            request, projection, layout_manifest, contract, review_rows, rows, annotation_by_source,
-            scale, start, end, timeline_content, timeline_bounds, mark_by_id,
-            routes.comparison_clusters, routes.instance_rows, metric_for, index,
-            register_candidate_rect, register_candidate_port))
-
-    first_annotations = annotations_for(route_label_options.first)
-    retry_annotations = (annotations_for(route_label_options.retry)
-                         if route_label_options.retry is not None else None)
-    route_label_plan, annotation_batch = select_completed_route_label_plan(
-        route_label_options, first_annotations, retry_annotations)
+    route_label_plan, annotation_batch = complete_route_label_options(route_label_options,
+        SurfaceAnnotationOptionContext(request, projection, layout_manifest, contract, review_rows, rows,
+            annotation_by_source, scale, start, end, timeline_content, timeline_bounds, mark_by_id, metric_for))
 
     # Commit only the selected route/label plan. Each candidate's annotations
     # were evaluated against its own private completed obstacle inventory.

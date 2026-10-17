@@ -1,4 +1,4 @@
-"""Owns at most one on-demand repair and preserves the first completed placement."""
+"""Owns one on-demand repair; reads closed label requests, route and annotation batches."""
 from __future__ import annotations
 
 from dataclasses import dataclass, replace

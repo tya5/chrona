@@ -8,7 +8,6 @@ import json
 import pytest
 
 import chrona.presentation.layout.surface_routes as surface_routes
-import chrona.presentation.layout.surface_route_label_plan as surface_route_label_plan
 import chrona.presentation.layout.routing as routing
 import chrona.presentation.layout.ports as route_ports
 import tests.unit.chrona.presentation.scene.test_relation_node_approach as node_approach
@@ -103,20 +102,8 @@ def _compose(*, mirrored=False, baseline_ghost=False, entry="side-when-free", ta
     return compose_review_surface(value)
 
 
-def _isolate_route_choice_from_optional_name_reservations(monkeypatch):
-    """Keep these route-entry fixtures about route geometry, not optional label policy.
-
-    The coordinator's provisional name reservations intentionally affect route
-    selection; that behavior has separate coordinator coverage. These fixtures
-    assert the route-entry contract against marks (including detached ghosts),
-    while still composing and checking final labels where relevant.
-    """
-    monkeypatch.setattr(surface_route_label_plan, "_reservations", lambda _context: ())
-
-
 @pytest.mark.parametrize("radius", range(7))
-def test_clipped_corner_preserves_head_and_side_entry_beside_detached_ghost(radius, monkeypatch):
-    _isolate_route_choice_from_optional_name_reservations(monkeypatch)
+def test_clipped_corner_preserves_head_and_side_entry_beside_detached_ghost(radius):
     surface = _compose(baseline_ghost=True, ghost_finish=9, entry="side",
                        corner_radius=radius, head_length=6)
     path = _relation_path(surface)
@@ -132,8 +119,7 @@ def test_clipped_corner_preserves_head_and_side_entry_beside_detached_ghost(radi
     assert endpoint[0] - previous[0] >= 6 - 1e-6
 
 
-def test_radius_clipping_does_not_shorten_a_head_to_cross_a_detached_ghost(monkeypatch):
-    _isolate_route_choice_from_optional_name_reservations(monkeypatch)
+def test_radius_clipping_does_not_shorten_a_head_to_cross_a_detached_ghost():
     surface = _compose(baseline_ghost=True, ghost_finish=11, entry="side",
                        corner_radius=4, head_length=6)
     assert any("reason=entry-stub-blocked" in diagnostic for diagnostic in surface.diagnostics)
@@ -175,7 +161,6 @@ def _prior_source_first(monkeypatch):
 
 
 def test_nearest_stub_exit_can_be_rejected_before_the_other_exit_enters_horizontally(monkeypatch):
-    _isolate_route_choice_from_optional_name_reservations(monkeypatch)
     attempts = []
     nearest_candidates = []
     original = surface_routes.select_relation_route
@@ -220,7 +205,6 @@ def test_nearest_stub_exit_can_be_rejected_before_the_other_exit_enters_horizont
 
 
 def test_actual_finish_delta_text_and_detached_snapshot_ghost_are_real_scene_content(monkeypatch):
-    _isolate_route_choice_from_optional_name_reservations(monkeypatch)
     surface = _compose(baseline_ghost=True, entry="side")
     path = _relation_path(surface)
     variance = next(item for item in surface.primitives if item.scene_id == "variance:a:a")
@@ -261,7 +245,6 @@ def test_actual_finish_delta_text_and_detached_snapshot_ghost_are_real_scene_con
 
 
 def test_the_mirrored_end_entry_keeps_the_full_horizontal_stub_and_old_order_does_not(monkeypatch):
-    _isolate_route_choice_from_optional_name_reservations(monkeypatch)
     current = _compose(mirrored=True, search="best")
     points = _relation_path(current).points
     assert points[-2][1] == points[-1][1] and points[-2][0] > points[-1][0]
@@ -272,8 +255,7 @@ def test_the_mirrored_end_entry_keeps_the_full_horizontal_stub_and_old_order_doe
     assert prior[-2][0] == prior[-1][0], "prior order drops vertically onto the target end"
 
 
-def test_round_target_terminal_keeps_semantic_entry_stub_after_paint_trimming(monkeypatch):
-    _isolate_route_choice_from_optional_name_reservations(monkeypatch)
+def test_round_target_terminal_keeps_semantic_entry_stub_after_paint_trimming():
     surface = _compose(entry="side", target_marker="circle")
     path = _relation_path(surface)
     target = next(item for item in surface.primitives if item.scene_id == "planned:b:b")
