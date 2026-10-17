@@ -733,6 +733,14 @@ plot/item/delta labels follow completed routes, then relation labels and
 annotations. Only selected completed batches enter the final inventory;
 terminal label suppression never changes lane membership (Spec 38).
 
+Forecast comparison text (#1634, designed; implementation pending) uses this
+existing required-text path. A required plot delta is a separate request from
+the optional member title, enters the hard obstacle inventory before routes,
+and cannot be removed by a relaxed domain or discarded repair pass. Reuse the
+existing required-label refusal when it cannot be placed; do not add a forecast
+placement algorithm or extra rehearsal loop. Table comparison text retains its
+atomic full-text feasibility check. Ordinary optional deltas are unchanged.
+
 After canonical side candidates fail, optional plot/item/delta and relation labels may use
 a finite side-relative displacement with at most 512 actual collision queries.
 Member-name candidates are bounded by the row and the completed own marks'

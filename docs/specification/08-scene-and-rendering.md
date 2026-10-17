@@ -276,6 +276,19 @@ flag MUST NOT override `comparison.baseline`. Without the flag no Snapshot
 Project is supplied and existing output is unchanged. This input is not an
 MCP or preset-library member.
 
+### Explicit forecast ingress (#1634; designed, implementation pending)
+
+Draft `render` and `render-workspace` accept boolean `--forecast`. The SDK-free
+MCP `render_draft` tool accepts the equivalent boolean `forecast`; it also gains
+the optional workspace-scoped `snapshot` Project path for the same baseline
+use case as Draft CLI. Both use the common Draft closure and forecast use case,
+not a separate renderer. This additive MCP path supersedes the Snapshot ingress
+restriction above only when implemented. Immutable `render-review` and MCP
+`render_review` obtain forecast and baseline inputs only from their pinned
+Context; no out-of-band flag overrides that Context. With no forecast flag,
+prior valid Draft outputs and diagnostics remain byte-identical. Context and
+failure semantics are specified in Specifications 13 §5.3.1 and 04 §17.1.
+
 ### 3.2.1 CLI output filename and target identity
 
 For `render` and `render-workspace`, the CLI MUST resolve one target before
@@ -318,6 +331,20 @@ semantic facet.  Thus a planned mark drawn as a baseline remains `planned`, and 
 Actual point remains `actual` even when they share geometry or paint.  `sceneId` is
 derived from `projectionInstanceId` plus the primitive-purpose suffix.  Array order,
 coordinates, renderer element IDs, and display text are not identity inputs.
+
+For explicit forecasts (#1634; designed, implementation pending), register
+semantic facet and primitive purpose `forecast` with the existing `planned`
+visual/paint role. It is a primary temporal mark in lane inventories and
+`primaryMarkIds`, not a Snapshot or Actual mark. Its projection identity includes
+the forecast facet and original Project source reference; provenance retains the
+original Context/Project/Actual/Snapshot identities, never a persisted effective
+Project. Contrast and primitive validation use the registered planned paint
+binding without relabelling forecast geometry as original planned truth.
+Scene v0.7's lane window-absence contract admits `facet: forecast` paired with
+`semanticRole: planned`; the registry, model and schema must agree. Layout emits
+this completed omission evidence for explicit windows. Scene/adapters neither
+infer the forecast identity nor choose visibility or geometry. This is an
+additive opt-in Scene admission change, not a new primitive kind.
 
 A semantic relation Path MAY carry paired `fromInstanceId` and `toInstanceId`
 in Scene v0.7. These non-empty opaque IDs are Layout's resolved endpoint
