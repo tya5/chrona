@@ -652,6 +652,18 @@ def _other_color(theme: Mapping[str, Any], legend_colors: tuple[str, ...]) -> st
     return candidates[-1] if candidates else None
 
 
+def _tint_other_color(theme: Mapping[str, Any], *, scale_id: str) -> str | None:
+    """Folded group tints take a light neutral ground that keeps header text readable, apart from the scale's own tints (#1628)."""
+    body = theme["body"]
+    slots = (body.get("colorScales", {}).get(scale_id) or {}).get("palette") or ()
+    used = tuple(body["categorySlots"][slot] for slot in slots if slot in body.get("categorySlots", {}))
+    candidates = body.get("tintOtherColors") or ()
+    for candidate in candidates:
+        if all(delta_e_2000(candidate, colour) >= MINIMUM_CATEGORY_DELTA_E for colour in used):
+            return candidate
+    return candidates[-1] if candidates else _other_color(theme, ())
+
+
 def _legend_colors(theme: Mapping[str, Any], detail: Any) -> tuple[str, ...]:
     """Colours of the Detail legend's non-category entries (Planned, Milestone, Dependency, Today ...).
 
@@ -696,7 +708,7 @@ def _resolve_group_tints(view: Any, projection: Any, theme: Mapping[str, Any]
         theme["body"].get("colorScales"), theme["body"].get("categorySlots"),
         source_ref="/body/grouping/tint",
         color_vision=tuple(theme["body"].get("colorVision", ())), observed=groups,
-        other_color=_other_color(theme, ()))
+        other_color=_tint_other_color(theme, scale_id=tint.scale))
     if scale is None:
         return (), (), None
     return tuple((group, scale.color_for(group, {scale.source_field: group})) for group in groups), scale.collisions, scale

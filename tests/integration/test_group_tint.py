@@ -162,6 +162,24 @@ def test_a_palette_slot_a_reader_cannot_tell_apart_is_skipped_and_the_remainder_
     assert len(folded) == 1 and '"scaleId":"groups"' in folded[0] and '"distinctColors":2' in folded[0]
 
 
+def test_a_folded_tint_group_keeps_its_header_text_readable(tmp_path):
+    """N+1 groups on an N-slot tint scale: the folded group takes a neutral ground the header text can read (#1628)."""
+    def mutate(parts):
+        parts["theme"]["body"]["colorScales"]["groups"] = {"palette": ["series-1", "series-2", "series-3"]}
+    owners = ("bus", "payload", "ground", "launch")
+    rendered = _render(tmp_path, _parts({"scale": "groups"}, mutate=mutate), _project(owners))
+    assert [item for item in rendered.scene.diagnostics if item.startswith("I_PRESENTATION_SCALE_FOLDED:")
+            and '"folded":["launch"]' in item]
+    assert not [item for item in rendered.scene.diagnostics if item.startswith("W_SCENE_STATE_TEXT_CONTRAST")]
+    bands = _bands(rendered)
+    fills = {key: item.paint.fill for key, item in bands.items() if key.startswith("group:")}
+    assert len(set(fills.values())) == 4
+    parts = sr.bundle("control-room-dark")
+    text = parts["scheme"]["body"]["colors"]["text"]
+    from chrona.presentation.scene.paint_analysis import composited_contrast
+    assert composited_contrast(fill=text, opacity=1.0, ground=fills["group:launch"]) >= 4.5
+
+
 def _findings(rendered, decoration_severity="warning"):
     return evaluate_scene_contrast(scene_document(rendered.scene), decoration_severity=decoration_severity)
 
