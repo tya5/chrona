@@ -54,7 +54,8 @@ def painted_style_occurrences(
     for placement in text:
         key = placement.style_occurrence_key
         color = fills.get(key)
-        if key is None or color is None or not placement.content.strip() or not visible(placement):
+        if (key is None or color is None or not placement.content.strip()
+                or placement.overflow == "suppressed" or not visible(placement)):
             continue
         paint = resolve_theme_paint_inputs(
             tokens, placement.theme_role or placement.typography_role, PaintFamily.TEXT, fill_override=color)

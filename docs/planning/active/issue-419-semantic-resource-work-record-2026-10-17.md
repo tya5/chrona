@@ -821,8 +821,13 @@ The batched regression check passed338 tests; the subsequent contract/native
 batch passed203, and final ingress/consumer/legend checks passed33. Schema
 equivalence, inward imports,293-module reachability and primitive delivery pass.
 Actual SVG and PNG were rendered and inspected with a scoped title and fitting
-qualifier. Official installed-wheel, artifact, reviewer and release evidence
-remain required; neither S2 nor parent419 is release-accepted.
+qualifier. The non-editable installed wheel passed26 native Style tests and
+the general wheel smoke outside the checkout. Final-filter review added
+duplicate-column and positive-bounds suppressed-cell regressions; the latter
+failed before a narrow correction excluding completed suppressed text, as the
+published contract already requires. That integration module now passes15.
+Official artifact, reviewer and release evidence remain required; neither S2
+nor parent419 is release-accepted.
 
 ## V1 equivalence inventory (117-entry baseline)
 

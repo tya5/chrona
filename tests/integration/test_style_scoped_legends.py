@@ -14,7 +14,8 @@ from chrona.usecases.render_review import RenderRequest, render_review
 from tests.support import synthetic_review as sr
 
 
-def _render(tmp_path, *, show_scope=False, glyph=None, shape=None, table=False, wide_legend=False, mode="ordinary", legacy=False):
+def _render(tmp_path, *, show_scope=False, glyph=None, shape=None, table=False,
+            duplicate_column=False, wide_legend=False, mode="ordinary", legacy=False):
     parts = sr.bundle()
     theme = parts["theme"]["body"]
     theme["colorScales"] = {"owners": {"slots": {"a": "owner-a"}}}
@@ -43,9 +44,12 @@ def _render(tmp_path, *, show_scope=False, glyph=None, shape=None, table=False, 
     else:
         parts["view"]["body"]["rows"] = {"mode": "automatic"}
     if table:
-        parts["view"]["body"]["tableColumns"] = [{
+        columns = [{
             "id": "Owner", "source": {"field": "owner"}, "missing": "em-dash",
             "align": "start", "width": "content", "headerOrientation": "horizontal"}]
+        if duplicate_column:
+            columns.append({**columns[0], "id": "Owner copy"})
+        parts["view"]["body"]["tableColumns"] = columns
     if shape is not None:
         theme["roles"].setdefault("legend-swatch", {})["swatchShape"] = shape
     if wide_legend:
@@ -124,6 +128,44 @@ def test_table_only_fill_has_its_actual_visible_value_legend(tmp_path):
     assert any(node.legend_scope is not None for node in rendered.surface.primitives)
     assert any(node.kind == "Text" and node.style_match is not None and node.paint.fill == "#28c7b8"
                for node in rendered.surface.primitives)
+
+
+def test_repeated_same_object_field_in_distinct_columns_keeps_one_legend_and_both_occurrences(tmp_path):
+    rendered = _render(tmp_path, table=True, duplicate_column=True)
+    document = scene_document(rendered.scene)
+    validate_scene_document(document)
+    cells = [node for node in rendered.surface.primitives
+             if node.kind == "Text" and node.style_match is not None
+             and node.table_column_id in {"Owner", "Owner copy"}]
+    assert {node.table_column_id for node in cells} == {"Owner", "Owner copy"}
+    assert all(node.paint.fill == "#28c7b8" for node in cells)
+    assert len({node.style_match for node in cells}) == 1
+    assert sum(node.legend_scope is not None for node in rendered.surface.primitives) == 1
+
+
+def test_suppressed_table_cell_does_not_keep_its_potential_style_legend(tmp_path, monkeypatch):
+    from dataclasses import replace
+
+    from chrona.presentation.layout import surface_composer
+
+    compose_table = surface_composer.compose_table
+    suppressed_keys = []
+
+    def suppress_style_cells(*args, **kwargs):
+        batch = compose_table(*args, **kwargs)
+        style_cells = [item for item in batch.text if item.style_occurrence_key is not None]
+        assert style_cells
+        assert all(item.bounds.inline_size > 0 and item.bounds.block_size > 0 for item in style_cells)
+        suppressed_keys.extend(item.style_occurrence_key for item in style_cells)
+        return replace(batch, text=tuple(
+            replace(item, overflow="suppressed") if item.style_occurrence_key is not None else item
+            for item in batch.text
+        ))
+
+    monkeypatch.setattr(surface_composer, "compose_table", suppress_style_cells)
+    rendered = _render(tmp_path, table=True)
+    assert suppressed_keys
+    assert not any(node.legend_scope is not None for node in rendered.surface.primitives)
 
 
 def test_legacy_and_style_domain_union_reports_one_completed_folding_diagnostic(tmp_path):

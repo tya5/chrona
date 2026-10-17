@@ -20,8 +20,37 @@ S2a now wires optional pinned Style through Context/Draft and the normal
 S2 scoped legends and passive Scene provenance are implemented on the WIP
 branch. Final contract/native checks passed203 tests; final ingress/consumer/
 legend checks passed33. Actual SVG/PNG scope output was inspected. Official
-S2 installed-wheel, artifact, reviewer and release evidence remain pending.
+S2 official artifact, reviewer and release evidence remain pending.
 Do not count WIP publication as release acceptance.
+
+### S2 installed-wheel evidence
+
+Source `e7e904ee0`; wheel SHA-256
+`b666525d11e466ea3e563851061b8860cf39c6933e220097db0cd74b82f7c22b`.
+Built with `pip wheel --no-deps . packages/chrona-fonts-noto-cjk`, then installed
+non-editably with `[dev,render]` into a separate worktree `.venv-wheel`.
+`chrona.__file__` resolves inside that environment's `site-packages`.
+The wheel interpreter passed both `test_style_resource_ingress.py` and
+`test_style_scoped_legends.py` (26 tests, `--import-mode=importlib`; only the
+repository test helpers were on `PYTHONPATH`). It also passed
+`tools/wheel_smoke.py` from `/tmp`, outside the checkout. This is local
+packaging evidence, not the exact-main three-OS release gate.
+
+Final-filter review exposed suppressed positive-bounds table text retaining a
+potential legend. The new native regression failed before the correction;
+Layout now excludes completed `overflow="suppressed"` text, matching the
+published S2 rule. The scoped-legend module passes15 tests, including repeated
+same-field columns, actual fill/Scene validation and suppression. No design
+or public-output policy changed.
+Combined ingress/legend/content/Scene regression check passed41 tests.
+
+The final 50-slide public batch is49 byte-identical SVG/Scene pairs and the
+known `glyph-gates` pair only. Both differing files are byte-identical to the
+previous S1 glyph-fill evidence: S2 introduces no additional public corpus
+delta. `regenerate_public_examples.py --check --jobs 4` still fails with
+`E_MATERIALIZER_MISMATCH` for that declared paint migration; an aggregating
+read-only materializer batch confirms all50 outcomes. No generated file was
+edited. This does not waive the unresolved S1 contrast gate.
 
 ## Literal issue acceptance
 
