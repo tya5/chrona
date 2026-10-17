@@ -10,7 +10,7 @@ Its official artifact has109 paths: all50 SVGs are byte-identical; all50
 Scenes differ only by semantic-vocabulary provenance; no paths retired.
 The V1 release gate is not the S1 or parent-issue acceptance gate.
 
-S1 is PR1675 at `89106fe86`, not merged or release-accepted. Typed facts, parsed-rule
+S1 is PR1675 at `efebe4a3a`, not merged or release-accepted. Typed facts, parsed-rule
 evaluation, source-local identities, and role/fill composition are connected
 through normalization, Layout, and Scene. Selected-mark early paint preflight
 is connected; the final Style/native batch passes131 tests, with shared

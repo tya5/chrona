@@ -727,11 +727,13 @@ module reachability passes without an evaluator allowlist.
 
 ## S2 design and implementation plan
 
-Baseline: S1 PR1675 at `89106fe86` on trusted-ready main890af301d. S1 release
+Baseline: S1 PR1675 at `efebe4a3a` on trusted-ready maind11fd42b0. S1 release
 acceptance is not assumed. S2 design proceeds independently; its implementation
 and merge must retain the accepted S1 correction and public evidence.
-The reviewer-approved glyph-fill declaration is integrated; current S1 CI
-39074991839 passes snapshot generation, with product checks still running.
+The reviewer-approved glyph-fill declaration is integrated. S1 CI
+39074991839 passed snapshot generation and reproduction, but exposed legacy
+caller/test/inventory failures. Those corrections are retained in S2; current
+S1 CI39076342187 is running on the reconciled main base.
 S2 retains that exact correction; no floor or Scheme change is needed.
 
 Use one optional `body.style` pinned reference in the live Context and one
