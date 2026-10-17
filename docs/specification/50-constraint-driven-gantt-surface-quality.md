@@ -388,6 +388,15 @@ channels before that pair's bounded search; the first fully accepted completed
 route wins. Proposal generation builds no visibility graph. Both paths retain
 terminal, bounds, obstacle, self-overlap, bend and detour validation.
 The existing first-fit proposal family and order remain unchanged (#1610).
+Only the single on-demand member-name repair described below may append up to
+eight paired row-contact/outward-channel proposals after the basic proposals
+and before the pair's bounded search. This is not part of the ordinary first
+pass. Use the two nearest interior row contacts at each endpoint and the
+nearest vertically clear existing column on each side of the endpoint span;
+contacts come from completed row gaps and obstacle edges with their existing
+clearance/grid offset. Every proposal passes the ordinary stroke, terminal,
+bend, detour, obstacle and completed-route validators. No project coordinates,
+new quality threshold, expansion quota or additional routing pass is added.
 Layout checks completed reduced and terminal-adjusted route
 stroke against retained text/label-visual footprints, not just its centreline;
 staged recovery still removes only the obstacle classes its contract permits.
