@@ -1,9 +1,11 @@
 # Issue1657 — forecast label ownership and observed-start warnings
 
-Status: implementation and literal acceptance evidence complete; release gates pending. Baseline: main `aabc5e894`, with unchanged product
+Status: issue closed after all four literal acceptance rows met and exact-main release gates passed on [`690f3549ff0b61ee15ed85885ad18aacd7cabf31`](https://github.com/tya5/chrona/commit/690f3549ff0b61ee15ed85885ad18aacd7cabf31). Baseline: main `aabc5e894`, with unchanged product
 source from trusted-ready `9f35dd457` after the legend fix.
-[Issue1657](https://github.com/tya5/chrona/issues/1657) is the next dev A item;
-issue1397's implemented slice is preserved separately and publications stay serial.
+[Issue1657](https://github.com/tya5/chrona/issues/1657) is closed; issue1397's
+implemented slice is preserved separately and publications stay serial.
+The [acceptance review](../reviews/issue-1657-forecast-presentation-acceptance-review-2026-10-17.md)
+records all four literal rows and the final release evidence.
 
 ## Literal acceptance
 
@@ -88,6 +90,10 @@ member name per object, visible baseline ghosts and required deltas retained.
 Its wireframes→visual-design warning states observed November9 start before
 observed November10 finish, overlapDays=1, severity warning, without the former
 E_FIXED_TARGET_VIOLATION. Neither source files nor examples were edited.
-PR1662's official snapshot39036008847 on `f6e245aa7` confirms all50 SVG+50
-Scene files byte-identical, same109 paths; only diagnostic inventory changes.
-Final acceptance requires exact review-containing main release CI.
+PR1662's official snapshot39037416367 on reviewed head
+`b7799320b9c0b91c4d7ca4399f1613971304c38e` confirms all50 SVG+50 Scene files
+byte-identical, same109 paths; only diagnostic inventory changes
+(304211→304383 bytes). Squash commit
+`5080e1c351c1a041054252c7e8fc394b5c1f5c3d` has the same tree. Exact-main
+release run [39038812877](https://github.com/tya5/chrona/actions/runs/39038812877)
+passed the three-OS full matrix, public-materializer reproduction and MCP floor.

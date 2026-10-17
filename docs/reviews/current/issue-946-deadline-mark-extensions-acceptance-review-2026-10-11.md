@@ -8,6 +8,13 @@ One correction to the PR. Its first count table said "0 changed rendered output"
 
 ## Literal issue acceptance
 
+Current successor disposition: the table below records the original
+2026-10-11 acceptance, not today's preset state. Editorial adoption is delivered
+by [PR1669](https://github.com/tya5/chrona/pull/1669) using the approved
+package-reference replacement, not additional Theme copies. See the
+[current1397 literal review](issue-1397-deadline-captions-acceptance-review-2026-10-15.md)
+for the delivered successor rows and release status.
+
 ### Issue #946
 
 - Source: [Issue #946](https://github.com/tya5/chrona/issues/946) (body and the Status comment)
