@@ -1,0 +1,30 @@
+# Issue #1634 — forecast architecture review
+
+Status: design accepted for implementation planning; product code still requires
+the separately published implementation plan. Public baseline
+41e6c83a9f742af6e7a46209c4cec8f4bca91f0f.
+[Current work record](../../planning/active/issue-1634-forecast-work-record-2026-10-17.md).
+
+| Boundary | Consistency check |
+| --- | --- |
+| Core / Actual | Spec04 §17.1 is explicit derived evaluation. Original Project, placements, Actual endpoints/progress and Snapshot stay immutable. Declared amount units are retained; only fixed spans infer effort. Nonworking starts retain their observed date; finish-only and conflicting rollup observations produce findings without fabricating Actual facts. |
+| Scheduler / application | Spec09 gives orchestration to the Forecast Coordinator, not a second solver or the ordinary engine. Only authored fixed-point target findings are admitted with complete placements, not every error sharing the diagnostic code; ordinary success and unavailable analysis are not rewritten. |
+| Observation selection | One neutral latest selector preserves ordinary positive-sequence/unmatched behavior. Scheduling never imports presentation or selects observations through a View. |
+| View / comparison | Spec06 §8.5 keeps original facts and a separate forecast fact. Text and variance paint select the same active comparison. A supplied Snapshot stays visible even at equal placement: an explicit forecast-only override of omitted/changed-only ghost policy, not a change to ordinary defaults. Explicit rows, point endpoints and missing baselines are explicit. |
+| View / geometry | Source selection/order and source-date bindings retain their meaning. Active forecast intervals drive geometry/packing, label-window admission and lane-label preflight; derived windows include forecast/ghost endpoints. Explicit windows remain authoritative. |
+| Layout / Scene / adapters | Spec33's existing required-text path reserves independent deltas before routes. Required text remains hard in staged routing. No new placement algorithm, extra rehearsal, adapter font discovery or Scene date arithmetic. Spec08 closes forecast purpose/facet with planned paint, primary lane inventories and forecast/planned window-absence evidence; registry/model/schema must widen together. |
+| Profiles / resources | Spec50's legend-slot authority stays intact. An incapable View/Profile refuses the mode rather than inventing a footer, editing examples or hiding selected work. Optional titles remain optional; required deltas do not inherit title suppression. |
+| Context / CLI / MCP | Spec13 has one optional boolean with runtime omission behavior; immutable Context identity remains exact. Spec08 routes Draft CLI/MCP through the same closure, including workspace-scoped MCP Snapshot input. No second immutable-render override. |
+| Schema / compatibility | The optional control preserves prior valid resources and default output. Spec56 equivalence/admission evidence is required at implementation; no version is bumped merely for widening. Forecast diagnostics apply only when explicitly requested. |
+| Adjacent source facts | Source-plan deadline verdicts, periods, planned annotation anchors, observed counts and figures retain their meaning. Original criticality cannot masquerade as unavailable forecast analysis. |
+
+Three independent read-only reviews covered scheduler states, presentation and
+whole-architecture closure. Resolved findings: retain declared units per the
+reviewer answer; finish-only/rollup findings are nonfatal; narrow the fixed-target
+exception; register Scene forecast/lane/window identities; rebase label admission
+to active geometry; name technical-print as the public generic preset; and make
+Snapshot ghost retention an explicit forecast-only override. No unresolved design
+gate remains. Local documentation guards: 28 passed; `git diff --check` clean.
+
+Release is separate: every literal criterion, original-trial PNG evidence,
+public artifact counts and exact review-containing three-OS CI.

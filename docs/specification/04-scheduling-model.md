@@ -376,7 +376,71 @@ produces the normative semantics and diagnostics required by the specification.
 Actual start, finish, and progress are observations and are not automatically used as
 dependency solver inputs in Core v0.1.
 
-Policies that reschedule remaining work based on actual progress are deferred.
+Progress-driven changes to remaining effort remain deferred. Explicit forecasting is
+a separate derived evaluation, not a change to the authored plan.
+
+### 17.1 Explicit forecast (#1634; designed, implementation pending)
+
+A forecast requires an explicitly selected Actual Set and its `asOf`. It uses the
+same latest resolved observation as ordinary comparison; `asOf` is a cutoff for
+forecast placement, not a filter that silently discards observations. Progress
+does not change effort. Neither the Project, its ordinary schedule, the Actual
+Set nor any Snapshot is mutated or implicitly saved.
+
+First derive and validate the ordinary plan. An unfinished span with a declared
+amount retains that amount and unit, using the existing calendar arithmetic.
+For an authored fixed span, infer effort by counting working dates in its
+original resolved `[start,end)` using its effective object/Project calendar;
+without a calendar count civil dates. No weekday calendar or positive minimum
+is invented. Core's ordinary amount semantics remain unchanged.
+
+| Source state | Forecast placement |
+| --- | --- |
+| Span with Actual start and finish | Those exact observed endpoints. |
+| Span with Actual finish only | Keep the original planned start and observed finish; report that the start is unobserved. This is not an inferred Actual start. Successors use the observed finish. |
+| Span with Actual start, no finish | Preserve the literal observed start. Apply the retained amount with existing unit arithmetic; working effort starts from the first eligible work date (from the start itself without a calendar). The exclusive end is at least `asOf`. |
+| Span without an Actual start or finish | Start no earlier than its original planned start and `asOf`; retain effort, applicable bounds, calendars and dependencies. Progress alone does not establish a start. |
+| Scheduled point | Reuse its dependency rule and original/as-of floor; a known Actual `at` is authoritative for its forecast occurrence. |
+| Fixed point | Retain the authored target, even if past `asOf`. An observed occurrence remains an independent Actual fact, not permission to move that target. |
+| Rollup | Derive the envelope and completion state from forecast children. A contradictory supplied group observation is reported and the children's envelope wins. |
+
+A leaf span is complete when its selected observation supplies `finish`, including
+the finish-only case. A point is complete only when it has observed `at`; an
+authored fixed-point target is not evidence of completion. A rollup is complete
+only when all temporal children are complete. Progress, including 0 or 1, never
+changes these predicates. Check only supplied group observation endpoints against
+the derived envelope; missing group observations are not contradictions.
+
+The application constructs non-persistent effective scheduling input and reuses
+the injected Scheduler. It does not add a second dependency solver. Only in
+that derived input may stale span anchors/fixed spans become movable schedules;
+observed coordinates and fixed-point targets remain fixed. A complete result
+with `E_FIXED_TARGET_VIOLATION` findings targeting authored `fixed-point.at`
+is renderable as a forecast, with every finding reported against its original
+object/relation. This exception does not admit fixed-span or completed-Actual
+endpoint conflicts merely because they share the diagnostic code. Other scheduler errors,
+missing/kind-invalid placements and cycles remain fatal. Ordinary scheduling's
+success contract is unchanged. Absent forecast float/driving analysis is
+unavailable, never replaced with the original plan's analysis.
+
+Forecast-specific refusals are `E_FORECAST_ACTUAL_REQUIRED`,
+`E_FORECAST_ASOF_REQUIRED`, `E_FORECAST_DURATION_UNAVAILABLE` (unfinished span
+with no positive inferred effort), and `E_FORECAST_ACTUAL_KIND`.
+`I_FORECAST_START_UNOBSERVED` accompanies a finish-only placement;
+`I_FORECAST_ROLLUP_OBSERVATION_CONFLICT` names a supplied group observation
+contradicting its child envelope. These findings do not refuse a complete valid
+forecast. An invalid span or another scheduling conflict still refuses it.
+In particular, a finish-only value not after the retained planned start is an
+invalid forecast span; do not clamp either endpoint or fabricate an observation.
+None of these rules invalidates the same inputs in ordinary rendering.
+Diagnostics identify the original Project or Actual Set, object/observation and
+resource-local pointer; derived input identities must not leak into source refs.
+
+The application emits `I_FORECAST_MOVED` with the count of primary Project
+objects whose complete placement differs from the ordinary plan, including
+derived rollups. This is not a count of selected rows or late items. Source-plan
+deadline verdicts, period facts and observed progress remain source-plan facts;
+forecasting does not silently redefine those independent contracts.
 
 ## 18. Diagnostics
 
