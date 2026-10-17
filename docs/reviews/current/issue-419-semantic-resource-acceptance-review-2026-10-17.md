@@ -47,8 +47,10 @@ gate found a bootstrap diagnostic-layer cycle. The published correction keeps
 native schema failures below rich ingress diagnostics; immutable indexes and
 the inward-dependency gate now pass. No Python fallback table remains.
 
-Last official artifact, before the comment-only reviewer correction: head
-`253b266b4` [snapshot39044257405](https://github.com/tya5/chrona/actions/runs/39044257405)
+Official artifact after the reviewer correction: head
+`ee9cbb3db` [snapshot39046678234](https://github.com/tya5/chrona/actions/runs/39046678234),
+artifact12105913414 (manifest SHA256
+`aabe3dcd291de83d72fe147cb4af13ebbd5f22cfd7a644ab600eb8a32ac7a60f`),
 has109 unchanged paths: all50 SVG byte-identical; all50 Scene JSONs differ only
 by one exact vocabulary provenance resource. No primitive, purpose, role,
 geometry, paint, route or label changed. Two of9 reports change (source-line
@@ -84,7 +86,12 @@ only the vocabulary identity changed. For all three synthetic characterizations,
 restoring only that old identity reproduces the preceding full-Scene SHA;
 their SVG hashes remain unchanged. A fresh wheel installed outside the checkout
 loads the new exact resource identity, all117 bindings and CLI version output.
-No schema member was added for rationale; final current-base CI/snapshot follows.
+No schema member was added for rationale. The official artifact above verifies
+the corrected raw identity; its run predates the later main advance and does
+not establish final-base CI success. Main `e71c8de3d` (Issue1660 and its trusted
+derived evidence) is normally merged before the next final V1 push.
+The post-merge vocabulary/closure, all-point folded-row and Editorial deadline
+integration batch passes37 tests on this base.
 The post-correction broad focused batch passes85 cases; seven public-example
 checks still read unsynchronized committed Scenes locally and require the CI
 derived snapshot. No public generated file was patched to satisfy them.
