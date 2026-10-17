@@ -3,7 +3,7 @@
 Status: overrides/folded implementation verified; network correction implemented
 against the pre-code design/architecture/implementation publication `c8aaf8604`.
 Focused verification passes; official snapshot and exact-main release remain pending.
-Current published baseline: trusted-ready main `690f3549ff0b61ee15ed85885ad18aacd7cabf31`.
+Current published baseline: trusted-ready main `d0df1e8aa3268f4b7efdda8991c3febf03906193`.
 Authority: [reviewer assignment](https://github.com/tya5/chrona/issues/1397#issuecomment-6233959539),
 which reopens the earlier row4/5 dispositions. Rows1/3 are released; row2 remains
 reviewer-owned. The [literal review](../../reviews/current/issue-1397-deadline-captions-acceptance-review-2026-10-15.md)

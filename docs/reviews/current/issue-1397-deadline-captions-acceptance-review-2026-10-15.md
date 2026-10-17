@@ -49,9 +49,13 @@ unchanged Scene/adapter ownership. Existing insufficient-header capacity keeps
 `W_LAYOUT_GROUP_HEADER_OVERFLOW`, not a new fitting exception. The unrelated
 all-point row-resurrection defect is [issue1660](https://github.com/tya5/chrona/issues/1660),
 reproduced without deadlines on preceding main; mixed-plan acceptance does not
-claim to resolve it. The pre-network PR1661 snapshot on `915af1104`
-([run39037423336](https://github.com/tya5/chrona/actions/runs/39037423336)) has109
-identical paths, all50 SVG and50 Scene files byte-identical; only diagnostic
-inventory and presentation coverage change. The network-containing official
-snapshot/count batch and exact-main release are pending, not inferred from that
-earlier green run.
+claim to resolve it. Official network-containing PR1661 snapshot `2ba99ea3c`
+([run39040220060](https://github.com/tya5/chrona/actions/runs/39040220060)) has109
+identical paths:50 SVG,50 Scene and9 reports. All100 visual files are
+byte-identical, with no public primitives/routes/labels added, removed or
+changed. Only diagnostic inventory304383→304701 bytes and presentation
+coverage334818→335168 change. All three pytest shards, conformance,
+reproduction and MCP passed; only `derived-ready` rejected the advanced main
+base. Trusted-ready `d0df1e8aa` is now normally merged (docs only), and11
+network/View tests pass on that final base. Final-head CI and exact-main
+release remain pending; an old green run is not release acceptance.
