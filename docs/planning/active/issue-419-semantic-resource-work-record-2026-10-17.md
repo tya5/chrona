@@ -627,8 +627,16 @@ keys. Native tests pass parsed rules through normalization, not completed-index
 injection. The collector/normalization/native batch passes176 tests; typed-field
 Context ingress also verifies enum/alias matching, absent booleans and pointed
 type/unknown failures. Scalar field facts retain declarations and source aliases
-without inferring schemas. Complete fill orchestration and release checks remain pending.
-Module reachability (288 modules)
+without inferring schemas. Native source-local descriptor ingress passes5 tests,
+including a real snapshot Context with distinct package definitions at the same
+package ID/token. After integration with main890af301d, the vocabulary/closure/
+Style batch passes59 tests and schema equivalence passes (merged deltas pruned).
+The shared model-owned Theme paint inputs now feed Scene's unchanged effect
+completion; focused extraction checks pass126 tests and the final native/paint
+batch passes71, including explicit-part and stroke-channel precedence. Internal
+scale target metadata is optional; legacy View controls pass35 tests. Full-key
+fill completion, Layout preflight hookup and release checks remain pending.
+Module reachability (290 modules)
 and inward imports pass without an allowlist. Generic Draft integration tests now provide an explicit temporary
 Store containing the exact declared package bytes rather than bypass closure.
 The remaining Draft test callers share that Store fixture without changing
