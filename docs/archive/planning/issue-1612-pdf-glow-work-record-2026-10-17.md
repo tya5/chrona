@@ -2,7 +2,7 @@
 
 ## Baseline and design authority
 
-Ready base: `fa262ebab648229138eb34c33bf6a821f6450e96`. Font closure and measured-source face closure are published by PRs #1619 and #1621. PDF completion merged as PR #1635, commit `315b9b32b84b8769926a8b751bdef99b1d935f22`; its exact head `9f4640c9e783e5bcea5eb55ee4969b614cd842ca` passed [CI run 39004437658](https://github.com/tya5/chrona/actions/runs/39004437658). The review-containing exact-main three-OS release remains pending; issue closure is not yet authorized.
+Ready base: `fa262ebab648229138eb34c33bf6a821f6450e96`. Font closure and measured-source face closure are published by PRs #1619 and #1621. PDF completion merged as PR #1635, commit `315b9b32b84b8769926a8b751bdef99b1d935f22`; its exact head `9f4640c9e783e5bcea5eb55ee4969b614cd842ca` passed [CI run 39004437658](https://github.com/tya5/chrona/actions/runs/39004437658). Issue #1612 is closed: final-review main `2ff197828dd1b8ef1f2573202d201129a6d00b9b` passed [three-OS release 39007088159](https://github.com/tya5/chrona/actions/runs/39007088159).
 
 The pre-code PDF design was published in `a2918bf202b51e974813b02c6649af63f9fe1d8a`; the mixed-run correction is governed by the published Specs 08 §2.3 and 63 §7.1 correction (`a885135e8838197ff2008c092371a80d30102b25`, [review finding](https://github.com/tya5/chrona/issues/1612#issuecomment-6229304765)). Specs 08/63 are normative; Specs 30/33 retain Layout ownership of face choice, advances and geometry. The [architecture and implementation plan](https://github.com/tya5/chrona/issues/1612#issuecomment-6225435042) remains the whole-system review authority.
 
@@ -30,8 +30,8 @@ The PDF peer admits baseline geometry, glow and native cap/join while optional o
 
 The mixed-run correction positions each completed run from Layout's prefix advances, tracking and scale in private adapter copies. It preserves exact serialized/inherited PDF aliases, multiline offsets, rotation and whitespace; PDF source text is lowered once, separately from its halo clone. Latin-only PNG input and adapter identity remain unchanged. Native/portable task-table and member-label tests demonstrate weight-sensitive full PNG output and corresponding embedded PDF fonts.
 
-## Final evidence and remaining gate
+## Final release evidence
 
 Exact-head CI 39004437658 passed all three pytest shards (4,201 / 4,195 / 4,210), conformance, MCP, reproduction, derived preview and readiness. The current snapshot audit confirms 109 public paths retained with no SVG/Scene or primitive/diagnostic changes. The CJK integration module passed 48 tests on macOS, including all 45 outputs; current three PNGs and rasterized PDF were viewed. Marquee retains 74 glow images/soft masks, extractable Japanese text and vector source paint.
 
-Focused evidence includes 34 projector/halo/registry/PDF-advance tests, 61 renderer/font/opacity controls and 48 CJK integration tests. The exact-head no-projection native control fails, confirming the mixed-run test detects the original defect. CI conformance passes. Local schema equivalence reports L2+L3 at 90.8s against its 60s runtime gate; this local timing failure is disclosed, not waived. The review-containing exact-main three-OS release remains the final gate; keep the issue open until it passes.
+Focused evidence includes 34 projector/halo/registry/PDF-advance tests, 61 renderer/font/opacity controls and 48 CJK integration tests. The exact-head no-projection native control fails, confirming the mixed-run test detects the original defect. Final release 39007088159 passed Ubuntu (9,022 + 3,644 tests), Windows (12,664) and macOS (12,671), each with conformance, OS probe and installed-wheel smoke, plus MCP-floor and newest-Python reproduction of every public materializer. Archive preparation passed 13 focused documentation tests; its conformance gate is supplied by CI.
