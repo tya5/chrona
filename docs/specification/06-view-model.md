@@ -585,6 +585,16 @@ Explicit rows must provide a compatible baseline track or refuse the forecast.
 Derived windows include forecast endpoints and drawn baseline ghosts; explicit
 windows remain authoritative and retain ordinary clipping diagnostics.
 
+The forecast primary owns the member-name label for its object occurrence.
+A paired Snapshot ghost has no member-name label, independently of its visible
+temporal paint; it still carries its baseline mark and provenance. View
+projection declares this occurrence eligibility before Layout, including in
+automatic, explicit, lane and folded compositions. Layout measurement/admission
+honours it without inferring forecast/source policy. The primary title keeps
+the existing View visibility/overflow rules; its required forecast delta is
+independent and remains required. This does not remove intentional repeated
+primary occurrences or alter ordinary non-forecast comparison labels.
+
 Forecast requires a table-timeline View with a declared per-item `finishDelta`
 channel and a Layout legend slot. Unsupported presentation is
 `E_FORECAST_PRESENTATION_REQUIRED`, with the missing capability named; do not

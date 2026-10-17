@@ -1,6 +1,6 @@
 # Issue1657 — forecast label ownership and observed-start warnings
 
-Status: design planning. Baseline: main `aabc5e894`, with unchanged product
+Status: design complete; implementation plan finalized. Baseline: main `aabc5e894`, with unchanged product
 source from trusted-ready `9f35dd457` after the legend fix.
 [Issue1657](https://github.com/tya5/chrona/issues/1657) is the next dev A item;
 issue1397's implemented slice is preserved separately and publications stay serial.
@@ -34,12 +34,46 @@ wireframes→visual-design miss carries `E_FIXED_TARGET_VIOLATION` with info sev
   parity, Spec33 Layout ownership and adjacent forecast/text contracts. Publish
   the chosen normative changes and completed architecture review before code.
 
-## Implementation planning boundary
+## Selected design and whole-architecture review
 
-Finalize after design: separate label-eligibility and warning-producer slices,
-owned files, neutral tests, publication unit and exact release gates. Expected
-owners: projection/label request generation, `forecast_schedule`, warning ledger
-and its presentation handoff. No schema/CLI flag or `examples/**` change planned.
+Spec06 §8.5 assigns the paired ghost's member-label eligibility to View
+projection, independently of temporal paint. A frozen `ReviewItem` eligibility
+fact defaults true; one shared row-composition rule disables only Snapshot
+companions of a forecasted primary of that object. Every title measurement and
+request consumer honours the fact; no Layout project/source-kind exception.
+Required forecast deltas and visible ghosts are unchanged.
+
+Spec04 §17.1 defines `W_FORECAST_OBSERVED_START_BEFORE_BOUND`. Classification
+requires the effective fixed target to have a supplied observed `start`, not
+the diagnostic code alone. Reuse Scheduler evidence; no extra solve or date
+mutation. Preserve other reportable fixed targets and fatal validation.
+Separate forecast warnings from informational findings in the immutable outcome
+and projection; the application sends them through the common warning ledger
+(Spec08 §7), not `ForecastInfo`. True FS overlap and other bound misses have
+different factual wording. No scalar-expression/predicate feature is added.
+
+Architecture review: Core supplies facts and unchanged Scheduler contracts;
+the application derives forecast/diagnostic meaning, View selects occurrence
+content, Layout measures/places eligible content, Scene/adapters serialize it.
+This matches Spec33/50 ownership and Spec08 warning parity. The deliberate
+compatibility changes are removal of duplicate ghost names and the new warning
+code/severity for observed-start misses. No resource version, CLI syntax,
+source data or ordinary scheduling success contract changes.
+
+## Implementation plan
+
+1. **Label ownership:** `model/projection.py`, member-label measurement/request
+   consumers and neutral forecast-render tests. Cover automatic/explicit/lane/
+   folded paths, ghost preservation, primary count, ordinary control, mandatory
+   delta and unchanged no-forecast output.
+2. **Warning classification/transport:** `core/forecast.py`,
+   `usecases/forecast_schedule.py`, projection/application handoff and
+   `warning_ledger.py`. Cover observed/forecast predecessor finishes, completed
+   and unfinished observed targets, SS/positive/negative lag, retained bounds,
+   unobserved endpoints, fixed gates, warning severity and Scene/CLI identity.
+3. **One implementation PR:** separately reviewable commits, concise literal
+   acceptance review, one official public SVG/Scene snapshot count batch and
+   actual trial technical-print PNG. No generated edits or `examples/**` changes.
 Focused tests run in this worktree's `.venv`; CI supplies full pytest,
 conformance/wheel, public materializer reproduction and MCP. Inspect one official
 public SVG/Scene batch with counts and the actual trial PNG before acceptance.
