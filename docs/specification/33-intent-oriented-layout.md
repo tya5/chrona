@@ -724,7 +724,7 @@ shared obstacle inventory before relations. Member names, in automatic and
 fixed-lane rows alike, use the single provisional reservation, bounded release
 and final revalidation owner defined by [Spec 50 §3.3](50-constraint-driven-gantt-surface-quality.md#33-relations)
 (#1610). Required attached-point, key-row and other route-independent labels
-remain hard obstacles in every trial; only optional member-name reservations
+remain hard obstacles during normal/staged searches in every trial; only optional member-name reservations
 may be released. That contract supersedes the earlier route-first/lost-name recovery
 and separate lane corridor rehearsal; it changes neither declared candidate
 order nor association, safety, route quality or overflow limits. Other optional

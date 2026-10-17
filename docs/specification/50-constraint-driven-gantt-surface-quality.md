@@ -405,9 +405,13 @@ completed routes. Do not replay composition in Scene or adapters.
 
 **Member-name reservations (#1610).** First classify and complete required
 route-independent labels, including required attached-point and key-row labels.
-Their full footprints remain hard obstacles in every trial and reference;
-release or reference fallback MUST NOT suppress or overlap them. Existing typed
-required-label failure behavior remains authoritative. Then Layout reserves
+Their full footprints remain hard obstacles during normal and staged searches
+in every trial and reference; optional-reservation release/fallback MUST NOT
+remove or suppress those placements. Carry their explicit Layout obstacle
+identities through relaxation, rather than inferring priority from every
+completed Text's `required` flag. Explicit unsafe overlap/stub completion keeps
+its existing contract below. Existing typed required-label failure behavior
+remains authoritative. Then Layout reserves
 exactly the first feasible box of each optional member name, in stable request order,
 using the existing declared candidate ladder, viewport, mark association and
 mark/text/label-visual/rule obstacles. Completed routes are not yet present.

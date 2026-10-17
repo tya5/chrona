@@ -393,7 +393,10 @@ name because it contradicts this terminal outcome. These are v0.28 ingress
 rules, not silent overrides. Non-lane label policies do not change.
 Mark, comparison, icon and text footprints remain relevant to this later
 placement and to #494 route avoidance. Required visible labels are obstacles
-before routes; a route cannot cross a required lane/member label. The
+before routes; normal and staged-search routes cannot cross a required
+lane/member label. Spec 50's explicitly unsafe overlap/stub completion retains
+its own contract; optional label reservation release does not weaken required
+label protection during search. The
 lane table shows one group/lane summary and optional member count per
 generated lane. For `laneTable.label: group`,
 the first lane in a group shows that group's title and later lanes have an
