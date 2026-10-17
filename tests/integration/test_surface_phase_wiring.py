@@ -75,11 +75,16 @@ def test_routes_and_labels_use_isolated_trials_from_one_pre_route_inventory(tmp_
         seen["pre_index_ids"] = {item.placement_id for item in context.clean_obstacles.all()}
         seen["post_request_ids"] = {item.placement_id for item in context.post_route_requests}
         result = original_plan(context)
-        seen["selected_index_id"] = id(result.obstacles)
         seen["trial_ids"] = set(trial_initial_ids)
         return result
 
     monkeypatch.setattr(surface_composer, "compose_routes_and_member_labels", plan_spy)
+    original_selection = surface_composer.select_completed_route_label_plan
+    def selection_spy(*args):
+        result, annotations = original_selection(*args)
+        seen["selected_index_id"] = id(result.obstacles)
+        return result, annotations
+    monkeypatch.setattr(surface_composer, "select_completed_route_label_plan", selection_spy)
     example = ROOT / "examples/halcyon-1"
     monkeypatch.setattr(sys, "argv", ["chrona", "render", str(example / "project.yaml"),
                                       "--actual", str(example / "actual.yaml"),
@@ -91,8 +96,8 @@ def test_routes_and_labels_use_isolated_trials_from_one_pre_route_inventory(tmp_
     route_ids = {identity for name, identity, _, _ in trials if name == "routes"}
     final_label_ids = {identity for name, identity, _, reserve_only in trials
                        if name == "member-labels" and not reserve_only}
-    assert len(probes) == 1, "the optional member-label probe is private and shared by bounded trials"
-    assert 1 <= len(route_ids) <= 3
+    assert not probes, "the coordinator must not run a global route-free label rehearsal"
+    assert 1 <= len(route_ids) <= 2
     assert probes.isdisjoint(route_ids | final_label_ids)
     assert seen["pre_index_id"] not in {identity for _, identity, _, _ in trials}
     assert seen["selected_index_id"] in final_label_ids
@@ -106,5 +111,4 @@ def test_routes_and_labels_use_isolated_trials_from_one_pre_route_inventory(tmp_
         assert seen["pre_index_ids"] <= trial_initial_ids[identity]
         assert trial_initial_ids[identity] <= trial_final_ids[identity]
     for identity in final_label_ids:
-        assert probe_added_ids[next(iter(probes))].isdisjoint(trial_initial_ids[identity])
         assert trial_initial_ids[identity] <= trial_final_ids[identity]

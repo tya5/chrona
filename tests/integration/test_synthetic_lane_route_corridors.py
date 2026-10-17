@@ -48,12 +48,17 @@ def _render_and_compare(tmp_path, source, monkeypatch, *, entry=None, unroutable
     original = composer.compose_routes_and_member_labels
     def observe(context):
         clean_before = tuple(context.clean_obstacles.all())
-        reference = label_plan._trial(context, (), context.post_route_requests)
-        selected = original(context)
+        options = original(context)
         assert tuple(context.clean_obstacles.all()) == clean_before
-        captured.update(reference=reference, selected=selected)
-        return selected
+        captured["reference"] = options.first
+        return options
     monkeypatch.setattr(composer, "compose_routes_and_member_labels", observe)
+    select = composer.select_completed_route_label_plan
+    def observe_selection(*args):
+        selected, annotations = select(*args)
+        captured["selected"] = selected
+        return selected, annotations
+    monkeypatch.setattr(composer, "select_completed_route_label_plan", observe_selection)
     parts = _parts(entry=entry, unroutable=unroutable)
     if label_sides:
         parts["view"]["body"]["visibility"]["fallback"]["labels"] = label_sides
@@ -126,7 +131,7 @@ def test_no_conflict_keeps_completed_primitives_equal_to_unreserved_reference(tm
     assert selected_routes == reference_routes
 
 
-def test_project_without_relations_uses_one_reservation_trial_and_no_replay(tmp_path, monkeypatch):
+def test_project_without_relations_uses_one_normal_pass_and_no_replay(tmp_path, monkeypatch):
     source = sr.chain_project()
     source["relations"] = []
     passes = []
@@ -138,4 +143,4 @@ def test_project_without_relations_uses_one_reservation_trial_and_no_replay(tmp_
     rendered = sr.render(tmp_path, source, presentation=_parts())
 
     assert _names(rendered)
-    assert passes == ["route-label-reserved"]
+    assert passes == ["route-label-baseline"]

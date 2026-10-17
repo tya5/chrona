@@ -1,13 +1,14 @@
-"""Owns provisional member-name reservations, route repair and final labels; reads completed label requests and geometry."""
+"""Owns at most one on-demand repair and preserves the first completed placement."""
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from typing import Callable
 
 from chrona.presentation.layout.labels import LabelRequest
-from chrona.presentation.layout.obstacles import SurfaceObstacle, SurfaceObstacleIndex, obstacles_intersect
+from chrona.presentation.layout.obstacles import SurfaceObstacleIndex
+from chrona.presentation.layout.surface_annotations import SurfaceAnnotationBatch
 from chrona.presentation.layout.surface_member_labels import (
-    SurfaceMemberLabelContext, SurfaceMemberLabelsBatch, place_member_labels,
+    MemberLabelReservation, SurfaceMemberLabelContext, SurfaceMemberLabelsBatch, place_member_labels,
 )
 from chrona.presentation.layout.surface_quality import TextPlacement
 from chrona.presentation.layout.surface_routes import (
@@ -35,34 +36,14 @@ class RouteLabelPlan:
 
 
 @dataclass(frozen=True)
-class MemberLabelReservation:
-    """One already-measured optional candidate, never a committed label batch."""
-    text: TextPlacement
-    obstacles: tuple[SurfaceObstacle, ...]
-
-
-@dataclass(frozen=True)
-class _Trial:
-    plan: RouteLabelPlan
-    route_ink: tuple[SurfaceObstacle, ...]
+class RouteLabelOptions:
+    """Private completed alternatives; annotations must complete before selection."""
+    first: RouteLabelPlan
+    retry: RouteLabelPlan | None = None
 
 
 def _empty_members() -> SurfaceMemberLabelsBatch:
     return SurfaceMemberLabelsBatch((), (), (), (), (), (), (), frozenset())
-
-
-def _reservations(context: RouteLabelPlanContext) -> tuple[MemberLabelReservation, ...]:
-    requests = tuple(item for item in context.post_route_requests
-                     if item.semantic_id == "memberLabel" and not item.is_required_before_routes)
-    if not requests:
-        return ()
-    probe_index = context.clean_obstacles.copy()
-    probe = place_member_labels(context.member_labels, requests, probe_index, reserve_only=True)
-    added = {item.placement_id: item for item in probe_index.all()
-             if not context.clean_obstacles.has(item.placement_id)}
-    return tuple(MemberLabelReservation(replace(text, required=False), tuple(
-        added[identifier] for identifier in (text.placement_id, f"label-footprint:{text.placement_id}")
-        if identifier in added)) for text in probe.text if text.overflow == "fit")
 
 
 def _relation_status(routes: SurfaceRoutesBatch) -> dict[str, int]:
@@ -84,29 +65,44 @@ def _relation_status(routes: SurfaceRoutesBatch) -> dict[str, int]:
 
 
 def _run_trial(context: RouteLabelPlanContext, reservations: tuple[MemberLabelReservation, ...],
-               requests: tuple[LabelRequest, ...], *, progress_pass: str) -> _Trial:
+               requests: tuple[LabelRequest, ...], *, progress_pass: str,
+               preserve: RouteLabelPlan | None = None) -> RouteLabelPlan:
     index = context.clean_obstacles.copy()
     provisional_ids = {item.placement_id for reserve in reservations for item in reserve.obstacles}
+    # A repair must not route through names already completed by the normal
+    # pass. Carry their measured footprints, except the names being repaired;
+    # this is retention of completed geometry, not another speculative probe.
+    repairing = {item.text.placement_id for item in reservations}
+    retained_text = tuple(item for item in preserve.members.text
+        if item.overflow != "suppressed" and item.placement_id not in repairing) if preserve else ()
+    retained_ids = frozenset(identifier for item in retained_text
+        for identifier in (item.placement_id, f"label-footprint:{item.placement_id}"))
+    if preserve:
+        index.extend(item for item in preserve.obstacles.all() if item.placement_id in retained_ids)
+    provisional_ids.update(retained_ids)
     index.extend(item for reserve in reservations for item in reserve.obstacles)
-    route_context = replace(context.routes_for(index, (*context.base_text, *(item.text for item in reservations))),
-                            progress_pass=progress_pass)
+    route_context = context.routes_for(index, (*context.base_text, *retained_text,
+                                              *(item.text for item in reservations)))
+    route_context = replace(route_context, progress_pass=progress_pass,
+        required_label_obstacle_ids=route_context.required_label_obstacle_ids | retained_ids)
     routes = compose_surface_routes(route_context)
-    route_ink = index.select(classes=("dependency-route",))
     # Revalidate through the same placement owner against actual route ink;
     # no probe facts or ghost boxes reach Scene or later obstacle phases.
-    final_index = SurfaceObstacleIndex()
-    final_index.extend(item for item in index.all() if item.placement_id not in provisional_ids)
+    final_index = index
+    if provisional_ids:
+        final_index = SurfaceObstacleIndex()
+        final_index.extend(item for item in index.all() if item.placement_id not in provisional_ids)
     members = (place_member_labels(context.member_labels, requests, final_index)
                if requests else _empty_members())
     relation_labels = place_relation_labels(replace(route_context, obstacles=final_index,
         text=(*context.base_text, *members.text)), routes)
-    return _Trial(RouteLabelPlan(routes, members, relation_labels, final_index), route_ink)
+    return RouteLabelPlan(routes, members, relation_labels, final_index)
 
 
 def _trial(context: RouteLabelPlanContext, reservations: tuple[MemberLabelReservation, ...],
            requests: tuple[LabelRequest, ...], *, progress_pass: str = "route-label-reference") -> RouteLabelPlan:
     """Expose a completed unreserved reference for characterization tests."""
-    return _run_trial(context, reservations, requests, progress_pass=progress_pass).plan
+    return _run_trial(context, reservations, requests, progress_pass=progress_pass)
 
 
 def _preserves(reference: RouteLabelPlan, candidate: RouteLabelPlan) -> bool:
@@ -114,57 +110,61 @@ def _preserves(reference: RouteLabelPlan, candidate: RouteLabelPlan) -> bool:
     if baseline.keys() != selected.keys() or any(selected[key] > baseline[key] for key in baseline):
         return False
     visible = lambda batch: {item.placement_id for item in batch.text if item.overflow != "suppressed"}
-    return visible(reference.relation_labels) <= visible(candidate.relation_labels)
+    return (visible(reference.members) <= visible(candidate.members)
+            and visible(reference.relation_labels) <= visible(candidate.relation_labels))
 
 
-def _crossed_reservations(ink: tuple[SurfaceObstacle, ...],
-                          reservations: tuple[MemberLabelReservation, ...]) -> frozenset[str]:
-    return frozenset(reserve.text.placement_id for reserve in reservations
-        if any(obstacles_intersect(paint.geometry, footprint.geometry, paint.clearance + footprint.clearance)
-               for paint in ink for footprint in reserve.obstacles))
+def compose_routes_and_member_labels(context: RouteLabelPlanContext) -> RouteLabelOptions:
+    """Run normally first; only recorded route-blocked candidates trigger one retry."""
+    first = _run_trial(context, (), context.post_route_requests,
+                       progress_pass="route-label-baseline")
+    reserves = first.members.route_blocked_candidates
+    if not reserves:
+        return RouteLabelOptions(first)
+    retry = _run_trial(context, reserves, context.post_route_requests,
+                       progress_pass="route-label-recovery", preserve=first)
+    return RouteLabelOptions(first, retry)
 
 
-def _relation_ink(ink: tuple[SurfaceObstacle, ...], relation_ids: set[str]) -> tuple[SurfaceObstacle, ...]:
-    return tuple(item for item in ink
-                 if any(item.placement_id.startswith(identifier + ":") for identifier in relation_ids))
+def _annotations_preserved(first: SurfaceAnnotationBatch, retry: SurfaceAnnotationBatch) -> bool:
+    visible_text = lambda batch: {item.placement_id for item in batch.text if item.overflow != "suppressed"}
+    if not visible_text(first) <= visible_text(retry):
+        return False
+    for attribute, identity in (("shapes", "placement_id"), ("icons", "placement_id"),
+                                ("relations", "relation_id")):
+        ids = lambda batch: {getattr(item, identity) for item in getattr(batch, attribute)
+                             if not getattr(item, "suppressed", False)}
+        if not ids(first) <= ids(retry):
+            return False
+    selected = {item.decision_id: item for item in retry.decisions}
+    for previous in first.decisions:
+        if previous.outcome != "placed":
+            continue
+        current = selected.get(previous.decision_id)
+        if current is None or current.outcome != "placed":
+            return False
+        connected = {"direct-tail", "routed-tail", "strict", "bridged-orthogonal"}
+        if previous.selected_topology in connected and current.selected_topology not in connected:
+            return False
+        ladder = previous.requested_ladder
+        if (previous.selected_rung in ladder and current.selected_rung in ladder
+                and ladder.index(current.selected_rung) > ladder.index(previous.selected_rung)):
+            return False
+    return True
 
 
-def _crossing_relations(trial: _Trial,
-                        reservations: tuple[MemberLabelReservation, ...]) -> set[str]:
-    return {identifier for identifier in _relation_status(trial.plan.routes)
-            if _crossed_reservations(_relation_ink(trial.route_ink, {identifier}), reservations)}
-
-
-def compose_routes_and_member_labels(context: RouteLabelPlanContext) -> RouteLabelPlan:
-    """Reserve once, with at most one reference and one selective-release retry."""
-    reservations = _reservations(context)
-    reserved = _run_trial(context, reservations, context.post_route_requests,
-                          progress_pass="route-label-reserved")
-    trials = [reserved]
-
-    def finish(chosen: _Trial) -> RouteLabelPlan:
-        return replace(chosen.plan, routes=replace(chosen.plan.routes, routing_info=tuple(
-            fact for trial in trials for fact in trial.plan.routes.routing_info)))
-
-    if not reservations:
-        return finish(reserved)
-    if (not any(_relation_status(reserved.plan.routes).values())
-            and not _crossed_reservations(reserved.route_ink, reservations)):
-        return finish(reserved)
-    reference = _run_trial(context, (), context.post_route_requests, progress_pass="route-label-reference")
-    trials.append(reference)
-    baseline, selected = _relation_status(reference.plan.routes), _relation_status(reserved.plan.routes)
-    affected = {key for key in baseline if selected.get(key, 6) > baseline[key]}
-    crossed = _crossed_reservations(reserved.route_ink, reservations)
-    if crossed:
-        affected.update(_crossing_relations(reserved, reservations))
-    reference_ink = _relation_ink(reference.route_ink, affected)
-    release = _crossed_reservations(reference_ink, reservations)
-    if not release:
-        return finish(reserved if _preserves(reference.plan, reserved.plan) and not crossed else reference)
-    kept = tuple(item for item in reservations if item.text.placement_id not in release)
-    if not kept:
-        return finish(reference)  # already the exact released trial; no replay
-    retry = _run_trial(context, kept, context.post_route_requests, progress_pass="route-label-release")
-    trials.append(retry)
-    return finish(retry if _preserves(reference.plan, retry.plan) else reference)
+def select_completed_route_label_plan(options: RouteLabelOptions,
+                                      first_annotations: SurfaceAnnotationBatch,
+                                      retry_annotations: SurfaceAnnotationBatch | None = None,
+                                      ) -> tuple[RouteLabelPlan, SurfaceAnnotationBatch]:
+    """Choose completed batches only; never replay or leak discarded geometry."""
+    if options.retry is None:
+        return options.first, first_annotations
+    if retry_annotations is None:
+        raise ValueError("retry annotations must be completed before route-label selection")
+    accepted = (_preserves(options.first, options.retry)
+                and _annotations_preserved(first_annotations, retry_annotations))
+    chosen, annotations = ((options.retry, retry_annotations) if accepted
+                           else (options.first, first_annotations))
+    facts = (*options.first.routes.routing_info, *options.retry.routes.routing_info)
+    return replace(chosen, routes=replace(chosen.routes, routing_info=facts)), annotations

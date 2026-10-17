@@ -10,6 +10,7 @@ from chrona.presentation.layout.annotation_search import (
     lattice_positions,
     nearest_free_routed_tail_box,
 )
+from chrona.presentation.layout.annotation_topology import route_strict_bounded
 from chrona.presentation.layout.annotations import (
     AnnotationAnchor,
     project_annotation_box,
@@ -307,3 +308,13 @@ def test_routed_tail_search_error_names_budget_and_anchor():
             route_state_limit=0)
     assert "route_state_limit=0" in str(tail.value)
     assert "anchor_id='mark-alpha'" in str(tail.value)
+
+
+def test_annotation_topology_error_names_search_budget_and_route():
+    with pytest.raises(ValueError) as topology:
+        route_strict_bounded((1, 2), (8, 9), SurfaceObstacleIndex(),
+                             bounds=(0, 0, 10, 10), limit=0,
+                             max_bends=3, max_detour_ratio=2)
+    assert str(topology.value).startswith("E_LAYOUT_ANNOTATION_SEARCH_INPUT:")
+    assert "state_limit=0" in str(topology.value)
+    assert "start=(1, 2)" in str(topology.value)

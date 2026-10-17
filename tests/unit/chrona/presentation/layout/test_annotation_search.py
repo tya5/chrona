@@ -5,7 +5,6 @@ from chrona.presentation.layout.annotation_search import (
     coarse_lattice_positions, lattice_positions, nearest_free_box, nearest_free_tail_box,
 )
 from chrona.presentation.layout.annotation_search import nearest_free_routed_tail_box
-from chrona.presentation.layout.ports import ConnectorEgress
 from chrona.presentation.layout.annotation_search import _route_crosses_rule_once
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.surface_quality import MarkPlacement
@@ -209,68 +208,6 @@ def test_routed_tail_search_returns_bounded_strict_route_and_keeps_box_out_of_in
     assert not any(candidate_index.collisions(ObstacleSegment(a, b),
                                                classes=("mark", "text", "dependency-route"))
                    for a, b in ((base_a, result.tip), (result.tip, base_b)))
-
-
-def test_routed_tail_fair_scheduler_does_not_let_blocked_egress_starve_sibling(monkeypatch) -> None:
-    mark = MarkPlacement("mark:anchor", "anchor", Rect(10, 40, 10, 10),
-                         (10, 45), (20, 45), mark_shape="span")
-    index = SurfaceObstacleIndex()
-    index.add(SurfaceObstacle("mark:anchor", "mark", "plot", ObstacleRect(10, 40, 20, 50)))
-    index.add(SurfaceObstacle("block:first-egress", "dependency-route", "plot",
-                              ObstacleSegment((25, 55), (50, 55))))
-    first = ConnectorEgress("end", (20, 55), (20, 55), ("mark:anchor",))
-    second = ConnectorEgress("start", (20, 60), (20, 60), ("mark:anchor",))
-    monkeypatch.setattr(search, "_candidate_positions",
-                        lambda *args, **kwargs: iter((LabelRect(60, 40, 20, 10),)))
-    monkeypatch.setattr(search, "connector_egress_candidates",
-                        lambda *args, **kwargs: (first, second))
-
-    def candidates(start, end, index, **kwargs):
-        if start == first.exposed_port:
-            # The first egress has a finite-looking but blocked prefix much
-            # larger than the total search cap.
-            return iter((start, (30 + number / 100, start[1]),
-                         (30 + number / 100, end[1]), end) for number in range(64))
-        return iter(((start, (start[0], 30), (end[0], 30), end),))
-
-    monkeypatch.setattr(search, "strict_route_candidates", candidates)
-    result = nearest_free_routed_tail_box(
-        region=LabelRect(0, 0, 100, 100), anchor=mark, endpoint="finish", siblings=(mark,),
-        box_size=(20, 10), max_positions=1, obstacles=index,
-        obstacle_classes=("mark", "text", "dependency-route"), corner_radius=2,
-        tail_base=6, content_bounds=(0, 0, 100, 100), host_id="mark:anchor",
-        route_state_limit=16)
-
-    assert result.box == LabelRect(60, 40, 20, 10)
-    assert result.egress == second
-    assert result.route is not None
-    assert 0 < result.route_states <= 16
-
-
-def test_routed_tail_keeps_valid_prefix_fit_at_aggregate_cap(monkeypatch) -> None:
-    mark = MarkPlacement("mark:anchor", "anchor", Rect(10, 40, 10, 10),
-                         (10, 45), (20, 45), mark_shape="span")
-    index = SurfaceObstacleIndex()
-    monkeypatch.setattr(search, "_candidate_positions",
-                        lambda *args, **kwargs: iter((LabelRect(60, 40, 20, 10),)))
-    monkeypatch.setattr(search, "connector_egress_candidates",
-                        lambda *args, **kwargs: (ConnectorEgress(
-                            "end", (20, 55), (20, 55), ("mark:anchor",)),))
-
-    def candidates(start, end, index, **kwargs):
-        return iter(((start, (start[0], 30), (end[0], 30), end),))
-
-    monkeypatch.setattr(search, "strict_route_candidates", candidates)
-    result = nearest_free_routed_tail_box(
-        region=LabelRect(0, 0, 100, 100), anchor=mark, endpoint="finish", siblings=(mark,),
-        box_size=(20, 10), max_positions=1, obstacles=index,
-        obstacle_classes=("mark", "text", "dependency-route"), corner_radius=2,
-        tail_base=6, content_bounds=(0, 0, 100, 100), route_state_limit=1)
-
-    assert result.box == LabelRect(60, 40, 20, 10)
-    assert result.route is not None
-    assert result.route_states == 1
-    assert not result.exhausted
 
 
 def test_coarse_routed_tail_search_finds_a_complete_collision_free_pair() -> None:

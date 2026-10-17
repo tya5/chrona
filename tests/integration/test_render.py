@@ -152,14 +152,14 @@ def test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic(monkeyp
     repeated = compositions[1].placement
     decisions = {item.source_ref: item for item in placement.decisions
                  if item.decision_id.startswith("annotation:")}
-    # Changed dependency/label geometry can change the TVAC/station topology.
-    # Require a connected tail, not a historical direct or routed shape;
+    # Changed dependency/label geometry can make the preferred direct TVAC
+    # tail free. Require a connected tail, not the historical routed shape;
     # both topologies receive the same full geometric safety checks below.
     # The neutral test_annotation_search fixtures separately require and bound
     # routed-tail search when a direct tail is obstructed.
     assert set(decisions) == {"window-note", "tvac-note", "station-note"}
     assert decisions["window-note"].selected_topology == "direct-tail"
-    assert decisions["station-note"].selected_topology in {"direct-tail", "routed-tail"}
+    assert decisions["station-note"].selected_topology == "direct-tail"
     assert decisions["tvac-note"].selected_topology in {"direct-tail", "routed-tail"}
     assert all(0 < item.search_count <= 3 * 1024 for item in decisions.values())
     assert all(item.box_positions_examined <= item.box_position_limit == 1024
@@ -302,18 +302,30 @@ def test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic(monkeyp
 
 
 def test_suppressed_plot_labels_have_one_completed_info_count(capsys, tmp_path):
-    from tests.support import synthetic_review as sr
-
-    # Force real suppression with neutral overlapping members, rather than
-    # requiring a named public project to keep losing a label after improvements.
-    parts = sr.bundle()
-    parts["view"] = sr.lane_view(parts["view"])
-    parts["view"]["body"]["window"] = {"mode": "explicit", "start": "2026-01-05", "end": "2026-03-01"}
-    parts["layout"]["reviewSurface"]["rowDistribution"] = "fill"
-    rendered = sr.render(tmp_path, sr.bunched_project(), presentation=parts)
+    # #487 corrected the table's `minmax`/content-minimum and its flex-allocation
+    # basis (ADR-0032), which changes which member label this `elevated-light`
+    # draft suppresses (`structure:structure` before #487, `launch:launch`
+    # after) because the table's corrected width gives the plot different room.
+    # The mechanism under test here -- exactly one completed info count and its
+    # JSON emission -- is unaffected; only the specific suppressed label id is.
+    root = _root()
+    example = root / "examples/halcyon-1"
+    preset = root / "src/chrona/resources/presets/bundles/elevated-light"
+    legacy_view = yaml.safe_load((preset / "view.yaml").read_text(encoding="utf-8"))
+    legacy_view["body"]["rows"]["mode"] = "automatic"
+    for key in ("packing", "laneTable", "laneKeys"):
+        legacy_view["body"]["rows"].pop(key, None)
+    legacy_view_path = tmp_path / "elevated-automatic-view.yaml"
+    legacy_view_path.write_text(yaml.safe_dump(legacy_view, sort_keys=False), encoding="utf-8")
+    rendered = render_review(_draft_request(
+        project_path=example / "project.yaml", actual_path=example / "actual.yaml",
+        scheme_path=root / "tests/fixtures/controller-z/schemes/executive-light.yaml",
+        view_path=legacy_view_path, theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
     visible_labels = {item.scene_id for item in rendered.surface.primitives if item.kind == "Text"}
     per_id = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics
               if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:")}
+    # The automatic View keeps the same suppression mechanism, while its
+    # lane migrated selection produces a different count of constrained rows.
     assert per_id
     assert not per_id & visible_labels
     assert rendered.scene.diagnostics.count(
@@ -371,11 +383,8 @@ def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
                                          theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
     assert "W_LAYOUT_LABEL_SUPPRESSED:variance:detector:detector" in tuned.scene.diagnostics
     member_suppressed = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in tuned.scene.diagnostics)
-    # The independent variance above must never manufacture a member count.
-    if member_suppressed:
-        assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={member_suppressed}" in tuned.scene.diagnostics
-    else:
-        assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in tuned.scene.diagnostics)
+    assert member_suppressed >= 1  # the variance suppression above is not counted
+    assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={member_suppressed}" in tuned.scene.diagnostics
     # HALCYON is evidence here, not the rule: which names the placement policy suppresses depends
     # on the corpus data (#575), so no name is pinned. The aggregate must still count members
     # only; the synthetic proof is test_fill_lanes_count_every_packed_name_as_shown_or_suppressed.

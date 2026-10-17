@@ -1,4 +1,4 @@
-"""Single-candidate reservation, selective release and no-extra-unroutable safety."""
+"""Bounded member-label recovery and completed-plan preservation safety."""
 from dataclasses import replace
 from datetime import date
 from decimal import Decimal
@@ -9,7 +9,8 @@ import pytest
 from chrona.presentation.layout.labels import LabelRect, LabelRequest
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
-from chrona.presentation.layout.surface_member_labels import SurfaceMemberLabelsBatch
+from chrona.presentation.layout.surface_annotations import SurfaceAnnotationBatch
+from chrona.presentation.layout.surface_member_labels import MemberLabelReservation, SurfaceMemberLabelsBatch
 from chrona.presentation.layout.surface_quality import CollisionDomain, TextPlacement
 from chrona.presentation.layout.surface_routes import SurfaceRelationLabelsBatch, SurfaceRoutesBatch, SurfaceRoutesContext
 from chrona.presentation.layout import surface_route_label_plan as plan
@@ -28,36 +29,75 @@ def _text(identifier):
         "text", semantic_id="memberLabel", collision_domain=CollisionDomain("timeline", "overlay"))
 
 
-def _install(monkeypatch, *, repair=False, retry_bad=False, lose_relation_label=False, reference_bad=False):
+def _reservation(identifier):
+    text = _text(identifier)
+    left = float(text.bounds.inline)
+    box = ObstacleRect(left, 10, left + 20, 20)
+    return MemberLabelReservation(text, (
+        SurfaceObstacle(identifier, "text", "timeline", box),
+        SurfaceObstacle(f"label-footprint:{identifier}", "label-visual", "timeline", box),
+    ))
+
+
+def _annotations(*, text=(), shapes=(), relations=(), icons=(), decisions=()):
+    return SurfaceAnnotationBatch(tuple(text), tuple(shapes), tuple(relations), tuple(icons), tuple(decisions),
+        (), (), (), frozenset(), frozenset(), frozenset())
+
+
+def _empty_annotations():
+    return _annotations()
+
+
+def _assert_selected_inventory(result, expected, facts):
+    assert result.obstacles is expected.obstacles
+    assert result.members is expected.members
+    assert result.relation_labels is expected.relation_labels
+    assert result.routes.relations == expected.routes.relations
+    assert result.routes.visible_route_fallbacks == expected.routes.visible_route_fallbacks
+    assert result.routes.resolution_info == expected.routes.resolution_info
+    assert result.routes.diagnostics == expected.routes.diagnostics
+    assert result.routes.routing_info == tuple(facts)
+
+
+def _install(monkeypatch, *, repair=False, retry_bad=False, lose_member_label=False,
+             lose_relation_label=False):
     calls = []
+    name_calls = []
     required = SurfaceObstacle("required", "text", "timeline", ObstacleRect(120, 30, 140, 40))
     clean = SurfaceObstacleIndex()
     clean.add(required)
     facts = []
 
     def names(_context, requests, obstacles, *, reserve_only=False):
+        name_calls.append(None)
         texts = []
+        blocked = []
         for request in requests:
             text = _text(request.placement_id)
             box = ObstacleRect(float(text.bounds.inline), 10, float(text.bounds.inline + 20), 20)
             if not reserve_only and obstacles.collisions(box, classes=("dependency-route",)):
                 texts.append(replace(text, overflow="suppressed", required=False))
+                blocked.append(_reservation(request.placement_id))
+                continue
+            if lose_member_label and request.placement_id == "b" and len(name_calls) > 1:
+                texts.append(replace(text, overflow="suppressed", required=False))
                 continue
             obstacles.add(SurfaceObstacle(text.placement_id, "text", "timeline", box))
             obstacles.add(SurfaceObstacle(f"label-footprint:{text.placement_id}", "label-visual", "timeline", box))
             texts.append(text)
-        return SurfaceMemberLabelsBatch(tuple(texts), (), (), (), (), (), (), frozenset())
+        return SurfaceMemberLabelsBatch(tuple(texts), (), (), (), (), (), (), frozenset(),
+                                        route_blocked_candidates=tuple(blocked))
 
     def routes(context):
         calls.append(context.progress_pass)
         assert context.obstacles.has(required.placement_id)
-        assert not any(item.required for item in context.text)  # only provisional optional text
-        suppressed = ((repair and context.obstacles.has("a"))
-                      or (retry_bad and context.progress_pass == "route-label-release")
-                      or (reference_bad and context.progress_pass == "route-label-reference"))
+        if repair and context.progress_pass == "route-label-recovery":
+            assert context.obstacles.has("b")
+            assert {"b", "label-footprint:b"} <= context.required_label_obstacle_ids
+        suppressed = retry_bad and context.progress_pass == "route-label-recovery"
         relation = SimpleNamespace(relation_id="relation:r", suppressed=suppressed)
         if not suppressed:
-            y = 15 if repair else 50
+            y = 15 if repair and not context.obstacles.has("a") else 50
             context.obstacles.add(SurfaceObstacle("relation:r:segment:0", "dependency-route", "timeline",
                 ObstacleSegment((0, y), (50, y), 1)))
         fact = RelationSearchBudgetHit("table-timeline", "relation:r", context.progress_pass, 1, 1)
@@ -66,7 +106,7 @@ def _install(monkeypatch, *, repair=False, retry_bad=False, lose_relation_label=
         return SurfaceRoutesBatch((relation,), (), {}, {}, {}, (), (fact,), resolution)
 
     def relation_labels(context, _routes):
-        if lose_relation_label and context.progress_pass == "route-label-release":
+        if lose_relation_label and context.progress_pass == "route-label-recovery":
             return SurfaceRelationLabelsBatch((), (), ())
         return SurfaceRelationLabelsBatch((replace(_text("relation-label:r"), semantic_id="relationLabel"),), (), ())
 
@@ -79,77 +119,90 @@ def _install(monkeypatch, *, repair=False, retry_bad=False, lose_relation_label=
     return context, calls, facts
 
 
-def test_normal_reserved_route_needs_one_trial_and_emits_no_ghosts(monkeypatch):
+def test_unblocked_baseline_needs_one_trial_and_emits_no_ghosts(monkeypatch):
     context, calls, facts = _install(monkeypatch)
-    result = plan.compose_routes_and_member_labels(context)
-    assert calls == ["route-label-reserved"]
+    options = plan.compose_routes_and_member_labels(context)
+    result, annotations = plan.select_completed_route_label_plan(options, _empty_annotations())
+    assert options.retry is None and calls == ["route-label-baseline"]
     assert [item.overflow for item in result.members.text] == ["fit", "fit"]
-    assert result.routes.routing_info == tuple(facts)
+    _assert_selected_inventory(result, options.first, facts)
     assert result.obstacles.has("a") and not context.clean_obstacles.has("a")
-    assert all(item.required for item in result.members.text)
+    assert annotations == _empty_annotations()
 
 
-def test_releases_only_reference_ink_blockers_then_revalidates_names(monkeypatch):
+def test_one_recovery_reserves_only_the_route_blocked_candidate_and_emits_no_ghosts(monkeypatch):
     context, calls, facts = _install(monkeypatch, repair=True)
-    result = plan.compose_routes_and_member_labels(context)
-    assert calls == ["route-label-reserved", "route-label-reference", "route-label-release"]
+    options = plan.compose_routes_and_member_labels(context)
+    assert options.retry is not None
+    result, annotations = plan.select_completed_route_label_plan(options, _empty_annotations(), _empty_annotations())
+    assert calls == ["route-label-baseline", "route-label-recovery"]
     assert not result.routes.relations[0].suppressed
-    assert [item.overflow for item in result.members.text] == ["suppressed", "fit"]
-    assert not result.obstacles.has("a") and not result.obstacles.has("label-footprint:a")
+    assert [item.overflow for item in result.members.text] == ["fit", "fit"]
+    assert result.obstacles.has("a") and result.obstacles.has("label-footprint:a")
     assert result.obstacles.has("b") and result.obstacles.has("required")
     assert result.routes.routing_info == tuple(facts)
-    assert not result.routes.resolution_info  # discarded trial's resolution is not output
-
-
-@pytest.mark.parametrize("reason", ("route", "relation-label"))
-def test_reference_is_safety_net_when_selective_retry_regresses(monkeypatch, reason):
-    context, calls, facts = _install(monkeypatch, repair=True,
-        retry_bad=reason == "route", lose_relation_label=reason == "relation-label")
-    result = plan.compose_routes_and_member_labels(context)
-    assert len(calls) == 3
-    assert not result.routes.relations[0].suppressed
-    assert result.relation_labels.text[0].placement_id == "relation-label:r"
-    assert result.routes.routing_info == tuple(facts)
     assert not result.routes.resolution_info
+    assert not context.clean_obstacles.has("a")
+    assert not options.first.obstacles.has("a")  # no provisional first-pass box leaks
+    assert result.obstacles is options.retry.obstacles
+    assert result.members is options.retry.members
+    assert result.relation_labels is options.retry.relation_labels
+    assert annotations == _empty_annotations()
 
 
-def test_reference_does_not_release_arbitrary_boxes_if_route_is_already_unroutable(monkeypatch):
-    context, calls, _facts = _install(monkeypatch, repair=True, reference_bad=True)
-    result = plan.compose_routes_and_member_labels(context)
-    assert len(calls) == 2
-    assert result.routes.relations[0].suppressed
-    assert [item.overflow for item in result.members.text] == ["fit", "fit"]
+@pytest.mark.parametrize("reason", ("route", "member-label", "relation-label"))
+def test_completed_candidate_falls_back_to_the_unchanged_baseline_when_it_regresses(monkeypatch, reason):
+    context, calls, facts = _install(monkeypatch, repair=True, retry_bad=reason == "route",
+        lose_member_label=reason == "member-label", lose_relation_label=reason == "relation-label")
+    options = plan.compose_routes_and_member_labels(context)
+    result, annotations = plan.select_completed_route_label_plan(options, _empty_annotations(), _empty_annotations())
+    assert len(calls) == 2 and options.retry is not None
+    _assert_selected_inventory(result, options.first, facts)
+    assert not result.obstacles.has("a") and not result.obstacles.has("label-footprint:a")
+    assert not context.clean_obstacles.has("a")
+    assert result.routes.relations[0].suppressed is False
+    assert result.relation_labels.text[0].placement_id == "relation-label:r"
+    assert annotations == _empty_annotations()
 
 
-def test_all_released_reference_is_reused_without_third_replay(monkeypatch):
-    context, calls, _facts = _install(monkeypatch, repair=True)
-    context = replace(context, post_route_requests=context.post_route_requests[:1])
-    result = plan.compose_routes_and_member_labels(context)
-    assert len(calls) == 2
-    assert not result.routes.relations[0].suppressed
-
-
-def test_crossing_one_reserve_cannot_release_a_different_routes_reserve(monkeypatch):
-    context, calls, _facts = _install(monkeypatch)
-
-    def routes(route_context):
-        calls.append(route_context.progress_pass)
-        # r crosses A's provisional box. s does not cross B when B is reserved,
-        # but its unreserved reference does; s must not enter r's release set.
-        for identifier, start, end in (("r", (0, 15), (50, 15)),
-                ("s", (55, 50 if route_context.obstacles.has("b") else 15),
-                      (100, 50 if route_context.obstacles.has("b") else 15))):
-            route_context.obstacles.add(SurfaceObstacle(f"relation:{identifier}:segment:0",
-                "dependency-route", "timeline", ObstacleSegment(start, end, 1)))
-        return SurfaceRoutesBatch(tuple(SimpleNamespace(relation_id=f"relation:{identifier}", suppressed=False)
-            for identifier in ("r", "s")), (), {}, {}, {}, ())
-
-    monkeypatch.setattr(plan, "compose_surface_routes", routes)
-    result = plan.compose_routes_and_member_labels(context)
-    assert calls == ["route-label-reserved", "route-label-reference", "route-label-release"]
-    assert [item.overflow for item in result.members.text] == ["suppressed", "fit"]
-    assert result.obstacles.has("b")
+@pytest.mark.parametrize("lost", ("note", "callout", "connector"))
+def test_candidate_that_loses_a_visible_annotation_component_falls_back(monkeypatch, lost):
+    context, calls, facts = _install(monkeypatch, repair=True)
+    options = plan.compose_routes_and_member_labels(context)
+    assert options.retry is not None and len(calls) == 2
+    if lost == "note":
+        first = _annotations(text=(SimpleNamespace(placement_id="annotation-note-text:n", overflow="fit"),))
+        retry = _empty_annotations()
+    elif lost == "callout":
+        first = _annotations(shapes=(SimpleNamespace(placement_id="annotation-callout:n", suppressed=False),))
+        retry = _empty_annotations()
+    else:
+        first = _annotations(relations=(SimpleNamespace(relation_id="annotation-connector:n", suppressed=False),))
+        retry = _empty_annotations()
+    result, selected_annotations = plan.select_completed_route_label_plan(options, first, retry)
+    _assert_selected_inventory(result, options.first, facts)
+    assert selected_annotations is first
     assert not result.obstacles.has("a")
+
+
+@pytest.mark.parametrize("topology", ("disconnected", "later-rung"))
+def test_candidate_cannot_drop_a_connected_annotation_or_move_it_later(monkeypatch, topology):
+    context, calls, facts = _install(monkeypatch, repair=True)
+    options = plan.compose_routes_and_member_labels(context)
+    assert options.retry is not None and len(calls) == 2
+    first_decision = SimpleNamespace(decision_id="annotation:n", outcome="placed",
+        selected_topology="direct-tail", requested_ladder=("plot-near", "rail"), selected_rung="plot-near")
+    retry_decision = SimpleNamespace(decision_id="annotation:n", outcome="placed",
+        selected_topology=None if topology == "disconnected" else "direct-tail",
+        requested_ladder=("plot-near", "rail"),
+        selected_rung="rail" if topology == "later-rung" else "plot-near")
+    first = _annotations(text=(SimpleNamespace(placement_id="annotation-note-text:n", overflow="fit"),),
+                         decisions=(first_decision,))
+    retry = _annotations(text=(SimpleNamespace(placement_id="annotation-note-text:n", overflow="fit"),),
+                         decisions=(retry_decision,))
+    result, selected_annotations = plan.select_completed_route_label_plan(options, first, retry)
+    _assert_selected_inventory(result, options.first, facts)
+    assert selected_annotations is first
 
 
 def test_status_keeps_stable_stub_identity_and_typed_recovery_order():
@@ -212,14 +265,20 @@ def test_real_owners_reserve_centered_name_before_rerouting_vertical_dependency(
         bounds=LabelRect(target.start_port[0] - 77, y, 154, height), semantic_id="memberLabel")
     context = replace(context, post_route_requests=(name,))
     baseline = plan._trial(context, (), context.post_route_requests)
-    chosen = plan.compose_routes_and_member_labels(context)
+    options = plan.compose_routes_and_member_labels(context)
+    assert options.retry is not None
+    first = options.first
+    retry = options.retry
     assert [item.overflow for item in baseline.members.text] == ["suppressed"]
+    assert [item.overflow for item in retry.members.text] == ["fit"]
+    chosen, _annotations = plan.select_completed_route_label_plan(options, _empty_annotations(), _empty_annotations())
     assert [item.overflow for item in chosen.members.text] == ["fit"]
     assert not chosen.routes.relations[0].suppressed
     assert chosen.routes.relations[0].relation_id == baseline.routes.relations[0].relation_id
     assert chosen.routes.relations[0].points != baseline.routes.relations[0].points
     assert chosen.routes.relations[0].points[0] == baseline.routes.relations[0].points[0]
     assert chosen.routes.relations[0].points[-1] == baseline.routes.relations[0].points[-1]
+    assert first.routes.relations[0].points == baseline.routes.relations[0].points
     bounds = chosen.members.text[0].bounds
     assert not chosen.obstacles.collisions(ObstacleRect(float(bounds.inline), float(bounds.block),
         float(bounds.inline + bounds.inline_size), float(bounds.block + bounds.block_size)),

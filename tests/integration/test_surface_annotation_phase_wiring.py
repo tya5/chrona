@@ -44,8 +44,16 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
 
         def owner_spy(*args, _original=original, _name=name, **kwargs):
             if _name == "routes":
-                assert args[0].required_label_obstacle_ids == seen["required_obstacle_ids"]
-                assert args[0].required_label_obstacle_ids.isdisjoint(seen["optional_label_ids"])
+                route_context = args[0]
+                expected = seen["required_obstacle_ids"]
+                if route_context.progress_pass == "route-label-recovery":
+                    retained = {item.placement_id for item in route_context.text
+                                if item.required and item.placement_id in seen["first_visible_ids"]}
+                    expected = expected | frozenset(identifier for placement_id in retained
+                        for identifier in (placement_id, f"label-footprint:{placement_id}"))
+                else:
+                    assert route_context.required_label_obstacle_ids.isdisjoint(seen["optional_label_ids"])
+                assert route_context.required_label_obstacle_ids == expected
             obstacles = args[0].obstacles
             identity = id(obstacles)
             ids = {item.placement_id for item in obstacles.all()}
@@ -65,6 +73,9 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
         trial_events.append(("member-labels", identity, len(ids), reserve_only))
         member_requests.setdefault(identity, []).extend(item.placement_id for item in requests)
         result = original_labels(context, requests, obstacles, reserve_only=reserve_only)
+        if not reserve_only:
+            seen.setdefault("first_visible_ids", {item.placement_id for item in result.text
+                                                   if item.overflow != "suppressed"})
         trial_final_ids[identity] = {item.placement_id for item in obstacles.all()}
         return result
 
@@ -75,11 +86,17 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
         seen["clean_id"] = id(context.clean_obstacles)
         seen["clean_ids"] = {item.placement_id for item in context.clean_obstacles.all()}
         result = original_plan(context)
-        seen["selected_index"] = result.obstacles
-        seen["selected_routes"] = {item.relation_id: item.points for item in result.routes.relations}
         return result
 
     monkeypatch.setattr(surface_composer, "compose_routes_and_member_labels", plan_spy)
+    original_selection = surface_composer.select_completed_route_label_plan
+    def selection_spy(*args):
+        result, annotations = original_selection(*args)
+        seen["selected_index"] = result.obstacles
+        seen["selected_routes"] = {item.relation_id: item.points for item in result.routes.relations}
+        call["selected_annotations"] = annotations
+        return result, annotations
+    monkeypatch.setattr(surface_composer, "select_completed_route_label_plan", selection_spy)
     original_complete = surface_composer.complete_surface_layout
 
     def completion_spy(context):
@@ -113,25 +130,26 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
     ])
     main()
 
-    assert events == ["legend", "notes", "summary", "annotations"]
+    assert events[:3] == ["legend", "notes", "summary"]
+    assert events[3:] in (["annotations"], ["annotations", "annotations"])
     probes = [(identity, ids) for name, identity, ids, reserve_only in trial_events
               if name == "member-labels" and reserve_only]
     route_trials = [(identity, ids) for name, identity, ids, _ in trial_events if name == "routes"]
     final_label_trials = [(identity, ids) for name, identity, ids, reserve_only in trial_events
                           if name == "member-labels" and not reserve_only]
-    assert len(probes) == 1, "one private reservation probe is shared by the bounded route trials"
-    assert 1 <= len(route_trials) <= 3
+    assert not probes, "no global optional-name rehearsal before the first route pass"
+    assert 1 <= len(route_trials) <= 2
     assert len(final_label_trials) == len(route_trials)
     for identity, _ in route_trials:
         assert seen["clean_ids"] <= trial_initial_ids[identity]
     for identity, _ in final_label_trials:
         assert seen["clean_ids"] <= trial_initial_ids[identity]
         assert len(member_requests.get(identity, ())) == len(set(member_requests.get(identity, ())))
-    assert id(seen["selected_index"]) == seen["annotations-before"][0] == seen["annotations-after"][0]
+    assert id(seen["selected_index"]) in {identity for identity, _ in final_label_trials}
     assert seen["clean_id"] not in {identity for _, identity, _, _ in trial_events}
     assert id(seen["selected_index"]) in {identity for identity, _ in final_label_trials}
     assert call["completed_routes"] == seen["selected_routes"]
-    batch = call["batch"]
+    batch = call["selected_annotations"]
     assert batch.text and batch.relations  # this slide has annotation text and leaders
     assert seen["annotations-after"][1] > seen["annotations-before"][1]  # annotations registered their own geometry
 

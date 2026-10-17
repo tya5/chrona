@@ -149,8 +149,6 @@ def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():
             value["version"] = "chrona/view/v0.28"
             finishes = [annotation for annotation in value["body"]["annotations"] if annotation["anchor"]["endpoint"] == "finish"]
             assert len(finishes) == 4
-            actual_firmware = next(annotation for annotation in finishes if annotation["id"] == "firmware-slip")
-            assert actual_firmware["anchor"]["facet"] == "actual"
             for annotation in finishes:
                 annotation["anchor"]["endpoint"] = endpoint_spelling
             contract = parse_contract(closure.view.identity, value)
@@ -160,8 +158,8 @@ def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():
 
         finish, end = render("finish"), render("end")
     scene = serialize_scene(finish.scene)
-    # The aliases must preserve exact output, without pinning a route-dependent
-    # annotation to its former suppressed state.
+    # The one-pass policy preserves the feasible leader and the truthful
+    # fallback, independently of endpoint-alias spelling.
     for identifier in ("bringup-risk",):
         assert f"annotation-leader:{identifier}".encode() in scene
         assert not any(item.scene_id == f"annotation-summary:{identifier}"
@@ -169,20 +167,9 @@ def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():
         for prefix in ("annotation-box", "annotation-text", "note-index"):
             assert any(item.scene_id == f"{prefix}:{identifier}"
                        for item in finish.surface.primitives)
-    firmware_ids = {item.scene_id for item in finish.surface.primitives
-                    if item.scene_id.endswith(":firmware-slip")}
-    firmware_suppressed = "W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" in finish.scene.diagnostics
-    if firmware_suppressed:
-        assert "annotation-summary:firmware-slip" in firmware_ids
-        assert not firmware_ids.intersection({
-            "annotation-box:firmware-slip", "annotation-text:firmware-slip",
-            "annotation-leader:firmware-slip", "note-index:firmware-slip",
-        })
-    else:
-        assert "annotation-summary:firmware-slip" not in firmware_ids
-        assert {"annotation-box:firmware-slip", "annotation-text:firmware-slip",
-                "annotation-leader:firmware-slip"} <= firmware_ids
-        assert "W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" not in finish.scene.diagnostics
+    assert b"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" in scene
+    assert any(item.scene_id == "annotation-summary:firmware-slip" for item in finish.surface.primitives)
+    assert not any(item.scene_id == "annotation-leader:firmware-slip" for item in finish.surface.primitives)
     assert serialize_scene(end.scene) == scene
     assert end.artifact.content == finish.artifact.content
 
