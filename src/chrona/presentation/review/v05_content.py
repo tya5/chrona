@@ -24,7 +24,7 @@ from chrona.presentation.contracts.resources import (
 from chrona.presentation.group_header_text import GroupHeaderTextError, HeaderTemplate, compose_group_header_runs, compose_group_headers
 from chrona.presentation.figure_text import FigureTextProgram
 from chrona.presentation.heading_text import HeadingTextPrograms, close_heading
-from chrona.presentation.model.color_scale import ResolvedColorScale
+from chrona.presentation.model.color_scale import OTHER_LABEL, ResolvedColorScale
 from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec, AxisBandScaleError
 
@@ -256,9 +256,8 @@ def legend_entries(detail: ReviewDetailInput | None, project: Mapping[str, Any],
     used = _used_scale_values(color_scale, projection)
     entities = project.get("entities", {})
     return entries + tuple(
-        SurfaceLegendEntry(f"scale:{color_scale.scale_id}:{value}",
-                           str(entities.get(value, {}).get("title", value)))
-        for value in color_scale.domain if value in used)
+        SurfaceLegendEntry(ref, str(entities.get(label, {}).get("title", label)) if label != OTHER_LABEL else label)
+        for ref, label, _color in color_scale.legend_items(used))
 
 
 def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
@@ -421,8 +420,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                              for item in projection.items if item.source_kind in {"primary", "combined"}
                              and color_scale.covers(item.fields))
         used = _used_scale_values(color_scale, projection)
-        scale_legend_paints = tuple((f"scale:{color_scale.scale_id}:{value}", dict(color_scale.colors)[value])
-                                    for value in color_scale.domain if value in used)
+        scale_legend_paints = tuple((ref, color) for ref, _label, color in color_scale.legend_items(used))
     return SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
                                show_member_labels=label_placement in {"plot", "legacy"}, label_placement=label_placement, label_content=label_content,
                                label_side=label_side,

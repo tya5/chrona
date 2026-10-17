@@ -153,13 +153,13 @@ def test_a_translucent_band_stays_translucent_under_the_tint(tmp_path):
     assert {item.paint.opacity for item in bands.values()} == {0.5}
 
 
-def test_two_groups_a_reader_cannot_tell_apart_are_warned_about(tmp_path):
-    def mutate(parts):  # a scale of its own, so the mark scale's identical diagnostics cannot stand in for it
+def test_a_palette_slot_a_reader_cannot_tell_apart_is_skipped_and_the_remainder_folds(tmp_path):
+    def mutate(parts):  # a scale of its own, so the mark scale's diagnostics cannot stand in for it (#1628)
         parts["theme"]["body"]["colorScales"]["groups"] = {"palette": ["series-1", "series-1", "series-3"]}
     rendered = _render(tmp_path, _parts({"scale": "groups"}, mutate=mutate))
-    assert any(item.startswith("W_PRESENTATION_SCALE_NOT_SEPARABLE:groups:bus:payload")
-               for item in rendered.scene.diagnostics)
-    assert any(item.scale_id == "groups" for item in rendered.scale_collisions)
+    assert not any(item.startswith("W_PRESENTATION_SCALE_NOT_SEPARABLE:groups:") for item in rendered.scene.diagnostics)
+    folded = [item for item in rendered.scene.diagnostics if item.startswith("I_PRESENTATION_SCALE_FOLDED:")]
+    assert len(folded) == 1 and '"scaleId":"groups"' in folded[0] and '"distinctColors":2' in folded[0]
 
 
 def _findings(rendered, decoration_severity="warning"):

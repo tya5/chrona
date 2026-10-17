@@ -9,7 +9,35 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
-from chrona.presentation.model.color_separability import ScaleCollision, scale_collisions
+from chrona.presentation.model.color_separability import (
+    MINIMUM_CATEGORY_DELTA_E, ScaleCollision, delta_e_2000, scale_collisions)
+
+
+OTHER_LABEL = "Other"
+OTHER_REF_SUFFIX = "#other"
+
+
+def distinct_palette(palette: tuple[str, ...], categories: Mapping[str, object],
+                     reserved: tuple[str, ...] = ()) -> tuple[str, ...]:
+    """Palette slots whose colours are pairwise separable and not a reserved legend colour (#1628).
+
+    A slot that repeats the hue of an earlier slot, or of a reserved non-category
+    legend entry such as Planned or Milestone, is dropped; a slot with no colour is
+    kept so the caller reports it.
+    """
+    kept: list[str] = []
+    seen = list(reserved)
+    for slot in palette:
+        color = categories.get(slot)
+        if isinstance(color, str):
+            try:
+                if any(delta_e_2000(color, other) < MINIMUM_CATEGORY_DELTA_E for other in seen):
+                    continue
+            except ValueError:
+                pass
+            seen.append(color)
+        kept.append(slot)
+    return tuple(kept)
 
 
 class ColorScaleError(ValueError):
@@ -78,6 +106,20 @@ class ResolvedColorScale:
     # Runtime provenance only: the View field that selected this scale is not
     # paint identity and must not affect equality, hashing, or repr.
     encoding_source_ref: str = field(default="/body/colorEncoding", compare=False, repr=False)
+    # Values beyond the distinct-hue palette share one neutral colour (#1628): the
+    # remainder of a cycled palette, in source order, never repeats a hue.
+    folded: tuple[str, ...] = ()
+    palette_size: int = 0
+
+    def legend_items(self, used: set[object]) -> tuple[tuple[str, str, str], ...]:
+        """One ``(source_ref, label_key, colour)`` per legend entry: each unfolded value, then one folded "Other"."""
+        colors = dict(self.colors)
+        items = tuple((f"scale:{self.scale_id}:{value}", value, colors[value])
+                      for value in self.domain if value in used and value not in self.folded)
+        other = next((value for value in self.folded if value in used), None)
+        if other is not None:
+            items += ((f"scale:{self.scale_id}{OTHER_REF_SUFFIX}", OTHER_LABEL, colors[other]),)
+        return items
 
     def covers(self, fields: Mapping[str, object] | None) -> bool:
         """Whether this scale paints an item: always for a closed domain."""
@@ -98,13 +140,17 @@ def resolve_color_scale(encoding: Mapping[str, object] | None,
                         categories: Mapping[str, object] | None,
                         *, source_ref: str = "/body/colorEncoding",
                         color_vision: tuple[str, ...] = (),
-                        observed: tuple[str, ...] = ()) -> ResolvedColorScale | None:
+                        observed: tuple[str, ...] = (),
+                        reserved: tuple[str, ...] = (),
+                        other_color: str | None = None) -> ResolvedColorScale | None:
     """Resolve one View encoding against exact Theme and Scheme declarations.
 
     Domain values whose colours a reader cannot separate, under normal vision
     or a vision the Scheme claims, are returned as non-fatal collisions.
     A ``firstAppearance`` domain is the distinct ``observed`` source values in
-    projection order; a Theme ``palette`` assigns them slots cyclically.
+    projection order; a Theme ``palette`` assigns them its distinct slots in order and
+    folds every value beyond them into one neutral ``other_color`` (#1628).  ``reserved``
+    lists colours of non-category legend entries that no category may share.
     """
     if encoding is None:
         return None
@@ -150,9 +196,16 @@ def resolve_color_scale(encoding: Mapping[str, object] | None,
     declared = scales.get(scale_id)
     theme_pointer = f"/body/colorScales/{_pointer_token(scale_id)}/slots"
     palette = declared.get("palette") if isinstance(declared, Mapping) else None
-    slots = ({value: palette[index % len(palette)] for index, value in enumerate(domain)}
-             if isinstance(palette, (list, tuple)) and palette else
-             declared.get("slots") if isinstance(declared, Mapping) else None)
+    folded: tuple[str, ...] = ()
+    palette_size = 0
+    if isinstance(palette, (list, tuple)) and palette:
+        usable = distinct_palette(tuple(str(slot) for slot in palette), categories, reserved) or (str(palette[0]),)
+        palette_size = len(usable)
+        if usable and len(domain) > len(usable) and isinstance(other_color, str):
+            folded = tuple(domain[len(usable):])
+        slots = {value: usable[index % len(usable)] for index, value in enumerate(domain)}
+    else:
+        slots = declared.get("slots") if isinstance(declared, Mapping) else None
     if not isinstance(slots, Mapping):
         raise _invalid_mapping(f"Theme scale {_brief(scale_id)} has slots={_brief(slots)}; expected a slots mapping or nonempty palette", theme_pointer)
     if set(slots) != set(domain):
@@ -160,6 +213,9 @@ def resolve_color_scale(encoding: Mapping[str, object] | None,
     colors: list[tuple[str, str]] = []
     for value in domain:
         slot = slots[value]
+        if value in folded:
+            colors.append((value, other_color))
+            continue
         if not isinstance(slot, str):
             raise _invalid_mapping(f"Theme scale {_brief(scale_id)} maps domain value {_brief(value)} to slot={_brief(slot)}; expected a string Scheme category", theme_pointer)
         color = categories.get(slot)
@@ -170,5 +226,5 @@ def resolve_color_scale(encoding: Mapping[str, object] | None,
                                    f"/body/categories/{_pointer_token(slot)}")
         colors.append((value, color))
     return ResolvedColorScale(scale_id, target, source["field"], tuple(domain), tuple(colors),
-                              scale_collisions(scale_id, tuple(colors), color_vision), derived,
-                              source_ref)
+                              scale_collisions(scale_id, tuple(colors[:len(colors) - len(folded)]), color_vision),
+                              derived, source_ref, folded, palette_size)
