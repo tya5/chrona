@@ -82,8 +82,20 @@ def relation_shape_candidates(start: Point, end: Point, *, bounds: Bounds,
         proposed.append((start, (x1, y), (x2, y), end))
     result = []
     for raw in proposed:
-        candidate = _canonical_shape_path(raw, bounds)
-        if candidate is not None and candidate not in result:
+        path = []
+        for point in raw:
+            if path and point == path[-1]:
+                continue
+            if len(path) >= 2:
+                a, b = path[-2:]
+                if ((a[0] == b[0] == point[0] or a[1] == b[1] == point[1])
+                        and (b[0] - a[0]) * (point[0] - b[0]) >= 0
+                        and (b[1] - a[1]) * (point[1] - b[1]) >= 0):
+                    path.pop()
+            path.append(point)
+        candidate = tuple(path)
+        if (len(candidate) >= 2 and candidate not in result
+                and all(bounds[0] <= x <= bounds[2] and bounds[1] <= y <= bounds[3] for x, y in candidate)):
             result.append(candidate)
     return tuple(result)
 
@@ -100,11 +112,11 @@ def supplemental_relation_channel_candidates(
     classes: tuple[str, ...] = ("mark", "text", "label-visual"),
     regions: tuple[str, ...] = ("timeline", "group-header"),
 ) -> Iterator[Path]:
-    """Offer at most eight full-stroke-safe outer-channel paths after base shapes fail.
+    """Yield at most eight outer-channel shapes for a label-repair route.
 
-    The start and end use separate nearby interior row contacts, then share an
-    outward vertical channel. Existing obstacle-edge and completed-row events
-    supply contacts; ordinary route validation still decides admissibility.
+    These finite supplemental proposals are intentionally separate from the
+    normal first-fit candidate grammar. The caller enables them only when a
+    route-label repair domain contains retained label obstacles.
     """
     _check_bounds(bounds)
     if any(len(point) != 2 or not all(_finite(value) for value in point) for point in (start, end)):

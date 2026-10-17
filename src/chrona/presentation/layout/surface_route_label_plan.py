@@ -84,7 +84,9 @@ def _run_trial(context: RouteLabelPlanContext, reservations: tuple[MemberLabelRe
     route_context = context.routes_for(index, (*context.base_text, *retained_text,
                                               *(item.text for item in reservations)))
     route_context = replace(route_context, progress_pass=progress_pass,
-        required_label_obstacle_ids=route_context.required_label_obstacle_ids | retained_ids)
+        required_label_obstacle_ids=route_context.required_label_obstacle_ids | retained_ids,
+        label_repair_obstacle_ids=frozenset(item.placement_id
+            for reserve in reservations for item in reserve.obstacles))
     routes = compose_surface_routes(route_context)
     # Revalidate through the same placement owner against actual route ink;
     # no probe facts or ghost boxes reach Scene or later obstacle phases.

@@ -21,8 +21,8 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
     call: dict[str, object] = {}
     original_phases = SurfaceMemberLabelRequests.routing_phases
 
-    def phases_spy(requests):
-        required, optional = original_phases(requests)
+    def phases_spy(requests, *, first_fit):
+        required, optional = original_phases(requests, first_fit=first_fit)
         seen["required_obstacle_ids"] = frozenset(
             obstacle_id for label in required
             for obstacle_id in (label.placement_id, f"label-footprint:{label.placement_id}"))

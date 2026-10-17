@@ -31,7 +31,7 @@ def test_routing_phases_keep_required_rule_and_nonmember_labels_before_routes():
 
     before, after = SurfaceMemberLabelRequests(
         (optional_name, required_name, rule_label, nonmember, delta), (later,)
-    ).routing_phases()
+    ).routing_phases(first_fit=True)
 
     assert before == (required_name, rule_label, nonmember)
     assert after == (optional_name, delta, later)
@@ -58,9 +58,18 @@ def test_required_intent_is_closed_even_if_request_arrives_in_post_route_partiti
     explicit = _request("explicit", required=True)
     diagnosed = replace(_request("diagnosed"), overflow="diagnose")
     optional = _request("optional")
-    before, after = SurfaceMemberLabelRequests((), (explicit, diagnosed, optional)).routing_phases()
+    before, after = SurfaceMemberLabelRequests((), (explicit, diagnosed, optional)).routing_phases(first_fit=True)
     assert before == (explicit, diagnosed)
     assert after == (optional,)
+
+
+def test_best_keeps_the_existing_pre_route_lane_names_and_deltas():
+    name = _request("lane-name")
+    delta = _request("lane-delta", "finishDelta")
+    later = _request("post-route")
+    requests = SurfaceMemberLabelRequests((name, delta), (later,))
+    assert requests.routing_phases(first_fit=False) == ((name, delta), (later,))
+    assert requests.routing_phases(first_fit=True) == ((), (name, delta, later))
 
 
 class _Metric:

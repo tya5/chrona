@@ -13,6 +13,7 @@ from chrona.presentation.layout.surface_member_labels import (
     SurfaceMemberLabelContext, SurfaceMemberLabelsBatch, build_member_label_requests, place_member_labels,
 )
 from chrona.presentation.layout.surface_routes import SurfaceRoutesContext
+from chrona.presentation.layout.surface_lane_route_plan import LaneRoutePlanContext, plan_lane_route_reservations
 from chrona.presentation.layout.surface_route_label_plan import (
     RouteLabelPlanContext, compose_routes_and_member_labels,
     select_completed_route_label_plan,
@@ -238,7 +239,17 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     def place_label_phase(requests: tuple[LabelRequest, ...]) -> None:
         accept_member_label_batch(place_member_labels(member_label_context, requests, surface_obstacles))
 
-    pre_route, post_route = member_label_requests.routing_phases()
+    first_fit = layout_manifest.relation_search == "first-fit"
+    pre_route, post_route = member_label_requests.routing_phases(first_fit=first_fit)
+    lane_routing_info = ()
+    if not first_fit:
+        lane_route_plan = plan_lane_route_reservations(LaneRoutePlanContext(
+            member_label_context, pre_route, tuple(text), surface_obstacles,
+            lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
+                tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot),
+                temporal_endpoints=mark_batch.temporal_endpoints)))
+        surface_obstacles.extend(lane_route_plan.reservations)
+        lane_routing_info = lane_route_plan.routing_info
     place_label_phase(pre_route)
     required_label_obstacle_ids = frozenset(
         obstacle_id for label in pre_route
@@ -328,7 +339,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     # Commit only the selected route/label plan. Each candidate's annotations
     # were evaluated against its own private completed obstacle inventory.
     surface_obstacles = route_label_plan.obstacles
-    routes_batch = route_label_plan.routes
+    routes_batch = replace(route_label_plan.routes,
+        routing_info=(*lane_routing_info, *route_label_plan.routes.routing_info))
     relations = list(routes_batch.relations)
     visible_route_fallbacks = list(routes_batch.visible_route_fallbacks)
     instance_anchors = dict(routes_batch.instance_anchors)

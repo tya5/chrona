@@ -90,6 +90,7 @@ class SurfaceRoutesContext:
     temporal_endpoints: tuple[TemporalEndpointPlacement, ...] = ()
     progress_pass: str = "relations"
     required_label_obstacle_ids: frozenset[str] = frozenset()
+    label_repair_obstacle_ids: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -712,6 +713,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         target_host_id=target_mark.placement_id if target_mark else None,
                         relation_scene_id=scene_id, max_bends=context.layout_manifest.relation_max_bends,
                         max_detour_ratio=context.layout_manifest.relation_max_detour_ratio, classes=route_classes,
+                        label_repair_obstacle_ids=context.label_repair_obstacle_ids,
                         route_stroke_width=dependency_stroke,
                         prepare=lambda candidate, source_exit, target_entry: prepare_route(candidate, dependency_stroke,
                             (*source_exit.host_ids, *target_entry.host_ids), source_exit.side, target_entry.side,

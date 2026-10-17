@@ -458,7 +458,7 @@ batches and their matching obstacle index, without replay or ghost placements.
 Reservations are private Layout facts, not emitted text or diagnostics.
 Each attempted pass retains its recorded routing facts and existing budgets;
 first-fit's cheap/exact phases still share one attempt ceiling. This adds no
-candidate, routing policy, safety exemption or search-budget increase.
+label candidate, routing policy, safety exemption or search-budget increase.
 Suppression of an otherwise placeable name is not a successful readability repair.
 
 Omitted `search` means `first-fit`. Authors requiring legacy ranked output

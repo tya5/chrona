@@ -73,7 +73,7 @@ def test_route_pipeline_forwards_theme_stroke_and_rejects_full_paint_overlap(mon
 
     assert captured
     kwargs, selection = captured[0]
-    width = kwargs["route_stroke_width"]
+    width = float(request.theme_tokens.number("dependency", "strokeWidth"))
     assert width > 0
     prepare = kwargs["prepare"]
     source, target = selection.selected_pair

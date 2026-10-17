@@ -69,3 +69,20 @@ def test_unrelated_or_nonimproving_obstruction_does_not_trigger_repair(monkeypat
 
     monkeypatch.setattr(owner, "place_member_labels", probe)
     assert owner._route_blocked_candidate(None, request, selected, index) is None
+
+
+@pytest.mark.parametrize("other_class", (None, "rule", "route-reserve", "text"))
+def test_real_label_owner_requires_route_ink_to_be_the_only_blocker(other_class):
+    from tests.unit.chrona.presentation.layout.test_member_label_required_phase import _placement_context
+    context = _placement_context()
+    request = replace(_request(), anchor=LabelRect(80, 40, 10, 10), content="Owner")
+    index = SurfaceObstacleIndex()
+    geometry = ObstacleSegment((105, 0), (105, 100), 1)
+    index.add(SurfaceObstacle("route", "dependency-route", "timeline", geometry))
+    if other_class is not None:
+        index.add(SurfaceObstacle("other", other_class, "timeline", geometry))
+    result = owner.place_member_labels(context, (request,), index)
+    assert result.text[0].selected_rung == "start"
+    assert len(result.route_blocked_candidates) == (1 if other_class is None else 0)
+    if result.route_blocked_candidates:
+        assert result.route_blocked_candidates[0].text.selected_rung == "end"

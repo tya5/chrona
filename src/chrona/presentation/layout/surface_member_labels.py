@@ -67,13 +67,13 @@ class SurfaceMemberLabelRequests:
     post_route: tuple[LabelRequest, ...]
     window_absences: tuple[WindowLabelAbsence, ...] = ()
 
-    def routing_phases(self) -> tuple[tuple[LabelRequest, ...], tuple[LabelRequest, ...]]:
-        """Keep hard required/rule/non-member labels before routes; optional names and deltas follow."""
+    def routing_phases(self, *, first_fit: bool) -> tuple[tuple[LabelRequest, ...], tuple[LabelRequest, ...]]:
+        """Keep the declared policy's initial phases and all hard required labels."""
         requests = (*self.pre_route, *self.post_route)
         pre_ids = {id(item) for item in self.pre_route}
         required = tuple(item for item in requests
             if (item.is_required_before_routes or (id(item) in pre_ids
-                and item.semantic_id not in {"memberLabel", "finishDelta"})))
+                and (not first_fit or item.semantic_id not in {"memberLabel", "finishDelta"}))))
         required_ids = {id(item) for item in required}
         return required, tuple(item for item in requests if id(item) not in required_ids)
 

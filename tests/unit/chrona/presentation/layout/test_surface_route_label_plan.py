@@ -91,9 +91,12 @@ def _install(monkeypatch, *, repair=False, retry_bad=False, lose_member_label=Fa
     def routes(context):
         calls.append(context.progress_pass)
         assert context.obstacles.has(required.placement_id)
+        if context.progress_pass == "route-label-baseline":
+            assert not context.label_repair_obstacle_ids
         if repair and context.progress_pass == "route-label-recovery":
             assert context.obstacles.has("b")
             assert {"b", "label-footprint:b"} <= context.required_label_obstacle_ids
+            assert context.label_repair_obstacle_ids == {"a", "label-footprint:a"}
         suppressed = retry_bad and context.progress_pass == "route-label-recovery"
         relation = SimpleNamespace(relation_id="relation:r", suppressed=suppressed)
         if not suppressed:
