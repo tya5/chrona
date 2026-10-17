@@ -270,6 +270,12 @@ published separately before code, without creating another design authority.
   derived indexes are not a second authority. A test-only frozen baseline
   proves every old value/order, rather than generating its expectation from
   the new resource under test.
+  Architecture boundary: `chrona.resources` must not import
+  `chrona.schema_diagnostics`, which already depends on resource loading.
+  Bootstrap resource errors carry the validator's native message and JSON
+  pointer; rich authored-ingress explanation remains in the existing contract
+  boundary. The schema still owns structural validation. Import-direction and
+  focused diagnostic tests must pass before accepting the loader.
 - **Identity/closure:** one typed `SemanticVocabularyContract`, registered in
   `contracts/resources.py` and exported through `contracts/__init__.py`.
   Normal and Draft closure append the same validated wheel-owned resource;
