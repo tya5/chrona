@@ -2,7 +2,7 @@
 
 ## Baseline and design plan
 
-Published base: `8fc5364c3022676b680268005417239eb094a5ca`.
+Published base: ready `fa262ebab648229138eb34c33bf6a821f6450e96`.
 [Owner rule and acceptance](https://github.com/tya5/chrona/issues/1634).
 Design preparation only; finish the active1610/1583 and1612 landing first.
 No forecast code or final implementation plan is approved by this record.
@@ -46,6 +46,31 @@ Design questions to resolve before implementation:
 - Coordinate forecast legend/style with reviewer-owned shared-design YAML.
 - Decide saving a forecast as a Snapshot; recommend no implicit save or source
   rewrite, with any explicit export requiring its own identity contract.
+
+## Selected architecture (design not complete)
+
+- One effective control: optional `RenderContext.body.forecast`, runtime false
+  when absent. Draft CLI/MCP normalize into that control and omit false; do not
+  add a competing flag to immutable `RenderRequest`. Require Actual Set `asOf`;
+  no wall-clock, viewport or fabricated Actual-finish fallback.
+- A neutral latest-observation selector can serve ordinary projection and
+  forecast input without scheduling importing presentation contracts. Preserve
+  unmatched reporting and normal-path selection behavior.
+- Forecast scheduling reuses the injected scheduler on explicit, non-mutating
+  effective inputs (the existing Scenario resolver is an adjacent pattern).
+  Its typed outcome separates fatal errors from complete placements carrying
+  known fixed-target findings; ordinary `ScheduleOutcome.ok` is unchanged.
+- Keep original `ReviewItem.planned`, Actuals and observed `finish_delta` intact.
+  Carry one optional forecast fact with placement, comparison baseline and
+  estimated status; select its mark instead of the primary planned mark.
+  Snapshot ghosts remain independent. No parallel full projection or synthetic
+  Actual Set. Layout owns geometry and formatted estimate text; Scene/adapters
+  receive completed primitives only.
+
+The [two concrete policy questions](https://github.com/tya5/chrona/issues/1634#issuecomment-6229844456)
+cover zero-work/non-working duration and incomplete/composite Actuals. Their
+disposition, display/legend contract and whole-architecture review still precede
+normative design completion and the final implementation plan. No product code.
 
 ## Design and implementation publication order
 
