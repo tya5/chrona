@@ -421,6 +421,10 @@ not the full canvas bounds. The sparse-contact path admits fill-less patterns
 only: substrate operations require opaque fill and are rejected during paint
 completion. Opaque patterns instead retain conservative substrate/ink contrast
 using the positive final visible-ink density (Specification 64 section 8).
+A mark patterned in a substrate and an ink (#1658) is judged by its strongest ink against each ground: a
+substrate pair that falls below the mark floor does not fail while that ink clears the floor on the same ground
+(a hatched legend swatch whose paper substrate equals the paper panel). The ink against the substrate is still
+gated, and a pattern none of whose ink differs from the ground still fails.
 Overlapping sparse primitives paint the same opaque ink before the layer
 opacity is applied once. Circle strokes contact a clipped convex query polygon
 when its radial-distance range intersects

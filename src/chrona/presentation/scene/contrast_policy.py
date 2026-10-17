@@ -557,14 +557,14 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
     # As for a flat primitive: a mark or a label sees the ink as ground, a decoration tint does not. The first
     # group is the host's substrate (its pair with the primitive's own substrate is the primitive's own); later
     # groups are ink grounds. A pattern's substrate under its ink is the primitive's own.
-    pairs = [("fill", *host_ground, substrate) for host_ground in groups[0]]
-    pairs.append(("stroke", substrate, "pattern-substrate", primitive_id, ink))
-    pairs += [("stroke", *host_ground, ink) for host_ground in groups[0]]
-    for group in groups[1:]:
-        pairs += [("fill", *host_ground, substrate) for host_ground in group]
-        pairs += [("stroke", *host_ground, ink) for host_ground in group]
-    findings = []
-    for channel, ground, ground_kind, ground_id, foreground in pairs:
+    pairs = [("fill", *host_ground, substrate, 0) for host_ground in groups[0]]
+    pairs.append(("stroke", substrate, "pattern-substrate", primitive_id, ink, None))
+    pairs += [("stroke", *host_ground, ink, 0) for host_ground in groups[0]]
+    for number, group in enumerate(groups[1:], start=1):
+        pairs += [("fill", *host_ground, substrate, number) for host_ground in group]
+        pairs += [("stroke", *host_ground, ink, number) for host_ground in group]
+    measured = []
+    for channel, ground, ground_kind, ground_id, foreground, group_number in pairs:
         if not decoration and _has_later_overlay(primitives, primitive, index):
             try:
                 overprinted = ordered_overprint_pairs(
@@ -580,8 +580,16 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
                 fill=pair.foreground, opacity=1, ground=pair.backdrop))
             foreground, ground, ground_kind, ground_id = worst.foreground, worst.backdrop, worst.ground_kind, worst.ground_id
         ratio = composited_contrast(fill=foreground, opacity=1.0, ground=ground)
+        measured.append((channel, ground, ground_kind, ground_id, ratio, group_number))
+    # A mark patterned in two paints is judged by its strongest ink against each ground (#1658): a substrate
+    # that matches the ground is no fault while an ink on that ground clears the floor. An ink that does not
+    # differ from the ground still fails, and so does the ink against its own substrate.
+    inked = {number for channel, _, kind, _, ratio, number in measured
+             if channel == "stroke" and number is not None and ratio >= floor}
+    findings = []
+    for channel, ground, ground_kind, ground_id, ratio, group_number in measured:
         severity, pair_code = "info", code
-        if ratio < floor:
+        if ratio < floor and not (policy_class == "mark" and channel == "fill" and group_number in inked):
             severity, pair_code = _failure(code, severity_class, policy_class, severities)
         findings.append(SceneContrastFinding(pair_code, severity, scene_path, purpose, role, primitive_id,
                                              ratio, floor, disposition, ground_id, ground, channel,

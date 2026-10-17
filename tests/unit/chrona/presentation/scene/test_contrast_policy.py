@@ -266,7 +266,9 @@ def test_catalog_pattern_checks_substrate_and_ink_pairs_independently_with_densi
     assert len(findings) == 3
     by_pair = {(item.paint_channel, item.ground_kind): item for item in findings}
     substrate = by_pair[("fill", "canvas")]
-    assert substrate.severity == "error"
+    # #1658: the substrate matches the canvas, but the black ink clears the floor on it, so the mark is judged
+    # by its strongest ink and the substrate pair reports without failing.
+    assert substrate.contrast_ratio == 1.0 and substrate.severity == "info"
     assert by_pair[("stroke", "pattern-substrate")].severity == "info"
     assert by_pair[("stroke", "canvas")].severity == "info"
     assert all(item.as_mapping()["densityBasisPoints"] == 1250 for item in findings)

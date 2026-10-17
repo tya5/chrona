@@ -111,8 +111,8 @@ def test_pattern_pair_obligations_reduce_per_part_before_figure_best_part_select
         "origin": [10, 10], "regionBounds": dict(BOX), "clipBounds": dict(BOX), "cornerRadius": 0,
     }
     parts = (
-        _mark("planned:object-1:instance-1:part0", WHITE, order=100, stroke=BLACK, pattern=pattern),
-        _mark("planned:object-1:instance-1:part1", WHITE, order=101, stroke=BLACK, pattern=pattern),
+        _mark("planned:object-1:instance-1:part0", WHITE, order=100, stroke=WHITE, pattern=pattern),
+        _mark("planned:object-1:instance-1:part1", WHITE, order=101, stroke=WHITE, pattern=pattern),
     )
 
     findings = _mark_findings(evaluate_scene_contrast(
