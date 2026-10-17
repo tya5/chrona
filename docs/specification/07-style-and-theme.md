@@ -490,6 +490,10 @@ caption ink; otherwise the registered `text` paint alternative applies. The
 role admits text measurement, Text paint and viewer-fit properties, not Path
 stroke properties. Its semantic is ground text (required4.5:1), never the
 deadline mark's3:1 class. Existing Themes need no new role to show a caption.
+The network deadline footer reuses this text treatment for its ISO date and
+optional caption. Its separate categorical tick/L glyph reuses `deadline-mark`
+stroke/reach/outline/wobble, including the existing zero-stroke-width rule;
+it does not inherit text contrast treatment or infer a new Theme role.
 
 **Glow (#587).** A role that admits a shadow (Rect, Symbol, Text or Path paint)
 also admits `glowColor` (a Scheme binding), `glowBlur`, `glowOpacity` and

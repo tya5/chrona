@@ -63,7 +63,9 @@ from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.presentation.model.axis_color_scale import (
     AxisBandScaleError, resolve_axis_band_scales, validate_axis_band_fill_targets,
 )
-from chrona.presentation.model.projection import ReviewDeadline, ReviewPeriod, build_review_projection
+from chrona.presentation.model.projection import (
+    NetworkDeadlineContent, ReviewDeadline, ReviewPeriod, build_review_projection,
+)
 from chrona.presentation.model.actual_variance_paint import resolve_actual_variance_colors
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.contracts.resources import ViewInput
@@ -828,10 +830,12 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         figure_diagnostics.extend(error.diagnostics)
     if figure_diagnostics:
         raise RenderRejected(figure_diagnostics)
+    shown_deadlines = _shown_deadlines(project, result.placements, view)
+    network = _network_deadline_projection(projection.network, shown_deadlines)
     projection = replace(projection, periods=_selected_periods(project, result.placements, view, dict(global_figures)),
                          figures=global_figures, group_figures=group_figures,
                          unavailable_figures=unavailable_figures,
-                         deadlines=_shown_deadlines(project, result.placements, view))
+                         deadlines=shown_deadlines, network=network)
     return projection, tuple(provenance), attachment_warnings(project, result.placements), deadline_warnings(project, result.placements)
 
 
@@ -1038,9 +1042,18 @@ def _shown_deadlines(project: dict[str, Any], placements: dict[str, dict[str, An
     """
     if view.deadlines is None:
         return ()
+    overrides = dict(view.deadlines.overrides)
+    objects = project.get("objects", {})
+    for object_id in overrides:
+        if object_id not in objects:
+            known = ", ".join(objects) if objects else "none"
+            raise RenderFailed("E_VIEW_DEADLINE_OBJECT_UNKNOWN",
+                               f"deadline override names object {object_id}, which the Project does not declare (declared: {known})",
+                               "view", f"/body/deadlines/overrides/{object_id}")
     shown = []
     for item in deadline_statuses(project, placements):
-        if not item.slipped and view.deadlines.show != "all":
+        show = overrides.get(item.object_id, view.deadlines.show)
+        if show == "hidden" or (not item.slipped and show != "all"):
             continue
         caption = None
         if item.slipped and view.deadlines.caption is not None:
@@ -1051,6 +1064,22 @@ def _shown_deadlines(project: dict[str, Any], placements: dict[str, dict[str, An
         shown.append(ReviewDeadline(item.object_id, item.deadline, item.finish, item.slipped,
                                     item.days_late, caption))
     return tuple(shown)
+
+
+def _network_deadline_projection(network: Any, deadlines: tuple[ReviewDeadline, ...]) -> Any:
+    """Attach only selected primary-node deadline copy before Layout sees the projection."""
+    if network is None or not deadlines:
+        return network
+    by_object = {item.object_id: item for item in deadlines}
+    nodes = tuple(
+        replace(node, deadline=(NetworkDeadlineContent(
+            item.object_id,
+            item.deadline.isoformat() + (f" {item.caption}" if item.slipped and item.caption else ""),
+            item.slipped,
+        ) if node.source_kind == "primary" and (item := by_object.get(node.object_id)) is not None else None))
+        for node in network.nodes
+    )
+    return replace(network, nodes=nodes)
 
 
 def _selected_periods(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput,

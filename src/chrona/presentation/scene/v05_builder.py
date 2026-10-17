@@ -1297,7 +1297,9 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
     def emit_text(text: Any) -> None:
         binding = semantic_binding(text.semantic_id)
         heading_roles = {"titleText": "heading", "kickerText": "kicker", "subtitleText": "subtitle"}
-        paint_role = (_heading_paint_role(value.theme_tokens, heading_roles[text.semantic_id])
+        paint_role = (value.theme_tokens.title_paint_role("deadline-caption")
+                      if text.semantic_id == "deadlineCaption" else
+                      _heading_paint_role(value.theme_tokens, heading_roles[text.semantic_id])
                       if text.semantic_id in heading_roles else binding.scene_role)
         layout = TextLayout((float(text.bounds.inline), float(text.bounds.block),
                              float(text.bounds.inline_size), float(text.bounds.block_size)),
@@ -1332,6 +1334,16 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                                          paint_order=node.paint_order))
         subject = DiagnosticSubject.project_object(node.object_id, getattr(node, "title", None))
         primitive_provenance.append(PrimitiveProvenance(f"network-node:{node.object_id}", (subject,)))
+    for shape in placed.shapes:
+        binding = semantic_binding(shape.semantic_id)
+        paint = ({"paint": ScenePaint(fill=value.theme_tokens.color("background", "fill"),
+                                      stroke=None, stroke_width=None, dash=(), opacity=1)}
+                 if shape.semantic_id == "deadlineMarkOutline" else {})
+        primitives.append(_completed_shape_primitive(
+            shape, "decoration" if shape.semantic_id == "deadlineMarkOutline" else "object",
+            binding.purpose, shape.visual_role or binding.scene_role, **paint))
+        if shape.subjects:
+            primitive_provenance.append(PrimitiveProvenance(shape.placement_id, shape.subjects))
     for text in placed.text:
         if text.placement_id != "title":
             emit_text(text)
@@ -1339,6 +1351,7 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
     ownership.update({item.relation_id: item.slot_id for item in placed.relations})
     ownership.update({f"network-node:{item.object_id}": item.slot_id for item in placed.nodes})
     ownership.update({f"network-edge:{item.relation_id}": item.slot_id for item in placed.relations})
+    ownership.update({item.placement_id: item.slot_id for item in placed.shapes})
     ownership.update(texture_slot)
     try:
         completed_primitives = tuple(replace(item, slot_id=ownership[item.scene_id]) for item in primitives)
