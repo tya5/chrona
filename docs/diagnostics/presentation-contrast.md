@@ -57,7 +57,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | legend-swatch | `calendar-closed` | enabled | 1.100 | 9 | 9 | 1.050 | 1.134 | 0 | 4 |
 | legend-swatch | `calendar-exception` | enabled | 1.100 | 8 | 8 | 1.216 | 1.255 | 0 | 0 |
 | legend-swatch | `gate` | required | 3.000 | 10 | 10 | 6.667 | 9.106 | 0 | 0 |
-| legend-swatch | `missing-actual` | required | 3.000 | 11 | 19 | 1.000 | 4.637 | 0 | 4 |
+| legend-swatch | `missing-actual` | required | 3.000 | 11 | 19 | 1.000 | 4.637 | 0 | 0 |
 | legend-swatch | `period-band` | enabled | 1.100 | 2 | 6 | 1.163 | 2.217 | 0 | 0 |
 | legend-swatch | `planned` | required | 3.000 | 43 | 76 | 4.637 | 16.268 | 0 | 0 |
 | legend-swatch | `progress-fill` | required | 3.000 | 38 | 38 | 3.216 | 4.789 | 0 | 0 |
@@ -338,9 +338,9 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:actual` | `actual` | 242.742, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 14.558 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:calendar-exception` | `calendar-exception` | 554.708, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 1.444 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:milestone:part0` | `gate` | 476.712, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 9.106 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 341.403, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 1.194 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 341.403, 862.337 | `legend-swatch:missing-actual` | pattern-substrate | `#3A1115` | stroke | 3.282 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 341.403, 862.337 | `canvas` | canvas | `#0D0A09` | stroke | 3.919 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 341.403, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 1.194 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:planned` | `planned` | 148.440, 862.337 | `canvas` | canvas | `#0D0A09` | stroke | 9.106 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:actual:progress-fill` | `progress-fill` | 231.742, 862.337 | `legend-swatch:actual` | flat | `#EADCC0` | stroke | 14.558 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:snapshot` | `snapshot` | 38.000, 862.338 | `canvas` | canvas | `#0D0A09` | stroke | 9.106 | 3.000 | info |
@@ -625,9 +625,9 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `legend-swatch:actual` | `actual` | 1355.533, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 4.747 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `legend-swatch:calendar-exception` | `calendar-exception` | 1355.533, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.270 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `legend-swatch:milestone:part1` | `gate` | 1109.065, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 884.598, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.000 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 884.598, 79.300 | `legend-swatch:missing-actual` | pattern-substrate | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 884.598, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 884.598, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.000 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `legend-swatch:period-band` | `period-band` | 884.598, 113.500 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.163 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `legend-swatch:period-band` | `period-band` | 884.598, 113.500 | `legend-swatch:period-band` | pattern-substrate | `#E4F0D6` | stroke | 2.217 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `legend-swatch:period-band` | `period-band` | 884.598, 113.500 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 2.578 | 1.100 | info |
@@ -7955,9 +7955,9 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend-swatch:actual` | `actual` | 242.742, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 14.558 | 3.000 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend-swatch:calendar-exception` | `calendar-exception` | 554.708, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 1.444 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend-swatch:milestone:part0` | `gate` | 476.712, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 9.106 | 3.000 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 341.403, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 1.194 | 3.000 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 341.403, 862.337 | `legend-swatch:missing-actual` | pattern-substrate | `#3A1115` | stroke | 3.282 | 3.000 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 341.403, 862.337 | `canvas` | canvas | `#0D0A09` | stroke | 3.919 | 3.000 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 341.403, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 1.194 | 3.000 | warning |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend-swatch:planned` | `planned` | 148.440, 862.337 | `canvas` | canvas | `#0D0A09` | stroke | 9.106 | 3.000 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend-swatch:actual:progress-fill` | `progress-fill` | 231.742, 862.337 | `legend-swatch:actual` | flat | `#EADCC0` | stroke | 14.558 | 3.000 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend-swatch:snapshot` | `snapshot` | 38.000, 862.338 | `canvas` | canvas | `#0D0A09` | stroke | 9.106 | 3.000 | info |
@@ -8287,9 +8287,9 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:actual` | `actual` | 1355.533, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 4.747 | 3.000 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:calendar-exception` | `calendar-exception` | 1355.533, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.270 | 1.100 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:milestone:part1` | `gate` | 1109.065, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 884.598, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.000 | 3.000 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 884.598, 79.300 | `legend-swatch:missing-actual` | pattern-substrate | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 884.598, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 884.598, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.000 | 3.000 | warning |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:period-band` | `period-band` | 884.598, 113.500 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.163 | 1.100 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:period-band` | `period-band` | 884.598, 113.500 | `legend-swatch:period-band` | pattern-substrate | `#E4F0D6` | stroke | 2.217 | 1.100 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:period-band` | `period-band` | 884.598, 113.500 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 2.578 | 1.100 | info |
@@ -8594,8 +8594,8 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 | `axis-color-scales` | 2 | 0 | 0 |
 | `chrona-roadmap` | 1 | 33 | 0 |
 | `group-header-runs` | 1 | 0 | 0 |
-| `marquee` | 2 | 112 | 0 |
-| `sunday` | 2 | 19 | 0 |
+| `marquee` | 2 | 110 | 0 |
+| `sunday` | 2 | 17 | 0 |
 | `target-b` | 1 | 83 | 0 |
 | `titlecard` | 2 | 21 | 0 |
 | `yuya` | 2 | 147 | 0 |
@@ -8607,4 +8607,4 @@ Every independently required decoration role has committed Scene or explicit syn
 - Synthetic `dependency-halo` (no public use): `tests/integration/test_unroutable_visible_obstacle.py`, `tests/integration/test_relation_resolution_wiring.py`, `tests/unit/chrona/presentation/scene/test_contrast_policy.py`
 - Synthetic `tableColumnRule` (no public use): `tests/integration/test_table_details_1545.py`, `tests/integration/test_technical_print_columns.py`
 
-Findings: 8526; errors: 0; warnings: 419.
+Findings: 8526; errors: 0; warnings: 415.
