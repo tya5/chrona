@@ -470,7 +470,7 @@ def test_definitions_that_name_an_existing_pattern_are_byte_exact_to_it():
 ADOPTERS = frozenset({
     "actual-intake-batch-v0.2.schema.yaml", "actual-set-v0.3.schema.yaml", "authoring-command-result-v0.1.schema.yaml",
     "authoring-command-v0.1.schema.yaml", "authoring-workspace-v0.1.schema.yaml", "automation-result-v0.2.schema.yaml",
-    "command-request-v0.3.schema.yaml", "example-registry-v0.1.schema.yaml", "icon-catalog-v0.5.schema.yaml",
+    "command-request-v0.4.schema.yaml", "example-registry-v0.1.schema.yaml", "icon-catalog-v0.5.schema.yaml",
     "layout-profile-v0.10.schema.yaml", "presentation-materialization-receipt-v0.1.schema.yaml", "presentation-preset-v0.1.schema.yaml",
     "preset-library-v0.2.schema.yaml", "profile-v0.3.schema.yaml", "project-v0.7.schema.yaml",
     "render-context-v0.17.schema.yaml", "scene-v0.7.schema.yaml", "style-v0.2.schema.yaml", "summary-profile-v0.2.schema.yaml", "theme-asset-source-v0.2.schema.yaml",
@@ -489,7 +489,7 @@ PARTS_REFERENCING_COMMON: dict[str, set[str]] = {
 
 
 # Adopted sites that add a local rule beside the `$ref`: the registry stores `snapshots/<id>.yaml`, so the id is one segment.
-SEGMENT_SITES = {("command-request-v0.3.schema.yaml", "/allOf/4/then/properties/payload/properties/snapshotId")}
+SEGMENT_SITES = {("command-request-v0.4.schema.yaml", "/allOf/4/then/properties/payload/properties/snapshotId")}
 
 
 def _adopted_sites(name: str) -> list[tuple[str, str]]:
