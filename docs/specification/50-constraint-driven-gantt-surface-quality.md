@@ -447,8 +447,9 @@ Layout checks completed reduced and terminal-adjusted route
 stroke against retained text/label-visual footprints, not just its centreline;
 staged recovery still removes only the obstacle classes its contract permits.
 Initial as-of/deadline rule obstacles likewise carry the exact stroke width
-resolved from their semantic Theme role, so labels avoid painted rule ink
-rather than only the centreline.
+resolved from their semantic Theme role, so consumers that avoid a rule use
+painted ink rather than only the centreline. Member names are the as-of-line
+exception specified below (#1754).
 First-fit fallback uses an obstacle-independent Manhattan/minimum-turn lower
 bound instead of preparing the exact reverse bound. It retains canonical
 prefix histories and existing expansion quotas; it does not collapse different
@@ -481,7 +482,12 @@ corridor planner remains a preflight; under `first-fit`, optional names follow
 routes. The on-demand pass does not change those initial phases or search
 proposals and replaces the former post-route lost-name retry, not the lane
 preflight. It adds at most one post-route repair, never another recovery loop. The
-as-of line and other `rule` geometry obstruct member names.
+as-of line does not obstruct member names (#1754). Their candidate contact
+generation, final placement and provisional route-blocked reservations ignore
+only that named line, preserving the normal halo/chip treatment. Other `rule`
+geometry, including deadline ticks, remains an obstacle. The shared inventory
+retains the as-of line for its own label host and annotation/connector policy;
+the as-of label/chip remains a separate real text/visual obstacle.
 
 Reserve on demand only for an initially suppressed optional member name when
 completed route paint blocked an otherwise legal declared candidate. Do not
@@ -1290,7 +1296,8 @@ block allocation, together with its existing mark/title/delta extent. Shared
 and repeated occurrences retain their own placement identities and subjects;
 no deadline date or lateness verdict is inferred from compact-header geometry.
 The paths are registered as `rule` obstacles, so annotation candidates avoid them as they
-avoid the as-of rule. Member names also avoid these `rule` obstacles (#1610);
+avoid the as-of rule. Member names also avoid deadline and other `rule` obstacles
+(#1610), but not the moving as-of line (#1754);
 relation routes retain their existing rule-crossing policy.
 Contrast is gated as a `mark` role at 3:1 over the primitive beneath its centre.
 With the optional Spec07 `outlineWidth`, Layout also completes a

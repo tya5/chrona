@@ -133,7 +133,28 @@ primary work mark, not a header. A newly invalid hint must fall through to
 safe ordinary routing, not become reusable in a relaxed domain. Bounded search
 is not mathematical feasibility proof; tests must provide a known legal
 detour and verify actual completed geometry, not merely a warning count.
-No unresolved S2 contract remains. Moving-decoration design is still pending.
+No unresolved S2 contract remains.
+
+## S3 selected design and whole-architecture review
+
+Spec 50 owns the as-of-line exception for member names. Apply one exact-ID
+query exclusion to their placement snapshot, before both candidate contact
+generation and collision checks. Use the same path for final names, required
+names, reserve-only names and route-blocked reservation probes. Do not remove
+the shared `as-of` obstacle, omit the `rule` class, or weaken generic overlap
+checks. Deadline rules, the separate as-of label/chip, required text, marks,
+routes and annotations retain their existing contracts and treatment.
+
+Architecture review: Layout retains sole geometry and obstacle-policy
+ownership (ADR-0031/Spec 50). A generic exact-ID exclusion on the existing
+independent obstacle-query snapshot avoids a second label pipeline. Accepted
+labels still register in the original inventory; exclusions do not leak to
+later annotations or routes. Existing geometry overrides remain applicable;
+prepared-query sharing/memo scopes may be retained only for exact unaffected
+content (1734). Scene/paint treatment and adapters are unchanged; no new
+schema, Theme role, threshold or project-specific exception is needed. Cone
+contrast is a separate S4 rule, not a reason to alter this placement boundary.
+No unresolved S3 contract remains.
 
 ## S1 implementation plan
 
