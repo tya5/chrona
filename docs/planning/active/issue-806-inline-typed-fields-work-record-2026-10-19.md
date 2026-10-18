@@ -79,6 +79,36 @@ changed.
 5. Publish one implementation PR and concise four-row acceptance review. Close
    only after every literal row and review-containing exact-main release pass.
 
-Selected design and normative Spec 65 are ready for publication after the
-independent architecture check above. Implementation planning is not final;
-no product code has changed.
+Selected design, normative Spec 65 and architecture review were published at
+`4294e23d8`. No product code has changed.
+
+## Implementation plan
+
+One implementation PR, keeping the following source commits independently
+reviewable. No new schema, dependency, overlay or public materializer input.
+
+| Slice / owner | Files and connection | Acceptance and focused evidence |
+| --- | --- | --- |
+| S1 pure syntax / delegated | `terse/{lexer,parser,compiler,emitter,diagnostics,ledger}.py`; unit terse tests and negative fixtures. CompileResult adds explicit-profile object identities, not another source map. | Declarations, contextual profile, scalar assignments and escaped pointer spans follow Spec 65 §12. Legacy goldens unchanged; quote boundaries, duplicate/empty/nonfinite values, null/number round trips, kind/parent semantics, reserved-name and deterministic/fuzz tests. Compiler-owned new syntax codes receive negative fixtures; application-only unknown-profile code is tested with its package context. |
+| S2 resources and application / dev A | `extensions/profiles.py`, `usecases/terse_compile.py`, `app/cli.py`; extension and CLI integration tests. Expose typed local package snapshots containing declared relative path, raw bytes and decoded manifest; keep the existing manifest-only resolver as a projection over that acquisition. PlanCompilation carries successful snapshots for staging. `compile_plan` accepts explicit optional resource origin; typed plans without one reject rather than implicitly reading cwd. | Shared containment/identity/manifest/field checks stay authoritative. Fieldless unknown profiles and invalid/ambiguous packages reject with positions; authored extension-schema errors are input errors. Compile stdout/file/stdin origins, no partial output, output refusal, required fields, wrong type/enum/key, source mutation after validation, exact-byte staging and cleanup on success/failure. Existing validate/schedule/render and table importer remain valid. |
+| S3 docs and visual evidence / dev A | Terse guide/card and typed-fields guide; executable docs file markers/commands, CLI and render tests; concise literal review under `docs/reviews/current/`. | Reuse the typed-fields guide's package/encoding in an executable staged example. Actual SVG risk paint and Scene fields; direct terse SVG/Scene equal compile-then-YAML. Keep the one-page card and legacy examples. Run documented-plan/command checks and import-direction tests. |
+
+S1 and the shared snapshot helper may proceed in parallel only after this
+plan is published; S2 integration consumes S1's explicit binding identities
+and existing single source map. Keep all syntax work in `chrona.terse`, all
+package semantics in the shared validator, all file context/staging in the
+application. If a contract gap appears, amend/publish design before code.
+
+Verification batches: terse unit suite (including legacy bytes and seeded
+fuzz), compile CLI and terse dispatch tests, extension/profile validation,
+table import regressions, import-direction guards, and executable docs. Batch
+SVG/Scene inspection with the typed render tests. CI supplies full pytest
+shards, conformance and newest-Python public materializers; inspect the one
+official derived snapshot for unintended changes, never edit generated public
+outputs. After landing, require the review-containing exact-main three-OS
+full release and a met row for each of the four literal criteria before close.
+
+Publish S1/S2/S3 code and tests coherently, then acceptance evidence. Follow
+the next ready main by a normal merge before the final PR push; coordinate
+the actual landing on 1718. Archive completed 1702 records in the next docs
+batch, not by moving main during another session's reservation.
