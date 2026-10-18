@@ -377,6 +377,11 @@ admission still apply. No previous-render state is needed.
 
 ### 3.3 Relations
 
+**Route region (#1683).** A relation corridor never rides the plot's own inline edge, where it reads as running into the
+table area. The routing region is the plot inset by 4 px on each inline side, except as far as a mark port already lies
+beyond that inset, so every port stays reachable. A route that cannot be found inside the inset region follows the
+declared `relationRouting.unroutable` policy and its recorded diagnostics, as before.
+
 **Declared routing policy (#1430).**
 `relationRouting.search` selects `first-fit` or `best`, never by project size.
 `best` retains the existing pair order, exact reverse bound, canonical path
