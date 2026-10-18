@@ -90,6 +90,39 @@ A schedule is read from `start`/`end`/`finish`/`duration`: start and end (or fin
 from them, a group takes none. Any other column becomes a text entry in the object's `fields` (`owner` above), and a blank
 cell adds nothing. `--columns map.yaml` maps your header names to the vocabulary (`Task name: title`).
 
+### A `start` on a row with `predecessors` is a fixed anchor
+
+A `start` cell is a fixed date, not a hint. On a row that also has `predecessors` it is a fixed anchor, and the schedule does not
+move it to follow the predecessors. When a predecessor ends later than the anchor, the plan contradicts itself. Only
+`chrona schedule` finds that: `chrona import` and `chrona validate` both report `ok`, because the dates are only compared when
+the schedule is resolved. `schedule` then rejects the plan with `E_CONTRADICTORY_BOUNDS`. Here `a` runs 10 working days from
+2027-01-04, so it ends on 2027-01-18, and `b` is anchored on 2027-01-04 yet follows `a`:
+
+<!-- chrona:doc-check file: anchor.csv -->
+```csv
+id,title,type,start,end,duration,parent,predecessors
+a,A,task,2027-01-04,,10wd,,
+b,B,task,2027-01-04,,5wd,,a
+```
+
+```sh
+chrona import anchor.csv --output anchor.yaml --calendar "standard mon-fri"
+chrona validate anchor.yaml
+```
+
+<!-- chrona:doc-check skip: schedule rejects this plan on purpose (exit 1); tests/integration/test_csv_import_guide.py runs it and asserts the message -->
+```sh
+chrona schedule anchor.yaml
+```
+
+```text
+Authoritative start anchor violates lower bound: b.start is anchored at 2027-01-04, but relation a-b (a.end 2027-01-18 + 0d) requires 2027-01-18 or later
+```
+
+The message names the anchor (`b.start` and its date 2027-01-04), the relation or constraint that bounds it (`a-b`, with the
+predecessor's end date and lag) and the date the start must reach (2027-01-18 or later). Remove the `start` from `b` to let it
+follow `a`, or move the anchor to the bound date or later.
+
 ## Options
 
 - `--output`, `-o`: the Project YAML (required). `--actual-output`: the Actual Set, required when the table has `progress` or
