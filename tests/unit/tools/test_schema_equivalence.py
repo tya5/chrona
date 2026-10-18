@@ -205,22 +205,16 @@ def test_coverage_check_names_a_live_kind_that_loses_every_probe_and_document(co
     assert failures and all("store-config" in failure for failure in failures)
 
 
-def test_expected_invalid_list_equals_the_baseline_invalid_documents():
+def test_expected_invalid_list_equals_the_baseline_invalid_documents(committed):
     baseline = gate.load_baseline(REPOSITORY / gate.BASELINE)
     listed = gate.load_expected_invalid(REPOSITORY / gate.EXPECTED_INVALID)
 
-    # The baseline names the schema a document mapped to at S0; a document re-pointed to a successor (I710-S-B)
-    # is listed under the successor, which the inventory names. A predecessor retired since (#731) has no inventory
-    # entry any more: it resolves to the live schema of its kind (the file name minus its version).
-    entries = validate_inventory(SCHEMAS, SCHEMAS / "schema-inventory-v0.1.yaml")
-    successor = {entry["file"]: entry.get("successor", entry["file"]) for entry in entries}
-    live = {re.sub(r"-v\d+\.\d+\.schema\.yaml$", "", entry["file"]): entry["file"] for entry in entries if entry["state"] == "live"}
-
-    def current(schema: str) -> str:
-        return successor.get(schema) or live.get(re.sub(r"-v\d+\.\d+\.schema\.yaml$", "", schema), schema)
-
-    invalid = {record["path"]: current(record["schema"]) for record in baseline["documents"] if not record["valid"]}
-
+    # Keep the frozen invalid population, but use each document's declared version
+    # for its current schema. A supported predecessor does not become its successor
+    # merely because a newer command schema was added (#902).
+    baseline_invalid = {record["path"] for record in baseline["documents"] if not record["valid"]}
+    assert baseline_invalid == set(listed)
+    invalid = {record["path"]: record["schema"] for record in committed.corpus.records if not record["valid"]}
     assert invalid == {path: entry["schema"] for path, entry in listed.items()}
     assert set(baseline["diagnostics"]["invalidDocuments"]) == set(listed)
     assert all(entry["reason"].strip() for entry in listed.values())

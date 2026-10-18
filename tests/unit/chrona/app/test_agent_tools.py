@@ -110,7 +110,7 @@ def cli(monkeypatch, capsys, cwd: Path, *arguments: str) -> tuple[int, str, str]
 def test_the_tool_set_is_seven_read_only_tools_and_one_writer_in_order():
     assert [spec.name for spec in tool_specs()] == ["validate_project", "schedule_project", "render_draft", "list_presets", "render_review", "compare_baseline", "check_command", "apply_command"]
     document = registry_document()
-    assert document["toolSet"] == "chrona/agent-tools/v0.4"
+    assert document["toolSet"] == "chrona/agent-tools/v0.5"
     assert [tool["name"] for tool in document["tools"]] == list(SPECS)
     for tool in document["tools"]:
         writes = tool["name"] == "apply_command"

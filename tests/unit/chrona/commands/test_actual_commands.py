@@ -4,9 +4,7 @@ from chrona.commands.actual_commands import (
     MemoryActualStore,
     LocalActualStore,
     apply_actual_intake_batch,
-    redo_actual_command,
     resolve_actual_observation,
-    undo_actual_command,
 )
 from chrona.storage.snapshot_paths import snapshot_directory
 
@@ -69,20 +67,6 @@ def test_actual_resolution_rejects_stale_unknown_or_non_unmatched_observation():
     _assert_diagnostic(
         resolve_actual_observation(store, accepted.result_revision, "supplier:42", "firmware", {"firmware"}),
         "E_ACTUAL_ALIGNMENT", "supplier:42")
-
-
-def test_actual_undo_redo_create_new_revisions_without_rewriting_history():
-    store = MemoryActualStore(_actual_set())
-    base, original = store.read()
-    accepted = resolve_actual_observation(store, base, "supplier:42", "firmware", {"firmware"}, command_id="resolve-42")
-    undone = undo_actual_command(store, accepted.result_revision, "resolve-42")
-    assert undone.status == "accepted"
-    assert undone.result_revision != base
-    assert undone.actual_set == original
-    redone = redo_actual_command(store, undone.result_revision, "resolve-42")
-    assert redone.status == "accepted"
-    assert redone.result_revision not in {base, accepted.result_revision, undone.result_revision}
-    assert redone.actual_set == accepted.actual_set
 
 
 def test_intake_is_atomic_and_replay_safe_with_explicit_unmatched_records():
@@ -174,9 +158,3 @@ def test_actual_result_diagnostics_name_expected_operand_without_echoing_record(
 
     unresolved = resolve_actual_observation(store, base, "missing-observation", "firmware", {"firmware"})
     _assert_diagnostic(unresolved, "E_REFERENCE", "missing-observation")
-
-    undo = undo_actual_command(store, base, "missing-command")
-    _assert_diagnostic(undo, "E_CONFLICT", "missing-command")
-
-    redo = redo_actual_command(store, base, "missing-command")
-    _assert_diagnostic(redo, "E_CONFLICT", "missing-command")

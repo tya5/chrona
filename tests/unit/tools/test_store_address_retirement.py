@@ -74,16 +74,19 @@ def test_the_retained_predecessor_is_still_registered_in_the_reader_that_selects
 def test_a_retired_predecessor_is_unregistered_and_an_unsupported_version_to_every_reader():
     """Layout Profile v0.9 (C1), Render Context v0.16 (C2), Command Request v0.2 (C3) and Automation Result v0.1 (C4).
     The archive test already proves each file is out of
-    `schemas/` and the inventory and unnamed; here the readers refuse the version and the kind has one live schema."""
+    `schemas/` and the inventory and unnamed; here the readers refuse the version while retained command v0.3 and current
+    v0.4 remain registered."""
     assert set(LAYOUT_SCHEMAS) == {LAYOUT_VERSION} == {"chrona/layout-profile/v0.10"}
     assert ("layout-profile", "chrona/layout-profile/v0.9") not in _SCHEMAS
     assert [name for name, entry in ENTRIES.items() if entry["kind"] == "layout-profile"] == ["layout-profile-v0.10.schema.yaml"]
     assert RENDER_CONTEXT_VERSIONS == ("chrona/render-context/v0.17",) and RENDER_CONTEXT_VERSION == RENDER_CONTEXT_VERSIONS[0]
     assert ("render-context", "chrona/render-context/v0.16") not in _SCHEMAS
     assert [name for name, entry in ENTRIES.items() if entry["kind"] == "render-context"] == ["render-context-v0.17.schema.yaml"]
-    # Command Request v0.2 (C3): the CLI registers v0.3 only.
-    assert set(COMMAND_SCHEMAS) == {"chrona/command/v0.3"}
-    assert [name for name, entry in ENTRIES.items() if entry["kind"] == "command-request"] == ["command-request-v0.3.schema.yaml"]
+    # Command Request v0.2 (C3) is retired; v0.3 remains readable beside the current v0.4 contract.
+    assert set(COMMAND_SCHEMAS) == {"chrona/command/v0.3", "chrona/command/v0.4"}
+    assert "chrona/command/v0.2" not in COMMAND_SCHEMAS
+    assert {name for name, entry in ENTRIES.items() if entry["kind"] == "command-request"} == {
+        "command-request-v0.3.schema.yaml", "command-request-v0.4.schema.yaml"}
     # Automation Result v0.1 (C4): one registered version, one live schema.
     assert set(AUTOMATION_RESULT_SCHEMAS) == {"chrona/automation-result/v0.2"}
     assert [name for name, entry in ENTRIES.items() if entry["kind"] == "automation-result"] == ["automation-result-v0.2.schema.yaml"]

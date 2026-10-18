@@ -94,7 +94,7 @@ Store identity, normalized address, immutable revision, and content identity. A 
 verifies all of these values; it does not search a directory to find a matching ID.
 Duplicate `(kind, id)` pairs in an evaluation are invalid.
 
-### Style resource selection (#419 S2; implementation pending)
+### Style resource selection (#419 S2)
 
 The live Context admits optional `body.style`, one ordinary pinned reference
 whose kind is `style`. Omission means no authored Style rules and preserves the
