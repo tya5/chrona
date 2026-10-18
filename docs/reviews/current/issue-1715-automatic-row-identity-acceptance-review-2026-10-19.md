@@ -43,6 +43,14 @@ the warning does not repaint or resize the figure.
 
 ## Programme-level criteria (optional)
 
+Initial [PR run39150249147](https://github.com/tya5/chrona/actions/runs/39150249147)
+had one failing test: the new Layout module was missing from Spec33's ownership
+table. The table and required ownership docstring are corrected; the guard
+is unchanged. Both other pytest shards, conformance and reproduction passed;
+derived-ready failed downstream of that test. Its snapshot's 50 SVGs and
+50 Scenes were byte-identical; only diagnostic inventory source positions
+changed. This initial old-base run is not final release evidence.
+
 Pending: exact-head PR CI, one official SVG/Scene/report delta audit, then
 exact-main three-OS full pytest/conformance/wheel, MCP floor and newest-Python
 public reproduction. Local literal evidence is not release acceptance;

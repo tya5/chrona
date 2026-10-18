@@ -1,4 +1,4 @@
-"""Complete the automatic-row identity warning from accepted Layout facts."""
+"""Owns automatic-row identity diagnostics; reads accepted placements and row membership."""
 from __future__ import annotations
 
 from dataclasses import replace
