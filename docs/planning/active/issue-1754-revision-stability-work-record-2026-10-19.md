@@ -149,6 +149,28 @@ on the exact main containing the final issue acceptance review. If a consumer
 cannot use the shared identity without a new semantic rule, return to design
 before changing that rule. Do not expand S1 into hint/routing or Theme policy.
 
+## S2 implementation plan
+
+- Owners: `layout/routing.py` validates preferred routes under both policies;
+  `surface_routes.py` proposes/records hints under both, protects accepted hints
+  from optional back-route ranking, and retains explicit unusable receipts.
+  Update the CLI-reference description and link it from `update-a-plan.md`.
+- Tests: replace the two obsolete best-ignores-hints tests in
+  `test_preferred_relation_route.py` and `usecases/test_previous_scene.py`;
+  exercise accepted, rejected, unadmitted and obstacle-invalidated hints under
+  both policies, including a better-ranked fresh candidate, no search on a hit,
+  honest expansion receipts, and overlap/stub unusable diagnostics. Extend the
+  revision integration synthetic with an unrelated slip and a known mark-safe
+  detour. Keep recovery/shape/quality/critical tests as regression controls.
+- Publication: a separate reviewed implementation commit in the issue branch;
+  batch S1/S2 in the issue PR after the design publication, rather than spending
+  another main-ready cycle per helper. CI and one official public snapshot cover
+  the combined slice; disclose ID/geometry/diagnostic changes separately.
+- Acceptance: synthetic retained primitive IDs and accepted hints under best,
+  an invalid hint falls through without a mark crossing, existing unsupported
+  modes explain themselves, and no-hint selection is unchanged by S2 itself.
+  Real target-b and five-week trial evidence remain the integrated issue gate.
+
 ## Current implementation evidence
 
 S1 is implemented locally; publication/public-output review and CI are pending.
@@ -162,4 +184,4 @@ again (15 tests). Eight migrated integration modules compile and collect
 (183 cases); their expensive corpus checks remain assigned to CI. Independent
 S1 review found no remaining identity/ownership blocker; the uniqueness-change
 limitation above is explicit. No schema, preset or generated output is edited.
-S2 implementation planning and the full trial-8 acceptance remain incomplete.
+S2 product implementation and the full trial-8 acceptance remain incomplete.
