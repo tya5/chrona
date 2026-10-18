@@ -101,6 +101,24 @@ must retain its original failure rather than claim a safe pre-write rejection.
   its own venv resolved both. No product workaround or weakened assertion.
 - Pending: current-main integration, CI/release and literal acceptance review.
 
+## Item5 literal acceptance review (release pending)
+
+Implementation `ab376c78e` with L1 `a4c7fe08c`, L2 `9dcf22c16`; public WIP
+`wip/issue-902-store-write-safety`. This reviews item5 only; items2/3 and parked
+4/814/815 remain open. No issue closure or current-main release claim.
+
+| Literal item5 acceptance | Disposition | Direct evidence |
+| --- | --- | --- |
+| Acceptance for 2, 3 and 5: each has its own stale-base, replay and no-overwrite tests, plus an MCP stdio test where it is a tool. | met (item5) | `tests/integration/test_actual_store_concurrency.py`, `test_store_write_lock.py`, `test_store_transaction_span.py`; MCP stdio `test_with_allow_write_an_intake_and_a_capture_are_applied_and_equal_the_command_line` and `test_stale_replayed_and_overwriting_commands_are_refused_over_stdio_and_nothing_is_overwritten`. Focused outcomes recorded above; not evidence for items2/3. |
+| Item 5 needs a two-process test that shows a lost update today and none after the fix. | met | Committed regression605232991 fails on baseline; the same test passes after9dcf22c16, rejecting the stale writer with every post-A Store file byte unchanged. |
+| Required release gate on current main containing this review. | not met | Current-ready-base PR/CI, exact-main three-OS full pytest/conformance/wheel/MCP and publication verification remain pending. |
+
+Structural review: engine owns the whole replay/CAS/publication/record scope;
+storage owns canonical-root/thread/process exclusion and raw OS locking;
+authoring retains its own workspace lock identity/diagnostics. No second ledger,
+renderer behavior, schema migration, approval or crash-atomicity promise added.
+Acquisition errors reject before mutation; publication/unlock errors remain raw.
+
 ## Next-item baseline (design not yet selected)
 
 - Item3: Spec10 §8 requires new-revision undo/redo with unsafe inverses rejected.
@@ -118,7 +136,7 @@ must retain its original failure rather than claim a safe pre-write rejection.
 - Use case: an agent reverses an accepted Actual write, then reapplies its intent,
   without overwriting intervening changes or rewinding immutable revision history.
 - Review Spec10 §8 against Store ownership (Spec15), command/reference contracts
-  (Spec65), and CLI/MCP shared dispatch/write gates (Spec66). Preserve snapshot
+  (Spec35), and CLI/MCP shared dispatch/write gates (Spec66). Preserve snapshot
   non-reversibility; do not extend this item to generic Project history.
 - Resolve history authority, origin/revert eligibility, replay identity, current
   base/content checks, and missing/corrupt historical bytes. Existing ledger
