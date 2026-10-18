@@ -77,6 +77,15 @@ untouched. A discovered contract gap returns to design before product edits.
 
 ## Evidence and remaining gate
 
+CI39090738185's snapshot/reproduction/MCP pass, but conformance's
+`legend-key-scene-evidence` fails15 findings: the checker compares each
+multipart milestone key part against the first source part, and still requires
+a Progress key for same-host ink. Extend I4 in `tools/check_legend_keys.py` and
+its unit/integration twins to compare complete figure paint/part witnesses and
+the approved fill-first host redundancy rule. Preserve negative mismatched-ink,
+missing nonredundant-key and relation-bounds checks; do not exempt public slides.
+This is checker conformance to published Specs28/61, not a product-policy change.
+
 - I1/I2 and native encoding/source tests pass; all50 public materializers were
   batched once, then only affected slides rerendered. Preliminary table is
   explicitly not final; replace it from the next official CI snapshot, not
