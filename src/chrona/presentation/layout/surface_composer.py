@@ -358,6 +358,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     text = [replace(item, slot_id=text_slot(item)) for item in text]
     text_visuals = place_text_visuals(tuple(text), request,
         handled_sources=handled_candidate_visuals, axis_label_targets=axis_label_targets,
+        legend_label_targets=legend_batch.label_targets if legend_batch is not None else (),
         pre_reserved_placements=detail_visual_reservations)
     text, icons = list(text_visuals.text), list(text_visuals.icons)
     icons = [replace(icon, subjects=member_label_subjects.get(icon.host_placement_id, icon.subjects))

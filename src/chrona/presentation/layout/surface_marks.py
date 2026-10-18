@@ -213,15 +213,15 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
 
     def completed_marks(composition, visibility, instance_id, source_occurrence):
         from chrona.presentation.model.mark_semantics import canonical_mark_semantic
-        composition = replace(composition, marks=tuple(replace(mark,
+        completed_marks = tuple(replace(mark,
             source_occurrence_key=source_occurrence.style_key(canonical_mark_semantic(
                 mark.semantic_id, mark.mark_shape, gate_declared=request.theme_tokens.has_role("gate"))))
-            for mark in composition.marks))
+            for mark in composition.marks)
         if visibility is None:
-            return composition.marks
+            return completed_marks
         facets = {facet.source.placement_id(instance_id): facet for facet in visibility.facets}
         result = []
-        for mark in composition.marks:
+        for mark in completed_marks:
             facet = facets.get(mark.placement_id)
             if facet is None:
                 raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/items",
@@ -292,14 +292,13 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                     if owner is not None else True),
                 selection=admitted_source_selection(visibility) if visibility is not None else None,
                 style_intents=prepared_style(item, kind=occurrence_kind,
-                                             container_id=occurrence_container, source_kind=source_kind,
-                                             member_id=owner[1] if owner is not None else None),
+                                             container_id=occurrence_container, source_kind=source_kind),
             )
             marks.extend(replace(mark, lane_row_id=owner[0], lane_member_id=owner[1],
                                  lane_source_kind=source_kind) if owner is not None else mark
                          for mark in completed_marks(composition, visibility, instance_id,
                              style_sources.occurrence(occurrence_kind, occurrence_container,
-                                 owner[1] if owner is not None else item.item_id or item.object_id,
+                                 item.item_id or item.object_id,
                                  item.object_id, source_kind)))
             diagnostics.extend(composition.diagnostics)
             diagnostic_provenance.extend(composition.diagnostic_provenance)

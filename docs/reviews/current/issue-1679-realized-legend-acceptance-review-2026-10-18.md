@@ -7,7 +7,11 @@ Implementation source `a7fc836ac8f386be589bc86fd20ee632152db71c`, based on
 Official derived snapshot [CI39090738185](https://github.com/tya5/chrona/actions/runs/39090738185)
 provides the 50-slide table below. Snapshot generation, MCP and reproduction
 pass; conformance fails on the legend checker's stale multipart/Progress rules
-(15 findings), with checker alignment in progress. Exact-head CI remains required.
+(15 findings), and the three pytest shards failed12/12/10 tests. Checker
+alignment now passes32 unit/7 native tests and the archived official50 Scenes
+with zero findings. Source-identity/error/fixture corrections and explicit
+legend-role visual fanout pass focused regression batches; the next exact-head
+CI must verify them. No failed gate is treated as acceptance.
 Supplemental Sunday, Gates and glyph-gates PNGs were inspected; their input SVGs
 are byte-identical to the official artifact. The artifact shows Sunday's seven expected
 keys without overflow and Gates’ five keys without a viewport warning. It adds
@@ -43,6 +47,9 @@ There are zero actual dependency-route changes. Twelve changed dependency
 entries are the `legend-swatch:dependency` line-key positions, not routes. Two
 new diagnostics are Yuya progress-swatch `W_SCENE_MARK_CONTRAST` warnings.
 No source YAML or canonical generated output was edited.
+Snapshot inventory:42 SVGs and43 Scenes change; overlay-briefing changes only
+Scene metadata, hence its zero primitive row. Three derived Markdown reports
+change; the semantic-realization report is byte-identical to baseline.
 
 | Slide | Primitives +/−/~ | Text +/−/~ | New diagnostics |
 | --- | --- | --- | --- |

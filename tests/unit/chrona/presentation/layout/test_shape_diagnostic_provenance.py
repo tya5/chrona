@@ -31,6 +31,9 @@ class _Metric:
 
 
 class _Theme:
+    def has_role(self, _role):
+        return False
+
     def text_treatment(self, _role):
         return SimpleNamespace(family="Test", weight=400, font_size=10, line_height=1.2,
                                letter_spacing=0, transform="none", numeric_spacing="proportional",

@@ -51,6 +51,7 @@ from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
 from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_role_consumers import unread_diagnostics as unread_theme_diagnostics
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
+from chrona.presentation.model.theme_paint import ThemePaintError
 from chrona.core.attachments import AttachmentWarning, attachment_warnings
 from chrona.core.deadlines import DeadlineStatus, deadline_statuses, deadline_warnings_from_statuses
 from chrona.presentation.count_text import CountTextError
@@ -269,7 +270,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed(error.diagnostic_id, error.detail, "presentation", error.source_ref) from error
     except ProfileConnectionError as error:
         raise RenderFailed(error.code, error.detail, error.component, error.source_ref) from error
-    except (LayoutError, ThemeTokenError, ScenePaintError) as error:
+    except (LayoutError, ThemeTokenError, ThemePaintError, ScenePaintError) as error:
         message = error_message(error.diagnostic_id, getattr(error, "detail", None))
         node = getattr(error, "node_id", None)  # a Layout finding names the offending token or node here
         raise RenderFailed(error.diagnostic_id, f"{message} ({node})" if node else message,

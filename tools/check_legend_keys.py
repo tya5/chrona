@@ -19,7 +19,75 @@ def _paint(item: dict[str, Any]) -> tuple[str | None, str | None]:
     return paint.get("fill"), paint.get("stroke")
 
 
-def _surface_findings(primitives: list[dict[str, Any]]) -> list[str]:
+def _freeze(value: Any) -> Any:
+    if isinstance(value, dict):
+        return tuple((key, _freeze(item)) for key, item in sorted(value.items()))
+    if isinstance(value, list):
+        return tuple(_freeze(item) for item in value)
+    return value
+
+
+def _scene_ink_identity(items: list[dict[str, Any]]) -> tuple[Any, ...]:
+    """Normalize a Scene figure by fill-first visible palette, opacity and patterns."""
+    fills, strokes, patterns = [], [], set()
+    for item in items:
+        paint = item.get("paint") or {}
+        opacity = paint.get("opacity", 1)
+        if opacity is None:
+            opacity = 1
+        if not isinstance(opacity, (int, float)) or not math.isfinite(opacity) or opacity <= 0:
+            continue
+        fill = paint.get("fill")
+        if fill is not None:
+            gradient = paint.get("gradient")
+            color = ("gradient", _freeze(gradient)) if gradient is not None else ("color", fill.upper() if isinstance(fill, str) else fill)
+            fills.append((color, opacity))
+        stroke = paint.get("stroke")
+        if stroke is not None:
+            strokes.append((("color", stroke.upper() if isinstance(stroke, str) else stroke), opacity))
+        pattern = item.get("pattern")
+        if pattern is not None:
+            patterns.add(_freeze(pattern))
+    palette = tuple(sorted(set(fills or strokes), key=repr))
+    pattern_identity = tuple(sorted(patterns, key=repr)) if patterns else None
+    return palette, pattern_identity
+
+
+def _figure_paint_identity(items: list[dict[str, Any]]) -> tuple[Any, ...]:
+    """Retain the complete ordered paint stack for a projected source figure."""
+    return tuple((_freeze(item.get("paint") or {}), _freeze(item.get("pattern")))
+                 for item in items)
+
+
+def _figure_groups(items: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
+    """Join only parts with explicit common source and completed bounds."""
+    grouped: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
+    for index, item in enumerate(items):
+        source = item.get("sourceRef")
+        bounds = item.get("bounds")
+        if item.get("kind") == "Symbol" and isinstance(source, str) and isinstance(bounds, dict):
+            identity = ("figure", source, _freeze(bounds))
+        else:
+            identity = ("primitive", index)
+        grouped.setdefault(identity, []).append(item)
+    return list(grouped.values())
+
+
+def _progress_hosts(item: dict[str, Any], marks: dict[str, list[dict[str, Any]]]) -> list[dict[str, Any]]:
+    remainder = item.get("id", "").removeprefix("progress-fill:")
+    role = remainder.partition(":")[0]
+    candidates = marks.get(role, [])
+    clip_source = item.get("clipSourceId")
+    if isinstance(clip_source, str):
+        return [host for host in candidates
+                if host.get("id") == clip_source
+                or host.get("id", "").startswith(f"{clip_source}:part")]
+    return [host for host in candidates
+            if host.get("id") == remainder
+            or host.get("id", "").startswith(f"{remainder}:part")]
+
+
+def _surface_findings(primitives: list[dict[str, Any]], *, legend_declared: bool = True) -> list[str]:
     keys: dict[str, list[dict[str, Any]]] = defaultdict(list)
     progress_keys: list[dict[str, Any]] = []
     marks: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -43,6 +111,30 @@ def _surface_findings(primitives: list[dict[str, Any]]) -> list[str]:
                 progress[role].append(item)
     findings: list[str] = []
     for role, role_keys in sorted(keys.items()):
+        if role in {"actual", "milestone"}:
+            expected_kind = "Symbol" if role == "milestone" else None
+            candidates = [item for item in marks.get("planned" if role == "milestone" else role, ())
+                          if (role != "milestone" or item["kind"] == expected_kind)
+                          and ":snapshot:" not in item["id"]]
+            if not candidates:
+                continue
+            mark_figures = _figure_groups(candidates)
+            mark_inks = {_scene_ink_identity(figure) for figure in mark_figures}
+            mark_paints = {_figure_paint_identity(figure) for figure in mark_figures}
+            for key_figure in _figure_groups(role_keys):
+                if role == "milestone" and any(item["kind"] != expected_kind for item in key_figure):
+                    findings.append("milestone: key shape is not Symbol, its marks are Symbol")
+                    continue
+                matched = (_figure_paint_identity(key_figure) in mark_paints
+                           if role == "milestone" else _scene_ink_identity(key_figure) in mark_inks)
+                if not matched:
+                    key_paint = [_paint(item) for item in key_figure]
+                    mark_paint = [_paint(item) for item in candidates]
+                    if role == "actual":
+                        findings.append(f"actual: key paints figure {key_paint}, no Actual mark has that ink (first mark {mark_paint})")
+                    else:
+                        findings.append(f"milestone: key paints fill/stroke figure {key_paint}, no source mark figure has that ink (first mark {mark_paint})")
+            continue
         for key in role_keys:
             if key["kind"] == "Path" and role not in {*MARK_PREFIXES, "milestone"}:
                 bounds, points = key["bounds"], key.get("points") or []
@@ -64,16 +156,23 @@ def _surface_findings(primitives: list[dict[str, Any]]) -> list[str]:
                 continue
             if role != "actual" and key["kind"] != expected_kind:
                 findings.append(f"{role}: key shape is {key['kind']}, its marks are {expected_kind}")
-            if role == "actual":
-                matching = next((item for item in candidates if _paint(item) == _paint(key)), None)
-                if matching is None:
-                    findings.append(f"{role}: key paints fill/stroke {_paint(key)}, no Actual mark has that ink")
-            elif _paint(key) != _paint(candidates[0]):
+            if _paint(key) != _paint(candidates[0]):
                 findings.append(f"{role}: the key paints fill/stroke {_paint(key)}, its marks {_paint(candidates[0])}")
             if role != "actual" and key["kind"] == "Rect" and key["bounds"]["inlineSize"] <= key["bounds"]["blockSize"]:
                 findings.append(f"{role}: the key {key['bounds']['inlineSize']}x{key['bounds']['blockSize']} is not landscape")
-    if any(progress.values()) and not progress_keys:
-        findings.append("Progress: the chart draws a positive progress fill but has no separate Progress key")
+    if any(progress.values()) and not progress_keys and legend_declared:
+        distinct_progress = False
+        for shapes in progress.values():
+            for shape in shapes:
+                hosts = _progress_hosts(shape, marks)
+                if not hosts or _scene_ink_identity([shape]) not in {
+                        _scene_ink_identity(figure) for figure in _figure_groups(hosts)}:
+                    distinct_progress = True
+                    break
+            if distinct_progress:
+                break
+        if distinct_progress:
+            findings.append("Progress: the chart draws a positive progress fill with ink distinct from its host but has no separate Progress key")
     for key in progress_keys:
         candidates = [item for entries in progress.values() for item in entries]
         if key["kind"] == "Rect":
@@ -92,7 +191,11 @@ def legend_key_findings(document: dict[str, Any]) -> list[str]:
     surfaces = document["surfaces"]
     if not isinstance(surfaces, list) or not surfaces:
         raise ValueError("Scene must have at least one surface")
-    return [finding for surface in surfaces for finding in _surface_findings(surface["primitives"])]
+    return [finding for surface in surfaces for finding in _surface_findings(
+        surface["primitives"],
+        legend_declared=any(slot.get("source") == "legend" for slot in surface.get("slots", ()))
+        if "slots" in surface else True,
+    )]
 
 
 def committed_scene_paths(root: Path = ROOT) -> tuple[Path, ...]:

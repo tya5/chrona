@@ -89,14 +89,27 @@ preserved hashed IDs. The all-encoded Planned inventory fixture must instead
 use a surviving role. This keeps View intent, Layout identity/geometry and
 Scene projection responsibilities separate; publish before code resumes.
 
-CI39090738185's snapshot/reproduction/MCP pass, but conformance's
-`legend-key-scene-evidence` fails15 findings: the checker compares each
-multipart milestone key part against the first source part, and still requires
-a Progress key for same-host ink. Extend I4 in `tools/check_legend_keys.py` and
-its unit/integration twins to compare complete figure paint/part witnesses and
-the approved fill-first host redundancy rule. Preserve negative mismatched-ink,
-missing nonredundant-key and relation-bounds checks; do not exempt public slides.
-This is checker conformance to published Specs28/61, not a product-policy change.
+CI39090738185 disposition: snapshot/reproduction/MCP pass. Conformance fails15
+legend-checker findings; the three pytest shards fail12/12/10 tests. All are
+triaged: canonical source IDs versus physical lane aliases; a dataclass-only
+test-double assumption; shared-paint errors not mapped at the use-case boundary;
+unused-key/source-presence/phase fixtures; stale private generated mirrors; and
+role-based visual binding. No independent failure is being ignored.
+
+I4 checker alignment compares complete ordered milestone part paints, exact
+Progress hosts and fill-first redundancy, and respects optional legend regions.
+Wrong ink, missing nonredundant keys, corrupt/missing parts, unrelated hosts and
+relation bounds retain negative tests. Official50-scene reevaluation has zero
+findings. Read-only public evidence tests consume canonical manifest outputs
+from the official snapshot, not a second stale fixture-output mirror. Mutating
+resource tests retain isolated fixtures. No source-YAML or generated-repo edits.
+These corrections preserve the published contracts; role-visual fanout is the
+explicit pre-code design correction above. Current-head CI must verify all fixes.
+Focused evidence (overlapping batches, not summed): lane/forecast/source identity79;
+paint/legend/checker/ownership67; phase/date/terminal30; legend visual/extent8;
+canonical public snapshot tests7 plus relation-label1. Native role visuals cover
+one and three hashed Actual groups; absent Planned still fails closed. Composer
+remains orchestration-only (394 lines); import and literal-review gates pass.
 
 - I1/I2 and native encoding/source tests pass; all50 public materializers were
   batched once, then only affected slides rerendered. Preliminary table is

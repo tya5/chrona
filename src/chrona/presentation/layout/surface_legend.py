@@ -49,6 +49,7 @@ class SurfaceLegendBatch:
     text: tuple[TextPlacement, ...]
     warnings: tuple[FitWarning, ...]
     allocated_slot: SlotPlacement
+    label_targets: tuple[tuple[str, str], ...] = ()
 
 
 def _legacy_swatch_size(legend_size: float) -> float:
@@ -256,6 +257,7 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
     shapes: list[ShapePlacement] = []
     relations: list[RelationPlacement] = []
     text: list[TextPlacement] = []
+    label_targets: list[tuple[str, str]] = []
     side_content_warnings: list[FitWarning] = []
     legend_treatment = request.theme_tokens.text_treatment("legend")
     legend_size = float(legend_treatment.font_size)
@@ -416,6 +418,7 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
                             collision_domain=CollisionDomain("legend", "content"), source_content=label,
                             available_inline_start=x, available_inline_size=available)
         text.append(placed)
+        label_targets.append((entry.role, placed.placement_id))
         if ellipsized:
             # An ellipsis is never silent: the Scene names the text, its natural size and the room it had (#497).
             side_content_warnings.append(FitWarning(
@@ -521,4 +524,4 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
     replacement = replace(legend, bounds=Rect(legend.bounds.inline, legend.bounds.block,
                                                legend.bounds.inline_size, final_size))
     return SurfaceLegendBatch(replacement, tuple(marks), tuple(shapes), tuple(relations), tuple(text),
-                              tuple(side_content_warnings), legend)
+                              tuple(side_content_warnings), legend, tuple(label_targets))
