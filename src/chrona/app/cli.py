@@ -195,6 +195,11 @@ def _draft_typesetter_identity(args: argparse.Namespace, target_kind: str) -> Ty
     return typesetter_identity(args.typesetter_engine, args.typesetter_version, args.typesetter_adapter_grammar, target_kind)
 
 
+def _project_directory(args: argparse.Namespace) -> Path | None:
+    """The raw Project file's directory, which resolves its ``path`` extensions; none in snapshot mode."""
+    return Path(args.project).parent if args.project else None
+
+
 def _load_primary_project(args: argparse.Namespace) -> dict[str, Any]:
     snapshot_values = (args.snapshot_reference, args.snapshot_root, args.store_identity)
     if any(snapshot_values):
@@ -1012,12 +1017,12 @@ def _run(args: argparse.Namespace) -> None:
         _validate_actual_set(project)
         return
     if args.command == "validate":
-        validation = validate_project_mapping(project)
+        validation = validate_project_mapping(project, base_dir=_project_directory(args))
         if not validation.ok:
             _reject(_with_source_ranges(args, validation.diagnostics))
         print(json.dumps({"status": "ok", "diagnostics": []}))
         return
-    outcome = schedule_project_mapping(project)
+    outcome = schedule_project_mapping(project, base_dir=_project_directory(args))
     if not outcome.ok:
         _reject(_with_source_ranges(args, outcome.diagnostics))
     print(json.dumps(_with_warning_positions(args, outcome), indent=2, default=_json_default))
