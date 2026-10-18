@@ -106,9 +106,34 @@ synthetic removal criterion exercises relations whose identity inputs stay
 unchanged; no cross-revision alias or stateful identity registry is introduced.
 No unresolved S1 contract remains.
 
-S2 will separately complete the all-policy hint/corridor design, then the
-moving-decoration design. S1 is independently testable and does not claim any
+S1 is independently testable and does not claim any
 full issue acceptance row met until integrated hints and trial evidence exist.
+
+## S2 selected design and whole-architecture review
+
+[Spec 50 §3.3](../../specification/50-constraint-driven-gantt-surface-quality.md)
+owns the revised all-policy hint-first contract. Issue rule 3 settles the
+ranking question: a currently valid prior corridor wins, even if fresh best
+search could rank another route higher. Without a valid hint, ordinary ranked
+best behavior is unchanged. No trusted/forced-route API or persisted geometry
+is added. Reuse the existing candidate preparation, admitted port pairs,
+completed terminal/mark/obstacle/self-overlap/quality validators, and expansion
+accounting. Hints are normal-domain proposals only. A post-selection optional
+back-route improvement must not replace an accepted hint.
+
+Architecture review: core identity remains S1-owned; immutable prior Scene
+ingress and materializer integrity stay in the application/closure layer.
+Layout alone reconstructs/reanchors/validates geometry and emits existing
+typed hint receipts and summary under both policies. Explicit overlap/stub
+report why they bypass hint selection. Scene emits completed paths and adapters
+remain serializers (ADR-0031, Specs 08/09/50). No schema, Scene mutation,
+budget increase, or quality exemption is needed. Existing staged detour-before-
+mark relaxation remains authoritative; trial 8's Observability stack is a
+primary work mark, not a header. A newly invalid hint must fall through to
+safe ordinary routing, not become reusable in a relaxed domain. Bounded search
+is not mathematical feasibility proof; tests must provide a known legal
+detour and verify actual completed geometry, not merely a warning count.
+No unresolved S2 contract remains. Moving-decoration design is still pending.
 
 ## S1 implementation plan
 
@@ -137,4 +162,4 @@ again (15 tests). Eight migrated integration modules compile and collect
 (183 cases); their expensive corpus checks remain assigned to CI. Independent
 S1 review found no remaining identity/ownership blocker; the uniqueness-change
 limitation above is explicit. No schema, preset or generated output is edited.
-S2 design and the full trial-8 acceptance remain incomplete.
+S2 implementation planning and the full trial-8 acceptance remain incomplete.
