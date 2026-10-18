@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import date
 from enum import StrEnum
+from itertools import chain
 from typing import Any
 
 from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
@@ -298,6 +299,23 @@ class ReviewProjection:
         if ordinary:
             return ordinary
         return tuple(item for point in self.folded_points if point.group_id == group_id for item in point.all_items)
+
+
+def forecast_deadline_placements(projection: ReviewProjection) -> dict[str, dict[str, date]]:
+    """Select completed View occurrences that may supply per-object forecast deadline finishes.
+
+    This is source-fact selection only: it does not use window geometry or recompute dates.
+    Repeated occurrences share the same Project object forecast and therefore one map entry.
+    """
+    occurrences = (item for row in projection.rows for item in row.items)
+    folded_occurrences = (item for point in projection.folded_points for item in point.all_items)
+    selected: dict[str, dict[str, date]] = {}
+    for item in chain(occurrences, folded_occurrences):
+        if (item.source_kind not in {"primary", "combined"} or not item.temporal_paint
+                or item.forecast is None):
+            continue
+        selected.setdefault(item.object_id, dict(item.forecast.schedule.placement))
+    return selected
 
 
 @dataclass(frozen=True)
