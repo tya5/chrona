@@ -14,12 +14,15 @@ from PIL import Image, ImageChops
 from pypdf import PdfReader
 
 from chrona.presentation.model.closure import ClosureError, resolve_draft_render
+from chrona.operational.store_config import load_store_config
+from chrona.operational.store_reads import DraftExtensionPackageReader
 from chrona.presentation.fonts.system import resolve_system_font
 from chrona.presentation.scene.serialization import scene_document, serialize_scene
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.presentation.scene.visual_capabilities import BASELINE_PROFILE, PNG_PROFILE
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderFailed, RenderRequest, render_review
+from tests.support.draft_packages import stage_project_package_store
 
 
 def _root() -> Path:
@@ -115,13 +118,17 @@ def test_host_face_without_tabular_digits_uses_proportional_mode_with_warning_on
     theme["body"]["values"]["editorial"]["value"] = family
     theme_path = tmp_path / "host-tabular.yaml"
     theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
+    project_path = root / "examples/halcyon-1/project.yaml"
+    project = yaml.safe_load(project_path.read_bytes())
+    config = stage_project_package_store(tmp_path / "package-store", project, project_path.parent)
+    package_reader = DraftExtensionPackageReader(lambda: load_store_config(str(config)))
     draft = resolve_draft_render(**{
-        "project_path": root / "examples/halcyon-1/project.yaml",
+        "project_path": project_path,
         "view_path": root / "examples/halcyon-1/views/default-draft.yaml", "theme_path": theme_path,
         "scheme_path": root / "examples/halcyon-1/schemes/mission-light.yaml",
         "layout_path": root / "examples/halcyon-1/layouts/briefing.yaml",
         "actual_path": root / "examples/halcyon-1/actual.yaml",
-        "system_fonts": True,
+        "system_fonts": True, "package_reader": package_reader,
     })
     assert draft.font_resolution is not None
     assert any(warning.role == "numeric" and warning.family == family
@@ -140,8 +147,9 @@ def test_host_face_without_tabular_digits_uses_proportional_mode_with_warning_on
     import sys
     output = tmp_path / "draft.svg"
     scene_path = tmp_path / "draft.scene.json"
+    cli_config = stage_project_package_store(tmp_path / "cli-package-store", project, project_path.parent)
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(root / "examples/halcyon-1/project.yaml"),
+        "chrona", "render", str(project_path), "--store-config", str(cli_config),
         "--view", str(root / "examples/halcyon-1/views/default-draft.yaml"),
         "--theme", str(theme_path),
         "--scheme", str(root / "examples/halcyon-1/schemes/mission-light.yaml"),

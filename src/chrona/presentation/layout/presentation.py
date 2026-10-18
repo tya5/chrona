@@ -350,12 +350,35 @@ def table_text_line_block(theme_tokens: Any, typography_roles: Any) -> float:
                 for role in sorted(set(typography_roles))), default=0.0)
 
 
+def _occurrence_frame_key(review_row: Any, item: Any) -> str:
+    """Use the planner's existing instance identity without interpreting its contents."""
+    return f"{review_row.row_id}:{item.item_id or item.object_id}"
+
+
+def _occurrence_outer_extent(frame: MarkBandFrame) -> float:
+    return frame.allocation.outer_extent if frame.allocation is not None else frame.block_size
+
+
+def _row_track_pitch(review_row: Any, mark_block_size: float,
+                     mark_band_allocation: MarkBandAllocation | None,
+                     occurrence_frames: Mapping[str, MarkBandFrame] | None) -> float:
+    pitch = mark_band_allocation.outer_extent if mark_band_allocation is not None else mark_block_size
+    if occurrence_frames:
+        pitch = max((pitch, *(
+            _occurrence_outer_extent(frame)
+            for item in review_row.items
+            if (frame := occurrence_frames.get(_occurrence_frame_key(review_row, item))) is not None
+        )))
+    return pitch
+
+
 def required_row_block_extents(*, review_rows: tuple[Any, ...], row_minimum: float,
                                row_padding: float, mark_block_size: float,
                                role_geometries: Mapping[str, MarkGeometry] | None = None,
                                mark_band_allocation: MarkBandAllocation | None = None,
                                text_line_block: float = 0.0,
                                row_text_blocks: Mapping[str, Decimal] | None = None,
+                               occurrence_frames: Mapping[str, MarkBandFrame] | None = None,
                                as_of: date | None = None) -> tuple[float, ...]:
     """Close each row's minimum before any surplus distribution occurs.
 
@@ -374,7 +397,7 @@ def required_row_block_extents(*, review_rows: tuple[Any, ...], row_minimum: flo
 
     return tuple(max(row_minimum, text_requirement(row), minimum_track_block_extent(
         review_row=row, mark_block_size=mark_block_size, role_geometries=role_geometries,
-        mark_band_allocation=mark_band_allocation, as_of=as_of,
+        mark_band_allocation=mark_band_allocation, occurrence_frames=occurrence_frames, as_of=as_of,
     ) + row_padding) for row in review_rows)
 
 
@@ -463,6 +486,7 @@ def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, fl
 def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[RowPlacement, ...],
                       mark_block_size: float, role_geometries: Mapping[str, MarkGeometry] | None = None,
                       mark_band_allocation: MarkBandAllocation | None = None,
+                      occurrence_frames: Mapping[str, MarkBandFrame] | None = None,
                       as_of: date | None = None) -> tuple[TrackPlacement, ...]:
     """Allocate member tracks whose completed marks are contained by their row."""
     geometries = role_geometries or {
@@ -487,9 +511,8 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
                     or actual.get("at") is not None)
 
     placements: list[TrackPlacement] = []
-    pitch = mark_band_allocation.outer_extent if mark_band_allocation is not None else mark_block_size
-    track_inset = -mark_band_allocation.outer_bounds[0] if mark_band_allocation is not None else 0.0
     for review_row, row in zip(review_rows, row_placements, strict=True):
+        pitch = _row_track_pitch(review_row, mark_block_size, mark_band_allocation, occurrence_frames)
         key_lanes = [lane for lane in (getattr(item, "key_lane", None) for item in review_row.items) if lane is not None]
         stacked_total = (max(key_lanes) + 1 if key_lanes else
                          max(1, sum(item.track != "shared" for item in review_row.items)))
@@ -503,6 +526,12 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
             key=lambda pair: shared_track_member_key(pair[1], pair[0]),
         )
         for _, item in members:
+            instance_id = _occurrence_frame_key(review_row, item)
+            occurrence_frame = occurrence_frames.get(instance_id) if occurrence_frames else None
+            item_geometries = occurrence_frame.role_geometries if occurrence_frame is not None else geometries
+            item_allocation = (occurrence_frame.allocation if occurrence_frame is not None
+                               else mark_band_allocation)
+            track_inset = -item_allocation.outer_bounds[0] if item_allocation is not None else 0.0
             key_lane = getattr(item, "key_lane", None)
             if key_lane is not None:
                 # A key-row point sits in the lane Layout packed it into (#1501); comparison variants share it.
@@ -519,7 +548,6 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
                 block = lane_origin + stacked_index * pitch + track_inset
                 actual_block = block
                 stacked_index += 1
-            instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
             source_kind = getattr(item, "source_kind", "primary")
             roles = (("actual",) if has_actual(item) else ()) if source_kind == "actual" else (
                 "snapshot" if source_kind in {"snapshot", "scenario"} else "planned",)
@@ -529,8 +557,8 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
                 roles += ("missing-actual",)
             slot_size = mark_block_size
             for role in roles:
-                geometry = geometries[role]
-                local_block, local_size = (mark_band_allocation.span_bounds(role) if mark_band_allocation is not None
+                geometry = item_geometries[role]
+                local_block, local_size = (item_allocation.span_bounds(role) if item_allocation is not None
                                           else (slot_size * geometry.offset, slot_size * geometry.height))
                 require_contained(row, block + local_block, local_size, instance_id=instance_id, role=role)
             placements.append(TrackPlacement(instance_id, block, actual_block, slot_size))
@@ -540,6 +568,7 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
 def minimum_track_block_extent(*, review_row: Any, mark_block_size: float,
                                role_geometries: Mapping[str, MarkGeometry] | None = None,
                                mark_band_allocation: MarkBandAllocation | None = None,
+                               occurrence_frames: Mapping[str, MarkBandFrame] | None = None,
                                as_of: date | None = None) -> float:
     """Find the smallest integral row block accepted by the track planner.
 
@@ -552,7 +581,7 @@ def minimum_track_block_extent(*, review_row: Any, mark_block_size: float,
                 RowPlacement(str(review_row.row_id), getattr(review_row, "group_id", None),
                              (0.0, 0.0, 1.0, block_size)),
             ), mark_block_size=mark_block_size, role_geometries=role_geometries,
-                mark_band_allocation=mark_band_allocation, as_of=as_of)
+                mark_band_allocation=mark_band_allocation, occurrence_frames=occurrence_frames, as_of=as_of)
         except LayoutError as error:
             if error.diagnostic_id != "E_LAYOUT_MARK_OVERFLOW":
                 raise

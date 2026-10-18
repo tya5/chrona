@@ -91,6 +91,32 @@ def test_diagnostic_identity_reads_are_not_construction_sites(tmp_path):
     assert [site.code for site in discover(tmp_path)] == ["E_COMPLETE"]
 
 
+def test_getattr_diagnostic_identity_fallback_is_not_a_construction_site(tmp_path):
+    source = tmp_path / "src" / "chrona"
+    source.mkdir(parents=True)
+    (source / "sample.py").write_text(
+        'code = getattr(error, "diagnostic_id", "E_FALLBACK")\n'
+        'kind = getattr(error, "code", "W_FALLBACK")\n'
+        'raise ValueError("E_VALUE_ERROR")\n'
+        'raise ThemeError("E_TYPED_ERROR")\n'
+        'raise ValueError("E_BARE_NEW_SITE")\n',
+        encoding="utf-8",
+    )
+    cli = source / "app" / "cli.py"
+    cli.parent.mkdir(parents=True)
+    cli.write_text("import chrona.sample\n", encoding="utf-8")
+
+    sites = discover(tmp_path)
+
+    assert {(site.code, site.constructor) for site in sites} == {
+        ("E_VALUE_ERROR", "ValueError"),
+        ("E_TYPED_ERROR", "ThemeError"),
+        ("E_BARE_NEW_SITE", "ValueError"),
+    }
+    with pytest.raises(DiagnosticInventoryError, match="missing=E_BARE_NEW_SITE"):
+        validate((next(site for site in sites if site.code == "E_BARE_NEW_SITE"),), ())
+
+
 def test_duplicate_helper_explicit_field_is_owner_detail(tmp_path):
     source = tmp_path / "src" / "chrona"
     source.mkdir(parents=True)

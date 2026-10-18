@@ -29,6 +29,28 @@ The source also admits `{fieldRole: ...}` under
 is resolved against the primary Project before scale evaluation; a bound field
 still obeys this specification's ordinary domain and missing-value rules.
 
+The accepted View input lowers to the shared typed Style evaluator, not a
+second selector engine. Its target denotes the canonical Scene role: `planned`
+therefore admits planned and forecast mark semantics, but not `gate` merely
+because that semantic has the planned purpose. This internal lowering does not
+require an authored scoped-legend title on the existing View input. Domain
+derivation, Theme/Scheme scale completion and missing-value diagnostics retain
+the rules below.
+
+Style encodings use the same scale resolver (Spec07), with eligibility already
+established by their source occurrence. The resolver's legacy `target` metadata
+is optional internally and does not select paint; View input still requires its
+declared target. Complete concrete colours against original source facts and
+retain full occurrence identity, including repeated row, snapshot and column
+identity. Do not flatten completed colours into an object-ID-only map or make
+the selected Theme role determine scale identity.
+
+An admitted fill encoding applies to inherited glyph-part fill as well as an
+ordinary host, replacing an inherited gradient or hollow host fill; explicit
+glyph colours and stroke-only parts remain unchanged (Spec07). Earlier View
+completion skipped every catalogue part, including inherited fill. The shared
+path corrects that omission rather than retaining a separate legacy paint rule.
+
 A field declared by a resolved profile package (Spec 17, `E_PROFILE_FIELD_*`) is read by the same
 `{field: ...}` accessor. Admitted source values are strings and booleans; a boolean matches the domain
 text `true` or `false`. Number and date sources are not admitted (binning is deferred) and fail with

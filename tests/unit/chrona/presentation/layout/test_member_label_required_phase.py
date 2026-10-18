@@ -11,6 +11,7 @@ from chrona.presentation.layout.surface_member_labels import (
     place_member_labels,
 )
 from chrona.presentation.layout.surface_quality import MarkPlacement, ScalePlacement, SlotPlacement
+from chrona.presentation.model.surface_content import SummaryContent, SurfaceContentInput
 from tests.unit.chrona.presentation.layout.test_point_host_labels import _label_request_context
 from chrona.core.forecast import ForecastItem
 from chrona.presentation.model.projection import ForecastComparisonFact, WindowMode
@@ -139,8 +140,17 @@ class _Theme:
 
 def _placement_context(*, slot_width=200):
     slot = SlotPlacement("timeline", "timeline", Rect(Decimal(0), Decimal(0), Decimal(slot_width), Decimal(100)))
+    surface_content = SurfaceContentInput(
+        table_columns=(), table_cells=(), relations=(), annotations=(), show_member_labels=False,
+        label_placement="none", label_content=(), label_side="auto", label_overflow="visible-overflow",
+        relation_overflow="visible-overflow", group_presentation="band", axis_tiers=(),
+        axis_fiscal_start_month=1, as_of=None, as_of_label="As of", annotation_numbered=False,
+        calendar_closed=(), calendar_exceptions=(), notes=(), legend_entries=(), coverage_text="",
+        summary=SummaryContent(()), template_values=(), group_details=(), milestones=(),
+        observation_columns=(), observation_rows=(),
+    )
     request = SimpleNamespace(theme_tokens=_Theme(), font_metrics=_Metric(), visual_requests=(), icon_assets={},
-        fixed_lane_preflight=None, capacity_short_sources=())
+        fixed_lane_preflight=None, capacity_short_sources=(), surface_content=surface_content)
     return SurfaceMemberLabelContext(request, SimpleNamespace(lane_membership=None),
         SimpleNamespace(member_names={}, row_distribution="auto"), {"timeline": slot},
         lambda _text: "timeline", (), (), (), (),

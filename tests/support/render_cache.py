@@ -26,6 +26,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[2]
 ALLOWED_ROOTS = (ROOT / "examples", ROOT / "src" / "chrona" / "resources")
 LOCK_TIMEOUT_SECONDS = 300.0
@@ -106,11 +108,27 @@ def _repo_path(value: str | Path) -> Path:
     return path if path.is_absolute() else ROOT / path
 
 
+def _local_extension_inputs(project_path: Path) -> list[Path]:
+    """Return exact committed bytes for locally declared Draft packages."""
+    project = yaml.safe_load(project_path.read_text(encoding="utf-8"))
+    inputs = []
+    for extension in project.get("extensions", ()):
+        reference = extension.get("resource", {})
+        if reference.get("store", {}).get("provider") != "local":
+            continue
+        inputs.append(project_path.parent / reference["address"])
+    return inputs
+
+
 def make_key(project: str | Path, actual: str | Path | None = None, preset: str | None = None,
              extra: tuple[str, ...] = ()) -> RenderKey:
     """Build a key and refuse any input the cache may not serve."""
     files: list[Path] = []
-    paths = [_repo_path(project)] + ([_repo_path(actual)] if actual else [])
+    project_path = _repo_path(project)
+    if not _under_allowed_root(project_path):
+        raise ValueError(f"the render cache only serves committed inputs, not {project_path}")
+    paths = [project_path] + ([_repo_path(actual)] if actual else [])
+    paths.extend(_local_extension_inputs(project_path))
     for token in extra:
         candidate = _repo_path(token)
         if not token.startswith("-") and candidate.exists():
@@ -214,6 +232,14 @@ class RenderCache:
         if key.preset:
             argv += ["--preset", key.preset]
         argv += list(key.extra)
+        project_path = _repo_path(key.project)
+        project = yaml.safe_load(project_path.read_text(encoding="utf-8"))
+        if any(extension.get("resource", {}).get("store", {}).get("provider") == "local"
+               for extension in project.get("extensions", ())):
+            from tests.support.draft_packages import stage_project_package_store
+
+            store_config = stage_project_package_store(staging / "package-store", project, project_path.parent)
+            argv += ["--store-config", str(store_config)]
         argv += ["--output", str(staging / "out.svg"), "--emit-scene", str(staging / "scene.json")]
         stdout, stderr = render_uncached(argv)
         (staging / "stdout.txt").write_text(stdout, encoding="utf-8")

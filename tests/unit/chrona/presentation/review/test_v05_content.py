@@ -5,6 +5,7 @@ import pytest
 
 from chrona.presentation.model.color_scale import ResolvedColorScale
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec, AxisBandScaleError
+from chrona.presentation.model.style_rules import StyleOccurrenceKey
 from chrona.presentation.model.projection import (
     ForecastComparisonFact, ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection, ReviewLaneRowProjection,
 )
@@ -18,7 +19,7 @@ from chrona.presentation.review.v05_content import (
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
 from chrona.presentation.contracts.resources import (
     LegendEntry, ReviewDetailInput, SummaryMetric, SummaryPanelInput, SummaryProfileInput, TableColumn, ViewComparison, ViewGroupHeader, ViewGrouping, ViewInput,
-    ViewHeading, ViewLaneLabel, ViewLaneTable, ViewRows, ViewVisibility, ViewWindow, freeze,
+    ViewHeading, ViewLaneColumn, ViewLaneLabel, ViewLaneTable, ViewRows, ViewVisibility, ViewWindow, freeze,
 )
 
 
@@ -137,6 +138,10 @@ def test_lane_table_content_uses_exact_membership_and_no_member_table_subject():
     ]
     assert table.cell_objects == ()
     assert table.row_levels[0].keys == (lane_id,)
+    assert table.cells[0].style_key == StyleOccurrenceKey(
+        lane_id, "view", "tableCell", lane_id, "", "Lane", "table-cell")
+    assert table.cells[1].style_key == StyleOccurrenceKey(
+        lane_id, "view", "tableCell", lane_id, "", "Items", "table-cell")
 
 
 @pytest.mark.parametrize("policy, member_count, expected", [
@@ -326,7 +331,10 @@ def test_optional_content_is_selected_only_from_current_project_and_view():
     project = {"relations": ({"id": "r", "from": {"object": "a"}, "to": {"object": "a"}},), "annotations": {"n": {"text": "note"}}}
     view = {"body": {"tableColumns": ({"id": "Name", "source": "title", "missing": "blank"},), "visibility": {"relations": "semantic", "annotations": "none"}}}
     value = normalize_v05_surface_content(projection, project, typed_view(view), summary=EMPTY_SUMMARY)
-    assert value.table_cells == (TableCellContent("a", "Name", "A", "tableCell"),)
+    assert value.table_cells == (TableCellContent(
+        "a", "Name", "A", "tableCell",
+        style_key=StyleOccurrenceKey("a", "primary", "tableCell", "a", "a", "Name", "table-cell"),
+    ),)
     assert value.relations[0].relation_id == "relation:0:r"
     assert value.notes == (("n", "note"),)
 
@@ -582,7 +590,14 @@ def test_actual_missing_display_uses_item_kind_and_actual_cutoff():
                      "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
     value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
                                           actual_set={"body": {"asOf": "2026-01-05"}}, summary=EMPTY_SUMMARY)
-    assert value.table_cells == (TableCellContent("active", "Actual", "in progress", "tableCell"), TableCellContent("future", "Actual", "—", "tableCell"), TableCellContent("gate", "Actual", "—", "tableCell"))
+    assert value.table_cells == (
+        TableCellContent("active", "Actual", "in progress", "tableCell",
+                         style_key=StyleOccurrenceKey("active", "primary", "tableCell", "active", "active", "Actual", "table-cell")),
+        TableCellContent("future", "Actual", "—", "tableCell",
+                         style_key=StyleOccurrenceKey("future", "primary", "tableCell", "future", "future", "Actual", "table-cell")),
+        TableCellContent("gate", "Actual", "—", "tableCell",
+                         style_key=StyleOccurrenceKey("gate", "primary", "tableCell", "gate", "gate", "Actual", "table-cell")),
+    )
 
 
 def test_date_range_is_compact_and_retains_cross_year_precision():
@@ -591,7 +606,10 @@ def test_date_range_is_compact_and_retains_cross_year_precision():
     view = {"body": {"tableColumns": ({"id": "Plan", "source": {"facet": "planned"}, "format": "dateRange", "missing": "em-dash"},),
                      "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
     value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view), summary=EMPTY_SUMMARY)
-    assert value.table_cells == (TableCellContent("a", "Plan", "31 Dec 2026 – 02 Jan 2027", "tableCell"),)
+    assert value.table_cells == (TableCellContent(
+        "a", "Plan", "31 Dec 2026 – 02 Jan 2027", "tableCell",
+        style_key=StyleOccurrenceKey("a", "primary", "tableCell", "a", "a", "Plan", "table-cell"),
+    ),)
 
 
 def test_scenario_table_facts_use_the_table_subject_and_missing_policy():
@@ -607,7 +625,93 @@ def test_scenario_table_facts_use_the_table_subject_and_missing_policy():
     ), "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
     value = normalize_v05_surface_content(projection, {"scenarios": {"delayed": {"title": "Delayed launch"}},
                                                         "relations": (), "annotations": {}}, typed_view(view), summary=EMPTY_SUMMARY)
-    assert value.table_cells == (TableCellContent("scenario", "Scenario", "Delayed launch", "tableCell"), TableCellContent("scenario", "Scenario id", "delayed", "tableCell"))
+    assert value.table_cells == (
+        TableCellContent("scenario", "Scenario", "Delayed launch", "tableCell",
+                         style_key=StyleOccurrenceKey("task", "scenario", "tableCell", "scenario", "delayed", "Scenario", "table-cell")),
+        TableCellContent("scenario", "Scenario id", "delayed", "tableCell",
+                         style_key=StyleOccurrenceKey("task", "scenario", "tableCell", "scenario", "delayed", "Scenario id", "table-cell")),
+    )
+
+
+def test_repeated_project_object_keeps_primary_and_scenario_table_subject_keys_distinct():
+    primary = ReviewItem("task", "Current", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)},
+                         None, None, (), item_id="current", source_kind="primary")
+    scenario = ReviewItem("task", "Delayed", "span", {"start": date(2026, 2, 1), "end": date(2026, 2, 2)},
+                          None, None, (), item_id="delayed", source_kind="scenario", scenario_id="delayed")
+    projection = ReviewProjection(
+        (primary,), (date(2026, 1, 1), date(2026, 2, 2)), (), (),
+        rows=(ReviewRowProjection("primary-row", "Current", "", "current", (primary,)),
+              ReviewRowProjection("scenario-row", "Delayed", "delayed", "delayed", (primary, scenario))),
+    )
+    view = typed_view({"body": {"tableColumns": (
+        {"id": "Title", "source": "title", "missing": "em-dash"},
+    ), "visibility": {}}})
+
+    table = normalize_v05_table_content(projection, {}, view)
+
+    assert table.cells[0].style_key == StyleOccurrenceKey(
+        "task", "primary", "tableCell", "primary-row", "current", "Title", "table-cell")
+    assert table.cells[1].style_key == StyleOccurrenceKey(
+        "task", "scenario", "tableCell", "scenario-row", "delayed", "Title", "table-cell")
+    assert table.cells[0].style_key != table.cells[1].style_key
+
+
+def test_table_columns_retain_detached_exact_source_mapping():
+    authored = {"body": {"tableColumns": (
+        {"id": "Owner", "source": {"field": "owner"}, "missing": "em-dash"},
+    ), "visibility": {}}}
+    view = typed_view(authored)
+    projection = ReviewProjection((ReviewItem("task", "Task", "span", {}, None, None, (),
+                                               fields={"owner": "team"}),),
+                                  (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+
+    table = normalize_v05_table_content(projection, {}, view)
+    authored["body"]["tableColumns"][0]["source"]["field"] = "phase"
+
+    assert table.columns[0].column_source == (("field", "owner"),)
+    assert isinstance(table.columns[0].column_source, tuple)
+
+
+def test_generated_key_row_uses_view_identity_without_borrowing_member_identity():
+    point = ReviewItem("gate", "Gate", "point", {"at": date(2026, 1, 2)}, None, None, (), item_id="gate-item")
+    projection = ReviewProjection(
+        (point,), (date(2026, 1, 1), date(2026, 1, 3)), (), (),
+        rows=(ReviewRowProjection("key-row", "Key events", "", "gate-item", (point,), key_row=True),),
+    )
+    view = typed_view({"body": {"tableColumns": (
+        {"id": "Label", "source": "title", "missing": "em-dash"},
+        {"id": "Owner", "source": {"field": "owner"}, "missing": "em-dash"},
+    ), "visibility": {}}})
+
+    table = normalize_v05_table_content(projection, {}, view)
+
+    assert tuple(cell.style_key for cell in table.cells) == (
+        StyleOccurrenceKey("key-row", "view", "tableCell", "key-row", "", "Label", "table-cell"),
+        StyleOccurrenceKey("key-row", "view", "tableCell", "key-row", "", "Owner", "table-cell"),
+    )
+
+
+def test_lane_field_cell_uses_the_actual_first_member_as_style_subject():
+    founder = ReviewItem("founder-object", "Founder", "span", {}, None, None, (), item_id="founder-item",
+                         fields={"owner": "bus"})
+    membership = LaneMembership(
+        (Lane("lane", "", ("founder-item",)),),
+        (LaneAssignment("founder-item", "lane", "", "single", "founder-item"),),
+    )
+    projection = ReviewProjection((founder,), (date(2026, 1, 1), date(2026, 1, 2)), (), (),
+                                  lane_membership=membership,
+                                  lane_rows=(ReviewLaneRowProjection("lane", "", (founder,), ("founder-item",)),))
+    view = replace(typed_view({"body": {"tableColumns": (), "visibility": {}}}),
+                   rows=ViewRows("lanes", (), lane_table=ViewLaneTable(
+                       ViewLaneLabel.LANE, False,
+                       columns=(ViewLaneColumn("Owner", freeze({"field": "owner"})),),
+                   )))
+
+    table = normalize_v05_table_content(projection, {}, view)
+
+    assert table.cells[0].content == "bus"
+    assert table.cells[0].style_key == StyleOccurrenceKey(
+        "founder-object", "primary", "tableCell", "lane", "founder-item", "Owner", "table-cell")
 
 
 def test_scenario_summary_facts_are_stable_and_limited_to_selected_sources():

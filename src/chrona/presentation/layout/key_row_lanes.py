@@ -15,6 +15,8 @@ from chrona.presentation.layout.mark_geometry import compose_item_marks
 from chrona.presentation.layout.presentation import MarkBandFrame
 from chrona.presentation.layout.surface_marks import pack_extent_lanes
 from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
+from chrona.presentation.layout.style_occurrences import StyleSourceOccurrences
+from chrona.presentation.layout.style_text import resolve_label_candidate_styles
 from chrona.presentation.layout.text import measure_text_width, metric_for_role
 from chrona.presentation.model.semantic_registry import label_chip_semantic
 
@@ -40,6 +42,9 @@ def assign_key_row_lanes(review_rows: tuple[Any, ...], *, request: Any, scale: A
     metrics = metric_for_role(theme, role, request.font_metrics)
     probe = MarkBandFrame.zero_origin(scale, mark_block_size, role_geometries, mark_band_allocation)
     index = request.mark_visibility_index
+    style_index = getattr(request.surface_content, "style_intents", None)
+    style_sources = (StyleSourceOccurrences.from_projection(projection, as_of=as_of)
+                     if style_index is not None and style_index.intents else None)
 
     def extent(row: Any, point_items: list[Any]) -> tuple[float, float]:
         lefts: list[float] = []
@@ -52,7 +57,11 @@ def assign_key_row_lanes(review_rows: tuple[Any, ...], *, request: Any, scale: A
                 item=item, instance_id=f"{row.row_id}:{item.item_id or item.object_id}", source_kind=item.source_kind,
                 frame=probe, as_of=as_of, theme_tokens=theme, slot_id=slot_id, emit_missing_actual=True,
                 emit_diagnostics=False,
-                selection=admitted_source_selection(visibility) if visibility is not None else None)
+                selection=admitted_source_selection(visibility) if visibility is not None else None,
+                style_intents=(MarkOccurrence(MarkOccurrenceKind.ROW, row.row_id,
+                                             item.item_id or item.object_id, item.object_id,
+                                             item.source_kind).style_intents(request.surface_content.style_intents)
+                               if getattr(request.surface_content, "style_intents", None) is not None else None))
             for mark in composition.marks:
                 lefts.append(float(mark.bounds.inline))
                 rights.append(float(mark.bounds.inline) + float(mark.bounds.inline_size))
@@ -62,6 +71,39 @@ def assign_key_row_lanes(review_rows: tuple[Any, ...], *, request: Any, scale: A
                                    letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
                                    numeric_spacing="proportional") + 2 * pad
         span = width + gap if width > 0 else 0.0
+        if style_sources is not None:
+            candidates = key_row_label_ladder(request.presentation_contract.labels.side)
+            selected_by_item = []
+            for item in point_items:
+                key = style_sources.label_key(item, row.row_id, "memberLabel")
+                selected = resolve_label_candidate_styles(key, candidates, style_index, theme)
+                selected_by_item.append((item, selected))
+            if any(intent is not None for _, selected in selected_by_item
+                   for intent in selected.values()):
+                candidate_widths = []
+                for item, selected in selected_by_item:
+                    for side in candidates:
+                        intent = selected.get(side)
+                        candidate_role = intent.role if intent is not None and intent.role else role
+                        candidate_treatment = theme.text_treatment(candidate_role)
+                        candidate_metrics = metric_for_role(theme, candidate_role, request.font_metrics)
+                        candidate_pad = chip_padding(
+                            theme, label_chip_semantic("memberLabel"),
+                            float(candidate_treatment.font_size),
+                            float(candidate_treatment.font_size) * float(candidate_treatment.line_height),
+                        )[0]
+                        candidate_width = measure_text_width(
+                            item.title or "", font_size=float(candidate_treatment.font_size),
+                            font_metrics=candidate_metrics,
+                            letter_spacing=float(candidate_treatment.letter_spacing),
+                            text_transform=candidate_treatment.transform,
+                            numeric_spacing="proportional",
+                        ) + 2 * candidate_pad
+                        candidate_widths.append((candidate_width,
+                                                 max(1.0, float(candidate_treatment.font_size) * 0.25)))
+                width = max(width, *(candidate_width for candidate_width, _ in candidate_widths))
+                span = max(span, *(candidate_width + candidate_gap
+                                   for candidate_width, candidate_gap in candidate_widths))
         return (min(lefts) - span, max(rights)) if label_at_start else (min(lefts), max(rights) + span)
 
     result = []

@@ -31,7 +31,7 @@ from chrona.storage.loader import load_project
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.operational.store_config import load_store_config
 from chrona.operational.store_commands import OPERATIONS, run_store_command
-from chrona.operational.store_reads import PackageAwareReader, compare_store_baseline, load_reference, snapshot_reader_for
+from chrona.operational.store_reads import DraftExtensionPackageReader, PackageAwareReader, compare_store_baseline, load_reference, snapshot_reader_for
 from chrona.usecases.context_review import render_context_closure, resolve_context_closure
 from chrona.usecases.authoring_commands import apply_authoring_command, parse_authoring_command, workspace_revision
 from chrona.operational.authoring_commands import cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
@@ -156,6 +156,7 @@ def _add_snapshot_arguments(command: argparse.ArgumentParser) -> None:
 
 
 def _add_draft_target_arguments(command: argparse.ArgumentParser) -> None:
+    command.add_argument("--store-config", help="Store config for declared extension packages (default: discover project-local .chrona/store.yaml)")
     command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"),
                          help="output target (default: infer from .svg/.png/.pdf/.typ/.tex; SVG without a suffix)")
     command.add_argument("--visual-profile", default=None,
@@ -746,6 +747,19 @@ def _draft_render_progress(enabled: bool) -> RenderProgress | None:
     return RenderProgress(report)
 
 
+def _draft_package_reader(args: argparse.Namespace, source: Path) -> DraftExtensionPackageReader:
+    """Choose providers outside presentation; read configuration only if needed."""
+    def configured():
+        explicit = Path(args.store_config) if getattr(args, "store_config", None) else None
+        try:
+            selected = discover_store_configuration(explicit=explicit, start=source.resolve().parent)
+            return load_store_config(str(selected.path))
+        except (ValueError, OSError) as error:
+            raise StableFailure("E_STORE_CONFIG_REQUIRED", str(error), "store-config", "/extensions", 2) from error
+
+    return DraftExtensionPackageReader(configured)
+
+
 def _run_draft_render(args: argparse.Namespace) -> None:
     target_kind = _resolve_output_target(args.output, args.format)
     result = render_draft(DraftRenderRequest(
@@ -760,6 +774,7 @@ def _run_draft_render(args: argparse.Namespace) -> None:
         previous_scene=getattr(args, "previous_scene", None),
         snapshot=getattr(args, "snapshot", None),
         forecast=getattr(args, "forecast", False),
+        package_reader=_draft_package_reader(args, Path(args.project)),
     ))
     _write_render_outputs(result.rendered, args)
     _emit_render_result(result.rendered, result.notes)
@@ -791,6 +806,7 @@ def _run_guided_draft_render(args: argparse.Namespace) -> None:
     target_kind = _resolve_output_target(args.output, args.format)
     draft = resolve_guided_draft_render(
         workspace_path=Path(args.workspace), viewport=_parse_viewport(args.viewport),
+        package_reader=_draft_package_reader(args, Path(args.workspace)),
         locale=args.locale, target_kind=target_kind, visual_profile=args.visual_profile,
         typesetter=_draft_typesetter_identity(args, target_kind),
         forecast=getattr(args, "forecast", False),

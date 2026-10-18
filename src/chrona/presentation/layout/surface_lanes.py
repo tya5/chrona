@@ -27,7 +27,7 @@ from chrona.presentation.layout.lane_projection import (
 )
 from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
 from chrona.presentation.layout.lane_label_intent import measure_lane_member_labels
-from chrona.presentation.layout.semantic_mark_facets import mark_placement_facet
+from chrona.presentation.model.semantic_mark_facets import mark_placement_facet
 from chrona.presentation.layout.lane_label_preflight import lane_label_row_requirements
 from chrona.presentation.layout.surface_quality import ScalePlacement
 from chrona.presentation.layout.lane_mark_facets import (
@@ -183,6 +183,7 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
         icon_assets=icon_assets, visual_requests=visual_requests,
         progress_fill_source=surface_content.progress_fill_source,
         mark_visibility_index=mark_visibility_index,
+        style_intents=getattr(surface_content, "style_intents", None),
     )
     provisional_footprints = compose_lane_item_footprints(scale=provisional_scale, **footprint_inputs)
     point_facets = []

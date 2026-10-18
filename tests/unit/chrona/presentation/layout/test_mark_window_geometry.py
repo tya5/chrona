@@ -11,7 +11,7 @@ from chrona.presentation.layout.mark_geometry import complete_mark_window_geomet
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.mark_facet_visibility import complete_item_visibility
 from chrona.presentation.layout.path_geometry import open_span_path
-from chrona.presentation.layout.semantic_mark_facets import LogicalMarkFacet, select_item_mark_facets
+from chrona.presentation.model.semantic_mark_facets import LogicalMarkFacet, select_item_mark_facets
 from chrona.presentation.layout.surface_quality import MarkPlacement, ScalePlacement, is_closed_stroke_contour
 from chrona.presentation.model.projection import ReviewItem, WindowMode
 

@@ -1,0 +1,36 @@
+version: chrona/style/v0.2
+kind: style
+id: semantic-review-treatment
+body:
+  rules:
+    - id: critical-risk
+      when:
+        purpose: planned
+        roles: [critical]
+        fields:
+          - source: {field: risk}
+            equals: high
+      then:
+        role: critical-risk-treatment
+    - id: behind-cell
+      when:
+        purpose: table-cell
+        columnSource: {comparisonFacet: finishDelta}
+        comparisonCategory: behind
+      then:
+        role: variance-behind
+    - id: responsible-risk
+      when:
+        semantic: planned
+        fields:
+          - source: {fieldRole: responsible}
+            equals: payload
+      then:
+        encode:
+          channel: fill
+          source: {field: risk}
+          scale: risk
+          domain: [low, high]
+          legend:
+            title: Risk — payload team
+            showScope: false

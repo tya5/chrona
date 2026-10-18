@@ -53,7 +53,7 @@ def _resolve(theme):
     ("variance-behind", "strokeWidth"), ("annotation", "strokeWidth"),
     ("axisMonth", "stroke"), ("groupHeader", "markHeight"),
     ("annotation-note-text", "annotationContainer"), ("baseline", "strokeWidth"),
-    ("fiscalAxis", "annotationContainer"), ("customLegend", "markHeight"),
+    ("fiscalAxis", "annotationContainer"), ("customLegend", "markWidth"),
     ("group:team-a", "stroke"), ("group:bad.key", "fill"),
     ("group:team-a", "fontSize"),
     ("period-band:frost", "markHeight"),
@@ -235,9 +235,17 @@ def test_every_public_authored_theme_resolves_with_its_declared_scheme():
 
 
 def test_text_paint_is_admitted_on_the_legend_role_and_on_a_view_named_text_role():
-    """`legend.fill` (#1062) and a View-named column role's measurement and fill are consumed; stroke is not."""
+    """Ordinary authored text adds bounded fill/contrast without widening named Text paint contracts."""
     assert theme_role_property_consumer("legend", "fill") and theme_role_property_consumer("legend", "opacity")
     assert theme_role_property_consumer("legend", "fontSize")
     assert theme_role_property_consumer("legend", "stroke") is None
     assert "table column text" in theme_role_property_consumer("table-cell-secondary", "fontSize")
     assert theme_role_property_consumer("table-cell-secondary", "fill")
+    style_text_consumer = "Layout Style-selected text treatment and Scene Text paint/contrast"
+    assert theme_role_property_consumer("authored-style-text", "fill") == style_text_consumer
+    assert theme_role_property_consumer("authored-style-text", "contrastTreatment") == style_text_consumer
+    assert theme_role_property_consumer("authored-style-text", "fontSize") == (
+        "View-named axis-tier or table column text measurement")
+    assert theme_role_property_consumer("authored-style-text", "pattern") is None
+    assert theme_role_property_consumer("text", "shadowBlur") is None
+    assert theme_role_property_consumer("text", "shadowColor") is None

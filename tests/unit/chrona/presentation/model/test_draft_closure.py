@@ -96,6 +96,53 @@ def test_draft_snapshot_project_is_typed_without_fabricating_snapshot_reference(
     assert snapshot_path.read_bytes() == source_bytes
 
 
+def test_draft_primary_and_snapshot_projects_resolve_injected_package_reader(tmp_path):
+    root = _root()
+    package_bytes = (root / "examples/halcyon-1/extensions/semiconductor-development.yaml").read_bytes()
+    package_ref = lambda store, address: {
+        "id": "semiconductor-development", "kind": "profile-package",
+        "store": {"provider": "local", "identity": store}, "address": address,
+        "revision": {"token": "shared-pin"},
+    }
+    primary_path = tmp_path / "primary-project.yaml"
+    primary = yaml.safe_load(_paths(root)["project_path"].read_bytes())
+    primary["extensions"] = [{"packageId": "semiconductor-development",
+                              "resource": package_ref("primary-store", "packages/primary.yaml")}]
+    primary_path.write_text(yaml.safe_dump(primary, sort_keys=False), encoding="utf-8")
+    snapshot_path = tmp_path / "snapshot-project.yaml"
+    snapshot = yaml.safe_load(yaml.safe_dump(primary))
+    snapshot["extensions"][0]["resource"] = package_ref("snapshot-store", "packages/snapshot.yaml")
+    snapshot_path.write_text(yaml.safe_dump(snapshot, sort_keys=False), encoding="utf-8")
+
+    class Reader:
+        def read(self, reference):
+            return package_bytes
+
+    draft = resolve_draft_render(**(_paths(root) | {"project_path": primary_path}),
+                                 snapshot_project_path=snapshot_path, package_reader=Reader())
+
+    assert len(draft.closure.profile_packages) == 1  # exact content identity is shared and deduplicated
+    assert draft.closure.profile_packages_for(draft.closure.project) == draft.closure.profile_packages_for(
+        draft.closure.snapshot_project)
+
+
+def test_draft_declared_package_requires_injected_reader(tmp_path):
+    root = _root()
+    project_path = tmp_path / "project.yaml"
+    project = yaml.safe_load(_paths(root)["project_path"].read_bytes())
+    project["extensions"] = [{"packageId": "kit", "resource": {
+        "id": "kit", "kind": "profile-package",
+        "store": {"provider": "local", "identity": "store"}, "address": "kit.yaml",
+        "revision": {"token": "pin"},
+    }}]
+    project_path.write_text(yaml.safe_dump(project, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ClosureError) as error:
+        resolve_draft_render(**(_paths(root) | {"project_path": project_path}))
+
+    assert error.value.diagnostic_id == "E_STORE_CONFIG_REQUIRED"
+
+
 def test_draft_snapshot_project_rejects_a_different_project_id(tmp_path):
     root = _root()
     primary = yaml.safe_load(_paths(root)["project_path"].read_bytes())

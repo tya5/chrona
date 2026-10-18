@@ -27,6 +27,7 @@ from chrona.presentation.layout.surface_source_inputs import (
     bind_heading_dependencies, heading_part_sources, network_deadline_source_input,
     surface_source_inputs,
 )
+from chrona.presentation.layout.style_text import resolve_table_cell_typography
 from chrona.presentation.model.font_metrics import FontMetricsError
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.render_progress import RenderProgress
@@ -89,6 +90,8 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
     project, view, projection = value.project, value.view, value.projection
     selected_content, summary, table_content = value.content, value.summary, value.table
     theme, font_metrics, layout = value.theme, value.font_metrics, value.profile
+    selected_content, table_content = resolve_table_cell_typography(
+        selected_content, table_content, ThemeTokenView(theme))
     actual_observations, heading_content = value.actual, value.heading
     if isinstance(heading_content, HeadingTextPrograms):
         heading_content = HeadingContent(*heading_content.bind(dict(projection.figures), view.figure_formats),

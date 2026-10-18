@@ -262,6 +262,40 @@ $defs:
     properties:
       scale: {description: "Named colour scale to apply.", type: string, minLength: 1}
       target: {description: "Only planned marks are colour-encoded.", const: planned}
+  colorEncodingDomain:
+    description: "Closed set of values admitted by a colour scale, or firstAppearance to derive it in the source's projection order."
+    examples: [firstAppearance, [alpha, beta]]
+    oneOf:
+      - description: "Explicit admitted source-value order."
+        type: array
+        minItems: 1
+        uniqueItems: true
+        items: {description: "One admitted source value.", type: string, minLength: 1}
+      - {description: "Distinct source values in projection order.", const: firstAppearance}
+  tableColumnSource:
+    description: "One source admitted by a View table column, preserving the complete existing source grammar."
+    examples: [title, {field: owner}, {comparisonFacet: finishDelta}, {facet: actual}, {scenario: title}]
+    oneOf:
+      - {description: "A built-in projected table value.", enum: [id, title, objectType, entity, rowIndex, wbsCode, path, totalFloat]}
+      - {$ref: "urn:chrona:common-v0.1#/$defs/projectFieldReference"}
+      - description: "A projected comparison value."
+        type: object
+        required: [comparisonFacet]
+        additionalProperties: false
+        properties:
+          comparisonFacet: {description: "One comparison-specific projected value.", enum: [startDelta, finishDelta, atDelta, progress, missingActual]}
+      - description: "One original comparison facet."
+        type: object
+        required: [facet]
+        additionalProperties: false
+        properties:
+          facet: {description: "The original planned, actual or finish-delta facet.", enum: [planned, actual, finishDelta]}
+      - description: "One field from a named scenario."
+        type: object
+        required: [scenario]
+        additionalProperties: false
+        properties:
+          scenario: {description: "The scenario identifier or title.", enum: [id, title]}
   profileFigureFact:
     description: "One existing figure fact grammar, shared by explicit View figures and profile bindings."
     examples: [asOf, {period: launch, side: start}, {object: task, endpoint: end}, {group: firstPlannedStart}, {project: lastPlannedFinish}]

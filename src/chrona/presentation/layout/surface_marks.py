@@ -12,8 +12,13 @@ from chrona.presentation.layout.point_hosting import resolve_point_host_plan
 from chrona.presentation.layout.point_host_geometry import (
     complete_hosted_point_geometry, translate_point_block, validate_hosted_point_collisions,
 )
-from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry
-from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation, compose_mark_band
+from chrona.presentation.layout.presentation import MarkBandFrame
+from chrona.presentation.layout.mark_role_geometry import (
+    MARK_GEOMETRY_ROLES as MARK_GEOMETRY_ROLES,
+    _default_actual_symbol as _default_actual_symbol,
+    resolve_mark_geometries as resolve_mark_geometries,
+    resolve_mark_band as resolve_mark_band,
+)
 from chrona.presentation.layout.surface_groups import (
     GroupHeaderExtentUpdate, replace_group_header_extent,
 )
@@ -35,6 +40,10 @@ from chrona.presentation.layout.text import metric_for_role, measure_text_width
 from chrona.presentation.layout.lane_projection import (
     folded_instance_id, lane_missing_actual_visible,
 )
+from chrona.presentation.layout.style_occurrences import StyleSourceOccurrences
+from chrona.presentation.layout.style_text import (
+    resolve_label_candidate_styles, resolve_text_style_intent,
+)
 from chrona.presentation.layout.surface_mark_visibility import (
     MarkOccurrence, MarkOccurrenceKind, outside_window_provenance,
 )
@@ -43,7 +52,6 @@ from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, D
 if TYPE_CHECKING:
     from chrona.presentation.layout.surface_base import SurfaceBaseGeometry
 
-MARK_GEOMETRY_ROLES = ("planned", "actual", "snapshot", "scenario", "missing-actual")
 MARK_PAINT_ORDER_BASE = 100
 
 
@@ -65,68 +73,6 @@ def pack_extent_lanes(extents: list[tuple[float, float]]) -> list[int]:
             lane_ends.append(end)
             lanes.append(len(lane_ends) - 1)
     return lanes
-
-
-def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
-    """Close each Theme mark role to lane-relative Layout geometry."""
-    def aligned_offset(height: float, alignment: str) -> float:
-        return 0.0 if alignment == "start" else 1.0 - height if alignment == "end" else (1.0 - height) / 2
-
-    result = {}
-    actual_explicit_offset = False
-    for role in MARK_GEOMETRY_ROLES:
-        height, offset, paint_order, corner_radius = theme_tokens.mark_geometry(role)
-        symbol_height, symbol_offset = theme_tokens.symbol_geometry(role)
-        if role == "actual":
-            actual_explicit_offset = offset is not None
-        alignment_reader = getattr(theme_tokens, "mark_alignment", None)
-        alignment = alignment_reader(role) if alignment_reader is not None else "center"
-        completed_offset = float(offset) if offset is not None else aligned_offset(float(height), alignment)
-        if offset is None:
-            if symbol_height is None:
-                symbol_height = (max(float(height), result["planned"].symbol_extent[1])
-                                 if role == "actual" else height)
-            if symbol_offset is None:
-                symbol_offset = aligned_offset(float(symbol_height), alignment)
-        result[role] = MarkGeometry(
-            float(height), completed_offset, paint_order, float(corner_radius),
-            None if symbol_height is None else float(symbol_height),
-            None if symbol_offset is None else float(symbol_offset),
-            physical_corner_radius=theme_tokens.optional_token(role, "cornerRadius", "radius"))
-    if actual_explicit_offset:
-        result["actual"] = _default_actual_symbol(result["actual"], result["planned"])
-    return result
-
-
-def resolve_mark_band(theme_tokens: Any, track_size: float, *,
-                      role_geometries: Mapping[str, MarkGeometry] | None = None) -> MarkBandAllocation:
-    """The shared closure for natural requirements, provisional and final marks."""
-    stack_reader = getattr(theme_tokens, "mark_stack", None)
-    return compose_mark_band(track_size=track_size,
-                             role_geometries=(role_geometries if role_geometries is not None
-                                              else resolve_mark_geometries(theme_tokens)),
-                             stack=stack_reader() if stack_reader is not None else None)
-
-
-def _default_actual_symbol(actual: MarkGeometry, planned: MarkGeometry) -> MarkGeometry:
-    """An actual gate is no smaller than the planned gate unless the Theme says otherwise (#1074).
-
-    The actual band is a thin bar, so a point mark sized from it is a speck beside the planned gate. An absent
-    `symbolHeight` is the larger of the band and the planned symbol; an absent `symbolOffset`, once the symbol is
-    taller than the band, centres it on the planned symbol (else it stays the band's offset). A declared value
-    is kept as declared: `symbolHeight` and `symbolOffset` equal to `markHeight` and `markOffset` restore the band.
-    """
-    planned_offset, planned_height = planned.symbol_extent
-    height = actual.symbol_height if actual.symbol_height is not None else max(actual.height, planned_height)
-    offset = actual.symbol_offset
-    if offset is None:
-        if height <= actual.height:
-            offset = actual.offset
-        elif height == planned_height:
-            offset = planned_offset
-        else:
-            offset = min(max(planned_offset + planned_height / 2 - height / 2, 0.0), 1.0 - height)
-    return replace(actual, symbol_height=height, symbol_offset=offset)
 
 
 @dataclass(frozen=True)
@@ -240,6 +186,17 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
     mark_block_size = base.mark_block_size
     contract = request.presentation_contract
     visibility_index = getattr(request, "mark_visibility_index", None)
+    style_index = getattr(request.surface_content, "style_intents", None)
+    style_sources = (StyleSourceOccurrences.from_projection(projection, as_of=contract.time.as_of)
+                     if style_index is not None and style_index.intents else None)
+
+    def prepared_style(item: Any, *, kind: MarkOccurrenceKind,
+                       container_id: str, source_kind: str, member_id: str | None = None):
+        if style_index is None or not style_index.intents:
+            return None
+        member = member_id or item.item_id or item.object_id
+        occurrence = style_sources.occurrence(kind, container_id, member, item.object_id, source_kind)
+        return occurrence.style_intents(style_index)
     if getattr(projection, "window_mode", None) == WindowMode.EXPLICIT and visibility_index is None:
         raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/window",
                           detail="stage=composition; reason=missing-visibility-index")
@@ -330,6 +287,9 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                 emit_missing_actual=(lane_missing_actual_visible(projection)
                     if owner is not None else True),
                 selection=admitted_source_selection(visibility) if visibility is not None else None,
+                style_intents=prepared_style(item, kind=occurrence_kind,
+                                             container_id=occurrence_container, source_kind=source_kind,
+                                             member_id=owner[1] if owner is not None else None),
             )
             marks.extend(replace(mark, lane_row_id=owner[0], lane_member_id=owner[1],
                                  lane_source_kind=source_kind) if owner is not None else mark
@@ -371,12 +331,37 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
         deadline for deadline in getattr(projection, "deadlines", ())
         if projection.window[0] <= deadline.deadline <= projection.window[1]
     )
+    def folded_label_candidates():
+        return (("end", "start") if contract.labels.side == "auto" else (contract.labels.side,))
+
+    def folded_title_measures(folded):
+        instance_id = folded_instance_id(folded, folded.item)
+        key = (style_sources.label_key(folded.item, folded.group_id, "memberLabel", folded=True)
+               if style_sources is not None else None)
+        candidates = folded_label_candidates()
+        selected = (resolve_label_candidate_styles(key, candidates, style_index, request.theme_tokens)
+                    if key is not None else {})
+        base_role = "groupHeader"
+        return tuple((side, measure_label_footprint(
+            f"member-label:{instance_id}", folded.item.title or "",
+            (selected.get(side).role if selected.get(side) and selected[side].role else base_role),
+            "memberLabel", request)) for side in candidates)
+
     def forecast_label_measures(folded):
         instance_id = folded_instance_id(folded, folded.item)
-        title = measure_label_footprint(f"member-label:{instance_id}", folded.item.title or "",
-            "groupHeader", "memberLabel", request)
+        title_measures = tuple(measure for _, measure in folded_title_measures(folded))
+        title = replace(title_measures[0], size=(
+            max(measure.size[0] for measure in title_measures),
+            max(measure.size[1] for measure in title_measures)))
+        delta_role = request.surface_content.label_text_role or "text"
+        if style_sources is not None:
+            delta_key = style_sources.label_key(
+                folded.item, folded.group_id, finish_delta_semantic(folded.item), folded=True)
+            delta_intent = resolve_text_style_intent(delta_key, style_index, request.theme_tokens)
+            if delta_intent is not None and delta_intent.role:
+                delta_role = delta_intent.role
         delta = measure_label_footprint(f"variance:{instance_id}", finish_delta_text(folded.item),
-            request.surface_content.label_text_role or "text", finish_delta_semantic(folded.item), request)
+            delta_role, finish_delta_semantic(folded.item), request)
         return title, delta
 
     def folded_extent(folded: Any) -> tuple[float, float, float, float]:
@@ -398,7 +383,9 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                 frame=probe, as_of=contract.time.as_of, theme_tokens=request.theme_tokens,
                 slot_id=timeline.slot_id, paint_order_base=MARK_PAINT_ORDER_BASE,
                 emit_missing_actual=False, emit_diagnostics=False,
-                selection=admitted_source_selection(visibility) if visibility is not None else None)
+                selection=admitted_source_selection(visibility) if visibility is not None else None,
+                style_intents=prepared_style(item, kind=MarkOccurrenceKind.FOLDED,
+                                             container_id=folded.group_id, source_kind=item.source_kind))
             for mark in composition.marks:
                 lefts.append(float(mark.bounds.inline))
                 rights.append(float(mark.bounds.inline) + float(mark.bounds.inline_size))
@@ -424,11 +411,22 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             reach = geometry_sum((title.size[0], title.gap, delta.size[0], delta.gap))
             left, right = min(lefts) - reach, max(rights) + reach
         else:
-            width = measure_text_width(
-                folded.item.title or "", font_size=float(label_treatment.font_size),
-                font_metrics=metric_for_role(request.theme_tokens, "groupHeader", request.font_metrics),
-                letter_spacing=float(label_treatment.letter_spacing),
-                text_transform=label_treatment.transform, numeric_spacing="proportional")
+            styled_title = False
+            if style_sources is not None:
+                key = style_sources.label_key(folded.item, folded.group_id, "memberLabel", folded=True)
+                selected = resolve_label_candidate_styles(
+                    key, folded_label_candidates(), style_index, request.theme_tokens)
+                styled_title = any(intent is not None and intent.role not in (None, "groupHeader")
+                                   for intent in selected.values())
+            if styled_title:
+                title_measures = tuple(measure for _, measure in folded_title_measures(folded))
+                width = max((measure.size[0] for measure in title_measures), default=0.0)
+            else:
+                width = measure_text_width(
+                    folded.item.title or "", font_size=float(label_treatment.font_size),
+                    font_metrics=metric_for_role(request.theme_tokens, "groupHeader", request.font_metrics),
+                    letter_spacing=float(label_treatment.letter_spacing),
+                    text_transform=label_treatment.transform, numeric_spacing="proportional")
             span = (width + label_gap) if width > 0 else 0.0
             left, right = ((min(lefts) - span, max(rights)) if label_side == "start"
                            else (min(lefts), max(rights) + span))
@@ -485,6 +483,8 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                     slot_id=timeline.slot_id, paint_order_base=MARK_PAINT_ORDER_BASE,
                     emit_missing_actual=False, emit_diagnostics=False,
                     selection=admitted_source_selection(visibility) if visibility is not None else None,
+                    style_intents=prepared_style(item, kind=MarkOccurrenceKind.FOLDED,
+                                                 container_id=folded.group_id, source_kind=item.source_kind),
                 )
                 marks.extend(completed_marks(composition, visibility, instance_id))
                 diagnostics.extend(composition.diagnostics)

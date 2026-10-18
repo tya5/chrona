@@ -16,6 +16,28 @@ def test_scale_resolves_explicit_value_to_named_slot():
     assert _scale().color_for("bus-task", {"owner": "bus"}) == "#112233"
 
 
+def test_occurrence_encoding_does_not_invent_a_legacy_target_role():
+    resolved = resolve_color_scale(
+        {"scale": "owner", "source": {"field": "owner"}, "domain": ["bus", "payload"]},
+        {"owner": {"slots": {"bus": "bus", "payload": "payload"}}},
+        {"bus": "#112233", "payload": "#445566"},
+        source_ref="/body/rules/0/then/encode",
+    )
+    assert resolved.target_role is None
+    assert resolved.colors == _scale().colors
+    assert resolved.color_for("task", {"owner": "payload"}) == "#445566"
+    assert resolved.encoding_source_ref == "/body/rules/0/then/encode"
+
+
+@pytest.mark.parametrize("target", [None, 7, False, [], {}])
+def test_explicit_invalid_target_metadata_remains_invalid(target):
+    with pytest.raises(ColorScaleError, match="encoding.target="):
+        resolve_color_scale(
+            {"scale": "owner", "target": target, "source": {"field": "owner"}, "domain": ["bus"]},
+            {"owner": {"slots": {"bus": "bus"}}}, {"bus": "#112233"},
+        )
+
+
 def test_scale_rejects_unknown_or_missing_selected_value():
     for fields, operand in (({"owner": "other"}, "value='other'"), ({}, "value=None")):
         with pytest.raises(ColorScaleError) as caught:

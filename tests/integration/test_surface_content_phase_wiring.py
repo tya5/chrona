@@ -4,10 +4,12 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 from chrona.app.cli import main
 from chrona.presentation.layout import surface_composer, surface_content, surface_legend, surface_route_label_plan
 from chrona.presentation.layout.obstacles import SurfaceObstacleIndex
+from tests.support.draft_packages import stage_project_package_store
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 
@@ -28,8 +30,12 @@ def test_content_phases_follow_routes_and_relation_labels_in_source_order(tmp_pa
                             ("complete_footer_band", "footer"), ("place_summary", "summary")):
         monkeypatch.setattr(surface_composer, attribute, spy(name, getattr(surface_composer, attribute)))
     example = ROOT / "examples/halcyon-1"
+    project_path = example / "project.yaml"
+    project = yaml.safe_load(project_path.read_bytes())
+    store_config = stage_project_package_store(tmp_path / "project-store", project, example)
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(example / "project.yaml"), "--actual", str(example / "actual.yaml"),
+        "chrona", "render", str(project_path), "--actual", str(example / "actual.yaml"),
+        "--store-config", str(store_config),
         "--view", str(example / "views/02-programme-board.yaml"), "--theme", str(example / "themes/wallboard.yaml"),
         "--scheme", str(example / "schemes/control-room-dark.yaml"), "--layout", str(example / "layouts/wallboard.yaml"),
         "--summary", str(example / "profiles/summary.yaml"), "--detail", str(example / "profiles/detail.yaml"),

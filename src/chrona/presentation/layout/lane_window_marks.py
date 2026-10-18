@@ -14,7 +14,7 @@ from chrona.presentation.layout.lane_projection import (
 )
 from chrona.presentation.layout.mark_facet_visibility import FacetDisposition
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.semantic_mark_facets import mark_placement_facet
+from chrona.presentation.model.semantic_mark_facets import mark_placement_facet
 from chrona.presentation.layout.surface_mark_visibility import (
     ItemMarkVisibilityIndex, MarkOccurrence, MarkOccurrenceKind,
 )

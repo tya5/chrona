@@ -16,6 +16,7 @@ from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.layout.relation_hint_model import PreviousRouteHints
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, axis_label_semantic_ids
+from chrona.presentation.model.style_rules import StyleOccurrenceKey
 
 if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement.
     from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
@@ -297,6 +298,9 @@ class TextPlacement:
     # One tuple of measured runs per line when the role is `small-caps` (#1285); empty otherwise.
     runs: tuple[tuple[TextRunPlacement, ...], ...] = ()
     subjects: tuple[DiagnosticSubject, ...] = ()
+    # Style-selected appearance stays separate from the canonical Scene role.
+    theme_role: str | None = None
+    style_occurrence_key: StyleOccurrenceKey | None = None
 
 
 @dataclass(frozen=True)
@@ -361,6 +365,9 @@ class MarkPlacement:
     paint_clip: PaintClip | None = None
     pattern_origin: tuple[float, float] | None = None
     physical_host: PhysicalMarkHost | None = None
+    # Style appearance is recorded only when this exact source occurrence was evaluated.
+    theme_role: str | None = None
+    style_occurrence_key: StyleOccurrenceKey | None = None
 
 @dataclass(frozen=True)
 class LayoutImageFill:

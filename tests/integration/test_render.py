@@ -10,11 +10,14 @@ from datetime import date
 from hashlib import sha256
 import json
 import re
+from tempfile import TemporaryDirectory
 
 import pytest
 import yaml
 
 from chrona.presentation.model.closure import resolve_draft_render
+from chrona.operational.store_config import load_store_config
+from chrona.operational.store_reads import DraftExtensionPackageReader
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, obstacles_intersect
 from chrona.presentation.model.info_diagnostics import PaintOmission, SuppressedPlotLabels
@@ -27,10 +30,25 @@ from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibili
 from chrona.app.cli import _emit_render_result
 from chrona.resources import default_preset_resource, default_preset_root
 from tests.support import synthetic_review as sr
+from tests.support.draft_packages import stage_project_package_store
 
 
 def _root() -> Path:
     return next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+
+
+def _resolve_test_draft(**inputs):
+    project_path = inputs["project_path"]
+    project = yaml.safe_load(project_path.read_text(encoding="utf-8"))
+    if not project.get("extensions"):
+        return resolve_draft_render(**inputs)
+    if not any(extension["resource"]["store"]["provider"] == "local"
+               for extension in project["extensions"]):
+        return resolve_draft_render(package_reader=DraftExtensionPackageReader(), **inputs)
+    with TemporaryDirectory(prefix="chrona-test-draft-packages-") as directory:
+        config = stage_project_package_store(Path(directory), project, project_path.parent)
+        reader = DraftExtensionPackageReader(lambda: load_store_config(str(config)))
+        return resolve_draft_render(package_reader=reader, **inputs)
 
 
 def _draft_request(*, project_path: Path | None = None, view_path: Path | None = None,
@@ -40,7 +58,7 @@ def _draft_request(*, project_path: Path | None = None, view_path: Path | None =
                    summary_path: Path | None = None, detail_path: Path | None = None,
                    viewport: tuple[int, int | None] = (1600, 900)) -> RenderRequest:
     root = _root()
-    draft = resolve_draft_render(
+    draft = _resolve_test_draft(
         project_path=project_path or root / "tests/fixtures/controller-z/project.yaml",
         view_path=view_path or root / "tests/fixtures/controller-z/views/executive.yaml",
         theme_path=theme_path or root / "tests/fixtures/controller-z/themes/executive-light.yaml",
@@ -589,7 +607,7 @@ def test_immutable_context_uses_the_same_coherent_content_allocation(tmp_path):
 
 def test_fixed_draft_reallocates_table_timeline_and_notes_together():
     root = _root()
-    draft = resolve_draft_render(
+    draft = _resolve_test_draft(
         project_path=root / "examples/halcyon-1/project.yaml",
         preset_path=Path(str(default_preset_resource())),
         preset_root=Path(str(default_preset_root())), viewport=(1600, 900),

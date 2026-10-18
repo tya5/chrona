@@ -235,7 +235,7 @@ list every builtin preset id with a one-line description
 
 draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix, from the files you pass
 
-`chrona render --actual --detail --emit-scene --font-metrics --forecast --format --icon-catalog --layout --locale --output --preset --previous-scene --progress --relations --scheme --snapshot --summary --system-fonts --theme --typesetter-adapter-grammar --typesetter-engine --typesetter-version --view --viewport --visual-profile -o`
+`chrona render --actual --detail --emit-scene --font-metrics --forecast --format --icon-catalog --layout --locale --output --preset --previous-scene --progress --relations --scheme --snapshot --store-config --summary --system-fonts --theme --typesetter-adapter-grammar --typesetter-engine --typesetter-version --view --viewport --visual-profile -o`
 
 - `project`: Draft Project YAML path, or a terse .chrona plan
 - `--preset`: Presentation preset YAML path, or a builtin catalogue id (see `chrona preset list`); omit it to use bundled chrona-default-draft; explicit resource flags override its members
@@ -255,6 +255,7 @@ draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix, 
 - `--progress`: report render phases and routing counts on stderr (automatic for terminal stderr)
 - `--relations`: override dependency-line visibility on top of the selected preset
 - `--locale`: render locale: en-US or ja-JP (default: en-US)
+- `--store-config`: Store config for declared extension packages (default: discover project-local .chrona/store.yaml)
 - `--format`: output target (default: infer from .svg/.png/.pdf/.typ/.tex; SVG without a suffix)
 - `--visual-profile`: exact visual capability profile (default: the preset's preferred profile, else baseline)
 - `--typesetter-engine`: the engine that will compile the output: typst (for .typ) or tectonic (for .tex); defaults from the output target
@@ -296,12 +297,13 @@ draw the same slide in several color schemes for comparison
 
 draw a slide from a guided authoring workspace (a draft)
 
-`chrona render-workspace --forecast --format --locale --output --provenance --typesetter-adapter-grammar --typesetter-engine --typesetter-version --viewport --visual-profile -o`
+`chrona render-workspace --forecast --format --locale --output --provenance --store-config --typesetter-adapter-grammar --typesetter-engine --typesetter-version --viewport --visual-profile -o`
 
 - `workspace`: guided authoring workspace YAML path
 - `--forecast`: derive the explicit forecast from the workspace Actual input
 - `--viewport`: Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600xauto)
 - `--locale`: render locale: en-US or ja-JP (default: en-US)
+- `--store-config`: Store config for declared extension packages (default: discover project-local .chrona/store.yaml)
 - `--format`: output target (default: infer from .svg/.png/.pdf/.typ/.tex; SVG without a suffix)
 - `--visual-profile`: exact visual capability profile (default: the preset's preferred profile, else baseline)
 - `--typesetter-engine`: the engine that will compile the output: typst (for .typ) or tectonic (for .tex); defaults from the output target

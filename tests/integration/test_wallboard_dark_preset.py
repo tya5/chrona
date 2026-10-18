@@ -10,6 +10,7 @@ import yaml
 from chrona.app.cli import main
 from chrona.resources import safe_load
 from chrona.usecases.preset_library import list_builtin_presets
+from tests.support.draft_packages import stage_project_package_store
 
 ROOT = Path(__file__).resolve().parents[2]
 BUNDLE = ROOT / "src/chrona/resources/presets/bundles/wallboard-dark"
@@ -21,6 +22,13 @@ def _run(monkeypatch, capsys, *argv):
     capsys.readouterr()
     main()
     return capsys.readouterr().out
+
+
+def _halcyon_store_args(tmp_path: Path) -> tuple[str, str]:
+    project_path = ROOT / "examples/halcyon-1/project.yaml"
+    project = yaml.safe_load(project_path.read_bytes())
+    config = stage_project_package_store(tmp_path / "project-store", project, project_path.parent)
+    return "--store-config", str(config)
 
 
 def test_the_preset_is_listed_and_its_entry_names_only_the_bundle():
@@ -75,7 +83,7 @@ def test_an_existing_example_renders_axis_bands_with_a_fill_per_interval(tmp_pat
     result = json.loads(_run(
         monkeypatch, capsys, "render", str(ROOT / "examples/halcyon-1/project.yaml"),
         "--actual", str(ROOT / "examples/halcyon-1/actual.yaml"), "--preset", "wallboard-dark",
-        "--output", str(tmp_path / "h.svg"), "--emit-scene", str(scene)))
+        *_halcyon_store_args(tmp_path), "--output", str(tmp_path / "h.svg"), "--emit-scene", str(scene)))
     assert result["status"] == "ok" and result["diagnostics"] == []
     assert not [w for w in result["warnings"] if "CONTRAST" in w["code"] or w["code"] == "W_PRESENTATION_SCALE_NOT_SEPARABLE"]
     text = scene.read_text(encoding="utf-8")

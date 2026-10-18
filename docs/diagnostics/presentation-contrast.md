@@ -6,7 +6,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 48 | 414 | 1.000 | 7.595 | 0 | 20 |
+| actual | `actual` | required | 3.000 | 48 | 414 | 1.000 | 7.583 | 0 | 20 |
 | annotation-artwork | `annotation-artwork` | enabled | 1.100 | 5 | 27 | 1.493 | 5.241 | 0 | 0 |
 | annotation-artwork | `annotation-artwork-rods` | enabled | 1.100 | 2 | 20 | 2.262 | 2.262 | 0 | 0 |
 | annotation-border-bottom | `annotation-border-bottom` | enabled | 1.100 | 2 | 3 | 15.434 | 15.434 | 0 | 0 |
@@ -5858,7 +5858,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","ait","integration"]:integration` | `actual` | 1409.855, 657.750 | `planned:review-lane:["generated","ait","integration"]:integration` | flat | `#2C2138` | fill | 7.730 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","ait","integration"]:tvac` | `actual` | 1505.849, 657.750 | `planned:review-lane:["generated","ait","integration"]:tvac` | flat | `#2C2138` | fill | 7.730 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","ait","integration"]:vibration` | `actual` | 1459.507, 657.750 | `planned:review-lane:["generated","ait","integration"]:vibration` | flat | `#2C2138` | fill | 7.730 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","bus","eps"]:cdr:part:0` | `actual` | 1176.490, 320.500 | `planned:review-lane:["generated","bus","eps"]:cdr:part:1` | flat | `#1B1B1B` | fill | 8.761 | 3.000 | info |
+| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","bus","eps"]:cdr:part:0` | `actual` | 1176.490, 320.500 | `planned:review-lane:["generated","bus","eps"]:cdr:part:1` | flat | `#1B1B1B` | fill | 6.998 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","bus","eps"]:eps` | `actual` | 1047.394, 320.500 | `planned:review-lane:["generated","bus","eps"]:eps` | flat | `#142642` | fill | 7.708 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","bus","pdr"]:avionics` | `actual` | 1115.252, 176.000 | `planned:review-lane:["generated","bus","pdr"]:avionics` | flat | `#142642` | fill | 7.708 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","bus","pdr"]:bus-test` | `actual` | 1227.797, 206.000 | `group:bus` | flat | `#142642` | fill | 7.708 | 3.000 | info |
@@ -5868,7 +5868,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","ground","station"]:station` | `actual` | 1169.869, 852.750 | `planned:review-lane:["generated","ground","station"]:station` | flat | `#33261A` | fill | 7.454 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","payload","optics"]:detector` | `actual` | 1108.632, 455.000 | `planned:review-lane:["generated","payload","optics"]:detector` | flat | `#12302B` | fill | 7.201 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","payload","optics"]:optics` | `actual` | 1019.258, 455.000 | `planned:review-lane:["generated","payload","optics"]:optics` | flat | `#12302B` | fill | 7.201 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","payload","optics"]:payload-delivery:part:0` | `actual` | 1375.098, 455.000 | `group:payload` | flat | `#142642` | fill | 7.708 | 3.000 | info |
+| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","payload","optics"]:payload-delivery:part:0` | `actual` | 1375.098, 455.000 | `group:payload` | flat | `#142642` | fill | 6.157 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","payload","optics"]:payload-tvac` | `actual` | 1151.664, 485.000 | `group:payload` | flat | `#142642` | fill | 7.708 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `annotation-box:station-note` | `annotation-note-box` | 1194.365, 901.625 | `group:launch` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `annotation-box:tvac-note` | `annotation-note-box` | 1024.933, 412.250 | `group:payload` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
