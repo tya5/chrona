@@ -30,8 +30,19 @@ inventories change (source coordinates and seven expected new emission sites).
 The first conformance run exposed a missing workspace schema annotation and
 an unclassified Style example; annotating the example exposed the checker’s
 missing root `allOf` version traversal. Those are corrected with a failing-then-
-passing regression and14 annotation/reference tests. Final-head CI, reviewer
-and exact-main release evidence remain required.
+passing regression and14 annotation/reference tests. Final-head CI and
+exact-main release evidence remain required.
+Reviewer [approved the S2 contract at `0f260ac4c`](https://github.com/tya5/chrona/pull/1687#issuecomment-6243613463).
+Shard2 then identified two integration regressions: scoped-legend details grew
+the composer beyond its structural bound, and the scheduled-point twin test
+constructed an invalid provenance-less Scene. Recomposition moves to the
+existing Style legend owner; the twin compares fields of valid Scenes instead.
+No structural threshold or provenance validation is weakened. Ownership/scoped
+legend checks pass19 tests; twin/Style provenance checks pass10. Shard1 passed;
+shard3 was superseded by
+the repair push, so its result must come from the final run.
+Local conformance passes every other check; its two stale diagnostic reports
+are bot-owned and were checked successfully in the official CI snapshot.
 Do not count WIP publication as release acceptance.
 
 ### S2 installed-wheel evidence

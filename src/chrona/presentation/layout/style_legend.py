@@ -1,7 +1,10 @@
-"""Select Style legend values from completed placements, never source fields."""
-from collections.abc import Mapping
+"""Select and recompose Style legends from completed placements, never source fields."""
+from collections.abc import Callable, Mapping
+from dataclasses import replace
+from typing import Any
 
-from chrona.presentation.layout.surface_quality import MarkPlacement, TextPlacement
+from chrona.presentation.layout.surface_legend import SurfaceLegendBatch, SurfaceLegendContext, place_legend
+from chrona.presentation.layout.surface_quality import FitWarning, MarkPlacement, SurfaceLayoutRequest, TextPlacement
 from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.presentation.model.style_fills import StyleFillIndex
 from chrona.presentation.model.style_rules import StyleOccurrenceKey
@@ -70,3 +73,30 @@ def filtered_style_legend_entries(
     """Preserve existing Detail/View policy; Style entries need a painted witness."""
     return tuple(entry for entry in entries
                  if entry.style_scope is None or any(key in painted for key in entry.style_occurrences))
+
+
+def initial_style_legend_warnings(request: SurfaceLayoutRequest, legend: SurfaceLegendBatch) -> tuple[FitWarning, ...]:
+    """Keep conservative-slot warnings deferred when final Style filtering can change entries."""
+    if any(entry.style_scope is not None for entry in request.surface_content.legend_entries):
+        return ()
+    return legend.warnings
+
+
+def recompose_scoped_style_legend(
+    request: SurfaceLayoutRequest, legend: SurfaceLegendBatch | None,
+    marks: tuple[MarkPlacement, ...], text: tuple[TextPlacement, ...],
+    metric_values: Mapping[str, Any], metric_for: Callable[[str], Any],
+    warnings: list[FitWarning],
+) -> SurfaceLegendBatch | None:
+    """Filter scoped entries against completed paint and recompose in their fixed slot."""
+    if legend is None or not any(entry.style_scope is not None for entry in request.surface_content.legend_entries):
+        return legend
+    painted = painted_style_occurrences(
+        marks, text, fills=request.surface_content.style_fills, tokens=request.theme_tokens)
+    filtered = filtered_style_legend_entries(request.surface_content.legend_entries, painted)
+    # The footer/annotation candidates already use conservative slots; final composition
+    # changes entries only and must not trigger a layout retry or allocation change.
+    legend_request = replace(request, surface_content=replace(request.surface_content, legend_entries=filtered))
+    completed = place_legend(SurfaceLegendContext(legend_request, legend.slot, metric_values, metric_for))
+    warnings.extend(completed.warnings)
+    return completed

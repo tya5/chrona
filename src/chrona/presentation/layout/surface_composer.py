@@ -23,7 +23,7 @@ from chrona.presentation.layout.surface_content import (
     validate_detail_panel_placement,
 )
 from chrona.presentation.layout.surface_legend import SurfaceLegendContext, place_legend
-from chrona.presentation.layout.style_legend import filtered_style_legend_entries, painted_style_occurrences
+from chrona.presentation.layout.style_legend import initial_style_legend_warnings, recompose_scoped_style_legend
 from chrona.presentation.layout.slot_heading import (SlotHeadings, content_slot, full_slot, inline_content_slot,
                                                     inline_full_slot)
 from chrona.presentation.layout.surface_completion import (
@@ -280,8 +280,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         legend_batch = place_legend(SurfaceLegendContext(
             request, inline_content_slot(content_slot(legend, headings.reserved("legend")),
                                          headings.reserved_inline("legend")), metric_values, metric_for))
-        if not any(entry.style_scope is not None for entry in request.surface_content.legend_entries):
-            side_content_warnings.extend(legend_batch.warnings)
+        side_content_warnings.extend(initial_style_legend_warnings(request, legend_batch))
         legend_slot = inline_full_slot(legend, full_slot(legend, legend_batch.slot, headings.reserved("legend")),
                                        headings.reserved_inline("legend"))
         slots = tuple(legend_slot if slot.source_ref == "legend" else slot for slot in slots)
@@ -333,17 +332,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     diagnostics.extend(relation_labels.diagnostics)
     visible_label_overflows.extend(relation_labels.visible_label_overflows)
 
-    if legend_batch is not None and any(entry.style_scope is not None
-                                        for entry in request.surface_content.legend_entries):
-        painted = painted_style_occurrences(tuple(marks), tuple(text),
-            fills=request.surface_content.style_fills, tokens=request.theme_tokens)
-        filtered = filtered_style_legend_entries(request.surface_content.legend_entries, painted)
-        # The footer/annotation candidates already use conservative slots.
-        # Recompose only the chosen entries, retaining that allocation.
-        legend_request = replace(request, surface_content=replace(request.surface_content, legend_entries=filtered))
-        legend_batch = place_legend(SurfaceLegendContext(
-            legend_request, legend_batch.slot, metric_values, metric_for))
-        side_content_warnings.extend(legend_batch.warnings)
+    legend_batch = recompose_scoped_style_legend(
+        request, legend_batch, tuple(marks), tuple(text), metric_values, metric_for, side_content_warnings)
 
     if legend_batch is not None:
         marks.extend(legend_batch.marks)
