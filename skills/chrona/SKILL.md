@@ -105,12 +105,21 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 | `compare_baseline` | `chrona baseline-compare` | What changed between a named baseline and a candidate Project in a Store; read-only. |
 | `check_command` | `chrona command-check` | Previews a Store command (an Actual intake batch or a baseline capture); writes nothing. |
 | `apply_command` | `chrona command-apply` | Applies that command to the Store. It runs only if the user started the server with `--allow-write`. |
-| `apply_authoring_command` | `chrona authoring-command-apply` | Applies an authoring command file to a guided workspace; requires `--allow-write`. |
+| `apply_authoring_command` | `chrona authoring-command-apply` | Applies an inline authoring command or contained command file; requires `--allow-write`. |
+| `create_workspace` | Library entry (no CLI equivalent) | Creates a new workspace directory from a builtin preset and compact project; requires `--allow-write`. |
+| `validate_workspace` | Library entry (no CLI equivalent) | Validates a workspace and its complete preset/resource closure; returns its revision. |
+| `workspace_revision` | `chrona workspace revision` | Reads the current guided workspace revision. |
+| `render_workspace` | `chrona render-workspace` | Renders a guided workspace using its copied preset; writes no output file. |
 
-Edit standalone `project.yaml` directly; use `apply_authoring_command` with workspace
-and command paths for guided workspaces, and `apply_command` for Stores, never standalone plans.
-Apply only the user's request; writers have no approval step. Get `baseRevision` with
-`chrona workspace revision`. Stale bases and IDs reused for different requests are rejected;
+Edit standalone `project.yaml` directly; use `apply_authoring_command` for guided
+workspaces and `apply_command` for Stores, never standalone plans. For MCP-only
+authoring, call `create_workspace` with a new `directory`, builtin `preset` ID and
+`project` object; validate and render the returned `workspace` path. Send inline
+commands using `workspaceRevision` as `baseRevision`, then carry each accepted
+`authoringResult.resultRevision` into the next edit. Query `workspace_revision`
+when needed. Tool descriptions give command types and payload shapes. An inverse
+edit reverts source at a new revision. Apply only the user's request; writers have
+no approval step. Stale bases and reused IDs with different requests are rejected;
 an exact accepted `commandId` retry returns its durable result without writing.
 
 ## The model in five lines
