@@ -172,7 +172,7 @@ def test_derived_theme_materializer_copies_pinned_base_and_rejects_tampering(tmp
 
 
 def test_controller_executive_public_evidence_exercises_inside_and_fallback_labels(tmp_path):
-    materialize(ROOT / "examples/controller-z/manifest.yaml", "executive", tmp_path / "controller", write=False)
+    materialize(ROOT / "tests/fixtures/controller-z/manifest.yaml", "executive", tmp_path / "controller", write=False)
     artifact = (tmp_path / "controller/review.svg").read_text(encoding="utf-8")
     assert 'data-scene-id="member-label:firmware:firmware"' in artifact
     # DVT uses its declared exterior fallback when the completed route blocks
@@ -182,7 +182,7 @@ def test_controller_executive_public_evidence_exercises_inside_and_fallback_labe
 
 
 def test_controller_annotation_evidence_realizes_each_purpose_through_layout_completed_primitives(tmp_path):
-    example = ROOT / "examples/controller-z"
+    example = ROOT / "tests/fixtures/controller-z"
     materialize(example / "manifest.yaml", "annotations", tmp_path / "annotations", write=False)
     artifact = (tmp_path / "annotations/review.svg").read_text(encoding="utf-8")
     for identifier in ("architecture-callout", "evb-highlight", "performance-note", "bringup-risk"):
@@ -212,7 +212,7 @@ def test_controller_annotation_evidence_realizes_each_purpose_through_layout_com
 
 def test_controller_japanese_public_evidence_uses_the_explicit_cjk_provider(tmp_path):
     _require_cjk_provider()
-    materialize(ROOT / "examples/controller-z-ja/manifest.yaml", "executive", tmp_path / "controller-z-ja", write=False)
+    materialize(ROOT / "tests/fixtures/controller-z-ja/manifest.yaml", "executive", tmp_path / "controller-z-ja", write=False)
     artifact = (tmp_path / "controller-z-ja/review.svg").read_text(encoding="utf-8")
     assert "コントローラZ — シリコン立ち上げから量産まで" in artifact
     assert "量産検証（PVT）および工場工程バリデーション" in artifact
@@ -220,7 +220,7 @@ def test_controller_japanese_public_evidence_uses_the_explicit_cjk_provider(tmp_
 
 def test_controller_japanese_detail_panels_are_completed_native_blocks(tmp_path):
     _require_cjk_provider()
-    materialize(ROOT / "examples/controller-z-ja/manifest.yaml", "executive", tmp_path / "controller-z-ja", write=False)
+    materialize(ROOT / "tests/fixtures/controller-z-ja/manifest.yaml", "executive", tmp_path / "controller-z-ja", write=False)
     scene = json.loads((tmp_path / "controller-z-ja/review.scene.json").read_text(encoding="utf-8"))
     surface = scene["surfaces"][0]
     slots = {item["id"]: item["bounds"] for item in surface["slots"]}
@@ -243,7 +243,7 @@ def test_controller_japanese_detail_panels_are_completed_native_blocks(tmp_path)
 
 
 def test_controller_elevated_public_evidence_uses_only_portable_completed_treatments(tmp_path):
-    materialize(ROOT / "examples/controller-z/manifest.yaml", "elevated", tmp_path / "elevated", write=False)
+    materialize(ROOT / "tests/fixtures/controller-z/manifest.yaml", "elevated", tmp_path / "elevated", write=False)
     artifact = (tmp_path / "elevated/review.svg").read_text(encoding="utf-8")
     assert '<linearGradient id="gradient-' in artifact and '<feDropShadow ' in artifact
     assert 'fill="url(#gradient-' in artifact and 'filter="url(#shadow-' in artifact
@@ -565,7 +565,7 @@ def test_materializer_copies_only_declared_icon_assets(tmp_path):
 
 
 def test_public_icon_evidence_is_bounded_and_decodes_its_purpose_built_raster(tmp_path):
-    example = ROOT / "examples/controller-z"
+    example = ROOT / "tests/fixtures/controller-z"
     raster = example / "assets/programme-mark.png"
     assert raster.stat().st_size <= 1024
     with Image.open(raster) as image:
@@ -578,13 +578,11 @@ def test_public_icon_evidence_is_bounded_and_decodes_its_purpose_built_raster(tm
 
 
 def test_public_material_icon_evidence_closes_the_packaged_catalog_and_small_text_slots(tmp_path):
-    example = ROOT / "examples/controller-z"
+    example = ROOT / "tests/fixtures/controller-z"
     context = yaml.safe_load((example / "contexts/material-icons.yaml").read_text(encoding="utf-8"))
     reference = context["body"]["inputs"]["iconCatalogs"][0]
     assert reference["store"] == {"provider": "package", "identity": "chrona.resources"}
-    # The public source deliberately leaves this package catalog unpinned;
-    # materialization still proves the resolved asset identity in the SVG.
-    assert "contentIdentity" not in reference
+    assert reference["contentIdentity"] == "sha256:c9550b8542dcc586757cee41e4d9ce90a3e12f2b8613056e4fabbc680b271b17"
     materialize(example / "manifest.yaml", "material-icons", tmp_path / "material-icons", write=False)
     artifact = (tmp_path / "material-icons/review.svg").read_text(encoding="utf-8")
     assert artifact == (example / "generated/material-icons.svg").read_text(encoding="utf-8")
