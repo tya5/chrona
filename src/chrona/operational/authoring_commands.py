@@ -146,7 +146,7 @@ def transact_authoring_command(
                 (stage / resource_directory).rename(target)
 
             receipt_directory.mkdir(exist_ok=True)
-            _ensure_private_directory(receipt_directory, "E_AUTHORING_REPLAY_UNAVAILABLE")
+            _ensure_private_directory("E_AUTHORING_REPLAY_UNAVAILABLE", receipt_directory)
             if final_receipt.exists() or final_receipt.is_symlink():
                 raise OperationalResourceError("E_AUTHORING_REPLAY_UNAVAILABLE", "receipt destination appeared during publication")
             os.link(staged_receipt, final_receipt)
@@ -210,7 +210,7 @@ def _read_receipt(workspace: Path, scope_identity: str, command_id: str,
     directory = _receipt_directory(workspace, scope_identity)
     if not directory.exists() and not directory.is_symlink():
         return None
-    _ensure_private_directory(directory, "E_AUTHORING_REPLAY_UNAVAILABLE")
+    _ensure_private_directory("E_AUTHORING_REPLAY_UNAVAILABLE", directory)
     path = _receipt_path(workspace, scope_identity, command_id)
     if not path.exists() and not path.is_symlink():
         return None
@@ -271,7 +271,7 @@ def _validate_candidates(workspace: Path, candidates: Mapping[str, bytes]) -> tu
 
 
 def _write_transaction_marker(path: Path, value: Mapping[str, Any]) -> None:
-    _ensure_not_symlink(path, "E_AUTHORING_AGGREGATE_RECOVERY")
+    _ensure_not_symlink("E_AUTHORING_AGGREGATE_RECOVERY", path)
     with path.open("x", encoding="utf-8") as handle:
         json.dump(value, handle, sort_keys=True, separators=(",", ":"))
         handle.flush()
@@ -529,12 +529,12 @@ def _cleanup_committed_marker(workspace: Path, stage: Path, marker: Path,
         return
 
 
-def _ensure_private_directory(path: Path, code: str) -> None:
+def _ensure_private_directory(code: str, path: Path) -> None:
     if path.is_symlink() or not path.is_dir():
         raise OperationalResourceError(code, f"private transaction directory {path.name!r} is not a real directory")
 
 
-def _ensure_not_symlink(path: Path, code: str) -> None:
+def _ensure_not_symlink(code: str, path: Path) -> None:
     if path.is_symlink():
         raise OperationalResourceError(code, f"transaction path {path.name!r} is a symlink")
 
@@ -559,7 +559,7 @@ def _aggregate_lock(path: Path):
     # Resolve before selecting this sibling so symlink/case aliases share one OS lock.
     path = _canonical_path(path)
     lock = path.with_name(f".{path.name}.authoring.lock")
-    _ensure_not_symlink(lock, "E_AUTHORING_LOCK_UNAVAILABLE")
+    _ensure_not_symlink("E_AUTHORING_LOCK_UNAVAILABLE", lock)
     with lock.open("a+b") as handle:
         _lock_file(handle, workspace_path=path, lock_path=lock)
         try:

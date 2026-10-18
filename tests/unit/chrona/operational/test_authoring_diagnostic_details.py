@@ -52,6 +52,59 @@ def test_recovery_names_the_invalid_marker(tmp_path):
     assert marker.name in raised.value.detail and marker.is_file()
 
 
+@pytest.mark.parametrize("name", ("receipt-read", "receipt-publish"))
+def test_private_transaction_directory_guard_names_its_owner_path(tmp_path, name):
+    path = tmp_path / name
+    path.write_text("not a directory", encoding="utf-8")
+
+    with pytest.raises(persistence.OperationalResourceError) as raised:
+        persistence._ensure_private_directory("E_AUTHORING_REPLAY_UNAVAILABLE", path)
+
+    assert raised.value.code == "E_AUTHORING_REPLAY_UNAVAILABLE"
+    assert path.name in raised.value.detail
+
+
+def test_read_receipt_private_directory_diagnostic_names_receipt_directory(tmp_path, monkeypatch):
+    workspace = tmp_path / "workspace.yaml"
+    workspace.write_text("id: workspace\n", encoding="utf-8")
+    directory = tmp_path / "receipt-directory"
+    directory.write_text("not a directory", encoding="utf-8")
+    monkeypatch.setattr(persistence, "_receipt_directory", lambda *_args: directory)
+
+    with pytest.raises(persistence.OperationalResourceError) as raised:
+        persistence._read_receipt(workspace, "scope", "command", lambda *_args: None)
+
+    assert raised.value.code == "E_AUTHORING_REPLAY_UNAVAILABLE"
+    assert directory.name in raised.value.detail
+
+
+def test_transaction_marker_symlink_diagnostic_names_marker_path(tmp_path, monkeypatch):
+    marker = tmp_path / "transaction-marker"
+    original = Path.is_symlink
+    monkeypatch.setattr(Path, "is_symlink", lambda path: path == marker or original(path))
+
+    with pytest.raises(persistence.OperationalResourceError) as raised:
+        persistence._write_transaction_marker(marker, {})
+
+    assert raised.value.code == "E_AUTHORING_AGGREGATE_RECOVERY"
+    assert marker.name in raised.value.detail
+
+
+def test_aggregate_lock_symlink_diagnostic_names_lock_path(tmp_path, monkeypatch):
+    workspace = tmp_path / "workspace.yaml"
+    workspace.write_text("id: workspace\n", encoding="utf-8")
+    lock = tmp_path / ".workspace.yaml.authoring.lock"
+    original = Path.is_symlink
+    monkeypatch.setattr(Path, "is_symlink", lambda path: path == lock or original(path))
+
+    with pytest.raises(persistence.OperationalResourceError) as raised:
+        with persistence._aggregate_lock(workspace):
+            pytest.fail("a symlinked aggregate lock must be refused")
+
+    assert raised.value.code == "E_AUTHORING_LOCK_UNAVAILABLE"
+    assert lock.name in raised.value.detail
+
+
 def test_canonical_target_rejection_names_the_required_workspace_filename(tmp_path):
     path = tmp_path / "sentinel-workspace.yaml"
     path.write_text("id: sentinel-workspace\n", encoding="utf-8")
