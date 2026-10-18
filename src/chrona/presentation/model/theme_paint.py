@@ -140,7 +140,10 @@ def _effective_channels(channels: ThemePaintInputs, family: PaintFamily, role: s
     if part_stroke is None or part_width is None:
         missing = "stroke" if part_stroke is None else "strokeWidth"
         raise ThemePaintError("E_THEME_ROLE_REQUIRED", f"{path}/{missing}")
-    return ThemePaintInputs(None, part_stroke, Decimal(str(part_width)), (), channels.opacity, False)
+    # Stroke glyph parts keep the role's dash, as Scene's prior part
+    # conversion did; only their fill channel is replaced by the part ink.
+    return ThemePaintInputs(None, part_stroke, Decimal(str(part_width)), channels.dash,
+                            channels.opacity, False)
 
 
 def _freeze_pattern_identity(value: object) -> tuple[object, ...] | None:

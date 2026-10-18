@@ -58,13 +58,16 @@ def test_resolver_completes_absent_opacity_before_adapter_invocation():
 
 
 def test_resolver_is_the_only_glyph_part_paint_conversion_point():
-    tokens = _tokens({"fill": "fill", "stroke": "stroke", "strokeWidth": "width"})
+    tokens = _tokens({"fill": "fill", "stroke": "stroke", "strokeWidth": "width", "dash": "dash"})
     filled = resolve_scene_paint(tokens, "role", PaintFamily.SOLID,
                                  part_mode="fill", part_color="#abcdef").paint
+    witness = resolve_theme_paint_witness(tokens, "role", PaintFamily.SOLID,
+                                          part_mode="stroke", part_color="#fedcba")
     stroked = resolve_scene_paint(tokens, "role", PaintFamily.SOLID,
                                   part_mode="stroke", part_color="#fedcba").paint
     assert (filled.fill, filled.stroke, filled.stroke_width, filled.dash) == ("#abcdef", None, None, ())
-    assert (stroked.fill, stroked.stroke, stroked.stroke_width) == (None, "#fedcba", 1.5)
+    assert (stroked.fill, stroked.stroke, stroked.stroke_width, stroked.dash) == (None, "#fedcba", 1.5, (2.0, 3.0))
+    assert witness.effective_channels.dash == stroked.dash
     outline = resolve_scene_paint(tokens, "role", PaintFamily.OUTLINE,
                                   part_mode="fill", part_color="#abcdef").paint
     assert outline.fill is None and outline.stroke == "#445566"
