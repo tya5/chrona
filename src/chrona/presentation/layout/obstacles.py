@@ -96,10 +96,39 @@ def _intersects(left: ObstacleGeometry, right: ObstacleGeometry, clearance: floa
         return True
     if radius == 0:
         return False
+    x1, y1 = segment.start
+    x2, y2 = segment.end
+    if y1 == y2:
+        low_x, high_x = sorted((x1, x2))
+        horizontal_gap = _interval_gap(low_x, high_x, rect.left, rect.right)
+        vertical_gap = _interval_gap(y1, y1, rect.top, rect.bottom)
+        distances = (
+            hypot(horizontal_gap, _interval_gap(y1, y1, rect.top, rect.top)),
+            hypot(horizontal_gap, _interval_gap(y1, y1, rect.bottom, rect.bottom)),
+            hypot(_interval_gap(low_x, high_x, rect.left, rect.left), vertical_gap),
+            hypot(_interval_gap(low_x, high_x, rect.right, rect.right), vertical_gap),
+        )
+        return any(distance < radius for distance in distances)
+    if x1 == x2:
+        top, bottom = sorted((y1, y2))
+        vertical_gap = _interval_gap(top, bottom, rect.top, rect.bottom)
+        horizontal_gap = _interval_gap(x1, x1, rect.left, rect.right)
+        distances = (
+            hypot(vertical_gap, _interval_gap(x1, x1, rect.left, rect.left)),
+            hypot(vertical_gap, _interval_gap(x1, x1, rect.right, rect.right)),
+            hypot(_interval_gap(top, bottom, rect.top, rect.top), horizontal_gap),
+            hypot(_interval_gap(top, bottom, rect.bottom, rect.bottom), horizontal_gap),
+        )
+        return any(distance < radius for distance in distances)
     corners = ((rect.left, rect.top), (rect.right, rect.top),
                (rect.right, rect.bottom), (rect.left, rect.bottom))
     return any(_segment_distance(segment.start, segment.end, corners[index], corners[(index + 1) % 4]) < radius
                for index in range(4))
+
+
+def _interval_gap(a0: float, a1: float, b0: float, b1: float) -> float:
+    """Distance between two closed intervals whose endpoints are ordered."""
+    return max(0.0, a0 - b1, b0 - a1)
 
 
 def obstacles_intersect(left: ObstacleGeometry, right: ObstacleGeometry, clearance: float = 0.0) -> bool:
