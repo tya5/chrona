@@ -13,7 +13,7 @@
 | ---: | --- | --- | --- | --- |
 | 1 | A profile summary on the issue, then the chosen change with before/after times for 120, 240 and 400 tasks on one machine. | met | [Profile and selected algorithm](https://github.com/tya5/chrona/issues/1723#issuecomment-6250681409); [same-host comparison and stop decision](https://github.com/tya5/chrona/issues/1723#issuecomment-6251104681). The candidate is rejected: no convincing end-to-end gain. All three outputs and diagnostics match. No numeric speed target or routing speedup is claimed. | — |
 | 2 | A synthetic large plan triggers the cost warning; `--progress` prints to a non-TTY stderr. | met | [Early CLI and completed MCP feedback](../../../tests/unit/chrona/app/test_routing_cost_feedback.py), [selected multiplicity admission](../../../tests/unit/chrona/presentation/layout/test_routing_workload.py), [captured subprocess progress](../../../tests/integration/test_render_progress_cli.py). The warning names both `--relations none` and `relationRouting`. | — |
-| 3 | The MCP guide's speed claim matches the measured behaviour. | not met | Corrected guidance is published in [PR #1730](https://github.com/tya5/chrona/pull/1730), not yet merged into this branch's public base. Follow that release before finalizing this row. | — |
+| 3 | The MCP guide's speed claim matches the measured behaviour. | met | [Corrected guide](https://github.com/tya5/chrona/blob/3ee4d0fec82c2008b3c88cdc90c52a625fbbcfa4/docs/guides/agent-interface.md) from merged [PR #1730](https://github.com/tya5/chrona/pull/1730); this branch follows that ready main. Large-plan routing is explicitly not a few-second promise. | — |
 
 ## Architecture and verification
 
@@ -38,6 +38,6 @@ guard passes. No local full suite or additional corpus sweep was run.
 
 ## Programme-level criteria (optional)
 
-Pending: follow PR1730, final-head CI, official generated output comparison,
+Pending: final-head CI, official generated output comparison,
 and exact-main three-OS pytest/conformance/wheel/public-materializer evidence.
 Local acceptance is not release acceptance; issue1723 remains open.
