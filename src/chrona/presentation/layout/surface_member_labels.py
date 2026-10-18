@@ -404,6 +404,9 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     f"{item.finish_delta:+d}d", anchor, ("end", "start", "above", "below"),
                     "summary", f"variance:{instance_id}", CollisionDomain("timeline", "overlay"),
                     request.surface_content.label_overflow, semantic_id="finishDelta",
+                    # Like a forecast delta, it is placed before routes (#1702): a dependency leaving the finish edge
+                    # must not push it to the bar's start, where it reads as a start slip.
+                    required_before_routes=True,
                     style_occurrence_key=style_key(item, review_row.row_id, finish_delta_semantic(item)),
                     subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
     forecast_requests = []
