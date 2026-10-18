@@ -960,7 +960,9 @@ This issue adds no paging syntax or page-splitting implementation.
 
 An optional typed presentation observer receives schedule, layout, routing and
 output phase events. CLI alone enables/formats it on stderr when stderr is a
-terminal or `--progress` is given; a nonterminal without the flag adds no bytes.
+terminal or `--progress` is given; a nonterminal without the flag adds no phase
+progress bytes. A selected-fact routing-cost advisory (Spec50 section3.3) is a
+warning, not phase progress: CLI reports it early even on a quiet nonterminal.
 It is ephemeral, outside resource/closure/cache identity and serialized Scene,
 and never influences geometry, routing order, budgets or artifacts. Progress
 sink I/O failure detaches that sink without rejecting rendering. Core has no

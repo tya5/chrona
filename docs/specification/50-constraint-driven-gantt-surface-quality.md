@@ -389,6 +389,22 @@ admission still apply. No previous-render state is needed.
 
 ### 3.3 Relations
 
+**Routing cost advisory (#1723).** Before expensive table-timeline Layout,
+estimate potential endpoint pairs from the selected relation facts and selected
+occurrence multiplicities (including folded points): sum source-occurrence count
+times target-occurrence count for each selected relation. This is a conservative
+workload indicator, not a timing guarantee or a Core dependency count. At 336 or
+more potential pairs, emit `W_LAYOUT_ROUTING_COST` with the surface and count.
+The initial advisory threshold is calibrated to the measured 240-task/336-relation
+case in issue1723, not to a test timeout or a rendering limit. It neither changes
+`relationRouting` nor omits, reorders or limits any relation. Zero selected
+relations produces no advisory. The message names `--relations none` and the
+Layout Profile's `relationRouting` as explicit user choices, never automatic
+changes. CLI prints the advisory on stderr before candidate Layout/routing even
+without progress enabled; the same diagnostic remains in completed Scene and
+CLI/MCP warning results. Its early observation uses stable selected facts,
+not an unaccepted count-closure trial's geometry or progress.
+
 **Route region (#1683).** A relation corridor never rides the plot's own inline edge, where it reads as running into the
 table area. The routing region is the plot inset by 4 px on each inline side, except as far as a mark port already lies
 beyond that inset, so every port stays reachable. A route that cannot be found inside the inset region follows the
