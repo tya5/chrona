@@ -13,10 +13,10 @@
 | ---: | --- | --- | --- | --- |
 | 1 | A phase table for 240 tasks (and for 400 if run) on one machine, with how it was measured. | met | Exclusive240 and400 tables below; [240 control ledger](assets-1734/profile.json), [400 candidate ledger](assets-1734/s1-candidate400-profile.json), exact methods and caveats. | — |
 | 2 | A recommendation, or a documented stop, if no phase offers a worthwhile intervention. | met | Recommendation below follows the [measured phase costs](assets-1734/profile.json): investigate member-label probes before choosing an algorithm change; use existing explicit hints for the measured edit case. No unmeasured speedup claim or product change. | — |
-| 3 | These are pure speed changes, so SVG and Scene stay byte-identical on the 50 public slides and on b240. | not met | Six240 outputs match complete control bytes; [candidate plan/evidence](https://github.com/tya5/chrona/issues/1734#issuecomment-6253883958). Final published disposition and official50-slide snapshot remain pending. | — |
-| 4 | Measure end-to-end on 240 and once on 400 after each change, on the same machine. | not met | Member240/400 measurements below are complete. [Graph candidate plan](https://github.com/tya5/chrona/issues/1734#issuecomment-6254199502) requires separate same-base controls/candidate240/400; currently pending. | — |
+| 3 | These are pure speed changes, so SVG and Scene stay byte-identical on the 50 public slides and on b240. | met | [FIFO12 official50-slide proof](https://github.com/tya5/chrona/pull/1750#issuecomment-6254678925) and four b240 outputs match complete control SVG/Scene hashes below. Final-head release remains pending. | — |
+| 4 | Measure end-to-end on 240 and once on 400 after each change, on the same machine. | not met | Member and one-slot graph240/400 measurements below are complete; FIFO12 comparison remains pending. | — |
 | 5 | Keep a change only if its end-to-end gain is worth its added complexity, and say why in the PR. Revert it otherwise; that is the stop condition. | not met | Member candidate reverted publicly at [cd8ac0983](https://github.com/tya5/chrona/commit/cd8ac098358ed4a0ba3072e58b7bba468d4eb096); product tree equals measured ready main. Final graph disposition and PR publication remain pending. | — |
-| 6 | Do not touch the algorithm, defaults or acceptance rules here. | met | [Approved scope](https://github.com/tya5/chrona/issues/1734#issuecomment-6253352192); candidate diff only prepares immutable private Layout facts and focused tests; collision checks/order/recovery remain fresh. No graph change proposed. | — |
+| 6 | Do not touch the algorithm, defaults or acceptance rules here. | met | [Approved scope](https://github.com/tya5/chrona/issues/1734#issuecomment-6253352192); candidate only reuses exact immutable Layout geometry; collision checks, candidate order, recovery, quotas and acceptance remain fresh. | — |
 
 ## Measurement
 
@@ -206,24 +206,56 @@ capacity ([raw identity ledger](assets-1734/s2-control240-identities.json),
 still match the240 control. Existing cache presence did not prove effective
 reuse; the preliminary stopping recommendation is withdrawn.
 
-[Pre-code design/architecture/implementation plan](https://github.com/tya5/chrona/issues/1734#issuecomment-6254199502)
-and [Spec50 publication](https://github.com/tya5/chrona/commit/e7ba1a147873fc70f05643fe071afcad2d8b0c3e)
-allow one geometry-only slot per prepared selection, across all visibility
-bases, keyed by exact endpoints/bounds/grid/selected exemptions. A per-base
-cache was rejected because its aggregate size could grow with endpoint pairs.
-New content starts empty; previous visibility generations carry no endpoint
-geometry; equal-content copies may share immutable geometry. Retained4096
-memo capacity and mode-specific keys remain unchanged. Reverse completion,
-frontiers, quotas, route validation and candidate order remain mode-correct.
+[Current pre-code correction/architecture/plan](https://github.com/tya5/chrona/issues/1734#issuecomment-6254537649)
+and [Spec50 publication](https://github.com/tya5/chrona/commit/caa6723bfba57adbe736f64028a8cd85df342cdc)
+allow a fixed twelve-entry FIFO geometry working set TOTAL per prepared
+selection across all visibility bases. Hits do not reorder entries. Exact
+endpoints/bounds/grid/selected exemptions identify geometry; changed content
+starts empty, equal-content copies share, and previous generations never carry
+endpoint geometry. The retained4096-result memo, bound-mode keys, reverse-bound
+completion, frontiers, quotas, route validation and candidate order are unchanged.
+No project-specific threshold, schema, default or algorithm change is introduced.
 
-Current candidate owners are only `obstacles.py` and `route_search.py`, with
-synthetic graph-memo tests. Fresh ready3277619d0 controls account for the B
-integration before candidate measurements. End-to-end240/400, byte gates and
-keep/discard are pending; do not equate saved graph builds with speedup.
-No algorithms, bounds, defaults or acceptance rules change. Hints stay opt-in.
+The preceding one-slot prototype is rejected: unprofiled same-base240 ABBA
+(control/candidate/candidate/control) measured49.59/50.00/67.44/50.27 wall seconds
+and42.02/41.92/43.14/41.95 user CPU seconds, with identical complete SVG/Scene
+bytes. Its [required400 run](assets-1734/s2-one-slot400.stderr) measured1120.51
+wall/933.81 user CPU seconds versus the [fresh ready327 control](assets-1734/s2-control400.stderr)
+1142.30/931.07: no CPU gain, and wall variation alone
+does not justify adoption. Peak RSS was360,071,168 bytes;400 SVG/Scene bytes
+also match the control hashes above.
+
+The [v4 actual-key trace](assets-1734/s2-candidate240-working-set.json) records
+zero one-slot hits in144 requests across two prepared selections. FIFO
+capacities1/2/4/8/11/12 recover0/8/18/40/56/60 calls;12 is the minimum covering
+all observed repeats, not evidence of end-to-end speedup. Independent architecture
+and implementation review found no ownership or invalidation blocker;107 focused
+tests pass. Serial unprofiled FIFO12 ABBA on the same ready327 base, candidate
+`a0b991b9c59a05b11b6b9fd60cd349f4ba4d0753`, Python3.13.7 and identical pinned
+packages (own `.venv-perf313`), used `/usr/bin/time -lp` for peak RSS:
+
+| Run | Wall s | User CPU s | Peak RSS bytes | Raw receipt / timing |
+| --- | ---: | ---: | ---: | --- |
+| Control | 50.38 | 42.15 | 351354880 | [receipt](assets-1734/s2-fifo12-control240.stdout) / [time](assets-1734/s2-fifo12-control240.stderr) |
+| FIFO12 | 49.90 | 39.67 | 427786240 | [receipt](assets-1734/s2-fifo12-candidate240.stdout) / [time](assets-1734/s2-fifo12-candidate240.stderr) |
+| FIFO12 repeat | 46.81 | 39.26 | 417546240 | [receipt](assets-1734/s2-fifo12-candidate240-repeat.stdout) / [time](assets-1734/s2-fifo12-candidate240-repeat.stderr) |
+| Control repeat | 50.53 | 42.46 | 349061120 | [receipt](assets-1734/s2-fifo12-control240-repeat.stdout) / [time](assets-1734/s2-fifo12-control240-repeat.stderr) |
+
+All four runs return `status: ok` and match the complete b240 SVG/Scene hashes
+above. CPU improves in both candidate observations, but RSS increases; required
+400 comparison is running. No adoption decision until its time/memory evidence.
+
+[Official snapshot proof](https://github.com/tya5/chrona/pull/1750#issuecomment-6254678925):
+run39162339047, candidate a0b991b9c, synthetic merge0418a2cc1 over newer main
+d45140e66; artifact12149895144, ZIP SHA256
+`f9817a73f8e5210ace196c58b610e9a90032835256af4fbb86b60b01d2892ba3`.
+All50 SVGs and50 Scenes are byte-identical, with zero primitive/label/route
+deltas or retirements. Eight other reports match; diagnostic inventory changes
+source positions plus one inherited #1749 vertical-tag warning site, not a graph
+reuse diagnostic. Final-head release and measured adoption remain unverified.
 
 ## Programme-level criteria (optional)
 
-Member measurements/disposition are complete; graph identity/admission evidence,
-final graph disposition, official public snapshot and exact-main release
-remain pending. No experimental optimizer has reached main.
+Member and one-slot measurements/dispositions, FIFO12 identity evidence and
+official public byte checks are complete. FIFO12 required400, adoption decision
+and exact-main release remain pending. No experimental optimizer has reached main.
