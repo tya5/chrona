@@ -7,7 +7,7 @@ from time import perf_counter, process_time
 import pytest
 import yaml
 
-from chrona.core.relation_identity import relation_identity
+from chrona.core.relation_identity import relation_identities
 from chrona.presentation.layout import route_search, routing
 from chrona.resources import builtin_preset_source_root, safe_load
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
@@ -118,7 +118,7 @@ def test_sunday_grouped_scheduled_chain_routes(tmp_path, monkeypatch, mode, chai
     )).rendered
     wall_seconds, cpu_seconds = perf_counter() - start_wall, process_time() - start_cpu
 
-    expected_ids = {relation_identity(index, relation) for index, relation in enumerate(relations)}
+    expected_ids = set(relation_identities(relations))
     route_primitives = [item for item in rendered.surface.primitives
                         if item.source_kind == "relation" and item.scene_id.startswith("relation:")]
     emitted_ids = {item.source_ref for item in route_primitives}

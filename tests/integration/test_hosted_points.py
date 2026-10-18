@@ -61,7 +61,7 @@ def test_dependency_can_enter_span_endpoint_covered_by_its_hosted_point(tmp_path
                   "to": {"object": "host", "endpoint": "start"}}]
     rendered = _render(tmp_path, objects, relations=relations)
     route = next(item for item in rendered.surface.primitives
-                 if item.purpose == "dependency" and item.source_ref == "relation:0:enter-host")
+                 if item.purpose == "dependency" and item.source_ref == "relation:id:enter-host")
     gate = _mark(rendered, "planned", "gate")
     x, y = route.points[-1]
     left, top, width, height = gate.bounds

@@ -99,7 +99,12 @@ No trial/preset-specific rule, declaration uniqueness error, or migration alias
 is introduced. Dependency-network ordering may change where it used the old
 derived ID; disclose generated output changes rather than preserving unstable
 order. Exact duplicate removal cannot promise per-copy identity; unique IDs
-are the explicit extension point. No unresolved S1 contract remains.
+are the explicit extension point. Removing a repeated declared ID can make its
+survivor unique and therefore move it from fallback to author-ID identity;
+uniqueness is itself changed input under rule 1, not an unrelated edit. The
+synthetic removal criterion exercises relations whose identity inputs stay
+unchanged; no cross-revision alias or stateful identity registry is introduced.
+No unresolved S1 contract remains.
 
 S2 will separately complete the all-policy hint/corridor design, then the
 moving-decoration design. S1 is independently testable and does not claim any
@@ -119,4 +124,17 @@ on the exact main containing the final issue acceptance review. If a consumer
 cannot use the shared identity without a new semantic rule, return to design
 before changing that rule. Do not expand S1 into hint/routing or Theme policy.
 
-No product implementation or trial reproduction is complete at this stage.
+## Current implementation evidence
+
+S1 is implemented locally; publication/public-output review and CI are pending.
+The batch helper replaces every runtime scalar caller. Scheduler passes the
+same identified tuple to its critical-path closure. Focused batches passed:
+171 scheduler/identity/lane/network/Model tests; 150 review-content, hosted-point,
+critical-role, previous-Scene and revision-regression tests; one new integrated
+remove/append test with accepted retained hints and explicit old-ID misses.
+After threading the Scheduler tuple, its identity/scheduler subset passed
+again (15 tests). Eight migrated integration modules compile and collect
+(183 cases); their expensive corpus checks remain assigned to CI. Independent
+S1 review found no remaining identity/ownership blocker; the uniqueness-change
+limitation above is explicit. No schema, preset or generated output is edited.
+S2 design and the full trial-8 acceptance remain incomplete.

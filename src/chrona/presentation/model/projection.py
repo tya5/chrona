@@ -13,7 +13,7 @@ from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.forecast import ForecastItem, ForecastOutcome
 from chrona.core.observations import latest_observations
-from chrona.core.relation_identity import relation_identity
+from chrona.core.relation_identity import relation_identities
 from chrona.presentation.contracts.resources import ViewInput, _PrivateGroupingMode
 from chrona.presentation.model.actual_observation import finish_variance
 from chrona.presentation.model.date_basis import DisplayDateRange, ItemDateBasis, aggregate_date_ranges, endpoint_distance
@@ -652,10 +652,11 @@ def _project_lane_membership(project: dict[str, Any], rows: tuple[ReviewRowProje
         if key is not None and (not isinstance(key, str) or not key):
             raise ValueError(f"E_REVIEW_LANE_KEY: the lane key of object {item.object_id!r} must be a non-empty string, got {key!r}")
         items.append(LaneItem(item.item_id, item.object_id, group_id, planned, key, attached_host))
-    relations = tuple(SelectedFSRelation(relation_identity(index, relation), str(relation["from"]["object"]),
+    project_relations = project.get("relations", ())
+    relations = tuple(SelectedFSRelation(identity, str(relation["from"]["object"]),
                                          str(relation["to"]["object"]),
-                                         relation.get("id") or relation_identity(index, relation))
-                      for index, relation in enumerate(project.get("relations", ()))
+                                         relation.get("id") or identity)
+                      for identity, relation in zip(relation_identities(project_relations), project_relations)
                       if relation.get("type") == "dependency"
                       and relation.get("from", {}).get("endpoint") == "end"
                       and relation.get("to", {}).get("endpoint") == "start"
@@ -692,7 +693,8 @@ def _dependency_network_projection(project: dict[str, Any], selected: list[Revie
                                         container_id=selected_container_parent(item))
                   for item in selected)
     edges = []
-    for index, relation in enumerate(project.get("relations", ())):
+    project_relations = project.get("relations", ())
+    for identity, relation in zip(relation_identities(project_relations), project_relations):
         if relation_mode == "none":
             continue
         source = relation.get("from", {})
@@ -700,7 +702,6 @@ def _dependency_network_projection(project: dict[str, Any], selected: list[Revie
         source_id, target_id = source.get("object"), target.get("object")
         if source_id not in selected_ids or target_id not in selected_ids:
             continue
-        identity = relation_identity(index, relation)
         critical = (identity in driving_relations
                     and source_id in critical_ids and target_id in critical_ids)
         if relation_mode == "critical" and not critical:

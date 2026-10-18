@@ -7,7 +7,7 @@ from typing import Any
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.hierarchy import children_by_parent, normalize_hierarchy
 from chrona.core.ports import ScheduleOutcome
-from chrona.core.relation_identity import relation_identity
+from chrona.core.relation_identity import relation_identities
 from chrona.core.temporal import (Calendar, TemporalError, advance, as_date, latest_start_for, parse_amount,
                        requires_working_calendar, retreat)
 from chrona.core.validation import validate_project
@@ -413,13 +413,16 @@ def _analyze_criticality(project: dict[str, Any], placements: dict[str, dict[str
         total_float[object_id] = TotalFloat(
             _calendar_distance(early, late, _object_calendar(objects[object_id], project, calendars)),
             _object_calendar_id(objects[object_id], project))
+    relations = project.get("relations", ())
+    identified_relations = tuple(zip(relation_identities(relations), relations))
     driving_relations = frozenset(
-        relation_identity(index, relation)
-        for index, relation in enumerate(project.get("relations", ()))
+        identity
+        for identity, relation in identified_relations
         if _is_driving_relation(relation, placements, project, calendars)
     )
     latest = {object_id: latest[object_id] for object_id in objects if object_id in latest}
-    critical = _critical_path_objects(project, placements, total_float, driving_relations, project_finish)
+    critical = _critical_path_objects(project, placements, total_float, driving_relations, project_finish,
+                                      identified_relations)
     return ScheduleAnalysis(latest, total_float, critical, project_finish, driving_relations)
 
 
@@ -442,15 +445,16 @@ def _is_driving_relation(relation: dict[str, Any], placements: dict[str, dict[st
 
 def _critical_path_objects(project: dict[str, Any], placements: dict[str, dict[str, date]],
                            total_float: dict[str, TotalFloat], driving: frozenset[str],
-                           project_finish: date) -> frozenset[str]:
+                           project_finish: date,
+                           identified_relations: tuple[tuple[str, dict[str, Any]], ...]) -> frozenset[str]:
     """Close zero-float driving paths, not merely immovable dates (Spec 57)."""
     zero = {object_id for object_id, value in total_float.items() if value.value == 0}
     terminals = {object_id for object_id in zero
                  if _placement_finish(placements[object_id]) == project_finish}
     predecessors: dict[str, list[str]] = {}
-    for index, relation in enumerate(project.get("relations", ())):
+    for identity, relation in identified_relations:
         source, target = relation["from"]["object"], relation["to"]["object"]
-        if source in zero and target in zero and relation_identity(index, relation) in driving:
+        if source in zero and target in zero and identity in driving:
             predecessors.setdefault(target, []).append(source)
     critical = {object_id for object_id in terminals
                 if project["objects"][object_id]["schedule"]["mode"] not in {"fixed-point", "fixed-span"}
