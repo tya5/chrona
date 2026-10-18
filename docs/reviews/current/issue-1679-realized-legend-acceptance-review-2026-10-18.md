@@ -9,11 +9,15 @@ head `1ecf36452` fails snapshot generation in
 [CI39088644589](https://github.com/tya5/chrona/actions/runs/39088644589): two
 strict glyph legend contrast errors. Reproduction fails because the snapshot
 was never uploaded; readiness fails on that dependency; tests were skipped.
-The published design/plan correction is implemented at `02bcefa7f`: Actual
-multipart keys retain the complete ordered figure, and targeted glyph-gates
-strict contrast now has zero errors. The next coherent PR push must replace
-the old failed run and preliminary table. Keep the issue open; official
-artifact and exact-main release remain required.
+Composite correction `02bcefa7f` retains complete ordered glyph figures.
+Reviewer correction `b928566f4` groups semantic fill inks across drawing
+variants, omits same-ink host Progress and releases candidate-only legend
+extent. Focused native/finite/ownership tests:52 passed. Targeted Sunday has
+the expected seven keys and no overflow; Gates has five keys and no viewport
+warning. Both PNGs and the composite glyph PNG were inspected. Glyph-gates'
+canvas warning already exists in committed baseline; it is not introduced here.
+The next official snapshot must replace the preliminary table below. Keep the
+issue open; current exact-head CI and exact-main release remain required.
 
 ## Literal issue acceptance
 
@@ -27,7 +31,7 @@ artifact and exact-main release remain required.
 | 1 | A synthetic project with actuals, rendered with executive-light: every distinct realized mark paint has exactly one legend key, and the actual and progress keys use the realized paints. | met | [Native/SVG tests](../../../tests/integration/test_realized_legends.py) cover scalar paints, exact Progress paint and one composite key per complete ordered glyph. The dark-canvas synthetic fixture passes strict contrast; targeted public glyph-gates has zero strict errors after `02bcefa7f`. Official CI confirmation remains pending. | — |
 | 2 | When an encoding replaces the planned paint on every planned mark, no base planned swatch remains; the encoding's entries stand in its place. A mixed case (some planned marks unencoded) keeps the base key. | met | [Native encoding tests](../../../tests/integration/test_realized_legends.py): all-covered View encoding removes Planned; selective Style encoding retains the unencoded base witness. Existing scoped-legend and finite-swatch tests retain their geometry/paint assertions. | — |
 | 3 | target-b without snapshot or actual has no baseline, actual or in-progress keys and no empty Δ column. | met | [Pinned trial5](https://github.com/tya5/chrona/tree/9fa6062de/trial-5) target-b native PNG/Scene inspected: unavailable keys and Δ cells/header removed. Native synthetic absent/supplied-empty and Snapshot-only tests retain source-presence distinctions. | — |
-| 4 | A count table of the public example changes, and the PNGs checked. | met | [Count table and PNG evidence](#public-count-table): all50 materializers completed into disposable outputs;42 SVG/Scene pairs change,8 remain identical. New warnings are disclosed, not repaired through corpus edits. | — |
+| 4 | A count table of the public example changes, and the PNGs checked. | not met | [Preliminary table](#public-count-table) is superseded by the reviewer correction; the current official snapshot table is pending. Corrected Sunday/Gates/glyph PNGs inspected locally; no source YAML repair. | — |
 
 ## Programme-level criteria (optional)
 
