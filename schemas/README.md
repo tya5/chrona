@@ -12,6 +12,7 @@ record.
 
 | Kind | Live schema |
 | --- | --- |
+| builtin-wording-tables | wording-tables-v0.1.schema.yaml |
 | builtin-axis-name-tables | axis-name-tables-v0.1.schema.yaml |
 | actual-intake-batch | actual-intake-batch-v0.2.schema.yaml |
 | actual-set | actual-set-v0.3.schema.yaml |

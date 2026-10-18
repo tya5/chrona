@@ -78,6 +78,7 @@ from chrona.presentation.contracts.resources import ViewInput
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.presentation.review.figure_facts import deferred_layout_figures, projected_counts, projected_last_planned_finish
 from chrona.presentation.review.annotation_expansion import AnnotationExpansionError
+from chrona.presentation.model.wording_tables import wording_resolver
 from chrona.presentation.review.profile_connections import ProfileConnectionError, resolve_profile_connections
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, header_lines, heading_text
 from chrona.presentation.figure_text import FigureTextError, FigureTextReadError, resolve_figure_text
@@ -308,7 +309,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     profile_connections = resolve_profile_connections(
         view, render_closure.summary_profile.summary if render_closure.summary_profile else None,
         render_closure.detail_profile.detail if render_closure.detail_profile else None,
-        project_object_ids=frozenset(project.get("objects", {})))
+        project_object_ids=frozenset(project.get("objects", {})),
+        locale=render_closure.context.environment.locale)
     view = profile_connections.view
     omitted_metrics = frozenset((item.panel_index, item.metric_index)
                                for item in profile_connections.omissions)
@@ -379,7 +381,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     summary = normalize_summary_content(profile_connections.summary,
                                         projection, render_closure.actual_set.observations_input if render_closure.actual_set else None,
                                         project, omitted_metrics=omitted_metrics,
-                                        summary_wording=(view.wording or {}).get("summary", {}))
+                                        summary_wording=(view.wording or {}).get("summary", {}),
+                                        unknown_text=wording_resolver(environment.locale, view.wording).text("missing.unknown"))
     summary = replace(summary, absent=bool(omitted_metrics) and not summary.panels)
     if render_closure.summary_profile is not None:
         ledger.summary()

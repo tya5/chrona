@@ -386,6 +386,17 @@ $defs:
     type: object
     propertyNames: {$ref: "#/$defs/profileFigureIdentity"}
     additionalProperties: {$ref: "#/$defs/profileBinding"}
+  wordingKey:
+    description: "Closed key of one built-in wording-table entry (the bundled `wording-tables-v0.1` resource holds the text per locale)."
+    enum: [column.task, column.plan, marker.today, marker.asOf, legend.planned, legend.actual, legend.milestone, legend.dependency, legend.asOf, legend.calendar-closed, legend.critical-edge, legend.forecast, legend.progressFill, legend.snapshot, legend.deadlineMark, missing.unknown, missing.inProgress]
+  wordingRef:
+    description: "A reference to a built-in wording-table entry; the text is the entry for the Render Context locale."
+    examples: [{wording: column.task}]
+    type: object
+    required: [wording]
+    additionalProperties: false
+    properties:
+      wording: {description: "The wording key.", $ref: "#/$defs/wordingKey"}
   viewWording:
     description: "Optional View-owned literal replacements for reusable profile labels."
     type: object
@@ -401,6 +412,12 @@ $defs:
         type: object
         propertyNames: {$ref: "#/$defs/profileFigureIdentity"}
         additionalProperties: {$ref: "#/$defs/profileSummaryLabel"}
+      keys:
+        description: "Generic override of any built-in wording key for this View; a legend or summary entry above wins over it, and it wins over a literal authored in the preset or the locale table."
+        examples: [{legend.calendar-closed: Holiday}]
+        type: object
+        propertyNames: {description: "A built-in wording key; an unknown key is E_VIEW_WORDING_UNKNOWN at its pointer.", type: string, minLength: 1, maxLength: 256}
+        additionalProperties: {description: "The replacement text for the key.", type: string, minLength: 1, maxLength: 4096}
   profileLegendLabel: {description: "A View override for a Detail Profile legend label, with the same text limits as the existing label.", type: string, minLength: 1, maxLength: 4096}
   profileSummaryLabel: {description: "A View override for a Summary metric label or panel title, with the same unrestricted string grammar as the existing text.", type: string}
   summarySlotSource:

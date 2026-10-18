@@ -43,7 +43,12 @@ properties:
           required: [role, label]
           properties:
             role: {description: "Semantic presentation role.", type: string, minLength: 1, maxLength: 4096}
-            label: {description: "Human-readable role label.", type: string, minLength: 1, maxLength: 4096}
+            label:
+              description: "Human-readable role label: a literal shown exactly, or a `{wording: <key>}` reference resolved per Render Context locale from the built-in wording table."
+              examples: [Planned, {wording: legend.planned}]
+              oneOf:
+                - {description: "An authored literal, shown exactly.", type: string, minLength: 1, maxLength: 4096}
+                - {$ref: "urn:chrona:common-v0.1#/$defs/wordingRef"}
             sourceRef: {description: "Optional stable source identity for a period legend entry.", type: string, minLength: 1, maxLength: 4096}
             swatchShape: {description: "Optional closed geometric form for this key, retaining its role's Theme paint; absent keeps the role's existing swatch geometry.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/legendSwatchShape"}
       unkeyedLegendRoles:

@@ -201,6 +201,7 @@ class TableColumn:
     text_wrap: str = "forbid"
     transform: str | None = None  # a closed cell transform, `initials` (#1373)
     suffix: str | None = None  # a literal appended to a `rowIndex` cell (#1545)
+    header: str | FrozenDict | None = None  # a literal or `{wording: key}`; absent, the header is the id (#1724)
 
 
 @dataclass(frozen=True)
@@ -513,7 +514,7 @@ class SummaryProfileInput:
 @dataclass(frozen=True)
 class LegendEntry:
     role: str
-    label: str
+    label: str | FrozenDict  # a literal, or a `{wording: key}` reference until the render resolves it (#1724)
     source_ref: str | None = None
     swatch_shape: str | None = None
 
@@ -1113,7 +1114,9 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                                       end_display=str(column.get("endDisplay", "exclusive")),
                                       text_wrap=str(column.get("text", {}).get("wrap", "forbid")),
                                       transform=str(column["transform"]) if "transform" in column else None,
-                                      suffix=str(column["suffix"]) if "suffix" in column else None)
+                                      suffix=str(column["suffix"]) if "suffix" in column else None,
+                                      header=(freeze(column["header"]) if isinstance(column["header"], Mapping)
+                                              else str(column["header"])) if "header" in column else None)
                           for column in body.get("tableColumns", ()))
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)
@@ -1659,7 +1662,8 @@ def _summary_input(body: FrozenDict) -> SummaryProfileInput:
 
 def _review_detail_input(body: FrozenDict) -> ReviewDetailInput:
     return ReviewDetailInput(tuple(body.get("groupDetails", ())), tuple(str(item) for item in body.get("milestones", ())),
-                             tuple(LegendEntry(str(item["role"]), str(item["label"]),
+                             tuple(LegendEntry(str(item["role"]),
+                                               freeze(item["label"]) if isinstance(item["label"], Mapping) else str(item["label"]),
                                                str(item["sourceRef"]) if "sourceRef" in item else None,
                                                str(item["swatchShape"]) if "swatchShape" in item else None)
                                    for item in body.get("legend", ())),

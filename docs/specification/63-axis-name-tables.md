@@ -56,3 +56,20 @@ The `ja-JP` numeric forms mean `01` and `2026-01`; they no longer alias the
 Japanese named forms. Japanese short and long named forms may be equivalent
 when explicitly declared and audited. This intended source-visible behavior
 change is included in the atomic View v0.22 corpus migration.
+
+## Built-in wording tables
+
+(#1724) The engine also bundles `wording-tables-v0.1.yaml` (schema `wording-tables-v0.1.schema.yaml`), a sibling
+of the axis resource: one complete table per supported locale (`en-US`, `ja-JP`) mapping the same closed wording
+keys to text. A locale lacking any key, an unknown key, an empty text or a third table is `E_WORDING_TABLE_RESOURCE`.
+The keys are `column.task`, `column.plan`, `marker.today`, `marker.asOf`,
+`legend.planned`, `legend.actual`, `legend.milestone`, `legend.dependency`, `legend.asOf`, `legend.calendar-closed`,
+`legend.critical-edge`, `legend.forecast`, `legend.progressFill`, `legend.snapshot`, `legend.deadlineMark`,
+`missing.unknown` and `missing.inProgress`.
+The Layout-defaulted labels with no Detail entry (the Progress key when the Detail Profile declares none, the Actual variance qualifiers `Ahead`, `On track`, `Behind`, and the default lane-table headers `Task`/`Lane`/`Items`) are not table keys yet: Layout and the Layout-facing content still hold their English literals, so the public ja-JP slides that draw them keep their published text, and `wording.legend` remains the override of the first three (§9.3). Moving them into the table changes those slides and needs the owner's acceptance of the count table. The Render Context locale selects the table (an unsupported locale reads `en-US`); `nameTable` on an axis tier is
+unchanged and does not select wording. A View, Layout or Detail Profile references an entry as `{wording: <key>}`
+(`urn:chrona:common-v0.1#/$defs/wordingRef`); resolution and the override precedence are specified in
+[View Model §9.3](06-view-model.md). Adding a locale is a table entry in the resource and schema; a test lists the
+keys and fails when a locale lacks one. Upper-casing of a label such as `TODAY` remains a Theme typography transform
+and is not part of the table. The `en-US` entries equal the English literals the built-in presets carried before the
+table, so a preset that keeps its literals renders byte-identically.

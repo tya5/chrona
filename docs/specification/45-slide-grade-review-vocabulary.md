@@ -18,7 +18,7 @@ View axis policy chooses one or two semantic levels from existing interval algor
 
 ## Legend and mark labels
 
-Detail Profile admits ordered legend entries. Scene emits a role-derived swatch plus label for each entry, retaining source metadata. View `visibility.labels` controls optional mark/member title labels; explicit-row labels from specification 44 are its base behavior, and the same control applies to automatic rows.
+Detail Profile admits ordered legend entries. A legend `label` is a literal or a `{wording: <key>}` reference to the built-in wording table (`legend.planned`, `legend.actual`, `legend.milestone`, `legend.dependency`, `legend.asOf`, `legend.calendar-closed`, and the defaulted `legend.forecast`, `legend.progressFill`, `legend.snapshot`, `legend.deadlineMark`, `legend.critical-edge`; [Axis Name Tables](63-axis-name-tables.md#built-in-wording-tables), precedence in [View Model §9.3](06-view-model.md)). The `calendar-closed` role is the closed-day key and covers public holidays as well as non-working weekdays, so its built-in text is `Non-working day` / `休業日`, not `Weekend`. Scene emits a role-derived swatch plus label for each entry, retaining source metadata. View `visibility.labels` controls optional mark/member title labels; explicit-row labels from specification 44 are its base behavior, and the same control applies to automatic rows.
 
 ## Callout rail
 

@@ -3,12 +3,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from collections.abc import Mapping
+from typing import Any
 
 from chrona.presentation.contracts.resources import (
     ReviewDetailInput, SummaryMetric, SummaryPanelInput,
     SummaryProfileInput, ViewInput, freeze,
 )
 from chrona.presentation.model.projection import ReviewPeriod
+from chrona.presentation.model.wording_tables import WordingResolver, is_wording_ref, wording_keys, wording_resolver
 
 
 class ProfileConnectionError(ValueError):
@@ -89,9 +91,34 @@ def _metric_id(metric: SummaryMetric | tuple[str, str]) -> str:
     return metric.id if isinstance(metric, SummaryMetric) else metric[0]
 
 
+def _legend_label(entry: Any, resolver: WordingResolver, known_keys: frozenset[str]) -> str:
+    """Resolve one Detail legend label: a role-specific override first, then a reference or the authored literal."""
+    if entry.role in resolver.legend:
+        return str(resolver.legend[entry.role])
+    if is_wording_ref(entry.label):
+        return resolver.text(entry.label["wording"])
+    key = "legend." + entry.role
+    if key in known_keys and key in resolver.keys:
+        return str(resolver.keys[key])
+    return str(entry.label)
+
+
+def _resolve_view_references(view: ViewInput, resolver: WordingResolver) -> ViewInput:
+    """Replace `{wording: key}` column headers and marker labels by their locale text (#1724)."""
+    columns = tuple(replace(column, header=resolver.resolve(column.header)) if is_wording_ref(column.header) else column
+                    for column in view.table_columns)
+    markers = tuple(freeze({**marker, "label": resolver.resolve(marker["label"])})
+                    if is_wording_ref(marker.get("label")) else marker
+                    for marker in view.markers)
+    if columns == view.table_columns and markers == view.markers:
+        return view
+    return replace(view, table_columns=columns, markers=markers)
+
+
 def resolve_profile_connections(view: ViewInput, summary: SummaryProfileInput | None,
                                 detail: ReviewDetailInput | None, *,
-                                project_object_ids: frozenset[str]) -> ProfileConnectionResult:
+                                project_object_ids: frozenset[str],
+                                locale: str = "en-US") -> ProfileConnectionResult:
     """Close slot names and View wording without filtering or mutating profile entries.
 
     The View parser has already typed figure bindings and placed their FigureSpecs
@@ -212,6 +239,12 @@ def resolve_profile_connections(view: ViewInput, summary: SummaryProfileInput | 
                     component="review-detail-profile",
                 )
 
+    known_keys = frozenset(wording_keys())
+    for key in wording.get("keys", {}):
+        if key not in known_keys:
+            raise ProfileConnectionError("E_VIEW_WORDING_UNKNOWN", f"wording key {key!r} is not a built-in wording key",
+                                         f"/body/wording/keys/{_pointer_token(str(key))}")
+    resolver = wording_resolver(locale, wording)
     legend_wording = wording.get("legend", {})
     if legend_wording:
         declared_roles = {entry.role for entry in (detail.legend if detail is not None else ())}
@@ -227,13 +260,15 @@ def resolve_profile_connections(view: ViewInput, summary: SummaryProfileInput | 
             if not valid:
                 pointer = f"/body/wording/legend/{_pointer_token(str(role))}"
                 raise ProfileConnectionError("E_VIEW_WORDING_UNKNOWN", f"legend wording target {role!r} has no declared legend candidate", pointer)
-        if detail is not None:
-            effective_detail = replace(
-                detail,
-                legend=tuple(replace(entry, label=str(legend_wording[entry.role]))
-                             if entry.role in legend_wording else entry
-                             for entry in detail.legend),
-            )
+    if detail is not None:
+        # One precedence for a legend label: wording.legend, wording.keys, an authored literal, the locale table.
+        effective_detail = replace(
+            detail,
+            legend=tuple(replace(entry, label=_legend_label(entry, resolver, known_keys)) for entry in detail.legend),
+        )
+    effective_view = _resolve_view_references(view, resolver)
+    if effective_view is not view:
+        view = effective_view
 
     if summary is None:
         inactive_ids = {item.figure.figure_id for item in view.profile_bindings if item.figure is not None}

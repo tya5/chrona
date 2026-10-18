@@ -8,7 +8,7 @@ import pytest
 import tomllib
 import yaml
 
-from chrona.resources import axis_name_tables_resource, example_ids, example_registry, minimal_template_resource, schema_resource, template_resource
+from chrona.resources import axis_name_tables_resource, wording_tables_resource, example_ids, example_registry, minimal_template_resource, schema_resource, template_resource
 from chrona.resources import SCHEMA_PARTS, schema_registry
 from chrona.presentation.contracts import ClosureIdentity, IconCatalogContract, parse_contract
 
@@ -18,6 +18,7 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents
 RESOURCES = files("chrona.resources")
 SCHEMAS = (
     "axis-name-tables-v0.1.schema.yaml",
+    "wording-tables-v0.1.schema.yaml",
     "common-v0.1.schema.yaml",
     "graphics-v0.1.schema.yaml",
     "project-v0.7.schema.yaml",
@@ -92,6 +93,10 @@ def test_unregistered_example_is_rejected_naming_the_available_ids():
 
 def test_axis_name_table_catalog_is_packaged_from_one_source_authority():
     assert axis_name_tables_resource().read_bytes() == (ROOT / "src/chrona/resources/axis-name-tables-v0.1.yaml").read_bytes()
+
+
+def test_wording_table_catalog_is_packaged_from_one_source_authority():
+    assert wording_tables_resource().read_bytes() == (ROOT / "src/chrona/resources/wording-tables-v0.1.yaml").read_bytes()
 
 
 def test_semantic_vocabulary_and_schema_are_packaged_from_one_source_authority():

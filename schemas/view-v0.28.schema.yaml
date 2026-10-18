@@ -302,7 +302,12 @@ allOf:
               properties:
                 kind: {$ref: "urn:chrona:common-v0.1#/$defs/markerPresentation/properties/kind"}
                 source: {const: actual}
-                label: {$ref: "urn:chrona:common-v0.1#/$defs/markerPresentation/properties/label"}
+                label:
+                  description: "The marker label: a literal rendered exactly as written unless a date form is declared, or a `{wording: <key>}` reference resolved per Render Context locale."
+                  examples: ["TODAY", {wording: marker.today}]
+                  oneOf:
+                    - {$ref: "urn:chrona:common-v0.1#/$defs/markerPresentation/properties/label"}
+                    - {$ref: "urn:chrona:common-v0.1#/$defs/wordingRef"}
                 date: {$ref: "urn:chrona:common-v0.1#/$defs/markerPresentation/properties/date"}
                 placement: {$ref: "urn:chrona:common-v0.1#/$defs/markerPresentation/properties/placement"}
           periods:
@@ -434,6 +439,12 @@ allOf:
                 id: {type: string, minLength: 1}
                 endDisplay: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/endDisplay"}
                 style: {description: "Named Layout column style resolved at ingress; explicit presentation fields win.", type: string, minLength: 1}
+                header:
+                  description: "Optional header text: a literal shown exactly, or a `{wording: <key>}` reference resolved per Render Context locale from the built-in wording table. Absent, the header is the column `id` (rows and `hierarchyColumn` keep referring to `id`)."
+                  examples: ["Plan", {wording: column.plan}]
+                  oneOf:
+                    - {description: "An authored literal header, shown exactly.", type: string, minLength: 1}
+                    - {$ref: "urn:chrona:common-v0.1#/$defs/wordingRef"}
                 source:
                   $ref: "urn:chrona:common-v0.1#/$defs/tableColumnSource"
                 format: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/format"}
