@@ -98,7 +98,7 @@ Points to take from it:
 - Every object's `id` (`design`, `build`) is what an Actual Set refers to as
   `projectObjectId`.
 
-`chrona schedule` returns these placements (its full output also has `diagnostics`,
+`chrona schedule` returns these placements (its full output also has `status`, `diagnostics`,
 `warnings` and an `analysis` of critical objects and float). `build` ends on 2026-12-01 because 15
 working days from 2026-11-09 cross the exception on 2026-11-23:
 

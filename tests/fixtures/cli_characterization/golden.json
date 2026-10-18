@@ -1379,7 +1379,7 @@
   "exit": 0,
   "files": {},
   "stderr": "",
-  "stdout": "{\n  \"placements\": {\n    \"qa\": {\n      \"start\": \"2026-10-01\",\n      \"end\": \"2026-10-08\"\n    },\n    \"launch\": {\n      \"at\": \"2026-10-10\"\n    }\n  },\n  \"diagnostics\": [],\n  \"warnings\": [\n    {\n      \"code\": \"W_DEADLINE\",\n      \"severity\": \"warning\",\n      \"component\": \"core\",\n      \"sourceRef\": \"/objects/qa/deadline\",\n      \"revisionRefs\": [],\n      \"message\": \"qa finishes 2026-10-08, 3 days after its deadline 2026-10-05\",\n      \"details\": {\n        \"object\": \"qa\",\n        \"endpoint\": \"end\",\n        \"finish\": \"2026-10-08\",\n        \"deadline\": \"2026-10-05\",\n        \"daysLate\": 3\n      },\n      \"sourceRange\": {\n        \"line\": 4,\n        \"column\": 31,\n        \"endLine\": 4,\n        \"endColumn\": 39\n      }\n    },\n    {\n      \"code\": \"W_DEADLINE\",\n      \"severity\": \"warning\",\n      \"component\": \"core\",\n      \"sourceRef\": \"/objects/launch/deadline\",\n      \"revisionRefs\": [],\n      \"message\": \"launch finishes 2026-10-10, 2 days after its deadline 2026-10-08\",\n      \"details\": {\n        \"object\": \"launch\",\n        \"endpoint\": \"at\",\n        \"finish\": \"2026-10-10\",\n        \"deadline\": \"2026-10-08\",\n        \"daysLate\": 2\n      },\n      \"sourceRange\": {\n        \"line\": 5,\n        \"column\": 39,\n        \"endLine\": 5,\n        \"endColumn\": 47\n      }\n    }\n  ],\n  \"analysis\": {\n    \"criticalObjectIds\": [\n      \"qa\",\n      \"launch\"\n    ],\n    \"totalFloat\": {\n      \"qa\": {\n        \"value\": 0,\n        \"unit\": \"calendar-days\",\n        \"calendar\": null\n      },\n      \"launch\": {\n        \"value\": 0,\n        \"unit\": \"calendar-days\",\n        \"calendar\": null\n      }\n    }\n  }\n}\n"
+  "stdout": "{\n  \"status\": \"ok\",\n  \"placements\": {\n    \"qa\": {\n      \"start\": \"2026-10-01\",\n      \"end\": \"2026-10-08\"\n    },\n    \"launch\": {\n      \"at\": \"2026-10-10\"\n    }\n  },\n  \"diagnostics\": [],\n  \"warnings\": [\n    {\n      \"code\": \"W_DEADLINE\",\n      \"severity\": \"warning\",\n      \"component\": \"core\",\n      \"sourceRef\": \"/objects/qa/deadline\",\n      \"revisionRefs\": [],\n      \"message\": \"qa finishes 2026-10-08, 3 days after its deadline 2026-10-05\",\n      \"details\": {\n        \"object\": \"qa\",\n        \"endpoint\": \"end\",\n        \"finish\": \"2026-10-08\",\n        \"deadline\": \"2026-10-05\",\n        \"daysLate\": 3\n      },\n      \"sourceRange\": {\n        \"line\": 4,\n        \"column\": 31,\n        \"endLine\": 4,\n        \"endColumn\": 39\n      }\n    },\n    {\n      \"code\": \"W_DEADLINE\",\n      \"severity\": \"warning\",\n      \"component\": \"core\",\n      \"sourceRef\": \"/objects/launch/deadline\",\n      \"revisionRefs\": [],\n      \"message\": \"launch finishes 2026-10-10, 2 days after its deadline 2026-10-08\",\n      \"details\": {\n        \"object\": \"launch\",\n        \"endpoint\": \"at\",\n        \"finish\": \"2026-10-10\",\n        \"deadline\": \"2026-10-08\",\n        \"daysLate\": 2\n      },\n      \"sourceRange\": {\n        \"line\": 5,\n        \"column\": 39,\n        \"endLine\": 5,\n        \"endColumn\": 47\n      }\n    }\n  ],\n  \"analysis\": {\n    \"criticalObjectIds\": [\n      \"qa\",\n      \"launch\"\n    ],\n    \"totalFloat\": {\n      \"qa\": {\n        \"value\": 0,\n        \"unit\": \"calendar-days\",\n        \"calendar\": null\n      },\n      \"launch\": {\n        \"value\": 0,\n        \"unit\": \"calendar-days\",\n        \"calendar\": null\n      }\n    }\n  }\n}\n"
  },
  "schedule-halcyon-ok": {
   "argv": [
@@ -1390,9 +1390,9 @@
   "files": {},
   "stderr": "",
   "stdout": {
-   "length": 5195,
-   "lines": 249,
-   "sha256": "4978e43e3d9b278f877ffa09ade0b77a20e8f13d10d1d95e38a9d430b060f3c5"
+   "length": 5213,
+   "lines": 250,
+   "sha256": "fe63e4f0233eb8c48280f3507e1b73cdf58cd2eafe24f3766fa799784bc563fd"
   }
  },
  "schedule-missing-file": {
@@ -1452,7 +1452,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\n  \"placements\": {\n    \"design\": {\n      \"start\": \"2026-10-01\",\n      \"end\": \"2026-10-31\"\n    },\n    \"build\": {\n      \"start\": \"2026-11-03\",\n      \"end\": \"2026-12-15\"\n    },\n    \"release\": {\n      \"at\": \"2026-12-18\"\n    }\n  },\n  \"diagnostics\": [],\n  \"warnings\": [],\n  \"analysis\": {\n    \"criticalObjectIds\": [],\n    \"totalFloat\": {\n      \"design\": {\n        \"value\": 0,\n        \"unit\": \"calendar-days\",\n        \"calendar\": null\n      },\n      \"build\": {\n        \"value\": 0,\n        \"unit\": \"calendar-days\",\n        \"calendar\": null\n      },\n      \"release\": {\n        \"value\": 0,\n        \"unit\": \"calendar-days\",\n        \"calendar\": null\n      }\n    }\n  }\n}\n"
+  "stdout": "{\n  \"status\": \"ok\",\n  \"placements\": {\n    \"design\": {\n      \"start\": \"2026-10-01\",\n      \"end\": \"2026-10-31\"\n    },\n    \"build\": {\n      \"start\": \"2026-11-03\",\n      \"end\": \"2026-12-15\"\n    },\n    \"release\": {\n      \"at\": \"2026-12-18\"\n    }\n  },\n  \"diagnostics\": [],\n  \"warnings\": [],\n  \"analysis\": {\n    \"criticalObjectIds\": [],\n    \"totalFloat\": {\n      \"design\": {\n        \"value\": 0,\n        \"unit\": \"calendar-days\",\n        \"calendar\": null\n      },\n      \"build\": {\n        \"value\": 0,\n        \"unit\": \"calendar-days\",\n        \"calendar\": null\n      },\n      \"release\": {\n        \"value\": 0,\n        \"unit\": \"calendar-days\",\n        \"calendar\": null\n      }\n    }\n  }\n}\n"
  },
  "schedule-starter-ok": {
   "argv": [
@@ -1462,7 +1462,7 @@
   "exit": 0,
   "files": {},
   "stderr": "",
-  "stdout": "{\n  \"placements\": {\n    \"design\": {\n      \"start\": \"2026-10-01\",\n      \"end\": \"2026-10-31\"\n    },\n    \"build\": {\n      \"start\": \"2026-11-03\",\n      \"end\": \"2026-12-15\"\n    },\n    \"release\": {\n      \"at\": \"2026-12-18\"\n    }\n  },\n  \"diagnostics\": [],\n  \"warnings\": [],\n  \"analysis\": {\n    \"criticalObjectIds\": [],\n    \"totalFloat\": {\n      \"design\": {\n        \"value\": 0,\n        \"unit\": \"calendar-days\",\n        \"calendar\": null\n      },\n      \"build\": {\n        \"value\": 0,\n        \"unit\": \"calendar-days\",\n        \"calendar\": null\n      },\n      \"release\": {\n        \"value\": 0,\n        \"unit\": \"calendar-days\",\n        \"calendar\": null\n      }\n    }\n  }\n}\n"
+  "stdout": "{\n  \"status\": \"ok\",\n  \"placements\": {\n    \"design\": {\n      \"start\": \"2026-10-01\",\n      \"end\": \"2026-10-31\"\n    },\n    \"build\": {\n      \"start\": \"2026-11-03\",\n      \"end\": \"2026-12-15\"\n    },\n    \"release\": {\n      \"at\": \"2026-12-18\"\n    }\n  },\n  \"diagnostics\": [],\n  \"warnings\": [],\n  \"analysis\": {\n    \"criticalObjectIds\": [],\n    \"totalFloat\": {\n      \"design\": {\n        \"value\": 0,\n        \"unit\": \"calendar-days\",\n        \"calendar\": null\n      },\n      \"build\": {\n        \"value\": 0,\n        \"unit\": \"calendar-days\",\n        \"calendar\": null\n      },\n      \"release\": {\n        \"value\": 0,\n        \"unit\": \"calendar-days\",\n        \"calendar\": null\n      }\n    }\n  }\n}\n"
  },
  "schedule-unexpected-exception": {
   "argv": [
