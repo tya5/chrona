@@ -178,9 +178,10 @@ def render_markdown(report: Mapping[str, Any]) -> str:
         return "—" if value is None else f"{value:.3f}"
     lines = ["# Presentation Contrast", "", "Generated from committed public Scene evidence by `tools/presentation_contrast.py`.", "",
              "Contrast constraints are an opt-in design option (Specification 46 section 8). For a Theme listed in "
-             "`conformance/contrast-opt-in.yaml`, a mark or text below its floor is an error and fails the check; a "
+             "`conformance/contrast-opt-in.yaml`, ordinary shape visibility or text legibility below its floor is an error and fails the check; a "
              "decoration below its floor (or on a ground that cannot be read) is a warning. For any other Theme every "
-             "miss is a warning: it is listed and counted, and fails nothing.", "",
+             "miss is a warning: it is listed and counted, and fails nothing. Independent encoded-fill misses are "
+             "reported as warnings; authored Theme enforcement is checked by the render before Scene output.", "",
              "| Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |",
              "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"]
     for row in report["rows"]:
