@@ -6,7 +6,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 48 | 414 | 1.000 | 7.583 | 0 | 19 |
+| actual | `actual` | required | 3.000 | 48 | 414 | 1.000 | 7.583 | 0 | 20 |
 | annotation-artwork | `annotation-artwork` | enabled | 1.100 | 5 | 27 | 1.493 | 5.241 | 0 | 0 |
 | annotation-artwork | `annotation-artwork-rods` | enabled | 1.100 | 2 | 20 | 2.262 | 2.262 | 0 | 0 |
 | annotation-border-bottom | `annotation-border-bottom` | enabled | 1.100 | 2 | 3 | 15.434 | 15.434 | 0 | 0 |
@@ -53,7 +53,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | kicker-text | `kicker` | required | 4.500 | 6 | 6 | 9.106 | 15.260 | 0 | 0 |
 | legend-label | `legend` | required | 4.500 | 11 | 72 | 5.448 | 13.415 | 0 | 0 |
 | legend-label | `text` | required | 4.500 | 32 | 128 | 10.019 | 16.268 | 0 | 0 |
-| legend-swatch | `actual` | required | 3.000 | 42 | 43 | 4.747 | 14.558 | 0 | 0 |
+| legend-swatch | `actual` | required | 3.000 | 42 | 43 | 4.747 | 16.268 | 0 | 0 |
 | legend-swatch | `calendar-closed` | enabled | 1.100 | 9 | 9 | 1.050 | 1.134 | 0 | 4 |
 | legend-swatch | `calendar-exception` | enabled | 1.100 | 4 | 4 | 1.216 | 1.255 | 0 | 0 |
 | legend-swatch | `gate` | required | 3.000 | 10 | 10 | 6.667 | 9.106 | 0 | 0 |
@@ -6698,21 +6698,21 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `column:Items` | `text` | 862.135, 50.875 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `column:Lane` | `text` | 517.025, 50.875 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `title` | `text` | 119.674, 72.400 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:avionics:avionics` | `actual` | 589.982, 208.460 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:bus-test:bus-test` | `actual` | 707.800, 252.167 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:cdr:cdr:part0` | `actual` | 678.345, 269.621 | `planned:cdr:cdr:part0` | flat | `#101828` | fill | 3.051 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:comms-test:comms-test` | `actual` | 734.309, 596.267 | `canvas` | canvas | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:detector:detector` | `actual` | 617.964, 337.729 | `canvas` | canvas | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:eps:eps` | `actual` | 563.473, 230.313 | `canvas` | canvas | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:integration:integration` | `actual` | 886.000, 423.290 | `planned:integration:snapshot:integration` | flat | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:mcs:mcs` | `actual` | 501.618, 552.560 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:optics:optics` | `actual` | 501.618, 315.875 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:payload-delivery:payload-delivery:part0` | `actual` | 855.073, 377.037 | `canvas` | canvas | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:payload-tvac:payload-tvac` | `actual` | 656.255, 359.583 | `canvas` | canvas | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:station:station` | `actual` | 672.455, 574.413 | `canvas` | canvas | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:structure:structure` | `actual` | 544.327, 186.606 | `canvas` | canvas | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:tvac:tvac` | `actual` | 955.218, 466.998 | `planned:tvac:snapshot:tvac` | flat | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:vibration:vibration` | `actual` | 919.873, 445.144 | `planned:vibration:snapshot:vibration` | flat | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:avionics:avionics` | `actual` | 589.982, 208.460 | `canvas` | canvas | `#FFFFFF` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:bus-test:bus-test` | `actual` | 707.800, 252.167 | `canvas` | canvas | `#FFFFFF` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:cdr:cdr:part0` | `actual` | 678.345, 269.621 | `planned:cdr:cdr:part0` | flat | `#101828` | fill | 1.000 | 3.000 | warning |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:comms-test:comms-test` | `actual` | 734.309, 596.267 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:detector:detector` | `actual` | 617.964, 337.729 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:eps:eps` | `actual` | 563.473, 230.313 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:integration:integration` | `actual` | 886.000, 423.290 | `planned:integration:snapshot:integration` | flat | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:mcs:mcs` | `actual` | 501.618, 552.560 | `canvas` | canvas | `#FFFFFF` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:optics:optics` | `actual` | 501.618, 315.875 | `canvas` | canvas | `#FFFFFF` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:payload-delivery:payload-delivery:part0` | `actual` | 855.073, 377.037 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:payload-tvac:payload-tvac` | `actual` | 656.255, 359.583 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:station:station` | `actual` | 672.455, 574.413 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:structure:structure` | `actual` | 544.327, 186.606 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:tvac:tvac` | `actual` | 955.218, 466.998 | `planned:tvac:snapshot:tvac` | flat | `#FFFFFF` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `actual:vibration:vibration` | `actual` | 919.873, 445.144 | `planned:vibration:snapshot:vibration` | flat | `#FFFFFF` | stroke | 17.747 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `annotation-box:station-note` | `annotation-note-box` | 1447.000, 568.921 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `annotation-box:tvac-note` | `annotation-note-box` | 1447.000, 354.090 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `annotation-box:window-note` | `annotation-note-box` | 1447.000, 720.044 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
@@ -6837,7 +6837,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `group-header-band:launch` | `group-header-band` | 668.000, 612.794 | `canvas` | canvas | `#FFFFFF` | fill | 1.151 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `group-header-band:ops` | `group-header-band` | 668.000, 742.063 | `canvas` | canvas | `#FFFFFF` | fill | 1.259 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `group-header-band:payload` | `group-header-band` | 668.000, 290.548 | `canvas` | canvas | `#FFFFFF` | fill | 1.137 | 1.100 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `legend:actual:408b0c4489a2b7f9` | `legend` | 297.386, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `legend:actual:0c57abe9145636fd` | `legend` | 297.386, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend:calendar-closed` | `legend` | 589.336, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend:calendar-exception` | `legend` | 744.508, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend:dependency` | `legend` | 886.630, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
@@ -6845,7 +6845,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend:planned` | `legend` | 191.678, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend:progressFill:f0c97fce73ac5139` | `legend` | 393.458, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend:snapshot` | `legend` | 79.502, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:actual:408b0c4489a2b7f9` | `actual` | 263.352, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.817 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:actual:0c57abe9145636fd` | `actual` | 263.352, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:calendar-closed` | `calendar-closed` | 524.708, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:calendar-exception` | `calendar-exception` | 673.964, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 1.240 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:milestone:part0` | `gate` | 450.496, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
@@ -6880,19 +6880,19 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:structure:structure` | `planned` | 501.618, 180.126 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:tvac:tvac` | `planned` | 946.382, 460.518 | `planned:tvac:snapshot:tvac` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:vibration:vibration` | `planned` | 919.873, 438.664 | `planned:vibration:snapshot:vibration` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:avionics:avionics` | `progress-fill` | 589.982, 208.460 | `actual:avionics:avionics` | flat | `#1D5FD1` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:bus-test:bus-test` | `progress-fill` | 707.800, 252.167 | `actual:bus-test:bus-test` | flat | `#1D5FD1` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:comms-test:comms-test` | `progress-fill` | 728.418, 596.267 | `actual:comms-test:comms-test` | flat | `#1D5FD1` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:detector:detector` | `progress-fill` | 604.709, 337.729 | `actual:detector:detector` | flat | `#1D5FD1` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:eps:eps` | `progress-fill` | 542.855, 230.313 | `actual:eps:eps` | flat | `#1D5FD1` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:integration:integration` | `progress-fill` | 855.073, 423.290 | `actual:integration:integration` | flat | `#1D5FD1` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:mcs:mcs` | `progress-fill` | 501.618, 552.560 | `actual:mcs:mcs` | flat | `#1D5FD1` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:optics:optics` | `progress-fill` | 501.618, 315.875 | `actual:optics:optics` | flat | `#1D5FD1` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:payload-tvac:payload-tvac` | `progress-fill` | 634.164, 359.583 | `actual:payload-tvac:payload-tvac` | flat | `#1D5FD1` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:station:station` | `progress-fill` | 625.327, 574.413 | `actual:station:station` | flat | `#1D5FD1` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:structure:structure` | `progress-fill` | 501.618, 186.606 | `actual:structure:structure` | flat | `#1D5FD1` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:tvac:tvac` | `progress-fill` | 955.218, 466.998 | `actual:tvac:tvac` | flat | `#1D5FD1` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:vibration:vibration` | `progress-fill` | 919.873, 445.144 | `actual:vibration:vibration` | flat | `#1D5FD1` | stroke | 5.817 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:avionics:avionics` | `progress-fill` | 589.982, 208.460 | `actual:avionics:avionics` | flat | `#101828` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:bus-test:bus-test` | `progress-fill` | 707.800, 252.167 | `actual:bus-test:bus-test` | flat | `#101828` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:comms-test:comms-test` | `progress-fill` | 728.418, 596.267 | `actual:comms-test:comms-test` | flat | `#101828` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:detector:detector` | `progress-fill` | 604.709, 337.729 | `actual:detector:detector` | flat | `#101828` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:eps:eps` | `progress-fill` | 542.855, 230.313 | `actual:eps:eps` | flat | `#101828` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:integration:integration` | `progress-fill` | 855.073, 423.290 | `actual:integration:integration` | flat | `#101828` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:mcs:mcs` | `progress-fill` | 501.618, 552.560 | `actual:mcs:mcs` | flat | `#101828` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:optics:optics` | `progress-fill` | 501.618, 315.875 | `actual:optics:optics` | flat | `#101828` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:payload-tvac:payload-tvac` | `progress-fill` | 634.164, 359.583 | `actual:payload-tvac:payload-tvac` | flat | `#101828` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:station:station` | `progress-fill` | 625.327, 574.413 | `actual:station:station` | flat | `#101828` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:structure:structure` | `progress-fill` | 501.618, 186.606 | `actual:structure:structure` | flat | `#101828` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:tvac:tvac` | `progress-fill` | 955.218, 466.998 | `actual:tvac:tvac` | flat | `#101828` | stroke | 17.747 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:vibration:vibration` | `progress-fill` | 919.873, 445.144 | `actual:vibration:vibration` | flat | `#101828` | stroke | 17.747 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `row-rule:avionics` | `row-rule` | 668.000, 214.987 | `canvas` | canvas | `#FFFFFF` | stroke | 1.248 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `row-rule:bus-test` | `row-rule` | 668.000, 258.694 | `canvas` | canvas | `#FFFFFF` | stroke | 1.248 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `row-rule:campaign` | `row-rule` | 668.000, 688.356 | `canvas` | canvas | `#FFFFFF` | stroke | 1.248 | 1.100 | info |
@@ -8578,7 +8578,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 | `group-header-runs` | 1 | 0 | 0 |
 | `marquee` | 2 | 110 | 0 |
 | `sunday` | 2 | 17 | 0 |
-| `target-b` | 1 | 82 | 0 |
+| `target-b` | 1 | 83 | 0 |
 | `titlecard` | 2 | 21 | 0 |
 | `yuya` | 2 | 149 | 0 |
 
@@ -8589,4 +8589,4 @@ Every independently required decoration role has committed Scene or explicit syn
 - Synthetic `dependency-halo` (no public use): `tests/integration/test_unroutable_visible_obstacle.py`, `tests/integration/test_relation_resolution_wiring.py`, `tests/unit/chrona/presentation/scene/test_contrast_policy.py`
 - Synthetic `tableColumnRule` (no public use): `tests/integration/test_table_details_1545.py`, `tests/integration/test_technical_print_columns.py`
 
-Findings: 8508; errors: 0; warnings: 416.
+Findings: 8508; errors: 0; warnings: 417.

@@ -1,12 +1,18 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 PR1698 merged `076be666c`; final CI39100063943 passed.
-Trusted generated main `ca1e0bbe8` passed gate39101119087; its full three-OS
-release39101259252 is running. Final artifact12126645488 retains all50 SVG/
-50 Scene bytes; only diagnostic source coordinates/helper names differ.
-Design `69273a1bf` and plan `54b9ddd20` precede code. Reviewer1704 merged
-`2af41d6bf`; item3 follows its ready main. Item3 may open PR CI while item5
-release runs, but may not merge before that release succeeds.
+Status: item5 PR1698 merged `076be666c` after final CI39100063943 passed.
+Release39101259252 on `ca1e0bbe8` passed Linux/macOS but failed four Windows
+process/replay tests: pre-lock reading of byte0 collides with the other handle's
+mandatory lock. Repair PR1707 merged `381cf404a` after all final-head checks
+39104093015 passed; official artifact109 paths are unchanged. Its trusted
+sync39104963215 and native/full release must succeed before item5 acceptance
+or an item3/item2 merge. Item3 PR CI may proceed on the repaired ready main.
+Published correction `d0ea4f635` and issue plan6246530666 precede repair code.
+Independent architecture review confirms the shared Windows primitive can lock
+past EOF without sentinel initialization; Store/authoring transaction ownership,
+persistent inode identity, diagnostics and formats remain unchanged. Portable
+guarded-handle regression fails3 cases before the fix; the repaired focused
+storage/authoring/process batch passes58. Native Windows proof remains required.
 #1679/#1680 are closed after exact-main39094741641 passed all
 three OSes, public reproduction and MCP. Their archival/ledger update is an
 independent commit in PR1698; separate docs PR1699 was superseded to avoid
@@ -113,6 +119,9 @@ must retain its original failure rather than claim a safe pre-write rejection.
   on `ca1e0bbe8` remains pending.
 
 ## Item5 literal acceptance review (release pending)
+
+Current authority: [item5 acceptance review](../../reviews/current/issue-902-store-write-safety-acceptance-review-2026-10-18.md),
+including the Windows correction and required native release disposition.
 
 Implementation `ab376c78e` with L1 `a4c7fe08c`, L2 `9dcf22c16`; public WIP
 `wip/issue-902-store-write-safety`. This reviews item5 only; items2/3 and parked
