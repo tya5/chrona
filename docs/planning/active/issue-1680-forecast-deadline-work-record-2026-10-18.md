@@ -2,7 +2,8 @@
 
 Status: design, architecture review and implementation plan published; I1 implemented
 and reviewed (32 focused Core tests pass), not yet integrated or release-accepted.
-I2 integration and the single implementation PR wait for Issue419 S2 to merge.
+I2 may run on the published, reviewer-approved S2 source while its test-only CI
+repair runs. The single implementation PR still waits for Issue419 S2 to merge.
 Published execution baseline: main `e69d4541a2e6829d568a2f5a5ab077aadda499bb`;
 Core and its deadline tests are byte-identical to the original planning base `cd3622754`.
 [Issue](https://github.com/tya5/chrona/issues/1680);
@@ -80,8 +81,12 @@ Design/architecture publication: `293d0cc52`, before this finalized plan.
 Create this worktree's Python venv (`.[dev,render]` and Noto CJK). Core-only I1
 may be implemented/tested on the published S1 base while S2 CI/review runs:
 it imports no View/Layout/Scene owner and S2 changes no Core file. This is
-isolated WIP, not another concurrent code PR. Before I2, reconcile the full
-normative correction and source with merged S2. No schema/resource migration.
+isolated WIP, not another concurrent code PR. S2's product contract is now
+reviewer-approved and its remaining CI repair changes test inputs only. Reconcile
+I2 with that published S2 source and implement in parallel; before opening the
+single PR, reconcile again with merged S2 and its trusted generated main. This
+changes execution order only, not the reviewed design or publication dependency.
+No schema/resource migration.
 
 | Commit slice (one atomic implementation PR) | Files and acceptance evidence |
 | --- | --- |
