@@ -258,3 +258,28 @@ def test_final_actual_qualifiers_follow_visible_paint_groups_after_clip(tmp_path
     labels = {item.source_ref: item.text for item in rendered.surface.primitives if item.purpose == "legend-label"}
     assert {item.paint.fill for item in actual_keys} == {"#4B5563", "#269D79"}
     assert {labels[item.source_ref] for item in actual_keys} == {"Actual — Ahead", "Actual — On track"}
+
+
+def test_fully_clipped_actual_groups_leave_one_unqualified_key_and_no_progress_key(tmp_path):
+    actual = deepcopy(ACTUAL)
+    for observation in actual["body"]["observations"]:
+        if observation["projectObjectId"] in {"track", "behind"}:
+            observation["actual"].update(start="2026-02-22", finish="2026-02-24", progress=1.0)
+        elif observation["projectObjectId"] == "ahead":
+            observation["actual"]["progress"] = 0.0
+        elif observation["projectObjectId"] == "gate":
+            observation["actual"]["at"] = "2026-02-22"
+    parts = _parts(progress=True)
+    parts["view"]["body"]["window"] = {
+        "mode": "explicit", "start": "2026-02-01", "end": "2026-02-21",
+    }
+    rendered = _render(tmp_path, _source(), actual=actual, parts=parts)
+
+    actual_marks = tuple(item for item in rendered.surface.primitives if item.purpose == "actual")
+    actual_keys = _swatches(rendered, "actual")
+    labels = {item.source_ref: item.text for item in rendered.surface.primitives if item.purpose == "legend-label"}
+    assert {item.source_ref for item in actual_marks} == {"ahead"}
+    assert len(actual_keys) == 1
+    assert actual_keys[0].paint == actual_marks[0].paint
+    assert labels[actual_keys[0].source_ref] == "Actual"
+    assert not _swatches(rendered, "progress-fill")
