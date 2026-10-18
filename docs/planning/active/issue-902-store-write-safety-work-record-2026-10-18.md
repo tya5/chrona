@@ -1,9 +1,11 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 PR1698 (CI39094985183), item3 implementation WIP `db9caca1d`,
-item2 design in progress. No item2 product code. Publication order stays5→3→2.
-Item5 integrates ready main `4e30fbc3f`; #1679 is merged and its exact-main
-release39094741641 is running. This branch is item2 preparation, not main.
+Status: item5 PR1698, item3 WIP `db9caca1d`, item2 implementation `fa831e384`.
+Publication order stays5→3→2; neither item3 nor item2 is released on main.
+Item5 CI39094985183 passed every product check; readiness alone failed after
+dev B advanced main from `4e30fbc3f` to `f5a51c099`. Follow B's landing batch
+once onto its ready tip before the final push. #1679/#1680 exact-main release
+39094741641 remains running; macOS passed. Board454 remains reviewer-owned.
 
 ## Scope and literal acceptance
 
@@ -188,7 +190,7 @@ findings. Imports11 packages/37 edges inward. No public render policy/source
 or canonical generated outputs changed. Remaining: current-main integration,
 final CI/public evidence and exact-main release after item5 publication.
 
-## Item2 design plan (no item2 product code)
+## Item2 design plan
 
 - Baseline: CLI-only authoring use case/adapter (Spec51) echoes commandId but
   cannot replay an accepted retry; ordinary CAS lacks the aggregate OS lock.
@@ -211,7 +213,7 @@ final CI/public evidence and exact-main release after item5 publication.
   architecture review, then implementation plan before code. One coherent item2
   release follows item3; design preparation may pipeline without mixing releases.
 
-## Item2 selected design and architecture review (no product code)
+## Item2 selected design and architecture review
 
 Normative authority: Spec51 §4.2 and Spec66 §2.3/tool-set v0.6. Keep the
 existing command/result v0.1 and return the exact durable result on retry, with
@@ -265,3 +267,27 @@ Implement as isolated WIP while prior releases run; one coherent item2 PR/releas
 after item3, not partially safe main slices. Return to design before addressing
 any new transaction/schema/layer contract gap. Acceptance is the literal item2
 row above; parked4/814/815 remain open.
+
+## Item2 implementation review
+
+Code: `fa831e384`, following design `cdf0289f8` and plan `fa31cc79c`.
+CLI/MCP share the preparation/transaction port; no writer compatibility bypass
+remains. Engine retains no authoring operation/presentation interpretation.
+Canonical filename spelling is preserved; case normalization affects identity
+only, and staging identity includes workspace scope as well as command ID.
+Independent reviews found and resolved committed-cleanup replay and marker-to-
+receipt cross-check gaps. Owned-stage validation preserves unexpected files.
+No renderer/schema/source-YAML or generated artifact changes in this slice.
+
+| Literal item2 acceptance | Result | Direct evidence |
+| --- | --- | --- |
+| MCP tool over guided authoring workspace, same write gate and honest annotations | met locally | `test_agent_authoring.py`, `test_authoring_stdio.py`: both paths contained, gate before reads, writer/destructive/idempotent annotations, exact CLI result, canonical aliases and failed preflight envelopes. |
+| Own stale-base, replay and no-overwrite tests | met locally | Operational authoring/recovery tests and `test_authoring_command_transaction.py`: restart/after-later-write replay, changed-ID refusal, corrupt receipts/markers, no-op, rollback, replace-then-raise acceptance, two spawned writers. |
+| MCP stdio test where it is a tool | met locally | `tests/mcp/test_authoring_stdio.py`: enabled/disabled server, exact retry, stale base and ID reuse without overwriting receipts/workspace. |
+| Required release evidence | not met | Item5 then item3 must release first; item2 PR CI, exact-main three-OS/conformance/wheel/MCP and official materializer comparison remain pending. |
+
+Verification: combined focused authoring/containment/registry/CLI/Store/MCP
+batch **1010 passed**; final recovery/helper migration **489 passed** and
+case/staging/process batch **58 passed**. These batches overlap, not additive.
+`tools/check_import_direction.py`: 11 packages/37 inward edges; diff check clean.
+Full local pytest/public-materializer reruns deliberately delegated to CI.
