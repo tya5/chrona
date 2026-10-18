@@ -1,6 +1,6 @@
 # Issue 1679: realized legend work record (2026-10-18)
 
-Status: design complete; implementation planning is next. No product changes.
+Status: design/architecture review published at `e1ede946c`; implementation plan finalized below. Product work waits for #1680 integration.
 
 ## Baseline and order
 
@@ -30,6 +30,17 @@ Status: design complete; implementation planning is next. No product changes.
 - **Scene/adapters (Spec08):** consume completed entries and shared ink, not domain facts or source declarations to infer legends. Existing finite circle/rule-pair projections remain intentional; pattern/effect geometry is not copied to those shapes.
 - Independent Luna audits identified the two genuine gaps (within-class Style wording and paint/capability parity); the rules above close both before implementation. Remaining risk is implementation parity, covered by synthetic and adapter tests, not another owner decision.
 
-## Implementation planning next
+## Implementation plan
 
-Finalize file-owned slices for shared paint parity, source normalization, candidate/witness composition, and final acceptance. Publish that plan before product edits. Required evidence includes synthetic actual/progress/trait/Style variants; equal-ink distinct meanings; all-encoded and mixed planned marks; absent versus supplied-empty sources and explicit forecast delta; focused conformance; one batched public 50-slide count table; and inspected executive-light/target-b PNGs. Full pytest, wheel and reproduction gates run in CI; close only after exact-main release and all four literal rows are verified.
+All slices are independently focused-testable WIP publications; one coherent product PR includes I1–I4 after #1680 integration. Do not land the paint bridge or progress migration halfway through the fix. Main landing follows B's promised window; reconcile its current profile/packing changes without taking ownership.
+
+| Slice | Owned files/boundary | Acceptance and focused evidence |
+| --- | --- | --- |
+| I1 shared paint parity | `model/theme_paint.py` or a small adjacent model module; `scene/paint.py`, `scene/v05_builder.py`; neutral profile adaptation in `surface_pipeline.py`/existing request preparation | One consumed channel/override/gradient-admission result, no duplicate resolver or Scene dependency in Layout. Test Style/Actual/explicit-role precedence, outline/fixed glyph channels, replaced gradient, required failure/optional solid fallback, finite circle/rule-pair ink. Existing `test_actual_variance_fill_resolution.py`, `test_style_fill_scene_bridge.py`, `test_capabilities.py` remain gates. Ordinary Scene output unchanged in this structural slice. |
+| I2 source normalization | `review/v05_content.py::normalize_v05_table_content`; the existing lane path only where its declared source needs it | Columns and cells use the same normalized list before measurement. `test_v05_content.py`/`test_surface_content.py`: absent versus supplied-empty Actual, Snapshot-alone no ordinary delta, explicit forecast delta, bound scenario/Snapshot columns and preserved required-source errors. No `examples/` repair or B-owned field accessor change. |
+| I3 candidate and witness composition | `review/v05_content.py::legend_entries`, `review/profile_connections.py`; `model/surface_content.py`; `layout/style_legend.py`, `surface_legend.py`, `surface_marks.py` and composer call only as needed | Reserve possible variants/progress before sizing; final completed marks/shapes/text filter once and recompose fixed slots. Add consumed typed witness/entry fields only. Tests cover multiple trait paints, same-class Style variants, equal-painted Actual coalescing, Actual/Progress equal-ink separation, zero/absent/clipped progress, all-encoded versus mixed planned/forecast, unused keys and wording validation. Remove host-key progress inset atomically with separate keys. Preserve S2 scope/domain order and diagnostics. |
+| I4 adapter and release acceptance | Synthetic integration fixtures and existing legend/actual/progress integration tests; one concise acceptance review | Run focused tests for all four literal rows, inward-import/reachability/ownership checks and conformance. Batch all public materializers once; disclose per-slide primitive/route/label/diagnostic counts, not byte-preservation expectations. Inspect before/after executive-light actual and target-b absent/encoded/forecast PNGs. Public source YAML remains unchanged. |
+
+I1 and the non-overlapping I2 may run through Luna agents after the baseline is integrated; root owns I3 and serial publication. Publish completed slices with focused evidence; a contract gap returns to normative design before code continues. No new schema version or resource migration is planned; if a schema edit proves necessary, apply Spec56 equivalence checks before publication.
+
+The code PR's exact-head CI supplies pytest shards, conformance and newest-Python reproduction. After merge, publish the batched literal acceptance/release review and verify full three-OS pytest/conformance/wheel evidence on the exact main containing that review. Close only when every literal row is met, inspected PNGs and the public count table are linked, and release checks pass; update the specification closure ledger. No local full pytest duplicate is planned.
