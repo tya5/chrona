@@ -31,12 +31,19 @@ the combined diagnostics/operational/recovery/agent/transaction/lock/MCP-stdio
 batch passes112. Import-direction and literal-review checks pass. Earlier
 focused batches overlap and are not additive.
 
-CI39108636652 on199272f90 failed two conformance subchecks: four helper calls
-presented their code without following context, and the CLI reference was
-stale. Private guards now take `(code, path)` with identical runtime messages
+CI39108636652 on199272f90 failed conformance and pytest shards2/3. All failures
+are accounted for: four helper calls lacked following diagnostic context; the
+CLI reference was stale (also shard2); the exact import-set test omitted the
+approved authoring port (shard2); and the skill exceeded its200-line limit
+(shard3). Private guards now take `(code, path)` with identical runtime messages
 and failure predicates; direct tests retain those owner paths. Diagnostic
 validation has no bare/unclassified sites or policy exclusions. The existing
 CLI-reference generator refreshed only MCP help copy; grammar is unchanged.
+The import expectation now includes only the approved port, with positive and
+SDK-binding rejection coverage; production permissions are unchanged. The skill
+is200 lines, preserving write authorization, stale-base and durable replay rules.
+The exact affected import/CLI/skill batch passes78 tests; skill validation,
+import-direction and generated CLI-reference checks pass. No gate was weakened.
 Its official artifact12129351876 retains all50 SVG/Scene pairs and changes only
 two reviewed diagnostic inventories; that old artifact is not final acceptance.
 Current-head PR checks, official artifact comparison and successful
