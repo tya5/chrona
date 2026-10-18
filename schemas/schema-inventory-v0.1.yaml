@@ -1,5 +1,6 @@
 version: chrona/schema-inventory/v0.1
 schemas:
+  - {file: wording-tables-v0.1.schema.yaml, kind: builtin-wording-tables, state: live, consumers: [src/chrona/presentation/model/wording_tables.py]}
   - {file: axis-name-tables-v0.1.schema.yaml, kind: builtin-axis-name-tables, state: live, consumers: [src/chrona/presentation/model/axis_names.py]}
   - {file: actual-intake-batch-v0.2.schema.yaml, kind: actual-intake-batch, state: live, consumers: [src/chrona/operational/command_engine.py]}
   - {file: actual-set-v0.3.schema.yaml, kind: actual-set, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
@@ -81,7 +82,9 @@ schemas:
       profileFigure: "sha256:9239914c0ef5fae70ea224d1c46cd5e1430cec63d99ecd4f539421b071782ea6"
       profileBinding: "sha256:04325918c7ff85b736bedfbaab5288f3992cda0c138b50e7da40c43cfc4a8789"
       profileBindings: "sha256:4452c5489b8d4c993c417aa2e0c89cebfc0cb56e18fb6da60debbc4a8c5d43ce"
-      viewWording: "sha256:353408d0fce7cae7030a76d9fc6a1335f0f4dd821af40ba03c60b543320e251b"
+      viewWording: "sha256:8621134f7cff3eb87910859ea16ad2db2272a75d56be1c5b767c0ff8850e5651"
+      wordingKey: "sha256:9a4635e5d1bc1bbbb088a20cb7e9a998fe6feedddae7fc53b5a54002b4d7b5e0"
+      wordingRef: "sha256:aa52583b3f55a590ad8c90d8e17eecc7c51e7edec997e6f5b34d0d03b058559a"
       profileLegendLabel: "sha256:f7be3125a2038a14d7cd75b5ae3a7eeefaaf39698437bbbabfa6eb0163390469"
       profileSummaryLabel: "sha256:00404e686415370f1711c4d7acfa2905444d3cf23cef2e10c47d445ebe690f96"
       summarySlotSource: "sha256:9f0c93048c879c5ac3d6d5963ba6f2c5373f46f6696c2af20e294b03f8407e8c"

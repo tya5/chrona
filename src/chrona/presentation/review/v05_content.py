@@ -10,6 +10,7 @@ from typing import Any, Mapping
 from chrona.presentation.model.actual_variance_paint import select_actual_variance_paints
 from chrona.presentation.model.date_basis import DisplayDateRange, ItemDateBasis, date_range_display
 from chrona.presentation.model.hierarchy_names import close_member_names, member_name_key, path_name_selected
+from chrona.presentation.model.wording_tables import WordingResolver, wording_resolver
 from chrona.presentation.model.projection import ObservationState, ReviewProjection, display_finish_delta
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
@@ -79,12 +80,14 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
                                 locale: str = "en-US") -> TableContent:
     """Normalize the table once so measurement and composition read the same cells."""
     member_names = close_member_names(projection, view)
+    resolver = wording_resolver(locale, view.wording)
     if getattr(view.rows.mode, "value", view.rows.mode) == "lanes":
-        return replace(_lane_table_content(projection, project, view), member_names=member_names)
+        return replace(_lane_table_content(projection, project, view, resolver), member_names=member_names)
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
     active_columns = tuple(column for column in view.table_columns
                            if _table_column_source_available(column.source, projection, actual_set))
-    columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width), column.header_orientation,
+    columns = tuple(TableColumnContent(column.id, resolver.resolve(column.header) if column.header is not None else column.id,
+                                       column.align, _column_width(column.width), column.header_orientation,
                                        text_wrap=column.text_wrap, column_source=column.source)
                     for column in active_columns)
     group_ranges = {
@@ -120,11 +123,11 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
             declared = column.missing_by.get(_absence_state(item), missing)
             missing = declared if isinstance(declared, Mapping) else str(declared)
         if value is None and missing == "in-progress" and _is_actual_source(column.source):
-            core = _missing_actual_display(item, as_of)
+            core = _missing_actual_display(item, as_of, resolver.text("missing.inProgress"))
         else:
             core = display_value(value, missing, column.format, locale=locale, zero=column.zero,
                                  end_display=column.end_display, transform=column.transform,
-                                 years_visible=years_visible)
+                                 years_visible=years_visible, missing_words=resolver.missing_words())
             if column.transform == "initials" and isinstance(value, str) and not initials(value):
                 value = None  # no letter or digit: the cell reads as absent, so the `missing` affix applies (#1373)
         if column.suffix is not None:
@@ -278,7 +281,8 @@ def _default_lane_header(projection: ReviewProjection, lane_table: Any) -> str:
     return "Lane"
 
 
-def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> TableContent:
+def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
+                        resolver: WordingResolver) -> TableContent:
     """Build exact lane summary cells solely from the immutable membership projection."""
     lane_table = view.rows.lane_table
     if projection.lane_membership is None or not projection.lane_rows or lane_table is None:
@@ -359,7 +363,8 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
                 value = (entity_title_or_value(founder.field_bindings.read(founder.fields, column.source), project)
                          if founder is not None else None)
             cells.append(TableCellContent(row.lane_id, column.id,
-                                          display_value(value, column.missing, "text", transform=column.transform)
+                                          display_value(value, column.missing, "text", transform=column.transform,
+                                                          missing_words=resolver.missing_words())
                                           + (column.suffix or ""),
                                           "tableCell", column.text_role or "text",
                                           style_key=_table_style_key(founder, row.lane_id, column.id, "tableCell")))
@@ -451,12 +456,14 @@ def _style_match_index(intents: OccurrenceStyleIndex,
 def _default_legend_entries(entries: tuple[SurfaceLegendEntry, ...],
                             detail: ReviewDetailInput | None, *,
                             potential_roles: frozenset[str],
-                            wording: Mapping[str, str]) -> tuple[SurfaceLegendEntry, ...]:
+                            wording: Mapping[str, str], locale: str = "en-US",
+                            keys: Mapping[str, str] | None = None) -> tuple[SurfaceLegendEntry, ...]:
     """Reserve missing comparison keys; completed Layout still owns admission."""
     opted_out = frozenset(detail.unkeyed_legend_roles if detail is not None else ())
     declared = {entry.role for entry in entries}
-    defaults = tuple(SurfaceLegendEntry(role, wording.get(role, label))
-                     for role, label in (("snapshot", "Baseline"), ("deadlineMark", "Deadline"))
+    resolver = WordingResolver(locale, keys or {}, wording)
+    defaults = tuple(SurfaceLegendEntry(role, resolver.legend_text(role))
+                     for role in ("snapshot", "deadlineMark")
                      if role in potential_roles and role not in declared and role not in opted_out)
     authored_roles = {entry.role for entry in detail.legend} if detail is not None else set()
     insertion = next((index for index, entry in enumerate(entries)
@@ -696,8 +703,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     notes = tuple((str(key), str(value.get("text", ""))) for key, value in project_notes.items()
                  if key not in consumed_note_ids)
     calendar_closed, calendar_exceptions = calendar_closures(project, projection, view)
-    legend_wording = (view.wording or {}).get("legend", {})
-    forecast_label = legend_wording.get("forecast") if isinstance(legend_wording, Mapping) else None
+    resolver = wording_resolver(locale, view.wording)
+    forecast_label = resolver.legend_text("forecast")
     legend = legend_entries(detail, project, projection, color_scale, closed_days_drawn=bool(calendar_closed),
                             forecast_label=forecast_label)
     if view.surface == "dependency-network" and projection.network is not None:
@@ -713,9 +720,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         has_visible_critical_edge = False
     if (has_visible_critical_edge
             and not any(entry.role == "critical-edge" for entry in legend)):
-        critical_label = (legend_wording.get("critical-edge", "Critical dependency")
-                          if isinstance(legend_wording, Mapping) else "Critical dependency")
-        legend = (*legend, SurfaceLegendEntry("critical-edge", str(critical_label)))
+        legend = (*legend, SurfaceLegendEntry("critical-edge", resolver.legend_text("critical-edge")))
     detail_content = normalize_v05_review_detail_profile(detail, projection.items)
     scale_legend_paints: tuple[tuple[str, str], ...] = ()
     encoding_rules = ()
@@ -734,7 +739,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                relation_overflow_declared=isinstance(relation_value, Mapping) and "overflow" in relation_value,
                                group_presentation=group_presentation,
                                axis_tiers=axis_tiers, axis_fiscal_start_month=fiscal_start_month,
-                               as_of=as_of, as_of_label=_as_of_label(as_of_marker, as_of, locale),
+                               as_of=as_of, as_of_label=_as_of_label(as_of_marker, as_of, locale, resolver),
                                annotation_numbered=annotation_numbered,
                                calendar_closed=calendar_closed, calendar_exceptions=calendar_exceptions,
                                    notes=notes, legend_entries=legend, coverage_text="",
@@ -779,7 +784,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         potential_roles |= {"deadlineMark"}
     content = replace(content, legend_entries=_default_legend_entries(
         content.legend_entries, detail, potential_roles=potential_roles,
-        wording=legend_wording if isinstance(legend_wording, Mapping) else {}))
+        wording=resolver.legend, locale=locale, keys=resolver.keys))
     if style_rules or encoding_rules:
         assert facts is not None
         encoding_sources: dict[str, EncodingSource] = {}
@@ -816,7 +821,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                 source_refs={rule.rule_id: rule.source_ref for rule in (*encoding_rules, *style_rules)})
     content = bind_view_legend_witnesses(content, facts.occurrences if facts else (), encoding_rules, color_scale)
     return replace(content,
-        legend_wording=tuple(sorted((view.wording or {}).get("legend", {}).items())),
+        legend_wording=tuple(sorted(resolver.legend.items())),
         legend_mark_occurrences=tuple(item for item in (facts.occurrences if facts else ())
                                       if item.primitive_family == "mark"),
         legend_progress_possible=_positive_legend_progress(projection, view.progress_fill))
@@ -908,14 +913,15 @@ def _attached_labels(projection: ReviewProjection, locale: str,
     return tuple(labels)
 
 
-def _as_of_label(marker: Mapping[str, Any] | None, as_of: date | None, locale: str) -> str:
+def _as_of_label(marker: Mapping[str, Any] | None, as_of: date | None, locale: str,
+                 resolver: WordingResolver | None = None) -> str:
     """Return the as-of label exactly as declared, plus a date only in a declared form (#428).
 
     A View without an as-of marker keeps the implicit "As of <localized date>"
     label; a declared marker is its own text unless it names a date form.
     """
     date_form = {"form": "localized-date"} if marker is None else marker.get("date")
-    label = "As of" if marker is None else str(marker.get("label", ""))
+    label = (resolver or wording_resolver(locale, None)).text("marker.asOf") if marker is None else str(marker.get("label", ""))
     if not isinstance(date_form, Mapping) or as_of is None:
         return label
     table = axis_name_table(str(date_form.get("nameTable", locale)))
@@ -1103,13 +1109,13 @@ def _absence_state(item: Any) -> str:
     return "unavailable"
 
 
-def _missing_actual_display(item: Any, as_of: date | None) -> str:
+def _missing_actual_display(item: Any, as_of: date | None, in_progress: str = "in progress") -> str:
     """Render absence as progress only for an active planned span at the cutoff."""
     planned = item.planned if hasattr(item, "planned") else {}
     start, end = planned.get("start"), planned.get("end")
     if (getattr(item, "source_type", None) == "span" and isinstance(start, date)
             and isinstance(end, date) and as_of is not None and start <= as_of < end):
-        return "in progress"
+        return in_progress
     return "—"
 
 
@@ -1118,7 +1124,8 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
                               actual_set: Mapping[str, Any] | None,
                               project: Mapping[str, Any] | None = None, *,
                               omitted_metrics: frozenset[tuple[int, int]] = frozenset(),
-                              summary_wording: Mapping[str, str] | None = None) -> SummaryContent:
+                              summary_wording: Mapping[str, str] | None = None,
+                              unknown_text: str = "unknown") -> SummaryContent:
     """Resolve summary-profile facts once, before source measurement and Layout."""
     points = sorted(item.planned["at"] for item in projection.items
                     if item.source_type == "point" and isinstance(item.planned.get("at"), date))
@@ -1175,7 +1182,7 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
                 if formatter not in {"text", "date", "count", "signedDays"}:
                     raise ValueError(f"E_PRESENTATION_SUMMARY_FORMAT: {metric_path}/format={_diagnostic_value(formatter)}; expected text, date, count, or signedDays")
                 raw = values[source]
-                rendered = "unknown" if raw is None else (
+                rendered = unknown_text if raw is None else (
                     raw.isoformat() if formatter == "date" and isinstance(raw, date)
                     else f"{raw:+d}d" if formatter == "signedDays" and isinstance(raw, int)
                     else str(raw)

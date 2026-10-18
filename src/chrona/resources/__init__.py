@@ -133,6 +133,14 @@ def axis_name_tables_resource() -> Traversable:
     return resource
 
 
+def wording_tables_resource() -> Traversable:
+    """Return the finite, wheel-owned built-in wording catalog (#1724)."""
+    resource = files(__package__).joinpath("wording-tables-v0.1.yaml")
+    if not resource.is_file():
+        raise ValueError("E_WORDING_TABLE_RESOURCE: the packaged wording-tables-v0.1.yaml is missing")
+    return resource
+
+
 def builtin_preset_source_root(address: str) -> Traversable:
     """Resolve one safe builtin-library source root in wheel or source authority."""
     path = PurePosixPath(address)

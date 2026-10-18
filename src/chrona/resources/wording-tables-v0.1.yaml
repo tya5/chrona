@@ -1,0 +1,38 @@
+version: chrona/wording-tables/v0.1
+tables:
+  en-US:
+    column.task: Task
+    column.plan: Plan
+    marker.today: TODAY
+    marker.asOf: As of
+    legend.planned: Task duration
+    legend.actual: Actual
+    legend.milestone: Milestone
+    legend.dependency: Dependency
+    legend.asOf: Today
+    legend.calendar-closed: Non-working day
+    legend.critical-edge: Critical dependency
+    legend.forecast: Forecast (* estimated)
+    legend.progressFill: Progress
+    legend.snapshot: Baseline
+    legend.deadlineMark: Deadline
+    missing.unknown: unknown
+    missing.inProgress: in progress
+  ja-JP:
+    column.task: タスク
+    column.plan: 計画
+    marker.today: 本日
+    marker.asOf: 基準日
+    legend.planned: 計画期間
+    legend.actual: 実績
+    legend.milestone: マイルストーン
+    legend.dependency: 依存関係
+    legend.asOf: 本日
+    legend.calendar-closed: 休業日
+    legend.critical-edge: クリティカルな依存関係
+    legend.forecast: 予測（*は推定）
+    legend.progressFill: 進捗
+    legend.snapshot: 基準計画
+    legend.deadlineMark: 期限
+    missing.unknown: 不明
+    missing.inProgress: 進行中

@@ -48,6 +48,7 @@ def empty_package(monkeypatch, tmp_path: Path) -> Path:
     (lambda: resources.default_preset_root(), "default.yaml"),
     (lambda: resources.builtin_preset_library_resource(), "presets/library.yaml"),
     (lambda: resources.axis_name_tables_resource(), "axis-name-tables-v0.1.yaml"),
+    (lambda: resources.wording_tables_resource(), "wording-tables-v0.1.yaml"),
     (lambda: resources.minimal_template_resource(), "templates/minimal"),
     (lambda: resources.builtin_preset_source_root("presets/nowhere"), "'presets/nowhere'"),
     (lambda: resources.builtin_preset_source_root("../escape"), "'../escape'"),

@@ -888,6 +888,27 @@ in Specification 28 are explicit exceptions, like the Forecast key in §8:
 and `actual-behind` address qualifier fragments appended to the authored
 Actual label. These are wording targets, not new paint or registry roles.
 
+**Built-in wording keys (#1724).** Built-in text (table headers, the as-of marker,
+legend labels, the Forecast and Critical dependency keys, absent-value words) is
+looked up by a closed key in the bundled wording table of
+[Axis Name Tables](63-axis-name-tables.md#built-in-wording-tables), one complete
+table per supported locale (`en-US`, `ja-JP`), selected by the Render Context locale
+only. A preset, View or Detail Profile references an entry as `{wording: <key>}` in
+`tableColumns[].header`, `markers[].label` and a Detail legend `label`; each also
+accepts a literal. The text of one built-in label resolves, lowest to highest:
+(1) the table entry for the locale; (2) a literal authored in the preset (never
+translated); (3) the View `wording.keys: {<key>: <text>}` override of that key;
+(4) `wording.legend.<role>` or `wording.summary.<id>`, which wins over
+`wording.keys["legend.<role>"]` when both address one label. A legend entry of role
+`R` is keyed `legend.R`, so `wording.keys` also replaces a literal legend label of
+that role. An unknown `wording.keys` key is `E_VIEW_WORDING_UNKNOWN` at
+`/body/wording/keys/<key>`. The default `Critical dependency` text of the network
+`critical-edge` key is the table entry `legend.critical-edge`; `wording.legend.critical-edge`
+(level 4) is unchanged. The closed-day legend role `calendar-closed` is keyed
+`legend.calendar-closed` (`Non-working day`, `休業日`), never `Weekend`, because the role also
+draws public holidays. A key never changes paint, identity or order, and an omitted
+`header` leaves the column `id` as the header.
+
 Before table measurement, omit comparison-dependent columns whose closed
 source is absent (#1679). Actual/progress/missing-Actual sources require a
 supplied Actual Set; a supplied but empty set retains the column and its
