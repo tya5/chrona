@@ -1,0 +1,23 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: chrona/wording-tables-v0.1
+description: Finite wheel-owned built-in wording catalog, one complete table per supported locale.
+type: object
+required: [version, tables]
+additionalProperties: false
+properties:
+  version: {description: Catalog contract version., const: chrona/wording-tables/v0.1}
+  tables:
+    description: Complete built-in table registry.
+    type: object
+    required: [en-US, ja-JP]
+    additionalProperties: false
+    properties:
+      en-US: {$ref: '#/$defs/table'}
+      ja-JP: {$ref: '#/$defs/table'}
+$defs:
+  table:
+    description: One locale's text for every wording key; completeness is checked by the loader and by the all-locale key test.
+    type: object
+    minProperties: 1
+    propertyNames: {$ref: 'urn:chrona:common-v0.1#/$defs/wordingKey'}
+    additionalProperties: {description: The built-in text for the key in this locale., type: string, minLength: 1}

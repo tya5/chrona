@@ -191,7 +191,7 @@ def test_shapes_do_not_waive_bend_quality_or_full_route_acceptance(monkeypatch):
     result = _select(max_bends=0)
     assert result.selected_pair is None and not result.settled_by_shape
     assert result.attempts[0].outcome == "quality-rejected"
-    assert counts["graph"] == 2  # cheap fallback, then exact rescue
+    assert counts["graph"] == 1  # exact rescue reuses the cheap fallback's geometry
     assert counts["reverse"] == 1  # only the rescue prepares the exact bound
     result = _select(accept=lambda points: False)
     assert result.selected_pair is None and not result.settled_by_shape

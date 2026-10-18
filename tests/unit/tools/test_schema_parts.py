@@ -392,9 +392,13 @@ PROBES: dict[str, tuple[list[Any], list[Any]]] = {
                          {"x": {"figure": {"id": "x", "kind": "count", "source": "selected"}}}, None]),
     "viewWording": ([{}, {"legend": {"planned": "Plan"}}, {"summary": {"launch.countdown": "Days"}},
                       {"legend": {}, "summary": {"part.one.two": ""}}, {"summary": {"x": "line\nallowed"}},
-                      {"legend": {"risk": "x" * 4096}}],
+                      {"legend": {"risk": "x" * 4096}}, {"keys": {"legend.calendar-closed": "Holiday"}}, {"keys": {}}],
                      [{"legend": {"planned": ""}}, {"legend": {"planned": "x" * 4097}},
-                      {"extra": {}}, {"legend": "Plan"}, None]),
+                      {"extra": {}}, {"legend": "Plan"}, {"keys": {"column.task": ""}}, {"keys": {"": "x"}},
+                      {"keys": "Task"}, None]),
+    "wordingKey": (["column.task", "legend.calendar-closed", "missing.inProgress"], ["", "column", "Column.task", None, 5]),
+    "wordingRef": ([{"wording": "column.plan"}], [{}, {"wording": "column.nope"}, {"wording": "column.plan", "extra": 1},
+                                                   "column.plan", None]),
     "profileLegendLabel": (["Plan", "x" * 4096], ["", "x" * 4097, None, 5]),
     "profileSummaryLabel": (["", "x", "line\nallowed", "x" * 8192], [None, 5, {}]),
     "summarySlotSource": ([{"slot": "countdown"}, {"slot": "Work package / gate"}, {"slot": "with\nline"}],
@@ -475,6 +479,7 @@ ADOPTERS = frozenset({
     "preset-library-v0.2.schema.yaml", "profile-v0.3.schema.yaml", "project-v0.7.schema.yaml",
     "render-context-v0.17.schema.yaml", "scene-v0.7.schema.yaml", "style-v0.2.schema.yaml", "summary-profile-v0.2.schema.yaml", "theme-asset-source-v0.2.schema.yaml",
     "theme-v0.16.schema.yaml", "view-v0.28.schema.yaml",
+    "review-detail-profile-v0.1.schema.yaml", "wording-tables-v0.1.schema.yaml",
 })
 
 

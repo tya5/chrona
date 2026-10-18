@@ -430,17 +430,20 @@ def initials(text: str) -> str:
 
 def display_value(value: Any, missing: str | Mapping[str, Any], formatter: str | BooleanPresencePresentation = "text", *,
                   locale: str = "en-US", zero: str = "signed", end_display: str = "exclusive",
-                  transform: str | None = None, years_visible: bool = False) -> str:
+                  transform: str | None = None, years_visible: bool = False,
+                  missing_words: Mapping[str, str] | None = None) -> str:
     """Format a normalized table value according to its declared View contract.
 
     ``years_visible`` is true when the visible window spans more than one calendar year: every
     ``dateRange`` date then carries its year (#1724).
+    `missing_words` supplies the locale text of `unknown` and `in-progress` (#1724); this function does no lookup.
     """
     if value is None:
         if isinstance(missing, Mapping):
             return str(missing["text"])  # an author-chosen literal, shown exactly (#1288)
-        return {"blank": "", "em-dash": "—", "unknown": "unknown",
-                "in-progress": "in progress"}[missing]
+        words = {"unknown": "unknown", "in-progress": "in progress", **(missing_words or {})}
+        return {"blank": "", "em-dash": "—", "unknown": words["unknown"],
+                "in-progress": words["in-progress"]}[missing]
     if isinstance(value, bool):
         if isinstance(formatter, BooleanPresencePresentation):
             return formatter.when_true if value else formatter.when_false
@@ -450,7 +453,7 @@ def display_value(value: Any, missing: str | Mapping[str, Any], formatter: str |
     if transform == "initials":
         if not isinstance(value, str):
             raise _diagnostic_error("E_VIEW_COLUMN_TRANSFORM", f"valueType={type(value).__name__}, transform=initials; expected a text value")
-        return initials(value) or display_value(None, missing, formatter)
+        return initials(value) or display_value(None, missing, formatter, missing_words=missing_words)
     if formatter == "date":
         if isinstance(value, date):
             return value.isoformat()

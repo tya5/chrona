@@ -1,0 +1,174 @@
+{
+  "argv": [
+    "render",
+    "/tmp/chrona-1734-evidence.qW1pl7/b240.yaml",
+    "--preset",
+    "chrona-default-draft",
+    "--progress",
+    "--output",
+    "/tmp/chrona-1734-evidence.qW1pl7/s1-candidate240-profile.svg",
+    "--emit-scene",
+    "/tmp/chrona-1734-evidence.qW1pl7/s1-candidate240-profile.scene.json"
+  ],
+  "argv_paths_sha256": "f986422e3b1224ebed73bc216504a857ec3911da5955994f8cbb6cd349767cb9",
+  "exclusive_total_seconds": 43.41813250025734,
+  "git_dirty": false,
+  "git_head": "7421b458712e37bad85f8ffc84228f7358796393",
+  "patch_alias_counts": {
+    "graph.envelope": 1,
+    "graph.reverse_bounds": 1,
+    "graph.sparse_graph": 1,
+    "graph.visibility_base": 1,
+    "labels.member": 2,
+    "labels.preparation": 1,
+    "labels.relation": 2,
+    "labels.span_paint": 1,
+    "routing.compose_surface_routes": 2,
+    "routing.label_trial_other": 1,
+    "routing.resolution": 2,
+    "routing.selection_other": 2
+  },
+  "phases": {
+    "route-label-baseline/normal/candidate.accept": {
+      "calls": 553,
+      "exclusive_seconds": 0.15191982872784138
+    },
+    "route-label-baseline/normal/candidate.prepare": {
+      "calls": 403,
+      "exclusive_seconds": 0.016603675670921803
+    },
+    "route-label-baseline/normal/candidate.rank": {
+      "calls": 56,
+      "exclusive_seconds": 0.001558337826281786
+    },
+    "route-label-baseline/normal/graph.envelope": {
+      "calls": 61920,
+      "exclusive_seconds": 0.010749829467386007
+    },
+    "route-label-baseline/normal/graph.reverse_bounds": {
+      "calls": 60,
+      "exclusive_seconds": 3.2782136630266905
+    },
+    "route-label-baseline/normal/graph.sparse_graph": {
+      "calls": 129,
+      "exclusive_seconds": 8.637841332703829
+    },
+    "route-label-baseline/normal/graph.visibility_base": {
+      "calls": 1,
+      "exclusive_seconds": 0.06537329079583287
+    },
+    "route-label-baseline/normal/routing.resolution_attempt_other": {
+      "calls": 336,
+      "exclusive_seconds": 0.003494914621114731
+    },
+    "route-label-baseline/normal/routing.selection_other": {
+      "calls": 336,
+      "exclusive_seconds": 1.2009557904675603
+    },
+    "route-label-baseline/unspecified/labels.member": {
+      "calls": 209,
+      "exclusive_seconds": 14.742456749081612
+    },
+    "route-label-baseline/unspecified/labels.preparation": {
+      "calls": 1,
+      "exclusive_seconds": 0.0007112943567335606
+    },
+    "route-label-baseline/unspecified/labels.relation": {
+      "calls": 1,
+      "exclusive_seconds": 0.00011279061436653137
+    },
+    "route-label-baseline/unspecified/labels.span_paint": {
+      "calls": 240,
+      "exclusive_seconds": 0.005945789627730846
+    },
+    "route-label-baseline/unspecified/routing.compose_surface_routes": {
+      "calls": 1,
+      "exclusive_seconds": 0.3363586333580315
+    },
+    "route-label-baseline/unspecified/routing.label_trial_other": {
+      "calls": 1,
+      "exclusive_seconds": 0.00011491728946566582
+    },
+    "route-label-baseline/unspecified/routing.resolution": {
+      "calls": 336,
+      "exclusive_seconds": 0.0030961204320192337
+    },
+    "route-label-recovery/normal/candidate.accept": {
+      "calls": 516,
+      "exclusive_seconds": 0.14424967812374234
+    },
+    "route-label-recovery/normal/candidate.prepare": {
+      "calls": 412,
+      "exclusive_seconds": 0.09409913141280413
+    },
+    "route-label-recovery/normal/graph.envelope": {
+      "calls": 21600,
+      "exclusive_seconds": 0.004701667930930853
+    },
+    "route-label-recovery/normal/graph.sparse_graph": {
+      "calls": 15,
+      "exclusive_seconds": 4.536106498911977
+    },
+    "route-label-recovery/normal/graph.visibility_base": {
+      "calls": 1,
+      "exclusive_seconds": 0.71437320811674
+    },
+    "route-label-recovery/normal/routing.resolution_attempt_other": {
+      "calls": 336,
+      "exclusive_seconds": 0.004182257689535618
+    },
+    "route-label-recovery/normal/routing.selection_other": {
+      "calls": 336,
+      "exclusive_seconds": 7.5836712014861405
+    },
+    "route-label-recovery/unspecified/labels.member": {
+      "calls": 1,
+      "exclusive_seconds": 1.3564551253803074
+    },
+    "route-label-recovery/unspecified/labels.preparation": {
+      "calls": 1,
+      "exclusive_seconds": 0.00031850067898631096
+    },
+    "route-label-recovery/unspecified/labels.relation": {
+      "calls": 1,
+      "exclusive_seconds": 2.4124979972839355e-05
+    },
+    "route-label-recovery/unspecified/labels.span_paint": {
+      "calls": 240,
+      "exclusive_seconds": 0.0009973742999136448
+    },
+    "route-label-recovery/unspecified/routing.compose_surface_routes": {
+      "calls": 1,
+      "exclusive_seconds": 0.4025634340941906
+    },
+    "route-label-recovery/unspecified/routing.label_trial_other": {
+      "calls": 1,
+      "exclusive_seconds": 0.11392912548035383
+    },
+    "route-label-recovery/unspecified/routing.resolution": {
+      "calls": 336,
+      "exclusive_seconds": 0.003370505291968584
+    },
+    "unclassified/unspecified/labels.member": {
+      "calls": 1,
+      "exclusive_seconds": 6.316741928458214e-05
+    },
+    "unclassified/unspecified/labels.preparation": {
+      "calls": 1,
+      "exclusive_seconds": 0.000853206031024456
+    },
+    "unclassified/unspecified/labels.span_paint": {
+      "calls": 240,
+      "exclusive_seconds": 0.0026673348620533943
+    }
+  },
+  "platform": "macOS-26.3.1-arm64-arm-64bit-Mach-O",
+  "probe_sha256": "3e7afce19863aa6e5d1529c2dc6764118738e934cce65d4c5b30dbdc2d50bc50",
+  "process_outcome": "returned",
+  "python": "3.13.7 (main, Sep  6 2025, 01:18:26) [Clang 13.1.6 (clang-1316.0.21.2)]",
+  "residual_category": "unwrapped CLI/projection/other runtime",
+  "residual_seconds": 8.160537583753467,
+  "return_code": 0,
+  "source_root": "/private/tmp/chrona-1715-auto-warning.TW0LNy",
+  "wall_seconds": 51.57867008401081
+}

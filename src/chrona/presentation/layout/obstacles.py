@@ -240,6 +240,7 @@ class RouteVisibilityScope:
     port_ids: frozenset[str]
     previous_bases: dict[tuple, object]
     additions: tuple[SurfaceObstacle, ...]
+    endpoint_geometry: dict[tuple, object]
 
     def clears_additions(self, geometry: ObstacleGeometry) -> bool:
         box = obstacle_envelope(geometry)
@@ -258,7 +259,8 @@ class _PreparedSelection:
     """
 
     __slots__ = ("items", "envelopes", "clearances", "max_clearance", "queries", "_grid", "content_id",
-                 "visibility_bases", "previous_visibility_bases", "visibility_additions")
+                 "visibility_bases", "previous_visibility_bases", "visibility_additions",
+                 "endpoint_geometry")
 
     def __init__(self, items: tuple[SurfaceObstacle, ...], *,
                  previous: _PreparedSelection | None = None, added: SurfaceObstacle | None = None) -> None:
@@ -271,6 +273,9 @@ class _PreparedSelection:
         self.content_id: int | None | object = _UNSET  # computed on first route-memo use
         # Input-sized active geometry, separate from the bounded result memo.
         self.visibility_bases: dict[tuple, object] = {}
+        # Bounded geometry working set across all endpoint/visibility-base queries.
+        # Bound-mode state is completed by the caller and is not retained here.
+        self.endpoint_geometry: dict[tuple, object] = {}
         # Keep at most one previous base generation, never a snapshot chain.
         self.previous_visibility_bases: dict[tuple, object] = {}
         self.visibility_additions: tuple[SurfaceObstacle, ...] = ()
@@ -410,7 +415,8 @@ class SurfaceObstacleIndex:
         selected_ports = frozenset(item.placement_id for item in prepared.items
                                    if item.placement_id in ports)
         return RouteVisibilityScope(prepared.visibility_bases, selected_ports,
-                                    prepared.previous_visibility_bases, prepared.visibility_additions)
+                                    prepared.previous_visibility_bases, prepared.visibility_additions,
+                                    prepared.endpoint_geometry)
 
     def extend(self, obstacles: Iterable[SurfaceObstacle]) -> None:
         for obstacle in obstacles:
