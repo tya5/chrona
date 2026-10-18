@@ -356,9 +356,18 @@ class ThemeTokenView:
         roles = self._body["roles"]
         binding = roles.get(role)
         path = f"/body/roles/{role}/{property_name}"
-        if not isinstance(binding, Mapping) or not isinstance(binding.get(property_name), str):
-            raise ThemeTokenError("E_THEME_ROLE_REQUIRED", path,
-                                  f"role={_shown(role)}, property={_shown(property_name)}; bindingType={_operand(binding)}; expected token-name string")
+        if not isinstance(binding, Mapping):
+            raise ThemeTokenError(
+                "E_THEME_ROLE_REQUIRED", path,
+                f"the Theme declares no role '{role}', which this View needs (it was read for '{property_name}'); "
+                f"declare roles.{role} with its typography properties (fontFamily, fontSize, lineHeight, ...), "
+                f"for example by copying the 'heading' role (Spec 07; at /body/roles/{role})")
+        if not isinstance(binding.get(property_name), str):
+            raise ThemeTokenError(
+                "E_THEME_ROLE_REQUIRED", path,
+                f"the Theme role '{role}' declares no '{property_name}'; bind roles.{role}.{property_name} to a "
+                f"token name declared under values (Spec 07; at {path}); property={_shown(property_name)}, "
+                f"bindingType={_operand(binding.get(property_name))}; expected token-name string")
         token_id = binding[property_name]
         declared = self._body["values"].get(token_id)
         if not isinstance(declared, Mapping) or declared.get("type") != expected_type or "value" not in declared:

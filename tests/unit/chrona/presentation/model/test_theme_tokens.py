@@ -109,7 +109,7 @@ def test_missing_role_property_is_a_stable_diagnostic():
     with pytest.raises(ThemeTokenError, match="E_THEME_ROLE_REQUIRED") as error:
         ThemeTokenView(_theme()).color("planned")
     assert error.value.path == "/body/roles/planned/fill"
-    assert "role='planned', property='fill'" in error.value.detail
+    assert "declares no role 'planned'" in error.value.detail and "roles.planned" in error.value.detail
 
 
 def test_background_treatment_preserves_explicit_nondrawable_absence():
