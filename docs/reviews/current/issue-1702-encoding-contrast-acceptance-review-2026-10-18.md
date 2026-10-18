@@ -28,7 +28,11 @@ completion alone attaches passive provenance when that encoding supplies the
 final mark fill. Layout geometry, strongest-channel shape visibility and
 adapters are unchanged. Same-colour glyph, legend and stroke-only overrides
 do not acquire encoding provenance. Scene observes completed grounds only;
-existing mark policy controls severity. Scene-v0.7 widens in place; v0.6 is
+the authored mark policy controls render severity. The [pre-code corpus-policy
+clarification](https://github.com/tya5/chrona/commit/caf0a3b557365e9e6901b16a601c7c4e258f1a88)
+preserves the existing strict shape guarantee and reports new encoded-fill
+observations as warnings; an explicit caller-only policy separates them without
+changing the legacy strict evaluator or adding a Theme knob. Scene-v0.7 widens in place; v0.6 is
 unchanged. No new Theme policy or project-specific branch is introduced.
 
 Focused component/caller batch: 1,471 passed; final targeted additions: 39 and
