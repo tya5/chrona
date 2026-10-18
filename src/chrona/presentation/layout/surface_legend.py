@@ -39,12 +39,15 @@ class SurfaceLegendContext:
 
 @dataclass(frozen=True)
 class SurfaceLegendBatch:
+    """Completed extent plus the original allocation used for final fit checks."""
+
     slot: SlotPlacement
     marks: tuple[MarkPlacement, ...]
     shapes: tuple[ShapePlacement, ...]
     relations: tuple[RelationPlacement, ...]
     text: tuple[TextPlacement, ...]
     warnings: tuple[FitWarning, ...]
+    allocated_slot: SlotPlacement
 
 
 def _legacy_swatch_size(legend_size: float) -> float:
@@ -491,4 +494,4 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
     replacement = replace(legend, bounds=Rect(legend.bounds.inline, legend.bounds.block,
                                                legend.bounds.inline_size, final_size))
     return SurfaceLegendBatch(replacement, tuple(marks), tuple(shapes), tuple(relations), tuple(text),
-                              tuple(side_content_warnings))
+                              tuple(side_content_warnings), legend)

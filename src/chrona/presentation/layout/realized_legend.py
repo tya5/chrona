@@ -106,6 +106,6 @@ def recompose_realized_legend(request, legend, marks, shapes, relations, text,
     entries = filtered_realized_entries(request, marks, shapes, relations, text)
     completed = place_legend(SurfaceLegendContext(
         replace(request, surface_content=replace(request.surface_content, legend_entries=entries)),
-        legend.slot, metric_values, metric_for))
+        legend.allocated_slot, metric_values, metric_for))
     warnings.extend(completed.warnings)
     return completed
