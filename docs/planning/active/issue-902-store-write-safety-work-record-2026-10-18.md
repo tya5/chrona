@@ -1,7 +1,8 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: design preparation only; #1679/PR1692 remains the active release.
-Published baseline `ee99b2d78`. No item5 product code is changed.
+Status: selected design/whole-architecture review published at `69273a1bf`;
+#1679/PR1692 remains the active release. Published baseline `ee99b2d78`.
+No item5 product code is changed.
 
 ## Scope and literal acceptance
 
@@ -20,7 +21,7 @@ does not silently close those requirements.
 - **Authority:** [archived813 design §3.9/R7](../../archive/planning/issue-813-mcp-mutating-tools.md), [Spec15 §§3/7](../../specification/15-revision-store-adapters.md), and the shared CLI/MCP command path. The old active813 link is an archive move, not missing design. Item5 strengthens the explicitly deferred interprocess boundary; it does not add an approval step.
 - **Verified code facts:** `LocalActualStore.write` compares cached state; separate instances can accept the same base sequentially. Mutable tips and `ReplayLedger.record` use independent read/check/replace sequences. Snapshot publication already uses exclusive immutable creation. Authoring's file lock is workspace-scoped, not this Store transaction.
 - **Use cases:** two CLI/server processes mutate one Actual; identical commands race for replay; distinct Actual IDs share a ledger; snapshot capture races with its replay; a stale long-lived adapter writes after another process commits. Existing immutable revisions must remain untouched.
-- **Decisions to complete before implementation:** choose the canonical Store-wide lock owner/path, transaction span, nested/thread acquisition policy, OS failure behavior, and the smallest shared platform primitive. Determine how direct adapter CAS participates without self-deadlocking inside the command transaction. Distinguish concurrent-operation safety from crash recovery; do not silently add journaling or a distributed-lock promise.
+- **Decisions:** the selected design below closes lock identity, transaction span, nesting, thread/OS failure behavior and platform reuse. Concurrent-operation safety is not crash recovery; no journaling or distributed-lock promise is added.
 - **Architecture review:** Core/command meanings, opaque revision identities and immutable inputs stay unchanged. Persistence owns the lock; operational orchestration owns replay→mutation→record. CLI/MCP retain guards/envelopes and do not implement separate locks. Check the adjacent authoring aggregate lock and local Project adapter without expanding item5 beyond Actual/snapshot commands.
 - **Data/migration:** prefer an adapter-private persistent lock file and unchanged revision/ledger formats; decide and document any observable diagnostics or failure changes. Do not alter planned data, render layers, source YAML or generated materializers.
 - **Evidence:** spawn two independent adapters at one base, let A commit, then release stale B: current code accepts both, fixed code must preserve A and reject B without a revision or overwritten snapshot. Add overlapping command/ledger tests and applicable real stdio tests; require all three OSes in exact-main release. No timing target or sleep-based race proof.
@@ -54,3 +55,22 @@ and publication/ledger crash journaling stay outside this item. Migration adds
 only the private lock file; existing tips, immutable revisions and ledger bytes
 remain readable. Focused risks: nested self-deadlock, thread ownership, fresh
 CAS, concurrent ledger loss, acquisition failure and same-root aliases.
+
+## Item5 implementation plan
+
+One code PR only after1679 merges or is explicitly parked. These are review/test
+slices, not partially safe main releases; publish their coherent implementation
+and acceptance evidence together. Design `69273a1bf` precedes this plan.
+
+| Slice | Files/owner | Focused acceptance |
+| --- | --- | --- |
+| L1 kernel/coordinator | `storage/file_lock.py`, `storage/store_lock.py`, existing authoring wrapper | Persistent canonical-root file; nested same-thread reuse, other-thread/process exclusion, exception release and typed acquisition failure. Existing authoring Windows/POSIX diagnostics unchanged. |
+| L2 fresh CAS | `commands/actual_commands.py`, direct adapter tests | Remove cache authority; seed/write under coordinator; read fresh disk. Two spawned adapters at one base: A commits, stale B conflicts, A remains current, no B revision and no overwritten immutable bytes. Demonstrate failure on baseline before fix. |
+| L3 command transaction | `operational/command_engine.py`, `operational/references.py` | Lock before replay lookup until accepted result recorded; direct ledger RMW participates; destination registry lock for snapshots. Stale-base, same-ID replay, conflicting-ID reuse, no overwrite, concurrent distinct ledger entries and snapshot name collision. |
+| L4 release | `tests/integration/test_store_write_lock.py`, existing command/authoring/MCP stdio tests, literal review | Deterministic spawn/Event overlap proves OS serialization separately from stale-cache repair; no sleep-based success criterion. Applicable real MCP stdio stale/replay/no-overwrite tests, import/diagnostic gates and conformance. CI supplies full three-OS pytest/wheel release on exact main containing review. |
+
+Use the new worktree's own venv. No render-materializer rerun is needed for this
+storage-only slice unless dependency review reveals render-visible behavior.
+No revision/ledger schema migration or generated-output edits are planned.
+Acquisition errors are mapped narrowly; a simulated publication I/O failure
+must retain its original failure rather than claim a safe pre-write rejection.
