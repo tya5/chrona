@@ -5,6 +5,8 @@ import pytest
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.model.theme_paint import resolve_theme_paint_witness
 from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, resolve_scene_paint
+from chrona.presentation.renderers.v05_svg import render_v05_svg
+from chrona.presentation.scene.model import ScenePaint, ScenePrimitive, SceneSurface
 from chrona.presentation.scene.visual_capabilities import BASELINE_PROFILE, SVG_PROFILE, resolve_visual_profile
 
 
@@ -101,11 +103,71 @@ def test_gradient_witness_matches_adapter_paint_for_outline_and_stroke_glyph_cha
                                     part_color=part_color, gradient_bounds=(0, 0, 10, 10)).paint
         assert witness.gradient is not None and witness.gradient.admitted
         assert paint.gradient is not None
-        assert witness.identity[-1] == witness.gradient.identity
+        assert witness.identity[0] is None
         if part_mode == "stroke":
             assert paint.fill is None and paint.stroke == "#abcdef"
         else:
             assert paint.fill is None
+
+    filled = resolve_theme_paint_witness(tokens, "role", PaintFamily.SOLID)
+    assert filled.identity[0] == ("gradient", filled.gradient.identity)
+
+
+def test_svg_gradient_reference_requires_an_emitted_fill_channel():
+    values = {
+        "fill": {"type": "color", "value": "#112233"},
+        "stroke": {"type": "color", "value": "#445566"},
+        "width": {"type": "number", "value": 1.5},
+        "start": {"type": "color", "value": "#112233"},
+        "end": {"type": "color", "value": "#445566"},
+        "angle": {"type": "number", "value": 45},
+    }
+    tokens = _tokens({"fill": "fill", "stroke": "stroke", "strokeWidth": "width",
+                      "gradientStart": "start", "gradientEnd": "end", "gradientAngle": "angle"}, values)
+    gradient = resolve_scene_paint(
+        tokens, "role", PaintFamily.SOLID, gradient_bounds=(1, 1, 3, 4),
+    ).paint.gradient
+    assert gradient is not None
+    no_fill = ScenePrimitive(
+        "outline-gradient", "Rect", "object", "object", "outline", "outline",
+        (1, 1, 3, 4), paint=ScenePaint(None, "#445566", 1.5, (), 1, gradient),
+    )
+    with_fill = ScenePrimitive(
+        "filled-gradient", "Rect", "object", "object", "solid", "solid",
+        (1, 1, 3, 4), paint=ScenePaint("#112233", None, None, (), 1, gradient),
+    )
+    surface = SceneSurface(
+        "s", (), (), (), None, (no_fill, with_fill), ScenePaint("#ffffff", None, None, (), 1),
+        canvas_bounds=(0, 0, 10, 10),
+    )
+
+    output = render_v05_svg(surface)
+    outline_line = next(line for line in output.splitlines() if 'data-scene-id="outline-gradient"' in line)
+    filled_line = next(line for line in output.splitlines() if 'data-scene-id="filled-gradient"' in line)
+    assert 'fill="none"' in outline_line and 'url(#gradient-' not in outline_line
+    assert 'url(#gradient-' in filled_line
+
+
+def test_scene_paint_consumes_the_completed_witness_for_ink_and_gradient_geometry():
+    original = _tokens({"fill": "fill", "gradientStart": "start", "gradientEnd": "end",
+                        "gradientAngle": "angle"}, {
+        "fill": {"type": "color", "value": "#112233"},
+        "start": {"type": "color", "value": "#112233"},
+        "end": {"type": "color", "value": "#445566"},
+        "angle": {"type": "number", "value": 90},
+    })
+    replacement = _tokens({"fill": "replacement"}, {
+        "replacement": {"type": "color", "value": "#AABBCC"},
+    })
+    witness = resolve_theme_paint_witness(original, "role", PaintFamily.SOLID)
+
+    paint = resolve_scene_paint(replacement, "role", PaintFamily.SOLID,
+                                completed_witness=witness,
+                                gradient_bounds=(0, 0, 8, 4)).paint
+
+    assert paint.fill == "#112233"
+    assert paint.gradient is not None
+    assert paint.gradient.start == (4.0, 0.0) and paint.gradient.end == (4.0, 4.0)
 
 
 def test_baseline_omits_decorative_optional_treatment_during_scene_completion():

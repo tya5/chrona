@@ -112,7 +112,7 @@ def test_witness_retains_admitted_gradient_identity_without_geometry():
 
     assert witness.gradient is not None and witness.gradient.admitted
     assert witness.gradient.identity == ("#112233", "#445566", Decimal("45"), "required")
-    assert witness.identity[-1] == witness.gradient.identity
+    assert witness.identity[0] == ("gradient", witness.gradient.identity)
 
 
 def test_witness_optional_omission_uses_solid_identity_and_solid_override_replaces_gradient():
@@ -136,7 +136,7 @@ def test_witness_optional_omission_uses_solid_identity_and_solid_override_replac
     )
 
     assert omitted.gradient is not None and not omitted.gradient.admitted
-    assert omitted.identity == ("solid", "#112233", None, None, (), None, None, None)
+    assert omitted.identity == (("solid", "#112233"), None, None, (), Decimal(1))
     assert replaced.channels.fill == "#abcdef" and replaced.channels.solid_override
     assert replaced.gradient is None
 
@@ -162,7 +162,7 @@ def test_witness_identity_uses_effective_glyph_channels_not_replaced_role_channe
 
     assert filled.effective_channels.fill == "#fedcba"
     assert filled.effective_channels.stroke is None
-    assert filled.identity[:5] == ("solid", "#fedcba", None, None, ())
+    assert filled.identity[0] == ("solid", "#FEDCBA")
     assert outlined.effective_channels.fill is None
 
 
@@ -184,8 +184,24 @@ def test_witness_identity_retains_pattern_and_paint_family():
 
     outline = resolve_theme_paint_witness(outline_tokens, "role", PaintFamily.SOLID)
     hatch = resolve_theme_paint_witness(hatch_tokens, "role", PaintFamily.SOLID)
-    family = resolve_theme_paint_witness(hatch_tokens, "role", PaintFamily.OUTLINE)
+    family = resolve_theme_paint_witness(hatch_tokens, "role", PaintFamily.OUTLINE,
+                                         fill_override="#abcdef")
+    solid = resolve_theme_paint_witness(hatch_tokens, "role", PaintFamily.SOLID,
+                                        fill_override="#abcdef")
 
-    assert outline.identity != hatch.identity
-    assert hatch.identity != family.identity
+    assert outline.identity == hatch.identity
+    assert solid.identity == family.identity
     assert outline.pattern_identity == (("gap", (3,)), ("kind", ("outline",)))
+
+
+def test_witness_normalizes_hex_case_and_omitted_opacity():
+    upper = resolve_theme_paint_witness(
+        _tokens({"fill": "fill"}, {"fill": {"type": "color", "value": "#AABBCC"}}),
+        "role", PaintFamily.SOLID,
+    )
+    lower = resolve_theme_paint_witness(
+        _tokens({"fill": "fill"}, {"fill": {"type": "color", "value": "#aabbcc"}}),
+        "role", PaintFamily.SOLID,
+    )
+
+    assert upper.identity == lower.identity == (("solid", "#AABBCC"), None, None, (), Decimal(1))

@@ -1,6 +1,7 @@
 """Finite Theme channel requirements shared before Scene paint completion."""
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from decimal import Decimal
@@ -52,7 +53,7 @@ class GradientPaintIntent:
 
     @property
     def identity(self) -> tuple[str, str, Decimal, str]:
-        return self.start, self.end, self.angle, self.fidelity
+        return _canonical_color(self.start), _canonical_color(self.end), self.angle, self.fidelity
 
 
 @dataclass(frozen=True)
@@ -67,11 +68,23 @@ class ThemePaintWitness:
 
     @property
     def identity(self) -> tuple[object, ...]:
-        """Effective emitted ink identity; an omitted gradient is not paint."""
+        """Effective emitted ink; unused gradient/pattern declarations do not identify paint."""
         channels = self.effective_channels
-        gradient = self.gradient.identity if self.gradient is not None and self.gradient.admitted else None
-        return (self.family.value, channels.fill, channels.stroke, channels.stroke_width,
-                channels.dash, channels.opacity, self.pattern_identity, gradient)
+        gradient = (self.gradient.identity if channels.fill is not None and self.gradient is not None
+                    and self.gradient.admitted else None)
+        fill_ink = (("gradient", gradient) if gradient is not None else
+                    ("solid", _canonical_color(channels.fill)) if channels.fill is not None else None)
+        opacity = channels.opacity if channels.opacity is not None else Decimal(1)
+        stroke = _canonical_color(channels.stroke) if channels.stroke is not None else None
+        return (fill_ink, stroke, channels.stroke_width,
+                channels.dash, opacity)
+
+
+_HEX_COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
+
+
+def _canonical_color(value: str) -> str:
+    return value.upper() if _HEX_COLOR.fullmatch(value) else value
 
 
 def choose_fill_override(*, style_fill: str | None, legend_fill: str | None,

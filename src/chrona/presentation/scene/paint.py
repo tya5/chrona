@@ -11,6 +11,7 @@ from chrona.presentation.model.theme_paint import (
     PaintFamily,
     GradientPaintIntent,
     ThemePaintError,
+    ThemePaintWitness,
     resolve_legend_shape_ink,
     resolve_theme_paint_witness,
 )
@@ -99,6 +100,7 @@ class RadialOverlayResolution:
 
 def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                         *, visual_profile: VisualProfile | None = None,
+                        completed_witness: ThemePaintWitness | None = None,
                         fill_override: str | None = None,
                         gradient_bounds: tuple[float, float, float, float] | None = None,
                         glow_extent: tuple[float, float, float, float] | None = None,
@@ -112,7 +114,7 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                         catalog_glyph_line_join: str | None = None) -> PaintResolution:
     """Resolve one closed role into renderer-neutral channels, without defaults."""
     try:
-        witness = resolve_theme_paint_witness(
+        witness = completed_witness or resolve_theme_paint_witness(
             tokens, role, family,
             gradient_supported=(visual_profile is None or LINEAR_GRADIENT in visual_profile.capabilities),
             optional_gradient_omission=(visual_profile.optional_omission
