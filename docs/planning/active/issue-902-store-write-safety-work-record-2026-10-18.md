@@ -13,11 +13,12 @@ three OSes, public reproduction and MCP. Their archival/ledger update is an
 independent commit in PR1698; separate docs PR1699 was superseded to avoid
 another serial snapshot/sync cycle. Item3 code `c2984c018` and item2
 code/review `fa831e384`/`0b79e65a0` remain unreleased; this branch is not a main
-release claim. Merge/release order remains5→3→2. Item3 PR may open only after
+release claim. Publication order remains5→3→2. Item3 PR may open only after
 item5 merges and derived-main is ready; its merge waits for item5's successful
 full release. Item2 PR may open only after item3 merges and derived-main is
-ready; its merge waits for item3's successful full release. Any predecessor
-release failure remains that predecessor owner's priority. Board454 is
+ready; its own current-head checks/review still precede merge. The reviewed
+scheduling amendment below allows one latest exact-main full run to accept
+items3/2 together. Known predecessor failures remain the priority. Board454 is
 reviewer-owned and unchanged.
 
 ## Scope and literal acceptance
@@ -251,7 +252,8 @@ engine/schema code;31 focused history/concurrency/documentation cases pass.
   unchanged workspace/resource bytes on rejection. CI supplies the full gate.
 - Publication: design/implementation preparation may pipeline on its isolated
   branch. Item2 PR opens only after item3 merges and derived-main is ready; the
-  item2 merge waits until item3's successful full release. Any item3 release
+  item2 merge requires its own checks/review, while final acceptance follows
+  the shared exact-main release amendment below. Any known item3 release
   failure remains its owner's priority and blocks item2 merge. This changes PR
   timing only; item2 acceptance is unchanged.
 
@@ -306,8 +308,9 @@ the use case. Remove the old public CAS-callback wiring, not emulate it.
 | A3 front ends/release | `app/cli.py`, `app/agent_tools.py`, import guard, registry/CLI/MCP tests and literal review | Tool-set v0.6/new tool and honest annotations; gate before missing/malformed/escaped files open; canonical/symlink scope; exact CLI/tool results, stale/replay/no-overwrite over real stdio. Run focused tests per owner, then combined tests and planned CI full three-OS/conformance/wheel/MCP; inspect official materializer deltas as a batch. No renderer policy/source change intended. |
 
 Implement as isolated WIP while predecessor releases run; one coherent item2 PR
-may open after item3 merges and derived-main is ready, but item2 merge waits for
-item3's successful full release. Do not publish partially safe main slices.
+may open after item3 merges and derived-main is ready. Item2 merge requires its
+own current-head checks/review; shared full-release acceptance is specified in
+the scheduling amendment below. Do not publish partially safe main slices.
 Return to design before addressing any new transaction/schema/layer contract
 gap. Acceptance is the literal item2 row above; parked4/814/815 remain open.
 
@@ -343,5 +346,22 @@ Current-base integration of predecessor `64c8a6094`/ready `9e224db6c` preserves
 item2 product code;40 focused history/authoring/process/stdio/docs cases pass.
 Design `cdf0289f8`, plan `fa31cc79c`, code `fa831e384` and review `0b79e65a0`
 are on `wip/issue-902-authoring-design`; that branch owns durable authoring/MCPv0.6.
-Item2 PR may open after item3 merges and derived-main is ready; item2 merge waits
-for item3's successful full release. Parked4/814/815 remain open.
+Item2 PR may open after item3 merges and derived-main is ready, alongside
+item3's full release. Item2 may merge after its own current-head checks and
+artifact/architecture review pass on that ready base; it need not wait for
+item3's OS matrix to finish. Known predecessor failures still take priority
+and block the dependent merge. Parked4/814/815 remain open.
+
+### Publication versus acceptance (reviewed scheduling amendment)
+
+The separate item3/item2 PRs, current-ready-base checks, literal reviews and
+5→3→2 publication order remain required. Item5's failed Windows foundation must
+be repaired and release-verified first. Once item3 and item2 are both published,
+one successful exact-main three-OS full pytest/conformance/wheel/MCP/public
+reproduction run containing both source changes and both literal reviews may
+prove their acceptance together. Neither merge alone is acceptance. Keep the
+existing item3 full run until the combined exact-SHA run exists; preserve all
+inverse/legacy/replay and authoring tests in the combined suite. Any newly red
+predecessor becomes the priority; never use a narrower run as shared proof.
+Independent workflow/architecture review confirms this changes scheduling only,
+not a contract, test scope or gate. Publish the amendment before using it.
