@@ -65,8 +65,10 @@ def test_default_axis_refines_truthfully_from_one_day_to_ten_years(tmp_path, day
     parts = _default_parts()
     parts["view"]["body"]["window"] = {
         "mode": "explicit", "start": start.isoformat(), "end": end.isoformat()}
+    # The refining tier is the automatic tier that offers days; the default stacks a
+    # year-bearing automatic tier above it (#1724 P2), which a short window covers once.
     tier_index = next(index for index, tier in enumerate(parts["view"]["body"]["axis"]["tiers"])
-                      if tier["unit"] == "auto")
+                      if tier["unit"] == "auto" and "day" in tier["label"]["forms"])
     rendered = sr.render(tmp_path, sr.project({"work": sr.span("work", start, days)}), presentation=parts)
     _assert_readable(rendered)
     labels = [p for p in rendered.surface.primitives if p.scene_id.startswith(f"axis-label:{tier_index}:")]
