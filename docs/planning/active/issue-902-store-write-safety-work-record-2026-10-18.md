@@ -1,12 +1,18 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 PR1698 awaits final current-base CI/release; item3 WIP `64c8a6094`
-and item2 code/review `fa831e384`/`0b79e65a0` are implemented, not released.
-This branch follows ready main `9e224db6c` through the reviewed predecessor.
-Publication order remains5→3→2; no premature item3/item2 PR. #1679/#1680 are
-closed after exact-main39094741641 passed all three OSes, public reproduction
-and MCP. Their archival is batched in1698; docs1699 was superseded to avoid
-another cycle. Board454 is reviewer-owned, not changed here.
+Status: item5 PR1698 passed every product check in39094985183; readiness alone
+failed after main advanced. Normal integration `30d957743` follows main
+`e9432fb85` after B's1697 landing; that update changes CI/AGENTS only, not the
+product code verified by107 focused command/adapter/process/docs tests and
+11/37 inward imports. Final push requires successful derived-main on that
+current tip. This branch follows ready main `9e224db6c` and the reviewed
+predecessors; item3 code `c2984c018` and item2 code/review
+`fa831e384`/`0b79e65a0` remain unreleased. Publication order remains5→3→2;
+there is no premature item3/item2 PR. #1679/#1680 are closed after
+exact-main39094741641 passed all three OSes, public reproduction and MCP. Their
+archival/ledger update is an independent commit in PR1698; separate docs PR1699
+was superseded to avoid another serial snapshot/sync cycle. Board454 is
+reviewer-owned. No unmerged branch is claimed as released main functionality.
 
 ## Scope and literal acceptance
 
