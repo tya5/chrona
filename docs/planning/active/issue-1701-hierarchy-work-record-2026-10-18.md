@@ -146,3 +146,24 @@ contract is Spec06 §6.0, Spec38's lane names and Spec50 §3.2.
   correcting Snapshot/scenario path ancestry is an intentional source-locality
   repair. Migrate packaged declarations explicitly, never infer from project
   names or change Project dates/data to make the acceptance twin pass.
+
+## Row2 implementation plan
+
+Design publication: `f4475ec01`; reviewer wording approval6247026872.
+Implement on a separate row2 branch so the tested legend/row1 release can land
+without waiting for all-preset hierarchy evidence. Publish the following
+coherent commits in one row2 PR after the joint display followup's ready base.
+
+| Slice | Files / owners | Focused acceptance and evidence |
+| --- | --- | --- |
+| H1 source/name closure | `model/projection.py`, `model/surface_content.py`, `review/v05_content.py`; a small shared pure name helper if needed | Primary/Snapshot/scenario ID/title segments; exact enclosing-ancestor coverage; no text/entity collision; missing-title fallback; hidden/depth-limited ancestors retained; legacy path output and selected-current links preserved. Test table/plot parity and same IDs with different source titles. |
+| H2 authoring and Layout consumers | `schemas/view-v0.28.schema.yaml`, `contracts/resources.py`, label-content normalization; `layout/lane_label_intent.py`, `surface_member_labels.py`, `surface_marks.py`, `key_row_lanes.py` | Admit path and reject title+path; retain delta-only and omitted-content verdicts; matching-source both/link checks. Preflight and final text agree for ordinary, lane, attached, folded and key-row names; existing explicit-window absences and Style identities unchanged. No Scene/adapter hierarchy logic. |
+| H3 packaged declarations | Effective View/Layout declarations and source mirrors for all15 preset closures | Explicit name-path choice and ordinary path column except the already-lossless default depth-all route; preserve grouping/packing/rollup. A neutral three-level fixture (also bound-role, no-group and differing-source negatives) proves no intermediate name lost. Render all15 native PNGs as one batch, inspect every level and retain Scene/SVG/source counts. Diagnose rather than silently waive an unreadable level. |
+| H4 release review | Existing literal acceptance review; official public-materializer artifact | Schema-equivalence/annotation checks, import-direction and focused presentation tests; official before/after50 SVG/Scene pairs and report diffs inspected as a batch. CI supplies full three-OS pytest/conformance, wheel/smoke, MCP and newest-Python materializer release on the exact main SHA containing both literal acceptance rows. Only then close1701. |
+
+Expected changes are opted-in preset names, their measured text/fit geometry,
+and source-local comparison path repairs; do not assert byte identity for
+those intentional changes. Unchanged legacy fixtures remain characterization
+guards. Do not weaken fit diagnostics or edit example Project data to absorb
+side effects. An ownership, schema, visible-selection or diagnostic design gap
+returns to this design and its normative specification before more code.
