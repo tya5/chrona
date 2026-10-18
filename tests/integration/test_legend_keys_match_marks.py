@@ -49,14 +49,16 @@ def test_the_bundled_default_keys_are_the_ones_the_issue_asked_for(tmp_path):
     milestone, planned = items["legend-swatch:milestone"], items["legend-swatch:planned"]
     assert milestone["kind"] == "Symbol" and milestone["paint"].get("fill") is None and milestone["paint"].get("stroke") is not None  # hollow
     assert planned["bounds"]["inlineSize"] > planned["bounds"]["blockSize"]  # a horizontal capsule
-    progress = items["legend-swatch:actual:progress-fill"]
-    assert progress["paint"].get("fill") == next(item for key, item in items.items() if key.startswith("progress-fill:"))["paint"].get("fill") is not None
+    progress = next(item for key, item in items.items() if key.startswith("legend-swatch:progressFill:"))
+    progress_marks = [item for key, item in items.items() if key.startswith("progress-fill:")]
+    assert progress_marks and progress["paint"].get("fill") is not None
+    assert any(progress["paint"].get("fill") == item["paint"].get("fill") for item in progress_marks)
     for role in ("dependency", "asOf"):
         key = items[f"legend-swatch:{role}"]
         assert key["bounds"]["inlineSize"] > 0 and key["bounds"]["blockSize"] > 0
 
 
-def test_planned_progress_has_its_plan_key_not_an_actual_key(tmp_path):
+def test_planned_progress_uses_the_separate_progress_key(tmp_path):
     example = ROOT / "examples/halcyon-1"
     document = _scene(tmp_path,
         "--view", str(example / "views/02-programme-board.yaml"),
@@ -69,13 +71,13 @@ def test_planned_progress_has_its_plan_key_not_an_actual_key(tmp_path):
     items = {item["id"]: item for item in document["surfaces"][0]["primitives"]}
     fills = [item for identity, item in items.items() if identity.startswith("progress-fill:planned:")]
     assert fills
-    assert items["legend-swatch:planned:progress-fill"]["paint"] == fills[0]["paint"]
-    assert "legend-swatch:actual:progress-fill" not in items
+    progress_key = next(item for key, item in items.items() if key.startswith("legend-swatch:progressFill:"))
+    assert any(progress_key["paint"].get("fill") == item["paint"].get("fill") for item in fills)
     assert legend_key_findings(document) == []
     broken = deepcopy(document)
     broken["surfaces"][0]["primitives"] = [item for item in broken["surfaces"][0]["primitives"]
-                                             if item["id"] != "legend-swatch:planned:progress-fill"]
-    assert any("planned" in finding and "progress" in finding for finding in legend_key_findings(broken))
+                                             if not item["id"].startswith("legend-swatch:progressFill:")]
+    assert any("Progress" in finding and "separate" in finding for finding in legend_key_findings(broken))
 
 
 def test_the_check_reports_each_kind_of_disagreement(tmp_path):
@@ -93,6 +95,7 @@ def test_the_check_reports_each_kind_of_disagreement(tmp_path):
     assert any("landscape" in item for item in broken(**{"legend-swatch:planned": lambda i: i["bounds"].update(inlineSize=9.6)}))
     assert any("enclose" in item for item in broken(**{"legend-swatch:dependency": lambda i: i["bounds"].update(inlineSize=0, blockSize=0)}))
     copy = deepcopy(document)
-    copy["surfaces"][0]["primitives"] = [item for item in copy["surfaces"][0]["primitives"] if item["id"] != "legend-swatch:actual:progress-fill"]
-    assert any("Progress key shows none" in item for item in legend_key_findings(copy))
+    copy["surfaces"][0]["primitives"] = [item for item in copy["surfaces"][0]["primitives"]
+                                             if not item["id"].startswith("legend-swatch:progressFill:")]
+    assert any("separate Progress key" in item for item in legend_key_findings(copy))
     assert primitives  # the rendered scene is the one under test

@@ -1,7 +1,7 @@
 """Owns source measurement, allocation and native preparation; reads resolved surface intent and resources."""
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import date
 from decimal import Decimal, ROUND_CEILING
 from typing import Any, Mapping
@@ -28,11 +28,13 @@ from chrona.presentation.layout.surface_source_inputs import (
     surface_source_inputs,
 )
 from chrona.presentation.layout.style_text import resolve_table_cell_typography
+from chrona.presentation.layout.legend_candidates import prepare_realized_legend_candidates
 from chrona.presentation.model.font_metrics import FontMetricsError
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, SurfaceContentInput, TableContent
 from chrona.presentation.model.theme_tokens import ThemeTokenView
+from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.presentation.review.v05_content import compose_heading
 
@@ -60,6 +62,7 @@ class SurfaceRenderPlanInput:
     visual_requests: tuple[VisualRequest, ...]
     progress: RenderProgress | None = None
     previous_route_hints: PreviousRouteHints | None = None
+    paint_capabilities: PaintWitnessCapabilities = field(default_factory=PaintWitnessCapabilities)
 
 
 @dataclass(frozen=True)
@@ -90,6 +93,10 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
     project, view, projection = value.project, value.view, value.projection
     selected_content, summary, table_content = value.content, value.summary, value.table
     theme, font_metrics, layout = value.theme, value.font_metrics, value.profile
+    selected_content = prepare_realized_legend_candidates(
+        selected_content, ThemeTokenView(theme),
+        mark_block_size=float(resolve_theme_metrics(theme)["timeline.mark.blockSize"]),
+        paint_capabilities=value.paint_capabilities)
     selected_content, table_content = resolve_table_cell_typography(
         selected_content, table_content, ThemeTokenView(theme))
     actual_observations, heading_content = value.actual, value.heading
@@ -220,6 +227,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
                                if view.surface == "table-timeline" else None),
             theme_tokens=ThemeTokenView(theme), font_metrics=font_metrics,
             capabilities=dict(value.capabilities),
+            paint_capabilities=value.paint_capabilities,
             icon_assets=icon_assets, visual_requests=visual_requests,
             capacity_short_sources=short_sources,
             as_of_chip_measurement=as_of_chip_measurement,

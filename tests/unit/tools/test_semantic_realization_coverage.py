@@ -186,3 +186,12 @@ def test_report_carries_the_headline_figure_for_the_committed_corpus():
     report = render(_root())
     assert "## Purpose coverage" in report and "drawn purposes resolve to exactly one realized appearance role" in report
     assert "### Registered but unpainted purposes" in report
+
+
+def test_report_labels_observed_evidence_apart_from_admitted_cardinality_and_never_says_witnessed():
+    report = render(_root())
+    observed, admitted = report.index("## Observed realization evidence"), report.index("## Admitted-model cardinality (admitted, not observed)")
+    assert observed < admitted < report.index("## Purpose coverage")
+    assert "Admitted states" not in report[observed:admitted] and "Declared states" not in report
+    assert "witness" not in report.replace("states no state-to-role pairing", "").lower()
+    assert "Admitted model states (not observed)" in report

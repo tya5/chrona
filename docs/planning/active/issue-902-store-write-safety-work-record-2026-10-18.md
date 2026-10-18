@@ -1,11 +1,12 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 PR1698, item3 WIP `db9caca1d`, item2 implementation `fa831e384`.
-Publication order stays5→3→2; neither item3 nor item2 is released on main.
-Item5 CI39094985183 passed every product check; readiness alone failed after
-dev B advanced main from `4e30fbc3f` to `f5a51c099`. Follow B's landing batch
-once onto its ready tip before the final push. #1679/#1680 exact-main release
-39094741641 remains running; macOS passed. Board454 remains reviewer-owned.
+Status: item5 PR1698 awaits final current-base CI/release; item3 WIP `64c8a6094`
+and item2 code/review `fa831e384`/`0b79e65a0` are implemented, not released.
+This branch follows ready main `9e224db6c` through the reviewed predecessor.
+Publication order remains5→3→2; no premature item3/item2 PR. #1679/#1680 are
+closed after exact-main39094741641 passed all three OSes, public reproduction
+and MCP. Their archival is batched in1698; docs1699 was superseded to avoid
+another cycle. Board454 is reviewer-owned, not changed here.
 
 ## Scope and literal acceptance
 
@@ -103,12 +104,28 @@ must retain its original failure rather than claim a safe pre-write rejection.
   its own venv resolved both. No product workaround or weakened assertion.
 - Pending: current-main integration, CI/release and literal acceptance review.
 
-## Publication branches
+## Item5 literal acceptance review (release pending)
 
-- Item5: PR1698, `wip/issue-902-store-write-safety` at `96e657289`.
-- Item3: `wip/issue-902-actual-history-design` at `db9caca1d`, implemented locally
-  and focused-tested; its PR/release follows item5.
-- Item2: this separate branch contains its design plan and proposed contract.
+Implementation `ab376c78e` with L1 `a4c7fe08c`, L2 `9dcf22c16`; public WIP
+`wip/issue-902-store-write-safety`. This reviews item5 only; items2/3 and parked
+4/814/815 remain open. No issue closure or current-main release claim.
+
+| Literal item5 acceptance | Disposition | Direct evidence |
+| --- | --- | --- |
+| Acceptance for 2, 3 and 5: each has its own stale-base, replay and no-overwrite tests, plus an MCP stdio test where it is a tool. | met (item5) | `tests/integration/test_actual_store_concurrency.py`, `test_store_write_lock.py`, `test_store_transaction_span.py`; MCP stdio gate/stale/replay/no-overwrite checks recorded above. Not evidence for items2/3. |
+| Item 5 needs a two-process test that shows a lost update today and none after the fix. | met | Regression605232991 fails on baseline and passes after9dcf22c16, with all post-A Store files unchanged. |
+| Required release gate on current main containing this review. | not met | Final current-ready-base PR CI and exact-main three-OS release remain pending. |
+
+Engine owns the complete replay/CAS/publication/record scope; storage owns root/
+thread/process exclusion. Authoring keeps separate workspace identity. No new
+ledger, renderer behavior, schema or crash-atomicity promise. Body/unlock errors
+remain raw; acquisition failures happen before mutation.
+
+Official artifact12124072125 (96e657289, CI39094985183), archive SHA-256
+`235288f64f486b80fd2422bc7b9a96ad99ae3a889899db95db35d503614b6c9c`:
+all50 SVGs/50 Scenes unchanged from final1679; no added/removed paths. Only two
+inventories change, for source coordinates and two helper-owner names; seven
+other reports unchanged. This does not waive final CI/release.
 
 ## Item3 design plan
 
@@ -126,7 +143,7 @@ must retain its original failure rather than claim a safe pre-write rejection.
   plan → shared engine/adapter/schema work → stale/replay/no-overwrite and real
   MCP stdio evidence → one reviewed release. Literal acceptance is listed above.
 
-## Item3 selected contract (pre-code design branch; no product code)
+## Item3 selected contract
 
 Normative contract: [Spec35 §4.3](../../specification/35-operational-review-workflows.md),
 connected by Specs10/66. Command v0.4 adds Actual revert/redo; MCP tool-set v0.5
@@ -187,8 +204,13 @@ retirement/packaging45; adapter10; real history MCP/CLI-pointer batch5.
 Schema equivalence passes with one declared v0.4 addition and three proven stale
 S2 deltas retired; the five reported invalid documents are unchanged baseline
 findings. Imports11 packages/37 edges inward. No public render policy/source
-or canonical generated outputs changed. Remaining: current-main integration,
-final CI/public evidence and exact-main release after item5 publication.
+or canonical generated outputs changed. Ready-main integration `499d2ad27`
+passed99 focused command/adapter/CLI/process tests, three real MCP history
+tests and an independent11-test history/concurrency audit; no conflict or new
+architecture gap. Remaining: item5 release, final current-ready-base PR CI/public
+evidence and exact-main release. No item3 PR has been opened prematurely.
+Following ready `9e224db6c` and predecessor review `950d79001` changes no item3
+engine/schema code;31 focused history/concurrency/documentation cases pass.
 
 ## Item2 design plan
 
@@ -291,3 +313,5 @@ batch **1010 passed**; final recovery/helper migration **489 passed** and
 case/staging/process batch **58 passed**. These batches overlap, not additive.
 `tools/check_import_direction.py`: 11 packages/37 inward edges; diff check clean.
 Full local pytest/public-materializer reruns deliberately delegated to CI.
+Current-base integration of predecessor `64c8a6094`/ready `9e224db6c` preserves
+item2 product code;40 focused history/authoring/process/stdio/docs cases pass.

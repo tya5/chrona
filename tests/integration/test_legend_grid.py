@@ -15,6 +15,11 @@ from tests.support import synthetic_review as sr
 ROLES = ("planned", "milestone", "calendar-closed", "actual")
 LABELS = {"planned": "Planned work", "milestone": "Gate review", "calendar-closed": "Non-working day",
           "actual": "Actual work"}
+ACTUAL = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "legend-grid-actual",
+          "body": {"asOf": "2026-03-20", "observations": [
+              {"id": "a-actual", "sequence": 1, "projectObjectId": "a",
+               "actual": {"start": "2026-02-02", "finish": "2026-02-28"}},
+          ]}}
 
 
 def _render(tmp_path, *, columns=None, heading=None, direction=None, roles=ROLES, distribution=None, wide=False):
@@ -39,7 +44,7 @@ def _render(tmp_path, *, columns=None, heading=None, direction=None, roles=ROLES
     source = sr.with_calendar(sr.project({"a": sr.span("a", date(2026, 2, 2), 30), "g": sr.point("g", date(2026, 3, 9))}))
     detail = {"version": "chrona/review-detail-profile/v0.1", "id": "legend-detail",
               "body": {"legend": [{"role": role, "label": LABELS[role]} for role in roles]}}
-    return sr.render(tmp_path, source, presentation=parts, detail=detail)
+    return sr.render(tmp_path, source, presentation=parts, detail=detail, actual=ACTUAL)
 
 
 def _sub(tmp_path, name):
@@ -51,8 +56,15 @@ def _sub(tmp_path, name):
 def _entries(rendered, roles=ROLES):
     found = {}
     for role in roles:
-        swatch = next(item for item in rendered.surface.primitives if item.scene_id.startswith(f"legend-swatch:{role}"))
-        label = next(item for item in rendered.surface.primitives if item.scene_id == f"legend:{role}")
+        if role == "actual":
+            swatch = next(item for item in rendered.surface.primitives
+                          if item.purpose == "legend-swatch" and item.visual_role == "actual")
+            label = next(item for item in rendered.surface.primitives
+                         if item.purpose == "legend-label" and item.source_ref == swatch.source_ref)
+        else:
+            swatch = next(item for item in rendered.surface.primitives
+                          if item.scene_id.startswith(f"legend-swatch:{role}"))
+            label = next(item for item in rendered.surface.primitives if item.scene_id == f"legend:{role}")
         found[role] = (swatch.bounds, label.bounds)
     return found
 

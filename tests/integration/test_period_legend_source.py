@@ -123,7 +123,7 @@ def test_period_legend_role_wording_overrides_sourced_and_unsourced_labels(tmp_p
     assert texts["legend:period-band"].text == "Shared period"
 
 
-def test_none_period_role_keeps_sourced_labels_and_their_swatch_reservation(tmp_path):
+def test_none_period_role_removes_sourced_keys_without_painted_witnesses(tmp_path):
     entries = [{"role": "period-band", "label": "Launch", "sourceRef": "launch"},
                {"role": "period-band", "label": "Handoff", "sourceRef": "handoff"}]
     painted = _render(tmp_path / "painted", entries)
@@ -133,8 +133,8 @@ def test_none_period_role_keeps_sourced_labels_and_their_swatch_reservation(tmp_
     absent_text = {item.scene_id: item for item in absent.surface.primitives
                    if item.scene_id.startswith("legend-period:")}
 
-    assert set(absent_text) == set(painted_text) == {"legend-period:launch", "legend-period:handoff"}
-    assert all(absent_text[key].bounds == painted_text[key].bounds for key in absent_text)
+    assert set(painted_text) == {"legend-period:launch", "legend-period:handoff"}
+    assert absent_text == {}
     assert not any(item.scene_id.startswith("legend-period-swatch:") for item in absent.surface.primitives)
 
 
