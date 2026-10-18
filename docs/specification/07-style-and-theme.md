@@ -19,12 +19,16 @@ square, chevron or catalogue glyph; those retain their native symbol contour.
 Bars keep their independent corner treatment. Layout completes this shape
 identity before Scene projection.
 
-On a table-timeline or dependency network with semantic relations, declaring the optional Theme
+On a table-timeline with semantic relations, declaring the optional Theme
 role `dependency-critical` selects it for the existing scheduling-derived
 critical relation facts (#1561). Absence keeps `dependency`. It supplies the
 ordinary path paint and width, not a criticality classifier; existing shared
 relation-terminal policy still applies, without a new role-specific marker;
 the wider stroke participates in Layout safety, halos and Scene contrast.
+Dependency networks retain their existing `network-edge` / `critical-edge`
+paint roles; their critical key uses the actual `critical-edge` ink (Spec50),
+not the optional timeline role. Criticality still uses the shared scheduler
+facts; a surface-specific paint role does not classify a dependency.
 
 Dependency-network node content has optional Theme metrics
 `network.node.paddingInline` and `network.node.paddingBlock` (#1727). Each

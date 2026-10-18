@@ -691,8 +691,7 @@ each class. This priority pass may be published independently of protected
 feasibility; it retains declaration-based placement identity/output order and
 does not itself enable the quality exception or establish safe-path completeness.
 
-Optional critical paint (#1561, #1727): on table-timeline and dependency-network
-surfaces in semantic relation mode, a declared Theme
+Optional timeline paint (#1561): in semantic relation mode, a declared Theme
 `dependency-critical` role selects that paint for exactly these canonical
 critical facts before Layout; otherwise `dependency` is unchanged. It neither
 changes critical-only View filtering nor recomputes scheduling analysis.
@@ -1360,9 +1359,12 @@ and affected node subjects in `W_LAYOUT_ROUTE_FALLBACK`. A direct path that
 crosses an unrelated node must explicitly say so; it is not a normal clear
 route. Neither criticality nor failure is inferred from the line's paint.
 
-When a selected edge actually draws the `dependency-critical` role, normalized
+When a selected network edge actually draws the existing `critical-edge` role, normalized
 content includes one key for that role unless an authored key already exists.
 Use its authored wording when provided, otherwise `Critical dependency`.
+The shared line-key machinery uses that role's actual stroke, width and
+opacity, not timeline `dependency-critical` ink. Relation visibility and
+selected endpoint admission apply before this candidate is added.
 An authored legend slot is the sole owner. Without one, Layout reserves a
 measured intrinsic legend band at the block end of the network source before
 placing graph content, and completes a real child slot with source `legend`.
