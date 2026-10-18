@@ -709,7 +709,11 @@ class ThemeTokenView:
         fallback to another role.
         """
         if not isinstance(self._body["roles"].get(role), Mapping):
-            raise ThemeTokenError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}")
+            raise ThemeTokenError(
+                "E_THEME_ROLE_REQUIRED", f"/body/roles/{role}",
+                f"the Theme declares no role '{role}', which the View member 'deadlines' (show: slipped or all) needs "
+                f"to draw deadline ticks; declare roles.{role} with strokeWidth, markReach and markPaintOrder "
+                f"(Spec 06 section on deadlines) or remove 'deadlines' from the View (at /body/roles/{role})")
         reach, order = self.number(role, "markReach"), self.number(role, "markPaintOrder")
         if reach <= 0 or reach > 4:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markReach")
