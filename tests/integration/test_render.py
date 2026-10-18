@@ -377,7 +377,7 @@ def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
     preset = root / "src/chrona/resources/presets/bundles/mission-light"
     legacy_view = yaml.safe_load((preset / "view.yaml").read_text(encoding="utf-8"))
     legacy_view["body"]["rows"]["mode"] = "automatic"
-    # Exercise independent variance-label suppression explicitly; the shipped
+    # Exercise independent finish-delta labels explicitly; the shipped
     # lane View includes finishDelta in its lane member label instead.
     legacy_view["body"]["visibility"]["labels"]["content"] = ["title"]
     for key in ("packing", "laneTable", "laneKeys"):
@@ -388,7 +388,9 @@ def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
                   scheme_path=example / "schemes/mission-light.yaml")
     tuned = render_review(_draft_request(**inputs, view_path=legacy_view_path,
                                          theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
-    assert any(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:variance:") for item in tuned.scene.diagnostics)
+    # #1702 row 5: a finish delta is placed before routes at its bar's finish side, so it is no longer suppressed
+    # here; the aggregation below still must not count variance text (and counts none that is absent).
+    assert not any(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:variance:") for item in tuned.scene.diagnostics)
 
     def assert_member_only_count(rendered):
         members = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")
