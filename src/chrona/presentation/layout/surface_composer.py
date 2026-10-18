@@ -187,7 +187,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         groups=tuple(groups), theme_tokens=request.theme_tokens,
         tag_column=(base.table_bounds[0], base.group_tag_inline_size) if base.group_tag_inline_size else None))
     shapes.extend(mark_batch.progress_shapes)
-    shapes.extend(mark_batch.summary_shapes)
     deadline_batch = compose_deadline_marks(
         base=base, theme_tokens=request.theme_tokens, deadlines=projection.deadlines, marks=mark_batch.marks,
         window=projection.window, paint_order_base=MARK_PAINT_ORDER_BASE)

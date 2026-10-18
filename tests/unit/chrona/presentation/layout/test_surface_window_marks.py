@@ -142,11 +142,12 @@ def test_outside_warning_transport_names_exact_objects_once_with_actionable_caus
     assert all(ref in text.subject for ref in ("/objects/across", "/objects/after", "/objects/before"))
 
 
-def test_summary_uses_same_clipped_contour_rule_without_inventing_mark_or_ports():
+def test_rollup_bar_uses_existing_planned_mark_for_clipped_summary():
     base, batch = _compose(summaries=True)
-    assert tuple(shape.source_ref for shape in batch.summary_shapes) == ("across",)
-    summary = batch.summary_shapes[0]
-    assert summary.kind == "Symbol" and summary.paint_clip is not None
+    assert tuple(mark.source_ref for mark in batch.marks) == ("across",)
+    summary = batch.marks[0]
+    assert summary.placement_id == "planned:row-across:across"
+    assert summary.paint_clip is not None
     assert summary.path_commands
     x, y, width, height = summary.paint_clip.bounds
     assert all(x <= px <= x + width and y <= py <= y + height
@@ -156,10 +157,10 @@ def test_summary_uses_same_clipped_contour_rule_without_inventing_mark_or_ports(
         coordinate_for_date(date(2026, 1, 9), base.scale))
 
 
-def test_containing_summary_retains_existing_geometry_and_has_no_clip():
+def test_containing_rollup_summary_keeps_only_source_marks():
     window = (date(2026, 1, 1), date(2026, 1, 15))
     _, explicit = _compose(summaries=True, window=window)
     _, derived = _compose(summaries=True, window=window, mode=WindowMode.SELECTED_PLANNED)
-    assert explicit.summary_shapes == derived.summary_shapes
-    assert len(explicit.summary_shapes) == 3
-    assert all(shape.kind == "Rect" and shape.paint_clip is None for shape in explicit.summary_shapes)
+    assert explicit.marks == derived.marks
+    assert tuple(mark.source_ref for mark in explicit.marks) == ("before", "across", "after")
+    assert all(mark.paint_clip is None for mark in explicit.marks)
