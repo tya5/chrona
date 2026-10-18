@@ -107,11 +107,8 @@ class WorkspaceScope:
                 scrubbers.append((re.compile(start + rest), "<path>"))
         return tuple(scrubbers)
 
-    def resolve_path(self, value: object, pointer: str) -> Path:
-        """Return the resolved regular file ``value`` names below the workspace, or raise ``StableFailure``.
-
-        ``pointer`` is the input property (``/project``) reported as the diagnostic's ``sourceRef``.
-        """
+    def _resolve_address(self, value: object, pointer: str) -> Path:
+        """Apply the shared syntax/device/containment rules before any file read."""
         try:
             segments = check_store_address(value, charset="file-name")
         except StoreAddressError as error:
@@ -131,6 +128,28 @@ class WorkspaceScope:
             raise _failure("E_MCP_PATH_CONTAINMENT",
                            "the path resolves outside the workspace; use a path whose real location is inside the workspace root",
                            pointer) from error
+        return target
+
+    def resolve_destination(self, value: object, pointer: str) -> Path:
+        """Guard a new workspace directory, never relaxing the existing-file guard."""
+        target = self._resolve_address(value, pointer)
+        current = self._root
+        for segment in str(value).split("/"):
+            current = current / segment
+            if current.is_symlink():
+                raise _failure("E_MCP_PATH_CONTAINMENT",
+                               "a new workspace destination must not use a symlink; choose a real parent directory",
+                               pointer)
+        if target.exists():
+            raise _failure("E_AUTHORING_WORKSPACE_EXISTS",
+                           "the destination already exists; choose a new workspace directory", pointer)
+        if not target.parent.is_dir():
+            raise _failure("E_INPUT_IO", "the destination parent must already be an existing directory", pointer)
+        return target
+
+    def resolve_path(self, value: object, pointer: str) -> Path:
+        """Return a bounded existing regular file strictly inside the workspace."""
+        target = self._resolve_address(value, pointer)
         try:
             if not target.is_file():
                 raise _failure("E_INPUT_IO", "no regular file exists at this workspace path", pointer)
@@ -140,7 +159,7 @@ class WorkspaceScope:
         if size > MAX_INPUT_BYTES:
             raise _failure(
                 "E_MCP_INPUT_TOO_LARGE",
-                f"the file is larger than {MAX_INPUT_BYTES} bytes; split the plan or use the chrona command line",
+                f"the file is larger than {MAX_INPUT_BYTES} bytes; split the plan before retrying the tool",
                 pointer,
             )
         return target

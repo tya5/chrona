@@ -263,6 +263,19 @@ class GuidedAuthoringProvenance:
     normalizer_version: str = "chrona/authoring-normalizer/v0.1"
 
 
+@dataclass(frozen=True)
+class DraftPresetMembers:
+    """One acquisition of every declared preset member for Draft and guided ingress."""
+
+    paths: Mapping[str, Path]
+    sources: tuple[PresentationResourceSource, ...]
+    catalog_paths: tuple[Path, ...]
+    documents_by_path: Mapping[str, Mapping[str, Any]]
+
+    def source(self, kind: str) -> PresentationResourceSource | None:
+        return next((item for item in self.sources if item.identity.kind == kind), None)
+
+
 _DRAFT_CAPABILITIES = (
     "accessibleText", "hierarchicalAxis", "marker", "semanticRoles", "sourceMetadata",
     "tableSemantics",
@@ -296,9 +309,14 @@ def resolve_draft_render(
     from an immutable closure.
     """
     preset = _load_draft_resource("presentation-preset", preset_path) if preset_path is not None else None
-    preset_paths = _draft_preset_paths(preset, preset_path, preset_root) if preset is not None and preset_path is not None else {}
-    declared_catalog_paths = (_draft_preset_catalog_paths(preset, preset_path, preset_root)
-                              if not icon_catalog_paths and preset is not None and preset_path is not None else ())
+    preset_members = (_acquire_draft_preset_members(
+        preset, preset_path, preset_root,
+        include_catalogs=not bool(icon_catalog_paths), include_compatible_schemes=False,
+    )
+                      if preset is not None and preset_path is not None else None)
+    preset_paths = preset_members.paths if preset_members is not None else {}
+    declared_catalog_paths = (preset_members.catalog_paths
+                              if not icon_catalog_paths and preset_members is not None else ())
     selected_catalog_paths = icon_catalog_paths or declared_catalog_paths
     visual_profile, profile_fallback = _preset_visual_profile(preset.contract if preset is not None else None, visual_profile, target_kind)
     paths = (("project", project_path),
@@ -314,15 +332,28 @@ def resolve_draft_render(
         # only when that Theme is the one rendered (#479 amendment 2).
         ("review-detail-profile", detail_path or (preset_paths.get("review-detail-profile") if theme_path is None else None)),
     )
-    sources = [_load_draft_source(kind, path) for kind, path in paths if path is not None]
+    sources = []
+    for kind, path in paths:
+        if path is None:
+            continue
+        acquired = preset_members.source(kind) if preset_members is not None and path == preset_paths.get(kind) else None
+        sources.append(acquired or _load_draft_source(kind, path))
     selected_style_path = style_path or preset_paths.get("style")
     if selected_style_path is not None:
-        sources.insert(2, _load_draft_source("style", selected_style_path))
+        acquired = preset_members.source("style") if preset_members is not None and selected_style_path == preset_paths.get("style") else None
+        sources.insert(2, acquired or _load_draft_source("style", selected_style_path))
     if relations is not None:
         sources = [_draft_relation_override(source, relations) if source.identity.kind == "view" else source
                    for source in sources]
-    sources.extend(_load_draft_source(kind, path) for kind, path in optional if path is not None)
-    sources.extend(_load_draft_source("icon-catalog", path) for path in selected_catalog_paths)
+    for kind, path in optional:
+        if path is None:
+            continue
+        acquired = preset_members.source(kind) if preset_members is not None and path == preset_paths.get(kind) else None
+        sources.append(acquired or _load_draft_source(kind, path))
+    if preset_members is not None and not icon_catalog_paths:
+        sources.extend(source for source in preset_members.sources if source.identity.kind == "icon-catalog")
+    else:
+        sources.extend(_load_draft_source("icon-catalog", path) for path in selected_catalog_paths)
     resources = _collect_presentation_resources(sources)
     package_edges: list[ProfilePackageSourceEdge] = []
     primary_project = next((item.contract for item in resources if item.kind == "project"), None)
@@ -412,8 +443,11 @@ def _preset_visual_profile(preset: object, requested: str | None, target_kind: s
     return selected, fallback
 
 
-def _draft_preset_paths(preset: Any, preset_path: Path, preset_root: Path | None = None) -> dict[str, Path]:
-    """Resolve one explicit preset into safe ordinary-resource paths."""
+def _acquire_draft_preset_members(
+    preset: Any, preset_path: Path, preset_root: Path | None = None, *,
+    include_catalogs: bool = True, include_compatible_schemes: bool = True,
+) -> DraftPresetMembers:
+    """Acquire, resolve and validate one complete preset closure for either Draft ingress."""
     if not isinstance(preset.contract, PresentationPresetContract):
         raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail=f"{preset_path.name} is not a presentation preset")
     mapping = {"view": "view", "style": "style", "theme": "theme", "colorScheme": "color-scheme", "layout": "layout-profile",
@@ -428,14 +462,16 @@ def _draft_preset_paths(preset: Any, preset_path: Path, preset_root: Path | None
         if not isinstance(declaration, Mapping):
             raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail=f"preset {preset.id!r} declares no valid {name!r} resource")
         path = _declared_child(preset_root or preset_path.parent, str(declaration["path"]))
-        sources.append(_read_draft_resource_source(kind, path))
+        sources.append(_load_draft_source(kind, path))
         paths[kind] = path
         declarations[kind] = name, declaration, path
 
     # A declared View can be a thin connection to its declared design, just
     # like the selected View below. Normalize the set before freezing any
     # contract, but still validate every member even when later overridden.
-    for source in apply_view_defaults(sources):
+    effective_sources = tuple(apply_view_defaults(sources))
+    documents_by_path: dict[str, Mapping[str, Any]] = {}
+    for source in effective_sources:
         name, declaration, path = declarations[source.identity.kind]
         try:
             resource = _freeze_draft_resource_source(source)
@@ -448,27 +484,31 @@ def _draft_preset_paths(preset: Any, preset_path: Path, preset_root: Path | None
                                declaring_preset_id=preset.id) from error
         if resource.id != declaration["id"]:
             raise ClosureError("E_DRAFT_PRESET_RESOURCE", detail=f"preset {preset.id!r} declares {name} id {declaration['id']!r}, but {path.name} has id {resource.id!r}")
-    return paths
-
-
-def _draft_preset_catalog_paths(preset: Any, preset_path: Path,
-                                preset_root: Path | None = None) -> tuple[Path, ...]:
-    """Close only the catalogue paths explicitly pinned by a Draft preset."""
-    if not isinstance(preset.contract, PresentationPresetContract):
-        raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail=f"{preset_path.name} is not a presentation preset")
-    declarations = preset.contract.resources.get("iconCatalogs", ())
-    if not isinstance(declarations, (tuple, list)):
+        documents_by_path[str(declaration["path"])] = source.value
+    catalog_declarations = preset.contract.resources.get("iconCatalogs", ()) if include_catalogs else ()
+    if not isinstance(catalog_declarations, (tuple, list)):
         raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail="resources.iconCatalogs of the preset must be a list")
-    paths: list[Path] = []
-    for declaration in declarations:
+    catalog_paths: list[Path] = []
+    catalog_sources: list[PresentationResourceSource] = []
+    for declaration in catalog_declarations:
         if not isinstance(declaration, Mapping):
             raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail="every entry of resources.iconCatalogs of the preset must be a mapping")
         path = _declared_child(preset_root or preset_path.parent, str(declaration["path"]))
-        resource = _load_draft_resource("icon-catalog", path)
+        source = _load_draft_source("icon-catalog", path)
+        resource = _freeze_draft_resource_source(source)
         if resource.id != declaration["id"]:
             raise ClosureError("E_DRAFT_PRESET_RESOURCE", detail=f"preset {preset.id!r} declares icon catalog id {declaration['id']!r}, but {path.name} has id {resource.id!r}")
-        paths.append(path)
-    return tuple(paths)
+        catalog_paths.append(path)
+        catalog_sources.append(source)
+        documents_by_path[str(declaration["path"])] = source.value
+    # Compatible schemes are selectable by the guided binding. Acquire each through the
+    # same Theme/reference resolver, but only the selected scheme enters the render closure.
+    if include_compatible_schemes:
+        for declaration in preset.contract.compatible_color_schemes:
+            path = _declared_child(preset_root or preset_path.parent, str(declaration["path"]))
+            source = _load_draft_source("color-scheme", path)
+            documents_by_path[str(declaration["path"])] = source.value
+    return DraftPresetMembers(paths, (*effective_sources, *catalog_sources), tuple(catalog_paths), documents_by_path)
 
 
 def resolve_guided_draft_render(
@@ -487,25 +527,22 @@ def resolve_guided_draft_render(
     if not isinstance(preset_resource.contract, PresentationPresetContract):
         raise ClosureError("E_AUTHORING_PRESET_SCHEMA", detail=f"{preset_path.name} is not a presentation preset")
     visual_profile, profile_fallback = _preset_visual_profile(preset_resource.contract, visual_profile, target_kind)
-    resource_declarations = (*preset_resource.contract.resources.values(), *preset_resource.contract.compatible_color_schemes)
-    resources_by_path = {
-        str(declaration["path"]): safe_load(_declared_child(preset_path.parent, str(declaration["path"])).read_bytes())
-        for declaration in resource_declarations if isinstance(declaration, Mapping)
-    }
-    if not all(isinstance(value, dict) for value in resources_by_path.values()):
-        raise ClosureError("E_AUTHORING_PRESET_RESOURCE", detail="a resource the preset declares is not a mapping document")
+    preset_members = _acquire_draft_preset_members(preset_resource, preset_path)
+    resources_by_path = preset_members.documents_by_path
     try:
         normalized = normalize_authoring_workspace(workspace_resource.contract, preset_resource.contract, resources_by_path)
     except ContractError as error:
         raise ClosureError(error.diagnostic_id, error.source_ref, error.detail) from error
     except AuthoringError as error:
-        raise ClosureError(str(error)) from error
+        raise ClosureError(error.diagnostic_id, error.source_ref, error.detail) from error
     sources = [_normalized_draft_source(kind, source) for kind, source in normalized.draft_sources()]
-    catalog_declarations = preset_resource.contract.resources.get("iconCatalogs", ())
-    if not isinstance(catalog_declarations, (tuple, list)):
-        raise ClosureError("E_AUTHORING_PRESET_RESOURCE", detail="resources.iconCatalogs of the preset must be a list")
-    catalog_paths = tuple(_declared_child(preset_path.parent, str(item["path"])) for item in catalog_declarations)
-    sources.extend(_load_draft_source("icon-catalog", path) for path in catalog_paths)
+    # Guided source supports no Detail/Summary overrides, but preset-declared
+    # optional members remain part of the same closed render as ordinary Draft.
+    normalized_kinds = {kind for kind, _source in normalized.draft_sources()}
+    sources.extend(item for item in preset_members.sources
+                   if item.identity.kind in {"review-detail-profile", "summary-profile", "icon-catalog"}
+                   and item.identity.kind not in normalized_kinds)
+    catalog_paths = preset_members.catalog_paths
     resources = _collect_presentation_resources(sources)
     package_edges: tuple[ProfilePackageSourceEdge, ...] = ()
     primary_project = next((item.contract for item in resources if item.kind == "project"), None)
@@ -516,7 +553,8 @@ def resolve_guided_draft_render(
                 _collect_presentation_resources([*sources, *package_sources]))
         _project_profile_packages(primary_project, resources, package_edges)
     catalog_resources = tuple(resource for resource in resources if resource.kind == "icon-catalog")
-    if any(resource.id != declaration["id"] for resource, declaration in zip(catalog_resources, catalog_declarations)):
+    if any(resource.id != declaration["id"] for resource, declaration in zip(
+            catalog_resources, preset_resource.contract.resources.get("iconCatalogs", ()))):
         raise ClosureError("E_AUTHORING_PRESET_RESOURCE", detail="the icon catalog files do not carry the ids the preset declares for them, in order")
     _validate_icon_catalog_set(catalog_resources)
     binding_identity = "sha256:" + sha256(yaml.safe_dump(_plain_value(workspace_resource.contract.binding), sort_keys=True).encode()).hexdigest()

@@ -76,7 +76,7 @@ def materialization_candidate(workspace_path: Path, workspace: dict[str, Any], *
         explicit_resources["style"] = written["style"]
     explicit["body"]["presentation"] = {"mode": "explicit", "resources": explicit_resources, "receipt": {"id": receipt["id"], "kind": receipt["kind"], "path": f"{directory}/receipt.yaml", "contentIdentity": _digest_bytes(receipt_payload)}}
     parse_contract(_identity("authoring-workspace", explicit), explicit)
-    candidates[workspace_path.name] = yaml.safe_dump(explicit, sort_keys=False).encode()
+    candidates[workspace_path.name] = yaml.safe_dump(explicit, allow_unicode=True, sort_keys=False).encode("utf-8")
     return explicit, candidates
 
 

@@ -19,9 +19,10 @@ the Store read tools: [`docs/archive/planning/issue-812-mcp-store-read-tools.md`
 A tool is a use case with a typed envelope. The tool set adds no behavior: for the same files it returns the verdict,
 the diagnostic code and the bytes the command of the same name returns, and a disagreement is a defect in one of
 the two. The tool core imports use cases, the shared Store address guard and the shared Store functions
-(`chrona.operational.store_commands` and `chrona.operational.store_reads`, which the command line calls too) only,
-imports no transport SDK and prints nothing. `apply_command` and
-`apply_authoring_command` write only behind the write gate (sections2.1/2.3).
+(`chrona.operational.store_commands` and `chrona.operational.store_reads`, which the command line calls too),
+the shared authoring transaction, and the opaque exclusive workspace initializer only.
+It imports no transport SDK and prints nothing. `apply_command`,
+`apply_authoring_command` and `create_workspace` write only behind the write gate (sections2.1/2.3).
 
 ## 2. Tool set `chrona/agent-tools/v0.7`
 
@@ -54,7 +55,7 @@ The first four tools are read-only. `render_review` and `compare_baseline` are r
 (section 2.2); the two command tools are section 2.1.
 
 Inputs are closed objects (`additionalProperties: false`). A tool accepts no integrity override, no system-font
-switch, no font-metrics or icon-catalog path, no typesetter descriptor, no output path, no Store root and no
+switch, no font-metrics or icon-catalog path, no typesetter descriptor, no rendered-output path, no Store root and no
 `allow-missing-content-identity`. The registry (`registry_document()`, served as the tool list) carries the exact
 JSON Schema 2020-12 input and output schema of each tool, and its annotations: for a read-only tool `readOnlyHint:
 true`, `destructiveHint: false`; for mutating tools `readOnlyHint: false`, `destructiveHint: true` (the metadata does
