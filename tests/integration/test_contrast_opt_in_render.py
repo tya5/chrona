@@ -103,11 +103,24 @@ BUNDLES = ("control-room-dark", "editorial", "elevated-light", "executive-light"
 
 
 @pytest.mark.parametrize("bundle", BUNDLES)
-def test_an_opted_in_bundled_preset_renders_a_standard_project_with_no_floor_miss(tmp_path, bundle):
+def test_an_opted_in_bundled_preset_enforces_its_declared_floor_policy(tmp_path, bundle):
     parts = sr.bundle(bundle)
     parts["theme"]["body"]["contrastPolicy"] = {member: "error" for member in POLICY_MEMBERS}
     directory = tmp_path / bundle
     directory.mkdir()
+
+    # These bundles have encoded fills below 3:1. An explicit mark:error must refuse that independent channel;
+    # do not weaken their authored policy just because the outline still makes the symbol recognizable.
+    if bundle in {"control-room-dark", "mission-light", "print-mono"}:
+        with pytest.raises(RenderFailed) as raised:
+            sr.render(directory, _source(), presentation=parts, icon_catalogs=(STARTER_CATALOG,))
+
+        assert raised.value.code == "E_SCENE_ENCODING_CONTRAST"
+        assert raised.value.source_ref == "/body/contrastPolicy/mark"
+        assert raised.value.details["encoding"]["channel"] == "fill"
+        assert raised.value.details["contrastRatio"] < raised.value.details["floor"] == 3.0
+        assert raised.value.details["encoding"]["scaleId"] and raised.value.details["encoding"]["value"]
+        return
 
     rendered = sr.render(directory, _source(), presentation=parts, icon_catalogs=(STARTER_CATALOG,))
 

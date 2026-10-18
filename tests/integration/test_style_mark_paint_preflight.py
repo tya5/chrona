@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 
-from chrona.presentation.contracts.resources import ClosureIdentity, parse_contract
 from chrona.presentation.layout import surface_count_closure, surface_render_plan
 from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.usecases import render_review as render_review_usecase
@@ -19,11 +18,8 @@ _ENCODED_COLOR = "#28c7b8"
 
 
 def _style(rules):
-    resource = {"version": "chrona/style/v0.2", "kind": "style", "id": "mark-paint-preflight",
-                "body": {"rules": list(rules)}}
-    return parse_contract(
-        ClosureIdentity("style", "mark-paint-preflight", "test-v1", "sha256:" + "0" * 64), resource,
-    ).rules
+    return {"version": "chrona/style/v0.2", "kind": "style", "id": "mark-paint-preflight",
+            "body": {"rules": list(rules)}}
 
 
 def _parts(*, stroke_only_point=False):
@@ -77,7 +73,6 @@ def _render(tmp_path, monkeypatch, *, source, parts, rules):
         return result
 
     def normalize(*args, **kwargs):
-        kwargs["style_rules"] = rules
         kwargs.setdefault("gate_declared", "gate" in parts["theme"]["body"]["roles"])
         return _ORIGINAL_NORMALIZE(*args, **kwargs)
 
@@ -85,7 +80,7 @@ def _render(tmp_path, monkeypatch, *, source, parts, rules):
     monkeypatch.setattr(render_review_usecase, "normalize_v05_surface_content", normalize)
     directory = Path(tmp_path)
     directory.mkdir(parents=True, exist_ok=True)
-    rendered = sr.render(directory, source, presentation=parts)
+    rendered = sr.render(directory, source, presentation=parts, style=rules)
     assert captured
     return rendered, captured[-1]
 

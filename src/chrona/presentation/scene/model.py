@@ -16,7 +16,7 @@ from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, PrimitiveProvenance
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding_for_primitive, semantic_binding
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, TEXT_FOLLOWS_BOX, VIEWER_FIT_MODES
-from chrona.presentation.style import StyleLegendScope, StyleMatch
+from chrona.presentation.style import EncodingWitness, StyleLegendScope, StyleMatch
 from chrona.presentation.scene.pattern_host import completed_pattern_host_valid
 
 
@@ -155,6 +155,33 @@ def _validate_style_provenance_metadata(primitives: tuple[ScenePrimitive, ...],
     identifiers.update(item.legend_scope.style_id for item in metadata if item.legend_scope is not None)
     if len(styles) != 1 or identifiers != {styles[0][1]}:
         raise ValueError("E_RESOURCE_IDENTITY_MISMATCH: Scene Style metadata must join exactly one pinned Style provenance resource")
+
+
+def _validate_encoding_mark(scene_id: object, value: EncodingWitness | None, *, kind: object,
+                             purpose: object, visual_role: object, paint: object) -> None:
+    if value is None:
+        return
+    binding = (contrast_binding_for_primitive(visual_role, kind, purpose)
+               if isinstance(visual_role, str) and isinstance(kind, str) else None)
+    if (not isinstance(value, EncodingWitness) or kind not in {"Rect", "Symbol", "Path"}
+            or not isinstance(paint, ScenePaint) or paint.fill is None
+            or binding is None or binding.contrast_class != ContrastClass.MARK):
+        raise _invalid("encoding", value,
+                       "passive encoding metadata on a filled MARK-classified Rect, Symbol, or Path",
+                       owner=f"primitive {_brief(scene_id)}")
+
+
+def _validate_encoding_provenance_metadata(primitives: tuple[ScenePrimitive, ...],
+                                           resources: tuple[tuple[str, str, str, str], ...]) -> None:
+    encoded = tuple(item for item in primitives if item.encoding is not None)
+    if not encoded:
+        return
+    for primitive in encoded:
+        for source in primitive.encoding.sources:
+            matches = tuple(resource for resource in resources
+                            if resource[0] == source.kind and resource[1] == source.resource_id)
+            if len(matches) != 1:
+                raise ValueError("E_RESOURCE_IDENTITY_MISMATCH: Scene encoding source must join exactly one pinned provenance resource")
 
 
 def _paint_clip_contains(clip: PaintClip, bounds: object, points: object) -> bool:
@@ -547,6 +574,7 @@ class ScenePrimitive:
     theme_role: str | None = None
     style_match: StyleMatch | None = None
     legend_scope: StyleLegendScope | None = None
+    encoding: EncodingWitness | None = None
 
     def __post_init__(self) -> None:
         _validate_style_semantic_metadata(self.scene_id, self.semantic_id, self.theme_role,
@@ -555,6 +583,8 @@ class ScenePrimitive:
         _validate_legend_scope(self.scene_id, self.legend_scope,
                                kind=self.kind, source_kind=self.source_kind,
                                purpose=self.purpose)
+        _validate_encoding_mark(self.scene_id, self.encoding, kind=self.kind, purpose=self.purpose,
+                                visual_role=self.visual_role, paint=self.paint)
         if (self.legend_swatch_shape not in (None, "circle", "rule-pair")
                 or (self.legend_swatch_shape is not None and self.source_kind != "legend")):
             raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} legend_swatch_shape")
@@ -1088,6 +1118,10 @@ class InspectionScene:
 
     def __post_init__(self) -> None:
         _validate_style_provenance_metadata(
+            tuple(primitive for surface in self.surfaces for primitive in surface.primitives),
+            self.provenance.resources,
+        )
+        _validate_encoding_provenance_metadata(
             tuple(primitive for surface in self.surfaces for primitive in surface.primitives),
             self.provenance.resources,
         )

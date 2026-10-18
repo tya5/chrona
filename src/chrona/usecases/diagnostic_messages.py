@@ -146,6 +146,7 @@ _SCENE_CAUSES: Mapping[str, str] = {
     "W_SCENE_RELATION_FAN_IN_INVALID": "shared dependency arrivals do not agree on their target port, terminal owner, paint, or approach direction",
     "W_SCENE_DECORATION_CONTRAST": "a background decoration is fainter than its visibility floor against the ground it lies on",
     "W_SCENE_MARK_CONTRAST": "a mark is fainter than its 3:1 visibility floor against the ground it lies on",
+    "W_SCENE_ENCODING_CONTRAST": "an encoded fill is below its independent 3:1 data-colour floor against its ground",
     "W_SCENE_STATE_TEXT_CONTRAST": "text is fainter than its contrast floor against the ground it lies on",
     "W_SCENE_CONTRAST_GROUND_UNSUPPORTED": "a mark or text lies on a ground whose colour cannot be computed, so its contrast cannot be judged",
     "W_SCENE_CONTRAST_ACCEPTED": "a pair below its contrast floor is accepted by the Theme's declared exception",
@@ -170,6 +171,40 @@ def _items(value: object) -> list[object]:
 
 def _number(value: object) -> str:
     return f"{value:g}" if isinstance(value, (int, float)) else str(value)
+
+
+def _bounded_text(value: object, limit: int = 56) -> str:
+    text = "".join(character if character.isprintable() else "?" for character in str(value))
+    return text if len(text) <= limit else text[:limit - 1] + "…"
+
+
+def encoding_contrast_detail(payload: Mapping[str, object]) -> str:
+    """Bounded user-facing identity for one encoded-fill contrast observation."""
+    facts = payload.get("measuredFacts")
+    if isinstance(facts, Mapping):
+        payload = {**facts, **payload}
+    encoding = payload.get("encoding")
+    if not isinstance(encoding, Mapping):
+        return "encoded mark fill"
+    sources = [source for source in _items(encoding.get("sources")) if isinstance(source, Mapping)]
+    source_labels = []
+    for source in sources[:3]:
+        label = f"{_bounded_text(source.get('kind', '?'))}:{_bounded_text(source.get('id', '?'))}"
+        if source.get("ruleId") is not None:
+            label += f"#{_bounded_text(source.get('ruleId'))}"
+        source_labels.append(label)
+    if len(sources) > len(source_labels):
+        source_labels.append(f"and {len(sources) - len(source_labels)} more sources")
+    source_text = ", ".join(source_labels) if source_labels else "encoding source"
+    field = _bounded_text(encoding.get("field", "?"))
+    value = repr(_bounded_text(encoding.get("value", "?")))
+    scale = _bounded_text(encoding.get("scaleId", "?"))
+    ratio = payload.get("contrastRatio")
+    floor = payload.get("floor")
+    ground = _bounded_text(payload.get("groundId") or payload.get("groundKind") or "ground")
+    measured = (f"{_number(ratio)}:1 vs {_number(floor)}:1" if ratio is not None and floor is not None
+                else "contrast could not be computed")
+    return f"{source_text}; {field}={value} (scale {scale}), {measured} over {ground}"
 
 
 def _describe_warning(payload: Mapping[str, object]) -> WarningText:
@@ -220,6 +255,8 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
         has = f"has {_number(payload.get('availableInline'))}x{_number(payload.get('availableBlock'))}"
         return WarningText(cause, f"{payload.get('placementId')} ({needs}, {has})")
     if code in _SCENE_CAUSES:
+        if code == "W_SCENE_ENCODING_CONTRAST":
+            return WarningText(_SCENE_CAUSES[code], encoding_contrast_detail(payload))
         return WarningText(_SCENE_CAUSES[code], ", ".join(str(item) for item in _items(payload.get("primitiveIds"))))
     if code == "W_FONT_TABULAR_UNAVAILABLE":
         return WarningText(f"font {payload.get('family')} {payload.get('weight')} has no tabular digits, "
