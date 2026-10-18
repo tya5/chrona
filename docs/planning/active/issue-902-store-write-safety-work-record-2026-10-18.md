@@ -118,7 +118,7 @@ must retain its original failure rather than claim a safe pre-write rejection.
 - Use case: an agent reverses an accepted Actual write, then reapplies its intent,
   without overwriting intervening changes or rewinding immutable revision history.
 - Review Spec10 §8 against Store ownership (Spec15), command/reference contracts
-  (Spec65), and CLI/MCP shared dispatch/write gates (Spec66). Preserve snapshot
+  (Spec35), and CLI/MCP shared dispatch/write gates (Spec66). Preserve snapshot
   non-reversibility; do not extend this item to generic Project history.
 - Resolve history authority, origin/revert eligibility, replay identity, current
   base/content checks, and missing/corrupt historical bytes. Existing ledger
@@ -128,3 +128,29 @@ must retain its original failure rather than claim a safe pre-write rejection.
 - Order: selected contract/specification + whole-architecture review → implementation
   plan → shared engine/adapter/schema work → stale/replay/no-overwrite and real
   MCP stdio evidence → one reviewed release. Literal acceptance is listed above.
+
+## Item3 selected contract (pre-code design branch; no product code)
+
+Normative contract: [Spec35 §4.3](../../specification/35-operational-review-workflows.md),
+connected by Specs10/66. Command v0.4 adds Actual revert/redo; MCP tool-set v0.5
+admits them through existing tools, with unchanged gate/path/result contracts.
+Fresh caller-base CAS and verified whole-state equality are independent guards.
+The engine records canonical request intent in the existing ledger, not another
+journal. Legacy records stay replayable/revertible; redo needs recoverable intent.
+
+Implementation migration: remove `record_command` from ActualStore/core mutation
+handlers, MemoryActualStore's process-local undo/redo and wrappers, and the
+always-None LocalActualStore methods/history dictionary. Replace their tests
+with durable engine coverage. Generic Project history is unchanged.
+
+Architecture review: two independent reviews against Specs10/15/35/66 and the
+shared parser/engine/MCP seams found and resolved exact-token rejection of safe
+multi-command inverses, duplicated adapter history, missing legacy identity
+checks and the MCP allowlist/version gap. All ancestry must match the same
+Store/Actual; full identities are verified from immutable bytes, never trusted
+from a ledger digest alone. Fresh-base CAS remains independent of state equality.
+No unresolved architecture finding remains. Normative authority is Spec35 §4.3;
+Spec10 and Spec66 connect the ownership and agent contract. Publish this design
+before implementation planning; item3 code waits for item5 release. This branch
+is separate from the item5 product/release branch, avoiding an unimplemented
+tool-set claim in that release.
