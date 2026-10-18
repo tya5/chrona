@@ -91,6 +91,19 @@ terminal outcome for a name that cannot fit is source-keyed suppression and
 counting, never a new lane or visible overflow. The general visible-overflow
 policy remains available to automatic and explicit rows.
 
+**Automatic row identity warning (#1715).** An automatic View without
+`tableColumns` emits one `W_LAYOUT_ROW_IDENTITY_MISSING` warning per accepted
+render when plot names are spatially suppressed. Count distinct ordinary
+Review rows with a suppressed member-name placement, not labels, count trials
+or out-of-window absences. The selected `title` or alternative `path` is a
+name; delta-only labels are not. Name the affected-row count and the remedies:
+declare a title table column with its required column settings, or widen the
+plot/viewport, pointing at `/body/tableColumns`. Preserve existing per-label
+diagnostics and suppression totals. Any declared table column disables this
+additional warning; explicit/lane modes and geometry/defaults are unchanged.
+Join normalized View intent to completed Layout facts before passive Scene
+projection, after the accepted count trial; never synthesize a default column.
+
 Before any row, mark, table cell or note placement, Layout applies the
 measured table-timeline content requirement to the complete Layout Profile
 allocation. A known row-density requirement grows its table/timeline host and

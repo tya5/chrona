@@ -13,6 +13,7 @@ from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.surface_count_closure import CountReadInput, CountTrial, complete_surface_render_plan
 from chrona.presentation.layout.surface_render_plan import PreparedSurfaceRenderPlan
+from chrona.presentation.layout.surface_row_identity import complete_row_identity_warning
 from chrona.presentation.layout.surface_preparation import SurfacePreRowGeometry
 from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest
 from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
@@ -145,8 +146,14 @@ def compose_resolved_review_surface(seed: CountReadInput, *, visual_profile: Vis
             previous_route_hints=value.previous_route_hints)
     elif admitted.layout_manifest is not plan.manifest:
         raise ValueError("admitted ordinary plan does not match accepted completion")
+    composition = completed.composition
+    if completed.projection.surface == "table-timeline":
+        composition = complete_row_identity_warning(
+            composition, row_mode=value.view.rows.mode,
+            has_table_columns=bool(value.view.table_columns),
+            name_selected=bool({"title", "path"}.intersection(plan.content.label_content)))
     scene_input = SceneBuildInput(completed.projection, plan.content, plan.manifest,
-        admitted.theme_tokens, admitted.capabilities, completed.composition, visual_profile, plan.viewport)
+        admitted.theme_tokens, admitted.capabilities, composition, visual_profile, plan.viewport)
     surface = project_review_surface(scene_input)
     return SurfaceRenderResult(surface, plan, completed.projection, completed.trials)
 

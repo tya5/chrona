@@ -92,6 +92,10 @@ _SURFACE_CAUSES: Mapping[str, str] = {
     "W_LAYOUT_OUTSIDE_WINDOW": "objects outside the explicit window were clipped or left out of the plot; their source data is unchanged",
     "W_LAYOUT_MARK_STACK_OVERFLOW": "a comparison stack exceeds its nominal track; row space was expanded",
     "W_LAYOUT_LABEL_SUPPRESSED": "a label was left out of the picture because it does not fit",
+    "W_LAYOUT_ROW_IDENTITY_MISSING": (
+        "automatic rows have plot names suppressed for lack of room and no table columns; "
+        "declare tableColumns with source: title and the required column settings, "
+        "or widen the plot/viewport"),
     "W_THEME_ROLE_UNREAD": "a Theme role or colour binding is declared but no registered role, group colour or document of the render reads it",
     "W_LAYOUT_ASOF_BELOW_PLOT_FALLBACK": (
         "the as-of chip could not be placed below the plot, so it sits inside the plot foot instead"),
@@ -216,6 +220,9 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
     """Name the cause and the subject of one warning record of ``usecases.warning_ledger``."""
     code = str(payload.get("code", ""))
     identity = str(payload.get("diagnostic", ""))
+    if code == "W_LAYOUT_ROW_IDENTITY_MISSING":
+        count = identity.removeprefix(code + ":count=")
+        return WarningText(f"{count} {_SURFACE_CAUSES[code]}")
     if code == "W_LAYOUT_AUTO_BLOCK_SIZE":
         return WarningText("completed auto canvas exceeds the declared readability limit; "
                            "use View selection/grouping for a smaller review; paging is a future option",
