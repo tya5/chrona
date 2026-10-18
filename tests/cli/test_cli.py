@@ -163,8 +163,9 @@ def test_cli_emits_draft_font_substitution_warning_in_stdout_envelope(capsys):
         "code": "W_FONT_GLYPH_SUBSTITUTED", "severity": "warning",
         "requestedFamily": "Noto Sans", "fallbackFamily": "Noto Color Emoji Check",
         "weight": 400, "codepoint": "U+2705", "text": "General Availability ✅", "drawn": False,
-        "message": "a glyph missing from Noto Sans is drawn with Noto Color Emoji Check: "
-                   "U+2705 in 'General Availability ✅'",
+        "script": "other", "count": 1,
+        "message": "1 other glyphs missing from Noto Sans are drawn with Noto Color Emoji Check: "
+                   "first U+2705 in 'General Availability ✅'",
     }
 
 

@@ -1,6 +1,7 @@
 """Deterministic declared font closure for Layout and output adapters."""
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from hashlib import sha256
 from importlib.resources import files
@@ -76,6 +77,57 @@ class FontGlyphSubstitution:
     codepoint: int
     text: str
     informational: bool = False
+
+
+# Closed script table for glyph-substitution grouping (#1724). Ranges are inclusive Unicode blocks.
+_SCRIPT_RANGES: tuple[tuple[int, int, str], ...] = (
+    (0x3040, 0x309F, "Hiragana"),
+    (0x30A0, 0x30FF, "Katakana"),
+    (0x31F0, 0x31FF, "Katakana"),
+    (0x3400, 0x4DBF, "CJK Unified Ideographs"),
+    (0x4E00, 0x9FFF, "CJK Unified Ideographs"),
+    (0xF900, 0xFAFF, "CJK Unified Ideographs"),
+    (0x3000, 0x303F, "CJK Symbols and Punctuation"),
+    (0xFF00, 0xFFEF, "Halfwidth and Fullwidth Forms"),
+    (0xAC00, 0xD7AF, "Hangul"),
+    (0x1100, 0x11FF, "Hangul"),
+)
+
+
+def glyph_script(codepoint: int) -> str:
+    """The closed script or block name a substituted codepoint is grouped under."""
+    for low, high, name in _SCRIPT_RANGES:
+        if low <= codepoint <= high:
+            return name
+    return "other"
+
+
+@dataclass(frozen=True)
+class FontGlyphGroup:
+    """Substituted glyphs of one (requested font, fallback font, weight, script): a count and the first sample."""
+
+    requested_family: str
+    fallback_family: str
+    weight: int
+    script: str
+    count: int
+    codepoint: int
+    text: str
+
+
+def group_glyph_substitutions(items: "Iterable[FontGlyphSubstitution]") -> tuple[FontGlyphGroup, ...]:
+    """One group per (font, fallback, weight, script); count is distinct codepoints, sample the lowest codepoint."""
+    groups: dict[tuple[str, str, int, str], list[FontGlyphSubstitution]] = {}
+    for item in items:
+        groups.setdefault((item.requested_family, item.fallback_family, item.weight,
+                           glyph_script(item.codepoint)), []).append(item)
+    result = []
+    for (requested, fallback, weight, script), members in groups.items():
+        sample = min(members, key=lambda member: (member.codepoint, member.text))
+        result.append(FontGlyphGroup(requested, fallback, weight, script,
+                                     len({member.codepoint for member in members}), sample.codepoint, sample.text))
+    return tuple(sorted(result, key=lambda group: (group.requested_family.casefold(), group.weight,
+                                                   group.fallback_family, group.script)))
 
 
 @dataclass(frozen=True)

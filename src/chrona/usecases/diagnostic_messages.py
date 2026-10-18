@@ -267,8 +267,9 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
         return WarningText(f"font {payload.get('family')} {payload.get('weight')} has no tabular digits, "
                            "so numbers use proportional spacing", str(payload.get("role")))
     if code == "W_FONT_GLYPH_SUBSTITUTED":
-        return WarningText(f"a glyph missing from {payload.get('requestedFamily')} is drawn with "
-                           f"{payload.get('fallbackFamily')}", f"{payload.get('codepoint')} in {payload.get('text')!r}")
+        return WarningText(f"{payload.get('count', 1)} {payload.get('script', 'other')} glyphs missing from "
+                           f"{payload.get('requestedFamily')} are drawn with {payload.get('fallbackFamily')}",
+                           f"first {payload.get('codepoint')} in {payload.get('text')!r}")
     if code == "W_FONT_FAMILY_SKIPPED":
         fields = dict(part.split("=", 1) for part in identity.removeprefix(code).removeprefix(":").split(";") if "=" in part)
         if fields.get("role") == "font-set":

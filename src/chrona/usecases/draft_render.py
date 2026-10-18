@@ -267,7 +267,8 @@ def warning_payloads(rendered: RenderedReview) -> list[dict[str, Any]]:
     for info in rendered.info_diagnostics:
         if isinstance(info, FontGlyphFallback):
             payloads.append({"code": info.code, "severity": "info", **info.payload(),
-                             "message": f"{info.requested_family} uses {info.fallback_family} for U+{info.codepoint:04X}"})
+                             "message": f"{info.requested_family} uses {info.fallback_family} for {info.count} {info.script} glyphs "
+                                        f"(first U+{info.codepoint:04X})"})
         elif isinstance(info, ForecastInfo):
             payloads.append({"code": info.code, "severity": "info", **info.payload()})
         elif isinstance(info, UnboundFieldRole):

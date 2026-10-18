@@ -443,13 +443,15 @@ class FieldGroupingSummariesOmitted:
 
 @dataclass(frozen=True)
 class FontGlyphFallback:
-    """An automatically covered glyph with its exact measured face."""
+    """Automatically covered glyphs of one script with their exact measured face: a count and the first sample (#1724)."""
 
     requested_family: str
     fallback_family: str
     weight: int
     codepoint: int
     text: str
+    script: str = "other"
+    count: int = 1
 
     @property
     def code(self) -> str:
@@ -457,7 +459,8 @@ class FontGlyphFallback:
 
     def payload(self) -> dict[str, object]:
         return {"requestedFamily": self.requested_family, "fallbackFamily": self.fallback_family,
-                "weight": self.weight, "codepoint": f"U+{self.codepoint:04X}", "text": self.text}
+                "weight": self.weight, "codepoint": f"U+{self.codepoint:04X}", "text": self.text,
+                "script": self.script, "count": self.count}
 
     def scene_diagnostic(self) -> str:
         return self.code + ":" + json.dumps(self.payload(), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
