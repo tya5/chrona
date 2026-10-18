@@ -294,6 +294,14 @@ class ThemeTokenView:
         """Whether this resolved Theme declares the exact semantic role."""
         return isinstance(self._body["roles"].get(role), Mapping)
 
+    @property
+    def color_vision(self) -> tuple[str, ...]:
+        """Claimed vision modes, already closed into the resolved Theme."""
+        modes = self._body.get("colorVision", ())
+        if not isinstance(modes, (tuple, list)) or not all(isinstance(mode, str) for mode in modes):
+            raise ThemeTokenError("E_THEME_RESOLVED_SCHEMA", "/body/colorVision")
+        return tuple(modes)
+
     def dependency_halo_width(self, dependency_role: str) -> Decimal:
         """Recovery decoration width; ground ink remains background.fill."""
         line_width = self.number(dependency_role, "strokeWidth")
