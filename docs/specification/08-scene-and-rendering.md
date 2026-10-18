@@ -376,6 +376,10 @@ instances, not port names or coordinates; Scene and adapters MUST NOT infer
 them from primitive identifiers or proximity. They are optional inspection
 metadata, require both endpoints and a Path, and do not alter adapter geometry.
 Scene v0.6 is unchanged. Layout's node-approach policy is owned by Spec 50.
+Completed dependency-network endpoint identity and physical terminals use
+these existing v0.7 fields (#1727); a previously v0.6 network consequently
+serializes as v0.7. This activates the existing version selector, not a schema
+extension, and its corpus verdict transition must be explicitly recorded.
 
 For approved same-port arrivals, a semantic relation Path MAY additionally
 carry `fanIn: {targetPortId, terminalOwnerId}` in v0.7. Both identifiers are
