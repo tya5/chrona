@@ -591,7 +591,7 @@ def place_member_labels(context: SurfaceMemberLabelContext,
         candidate_geometries = {side: value[2] for side, value in prepared.items()} if prepared else None
         label_size, label_gap, placement_bounds = geometry.size, geometry.gap, geometry.bounds
         reach, association, final_association = geometry.maximum_end_gap, geometry.association, geometry.final_association
-        anchor_with_delta = label_request.anchor
+        anchor_with_delta, delta_extra = label_request.anchor, 0.0
         sibling = obstacles.get(f"variance:{label_request.placement_id.split(':', 1)[-1]}")
         if associated_member and sibling is not None and sibling.obstacle_class == "text":
             # A finish delta is a member of its title's label packing (#1681): when it already holds a side of
@@ -600,13 +600,13 @@ def place_member_labels(context: SurfaceMemberLabelContext,
             host_left, _, host_width, _ = bounds_from_rect(host.bounds)
             anchor = label_request.anchor
             if sibling.geometry.left >= host_left + host_width - label_gap:
-                extra = sibling.geometry.right - (host_left + host_width)
-                reach += extra
+                delta_extra = sibling.geometry.right - (host_left + host_width)
+                reach += delta_extra
                 if association is not None:
-                    association = replace(association, maximum_distance=association.maximum_distance + extra)
+                    association = replace(association, maximum_distance=association.maximum_distance + delta_extra)
                 if final_association is not None:
                     final_association = replace(final_association,
-                                                maximum_distance=final_association.maximum_distance + extra)
+                                                maximum_distance=final_association.maximum_distance + delta_extra)
                 anchor_with_delta = LabelRect(anchor.x, anchor.y, max(anchor.width, sibling.geometry.right - anchor.x),
                                               anchor.height)
             elif sibling.geometry.right <= host_left + label_gap:
@@ -662,6 +662,11 @@ def place_member_labels(context: SurfaceMemberLabelContext,
             selected = prepared[candidate.side]
         measurement, provisional, geometry, slot_bounds = selected
         association, final_association = geometry.association, geometry.final_association
+        if delta_extra and association is not None:
+            association = replace(association, maximum_distance=association.maximum_distance + delta_extra)
+        if delta_extra and final_association is not None:
+            final_association = replace(final_association,
+                                        maximum_distance=final_association.maximum_distance + delta_extra)
         font_size = measurement.treatment.font_size
         label_metrics, visuals = measurement.metrics, measurement.visuals
         leading, trailing, text_width = measurement.leading, measurement.trailing, measurement.text_width
