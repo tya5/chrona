@@ -64,6 +64,7 @@ def schedule(
     objects = project.get("objects", {})
     placements: dict[str, dict[str, date]] = {}
     pending = list(objects)
+    failed: set[str] = set()  # rejected objects: they have no placement, and nothing after them can be placed
     children = children_by_parent(normalize_hierarchy(project))
 
     # Fixed coordinates are authoritative and can always be made available.
@@ -78,6 +79,12 @@ def schedule(
         for object_id in tuple(pending):
             item = objects[object_id]
             raw = item["schedule"]
+            if _waits_on_failed(object_id, raw, project, children, failed):
+                # The root cause is already diagnosed; this object is neither placed nor in a cycle.
+                failed.add(object_id)
+                pending.remove(object_id)
+                progressed = True
+                continue
             if raw["mode"] == "rollup":
                 direct_children = children[object_id]
                 if any(child not in placements for child in direct_children):
@@ -90,6 +97,7 @@ def schedule(
                 bound, wait, bound_diagnostics = _lower_bound(object_id, project, placements, calendars)
                 if bound_diagnostics:
                     diagnostics.extend(bound_diagnostics)
+                    failed.add(object_id)
                 elif wait:
                     continue
                 else:
@@ -107,20 +115,25 @@ def schedule(
             bound, wait, bound_diagnostics = _lower_bound(object_id, project, placements, calendars)
             if bound_diagnostics:
                 diagnostics.extend(bound_diagnostics)
+                failed.add(object_id)
                 pending.remove(object_id)
                 progressed = True
                 continue
             if wait:
                 continue
             try:
-                placement, extra = _place_scheduled(object_id, item, raw, bound, project, calendars)
+                placement, extra = _place_scheduled(object_id, item, raw, bound, project, calendars, placements)
             except TemporalError as exc:
                 diagnostics.append(Diagnostic("E_DERIVATION", str(exc), f"/objects/{object_id}/schedule"))
+                failed.add(object_id)
                 pending.remove(object_id)
+                progressed = True
                 continue
             diagnostics.extend(extra)
             if placement:
                 placements[object_id] = placement
+            else:
+                failed.add(object_id)
             pending.remove(object_id)
             progressed = True
         if not progressed:
@@ -149,6 +162,40 @@ class ReferenceScheduler:
     def schedule(self, project: dict[str, Any], *, extension_diagnostics=()) -> ScheduleOutcome:
         result = schedule(project, extension_diagnostics=extension_diagnostics)
         return ScheduleOutcome(result.placements, tuple(result.diagnostics), result.analysis)
+
+
+def _waits_on_failed(object_id: str, raw: dict, project: dict, children: dict, failed: set[str]) -> bool:
+    """True when a relation source (or, for a rollup, a child) was rejected and so can never be placed."""
+    if not failed:
+        return False
+    if raw["mode"] == "rollup":
+        return any(child in failed for child in children[object_id])
+    return any(relation["to"]["object"] == object_id and relation["from"]["object"] in failed
+               for relation in project.get("relations", []))
+
+
+def _bound_source(target_id: str, endpoint: str, value: date, project: dict, placements: dict,
+                  calendars: dict[str, Calendar]) -> str:
+    """Name the relation (id, else /relations/N) or constraint floor that sets `value` as the lower bound of an endpoint."""
+    for index, relation in enumerate(project.get("relations", [])):
+        if relation["to"]["object"] != target_id or relation["to"]["endpoint"] != endpoint:
+            continue
+        source = placements[relation["from"]["object"]][relation["from"]["endpoint"]]
+        if _lag_bound(relation, source, project, calendars) == value:
+            lag = relation.get("lag", "0d")
+            amount = lag if isinstance(lag, str) else lag["value"]
+            signed = f"- {amount[1:]}" if amount.startswith("-") else f"+ {amount}"
+            key = relation.get("id") or f"/relations/{index}"
+            return f"relation {key} ({relation['from']['object']}.{relation['from']['endpoint']} {source.isoformat()} {signed})"
+    return f"the minimum constraint /objects/{target_id}/schedule/constraints/{endpoint}/min"
+
+
+def _anchor_violation(object_id: str, endpoint: str, anchor: date, bound: date, project: dict, placements: dict,
+                      calendars: dict[str, Calendar]) -> Diagnostic:
+    source = _bound_source(object_id, endpoint, bound, project, placements, calendars)
+    message = (f"Authoritative {endpoint} anchor violates lower bound: {object_id}.{endpoint} is anchored at "
+               f"{anchor.isoformat()}, but {source} requires {bound.isoformat()} or later")
+    return Diagnostic("E_CONTRADICTORY_BOUNDS", message, f"/objects/{object_id}/schedule/anchor")
 
 
 def _fixed_placement(raw: dict[str, Any]) -> dict[str, date]:
@@ -232,7 +279,8 @@ def _derivation_driver(object_id: str, raw: dict, derived: date, project: dict, 
     return f"/objects/{object_id}/schedule"
 
 
-def _place_scheduled(object_id: str, item: dict, raw: dict, bounds: dict[str, date], project: dict, calendars: dict[str, Calendar]) -> tuple[dict[str, date], list[Diagnostic]]:
+def _place_scheduled(object_id: str, item: dict, raw: dict, bounds: dict[str, date], project: dict, calendars: dict[str, Calendar],
+                     placements: dict[str, dict[str, date]]) -> tuple[dict[str, date], list[Diagnostic]]:
     amount = raw["amount"]
     calendar_id = item.get("calendar") or project.get("project", {}).get("calendar")
     calendar = calendars.get(calendar_id) if requires_working_calendar(amount) else None
@@ -243,11 +291,11 @@ def _place_scheduled(object_id: str, item: dict, raw: dict, bounds: dict[str, da
         if calendar is not None and not calendar.is_working(start):
             return {}, [Diagnostic("E_NON_WORKING_ANCHOR", "Explicit WorkPeriod start anchor is not a working date", f"/objects/{object_id}/schedule/anchor/start")]
         if "start" in bounds and start < bounds["start"]:
-            return {}, [Diagnostic("E_CONTRADICTORY_BOUNDS", "Authoritative start anchor violates lower bound", f"/objects/{object_id}/schedule/anchor")]
+            return {}, [_anchor_violation(object_id, "start", start, bounds["start"], project, placements, calendars)]
     elif "end" in anchor:
         end = as_date(anchor["end"])
         if "end" in bounds and end < bounds["end"]:
-            return {}, [Diagnostic("E_CONTRADICTORY_BOUNDS", "Authoritative end anchor violates lower bound", f"/objects/{object_id}/schedule/anchor")]
+            return {}, [_anchor_violation(object_id, "end", end, bounds["end"], project, placements, calendars)]
         start = retreat(end, amount, calendar)
     else:
         candidates = []
