@@ -1,0 +1,45 @@
+<!-- chrona:literal-acceptance/v1 -->
+
+# Trial 6 follow-up acceptance review
+
+## Literal issue acceptance
+
+### Issue #1702
+
+- Source: [Issue #1702](https://github.com/tya5/chrona/issues/1702)
+- Observed: 2026-10-18
+
+| # | Literal acceptance criterion | Disposition | Evidence | Successor |
+| ---: | --- | --- | --- | --- |
+| 1 | a synthetic 8-value domain on a 6-slot scheme gives distinct paints or a legend-keyed Other. | met | [CSV import, explicit responsible mapping, mission-light six-slot scheme, local legend Layout, distinct retained paints and emitted Other key](../../../tests/integration/test_categorical_hues_not_cycled.py). Existing folding works; neither trial inputs nor packaged resources are changed. | — |
+| 2 | find why the gate does not judge this pair; a synthetic twin raises the warning. | met | Existing figure visibility intentionally chooses the readable outline. [Independent encoded-fill twin and unencoded negative, multipart/opacity/policy cases](../../../tests/unit/chrona/presentation/scene/test_contrast_policy.py); [real View and Style → Scene/SVG warning/error transport](../../../tests/integration/test_encoding_contrast.py). | — |
+| 3 | the message names the missing role, the View member that needs it, and what to declare (one sentence plus the pointer). | not met | [Dev B lane](https://github.com/tya5/chrona/issues/454); not accepted by the rows1–2 implementation. | — |
+| 4 | both read in words, with the author's pointer (same mechanism as #1683 row 1). | not met | [Dev B lane](https://github.com/tya5/chrona/issues/454); not accepted by the rows1–2 implementation. | — |
+| 5 | a synthetic case and the PNG. | not met | [Dev B lane](https://github.com/tya5/chrona/issues/454); not accepted by the rows1–2 implementation. | — |
+| 6 | the guide matches; the docs tests cover both statements. | not met | [Dev B lane](https://github.com/tya5/chrona/issues/454); not accepted by the rows1–2 implementation. | — |
+
+## Architecture and release
+
+[Pre-code plan](https://github.com/tya5/chrona/issues/1702#issuecomment-6248687439)
+and [architecture review](https://github.com/tya5/chrona/issues/1702#issuecomment-6248759612)
+publish Specs08/46/60 (`92954b7a6`) before implementation. Model closes
+occurrence-local colour and View/Style source/value together. Central paint
+completion alone attaches passive provenance when that encoding supplies the
+final mark fill. Layout geometry, strongest-channel shape visibility and
+adapters are unchanged. Same-colour glyph, legend and stroke-only overrides
+do not acquire encoding provenance. Scene observes completed grounds only;
+existing mark policy controls severity. Scene-v0.7 widens in place; v0.6 is
+unchanged. No new Theme policy or project-specific branch is introduced.
+
+Focused component/caller batch: 1,471 passed; final targeted additions: 39 and
+34 passed. Schema equivalence against ready `96bdfbb7c` passes with two exact
+Scene deltas and no newly invalid documents. Independent review also found
+and corrected a direct-observer admission gap; raw non-mark/Text witnesses
+now fail structurally, including when no serializer is involved (81 focused
+observer/policy/report tests passed).
+
+## Programme-level criteria (optional)
+
+Release pending: focused checks are not a substitute for the official generated
+snapshot/output review and exact-main three-OS release. This shared issue stays
+open until all six literal rows and the release gate are accepted.
