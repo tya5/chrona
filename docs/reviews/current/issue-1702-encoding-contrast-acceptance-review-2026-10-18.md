@@ -44,6 +44,16 @@ observer/policy/report tests passed).
 
 ## Programme-level criteria (optional)
 
-Release pending: focused checks are not a substitute for the official generated
-snapshot/output review and exact-main three-OS release. This shared issue stays
+Official candidate [CI39122240206](https://github.com/tya5/chrona/actions/runs/39122240206),
+source `8b92a6495`, artifact12134274661: all50 SVGs are byte-identical. Seven
+Scenes gain149 passive encoding witnesses and148 warning identities; after
+removing only those new fields/diagnostics, every Scene is unchanged. The
+contrast report keeps all existing findings: 8,514→8,663 findings, 0→0 errors,
+417→565 warnings. No geometry, paint, text, route or existing diagnostic changes.
+The final candidate must repeat that comparison after following #1714's ready
+main. CI identified stale diagnostic/snapshot expectations and missing schema
+annotations, which must pass before publication.
+
+Release pending: focused checks and the candidate snapshot are not substitutes
+for final-head checks and exact-main three-OS release. This shared issue stays
 open until all six literal rows and the release gate are accepted.
