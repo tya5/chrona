@@ -64,6 +64,12 @@ body:
     width: {minmax: {min: content, max: {fr: 1}}}
     headerOrientation: horizontal
   hierarchyColumn: Work item
+  axis:
+    tiers:
+    - unit: month
+      every: 1
+      role: labels
+      label: {form: short-month-year, align: center, overflow: thin-with-record, orientation: horizontal}
 ```
 
 ```sh
