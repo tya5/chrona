@@ -10,9 +10,10 @@ import yaml
 
 from chrona.usecases.authoring_commands import apply_authoring_command, workspace_revision
 import chrona.operational.authoring_commands as authoring_commands
-from chrona.operational.authoring_commands import _bytes_identity, _transaction_marker, _write_marker, cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
+from chrona.operational.authoring_commands import _bytes_identity, _transaction_marker, _write_transaction_marker, read_authoring_workspace, transact_authoring_command
 from chrona.operational.resources import content_identity
 from chrona.operational.resources import OperationalResourceError
+from chrona.storage.file_transaction import PreparedFileMutation
 
 
 def _workspace() -> dict:
@@ -31,12 +32,16 @@ def _write(path: Path, workspace: dict) -> None:
     path.write_text(yaml.safe_dump(workspace, sort_keys=False), encoding="utf-8")
 
 
+def _apply(path: Path, command: dict) -> dict:
+    return apply_authoring_command(path, command, transact=transact_authoring_command)
+
+
 def test_authoring_command_updates_one_task_with_a_new_content_revision(tmp_path):
     workspace, path = _workspace(), tmp_path / "workspace.yaml"
     _write(path, workspace)
     command = _command(workspace, "setWorkspaceTask", {"task": {"id": "one", "title": "Renamed", "planned": {"start": "2026-01-03", "finish": "2026-01-04"}}})
 
-    result = apply_authoring_command(path, command, read_workspace=read_authoring_workspace, cas_write=cas_write_authoring_workspace)
+    result = _apply(path, command)
 
     assert result["status"] == "accepted"
     assert result["resultRevision"] != result["workspaceRevision"]
@@ -53,8 +58,7 @@ def test_authoring_command_updates_a_japanese_workspace_at_its_current_revision(
         "task": {"id": "one", "title": "実装レビュー", "planned": {"start": "2026-01-03", "finish": "2026-01-04"}},
     })
 
-    result = apply_authoring_command(path, command, read_workspace=read_authoring_workspace,
-                                     cas_write=cas_write_authoring_workspace)
+    result = _apply(path, command)
 
     assert result["status"] == "accepted"
     assert result["workspaceRevision"] == content_identity(workspace)
@@ -69,8 +73,7 @@ def test_workspace_revision_is_the_first_command_precondition_without_writing(tm
         "task": {"id": "one", "title": "First edit", "planned": {"start": "2026-01-03", "finish": "2026-01-04"}},
     }) | {"baseRevision": revision}
 
-    result = apply_authoring_command(path, command, read_workspace=read_authoring_workspace,
-                                     cas_write=cas_write_authoring_workspace)
+    result = _apply(path, command)
 
     assert original != path.read_bytes()
     assert result["status"] == "accepted"
@@ -122,8 +125,7 @@ def test_stale_or_illegal_command_leaves_workspace_bytes_unchanged(tmp_path):
     original = path.read_bytes()
     stale = _command(workspace, "setWorkspaceTask", {"task": {"id": "two", "title": "Two", "planned": {"start": "2026-01-03", "finish": "2026-01-04"}}})
     stale["baseRevision"] = "sha256:" + "0" * 64
-    result = apply_authoring_command(path, stale, read_workspace=read_authoring_workspace,
-                                     cas_write=cas_write_authoring_workspace)
+    result = _apply(path, stale)
     diagnostic = result["diagnostics"][0]
     assert diagnostic["code"] == "E_AUTHORING_BASE_REVISION"
     assert diagnostic["expectedRevision"] == result["workspaceRevision"] == content_identity(workspace)
@@ -132,7 +134,7 @@ def test_stale_or_illegal_command_leaves_workspace_bytes_unchanged(tmp_path):
     assert path.read_bytes() == original
 
     illegal = _command(workspace, "setPresentationOverride", {"overrides": {"view": {"offset": {"x": 1}}}})
-    assert apply_authoring_command(path, illegal, read_workspace=read_authoring_workspace, cas_write=cas_write_authoring_workspace)["status"] == "rejected"
+    assert _apply(path, illegal)["status"] == "rejected"
     assert path.read_bytes() == original
 
 
@@ -141,12 +143,152 @@ def test_actual_command_rejects_unknown_task_without_writing(tmp_path):
     _write(path, workspace)
     original = path.read_bytes()
     command = _command(workspace, "setWorkspaceActual", {"actual": {"taskId": "missing", "actual": {"start": "2026-01-01", "finish": "2026-01-02"}}})
-    result = apply_authoring_command(path, command, read_workspace=read_authoring_workspace, cas_write=cas_write_authoring_workspace)
+    result = _apply(path, command)
     assert result["status"] == "rejected"
     assert path.read_bytes() == original
 
 
-def test_aggregate_writer_switches_workspace_last_and_rejects_stale_or_colliding_destinations(tmp_path):
+def test_exact_command_retry_replays_original_result_after_later_write(tmp_path):
+    workspace, path = _workspace(), tmp_path / "workspace.yaml"
+    _write(path, workspace)
+    first = _command(workspace, "setWorkspaceTask", {
+        "task": {"id": "one", "title": "First", "planned": {"start": "2026-01-03", "finish": "2026-01-04"}},
+    })
+    accepted = _apply(path, first)
+    current = read_authoring_workspace(path)
+    later = _command(current, "setWorkspaceTask", {
+        "task": {"id": "one", "title": "Later", "planned": {"start": "2026-01-05", "finish": "2026-01-06"}},
+    }) | {"commandId": "change-2"}
+    assert _apply(path, later)["status"] == "accepted"
+
+    before_retry = path.read_bytes()
+    assert _apply(path, first) == accepted
+    assert path.read_bytes() == before_retry
+
+
+def test_reused_command_id_with_changed_target_is_id_reuse_before_target_rejection(tmp_path):
+    workspace, path = _workspace(), tmp_path / "workspace.yaml"
+    _write(path, workspace)
+    original = _command(workspace, "setWorkspaceTask", {
+        "task": {"id": "one", "title": "First", "planned": {"start": "2026-01-03", "finish": "2026-01-04"}},
+    })
+    assert _apply(path, original)["status"] == "accepted"
+
+    changed = deepcopy(original)
+    changed["target"]["path"] = "other.yaml"
+    replay = _apply(path, changed)
+    assert replay["status"] == "rejected"
+    assert replay["diagnostics"][0]["code"] == "E_AUTHORING_COMMAND_ID_REUSE"
+
+
+def test_noop_command_commits_and_replays_receipt_without_rewriting_workspace(tmp_path):
+    workspace, path = _workspace(), tmp_path / "workspace.yaml"
+    _write(path, workspace)
+    command = _command(workspace, "selectPresentationPreset", {
+        "preset": deepcopy(workspace["body"]["presentation"]["binding"]["preset"]),
+    })
+    result = _apply(path, command)
+    assert result["status"] == "accepted"
+    assert result["resultRevision"] == result["workspaceRevision"]
+    after_first = path.read_bytes()
+    assert _transaction_marker(path).exists() is False
+    assert _apply(path, command) == result
+    assert path.read_bytes() == after_first
+
+
+def test_noop_bundle_recovery_verifies_resource_outputs_before_replay(tmp_path, monkeypatch):
+    workspace, path = _workspace(), tmp_path / "workspace.yaml"
+    _write(path, workspace)
+    workspace_bytes = path.read_bytes()
+    request = {"commandId": "noop-bundle", "target": {"path": path.name},
+               "baseRevision": content_identity(workspace)}
+    result = {"status": "accepted", "commandId": "noop-bundle"}
+    candidates = {path.name: workspace_bytes, "presentation/view.yaml": b"view"}
+    prepare = lambda _path, _current: PreparedFileMutation(candidates, content_identity(workspace), result)
+    reject = lambda code, _observed, _detail: {"code": code}
+    verify = lambda request, actual, before, after: (
+        None if request["commandId"] == actual["commandId"] and before == after
+        else (_ for _ in ()).throw(ValueError("receipt mismatch"))
+    )
+    monkeypatch.setattr(authoring_commands, "_cleanup_committed_marker", lambda *_args: None)
+
+    assert transact_authoring_command(path, request, prepare=prepare, reject=reject,
+                                      verify_receipt=verify) == result
+    marker = _transaction_marker(path)
+    assert marker.is_file() and (tmp_path / "presentation/view.yaml").read_bytes() == b"view"
+    assert transact_authoring_command(path, request, prepare=prepare, reject=reject,
+                                      verify_receipt=verify) == result
+    assert not marker.exists()
+    assert path.read_bytes() == workspace_bytes
+
+
+def test_verified_commit_replays_when_cleanup_waits_but_blocks_new_commands(tmp_path, monkeypatch):
+    workspace, path = _workspace(), tmp_path / "workspace.yaml"
+    _write(path, workspace)
+    command = _command(workspace, "selectPresentationPreset", {
+        "preset": deepcopy(workspace["body"]["presentation"]["binding"]["preset"]),
+    })
+    monkeypatch.setattr(authoring_commands, "_remove_stage",
+                        lambda *_args: (_ for _ in ()).throw(OSError("cleanup unavailable")))
+    accepted = _apply(path, command)
+    assert accepted["status"] == "accepted"
+    assert _transaction_marker(path).is_file()
+    assert _apply(path, command) == accepted
+
+    new_command = deepcopy(command) | {"commandId": "new-command"}
+    blocked = _apply(path, new_command)
+    assert blocked["status"] == "rejected"
+    assert blocked["diagnostics"][0]["code"] == "E_AUTHORING_AGGREGATE_RECOVERY"
+
+
+def test_identity_case_normalization_does_not_change_canonical_target_filename(tmp_path, monkeypatch):
+    path = tmp_path / "MiXeD.yaml"
+    _write(path, _workspace())
+    monkeypatch.setattr(authoring_commands.os.path, "normcase", lambda value: value.lower())
+    canonical, scope = authoring_commands._canonical_workspace(path)
+    assert canonical.name == "MiXeD.yaml"
+    assert scope.startswith("sha256:")
+
+
+def test_staging_identity_is_scoped_to_the_canonical_workspace(tmp_path):
+    paths = [tmp_path / name for name in ("first.yaml", "second.yaml")]
+    for path in paths:
+        _write(path, _workspace())
+    scopes = [authoring_commands._canonical_workspace(path)[1] for path in paths]
+    stages = [authoring_commands._stage_name("shared-command-id", scope) for scope in scopes]
+    assert stages[0] != stages[1]
+    assert stages[0] == authoring_commands._stage_name("shared-command-id", scopes[0])
+
+
+def test_recovery_preserves_unowned_staging_entries(tmp_path, monkeypatch):
+    workspace, path = _workspace(), tmp_path / "workspace.yaml"
+    _write(path, workspace)
+    command = _command(workspace, "setWorkspaceTask", {
+        "task": {"id": "one", "title": "Candidate", "planned": {"start": "2026-01-03", "finish": "2026-01-04"}},
+    })
+    original_write = authoring_commands._write_new_bytes
+    injected = False
+
+    def write_then_inject(destination, payload):
+        nonlocal injected
+        original_write(destination, payload)
+        if not injected and destination.name == path.name:
+            (destination.parent / "unowned.txt").write_text("preserve", encoding="utf-8")
+            injected = True
+
+    monkeypatch.setattr(authoring_commands, "_write_new_bytes", write_then_inject)
+    monkeypatch.setattr(authoring_commands.os, "link", lambda *_args: (_ for _ in ()).throw(OSError("publish failed")))
+
+    with pytest.raises(OperationalResourceError) as raised:
+        _apply(path, command)
+    assert raised.value.code == "E_AUTHORING_AGGREGATE_RECOVERY"
+    _, scope_identity = authoring_commands._canonical_workspace(path)
+    stage = tmp_path / authoring_commands._stage_name(command["commandId"], scope_identity)
+    assert (stage / "unowned.txt").read_text(encoding="utf-8") == "preserve"
+    assert path.read_bytes() == yaml.safe_dump(workspace, sort_keys=False).encode("utf-8")
+
+
+def test_transaction_switches_workspace_last_and_rejects_stale_or_colliding_destinations(tmp_path):
     workspace, path = _workspace(), tmp_path / "workspace.yaml"
     _write(path, workspace)
     explicit = deepcopy(workspace)
@@ -155,27 +297,36 @@ def test_aggregate_writer_switches_workspace_last_and_rejects_stale_or_colliding
         for name in ("view", "theme", "colorScheme", "layout", "renderContext")
     }, "receipt": {"id": "receipt", "kind": "receipt", "path": "presentation/receipt.yaml", "contentIdentity": "sha256:" + "a" * 64}}
     candidates = {"workspace.yaml": yaml.safe_dump(explicit).encode(), "presentation/view.yaml": b"view"}
+    request = {"commandId": "bundle", "target": {"path": path.name}, "baseRevision": content_identity(workspace)}
+    prepare = lambda _path, _current: PreparedFileMutation(candidates, content_identity(explicit), {"ok": True})
+    verify = lambda *_args: None
+    reject = lambda code, _observed, _detail: {"code": code}
 
-    assert cas_write_authoring_aggregate(path, "sha256:" + "0" * 64, candidates) is None
+    assert transact_authoring_command(path, request | {"baseRevision": "sha256:" + "0" * 64},
+                                      prepare=prepare, reject=reject, verify_receipt=verify)["code"] == "E_AUTHORING_BASE_REVISION"
     assert not (tmp_path / "presentation").exists()
-    result = cas_write_authoring_aggregate(path, content_identity(workspace), candidates)
-    assert result == content_identity(explicit)
+    result = transact_authoring_command(path, request, prepare=prepare, reject=reject, verify_receipt=verify)
+    assert result == {"ok": True}
     assert yaml.safe_load(path.read_text(encoding="utf-8"))["body"]["presentation"]["mode"] == "explicit"
     assert (tmp_path / "presentation/view.yaml").read_bytes() == b"view"
 
 
-def test_aggregate_writer_recovers_an_unreferenced_complete_bundle_before_retry(tmp_path):
+def test_transaction_rolls_back_proven_legacy_bundle_before_retry(tmp_path):
     workspace, path = _workspace(), tmp_path / "workspace.yaml"
     _write(path, workspace)
     orphan = tmp_path / "presentation"
     orphan.mkdir()
     payload = b"orphan"
     (orphan / "view.yaml").write_bytes(payload)
-    _write_marker(_transaction_marker(path), content_identity(workspace), "presentation", {"presentation/view.yaml": _bytes_identity(payload)})
-    candidates = {"workspace.yaml": yaml.safe_dump(workspace).encode(), "presentation/view.yaml": b"replacement"}
+    _write_transaction_marker(_transaction_marker(path), {
+        "workspaceIdentity": content_identity(workspace), "directory": "presentation",
+        "resources": {"presentation/view.yaml": _bytes_identity(payload)},
+    })
+    command = _command(workspace, "setWorkspaceTask", {"task": {"id": "one", "title": "retry", "planned": {"start": "2026-01-03", "finish": "2026-01-04"}}})
 
-    assert cas_write_authoring_aggregate(path, content_identity(workspace), candidates) == content_identity(workspace)
-    assert (tmp_path / "presentation/view.yaml").read_bytes() == b"replacement"
+    result = _apply(path, command)
+    assert result["status"] == "accepted"
+    assert not (tmp_path / "presentation").exists()
     assert not _transaction_marker(path).exists()
 
 
@@ -248,10 +399,13 @@ def _parse(tmp_path: Path, document: dict) -> str:
 
 def _downstream(document: dict, workspace: dict, workspace_name: str = "workspace.yaml") -> str:
     """The verdict of `apply_authoring_command` alone, on an in-memory workspace (no parser)."""
-    result = apply_authoring_command(
-        Path(workspace_name), document, read_workspace=lambda _path: deepcopy(workspace),
-        cas_write=lambda _path, _base, _candidate: _STORED,
-    )
+    def transact(_path, _command, *, prepare, reject, verify_receipt):
+        current = deepcopy(workspace)
+        if document["baseRevision"] != content_identity(current):
+            return reject("E_AUTHORING_BASE_REVISION", content_identity(current), "")
+        prepared = prepare(Path(workspace_name), current)
+        return prepared.result if prepared.result_revision is not None else prepared.result
+    result = apply_authoring_command(Path(workspace_name), document, transact=transact)
     return "accepted" if result["status"] == "accepted" else result["diagnostics"][0]["code"].partition(":")[0]
 
 
@@ -270,7 +424,13 @@ def test_authoring_command_target_path_guard_matrix(tmp_path, value, parses, dow
     assert (verdict == "parsed") is parses, verdict
     if not parses:
         assert verdict.startswith("E_AUTHORING_COMMAND_SCHEMA /target/path"), verdict
-    assert _downstream(command, workspace) == downstream
+    actual_downstream = _downstream(command, workspace)
+    if value != "workspace.yaml":
+        # The transaction port canonicalizes the target before preparation; this is
+        # now the explicit target-mismatch result rather than a later CAS mismatch.
+        assert actual_downstream == "E_AUTHORING_TARGET_MISMATCH"
+    else:
+        assert actual_downstream == downstream
     if value in NARROWED_BY_THE_GUARD and Path(value).name == value:
         # apply alone would have accepted a workspace stored under exactly this name
         assert _downstream(command, workspace, value) == "accepted"
@@ -286,8 +446,7 @@ def test_authoring_command_still_works_for_a_workspace_named_with_spaces_or_non_
     command_file.write_text(yaml.safe_dump(command, allow_unicode=True), encoding="utf-8")
 
     from chrona.usecases.authoring_commands import parse_authoring_command
-    result = apply_authoring_command(path, parse_authoring_command(command_file), read_workspace=read_authoring_workspace,
-                                     cas_write=cas_write_authoring_workspace)
+    result = _apply(path, parse_authoring_command(command_file))
 
     assert result["status"] == "accepted"
     assert yaml.safe_load(path.read_text(encoding="utf-8"))["body"]["project"]["tasks"][0]["title"] == "Renamed"

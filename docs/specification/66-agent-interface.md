@@ -2,7 +2,7 @@
 
 **Status:** Proposed; the tool core is implemented in `chrona.app.agent_tools` (#142, slice I142-S3; the Store command
 tools, #813; the Store read tools, #812) and served over MCP by `chrona mcp` (`chrona.app.mcp_server`, slice I142-S4).
-**Owns:** the agent tool set `chrona/agent-tools/v0.5`, the shape of a tool result, the workspace path rules, the
+**Owns:** the agent tool set `chrona/agent-tools/v0.6`, the shape of a tool result, the workspace path rules, the
 write gate, the determinism contract of a tool call, the MCP binding rules of section 7, and the `E_MCP_*` diagnostic
 codes.
 **Does not own:** the meaning of a Project or a schedule (Spec 05, Spec 04), the render pipeline (Specs 06, 07,
@@ -20,15 +20,17 @@ A tool is a use case with a typed envelope. The tool set adds no behavior: for t
 the diagnostic code and the bytes the command of the same name returns, and a disagreement is a defect in one of
 the two. The tool core imports use cases, the shared Store address guard and the shared Store functions
 (`chrona.operational.store_commands` and `chrona.operational.store_reads`, which the command line calls too) only,
-imports no transport SDK and prints nothing. One tool, `apply_command`, writes (section 2.1); every other tool writes nothing.
+imports no transport SDK and prints nothing. `apply_command` and
+`apply_authoring_command` write only behind the write gate (sections2.1/2.3).
 
-## 2. Tool set `chrona/agent-tools/v0.5`
+## 2. Tool set `chrona/agent-tools/v0.6`
 
 Every tool takes paths relative to one workspace root (section 4). A change to any input or output schema, or to the
 set, changes the tool-set version. `v0.2` (#782) added the optional `count` and `occurrences` properties of a
 diagnostic and nothing else; `v0.3` (#813) added `check_command` and `apply_command`; `v0.4` (#812) added `render_review` and `compare_baseline`.
 `v0.5` (#902 item3) admits Command v0.4 Actual revert/redo through the existing
 Store tools; their path arguments, result envelope and write gate are unchanged.
+`v0.6` (#902 item2) adds `apply_authoring_command` for the guided workspace.
 
 | Tool | Command equivalent | Use case |
 | --- | --- | --- |
@@ -40,6 +42,7 @@ Store tools; their path arguments, result envelope and write gate are unchanged.
 | `compare_baseline` | `chrona baseline-compare` | `operational.store_reads.compare_store_baseline` |
 | `check_command` | `chrona command-check` | `operational.store_commands.run_store_command` |
 | `apply_command` | `chrona command-apply` | `operational.store_commands.run_store_command` |
+| `apply_authoring_command` | `chrona authoring-command-apply` | shared authoring use case and operational transaction of Spec51 §4.2 |
 
 The first four tools are read-only. `render_review` and `compare_baseline` are read-only too and read a Store
 (section 2.2); the two command tools are section 2.1.
@@ -48,7 +51,7 @@ Inputs are closed objects (`additionalProperties: false`). A tool accepts no int
 switch, no font-metrics or icon-catalog path, no typesetter descriptor, no output path, no Store root and no
 `allow-missing-content-identity`. The registry (`registry_document()`, served as the tool list) carries the exact
 JSON Schema 2020-12 input and output schema of each tool, and its annotations: for a read-only tool `readOnlyHint:
-true`, `destructiveHint: false`; for `apply_command` `readOnlyHint: false`, `destructiveHint: true` (the metadata does
+true`, `destructiveHint: false`; for both write tools `readOnlyHint: false`, `destructiveHint: true` (the metadata does
 not understate a write, whatever it overwrites); `idempotentHint: true` and `openWorldHint: false` for every tool.
 
 - `validate_project {project}`: result `projectIdentity` (the SHA-256 of the file bytes) when the file was read.
@@ -155,6 +158,26 @@ command line returns.
 - A Store read has no size cap beyond the file system: Store content is identity-bound and an asset such as a font is
   legitimately large. A reference or configuration file over 2 MiB is `E_MCP_INPUT_TOO_LARGE`.
 
+### 2.3 The guided authoring write tool
+
+`apply_authoring_command {workspace, command}` takes two workspace-relative
+paths, to the guided workspace and `authoring-command/v0.1` request. Resolve
+both through the existing containment guard after the write gate and before
+opening either file. Its shared use case/transaction and exact CLI-equivalent
+`authoringResult` follow Spec51 §4.2; no separate tool mutation policy or approval.
+The tool core may import the same named operational authoring transaction port
+as the CLI; schema/intent preparation stays in the use case. It does not call
+individual CAS/file writers or add a second authoring command dispatcher.
+
+It is always listed, with `readOnlyHint: false`, `destructiveHint: true` and
+`idempotentHint: true`: a durable exact retry returns the original accepted
+result without writes. Without `--allow-write`, fail `E_MCP_WRITE_DISABLED`
+before opening any file. An understood accepted result is `ok`, a logical
+refusal is `rejected` with the authoring result retained, and preflight/runtime
+failures use the existing failed envelope. Diagnostics identify command fields
+(`/baseRevision`, `/commandId`, `/target/path`) or the workspace/command path as appropriate.
+Command/result versions remain v0.1; the new tool changes the tool-set version.
+
 ## 3. Result
 
 Every result is the envelope `{status, diagnostics, omittedDiagnostics?}` plus the tool's own fields, which are
@@ -222,7 +245,8 @@ present only when `status` is `ok` (a field a call had already produced, such as
 ## 4. Workspace rules
 
 A tool call reads files below one directory, resolved once when the server starts, the Store tools read a Store below
-it, and `apply_command` writes a Store below it. A filesystem root is refused (`E_MCP_WORKSPACE_TOO_BROAD`).
+it, and the two write tools modify only a contained Store or guided workspace.
+A filesystem root is refused (`E_MCP_WORKSPACE_TOO_BROAD`).
 
 1. Every path argument passes `resolve_store_address(workspace, value, charset="file-name")` of
    `core/store_address.py`: `/`-separated, no backslash, colon, drive, anchor, control character, empty or all-dot
@@ -256,13 +280,13 @@ rasterizer of the `render` extra.
 | `E_MCP_INPUT_TOO_LARGE` | An input file exceeds 2 MiB. |
 | `E_MCP_RESULT_TOO_LARGE` | An inline payload, or a `compare_baseline` result, exceeds its cap; lower the viewport (`render_draft`), use `inline: none`, or use the command line. |
 | `E_MCP_WORKSPACE_TOO_BROAD` | The workspace is a filesystem root. |
-| `E_MCP_WRITE_DISABLED` | `apply_command` is called on a server started without `--allow-write` (status `failed`). |
+| `E_MCP_WRITE_DISABLED` | A write tool is called on a server started without `--allow-write` (status `failed`). |
 | `E_MCP_UNAVAILABLE` | `chrona mcp` is run without the optional SDK; the message says `pip install 'chrona[mcp]'` (exit 2). |
 
 ## 7. The MCP binding
 
 `chrona mcp [--workspace DIR] [--allow-write] [--list-tools]` serves the tool set over MCP on standard input and output;
-it is the only transport. `--allow-write` lets `apply_command` write (section 2.1); without it the server is read-only
+it is the only transport. `--allow-write` enables the two write tools (sections2.1/2.3); without it the server is read-only
 and the registry is unchanged. The binding is the one module that imports the SDK (`chrona.app.mcp_server`, optional extra
 `chrona[mcp]`, `mcp>=2.0,<3`); `chrona mcp --list-tools` prints the registry and needs no SDK.
 

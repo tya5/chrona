@@ -127,6 +127,63 @@ and `resultRevision` is the accepted next value. A stale result carries
 file-local rule is the equivalent precondition allowed by Specification 10 and
 does not modify the Store-command rules in Specification 35.
 
+### 4.2 Durable authoring command execution (#902 item2)
+
+CLI and MCP use the same application entry and transaction coordinator. The
+authoring use case prepares and validates complete byte candidates, their next
+workspace content identity and the exact result before publication. The Engine
+owns lock/replay/CAS/recovery and treats candidates and results as opaque data;
+it does not interpret authoring operation types or presentation models. Replace
+the old pair of write callbacks rather than retaining a second mutation path.
+
+One resolved workspace path, platform-case-normalized for identity, identifies
+the transaction, lock and private replay receipts. `target.path` names that
+canonical workspace filename. Revision reads follow the same resolution.
+Noncanonical target filenames reject as `E_AUTHORING_TARGET_MISMATCH`, naming
+the canonical filename needed for retry; alias paths do not create another lock
+or receipt scope. This intentionally replaces alias-basename write behavior.
+Both ordinary and materializing commands take the existing workspace OS lock.
+Under it, recover a pending transaction, look up a receipt, then perform fresh
+base comparison, preparation and publication. Exact accepted retries return
+the original `authoring-command-result/v0.1` without writes, even after later
+commands. The result gains no replay flag. Same ID with a different canonical
+request/target is `E_AUTHORING_COMMAND_ID_REUSE`.
+
+Append-only receipts live in a workspace-adjacent private directory, with hashed
+command-ID filenames (SHA-256 of the exact UTF-8 ID, never a raw path); they retain the canonical request, request/workspace
+identity and exact accepted result. They are the sole replay authority; a
+materialization provenance receipt and the temporary transaction marker are not
+alternative histories. Validate receipt identities and result before replay;
+corrupt/mismatched receipts fail closed with `E_AUTHORING_REPLAY_UNAVAILABLE`.
+Check the embedded ID against the selected filename, the canonical request hash,
+the canonical workspace scope, and accepted result schema/command ID/base/next
+identities. Never overwrite an earlier accepted receipt.
+Do not infer old acceptance from current content: receipt-free pre-feature
+commands keep their stale-base behavior. No eager workspace/schema migration.
+
+Extend the existing recovery marker with old/new workspace identities and the
+new receipt/resource identities. Stage candidates and receipt, publish resources
+and receipt first, then atomically replace a changed workspace as commit point.
+Before commit, rollback only the transaction's owned new files; after commit,
+never remove its resources/receipt or turn accepted work into a rejection.
+When the workspace identity is unchanged, atomic receipt publication is the
+no-op commit point and the workspace is not rewritten. Recovery distinguishes
+those cases, validates owned paths/bytes, and preserves unexpected state with
+`E_AUTHORING_AGGREGATE_RECOVERY` rather than guessing or deleting unrelated files.
+For a no-op marker, a final receipt matching its recorded digest proves commit;
+absence is precommit, and a mismatch is recovery failure.
+Legacy markers may roll back only when the old workspace identity and owned
+resource paths/bytes prove that safe. Without a recorded new identity/receipt,
+a changed workspace cannot prove commit: preserve state and report recovery
+required, never fabricate an accepted receipt.
+
+Post-commit marker cleanup is not mutation acceptance. A verified committed
+marker permits accepted replay even if cleanup must wait; new mutations require
+recovery/cleanup first. Logical refusals retain the authoring result contract;
+I/O failures that prevent a safe observation/commit must not fabricate acceptance
+or a pre-write rejection. This is cooperative local process-recovery, not a
+distributed transaction or a guarantee against arbitrary shell edits/power loss.
+
 ## 5. Successor boundaries
 
 This document does not add a compatibility parser, GUI workflow, external-sync

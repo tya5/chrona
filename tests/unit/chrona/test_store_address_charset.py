@@ -19,12 +19,13 @@ from chrona.core.store_address import (
     StoreAddressError, _has_foreign_segment, check_store_address, check_store_segment, resolve_store_address,
 )
 from chrona.operational.authoring_commands import (
-    OperationalResourceError, _relative as _operational_relative, cas_write_authoring_aggregate,
+    OperationalResourceError, _validate_candidates, transact_authoring_command,
 )
 from chrona.operational.command_engine import apply_actual_command
 from chrona.operational.store_config import ConfiguredStoreReader
 from chrona.resources import validator_for_schema
 from chrona.storage.snapshot_paths import snapshot_directory
+from chrona.storage.file_transaction import PreparedFileMutation
 
 STORE_ADDRESS = validator_for_schema({"$ref": "urn:chrona:common-v0.1#/$defs/storeAddress"})
 # One character from every class that matters: a letter, a digit, the three punctuation marks the grammar allows, the
@@ -123,12 +124,13 @@ def test_resolve_takes_the_mode_and_still_checks_containment(tmp_path):
         resolve_store_address(tmp_path, "../x", charset="file-name")
 
 
-def test_the_operational_path_check_takes_the_mode():
-    assert _operational_relative("計画.yaml", charset="file-name") is True
-    assert _operational_relative("計画.yaml") is False
-    assert _operational_relative("a:b.yaml", charset="file-name") is False
-    assert _operational_relative("a\\b.yaml", charset="file-name") is False
-    assert _operational_relative("presentation/view.yaml") is True
+def test_the_operational_path_check_assigns_the_mode_by_candidate_role(tmp_path):
+    path = tmp_path / "計画.yaml"
+    files = {path.name: b"workspace", "presentation/view.yaml": b"view"}
+    assert _validate_candidates(path, files) == (files, "presentation")
+    for invalid in ("a:b.yaml", "a\\b.yaml", "presentation/計画.yaml"):
+        with pytest.raises(OperationalResourceError):
+            _validate_candidates(path, {path.name: b"workspace", invalid: b"invalid"})
 
 
 # --------------------------------------------------------------------------------------------
@@ -139,13 +141,23 @@ def _workspace() -> dict:
     return {"version": "chrona/authoring-workspace/v0.1", "kind": "authoring-workspace", "id": "w", "body": {}}
 
 
+def _publish_candidates(path, workspace, candidates):
+    revision = content_identity(workspace)
+    return transact_authoring_command(
+        path, {"commandId": "charset", "baseRevision": revision, "target": {"path": path.name}},
+        prepare=lambda *_: PreparedFileMutation(candidates, revision, {"revision": revision}),
+        reject=lambda code, observed, detail: pytest.fail(f"{code}: {detail}"),
+        verify_receipt=lambda *_: None,
+    )
+
+
 @pytest.mark.parametrize("workspace_name", ["workspace.yaml", "my plan.yaml", "計画.yaml"])
 def test_the_aggregate_writer_accepts_a_workspace_file_name_of_any_valid_kind(tmp_path, workspace_name):
     path = tmp_path / workspace_name
     workspace = _workspace()
     path.write_text(yaml.safe_dump(workspace), encoding="utf-8")
     candidates = {workspace_name: yaml.safe_dump(workspace).encode(), "presentation/view.yaml": b"view"}
-    assert cas_write_authoring_aggregate(path, content_identity(workspace), candidates) == content_identity(workspace)
+    assert _publish_candidates(path, workspace, candidates) == {"revision": content_identity(workspace)}
     assert (tmp_path / "presentation" / "view.yaml").read_bytes() == b"view"
 
 
@@ -156,11 +168,11 @@ def test_the_aggregate_writer_holds_a_resource_name_to_the_address_rule(tmp_path
     path.write_text(yaml.safe_dump(workspace), encoding="utf-8")
     candidates = {path.name: yaml.safe_dump(workspace).encode(), resource: b"x"}
     with pytest.raises(OperationalResourceError) as error:
-        cas_write_authoring_aggregate(path, content_identity(workspace), candidates)
+        _publish_candidates(path, workspace, candidates)
     assert error.value.code == "E_AUTHORING_AGGREGATE_PATH"
     assert str(error.value).startswith("E_AUTHORING_AGGREGATE_PATH: ")
-    assert "workspace 'my plan.yaml'" in error.value.detail
-    assert "safe relative paths" in error.value.detail
+    assert resource in error.value.detail
+    assert "unsafe" in error.value.detail
     assert not (tmp_path / resource.split("/")[0]).exists()
 
 

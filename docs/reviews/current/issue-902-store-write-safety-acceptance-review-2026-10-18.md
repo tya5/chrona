@@ -16,12 +16,11 @@
 
 ## Programme-level criteria (optional)
 
-**Release not accepted.** PR1698 merged076be666c after finalCI39100063943.
-[Exact-main39101259252](https://github.com/tya5/chrona/actions/runs/39101259252)
-passed Linux/macOS but Windows failed precisely persistent process exclusion,
-same-command replay, transaction span and snapshot registry replay. The stack
-shows `file_lock.lock_file` reading the byte another handle already locks;
-the waiting writer is rejected before mutation, not allowed to overwrite.
+**Item5 release accepted.** [Exact-main39105269292](https://github.com/tya5/chrona/actions/runs/39105269292)
+on `381cf404ac678446b68ede5f34125a1c1164c6d3` passed full pytest/conformance
+and wheel/smoke on Linux, macOS and Windows, plus MCP and newest-Python public
+materializer reproduction. The retained native persistent-exclusion,
+same-command replay, transaction-span and snapshot-registry tests now pass.
 
 Design correction `d0ea4f635`/Spec15 and [reviewed plan6246530666](https://github.com/tya5/chrona/issues/902#issuecomment-6246530666)
 precede repair. The shared storage primitive now locks offset0 without content
@@ -31,8 +30,8 @@ ownership, authoring diagnostic translation and replay→CAS→publish→record 
 No sentinel migration, unlink, new retry, schema or renderer policy is added.
 
 The guarded-handle regression fails3 empty/nonempty cases before the fix and
-passes afterward; the focused storage/authoring/process batch passes58. This
-portable model is **not** native Windows proof. Current-head PR CI and official
-artifact review, followed by a successful exact-main three-OS full suite,
-conformance/wheel/MCP/public reproduction containing this review, remain required.
-All four native failed tests are retained. Parent902 remains open.
+passes afterward; the focused storage/authoring/process batch passes58.
+Repair PR1707 head `a0f42ce9a` passed final CI39104093015; its official artifact
+12127409514 has all109 generated paths unchanged. The exact-main full release
+above supplies native Windows proof beyond that portable regression. Parent902
+remains open: this accepts item5 only, not item3, item2 or parked requirements.

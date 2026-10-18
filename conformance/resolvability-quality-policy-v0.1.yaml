@@ -4,6 +4,21 @@ diagnosticActionability:
   # A new bare site requires explicit classification; detailed sites cannot stay here.
   bareDiagnostics: []
 declaredComputedValues:
+  - path: src/chrona/operational/authoring_commands.py
+    function: _read_receipt
+    field: requestIdentity
+    classification: pinned-deliberately
+    producer: chrona identity document
+  - path: src/chrona/operational/authoring_commands.py
+    function: transact_authoring_command
+    field: requestIdentity
+    classification: pinned-deliberately
+    producer: chrona identity document
+  - path: src/chrona/operational/authoring_commands.py
+    function: transact_authoring_command
+    field: baseRevision
+    classification: pinned-deliberately
+    producer: chrona workspace revision
   - path: src/chrona/operational/command_engine.py
     function: _apply_revert
     field: contentIdentity
@@ -65,7 +80,7 @@ declaredComputedValues:
     classification: pinned-deliberately
     producer: chrona render
   - path: src/chrona/usecases/authoring_commands.py
-    function: apply_authoring_command
+    function: prepare_authoring_command
     field: baseRevision
     classification: pinned-deliberately
     producer: chrona workspace revision

@@ -1,12 +1,15 @@
-"""Typed guided-workspace command use case above the presentation-free CAS writer."""
+"""Typed guided-workspace command preparation above the transaction port."""
 from __future__ import annotations
 
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-from chrona.presentation.contracts import ClosureIdentity, ContractError, parse_contract
+import yaml
+
 from chrona.core.identity import content_identity
+from chrona.presentation.contracts import ClosureIdentity, ContractError, parse_contract
+from chrona.storage.file_transaction import PreparedFileMutation
 
 
 def parse_authoring_command(path: Path) -> dict[str, Any]:
@@ -30,39 +33,77 @@ def workspace_revision(workspace_path: Path, *, read_workspace: Any) -> str:
 
 
 def apply_authoring_command(
-    workspace_path: Path, command: dict[str, Any], *, read_workspace: Any, cas_write: Any,
-    cas_write_aggregate: Any | None = None,
+    workspace_path: Path, command: dict[str, Any], *, transact: Any,
 ) -> dict[str, Any]:
-    """Validate source intent; persistence is injected by the outer application adapter."""
-    current = read_workspace(workspace_path)
+    """Prepare source intent and delegate all canonical publication to Engine."""
+    def prepare(canonical_path: Path, current: dict[str, Any]) -> PreparedFileMutation:
+        return prepare_authoring_command(canonical_path, current, command)
+
+    def reject(code: str, observed_identity: str, detail: str = "") -> dict[str, Any]:
+        return _rejected(command, code, observed_identity, detail=detail)
+
+    return transact(
+        workspace_path, command, prepare=prepare, reject=reject,
+        verify_receipt=verify_authoring_receipt,
+    )
+
+
+def prepare_authoring_command(
+    canonical_path: Path, current: dict[str, Any], command: dict[str, Any],
+) -> PreparedFileMutation:
+    """Return complete validated bytes and exact result without canonical writes."""
     base = content_identity(current)
-    if command["target"]["path"] != workspace_path.name or command["baseRevision"] != base:
-        return _rejected(command, "E_AUTHORING_BASE_REVISION", base)
+    if command["target"]["path"] != canonical_path.name:
+        return _prepared_rejection(command, "E_AUTHORING_TARGET_MISMATCH", base,
+                                   detail=f"target path must name canonical workspace {canonical_path.name!r}")
+    if command["baseRevision"] != base:
+        return _prepared_rejection(command, "E_AUTHORING_BASE_REVISION", base)
     try:
         if command["type"] == "materializePresentationPreset":
-            if cas_write_aggregate is None:
-                raise ValueError("E_AUTHORING_AGGREGATE_WRITER: materializePresentationPreset requires an aggregate CAS writer")
             from chrona.usecases.authoring_materialization import materialization_candidate
-            candidate, candidates = materialization_candidate(
-                workspace_path, current, directory=command["payload"].get("directory", "presentation"),
+            explicit, files = materialization_candidate(
+                canonical_path, current, directory=command["payload"].get("directory", "presentation"),
             )
-            result = cas_write_aggregate(workspace_path, base, candidates)
-            if result is None:
-                return _rejected(command, "E_AUTHORING_BASE_REVISION", base)
-            return _accepted(command, base, result, reversible=False)
+            next_revision = content_identity(explicit)
+            result = _accepted(command, base, next_revision, reversible=False)
+            return PreparedFileMutation(files=files, result_revision=next_revision, result=result)
+
         candidate = deepcopy(current)
         _apply(candidate, command)
         parse_contract(ClosureIdentity("authoring-workspace", str(candidate["id"]), "draft", content_identity(candidate)), candidate)
-        result = cas_write(workspace_path, base, candidate)
-        if result is None:
-            return _rejected(command, "E_AUTHORING_BASE_REVISION", base)
+        payload = yaml.safe_dump(candidate, sort_keys=False).encode("utf-8")
+        next_revision = content_identity(candidate)
+        result = _accepted(command, base, next_revision)
+        return PreparedFileMutation(files={canonical_path.name: payload}, result_revision=next_revision, result=result)
     except FileExistsError as error:
-        return _rejected(command, str(error) if str(error).startswith("E_") else "E_AUTHORING_MATERIALIZE_COLLISION", base)
+        message = str(error)
+        if message.startswith("E_"):
+            return _prepared_rejection(command, message, base)
+        return _prepared_rejection(command, "E_AUTHORING_MATERIALIZE_COLLISION", base, detail=message)
     except (KeyError, ContractError, ValueError) as error:
         code = getattr(error, "code", str(error))
         detail = getattr(error, "detail", "")
-        return _rejected(command, code if code.startswith("E_") else "E_AUTHORING_COMMAND", base, detail=detail)
-    return _accepted(command, base, result)
+        return _prepared_rejection(command, code if code.startswith("E_") else "E_AUTHORING_COMMAND", base, detail=detail)
+
+
+def verify_authoring_receipt(
+    request: dict[str, Any], result: dict[str, Any], before_identity: str, after_identity: str,
+) -> None:
+    """Validate persisted replay data before Engine returns it as authoritative."""
+    from chrona.resources import schema_validator
+
+    request_errors = tuple(schema_validator("authoring-command-v0.1.schema.yaml").iter_errors(request))
+    result_errors = tuple(schema_validator("authoring-command-result-v0.1.schema.yaml").iter_errors(result))
+    if request_errors or result_errors:
+        raise ValueError("E_AUTHORING_REPLAY_UNAVAILABLE: retained request or result violates its schema")
+    if (
+        result["status"] != "accepted"
+        or result["commandId"] != request["commandId"]
+        or result["commandBaseRevision"] != request["baseRevision"]
+        or result["workspaceRevision"] != before_identity
+        or result["resultRevision"] != after_identity
+    ):
+        raise ValueError("E_AUTHORING_REPLAY_UNAVAILABLE: retained result identities do not match the accepted request")
 
 
 def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> None:
@@ -92,7 +133,12 @@ def _accepted(command: dict[str, Any], workspace: str, result: str, *, reversibl
     return value if reversible is None else value | {"reversible": reversible}
 
 
-def _rejected(command: dict[str, Any], code: str, base: str, *, detail: str = "") -> dict[str, Any]:
+def _prepared_rejection(command: dict[str, Any], code: str, base: str, *, detail: str = "") -> PreparedFileMutation:
+    result = _rejected(command, code, base, detail=detail)
+    return PreparedFileMutation(files={}, result_revision=None, result=result)
+
+
+def _rejected(command: dict[str, Any], code: str, base: str, detail: str = "") -> dict[str, Any]:
     code, _, inline_detail = code.partition(":")
     detail = detail or inline_detail.strip()
     diagnostic: dict[str, Any] = {"code": code}
