@@ -1,0 +1,138 @@
+{
+  "argv": [
+    "render",
+    "/tmp/chrona-1734-evidence.qW1pl7/b240.yaml",
+    "--preset",
+    "chrona-default-draft",
+    "--progress",
+    "--output",
+    "/tmp/chrona-1734-evidence.qW1pl7/profile.svg",
+    "--emit-scene",
+    "/tmp/chrona-1734-evidence.qW1pl7/profile.scene.json"
+  ],
+  "argv_paths_sha256": "f986422e3b1224ebed73bc216504a857ec3911da5955994f8cbb6cd349767cb9",
+  "exclusive_total_seconds": 41.35559791699052,
+  "git_dirty": false,
+  "git_head": "9672b4c85e523e2be10f804f39fe7f0145766c0e",
+  "patch_alias_counts": {
+    "graph.reverse_bounds": 1,
+    "graph.sparse_graph": 1,
+    "graph.visibility_base": 1,
+    "labels.member": 2,
+    "labels.relation": 2,
+    "routing.compose_surface_routes": 2,
+    "routing.label_trial_other": 1,
+    "routing.resolution": 2,
+    "routing.selection_other": 2
+  },
+  "phases": {
+    "route-label-baseline/normal/candidate.accept": {
+      "calls": 553,
+      "exclusive_seconds": 0.1486659669317305
+    },
+    "route-label-baseline/normal/candidate.prepare": {
+      "calls": 403,
+      "exclusive_seconds": 0.02073244983330369
+    },
+    "route-label-baseline/normal/candidate.rank": {
+      "calls": 56,
+      "exclusive_seconds": 0.0013286652974784374
+    },
+    "route-label-baseline/normal/graph.reverse_bounds": {
+      "calls": 60,
+      "exclusive_seconds": 2.910014331806451
+    },
+    "route-label-baseline/normal/graph.sparse_graph": {
+      "calls": 129,
+      "exclusive_seconds": 7.978796125389636
+    },
+    "route-label-baseline/normal/graph.visibility_base": {
+      "calls": 1,
+      "exclusive_seconds": 0.07190004084259272
+    },
+    "route-label-baseline/normal/routing.resolution_attempt_other": {
+      "calls": 336,
+      "exclusive_seconds": 0.003406885080039501
+    },
+    "route-label-baseline/normal/routing.selection_other": {
+      "calls": 336,
+      "exclusive_seconds": 1.1408501244150102
+    },
+    "route-label-baseline/unspecified/labels.member": {
+      "calls": 209,
+      "exclusive_seconds": 14.852285000029951
+    },
+    "route-label-baseline/unspecified/labels.relation": {
+      "calls": 1,
+      "exclusive_seconds": 2.4707987904548645e-05
+    },
+    "route-label-baseline/unspecified/routing.compose_surface_routes": {
+      "calls": 1,
+      "exclusive_seconds": 0.318219933193177
+    },
+    "route-label-baseline/unspecified/routing.label_trial_other": {
+      "calls": 1,
+      "exclusive_seconds": 0.00011375034227967262
+    },
+    "route-label-baseline/unspecified/routing.resolution": {
+      "calls": 336,
+      "exclusive_seconds": 0.002998019102960825
+    },
+    "route-label-recovery/normal/candidate.accept": {
+      "calls": 516,
+      "exclusive_seconds": 0.13105150824412704
+    },
+    "route-label-recovery/normal/candidate.prepare": {
+      "calls": 412,
+      "exclusive_seconds": 0.10479506570845842
+    },
+    "route-label-recovery/normal/graph.sparse_graph": {
+      "calls": 15,
+      "exclusive_seconds": 4.2572317104786634
+    },
+    "route-label-recovery/normal/graph.visibility_base": {
+      "calls": 1,
+      "exclusive_seconds": 0.6159103326499462
+    },
+    "route-label-recovery/normal/routing.resolution_attempt_other": {
+      "calls": 336,
+      "exclusive_seconds": 0.0033584642224013805
+    },
+    "route-label-recovery/normal/routing.selection_other": {
+      "calls": 336,
+      "exclusive_seconds": 7.1376567971892655
+    },
+    "route-label-recovery/unspecified/labels.member": {
+      "calls": 1,
+      "exclusive_seconds": 1.189266124740243
+    },
+    "route-label-recovery/unspecified/labels.relation": {
+      "calls": 1,
+      "exclusive_seconds": 6.412481889128685e-05
+    },
+    "route-label-recovery/unspecified/routing.compose_surface_routes": {
+      "calls": 1,
+      "exclusive_seconds": 0.3636481552384794
+    },
+    "route-label-recovery/unspecified/routing.label_trial_other": {
+      "calls": 1,
+      "exclusive_seconds": 0.09786775009706616
+    },
+    "route-label-recovery/unspecified/routing.resolution": {
+      "calls": 336,
+      "exclusive_seconds": 0.002948216162621975
+    },
+    "unclassified/unspecified/labels.member": {
+      "calls": 1,
+      "exclusive_seconds": 0.0024636671878397465
+    }
+  },
+  "platform": "macOS-26.3.1-arm64-arm-64bit-Mach-O",
+  "process_outcome": "returned",
+  "python": "3.13.7 (main, Sep  6 2025, 01:18:26) [Clang 13.1.6 (clang-1316.0.21.2)]",
+  "residual_category": "unwrapped CLI/projection/other runtime",
+  "residual_seconds": 8.168095999862999,
+  "return_code": 0,
+  "source_root": "/private/tmp/chrona-1734-measure.EsSGyd",
+  "wall_seconds": 49.52369391685352
+}
