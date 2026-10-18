@@ -43,6 +43,12 @@ external absolute paths. No product code, golden, native lock test or gate
 changes. [The publication amendment](https://github.com/tya5/chrona/issues/902#issuecomment-6247917297)
 batches this test-only repair into PR1712 before fresh candidate checks and the
 mandatory exact-main three-OS full release; the failed run is not acceptance.
+Independent review confirms strict workspace identity is unchanged. The full
+CLI-characterization module and focused operational/recovery/spawned-writer/
+agent/MCP-stdio batch passes199 locally; this includes the exact missing-workspace
+case, both newline forms, nested Windows short/long/device paths and an external
+path negative. Literal-review and diff checks pass. Native Windows execution
+and its wheel gate remain required in the next full release.
 
 Items5/3 are independently accepted on native releases39105269292 and39108421823.
 Item2 still requires current-head PR/artifact review and a successful native
