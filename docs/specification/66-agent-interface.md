@@ -2,7 +2,7 @@
 
 **Status:** Proposed; the tool core is implemented in `chrona.app.agent_tools` (#142, slice I142-S3; the Store command
 tools, #813; the Store read tools, #812) and served over MCP by `chrona mcp` (`chrona.app.mcp_server`, slice I142-S4).
-**Owns:** the agent tool set `chrona/agent-tools/v0.6`, the shape of a tool result, the workspace path rules, the
+**Owns:** the agent tool set `chrona/agent-tools/v0.7`, the shape of a tool result, the workspace path rules, the
 write gate, the determinism contract of a tool call, the MCP binding rules of section 7, and the `E_MCP_*` diagnostic
 codes.
 **Does not own:** the meaning of a Project or a schedule (Spec 05, Spec 04), the render pipeline (Specs 06, 07,
@@ -19,11 +19,12 @@ the Store read tools: [`docs/archive/planning/issue-812-mcp-store-read-tools.md`
 A tool is a use case with a typed envelope. The tool set adds no behavior: for the same files it returns the verdict,
 the diagnostic code and the bytes the command of the same name returns, and a disagreement is a defect in one of
 the two. The tool core imports use cases, the shared Store address guard and the shared Store functions
-(`chrona.operational.store_commands` and `chrona.operational.store_reads`, which the command line calls too) only,
-imports no transport SDK and prints nothing. `apply_command` and
-`apply_authoring_command` write only behind the write gate (sections2.1/2.3).
+(`chrona.operational.store_commands` and `chrona.operational.store_reads`, which the command line calls too),
+the shared authoring transaction, and the opaque exclusive workspace initializer only.
+It imports no transport SDK and prints nothing. `apply_command`,
+`apply_authoring_command` and `create_workspace` write only behind the write gate (sections2.1/2.3).
 
-## 2. Tool set `chrona/agent-tools/v0.6`
+## 2. Tool set `chrona/agent-tools/v0.7`
 
 Every tool takes paths relative to one workspace root (section 4). A change to any input or output schema, or to the
 set, changes the tool-set version. `v0.2` (#782) added the optional `count` and `occurrences` properties of a
@@ -31,6 +32,8 @@ diagnostic and nothing else; `v0.3` (#813) added `check_command` and `apply_comm
 `v0.5` (#902 item3) admits Command v0.4 Actual revert/redo through the existing
 Store tools; their path arguments, result envelope and write gate are unchanged.
 `v0.6` (#902 item2) adds `apply_authoring_command` for the guided workspace.
+`v0.7` (#1725) adds the workspace lifecycle below and permits an inline
+authoring-command object through the same validated mutation use case.
 
 | Tool | Command equivalent | Use case |
 | --- | --- | --- |
@@ -43,15 +46,19 @@ Store tools; their path arguments, result envelope and write gate are unchanged.
 | `check_command` | `chrona command-check` | `operational.store_commands.run_store_command` |
 | `apply_command` | `chrona command-apply` | `operational.store_commands.run_store_command` |
 | `apply_authoring_command` | `chrona authoring-command-apply` | shared authoring use case and operational transaction of Spec51 §4.2 |
+| `create_workspace` | initialization library entry | Spec51 initialization and exclusive publication |
+| `validate_workspace` | workspace validation library entry | complete guided source/resource closure validation |
+| `workspace_revision` | `chrona workspace revision` | existing validated workspace revision query |
+| `render_workspace` | `chrona render-workspace` | shared guided-render use case |
 
 The first four tools are read-only. `render_review` and `compare_baseline` are read-only too and read a Store
 (section 2.2); the two command tools are section 2.1.
 
 Inputs are closed objects (`additionalProperties: false`). A tool accepts no integrity override, no system-font
-switch, no font-metrics or icon-catalog path, no typesetter descriptor, no output path, no Store root and no
+switch, no font-metrics or icon-catalog path, no typesetter descriptor, no rendered-output path, no Store root and no
 `allow-missing-content-identity`. The registry (`registry_document()`, served as the tool list) carries the exact
 JSON Schema 2020-12 input and output schema of each tool, and its annotations: for a read-only tool `readOnlyHint:
-true`, `destructiveHint: false`; for both write tools `readOnlyHint: false`, `destructiveHint: true` (the metadata does
+true`, `destructiveHint: false`; for mutating tools `readOnlyHint: false`, `destructiveHint: true` (the metadata does
 not understate a write, whatever it overwrites); `idempotentHint: true` and `openWorldHint: false` for every tool.
 
 - `validate_project {project}`: result `projectIdentity` (the SHA-256 of the file bytes) when the file was read.
@@ -160,10 +167,11 @@ command line returns.
 
 ### 2.3 The guided authoring write tool
 
-`apply_authoring_command {workspace, command}` takes two workspace-relative
-paths, to the guided workspace and `authoring-command/v0.1` request. Resolve
-both through the existing containment guard after the write gate and before
-opening either file. Its shared use case/transaction and exact CLI-equivalent
+`apply_authoring_command {workspace, command}` takes a workspace-relative
+workspace path and either a contained command-file path or an inline closed
+`authoring-command/v0.1` object. Both command forms use the same schema and
+mutation dispatcher. Resolve all paths through the containment guard after
+the write gate and before opening any file. Its shared use case/transaction and exact CLI-equivalent
 `authoringResult` follow Spec51 §4.2; no separate tool mutation policy or approval.
 The tool core may import the same named operational authoring transaction port
 as the CLI; schema/intent preparation stays in the use case. It does not call
@@ -177,6 +185,36 @@ refusal is `rejected` with the authoring result retained, and preflight/runtime
 failures use the existing failed envelope. Diagnostics identify command fields
 (`/baseRevision`, `/commandId`, `/target/path`) or the workspace/command path as appropriate.
 Command/result versions remain v0.1; the new tool changes the tool-set version.
+
+### 2.4 Workspace lifecycle (#1725)
+
+- `create_workspace {directory, project, preset?}` initializes the Spec51
+  bundle. `project` is the compact workspace-project object (id, optional
+  title, tasks with id/title/planned start/finish), not a second Project format;
+  `preset` is a builtin ID returned by `list_presets`, default
+  `chrona-default-draft`. The destination must not exist and its parent must
+  already be a real directory inside the server workspace. Validate syntax,
+  reserved names, symlinks and containment before reading preset bytes.
+  Return `workspace` (the relative workspace.yaml path) and `workspaceRevision`.
+  It is a mutating, gated tool; collisions leave existing content unchanged.
+- `validate_workspace {workspace}` validates the complete guided workspace and
+  pinned resource closure, returning `workspaceRevision` on success without
+  writing. `workspace_revision {workspace}` returns the same canonical CAS
+  precondition through the existing query. Neither requires the write gate.
+- `render_workspace {workspace, viewport?, locale?, format?, inline?}` shares
+  guided rendering with the CLI, including `{expr}` tokens and effective font
+  resolution. Its options, artifacts, warning/size policy and read-only
+  annotations match `render_draft`; the latter remains a raw-Project tool.
+- The command description and inline schema expose the existing five command
+  types and payloads. An agent carries creation/query `workspaceRevision` and
+  accepted `authoringResult.resultRevision` into the next command base; it
+  never has to read files or provoke a stale-base error to discover a revision.
+  Reverting a source edit is its inverse command at the new revision, not a
+  second undo engine. MCP recovery guidance names tools, not shell commands.
+
+Only initialization accepts a nonexistent destination directory. Its explicit
+destination guard retains the syntax/containment/device rules of section4;
+the existing-file guard is unchanged for every read and command-file input.
 
 ## 3. Result
 
@@ -245,7 +283,7 @@ present only when `status` is `ok` (a field a call had already produced, such as
 ## 4. Workspace rules
 
 A tool call reads files below one directory, resolved once when the server starts, the Store tools read a Store below
-it, and the two write tools modify only a contained Store or guided workspace.
+it, and mutating tools modify only a contained Store or guided workspace bundle.
 A filesystem root is refused (`E_MCP_WORKSPACE_TOO_BROAD`).
 
 1. Every path argument passes `resolve_store_address(workspace, value, charset="file-name")` of
@@ -286,7 +324,7 @@ rasterizer of the `render` extra.
 ## 7. The MCP binding
 
 `chrona mcp [--workspace DIR] [--allow-write] [--list-tools]` serves the tool set over MCP on standard input and output;
-it is the only transport. `--allow-write` enables the two write tools (sections2.1/2.3); without it the server is read-only
+it is the only transport. `--allow-write` enables mutating tools (sections2.1/2.3/2.4); without it the server is read-only
 and the registry is unchanged. The binding is the one module that imports the SDK (`chrona.app.mcp_server`, optional extra
 `chrona[mcp]`, `mcp>=2.0,<3`); `chrona mcp --list-tools` prints the registry and needs no SDK.
 

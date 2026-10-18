@@ -492,3 +492,28 @@ def test_a_lanes_view_with_the_automatic_point_policy_names_the_conflict_in_word
     message = raised.value.detail
     assert "property 'points'" in message and "not allowed with mode 'lanes'" in message
     assert "should not be valid" not in message
+
+
+def test_a_design_supplied_grouping_without_by_is_reported_against_the_view_the_author_wrote(tmp_path):
+    parts = sr.bundle("executive-light")
+    parts["view"]["body"].pop("grouping")
+    parts["layout"]["viewDefaults"] = {"grouping": {"presentation": "header"}}
+
+    with pytest.raises(Exception) as raised:
+        _render(tmp_path, parts)
+    assert str(raised.value) == "E_VIEW_SCHEMA" and raised.value.source_ref == "/body/grouping"
+    message = raised.value.detail
+    assert "the View declares no 'grouping'" in message and "viewDefaults" in message and "'by'" in message
+    assert "missing required property" not in message
+
+
+def test_hierarchy_grouping_in_a_lanes_view_names_the_value_and_the_rows_mode(tmp_path):
+    parts = sr.bundle("executive-light")
+    parts["view"]["body"]["grouping"] = {"by": "hierarchy", "depth": 1, "rollup": "header"}
+
+    with pytest.raises(Exception) as raised:
+        _render(tmp_path, parts)
+    assert str(raised.value) == "E_VIEW_SCHEMA" and raised.value.source_ref == "/body/grouping/by"
+    message = raised.value.detail
+    assert "cannot be 'hierarchy' while rows.mode is 'lanes' (/body/rows/mode)" in message
+    assert "should not be valid" not in message

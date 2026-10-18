@@ -154,10 +154,15 @@ def collect_render_warnings(
         identity = {"scenePath": item.scene_path, "primitiveIds": list(item.primitive_ids)}
         if encoding is not None:
             identity["encoding"] = encoding
+        pair = dict(getattr(item, "encoding_pair", ()))
+        if pair:
+            identity = {"scenePath": item.scene_path, "encoding": encoding, "encodingPair": pair}
         records.append(_with_subjects(_record(item.code, identity,
                                findingCode=item.finding_code, scenePath=item.scene_path,
                                primitiveIds=list(item.primitive_ids), measuredFacts=dict(item.measured_facts),
                                **({"encoding": encoding} if encoding is not None else {}),
+                               **({"encodingPair": pair, "occurrenceCount": len(item.primitive_ids),
+                                   "groundIds": list(item.ground_ids)} if pair else {}),
                                **({"disposition": item.disposition} if item.disposition is not None else {})),
                                      getattr(item, "subjects", ())))
     for item in scale_collisions:

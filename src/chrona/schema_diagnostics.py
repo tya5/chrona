@@ -222,6 +222,12 @@ def _forbidden_members(error: ValidationError) -> SchemaViolation | None:
         if isinstance(required, Sequence) and not isinstance(required, str):
             forbidden.extend(str(name) for name in required)
     instance = error.instance
+    pinned = _forbidden_value(rule, instance)
+    if pinned is not None:
+        name, value = pinned
+        pointer = json_pointer((*tuple(error.absolute_path), name))
+        return SchemaViolation(pointer, "not", (pointer,), _kind(instance),
+                               f"'{name}' ({pointer}) cannot be {_literal(value)} in this form; choose another value or change the mode")
     present = [name for name in dict.fromkeys(forbidden) if isinstance(instance, Mapping) and name in instance]
     if not present:
         return None
@@ -233,6 +239,20 @@ def _forbidden_members(error: ValidationError) -> SchemaViolation | None:
     noun, verb = ("property", "is") if len(present) == 1 else ("properties", "are")
     return SchemaViolation(pointers[0], "not", pointers, _kind(instance),
                            f"{noun} {named} {verb} not allowed{context}; remove it or change the mode")
+
+
+def _forbidden_value(rule: object, instance: object) -> tuple[str, object] | None:
+    """`not: {properties: {k: {const: V}}, required: [k]}` met by an instance whose `k` is `V`: the forbidden value."""
+    if not (isinstance(rule, Mapping) and isinstance(instance, Mapping)):
+        return None
+    properties, required = rule.get("properties"), rule.get("required")
+    if not (isinstance(properties, Mapping) and len(properties) == 1 and isinstance(required, Sequence)):
+        return None
+    name, constraint = next(iter(properties.items()))
+    if (isinstance(constraint, Mapping) and "const" in constraint and list(required) == [name]
+            and name in instance and instance[name] == constraint["const"]):
+        return str(name), constraint["const"]
+    return None
 
 
 def _union_forms(error: ValidationError) -> tuple[str, ...]:

@@ -9,8 +9,8 @@ from tests.support.skill_files import SKILL_DIR, skill_documents
 from tools.check_documented_commands import surface
 
 SKILL = SKILL_DIR / "SKILL.md"
-ROW = re.compile(r"^\|\s*`(?P<tool>[a-z_]+)`\s*\|\s*`(?P<command>chrona [^`]+)`\s*\|", re.MULTILINE)
-TOOL_LIKE = re.compile(r"`((?:validate|schedule|render|list|compare|apply|check|init|workspace)_[a-z_]+)`")
+ROW = re.compile(r"^\|\s*`(?P<tool>[a-z_]+)`\s*\|\s*(?P<command>[^|]+?)\s*\|", re.MULTILINE)
+TOOL_LIKE = re.compile(r"`((?:create|validate|schedule|render|list|compare|apply|check|init|workspace)_[a-z_]+)`")
 # The commands each tool is documented to equal (design D2.3): the table may not drift from them.
 EQUIVALENT_COMMANDS = {
     "validate_project": "chrona validate", "schedule_project": "chrona schedule",
@@ -18,19 +18,29 @@ EQUIVALENT_COMMANDS = {
     "render_review": "chrona render-review", "compare_baseline": "chrona baseline-compare",
     "check_command": "chrona command-check", "apply_command": "chrona command-apply",
     "apply_authoring_command": "chrona authoring-command-apply",
+    "create_workspace": None, "validate_workspace": None,
+    "workspace_revision": "chrona workspace revision", "render_workspace": "chrona render-workspace",
 }
 
 
+def _rows():
+    return [(match["tool"], match["command"].strip().strip("`"))
+            for match in ROW.finditer(SKILL.read_text(encoding="utf-8"))]
+
+
 def test_the_table_lists_exactly_the_registered_tools_in_order():
-    rows = [(match["tool"], match["command"]) for match in ROW.finditer(SKILL.read_text(encoding="utf-8"))]
+    rows = _rows()
 
     assert [tool for tool, _ in rows] == [spec.name for spec in tool_specs()]
-    assert dict(rows) == EQUIVALENT_COMMANDS
+    assert {tool: command if command.startswith("chrona ") else None
+            for tool, command in rows} == EQUIVALENT_COMMANDS
+    assert all(command == "Library entry (no CLI equivalent)"
+               for tool, command in rows if EQUIVALENT_COMMANDS[tool] is None)
 
 
 def test_every_command_in_the_table_is_a_real_command_of_the_cli():
     real = {" ".join(path) for path in surface(_parser())}
-    shown = [match["command"] for match in ROW.finditer(SKILL.read_text(encoding="utf-8"))]
+    shown = [command for _, command in _rows() if command.startswith("chrona ")]
 
     assert shown and all(command in real for command in shown), [command for command in shown if command not in real]
 

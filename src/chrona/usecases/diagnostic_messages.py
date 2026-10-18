@@ -96,6 +96,9 @@ _SURFACE_CAUSES: Mapping[str, str] = {
     "W_LAYOUT_ASOF_BELOW_PLOT_FALLBACK": (
         "the as-of chip could not be placed below the plot, so it sits inside the plot foot instead"),
     "W_LAYOUT_RELATION_SUPPRESSED": "a relation line was left out of the picture because no route fits",
+    "W_LAYOUT_ROUTING_COST": (
+        "the selected relation workload may make routing expensive; use --relations none to omit drawn relations, "
+        "or review the Layout Profile relationRouting policy"),
     "W_LAYOUT_CRITICAL_RELATION_SEARCH_DOMAIN_EXHAUSTED": (
         "a critical relation line was left out because exhaustive checks found no hard-safe route within the "
         "declared finite port/event search domain; this does not establish impossibility outside that domain"),
@@ -204,7 +207,9 @@ def encoding_contrast_detail(payload: Mapping[str, object]) -> str:
     ground = _bounded_text(payload.get("groundId") or payload.get("groundKind") or "ground")
     measured = (f"{_number(ratio)}:1 vs {_number(floor)}:1" if ratio is not None and floor is not None
                 else "contrast could not be computed")
-    return f"{source_text}; {field}={value} (scale {scale}), {measured} over {ground}"
+    count = payload.get("occurrenceCount")
+    occurrences = f"; {count} occurrences" if isinstance(count, int) else ""
+    return f"{source_text}; {field}={value} (scale {scale}), {measured} over {ground}{occurrences}"
 
 
 def _describe_warning(payload: Mapping[str, object]) -> WarningText:
@@ -322,9 +327,12 @@ def collapse_warnings(payloads: Iterable[Mapping[str, object]]) -> list[dict[str
     gains ``count`` (2 or more) and ``occurrences`` (the distinct identities in order, at most 20), and its
     message names the first subject and how many more there were.
     """
-    groups: dict[tuple[str, str, str], list[Mapping[str, object]]] = {}
+    groups: dict[tuple[str, str, str, str], list[Mapping[str, object]]] = {}
     for payload in payloads:
-        key = (str(payload.get("code")), str(payload.get("severity")), describe_warning(payload).cause)
+        # Encoded-fill warnings already represent complete realised pairs at the
+        # render boundary. Do not co-collapse distinct pairs or truncate their IDs.
+        pair = str(payload.get("diagnostic", "")) if payload.get("encodingPair") else ""
+        key = (str(payload.get("code")), str(payload.get("severity")), describe_warning(payload).cause, pair)
         groups.setdefault(key, []).append(payload)
     rows: list[dict[str, object]] = []
     for members in groups.values():

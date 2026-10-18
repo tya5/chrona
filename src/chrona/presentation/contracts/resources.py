@@ -1,7 +1,7 @@
 """Frozen contracts constructed only after exact resource-schema acceptance."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta
 from enum import Enum, StrEnum
 import math
@@ -895,7 +895,7 @@ def _validate(kind: str, value: Mapping[str, Any], identity: ClosureIdentity) ->
     candidate = _icon_catalog_envelope(value) if kind == "icon-catalog" else _schema_value(value)
     errors = tuple(schema_validator(schema_name).iter_errors(candidate))
     if errors:
-        violation = explain_errors(errors, resource_kind=kind, resource_identity=identity.id)
+        violation = _in_authors_words(explain_errors(errors, resource_kind=kind, resource_identity=identity.id), value)
         raise SchemaContractError(kind, violation.pointer, violation.message, violation)
     return version
 
@@ -917,10 +917,42 @@ def explain_resource_schema_errors(identity: ClosureIdentity, value: Mapping[str
     if not errors:
         return None
     return SchemaErrorExplanations(
-        explain_all_errors(errors, resource_kind=identity.kind, resource_identity=identity.id),
-        explain_errors(errors, resource_kind=identity.kind, resource_identity=identity.id),
+        tuple(_in_authors_words(item, value) for item in
+              explain_all_errors(errors, resource_kind=identity.kind, resource_identity=identity.id)),
+        _in_authors_words(explain_errors(errors, resource_kind=identity.kind, resource_identity=identity.id), value),
         len(errors),
     )
+
+
+class DesignMergedView(dict):
+    """A View mapping after a Layout profile's `viewDefaults` were laid under it; remembers which members it supplied."""
+
+    design_supplied: frozenset[str] = frozenset()
+
+
+def _in_authors_words(violation: SchemaViolation, value: Mapping[str, Any]) -> SchemaViolation:
+    """Re-word a View schema finding that the author's own text cannot explain (#1702 row 4).
+
+    A member the Layout profile supplied (not the author) that lacks a required property is reported against the View
+    the author wrote; a value forbidden by the rows mode names that mode. The pointer and rule are unchanged.
+    """
+    if violation.resource_kind != "view":
+        return violation
+    supplied = getattr(value, "design_supplied", frozenset())
+    parts = violation.pointer.strip("/").split("/")
+    if violation.rule == "required" and len(parts) == 2 and parts[0] == "body" and parts[1] in supplied and violation.expected:
+        name, missing = parts[1], violation.expected[0]
+        return replace(violation, message=(
+            f"the View declares no '{name}', so the Layout profile's viewDefaults supplied one without the required "
+            f"property '{missing}'; declare '{name}' with '{missing}' in the View (at /body/{name})"))
+    body = value.get("body") if isinstance(value, Mapping) else None
+    rows = body.get("rows") if isinstance(body, Mapping) else None
+    mode = rows.get("mode") if isinstance(rows, Mapping) else None
+    if violation.rule == "not" and isinstance(mode, str) and "in this form; choose another value or change the mode" in violation.message:
+        return replace(violation, message=violation.message.replace(
+            "in this form; choose another value or change the mode",
+            f"while rows.mode is {mode!r} (/body/rows/mode); choose another value or change rows.mode"))
+    return violation
 def _resource_schema_errors(identity: ClosureIdentity, value: Mapping[str, Any]) -> tuple[ValidationError, ...]:
     """Evaluate one resource schema without constructing a runtime contract."""
     version = value.get("version")

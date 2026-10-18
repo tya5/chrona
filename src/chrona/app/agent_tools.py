@@ -5,7 +5,7 @@ Four read-only tools front the use cases an agent needs to plan and draw a sched
 Store, ``render_review`` and ``compare_baseline`` (#812); two tools front the revision-bound Store commands,
 ``check_command`` (read-only) and ``apply_command`` (writes, only when the caller passes ``allow_write``; #813).
 ``apply_authoring_command`` edits a guided workspace through the shared durable transaction port.
-Tool set ``chrona/agent-tools/v0.6``, Spec 66. A tool is a use case
+Tool set ``chrona/agent-tools/v0.7``, Spec 66. A tool is a use case
 with a typed envelope: ``call_tool(scope, name, arguments)`` validates the arguments against the
 tool's input schema, runs the use case on files inside a ``WorkspaceScope`` and returns a
 ``ToolResult`` whose ``structured`` mapping is the envelope (``status``, ``diagnostics``)
@@ -36,13 +36,16 @@ from typing import Any, Callable, Mapping, Sequence
 from jsonschema.exceptions import best_match
 
 from chrona.app.agent_workspace import WorkspaceScope
-from chrona.operational.authoring_commands import transact_authoring_command
+from chrona.operational.authoring_commands import read_authoring_workspace, transact_authoring_command
+from chrona.operational.workspace_initialization import publish_workspace_directory
 from chrona.operational.store_commands import (
     StoreRootOutsideWorkspace, open_store_reader, parse_command_request, run_store_command,
 )
 from chrona.operational.store_reads import DraftExtensionPackageReader, compare_store_baseline, load_reference, snapshot_reader_for
-from chrona.resources import validator_for_schema
-from chrona.usecases.authoring_commands import apply_authoring_command, parse_authoring_command
+from chrona.resources import schema_document, validator_for_schema
+from chrona.usecases.authoring_commands import apply_authoring_command, parse_authoring_command, workspace_revision
+from chrona.usecases.authoring_workspace import create_workspace, validate_workspace
+from chrona.usecases.guided_render import WorkspaceRenderRequest, render_workspace
 from chrona.usecases.context_review import render_context_closure, resolve_context_closure
 from chrona.usecases.draft_render import DEFAULT_VIEWPORT, DraftRenderRequest, render_draft, warning_payloads
 from chrona.usecases.failure_report import (
@@ -51,7 +54,7 @@ from chrona.usecases.failure_report import (
 from chrona.usecases.preset_library import DEFAULT_PRESET_ID, list_builtin_presets
 from chrona.usecases.project_checks import schedule_project_file, validate_project_file
 
-TOOL_SET_VERSION = "chrona/agent-tools/v0.6"
+TOOL_SET_VERSION = "chrona/agent-tools/v0.7"
 COMMAND_TYPES = frozenset({"applyActualIntakeBatch", "captureSnapshot", "revertActualCommand", "redoActualCommand"})
 """The command types the command tools accept in this release (#813); anything else is rejected before a Store is opened."""
 DEFAULT_STORE_CONFIG = ".chrona/store.yaml"
@@ -119,7 +122,8 @@ class ToolSpec:
 
         A read-only tool is ``readOnlyHint`` true (a host may skip its approval prompt); a mutating tool is
         ``readOnlyHint`` false and ``destructiveHint`` true whatever it overwrites, because the metadata must not
-        understate it. ``idempotentHint`` is true for both: repeating a call is a no-op (the replay ledger).
+        understate it. Repeated mutations cannot add side effects: commands use their replay ledger and
+        workspace initialization refuses an existing destination.
         """
         return {
             "name": self.name, "title": self.title, "description": self.description,
@@ -202,6 +206,45 @@ def _command_output_schema() -> dict[str, Any]:
                        "--result: operation, status accepted or rejected, requestContentIdentity, inputs, diagnostics, "
                        "resultTarget when accepted, replayed true for a replay. Present when the engine produced one.",
     }})
+
+
+def _workspace_create_schema() -> dict[str, Any]:
+    workspace = schema_document("authoring-workspace-v0.1.schema.yaml")
+    project = copy.deepcopy(workspace["properties"]["body"]["properties"]["project"])
+    schema = _input_schema({
+        "directory": {**_WORKSPACE_PATH_PROPERTY,
+                      "description": "New directory below the server workspace; parent must exist, destination must not."},
+        "project": project,
+        "preset": {"type": "string", "minLength": 1, "default": DEFAULT_PRESET_ID,
+                   "description": "Builtin ID from list_presets; copied into the new workspace, never a file path."},
+    }, ["directory", "project"])
+    schema["$defs"] = {name: copy.deepcopy(workspace["$defs"][name]) for name in ("date", "dateRange")}
+    return schema
+
+
+def _workspace_command_schema() -> dict[str, Any]:
+    return _input_schema({
+        "workspace": copy.deepcopy(_WORKSPACE_PATH_PROPERTY),
+        "command": {"description": "Inline authoring-command/v0.1 request, or a contained command-file path.",
+                    "oneOf": [copy.deepcopy(_WORKSPACE_PATH_PROPERTY),
+                              copy.deepcopy(schema_document("authoring-command-v0.1.schema.yaml"))]},
+    }, ["workspace", "command"])
+
+
+def _draft_options() -> dict[str, Any]:
+    return {"viewport": {"type": "string", "pattern": "^[1-9][0-9]{2,4}x([1-9][0-9]{2,4}|auto)$",
+                         "default": DEFAULT_VIEWPORT},
+            "locale": {"enum": ["en-US", "ja-JP"], "default": "en-US"},
+            "format": {"enum": ["svg", "png"], "default": "svg"},
+            "inline": {"enum": ["none", "image", "svg"], "default": "image"}}
+
+
+def _draft_output_schema() -> dict[str, Any]:
+    return _output_schema({
+        "format": {"enum": ["svg", "png"]}, "contentIdentity": {"$ref": "#/$defs/sha256"},
+        "byteLength": {"type": "integer", "minimum": 0}, "pngAvailable": {"type": "boolean"},
+        "warnings": {"type": "array", "items": {"$ref": "#/$defs/diagnostic"}},
+    })
 
 
 _STORE_CONFIG_PROPERTY = {
@@ -384,14 +427,16 @@ def _rasterizer_importable() -> bool:
     return True
 
 
-def _render_draft(call: _Call, arguments: dict[str, Any]) -> ToolResult:
+def _tool_viewport(arguments: dict[str, Any]) -> str:
     viewport = arguments.get("viewport", DEFAULT_VIEWPORT)
     if not _VIEWPORT.fullmatch(viewport):
         raise InvalidArgumentsError("viewport must match WIDTHxHEIGHT or WIDTHxauto (3 to 5 digits, no leading zero)")
-    fmt = arguments.get("format", "svg")
-    inline = arguments.get("inline", "image")
+    return viewport
+
+
+def _render_draft(call: _Call, arguments: dict[str, Any]) -> ToolResult:
     request = DraftRenderRequest(
-        project=call.scope.resolve_path(arguments["project"], "/project"), target_kind=fmt,
+        project=call.scope.resolve_path(arguments["project"], "/project"), target_kind=arguments.get("format", "svg"),
         preset=_preset_argument(call, arguments.get("preset")),
         view=_optional_path(call, arguments, "view"), theme=_optional_path(call, arguments, "theme"),
         style=_optional_path(call, arguments, "style"),
@@ -399,17 +444,33 @@ def _render_draft(call: _Call, arguments: dict[str, Any]) -> ToolResult:
         actual=_optional_path(call, arguments, "actual"),
         snapshot=_optional_path(call, arguments, "snapshot"),
         forecast=arguments.get("forecast", False),
-        viewport=viewport, locale=arguments.get("locale", "en-US"),
+        viewport=_tool_viewport(arguments), locale=arguments.get("locale", "en-US"),
         package_reader=DraftExtensionPackageReader(lambda: _open_contained_store(
             call, call.scope.resolve_path(arguments.get("storeConfig", DEFAULT_STORE_CONFIG), "/storeConfig"))),
     )
-    rendered = render_draft(request)
+    return _draft_artifacts(call, arguments, lambda kind: render_draft(replace(request, target_kind=kind)))
+
+
+def _render_workspace(call: _Call, arguments: dict[str, Any]) -> ToolResult:
+    request = WorkspaceRenderRequest(
+        workspace=call.scope.resolve_path(arguments["workspace"], "/workspace"),
+        target_kind=arguments.get("format", "svg"), viewport=_tool_viewport(arguments),
+        locale=arguments.get("locale", "en-US"),
+    )
+    return _draft_artifacts(call, arguments, lambda kind: render_workspace(replace(request, target_kind=kind)))
+
+
+def _draft_artifacts(call: _Call, arguments: dict[str, Any], render: Callable[[str], Any]) -> ToolResult:
+    """One artifact/preview/size/warning projection for both Draft source facades."""
+    fmt = arguments.get("format", "svg")
+    inline = arguments.get("inline", "image")
+    rendered = render(fmt)
     artifact = rendered.artifact
     artifacts: dict[str, Any] = {fmt: artifact}
 
     def artifact_of(kind: str) -> Any:
         if kind not in artifacts:
-            artifacts[kind] = render_draft(replace(request, target_kind=kind)).artifact
+            artifacts[kind] = render(kind).artifact
         return artifacts[kind]
 
     attachments: list[Attachment] = []
@@ -444,18 +505,17 @@ def _render_draft(call: _Call, arguments: dict[str, Any]) -> ToolResult:
 def _too_large(kind: str, limit: int) -> StableFailure:
     return StableFailure(
         "E_MCP_RESULT_TOO_LARGE",
-        f"the inline {kind} is larger than {limit} bytes; lower the viewport, use inline 'none', "
-        "or render to a file with the chrona command line, which has no size cap",
+        f"the inline {kind} is larger than {limit} bytes; lower the viewport or use inline 'none'",
         "mcp", "/inline", 2,
     )
 
 
 def _too_large_review(kind: str, limit: int) -> StableFailure:
-    """An immutable Context fixes its own viewport, so the advice is ``inline: none`` or the command line only."""
+    """An immutable Context fixes its viewport; the tool can omit inline bytes."""
     return StableFailure(
         "E_MCP_RESULT_TOO_LARGE",
         f"the inline {kind} is larger than {limit} bytes; use inline 'none' (the identity and length still describe "
-        "it) or render to a file with chrona render-review, which has no size cap",
+        "it) without inline bytes",
         "mcp", "/inline", 2,
     )
 
@@ -572,10 +632,11 @@ def _command_tool(operation: str) -> Callable[[_Call, dict[str, Any]], ToolResul
 
 def _authoring_tool(call: _Call, arguments: dict[str, Any]) -> ToolResult:
     workspace = call.scope.resolve_path(arguments["workspace"], "/workspace")
-    command_path = call.scope.resolve_path(arguments["command"], "/command")
+    supplied = arguments["command"]
+    command_path = call.scope.resolve_path(supplied, "/command") if isinstance(supplied, str) else None
     source = "/command"
     try:
-        command = parse_authoring_command(command_path)
+        command = parse_authoring_command(command_path) if command_path is not None else copy.deepcopy(supplied)
         source = "/workspace"
         result = call.scope.scrub_value(apply_authoring_command(workspace, command, transact=transact_authoring_command))
     except Exception as error:
@@ -598,6 +659,26 @@ def _authoring_tool(call: _Call, arguments: dict[str, Any]) -> ToolResult:
         pointers.get(item["code"], "/"),
     ) for item in result["diagnostics"]]
     return call.rejected(FailureReport("rejected", collapse_records(rows), 1))
+
+
+def _create_workspace(call: _Call, arguments: dict[str, Any]) -> ToolResult:
+    destination = call.scope.resolve_destination(arguments["directory"], "/directory")
+    created = create_workspace(destination, arguments["project"], arguments.get("preset", DEFAULT_PRESET_ID),
+                               publish=publish_workspace_directory)
+    return ToolResult(call.ok(workspace=created.workspace.relative_to(call.scope.root).as_posix(),
+                              workspaceRevision=created.workspace_revision))
+
+
+def _validate_workspace(call: _Call, arguments: dict[str, Any]) -> ToolResult:
+    workspace = call.scope.resolve_path(arguments["workspace"], "/workspace")
+    revision = validate_workspace(workspace, read_workspace=read_authoring_workspace)
+    return ToolResult(call.ok(workspaceRevision=revision))
+
+
+def _workspace_revision(call: _Call, arguments: dict[str, Any]) -> ToolResult:
+    workspace = call.scope.resolve_path(arguments["workspace"], "/workspace")
+    revision = workspace_revision(workspace, read_workspace=read_authoring_workspace)
+    return ToolResult(call.ok(workspaceRevision=revision))
 
 _TOOLS: tuple[ToolSpec, ...] = (
     ToolSpec(
@@ -666,17 +747,9 @@ _TOOLS: tuple[ToolSpec, ...] = (
                        "description": "A builtin preset id (see list_presets) or a workspace path ending .yaml or .yml."},
             "view": _WORKSPACE_PATH_PROPERTY, "style": _WORKSPACE_PATH_PROPERTY, "theme": _WORKSPACE_PATH_PROPERTY,
             "scheme": _WORKSPACE_PATH_PROPERTY, "layout": _WORKSPACE_PATH_PROPERTY,
-            "viewport": {"type": "string", "pattern": "^[1-9][0-9]{2,4}x([1-9][0-9]{2,4}|auto)$",
-                         "default": DEFAULT_VIEWPORT},
-            "locale": {"enum": ["en-US", "ja-JP"], "default": "en-US"},
-            "format": {"enum": ["svg", "png"], "default": "svg"},
-            "inline": {"enum": ["none", "image", "svg"], "default": "image"},
+            **_draft_options(),
         }, ["project"]),
-        _output_schema({
-            "format": {"enum": ["svg", "png"]}, "contentIdentity": {"$ref": "#/$defs/sha256"},
-            "byteLength": {"type": "integer", "minimum": 0}, "pngAvailable": {"type": "boolean"},
-            "warnings": {"type": "array", "items": {"$ref": "#/$defs/diagnostic"}},
-        }),
+        _draft_output_schema(),
         _render_draft,
     ),
     ToolSpec(
@@ -757,16 +830,57 @@ _TOOLS: tuple[ToolSpec, ...] = (
     ),
     ToolSpec(
         "apply_authoring_command", "Apply a guided workspace command",
-        "Apply an authoring-command/v0.1 YAML file to a guided workspace, as chrona authoring-command-apply does. "
-        "Both paths must be inside the server workspace. Requires --allow-write; no approval step. "
+        "Apply an inline authoring-command/v0.1 object or contained YAML command file to a guided workspace. "
+        "A request has version, commandId, type, target {kind:authoring-workspace,path:<filename>}, baseRevision and payload. "
+        "Types/payloads: setWorkspaceTask {task:{id,title,planned:{start,finish}}}; "
+        "setWorkspaceActual {actual:{taskId,actual:{start,finish},progress?}}; "
+        "selectPresentationPreset {preset:{id,version,path}}; setPresentationOverride {overrides:{view?,theme?}}; "
+        "materializePresentationPreset {directory?}. Get baseRevision from create_workspace/workspace_revision "
+        "or the last authoringResult.resultRevision. Inverse edits revert source changes at a new revision. "
+        "All paths stay inside the server workspace. Requires --allow-write; no approval step. "
         "A stale baseRevision is rejected without writing. A durable receipt returns the exact first accepted "
         "result for the same commandId and request; reusing that ID with another request is rejected. "
         "Returns authoringResult, with status ok when accepted or rejected with typed diagnostics.",
-        _input_schema({"workspace": copy.deepcopy(_WORKSPACE_PATH_PROPERTY),
-                       "command": copy.deepcopy(_WORKSPACE_PATH_PROPERTY)}, ["workspace", "command"]),
+        _workspace_command_schema(),
         _output_schema({"authoringResult": {"type": "object",
                                            "description": "The authoring-command-result/v0.1 emitted by the CLI."}}),
         _authoring_tool, mutating=True,
+    ),
+    ToolSpec(
+        "create_workspace", "Create a guided workspace from a builtin preset",
+        "Create a new directory containing workspace.yaml and a local preset/ copy. Requires --allow-write. "
+        "directory must not exist; its real parent must exist below the server workspace. No overwrite. "
+        "project is {id,title?,tasks:[{id,title,planned:{start,finish}}]}; preset is a builtin ID from list_presets "
+        "(default chrona-default-draft). Returns workspace and workspaceRevision for the first inline authoring command. "
+        "Use validate_workspace, apply_authoring_command, workspace_revision and render_workspace for the lifecycle.",
+        _workspace_create_schema(),
+        _output_schema({"workspace": {"type": "string"}, "workspaceRevision": {"$ref": "#/$defs/sha256"}}),
+        _create_workspace, mutating=True,
+    ),
+    ToolSpec(
+        "validate_workspace", "Validate a guided workspace and its pinned resources",
+        "Validate workspace {workspace:<relative YAML path>} and its complete preset/resource closure without writing. "
+        "Returns workspaceRevision. For an edit, pass that value as apply_authoring_command.command.baseRevision; "
+        "a successful command returns the next authoringResult.resultRevision.",
+        _input_schema({"workspace": copy.deepcopy(_WORKSPACE_PATH_PROPERTY)}, ["workspace"]),
+        _output_schema({"workspaceRevision": {"$ref": "#/$defs/sha256"}}), _validate_workspace,
+    ),
+    ToolSpec(
+        "workspace_revision", "Read the current guided workspace revision",
+        "Read workspace {workspace:<relative YAML path>} and return its canonical workspaceRevision without writing. "
+        "Use it as an inline authoring command baseRevision; a stale rejection writes nothing. "
+        "After a successful edit use authoringResult.resultRevision instead of reading a file or provoking an error.",
+        _input_schema({"workspace": copy.deepcopy(_WORKSPACE_PATH_PROPERTY)}, ["workspace"]),
+        _output_schema({"workspaceRevision": {"$ref": "#/$defs/sha256"}}), _workspace_revision,
+    ),
+    ToolSpec(
+        "render_workspace", "Render a guided workspace",
+        "Render workspace {workspace:<relative YAML path>,viewport?,locale?,format?,inline?} without writing. "
+        "Uses the same pinned preset resolution, Theme expressions and rendering as render-workspace, not raw Project "
+        "render_draft. format is svg/png; inline image/svg/none controls the preview, default image. "
+        "Returns artifact identity/length, availability and typed warnings; a rejected plan is a result, not a tool error.",
+        _input_schema({"workspace": copy.deepcopy(_WORKSPACE_PATH_PROPERTY), **_draft_options()}, ["workspace"]),
+        _draft_output_schema(), _render_workspace,
     ),
 )
 _BY_NAME = {spec.name: spec for spec in _TOOLS}
@@ -814,8 +928,8 @@ def call_tool(scope: WorkspaceScope, name: str, arguments: object = None, *, all
     if spec.mutating and not allow_write:
         return call.failure(StableFailure(
             WRITE_DISABLED,
-            f"{spec.name} writes, and this server was started without --allow-write; restart it with "
-            "'chrona mcp --allow-write' to enable writes. Nothing was read or written.",
+            f"{spec.name} writes, and this server was started without --allow-write; ask the server operator "
+            "to enable writes. Nothing was read or written.",
             "mcp", "/", 2,
         ))
     try:
