@@ -57,6 +57,27 @@ invalidated. Do not reject safe hint-first corridors merely to improve a count.
 
 ## Verification and release gates
 
+Official PR snapshot: run [39174351117](https://github.com/tya5/chrona/actions/runs/39174351117),
+source `1bedd8ef59eb9b560261170382a44a42ed8184d8`, artifact `12152819958`.
+All 50 SVG and 50 Scene files change; no paths retire. After matching canonical
+relation identities, point lists change on 8 routes and placement on 37 Text
+primitives (all member labels). Sixteen matched route records differ in all;
+that broader count includes secondary-reference metadata, not 16 route shapes.
+See the [per-path snapshot summary](assets-1754/public-snapshot-summary.json).
+11 member labels are added and 4 removed (net +7). No new diagnostic codes;
+suppression counts decrease. Actual SVG before/after rasterizations inspected
+with resvg 0.5.0 and repository Noto font assets:
+[mission before](assets-1754/public-mission-before.png) /
+[after](assets-1754/public-mission-after.png),
+[campaign before](assets-1754/public-campaign-before.png) /
+[after](assets-1754/public-campaign-after.png), and
+[Editorial lanes before](assets-1754/public-editorial-lanes-before.png) /
+[after](assets-1754/public-editorial-lanes-after.png).
+The sampled changes are consistent with the declared identity migration,
+route tie ordering and as-of-independent member-label placement; no new
+visible clipping/overlap was found in those samples. Batch counts do not alone
+prove every rendered output is good.
+
 Focused batches and architecture checks are recorded in the work record.
 After integration with `bd6898017`, focused readable-default/revision tests:
 112 passed; two generated-wallboard assertions failed because the checked-in
@@ -71,6 +92,31 @@ previous-Scene focused tests passed (52 cases).
 Schema L1 passed with precise expected Scene deltas. Local L2/L3 had no
 semantic mismatch but exceeded the unchanged 60-second timing guard on the
 loaded host; CI must establish the isolated gate. No local full pytest was run.
+
+The first PR gate found three omitted integration records, not a new design
+rule: the cone conditional lacked its schema example, `mark_ground` lacked
+its explicit serialization delivery owner, and generated CLI documentation
+did not match the old first-fit-only help. The example, inventory/test and
+live help/reference are corrected; all three focused check commands and 13
+schema/delivery tests pass. Schema L1 still passes. A new exact-head CI result
+remains required; the old red run is not acceptance evidence.
+
+All three pytest shards' failures were identified: two delivery-inventory
+assertions, the generated help reference, three HALCYON CLI characterization
+cases and seven materializer fixture checks. Only the three affected CLI
+stdout records are refreshed; argv, exits, stderr and file descriptions remain
+unchanged, and the three focused cases pass. No assertion is removed.
+
+The ten slides under three dev-owned `tests/fixtures/*/manifest.yaml` files
+have their expected SVG/Scene evidence regenerated, not their authored inputs.
+A fresh `bd689` control render distinguishes existing fixture drift: four
+slides already differ from their frozen evidence (capabilities, plan-only,
+baseline-ghosts, and Aster overview); their legend/finish-delta changes are not
+new 1754 behavior. Candidate-specific changes include canonical identities,
+DVT moving inside across the as-of line, and Aster's label/route placement.
+The DVT test now checks that label's own SVG ink and contained Scene bounds
+crossing the line; EVB still proves the exterior fallback with exact ink and
+disjoint host bounds. It no longer passes on an unrelated text substring.
 
 The combined PR also carries reviewer [1768](https://github.com/tya5/chrona/pull/1768),
 the independent 1724 wording-key YAML migration and its declared preset-test

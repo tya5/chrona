@@ -110,6 +110,7 @@ $defs:
       then: {properties: {strokeClip: {required: [outline]}}}
     allOf:
       - description: "Completed moving-cone ground choice belongs only to a gradient-painted as-of cone, never an adapter instruction."
+        examples: [{markGround: true, kind: Symbol, purpose: as-of-cone, visualRole: as-of-cone, paint: {gradient: {start: {x: 0, y: 0}, end: {x: 0, y: 1}, stops: [{offset: 0, color: '#FFFFFF'}, {offset: 1, color: '#000000'}], fidelity: required}}}]
         if: {required: [markGround]}
         then:
           required: [paint]

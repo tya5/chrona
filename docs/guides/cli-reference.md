@@ -264,9 +264,7 @@ draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix, 
 - `--typesetter-adapter-grammar`: the output grammar: chrona-typst/v0.1 for typst, chrona-tikz/v0.1 for tectonic; defaults from the output target
 - `--output, -o`: where to write the slide (the suffix selects the format); an existing file is replaced
 - `--emit-scene`: write a schema-validated inspection Scene JSON without replacing an existing file
-- `--previous-scene`: revalidate routes from this previous Scene before ordinary
-  selection under `first-fit` or `best`; a valid prior corridor wins. Hint info
-  receipts explain acceptance, invalidation, absence or an unusable routing mode.
+- `--previous-scene`: revalidate routes from this previous Scene before first-fit or best selection; emit hint receipts
 
 ## chrona render-review
 

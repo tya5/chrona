@@ -1,0 +1,679 @@
+{
+  "apiDigest": "sha256:cee560f6b1c2541e42d3aab72e793382c403948fb1c57ec432f333288e0464e3",
+  "artifactId": 12152819958,
+  "artifactName": "derived-snapshot-1bedd8ef59eb9b560261170382a44a42ed8184d8",
+  "beforeTarSha256": "8a6750d86eeddbc65da27177d993eecc778996e1a4e623b832646e3d405f2ca6",
+  "comparison": "Matched primitives after normalizing old relation:<index>: IDs/sourceRefs to relation:id:; semantic compare ignores primitive ID and sourceRef but retains geometry/text/paint. SVG XML compare similarly normalizes relation index tokens. routeRecordChanges compares the complete matched record excluding primary id/sourceRef, so it may count secondary reference migration; routePointChanges separately counts actual completed Path point-list differences by canonical primitive identity.",
+  "diagnosticCodeDelta": {
+    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": -3,
+    "I_LAYOUT_RELATION_NODE_APPROACH_SHARED": -1,
+    "I_LAYOUT_RELATION_ROUTING": -4,
+    "W_LAYOUT_LABEL_SUPPRESSED": -7
+  },
+  "manifest": {
+    "changed": 105,
+    "changedGeneratedSvgScenePaths": 100,
+    "generatedSvgScenePaths": 100,
+    "paths": 109,
+    "retired": []
+  },
+  "run": 39174351117,
+  "slides": [
+    {
+      "added": {},
+      "diagnosticDelta": {
+        "I_LAYOUT_RELATION_ROUTING": -1
+      },
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 1,
+      "scenePath": "examples/aster-ssd/generated/overview.scene.json",
+      "slide": "overview",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 1,
+      "routePointChanges": 1
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 9,
+      "scenePath": "examples/chrona-roadmap/generated/roadmap-marquee.scene.json",
+      "slide": "roadmap-marquee",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 9,
+      "scenePath": "examples/chrona-roadmap/generated/roadmap-sunday.scene.json",
+      "slide": "roadmap-sunday",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 9,
+      "scenePath": "examples/chrona-roadmap/generated/roadmap-titlecard.scene.json",
+      "slide": "roadmap-titlecard",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 9,
+      "scenePath": "examples/chrona-roadmap/generated/roadmap-yuya.scene.json",
+      "slide": "roadmap-yuya",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 9,
+      "scenePath": "examples/chrona-roadmap/generated/roadmap.scene.json",
+      "slide": "roadmap",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/annotation-kinds.scene.json",
+      "slide": "annotation-kinds",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {
+        "member-label": 1
+      },
+      "diagnosticDelta": {
+        "I_LAYOUT_PLOT_LABELS_SUPPRESSED": -1,
+        "I_LAYOUT_RELATION_ROUTING": -1,
+        "W_LAYOUT_LABEL_SUPPRESSED": -1
+      },
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/annotation-rounded.scene.json",
+      "slide": "annotation-rounded",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/annotations.scene.json",
+      "slide": "annotations",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 7,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/as-of-foot.scene.json",
+      "slide": "as-of-foot",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 7,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/axis-alternating.scene.json",
+      "slide": "axis-alternating",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 7,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/axis-cell-corners.scene.json",
+      "slide": "axis-cell-corners",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 7,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/axis-interval-scales.scene.json",
+      "slide": "axis-interval-scales",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 7,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/baseline-ghosts.scene.json",
+      "slide": "baseline-ghosts",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 7,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/capabilities.scene.json",
+      "slide": "capabilities",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 7,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/elevated.scene.json",
+      "slide": "elevated",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 7,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/executive.scene.json",
+      "slide": "executive",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 7,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/group-child-indent.scene.json",
+      "slide": "group-child-indent",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 7,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/group-header-runs.scene.json",
+      "slide": "group-header-runs",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/icons.scene.json",
+      "slide": "icons",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 7,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/in-progress.scene.json",
+      "slide": "in-progress",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/material-icons.scene.json",
+      "slide": "material-icons",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 2,
+      "scenePath": "examples/controller-z/generated/plan-only.scene.json",
+      "slide": "plan-only",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 7,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/progress-track.scene.json",
+      "slide": "progress-track",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 7,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/region-frames.scene.json",
+      "slide": "region-frames",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 7,
+      "routePointChanges": 0
+    },
+    {
+      "added": {
+        "member-label": 1
+      },
+      "diagnosticDelta": {
+        "I_LAYOUT_PLOT_LABELS_SUPPRESSED": -1,
+        "I_LAYOUT_RELATION_ROUTING": -1,
+        "W_LAYOUT_LABEL_SUPPRESSED": -1
+      },
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/slot-heading.scene.json",
+      "slide": "slot-heading",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 7,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/surface-glow.scene.json",
+      "slide": "surface-glow",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 7,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/text-roles.scene.json",
+      "slide": "text-roles",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z/generated/viewer-fit.scene.json",
+      "slide": "viewer-fit",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z-ja/generated/axis-secondary.scene.json",
+      "slide": "axis-secondary",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 7,
+      "scenePath": "examples/controller-z-ja/generated/executive.scene.json",
+      "slide": "executive",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {
+        "member-label": 2
+      },
+      "diagnosticDelta": {
+        "I_LAYOUT_PLOT_LABELS_SUPPRESSED": -1,
+        "W_LAYOUT_LABEL_SUPPRESSED": -2
+      },
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 11,
+      "scenePath": "examples/halcyon-1/generated/01-mission-brief.scene.json",
+      "slide": "01-mission-brief",
+      "textGeometryChanges": 3,
+      "routeRecordChanges": 2,
+      "routePointChanges": 2
+    },
+    {
+      "added": {
+        "member-label": 1
+      },
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {
+        "member-label": 1
+      },
+      "routeIdentityRefs": 24,
+      "scenePath": "examples/halcyon-1/generated/02-programme-board.scene.json",
+      "slide": "02-programme-board",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {
+        "member-label": 3
+      },
+      "diagnosticDelta": {
+        "I_LAYOUT_RELATION_NODE_APPROACH_SHARED": -1,
+        "I_LAYOUT_RELATION_ROUTING": -1,
+        "W_LAYOUT_LABEL_SUPPRESSED": -3
+      },
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 11,
+      "scenePath": "examples/halcyon-1/generated/03-launch-campaign.scene.json",
+      "slide": "03-launch-campaign",
+      "textGeometryChanges": 3,
+      "routeRecordChanges": 3,
+      "routePointChanges": 2
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 4,
+      "removed": {},
+      "routeIdentityRefs": 4,
+      "scenePath": "examples/halcyon-1/generated/04-tvac-slip.scene.json",
+      "slide": "04-tvac-slip",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 11,
+      "removed": {},
+      "routeIdentityRefs": 0,
+      "scenePath": "examples/halcyon-1/generated/05-dependency-network.scene.json",
+      "slide": "05-dependency-network",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 1,
+      "scenePath": "examples/halcyon-1/generated/06-flight-readiness.scene.json",
+      "slide": "06-flight-readiness",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 6,
+      "scenePath": "examples/halcyon-1/generated/07-replan-baseline.scene.json",
+      "slide": "07-replan-baseline",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {
+        "member-label": 1
+      },
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {
+        "member-label": 1
+      },
+      "routeIdentityRefs": 24,
+      "scenePath": "examples/halcyon-1/generated/11-overlay-briefing.scene.json",
+      "slide": "11-overlay-briefing",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {
+        "member-label": 1
+      },
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {
+        "member-label": 1
+      },
+      "routeIdentityRefs": 24,
+      "scenePath": "examples/halcyon-1/generated/12-glyph-gates.scene.json",
+      "slide": "12-glyph-gates",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 24,
+      "scenePath": "examples/halcyon-1/generated/13-gallery-editorial.scene.json",
+      "slide": "13-gallery-editorial",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 24,
+      "scenePath": "examples/halcyon-1/generated/15-gallery-image-notes.scene.json",
+      "slide": "15-gallery-image-notes",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 24,
+      "scenePath": "examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json",
+      "slide": "16-gallery-editorial-lanes",
+      "textGeometryChanges": 2,
+      "routeRecordChanges": 3,
+      "routePointChanges": 3
+    },
+    {
+      "added": {
+        "member-label": 1
+      },
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {
+        "member-label": 1
+      },
+      "routeIdentityRefs": 24,
+      "scenePath": "examples/halcyon-1/generated/19-gallery-text-compression.scene.json",
+      "slide": "19-gallery-text-compression",
+      "textGeometryChanges": 1,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 24,
+      "scenePath": "examples/halcyon-1/generated/21-target-b.scene.json",
+      "slide": "21-target-b",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 24,
+      "scenePath": "examples/halcyon-1/generated/22-yuya.scene.json",
+      "slide": "22-yuya",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 24,
+      "scenePath": "examples/halcyon-1/generated/23-titlecard.scene.json",
+      "slide": "23-titlecard",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 24,
+      "scenePath": "examples/halcyon-1/generated/24-marquee.scene.json",
+      "slide": "24-marquee",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 0,
+      "removed": {},
+      "routeIdentityRefs": 24,
+      "scenePath": "examples/halcyon-1/generated/25-sunday.scene.json",
+      "slide": "25-sunday",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    },
+    {
+      "added": {},
+      "diagnosticDelta": {},
+      "otherIdentityRefs": 4,
+      "removed": {},
+      "routeIdentityRefs": 8,
+      "scenePath": "examples/halcyon-1/generated/26-gates.scene.json",
+      "slide": "26-gates",
+      "textGeometryChanges": 0,
+      "routeRecordChanges": 0,
+      "routePointChanges": 0
+    }
+  ],
+  "snapshotTarSha256": "716bec85ad9c3410ccf20b7e6262cc1a200c0dd564d8caefa400fad2df2b4855",
+  "sourceSha": "1bedd8ef59eb9b560261170382a44a42ed8184d8",
+  "svgXmlAfterRelationIdentityNormalization": {
+    "changed": 32,
+    "same": 18
+  },
+  "totals": {
+    "added": 11,
+    "otherIdentityRefs": 124,
+    "removed": 4,
+    "routeIdentityRefs": 545,
+    "textGeometryChanges": 37,
+    "routeRecordChanges": 16,
+    "routePointChanges": 8
+  }
+}

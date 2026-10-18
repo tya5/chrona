@@ -344,7 +344,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--output", "-o", required=True,
                          help="where to write the slide (the suffix selects the format); an existing file is replaced")
     command.add_argument("--emit-scene", help="write a schema-validated inspection Scene JSON without replacing an existing file")
-    command.add_argument("--previous-scene", help="revalidate routes from this previous Scene under first-fit")
+    command.add_argument("--previous-scene", help="revalidate routes from this previous Scene before first-fit or best selection; emit hint receipts")
 
     icon = sub.add_parser("icon-catalog", help="build an icon catalog from icon files")
     icon_sub = icon.add_subparsers(dest="icon_command", required=True, parser_class=JsonArgumentParser)
