@@ -127,7 +127,7 @@ its relations allow), `fixed-span` (`start` and `end`), `scheduled` (an
 `amount` such as `15wd`, placed from its relations and its calendar) and `rollup`. A
 relation joins two endpoints and has a `lag`. The worked example, with all of it, is in
 [references/authoring-model.md](references/authoring-model.md) and lives as a file at
-`examples/launch.yaml`.
+`examples/launch.yaml`. For typed fields and a colour by one, read [references/typed-fields.md](references/typed-fields.md).
 
 ## Check the worked example
 Run from the skill directory (it holds this file).
