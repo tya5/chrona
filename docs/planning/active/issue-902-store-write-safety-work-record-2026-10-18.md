@@ -1,12 +1,12 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 PR1698 follows ready main `8e25a4232` after B's1695 landing.
-CI39099136587 passed every product check; readiness failed when main advanced.
-The final official artifact12126176185 retains all50 SVG/50 Scene bytes; only
-diagnostic source coordinates differ from the prior snapshot. Current-base
-Store/engine/process tests pass21; earlier focused107 and inward imports11/37
-also passed. Final-head CI and exact-main release remain required. Design
-`69273a1bf` and plan `54b9ddd20` precede code.
+Status: item5 PR1698 merged `076be666c`; final CI39100063943 passed.
+Trusted generated main `ca1e0bbe8` passed gate39101119087; its full three-OS
+release39101259252 is running. Final artifact12126645488 retains all50 SVG/
+50 Scene bytes; only diagnostic source coordinates/helper names differ.
+Design `69273a1bf` and plan `54b9ddd20` precede code. Reviewer1704 merged
+`2af41d6bf`; item3 follows its ready main. Item3 may open PR CI while item5
+release runs, but may not merge before that release succeeds.
 #1679/#1680 are closed after exact-main39094741641 passed all
 three OSes, public reproduction and MCP. Their archival/ledger update is an
 independent commit in PR1698; separate docs PR1699 was superseded to avoid
@@ -109,7 +109,8 @@ must retain its original failure rather than claim a safe pre-write rejection.
   checks:6 passed. An initial broader run had63 pass/2 render failures because
   this WT lacked render extras; installing `.[render]` plus the Noto provider in
   its own venv resolved both. No product workaround or weakened assertion.
-- Pending: current-main integration, CI/release and literal acceptance review.
+- Current-main integration and PR CI passed; exact-main release39101259252
+  on `ca1e0bbe8` remains pending.
 
 ## Item5 literal acceptance review (release pending)
 
@@ -121,7 +122,7 @@ Implementation `ab376c78e` with L1 `a4c7fe08c`, L2 `9dcf22c16`; public WIP
 | --- | --- | --- |
 | Acceptance for 2, 3 and 5: each has its own stale-base, replay and no-overwrite tests, plus an MCP stdio test where it is a tool. | met (item5) | `tests/integration/test_actual_store_concurrency.py`, `test_store_write_lock.py`, `test_store_transaction_span.py`; MCP stdio gate/stale/replay/no-overwrite checks recorded above. Not evidence for items2/3. |
 | Item 5 needs a two-process test that shows a lost update today and none after the fix. | met | Regression605232991 fails on baseline and passes after9dcf22c16, with all post-A Store files unchanged. |
-| Required release gate on current main containing this review. | not met | Final current-ready-base PR CI and exact-main three-OS release remain pending. |
+| Required release gate on current main containing this review. | not met | PR1698 merged after all final-head checks39100063943 passed; exact-main three-OS39101259252 remains pending. |
 
 Engine owns the complete replay/CAS/publication/record scope; storage owns root/
 thread/process exclusion. Authoring keeps separate workspace identity. No new
@@ -217,8 +218,8 @@ findings. Imports11 packages/37 edges inward. No public render policy/source
 or canonical generated outputs changed. Ready-main integration `499d2ad27`
 passed99 focused command/adapter/CLI/process tests, three real MCP history
 tests and an independent11-test history/concurrency audit; no conflict or new
-architecture gap. Remaining: item5 final-head/current-ready-base CI and full
-release. Item3 PR may open after item5 merges and derived-main is ready, but
+architecture gap. Remaining: item5 full release and item3 current-head PR/
+exact-main gates. Item3 PR may open after item5 merges and derived-main is ready, but
 item3 merge remains blocked until item5 full release succeeds. This changes PR
 timing only; acceptance is unchanged.
 Following ready `9e224db6c` and predecessor review `950d79001` changes no item3
