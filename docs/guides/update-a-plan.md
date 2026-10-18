@@ -114,12 +114,20 @@ Reading `update-after.svg`:
   its plan did not change.
 - **Solid bar:** the current plan. **Dark line:** the actual. A striped bar is a task open
   at `asOf`.
-- **`Δ finish`:** the Actual finish minus the **current** plan's finish, in calendar days.
-  Design reads `+3d` (it finished 2026-11-12 against a planned 2026-11-09). Build reads a dash
+- **`Δ finish`:** the Actual finish minus the **current** plan's finish, in **working days** of
+  the object's calendar (the task's own `calendar`, else the project's `calendar`): the days
+  from the planned finish up to, not including, the actual finish that the calendar marks
+  working. A task still open is measured to `asOf`. If the plan declares no calendar every
+  day counts, so the delta equals calendar days, as in this guide's plan. Design reads `+3d`
+  (it finished 2026-11-12 against a planned 2026-11-09). With a Monday to Friday calendar, a
+  task planned to finish on Friday 2026-11-06 and finished on Tuesday 2026-11-10 reads `+2d`
+  (Friday and Monday), not `+4d`. This is the `target-b` preset's `deltaUnit: working-days`;
+  a preset that sets `calendar-days` counts every day. Build reads a dash
   because it has no finish yet. Moving the plan to match an actual makes its delta `+0d`, so
   the ghost, not the delta, shows how far the plan moved.
 
-`render` refuses to replace an existing output file; choose a new name for each update, for
+`render` replaces an existing `--output` file without asking (`--output` says "an existing file
+is replaced"). To keep the picture of an earlier update, choose a new name for each update, for
 example `plan-2026-11-16.svg`. Warnings (`W_...`) arrive as JSON lines on standard error with
 exit 0; [the diagnostics reference](../../skills/chrona/references/diagnostics.md) says what
 each means.

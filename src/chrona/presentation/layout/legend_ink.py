@@ -66,7 +66,7 @@ def _keys(content, tokens, capabilities, *, key, selected_role, parts,
             actual_eligible=family_id == "actual" and selected_role is None and role == "actual" and family != PaintFamily.OUTLINE,
             actual_fill=dict(content.actual_variance_paints).get(key.subject_id if key else subject_id))
         paint = resolve_theme_paint_witness(
-            tokens, role, family, fill_override=fill,
+            tokens, role, family, fill_override=fill.color if fill is not None else None,
             gradient_supported=capabilities.gradient_supported,
             optional_gradient_omission=capabilities.optional_gradient_omission,
             part_mode=mode, part_color=part.paint_color if part is not None else None,

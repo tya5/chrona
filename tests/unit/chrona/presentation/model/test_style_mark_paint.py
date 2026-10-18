@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import pytest
 
-from chrona.presentation.model.style_fills import StyleFillIndex
+from chrona.presentation.model.style_fills import CompletedStyleFill, StyleFillIndex
 from chrona.presentation.model.style_mark_paint import validate_style_mark_paint
 from chrona.presentation.model.style_rules import (
     OccurrenceStyleIndex, OccurrenceStyleIntent, StyleOccurrence, StyleOccurrenceKey,
 )
 from chrona.presentation.model.theme_tokens import ThemeTokenView
+from chrona.presentation.style import EncodingSource, EncodingWitness
 
 
 def _tokens(role, values=None, *, glyphs=None, patterns=None):
@@ -30,7 +31,12 @@ def _inputs(shape, role="selected", *, fill=None, values=None, glyphs=None):
     intent = OccurrenceStyleIntent(
         key, role, None, ("paint-rule",), ("paint-rule",), (),
     )
-    fills = StyleFillIndex(((key, fill),)) if fill is not None else StyleFillIndex()
+    witness = EncodingWitness(
+        "fill", "fixture-scale", "owner", "A",
+        (EncodingSource("style", "fixture-style", "/body/rules/paint/then/encode", "paint"),),
+    )
+    fills = (StyleFillIndex(((key, CompletedStyleFill(fill, witness)),))
+             if fill is not None else StyleFillIndex())
     return OccurrenceStyleIndex((intent,)), (occurrence,), fills, values, glyphs
 
 

@@ -33,7 +33,7 @@ from chrona.presentation.model.style_rules import (
     OccurrenceStyleIndex, StyleMatchIndex, StyleOccurrenceKey, evaluate_style_rules,
 )
 from chrona.presentation.style import (
-    StyleEncodingOutcome, StyleLegendScope, StyleMatch, StyleRule,
+    EncodingSource, StyleEncodingOutcome, StyleLegendScope, StyleMatch, StyleRule,
     canonical_style_selector,
 )
 from chrona.presentation.review.style_occurrences import collect_surface_style_facts, surface_comparison_mark_semantics
@@ -516,6 +516,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                   dependency_critical_role_available: bool = False,
                                   annotation_kind_also: Mapping[str, tuple[str, ...]] | None = None,
                                   style_rules: tuple[StyleRule, ...] = (),
+                                  view_id: str | None = None,
                                   gate_declared: bool = False,
                                   theme: Mapping[str, Any] | None = None,
                                   scale_reserved: tuple[str, ...] = (),
@@ -734,13 +735,26 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         wording=legend_wording if isinstance(legend_wording, Mapping) else {}))
     if style_rules or encoding_rules:
         assert facts is not None
+        encoding_sources: dict[str, EncodingSource] = {}
+        if encoding_rules:
+            if not isinstance(view_id, str) or not view_id:
+                raise ValueError("View identity is required when a View color encoding is completed")
+            encoding_sources.update({rule.rule_id: EncodingSource(
+                "view", view_id, rule.source_ref) for rule in encoding_rules})
+        for rule in style_rules:
+            if not isinstance(rule.outcome, StyleEncodingOutcome):
+                continue
+            if (not isinstance(rule.style_id, str) or not rule.style_id
+                    or not isinstance(rule.authored_rule_id, str) or not rule.authored_rule_id):
+                raise ValueError("bound Style encoding rule is missing its pinned resource or authored rule identity")
+            encoding_sources[rule.rule_id] = EncodingSource(
+                "style", rule.style_id, rule.source_ref + "/then/encode", rule.authored_rule_id)
         intents = OccurrenceStyleIndex(evaluate_style_rules(
             (*encoding_rules, *style_rules), facts.occurrences, field_catalogue=facts.field_catalogue))
         style_fills = complete_style_fills(
             intents, facts.occurrences, theme=theme, legacy_scale=color_scale,
             reserved=scale_reserved, other_color=scale_other_color,
-            source_refs={rule.rule_id: rule.source_ref
-                         for rule in (*encoding_rules, *style_rules)})
+            encoding_sources=encoding_sources)
         style_legend, style_legend_paints = _style_legend_entries(
             style_rules, intents, facts.occurrences, style_fills)
         content = replace(content, style_intents=intents,

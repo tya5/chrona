@@ -31,10 +31,13 @@ from chrona.presentation.scene.paint import ScenePaintError
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.usecases.render_review import (
-    RenderFailed, RenderRequest, _font_warnings, _warnings_from_findings, render_review,
+    RenderFailed, RenderRequest, _contrast_warnings_from_findings, _font_warnings,
+    _scene_contrast_warnings, _warnings_from_findings, render_review,
 )
+from chrona.presentation.scene.contrast_policy import SceneContrastFinding
 from chrona.presentation.scene.perceptibility import ScenePerceptibilityFinding
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution
+from chrona.presentation.style import EncodingSource, EncodingWitness
 from chrona.presentation.scene.serialization import SceneSerializationError, _references_are_closed, _surface, scene_document, serialize_scene, validate_scene_document
 from chrona.presentation.scene.model import (
     SceneLaneMember, SceneLaneObstacle, SceneLaneRectObstacle, SceneLaneSegmentObstacle,
@@ -88,6 +91,56 @@ def test_scene_error_findings_become_draft_warnings_without_information_duplicat
     assert [(item.code, item.finding_code, item.primitive_ids) for item in warnings] == [
         ("W_SCENE_TEXT_OCCLUDED", "E_SCENE_TEXT_OCCLUDED", ("text", "cover")),
     ]
+
+
+def test_encoded_contrast_warning_preserves_witness_and_formats_bounded_details():
+    from chrona.usecases.warning_ledger import collect_render_warnings
+
+    witness = EncodingWitness("fill", "status-colors", "status", "gate-ready",
+                               (EncodingSource("style", "style-a", "/body/rules/then/encode", "encode-status"),))
+    finding = SceneContrastFinding(
+        "W_SCENE_ENCODING_CONTRAST", "warning", "/surfaces/0:review", "planned", "planned", "mark-1",
+        1.2, 3.0, "required", "host-1", "#16213A", "fill", 20, 15, "flat",
+        severity_class="legibility", encoding=witness,
+    )
+    (warning,) = _contrast_warnings_from_findings((finding,))
+    records = collect_render_warnings(
+        surface_diagnostics=(), tabular_warnings=(), glyph_warnings=(), fit_warnings=(),
+        perceptibility_warnings=(), scale_collisions=(), attachment_warnings=(), contrast_warnings=(warning,),
+    )
+    payload = records[0].payload
+
+    assert payload["encoding"] == witness.as_mapping()
+    assert payload["measuredFacts"]["scaleId"] == "status-colors"
+    assert payload["measuredFacts"]["field"] == "status"
+    assert payload["measuredFacts"]["value"] == "gate-ready"
+    assert "style:style-a#encode-status" in payload["message"]
+    assert "status='gate-ready'" in payload["message"]
+    assert "1.2:1 vs 3:1" in payload["message"]
+    assert "no further detail" not in payload["message"]
+
+
+def test_encoded_contrast_error_preserves_witness_in_render_failure_details(monkeypatch):
+    witness = EncodingWitness("fill", "status-colors", "status", "x" * 400,
+                               (EncodingSource("view", "view-a", "/body/colorEncoding"),))
+    primitive = {"id": "mark-1", "kind": "Symbol", "visualRole": "planned", "purpose": "planned",
+                 "bounds": {"inline": 0, "block": 0, "inlineSize": 20, "blockSize": 10},
+                 "paint": {"fill": "#2C2138", "stroke": "#EAF0FA", "strokeWidth": 1, "opacity": 1},
+                 "encoding": witness.as_mapping()}
+    document = {"version": "chrona/scene/v0.7", "kind": "scene",
+                "provenance": {"resources": [{"kind": "view", "id": "view-a"}]},
+                "surfaces": [{"id": "review", "canvasPaint": {"fill": "#16213A", "opacity": 1},
+                              "primitives": [primitive]}]}
+    monkeypatch.setattr(render_usecase, "scene_document", lambda _scene: document)
+
+    with pytest.raises(RenderFailed) as captured:
+        _scene_contrast_warnings(SimpleNamespace(), {"body": {"contrastPolicy": {"mark": "error"}}})
+
+    error = captured.value
+    assert error.code == "E_SCENE_ENCODING_CONTRAST"
+    assert error.details["encoding"] == witness.as_mapping()
+    assert len(error.message) < 300
+    assert "status='" + "x" * 55 + "…'" in error.message
 
 
 from tools.materialize_example import _copy_context_closure

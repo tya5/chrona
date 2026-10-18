@@ -12,7 +12,7 @@ from datetime import date
 import pytest
 import yaml
 
-from chrona.presentation.scene.contrast_policy import evaluate_scene_contrast
+from chrona.presentation.scene.contrast_policy import DEFAULT_POLICY, evaluate_scene_contrast
 from chrona.presentation.scene.paint_analysis import composited_contrast
 from chrona.presentation.scene.serialization import scene_document
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
@@ -34,11 +34,20 @@ def test_a_packaged_preset_renders_no_label_or_mark_the_gate_rejects(tmp_path, p
     project = tmp_path / "project.yaml"
     project.write_text(yaml.safe_dump(_project(), sort_keys=False), encoding="utf-8")
     rendered = render_draft(DraftRenderRequest(project=project, target_kind="svg", preset=preset)).rendered
-    findings = evaluate_scene_contrast(scene_document(rendered.scene))
+    findings = evaluate_scene_contrast(scene_document(rendered.scene), encoded_fill_policy=DEFAULT_POLICY)
 
     errors = [(item.purpose, item.visual_role, item.primitive_id, round(item.contrast_ratio or 0, 2), item.ground_color)
               for item in findings if item.severity == "error"]
     assert not errors, errors
+    encoded = [item for item in findings if item.encoding is not None]
+    if preset in {"control-room-dark", "mission-light", "print-mono"}:
+        assert encoded
+    for item in encoded:
+        assert item.code == ("W_SCENE_ENCODING_CONTRAST" if item.contrast_ratio < item.floor
+                             else "E_SCENE_ENCODING_CONTRAST")
+        assert item.encoding.channel == "fill"
+        assert item.floor == 3.0 and item.contrast_ratio is not None
+        assert item.severity == ("warning" if item.contrast_ratio < item.floor else "info")
     # The sweep looked at the labels it is about: free ink at the required floor, not only marks.
     assert any(item.visual_role == "text" and item.floor == 4.5 for item in findings)
 

@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import pytest
+
 from chrona.presentation.scene.contrast_policy import evaluate_scene_contrast
 
 
-def _scene(*primitives, dispositions=(), version="chrona/scene/v0.6"):
-    return {"version": version, "kind": "scene", "surfaces": [{
+def _scene(*primitives, dispositions=(), version="chrona/scene/v0.6", provenance=None):
+    scene = {"version": version, "kind": "scene", "surfaces": [{
         "id": "review", "canvasPaint": {"fill": "#FFFFFF", "opacity": 1},
         "primitives": list(primitives), "decorationDispositions": list(dispositions),
     }]}
+    if provenance is not None:
+        scene["provenance"] = provenance
+    return scene
 
 
 def _primitive(identifier, role, purpose, fill, *, opacity=1, treatment=None,
@@ -238,6 +243,207 @@ def test_opaque_linear_gradient_is_sampled_as_mark_ground():
     assert finding.ground_id == "gradient"
     assert finding.ground_kind == "gradient-sample"
     assert finding.ground_color == "#808080"
+
+
+def _encoding_witness(value="gate"):
+    return {"channel": "fill", "scaleId": "status-colors", "field": "status", "value": value,
+            "sources": [{"kind": "view", "id": "view-a", "sourceRef": "/body/colorEncoding"}]}
+
+
+def _encoded_mark(identifier="encoded", *, fill="#2C2138", stroke="#EAF0FA", order=100):
+    mark = _primitive(identifier, "planned", "planned", fill, kind="Symbol", order=order, stroke=stroke,
+                      bounds={"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10})
+    mark.update(sourceRef="task-a", sourceKind="project", encoding=_encoding_witness())
+    return mark
+
+
+def _dark_host():
+    return _primitive("host", "unclassified", "panel", "#16213A", order=10,
+                      bounds={"inline": 0, "block": 0, "inlineSize": 60, "blockSize": 40})
+
+
+def _encoded_scene(*primitives):
+    return _scene(*primitives, version="chrona/scene/v0.7",
+                  provenance={"resources": [{"kind": "view", "id": "view-a"}]})
+
+
+def test_encoded_fill_is_checked_independently_of_readable_mark_outline():
+    scene = _encoded_scene(_dark_host(), _encoded_mark())
+    findings = evaluate_scene_contrast(scene, policy={"mark": "warning"})
+    encoded = next(item for item in findings if item.code == "W_SCENE_ENCODING_CONTRAST")
+    shape = next(item for item in findings if item.primitive_id == "encoded"
+                 and item.code in {"E_SCENE_MARK_CONTRAST", "W_SCENE_MARK_CONTRAST"})
+
+    assert encoded.severity == "warning"
+    assert encoded.floor == 3.0
+    assert encoded.paint_channel == "fill"
+    assert encoded.ground_id == "host"
+    assert encoded.contrast_ratio < 3.0
+    assert encoded.encoding.as_mapping() == _encoding_witness()
+    assert encoded.as_mapping()["encoding"] == _encoding_witness()
+    # The existing mark observation still selects the readable outline.
+    assert shape.paint_channel == "stroke"
+    assert shape.contrast_ratio >= 3.0
+    assert not any(item.severity == "error" for item in findings)
+
+
+def test_unencoded_twin_and_stroke_only_mark_gain_no_encoding_finding():
+    unencoded = _encoded_mark()
+    unencoded.pop("encoding")
+    stroke_only = _primitive("stroke-only", "planned", "planned", None,
+                              kind="Symbol", order=101, stroke="#EAF0FA")
+    scene = _encoded_scene(_dark_host(), unencoded, stroke_only)
+    findings = evaluate_scene_contrast(scene, policy={"mark": "warning"})
+
+    assert not any(item.code == "W_SCENE_ENCODING_CONTRAST" for item in findings)
+    assert not any(item.code == "E_SCENE_ENCODING_CONTRAST" for item in findings)
+
+
+def test_encoded_multipart_fill_is_checked_even_when_another_part_carries_visibility():
+    first = _encoded_mark("glyph:part0", order=100)
+    second = _primitive("glyph:part1", "planned", "planned", "#EAF0FA", kind="Symbol", order=101,
+                        bounds=first["bounds"])
+    for part in (first, second):
+        part.update(sourceRef="task-a", sourceKind="project")
+    scene = _encoded_scene(_dark_host(), first, second)
+    findings = evaluate_scene_contrast(scene, policy={"mark": "warning"})
+
+    encoded = [item for item in findings if item.code == "W_SCENE_ENCODING_CONTRAST"]
+    assert len(encoded) == 1
+    assert encoded[0].primitive_id == "glyph:part0"
+    assert encoded[0].paint_channel == "fill"
+    shape = next(item for item in findings if item.code in {"E_SCENE_MARK_CONTRAST", "W_SCENE_MARK_CONTRAST"}
+                 and item.primitive_id in {"glyph:part0", "glyph:part1"})
+    assert shape.contrast_ratio >= 3.0
+
+
+def test_encoded_fill_obeys_mark_policy_none_error_and_accepted_exception():
+    scene = _encoded_scene(_dark_host(), _encoded_mark())
+    none = next(item for item in evaluate_scene_contrast(scene, policy={"mark": "none"})
+                if item.code == "E_SCENE_ENCODING_CONTRAST")
+    assert none.severity == "info"
+
+    error = next(item for item in evaluate_scene_contrast(scene, policy={"mark": "error"})
+                 if item.code == "E_SCENE_ENCODING_CONTRAST")
+    assert error.severity == "error"
+
+    accepted = next(item for item in evaluate_scene_contrast(
+        scene, policy={"mark": "error"},
+        exceptions=[{"purpose": "planned", "over": "unclassified", "minimum": 1.0,
+                     "reason": "accepted fixture"}])
+        if item.accepted_code == "E_SCENE_ENCODING_CONTRAST")
+    assert accepted.code == "W_SCENE_CONTRAST_ACCEPTED"
+    assert accepted.encoding.as_mapping() == _encoding_witness()
+
+
+def test_encoded_fill_policy_override_is_scoped_to_encoded_findings():
+    scene = _encoded_scene(_dark_host(), _encoded_mark())
+    findings = evaluate_scene_contrast(
+        scene, policy={"mark": "error"},
+        encoded_fill_policy={"mark": "warning", "unsupportedGround": "warning"})
+
+    encoded = next(item for item in findings if item.encoding is not None)
+    ordinary = next(item for item in findings if item.code == "E_SCENE_MARK_CONTRAST")
+    assert encoded.code == "W_SCENE_ENCODING_CONTRAST"
+    assert encoded.severity == "warning"
+    assert ordinary.severity == "info"
+    assert ordinary.paint_channel == "stroke"
+
+
+def test_encoded_fill_policy_override_applies_to_encoded_unsupported_ground_only():
+    top = _primitive("unreadable", "unclassified", "panel", "#101010", order=90,
+                     bounds={"inline": 0, "block": 0, "inlineSize": 60, "blockSize": 40})
+    top["paint"]["gradient"] = {"invalid": True}
+    scene = _encoded_scene(_dark_host(), top, _encoded_mark())
+    findings = evaluate_scene_contrast(
+        scene, policy={"mark": "error", "unsupportedGround": "error"},
+        encoded_fill_policy={"mark": "warning", "unsupportedGround": "warning"})
+
+    encoded = next(item for item in findings if item.encoding is not None)
+    ordinary = next(item for item in findings
+                    if item.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED" and item.encoding is None)
+    assert encoded.code == "W_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+    assert encoded.severity == "warning"
+    assert ordinary.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+    assert ordinary.severity == "error"
+
+    inherited = evaluate_scene_contrast(scene, policy={"mark": "none", "unsupportedGround": "error"})
+    inherited_encoded = next(item for item in inherited if item.encoding is not None)
+    assert inherited_encoded.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+    assert inherited_encoded.severity == "error"
+
+
+def test_encoded_fill_uses_completed_opacity_and_reports_unsupported_ground():
+    translucent = _encoded_mark()
+    translucent["paint"]["opacity"] = 0.5
+    scene = _encoded_scene(_dark_host(), translucent)
+    finding = next(item for item in evaluate_scene_contrast(scene, policy={"mark": "warning"})
+                   if item.code == "W_SCENE_ENCODING_CONTRAST")
+    assert finding.ground_id == "host"
+    assert finding.contrast_ratio < 3.0
+
+    # A malformed top host is not skipped in favour of the lower opaque panel.
+    top = _primitive("unreadable", "unclassified", "panel", "#101010", order=90,
+                     bounds={"inline": 0, "block": 0, "inlineSize": 60, "blockSize": 40})
+    top["paint"]["gradient"] = {"invalid": True}
+    unsupported = evaluate_scene_contrast(_encoded_scene(_dark_host(), top, _encoded_mark()),
+                                          policy={"mark": "warning", "unsupportedGround": "warning"})
+    ground = next(item for item in unsupported if item.code == "W_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+                  and item.primitive_id == "encoded")
+    assert ground.encoding.as_mapping() == _encoding_witness()
+
+
+def test_malformed_or_unjoined_encoding_witness_is_structural():
+    malformed = _encoded_mark()
+    malformed["encoding"] = {"channel": "stroke"}
+    with pytest.raises(ValueError, match="E_SCENE_CONTRAST_DOCUMENT: malformed encoding witness"):
+        evaluate_scene_contrast(_encoded_scene(malformed))
+
+    missing_resource = _encoded_mark()
+    missing_resource["encoding"]["sources"][0]["id"] = "unknown-view"
+    with pytest.raises(ValueError, match="encoding source does not join"):
+        evaluate_scene_contrast(_encoded_scene(missing_resource))
+
+    wrong_version = _encoded_mark()
+    with pytest.raises(ValueError, match="encoding metadata requires Scene v0.7"):
+        evaluate_scene_contrast(_scene(wrong_version))
+
+
+@pytest.mark.parametrize("kind,visual_role,purpose", [
+    ("Rect", "unclassified", "panel"),
+    ("Text", "planned", "planned"),
+])
+def test_encoding_witness_on_non_mark_or_non_shape_is_structural(kind, visual_role, purpose):
+    primitive = _encoded_mark()
+    primitive.update(kind=kind, visualRole=visual_role, purpose=purpose)
+
+    with pytest.raises(
+        ValueError,
+        match="E_SCENE_CONTRAST_DOCUMENT: encoding metadata requires a completed filled MARK-classified",
+    ):
+        evaluate_scene_contrast(_encoded_scene(primitive))
+
+
+def test_style_encoding_witness_is_self_contained_and_joins_resource_without_style_match():
+    mark = _encoded_mark()
+    mark["encoding"] = {"channel": "fill", "scaleId": "status-colors", "field": "status", "value": "gate",
+                         "sources": [{"kind": "style", "id": "style-a", "sourceRef": "/body/rules/then",
+                                      "ruleId": "encode-status"}]}
+    scene = _encoded_scene(_dark_host(), mark)
+    scene["provenance"]["resources"] = [{"kind": "style", "id": "style-a"}]
+
+    finding = next(item for item in evaluate_scene_contrast(scene, policy={"mark": "warning"})
+                   if item.code == "W_SCENE_ENCODING_CONTRAST")
+    assert finding.encoding.sources[0].rule_id == "encode-status"
+
+    mark["encoding"]["sources"][0].pop("ruleId")
+    with pytest.raises(ValueError, match="malformed encoding witness"):
+        evaluate_scene_contrast(scene, policy={"mark": "warning"})
+
+    mark["encoding"]["sources"][0]["ruleId"] = "encode-status"
+    mark["encoding"]["sources"][0]["id"] = "missing-style"
+    with pytest.raises(ValueError, match="encoding source does not join exactly one Scene resource"):
+        evaluate_scene_contrast(scene, policy={"mark": "warning"})
 
 
 def test_category_fill_can_be_carried_by_a_contrasting_explicit_outline():

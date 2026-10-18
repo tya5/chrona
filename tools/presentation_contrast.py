@@ -10,6 +10,7 @@ import sys
 from typing import Any, Iterable, Mapping
 
 from chrona.resources import safe_load
+from chrona.usecases.diagnostic_messages import encoding_contrast_detail
 
 from chrona.presentation.scene.contrast_policy import (
     DEFAULT_POLICY,
@@ -81,7 +82,15 @@ def evaluate_committed_scenes(paths: Iterable[Path], *, root: Path = ROOT) -> tu
             document = json.loads(path.read_text(encoding="utf-8"))
             theme = scene_theme_id(document)
             held = theme in opted_in
-            findings = evaluate_scene_contrast(document, policy=None if held else DEFAULT_POLICY)
+            findings = evaluate_scene_contrast(
+                document,
+                policy=None if held else DEFAULT_POLICY,
+                # Encoded data fills are an observer warning in the corpus report.
+                # A repository Theme opt-in still holds ordinary shape/text
+                # contrast to error; it does not silently opt encoded domains
+                # into a guarantee that runtime Theme policy does not provide.
+                encoded_fill_policy=DEFAULT_POLICY,
+            )
         except (OSError, ValueError, SceneContrastPolicyError) as error:
             records.append({"scene": relative, "theme": theme, "optedIn": False, "finding": {
                 "code": "E_SCENE_CONTRAST_DOCUMENT", "severity": "error", "scenePath": "/",
@@ -169,9 +178,10 @@ def render_markdown(report: Mapping[str, Any]) -> str:
         return "—" if value is None else f"{value:.3f}"
     lines = ["# Presentation Contrast", "", "Generated from committed public Scene evidence by `tools/presentation_contrast.py`.", "",
              "Contrast constraints are an opt-in design option (Specification 46 section 8). For a Theme listed in "
-             "`conformance/contrast-opt-in.yaml`, a mark or text below its floor is an error and fails the check; a "
+             "`conformance/contrast-opt-in.yaml`, ordinary shape visibility or text legibility below its floor is an error and fails the check; a "
              "decoration below its floor (or on a ground that cannot be read) is a warning. For any other Theme every "
-             "miss is a warning: it is listed and counted, and fails nothing.", "",
+             "miss is a warning: it is listed and counted, and fails nothing. Independent encoded-fill misses are "
+             "reported as warnings; authored Theme enforcement is checked by the render before Scene output.", "",
              "| Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |",
              "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"]
     for row in report["rows"]:
@@ -181,20 +191,23 @@ def render_markdown(report: Mapping[str, Any]) -> str:
         lines.append("| {purpose} | `{visualRole}` | {disposition} | {floor} | {slideCount} | {primitiveCount} | {minimum} | {median} | {errorCount} | {warningCount} |".format(
             **display))
     lines.extend(("", "## Per-primitive grounds", "",
-                  "| Scene | Primitive | Role | Sample | Ground | Ground kind | Ground colour | Channel | Ratio | Floor | Severity |",
-                  "| --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- |"))
+                  "| Scene | Primitive | Role | Sample | Ground | Ground kind | Ground colour | Channel | Encoded fill | Ratio | Floor | Severity |",
+                  "| --- | --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- |"))
     for record in report["findings"]:
         finding = record["finding"]
         if finding["primitiveId"] is None:
             continue
         sample = (f"{finding['sampleInline']:.3f}, {finding['sampleBlock']:.3f}"
                   if finding.get("sampleInline") is not None and finding.get("sampleBlock") is not None else "—")
-        lines.append("| `{scene}` | `{primitive}` | `{role}` | {sample} | `{ground}` | {ground_kind} | `{color}` | {channel} | {ratio} | {floor} | {severity} |".format(
+        encoded = (encoding_contrast_detail({**finding, "encoding": finding["encoding"]})
+                   .replace("|", "\\|") if isinstance(finding.get("encoding"), Mapping) else "—")
+        lines.append("| `{scene}` | `{primitive}` | `{role}` | {sample} | `{ground}` | {ground_kind} | `{color}` | {channel} | {encoded} | {ratio} | {floor} | {severity} |".format(
             scene=record["scene"], primitive=finding["primitiveId"], role=finding["visualRole"],
             sample=sample,
             ground=finding.get("groundId") or "—", color=finding.get("groundColor") or "—",
             ground_kind=finding.get("groundKind") or "—",
-            channel=finding.get("paintChannel") or "—", ratio=number(finding["contrastRatio"]),
+            channel=finding.get("paintChannel") or "—", encoded=encoded,
+            ratio=number(finding["contrastRatio"]),
             floor=number(finding["floor"]), severity=finding["severity"]))
     lines.extend(("", "## Themes not opted in", "",
                   "Contrast constraints are an opt-in design option (Specification 46 section 8): a Theme listed in "
