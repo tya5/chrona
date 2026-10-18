@@ -234,5 +234,13 @@ old-ID miss behavior, and explicit overlap/stub unusable receipts. A default
 plot-name/stub collision reproduced on public `1de259e69` is independently
 tracked in [1763](https://github.com/tya5/chrona/issues/1763); the receipt test
 uses a valid table-label View without changing product behavior for that bug.
-Public snapshot/CI, the slip/detour synthetic and full trial-8 acceptance are
-still pending. S3 product implementation has not started.
+The real three-row slip/detour synthetic passes under both policies (2 cases):
+an irrelevant slip keeps the validated corridor; moving a primary mark across
+it invalidates the hint and accepts a mark-clear detour in NORMAL, before mark
+relaxation. Endpoint geometry is unchanged and actual paths are compared.
+
+S3 exact-ID query exclusions and all placement paths are implemented. The
+obstacle/member-name/as-of-label/route-memo/annotation negative-control batch
+passes (77 cases). The original inventory and other rule obstacles remain
+intact. Public snapshot/CI and full trial-8 acceptance are still pending;
+S4 cone-ground design and implementation remain incomplete.
