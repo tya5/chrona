@@ -178,7 +178,8 @@ per task, gate or group; only `id` is required. Columns: `title`, `type` (task, 
 ## Warnings and diagnostics
 
 Errors are JSON on standard output with exit 1 or 2. A render that succeeds exits 0 and prints
-`{"status": "ok", "diagnostics": [], "warnings": [...]}` on standard output (standard error stays empty):
+`{"status": "ok", "diagnostics": [], "warnings": [...]}` on standard output. Phase progress
+uses terminal stderr or `--progress`; expensive-routing advice is printed early even on a quiet pipe:
 read `warnings` for `W_...` and `I_...` entries, such as something clipped, suppressed or substituted. Read the code in
 [references/diagnostics.md](references/diagnostics.md); shorten a title, widen `--viewport`, or
 accept it. `.typ` or `.tex` of a preset with viewer-fit (`target-b`, `sunday`) warns `W_VIEWER_FIT_NOT_HONOURED`: harmless, that text is drawn plain. If that file does not list a code, rerun the smallest plan that shows it, quote the
