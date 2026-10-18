@@ -251,10 +251,23 @@ def test_the_contrast_policy_is_carried_into_the_resolved_theme_and_absent_when_
         assert resolved["body"]["contrastPolicy"] == {"decoration": severity}
 
 
+@pytest.mark.parametrize("enabled", [False, True])
+def test_as_of_cone_ground_policy_is_a_resolved_boolean(enabled):
+    theme = _paper_note_theme()
+    theme["body"]["contrastPolicy"] = {"asOfConeGround": enabled}
+
+    resolved = resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
+
+    assert resolved["body"]["contrastPolicy"] == {"asOfConeGround": enabled}
+
+
 @pytest.mark.parametrize("policy,pointer", [
     ({"decoration": "info"}, "/body/contrastPolicy/decoration"),
     ({"mark": False}, "/body/contrastPolicy/mark"),  # YAML 1.1 reads an unquoted `off` as false
     ({"decoration": "error", "marks": "warning"}, "/body/contrastPolicy/marks"),
+    ({"asOfConeGround": "true"}, "/body/contrastPolicy/asOfConeGround"),
+    ({"asOfConeGround": 1}, "/body/contrastPolicy/asOfConeGround"),
+    ({"asOfConeGround": {}}, "/body/contrastPolicy/asOfConeGround"),
     ({"stateText": "strict"}, "/body/contrastPolicy/stateText"),
     ("error", "/body/contrastPolicy")])
 def test_an_undeclared_policy_value_or_member_is_refused_at_its_pointer(policy, pointer):

@@ -357,6 +357,11 @@ def _contrast_policy(declared: Any) -> dict[str, Any]:
     if not isinstance(declared, Mapping):
         raise ColorSchemeError("E_THEME_CONTRAST_POLICY", "/body/contrastPolicy")
     for member, severity in declared.items():
+        if member == "asOfConeGround":
+            if not isinstance(severity, bool):
+                raise ColorSchemeError("E_THEME_CONTRAST_POLICY", f"/body/contrastPolicy/{member}",
+                                       detail="expected boolean")
+            continue
         if member == "exceptions":
             _contrast_exceptions(severity)
             continue

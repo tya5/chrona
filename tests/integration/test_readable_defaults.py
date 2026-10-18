@@ -12,7 +12,7 @@ import pytest
 import yaml
 
 from chrona.app.cli import main
-from chrona.core.relation_identity import relation_identity
+from chrona.core.relation_identity import relation_identities
 from tests.support.draft_packages import stage_project_package_store
 from tests.support.preset_checks import MINIMUM_BAND_CONTRAST, band_contrasts as _band_contrasts, primitives as _primitives
 
@@ -317,8 +317,8 @@ def test_wallboard_lane_table_keeps_the_bus_test_relation(slide: str) -> None:
     lane_labels = [item["text"] for item in primitives
                    if item.get("purpose") == "table-cell" and item["id"].endswith(":Lane")]
     project = yaml.safe_load((ROOT / "examples/halcyon-1/project.yaml").read_bytes())
-    identity = next(relation_identity(index, relation)
-                    for index, relation in enumerate(project["relations"])
+    relations = project["relations"]
+    identity = next(identity for relation, identity in zip(relations, relation_identities(relations))
                     if relation["id"] == "bustest-integration")
     route_id = (f'relation:{identity}:review-lane:["generated","bus","pdr"]:'
                 'bus-test:review-lane:["generated","ait","integration"]:integration')

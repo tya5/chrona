@@ -160,7 +160,7 @@ def _placement_context(*, slot_width=200):
         (0, 0, 200, 100), None)
 
 
-def test_reserve_only_uses_rule_obstacle_and_registers_full_candidate_footprint():
+def test_reserve_only_member_name_crosses_asof_rule_and_registers_full_footprint():
     context = _placement_context()
     request = LabelRequest("member-label:a", "a", "Owner", LabelRect(80, 40, 10, 10),
         ("end", "start"), "text", "plot-label", CollisionDomain("timeline", "overlay"),
@@ -170,12 +170,12 @@ def test_reserve_only_uses_rule_obstacle_and_registers_full_candidate_footprint(
 
     batch = place_member_labels(context, (request,), index, reserve_only=True)
 
-    assert len(batch.text) == 1 and batch.text[0].selected_rung == "start"
+    assert len(batch.text) == 1 and batch.text[0].selected_rung == "end"
     assert index.has("member-label:a")
     footprint = next(item for item in index.all() if item.placement_id == "label-footprint:member-label:a")
     assert footprint.obstacle_class == "label-visual"
     assert footprint.geometry.left < footprint.geometry.right
-    assert not index.collisions(footprint.geometry, classes=("rule",))
+    assert [item.placement_id for item in index.collisions(footprint.geometry, classes=("rule",))] == ["as-of"]
     assert not batch.diagnostics
 
 
@@ -190,7 +190,7 @@ def test_generic_required_text_translates_diagnose_into_bounded_refusal_not_supp
         place_member_labels(context, (request,), blocked)
 
 
-def test_final_ordinary_member_label_avoids_asof_rule():
+def test_final_ordinary_member_label_crosses_asof_rule():
     context = _placement_context()
     request = LabelRequest("member-label:a", "a", "Owner", LabelRect(80, 40, 10, 10),
         ("end", "start"), "text", "plot-label", CollisionDomain("timeline", "overlay"),
@@ -200,9 +200,41 @@ def test_final_ordinary_member_label_avoids_asof_rule():
 
     batch = place_member_labels(context, (request,), index)
 
-    assert len(batch.text) == 1 and batch.text[0].selected_rung == "start"
+    assert len(batch.text) == 1 and batch.text[0].selected_rung == "end"
     footprint = next(item for item in index.all() if item.placement_id == "label-footprint:member-label:a")
-    assert not index.collisions(footprint.geometry, classes=("rule",))
+    assert [item.placement_id for item in index.collisions(footprint.geometry, classes=("rule",))] == ["as-of"]
+
+
+def test_member_name_still_avoids_deadline_rule_while_crossing_asof():
+    context = _placement_context()
+    request = LabelRequest("member-label:a", "a", "Owner", LabelRect(80, 40, 10, 10),
+        ("end", "start"), "text", "plot-label", CollisionDomain("timeline", "overlay"),
+        "suppress", semantic_id="memberLabel")
+    index = SurfaceObstacleIndex()
+    index.extend((
+        SurfaceObstacle("as-of", "rule", "timeline", ObstacleSegment((105, 0), (105, 100))),
+        SurfaceObstacle("deadlineMark:critical:segment:0", "rule", "timeline",
+                        ObstacleSegment((95, 0), (95, 100))),
+    ))
+
+    batch = place_member_labels(context, (request,), index)
+
+    assert len(batch.text) == 1 and batch.text[0].selected_rung == "start"
+    assert index.has("as-of") and index.has("deadlineMark:critical:segment:0")
+
+
+def test_required_member_name_also_crosses_asof_rule():
+    context = _placement_context()
+    request = replace(LabelRequest("member-label:a", "a", "Owner", LabelRect(80, 40, 10, 10),
+        ("end", "start"), "text", "plot-label", CollisionDomain("timeline", "overlay"),
+        "suppress", semantic_id="memberLabel"), required_before_routes=True)
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("as-of", "rule", "timeline", ObstacleSegment((105, 0), (105, 100))))
+
+    batch = place_member_labels(context, (request,), index)
+
+    assert len(batch.text) == 1 and batch.text[0].selected_rung == "end"
+    assert index.has("as-of")
 
 
 def test_reserve_only_does_not_register_unavailable_or_out_of_slot_candidates():
@@ -222,7 +254,7 @@ def test_reserve_only_does_not_register_unavailable_or_out_of_slot_candidates():
     assert len(batch.text) == 1 and batch.text[0].selected_rung == "start"
 
     blocked = SurfaceObstacleIndex()
-    blocked.add(SurfaceObstacle("as-of", "rule", "timeline", ObstacleRect(0, 0, 200, 100)))
+    blocked.add(SurfaceObstacle("deadlineMark:critical:segment:0", "rule", "timeline", ObstacleRect(0, 0, 200, 100)))
     only_end = replace(request, candidates=("end",), bounds=None, overflow="visible-overflow")
     batch = place_member_labels(_placement_context(), (only_end,), blocked, reserve_only=True)
     assert not batch.text
@@ -239,7 +271,7 @@ def test_unavailable_optional_associated_reservation_does_not_apply_final_visibl
         ("end", "start"), "text", "plot-label", CollisionDomain("timeline", "overlay"),
         "visible-overflow", semantic_id="memberLabel", inside_host_obstacle_id="planned:a")
     index = SurfaceObstacleIndex()
-    index.add(SurfaceObstacle("as-of", "rule", "timeline", ObstacleRect(0, 0, 200, 100)))
+    index.add(SurfaceObstacle("deadlineMark:critical:segment:0", "rule", "timeline", ObstacleRect(0, 0, 200, 100)))
     before = index.all()
 
     batch = place_member_labels(context, (request,), index, reserve_only=True)

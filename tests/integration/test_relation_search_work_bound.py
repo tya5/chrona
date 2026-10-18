@@ -5,7 +5,7 @@ from datetime import date
 import pytest
 
 from chrona.presentation.layout import route_search as search
-from chrona.core.relation_identity import relation_identity
+from chrona.core.relation_identity import relation_identities
 from tests.support import synthetic_review as sr
 
 
@@ -53,8 +53,7 @@ def test_generated_project_obeys_the_surface_candidate_bound(tmp_path, monkeypat
     assert counts["history_predicates"] <= 20 * relation_count * 4096**2
     if relation_count:
         assert counts["generators"] >= relation_count
-    relation_ids = {relation_identity(index, relation)
-                    for index, relation in enumerate(source["relations"])}
+    relation_ids = set(relation_identities(source["relations"]))
     routes = [primitive for primitive in rendered.surface.primitives
               if primitive.scene_id.startswith("relation:")]
     emitted = {primitive.source_ref for primitive in routes}

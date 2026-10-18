@@ -42,5 +42,5 @@ def test_theme_role_is_wired_through_real_render_without_reclassifying_the_short
     assert set(plain) == set(themed) and len(themed) == 4
     assert all(item.visual_role == "dependency" for item in plain.values())
     assert {item.source_ref for item in themed.values() if item.visual_role == "dependency-critical"} == {
-        "relation:0:start-long", "relation:2:long-finish"}
+        "relation:id:start-long", "relation:id:long-finish"}
     assert {item.paint.stroke_width for item in themed.values() if item.visual_role == "dependency-critical"} == {2}

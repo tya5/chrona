@@ -115,6 +115,7 @@ def _cone(*, strength=0.6, order=50, ink=INK):
     # A cone from the apex (250, 50) widening to half-width 50 at the foot (y 250): spread 0.25, extent 1.
     outline = [("move", (250.0, 50.0)), ("line", (300.0, 250.0)), ("line", (200.0, 250.0)), ("line", (250.0, 50.0))]
     return {"id": "as-of-cone", "visualRole": "as-of-cone", "purpose": "as-of-cone", "kind": "Symbol", "paintOrder": order,
+            "markGround": True,
             "bounds": {"inline": 200.0, "block": 50.0, "inlineSize": 100.0, "blockSize": 200.0},
             "symbol": {"outline": [{"kind": kind, "points": [list(point)]} for kind, point in outline]},
             "paint": {"fill": ink, "opacity": strength, "gradient": {
@@ -155,6 +156,26 @@ def test_a_mark_in_the_cone_is_judged_on_the_ink_composited_at_the_strength_the_
     assert finding.ground_kind == "cone-blend" and finding.ground_id == "as-of-cone"
     assert finding.contrast_ratio == pytest.approx(min(_ratio("#F4C000", top), _ratio("#F4C000", bottom)))
     assert finding.contrast_ratio < _ratio("#F4C000", CANVAS)  # the cone made the ground harder, and the gate saw it
+
+
+def test_an_unopted_cone_is_not_a_mark_ground() -> None:
+    cone = _cone()
+    cone.pop("markGround")
+    finding = _finding(_scene(cone, _mark(block=140.0)))
+
+    assert finding.ground_kind == "canvas" and finding.ground_id == "canvas"
+    assert finding.contrast_ratio == pytest.approx(_ratio("#F4C000", CANVAS))
+
+
+def test_unopted_cone_remains_a_physical_ground_for_state_text() -> None:
+    cone = _cone(strength=1.0)
+    cone.pop("markGround")
+    label = _mark("variance", block=140.0, fill="#7A5A00", role="variance-behind", purpose="table-cell")
+    label["contrastTreatment"] = "required"
+
+    finding = _finding(_scene(cone, label), "variance")
+
+    assert finding.code == "E_SCENE_STATE_TEXT_CONTRAST" and finding.ground_kind == "cone-blend"
 
 
 def test_the_worst_of_the_stops_a_mark_spans_decides_not_its_centre() -> None:
@@ -239,6 +260,14 @@ def test_a_cone_is_never_the_host_of_an_unrelated_ordinary_ground_lookup() -> No
 def test_an_unreadable_cone_is_a_malformed_document_not_a_silent_skip() -> None:
     broken = _cone()
     broken["paint"]["gradient"]["stops"] = [{"offset": 0, "color": INK}, {"offset": 1, "color": INK}]  # no stop opacity
+
+    with pytest.raises(Exception, match="E_SCENE_CONTRAST_DOCUMENT"):
+        evaluate_scene_contrast(_scene(broken, _mark(block=140.0)))
+
+
+def test_a_cone_with_a_nonboolean_mark_ground_is_malformed() -> None:
+    broken = _cone()
+    broken["markGround"] = "true"
 
     with pytest.raises(Exception, match="E_SCENE_CONTRAST_DOCUMENT"):
         evaluate_scene_contrast(_scene(broken, _mark(block=140.0)))

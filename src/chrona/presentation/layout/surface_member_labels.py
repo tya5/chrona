@@ -526,7 +526,8 @@ def place_member_labels(context: SurfaceMemberLabelContext,
         if reserve_only and (label_request.semantic_id != "memberLabel"
                              or label_request.is_required_before_routes):
             continue
-        placement_obstacles = obstacles.copy(geometry_overrides=paint_footprints)
+        placement_obstacles = obstacles.copy(geometry_overrides=paint_footprints,
+            excluded_ids=("as-of",) if label_request.semantic_id == "memberLabel" else ())
         slot = context.by_source.get(label_request.collision_domain.slot)
         host = marks.get(label_request.inside_host_obstacle_id or "")
         associated_member = (label_request.semantic_id == "memberLabel" and

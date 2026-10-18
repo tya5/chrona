@@ -27,7 +27,7 @@ def _index():
     return index
 
 
-def test_route_only_probe_retains_preceding_text_and_rule_and_uses_exact_footprint(monkeypatch):
+def test_route_only_probe_retains_preceding_text_and_shared_asof_rule(monkeypatch):
     index = _index()
     before = index.all()
 
@@ -36,6 +36,8 @@ def test_route_only_probe_retains_preceding_text_and_rule_and_uses_exact_footpri
         if requests[0].candidates == ("start",):
             return owner.SurfaceMemberLabelsBatch((), (), (), (), (), (), (), frozenset())
         assert requests[0].candidates == ("end",)
+        # The recovery probe owns the original preceding inventory; the label
+        # owner applies its member-name-only query exclusion on a private copy.
         assert obstacles.has("prior-name") and obstacles.has("as-of")
         assert not obstacles.has("route")
         text = TextPlacement("name", "item", "Name", Rect(Decimal(15), Decimal(10), Decimal(10), Decimal(10)),
@@ -51,6 +53,30 @@ def test_route_only_probe_retains_preceding_text_and_rule_and_uses_exact_footpri
     assert reservation.text.selected_rung == "end"
     assert not reservation.text.required
     assert [item.placement_id for item in reservation.obstacles] == ["label-footprint:name"]
+    assert index.all() == before
+
+
+def test_real_route_blocked_reservation_crosses_asof_but_preserves_shared_inventory():
+    from tests.unit.chrona.presentation.layout.test_member_label_required_phase import _placement_context
+
+    context = _placement_context()
+    request = replace(_request(), anchor=LabelRect(80, 40, 10, 10), content="Owner")
+    index = SurfaceObstacleIndex()
+    index.extend((
+        SurfaceObstacle("as-of", "rule", "timeline", ObstacleSegment((105, 0), (105, 100))),
+        SurfaceObstacle("route", "dependency-route", "timeline",
+                        ObstacleSegment((105, 0), (105, 100)), route_owner_id="relation:one"),
+    ))
+    before = index.all()
+
+    reservations = owner._route_blocked_candidate(context, request, None, index)
+
+    assert len(reservations) == 1
+    reservation = reservations[0]
+    assert reservation.text.selected_rung == "end"
+    assert any(item.placement_id == "label-footprint:name" for item in reservation.obstacles)
+    footprint = next(item for item in reservation.obstacles if item.placement_id == "label-footprint:name")
+    assert footprint.geometry.left < 105 < footprint.geometry.right
     assert index.all() == before
 
 
@@ -170,14 +196,16 @@ def test_required_and_nonroute_blockers_are_not_released_for_a_route_candidate(m
     index.extend((
         SurfaceObstacle("required-name", "text", "timeline", ObstacleRect(7, 7, 23, 23)),
         SurfaceObstacle("as-of", "rule", "timeline", ObstacleSegment((0, 15), (60, 15))),
+        SurfaceObstacle("deadlineMark:critical:segment:0", "rule", "timeline",
+            ObstacleSegment((0, 17), (60, 17))),
         SurfaceObstacle("route", "dependency-route", "timeline",
             ObstacleSegment((0, 16), (60, 16)), route_owner_id="route:one"),
     ))
     required_request = replace(_request(), required_before_routes=True)
 
     assert owner._route_blocked_candidate(None, required_request, None, index) == ()
-    # With an optional name, the rule blocks both candidate footprints in the
-    # route-free inventory; route paint cannot turn that into eligibility.
+    # With an optional name, the deadline rule blocks both candidate footprints
+    # in the route-free inventory; excluding as-of does not release other rules.
     assert owner._route_blocked_candidate(None, _request(), None, index) == ()
 
 
