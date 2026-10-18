@@ -27,6 +27,17 @@ public15-preset PNG evidence. The published batching amendment retains both
 literal reviews and current-head artifact/exact-main full release gates.
 The final ready-base hierarchy/legend/native batch passes66; schema-equivalence,
 import-direction and literal-review checks pass without new waivers.
+CI39111014852 correctly refused release: catalogue admission was dropped by
+the diagnostic paint-witness call, so roadmap-sunday's patterned period key
+failed before snapshot publication. Reproduction then had no artifact;
+derived-ready refused the failed preview, while pytest/conformance were skipped.
+[Pre-code correction and architecture review](https://github.com/tya5/chrona/issues/1703#issuecomment-6247624098)
+and Spec28 clarification `bc828e92c` precede the repair. Layout now preserves
+the completed catalogue flag through the same family/witness resolver as Scene;
+no paint defaults, YAML adaptation or relaxed ordinary-stroke validation.
+Two neutral missing-host-width cases fail before and pass after the correction;
+the ordinary-stroke negative still rejects. Catalogue/Scene/legend/hierarchy
+batch54 passes; final-head official artifact and full release remain required.
 
 Implementation candidate: `192129bd9`; reviewer correction [1705](https://github.com/tya5/chrona/pull/1705) restores owner-approved target-b Actual ink. Final integrated focused tests pass290 (18.03 s), including the native equal-black multipart keys and exact placed-geometry parity. Detail validation passes2 positive/8 negative; schema equivalence passes L1 (1 additive,40 equal) and L2/L3 with five pre-existing invalid documents. PR/main publication, official snapshot and full three-OS release remain unverified. Issue #1703 remains open.
 
