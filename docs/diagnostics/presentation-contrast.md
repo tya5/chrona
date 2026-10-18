@@ -52,7 +52,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | group-tab | `group-tab` | enabled | 1.100 | 6 | 60 | 1.119 | 6.982 | 0 | 0 |
 | kicker-text | `kicker` | required | 4.500 | 6 | 6 | 9.106 | 15.260 | 0 | 0 |
 | legend-label | `legend` | required | 4.500 | 11 | 72 | 5.448 | 13.415 | 0 | 0 |
-| legend-label | `text` | required | 4.500 | 32 | 128 | 10.019 | 16.268 | 0 | 0 |
+| legend-label | `text` | required | 4.500 | 33 | 131 | 10.019 | 16.268 | 0 | 0 |
 | legend-swatch | `actual` | required | 3.000 | 42 | 43 | 4.747 | 16.268 | 0 | 0 |
 | legend-swatch | `calendar-closed` | enabled | 1.100 | 9 | 9 | 1.050 | 1.134 | 0 | 4 |
 | legend-swatch | `calendar-exception` | enabled | 1.100 | 4 | 4 | 1.216 | 1.255 | 0 | 0 |
@@ -61,7 +61,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | legend-swatch | `period-band` | enabled | 1.100 | 2 | 6 | 1.163 | 2.217 | 0 | 0 |
 | legend-swatch | `planned` | required | 3.000 | 43 | 68 | 4.637 | 16.268 | 0 | 0 |
 | legend-swatch | `progress-fill` | required | 3.000 | 36 | 36 | 1.782 | 16.268 | 0 | 2 |
-| legend-swatch | `snapshot` | required | 3.000 | 10 | 10 | 2.594 | 5.508 | 0 | 2 |
+| legend-swatch | `snapshot` | required | 3.000 | 13 | 13 | 2.594 | 5.817 | 0 | 2 |
 | member-label | `text` | required | 4.500 | 35 | 329 | 10.019 | 14.573 | 0 | 0 |
 | milestone-digest-entry | `text` | required | 4.500 | 24 | 48 | 11.935 | 16.268 | 0 | 0 |
 | missingActual | `missing-actual` | required | 3.000 | 29 | 35 | 4.436 | 14.573 | 0 | 0 |
@@ -2695,9 +2695,11 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `legend:actual:1f3fcaa4cc2095e6` | `text` | 1447.102, 808.538 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `legend:planned` | `text` | 1471.834, 783.338 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `legend:progressFill:ff20d4fbbb7c74d9` | `text` | 1435.438, 830.138 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/baseline-ghosts.scene.json` | `legend:snapshot` | `text` | 1472.512, 855.338 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `legend-swatch:actual:1f3fcaa4cc2095e6` | `actual` | 1396.000, 808.538 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `legend-swatch:planned` | `planned` | 1396.000, 783.338 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `legend-swatch:progressFill:ff20d4fbbb7c74d9` | `progress-fill` | 1396.000, 830.138 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/controller-z/generated/baseline-ghosts.scene.json` | `legend-swatch:snapshot` | `snapshot` | 1396.000, 855.338 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:architecture:architecture` | `text` | 570.261, 147.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:dvt:dvt` | `text` | 1329.981, 527.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:dvt:snapshot:dvt` | `text` | 1213.983, 527.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
@@ -5488,6 +5490,8 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `group:launch` | `group-band` | 1373.497, 206.000 | `canvas` | canvas | `#0B1220` | fill | 1.235 | 1.100 | info |
 | `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `group-header:ait` | `text` | 599.762, 96.000 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
 | `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `group-header:launch` | `text` | 558.175, 176.000 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
+| `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `legend:snapshot` | `text` | 90.527, 274.000 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
+| `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `legend-swatch:snapshot` | `snapshot` | 40.000, 274.000 | `canvas` | canvas | `#0B1220` | stroke | 16.354 | 3.000 | info |
 | `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `member-label:campaign:campaign` | `text` | 1335.638, 231.000 | `group:launch` | flat | `#142642` | fill | 13.238 | 4.500 | info |
 | `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `member-label:campaign:scenario:tvac-slip:campaign` | `text` | 1587.163, 231.000 | `group:launch` | flat | `#142642` | fill | 13.238 | 4.500 | info |
 | `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `member-label:emc:emc` | `text` | 1110.137, 151.000 | `group:ait` | flat | `#142642` | fill | 13.238 | 4.500 | info |
@@ -8451,36 +8455,38 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/26-gates.scene.json` | `group:ait` | `group-band` | 1041.200, 838.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `group:bus` | `group-band` | 1041.200, 318.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `group:payload` | `group-band` | 1041.200, 658.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `group-detail:ait` | `text` | 260.306, 1003.000 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `group-detail:bus` | `text` | 316.740, 963.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `group-detail:payload` | `text` | 320.233, 983.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `group-detail:ait` | `text` | 260.306, 985.000 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `group-detail:bus` | `text` | 316.740, 945.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `group-detail:payload` | `text` | 320.233, 965.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `group-header:ait` | `text` | 124.226, 806.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `group-header:bus` | `text` | 72.300, 126.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `group-header:payload` | `text` | 79.482, 530.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:actual:1f3fcaa4cc2095e6` | `text` | 70.302, 1078.938 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:progressFill:ff20d4fbbb7c74d9` | `text` | 63.438, 1101.738 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:scale:model:EM` | `text` | 47.178, 1124.538 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:scale:model:FM` | `text` | 46.956, 1170.138 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:scale:model:QM` | `text` | 48.528, 1147.338 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:actual:1f3fcaa4cc2095e6` | `actual` | 24.000, 1078.938 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:scale:model:EM` | `planned` | 24.000, 1124.538 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:scale:model:FM` | `planned` | 24.000, 1170.138 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:scale:model:QM` | `planned` | 24.000, 1147.338 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:progressFill:ff20d4fbbb7c74d9` | `progress-fill` | 24.000, 1101.738 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `milestone:cdr` | `text` | 833.652, 963.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `milestone:psr` | `text` | 813.870, 983.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:actual:1f3fcaa4cc2095e6` | `text` | 70.302, 1060.938 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:progressFill:ff20d4fbbb7c74d9` | `text` | 63.438, 1083.738 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:scale:model:EM` | `text` | 47.178, 1131.338 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:scale:model:FM` | `text` | 46.956, 1176.938 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:scale:model:QM` | `text` | 48.528, 1154.138 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:snapshot` | `text` | 92.512, 1107.538 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:actual:1f3fcaa4cc2095e6` | `actual` | 24.000, 1060.938 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:scale:model:EM` | `planned` | 24.000, 1131.338 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:scale:model:FM` | `planned` | 24.000, 1176.938 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:scale:model:QM` | `planned` | 24.000, 1154.138 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:progressFill:ff20d4fbbb7c74d9` | `progress-fill` | 24.000, 1083.738 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:snapshot` | `snapshot` | 24.000, 1107.538 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `milestone:cdr` | `text` | 833.652, 945.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `milestone:psr` | `text` | 813.870, 965.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `missing-actual:pdr:pdr` | `missing-actual` | 598.187, 168.800 | `planned:pdr:pdr` | flat | `#8DB6E8` | stroke | 7.738 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:payload-fast-track:cell:area` | `text` | 1076.843, 1042.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:payload-fast-track:cell:disposition` | `text` | 1519.622, 1042.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:payload-fast-track:cell:observation` | `text` | 1295.562, 1042.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:psr-approval:cell:area` | `variance-ahead` | 1063.270, 1003.000 | `canvas` | canvas | `#FFFFFF` | fill | 3.397 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:psr-approval:cell:disposition` | `variance-ahead` | 1511.390, 1003.000 | `canvas` | canvas | `#FFFFFF` | fill | 3.397 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:psr-approval:cell:observation` | `variance-ahead` | 1274.408, 1003.000 | `canvas` | canvas | `#FFFFFF` | fill | 3.397 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:header:area` | `text` | 1066.077, 963.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:header:disposition` | `text` | 1525.138, 963.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:header:observation` | `text` | 1167.189, 963.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:payload-fast-track:source` | `text` | 1161.753, 1022.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:psr-approval:source` | `text` | 1160.955, 983.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:payload-fast-track:cell:area` | `text` | 1076.843, 1024.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:payload-fast-track:cell:disposition` | `text` | 1519.622, 1024.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:payload-fast-track:cell:observation` | `text` | 1295.562, 1024.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:psr-approval:cell:area` | `variance-ahead` | 1063.270, 985.000 | `canvas` | canvas | `#FFFFFF` | fill | 3.397 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:psr-approval:cell:disposition` | `variance-ahead` | 1511.390, 985.000 | `canvas` | canvas | `#FFFFFF` | fill | 3.397 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:psr-approval:cell:observation` | `variance-ahead` | 1274.408, 985.000 | `canvas` | canvas | `#FFFFFF` | fill | 3.397 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:header:area` | `text` | 1066.077, 945.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:header:disposition` | `text` | 1525.138, 945.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:header:observation` | `text` | 1167.189, 945.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:payload-fast-track:source` | `text` | 1161.753, 1004.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `observations:row:psr-approval:source` | `text` | 1160.955, 965.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `planned:avionics:avionics` | `planned` | 743.586, 360.800 | `planned:avionics:scenario:payload-fast-track:avionics` | flat | `#C9CED8` | stroke | 10.306 | 3.000 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `planned:bus-test:bus-test` | `planned` | 848.092, 424.800 | `planned:bus-test:scenario:payload-fast-track:bus-test` | flat | `#C9CED8` | stroke | 10.306 | 3.000 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `planned:cdr:cdr` | `planned` | 874.442, 488.800 | `planned:cdr:scenario:payload-fast-track:cdr` | flat | `#C9CED8` | stroke | 10.306 | 3.000 | info |
@@ -8499,9 +8505,9 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:optics:optics` | `progress-fill` | 611.818, 572.800 | `actual:optics:optics` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:payload-tvac:payload-tvac` | `progress-fill` | 816.286, 700.800 | `actual:payload-tvac:payload-tvac` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:structure:structure` | `progress-fill` | 611.818, 232.800 | `actual:structure:structure` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `note:station` | `text` | 1403.919, 1117.000 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `note:tvac` | `text` | 1404.808, 1097.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `note:window` | `text` | 1409.106, 1077.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `note:station` | `text` | 1403.919, 1099.000 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `note:tvac` | `text` | 1404.808, 1079.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `note:window` | `text` | 1409.106, 1059.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `relation-label:relation:0:pdr-structure:pdr:pdr:structure:structure` | `text` | 637.585, 184.800 | `group:bus` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `relation-label:relation:3:avionics-bustest:avionics:avionics:bus-test:bus-test` | `text` | 874.831, 380.400 | `group:bus` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `relation-label:relation:5:optics-detector:optics:optics:detector:detector` | `text` | 707.644, 604.800 | `group:payload` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
@@ -8589,4 +8595,4 @@ Every independently required decoration role has committed Scene or explicit syn
 - Synthetic `dependency-halo` (no public use): `tests/integration/test_unroutable_visible_obstacle.py`, `tests/integration/test_relation_resolution_wiring.py`, `tests/unit/chrona/presentation/scene/test_contrast_policy.py`
 - Synthetic `tableColumnRule` (no public use): `tests/integration/test_table_details_1545.py`, `tests/integration/test_technical_print_columns.py`
 
-Findings: 8508; errors: 0; warnings: 417.
+Findings: 8514; errors: 0; warnings: 417.
