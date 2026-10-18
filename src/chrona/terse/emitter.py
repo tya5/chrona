@@ -6,6 +6,7 @@ no BOM, a final newline, fixed key order (the order of the mapping given), singl
 """
 from __future__ import annotations
 
+import math
 import re
 from typing import Any
 
@@ -22,12 +23,24 @@ _FOLDED = "\x85\u2028\u2029"  # line breaks PyYAML would fold inside a quoted sc
 
 
 def _scalar(value: Any) -> str:
+    if value is None:
+        return "null"
     if value is True:
         return "true"
     if value is False:
         return "false"
     if isinstance(value, int):
         return str(value)
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise TypeError("cannot emit a nonfinite number")
+        rendered = repr(value)
+        if "e" in rendered.lower():
+            mantissa, exponent = re.split("[eE]", rendered, maxsplit=1)
+            if "." not in mantissa:
+                mantissa += ".0"
+            return mantissa + "e" + exponent
+        return rendered
     if not isinstance(value, str):
         raise TypeError(f"cannot emit {type(value).__name__}")
     if _PLAIN.fullmatch(value) and not value.endswith(" ") and value.lower() not in _SPECIAL:
