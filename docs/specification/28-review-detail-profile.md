@@ -76,6 +76,25 @@ effective fill/stroke, width/dash/opacity, pattern and admitted gradient ink,
 not object identity, placement bounds, shadows or glow. Existing finite key
 shapes remain deliberate ink projections, not copies of source geometry.
 
+A multipart Actual glyph is one realized mark, not several independent
+coloured marks. Its key preserves the ordered completed part paints and the
+glyph geometry as one miniature figure with one label. Composite identity
+includes the ordered effective paints and canonical glyph geometry/part
+structure; it excludes resource names, translations and placement bounds.
+Equal ink alone does not merge different glyph structures. Scalar Actual and
+Progress keys retain their existing identities. A declared finite circle or
+rule-pair remains an intentional projection of the composite's first visible
+part ink, rather than a separate key for every internal colour.
+
+Layout reserves and completes the composite footprint and parts; the existing
+point-swatch size override also applies to this glyph key. Coalesced candidates
+reserve the largest required glyph footprint before measurement. Scene emits
+the completed sibling Symbol parts under one figure identity and consumes
+their completed paint witnesses. The ordinary whole-figure contrast rule
+applies unchanged: an internal part is not tested as a standalone Rect against
+canvas. No palette substitution, contrast exemption or corpus-specific branch
+is introduced.
+
 The authored Actual label is retained. If Actual has multiple paint groups,
 append the group's realized Ahead / On track / Behind qualifiers in that order.
 Style variants within one class remain distinct swatches with the same label;
