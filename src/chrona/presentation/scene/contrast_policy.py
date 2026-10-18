@@ -135,6 +135,23 @@ def _first_id(primitives: Sequence[Any], identifier: str):
 
 
 @dataclass(frozen=True)
+class EncodedFillPair:
+    """Completed paint samples identifying one realised data-colour comparison."""
+
+    fill_color: str
+    fill_opacity: float
+    sampled_fill: str
+    ground_color: str
+    contrast_ratio: float
+    floor: float
+
+    def as_mapping(self) -> dict[str, str | float]:
+        return {"fillColor": self.fill_color, "fillOpacity": self.fill_opacity,
+                "sampledFill": self.sampled_fill, "groundColor": self.ground_color,
+                "contrastRatio": self.contrast_ratio, "floor": self.floor}
+
+
+@dataclass(frozen=True)
 class SceneContrastFinding:
     """One deterministic classified-paint observation or policy failure."""
 
@@ -159,6 +176,7 @@ class SceneContrastFinding:
     exception_minimum: float | None = None
     exception_reason: str | None = None
     encoding: EncodingWitness | None = None
+    encoding_pair: EncodedFillPair | None = None
 
     def as_mapping(self) -> dict[str, Any]:
         result = {
@@ -180,6 +198,8 @@ class SceneContrastFinding:
                           exceptionReason=self.exception_reason)
         if self.encoding is not None:
             result["encoding"] = self.encoding.as_mapping()
+        if self.encoding_pair is not None:
+            result["encodingPair"] = self.encoding_pair.as_mapping()
         return result
 
 
@@ -464,7 +484,7 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
             continue
         # A canvas texture and a catalogue pattern are ground in two colours: a mark or a label may lie
         # on either. A decoration is a tint judged against the dominant substrate, not against thin ink lines.
-        ratio = ground = ground_kind = None
+        ratio = ground = ground_kind = sampled_fill = None
         options = [option for group in groups for option in group]
         if not decoration and _has_later_overlay(primitives, primitive, index):
             try:
@@ -477,12 +497,15 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
                 option_ratio = composited_contrast(fill=pair.foreground, opacity=1, ground=pair.backdrop)
                 if ratio is None or option_ratio < ratio:
                     ratio, ground, ground_kind, ground_id = option_ratio, pair.backdrop, pair.ground_kind, pair.ground_id
+                    sampled_fill = pair.foreground
         else:
             for option_ground, option_kind, option_id in options:
                 option_ratio = composited_contrast(fill=paint[channel], opacity=float(opacity), ground=option_ground)
                 if ratio is None or option_ratio < ratio:
                     ratio, ground, ground_kind, ground_id = option_ratio, option_ground, option_kind, option_id
-        candidates.append((ratio, channel, ground_id, ground, sample, ground_kind))
+                    if encoded_witness is not None:
+                        sampled_fill = blend_over(ink=paint[channel], opacity=float(opacity), ground=option_ground)
+        candidates.append((ratio, channel, ground_id, ground, sample, ground_kind, sampled_fill))
     if not candidates:
         error_code = "E_SCENE_CONTRAST_GROUND_UNSUPPORTED" if unsupported_ground else "E_SCENE_CONTRAST_PAINT"
         if encoded_witness is not None and not unsupported_ground:
@@ -492,13 +515,17 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
         return (SceneContrastFinding(error_code, severity, scene_path, purpose, role,
                                      primitive_id, None, floor, disposition, unsupported_host,
                                      severity_class=severity_class, encoding=encoded_witness),)
-    ratio, channel, ground_id, ground, sample, ground_kind = max(candidates, key=lambda item: item[0])
+    ratio, channel, ground_id, ground, sample, ground_kind, sampled_fill = max(candidates, key=lambda item: item[0])
     severity = "info"
     if ratio < floor:
         severity, code = _failure(code, severity_class, policy_class, severities)
+    encoding_pair = (EncodedFillPair(paint["fill"].upper(), float(opacity), sampled_fill.upper(),
+                                     ground.upper(), ratio, floor)
+                     if encoded_witness is not None else None)
     return (SceneContrastFinding(code, severity, scene_path, purpose, role, primitive_id, ratio, floor,
                                  disposition, ground_id, ground, channel, *sample, ground_kind,
-                                 severity_class=severity_class, encoding=encoded_witness),)
+                                 severity_class=severity_class, encoding=encoded_witness,
+                                 encoding_pair=encoding_pair),)
 
 
 def _read_encoding_witness(raw: Any, *, version: str, document: Mapping[str, Any],

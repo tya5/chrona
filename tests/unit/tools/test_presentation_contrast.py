@@ -235,10 +235,13 @@ def test_opted_in_theme_keeps_shape_errors_but_encoded_fill_is_reported_as_warni
         "encoding": {"channel": "fill", "scaleId": "status-colors", "field": "status", "value": "gate",
                       "sources": [{"kind": "view", "id": "view-a", "sourceRef": "/body/colorEncoding"}]},
     }
+    encoded_again = json.loads(json.dumps(encoded))
+    encoded_again["id"] = "encoded-again"
+    encoded_again["bounds"]["inline"] = 40
     host = {"id": "dark-host", "kind": "Rect", "visualRole": "unclassified", "purpose": "panel",
             "paintOrder": 10, "bounds": {"inline": 0, "block": 0, "inlineSize": 60, "blockSize": 40},
             "paint": {"fill": "#16213A", "opacity": 1}}
-    tool = _corpus(tmp_path, monkeypatch, host, encoded)
+    tool = _corpus(tmp_path, monkeypatch, host, encoded, encoded_again)
     path = tmp_path / "examples/demo/generated/slide.scene.json"
     document = json.loads(path.read_text(encoding="utf-8"))
     document["version"] = "chrona/scene/v0.7"
@@ -246,15 +249,23 @@ def test_opted_in_theme_keeps_shape_errors_but_encoded_fill_is_reported_as_warni
     path.write_text(json.dumps(document), encoding="utf-8")
 
     report = tool.report_document(tool.evaluate_committed_scenes((path,), root=tmp_path))
-    encoded_finding = next(item["finding"] for item in report["findings"]
-                           if item["finding"].get("encoding") is not None)
+    encoded_record = next(item for item in report["findings"]
+                          if item["finding"].get("encoding") is not None)
+    encoded_finding = encoded_record["finding"]
     shape_finding = next(item["finding"] for item in report["findings"]
                          if item["finding"]["code"] == "E_SCENE_MARK_CONTRAST")
 
     assert encoded_finding["code"] == "W_SCENE_ENCODING_CONTRAST"
     assert encoded_finding["severity"] == "warning"
+    assert encoded_record["occurrenceCount"] == 2
+    assert encoded_record["primitiveIds"] == ["encoded", "encoded-again"]
+    assert encoded_record["groundIds"] == ["dark-host", "dark-host"]
+    assert len(encoded_record["observations"]) == 2
+    assert report["findingCount"] == report["observationCount"] - 1
+    assert "2 occurrences" in render_markdown(report)
+    assert "encoded, encoded-again" in render_markdown(report)
     assert shape_finding["severity"] == "error"
-    assert report["errorCount"] == 1
+    assert report["errorCount"] == 2
 
 
 def test_a_scene_without_a_theme_in_its_provenance_is_not_opted_in(tmp_path, monkeypatch):
