@@ -8,16 +8,16 @@ and its official artifact12128521189 has all50 SVG/Scene pairs unchanged, with
 two intended diagnostic inventories. Item3 is accepted independently on
 review-containing exact main `5fe41db8e8512e5438e9ecbe67f5c56c1d18d152` by
 [release39108421823](https://github.com/tya5/chrona/actions/runs/39108421823).
-Item2 PR1708 is merged at `0bd24fd4a`; its review-containing main `b12cbd7b4`
-full release [39110885313](https://github.com/tya5/chrona/actions/runs/39110885313)
-failed two Windows test portability expectations (Linux/macOS passed; Windows
-wheel skipped). [Repair plan](https://github.com/tya5/chrona/issues/902#issuecomment-6247905669)
-and [publication amendment](https://github.com/tya5/chrona/issues/902#issuecomment-6247917297)
-batch the test-only corrections into PR1712; exact LF/CRLF bytes and known-scratch
-error paths are covered without runtime/golden/native-lock changes. Full CLI,
-authoring, recovery, process and MCP focused verification passes199. Item2 still
-requires successful candidate checks and native three-OS full release. Parent902
-remains open for that gate and parked4/814/815; board454 is unchanged.
+Item2's PR1708 merge `0bd24fd4a` had exact-main release
+[39110885313](https://github.com/tya5/chrona/actions/runs/39110885313) fail two
+Windows test portability expectations (Linux/macOS passed; Windows wheel
+skipped). The reviewed test-only repair was included in PR1712, merged at
+`3d915fbc930e59c039e04309c4a49eb0f2b5ae25`. The final candidate artifact
+12132160084 has 109 paths, no retirements, and all50 SVG/Scene pairs byte-identical
+to the prior reviewed candidate. This is candidate evidence, not release
+acceptance. Exact-main full release [39115421872](https://github.com/tya5/chrona/actions/runs/39115421872)
+is pending; item2 remains unaccepted until it succeeds. Parent902 remains open
+for that gate and parked4/814/815; board454 is unchanged.
 
 ## Scope and literal acceptance
 
