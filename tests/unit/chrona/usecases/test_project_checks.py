@@ -77,7 +77,8 @@ def test_schedule_document_keeps_the_published_key_order_and_object_order(tmp_pa
     outcome = schedule_project_file(_write(tmp_path, "ok.yaml", STARTER))
     assert outcome.ok
     document = outcome.payload()
-    assert list(document) == ["placements", "diagnostics", "warnings", "analysis"]
+    assert list(document) == ["status", "placements", "diagnostics", "warnings", "analysis"]  # status first (#1726 row 2)
+    assert document["status"] == "ok"
     assert document["diagnostics"] == [] and document["warnings"] == []
     assert list(document["analysis"]) == ["criticalObjectIds", "totalFloat"]
     assert document["analysis"]["criticalObjectIds"] == []

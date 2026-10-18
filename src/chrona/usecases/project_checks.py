@@ -56,9 +56,9 @@ class ProjectSchedule:
         return not self.diagnostics
 
     def payload(self) -> dict[str, Any]:
-        """The schedule document: placements, no diagnostics, the warnings and the analysis when derived."""
+        """The schedule document: status, placements, no diagnostics, the warnings and the analysis when derived."""
         payload: dict[str, Any] = {
-            "placements": self.placements, "diagnostics": [],
+            "status": "ok", "placements": self.placements, "diagnostics": [],
             "warnings": [diagnostic_record(item.id, item.message, "core", item.path, details=item.details, severity="warning")
                          for item in self.warnings],
         }
