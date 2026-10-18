@@ -2,7 +2,7 @@
 
 ## Baseline and scope
 
-Selected design; no product implementation. Published planning base is ready main
+Implemented candidate; PR/release verification pending. Published planning base is ready main
 `bd6898017e3314bcfaffa3432d977d9a0f00fdd2`.
 [Owner decision](https://github.com/tya5/chrona/issues/806#issuecomment-6255826606)
 supersedes the old deferral: implement option B, not an overlay. Authority:
@@ -80,7 +80,7 @@ changed.
    only after every literal row and review-containing exact-main release pass.
 
 Selected design, normative Spec 65 and architecture review were published at
-`4294e23d8`. No product code has changed.
+`4294e23d8`; implementation plan at `1c745b453`, before product code.
 
 ## Implementation plan
 
@@ -112,3 +112,18 @@ Publish S1/S2/S3 code and tests coherently, then acceptance evidence. Follow
 the next ready main by a normal merge before the final PR push; coordinate
 the actual landing on 1718. Archive completed 1702 records in the next docs
 batch, not by moving main during another session's reservation.
+
+## Candidate evidence
+
+Shared snapshots `c276703a5`, syntax `60c4398a4`, application/CLI `ccda7bb51`,
+docs and actual SVG/Scene encoding tests `1a02e5837`. Normally merged ready
+main `137eed375`; no overwritten remote changes. Independent architecture
+review found no contract gap. Snapshot origin/staging, package ambiguity,
+fieldless bindings, required/unknown/type/enum errors, unchanged old bytes,
+group rollup/parent semantics and import boundaries have focused coverage.
+Latest-ready combined focused batch: 494 tests passed (terse, typed application,
+CLI dispatch, extension/profile checks, table import, docs and import-direction
+guards); closed-issue specification ledger: 3 passed. Documented-command check
+passed; all seven typed-guide commands executed in the disposable workspace.
+See the [literal review](../../reviews/current/issue-806-inline-typed-fields-acceptance-review-2026-10-19.md)
+for actual raster and release gates; local success does not close the issue.
