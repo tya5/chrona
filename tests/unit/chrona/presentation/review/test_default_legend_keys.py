@@ -36,6 +36,14 @@ def test_absent_meanings_and_explicit_opt_out_add_no_default_candidates():
         potential_roles=frozenset({"snapshot", "deadlineMark"}), wording={}) == ()
 
 
+def test_candidate_order_does_not_infer_authorship_from_a_role_prefix():
+    entry = SurfaceLegendEntry("scale:authored", "Authored key")
+    detail = ReviewDetailInput((), (), (LegendEntry(entry.role, entry.label),), None)
+    assert _default_legend_entries((entry,), detail,
+        potential_roles=frozenset({"snapshot"}), wording={}) == (
+            entry, SurfaceLegendEntry("snapshot", "Baseline"))
+
+
 def test_snapshot_potential_comes_from_selected_occurrences_not_bound_source_alone():
     day = date(2027, 3, 1)
     item = ReviewItem("task", "Task", "span", {"start": day, "end": date(2027, 3, 4)},

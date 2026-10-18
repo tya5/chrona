@@ -12,7 +12,7 @@ from chrona.usecases.render_review import RenderRequest, render_review
 from tests.support import synthetic_review as sr
 
 
-def _render(tmp_path, *, unkeyed=(), legend_slot=True):
+def _render(tmp_path, *, unkeyed=(), legend_slot=True, baseline_start=date(2026, 2, 2)):
     parts = sr.bundle("executive-light")
     body = parts["view"]["body"]
     body["window"] = {"mode": "explicit", "start": "2026-02-01", "end": "2026-02-21"}
@@ -21,7 +21,7 @@ def _render(tmp_path, *, unkeyed=(), legend_slot=True):
     body["deadlines"] = {"show": "all"}
     source = sr.project({"a": sr.span("a", date(2026, 2, 8), 5)})
     source["objects"]["a"]["deadline"] = "2026-02-10"
-    baseline = sr.project({"a": sr.span("a", date(2026, 2, 2), 4)})
+    baseline = sr.project({"a": sr.span("a", baseline_start, 4)})
     actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "observed",
               "body": {"asOf": "2026-02-20", "observations": [
                   {"id": "a", "sequence": 1, "projectObjectId": "a",
@@ -77,3 +77,11 @@ def test_default_candidates_do_not_create_a_legend_slot(tmp_path):
     assert any(item.purpose == "deadline-mark" for item in rendered.surface.primitives)
     assert not any(item.scene_id.startswith(("legend:", "legend-swatch:"))
                    for item in rendered.surface.primitives)
+
+
+def test_snapshot_default_is_filtered_when_its_painted_occurrence_is_outside_the_window(tmp_path):
+    rendered = _render(tmp_path, baseline_start=date(2026, 1, 2))
+    root = ElementTree.fromstring(rendered.artifact.content)
+    texts = {"".join(item.itertext()) for item in root.iter() if item.tag.endswith("}text")}
+    assert "Baseline" not in texts
+    assert "Deadline" in texts

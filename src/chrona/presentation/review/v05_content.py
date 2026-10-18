@@ -411,8 +411,9 @@ def _default_legend_entries(entries: tuple[SurfaceLegendEntry, ...],
     defaults = tuple(SurfaceLegendEntry(role, wording.get(role, label))
                      for role, label in (("snapshot", "Baseline"), ("deadlineMark", "Deadline"))
                      if role in potential_roles and role not in declared and role not in opted_out)
+    authored_roles = {entry.role for entry in detail.legend} if detail is not None else set()
     insertion = next((index for index, entry in enumerate(entries)
-                      if entry.role.startswith("scale:")), len(entries))
+                      if entry.role.startswith("scale:") and entry.role not in authored_roles), len(entries))
     return (*entries[:insertion], *defaults, *entries[insertion:])
 
 
