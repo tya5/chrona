@@ -13,6 +13,7 @@ and adds typed `fields`. Common field types are `string`, `boolean` and `enum` (
 ```yaml examples/typed-fields/team.yaml
 version: chrona/profile/v0.3
 packageId: team-delivery
+contentIdentity: sha256:c81ab89626b1fb23f4a7187219d4d097252c4c3c37bad28ebbe75cec0384e046
 requires:
   projectFormat: timeline/v0.7
 profiles:
