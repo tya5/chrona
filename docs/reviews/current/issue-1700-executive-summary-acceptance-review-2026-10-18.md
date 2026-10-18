@@ -21,6 +21,11 @@ Release pending: the implementation is public WIP, not yet merged or accepted.
 The official generated snapshot and exact-main three-OS full release remain
 required. Focused projection/Layout/Scene/native/docs tests pass181 on the
 published source; no local full pytest or whole-materializer sweep was duplicated.
+The additional materializer test file passes37; three checks stop on the old
+flight-readiness/replan-baseline bytes before generation. Those public rollup
+Scenes still contain the overlay deliberately removed here. Their assertions
+and byte checks are unchanged; the official CI snapshot must regenerate and
+verify them before release. No local expected-output replacement is accepted.
 
 [Pre-code design/architecture/implementation plan](https://github.com/tya5/chrona/issues/1700#issuecomment-6248519700)
 and normative correction `bba2cf919` precede code `05695184a`.
