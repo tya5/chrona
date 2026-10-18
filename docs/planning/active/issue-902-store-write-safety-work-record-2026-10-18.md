@@ -74,3 +74,10 @@ storage-only slice unless dependency review reveals render-visible behavior.
 No revision/ledger schema migration or generated-output edits are planned.
 Acquisition errors are mapped narrowly; a simulated publication I/O failure
 must retain its original failure rather than claim a safe pre-write rejection.
+
+Baseline evidence (`ee99b2d78`, own venv): two independent Python subprocesses
+opened the same seed and signalled readiness before either write. Releasing A
+then stale B accepted both (`actual:2:6c52833a6e1c`, `actual:3:84aa7f2ec6b7`);
+reopening returned B's content and lost A's update. This deterministic temporary
+Store experiment uses explicit pipe handshakes, not sleeps. L2 must reproduce
+this failure as a committed regression, then prove B conflicts after the fix.
