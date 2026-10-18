@@ -4,6 +4,21 @@ diagnosticActionability:
   # A new bare site requires explicit classification; detailed sites cannot stay here.
   bareDiagnostics: []
 declaredComputedValues:
+  - path: src/chrona/operational/command_engine.py
+    function: _apply_revert
+    field: contentIdentity
+    classification: pinned-deliberately
+    producer: chrona identity bytes
+  - path: src/chrona/operational/command_engine.py
+    function: _apply_redo
+    field: contentIdentity
+    classification: pinned-deliberately
+    producer: chrona identity bytes
+  - path: src/chrona/operational/references.py
+    function: history
+    field: requestIdentity
+    classification: pinned-deliberately
+    producer: chrona identity document
   - path: src/chrona/operational/references.py
     function: lookup
     field: requestIdentity

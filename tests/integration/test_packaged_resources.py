@@ -41,6 +41,7 @@ SCHEMAS = (
     "actual-set-v0.3.schema.yaml",
     "authoring-command-result-v0.1.schema.yaml",
     "command-request-v0.3.schema.yaml",
+    "command-request-v0.4.schema.yaml",
     "automation-result-v0.2.schema.yaml",
     "snapshot-ref-v0.2.schema.yaml",
     "snapshot-ref-v0.3.schema.yaml",

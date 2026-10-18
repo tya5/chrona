@@ -67,6 +67,7 @@ class ReplayRecord:
     request_identity: str
     target_identity: str
     result: dict[str, Any]
+    request: dict[str, Any] | None = None
 
 
 class ReplayLedger:
@@ -84,7 +85,36 @@ class ReplayLedger:
         target_identity = content_identity(target)
         if entry["requestIdentity"] != request_identity or entry["targetIdentity"] != target_identity:
             raise ValueError(f"E_COMMAND_ID_REUSE: command id {command_id!r} was already used for a different request or target")
-        return ReplayRecord(command_id, request_identity, target_identity, dict(entry["result"]))
+        request_value = entry.get("request")
+        return ReplayRecord(command_id, request_identity, target_identity, dict(entry["result"]),
+                            dict(request_value) if isinstance(request_value, dict) else None)
+
+    def history(self, command_id: str) -> ReplayRecord | None:
+        """Return a stored execution row, checking optional retained intent integrity.
+
+        Pre-H1 records have no ``request`` and remain useful for reference-based
+        history operations. A malformed row or mismatched retained request is
+        not safe history authority.
+        """
+        try:
+            entries = self._entries()
+            entry = entries.get(command_id)
+            if entry is None:
+                return None
+            if (not isinstance(entry, dict)
+                    or not isinstance(entry.get("requestIdentity"), str)
+                    or not isinstance(entry.get("targetIdentity"), str)
+                    or not isinstance(entry.get("result"), dict)):
+                raise ValueError("ledger row is incomplete")
+            has_request = "request" in entry
+            request = entry.get("request")
+            if has_request:
+                if not isinstance(request, dict) or content_identity(request) != entry["requestIdentity"]:
+                    raise ValueError("retained canonical request does not match requestIdentity")
+            return ReplayRecord(command_id, entry["requestIdentity"], entry["targetIdentity"],
+                                dict(entry["result"]), dict(request) if isinstance(request, dict) else None)
+        except (OSError, TypeError, ValueError, KeyError) as error:
+            raise ValueError(f"E_COMMAND_HISTORY_UNAVAILABLE: stored history for command {command_id!r} is corrupt") from error
 
     def record(self, command_id: str, request: dict[str, Any], target: dict[str, Any], result: dict[str, Any]) -> ReplayRecord:
         with store_write_lock(self.path.parent):
@@ -97,12 +127,14 @@ class ReplayLedger:
         entries = self._entries()
         request_identity = content_identity(request)
         target_identity = content_identity(target)
-        entries[command_id] = {"requestIdentity": request_identity, "targetIdentity": target_identity, "result": result}
+        retained_request = json_value(request)
+        entries[command_id] = {"requestIdentity": request_identity, "targetIdentity": target_identity,
+                               "result": result, "request": retained_request}
         self.path.parent.mkdir(parents=True, exist_ok=True)
         temporary = self.path.with_name(self.path.name + ".tmp")
         temporary.write_bytes(canonical_bytes(entries))
         temporary.replace(self.path)
-        return ReplayRecord(command_id, request_identity, target_identity, dict(result))
+        return ReplayRecord(command_id, request_identity, target_identity, dict(result), dict(retained_request))
 
     def _entries(self) -> dict[str, Any]:
         if not self.path.exists():

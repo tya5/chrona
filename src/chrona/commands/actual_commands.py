@@ -21,12 +21,6 @@ class ActualStore(Protocol):
 
     def write(self, expected_revision: str, actual_set: dict[str, Any]) -> tuple[str, dict[str, Any]] | None: ...
 
-    def record_command(self, command_id: str, before: dict[str, Any], after: dict[str, Any]) -> None: ...
-
-    def undo(self, expected_revision: str, command_id: str) -> tuple[str, dict[str, Any]] | None: ...
-
-    def redo(self, expected_revision: str, command_id: str) -> tuple[str, dict[str, Any]] | None: ...
-
 
 @dataclass(frozen=True)
 class ActualCommandResult:
@@ -52,7 +46,6 @@ class MemoryActualStore:
     def __init__(self, actual_set: dict[str, Any]):
         self._revision = 0
         self._actual_set = deepcopy(actual_set)
-        self._commands: dict[str, tuple[dict[str, Any], dict[str, Any], bool]] = {}
 
     def read(self) -> tuple[str, dict[str, Any]]:
         return f"actual:{self._revision}", deepcopy(self._actual_set)
@@ -63,28 +56,6 @@ class MemoryActualStore:
         self._revision += 1
         self._actual_set = deepcopy(actual_set)
         return self.read()
-
-    def record_command(self, command_id: str, before: dict[str, Any], after: dict[str, Any]) -> None:
-        self._commands[command_id] = (deepcopy(before), deepcopy(after), False)
-
-    def undo(self, expected_revision: str, command_id: str) -> tuple[str, dict[str, Any]] | None:
-        entry = self._commands.get(command_id)
-        if entry is None or entry[2] or expected_revision != f"actual:{self._revision}" or self._actual_set != entry[1]:
-            return None
-        self._revision += 1
-        self._actual_set = deepcopy(entry[0])
-        self._commands[command_id] = (entry[0], entry[1], True)
-        return self.read()
-
-    def redo(self, expected_revision: str, command_id: str) -> tuple[str, dict[str, Any]] | None:
-        entry = self._commands.get(command_id)
-        if entry is None or not entry[2] or expected_revision != f"actual:{self._revision}" or self._actual_set != entry[0]:
-            return None
-        self._revision += 1
-        self._actual_set = deepcopy(entry[1])
-        self._commands[command_id] = (entry[0], entry[1], False)
-        return self.read()
-
 
 class LocalActualStore:
     """Local immutable-token Actual Store with an adapter-private CAS pointer."""
@@ -99,7 +70,6 @@ class LocalActualStore:
         except StoreAddressError as error:
             raise ValueError(f"E_STORE_REFERENCE: Actual set id {self.actual_set_id!r} is not a safe file name inside the Store") from error
         self.tip = tip
-        self._commands: dict[str, tuple[dict[str, Any], dict[str, Any], bool]] = {}
         with store_write_lock(self.root):
             if self.tip.is_file():
                 self._load_tip()
@@ -118,12 +88,6 @@ class LocalActualStore:
                 return None
             counter = int(json.loads(self.tip.read_text(encoding="utf-8"))["counter"]) + 1
             return self._persist(actual_set, counter)
-
-    def record_command(self, command_id: str, before: dict[str, Any], after: dict[str, Any]) -> None:
-        self._commands[command_id] = (deepcopy(before), deepcopy(after), False)
-
-    def undo(self, expected_revision: str, command_id: str): return None
-    def redo(self, expected_revision: str, command_id: str): return None
 
     def _persist(self, actual_set: dict[str, Any], counter: int) -> tuple[str, dict[str, Any]]:
         payload = yaml.safe_dump(actual_set, sort_keys=True).encode()
@@ -150,7 +114,6 @@ def apply_actual_intake_batch(
     base_revision: str,
     batch: dict[str, Any],
     project_object_ids: set[str] | frozenset[str],
-    command_id: str = "apply-actual-intake-batch",
 ) -> ActualIntakeCommandResult:
     """Atomically intake one normalized batch into an Actual-set v0.2.
 
@@ -263,7 +226,6 @@ def apply_actual_intake_batch(
             (f"E_CONFLICT: Actual set changed after base revision {base_revision!r}; compare-and-swap write was not applied",),
             tuple(dispositions))
     result_revision, result = persisted
-    store.record_command(command_id, current, result)
     return ActualIntakeCommandResult("accepted", result, (), tuple(dispositions), result_revision)
 
 
@@ -279,7 +241,6 @@ def resolve_actual_observation(
     observation_id: str,
     project_object_id: str,
     project_object_ids: set[str] | frozenset[str],
-    command_id: str = "resolve-actual-observation",
 ) -> ActualCommandResult:
     """Explicitly align one imported observation without mutating planned data."""
     if project_object_id not in project_object_ids:
@@ -315,25 +276,4 @@ def resolve_actual_observation(
             "rejected", None,
             (f"E_CONFLICT: Actual set changed after base revision {base_revision!r}; compare-and-swap write was not applied",))
     result_revision, result = persisted
-    store.record_command(command_id, current, result)
     return ActualCommandResult("accepted", result, (), result_revision, provenance)
-
-
-def undo_actual_command(store: ActualStore, base_revision: str, command_id: str) -> ActualCommandResult:
-    persisted = store.undo(base_revision, command_id)
-    if persisted is None:
-        return ActualCommandResult(
-            "rejected", None,
-            (f"E_CONFLICT: command {command_id!r} cannot be undone at base revision {base_revision!r}",))
-    revision, actual_set = persisted
-    return ActualCommandResult("accepted", actual_set, (), revision)
-
-
-def redo_actual_command(store: ActualStore, base_revision: str, command_id: str) -> ActualCommandResult:
-    persisted = store.redo(base_revision, command_id)
-    if persisted is None:
-        return ActualCommandResult(
-            "rejected", None,
-            (f"E_CONFLICT: command {command_id!r} cannot be redone at base revision {base_revision!r}",))
-    revision, actual_set = persisted
-    return ActualCommandResult("accepted", actual_set, (), revision)

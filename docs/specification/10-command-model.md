@@ -259,6 +259,11 @@ Undo and redo are Commands that create new revisions; they do not rewrite shared
 
 Git remains the durable history mechanism for canonical files. Command history augments it with intent, validation, and client-independent undo/redo semantics; it is not a replacement for Git commits, branches, or review.
 
+The local Actual operational profile is specified in Spec35 §4.3. Its engine
+owns persistent intent/history and its adapter owns fresh CAS. A verified
+whole-document state boundary, independently of the caller's fresh revision
+precondition, permits ordered multi-command undo/redo without rewriting history.
+
 ## 9. Client integration and AI operation
 
 Client adapters translate user gestures or natural-language intent into a previewable Command request. Before submission, a client MAY show the target IDs, base revision, requested semantic fields, predicted diagnostics, and expected derived-view effect.

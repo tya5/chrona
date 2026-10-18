@@ -2,7 +2,7 @@
 
 **Status:** Proposed; the tool core is implemented in `chrona.app.agent_tools` (#142, slice I142-S3; the Store command
 tools, #813; the Store read tools, #812) and served over MCP by `chrona mcp` (`chrona.app.mcp_server`, slice I142-S4).
-**Owns:** the agent tool set `chrona/agent-tools/v0.4`, the shape of a tool result, the workspace path rules, the
+**Owns:** the agent tool set `chrona/agent-tools/v0.5`, the shape of a tool result, the workspace path rules, the
 write gate, the determinism contract of a tool call, the MCP binding rules of section 7, and the `E_MCP_*` diagnostic
 codes.
 **Does not own:** the meaning of a Project or a schedule (Spec 05, Spec 04), the render pipeline (Specs 06, 07,
@@ -22,12 +22,13 @@ the two. The tool core imports use cases, the shared Store address guard and the
 (`chrona.operational.store_commands` and `chrona.operational.store_reads`, which the command line calls too) only,
 imports no transport SDK and prints nothing. One tool, `apply_command`, writes (section 2.1); every other tool writes nothing.
 
-## 2. Tool set `chrona/agent-tools/v0.4`
+## 2. Tool set `chrona/agent-tools/v0.5`
 
 Every tool takes paths relative to one workspace root (section 4). A change to any input or output schema, or to the
 set, changes the tool-set version. `v0.2` (#782) added the optional `count` and `occurrences` properties of a
 diagnostic and nothing else; `v0.3` (#813) added `check_command` and `apply_command`; `v0.4` (#812) added `render_review` and `compare_baseline`.
-Neither version changed an existing tool.
+`v0.5` (#902 item3) admits Command v0.4 Actual revert/redo through the existing
+Store tools; their path arguments, result envelope and write gate are unchanged.
 
 | Tool | Command equivalent | Use case |
 | --- | --- | --- |
@@ -81,12 +82,16 @@ not understate a write, whatever it overwrites); `idempotentHint: true` and `ope
 commands of Spec 10 through the one dispatch the command line uses (`operational.store_commands.run_store_command`):
 `check_command` is `chrona command-check` and writes nothing; `apply_command` is `chrona command-apply`.
 
-- `command` is a workspace path to a Command Request (`chrona/command/v0.3`), parsed and validated as the command line
+- `command` is a workspace path to a Command Request (`chrona/command/v0.3` or `v0.4`), parsed and validated as the command line
   does. `storeConfig` is a workspace path to a Store configuration (`chrona/store-config/v0.1`); omitted it is
   `.chrona/store.yaml` at the workspace root (no ancestor search, no working-directory lookup). Every Store root in the
   configuration is resolved with symlinks followed and must lie strictly inside the workspace, otherwise the call is
   `failed` with `E_MCP_PATH_CONTAINMENT` (`sourceRef` `/storeConfig`) before any file is read from or written to a root.
-- Accepted command types: `applyActualIntakeBatch` and `captureSnapshot`. Any other type is `rejected` with
+- Accepted command types: `applyActualIntakeBatch`, `captureSnapshot`,
+  `revertActualCommand` and `redoActualCommand`. The latter two follow Spec35 §4.3
+  and use the same Store transaction as an ordinary write. History diagnostics
+  identify `/payload/commandId` or `/payload/revertCommandId` as appropriate.
+  Any other type is `rejected` with
   `E_AUTOMATION_OPERATION_UNSUPPORTED` (`sourceRef` `/type`) and no Store is touched.
 - Result: the envelope plus `automationResult`, the Automation Result (`chrona/automation-result/v0.2`) exactly as the
   command line writes it to `--result` (a replay carries `replayed: true`). Serialized with sorted keys it is byte-equal
