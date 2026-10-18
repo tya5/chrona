@@ -215,6 +215,7 @@ jobs:
     needs: [classify-pr, derived-preview, pr-conformance, pr-pytest, reproduction-newest-python]
     if: ${{ !cancelled() && github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
