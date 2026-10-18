@@ -1,0 +1,40 @@
+version: timeline/v0.7
+project:
+  id: synthetic
+  title: Synthetic
+entities:
+  team-a:
+    type: team
+    title: Team team-a
+objects:
+  atlas:
+    type: group
+    title: Atlas
+    schedule:
+      mode: rollup
+  borealis:
+    type: group
+    title: Borealis
+    parent: atlas
+    schedule:
+      mode: rollup
+  curie:
+    type: task
+    title: Curie
+    fields:
+      owner: team-a
+    schedule:
+      mode: fixed-span
+      start: '2027-01-04'
+      end: '2027-01-12'
+    parent: borealis
+  context:
+    type: task
+    title: Context
+    fields:
+      owner: team-a
+    schedule:
+      mode: fixed-span
+      start: '2027-02-01'
+      end: '2027-02-03'
+relations: []
