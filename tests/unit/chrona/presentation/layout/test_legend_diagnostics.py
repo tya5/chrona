@@ -1,5 +1,8 @@
+from copy import deepcopy
 from decimal import Decimal
 from types import SimpleNamespace
+
+import pytest
 
 from chrona.presentation.layout.legend_diagnostics import completed_legend_diagnostics
 from chrona.presentation.layout.mark_geometry import complete_point_outline, symbol_parts
@@ -9,7 +12,7 @@ from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
 from chrona.presentation.model.legend_paint import RealizedLegendKey
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
 from chrona.presentation.model.theme_paint import (
-    GradientPaintIntent, PaintFamily, ThemePaintInputs, ThemePaintWitness,
+    GradientPaintIntent, PaintFamily, ThemePaintError, ThemePaintInputs, ThemePaintWitness,
 )
 from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 from chrona.presentation.model.theme_tokens import ThemeTokenView
@@ -325,3 +328,39 @@ def test_line_keys_use_canonical_theme_roles_and_full_completed_stroke():
     different_ink = completed_legend_diagnostics(_theme_request(different_line=True), (left, right), (), (),
         (relation(left), relation(right)), text)
     assert "W_LEGEND_SWATCH_COLLISION" not in different_ink[0]
+
+
+@pytest.mark.parametrize("different_fill", [False, True])
+def test_catalogue_key_uses_intrinsic_pattern_width_not_an_unused_host_width(different_fill):
+    request = _theme_request()
+    theme = deepcopy(request.theme_tokens.resolved_theme)
+    body = theme["body"]
+    body["values"]["dots"] = {"type": "pattern", "value": {"kind": "catalog", "ref": "dots"}}
+    for role in ("planned", "actual"):
+        body["roles"][role].pop("strokeWidth")
+        body["roles"][role]["pattern"] = "dots"
+    if different_fill:
+        body["values"]["actual-fill"]["value"] = "#D99024"
+    request.theme_tokens = ThemeTokenView(theme, catalog_patterns={"dots": {
+        "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
+        "densityBasisPoints": 1000,
+        "primitives": [{"kind": "circle", "cx": 4, "cy": 4, "radius": 1}],
+    }})
+    left, right = SurfaceLegendEntry("planned", "Work"), SurfaceLegendEntry("actual", "Observed")
+    result = _batch((left, right), (
+        ("shape", _box(0, 0, 10, 10), "Rect", None, None),
+        ("shape", _box(20, 30, 20, 20), "Rect", None, None),
+    ), request=request)
+    assert ("W_LEGEND_SWATCH_COLLISION" in result[0]) is not different_fill
+
+
+def test_ordinary_key_still_requires_its_declared_stroke_width():
+    request = _theme_request()
+    theme = deepcopy(request.theme_tokens.resolved_theme)
+    theme["body"]["roles"]["planned"].pop("strokeWidth")
+    request.theme_tokens = ThemeTokenView(theme)
+    entry = SurfaceLegendEntry("planned", "Work")
+    with pytest.raises(ThemePaintError) as error:
+        _batch((entry,), (("shape", _box(0, 0, 10, 10), "Rect", None, None),), request=request)
+    assert error.value.diagnostic_id == "E_THEME_ROLE_REQUIRED"
+    assert error.value.path == "/body/roles/planned/strokeWidth"

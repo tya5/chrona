@@ -27,16 +27,16 @@ def _commands(commands, bounds):
                                       for px, py in command.points)) for command in commands)
 
 
-def _role_paint(request, role, *, family=None, fill_override=None):
+def _role_paint(request, role, *, family=None, fill_override=None, completed_catalog=False):
     tokens = request.theme_tokens
     capabilities = request.paint_capabilities
-    family = family or mark_paint_family(tokens, role)
+    family = family or mark_paint_family(tokens, role, has_completed_catalog_pattern=completed_catalog)
     witness = resolve_theme_paint_witness(
         tokens, role, family,
         gradient_supported=capabilities.gradient_supported,
         optional_gradient_omission=capabilities.optional_gradient_omission,
         fill_override=fill_override,
-        catalog_pattern=False,
+        catalog_pattern=completed_catalog,
     )
     return witness.identity
 
@@ -102,7 +102,8 @@ def _shape_signature(request, entry, shape):
         completed_catalog = (shape.kind == "Rect" and isinstance(declared_pattern, Mapping)
                              and declared_pattern.get("kind") == "catalog")
         fill_override = dict(request.surface_content.scale_legend_paints).get(shape.source_ref)
-        paint_identity = _role_paint(request, role, fill_override=fill_override)
+        paint_identity = _role_paint(request, role, fill_override=fill_override,
+                                     completed_catalog=completed_catalog)
         pattern = pattern_ink_identity(tokens, role, completed_catalog=completed_catalog)
     if shape.legend_swatch_shape is None and shape.paint_channels is not None:
         fill_ink, stroke, stroke_width, dash, opacity = paint_identity
