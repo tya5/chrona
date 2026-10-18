@@ -1,0 +1,14 @@
+version: chrona/style/v0.2
+kind: style
+id: platform-risk
+body:
+  rules:
+    - id: platform-risk-fill
+      when: {semantic: planned, fields: [{source: {field: team}, equals: platform}]}
+      then:
+        encode:
+          channel: fill
+          source: {field: risk}
+          scale: series
+          domain: [low, medium, high]
+          legend: {title: Platform risk, showScope: true}

@@ -14,17 +14,17 @@ objects:
   design:
     type: work
     title: Design
-    fields: {risk: low}
+    fields: {risk: low, team: platform}
     schedule: {mode: fixed-span, start: 2026-11-02, end: 2026-11-09}
   build:
     type: work
     title: Build
-    fields: {risk: high}
+    fields: {risk: high, team: platform}
     schedule: {mode: scheduled, amount: 10wd}
   test:
     type: work
     title: Test
-    fields: {risk: medium}
+    fields: {risk: medium, team: product}
     schedule: {mode: scheduled, amount: 5wd}
 relations:
 - {id: design-to-build, type: dependency, from: {object: design, endpoint: end}, to: {object: build, endpoint: start}, lag: 0d}

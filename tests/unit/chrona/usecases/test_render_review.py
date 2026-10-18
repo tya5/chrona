@@ -38,7 +38,7 @@ from chrona.usecases.render_review import (
 )
 from chrona.presentation.scene.contrast_policy import SceneContrastFinding
 from chrona.presentation.scene.perceptibility import ScenePerceptibilityFinding
-from chrona.presentation.model.font_metrics import FontGlyphSubstitution
+from chrona.presentation.model.font_metrics import FontGlyphSubstitution, group_glyph_substitutions
 from chrona.presentation.style import EncodingSource, EncodingWitness
 from chrona.presentation.scene.serialization import SceneSerializationError, _references_are_closed, _surface, scene_document, serialize_scene, validate_scene_document
 from chrona.presentation.scene.model import (
@@ -53,6 +53,30 @@ def test_font_substitution_warning_only_claims_raster_draw_result():
     assert _font_warnings((substitution,), "png")[0].drawn is False
     assert _font_warnings((substitution,), "pdf")[0].drawn is False
     assert _font_warnings((substitution,), "svg")[0].drawn is None
+
+
+def _glyphs(text):
+    return tuple(FontGlyphSubstitution("Noto Sans", "Noto Sans JP", 400, ord(c), text, True) for c in dict.fromkeys(text))
+
+
+def test_many_missing_glyphs_of_one_script_yield_one_counted_diagnostic():
+    kanji = "".join(chr(0x4E00 + index) for index in range(120))
+    groups = group_glyph_substitutions(_glyphs(kanji) + _glyphs(kanji))
+    assert [(g.script, g.count, g.codepoint) for g in groups] == [("CJK Unified Ideographs", 120, 0x4E00)]
+    warnings = _font_warnings(tuple(replace(item, informational=False) for item in _glyphs(kanji)), "png")
+    assert [(w.script, w.count) for w in warnings] == [("CJK Unified Ideographs", 120)]
+
+
+def test_two_scripts_yield_two_counted_diagnostics_per_font():
+    text = "あいうえお" + "アイウ" + "要件定義"
+    groups = group_glyph_substitutions(_glyphs(text))
+    assert [(g.script, g.count) for g in groups] == [("CJK Unified Ideographs", 4), ("Hiragana", 5), ("Katakana", 3)]
+    other = tuple(FontGlyphSubstitution("Noto Serif", "Noto Sans JP", 400, ord("あ"), "あ", True) for _ in (0,))
+    assert len(group_glyph_substitutions(_glyphs(text) + other)) == 4
+
+
+def test_unlisted_codepoints_group_as_other():
+    assert [(g.script, g.count) for g in group_glyph_substitutions(_glyphs("✅❌"))] == [("other", 2)]
 
 
 def test_lane_source_measurement_uses_exact_membership_table_and_lane_count():

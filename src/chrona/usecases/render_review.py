@@ -36,7 +36,7 @@ from chrona.presentation.layout.presentation import (
     validate_label_text_role, validate_lane_table_text_roles, validate_table_text_roles)
 from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
-from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
+from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, group_glyph_substitutions, FontTabularWarning, resolve_font_metrics_catalog
 from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import (
@@ -188,6 +188,8 @@ class FontGlyphWarning:
     codepoint: int
     text: str
     drawn: bool | None = None
+    script: str = "other"
+    count: int = 1
 
 
 @dataclass(frozen=True)
@@ -518,8 +520,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     if resolution is not None and resolution.notes:
         surface = replace(surface, diagnostics=(*surface.diagnostics, *resolution.notes))
     glyph_info = tuple(FontGlyphFallback(item.requested_family, item.fallback_family, item.weight,
-                                         item.codepoint, item.text)
-                       for item in font_metrics.warnings if item.informational)
+                                         item.codepoint, item.text, item.script, item.count)
+                       for item in group_glyph_substitutions(item for item in font_metrics.warnings if item.informational))
     if glyph_info:
         surface = replace(surface, info_diagnostics=(*surface.info_diagnostics, *glyph_info))
     try:
@@ -625,7 +627,8 @@ def _font_warnings(substitutions: tuple[FontGlyphSubstitution, ...], target_kind
     drawn = False if target_kind in {"png", "pdf"} else None
     return tuple(FontGlyphWarning(
         item.requested_family, item.fallback_family, item.weight, item.codepoint, item.text, drawn,
-    ) for item in substitutions if not item.informational)
+        item.script, item.count,
+    ) for item in group_glyph_substitutions(item for item in substitutions if not item.informational))
 
 
 def _scene_perceptibility_warnings(

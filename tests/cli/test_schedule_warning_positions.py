@@ -52,3 +52,10 @@ def test_a_schedule_without_warnings_has_none_to_position(tmp_path):
     payload = _schedule(tmp_path, "ok.chrona", 'terse 0.1\nproject p "P"\na "A" task 2027-03-01..2027-03-05 deadline 2027-03-31\n')
 
     assert payload["warnings"] == []
+
+
+def test_a_successful_schedule_prints_status_ok_like_the_other_commands(tmp_path):
+    document = _schedule(tmp_path, "project.yaml", YAML)
+
+    assert document["status"] == "ok" and document["diagnostics"] == []
+    assert list(document)[0] == "status" and "placements" in document

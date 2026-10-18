@@ -325,6 +325,34 @@ class AxisBandCellIndex:
         return max(candidates, key=lambda item: item[:2])[2] if candidates else None
 
 
+    def host_ground(self, host: AxisBandCellGeometry | None, run: Rect) -> Rect | None:
+        """The host's box, widened over native cells that continue it (#1724).
+
+        A run that starts or ends beyond its host stays contained when the
+        overhang lies on cells of the same tier whose natural intervals abut
+        the host's, for example a week label across the year boundary of a
+        year band. The cells are one continuous painted run; their ``cellGap``
+        is the only break. A cell that does not abut (a retained ``every``
+        step) never extends the ground.
+        """
+        if host is None:
+            return None
+        cells = [cell for _, cell in next(
+            items for starts, items in self.by_tier if items and items[0][1].tier_index == host.tier_index)]
+        position = next(index for index, cell in enumerate(cells) if cell is host)
+        left = right = position
+        run_end = run.inline + run.inline_size
+        while (run.inline < cells[left].bounds.inline - GEOMETRY_TOLERANCE and left > 0
+               and cells[left - 1].interval.end == cells[left].interval.start):
+            left -= 1
+        while (run_end > cells[right].bounds.inline + cells[right].bounds.inline_size + GEOMETRY_TOLERANCE
+               and right + 1 < len(cells) and cells[right].interval.end == cells[right + 1].interval.start):
+            right += 1
+        first, last = cells[left].bounds, cells[right].bounds
+        return Rect(first.inline, host.bounds.block, last.inline + last.inline_size - first.inline,
+                    host.bounds.block_size)
+
+
 def _axis_text_run_geometry(*, content: str, inline: float, baseline_block: float,
                             treatment: TextTreatment, metrics: Any, orientation: str) -> AxisTextRunGeometry:
     font_size, line_height = float(treatment.font_size), float(treatment.line_height)
@@ -707,8 +735,10 @@ def _resolve_axis_label_geometry(*, request: SurfaceLayoutRequest, frame: Surfac
     def admission(selected: AxisLabelTextGeometry) -> tuple[bool, bool, AxisBandCellGeometry | None]:
         own_host = cells.own_cell(interval, selected.primary.bounds)
         host = cells.host(selected.primary.bounds)
-        bounds = (logical, *(cell.bounds for cell in (own_host, host) if cell is not None))
         def fits(run: AxisTextRunGeometry) -> bool:
+            ground = cells.host_ground(host, run.bounds)
+            bounds = (logical, *(box for box in (own_host.bounds if own_host else None, ground)
+                                 if box is not None))
             return (all(_axis_contains(bound, run.bounds) for bound in bounds)
                     and _axis_contains(frame.timeline.bounds, run.bounds, inline_only=True))
         return fits(selected.primary), selected.secondary is None or fits(selected.secondary), host
