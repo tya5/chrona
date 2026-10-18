@@ -1,9 +1,9 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 L1–L3 and local L4 implemented; PR/current-main release is pending.
-Design/review `69273a1bf`, implementation plan `54b9ddd20` precede
-code. Baseline `ee99b2d78`; #1679/PR1692 remains the priority release, with its
-code explicitly parked during live CI. No902 product PR before1679 merges.
+Status: item5 L1–L3 and local L4 implemented/reviewed; PR CI/release pending.
+Design/review `69273a1bf` and plan `54b9ddd20` precede code. Ready main
+`4e30fbc3f` is normally integrated at `0dc884a65`; post-integration83 focused
+tests pass and imports11/37 stay inward. #1679 is merged; its release is running.
 
 ## Scope and literal acceptance
 
@@ -119,30 +119,14 @@ authoring retains its own workspace lock identity/diagnostics. No second ledger,
 renderer behavior, schema migration, approval or crash-atomicity promise added.
 Acquisition errors reject before mutation; publication/unlock errors remain raw.
 
-## Next-item baseline (design not yet selected)
+## Later items (not part of the item5 release)
 
-- Item3: Spec10 §8 requires new-revision undo/redo with unsafe inverses rejected.
-  Accepted replay results already retain before/after immutable references;
-  investigate reusing that authority instead of a duplicate content journal.
-  The closed command-request schema needs an explicit version/operation decision.
+- Item3 design/review `a79ab0307`, implementation plan `504478877` and code
+  `c2984c018` are published separately at `db9caca1d` on
+  `wip/issue-902-actual-history-design`. That branch owns its current contract and
+  focused evidence; its PR/release follows item5. It is not yet main functionality.
 - Item2: reuse the authoring use case and CLI persistence adapters behind the
   existing MCP write gate. Adding a tool changes the tool-set contract. Current
   authoring code echoes commandId but has no durable replay; successful retry
   becomes stale-CAS rejection. Resolve that contract before claiming honest
-  idempotent annotations or the item's replay acceptance. No item3/2 code yet.
-
-## Item3 design plan (preparation; code waits for item5 release)
-
-- Use case: an agent reverses an accepted Actual write, then reapplies its intent,
-  without overwriting intervening changes or rewinding immutable revision history.
-- Review Spec10 §8 against Store ownership (Spec15), command/reference contracts
-  (Spec35), and CLI/MCP shared dispatch/write gates (Spec66). Preserve snapshot
-  non-reversibility; do not extend this item to generic Project history.
-- Resolve history authority, origin/revert eligibility, replay identity, current
-  base/content checks, and missing/corrupt historical bytes. Existing ledger
-  before/after refs can restore content, but its request hash cannot supply the
-  original semantic intent required by redo. Decide the smallest durable intent
-  representation and an explicit closed-command-schema migration before code.
-- Order: selected contract/specification + whole-architecture review → implementation
-  plan → shared engine/adapter/schema work → stale/replay/no-overwrite and real
-  MCP stdio evidence → one reviewed release. Literal acceptance is listed above.
+  idempotent annotations or the item's replay acceptance. No item2 code yet.
