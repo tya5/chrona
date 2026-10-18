@@ -123,11 +123,12 @@ the scale domain.
 Scale-derived and semantic candidates are included only when a final completed
 painted-occurrence witness establishes that their meaning and paint are
 visible. The pure presentation model and Layout share this paint/visibility
-closure; Scene and adapters do not infer or filter legend entries. Identity is
-semantic-family plus completed key-relevant paint, not RGB alone; the exact
+closure; Scene and adapters do not infer or filter legend entries. Grouping is
+semantic meaning plus effective ink colours, not drawing-channel variants; the exact
 identity and wording rules are in Specification 28. Semantic Actual keys use
 realized actual-trait/Style ink. A positive
-completed progress submark contributes its separate Progress key; it does not
+completed progress submark with ink different from its host contributes its
+separate Progress key; it does not
 repeat as an inset in the Plan or Actual key (Specification 61 §1). A declared
 comparison with no available bound source contributes no comparison key; a
 supplied source with blank values keeps its missing-value behavior.
@@ -136,7 +137,8 @@ For planned occurrences, an encoding key replaces the base planned/forecast
 key when every planned occurrence is encoded. A mixed set with any unencoded
 planned occurrence retains the base key. After final route/label selection,
 Layout recomposes the candidates once in the conservatively allocated legend
-slot; it neither shrinks that slot nor retries route, row, or annotation
+slot. Final canvas completion releases candidate-only legend growth while
+preserving the declared allocation; it does not retry route, row or annotation
 layout.
 
 ## 5. Migration boundary
