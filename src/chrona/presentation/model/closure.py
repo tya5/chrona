@@ -25,7 +25,7 @@ from chrona.presentation.contracts import (
     PresentationPresetContract,
     ProfilePackageContract, ProjectContract, RenderContextContract,
     ResolvedThemeContract, ResourceContract, ReviewDetailProfileContract,
-    SemanticVocabularyContract, SnapshotRefContract, SummaryProfileContract, TypesetterIdentity, ViewContract,
+    SemanticVocabularyContract, SnapshotRefContract, StyleContract, SummaryProfileContract, TypesetterIdentity, ViewContract,
     PresentationIngressRejected, PresentationResourceSource, collect_presentation_contracts,
     freeze, parse_contract, validate_icon_catalog_entry, validate_theme_asset_entry, IconRasterSource,
 )
@@ -185,6 +185,10 @@ class RenderClosure:
         return self._optional("review-detail-profile", ReviewDetailProfileContract)  # type: ignore[return-value]
 
     @property
+    def style(self) -> StyleContract | None:
+        return self._optional("style", StyleContract)  # type: ignore[return-value]
+
+    @property
     def snapshot(self) -> SnapshotRefContract | None:
         return self._optional("snapshot-ref", SnapshotRefContract)  # type: ignore[return-value]
 
@@ -270,6 +274,7 @@ DEFAULT_DRAFT_VIEWPORT: tuple[int, int | None] = (1600, None)
 
 def resolve_draft_render(
     *, project_path: Path, view_path: Path | None = None, theme_path: Path | None = None, scheme_path: Path | None = None,
+    style_path: Path | None = None,
     layout_path: Path | None = None, preset_path: Path | None = None, preset_root: Path | None = None, actual_path: Path | None = None, summary_path: Path | None = None,
     detail_path: Path | None = None, icon_catalog_paths: tuple[Path, ...] = (),
     font_metrics_path: Path | None = None,
@@ -310,6 +315,9 @@ def resolve_draft_render(
         ("review-detail-profile", detail_path or (preset_paths.get("review-detail-profile") if theme_path is None else None)),
     )
     sources = [_load_draft_source(kind, path) for kind, path in paths if path is not None]
+    selected_style_path = style_path or preset_paths.get("style")
+    if selected_style_path is not None:
+        sources.insert(2, _load_draft_source("style", selected_style_path))
     if relations is not None:
         sources = [_draft_relation_override(source, relations) if source.identity.kind == "view" else source
                    for source in sources]
@@ -408,14 +416,14 @@ def _draft_preset_paths(preset: Any, preset_path: Path, preset_root: Path | None
     """Resolve one explicit preset into safe ordinary-resource paths."""
     if not isinstance(preset.contract, PresentationPresetContract):
         raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail=f"{preset_path.name} is not a presentation preset")
-    mapping = {"view": "view", "theme": "theme", "colorScheme": "color-scheme", "layout": "layout-profile",
+    mapping = {"view": "view", "style": "style", "theme": "theme", "colorScheme": "color-scheme", "layout": "layout-profile",
                "detailProfile": "review-detail-profile", "summaryProfile": "summary-profile"}
     paths: dict[str, Path] = {}
     sources: list[PresentationResourceSource] = []
     declarations: dict[str, tuple[str, Mapping[str, Any], Path]] = {}
     for name, kind in mapping.items():
         declaration = preset.contract.resources.get(name)
-        if declaration is None and kind in {"review-detail-profile", "summary-profile"}:
+        if declaration is None and kind in {"style", "review-detail-profile", "summary-profile"}:
             continue
         if not isinstance(declaration, Mapping):
             raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail=f"preset {preset.id!r} declares no valid {name!r} resource")
@@ -628,6 +636,7 @@ def _draft_render_from_resources(
         "body": {
             "project": _draft_reference(by_kind["project"]),
             "view": _draft_reference(by_kind["view"]),
+            **({"style": _draft_reference(by_kind["style"])} if "style" in by_kind else {}),
             "theme": _draft_reference(by_kind["theme"]),
             "colorScheme": _draft_reference(by_kind["color-scheme"]),
             "layout": _draft_reference(by_kind["layout-profile"]),
@@ -995,6 +1004,8 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
     ordered = (
         (context_contract.project.as_reader_reference(), "project"),
         (context_contract.view.as_reader_reference(), "view"),
+        *(((context_contract.style.as_reader_reference(), "style"),)
+          if context_contract.style is not None else ()),
         (context_contract.theme.as_reader_reference(), "theme"),
         (context_contract.color_scheme.as_reader_reference(), "color-scheme"),
         (context_contract.layout.as_reader_reference(), "layout-profile"),
@@ -1038,7 +1049,8 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
             snapshot_project.content_identity, snapshot_project_contract)))
     if context_contract.target.capabilities != tuple(sorted(context_contract.target.capabilities)):
         raise ClosureError("E_TARGET_CAPABILITY_ORDER", detail=f"target.capabilities must be sorted, got {list(context_contract.target.capabilities)}")
-    theme, scheme = resources[2], resources[3]
+    theme = next(item for item in resources if item.kind == "theme")
+    scheme = next(item for item in resources if item.kind == "color-scheme")
     try:
         value = resolve_theme(theme.contract.theme_input, scheme.contract.scheme_input, scheme_content_identity=scheme.content_identity)
     except ColorSchemeError as error:

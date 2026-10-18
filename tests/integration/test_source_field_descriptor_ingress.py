@@ -9,7 +9,7 @@ import yaml
 from chrona.presentation.contracts.resources import ClosureIdentity, parse_contract
 from chrona.presentation.model.field_roles import FieldDescriptor
 from chrona.presentation.model.semantic_registry import semantic_binding
-from chrona.presentation.model.style_rules import StyleEvaluationError
+from chrona.usecases.render_review import RenderFailed
 from chrona.usecases import render_review as render_review_usecase
 from tests.integration.test_declared_field_color_encoding import _project, _render
 
@@ -29,9 +29,8 @@ def _style_rules(rules):
 
 def _render_with_style(tmp_path, monkeypatch, project, rules):
     def normalize(*args, **kwargs):
-        return _ORIGINAL_NORMALIZE_V05_SURFACE_CONTENT(
-            *args, **kwargs, style_rules=rules,
-        )
+        kwargs["style_rules"] = rules
+        return _ORIGINAL_NORMALIZE_V05_SURFACE_CONTENT(*args, **kwargs)
 
     monkeypatch.setattr(render_review_usecase, "normalize_v05_surface_content", normalize)
     return _render(tmp_path, project, field="acme.risk", domain=["low", "medium", "high"],
@@ -145,10 +144,10 @@ def test_style_bool_predicate_rejects_numeric_zero_for_absent_or_false_bool_fiel
         ]}, "then": {"role": "planned"}},
     ))
 
-    with pytest.raises(StyleEvaluationError) as caught:
+    with pytest.raises(RenderFailed) as caught:
         _render_with_style(tmp_path, monkeypatch, project, rules)
 
-    assert caught.value.diagnostic_id == "E_STYLE_FACT_TYPE"
+    assert caught.value.code == "E_STYLE_FACT_TYPE"
     assert caught.value.source_ref.endswith("/when/fields/0")
 
 
@@ -160,7 +159,7 @@ def test_style_unknown_field_predicate_is_rejected_even_when_no_object_has_a_val
         ]}, "then": {"role": "planned"}},
     ))
 
-    with pytest.raises(StyleEvaluationError) as caught:
+    with pytest.raises(RenderFailed) as caught:
         _render_with_style(tmp_path, monkeypatch, project, rules)
 
-    assert caught.value.diagnostic_id == "E_STYLE_FACT_UNKNOWN"
+    assert caught.value.code == "E_STYLE_FACT_UNKNOWN"

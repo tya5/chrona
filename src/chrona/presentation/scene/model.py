@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+import json
 import math
 from typing import Any
 
@@ -15,6 +16,7 @@ from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, PrimitiveProvenance
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding_for_primitive, semantic_binding
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, TEXT_FOLLOWS_BOX, VIEWER_FIT_MODES
+from chrona.presentation.style import StyleLegendScope, StyleMatch
 from chrona.presentation.scene.pattern_host import completed_pattern_host_valid
 
 
@@ -101,6 +103,58 @@ def _validate_style_semantic_metadata(scene_id: object, semantic_id: object, the
                        (semantic_id, purpose, visual_role),
                        f"the vocabulary binding purpose={binding.purpose!r} and sceneRole={binding.scene_role!r}",
                        owner=owner)
+
+
+def _validate_style_match(scene_id: object, value: StyleMatch | None) -> None:
+    if value is None:
+        return
+    if (not isinstance(value, StyleMatch) or not isinstance(value.style_id, str) or not value.style_id
+            or not isinstance(value.rule_ids, tuple) or not value.rule_ids
+            or any(not isinstance(item, str) or not item for item in value.rule_ids)
+            or len(set(value.rule_ids)) != len(value.rule_ids)):
+        raise _invalid("style_match", value, "StyleMatch with non-empty Style ID and unique authored rule IDs",
+                       owner=f"primitive {_brief(scene_id)}")
+
+
+def _validate_legend_scope(scene_id: object, value: StyleLegendScope | None,
+                           *, kind: object, source_kind: object, purpose: object) -> None:
+    if value is None:
+        return
+    owner = f"primitive {_brief(scene_id)}"
+    if (not isinstance(value, StyleLegendScope) or not isinstance(value.style_id, str) or not value.style_id
+            or not isinstance(value.rule_id, str) or not value.rule_id
+            or not isinstance(value.scale_id, str) or not value.scale_id
+            or not isinstance(value.selector, str) or not value.selector
+            or (value.title is not None and (not isinstance(value.title, str) or not value.title.strip()))
+            or not isinstance(value.show_scope, bool)
+            or kind not in {"Rect", "Symbol", "Path"}
+            or source_kind != "legend"
+            or purpose != semantic_binding("legendEntry").purpose):
+        raise _invalid("legend_scope", value,
+                       "StyleLegendScope on a completed non-text legend swatch with canonical selector metadata",
+                       owner=owner)
+    try:
+        parsed = json.loads(value.selector)
+        canonical = json.dumps(parsed, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+                               allow_nan=False)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        parsed, canonical = None, None
+    if not isinstance(parsed, dict) or canonical != value.selector:
+        raise _invalid("legend_scope.selector", value.selector,
+                       "canonical JSON object text", owner=owner)
+
+
+def _validate_style_provenance_metadata(primitives: tuple[ScenePrimitive, ...],
+                                        resources: tuple[tuple[str, str, str, str], ...]) -> None:
+    metadata = tuple(item for item in primitives
+                     if item.style_match is not None or item.legend_scope is not None)
+    if not metadata:
+        return
+    styles = tuple(item for item in resources if item[0] == "style")
+    identifiers = {item.style_match.style_id for item in metadata if item.style_match is not None}
+    identifiers.update(item.legend_scope.style_id for item in metadata if item.legend_scope is not None)
+    if len(styles) != 1 or identifiers != {styles[0][1]}:
+        raise ValueError("E_RESOURCE_IDENTITY_MISMATCH: Scene Style metadata must join exactly one pinned Style provenance resource")
 
 
 def _paint_clip_contains(clip: PaintClip, bounds: object, points: object) -> bool:
@@ -491,10 +545,16 @@ class ScenePrimitive:
     # Optional Style appearance metadata; visual_role remains the host role.
     semantic_id: str | None = None
     theme_role: str | None = None
+    style_match: StyleMatch | None = None
+    legend_scope: StyleLegendScope | None = None
 
     def __post_init__(self) -> None:
         _validate_style_semantic_metadata(self.scene_id, self.semantic_id, self.theme_role,
                                           self.purpose, self.visual_role)
+        _validate_style_match(self.scene_id, self.style_match)
+        _validate_legend_scope(self.scene_id, self.legend_scope,
+                               kind=self.kind, source_kind=self.source_kind,
+                               purpose=self.purpose)
         if (self.legend_swatch_shape not in (None, "circle", "rule-pair")
                 or (self.legend_swatch_shape is not None and self.source_kind != "legend")):
             raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} legend_swatch_shape")
@@ -1025,3 +1085,9 @@ class InspectionScene:
     manifest: SceneManifest
     diagnostics: tuple[str, ...]
     font_warnings: tuple[FontTabularWarning, ...] = ()
+
+    def __post_init__(self) -> None:
+        _validate_style_provenance_metadata(
+            tuple(primitive for surface in self.surfaces for primitive in surface.primitives),
+            self.provenance.resources,
+        )

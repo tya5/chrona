@@ -45,6 +45,7 @@ class DraftRenderRequest:
     target_kind: str
     preset: str | None = None
     view: str | Path | None = None
+    style: str | Path | None = None
     theme: str | Path | None = None
     scheme: str | Path | None = None
     layout: str | Path | None = None
@@ -163,6 +164,7 @@ def render_draft(request: DraftRenderRequest) -> DraftRenderResult:
                 preset_path=preset_path if preset_path is not None else Path(str(default)),
                 preset_root=None if preset_path is not None else Path(str(default_preset_root())),
                 view_path=_optional_path(request.view), theme_path=_optional_path(request.theme),
+                style_path=_optional_path(request.style),
                 scheme_path=_optional_path(request.scheme), layout_path=_optional_path(request.layout),
                 actual_path=_optional_path(request.actual),
                 summary_path=_optional_path(request.summary),

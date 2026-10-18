@@ -235,11 +235,12 @@ list every builtin preset id with a one-line description
 
 draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix, from the files you pass
 
-`chrona render --actual --detail --emit-scene --font-metrics --forecast --format --icon-catalog --layout --locale --output --preset --previous-scene --progress --relations --scheme --snapshot --store-config --summary --system-fonts --theme --typesetter-adapter-grammar --typesetter-engine --typesetter-version --view --viewport --visual-profile -o`
+`chrona render --actual --detail --emit-scene --font-metrics --forecast --format --icon-catalog --layout --locale --output --preset --previous-scene --progress --relations --scheme --snapshot --store-config --style --summary --system-fonts --theme --typesetter-adapter-grammar --typesetter-engine --typesetter-version --view --viewport --visual-profile -o`
 
 - `project`: Draft Project YAML path, or a terse .chrona plan
 - `--preset`: Presentation preset YAML path, or a builtin catalogue id (see `chrona preset list`); omit it to use bundled chrona-default-draft; explicit resource flags override its members
 - `--view`: View YAML path
+- `--style`: Style YAML path; overrides the selected preset's Style
 - `--theme`: Theme YAML path
 - `--scheme`: Color Scheme YAML path
 - `--layout`: Layout Profile YAML path

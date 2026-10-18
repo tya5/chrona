@@ -67,9 +67,9 @@ ID_SITES: dict[tuple[str, str], int] = {
     ("example-registry-v0.1.schema.yaml", "slug"): 1,
     ("layout-profile-v0.10.schema.yaml", "layout-profile-id"): 7,
     ("presentation-materialization-receipt-v0.1.schema.yaml", "non-empty-string"): 1,
-    # Optional Summary members preserve the referenced resource's opaque id grammar (#1535).
-    ("presentation-preset-v0.1.schema.yaml", "non-empty-string"): 5,
-    ("preset-library-v0.2.schema.yaml", "non-empty-string"): 6,
+    # Optional Summary/Style members preserve their referenced resource's opaque id grammar (#1535, #419).
+    ("presentation-preset-v0.1.schema.yaml", "non-empty-string"): 6,
+    ("preset-library-v0.2.schema.yaml", "non-empty-string"): 7,
     ("preset-library-v0.2.schema.yaml", "portable-name"): 1,
     ("preset-library-v0.2.schema.yaml", "slug"): 1,
     ("profile-v0.3.schema.yaml", "non-empty-string"): 1,
@@ -77,8 +77,8 @@ ID_SITES: dict[tuple[str, str], int] = {
     ("project-v0.7.schema.yaml", "unconstrained-string"): 1,
     ("render-context-v0.17.schema.yaml", "non-empty-string"): 2,
     ("review-detail-profile-v0.1.schema.yaml", "bounded-non-empty-string"): 4,
-    # R6 ports/terminals and #1292 absence placement/instance IDs are Layout-generated, not authored.
-    ("scene-v0.7.schema.yaml", "scene-text"): 34,
+    # R6/#1292 generated identities and #419 passive Style/rule/scale provenance keep their source grammar.
+    ("scene-v0.7.schema.yaml", "scene-text"): 38,
     ("snapshot-ref-v0.3.schema.yaml", "non-empty-string"): 1,
     ("semantic-vocabulary-v0.1.schema.yaml", "host-vocabulary-id"): 1,
     ("semantic-vocabulary-v0.1.schema.yaml", "non-empty-string"): 1,

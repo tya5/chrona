@@ -19,6 +19,27 @@ def test_current_reference_must_be_live(tmp_path):
     validate_specifications(specs, schemas, inventory)
 
 
+def test_current_reference_accepts_version_in_composed_root(tmp_path):
+    specs, schemas, inventory = _root(tmp_path, "# chrona-contract: current\nversion: chrona/style/v0.2\n")
+    (schemas / "project.schema.yaml").write_text(
+        "allOf:\n"
+        "  - type: object\n"
+        "  - allOf:\n"
+        "      - properties:\n"
+        "          version: {const: chrona/style/v0.2}\n"
+    )
+    validate_specifications(specs, schemas, inventory)
+
+
+def test_version_in_nested_resource_is_not_a_root_contract(tmp_path):
+    specs, schemas, inventory = _root(tmp_path, "# chrona-contract: current\nversion: nested/v0.1\n")
+    (schemas / "project.schema.yaml").write_text(
+        "$defs:\n  nested:\n    properties:\n      version: {const: nested/v0.1}\n"
+    )
+    with pytest.raises(SchemaReferenceError, match="E_SCHEMA_REFERENCE_STALE"):
+        validate_specifications(specs, schemas, inventory)
+
+
 def test_unclassified_reference_is_rejected(tmp_path):
     specs, schemas, inventory = _root(tmp_path, "version: timeline/v0.7\n")
     with pytest.raises(SchemaReferenceError, match="E_SCHEMA_REFERENCE_UNCLASSIFIED"):

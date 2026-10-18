@@ -11,14 +11,75 @@ Scenes differ only by semantic-vocabulary provenance; no paths retired.
 Exact-main release [39053236335](https://github.com/tya5/chrona/actions/runs/39053236335)
 passed all three OSes on `890af301d`. This is not S1 or parent-issue acceptance.
 
-S1 is PR1675, not merged or release-accepted. Typed facts, parsed-rule
-evaluation, source-local identities, and role/fill composition are connected
-through normalization, Layout, and Scene. Selected-mark early paint preflight
-is connected; the final Style/native batch passes131 tests, with shared
-catalogue/part requirements, inward imports and292 reachable modules.
-Style resource-reference ingress is intentionally S2 and
-is not yet wired to `RenderRequest`; injected parsed-rule composition tests do
-not establish that ingress. Do not count WIP publication as release acceptance.
+S1 [PR1675](https://github.com/tya5/chrona/pull/1675) merged at `0ef9952a4`.
+Final head `ee7354fa1` passes every gate in
+[39079786599](https://github.com/tya5/chrona/actions/runs/39079786599).
+Trusted generated main is `e69d4541a`; its exact three-OS release
+[39080991902](https://github.com/tya5/chrona/actions/runs/39080991902) is pending.
+S2a now wires optional pinned Style through Context/Draft and the normal
+`RenderRequest`, with [native Store evidence](../../../tests/integration/test_style_resource_ingress.py).
+S2 scoped legends and passive Scene provenance are implemented on the WIP
+branch. Combined ingress/legend/Scene/C1 checks pass67 tests; actual SVG/PNG
+scope output was inspected. Native serialized Style treatment also reaches
+C1's effective appearance-role lookup, not only an injected metadata fixture.
+S2 [PR1687](https://github.com/tya5/chrona/pull/1687) is open for reviewer approval.
+Its first official snapshot from
+[39081414706](https://github.com/tya5/chrona/actions/runs/39081414706)
+has all50 SVG/Scene pairs byte-identical to its S1 base; only two diagnostic
+inventories change (source coordinates and seven expected new emission sites).
+The first conformance run exposed a missing workspace schema annotation and
+an unclassified Style example; annotating the example exposed the checker’s
+missing root `allOf` version traversal. Those are corrected with a failing-then-
+passing regression and14 annotation/reference tests. Final-head CI and
+exact-main release evidence remain required.
+Reviewer [approved the S2 contract at `0f260ac4c`](https://github.com/tya5/chrona/pull/1687#issuecomment-6243613463).
+Shard2 then identified two integration regressions: scoped-legend details grew
+the composer beyond its structural bound, and the scheduled-point twin test
+constructed an invalid provenance-less Scene. Recomposition moves to the
+existing Style legend owner; the twin compares fields of valid Scenes instead.
+No structural threshold or provenance validation is weakened. Ownership/scoped
+legend checks pass19 tests; twin/Style provenance checks pass10. Shard1 passed;
+shard3 was superseded by
+the repair push, so its result must come from the final run.
+Local conformance passes every other check; its two stale diagnostic reports
+are bot-owned and were checked successfully in the official CI snapshot.
+Run [39082214880](https://github.com/tya5/chrona/actions/runs/39082214880)
+passes conformance, reproduction and shards1/3. Shard2's only remaining failure
+is the retired-example guard: the new authoring Style tests used obsolete
+example inputs. They now read the current packaged executive-light resources;
+the guard is unchanged. Its final snapshot again has50 unchanged SVG/Scene pairs.
+Do not count WIP publication as release acceptance.
+
+### S2 installed-wheel evidence
+
+Source `b201711c4`; wheel SHA-256
+`7f45ef93469206b1af933709e004cc07c51a53ff2c34741c121963ccf04eb2da`.
+Built with `pip wheel --no-deps --wheel-dir .venv-wheel/wheels .`, then installed
+non-editably with `[dev,render]` into a separate worktree `.venv-wheel`.
+`chrona.__file__` resolves inside that environment's `site-packages`.
+The wheel interpreter passed both `test_style_resource_ingress.py` and
+`test_style_scoped_legends.py` (29 tests, `--import-mode=importlib`; only the
+repository test helpers were on `PYTHONPATH`), including real CLI SVG treatment.
+It also passed
+`tools/wheel_smoke.py` from `/tmp`, outside the checkout. This is local
+packaging evidence, not the exact-main three-OS release gate.
+
+Final-filter review exposed suppressed positive-bounds table text retaining a
+potential legend. The new native regression failed before the correction;
+Layout now excludes completed `overflow="suppressed"` text, matching the
+published S2 rule. The scoped-legend module passes15 tests, including repeated
+same-field columns, actual fill/Scene validation and suppression. No design
+or public-output policy changed.
+Combined ingress/legend/content/Scene regression check passed41 tests.
+The native CLI test now renders both the no-Style and explicit `--style`
+paths and verifies their actual SVG paint differs; the complete ingress module
+passes14 tests.
+
+The local 50-slide S2 batch introduces no SVG/Scene delta beyond the accepted
+S1 glyph migration. Corrected glyph output equals S1 exactly; S1's official
+final-head snapshot has109 paths, all byte-identical to the PNG-reviewed
+evidence. No generated file was edited. S2's first official artifact confirms
+the same50 unchanged pairs; the final-head artifact must retain that result.
 
 ## Literal issue acceptance
 
@@ -30,12 +91,12 @@ not establish that ingress. Do not count WIP publication as release acceptance.
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | --- | --- | --- | --- | --- |
 | 1 | The semantic vocabulary is a versioned resource with a schema. | met | [Vocabulary resource](../../../src/chrona/resources/semantic-vocabulary.yaml), [schema](../../../schemas/semantic-vocabulary-v0.1.schema.yaml), immutable loader and typed-ingress tests. V1 official artifact and exact-main release evidence are above. | — |
-| 2 | A design set can introduce a visual distinction the product did not anticipate, without a code change. | not met | S1 implements Style evaluation and composition on its WIP branch; [S2 resource ingress](../../planning/active/issue-419-semantic-resource-work-record-2026-10-17.md#architecture-review-and-proposed-implementation-sequence) and published end-to-end evidence remain required. | — |
-| 3 | The presentation coverage report derives distinctions from resources rather than from source. | not met | [C1](../../planning/active/issue-419-semantic-resource-work-record-2026-10-17.md#architecture-review-and-proposed-implementation-sequence) remains dev B's scope; the current report is not resource-derived. | — |
+| 2 | A design set can introduce a visual distinction the product did not anticipate, without a code change. | not met | S1 is merged; [native S2 Store/CLI tests](../../../tests/integration/test_style_resource_ingress.py) and wheel evidence prove authored treatment. S2 PR, reviewer and exact-main release acceptance remain required. | — |
+| 3 | The presentation coverage report derives distinctions from resources rather than from source. | not met | [C1 review](issues-419-c1-acceptance-review-2026-10-18.md) covers the published vocabulary/Scene side; native S2 Style-to-Scene-to-effective-role lookup is covered. Final S2 publication and design-conformance review remain. | — |
 | 4 | No field in the registry is unread. | met | The [117-entry inventory](../../planning/active/issue-419-semantic-resource-work-record-2026-10-17.md#v1-equivalence-inventory-117-entry-baseline), registry/Scene/contrast/reachability tests, and independent digest cover all fields. V1 official artifact shows provenance-only Scene changes. | — |
-| 5 | The report lists every purpose drawn in the corpus with its realized role count, generated from committed Scenes. | not met | C1 must derive and publish the corpus population in the [coverage report](../../gallery/semantic-realization-coverage.md). | — |
-| 6 | Adding a purpose to the semantic registry without a classification fails the check. | not met | C1 must connect the complete purpose population to the [classification gate](../../../src/chrona/presentation/model/semantic_realization.py); current code does not yet enforce this. | — |
-| 7 | The 31-of-40 figure, or its successor, is visible in a committed, checked document. | not met | C1 must publish the current derived fraction in the [checked report](../../gallery/semantic-realization-coverage.md); the historical figure is not current evidence. | — |
+| 5 | The report lists every purpose drawn in the corpus with its realized role count, generated from committed Scenes. | not met | C1 published the [purpose table](../../gallery/semantic-realization-coverage.md), checked by `--check`; final current-main release/design review remains. | — |
+| 6 | Adding a purpose to the semantic registry without a classification fails the check. | not met | C1 implements and tests the [classification gate](../../../src/chrona/presentation/model/semantic_realization.py); final current-main release/design review remains. | — |
+| 7 | The 31-of-40 figure, or its successor, is visible in a committed, checked document. | not met | Published [report](../../gallery/semantic-realization-coverage.md) contains the checked51-of-72 figure; final current-main release/design review remains. | — |
 
 ## Programme-level criteria (optional)
 
@@ -57,13 +118,8 @@ generated outputs were not edited. Focused native tests include
 and [mark paint preflight](../../../tests/integration/test_style_mark_paint_preflight.py).
 They are not published release evidence.
 
-CI [39077516079](https://github.com/tya5/chrona/actions/runs/39077516079),
-head `474f3f92d`, passes snapshot/contrast, public reproduction, MCP,
-conformance and all three pytest shards. Only `derived-ready` failed because
-main advanced during the run. Its official snapshot has109 paths,
-all byte-identical to the preceding reviewed snapshot:49 unchanged SVG/Scene
-pairs, the disclosed glyph-gates pair, three diagnostic reports, no retired
-paths. The official glyph SVG equals the PNG-inspected source.
+Final CI/artifact and exact-main release links are above. The official glyph
+SVG equals the PNG-inspected source; all49 other SVG/Scene pairs are unchanged.
 
 Caller repairs retain exact package closure and typed Layout content, not
 production fallbacks. The shared catalogue preserves PR1676's
@@ -71,9 +127,10 @@ production fallbacks. The shared catalogue preserves PR1676's
 Inventory, schema, paint-capability, documented-command and caller focused
 checks pass. Optional TikZ compilation is not claimed and remains out of scope.
 
-C1 merged in PR1678 at `348fa338c`; its trusted generated tip `ba46a837b`
-(`derived-main` success) is normally integrated for the final S1 re-run.
-Current-head CI and artifact review remain required. C1's state-to-role
-evidence finding remains a separate final review item with dev B. S1 is not
-release-accepted until current-head CI, official artifact review and exact-main
-three-OS release succeed. Parent419 stays open for S2 and C1 as well.
+C1's [state-to-role finding](https://github.com/tya5/chrona/issues/419#issuecomment-6242783472)
+and forecast classification rationale remain final-review items with dev B.
+The S1-to-S2 squash integration retains byte-identical S2 product/schema code;
+an accidentally repeated Style contract was removed, not made a second authority.
+Schema equivalence passes on the S1 base; the standard pruner retired5 landed
+S1 L1 exceptions, retaining only applicable S2 expectations. Parent419 stays
+open until S1/S2 release gates, reviewer acceptance and final literal review.

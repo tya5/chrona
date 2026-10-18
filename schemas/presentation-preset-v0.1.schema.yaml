@@ -23,7 +23,7 @@ properties:
         properties: {version: {description: "Preset package version.", type: string, minLength: 1}}
       resources:
         type: object
-        description: "View, Theme, Scheme, Layout, and explicitly closed optional icon catalogs supplied by the preset."
+        description: "View, Theme, Scheme, Layout, and optional presentation resources supplied by the preset."
         required: [view, theme, colorScheme, layout]
         additionalProperties: false
         properties:
@@ -31,6 +31,7 @@ properties:
           theme: {description: "Preset Theme resource.", $ref: "#/$defs/resource"}
           colorScheme: {description: "Preset Color Scheme resource.", $ref: "#/$defs/resource"}
           layout: {description: "Preset Layout Profile resource.", $ref: "#/$defs/resource"}
+          style: {description: "Optional pinned Style resource.", $ref: "#/$defs/styleResource"}
           detailProfile: {description: "Optional review-detail profile (for example a legend) applied unless an explicit detail profile is given.", $ref: "#/$defs/detailProfileResource"}
           summaryProfile: {description: "Optional Summary Profile, overridden by an explicit summary input.", $ref: "#/$defs/summaryProfileResource"}
           iconCatalogs:
@@ -78,6 +79,15 @@ $defs:
       id: {description: "Stable review-detail profile identifier.", type: string, minLength: 1}
       kind: {description: "The only permitted detail resource kind.", const: review-detail-profile}
       path: {description: "Safe relative path to the review-detail profile document.", examples: ["detail.yaml"], minLength: 1, $ref: "urn:chrona:common-v0.1#/$defs/safeRelativePath"}
+  styleResource:
+    type: object
+    description: "Optional pinned Style resource supplied by the preset."
+    required: [id, kind, path]
+    additionalProperties: false
+    properties:
+      id: {description: "Stable Style resource identifier.", type: string, minLength: 1}
+      kind: {description: "The only permitted Style resource kind.", const: style}
+      path: {description: "Safe relative path to the Style document.", examples: ["styles/default.yaml"], minLength: 1, $ref: "urn:chrona:common-v0.1#/$defs/safeRelativePath"}
   summaryProfileResource:
     type: object
     description: "Pinned Summary Profile supplied by the preset."

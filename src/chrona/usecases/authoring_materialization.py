@@ -37,7 +37,7 @@ def materialization_candidate(workspace_path: Path, workspace: dict[str, Any], *
                 for item in (*preset_contract.resources.values(), *preset_contract.compatible_color_schemes)}
     normalized = normalize_authoring_workspace(workspace_contract, preset_contract, acquired)
     sources = dict(normalized.draft_sources())
-    names = {"project": "project.yaml", "actual-set": "actual.yaml", "view": "view.yaml", "theme": "theme.yaml", "color-scheme": "scheme.yaml", "layout-profile": "layout.yaml"}
+    names = {"project": "project.yaml", "actual-set": "actual.yaml", "view": "view.yaml", "style": "style.yaml", "theme": "theme.yaml", "color-scheme": "scheme.yaml", "layout-profile": "layout.yaml"}
     candidates: dict[str, bytes] = {}
     written: dict[str, dict[str, Any]] = {}
     for kind, filename in names.items():
@@ -58,6 +58,7 @@ def materialization_candidate(workspace_path: Path, workspace: dict[str, Any], *
             project_path=staged / written["project"]["path"], view_path=staged / written["view"]["path"],
             theme_path=staged / written["theme"]["path"], scheme_path=staged / written["color-scheme"]["path"],
             layout_path=staged / written["layout-profile"]["path"],
+            style_path=(staged / written["style"]["path"]) if "style" in written else None,
             actual_path=(staged / written["actual-set"]["path"]) if "actual-set" in written else None,
         )
         if _render_bytes(explicit_draft) != guided_bytes:
@@ -70,7 +71,10 @@ def materialization_candidate(workspace_path: Path, workspace: dict[str, Any], *
     receipt_payload = yaml.safe_dump(receipt, sort_keys=True).encode()
     candidates[f"{directory}/receipt.yaml"] = receipt_payload
     explicit = deepcopy(workspace)
-    explicit["body"]["presentation"] = {"mode": "explicit", "resources": {"view": written["view"], "theme": written["theme"], "colorScheme": written["color-scheme"], "layout": written["layout-profile"], "renderContext": written["render-context"]}, "receipt": {"id": receipt["id"], "kind": receipt["kind"], "path": f"{directory}/receipt.yaml", "contentIdentity": _digest_bytes(receipt_payload)}}
+    explicit_resources = {"view": written["view"], "theme": written["theme"], "colorScheme": written["color-scheme"], "layout": written["layout-profile"], "renderContext": written["render-context"]}
+    if "style" in written:
+        explicit_resources["style"] = written["style"]
+    explicit["body"]["presentation"] = {"mode": "explicit", "resources": explicit_resources, "receipt": {"id": receipt["id"], "kind": receipt["kind"], "path": f"{directory}/receipt.yaml", "contentIdentity": _digest_bytes(receipt_payload)}}
     parse_contract(_identity("authoring-workspace", explicit), explicit)
     candidates[workspace_path.name] = yaml.safe_dump(explicit, sort_keys=False).encode()
     return explicit, candidates
@@ -80,7 +84,10 @@ def _context(written: dict[str, dict[str, Any]]) -> dict[str, Any]:
     asset_root = Path(__file__).resolve().parents[1] / "resources"
     def ref(key: str) -> dict[str, Any]:
         return {**written[key], "store": {"provider": "draft", "identity": "draft"}, "address": written[key]["path"], "revision": {"token": "draft"}}
-    return {"version": RENDER_CONTEXT_VERSION, "kind": "render-context", "id": "materialized-context", "body": {"project": ref("project"), "view": ref("view"), "theme": ref("theme"), "colorScheme": ref("color-scheme"), "layout": ref("layout-profile"), "inputs": ({"actual": ref("actual-set")} if "actual-set" in written else {}), "environment": {"viewport": {"inlineSize": 1600, "blockSize": 900}, "locale": "en-US", "fontMetrics": _packaged_font_metrics(asset_root), "scenePrecision": 3}, "target": {"kind": "svg", "capabilities": ["accessibleText", "hierarchicalAxis", "marker", "semanticRoles", "sourceMetadata", "tableSemantics"], "visualProfile": "chrona-output/visual/v0.5-baseline"}}}
+    body = {"project": ref("project"), "view": ref("view"), "theme": ref("theme"), "colorScheme": ref("color-scheme"), "layout": ref("layout-profile"), "inputs": ({"actual": ref("actual-set")} if "actual-set" in written else {}), "environment": {"viewport": {"inlineSize": 1600, "blockSize": 900}, "locale": "en-US", "fontMetrics": _packaged_font_metrics(asset_root), "scenePrecision": 3}, "target": {"kind": "svg", "capabilities": ["accessibleText", "hierarchicalAxis", "marker", "semanticRoles", "sourceMetadata", "tableSemantics"], "visualProfile": "chrona-output/visual/v0.5-baseline"}}
+    if "style" in written:
+        body["style"] = ref("style")
+    return {"version": RENDER_CONTEXT_VERSION, "kind": "render-context", "id": "materialized-context", "body": body}
 
 
 def _render_bytes(draft: Any) -> bytes:

@@ -56,7 +56,11 @@ def test_a_derived_gate_and_its_fixed_twin_render_byte_identical_svg_and_equal_s
         ]
         assert results[0].artifact.content == results[1].artifact.content
         # Provenance records the content identity of the Project source, which differs by construction.
-        first, second = (dataclasses.replace(item.rendered.scene, provenance=None) for item in results)
+        # Compare valid completed Scenes without constructing an invalid provenance-less Scene.
+        first, second = (
+            {field.name: getattr(item.rendered.scene, field.name)
+             for field in dataclasses.fields(item.rendered.scene) if field.name != "provenance"}
+            for item in results)
         assert first == second
         assert b"Launch" in results[0].artifact.content
         rendered[with_actual] = results[0].artifact.content

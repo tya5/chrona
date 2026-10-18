@@ -9,7 +9,6 @@ import pytest
 from chrona.presentation.contracts.resources import ClosureIdentity, parse_contract
 from chrona.presentation.layout import surface_count_closure, surface_render_plan
 from chrona.presentation.model.semantic_registry import semantic_binding
-from chrona.presentation.model.style_rules import StyleEvaluationError
 from chrona.usecases import render_review as render_review_usecase
 from tests.support import synthetic_review as sr
 
@@ -128,10 +127,10 @@ def test_selected_span_role_without_fill_or_encoding_fails_before_layout_sizing(
         return original(*args, **kwargs)
 
     monkeypatch.setattr(surface_render_plan, "surface_source_inputs", capture_sources)
-    with pytest.raises(StyleEvaluationError) as caught:
+    with pytest.raises(render_review_usecase.RenderFailed) as caught:
         _render(tmp_path, monkeypatch, source=source, parts=parts, rules=rules)
 
-    assert caught.value.diagnostic_id == "E_STYLE_ROLE_INCOMPATIBLE"
+    assert caught.value.code == "E_STYLE_ROLE_INCOMPATIBLE"
     assert caught.value.source_ref == "/body/rules/0/then/role"
     assert not measured
 

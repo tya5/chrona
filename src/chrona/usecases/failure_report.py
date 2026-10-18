@@ -139,6 +139,9 @@ def report_failure(error: Exception) -> FailureReport:
     if isinstance(error, RenderRejected):
         return rejection_report(error.diagnostics, error.component)
     if isinstance(error, RenderFailed):
+        if error.details is not None:
+            return FailureReport("rejected", (diagnostic_record(
+                error.code, error.message, error.component, error.source_ref, details=error.details),), 1)
         return _stable_report(StableFailure(error.code, error.message, error.component, error.source_ref))
     if isinstance(error, PresentationIngressRejected):
         return _presentation_rejection_report(error)

@@ -826,6 +826,7 @@ class RenderContextContract(ResourceContract):
     target: RenderTarget
     previous_scene: ArtifactPin | None = None
     forecast: bool = False
+    style: ResourceReference | None = None
 
 
 @dataclass(frozen=True)
@@ -1701,6 +1702,7 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
                          inputs["previousScene"].get("contentIdentity"))
              if "previousScene" in inputs else None),
             body.get("forecast", False),
+            ResourceReference.from_value(body["style"]) if "style" in body else None,
         )
     if identity.kind == "actual-set":
         _check_actual_intervals(body)

@@ -155,7 +155,7 @@ def copy_builtin_preset(identifier: str, destination: Path) -> Path:
         member = _member(entry, name)
         payloads[output] = _plain(_read_member(member))
         resources[name] = {"id": str(member["id"]), "kind": str(member["kind"]), "path": output}
-    for name, output in (("detailProfile", "detail.yaml"), ("summaryProfile", "summary.yaml")):
+    for name, output in (("style", "style.yaml"), ("detailProfile", "detail.yaml"), ("summaryProfile", "summary.yaml")):
         if isinstance(entry.get("members"), dict) and name in entry["members"]:
             member = _member(entry, name)
             payloads[output] = _plain(_read_member(member))

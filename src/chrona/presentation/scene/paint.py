@@ -68,7 +68,9 @@ def resolve_legend_shape_paint(tokens: ThemeTokenView, role: str, shape: str,
             return ScenePaint(fill=fill, stroke=None, stroke_width=None, dash=(),
                               opacity=float(opacity) if opacity is not None else 1.0)
         if shape == "rule-pair":
-            stroke = tokens.color(role, "stroke")
+            # The completed category ink also colours a rule-pair key. Keep
+            # the selected role's width and opacity as its canonical shape.
+            stroke = fill_override or tokens.color(role, "stroke")
             width = tokens.number(role, "strokeWidth")
             if width <= 0:
                 raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"/body/roles/{role}/strokeWidth")
