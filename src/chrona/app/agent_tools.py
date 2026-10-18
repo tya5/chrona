@@ -4,7 +4,7 @@ Four read-only tools front the use cases an agent needs to plan and draw a sched
 ``validate_project``, ``schedule_project``, ``render_draft`` and ``list_presets``; two read-only tools read a
 Store, ``render_review`` and ``compare_baseline`` (#812); two tools front the revision-bound Store commands,
 ``check_command`` (read-only) and ``apply_command`` (writes, only when the caller passes ``allow_write``; #813).
-Tool set ``chrona/agent-tools/v0.4``, Spec 66. A tool is a use case
+Tool set ``chrona/agent-tools/v0.5``, Spec 66. A tool is a use case
 with a typed envelope: ``call_tool(scope, name, arguments)`` validates the arguments against the
 tool's input schema, runs the use case on files inside a ``WorkspaceScope`` and returns a
 ``ToolResult`` whose ``structured`` mapping is the envelope (``status``, ``diagnostics``)
@@ -48,8 +48,8 @@ from chrona.usecases.failure_report import (
 from chrona.usecases.preset_library import DEFAULT_PRESET_ID, list_builtin_presets
 from chrona.usecases.project_checks import schedule_project_file, validate_project_file
 
-TOOL_SET_VERSION = "chrona/agent-tools/v0.4"
-COMMAND_TYPES = frozenset({"applyActualIntakeBatch", "captureSnapshot"})
+TOOL_SET_VERSION = "chrona/agent-tools/v0.5"
+COMMAND_TYPES = frozenset({"applyActualIntakeBatch", "captureSnapshot", "revertActualCommand", "redoActualCommand"})
 """The command types the command tools accept in this release (#813); anything else is rejected before a Store is opened."""
 DEFAULT_STORE_CONFIG = ".chrona/store.yaml"
 WRITE_DISABLED = "E_MCP_WRITE_DISABLED"
@@ -184,7 +184,7 @@ def _output_schema(properties: dict[str, Any] | None = None) -> dict[str, Any]:
 def _command_input_schema() -> dict[str, Any]:
     return _input_schema({
         "command": {**_WORKSPACE_PATH_PROPERTY, "description": "A '/'-separated workspace path to a Command Request "
-                    "document (chrona/command/v0.3, Spec 10), as chrona command-apply --command takes. The file must "
+                    "document (chrona/command/v0.3 or v0.4, Spec 10), as chrona command-apply --command takes. The file must "
                     "already exist inside the workspace."},
         "storeConfig": {**_WORKSPACE_PATH_PROPERTY, "description": "A '/'-separated workspace path to a Store configuration "
                         f"(chrona/store-config/v0.1). Omitted means {DEFAULT_STORE_CONFIG}. Every Store root in it must lie "
@@ -466,6 +466,13 @@ def _list_presets(call: _Call, arguments: dict[str, Any]) -> ToolResult:
 _COMMAND_SOURCE_REFS = {"E_AUTOMATION_BASE_REVISION": "/baseRevision", "E_AUTOMATION_OPERATION_UNSUPPORTED": "/type"}
 
 
+def _command_source_ref(code: str, command: dict[str, Any]) -> str:
+    if code in {"E_COMMAND_HISTORY_UNAVAILABLE", "E_COMMAND_NOT_REVERSIBLE"}:
+        field = "revertCommandId" if command["type"] == "redoActualCommand" else "commandId"
+        return f"/payload/{field}"
+    return _COMMAND_SOURCE_REFS.get(code, "/")
+
+
 def _open_contained_store(call: _Call, config_path: Path) -> Any:
     """Open the Store configuration; every Store root in it must lie strictly inside the workspace (Spec 66 section 4).
 
@@ -552,7 +559,7 @@ def _command_tool(operation: str) -> Callable[[_Call, dict[str, Any]], ToolResul
             return ToolResult(call.ok(automationResult=result))
         call.carried["automationResult"] = result
         rows = [diagnostic_record(item["code"], item.get("message", ""), "operational",
-                                  _COMMAND_SOURCE_REFS.get(item["code"], "/")) for item in result["diagnostics"]]
+                                  _command_source_ref(item["code"], command)) for item in result["diagnostics"]]
         return call.rejected(FailureReport("rejected", collapse_records(rows), 1))
 
     return handle
@@ -693,8 +700,9 @@ _TOOLS: tuple[ToolSpec, ...] = (
     ToolSpec(
         "check_command", "Preview a Store command",
         "Check a Command Request file in the workspace against its Store without writing anything: the same check "
-        "as chrona command-check. The request must be applyActualIntakeBatch (an Actual intake batch) or captureSnapshot "
-        "(a named baseline); any other type is rejected with E_AUTOMATION_OPERATION_UNSUPPORTED. 'storeConfig' is a "
+        "as chrona command-check. The request must be applyActualIntakeBatch (an Actual intake batch), captureSnapshot "
+        "(a named baseline), revertActualCommand or redoActualCommand; any other type is rejected with "
+        "E_AUTOMATION_OPERATION_UNSUPPORTED. 'storeConfig' is a "
         "workspace path to a Store configuration and defaults to .chrona/store.yaml; every Store root in it must lie "
         "inside the workspace. Returns status 'ok' with automationResult (the Automation Result the command line writes), "
         "or 'rejected' with typed diagnostics, for example a stale baseRevision. A preview is not a precondition of "
@@ -707,7 +715,8 @@ _TOOLS: tuple[ToolSpec, ...] = (
         "executes directly. There is no approval step and no confirm token, and the proposal and decision exchange of "
         "Spec 10 section 9.1 is not implemented. It writes only when the server was started with --allow-write; "
         "otherwise it is refused with E_MCP_WRITE_DISABLED and writes nothing. The request must be "
-        "applyActualIntakeBatch or captureSnapshot. Safeguards that are not approvals: a stale baseRevision is "
+        "applyActualIntakeBatch, captureSnapshot, revertActualCommand or redoActualCommand. "
+        "Safeguards that are not approvals: a stale baseRevision is "
         "rejected (compare-and-set), the same commandId with the same request is a no-op that returns the first result "
         "(replayed: true), a baseline name or an observation with different facts is never overwritten, and every write "
         "is a new immutable Store revision, so an earlier one can be inspected and restored. Store roots must lie "

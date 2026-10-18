@@ -36,10 +36,11 @@ def _command(version: str, address: str = "project.yaml", snapshot_id: str = "q2
 
 
 def test_the_command_ingress_names_the_schema_of_the_declared_version():
-    assert set(COMMAND_SCHEMAS) == {"chrona/command/v0.3"}
+    assert set(COMMAND_SCHEMAS) == {"chrona/command/v0.3", "chrona/command/v0.4"}
     assert command_schema_name(_command("chrona/command/v0.3")) == "command-request-v0.3.schema.yaml"
+    assert command_schema_name(_command("chrona/command/v0.4")) == "command-request-v0.4.schema.yaml"
     for payload in ("version: chrona/command/v0.9\n", "- not a mapping\n", "{{{", "version: 5\n", _command("chrona/command/v0.2")):
-        assert command_schema_name(payload) == COMMAND_SCHEMAS["chrona/command/v0.3"]
+        assert command_schema_name(payload) == COMMAND_SCHEMAS["chrona/command/v0.4"]
 
 
 def test_a_retired_v0_2_command_is_refused_and_v0_3_refuses_a_loose_address():
@@ -49,6 +50,28 @@ def test_a_retired_v0_2_command_is_refused_and_v0_3_refuses_a_loose_address():
     with pytest.raises(OperationalResourceError, match="E_OPERATIONAL_SCHEMA"):
         parse_command(_command("chrona/command/v0.3", address="my projects/main.yaml"))
     assert parse_command(_command("chrona/command/v0.3"))["version"] == "chrona/command/v0.3"
+
+
+@pytest.mark.parametrize(("command_type", "payload", "target_kind"), [
+    ("revertActualCommand", {"commandId": "origin-1"}, "actual-set"),
+    ("redoActualCommand", {"revertCommandId": "revert-1"}, "actual-set"),
+])
+def test_v04_history_operations_have_closed_actual_payloads(command_type, payload, target_kind):
+    command = {"version": "chrona/command/v0.4", "commandId": "history-1", "type": command_type,
+               "target": _reference("actual.yaml") | {"kind": target_kind}, "baseRevision": "actual-r1",
+               "payload": payload}
+    assert parse_command(yaml.safe_dump(command))["type"] == command_type
+    malformed = command | {"payload": payload | {"unexpected": True}}
+    with pytest.raises(OperationalResourceError, match="E_OPERATIONAL_SCHEMA"):
+        parse_command(yaml.safe_dump(malformed))
+
+
+def test_v03_does_not_admit_v04_history_operations():
+    command = {"version": "chrona/command/v0.3", "commandId": "history-1", "type": "revertActualCommand",
+               "target": _reference("actual.yaml") | {"kind": "actual-set"}, "baseRevision": "actual-r1",
+               "payload": {"commandId": "origin-1"}}
+    with pytest.raises(OperationalResourceError, match="E_OPERATIONAL_SCHEMA"):
+        parse_command(yaml.safe_dump(command))
 
 
 @pytest.mark.parametrize("snapshot_id", ["..\\..\\x", "a/b", ".", "..", "...", "a\x00b", "a\nb", "a\n", "C:x", "a b", "é", ""])
