@@ -25,7 +25,10 @@ receipt verification and the gate before reads. No renderer policy changes.
 
 ## Programme-level criteria (optional)
 
-**Release not accepted.** Ready main `5fe41db8e` includes merged item3. Repair
+**Release pending.** PR1708 merged at `0bd24fd4abdfb35b40323a3b1a97e445a728d9c4`
+on ready main `b12cbd7b49c476013ce339c01dbd66161be9f4f2`; exact-main full
+release39110885313 is still in progress. Item2 cannot be marked release-accepted
+until that run succeeds. Repair
 `8030a353e` follows [plan6247290279](https://github.com/tya5/chrona/issues/902#issuecomment-6247290279);
 the combined diagnostics/operational/recovery/agent/transaction/lock/MCP-stdio
 batch passes112. Import-direction and literal-review checks pass. Earlier
@@ -46,9 +49,8 @@ The exact affected import/CLI/skill batch passes78 tests; skill validation,
 import-direction and generated CLI-reference checks pass. No gate was weakened.
 Its official artifact12129351876 retains all50 SVG/Scene pairs and changes only
 two reviewed diagnostic inventories; that old artifact is not final acceptance.
-Current-head PR checks, official artifact comparison and successful
-exact-main full three-OS release containing this review remain required.
-Item5's repaired exact-main release39105269292 passed all native gates. The
-published scheduling amendment allows items3/2 to
-share a later exact-main full run containing both implementations/reviews,
-without waiving either PR's checks. Parked4/#814/#815 keep parent902 open.
+The merged PR has passed its current-head checks and its publication artifact
+was reviewed; the exact-main full release remains the final item2 gate. Item5's
+repaired exact-main release39105269292 passed all native gates, and item3 was
+accepted independently by exact-main release39108421823. Parked4/#814/#815
+keep parent902 open.
