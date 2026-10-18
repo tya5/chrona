@@ -186,6 +186,9 @@ shared paint family and witness. Their tile primitives own intrinsic stroke
 widths; comparison must not require an unused host-role `strokeWidth` or treat
 the admitted substrate as an ordinary outline. Ordinary stroke validation stays
 unchanged. This is the same paint contract used by Scene, not a diagnostic fallback.
+Completed shape kind and channel selection also determine the shared paint family:
+stroke-only shapes and paths use path paint; fill-only hosts use solid paint.
+Do not infer a mark family that requires an unpainted fill for a completed edge path.
 
 For composed point keys, Layout retains a canonical local completed geometry
 witness from the same selected-symbol/outline kernels as the placed figure.
