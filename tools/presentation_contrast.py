@@ -10,6 +10,7 @@ import sys
 from typing import Any, Iterable, Mapping
 
 from chrona.resources import safe_load
+from chrona.usecases.diagnostic_messages import encoding_contrast_detail
 
 from chrona.presentation.scene.contrast_policy import (
     DEFAULT_POLICY,
@@ -181,20 +182,23 @@ def render_markdown(report: Mapping[str, Any]) -> str:
         lines.append("| {purpose} | `{visualRole}` | {disposition} | {floor} | {slideCount} | {primitiveCount} | {minimum} | {median} | {errorCount} | {warningCount} |".format(
             **display))
     lines.extend(("", "## Per-primitive grounds", "",
-                  "| Scene | Primitive | Role | Sample | Ground | Ground kind | Ground colour | Channel | Ratio | Floor | Severity |",
-                  "| --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- |"))
+                  "| Scene | Primitive | Role | Sample | Ground | Ground kind | Ground colour | Channel | Encoded fill | Ratio | Floor | Severity |",
+                  "| --- | --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- |"))
     for record in report["findings"]:
         finding = record["finding"]
         if finding["primitiveId"] is None:
             continue
         sample = (f"{finding['sampleInline']:.3f}, {finding['sampleBlock']:.3f}"
                   if finding.get("sampleInline") is not None and finding.get("sampleBlock") is not None else "—")
-        lines.append("| `{scene}` | `{primitive}` | `{role}` | {sample} | `{ground}` | {ground_kind} | `{color}` | {channel} | {ratio} | {floor} | {severity} |".format(
+        encoded = (encoding_contrast_detail({**finding, "encoding": finding["encoding"]})
+                   .replace("|", "\\|") if isinstance(finding.get("encoding"), Mapping) else "—")
+        lines.append("| `{scene}` | `{primitive}` | `{role}` | {sample} | `{ground}` | {ground_kind} | `{color}` | {channel} | {encoded} | {ratio} | {floor} | {severity} |".format(
             scene=record["scene"], primitive=finding["primitiveId"], role=finding["visualRole"],
             sample=sample,
             ground=finding.get("groundId") or "—", color=finding.get("groundColor") or "—",
             ground_kind=finding.get("groundKind") or "—",
-            channel=finding.get("paintChannel") or "—", ratio=number(finding["contrastRatio"]),
+            channel=finding.get("paintChannel") or "—", encoded=encoded,
+            ratio=number(finding["contrastRatio"]),
             floor=number(finding["floor"]), severity=finding["severity"]))
     lines.extend(("", "## Themes not opted in", "",
                   "Contrast constraints are an opt-in design option (Specification 46 section 8): a Theme listed in "

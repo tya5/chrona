@@ -82,6 +82,13 @@ def test_enum_field_colours_planned_marks_and_exports_a_picture(tmp_path):
     rendered = _render(tmp_path, project, field="acme.risk", domain=["low", "medium", "high"], slots=RISK_COLOURS)
     fills = _fills(rendered)
     assert fills == {"alpha": RISK_COLOURS["low"], "beta": RISK_COLOURS["high"], "gamma": RISK_COLOURS["medium"]}
+    witnesses = {p.source_ref: p.encoding for p in rendered.surface.primitives
+                 if p.scene_id.startswith("planned:")}
+    assert {key: value.value for key, value in witnesses.items()} == {
+        "alpha": "low", "beta": "high", "gamma": "medium"}
+    assert all(value.field == "acme.risk" and value.sources[0].kind == "view"
+               and value.sources[0].source_ref == "/body/colorEncoding"
+               for value in witnesses.values())
     out = os.environ.get("CHRONA_344_SVG")
     if out:
         Path(out).write_bytes(rendered.artifact.content if isinstance(rendered.artifact.content, bytes) else rendered.artifact.content.encode())
@@ -92,6 +99,8 @@ def test_boolean_field_colours_planned_marks(tmp_path):
     rendered = _render(tmp_path, project, field="acme.reviewed", domain=["true", "false"],
                        slots={"true": "#2e7d32", "false": "#c62828"})
     assert _fills(rendered) == {"alpha": "#2e7d32", "beta": "#c62828"}
+    assert {p.source_ref: p.encoding.value for p in rendered.surface.primitives
+            if p.scene_id.startswith("planned:")} == {"alpha": "true", "beta": "false"}
 
 
 def test_number_source_is_not_admitted_yet(tmp_path):

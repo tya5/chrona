@@ -15,6 +15,7 @@ from chrona.presentation.model.semantic_registry import (
     is_frame_glyph_role,
     is_label_chip_role,
 )
+from chrona.presentation.style import EncodingWitness
 from chrona.presentation.scene.cone_ground import AS_OF_CONE_ROLE, ConeGround, cones_in
 from chrona.presentation.scene.ink_touch import InkTouchError, fill_touches
 from chrona.presentation.scene.paint_analysis import (
@@ -44,12 +45,15 @@ DEFAULT_POLICY = {member: "warning" for member in POLICY_MEMBERS}
 # Today's gate, the repository's: every legibility class blocks, a decoration warns (#995).
 STRICT_SEVERITIES = {"mark": "error", "stateText": "error", "groundText": "error", "unsupportedGround": "error",
                      "decoration": "warning"}
-_FLOOR_CODES = frozenset({"E_SCENE_MARK_CONTRAST", "E_SCENE_STATE_TEXT_CONTRAST", "E_SCENE_DECORATION_CONTRAST"})
+_ENCODING_CONTRAST_CODE = "E_SCENE_ENCODING_CONTRAST"
+_FLOOR_CODES = frozenset({"E_SCENE_MARK_CONTRAST", _ENCODING_CONTRAST_CODE,
+                          "E_SCENE_STATE_TEXT_CONTRAST", "E_SCENE_DECORATION_CONTRAST"})
 # The warning twin of each blocking code, by (is a decoration, blocking code).
 _WARNING_CODES = {
     (True, "E_SCENE_DECORATION_CONTRAST"): "W_SCENE_DECORATION_CONTRAST",
     (True, "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"): "W_SCENE_DECORATION_GROUND_UNSUPPORTED",
     (False, "E_SCENE_MARK_CONTRAST"): "W_SCENE_MARK_CONTRAST",
+    (False, _ENCODING_CONTRAST_CODE): "W_SCENE_ENCODING_CONTRAST",
     (False, "E_SCENE_STATE_TEXT_CONTRAST"): "W_SCENE_STATE_TEXT_CONTRAST",
     (False, "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"): "W_SCENE_CONTRAST_GROUND_UNSUPPORTED",
 }
@@ -154,6 +158,7 @@ class SceneContrastFinding:
     accepted_code: str | None = None
     exception_minimum: float | None = None
     exception_reason: str | None = None
+    encoding: EncodingWitness | None = None
 
     def as_mapping(self) -> dict[str, Any]:
         result = {
@@ -173,6 +178,8 @@ class SceneContrastFinding:
         if self.accepted_code is not None:
             result.update(acceptedCode=self.accepted_code, exceptionMinimum=self.exception_minimum,
                           exceptionReason=self.exception_reason)
+        if self.encoding is not None:
+            result["encoding"] = self.encoding.as_mapping()
         return result
 
 
@@ -220,8 +227,34 @@ def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity:
             raise SceneContrastPolicyError(f"E_SCENE_CONTRAST_DOCUMENT: invalid as-of cone at {scene_path}") from error
         figures = _mark_figures(primitives)
         sibling_indices = {position for parts in figures.values() for position, _ in parts[1:]}
+        figure_parts = {position: parts for parts in figures.values() for position, _ in parts}
         for index, primitive in enumerate(primitives):
             _require(isinstance(primitive, Mapping), f"invalid primitive {index} at {scene_path}")
+            if "encoding" in primitive:
+                witness = _read_encoding_witness(
+                    primitive["encoding"], version=version, document=document,
+                    scene_path=scene_path, primitive_index=index,
+                )
+                _validate_encoding_sources(witness, primitive, document,
+                                           scene_path=scene_path, primitive_index=index)
+                binding = contrast_binding_for_primitive(
+                    primitive.get("visualRole"), primitive.get("kind"), primitive.get("purpose"))
+                if binding is not None and binding.contrast_class == ContrastClass.MARK:
+                    paint = primitive.get("paint")
+                    _require(isinstance(paint, Mapping) and is_hex_color(paint.get("fill")),
+                             f"encoded mark fill is not a completed flat fill at {scene_path}/primitives/{index}")
+                    parts = figure_parts.get(index)
+                    if parts is None:
+                        external = primitives
+                    else:
+                        figure_indices = {position for position, _ in parts}
+                        external = [item if position not in figure_indices or position == index else {}
+                                    for position, item in enumerate(primitives)]
+                    findings.extend(_encoded_fill_findings(
+                        scene_path, primitive, canvas=ground, primitives=external, index=index,
+                        catalog_patterns=version == "chrona/scene/v0.7", cones=cones,
+                        severities=severities, witness=witness,
+                    ))
             if index in sibling_indices:
                 continue
             if index in figures:
@@ -347,7 +380,8 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
                         primitives: Sequence[Any], index: int, *,
                         catalog_patterns: bool = False,
                         cones: tuple[ConeGround, ...] = (),
-                        severities: Mapping[str, str] = None) -> tuple[SceneContrastFinding, ...]:
+                        severities: Mapping[str, str] = None,
+                        encoded_witness: EncodingWitness | None = None) -> tuple[SceneContrastFinding, ...]:
     severities = severities or _resolve_severities(None, "warning")
     role = primitive.get("visualRole")
     if not isinstance(role, str):
@@ -364,7 +398,7 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
         code = "E_SCENE_DECORATION_CONTRAST"
     elif binding.contrast_class == ContrastClass.MARK:
         floor, disposition = MARK_FLOOR, "required"
-        code = "E_SCENE_MARK_CONTRAST"
+        code = _ENCODING_CONTRAST_CODE if encoded_witness is not None else "E_SCENE_MARK_CONTRAST"
     elif binding.contrast_class == ContrastClass.GROUND_TEXT:
         # Ink of the shared text role on a decoration ground: always required, never authored (#884).
         floor, disposition = STATE_TEXT_FLOORS["required"], "required"
@@ -390,13 +424,13 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
     pattern = primitive.get("pattern") if catalog_patterns else None
     is_catalog_pattern = isinstance(pattern, Mapping) and any(
         key in pattern for key in ("densityBasisPoints", "primitives", "origin", "regionBounds", "clipBounds"))
-    if is_catalog_pattern:
+    if is_catalog_pattern and encoded_witness is None:
         return _pattern_findings(scene_path, primitive, pattern, paint, opacity, floor,
                                  disposition, code, purpose, role, primitive_id, canvas,
                                  primitives, index, catalog_patterns, cones,
                                  severity_class=severity_class, severities=severities, policy_class=policy_class)
-    channels = (("fill",) if binding.contrast_class in (ContrastClass.STATE_TEXT, ContrastClass.GROUND_TEXT)
-                else ("fill", "stroke"))
+    channels = (("fill",) if encoded_witness is not None or binding.contrast_class in (
+        ContrastClass.STATE_TEXT, ContrastClass.GROUND_TEXT) else ("fill", "stroke"))
     candidates = []
     unsupported_host: str | None = None
     unsupported_ground = False
@@ -440,17 +474,65 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
         candidates.append((ratio, channel, ground_id, ground, sample, ground_kind))
     if not candidates:
         error_code = "E_SCENE_CONTRAST_GROUND_UNSUPPORTED" if unsupported_ground else "E_SCENE_CONTRAST_PAINT"
+        if encoded_witness is not None and not unsupported_ground:
+            error_code = "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+            unsupported_host = None
         severity, error_code = _failure(error_code, severity_class, policy_class, severities)
         return (SceneContrastFinding(error_code, severity, scene_path, purpose, role,
                                      primitive_id, None, floor, disposition, unsupported_host,
-                                     severity_class=severity_class),)
+                                     severity_class=severity_class, encoding=encoded_witness),)
     ratio, channel, ground_id, ground, sample, ground_kind = max(candidates, key=lambda item: item[0])
     severity = "info"
     if ratio < floor:
         severity, code = _failure(code, severity_class, policy_class, severities)
     return (SceneContrastFinding(code, severity, scene_path, purpose, role, primitive_id, ratio, floor,
                                  disposition, ground_id, ground, channel, *sample, ground_kind,
-                                 severity_class=severity_class),)
+                                 severity_class=severity_class, encoding=encoded_witness),)
+
+
+def _read_encoding_witness(raw: Any, *, version: str, document: Mapping[str, Any],
+                           scene_path: str, primitive_index: int) -> EncodingWitness:
+    """Read the closed passive v0.7 encoding record; never reconstruct its source facts."""
+    pointer = f"{scene_path}/primitives/{primitive_index}/encoding"
+    _require(version == "chrona/scene/v0.7", f"encoding metadata requires Scene v0.7 at {pointer}")
+    try:
+        witness = EncodingWitness.from_mapping(raw)
+    except (TypeError, ValueError, KeyError) as error:
+        detail = f"E_SCENE_CONTRAST_DOCUMENT: malformed encoding witness at {pointer}"
+        raise SceneContrastPolicyError(detail) from error
+    return witness
+
+
+def _validate_encoding_sources(witness: EncodingWitness, primitive: Mapping[str, Any],
+                               document: Mapping[str, Any], *, scene_path: str,
+                               primitive_index: int) -> None:
+    """Require every passive origin to join the Scene resource inventory and authored Style match."""
+    pointer = f"{scene_path}/primitives/{primitive_index}/encoding/sources"
+    provenance = document.get("provenance")
+    resources = provenance.get("resources") if isinstance(provenance, Mapping) else None
+    _require(isinstance(resources, (list, tuple)), f"encoding witness has no resource inventory at {pointer}")
+    for source in witness.sources:
+        matches = [resource for resource in resources if isinstance(resource, Mapping)
+                   and resource.get("kind") == source.kind and resource.get("id") == source.resource_id]
+        _require(len(matches) == 1,
+                 f"encoding source does not join exactly one Scene resource at {pointer}")
+        if source.kind == "style":
+            style_match = primitive.get("styleMatch")
+            _require(isinstance(style_match, Mapping)
+                     and style_match.get("styleId") == source.resource_id
+                     and isinstance(style_match.get("ruleIds"), (list, tuple))
+                     and source.rule_id in style_match["ruleIds"],
+                     f"Style encoding source does not join the primitive match at {pointer}")
+
+
+def _encoded_fill_findings(scene_path: str, primitive: Mapping[str, Any], canvas: str | None,
+                           primitives: Sequence[Any], index: int, *, catalog_patterns: bool,
+                           cones: tuple[ConeGround, ...], severities: Mapping[str, str],
+                           witness: EncodingWitness) -> tuple[SceneContrastFinding, ...]:
+    """Check just the encoded fill channel, independently of the mark's best visibility ink."""
+    return _primitive_findings(scene_path, primitive, canvas, primitives, index,
+                               catalog_patterns=catalog_patterns, cones=cones,
+                               severities=severities, encoded_witness=witness)
 
 
 def _severity_class(contrast_class: ContrastClass) -> str:

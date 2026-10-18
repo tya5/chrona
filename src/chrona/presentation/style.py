@@ -62,6 +62,79 @@ StyleOutcome = StyleRoleOutcome | StyleEncodingOutcome
 
 
 @dataclass(frozen=True)
+class EncodingSource:
+    """Passive identity of one authored resource that supplied an encoding."""
+
+    kind: str
+    resource_id: str
+    source_ref: str
+    rule_id: str | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.kind, str) or self.kind not in {"view", "style"}:
+            raise ValueError("encoding source kind must be 'view' or 'style'")
+        if (not isinstance(self.resource_id, str) or not self.resource_id
+                or not isinstance(self.source_ref, str) or not self.source_ref):
+            raise ValueError("encoding source needs non-empty resource identity and source pointer")
+        if self.kind == "style":
+            if not isinstance(self.rule_id, str) or not self.rule_id:
+                raise ValueError("Style encoding source needs an authored rule ID")
+        elif self.rule_id is not None:
+            raise ValueError("View encoding source cannot have a rule ID")
+
+    def as_mapping(self) -> dict[str, str]:
+        return {"kind": self.kind, "id": self.resource_id, "sourceRef": self.source_ref,
+                **({"ruleId": self.rule_id} if self.rule_id is not None else {})}
+
+    @classmethod
+    def from_mapping(cls, raw: Mapping[str, Any]) -> "EncodingSource":
+        if not isinstance(raw, Mapping):
+            raise ValueError("encoding source must be an object")
+        kind = raw.get("kind")
+        expected = {"kind", "id", "sourceRef", *(('ruleId',) if kind == "style" else ())}
+        if set(raw) != expected:
+            raise ValueError("encoding source has missing or unsupported members")
+        return cls(kind, raw["id"], raw["sourceRef"], raw.get("ruleId"))
+
+
+@dataclass(frozen=True)
+class EncodingWitness:
+    """Completed passive identity/value for a fill supplied by an encoding."""
+
+    channel: str
+    scale_id: str
+    field: str
+    value: str
+    sources: tuple[EncodingSource, ...]
+
+    def __post_init__(self) -> None:
+        if self.channel != "fill":
+            raise ValueError("encoding witness channel must be 'fill'")
+        if (not isinstance(self.scale_id, str) or not self.scale_id
+                or not isinstance(self.field, str) or not self.field
+                or not isinstance(self.value, str)):
+            raise ValueError("encoding witness needs scale, field, and canonical string value")
+        if (not isinstance(self.sources, tuple) or not self.sources
+                or any(not isinstance(source, EncodingSource) for source in self.sources)
+                or len(set(self.sources)) != len(self.sources)):
+            raise ValueError("encoding witness needs non-empty unique source records")
+
+    def as_mapping(self) -> dict[str, Any]:
+        return {"channel": self.channel, "scaleId": self.scale_id, "field": self.field,
+                "value": self.value, "sources": [source.as_mapping() for source in self.sources]}
+
+    @classmethod
+    def from_mapping(cls, raw: Mapping[str, Any]) -> "EncodingWitness":
+        if not isinstance(raw, Mapping) or set(raw) != {"channel", "scaleId", "field", "value", "sources"}:
+            raise ValueError("encoding witness has missing or unsupported members")
+        sources = raw["sources"]
+        if not isinstance(sources, (tuple, list)):
+            raise ValueError("encoding witness sources must be an array")
+        return cls(raw["channel"], raw["scaleId"], raw["field"], raw["value"],
+                   tuple(EncodingSource.from_mapping(source) for source in sources))
+
+
+@dataclass(frozen=True)
 class StyleMatch:
     """Passive provenance for authored Style rules that treated one occurrence."""
 

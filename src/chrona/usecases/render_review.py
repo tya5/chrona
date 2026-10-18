@@ -18,7 +18,7 @@ from typing import Any, Mapping
 from chrona.usecases.previous_scene import decode_previous_scene
 
 from chrona.core.diagnostics import Diagnostic
-from chrona.usecases.diagnostic_messages import error_message
+from chrona.usecases.diagnostic_messages import encoding_contrast_detail, error_message
 from chrona.usecases.warning_ledger import RenderWarning, collect_render_warnings
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, PrimitiveProvenance
 from chrona.presentation.scene.viewer_fit import viewer_fit_fallbacks
@@ -62,6 +62,7 @@ from chrona.presentation.model.color_scale import ColorScaleError, resolve_color
 from chrona.presentation.model.color_separability import MINIMUM_CATEGORY_DELTA_E, MINIMUM_RESERVED_CHROMA, chroma, delta_e_2000
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.semantic_registry import semantic_binding
+from chrona.presentation.style import EncodingWitness
 from chrona.presentation.model.axis_color_scale import (
     AxisBandScaleError, resolve_axis_band_scales, validate_axis_band_fill_targets,
 )
@@ -203,7 +204,7 @@ class ScenePerceptibilityWarning:
 
 @dataclass(frozen=True)
 class SceneContrastWarning:
-    """One decoration finding that missed its floor or could not be judged, reported and never blocking (#995)."""
+    """One contrast finding below its floor or not judgeable, with optional encoding provenance."""
 
     code: str
     finding_code: str
@@ -212,6 +213,7 @@ class SceneContrastWarning:
     measured_facts: tuple[tuple[str, float | str], ...]
     disposition: str | None
     subjects: tuple[DiagnosticSubject, ...] = ()
+    encoding: EncodingWitness | None = None
 
 
 class ClosureReadLedger:
@@ -406,6 +408,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         gate_declared=ThemeTokenView(theme).has_role("gate"),
         style_rules=(bind_style_rules(render_closure.style.identity.id, render_closure.style.rules)
                      if render_closure.style is not None else ()),
+        view_id=render_closure.view.identity.id,
         scale_reserved=tuple(c for c in legend_colors if chroma(c) >= MINIMUM_RESERVED_CHROMA),
         scale_other_color=_other_color(theme, legend_colors))
     if render_closure.style is not None:
@@ -642,8 +645,20 @@ def _scene_contrast_warnings(
         member = policy_member_of(first) or "mark"
         ratio = f", contrast {first.contrast_ratio:.3f} against {first.floor:g}" if first.contrast_ratio is not None else ""
         more = f" and {len(blocking) - 1} more" if len(blocking) > 1 else ""
-        raise RenderFailed(first.code, f"{first.primitive_id} ({first.visual_role}){ratio}{more}; the Theme declares "
-                           f"contrastPolicy.{member}: error", "presentation", f"/body/contrastPolicy/{member}")
+        details = None
+        if first.encoding is not None:
+            detail = encoding_contrast_detail({
+                "encoding": first.encoding.as_mapping(), "contrastRatio": first.contrast_ratio,
+                "floor": first.floor, "groundId": first.ground_id, "groundKind": first.ground_kind,
+            })
+            message = f"{first.primitive_id} ({first.visual_role}): {detail}{more}; the Theme declares "
+            details = {"encoding": first.encoding.as_mapping(), "contrastRatio": first.contrast_ratio,
+                       "floor": first.floor, "groundId": first.ground_id,
+                       "paintChannel": first.paint_channel}
+        else:
+            message = f"{first.primitive_id} ({first.visual_role}){ratio}{more}; the Theme declares "
+        raise RenderFailed(first.code, message + f"contrastPolicy.{member}: error", "presentation",
+                           f"/body/contrastPolicy/{member}", details=details)
     return _contrast_warnings_from_findings(findings, provenance)
 
 
@@ -672,11 +687,16 @@ def _contrast_warnings_from_findings(
                             ("paintChannel", finding.paint_channel)):
             if value is not None:
                 facts.append((name, value))
+        if finding.encoding is not None:
+            facts.extend((name, value) for name, value in (
+                ("scaleId", finding.encoding.scale_id), ("field", finding.encoding.field),
+                ("value", finding.encoding.value)))
         warnings.append(SceneContrastWarning(
             finding.code, finding.accepted_code or WARNING_BLOCKING_CODES.get(finding.code, finding.code),
             finding.scene_path,
             (finding.primitive_id,) if finding.primitive_id is not None else (), tuple(facts), finding.disposition,
-            _finding_subjects((finding.primitive_id,) if finding.primitive_id is not None else (), provenance)))
+            _finding_subjects((finding.primitive_id,) if finding.primitive_id is not None else (), provenance),
+            finding.encoding))
     return tuple(warnings)
 
 

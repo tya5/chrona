@@ -148,8 +148,18 @@ def test_witness_optional_omission_uses_solid_identity_and_solid_override_replac
     (None, None, False, "actual", None),
 ])
 def test_fill_override_precedence_is_shared(style, legend, eligible, actual, expected):
-    assert choose_fill_override(style_fill=style, legend_fill=legend,
-                                actual_eligible=eligible, actual_fill=actual) == expected
+    selected = choose_fill_override(style_fill=style, legend_fill=legend,
+                                    actual_eligible=eligible, actual_fill=actual)
+    assert (selected.color if selected is not None else None) == expected
+    if selected is not None:
+        assert selected.source == expected
+
+
+def test_equal_override_colours_retain_selected_origin():
+    selected = choose_fill_override(style_fill="#123456", legend_fill="#123456",
+                                    actual_eligible=True, actual_fill="#123456")
+    assert selected.color == "#123456"
+    assert selected.source == "legend"
 
 
 def test_witness_identity_uses_effective_glyph_channels_not_replaced_role_channels():
