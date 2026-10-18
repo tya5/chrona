@@ -93,7 +93,7 @@ def place_vertical_label_fit(*, label: str, placement_prefix: str, source_ref: s
         while prefix and extent(segment_vertical(prefix) + marker) > available_block:
             prefix = prefix[:-1]
         if extent(marker) > available_block:
-            overflow = "visible-overflow"  # not even the marker fits: show the whole label and say so
+            overflow = "suppressed"  # not even the marker fits: the tag gives way entirely (#1726), never crossing its lane
         else:
             segments, overflow = segment_vertical(prefix) + marker, "ellipsized"
     centre = column_inline + column_size / 2
@@ -119,6 +119,9 @@ def place_vertical_label_fit(*, label: str, placement_prefix: str, source_ref: s
                                 orientation="rotate-cw", **common)
             bounds = Rect(Decimal(str(centre - line_box / 2)), Decimal(str(cursor)), Decimal(str(line_box)),
                           Decimal(str(step)))
-        placements.append(replace(placed, bounds=bounds))
+        placed = replace(placed, bounds=bounds)
+        if overflow == "suppressed":
+            placed = replace(placed, required=False, selected_rung="suppress")
+        placements.append(placed)
         cursor += step + spacing
     return VerticalLabel(tuple(placements), required, available_block)

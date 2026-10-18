@@ -176,7 +176,27 @@ def prepare_table_header_seed(*, request: SurfaceLayoutRequest, table: SlotPlace
                                   tuple(header_text), tuple(cell_indents.items()), extent, bounded)
 
 
-def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | None = None) -> SurfaceTablePlacements:
+def _full_path_cells(request: Any, rows: Any, tag_suppressed_groups: frozenset[str]) -> dict[tuple[str, str], str]:
+    """The full source path of each path cell whose group tag gave way, so the covered ancestor name stays drawn (#1726)."""
+    content = request.surface_content
+    path_columns = {item.column_id for item in content.table_columns if item.column_source == "path"}
+    group_of = {item.row_id: item.group_id for item in rows} | {item.object_id: item.group_id for item in rows}
+    full: dict[tuple[str, str], str] = {}
+    for cell in content.table_cells:
+        if cell.column_id not in path_columns or group_of.get(cell.object_id) not in tag_suppressed_groups:
+            continue
+        key = cell.style_key
+        for name_key, value in content.member_names.items():
+            if (key is not None and not name_key[4] and name_key[3] == key.subject_id and name_key[0] == key.source_kind
+                    and name_key[2] == (key.member_id or key.subject_id)):
+                if value != cell.content:
+                    full[(cell.object_id, cell.column_id)] = value
+                break
+    return full
+
+
+def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | None = None,
+                  tag_suppressed_groups: frozenset[str] = frozenset()) -> SurfaceTablePlacements:
     """Place columns and table text from the completed row/slot geometry."""
     request = base.request
     tokens, font_metrics = _table_resources(request)
@@ -199,8 +219,11 @@ def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | N
                     if seed.bounded_table is not None else {})
 
     row_by_subject = {item.row_id: item for item in rows} | {item.object_id: item for item in rows}
+    full_paths = _full_path_cells(request, rows, tag_suppressed_groups) if tag_suppressed_groups else {}
     for cell in cells:
         object_id, column_id, content, typography_role = cell.object_id, cell.column_id, cell.content, cell.typography_role
+        if (object_id, column_id) in full_paths:
+            content = full_paths[(object_id, column_id)]
         row = row_by_subject.get(object_id)
         position = positions.get(column_id)
         if row is not None and position is not None and column_id in column_intents:
@@ -208,7 +231,7 @@ def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | N
             indent = ((cell_indents.get(object_id, 0) if seed.bounded_table is not None else cell_indents[object_id])
                       if column_id == request.surface_content.table_hierarchy_column else 0)
             available = max(0.0, column_widths[column_id] - indent - body_size)
-            closed = closed_cells.get((object_id, column_id))
+            closed = None if (object_id, column_id) in full_paths else closed_cells.get((object_id, column_id))
             if closed is not None:
                 resolved, overflow = closed.fit.content, "ellipsized" if closed.fit.ellipsized else "fit"
             else:

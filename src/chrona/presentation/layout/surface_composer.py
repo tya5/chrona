@@ -115,16 +115,18 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     by_source = {slot.source_ref: slot for slot in slots}
     text.extend(detail_panel_text)
     text.extend(headings.text)
-    table_batch = compose_table(base, seed=table_seed)
-    column_placements = table_batch.columns
-    text.extend(table_batch.text)
-    table_rule_shapes = table_batch.shapes
     group_batch = compose_group_presentation(
         request=request, rows=rows, review_rows=review_rows, groups=groups, body_size=body_size,
         tag_column=(base.table_bounds[0], base.group_tag_inline_size) if base.group_tag_inline_size else None,
         text_end_limit=(Decimal(str(base.table_bounds[0])) + Decimal(str(base.table_bounds[2]))
                         if base.layout_manifest.background_extents.get("groupHeaderBand") in {"text", "table"}
                         else None))
+    # A group whose vertical tag gave way keeps its name in the path column (#1726).
+    table_batch = compose_table(base, seed=table_seed, tag_suppressed_groups=frozenset(
+        item.source_ref for item in group_batch.warnings if item.behaviour == "suppress-with-source"))
+    column_placements = table_batch.columns
+    text.extend(table_batch.text)
+    table_rule_shapes = table_batch.shapes
     text.extend(group_batch.text)
     shapes: list[ShapePlacement] = []
     shapes.extend(compose_row_group_backgrounds(
