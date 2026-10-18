@@ -88,12 +88,16 @@ def reserve_text_visuals(*, typography_role: str, font_size: float,
 def place_text_visuals(text: tuple[TextPlacement, ...], request: SurfaceLayoutRequest, *,
                        handled_sources: set[str] | None = None,
                        axis_label_targets: Mapping[tuple[str, str, str], str] | None = None,
+                       legend_label_targets: tuple[tuple[str, str], ...] = (),
                        pre_reserved_placements: frozenset[str] = frozenset()) -> SurfaceTextVisuals:
     """Complete text and hosted icon geometry without depending on Scene or catalog."""
     handled_sources = handled_sources or set()
     placed_text = list(text)
     requested: dict[str, dict[str, Any]] = {}
     occupied: set[tuple[str, str]] = set()
+    legend_targets: dict[str, list[str]] = {}
+    for role, placement_id in legend_label_targets:
+        legend_targets.setdefault(role, []).append(placement_id)
     for visual in request.visual_requests:
         if visual.target_kind == "mark" or visual.source_ref in handled_sources:
             continue
@@ -101,15 +105,22 @@ def place_text_visuals(text: tuple[TextPlacement, ...], request: SurfaceLayoutRe
         if visual.target_kind == "axis-band":
             continue
         axis_key = (visual.target_kind, selector.get("level", ""), selector.get("index", ""))
-        placement_id = (selector.get("placementId") or (axis_label_targets or {}).get(axis_key)
-                        or visual_target_placement_id(visual.target_kind, selector))
-        key = (placement_id, visual.side)
-        if key in occupied:
-            raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", visual.source_ref)
-        occupied.add(key)
+        if visual.target_kind == "legend" and "role" in selector and "placementId" not in selector:
+            placement_ids = tuple(legend_targets.get(selector["role"], ()))
+            if not placement_ids:
+                placement_ids = (visual_target_placement_id(visual.target_kind, selector),)
+        else:
+            placement_ids = ((selector.get("placementId") or (axis_label_targets or {}).get(axis_key)
+                              or visual_target_placement_id(visual.target_kind, selector)),)
+        for placement_id in placement_ids:
+            key = (placement_id, visual.side)
+            if key in occupied:
+                raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", visual.source_ref)
+            occupied.add(key)
         if visual.ref is None:
             raise LayoutError("E_LAYOUT_VISUAL_TARGET", visual.source_ref)
-        requested.setdefault(placement_id, {})[visual.side] = visual
+        for placement_id in placement_ids:
+            requested.setdefault(placement_id, {})[visual.side] = visual
     icons: list[IconPlacement] = []
     warnings: list[FitWarning] = []
     surface_content = getattr(request, "surface_content", None)

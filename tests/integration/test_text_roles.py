@@ -16,7 +16,7 @@ from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
 
 DETAIL = {"version": "chrona/review-detail-profile/v0.1", "id": "legend-detail", "body": {"legend": [
-    {"role": "planned", "label": "Planned"}, {"role": "actual", "label": "Actual"}]}}
+    {"role": "planned", "label": "Planned"}]}}
 
 
 def _column(column_id, source, **extra):
@@ -124,7 +124,7 @@ def test_the_legend_labels_all_carry_the_declared_ink(tmp_path):
     muted = _render(_sub(tmp_path, "muted"), declare=False, legend_fill="textMuted")
     labels = [item for item in muted.surface.primitives if item.purpose == "legend-label"]
     base = [item for item in plain.surface.primitives if item.purpose == "legend-label"]
-    assert len(labels) == 2 == len(base)
+    assert len(labels) == 1 == len(base)
     assert {item.visual_role for item in labels} == {"legend"} and {item.visual_role for item in base} == {"text"}
     assert {item.paint.fill for item in labels} != {item.paint.fill for item in base}
     assert [item.bounds for item in labels] == [item.bounds for item in base]  # colour moves nothing

@@ -11,8 +11,9 @@ from chrona.presentation.model.axis_color_scale import AxisBandFillSpec
 from chrona.presentation.model.date_basis import DisplayDateRange
 from chrona.presentation.model.placement_candidates import PlacementCandidate
 from chrona.presentation.model.projection import ObservationState, ReviewItem, display_finish_delta
-from chrona.presentation.model.style_rules import OccurrenceStyleIndex, StyleMatchIndex, StyleOccurrenceKey
+from chrona.presentation.model.style_rules import OccurrenceStyleIndex, StyleMatchIndex, StyleOccurrenceKey, StyleOccurrence
 from chrona.presentation.model.style_fills import StyleFillIndex
+from chrona.presentation.model.legend_paint import RealizedLegendKey
 from chrona.presentation.style import StyleLegendScope
 
 
@@ -229,6 +230,7 @@ class SurfaceLegendEntry:
     style_scope: StyleLegendScope | None = None
     style_value: str | None = None
     style_occurrences: tuple[StyleOccurrenceKey, ...] = ()
+    realized_key: RealizedLegendKey | None = None
 
     def __post_init__(self) -> None:
         if self.style_scope is not None:
@@ -241,15 +243,21 @@ class SurfaceLegendEntry:
 
     @property
     def source_identity(self) -> str:
+        if self.realized_key is not None:
+            return self.realized_key.key_id
         return self.source_ref if self.source_ref is not None else self.role
 
     @property
     def text_placement_id(self) -> str:
+        if self.realized_key is not None:
+            return f"legend:{self.realized_key.key_id}"
         return (f"legend-period:{self.source_ref}" if self.source_ref is not None
                 else f"legend:{self.role}")
 
     @property
     def swatch_placement_id(self) -> str:
+        if self.realized_key is not None:
+            return f"legend-swatch:{self.realized_key.key_id}"
         return (f"legend-period-swatch:{self.source_ref}" if self.source_ref is not None
                 else f"legend-swatch:{self.role}")
 
@@ -330,6 +338,9 @@ class SurfaceContentInput:
     style_intents: OccurrenceStyleIndex = field(default_factory=OccurrenceStyleIndex)
     # Authored Style treatment provenance only; Layout joins by exact occurrence.
     style_matches: StyleMatchIndex = field(default_factory=StyleMatchIndex)
+    legend_wording: tuple[tuple[str, str], ...] = ()
+    legend_mark_occurrences: tuple[StyleOccurrence, ...] = ()
+    legend_progress_possible: bool = False
 
 
 @dataclass(frozen=True)

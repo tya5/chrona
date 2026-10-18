@@ -18,6 +18,11 @@ DETAIL = {
         {"role": "actual", "label": "Observed work"},
     ]},
 }
+ACTUAL = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "transformed-legend-actual",
+          "body": {"asOf": "2026-03-20", "observations": [
+              {"id": "t0-actual", "sequence": 1, "projectObjectId": "t0",
+               "actual": {"start": "2026-01-05", "finish": "2026-01-25"}},
+          ]}}
 
 
 def _uppercase_compressed_theme(parts):
@@ -199,9 +204,13 @@ def test_transformed_legend_grid_and_start_column_close_drawn_bounds(tmp_path, m
         "heading": {"text": "Review key", "block": "start-column"},
     })
     rendered = sr.render(tmp_path, ak.project(text="A synthetic note."),
-                         presentation=parts, detail=DETAIL, viewport=(1500, 900))
+                         presentation=parts, detail=DETAIL, actual=ACTUAL, viewport=(1500, 900))
     primitives = {item.scene_id: item for item in rendered.surface.primitives}
-    for identity in ("legend:planned", "legend:actual", "slot-heading:legend"):
+    actual_swatch = next(item for item in rendered.surface.primitives
+                         if item.purpose == "legend-swatch" and item.visual_role == "actual")
+    actual_label = next(item for item in rendered.surface.primitives
+                        if item.purpose == "legend-label" and item.source_ref == actual_swatch.source_ref)
+    for identity in ("legend:planned", actual_label.scene_id, "slot-heading:legend"):
         placement = placements[identity]
         tokens, metrics = resources[identity]
         assert placement.text_transform == "uppercase"
@@ -213,8 +222,7 @@ def test_transformed_legend_grid_and_start_column_close_drawn_bounds(tmp_path, m
     caption = primitives["slot-heading:legend"]
     first = next(item for item in rendered.surface.primitives
                  if item.scene_id.startswith("legend-swatch:planned"))
-    second = next(item for item in rendered.surface.primitives
-                  if item.scene_id.startswith("legend-swatch:actual"))
+    second = actual_swatch
     label = primitives["legend:planned"]
     assert first.bounds[0] == pytest.approx(
         caption.bounds[0] + caption.bounds[2]

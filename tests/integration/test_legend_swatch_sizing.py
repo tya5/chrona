@@ -14,6 +14,11 @@ from tests.support import synthetic_review as sr
 
 ROLES = ("planned", "milestone", "calendar-closed", "actual")
 LABELS = {"planned": "Planned", "milestone": "Gate", "calendar-closed": "Non-working", "actual": "Actual"}
+ACTUAL = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "legend-sizing-actual",
+          "body": {"asOf": "2026-03-20", "observations": [
+              {"id": "a-actual", "sequence": 1, "projectObjectId": "a",
+               "actual": {"start": "2026-02-02", "finish": "2026-02-28"}},
+          ]}}
 DETAIL = {"version": "chrona/review-detail-profile/v0.1", "id": "legend-detail",
           "body": {"legend": [{"role": role, "label": LABELS[role]} for role in ROLES]}}
 
@@ -43,7 +48,7 @@ def _render(tmp_path, *, direction="inline", slot_gap=None, swatch_gap=None, are
     source = sr.with_calendar(sr.project({"a": sr.span("a", date(2026, 2, 2), 30),
                                            **({"g": sr.point("g", date(2026, 3, 9))} if gates else {})}))
     detail = {**DETAIL, "body": {"legend": [{"role": item, "label": LABELS[item]} for item in roles]}}
-    return sr.render(tmp_path, source, presentation=parts, detail=detail)
+    return sr.render(tmp_path, source, presentation=parts, detail=detail, actual=ACTUAL)
 
 
 def _sub(tmp_path, name):
@@ -57,8 +62,15 @@ def _entries(rendered):
     primitives = rendered.surface.primitives
     found = {}
     for role in ROLES:
-        swatch = next((item for item in primitives if item.scene_id.startswith(f"legend-swatch:{role}")), None)
-        label = next((item for item in primitives if item.scene_id == f"legend:{role}"), None)
+        if role == "actual":
+            swatch = next((item for item in primitives
+                           if item.purpose == "legend-swatch" and item.visual_role == "actual"), None)
+            label = next((item for item in primitives
+                          if item.purpose == "legend-label" and swatch is not None
+                          and item.source_ref == swatch.source_ref), None)
+        else:
+            swatch = next((item for item in primitives if item.scene_id.startswith(f"legend-swatch:{role}")), None)
+            label = next((item for item in primitives if item.scene_id == f"legend:{role}"), None)
         if swatch is not None and label is not None:
             found[role] = (swatch.bounds, label.bounds)
     return found
