@@ -5,20 +5,17 @@ description: Plan a project timeline, Gantt chart, roadmap slide, milestone sche
 
 # chrona
 
-Chrona turns a YAML plan into a computed schedule and a picture. You write and edit the
-plan; the `chrona` command computes every date and draws every pixel, always in the same
-design, so a changed picture means a changed plan.
+Chrona turns a YAML plan into a computed schedule and picture. Edit the plan; `chrona`
+computes every date and draws it consistently, so a changed picture means a changed plan.
 
 ## When to use it
 
 - Dates must be right: durations in working days, a holiday calendar, dependencies, lags.
 - The plan will be edited and re-rendered, or a reviewer will diff the result.
-- The plan will be updated as work progresses, and each revision compared with the earlier
-  plan and with actual progress.
+- Each revision will be compared with the earlier plan and actual progress.
 
-For a quick sketch inside a README or pull request, or for a decorative one-off picture,
-read [references/mermaid-or-chrona.md](references/mermaid-or-chrona.md) first. Chrona is
-the wrong tool there, and the file says so honestly.
+For a README/PR sketch or decorative one-off, read
+[references/mermaid-or-chrona.md](references/mermaid-or-chrona.md) first: Chrona is the wrong tool.
 
 ## Rules that cost the most when broken
 
@@ -110,12 +107,11 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 | `apply_command` | `chrona command-apply` | Applies that command to the Store. It runs only if the user started the server with `--allow-write`. |
 | `apply_authoring_command` | `chrona authoring-command-apply` | Applies an authoring command file to a guided workspace; requires `--allow-write`. |
 
-For a standalone plan, edit `project.yaml` yourself. For a guided workspace, use
-`apply_authoring_command` with workspace and command paths. `apply_command` changes
-a Store, never the standalone plan. Neither writer has an approval step: apply only
-what the user asked for. A stale `baseRevision` is rejected; an exact accepted
-`commandId` retry returns its durable result without writing, and an ID reused for
-another request is rejected. Obtain a workspace base with `chrona workspace revision`.
+Edit standalone `project.yaml` directly; use `apply_authoring_command` with workspace
+and command paths for guided workspaces, and `apply_command` for Stores, never standalone plans.
+Apply only the user's request; writers have no approval step. Get `baseRevision` with
+`chrona workspace revision`. Stale bases and IDs reused for different requests are rejected;
+an exact accepted `commandId` retry returns its durable result without writing.
 
 ## The model in five lines
 
