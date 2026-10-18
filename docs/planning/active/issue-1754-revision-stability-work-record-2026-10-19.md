@@ -308,10 +308,18 @@ failure, but its timing guard failed (75.4s > 60s while focused render tests
 ran concurrently). The limit is unchanged; CI must supply the authoritative
 isolated conformance gate. No local full pytest is run.
 
-Integrated release remains pending. Trial-8 week 5 deliberately requests
-forecast and includes baseline-new objects, the separately assigned B issue
-1755. Preserve those commands and report any failure; do not omit forecast or
-edit the inputs to satisfy this issue. Run plain/hinted variants in three
-independent design pipelines with weekly hint chains, reusing identical week-1
-outputs. Post all measured rows, including unavailable week-5 evidence if
-1755 has not landed; that dependency does not waive literal acceptance.
+Integrated source is based on ready main
+`bd6898017e3314bcfaffa3432d977d9a0f00fdd2`. The trial batch completed weeks
+1–4 with three independent design pipelines and weekly hint chains, reusing
+identical week-1 outputs. All six week-5 commands retain forecast and fail
+`E_FORECAST_BASELINE_UNAVAILABLE: be-ratelimit`, dependent on B issue 1755.
+Same-candidate raw changed primitives total 667 plain versus 670 hinted;
+row-normalized changes total 56 versus 54. Do not claim uniform improvement or
+waive literal acceptance. Target-b has accepted hint receipts in every
+available hinted week. The issue Status publishes the comparison table.
+The [acceptance review](../../reviews/current/issue-1754-revision-stability-acceptance-review-2026-10-19.md)
+records residual route-driven label changes and through-mark findings, actual
+PNG inspection, pending public snapshot/CI, and every literal criterion.
+Publish the independent implementation as one PR; leave this issue open for
+the full trial and release gates. No trial/preset data or forecast command is
+changed to satisfy the criterion.
