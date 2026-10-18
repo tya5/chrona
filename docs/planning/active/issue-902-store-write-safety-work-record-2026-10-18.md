@@ -174,3 +174,21 @@ Retain all item5 concurrency tests. Inspect any generated schema/inventory
 evidence with its source and compare public artifact changes as a batch. Return
 to design on a history/schema/ownership discrepancy. Item3 acceptance is the
 literal row above; item2 and owner-parked requirements remain open.
+
+### Item3 current implementation evidence
+
+WIP implementation `c2984c018` follows design `a79ab0307` and plan `504478877`.
+It is not merged or release-accepted. Independent review closed normalized
+optional target identities, shared check/apply ancestry, malformed history,
+snapshot/no-op classification and missing schema-packaging tests. Retained
+requests are parsed against their closed schema and checked against their ledger
+key as well as their hash; no unknown payload can silently become redo intent.
+
+Focused batches (overlap, not summed): operational/command/tool/CLI/process223;
+agent registry/Store reads293; final history/tool/concurrency64; schema/ledger61;
+retirement/packaging45; adapter10; real history MCP/CLI-pointer batch5.
+Schema equivalence passes with one declared v0.4 addition and three proven stale
+S2 deltas retired; the five reported invalid documents are unchanged baseline
+findings. Imports11 packages/37 edges inward. No public render policy/source
+or canonical generated outputs changed. Remaining: current-main integration,
+final CI/public evidence and exact-main release after item5 publication.

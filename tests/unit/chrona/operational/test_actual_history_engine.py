@@ -258,4 +258,3 @@ def test_cyclic_redo_revert_ancestry_rejects_check_and_apply_without_writes(tmp_
     assert checked["diagnostics"][0]["code"] == "E_COMMAND_HISTORY_UNAVAILABLE"
     assert applied["diagnostics"][0]["code"] == "E_COMMAND_HISTORY_UNAVAILABLE"
     assert after == before
-
