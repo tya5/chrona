@@ -18,7 +18,7 @@ from chrona.presentation.model.semantic_registry import (
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.info_diagnostics import PaintOmission
-from chrona.presentation.model.theme_paint import ThemePaintError, mark_paint_family
+from chrona.presentation.model.theme_paint import ThemePaintError, choose_fill_override, mark_paint_family
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, PrimitiveProvenance, review_row_subjects
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, ThemeTokenView
 from chrona.presentation.scene.pattern_geometry import pattern_geometry, project_pattern_placement
@@ -389,13 +389,16 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
         if not admission.admitted:
             return None, admission.omissions
     family = _paint_family(primitive, tokens, paint_role=paint_role)
-    fill_override = style_fill_override
-    if primitive.source_kind == "legend":
-        fill_override = scale_legend_paints.get(primitive.source_ref, fill_override)
-    if (fill_override is None and actual_variance_paints is not None
-            and primitive.theme_role is None and primitive.purpose == "actual" and paint_role == "actual"
-            and family != PaintFamily.OUTLINE):
-        fill_override = actual_variance_paints.get(primitive.source_ref)
+    actual_eligible = (actual_variance_paints is not None and primitive.theme_role is None
+                       and primitive.purpose == "actual" and paint_role == "actual"
+                       and family != PaintFamily.OUTLINE)
+    fill_override = choose_fill_override(
+        style_fill=style_fill_override,
+        legend_fill=(scale_legend_paints.get(primitive.source_ref)
+                     if primitive.source_kind == "legend" else None),
+        actual_eligible=actual_eligible,
+        actual_fill=(actual_variance_paints or {}).get(primitive.source_ref),
+    )
     resolution = resolve_scene_paint(tokens, paint_role, family,
                                      visual_profile=visual_profile, gradient_bounds=primitive.bounds,
                                      fill_override=fill_override,
