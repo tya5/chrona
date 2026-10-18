@@ -39,7 +39,8 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
             return original(*args, **kwargs)
         return wrapper
 
-    for attribute, name in (("place_legend", "legend"), ("place_notes", "notes"), ("place_summary", "summary")):
+    for attribute, name in (("reserve_potential_legend", "legend"), ("place_notes", "notes"),
+                            ("place_summary", "summary"), ("recompose_realized_legend", "realized-legend")):
         monkeypatch.setattr(surface_composer, attribute, spy(name, getattr(surface_composer, attribute)))
     for attribute, name in (("compose_surface_routes", "routes"), ("place_relation_labels", "relation-labels")):
         original = getattr(surface_route_label_plan, attribute)
@@ -137,7 +138,8 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
     main()
 
     assert events[:2] == ["legend", "summary"]  # #1649: no notes, no notes phase
-    assert events[2:] in (["annotations"], ["annotations", "annotations"])
+    assert events[2:] in (["annotations", "realized-legend"],
+                          ["annotations", "annotations", "realized-legend"])
     probes = [(identity, ids) for name, identity, ids, reserve_only in trial_events
               if name == "member-labels" and reserve_only]
     route_trials = [(identity, ids) for name, identity, ids, _ in trial_events if name == "routes"]

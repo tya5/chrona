@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
+
 from chrona.presentation.scene.capabilities import (
     DROP_SHADOW,
     GLOW,
@@ -56,6 +58,13 @@ class VisualProfile:
     target_kind: str
     capabilities: frozenset[str]
     optional_omission: bool
+
+
+def paint_witness_capabilities(profile: VisualProfile | None) -> PaintWitnessCapabilities:
+    """Close only the neutral ink admission needed before Scene projection."""
+    return (PaintWitnessCapabilities() if profile is None else PaintWitnessCapabilities(
+        gradient_supported=LINEAR_GRADIENT in profile.capabilities,
+        optional_gradient_omission=profile.optional_omission))
 
 
 def visual_capability_message(diagnostic_id: str, capability: str | None = None) -> str:

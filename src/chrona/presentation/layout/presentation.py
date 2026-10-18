@@ -369,7 +369,9 @@ def _row_track_pitch(review_row: Any, mark_block_size: float,
             for item in review_row.items
             if (frame := occurrence_frames.get(_occurrence_frame_key(review_row, item))) is not None
         )))
-    return pitch
+    # A key-row lane is at least as tall as the labels it holds (#1681).
+    return max([pitch] + [value for value in (getattr(item, "key_pitch", None) for item in review_row.items)
+                          if value is not None])
 
 
 def required_row_block_extents(*, review_rows: tuple[Any, ...], row_minimum: float,

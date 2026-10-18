@@ -18,7 +18,7 @@ from chrona.presentation.model.semantic_registry import (
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.info_diagnostics import PaintOmission
-from chrona.presentation.model.theme_paint import ThemePaintError, mark_paint_family
+from chrona.presentation.model.theme_paint import ThemePaintError, choose_fill_override, mark_paint_family
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, PrimitiveProvenance, review_row_subjects
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, ThemeTokenView
 from chrona.presentation.scene.pattern_geometry import pattern_geometry, project_pattern_placement
@@ -38,6 +38,7 @@ from chrona.presentation.scene.stroke_wobble import (
     MAX_OUTLINE_POINTS, WobbleLimitError, complete_path_wobble, complete_rect_wobble,
 )
 from chrona.presentation.scene.visual_capabilities import VisualProfile
+from chrona.presentation.model.theme_paint import ThemePaintWitness
 
 
 class SceneBuildError(ValueError):
@@ -189,6 +190,30 @@ def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose
             for index, part in enumerate(completed_parts)]
 
 
+def _completed_legend_paints(shapes: tuple[Any, ...], marks: tuple[Any, ...]) -> dict[str, ThemePaintWitness]:
+    """Bind Layout's exact completed legend witness to each emitted Scene primitive ID."""
+    paints = {shape.placement_id: shape.legend_paint for shape in shapes if shape.legend_paint is not None}
+    for mark in marks:
+        if not mark.legend_paints:
+            continue
+        primitive_ids = completed_symbol_primitive_ids(mark.placement_id, mark.symbol_parts)
+        if len(primitive_ids) != len(mark.legend_paints):
+            raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", mark.placement_id,
+                                  "completed legend paint count differs from symbol part count")
+        for primitive_id, paint in zip(primitive_ids, mark.legend_paints, strict=True):
+            if primitive_id in paints:
+                raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", primitive_id,
+                                      "duplicate completed legend paint identity")
+            paints[primitive_id] = paint
+    return paints
+
+
+def _legend_mark_role(mark: Any, tokens: ThemeTokenView) -> str:
+    """Use Layout's closed role for composite keys; preserve the ordinary key fallback."""
+    return mark.theme_role or resolve_point_paint_role(mark.source_ref,
+        gate_declared=tokens.has_role("gate"), legend=True)
+
+
 def _completed_host_primitive(scene_id: str, source_ref: str, source_kind: str,
                               purpose: str, visual_role: str, bounds: tuple[float, float, float, float],
                               placement: Any, **shared: Any) -> ScenePrimitive:
@@ -253,7 +278,8 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
                             group_tints: Mapping[str, str] | None = None,
                             annotation_kind_paints: Mapping[str, str] | None = None,
                             axis_band_paints: Mapping[str, str] | None = None,
-                            actual_variance_paints: Mapping[str, str] | None = None) -> SceneSurface:
+                            actual_variance_paints: Mapping[str, str] | None = None,
+                            legend_paints: Mapping[str, ThemePaintWitness] | None = None) -> SceneSurface:
     """Attach the sole adapter-ready paint payload to every completed primitive."""
     # Layer admission has already happened at the typed placement boundary.
     # Keep the existing canvas/artwork/part omission order and deduplication.
@@ -267,7 +293,8 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
             primitive, tokens, visual_profile,
             (style_fill_overrides or {}).get(primitive.scene_id), scale_legend_paints or {},
             group_tints or {}, surface.canvas_bounds or (0.0, 0.0, *viewport), annotation_kind_paints or {},
-            clip_hosts, axis_band_paints or {}, actual_variance_paints or {}))
+            clip_hosts, axis_band_paints or {}, actual_variance_paints or {},
+            (legend_paints or {}).get(primitive.scene_id)))
                          for primitive in surface.primitives)
         canvas = resolve_scene_paint(tokens, "background", PaintFamily.CANVAS,
                                      visual_profile=visual_profile,
@@ -364,10 +391,14 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
                               clip_hosts: frozenset[str] = frozenset(),
                               axis_band_paints: Mapping[str, str] = {},
                               actual_variance_paints: Mapping[str, str] | None = None,
+                              legend_paint: ThemePaintWitness | None = None,
                               ) -> tuple[ScenePrimitive | None, tuple[PaintOmission, ...]]:
     if primitive.legend_swatch_shape is not None:
+        key_channels = legend_paint.effective_channels if legend_paint is not None else None
         paint = resolve_legend_shape_paint(tokens, primitive.visual_role, primitive.legend_swatch_shape,
-                                           fill_override=scale_legend_paints.get(primitive.source_ref))
+                                           fill_override=(key_channels.fill or key_channels.stroke
+                                                          if key_channels is not None else
+                                                          scale_legend_paints.get(primitive.source_ref)))
         return replace(primitive, paint=paint, legend_swatch_shape=None), ()
     if primitive.visual_role == AS_OF_CONE_ROLE:
         # The cone's paint is its gradient; a profile that cannot paint one omits the whole cone (#890).
@@ -389,14 +420,18 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
         if not admission.admitted:
             return None, admission.omissions
     family = _paint_family(primitive, tokens, paint_role=paint_role)
-    fill_override = style_fill_override
-    if primitive.source_kind == "legend":
-        fill_override = scale_legend_paints.get(primitive.source_ref, fill_override)
-    if (fill_override is None and actual_variance_paints is not None
-            and primitive.theme_role is None and primitive.purpose == "actual" and paint_role == "actual"
-            and family != PaintFamily.OUTLINE):
-        fill_override = actual_variance_paints.get(primitive.source_ref)
+    actual_eligible = (actual_variance_paints is not None and primitive.theme_role is None
+                       and primitive.purpose == "actual" and paint_role == "actual"
+                       and family != PaintFamily.OUTLINE)
+    fill_override = choose_fill_override(
+        style_fill=style_fill_override,
+        legend_fill=(scale_legend_paints.get(primitive.source_ref)
+                     if primitive.source_kind == "legend" else None),
+        actual_eligible=actual_eligible,
+        actual_fill=(actual_variance_paints or {}).get(primitive.source_ref),
+    )
     resolution = resolve_scene_paint(tokens, paint_role, family,
+                                     completed_witness=legend_paint,
                                      visual_profile=visual_profile, gradient_bounds=primitive.bounds,
                                      fill_override=fill_override,
                                      glow_extent=_visible_extent(primitive), canvas_bounds=canvas,
@@ -478,7 +513,10 @@ def project_review_surface(value: SceneBuildInput) -> SceneSurface:
                                        group_tints=dict(value.surface_content.group_tints),
                                        annotation_kind_paints=dict(value.surface_content.annotation_kind_paints),
                                        axis_band_paints=dict(value.surface_content.axis_band_paints),
-                                       actual_variance_paints=dict(value.surface_content.actual_variance_paints))
+                                       actual_variance_paints=dict(value.surface_content.actual_variance_paints),
+                                       legend_paints=_completed_legend_paints(
+                                           value.completion.placement.shapes,
+                                           value.completion.placement.marks))
     if surface == "dependency-network":
         return _complete_surface_paint(_compose_dependency_network_surface(value), value.theme_tokens, value.visual_profile, value.viewport)
     raise SceneBuildError("E_PRESENTATION_SURFACE_UNSUPPORTED", "/projection/surface")
@@ -973,8 +1011,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput,
             # A legend key is a miniature of the chart's own gate, including a
             # Theme-bound multi-part glyph (#427, #464).
             primitives.extend(_symbol_primitives(mark.placement_id, mark.source_ref, "legend", legend_binding.purpose,
-                                                 resolve_point_paint_role(mark.source_ref,
-                                                     gate_declared=value.theme_tokens.has_role("gate"), legend=True),
+                                                 _legend_mark_role(mark, value.theme_tokens),
                                                  bounds, mark.symbol_parts,
                                                  corner_radius=mark.corner_radius, slot_id=mark.slot_id,
                                                  paint_order=mark.paint_order))
