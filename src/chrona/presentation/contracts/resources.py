@@ -524,6 +524,7 @@ class ReviewDetailInput:
     milestones: tuple[str, ...]
     legend: tuple[LegendEntry, ...]
     observations: FrozenDict | None
+    unkeyed_legend_roles: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -1622,7 +1623,8 @@ def _review_detail_input(body: FrozenDict) -> ReviewDetailInput:
                                                str(item["sourceRef"]) if "sourceRef" in item else None,
                                                str(item["swatchShape"]) if "swatchShape" in item else None)
                                    for item in body.get("legend", ())),
-                             body.get("observations"))
+                             body.get("observations"),
+                             tuple(str(item) for item in body.get("unkeyedLegendRoles", ())))
 
 
 def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> ResourceContract:

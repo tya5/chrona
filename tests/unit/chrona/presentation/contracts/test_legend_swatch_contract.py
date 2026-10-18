@@ -12,7 +12,7 @@ def _detail(entries):
     value = {
         "version": "chrona/review-detail-profile/v0.1",
         "id": "legend-detail",
-        "body": {"legend": entries},
+        "body": entries if isinstance(entries, dict) else {"legend": entries},
     }
     return parse_contract(
         ClosureIdentity("review-detail-profile", value["id"], "r", "sha256:" + "a" * 64), value,
@@ -52,6 +52,25 @@ def test_detail_swatch_shape_rejects_values_outside_the_shared_closed_vocabulary
         _detail([{"role": "planned", "label": "Planned", "swatchShape": "triangle"}])
     assert raised.value.violation is not None
     assert raised.value.violation.pointer == "/body/legend/0/swatchShape"
+
+
+def test_unkeyed_default_legend_roles_are_closed_and_typed():
+    detail = _detail({
+        "groupDetails": [{"groupId": "g", "label": "Group", "description": "Info"}],
+        "unkeyedLegendRoles": ["snapshot", "deadlineMark"],
+    })
+    assert detail.detail.unkeyed_legend_roles == ("snapshot", "deadlineMark")
+    assert _detail({"groupDetails": [{"groupId": "g", "label": "Group", "description": "Info"}]}) \
+        .detail.unkeyed_legend_roles == ()
+
+
+@pytest.mark.parametrize("roles", (["snapshot", "snapshot"], ["planned"]))
+def test_unkeyed_default_legend_roles_reject_duplicates_and_unknown_roles(roles):
+    with pytest.raises(SchemaContractError) as raised:
+        _detail({"groupDetails": [{"groupId": "g", "label": "Group", "description": "Info"}],
+                 "unkeyedLegendRoles": roles})
+    assert raised.value.violation is not None
+    assert raised.value.violation.pointer.startswith("/body/unkeyedLegendRoles")
 
 
 def test_theme_default_swatch_shape_uses_the_shared_closed_vocabulary():
