@@ -83,11 +83,13 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
         for surface in scene.surfaces for primitive in surface.primitives)
     has_encoding_metadata = any(primitive.encoding is not None
                                 for surface in scene.surfaces for primitive in surface.primitives)
+    has_mark_ground_metadata = any(primitive.mark_ground is not None
+                                   for surface in scene.surfaces for primitive in surface.primitives)
     return {
         "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale
                     or has_runs or has_fit or has_marker_axis or has_stroke_clip or has_paint_clip
                     or has_relation_endpoint_identity or has_window_absences or has_style_semantic_metadata
-                    or has_style_provenance_metadata or has_encoding_metadata
+                    or has_style_provenance_metadata or has_encoding_metadata or has_mark_ground_metadata
                     else "chrona/scene/v0.6"),
         "kind": "scene",
         "provenance": {
@@ -713,6 +715,7 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
                          "showScope": item.legend_scope.show_scope}
                         if item.legend_scope is not None else None),
         "encoding": item.encoding.as_mapping() if item.encoding is not None else None,
+        "markGround": item.mark_ground,
         "text": item.text, "baseline": _point(item.baseline) if item.baseline is not None else None,
         "textLayout": _text_layout(item.text_layout) if item.text_layout is not None else None,
         "paint": _paint(item.paint) if item.paint is not None else None,

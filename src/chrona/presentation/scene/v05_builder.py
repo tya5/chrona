@@ -408,7 +408,9 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
     if primitive.visual_role == AS_OF_CONE_ROLE:
         # The cone's paint is its gradient; a profile that cannot paint one omits the whole cone (#890).
         cone = resolve_cone_paint(tokens, primitive.visual_role, visual_profile=visual_profile, bounds=primitive.bounds)
-        return (replace(primitive, paint=cone.paint) if cone.paint is not None else None), cone.omissions
+        mark_ground = tokens.resolved_theme["body"].get("contrastPolicy", {}).get("asOfConeGround", False)
+        return (replace(primitive, paint=cone.paint, mark_ground=True if mark_ground else None)
+                if cone.paint is not None else None), cone.omissions
     if primitive.visual_role == "canvas-overlay-gradient":
         if primitive.paint is None or primitive.paint.radial_gradient is None:
             raise SceneBuildError("E_PRESENTATION_PAINT_INVALID", "/body/roles/canvas-overlay-gradient")

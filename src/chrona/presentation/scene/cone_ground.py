@@ -1,9 +1,9 @@
-"""The as-of light cone as a translucent ground for the contrast gate (#890).
+"""Parse the as-of light cone as a physical ground and optional MARK ground (#890, #1754).
 
 A cone is a gradient polygon whose ink fades to transparent. It is never an ordinary opaque host: the
-gate keeps the host a mark truly lies on and composites the cone's ink over it at the strength the
-gradient has where the mark lies. The gradient is linear and the polygon convex, so the worst ground over
-the stops a mark spans is found at the two ends of its block extent inside the gradient range.
+observer keeps the host an observed primitive truly lies on and composites the cone's ink over it at
+the strength the gradient has where the primitive lies. Classified MARK observations include that
+composite only when the completed cone opts in; text and physical-ground consumers retain the cone.
 """
 from __future__ import annotations
 
@@ -31,6 +31,7 @@ class ConeGround:
     start_opacity: float
     end_opacity: float
     polygon: tuple[Point, ...]
+    mark_ground: bool = False
 
     def strength_at(self, block: float) -> float:
         span = self.end_block - self.start_block
@@ -88,6 +89,9 @@ def cones_in(primitives: list[Any]) -> tuple[ConeGround, ...]:
 
 def _read(primitive: Mapping[str, Any], index: int) -> ConeGround | None:
     paint, symbol = primitive.get("paint"), primitive.get("symbol")
+    mark_ground = primitive.get("markGround", False)
+    if type(mark_ground) is not bool:
+        return None
     gradient = paint.get("gradient") if isinstance(paint, Mapping) else None
     outline = symbol.get("outline") if isinstance(symbol, Mapping) else None
     if not isinstance(gradient, Mapping) or not isinstance(outline, list) or not isinstance(primitive.get("id"), str):
@@ -108,4 +112,5 @@ def _read(primitive: Mapping[str, Any], index: int) -> ConeGround | None:
             or not 0 <= strength <= 1 or any(not 0 <= value <= 1 for value in opacities)):
         return None
     return ConeGround(primitive["id"], (order, index), str(ink), strength, start_block, end_block,
-                      opacities[0], opacities[1], polygon[:-1] if polygon[0] == polygon[-1] else polygon)
+                      opacities[0], opacities[1], polygon[:-1] if polygon[0] == polygon[-1] else polygon,
+                      mark_ground)

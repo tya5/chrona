@@ -262,6 +262,21 @@ def _dark_host():
                       bounds={"inline": 0, "block": 0, "inlineSize": 60, "blockSize": 40})
 
 
+def _cone(mark_ground=False, ink="#101010"):
+    return {"id": "cone", "visualRole": "as-of-cone", "purpose": "as-of-cone", "kind": "Symbol",
+            "paintOrder": 50, "markGround": mark_ground,
+            "bounds": {"inline": 0, "block": 0, "inlineSize": 60, "blockSize": 40},
+            "symbol": {"outline": [{"kind": "move", "points": [[0, 0]]},
+                                   {"kind": "line", "points": [[60, 0]]},
+                                   {"kind": "line", "points": [[60, 40]]},
+                                   {"kind": "line", "points": [[0, 40]]},
+                                   {"kind": "line", "points": [[0, 0]]}]},
+            "paint": {"fill": ink, "opacity": 1, "gradient": {
+                "start": [0, 0], "end": [0, 40],
+                "stops": [{"offset": 0, "color": ink, "opacity": 1},
+                          {"offset": 1, "color": ink, "opacity": 1}]}}}
+
+
 def _encoded_scene(*primitives):
     return _scene(*primitives, version="chrona/scene/v0.7",
                   provenance={"resources": [{"kind": "view", "id": "view-a"}]})
@@ -285,6 +300,73 @@ def test_encoded_fill_is_checked_independently_of_readable_mark_outline():
     assert shape.paint_channel == "stroke"
     assert shape.contrast_ratio >= 3.0
     assert not any(item.severity == "error" for item in findings)
+
+
+@pytest.mark.parametrize(("mark_ground", "expected_ground"), [(False, "host"), (True, "cone")])
+def test_encoded_fill_uses_the_cones_completed_mark_ground_choice(mark_ground, expected_ground):
+    findings = evaluate_scene_contrast(_encoded_scene(_dark_host(), _cone(mark_ground), _encoded_mark()),
+                                       policy={"mark": "warning"})
+    encoded = next(item for item in findings if item.code == "W_SCENE_ENCODING_CONTRAST")
+
+    assert encoded.ground_id == expected_ground
+    assert (encoded.ground_kind == "cone-blend") is mark_ground
+
+
+@pytest.mark.parametrize(("mark_ground", "expected_ground"), [(False, "host"), (True, "cone")])
+def test_multipart_mark_uses_the_cones_completed_mark_ground_choice(mark_ground, expected_ground):
+    first = _primitive("glyph:part0", "planned", "planned", "#101010", kind="Symbol", order=100)
+    second = _primitive("glyph:part1", "planned", "planned", "#101010", kind="Symbol", order=101,
+                        bounds=first["bounds"])
+    for part in (first, second):
+        part.update(sourceRef="task-a", sourceKind="project")
+    findings = evaluate_scene_contrast(_scene(_dark_host(), _cone(mark_ground), first, second,
+                                              version="chrona/scene/v0.7"), policy={"mark": "warning"})
+    shape = next(item for item in findings if item.code == "W_SCENE_MARK_CONTRAST")
+
+    assert shape.ground_id == expected_ground
+    assert (shape.ground_kind == "cone-blend") is mark_ground
+
+
+@pytest.mark.parametrize(("mark_ground", "expected_ground"), [(False, "host"), (True, "cone")])
+def test_catalog_pattern_mark_uses_the_cones_completed_mark_ground_choice(mark_ground, expected_ground):
+    primitive = _primitive("pattern", "progress-fill", "progress-fill", "#101010", order=100)
+    primitive["pattern"] = {
+        "tileInlineSize": 8, "tileBlockSize": 4, "angleDegrees": 45,
+        "densityBasisPoints": 1250, "primitives": [{"kind": "rect", "x": 0, "y": 0,
+        "inlineSize": 1, "blockSize": 4}], "origin": [10, 10],
+        "regionBounds": primitive["bounds"], "clipBounds": primitive["bounds"], "cornerRadius": 0,
+    }
+    primitive["paint"].update(stroke="#101010", strokeWidth=1)
+    findings = evaluate_scene_contrast(_scene(_dark_host(), _cone(mark_ground), primitive,
+                                              version="chrona/scene/v0.7"), policy={"mark": "warning"})
+    mark_findings = [item for item in findings if item.primitive_id == "pattern"]
+
+    assert mark_findings
+    external_grounds = [item for item in mark_findings if item.ground_kind in {"flat", "cone-blend"}]
+    assert external_grounds
+    assert {item.ground_id for item in external_grounds} == {expected_ground}
+    assert all((item.ground_kind == "cone-blend") is mark_ground for item in external_grounds)
+
+
+def test_mark_ground_choice_does_not_change_severity_or_exception_ground_matching():
+    scene = _scene(_cone(True, ink="#101010"),
+                   _primitive("bar", "planned", "planned", "#101010", order=100))
+    none = next(item for item in evaluate_scene_contrast(scene, policy={"mark": "none"})
+                if item.primitive_id == "bar")
+    warning = next(item for item in evaluate_scene_contrast(scene, policy={"mark": "warning"})
+                    if item.primitive_id == "bar")
+    error = next(item for item in evaluate_scene_contrast(scene, policy={"mark": "error"})
+                 if item.primitive_id == "bar")
+    accepted = next(item for item in evaluate_scene_contrast(
+        scene, policy={"mark": "error"}, exceptions=[{
+            "purpose": "planned", "over": "as-of-cone", "minimum": 0.9,
+            "reason": "explicit cone ground fixture",
+        }]) if item.primitive_id == "bar")
+
+    assert (none.code, none.severity, none.ground_id) == ("E_SCENE_MARK_CONTRAST", "info", "cone")
+    assert (warning.code, warning.severity, warning.ground_id) == ("W_SCENE_MARK_CONTRAST", "warning", "cone")
+    assert (error.code, error.severity, error.ground_id) == ("E_SCENE_MARK_CONTRAST", "error", "cone")
+    assert (accepted.code, accepted.severity, accepted.ground_id) == ("W_SCENE_CONTRAST_ACCEPTED", "warning", "cone")
 
 
 def test_unencoded_twin_and_stroke_only_mark_gain_no_encoding_finding():

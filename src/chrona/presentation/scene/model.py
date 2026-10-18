@@ -575,8 +575,14 @@ class ScenePrimitive:
     style_match: StyleMatch | None = None
     legend_scope: StyleLegendScope | None = None
     encoding: EncodingWitness | None = None
+    mark_ground: bool | None = None
 
     def __post_init__(self) -> None:
+        if self.mark_ground is not None and (
+                not isinstance(self.mark_ground, bool) or self.kind != "Symbol"
+                or self.visual_role != "as-of-cone" or self.purpose != "as-of-cone"
+                or self.paint is None or self.paint.gradient is None):
+            raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} mark_ground")
         _validate_style_semantic_metadata(self.scene_id, self.semantic_id, self.theme_role,
                                           self.purpose, self.visual_role)
         _validate_style_match(self.scene_id, self.style_match)

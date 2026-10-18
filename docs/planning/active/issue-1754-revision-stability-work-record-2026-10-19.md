@@ -295,4 +295,22 @@ S3 exact-ID query exclusions and all placement paths are implemented. The
 obstacle/member-name/as-of-label/route-memo/annotation negative-control batch
 passes (77 cases). The original inventory and other rule obstacles remain
 intact. Public snapshot/CI and full trial-8 acceptance are still pending;
-S4 cone-ground design and implementation remain incomplete.
+S4 is implemented: Theme boolean, cone-only completed metadata and shared
+classified observer selection. Focused Theme/Scene/schema/real-cone-render
+batch passes (164 cases), including multipart/pattern/encoded marks, unchanged
+text, severity and exceptions, and legacy-v0.6 rejection. Independent review
+found no ownership/contract blocker. L1 schema equivalence against public
+main passes: one additive Theme widening, one explained Scene delta, 41 equal.
+The tool retired seven already-merged L1 entries and records the two precise
+Scene pointers. Full local equivalence found no L2/L3 verdict/diagnostic
+failure, but its timing guard failed (75.4s > 60s while focused render tests
+ran concurrently). The limit is unchanged; CI must supply the authoritative
+isolated conformance gate. No local full pytest is run.
+
+Integrated release remains pending. Trial-8 week 5 deliberately requests
+forecast and includes baseline-new objects, the separately assigned B issue
+1755. Preserve those commands and report any failure; do not omit forecast or
+edit the inputs to satisfy this issue. Run plain/hinted variants in three
+independent design pipelines with weekly hint chains, reusing identical week-1
+outputs. Post all measured rows, including unavailable week-5 evidence if
+1755 has not landed; that dependency does not waive literal acceptance.
