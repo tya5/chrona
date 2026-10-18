@@ -372,6 +372,8 @@ class MarkPlacement:
     style_occurrence_key: StyleOccurrenceKey | None = None
     # Source identity is independent of whether an authored Style matched.
     source_occurrence_key: StyleOccurrenceKey | None = None
+    # Ordered completed ink for a composite legend figure, consumed at Scene projection.
+    legend_paints: tuple[ThemePaintWitness, ...] = ()
 
 @dataclass(frozen=True)
 class LayoutImageFill:

@@ -5,14 +5,18 @@ from decimal import Decimal
 import pytest
 
 from chrona.presentation.layout.model import Rect
-from chrona.presentation.layout.surface_quality import ShapePlacement
+from chrona.presentation.layout.mark_geometry import SymbolPartPlacement
+from chrona.presentation.layout.surface_quality import MarkPlacement, PathCommand, ShapePlacement, completed_symbol_primitive_ids
 from chrona.presentation.layout.realized_legend import visible_placement
 from chrona.presentation.model.legend_paint import RealizedLegendKey
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
 from chrona.presentation.model.theme_paint import PaintFamily, resolve_theme_paint_witness
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.model import ScenePrimitive, SceneSurface
-from chrona.presentation.scene.v05_builder import _completed_shape_primitive, _complete_surface_paint
+from chrona.presentation.scene.v05_builder import (
+    _completed_legend_paints, _completed_shape_primitive, _complete_surface_paint,
+    _legend_mark_role, _symbol_primitives,
+)
 
 
 def _tokens() -> ThemeTokenView:
@@ -130,3 +134,42 @@ def test_completed_period_edge_is_visible_without_a_rectangular_area():
     empty = ShapePlacement("empty", "period", "Path",
         Rect(Decimal(1), Decimal(2), Decimal(0), Decimal(0)))
     assert not visible_placement(empty)
+
+
+def test_composite_glyph_legend_mark_consumes_exact_ordered_part_witnesses():
+    tokens = _tokens()
+    fill_witness = resolve_theme_paint_witness(
+        tokens, "actual", PaintFamily.SOLID, part_mode="fill", part_color="#AABBCC")
+    stroke_witness = resolve_theme_paint_witness(
+        tokens, "actual", PaintFamily.SOLID, part_mode="stroke", part_color="#112233")
+    parts = (
+        SymbolPartPlacement((PathCommand("move", ((1.0, 2.0),)),
+                             PathCommand("line", ((9.0, 2.0),)),
+                             PathCommand("line", ((9.0, 8.0),)),
+                             PathCommand("line", ((1.0, 2.0),))), "fill", "#AABBCC"),
+        SymbolPartPlacement((PathCommand("move", ((2.0, 3.0),)),
+                             PathCommand("line", ((8.0, 7.0),))), "stroke", "#112233"),
+    )
+    mark = MarkPlacement(
+        "legend-swatch:actual:composite", "actual:composite", Rect(Decimal(1), Decimal(2), Decimal(8), Decimal(6)),
+        None, None, mark_shape="point", slot_id="legend", semantic_id="actual", theme_role="actual",
+        symbol_parts=parts, legend_paints=(fill_witness, stroke_witness),
+    )
+
+    assert _legend_mark_role(mark, tokens) == "actual"
+    primitive_ids = completed_symbol_primitive_ids(mark.placement_id, parts)
+    assert primitive_ids == (f"{mark.placement_id}:part0", f"{mark.placement_id}:part1")
+    paints = _completed_legend_paints((), (mark,))
+    assert tuple(paints[primitive_id] for primitive_id in primitive_ids) == mark.legend_paints
+
+    primitives = _symbol_primitives(mark.placement_id, mark.source_ref, "legend", "legend-swatch",
+        _legend_mark_role(mark, tokens), (1.0, 2.0, 8.0, 6.0), mark.symbol_parts,
+        slot_id=mark.slot_id, paint_order=mark.paint_order)
+    completed = _complete_surface_paint(
+        SceneSurface("surface", (), (), (), None, tuple(primitives)), tokens, legend_paints=paints)
+
+    assert tuple(item.scene_id for item in completed.primitives) == primitive_ids
+    assert tuple(item.source_ref for item in completed.primitives) == (mark.source_ref, mark.source_ref)
+    assert tuple(item.visual_role for item in completed.primitives) == ("actual", "actual")
+    assert tuple(item.paint.fill for item in completed.primitives) == ("#AABBCC", None)
+    assert tuple(item.paint.stroke for item in completed.primitives) == (None, "#112233")

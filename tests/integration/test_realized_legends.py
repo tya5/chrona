@@ -9,6 +9,8 @@ from xml.etree import ElementTree
 import yaml
 
 from chrona.presentation.model.closure import resolve_draft_render
+from chrona.presentation.scene.contrast_policy import POLICY_MEMBERS, evaluate_scene_contrast
+from chrona.presentation.scene.serialization import scene_document
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderRequest, render_review
@@ -283,3 +285,62 @@ def test_fully_clipped_actual_groups_leave_one_unqualified_key_and_no_progress_k
     assert actual_keys[0].paint == actual_marks[0].paint
     assert labels[actual_keys[0].source_ref] == "Actual"
     assert not _swatches(rendered, "progress-fill")
+
+
+def test_dark_canvas_composite_actual_glyph_has_one_complete_key_and_keeps_scalar_keys_separate(tmp_path):
+    parts = sr.bundle("executive-light")
+    dark = sr.bundle("control-room-dark")
+    parts["scheme"] = dark["scheme"]
+    parts["theme"]["body"]["contrastPolicy"] = {member: "error" for member in POLICY_MEMBERS}
+    parts["view"]["body"]["rows"] = {"mode": "automatic"}
+    parts["theme"]["body"]["values"]["milestone-symbol"]["value"] = {
+        "shape": "glyph", "viewBox": [10, 10], "parts": [
+            {"d": "M5 0L10 5L5 10L0 5Z", "paint": "fill"},
+            {"d": "M5 3L7 5L5 7L3 5Z", "paint": "fill", "color": "#0B1220"},
+        ],
+    }
+    source = sr.project({
+        "work": sr.span("work", date(2026, 2, 2), 10),
+        "gate": sr.point("gate", date(2026, 2, 4)),
+    })
+    actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "dark-glyph-actual",
+              "body": {"asOf": "2026-02-20", "observations": [
+                  {"id": "work-observed", "sequence": 1, "projectObjectId": "work",
+                       "actual": {"start": "2026-02-13", "finish": "2026-02-18"}},
+                  {"id": "gate-observed", "sequence": 1, "projectObjectId": "gate",
+                   "actual": {"at": "2026-02-12"}},
+              ]}}
+    detail = _detail(("actual", "Actual"), ("progressFill", "Progress"))
+
+    rendered = sr.render(tmp_path, source, presentation=parts, actual=actual, detail=detail,
+                         viewport=(1800, 1000))
+    actual_point = tuple(sorted((item for item in rendered.surface.primitives
+                                 if item.purpose == "actual" and item.source_ref == "gate" and item.kind == "Symbol"),
+                                key=lambda item: item.paint_order))
+    actual_span = next(item for item in rendered.surface.primitives
+                       if item.purpose == "actual" and item.source_ref == "work")
+    actual_swatches = tuple(item for item in rendered.surface.primitives
+                            if item.purpose == "legend-swatch" and item.visual_role == "actual")
+    swatch_groups: dict[str, list] = {}
+    for item in actual_swatches:
+        swatch_groups.setdefault(item.source_ref, []).append(item)
+    glyph_groups = [tuple(sorted(group, key=lambda item: item.paint_order))
+                    for group in swatch_groups.values() if all(item.kind == "Symbol" for item in group)]
+    labels = tuple(item for item in rendered.surface.primitives if item.purpose == "legend-label")
+
+    assert len(actual_point) >= 3
+    assert len(glyph_groups) == 1
+    (glyph_key,) = glyph_groups
+    assert tuple(item.paint for item in glyph_key) == tuple(item.paint for item in actual_point)
+    assert len({item.source_ref for item in glyph_key}) == 1
+    assert sum(item.source_ref == glyph_key[0].source_ref for item in labels) == 1
+    assert len(swatch_groups) == 2  # composite point key plus scalar span key
+    scalar_keys = [group for group in swatch_groups.values() if any(item.kind == "Rect" for item in group)]
+    assert len(scalar_keys) == 1
+    assert tuple(item.paint for item in scalar_keys[0]) == (actual_span.paint,)
+
+    svg_ids = {node.attrib.get("data-scene-id") for node in ElementTree.fromstring(rendered.artifact.content)
+               .iter() if node.attrib.get("data-scene-id")}
+    assert {item.scene_id for item in (*actual_point, *glyph_key)} <= svg_ids
+    findings = evaluate_scene_contrast(scene_document(rendered.scene))
+    assert not [item for item in findings if item.severity == "error"]

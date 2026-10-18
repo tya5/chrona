@@ -190,6 +190,30 @@ def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose
             for index, part in enumerate(completed_parts)]
 
 
+def _completed_legend_paints(shapes: tuple[Any, ...], marks: tuple[Any, ...]) -> dict[str, ThemePaintWitness]:
+    """Bind Layout's exact completed legend witness to each emitted Scene primitive ID."""
+    paints = {shape.placement_id: shape.legend_paint for shape in shapes if shape.legend_paint is not None}
+    for mark in marks:
+        if not mark.legend_paints:
+            continue
+        primitive_ids = completed_symbol_primitive_ids(mark.placement_id, mark.symbol_parts)
+        if len(primitive_ids) != len(mark.legend_paints):
+            raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", mark.placement_id,
+                                  "completed legend paint count differs from symbol part count")
+        for primitive_id, paint in zip(primitive_ids, mark.legend_paints, strict=True):
+            if primitive_id in paints:
+                raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", primitive_id,
+                                      "duplicate completed legend paint identity")
+            paints[primitive_id] = paint
+    return paints
+
+
+def _legend_mark_role(mark: Any, tokens: ThemeTokenView) -> str:
+    """Use Layout's closed role for composite keys; preserve the ordinary key fallback."""
+    return mark.theme_role or resolve_point_paint_role(mark.source_ref,
+        gate_declared=tokens.has_role("gate"), legend=True)
+
+
 def _completed_host_primitive(scene_id: str, source_ref: str, source_kind: str,
                               purpose: str, visual_role: str, bounds: tuple[float, float, float, float],
                               placement: Any, **shared: Any) -> ScenePrimitive:
@@ -490,9 +514,9 @@ def project_review_surface(value: SceneBuildInput) -> SceneSurface:
                                        annotation_kind_paints=dict(value.surface_content.annotation_kind_paints),
                                        axis_band_paints=dict(value.surface_content.axis_band_paints),
                                        actual_variance_paints=dict(value.surface_content.actual_variance_paints),
-                                       legend_paints={shape.placement_id: shape.legend_paint
-                                                      for shape in value.completion.placement.shapes
-                                                      if shape.legend_paint is not None})
+                                       legend_paints=_completed_legend_paints(
+                                           value.completion.placement.shapes,
+                                           value.completion.placement.marks))
     if surface == "dependency-network":
         return _complete_surface_paint(_compose_dependency_network_surface(value), value.theme_tokens, value.visual_profile, value.viewport)
     raise SceneBuildError("E_PRESENTATION_SURFACE_UNSUPPORTED", "/projection/surface")
@@ -987,8 +1011,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput,
             # A legend key is a miniature of the chart's own gate, including a
             # Theme-bound multi-part glyph (#427, #464).
             primitives.extend(_symbol_primitives(mark.placement_id, mark.source_ref, "legend", legend_binding.purpose,
-                                                 resolve_point_paint_role(mark.source_ref,
-                                                     gate_declared=value.theme_tokens.has_role("gate"), legend=True),
+                                                 _legend_mark_role(mark, value.theme_tokens),
                                                  bounds, mark.symbol_parts,
                                                  corner_radius=mark.corner_radius, slot_id=mark.slot_id,
                                                  paint_order=mark.paint_order))

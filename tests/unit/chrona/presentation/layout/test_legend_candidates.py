@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from dataclasses import replace
+
 from chrona.presentation.layout import legend_candidates
 from chrona.presentation.layout.legend_candidates import prepare_realized_legend_candidates
-from chrona.presentation.model.legend_paint import RealizedLegendKey
+from chrona.presentation.model.legend_paint import RealizedGlyphInk, RealizedLegendKey
 from chrona.presentation.model.style_rules import StyleOccurrence, StyleOccurrenceKey
 from chrona.presentation.model.surface_content import SummaryContent, SurfaceContentInput, SurfaceLegendEntry
 from chrona.presentation.model.theme_paint import PaintFamily, resolve_theme_paint_witness
@@ -38,6 +40,25 @@ def _key(tokens, color, classes=(), occurrence_id="x", family="actual"):
     witness = resolve_theme_paint_witness(tokens, "actual", PaintFamily.SOLID, fill_override=color)
     occurrence = StyleOccurrenceKey(occurrence_id, "primary", "actual")
     return RealizedLegendKey(family, "actual", witness, (occurrence,), tuple(classes))
+
+
+def test_composite_identity_keeps_geometry_and_order_but_not_role_names_or_footprints():
+    first = _key(_tokens(), "#123456", ("ahead",), "a")
+    inner = _key(_tokens(), "#111111").paint
+    glyph = RealizedGlyphInk(None, (("outer",), ("inner",)),
+                             (first.paint, inner), (12.0, 14.0))
+    first = replace(first, glyph=glyph)
+    second = replace(_key(_tokens(), "#123456", ("behind",), "b"),
+                     glyph=replace(glyph, selected_role="alias", footprint=(16.0, 10.0)))
+
+    assert first.identity == second.identity
+    assert first.identity != replace(first, glyph=None).identity
+    assert first.identity != replace(first, glyph=replace(glyph, paints=glyph.paints[::-1])).identity
+    assert first.identity != replace(first, glyph=replace(glyph, geometry_identity=(("other",),))).identity
+    grouped, = legend_candidates.coalesce_actual_keys((first, second))
+    assert grouped.glyph.footprint == (16.0, 14.0)
+    assert grouped.occurrences == (*first.occurrences, *second.occurrences)
+    assert grouped.variance_classes == ("ahead", "behind")
 
 
 def test_actual_qualifier_uses_actual_trait_not_forecast_display_delta():

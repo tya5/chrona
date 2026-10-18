@@ -9,7 +9,7 @@ from chrona.presentation.layout.mark_geometry import complete_point_outline, sym
 from chrona.presentation.layout.mark_role_geometry import resolve_mark_band, resolve_mark_geometries
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.pattern_placement import complete_pattern_placement
-from chrona.presentation.model.legend_paint import RealizedLegendKey
+from chrona.presentation.model.legend_paint import RealizedGlyphInk, RealizedLegendKey
 from chrona.presentation.model.semantic_registry import mark_style_role
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.actual_variance_paint import ACTUAL_VARIANCE_TRAIT_ROLES
@@ -47,10 +47,16 @@ def pattern_ink_identity(tokens, role, *, completed_catalog=False):
             placed.density_basis_points, placed.primitives)
 
 
+def actual_symbol_token(tokens, selected_role):
+    return tokens.symbol(selected_role) if selected_role is not None else tokens.variant_symbol("actual")
+
+
 def _keys(content, tokens, capabilities, *, key, selected_role, parts,
-          variance_classes=(), catalog=False, default_role="actual", family_id="actual", subject_id=None):
+          variance_classes=(), catalog=False, default_role="actual", family_id="actual", subject_id=None,
+          glyph_footprint=None):
     role = selected_role or default_role
     result = []
+    paints = []
     for part in parts or (None,):
         mode = part.paint_mode if part is not None else None
         family = mark_paint_family(tokens, role, glyph_paint_mode=mode,
@@ -66,11 +72,22 @@ def _keys(content, tokens, capabilities, *, key, selected_role, parts,
             part_mode=mode, part_color=part.paint_color if part is not None else None,
             catalog_pattern=catalog,
             catalog_glyph_stroke_width=part.stroke_width if part is not None and mode == "stroke" else None)
+        paints.append(paint)
         channels = paint.effective_channels
         if channels.opacity == 0 or (channels.fill is None and channels.stroke is None):
             continue
         result.append(RealizedLegendKey(family_id, role, paint, (key,) if key else (), variance_classes,
                                        pattern_ink_identity(tokens, role, completed_catalog=catalog)))
+    if glyph_footprint is not None and len(parts) > 1 and result:
+        # Canonical source structure, not translated/clipped Layout floats or
+        # a catalogue name. The ordinary part paints retain the physical ink.
+        canonical = symbol_parts(actual_symbol_token(tokens, selected_role), (0.0, 0.0, 1.0, 1.0),
+                                 catalog_glyphs=getattr(tokens, "catalog_glyphs", None))
+        geometry = tuple((part.paint_mode, part.line_cap, part.line_join,
+                          tuple((command.kind, command.points) for command in part.commands))
+                         for part in canonical)
+        glyph = RealizedGlyphInk(selected_role, geometry, tuple(paints), glyph_footprint)
+        return (replace(result[0], glyph=glyph),)
     return tuple(result)
 
 
@@ -85,6 +102,7 @@ def source_actual_keys(content, tokens, *, mark_block_size, paint_capabilities):
         selected_role = intent.role if intent is not None else None
         role = selected_role or "actual"
         parts = ()
+        glyph_footprint = None
         if occurrence.mark_shape == "point":
             selected = {"actual": selected_role} if selected_role is not None else {}
             for semantic in ("planned", "gate", "forecast"):
@@ -93,14 +111,16 @@ def source_actual_keys(content, tokens, *, mark_block_size, paint_capabilities):
                     selected["planned"] = planned.role
             geometries = resolve_mark_geometries(tokens, theme_role_by_geometry_role=selected)
             size = resolve_mark_band(tokens, mark_block_size, role_geometries=geometries).symbol_bounds("actual")[1]
-            token = tokens.symbol(role) if selected_role is not None else tokens.variant_symbol("actual")
+            token = actual_symbol_token(tokens, selected_role)
             parts = complete_point_outline(symbol_parts(token, (0, 0, size, size),
                 catalog_glyphs=getattr(tokens, "catalog_glyphs", None)), paint_role=role, theme_tokens=tokens)
+            glyph_footprint = (size, size)
         pattern = tokens.optional_pattern(role)
         catalog = occurrence.mark_shape == "span" and isinstance(pattern, Mapping) and pattern.get("kind") == "catalog"
         classes = _actual_classes(occurrence)
         result.extend(_keys(content, tokens, paint_capabilities, key=key, selected_role=selected_role,
-                            parts=parts, variance_classes=classes, catalog=catalog))
+                            parts=parts, variance_classes=classes, catalog=catalog,
+                            glyph_footprint=glyph_footprint))
     return tuple(result)
 
 
@@ -115,7 +135,9 @@ def actual_mark_keys(mark, content, tokens, paint_capabilities):
     pattern = tokens.optional_pattern(role)
     catalog = mark.mark_shape == "span" and isinstance(pattern, Mapping) and pattern.get("kind") == "catalog"
     return _keys(content, tokens, paint_capabilities, key=key, selected_role=mark.theme_role,
-                 parts=mark.symbol_parts, variance_classes=classes, catalog=catalog, subject_id=mark.source_ref)
+                 parts=mark.symbol_parts, variance_classes=classes, catalog=catalog, subject_id=mark.source_ref,
+                 glyph_footprint=(float(mark.bounds.inline_size), float(mark.bounds.block_size))
+                 if mark.mark_shape == "point" else None)
 
 
 def mark_ink_keys(mark, content, tokens, paint_capabilities, *, base=False):

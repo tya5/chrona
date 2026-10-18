@@ -37,7 +37,11 @@ def coalesce_actual_keys(keys: tuple[RealizedLegendKey, ...]) -> tuple[RealizedL
         first = group[0]
         occurrences = tuple(dict.fromkeys(occurrence for key in group for occurrence in key.occurrences))
         classes = _ordered_classes(tuple(group))
-        result.append(replace(first, occurrences=occurrences, variance_classes=classes))
+        glyph = first.glyph
+        if glyph is not None:
+            glyph = replace(glyph, footprint=tuple(
+                max(key.glyph.footprint[axis] for key in group) for axis in (0, 1)))
+        result.append(replace(first, occurrences=occurrences, variance_classes=classes, glyph=glyph))
     return tuple(result)
 
 
