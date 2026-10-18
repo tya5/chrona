@@ -6,8 +6,14 @@ here, and its findings are positioned through the compiler's source map. A rejec
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
+from chrona.core.diagnostics import Diagnostic
 from chrona.core.validation import validate_project
+from chrona.extensions.profiles import (
+    LocalExtensionSnapshot, resolve_local_extension_snapshots,
+    resolve_profile_field_catalogue, validate_profiles,
+)
 from chrona.terse.compiler import PROJECT_VERSION as PROJECT_FORMAT  # the Project format the CLI reports in `--version`
 from chrona.terse import SourceMap, TerseDiagnostic, compile_terse, decode, emit_project, locate
 
@@ -36,6 +42,7 @@ class PlanCompilation:
     yaml: bytes | None
     diagnostics: tuple[TerseDiagnostic, ...]
     source_map: SourceMap
+    extension_snapshots: tuple[LocalExtensionSnapshot, ...] = ()
 
     @property
     def ok(self) -> bool:
@@ -52,7 +59,7 @@ def emit_project_text(project: dict) -> str:
     return emit_project(project)
 
 
-def compile_plan(data: bytes, source: str | None = None) -> PlanCompilation:
+def compile_plan(data: bytes, source: str | None = None, *, resource_origin: Path | None = None) -> PlanCompilation:
     """Decode, compile and validate one terse plan. Never raises for any input bytes."""
     text, problem = decode(data)
     if text is None:
@@ -65,11 +72,36 @@ def compile_plan(data: bytes, source: str | None = None) -> PlanCompilation:
     if findings:
         positioned = tuple(_position(item, compiled.source_map, source) for item in findings)
         return PlanCompilation(None, None, positioned, compiled.source_map)
-    return PlanCompilation(compiled.project, emit_project(compiled.project).encode("utf-8"), (), compiled.source_map)
+    snapshots: tuple[LocalExtensionSnapshot, ...] = ()
+    if compiled.project.get("extensions"):
+        if resource_origin is None:
+            findings = [Diagnostic("E_EXTENSION_UNRESOLVED", "typed compilation needs an explicit Project resource directory",
+                                   "/extensions/0/path")]
+        else:
+            snapshots, findings = resolve_local_extension_snapshots(compiled.project, resource_origin)
+        if findings:
+            return PlanCompilation(None, None, tuple(_position(item, compiled.source_map, source, "extensions")
+                                                     for item in findings), compiled.source_map)
+    manifests = {item.package_id: item.manifest for item in snapshots}
+    findings = validate_profiles(compiled.project, manifests)
+    catalogue, catalogue_findings = resolve_profile_field_catalogue(compiled.project, manifests)
+    # Package validity/ambiguity errors explain why a binding cannot resolve;
+    # never cascade a misleading unknown-profile diagnostic from that failure.
+    package_errors = catalogue_findings or any(item.id == "IDP-PROFILE-006" for item in findings)
+    if not package_errors:
+        for object_id in compiled.profile_bindings:
+            profile = compiled.project["objects"][object_id]["type"]
+            if profile not in catalogue:
+                pointer = "/objects/" + object_id.replace("~", "~0").replace("/", "~1") + "/type"
+                findings.append(Diagnostic("E_TERSE_PROFILE_UNKNOWN", f"profile {profile!r} is not declared by a valid package", pointer))
+    if findings:
+        return PlanCompilation(None, None, tuple(_position(item, compiled.source_map, source, "extensions")
+                                                 for item in findings), compiled.source_map)
+    return PlanCompilation(compiled.project, emit_project(compiled.project).encode("utf-8"), (), compiled.source_map, snapshots)
 
 
 def _position(finding, source_map: SourceMap, source: str | None, component: str = "core") -> TerseDiagnostic:
-    if finding.id == "E_SCHEMA":
+    if finding.id == "E_SCHEMA" and not (finding.path or "").startswith("/extensions"):
         return TerseDiagnostic("E_TERSE_COMPILER_DEFECT", f"the compiled Project failed structural validation: {finding.message}",
                                finding.path, locate(source_map, finding.path), "report this plan as a chrona bug", source)
     pointer = finding.path

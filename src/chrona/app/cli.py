@@ -199,6 +199,8 @@ def _draft_typesetter_identity(args: argparse.Namespace, target_kind: str) -> Ty
 
 def _project_directory(args: argparse.Namespace) -> Path | None:
     """The raw Project file's directory, which resolves its ``path`` extensions; none in snapshot mode."""
+    if _is_plan_path(args.project):
+        return None  # the compile use case already checked its acquired package snapshots
     return Path(args.project).parent if args.project else None
 
 
@@ -577,7 +579,9 @@ def _run_compile(args: argparse.Namespace) -> None:
         data = sys.stdin.buffer.read() if args.plan == "-" else Path(args.plan).read_bytes()
     except OSError as error:
         _compile_failure((input_unreadable(args.plan, error.strerror or str(error)),), to_stderr=to_stderr, status="failed", exit_code=2)
-    result = compile_plan(data, args.plan)
+    resource_origin = (Path(args.output).parent if args.output is not None else
+                       Path(args.plan).parent if args.plan != "-" else Path.cwd())
+    result = compile_plan(data, args.plan, resource_origin=resource_origin)
     if result.yaml is None:
         _compile_failure(result.diagnostics, to_stderr=to_stderr, status="failed" if result.defect else "rejected",
                          exit_code=2 if result.defect else 1)
@@ -613,7 +617,7 @@ def _compile_plan_argument(path: str) -> PlanCompilation:
         data = Path(path).read_bytes()
     except OSError as error:
         _compile_failure((input_unreadable(path, error.strerror or str(error)),), to_stderr=False, status="failed", exit_code=2)
-    plan = compile_plan(data, path)
+    plan = compile_plan(data, path, resource_origin=Path(path).parent)
     if plan.yaml is None:
         _compile_failure(plan.diagnostics, to_stderr=False, status="failed" if plan.defect else "rejected",
                          exit_code=2 if plan.defect else 1)
@@ -630,8 +634,19 @@ def _run_draft_render_of_plan(args: argparse.Namespace) -> None:
     _set_plan_source(plan, args.project)
     tmp = tempfile.TemporaryDirectory(prefix="chrona-plan-")
     try:
-        project_path = Path(tmp.name) / "project.yaml"
+        root = Path(tmp.name)
+        # A declared package may itself be called project.yaml (or be under a
+        # directory with that name). Keep the temporary Project out of its way.
+        occupied = {Path(item.path).parts[0] for item in plan.extension_snapshots}
+        project_name = "project.yaml"
+        while project_name in occupied:
+            project_name = "_" + project_name
+        project_path = root / project_name
         project_path.write_bytes(plan.yaml)
+        for snapshot in plan.extension_snapshots:
+            target = root / snapshot.path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(snapshot.content)
         rendered_args = copy.copy(args)
         rendered_args.project = str(project_path)
         _run_draft_render(rendered_args)
