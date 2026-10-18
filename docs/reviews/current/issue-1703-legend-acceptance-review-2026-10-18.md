@@ -19,10 +19,12 @@
 
 ### Evidence and release status
 
-Prepared integration `163ba8725` follows ready main `381cf404a` and combines
-the independently reviewed1701 row1 date correction. Current-main legend
-focus36 and combined date/legend/native64 pass. Both issue reviews and required
-artifact/full release gates remain in force;1701 row2 is design-only.
+Prepared integration `e7243add0` follows ready main `5fe41db8e` and combines
+independently reviewed1701 rows1/2. Legend focus36 and combined date/legend/native64
+pass; row2's separate native18 and point/path/style159 batches pass. The
+[1701 review](issue-1701-hierarchy-acceptance-review-2026-10-18.md) records its
+public15-preset PNG evidence. The published batching amendment retains both
+literal reviews and current-head artifact/exact-main full release gates.
 
 Implementation candidate: `192129bd9`; reviewer correction [1705](https://github.com/tya5/chrona/pull/1705) restores owner-approved target-b Actual ink. Final integrated focused tests pass290 (18.03 s), including the native equal-black multipart keys and exact placed-geometry parity. Detail validation passes2 positive/8 negative; schema equivalence passes L1 (1 additive,40 equal) and L2/L3 with five pre-existing invalid documents. PR/main publication, official snapshot and full three-OS release remain unverified. Issue #1703 remains open.
 
@@ -30,18 +32,24 @@ Design correction `6888d036f` precedes repair `192129bd9`: Spec28 and independen
 whole-architecture review require the canonical completed local-geometry witness,
 not tolerance tuning over translated float32 contours. Native/unit regressions
 verify translation/footprint invariance, distinct paints and byte-identical placed
-geometry. The repaired target-b render now adds exactly one pointed collision
-warning naming `actual (actual)` and `gate (milestone)`; faithful black swatches
-remain unchanged. Root inspected the native PNG; its SHA256 is
-`c21d5439c20033b2c6f9fb0d625368550feffbf7dec50a4e34d2d9943e510d50`, identical
-to the1705 baseline. Scene surfaces are identical; only the expected diagnostic
-and CLI warning change (7 warning records,8 occurrences). The command uses the
-public trial inputs, actual-week2, baseline and target-b without a viewport
-override. The other two cases are unaffected by the target-b-only YAML correction.
+geometry. Combined candidate `e7243add0` was re-rendered against ready main
+`5fe41db8e` using unchanged public trial inputs, actual-week2 and baseline.
+Root inspected all three native PNGs. Target-b retains faithful black Actual/
+Gate swatches and adds exactly one pointed collision warning naming both;
+its30 Task cells now show the intended parent/leaf path. Two other cells have
+only approximately5e-14 inline-coordinate rounding changes. No viewport override
+or Project-data adaptation was used. Commands are `chrona render plan.yaml
+--actual actual-week2.yaml --snapshot baseline.yaml --preset target-b`, the
+same with `--forecast --preset technical-print --view tp-deadlines-view.yaml`,
+and `chrona render starter/project.yaml --actual starter/actual.yaml`, each with
+`--output <png> --emit-scene <json>`.
+PNG SHA256: target-b `06d1968e6c5ad42253982b51941859719209bec598685b09c116f3efeb47a71d`,
+technical-print `9191128c13db036047c7359c7c3d1518a69aaa4e9ae5f6cd9ffa227925a14206`,
+starter `322886a53e42153f69bad90c48bb5ddeb0636b22c1f58675e53b032d1cb5ee83`.
 
 | trial-6 case | Scene primitives before → after | Added / removed / changed | Scene diagnostics before → after | Observed key result |
 | --- | ---: | ---: | ---: | --- |
-| `compare-targetb` | 304 → 304 | 0 / 0 / 0 | 29 → 30 | Restored owner-approved Actual/Gate ink `#101828`; adds one collision warning naming both meanings. PNG and full surface payload unchanged. |
+| `compare-targetb` | 304 → 304 | 0 / 0 / 32 | 29 → 30 | Owner-approved Actual/Gate ink `#101828` retained; one collision warning;30 path names plus two inline rounding differences. |
 | `forecast-tp-deadlines` | 299 → 303 | 4 / 0 / 0 | 29 → 29 | Adds Baseline and Deadline swatch/label pairs; existing forecast `W_DEADLINE` remains, with no new warning code or duplicate-label warning. |
 | `starter` | 68 → 68 | 0 / 0 / 0 | 2 → 2 | One ACTUAL key; no duplicate-label warning. |
 
