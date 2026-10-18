@@ -243,13 +243,9 @@ def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():
         assert f"annotation-leader:{identifier}".encode() in scene
         assert not any(item.scene_id == f"annotation-summary:{identifier}"
                        for item in finish.surface.primitives)
-        for prefix in ("annotation-box", "annotation-text"):
+        for prefix in ("annotation-box", "annotation-text", "note-index"):
             assert any(item.scene_id == f"{prefix}:{identifier}"
                        for item in finish.surface.primitives)
-        # #1702 row 5: the finish delta now holds the span finish's end slot, so this annotation's optional note
-        # index (which prefers the same side) is left out with its diagnostic instead of the delta moving to the start.
-        assert not any(item.scene_id == f"note-index:{identifier}" for item in finish.surface.primitives)
-        assert f"W_LAYOUT_NOTE_INDEX_SUPPRESSED:{identifier}".encode() in scene
     assert b"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" in scene
     assert any(item.scene_id == "annotation-summary:firmware-slip" for item in finish.surface.primitives)
     assert not any(item.scene_id == "annotation-leader:firmware-slip" for item in finish.surface.primitives)

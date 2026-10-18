@@ -605,7 +605,15 @@ def place_member_labels(context: SurfaceMemberLabelContext,
             # it does from the mark, and its end reach counts the delta.
             host_left, _, host_width, _ = bounds_from_rect(host.bounds)
             anchor = label_request.anchor
-            if sibling.geometry.left >= host_left + host_width - label_gap:
+            # A title packs beyond an ordinary finish delta only while it stays within its reach of its nearest own
+            # mark (#1702): past that it takes another side of its mark rather than floating away from it.
+            forecast_ids = {f"variance:{row.row_id}:{item.item_id or item.object_id}"
+                            for row in projection.rows for item in row.items
+                            if getattr(item, "forecast", None) is not None}
+            ordinary_delta = sibling.placement_id not in forecast_ids
+            own_right = max(bounds_from_rect(mark.bounds)[0] + bounds_from_rect(mark.bounds)[2] for mark in own_marks)
+            beyond_reach = ordinary_delta and sibling.geometry.right + label_gap - own_right > reach
+            if sibling.geometry.left >= host_left + host_width - label_gap and not beyond_reach:
                 delta_extra = sibling.geometry.right - (host_left + host_width)
                 reach += delta_extra
                 if association is not None:
