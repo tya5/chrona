@@ -12,7 +12,9 @@ from pathlib import Path
 
 import pytest
 
-from chrona.core.deadlines import DeadlineStatus, deadline_statuses, deadline_warnings
+from chrona.core.deadlines import (
+    DeadlineStatus, deadline_statuses, deadline_warnings, deadline_warnings_from_statuses,
+)
 from chrona.core.validation import load_yaml, validate_project
 from chrona.scheduling.scheduler import schedule
 
@@ -198,3 +200,62 @@ def test_no_committed_project_warns(path):
     result = schedule(project)
     assert result.ok, result.diagnostics
     assert deadline_warnings(project, result.placements) == ()
+
+
+def test_forecast_finish_overrides_are_typed_and_use_point_at_or_span_end():
+    project = _project(qa="2026-10-07", launch="2026-10-11")
+    forecast = {
+        "qa": {"start": date(2026, 10, 2), "end": date(2026, 10, 9)},
+        "launch": {"at": date(2026, 10, 13)},
+    }
+
+    statuses = deadline_statuses(project, schedule(project).placements, forecast)
+
+    assert [(item.object_id, item.finish, item.endpoint, item.finish_basis, item.days_late)
+            for item in statuses] == [
+        ("qa", date(2026, 10, 9), "end", "forecast", 2),
+        ("launch", date(2026, 10, 13), "at", "forecast", 2),
+    ]
+
+
+def test_explicit_forecast_warnings_name_selected_basis_and_keep_equal_finish_kept():
+    project = _project(qa="2026-10-07", launch="2026-10-13")
+    placements = schedule(project).placements
+    forecast = {"qa": {"start": date(2026, 10, 1), "end": date(2026, 10, 8)},
+                "launch": {"at": date(2026, 10, 13)}}
+    statuses = deadline_statuses(project, placements, forecast)
+
+    (warning,) = deadline_warnings_from_statuses(statuses, forecast_mode=True)
+
+    assert warning.message == "qa forecast finishes 2026-10-08, 1 day after its deadline 2026-10-07"
+    assert dict(warning.details) == {"object": "qa", "endpoint": "end", "finish": "2026-10-08",
+                                    "deadline": "2026-10-07", "daysLate": 1,
+                                    "finishBasis": "forecast"}
+    assert statuses[1].finish_basis == "forecast" and not statuses[1].slipped
+
+
+def test_partial_forecast_overrides_fall_back_to_plan_without_mutating_inputs():
+    project = _project(qa="2026-10-07", launch="2026-10-11")
+    placements = schedule(project).placements
+    before_project, before_placements = copy.deepcopy(project), copy.deepcopy(placements)
+    forecast = {"qa": {"start": date(2026, 10, 1), "end": date(2026, 10, 8)}}
+    before_forecast = copy.deepcopy(forecast)
+
+    statuses = deadline_statuses(project, placements, forecast)
+    warnings = deadline_warnings_from_statuses(statuses, forecast_mode=True)
+
+    assert [(item.object_id, item.finish_basis) for item in statuses] == [
+        ("qa", "forecast"), ("launch", "planned")]
+    assert [dict(item.details)["finishBasis"] for item in warnings] == ["forecast", "planned"]
+    assert project == before_project and placements == before_placements and forecast == before_forecast
+
+
+def test_ordinary_wrapper_retains_the_exact_legacy_warning_payload():
+    project = _project(qa="2026-10-05", launch=None)
+    placements = schedule(project).placements
+
+    (warning,) = deadline_warnings(project, placements)
+
+    assert warning.message == "qa finishes 2026-10-08, 3 days after its deadline 2026-10-05"
+    assert dict(warning.details) == {"object": "qa", "endpoint": "end", "finish": "2026-10-08",
+                                    "deadline": "2026-10-05", "daysLate": 3}

@@ -1,6 +1,7 @@
 # Issue 1680 — forecast deadline
 
-Status: design, architecture review and implementation plan complete; I1 may start.
+Status: design, architecture review and implementation plan published; I1 implemented
+and reviewed (32 focused Core tests pass), not yet integrated or release-accepted.
 I2 integration and the single implementation PR wait for Issue419 S2 to merge.
 Published execution baseline: main `e69d4541a2e6829d568a2f5a5ab077aadda499bb`;
 Core and its deadline tests are byte-identical to the original planning base `cd3622754`.
@@ -16,7 +17,9 @@ shown deadlines and warnings, while the projection's primary temporal geometry
 can use forecast placements. Layout consumes the completed verdict/finish.
 The published main has planned-only semantics in Spec04 §10, Spec06 §7.3/§8.5
 and Spec50 §3.4; this branch supplies the explicit normative correction before code.
-The trial-5 observations are reported evidence, not yet independently reproduced:
+The literal trial-5 command was independently reproduced with the installed S2
+wheel from `b201711c4`: two deadline ticks, zero late runs and zero `W_DEADLINE`.
+The two forecast endpoints exceed their deadline tick positions. Baseline inputs:
 [inputs at 9fa6062de](https://github.com/tya5/chrona/tree/9fa6062de/trial-5).
 
 1. A synthetic forecast whose finish passes the deadline draws a run to the forecast finish and emits `W_DEADLINE` naming the forecast. A forecast that keeps the deadline draws only the tick.
