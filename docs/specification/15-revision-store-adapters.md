@@ -96,6 +96,32 @@ it unchanged to `write`; it neither parses nor fabricates Git syntax. On mismatc
 adapter returns a stable conflict result. An adapter may offer an explicit merge
 proposal, but applying it creates a new Command/revision and is never implicit.
 
+### Local Actual/snapshot command transactions (#902 item 5)
+
+Cooperating local CLI/server writers of one Actual/snapshot Store use one
+persistent, adapter-private OS lock at its canonical root. The command engine
+holds it from replay lookup through current-tip comparison, publication and
+replay recording. Snapshot commands lock the destination registry Store, not
+the immutable Project input Store. Read-only commands do not acquire it.
+Direct LocalActualStore creation and CAS writes and direct replay-ledger writes
+participate in the same lock. A long-lived Actual adapter reads its current tip
+from disk; a cached revision cannot authorize a write.
+
+Same-thread nested acquisition is reentrant; other threads and processes remain
+excluded. The lock file is not removed or replaced during release. Root aliases
+resolve to the same lock identity. Private lock-file content is not a sentinel
+or protocol: empty and nonempty files coordinate the same way. Windows acquires
+the byte range at offset0 without first reading or initializing it; the CRT
+permits locks past EOF, and another handle's mandatory lock forbids pre-lock
+content access. See [Microsoft CRT `_locking`](https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/locking?view=msvc-170).
+Failure to open/acquire the lock rejects the
+command with `E_STORE_LOCK_UNAVAILABLE` before canonical mutation; direct adapter
+calls raise that typed storage failure. Existing revision/ledger formats and
+conflict/replay behavior do not change. The advisory lock protects cooperating
+local writers, not arbitrary shell edits, remote filesystems or distributed
+Stores. It does not make publication and replay recording crash-atomic, and
+does not extend the generic local Project adapter's concurrency guarantee.
+
 Interactive editing may maintain a local Draft and compute fine-grained scene deltas.
 Only accepted semantic commands create canonical snapshots. This preserves the
 reactivity rule: changing one object does not require rebuilding unrelated UI state.

@@ -1,10 +1,10 @@
+from copy import deepcopy
+
 from chrona.commands.actual_commands import (
     MemoryActualStore,
     LocalActualStore,
     apply_actual_intake_batch,
-    redo_actual_command,
     resolve_actual_observation,
-    undo_actual_command,
 )
 from chrona.storage.snapshot_paths import snapshot_directory
 
@@ -69,20 +69,6 @@ def test_actual_resolution_rejects_stale_unknown_or_non_unmatched_observation():
         "E_ACTUAL_ALIGNMENT", "supplier:42")
 
 
-def test_actual_undo_redo_create_new_revisions_without_rewriting_history():
-    store = MemoryActualStore(_actual_set())
-    base, original = store.read()
-    accepted = resolve_actual_observation(store, base, "supplier:42", "firmware", {"firmware"}, command_id="resolve-42")
-    undone = undo_actual_command(store, accepted.result_revision, "resolve-42")
-    assert undone.status == "accepted"
-    assert undone.result_revision != base
-    assert undone.actual_set == original
-    redone = redo_actual_command(store, undone.result_revision, "resolve-42")
-    assert redone.status == "accepted"
-    assert redone.result_revision not in {base, accepted.result_revision, undone.result_revision}
-    assert redone.actual_set == accepted.actual_set
-
-
 def test_intake_is_atomic_and_replay_safe_with_explicit_unmatched_records():
     store = MemoryActualStore(_actual_set_v02())
     base, _ = store.read()
@@ -135,6 +121,28 @@ def test_local_actual_store_publishes_new_immutable_token_and_reopens(tmp_path):
     assert (snapshot_directory(tmp_path, accepted.result_revision) / "actuals" / "supplier-observed.yaml").is_file()
 
 
+def test_local_actual_store_reads_fresh_tip_and_rejects_stale_cached_writer(tmp_path):
+    first = LocalActualStore(tmp_path, _actual_set_v02())
+    stale = LocalActualStore(tmp_path, _actual_set_v02())
+    base, original = first.read()
+    committed_value = deepcopy(original)
+    committed_value["body"]["observations"].append({"id": "first", "sequence": 1,
+        "externalIdentity": {"system": "supplier", "key": "first"}, "actual": {"finish": "2026-04-18"}})
+
+    committed = first.write(base, committed_value)
+
+    assert committed is not None and committed[0] != base
+    assert stale.read() == committed
+    immutable_before = {path: path.read_bytes() for path in tmp_path.glob("revision-*/actuals/*.yaml")}
+    stale_value = deepcopy(original)
+    stale_value["body"]["observations"].append({"id": "stale", "sequence": 2,
+        "externalIdentity": {"system": "supplier", "key": "stale"}, "actual": {"finish": "2026-04-19"}})
+
+    assert stale.write(base, stale_value) is None
+    assert stale.read() == committed
+    assert {path: path.read_bytes() for path in tmp_path.glob("revision-*/actuals/*.yaml")} == immutable_before
+
+
 def test_actual_result_diagnostics_name_expected_operand_without_echoing_record():
     store = MemoryActualStore(_actual_set_v02())
     base, _ = store.read()
@@ -150,9 +158,3 @@ def test_actual_result_diagnostics_name_expected_operand_without_echoing_record(
 
     unresolved = resolve_actual_observation(store, base, "missing-observation", "firmware", {"firmware"})
     _assert_diagnostic(unresolved, "E_REFERENCE", "missing-observation")
-
-    undo = undo_actual_command(store, base, "missing-command")
-    _assert_diagnostic(undo, "E_CONFLICT", "missing-command")
-
-    redo = redo_actual_command(store, base, "missing-command")
-    _assert_diagnostic(redo, "E_CONFLICT", "missing-command")

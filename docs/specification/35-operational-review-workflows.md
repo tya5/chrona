@@ -151,6 +151,48 @@ rejection, and `3` only when the runner cannot construct or write its requested 
 artifact. Schema-valid results are still written for exit `2`; no result is promised
 for process interruption before output publication.
 
+### 4.3 Actual revert and redo (Command v0.4; #902 item3)
+
+Command v0.4 adds `revertActualCommand` (`payload.commandId`) and
+`redoActualCommand` (`payload.revertCommandId`) to the closed v0.3 operations;
+v0.3 remains readable. Both target an immutable Actual reference and an explicit
+current base. They use the same command-check/apply dispatch and result schema.
+
+The Store replay ledger records each accepted validated canonical request with
+its existing request/target identities and result. History use MUST verify the
+request hash when present, the result's request identity, the stored input's
+target identity, and the immutable before/after references. Every history link
+MUST identify the request's same Store and Actual ID. Missing, corrupt, cyclic
+or inconsistent history is `E_COMMAND_HISTORY_UNAVAILABLE`. Old records remain
+readable without rewriting the ledger: verified before/after references permit
+revert, but redo without recoverable semantic intent is unavailable.
+
+Revert accepts an ordinary Actual mutation or a redo whose before/after content
+differs. Under the Spec15 transaction lock, the caller's base MUST equal the
+fresh current tip, and the verified full-document current content identity MUST
+equal the origin's verified post-state identity. It then writes the verified
+pre-state through fresh CAS as a new immutable revision. Any unrelated content
+difference rejects the inverse; no prior revision or replay entry is rewritten.
+Eligibility uses full content, not the origin's revision token: undoing O2 may
+restore O1's post-state under a new token, allowing a subsequent safe undo of O1.
+
+Redo accepts an Actual revert whose verified result content equals the entire
+current Actual. After the same independent fresh-base check it resolves the
+original ordinary operation through verified history and executes that semantic
+intent with its immutable payload references and normal command validation.
+It is not a copy of the old after-state. New command IDs support repeated and
+multi-command revert/redo cycles. Replay lookup precedes eligibility checks,
+so an accepted inverse retry returns the recorded result without another write.
+
+Snapshots, no-ops and unsupported inverse targets are
+`E_COMMAND_NOT_REVERSIBLE`; a revert of a revert uses explicit redo instead.
+Existing stale-base/current-tip/CAS and command-ID-reuse diagnostics remain.
+Read-only check verifies inputs/history but promises neither current-tip
+acceptance nor exclusion; apply rechecks eligibility inside the transaction.
+The operational engine owns durable command history; Actual adapters expose
+fresh read/CAS, not a process-local undo stack. The obsolete Actual history
+hooks/wrappers are removed; generic Project history is unchanged.
+
 ## 5. Named baselines (UC-12)
 
 ### 5.1 Capture

@@ -4,16 +4,17 @@ Four read-only tools front the use cases an agent needs to plan and draw a sched
 ``validate_project``, ``schedule_project``, ``render_draft`` and ``list_presets``; two read-only tools read a
 Store, ``render_review`` and ``compare_baseline`` (#812); two tools front the revision-bound Store commands,
 ``check_command`` (read-only) and ``apply_command`` (writes, only when the caller passes ``allow_write``; #813).
-Tool set ``chrona/agent-tools/v0.4``, Spec 66. A tool is a use case
+``apply_authoring_command`` edits a guided workspace through the shared durable transaction port.
+Tool set ``chrona/agent-tools/v0.6``, Spec 66. A tool is a use case
 with a typed envelope: ``call_tool(scope, name, arguments)`` validates the arguments against the
 tool's input schema, runs the use case on files inside a ``WorkspaceScope`` and returns a
 ``ToolResult`` whose ``structured`` mapping is the envelope (``status``, ``diagnostics``)
 plus the tool's own fields. A transport adapter (the MCP binding) only moves that result.
 
-This module imports no SDK and prints nothing. The one tool that writes, ``apply_command``, writes only
+This module imports no SDK and prints nothing. ``apply_command`` writes only
 through the shared dispatch of the Store commands (``operational.store_commands``) into Store roots that lie
-inside the workspace; every other tool writes nothing. The Store tools reach a Store through that module's
-``open_store_reader`` and ``operational.store_reads`` (the two operational modules a tool may import), and a Store
+inside the workspace; ``apply_authoring_command`` uses ``operational.authoring_commands`` for workspace writes.
+The Store tools reach a Store through ``open_store_reader`` and ``operational.store_reads``, and a Store
 root outside the workspace is refused before anything is read from it.
 Failures reach the caller as typed diagnostics through ``usecases.failure_report``, never as a traceback,
 and every mapping it returns is sorted so a result is a pure function of the workspace bytes and the
@@ -35,11 +36,13 @@ from typing import Any, Callable, Mapping, Sequence
 from jsonschema.exceptions import best_match
 
 from chrona.app.agent_workspace import WorkspaceScope
+from chrona.operational.authoring_commands import transact_authoring_command
 from chrona.operational.store_commands import (
     StoreRootOutsideWorkspace, open_store_reader, parse_command_request, run_store_command,
 )
 from chrona.operational.store_reads import DraftExtensionPackageReader, compare_store_baseline, load_reference, snapshot_reader_for
 from chrona.resources import validator_for_schema
+from chrona.usecases.authoring_commands import apply_authoring_command, parse_authoring_command
 from chrona.usecases.context_review import render_context_closure, resolve_context_closure
 from chrona.usecases.draft_render import DEFAULT_VIEWPORT, DraftRenderRequest, render_draft, warning_payloads
 from chrona.usecases.failure_report import (
@@ -48,8 +51,8 @@ from chrona.usecases.failure_report import (
 from chrona.usecases.preset_library import DEFAULT_PRESET_ID, list_builtin_presets
 from chrona.usecases.project_checks import schedule_project_file, validate_project_file
 
-TOOL_SET_VERSION = "chrona/agent-tools/v0.4"
-COMMAND_TYPES = frozenset({"applyActualIntakeBatch", "captureSnapshot"})
+TOOL_SET_VERSION = "chrona/agent-tools/v0.6"
+COMMAND_TYPES = frozenset({"applyActualIntakeBatch", "captureSnapshot", "revertActualCommand", "redoActualCommand"})
 """The command types the command tools accept in this release (#813); anything else is rejected before a Store is opened."""
 DEFAULT_STORE_CONFIG = ".chrona/store.yaml"
 WRITE_DISABLED = "E_MCP_WRITE_DISABLED"
@@ -184,7 +187,7 @@ def _output_schema(properties: dict[str, Any] | None = None) -> dict[str, Any]:
 def _command_input_schema() -> dict[str, Any]:
     return _input_schema({
         "command": {**_WORKSPACE_PATH_PROPERTY, "description": "A '/'-separated workspace path to a Command Request "
-                    "document (chrona/command/v0.3, Spec 10), as chrona command-apply --command takes. The file must "
+                    "document (chrona/command/v0.3 or v0.4, Spec 10), as chrona command-apply --command takes. The file must "
                     "already exist inside the workspace."},
         "storeConfig": {**_WORKSPACE_PATH_PROPERTY, "description": "A '/'-separated workspace path to a Store configuration "
                         f"(chrona/store-config/v0.1). Omitted means {DEFAULT_STORE_CONFIG}. Every Store root in it must lie "
@@ -466,6 +469,13 @@ def _list_presets(call: _Call, arguments: dict[str, Any]) -> ToolResult:
 _COMMAND_SOURCE_REFS = {"E_AUTOMATION_BASE_REVISION": "/baseRevision", "E_AUTOMATION_OPERATION_UNSUPPORTED": "/type"}
 
 
+def _command_source_ref(code: str, command: dict[str, Any]) -> str:
+    if code in {"E_COMMAND_HISTORY_UNAVAILABLE", "E_COMMAND_NOT_REVERSIBLE"}:
+        field = "revertCommandId" if command["type"] == "redoActualCommand" else "commandId"
+        return f"/payload/{field}"
+    return _COMMAND_SOURCE_REFS.get(code, "/")
+
+
 def _open_contained_store(call: _Call, config_path: Path) -> Any:
     """Open the Store configuration; every Store root in it must lie strictly inside the workspace (Spec 66 section 4).
 
@@ -552,13 +562,42 @@ def _command_tool(operation: str) -> Callable[[_Call, dict[str, Any]], ToolResul
             return ToolResult(call.ok(automationResult=result))
         call.carried["automationResult"] = result
         rows = [diagnostic_record(item["code"], item.get("message", ""), "operational",
-                                  _COMMAND_SOURCE_REFS.get(item["code"], "/")) for item in result["diagnostics"]]
+                                  _command_source_ref(item["code"], command)) for item in result["diagnostics"]]
         return call.rejected(FailureReport("rejected", collapse_records(rows), 1))
 
     return handle
 
 
 # --- registry ------------------------------------------------------------------------------------------------
+
+def _authoring_tool(call: _Call, arguments: dict[str, Any]) -> ToolResult:
+    workspace = call.scope.resolve_path(arguments["workspace"], "/workspace")
+    command_path = call.scope.resolve_path(arguments["command"], "/command")
+    source = "/command"
+    try:
+        command = parse_authoring_command(command_path)
+        source = "/workspace"
+        result = call.scope.scrub_value(apply_authoring_command(workspace, command, transact=transact_authoring_command))
+    except Exception as error:
+        failed = call.failure(error)
+        failed.structured["status"] = "failed"
+        for row in failed.structured["diagnostics"]:
+            if row["sourceRef"] == "/":
+                row["sourceRef"] = source
+        return failed
+    if result["status"] == "accepted":
+        return ToolResult(call.ok(authoringResult=result))
+    call.carried["authoringResult"] = result
+    pointers = {
+        "E_AUTHORING_BASE_REVISION": "/baseRevision",
+        "E_AUTHORING_COMMAND_ID_REUSE": "/commandId",
+        "E_AUTHORING_TARGET_MISMATCH": "/target/path",
+    }
+    rows = [diagnostic_record(
+        item["code"], item.get("detail") or item.get("message") or item["code"], "authoring",
+        pointers.get(item["code"], "/"),
+    ) for item in result["diagnostics"]]
+    return call.rejected(FailureReport("rejected", collapse_records(rows), 1))
 
 _TOOLS: tuple[ToolSpec, ...] = (
     ToolSpec(
@@ -693,8 +732,9 @@ _TOOLS: tuple[ToolSpec, ...] = (
     ToolSpec(
         "check_command", "Preview a Store command",
         "Check a Command Request file in the workspace against its Store without writing anything: the same check "
-        "as chrona command-check. The request must be applyActualIntakeBatch (an Actual intake batch) or captureSnapshot "
-        "(a named baseline); any other type is rejected with E_AUTOMATION_OPERATION_UNSUPPORTED. 'storeConfig' is a "
+        "as chrona command-check. The request must be applyActualIntakeBatch (an Actual intake batch), captureSnapshot "
+        "(a named baseline), revertActualCommand or redoActualCommand; any other type is rejected with "
+        "E_AUTOMATION_OPERATION_UNSUPPORTED. 'storeConfig' is a "
         "workspace path to a Store configuration and defaults to .chrona/store.yaml; every Store root in it must lie "
         "inside the workspace. Returns status 'ok' with automationResult (the Automation Result the command line writes), "
         "or 'rejected' with typed diagnostics, for example a stale baseRevision. A preview is not a precondition of "
@@ -707,12 +747,26 @@ _TOOLS: tuple[ToolSpec, ...] = (
         "executes directly. There is no approval step and no confirm token, and the proposal and decision exchange of "
         "Spec 10 section 9.1 is not implemented. It writes only when the server was started with --allow-write; "
         "otherwise it is refused with E_MCP_WRITE_DISABLED and writes nothing. The request must be "
-        "applyActualIntakeBatch or captureSnapshot. Safeguards that are not approvals: a stale baseRevision is "
+        "applyActualIntakeBatch, captureSnapshot, revertActualCommand or redoActualCommand. "
+        "Safeguards that are not approvals: a stale baseRevision is "
         "rejected (compare-and-set), the same commandId with the same request is a no-op that returns the first result "
         "(replayed: true), a baseline name or an observation with different facts is never overwritten, and every write "
         "is a new immutable Store revision, so an earlier one can be inspected and restored. Store roots must lie "
         "inside the workspace. Returns status 'ok' with automationResult, or 'rejected' with typed diagnostics.",
         _command_input_schema(), _command_output_schema(), _command_tool("command-apply"), mutating=True,
+    ),
+    ToolSpec(
+        "apply_authoring_command", "Apply a guided workspace command",
+        "Apply an authoring-command/v0.1 YAML file to a guided workspace, as chrona authoring-command-apply does. "
+        "Both paths must be inside the server workspace. Requires --allow-write; no approval step. "
+        "A stale baseRevision is rejected without writing. A durable receipt returns the exact first accepted "
+        "result for the same commandId and request; reusing that ID with another request is rejected. "
+        "Returns authoringResult, with status ok when accepted or rejected with typed diagnostics.",
+        _input_schema({"workspace": copy.deepcopy(_WORKSPACE_PATH_PROPERTY),
+                       "command": copy.deepcopy(_WORKSPACE_PATH_PROPERTY)}, ["workspace", "command"]),
+        _output_schema({"authoringResult": {"type": "object",
+                                           "description": "The authoring-command-result/v0.1 emitted by the CLI."}}),
+        _authoring_tool, mutating=True,
     ),
 )
 _BY_NAME = {spec.name: spec for spec in _TOOLS}

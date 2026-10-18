@@ -317,6 +317,66 @@ def test_stale_replayed_and_overwriting_commands_are_refused_over_stdio_and_noth
     assert work.tip()["counter"] == 2  # only the first intake advanced the tip
 
 
+def test_actual_revert_redo_over_stdio_preserve_history_and_replay_without_writes(tmp_path):
+    work = StoreWorkspace(tmp_path / "ws")
+    intake_path = work.write_command("intake.yaml", work.intake("intake", work.batch("history-batch")))
+    original_bytes = work.snapshot()
+
+    async def scenario(client, init):
+        accepted = await client.call_tool("apply_command", {"command": intake_path})
+        target = accepted.structured_content["automationResult"]["resultTarget"]
+        revert = {"version": "chrona/command/v0.4", "commandId": "undo-intake",
+                  "type": "revertActualCommand", "target": target,
+                  "baseRevision": target["revision"]["token"], "payload": {"commandId": "intake"}}
+        revert_path = work.write_command("revert.yaml", revert)
+        checked = await client.call_tool("check_command", {"command": revert_path})
+        reverted = await client.call_tool("apply_command", {"command": revert_path})
+        after_revert = work.snapshot()
+        replay_revert = await client.call_tool("apply_command", {"command": revert_path})
+        assert work.snapshot() == after_revert
+        target = reverted.structured_content["automationResult"]["resultTarget"]
+        redo = {"version": "chrona/command/v0.4", "commandId": "redo-intake",
+                "type": "redoActualCommand", "target": target,
+                "baseRevision": target["revision"]["token"], "payload": {"revertCommandId": "undo-intake"}}
+        redo_path = work.write_command("redo.yaml", redo)
+        redone = await client.call_tool("apply_command", {"command": redo_path})
+        after_redo = work.snapshot()
+        replay_redo = await client.call_tool("apply_command", {"command": redo_path})
+        stale_path = work.write_command("stale.yaml", revert | {"commandId": "stale-undo"})
+        stale = await client.call_tool("apply_command", {"command": stale_path})
+        assert work.snapshot() == after_redo
+        return accepted, checked, reverted, replay_revert, redone, replay_redo, stale
+
+    accepted, checked, reverted, replay_revert, redone, replay_redo, stale = session(
+        work.root, scenario, allow_write=True)
+    for result in (accepted, checked, reverted, replay_revert, redone, replay_redo):
+        assert result.structured_content["status"] == "ok", result.structured_content
+    assert replay_revert.structured_content["automationResult"]["replayed"] is True
+    assert replay_redo.structured_content["automationResult"]["replayed"] is True
+    assert stale.structured_content["status"] == "rejected"
+    assert stale.structured_content["diagnostics"][0]["code"] == "E_AUTOMATION_TARGET_CLOSURE"
+    for path, payload in original_bytes.items():
+        if path.startswith("revision-"):
+            assert work.snapshot()[path] == payload
+    assert work.tip()["counter"] == 4
+
+
+def test_actual_history_requests_respect_the_stdio_write_gate(tmp_path):
+    work = StoreWorkspace(tmp_path / "ws")
+    command = {"version": "chrona/command/v0.4", "commandId": "disabled-undo",
+               "type": "revertActualCommand", "target": work.target,
+               "baseRevision": work.initial_revision, "payload": {"commandId": "absent"}}
+    path = work.write_command("revert.yaml", command)
+    before = work.snapshot()
+
+    async def scenario(client, init):
+        return await client.call_tool("apply_command", {"command": path})
+
+    result = session(work.root, scenario)
+    assert result.structured_content["diagnostics"][0]["code"] == "E_MCP_WRITE_DISABLED"
+    assert work.snapshot() == before
+
+
 def test_path_escapes_a_symlink_and_an_outside_store_are_refused_over_stdio(tmp_path):
     work = StoreWorkspace(tmp_path / "ws")
     path = work.write_command("c1.yaml", work.intake("c1", work.batch("b1")))
@@ -408,7 +468,7 @@ def test_standard_output_holds_only_json_rpc_frames_and_the_server_ends_with_its
         child.send({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
         assert [tool["name"] for tool in child.receive()["result"]["tools"]] == [
             "validate_project", "schedule_project", "render_draft", "list_presets", "render_review", "compare_baseline",
-            "check_command", "apply_command"]
+            "check_command", "apply_command", "apply_authoring_command"]
         child.send({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
                     "params": {"name": "render_draft", "arguments": {"project": "launch.yaml"}}})
         reply = child.receive()

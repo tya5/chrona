@@ -107,13 +107,13 @@ def cli(monkeypatch, capsys, cwd: Path, *arguments: str) -> tuple[int, str, str]
 
 # --- the registry --------------------------------------------------------------------------------------------
 
-def test_the_tool_set_is_seven_read_only_tools_and_one_writer_in_order():
-    assert [spec.name for spec in tool_specs()] == ["validate_project", "schedule_project", "render_draft", "list_presets", "render_review", "compare_baseline", "check_command", "apply_command"]
+def test_the_tool_set_is_seven_read_only_tools_and_two_writers_in_order():
+    assert [spec.name for spec in tool_specs()] == ["validate_project", "schedule_project", "render_draft", "list_presets", "render_review", "compare_baseline", "check_command", "apply_command", "apply_authoring_command"]
     document = registry_document()
-    assert document["toolSet"] == "chrona/agent-tools/v0.4"
+    assert document["toolSet"] == "chrona/agent-tools/v0.6"
     assert [tool["name"] for tool in document["tools"]] == list(SPECS)
     for tool in document["tools"]:
-        writes = tool["name"] == "apply_command"
+        writes = tool["name"] in {"apply_command", "apply_authoring_command"}
         assert tool["annotations"] == {"readOnlyHint": not writes, "destructiveHint": writes, "idempotentHint": True,
                                        "openWorldHint": False}
         assert tool["description"] and tool["title"]
@@ -134,6 +134,7 @@ def test_no_tool_accepts_an_integrity_font_or_filesystem_override():
     assert {name: set(spec.input_schema["properties"]) for name, spec in SPECS.items()} == {
         "validate_project": {"project"}, "schedule_project": {"project"}, "list_presets": set(),
         "check_command": {"command", "storeConfig"}, "apply_command": {"command", "storeConfig"},
+        "apply_authoring_command": {"workspace", "command"},
         "render_review": {"contextReference", "storeConfig", "inline"},
         "compare_baseline": {"baselineReference", "candidateReference", "storeConfig"},
         "render_draft": {"project", "actual", "preset", "view", "style", "theme", "scheme", "layout", "viewport", "locale",

@@ -202,12 +202,12 @@ apply a preset-materialization command to a guided authoring workspace
 
 ## chrona mcp
 
-serve validate_project, schedule_project, render_draft, list_presets, render_review, compare_baseline, check_command and apply_command to an MCP client; render_review and compare_baseline read a Store inside the workspace; apply_command writes a Store only with --allow-write; needs the optional chrona[mcp] extra
+serve project, rendering, Store and guided-authoring tools to an MCP client; apply_command and apply_authoring_command write only with --allow-write; needs the optional chrona[mcp] extra
 
 `chrona mcp --allow-write --list-tools --workspace`
 
-- `--workspace`: the only directory the tools may read, and below which a Store may be written (default: the current directory)
-- `--allow-write`: let apply_command write the Store (configuration, not approval: it has no approval step); without it the server is read-only and the call is refused with E_MCP_WRITE_DISABLED
+- `--workspace`: the only directory the tools may read or write below (default: the current directory)
+- `--allow-write`: enable Store and guided-workspace writes (configuration, not approval); without it write tools are refused with E_MCP_WRITE_DISABLED
 - `--list-tools`: print the tool registry as JSON and exit (needs no MCP SDK)
 
 ## chrona preset

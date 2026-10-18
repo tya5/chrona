@@ -25,8 +25,9 @@ class OperationalResourceError(ValueError):
 # test command used it (#731); an unknown, retired or missing version is reported against the current schema.
 COMMAND_SCHEMAS = {
     "chrona/command/v0.3": "command-request-v0.3.schema.yaml",
+    "chrona/command/v0.4": "command-request-v0.4.schema.yaml",
 }
-COMMAND_SCHEMA = COMMAND_SCHEMAS["chrona/command/v0.3"]
+COMMAND_SCHEMA = COMMAND_SCHEMAS["chrona/command/v0.4"]
 # Automation Result versions. v0.1 (loose Store addresses) was retired with the writers' fallback to it (#731).
 AUTOMATION_RESULT_SCHEMAS = {
     "chrona/automation-result/v0.2": "automation-result-v0.2.schema.yaml",

@@ -22,9 +22,10 @@ from chrona.core.store_address import (
     check_store_address, check_store_segment, resolve_store_address,
 )
 from chrona.core.identity import content_identity
-from chrona.operational.authoring_commands import OperationalResourceError, _recover_incomplete_aggregate, _transaction_marker
+from chrona.operational.authoring_commands import OperationalResourceError, _canonical_workspace, _recover_transaction, _transaction_marker
+from chrona.usecases.authoring_commands import verify_authoring_receipt
 from chrona.operational.command_engine import apply_actual_command
-from chrona.operational.authoring_commands import _relative as _operational_relative
+from chrona.operational.authoring_commands import _safe_relative_output as _operational_relative
 from chrona.presentation.model.closure import ClosureError, _declared_child, _safe_icon_address
 from chrona.usecases.authoring_materialization import _child as _authoring_child, _relative as _authoring_relative
 from chrona.presentation.model.font_resources import FontResourceError, resolve_font_resource
@@ -483,9 +484,10 @@ def test_aggregate_recovery_refuses_a_marker_directory_that_is_not_a_contained_n
     marker = _transaction_marker(workspace)
     marker.write_text(json.dumps({"workspaceIdentity": content_identity({"id": "w"}), "directory": directory, "resources": {}}))
     with pytest.raises(OperationalResourceError) as error:
-        _recover_incomplete_aggregate(workspace)
+        canonical, scope = _canonical_workspace(workspace)
+        _recover_transaction(canonical, scope, verify_authoring_receipt)
     assert error.value.code == "E_AUTHORING_AGGREGATE_RECOVERY"
     assert str(error.value).startswith("E_AUTHORING_AGGREGATE_RECOVERY: ")
     assert "transaction marker '.workspace.yaml.authoring-transaction.json'" in error.value.detail
-    assert "cannot be validated or recovered" in error.value.detail
+    assert "cannot be safely recovered" in error.value.detail
     assert (outside / "keep.yaml").exists()

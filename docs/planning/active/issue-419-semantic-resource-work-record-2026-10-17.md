@@ -1,8 +1,12 @@
 # Issue419 — semantic mapping resource
 
-Status: V1 merged as `ff9abcbbb` (PR1668); rationale and final-head artifact
-equivalence verified, all PR checks green. Exact-main release39053236335 on
-890af301d passed three OSes, reproduction and MCP.
+Status: V1/S1/S2 and C1 are merged. The [current parent acceptance review](../../reviews/current/issue-419-semantic-resource-acceptance-review-2026-10-17.md)
+records all seven literal rows met; its row3 scope audit follows consolidated
+#433 proposal2, which retains Python classifications of resource/Scene-derived
+rows. No state-to-role witness matrix is claimed (decision6243966086).
+Coverage tests16 and report `--check` pass. Publish the corrected review and
+verify its exact-main full release before closing419; earlier release39094741641
+does not contain that correction. Historical slice evidence follows.
 Source base: trusted-ready published main
 `890af301d31ab3896296caefaa5864691e60d69a`.
 [Reviewed scope](https://github.com/tya5/chrona/issues/419#issuecomment-6234966527):

@@ -43,7 +43,8 @@ def test_the_preset_is_listed_and_its_entry_names_only_the_bundle():
 
 def test_the_view_uses_the_generic_vocabulary_for_each_treatment():
     body = safe_load((BUNDLE / "view.yaml").read_bytes())["body"]
-    assert body["grouping"] == {"by": "objectType", "order": {"by": "earliestPlannedStart"}, "presentation": "header"}
+    assert body["grouping"] == {"by": {"fieldRole": "responsible"}, "fallback": "hierarchy", "missing": "Other",
+                                "order": {"by": "earliestPlannedStart"}, "presentation": "header"}
     assert [column["source"] for column in body["tableColumns"]] == ["rowIndex", "title", {"fieldRole": "responsible"}]
     assert body["comparison"]["baselineMarks"] == "ghost-when-changed"
     theme = safe_load((BUNDLE / "theme.yaml").read_bytes())["body"]

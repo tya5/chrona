@@ -677,7 +677,7 @@ Every Scene node has:
 
 One source may emit several nodes. For example, a planned span may emit a bar, label, baseline comparison mark, and accessible hit target. The `sceneId` must include a stable primitive-purpose suffix so a renderer can distinguish them without relying on array position.
 
-### Style provenance metadata (#419 S2; implementation pending)
+### Style provenance metadata (#419 S2)
 
 Treated primitives may carry `styleMatch: {styleId, ruleIds}`: non-empty unique
 authored rule IDs belonging to the one pinned Style provenance resource. A

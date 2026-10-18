@@ -420,6 +420,15 @@ body:
         points: 12
         innerRatio: 0.72
         fit: ellipse
+    deadline-mark-width:
+      type: number
+      value: 2
+    deadline-mark-reach:
+      type: number
+      value: 1.7
+    deadline-mark-order:
+      type: number
+      value: 5
   markStack:
     members:
     - - planned
@@ -843,6 +852,10 @@ body:
       wobbleWavelength: wobble.wavelength
       wobbleSeed: wobble.seed
       wobbleFidelity: wobble.fidelity
+    deadline-mark:
+      strokeWidth: deadline-mark-width
+      markReach: deadline-mark-reach
+      markPaintOrder: deadline-mark-order
   colorBindings:
     axis-rule.stroke: category:ink
     background.fill: surface
@@ -917,6 +930,7 @@ body:
     region-frame-chart.stroke: category:ink
     gate.fill: category:yellow
     gate.stroke: category:ink
+    deadline-mark.stroke: text
   metrics:
     text.body.size: size.body
     text.body.lineHeight: leading.body
