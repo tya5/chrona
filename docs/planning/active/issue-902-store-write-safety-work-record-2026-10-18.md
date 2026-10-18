@@ -1,12 +1,16 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 PR1698 follows ready main `8e25a4232` after B's1695 landing.
-CI39099136587 passed every product check; readiness failed when main advanced.
-The final official artifact12126176185 retains all50 SVG/50 Scene bytes; only
-diagnostic source coordinates differ from the prior snapshot. Current-base
-Store/engine/process tests pass21; earlier focused107 and inward imports11/37
-also passed. Final-head CI and exact-main release remain required. Design
-`69273a1bf` and plan `54b9ddd20` precede code.
+Status: item5 PR1698 merged `076be666c` after final CI39100063943 passed.
+Release39101259252 on `ca1e0bbe8` passed Linux/macOS but failed four Windows
+process/replay tests: pre-lock reading of byte0 collides with the other handle's
+mandatory lock. Item5 is not release-accepted; its repair takes priority over
+item3/item2. Current ready main is `72652b687` after reviewer1705.
+Published correction `d0ea4f635` and issue plan6246530666 precede repair code.
+Independent architecture review confirms the shared Windows primitive can lock
+past EOF without sentinel initialization; Store/authoring transaction ownership,
+persistent inode identity, diagnostics and formats remain unchanged. Portable
+guarded-handle regression fails3 cases before the fix; the repaired focused
+storage/authoring/process batch passes58. Native Windows proof remains required.
 #1679/#1680 are closed after exact-main39094741641 passed all
 three OSes, public reproduction and MCP. Their archival/ledger update is an
 independent commit in PR1698; separate docs PR1699 was superseded to avoid
@@ -109,6 +113,9 @@ must retain its original failure rather than claim a safe pre-write rejection.
 - Pending: current-main integration, CI/release and literal acceptance review.
 
 ## Item5 literal acceptance review (release pending)
+
+Current authority: [item5 acceptance review](../../reviews/current/issue-902-store-write-safety-acceptance-review-2026-10-18.md),
+including the Windows correction and required native release disposition.
 
 Implementation `ab376c78e` with L1 `a4c7fe08c`, L2 `9dcf22c16`; public WIP
 `wip/issue-902-store-write-safety`. This reviews item5 only; items2/3 and parked
