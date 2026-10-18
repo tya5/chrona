@@ -43,6 +43,11 @@ shard3 was superseded by
 the repair push, so its result must come from the final run.
 Local conformance passes every other check; its two stale diagnostic reports
 are bot-owned and were checked successfully in the official CI snapshot.
+Run [39082214880](https://github.com/tya5/chrona/actions/runs/39082214880)
+passes conformance, reproduction and shards1/3. Shard2's only remaining failure
+is the retired-example guard: the new authoring Style tests used obsolete
+example inputs. They now read the current packaged executive-light resources;
+the guard is unchanged. Its final snapshot again has50 unchanged SVG/Scene pairs.
 Do not count WIP publication as release acceptance.
 
 ### S2 installed-wheel evidence
