@@ -173,6 +173,11 @@ uses measured content and gutters; at most one `fill` maximum is allowed,
 otherwise Layout reports `E_LAYOUT_TABLE_OVERFLOW`. The shared schema authority
 is `common-v0.1.$defs.tableColumnPresentation.properties.width`.
 
+**Empty table slot (#1683).** Only `rows.mode: lanes` draws its own columns (from `rows.laneTable`); every other row mode
+takes its columns from the View's `tableColumns`. A View with no column source has nothing for the `table` slot to hold,
+so that slot is measured empty and collapses to zero width: an `fr` share of the free space is never reserved for a blank
+table, and the plot takes the room. Declare `tableColumns` to show a table.
+
 ### 2.1 Table and row metrics (#480)
 
 Layout measures a table once. The same measure sizes the `table` source and

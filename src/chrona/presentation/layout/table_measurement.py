@@ -81,7 +81,7 @@ def measure_bounded_table(table: TableContent, *, available_inline: float | Deci
     unchanged block demand retains its exact baseline and block measurements.
     """
     if (not isfinite(available_inline) or not isfinite(reserved_inline)
-            or reserved_inline < 0 or available_inline <= reserved_inline):
+            or reserved_inline < 0 or (table.columns and available_inline <= reserved_inline)):
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/table", detail="no finite content inline budget")
     content_inline = float(available_inline) - reserved_inline
     inset = float(tokens.text_treatment("text").font_size)
