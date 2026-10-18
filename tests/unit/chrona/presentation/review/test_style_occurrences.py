@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import date
 from types import SimpleNamespace
 
@@ -5,10 +6,13 @@ from chrona.presentation.model.field_roles import FieldDescriptor, FieldRoleBind
 from chrona.presentation.model.projection import (
     FoldedPointProjection,
     ReviewItem,
+    ReviewLaneRowProjection,
     ReviewProjection,
     ReviewRowProjection,
 )
 from chrona.presentation.model.style_rules import StyleOccurrenceKey
+from chrona.presentation.model.hierarchy_names import member_name_key
+from chrona.presentation.review.lane_membership import Lane, LaneAssignment, LaneMembership
 from chrona.presentation.review.style_occurrences import collect_surface_style_facts
 
 
@@ -157,3 +161,24 @@ def test_text_candidates_include_preferred_inside_but_not_folded_or_key_row_insi
                               occurrence_kind="row") in inside_keys
     assert not any(key.row_id == "folded-group" for key in inside_keys)
     assert not any(key.row_id == "key-row-id" for key in inside_keys)
+
+
+def test_attached_lane_style_presence_uses_lane_container_not_source_row_id():
+    item = _item("attached", item_id="attached-instance")
+    item = replace(item, attached_to="host")
+    row = ReviewRowProjection("source-row", "Attached", "", item.item_id, (item,))
+    lane_id = "lane-host"
+    membership = LaneMembership((Lane(lane_id, "", (item.item_id,)),),
+        (LaneAssignment(item.item_id, lane_id, "", "attached", "host"),))
+    projection = _projection(items=(item,), rows=(row,), lane_membership=membership)
+    projection = replace(projection, lane_rows=(ReviewLaneRowProjection(
+        lane_id, "", (item,), (item.item_id,)),))
+    content = _content(show_member_labels=False,
+        attached_labels=((member_name_key(item, lane_id), "Path / Attached · 03 Jan · +1d"),))
+
+    facts = collect_surface_style_facts(projection, content)
+
+    assert StyleOccurrenceKey("attached", "primary", "memberLabel", "source-row",
+                              "attached-instance", occurrence_kind="lane-source") in {
+        fact.key for fact in facts.occurrences if fact.primitive_family == "label"
+    }

@@ -149,7 +149,11 @@ def test_the_run_is_clipped_at_the_plot_edge_when_the_finish_is_beyond_the_windo
 
 def test_the_paint_order_is_the_themes_above_the_marks_base(tmp_path):
     rendered = _render(tmp_path, parts=_parts(order=7))
-    assert {item.paint_order for item in _marks(rendered)} == {107}
+    marks = [item for item in _marks(rendered)
+             if item.scene_id.startswith(("deadline-tick:", "deadline-run:"))]
+    assert len(marks) == 6 and {item.paint_order for item in marks} == {107}
+    legend_key = next(item for item in rendered.surface.primitives if item.scene_id == "legend-swatch:deadlineMark")
+    assert legend_key.visual_role == "deadline-mark" and legend_key.paint_order > max(item.paint_order for item in marks)
     assert all(item.paint_order < 107 for item in rendered.surface.primitives if item.purpose == "planned")
 
 
@@ -400,13 +404,17 @@ def test_outline_contains_wobbled_ink_and_keeps_its_geometry_on_profile_fallback
                                           "wobbleSeed": "deadline.seed", "wobbleFidelity": "deadline.fidelity"})
     rich = _render(tmp_path, parts=parts, name="rich", visual_profile="chrona-output/visual/v0.6-svg")
     baseline = _render(tmp_path, parts=parts, name="baseline")
+    actual_marks = lambda rendered: [item for item in _marks(rendered)
+                                     if item.scene_id.startswith(("deadline-tick:", "deadline-run:"))]
+    assert len(actual_marks(rich)) == len(actual_marks(baseline)) == 6
+    assert any(item.scene_id == "legend-swatch:deadlineMark" for item in rich.surface.primitives)
     grounds = {item.scene_id: item for item in rich.surface.primitives if item.visual_role == "deadline-mark-outline"}
     assert [item.bounds for item in grounds.values()] == [item.bounds for item in baseline.surface.primitives
                                                         if item.visual_role == "deadline-mark-outline"]
-    assert all(item.paint.wobble is None for item in _marks(baseline))
+    assert all(item.paint.wobble is None for item in actual_marks(baseline))
     svg = ElementTree.fromstring(rich.artifact.content)
     elements = {node.attrib["data-scene-id"]: node for node in svg.iter() if "data-scene-id" in node.attrib}
-    for mark in _marks(rich):
+    for mark in actual_marks(rich):
         ground = grounds[mark.scene_id + ":outline"]
         assert mark.paint.wobble is not None
         reserve = mark.paint.stroke_width / 2 + 1
@@ -422,7 +430,7 @@ def test_the_scene_validates_and_the_contrast_gate_judges_every_mark_at_the_mark
     document = scene_document(_render(tmp_path).scene)
     validate_scene_document(document)
     findings = [item for item in evaluate_scene_contrast(document) if item.visual_role == "deadline-mark"]
-    assert len(findings) == 6  # four ticks and two runs
+    assert len(findings) == 7  # four ticks, two runs, and the explicit legend key
     assert {(item.code, item.floor) for item in findings} == {("E_SCENE_MARK_CONTRAST", 3.0)}
     assert all(item.severity == "info" and item.contrast_ratio >= 3.0 for item in findings)
     # a tick that crosses a bar is judged against the bar, the rest against the row ground

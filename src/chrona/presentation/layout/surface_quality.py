@@ -374,6 +374,8 @@ class MarkPlacement:
     source_occurrence_key: StyleOccurrenceKey | None = None
     # Ordered completed ink for a composite legend figure, consumed at Scene projection.
     legend_paints: tuple[ThemePaintWitness, ...] = ()
+    # Canonical local completed point geometry for legend comparison; Scene keeps symbol_parts.
+    legend_geometry_identity: tuple[object, ...] | None = None
 
 @dataclass(frozen=True)
 class LayoutImageFill:

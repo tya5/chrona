@@ -109,12 +109,13 @@ def test_default_and_explicit_raw_chip_output_are_byte_identical(tmp_path):
     explicit_raw = _render(tmp_path, "explicit-raw", viewer_fit="raw")
     assert raw.artifact.content == explicit_raw.artifact.content
     assert sha256(raw.artifact.content).hexdigest() == "83b5b75f6f548316bc3f3f3f66daf512c007d16adfcb293ed2c31667d59074ec"
-    # Scene provenance now includes the wheel-owned vocabulary; geometry, paint and SVG bytes remain characterized.
+    # The Scene digest includes the builtin View provenance change from #1701;
+    # this case still characterizes geometry, paint, and SVG bytes.
     vocabulary = builtin_semantic_vocabulary()
     assert [resource for resource in raw.scene.provenance.resources if resource[0] == "semantic-vocabulary"] == [
         ("semantic-vocabulary", vocabulary.id, "v0.1", vocabulary.content_identity),
     ]
-    assert sha256(serialize_scene(raw.scene)).hexdigest() == "18b4961876255081a6a15f59ecd498e697be6fde4705d91c4cd43559e734ee6c"
+    assert sha256(serialize_scene(raw.scene)).hexdigest() == "459107a99c56241211e8eb5b23ce830575fdce3444cdedfc7599efa59c742e1a"
     labels = [item for item in raw.surface.primitives if item.kind == "Text" and item.purpose == "member-label"]
     assert labels and any(len(item.text_layout.lines) > 1 for item in labels)
     assert "<tspan" in raw.artifact.content.decode("utf-8")

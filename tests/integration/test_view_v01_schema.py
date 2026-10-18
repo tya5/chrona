@@ -102,6 +102,7 @@ def test_lane_resource_migration_inventory_and_editorial_mirror():
         assert next(_validator_v028().iter_errors(_json_value(view)), None) is None, preset_id
         assert view["body"]["rows"]["mode"] == "lanes", preset_id
         assert "tableColumns" not in view["body"], preset_id
+        assert "path" in view["body"]["visibility"]["labels"]["content"], preset_id
     editorial = entries["editorial"]["members"]["view"]
     assert editorial["id"] == "chrona-preset-editorial-lanes"
     assert editorial["sourcePath"] == "view-lanes.yaml"
@@ -117,6 +118,12 @@ def test_lane_resource_migration_inventory_and_editorial_mirror():
 
     package_view = ROOT / "src/chrona/resources/presets/bundles/editorial/view-lanes.yaml"
     corpus_view = ROOT / "examples/halcyon-1/views/editorial-lanes.yaml"
+    package_document = yaml.safe_load(package_view.read_bytes())
+    corpus_document = yaml.safe_load(corpus_view.read_bytes())
+    assert package_document["body"]["visibility"]["labels"]["content"] == ["path"]
+    assert corpus_document["body"]["visibility"]["labels"]["content"] == ["title"]
+    # The helper accounts for this explicit preset migration while ensuring the
+    # independently authored example remains unchanged.
     _assert_view_copy_except_axis(package_view, corpus_view)
     reference = yaml.safe_load((ROOT / "examples/halcyon-1/views/editorial.yaml").read_text(encoding="utf-8"))
     assert reference["id"] == "chrona-preset-editorial"

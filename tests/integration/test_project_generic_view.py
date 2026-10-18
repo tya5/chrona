@@ -36,8 +36,9 @@ def _render(tmp_path: Path, monkeypatch, *, project: dict | None = None, view_ed
     view["body"]["rows"]["mode"] = "automatic"
     for key in ("packing", "laneTable", "laneKeys"):
         view["body"]["rows"].pop(key, None)
+    name_source = "path" if "path" in view["body"]["visibility"]["labels"]["content"] else "title"
     view["body"].setdefault("tableColumns", [{
-        "id": "Title", "source": "title", "missing": "em-dash", "align": "start",
+        "id": "Title", "source": name_source, "missing": "em-dash", "align": "start",
         "width": "content", "headerOrientation": "horizontal",
     }])
     _dump(view_path, view)
@@ -117,10 +118,11 @@ def test_first_appearance_domain_takes_palette_slots_in_projection_order(tmp_pat
     assert len(set(distinct.values())) == 4
 
 
-def test_labels_both_requires_a_table_title_column(tmp_path, monkeypatch, capsys):
+def test_labels_both_requires_the_matching_table_name_column(tmp_path, monkeypatch, capsys):
     def edit(body: dict) -> None:
         body["visibility"]["labels"]["placement"] = "both"
-        body["tableColumns"] = [column for column in body["tableColumns"] if column["source"] != "title"]
+        name_source = "path" if "path" in body["visibility"]["labels"]["content"] else "title"
+        body["tableColumns"] = [column for column in body["tableColumns"] if column["source"] != name_source]
         if not body["tableColumns"]:
             body["tableColumns"] = [{
                 "id": "#", "source": "rowIndex", "missing": "em-dash", "align": "start",

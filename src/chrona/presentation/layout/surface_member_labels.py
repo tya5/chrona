@@ -14,6 +14,7 @@ from chrona.presentation.layout.labels import (
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.style_occurrences import StyleSourceOccurrences
 from chrona.presentation.layout.style_text import resolve_label_candidate_styles
+from chrona.presentation.model.hierarchy_names import member_name_key
 from chrona.presentation.layout.obstacles import (
     ROUTE_RESERVE_CLASS, ObstacleRect, SurfaceObstacle, SurfaceObstacleIndex, obstacles_intersect,
 )
@@ -280,14 +281,15 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 start_at, end_at = planned.get("start", planned.get("at")), planned.get("end", planned.get("at"))
                 if not isinstance(start_at, date) and not isinstance(end_at, date):
                     continue
-                attached = attached_labels.get(item.object_id) if getattr(item, "attached_to", None) else None
+                name_container = review_row.row_id if projection.rows else item.object_id
+                attached = attached_labels.get(member_name_key(item, name_container)) if getattr(item, "attached_to", None) else None
                 components = []
                 if attached is not None:
                     components.append(("attached", attached))
                 elif not contract.labels.enabled:
                     continue
                 if attached is None and "title" in contract.labels.content:
-                    components.append(("title", item.title))
+                    components.append(("title", request.surface_content.member_name(item, review_row.row_id)))
                 if (attached is None and getattr(item, "forecast", None) is None
                         and "finishDelta" in contract.labels.content and item.finish_delta is not None):
                     components.append(("finishDelta", f"{item.finish_delta:+d}d"))
@@ -355,7 +357,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
             group = groups.get(folded.group_id)
             occurrence, admission = admission_for(folded.item, folded.group_id, folded=True)
             parts = normalize(f"member-label:{instance_id}", folded.item,
-                (("title", folded.item.title),), occurrence, admission)
+                (("title", request.surface_content.member_name(folded.item, folded.group_id)),), occurrence, admission)
             if not parts:
                 continue
             if folded.item.source_kind == "actual" and mark is None:
@@ -365,7 +367,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 continue
             ladder = (("end", "start") if contract.labels.side == "auto" else (contract.labels.side,))
             requests.append(LabelRequest(f"member-label:{instance_id}", folded.item.object_id,
-                folded.item.title, LabelRect(*bounds_from_rect(mark.bounds)), ladder, "groupHeader",
+                request.surface_content.member_name(folded.item, folded.group_id), LabelRect(*bounds_from_rect(mark.bounds)), ladder, "groupHeader",
                 "group-header-point", CollisionDomain("group-header", folded.group_id),
                 "visible-overflow", bounds=LabelRect(*bounds_from_rect(group.header_bounds)),
                 inside_host_obstacle_id=mark.placement_id, semantic_id="memberLabel",
@@ -423,7 +425,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 # Keep the independent required delta outside the folded title's
                 # full measured inline reservation, whichever side fits.
                 title_footprint = measure_label_footprint(
-                    f"member-label:{instance_id}", folded.item.title or "", "groupHeader", "memberLabel",
+                    f"member-label:{instance_id}", request.surface_content.member_name(folded.item, folded.group_id),
+                    "groupHeader", "memberLabel",
                     request, available_inline=timeline_bounds[2] * 0.4)
                 title_reach = title_footprint.size[0] + title_footprint.gap
                 anchor = LabelRect(*bounds_from_rect(mark.bounds))

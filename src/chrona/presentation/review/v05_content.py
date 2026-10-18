@@ -9,6 +9,7 @@ from typing import Any, Mapping
 
 from chrona.presentation.model.actual_variance_paint import select_actual_variance_paints
 from chrona.presentation.model.date_basis import ItemDateBasis, date_range_display
+from chrona.presentation.model.hierarchy_names import close_member_names, member_name_key, path_name_selected
 from chrona.presentation.model.projection import ObservationState, ReviewProjection, display_finish_delta
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
@@ -35,7 +36,7 @@ from chrona.presentation.style import (
     StyleEncodingOutcome, StyleLegendScope, StyleMatch, StyleRule,
     canonical_style_selector,
 )
-from chrona.presentation.review.style_occurrences import collect_surface_style_facts
+from chrona.presentation.review.style_occurrences import collect_surface_style_facts, surface_comparison_mark_semantics
 from chrona.presentation.model.style_fills import complete_style_fills
 from chrona.presentation.model.style_mark_paint import validate_style_mark_paint
 from chrona.presentation.model.theme_tokens import ThemeTokenView
@@ -77,22 +78,36 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
                                 *, actual_set: Mapping[str, Any] | None = None,
                                 locale: str = "en-US") -> TableContent:
     """Normalize the table once so measurement and composition read the same cells."""
+    member_names = close_member_names(projection, view)
     if getattr(view.rows.mode, "value", view.rows.mode) == "lanes":
-        return _lane_table_content(projection, project, view)
+        return replace(_lane_table_content(projection, project, view), member_names=member_names)
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
     active_columns = tuple(column for column in view.table_columns
                            if _table_column_source_available(column.source, projection, actual_set))
     columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width), column.header_orientation,
                                        text_wrap=column.text_wrap, column_source=column.source)
                     for column in active_columns)
+    group_ranges = {
+        mode: projection.group_date_ranges(end_display=mode)
+        for mode in {column.end_display for column in active_columns
+                     if column.format == "dateRange" and isinstance(column.source, Mapping)
+                     and column.source.get("facet") == "planned"}
+    }
     as_of = date.fromisoformat(str(actual_body["asOf"])) if isinstance(actual_body.get("asOf"), str) else None
-    def cell_parts(item: Any, column: Any, row_index: int) -> tuple[str, str, str]:
+    def cell_parts(item: Any, column: Any, row_index: int, container_id: str = "") -> tuple[str, str, str]:
         """The cell's (prefix, core, suffix): the affix of its state wraps the formatted text (#588)."""
         value = table_value(item, dict(project), column.source, row_index)
+        if column.source == "path" and path_name_selected(view):
+            value = member_names.get(member_name_key(item, container_id),
+                                     member_names.get(member_name_key(item), value))
         if column.format == "dateRange":
+            planned = isinstance(column.source, Mapping) and column.source.get("facet") == "planned"
+            if planned and item.is_rollup and item.source_kind in {"primary", "combined"}:
+                resolved = group_ranges[column.end_display].get(item.object_id)
+                if resolved is not None:
+                    value = resolved
             value = date_range_display(
-                value, basis=(item.date_basis if isinstance(column.source, Mapping)
-                              and column.source.get("facet") == "planned" else ItemDateBasis()),
+                value, basis=item.date_basis if planned else ItemDateBasis(),
                 end_display=column.end_display)
         missing = column.missing
         if value is None and column.missing_by:
@@ -114,12 +129,12 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
             suffix += "*"
         return prefix, core, suffix
 
-    def cell(item: Any, column: Any, row_index: int) -> str:
-        prefix, core, suffix = cell_parts(item, column, row_index)
+    def cell(item: Any, column: Any, row_index: int, container_id: str = "") -> str:
+        prefix, core, suffix = cell_parts(item, column, row_index, container_id)
         return prefix + core + suffix
 
-    def cell_affixes(item: Any, column: Any, row_index: int) -> tuple[str, str]:
-        prefix, _, suffix = cell_parts(item, column, row_index)
+    def cell_affixes(item: Any, column: Any, row_index: int, container_id: str = "") -> tuple[str, str]:
+        prefix, _, suffix = cell_parts(item, column, row_index, container_id)
         return prefix, suffix
     def cell_semantic(item: Any, column: Any) -> str:
         source = column.source
@@ -140,10 +155,10 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
             item = next(item for item in row.items if item.item_id == row.table_subject_id)
             header = (item.is_rollup and row.rollup_presentation == "header"
                       and column.id == view.hierarchy_column)
-            return TableCellContent(row.row_id, column.id, cell(item, column, row_index),
+            return TableCellContent(row.row_id, column.id, cell(item, column, row_index, row.row_id),
                                     "groupHeader" if header else cell_semantic(item, column),
                                     "groupHeader" if header else cell_typography_role(column),
-                                    *cell_affixes(item, column, row_index),
+                                    *cell_affixes(item, column, row_index, row.row_id),
                                     required=_is_forecast_delta(item, column.source),
                                     style_key=_table_style_key(item, row.row_id, column.id,
                                                               "groupHeader" if header else cell_semantic(item, column)))
@@ -166,7 +181,7 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
                                    for item in projection.items for column in active_columns)
         row_levels = tuple(TableRowLevel((item.object_id,), bool(item.group_id)) for item in projection.items)
     return TableContent(columns, cells, table_cell_objects, view.hierarchy_column, row_levels,
-                        indent_under_headers=_indents_under_headers(view))
+                        indent_under_headers=_indents_under_headers(view), member_names=member_names)
 
 
 def _table_subjects(projection: ReviewProjection) -> tuple[Any, ...]:
@@ -402,6 +417,22 @@ def _style_match_index(intents: OccurrenceStyleIndex,
     return StyleMatchIndex(tuple(matches))
 
 
+def _default_legend_entries(entries: tuple[SurfaceLegendEntry, ...],
+                            detail: ReviewDetailInput | None, *,
+                            potential_roles: frozenset[str],
+                            wording: Mapping[str, str]) -> tuple[SurfaceLegendEntry, ...]:
+    """Reserve missing comparison keys; completed Layout still owns admission."""
+    opted_out = frozenset(detail.unkeyed_legend_roles if detail is not None else ())
+    declared = {entry.role for entry in entries}
+    defaults = tuple(SurfaceLegendEntry(role, wording.get(role, label))
+                     for role, label in (("snapshot", "Baseline"), ("deadlineMark", "Deadline"))
+                     if role in potential_roles and role not in declared and role not in opted_out)
+    authored_roles = {entry.role for entry in detail.legend} if detail is not None else set()
+    insertion = next((index for index, entry in enumerate(entries)
+                      if entry.role.startswith("scale:") and entry.role not in authored_roles), len(entries))
+    return (*entries[:insertion], *defaults, *entries[insertion:])
+
+
 def _style_legend_entries(
     rules: tuple[StyleRule, ...], intents: OccurrenceStyleIndex,
     occurrences: tuple[Any, ...], style_fills: Any,
@@ -505,7 +536,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     label_fallback: tuple[str, ...] = ()
     annotation_fallback: tuple[str, ...] = ()
     link_mode = visible.links
-    title_link_columns = tuple(column.id for column in view.table_columns if column.source == "title")
+    name_source = "path" if path_name_selected(view) else "title"
+    title_link_columns = tuple(column.id for column in view.table_columns if column.source == name_source)
     # Legacy boolean visibility never declared a failure policy.  Preserve its
     # materializability by treating a rejected candidate as optional.
     label_overflow = "suppress" if labels is True else "visible-overflow"
@@ -520,6 +552,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
             label_side = str(labels.get("side", "auto"))
             label_overflow = str(labels.get("overflow", "suppress" if lane_mode else "visible-overflow"))
             label_text_role = str(labels["textRole"]) if "textRole" in labels else None
+    # Layout keeps the existing name component's admission and Style identity.
+    label_content = tuple("title" if component == "path" else component for component in label_content)
+    member_names = table.member_names or close_member_names(projection, view)
     if isinstance(visible.fallback, Mapping):
         label_fallback = tuple(str(item) for item in visible.fallback.get("labels", ()))
         annotation_fallback = tuple(str(item) for item in visible.fallback.get("annotations", ()))
@@ -663,7 +698,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                    observation_rows=detail_content.observation_rows,
                                label_fallback=label_fallback, label_text_role=label_text_role, annotation_fallback=annotation_fallback,
                                link_mode=link_mode, title_link_columns=title_link_columns,
-                               attached_labels=_attached_labels(projection, locale),
+                               attached_labels=_attached_labels(projection, locale, member_names),
+                               member_names=member_names,
                                table_cell_objects=table_cell_objects,
                                scale_legend_paints=scale_legend_paints,
                                progress_fill_source=view.progress_fill,
@@ -688,6 +724,14 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     needs_actual_candidates = any(entry.role == "actual" for entry in content.legend_entries)
     facts = (collect_surface_style_facts(projection, content, gate_declared=gate_declared)
              if style_rules or encoding_rules or needs_actual_candidates else None)
+    potential_roles = (frozenset(item.key.semantic_id for item in facts.occurrences
+                                if item.primitive_family == "mark") if facts is not None
+                       else surface_comparison_mark_semantics(projection, content, gate_declared=gate_declared))
+    if projection.deadlines:
+        potential_roles |= {"deadlineMark"}
+    content = replace(content, legend_entries=_default_legend_entries(
+        content.legend_entries, detail, potential_roles=potential_roles,
+        wording=legend_wording if isinstance(legend_wording, Mapping) else {}))
     if style_rules or encoding_rules:
         assert facts is not None
         intents = OccurrenceStyleIndex(evaluate_style_rules(
@@ -784,7 +828,8 @@ def _group_header_runs(projection: ReviewProjection, project: Mapping[str, Any],
         raise ValueError(f"{error.code}: {error.detail}; groups={_diagnostic_value(facts['group_ids'])}, ordinal={_diagnostic_value(facts['ordinal'])}, first={_diagnostic_value(facts['first'])}") from error
 
 
-def _attached_labels(projection: ReviewProjection, locale: str) -> tuple[tuple[str, str], ...]:
+def _attached_labels(projection: ReviewProjection, locale: str,
+                     member_names: Mapping | None = None) -> tuple[tuple[str, str], ...]:
     """Title, planned date and point delta of each attached point, in its View locale (#486)."""
     labels = []
     active_rows = projection.lane_rows if projection.lane_membership is not None else projection.rows
@@ -793,10 +838,12 @@ def _attached_labels(projection: ReviewProjection, locale: str) -> tuple[tuple[s
             at = item.planned.get("at")
             if item.attached_to is None or not isinstance(at, date):
                 continue
-            parts = [item.title, _format_compact_date(at, include_year=False, locale=locale)]
+            container = row.lane_id if projection.lane_membership is not None else row.row_id
+            name = (member_names or {}).get(member_name_key(item, container), item.title)
+            parts = [name, _format_compact_date(at, include_year=False, locale=locale)]
             if item.at_delta is not None:
                 parts.append(f"{item.at_delta:+d}d")
-            labels.append((item.object_id, " · ".join(parts)))
+            labels.append((member_name_key(item, container), " · ".join(parts)))
     return tuple(labels)
 
 

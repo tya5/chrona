@@ -16,6 +16,7 @@ from tests.unit.chrona.presentation.layout.test_lane_item_footprints import _win
 from tests.unit.chrona.presentation.layout.test_surface_axis_tier_geometry import _axis_request
 from chrona.presentation.layout.lane_label_intent import measure_lane_member_labels
 from chrona.presentation.layout.surface_mark_visibility import build_item_mark_visibility_index
+from chrona.presentation.model.hierarchy_names import member_name_key
 from tests.unit.chrona.presentation.layout.test_label_visual_measurement import _icon
 
 
@@ -77,8 +78,9 @@ def test_standalone_delta_absences_do_not_enlarge_member_name_count():
 
 def test_attached_label_on_outside_host_has_no_spatial_overflow_fallback():
     request = _request()
+    before = next(item for item in request.projection.items if item.object_id == "before")
     request = replace(request, surface_content=replace(request.surface_content,
-        attached_labels=(("before", "Attached name"),)),
+        attached_labels=((member_name_key(before, before.object_id), "Attached name"),)),
         projection=replace(request.projection, items=tuple(
             replace(item, attached_to="across") if item.object_id == "before" else item
             for item in request.projection.items)))
@@ -129,6 +131,33 @@ def test_lane_measurement_uses_the_shared_admission_before_measuring_text():
         mark_visibility_index=build_item_mark_visibility_index(projection, as_of=content.as_of))
     assert len(measured) == 1 and measured[0].source_ref == across.object_id
     assert measured[0].content == across.title
+
+
+def test_lane_preflight_measures_the_closed_path_name_with_legacy_identity():
+    projection, _, _ = _window_footprint_fixture()
+    across = replace(projection.items[1], planned={
+        "start": date(2026, 1, 1), "end": date(2026, 1, 9)}, finish_delta=4)
+    items = (projection.items[0], across, projection.items[2])
+    projection = replace(projection, items=items,
+        rows=tuple(replace(row, items=(item,)) for row, item in zip(projection.rows, items)),
+        lane_rows=(replace(projection.lane_rows[0], items=items),))
+    request = _axis_request(())
+    lane_id = projection.lane_rows[0].lane_id
+    closed_path = "Platform / Infrastructure / across"
+    content = replace(request.surface_content, show_member_labels=True,
+        label_content=("title", "finishDelta"), label_placement="plot",
+        member_names={member_name_key(across, lane_id): closed_path})
+    measured = measure_lane_member_labels(projection, content, timeline_inline_size=200,
+        theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+        visual_requests=(), icon_assets={},
+        mark_visibility_index=build_item_mark_visibility_index(projection, as_of=content.as_of))
+
+    assert len(measured) == 1
+    # The explicit-window admission keeps its existing title-only result here;
+    # path normalization changes the name, not the independent delta verdict.
+    assert measured[0].content == closed_path
+    assert measured[0].source_ref == across.object_id
+    assert measured[0].placement_id == f"member-label:{lane_id}:{across.item_id}"
 
 
 @pytest.mark.parametrize("failure", ["duplicate", "missing-warning", "wrong-count", "also-text"])

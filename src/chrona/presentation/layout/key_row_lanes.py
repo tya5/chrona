@@ -70,7 +70,7 @@ def assign_key_row_lanes(review_rows: tuple[Any, ...], *, request: Any, scale: A
                 rights.append(float(mark.bounds.inline) + float(mark.bounds.inline_size))
         if not lefts:
             return (0.0, 0.0)
-        width = measure_text_width(point_items[0].title or "", font_size=float(treatment.font_size), font_metrics=metrics,
+        width = measure_text_width(request.surface_content.member_name(point_items[0], row.row_id), font_size=float(treatment.font_size), font_metrics=metrics,
                                    letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
                                    numeric_spacing="proportional") + 2 * pad
         span = width + gap if width > 0 else 0.0
@@ -96,7 +96,7 @@ def assign_key_row_lanes(review_rows: tuple[Any, ...], *, request: Any, scale: A
                             float(candidate_treatment.font_size) * float(candidate_treatment.line_height),
                         )[0]
                         candidate_width = measure_text_width(
-                            item.title or "", font_size=float(candidate_treatment.font_size),
+                            request.surface_content.member_name(item, row.row_id), font_size=float(candidate_treatment.font_size),
                             font_metrics=candidate_metrics,
                             letter_spacing=float(candidate_treatment.letter_spacing),
                             text_transform=candidate_treatment.transform,
