@@ -7,7 +7,7 @@ from chrona.presentation.contracts.resources import (
     ViewComparison, ViewGroupHeader, ViewGrouping, ViewInput, ViewRows,
     ViewVisibility, ViewWindow, _PrivateGroupingMode,
 )
-from chrona.presentation.model.hierarchy_names import close_member_names, member_name_key
+from chrona.presentation.model.hierarchy_names import close_member_names, member_name_key, plot_name_selected
 from chrona.presentation.model.surface_content import table_value
 from chrona.presentation.model.projection import (
     FoldedPointProjection, ReviewItem, ReviewLaneRowProjection, ReviewProjection,
@@ -111,3 +111,18 @@ def test_path_includes_a_standalone_member_and_never_looks_up_an_unrelated_proje
     snapshot = _item(source_kind="snapshot", hierarchy_titles=("Other", "Old", "Provision"))
     unrelated = {"objects": {"root": {"title": "Wrong primary title"}}}
     assert table_value(snapshot, unrelated, "path") == "Other / Old / Provision"
+
+
+@pytest.mark.parametrize("labels,expected", [
+    (True, True), (False, False),
+    ({"placement": "plot", "content": ["title"]}, True),
+    ({"placement": "both", "content": ["path", "finishDelta"]}, True),
+    ({"placement": "plot", "content": ["path"]}, True),
+    ({"placement": "plot", "content": ["finishDelta"]}, False),
+    ({"placement": "table", "content": ["path"]}, False),
+    ({"placement": "none", "content": ["title"]}, False),
+])
+def test_folded_and_key_row_name_admission_is_independent_of_name_source(labels, expected):
+    view = _view()
+    view = replace(view, visibility=replace(view.visibility, labels=labels))
+    assert plot_name_selected(view) is expected

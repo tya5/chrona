@@ -12,6 +12,7 @@ from chrona.presentation.layout.surface_member_labels import (
 )
 from chrona.presentation.layout.surface_quality import MarkPlacement, ScalePlacement, SlotPlacement
 from chrona.presentation.model.surface_content import SummaryContent, SurfaceContentInput
+from chrona.presentation.model.hierarchy_names import member_name_key
 from tests.unit.chrona.presentation.layout.test_point_host_labels import _label_request_context
 from chrona.core.forecast import ForecastItem
 from chrona.presentation.model.projection import ForecastComparisonFact, WindowMode
@@ -80,7 +81,8 @@ def test_member_label_builder_marks_attached_and_key_row_names_required():
     attached_context.projection.lane_membership = None
     attached_row = attached_context.review_rows[0]
     attached_row.items = (replace(attached_row.items[0], attached_to="host"),)
-    attached_context.request.surface_content.attached_labels = (("gate", "Attached gate"),)
+    attached_context.request.surface_content.attached_labels = ((
+        member_name_key(attached_row.items[0], attached_row.row_id), "Attached gate"),)
     attached, = build_member_label_requests(attached_context).pre_route
     assert attached.required_before_routes
 

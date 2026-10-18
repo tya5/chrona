@@ -78,8 +78,9 @@ def test_standalone_delta_absences_do_not_enlarge_member_name_count():
 
 def test_attached_label_on_outside_host_has_no_spatial_overflow_fallback():
     request = _request()
+    before = next(item for item in request.projection.items if item.object_id == "before")
     request = replace(request, surface_content=replace(request.surface_content,
-        attached_labels=(("before", "Attached name"),)),
+        attached_labels=((member_name_key(before, before.object_id), "Attached name"),)),
         projection=replace(request.projection, items=tuple(
             replace(item, attached_to="across") if item.object_id == "before" else item
             for item in request.projection.items)))

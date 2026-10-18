@@ -842,7 +842,7 @@ def _attached_labels(projection: ReviewProjection, locale: str,
             parts = [name, _format_compact_date(at, include_year=False, locale=locale)]
             if item.at_delta is not None:
                 parts.append(f"{item.at_delta:+d}d")
-            labels.append((item.object_id, " · ".join(parts)))
+            labels.append((member_name_key(item, container), " · ".join(parts)))
     return tuple(labels)
 
 

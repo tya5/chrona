@@ -14,6 +14,7 @@ from chrona.presentation.layout.labels import (
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.style_occurrences import StyleSourceOccurrences
 from chrona.presentation.layout.style_text import resolve_label_candidate_styles
+from chrona.presentation.model.hierarchy_names import member_name_key
 from chrona.presentation.layout.obstacles import (
     ROUTE_RESERVE_CLASS, ObstacleRect, SurfaceObstacle, SurfaceObstacleIndex, obstacles_intersect,
 )
@@ -280,7 +281,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 start_at, end_at = planned.get("start", planned.get("at")), planned.get("end", planned.get("at"))
                 if not isinstance(start_at, date) and not isinstance(end_at, date):
                     continue
-                attached = attached_labels.get(item.object_id) if getattr(item, "attached_to", None) else None
+                name_container = review_row.row_id if projection.rows else item.object_id
+                attached = attached_labels.get(member_name_key(item, name_container)) if getattr(item, "attached_to", None) else None
                 components = []
                 if attached is not None:
                     components.append(("attached", attached))

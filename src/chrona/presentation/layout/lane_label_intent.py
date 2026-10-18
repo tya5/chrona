@@ -16,6 +16,7 @@ from chrona.presentation.layout.surface_mark_visibility import (
 )
 from chrona.presentation.layout.style_occurrences import StyleSourceOccurrences
 from chrona.presentation.layout.style_text import resolve_label_candidate_styles
+from chrona.presentation.model.hierarchy_names import member_name_key
 
 
 @dataclass(frozen=True)
@@ -94,7 +95,7 @@ def measure_lane_member_labels(projection: Any, surface_content: Any, *,
             instance_id = (f"{lane_row.lane_id}:{item.item_id or item.object_id}"
                            if getattr(projection, "rows", ()) else item.object_id)
             placement_id = f"member-label:{instance_id}"
-            attached = attached_labels.get(item.object_id) if getattr(item, "attached_to", None) else None
+            attached = attached_labels.get(member_name_key(item, lane_row.lane_id)) if getattr(item, "attached_to", None) else None
             components = []
             if attached is not None:
                 components.append(("attached", attached))

@@ -19,6 +19,7 @@ from chrona.presentation.model.actual_observation import finish_variance
 from chrona.presentation.model.date_basis import DisplayDateRange, ItemDateBasis, aggregate_date_ranges, endpoint_distance
 from chrona.presentation.model.field_roles import FieldRoleBindings
 from chrona.presentation.model.field_role_view import resolve_role_grouping
+from chrona.presentation.model.hierarchy_names import plot_name_selected
 from chrona.presentation.review.lane_membership import (
     LaneItem, LaneMembership, LanePackingInput, PlannedPoint, PlannedSpan,
     SelectedFSRelation, derive_lane_membership,
@@ -814,11 +815,7 @@ def _fold_automatic_points(rows: tuple[ReviewRowProjection, ...], view: ViewInpu
     if view.rows.points == "group-header":
         if view.grouping is None or view.grouping.presentation != "header":
             raise ValueError("E_REVIEW_POINT_GROUP_HEADER_REQUIRED: rows.points group-header needs a grouping with presentation header")
-        labels = view.visibility.labels
-        has_title_label = (labels is True or
-                           (isinstance(labels, Mapping) and labels.get("placement") in {"plot", "both"}
-                            and "title" in labels.get("content", ())))
-        if not has_title_label:
+        if not plot_name_selected(view):
             raise ValueError("E_REVIEW_POINT_GROUP_HEADER_LABEL_REQUIRED: rows.points group-header needs visibility.labels "
                              "to show titles on the plot")
         folded = tuple(FoldedPointProjection(row.items[0], row.group_id, members=row.items[1:])
@@ -858,9 +855,7 @@ KEY_ROW_ID = "key-row"
 
 def _key_row(rows: tuple[ReviewRowProjection, ...], view: ViewInput) -> tuple[ReviewRowProjection, ...]:
     """Move every point row into one row placed first, under the axis (#1501); Layout packs it into lanes."""
-    labels = view.visibility.labels
-    if not (labels is True or (isinstance(labels, Mapping) and labels.get("placement") in {"plot", "both"}
-                               and "title" in labels.get("content", ()))):
+    if not plot_name_selected(view):
         raise ValueError("E_REVIEW_POINT_KEY_ROW_LABEL_REQUIRED: rows.points key-row needs visibility.labels "
                          "to show titles on the plot")
     points = sorted((row for row in rows if row.items and row.items[0].source_type == "point"),

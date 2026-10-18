@@ -329,7 +329,7 @@ class SurfaceContentInput:
     annotation_kind_paints: tuple[tuple[str, str], ...] = ()
     # Required plot-label text of each point drawn on the row of the span it
     # attaches to (#486): title, planned date and finish delta, never dropped.
-    attached_labels: tuple[tuple[str, str], ...] = ()
+    attached_labels: tuple[tuple[NameKey, str], ...] = ()
     # View literal overrides plus Layout-bound template copy, keyed by a headed slot node.
     slot_heading_text: tuple[tuple[str, str], ...] = ()
     # Completed Scheme colours keyed by neutral axis-band placement identity (#490).

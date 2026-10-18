@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from chrona.presentation.model.mark_semantics import canonical_mark_semantic
+from chrona.presentation.model.hierarchy_names import member_name_key
 from chrona.presentation.model.projection import (
     ReviewProjection,
     display_finish_delta,
@@ -38,6 +39,7 @@ class _SourceItem:
     row_id: str
     occurrence_kind: str
     source_kind: str
+    content_container_id: str
     key_row: bool = False
 
     @property
@@ -59,18 +61,31 @@ def _source_items(projection: ReviewProjection) -> tuple[_SourceItem, ...]:
     items: list[_SourceItem] = []
     if projection.rows:
         occurrence_kind = "lane-source" if projection.lane_membership is not None else "row"
+        lane_by_row = {}
+        if projection.lane_membership is not None:
+            lane_by_member = {
+                member_id: lane.lane_id
+                for lane in projection.lane_rows
+                for member_id in lane.member_item_ids
+            }
+            lane_by_row = {
+                row.row_id: lane_by_member.get(
+                    row.items[0].item_id or row.items[0].object_id, row.row_id)
+                for row in projection.rows if row.items
+            }
         for row in projection.rows:
             for item in row.items:
                 items.append(_SourceItem(item, row.row_id, occurrence_kind, item.source_kind,
+                                         lane_by_row.get(row.row_id, row.row_id),
                                          bool(getattr(row, "key_row", False))))
     elif not projection.rows_resolved:
         # Legacy direct projections have no normalized rows. Match Layout's
         # automatic occurrence source kind and leave row identity empty.
-        items.extend(_SourceItem(item, "", "auto", "combined")
+        items.extend(_SourceItem(item, "", "auto", "combined", "")
                      for item in projection.items)
 
     for folded in projection.folded_points:
-        items.extend(_SourceItem(item, folded.group_id, "folded", item.source_kind)
+        items.extend(_SourceItem(item, folded.group_id, "folded", item.source_kind, folded.group_id)
                      for item in folded.all_items)
     return tuple(items)
 
@@ -190,7 +205,8 @@ def _text_occurrences(projection: ReviewProjection, content: SurfaceContentInput
     occurrences: list[StyleOccurrence] = []
     for source in source_items:
         item = source.item
-        attached_text = item.object_id in attached and item.attached_to is not None
+        attached_text = (member_name_key(item, source.content_container_id) in attached
+                         and item.attached_to is not None)
         if (getattr(item, "member_label_eligible", True)
                 and (show_member_text or attached_text)
                 and (source.occurrence_kind == "folded"

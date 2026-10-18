@@ -22,6 +22,14 @@ def path_name_selected(view: Any) -> bool:
     return isinstance(labels, Mapping) and "path" in labels.get("content", ())
 
 
+def plot_name_selected(view: Any) -> bool:
+    """Point policies require a name, independent of its title/path source."""
+    labels = view.visibility.labels
+    return (labels is True or (isinstance(labels, Mapping)
+            and labels.get("placement") in {"plot", "both"}
+            and bool({"title", "path"}.intersection(labels.get("content", ())))))
+
+
 def source_path(item: Any) -> tuple[tuple[str, str], ...]:
     """Never look up a comparison ancestor in an unrelated primary Project."""
     ids = item.hierarchy_path
