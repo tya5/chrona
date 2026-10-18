@@ -56,3 +56,26 @@ evidence, not a project-specific core policy. The reviewer requests row1 first.
   implementation slices/files/tests/acceptance/publication boundaries here.
   Only afterward implement row2. No implementation plan or design-completion
   claim is made by this planning publication.
+
+## Capability inventory (selected design still pending)
+
+The public library has15 effective closures:7 lane and8 automatic. Layout
+`viewDefaults` contribute grouping/header declarations; raw View YAML alone is
+not the closure. All use table-timeline surfaces.
+
+| Presets | Rows | Grouping / current label route |
+| --- | --- | --- |
+| mission-light, control-room-dark, print-mono, executive-light, elevated-light | lanes | responsible-role groups; only executive-light falls back to hierarchy; plot titles |
+| editorial, technical-print | lanes | no grouping; plot titles |
+| marquee, sunday, target-b, titlecard, yuya | automatic | responsible-role groups with hierarchy fallback; Task title/Phase columns; Yuya uses vertical tags |
+| muted-executive | automatic | responsible-role groups with hierarchy fallback; Task title/Owner columns |
+| wallboard-dark | automatic | no grouping; Task title/Owner columns |
+| chrona-default-draft | automatic | explicit hierarchy, depth all, rollup header; Task hierarchy column |
+
+Existing `tableColumnSource: path` displays full ancestor-title breadcrumbs.
+However, lane schema forbids `tableColumns`, `hierarchyColumn` and explicit
+hierarchy grouping; its separate lane-table columns have their own contract.
+Therefore adding an ordinary path column alone cannot satisfy all-presets
+acceptance. Resolve the lane-compatible representation and intentionally
+ungrouped preset policy before selecting a contract. Bound field-role grouping
+also needs review: fixing only unbound-role fallback would be incomplete.
