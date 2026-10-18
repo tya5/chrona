@@ -380,6 +380,15 @@ body:
     legend-block:
       type: number
       value: 22
+    deadline-mark-width:
+      type: number
+      value: 2
+    deadline-mark-reach:
+      type: number
+      value: 1.7
+    deadline-mark-order:
+      type: number
+      value: 5
   markStack:
     members: [[planned, missing-actual], [actual]]
     gap: comparison-gap
@@ -720,6 +729,10 @@ body:
     annotation-note-leader:
       strokeWidth: stroke-width
       dash: dash.leader
+    deadline-mark:
+      strokeWidth: deadline-mark-width
+      markReach: deadline-mark-reach
+      markPaintOrder: deadline-mark-order
   colorBindings:
     axis-rule.stroke: rule
     background.fill: surface
@@ -754,8 +767,8 @@ body:
     snapshot.fill: surface
     snapshot.stroke: accent
     summary-bar.fill: accent
-    actual.fill: category:actualInk
-    actual.stroke: category:actualInk
+    actual.fill: accent
+    actual.stroke: accent
     milestone.fill: text
     missing-actual.fill: surface
     missing-actual.stroke: accent
@@ -784,6 +797,7 @@ body:
     period-band.fill: category:period
     period-label.fill: accent
     annotation-note-leader.stroke: textMuted
+    deadline-mark.stroke: text
   metrics:
     text.body.size: size.body
     text.body.lineHeight: leading.body
