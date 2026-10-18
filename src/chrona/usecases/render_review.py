@@ -145,6 +145,8 @@ class RenderRequest:
     draft_font_resolution: DraftFontResolution | None = None
     preset_visual_profile_fallback: PresetVisualProfileFallback | None = None
     progress: RenderProgress | None = field(default=None, compare=False, repr=False)
+    # Extension diagnostics a draft caller resolved beside the Project file (no Store); Context renders leave it empty.
+    extension_diagnostics: tuple[Diagnostic, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -313,7 +315,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         ledger.packages()
     if request.progress is not None:
         request.progress.phase("schedule")
-    projection, scenario_provenance, attachments, deadlines = _project_review(project, view, render_closure, manifests, request.scheduler)
+    projection, scenario_provenance, attachments, deadlines = _project_review(project, view, render_closure, manifests, request.scheduler, request.extension_diagnostics)
     profile_info += tuple(ForecastInfo(item) for item in projection.forecast_findings)
     if projection.omitted_group_summary_count:
         profile_info += (FieldGroupingSummariesOmitted(projection.omitted_group_summary_count),)
@@ -801,9 +803,10 @@ def _visual_request(visual: Any, projection: Any, index: int, closure: RenderClo
 
 
 def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClosure,
-                    manifests: dict[str, dict[str, Any]], scheduler: Scheduler) -> Any:
+                    manifests: dict[str, dict[str, Any]], scheduler: Scheduler,
+                    extra_diagnostics: tuple[Diagnostic, ...] = ()) -> Any:
     """Schedule the Project, and its Snapshot when one is bound, then project the review."""
-    result = scheduler.schedule(project, extension_diagnostics=validate_profiles(project, manifests))
+    result = scheduler.schedule(project, extension_diagnostics=[*extra_diagnostics, *validate_profiles(project, manifests)])
     if not result.ok:
         raise RenderRejected(result.diagnostics)
     field_bindings, descriptor_diagnostics = resolve_source_field_bindings(project, manifests)

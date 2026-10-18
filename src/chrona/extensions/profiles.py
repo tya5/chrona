@@ -6,6 +6,8 @@ from copy import deepcopy
 from datetime import date
 from difflib import get_close_matches
 import re
+from pathlib import Path
+from hashlib import sha256
 from typing import Any
 
 from chrona.core.diagnostics import Diagnostic
@@ -31,6 +33,66 @@ def resolve_package_manifests(project: dict[str, Any], reader: SnapshotReader) -
         except SnapshotReadError as error:
             diagnostics.append(Diagnostic(error.diagnostic_id, "Package reference did not resolve to an immutable snapshot", f"/extensions/{index}/resource"))
     return manifests, diagnostics
+
+
+def resolve_local_extension_manifests(project: dict[str, Any], base_dir: Path) -> tuple[dict[str, dict[str, Any]], list[Diagnostic]]:
+    """Read every ``path`` extension declaration relative to the Project file's directory.
+
+    A missing, escaping or unreadable file, an undecodable document, or a declared ``contentIdentity`` that does
+    not match the bytes is an ``E_EXTENSION_UNRESOLVED`` / ``E_CONTENT_IDENTITY`` error at ``/extensions/<i>/path``.
+    ``resource`` declarations need a Store reader and are left to the Context path.
+    """
+    manifests: dict[str, dict[str, Any]] = {}
+    diagnostics: list[Diagnostic] = []
+    root = base_dir.resolve()
+    for index, extension in enumerate(project.get("extensions", [])):
+        if not isinstance(extension, dict) or "resource" in extension or not isinstance(extension.get("path"), str):
+            continue
+        pointer = f"/extensions/{index}/path"
+        name = extension.get("packageId", extension["path"])
+        target = (root / extension["path"]).resolve()
+        if not target.is_relative_to(root):
+            diagnostics.append(Diagnostic("E_EXTENSION_UNRESOLVED", f"Extension package {name!r} path {extension['path']!r} leaves the Project directory", pointer))
+            continue
+        try:
+            content = target.read_bytes()
+        except OSError:
+            diagnostics.append(Diagnostic("E_EXTENSION_UNRESOLVED", f"Extension package {name!r} file {extension['path']!r} was not found", pointer))
+            continue
+        declared = extension.get("contentIdentity")
+        if declared is not None and declared != "sha256:" + sha256(content).hexdigest():
+            diagnostics.append(Diagnostic("E_CONTENT_IDENTITY", f"Extension package {name!r} file {extension['path']!r} does not match its declared contentIdentity", pointer))
+            continue
+        try:
+            manifest = safe_load(content)
+        except Exception:  # noqa: BLE001 - any decoder failure is the same pointed rejection
+            manifest = None
+        if not isinstance(manifest, dict):
+            diagnostics.append(Diagnostic("E_EXTENSION_UNRESOLVED", f"Extension package {name!r} file {extension['path']!r} is not a YAML mapping", pointer))
+            continue
+        # A local file's identity is its bytes: a manifest that omits the self-describing field gets the computed one.
+        manifest.setdefault("contentIdentity", "sha256:" + sha256(content).hexdigest())
+        manifests[str(extension.get("packageId", manifest.get("packageId")))] = manifest
+    return manifests, diagnostics
+
+
+def check_project_extensions(project: dict[str, Any], *, base_dir: Path | None = None,
+                             manifests: dict[str, dict[str, Any]] | None = None) -> list[Diagnostic]:
+    """The one extension check shared by validate, schedule, draft render and MCP.
+
+    ``base_dir`` resolves ``path`` declarations beside the Project file; ``manifests`` are packages a caller already
+    resolved from a Store. Unresolvable declarations are errors; resolved packages go through ``validate_profiles``.
+    """
+    resolved = dict(manifests or {})
+    diagnostics: list[Diagnostic] = []
+    if base_dir is not None:
+        local, diagnostics = resolve_local_extension_manifests(project, base_dir)
+        resolved.update(local)
+    if diagnostics or not resolved:
+        return diagnostics
+    visible = {**project, "extensions": [item for item in project.get("extensions", [])
+                                         if isinstance(item, dict) and item.get("packageId") in resolved]}
+    return validate_profiles(visible, resolved)
 
 
 def resolve_profile_diagnostics(

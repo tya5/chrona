@@ -121,6 +121,9 @@ def test_every_valid_conformance_project_has_safe_default_theme(tmp_path):
         if not any(extension["packageId"] == "implementation-delivery"
                    for extension in source.get("extensions", [])):
             project_path = directory / "draft.yaml"
-            project_path.write_text(yaml.safe_dump(source, sort_keys=False), encoding="utf-8")
+            # A draft resolves ``path`` extensions beside the file (#1682); this fixture's legacy placeholder
+            # path names no file there, so the draft copy omits the declaration and keeps every object.
+            draft_source = {**source, "extensions": [item for item in source.get("extensions", []) if "path" not in item]}
+            project_path.write_text(yaml.safe_dump(draft_source, sort_keys=False), encoding="utf-8")
             _assert_default_theme_safe(render_draft(DraftRenderRequest(
                 project=project_path, target_kind="svg")).rendered, path.name)
