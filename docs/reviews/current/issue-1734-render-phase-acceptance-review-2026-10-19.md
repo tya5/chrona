@@ -11,8 +11,12 @@
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | A phase table for 240 tasks (and for 400 if run) on one machine, with how it was measured. | met | Exclusive phase table below; [raw ledger](assets-1734/profile.json), [probe](assets-1734/profile_render_phases.py), raw CLI receipts/timings and environment alongside them. The explicit small-edit cold/hinted comparison is below. No400 run. | — |
-| 2 | A recommendation, or a documented stop, if no phase offers a worthwhile intervention. | met | Recommendation below follows the [measured phase costs](assets-1734/profile.json): investigate member-label probes before choosing an algorithm change; use existing explicit hints for the measured edit case. No unmeasured speedup claim or product change. | — |
+| 1 | A phase table for 240 tasks (and for 400 if run) on one machine, with how it was measured. | met | Exclusive240 and400 tables below; [240 control ledger](assets-1734/profile.json), [400 candidate ledger](assets-1734/s1-candidate400-profile.json), exact methods and caveats. | — |
+| 2 | A recommendation, or a documented stop, if no phase offers a worthwhile intervention. | met | Retain bounded FIFO12 geometry reuse on the measured time/memory evidence below; reject member reuse and one-slot caching. [400 receipt](assets-1734/s2-fifo12-candidate400.stderr). | — |
+| 3 | These are pure speed changes, so SVG and Scene stay byte-identical on the 50 public slides and on b240. | met | [FIFO12 official50-slide proof](https://github.com/tya5/chrona/pull/1750#issuecomment-6254678925) and four b240 outputs match complete control SVG/Scene hashes below. Final-head release remains pending. | — |
+| 4 | Measure end-to-end on 240 and once on 400 after each change, on the same machine. | met | Member, [one-slot400](assets-1734/s2-one-slot400.stderr), FIFO12 ABBA240 and [FIFO12 400](assets-1734/s2-fifo12-candidate400.stderr) complete; final-default240 comparison below also passes. | — |
+| 5 | Keep a change only if its end-to-end gain is worth its added complexity, and say why in the PR. Revert it otherwise; that is the stop condition. | met | [PR1750](https://github.com/tya5/chrona/pull/1750): retain FIFO12 for measured CPU savings with bounded memory; reject one-slot; member candidate reverted at [cd8ac0983](https://github.com/tya5/chrona/commit/cd8ac098358ed4a0ba3072e58b7bba468d4eb096). Final release gate remains pending. | — |
+| 6 | Do not touch the algorithm, defaults or acceptance rules here. | met | [Approved scope](https://github.com/tya5/chrona/issues/1734#issuecomment-6253352192); candidate only reuses exact immutable Layout geometry; collision checks, candidate order, recovery, quotas and acceptance remain fresh. | — |
 
 ## Measurement
 
@@ -100,27 +104,196 @@ Fourteen unique relations searched at least once (17 searched receipts).
 
 ## Recommendation and boundary
 
-First investigate the member-label reservation-probe algorithm:209 baseline
-calls consume14.85s, while graph preparation consumes15.83s across passes.
-`_route_blocked_candidate` re-enters `place_member_labels` for individual
-declared candidate rungs. Its per-call context/index preparation is a concrete
-structural review target; existing route visibility/graph caches do not cache
-label probes. Compare reusing immutable prepared geometry/context with the
-current per-candidate work. Do not reuse collision verdicts across changing
-obstacle indexes, drop declared candidates, skip recovery or change budgets.
-The measured category is an upper bound, not a predicted saving.
+The [reviewer approved pure reuse](https://github.com/tya5/chrona/issues/1734#issuecomment-6253352192),
+first member-label preparation, then graph preparation, one change at a time.
+The [pre-code plan and whole-architecture review](https://github.com/tya5/chrona/issues/1734#issuecomment-6253433414)
+confine reuse to private immutable Layout facts; changing-index collision
+checks, candidate order, recovery and safety remain unchanged. No schema,
+View, Scene, adapter, project-specific rule or migration is introduced.
 
-Bring that design/cost comparison for review before algorithm code. Reject a
-behavior-preserving candidate if it changes selection/safety/output or fails
-to improve repeated same-host end-to-end controls; a semantic change instead
-requires explicit design approval and disclosed output deltas. Existing
-explicit previous-Scene hints already help this one-edit case; do not present
-them as a new feature or apply them silently to cold renders. Stop here for
-this profiling slice. No400 run: no approved intervention yet warrants its
-cost, and240 already distinguishes the dominant owners. Do not extrapolate
-the timings to400 or invent a size threshold/speed target.
+Member candidate `bbb25d2e3fbc17ed2837388816e13852a866a2ec`, measured head
+`7421b458712e37bad85f8ffc84228f7358796393`, shares row/mark maps and
+originally admitted span footprints within one top-level placement call.
+Each probe still filters current index membership and performs fresh
+collision checks. It was rejected and [reverted publicly](https://github.com/tya5/chrona/commit/cd8ac098358ed4a0ba3072e58b7bba468d4eb096).
+The reverted tree is identical to ready main `ee4f85938`; the original18
+focused obstruction tests pass. No experimental optimizer reached main.
+Control `c30a2d58db114394e42688520972f8528c26a2f2` and candidate have the
+same relevant resources, Python and non-editable package versions.
+
+### Member candidate: end-to-end evidence
+
+Four serial uninstrumented240 runs, control/candidate/candidate/control:
+
+| Run | Wall seconds | User CPU seconds | Raw stdout / stderr |
+| --- | ---: | ---: | --- |
+| Control1 | 59.36 | 43.06 | [receipt](assets-1734/s1-control240.stdout) / [time](assets-1734/s1-control240.stderr) |
+| Candidate1 | 76.65 | 43.44 | [receipt](assets-1734/s1-candidate240.stdout) / [time](assets-1734/s1-candidate240.stderr) |
+| Candidate2 | 59.05 | 42.31 | [receipt](assets-1734/s1-candidate240-repeat.stdout) / [time](assets-1734/s1-candidate240-repeat.stderr) |
+| Control2 | 52.35 | 42.59 | [receipt](assets-1734/s1-control240-repeat.stdout) / [time](assets-1734/s1-control240-repeat.stderr) |
+
+All return CLI `status: ok`; full SVG/Scene hashes equal the original control
+above. CPU results overlap and wall variability dominates: no defensible
+end-to-end gain. Scoped [control](assets-1734/s1-control240-profile.json) and
+[candidate](assets-1734/s1-candidate240-profile.json) ledgers, using
+[probe v2](assets-1734/profile_render_phases_v2.py), explain why:
+baseline-pass span conversion falls from50,160 calls/0.365484s to240
+calls/0.005946s, not a saving of the whole14.85s label category.
+Both instrumented outputs also match the complete control SVG/Scene bytes.
+The actual remaining cost is full candidate placement/collision work, not
+the prepared maps alone. No collision verdict is cached.
+
+The public400 input is [`trial-7/big/big.yaml`](https://github.com/tya5/chrona/blob/3f234372863763efdf5d22a140d44da11355f610/trial-7/big/big.yaml),
+SHA256 `b892b08c30c638edc8327fb26c76151dd10c41e613ee3e2599faa54e829062db`:
+400 tasks,10 groups,578 relations. Its successful uninstrumented control
+takes1589.33 wall/954.33 user CPU seconds
+([receipt](assets-1734/b400-baseline.stdout), [time](assets-1734/b400-baseline.stderr)).
+Candidate400 completed successfully in1223.92 wall/941.73 user CPU seconds
+with external time and v2 attribution in the same run
+([receipt](assets-1734/s1-candidate400-profile.stdout),
+[time](assets-1734/s1-candidate400-profile.stderr)). The
+instrumented/uninstrumented pair cannot establish a causal speedup; wall time
+differs substantially while CPU is close. Together with repeated240 results,
+it does not establish an end-to-end gain worth extra prepared state/plumbing.
+Reject and revert rather than retain speculative complexity. Complete400
+SVG/Scene bytes also equal the control:
+`1f0e7ef4be727eedeae139fbc8e00ee5773f8ee5c1441576fb882f9563ba3787` /
+`4feadfafdd03ba8b12f185f5685e0217a91c977704c4e68f1d1f10ba8fb4b7a9`.
+
+### Disjoint400 candidate phase ledger (seconds)
+
+This is experimental7421 source, not an accepted optimizer or an
+uninstrumented control phase table. Graph includes v2 envelope conversion;
+member placement includes preparation/span conversion. All rows are exclusive.
+
+| Owner/category | Baseline pass | Recovery pass |
+| --- | ---: | ---: |
+| Graph: envelopes / visibility / sparse / reverse bounds | 82.260690 | 696.587330 |
+| Candidate completion | 0.052091 | 0.288587 |
+| Candidate validation | 0.395682 | 0.446912 |
+| Candidate ranking | 0.003280 | 0.001405 |
+| Selection remainder | 5.930851 | 331.287133 |
+| Resolution/attempt remainder | 0.034510 | 0.251193 |
+| Member-label placement/probes | 52.523219 | 36.227656 |
+| Relation-label placement | 0.000105 | 0.000043 |
+| Route composition/trial remainder | 0.845093 | 1.582459 |
+| Pass subtotal | 142.045522 | 1066.672717 |
+
+Outside passes: member work0.002146s and unwrapped CLI/projection/other
+14.190982s; total1222.911366s inside CLI. Stage attempts are normal578/578,
+label-visuals2/18, text2/18, marks2/4. Recovery1066.672717s already includes
+its graph and selection rows: never add these twice. Unlike240,400 repeatedly
+enters fallback stages; the raw ledger retains each stage separately.
+
+### Graph reuse: measured duplicate and bounded candidate
+
+`SurfaceObstacleIndex.route_memo_scope` already keys pure graph results by
+exact selected content; `route_visibility_scope` retains selected-port and
+obstacle-change identity. `_build_visibility_base` reuses endpoint-independent
+visibility, and bounded projection-line caches retain exact facts. The
+remaining `_build_sparse_graph` overlays depend on start/end points and
+`_reverse_bounds` on their adjacency and target. A wider cache needs proven
+identical inputs/hits, not just a shared routing pass.
+
+The control v2 ledger attributes only0.017979s to envelope conversion, not a
+worthwhile target. The [v3 identity/admission probe](assets-1734/profile_render_phases_v3.py)
+on clean c30 instead records144 builds/84 distinct exact geometry identities:
+60 identities occur in both bound modes, no same-mode duplicates or skipped
+unknown closures. All144 stores refuse4,012,742 records at the existing4096
+capacity ([raw identity ledger](assets-1734/s2-control240-identities.json),
+[receipt](assets-1734/s2-control240-identities.stdout),
+[time](assets-1734/s2-control240-identities.stderr)). Full SVG/Scene bytes
+still match the240 control. Existing cache presence did not prove effective
+reuse; the preliminary stopping recommendation is withdrawn.
+
+[Current pre-code correction/architecture/plan](https://github.com/tya5/chrona/issues/1734#issuecomment-6254537649)
+and [Spec50 publication](https://github.com/tya5/chrona/commit/caa6723bfba57adbe736f64028a8cd85df342cdc)
+allow a fixed twelve-entry FIFO geometry working set TOTAL per prepared
+selection across all visibility bases. Hits do not reorder entries. Exact
+endpoints/bounds/grid/selected exemptions identify geometry; changed content
+starts empty, equal-content copies share, and previous generations never carry
+endpoint geometry. The retained4096-result memo, bound-mode keys, reverse-bound
+completion, frontiers, quotas, route validation and candidate order are unchanged.
+No project-specific threshold, schema, default or algorithm change is introduced.
+
+The preceding one-slot prototype is rejected: unprofiled same-base240 ABBA
+(control/candidate/candidate/control) measured49.59/50.00/67.44/50.27 wall seconds
+and42.02/41.92/43.14/41.95 user CPU seconds, with identical complete SVG/Scene
+bytes. Its [required400 run](assets-1734/s2-one-slot400.stderr) measured1120.51
+wall/933.81 user CPU seconds versus the [fresh ready327 control](assets-1734/s2-control400.stderr)
+1142.30/931.07: no CPU gain, and wall variation alone
+does not justify adoption. Peak RSS was360,071,168 bytes;400 SVG/Scene bytes
+also match the control hashes above.
+
+The [v4 actual-key trace](assets-1734/s2-candidate240-working-set.json) records
+zero one-slot hits in144 requests across two prepared selections. FIFO
+capacities1/2/4/8/11/12 recover0/8/18/40/56/60 calls;12 is the minimum covering
+all observed repeats, not evidence of end-to-end speedup. Independent architecture
+and implementation review found no ownership or invalidation blocker;107 focused
+tests pass. Serial unprofiled FIFO12 ABBA on the same ready327 base, candidate
+`a0b991b9c59a05b11b6b9fd60cd349f4ba4d0753`, Python3.13.7 and identical pinned
+packages (own `.venv-perf313`), used `/usr/bin/time -lp` for peak RSS:
+
+| Run | Wall s | User CPU s | Peak RSS bytes | Raw receipt / timing |
+| --- | ---: | ---: | ---: | --- |
+| Control | 50.38 | 42.15 | 351354880 | [receipt](assets-1734/s2-fifo12-control240.stdout) / [time](assets-1734/s2-fifo12-control240.stderr) |
+| FIFO12 | 49.90 | 39.67 | 427786240 | [receipt](assets-1734/s2-fifo12-candidate240.stdout) / [time](assets-1734/s2-fifo12-candidate240.stderr) |
+| FIFO12 repeat | 46.81 | 39.26 | 417546240 | [receipt](assets-1734/s2-fifo12-candidate240-repeat.stdout) / [time](assets-1734/s2-fifo12-candidate240-repeat.stderr) |
+| Control repeat | 50.53 | 42.46 | 349061120 | [receipt](assets-1734/s2-fifo12-control240-repeat.stdout) / [time](assets-1734/s2-fifo12-control240-repeat.stderr) |
+
+All four runs return `status: ok` and match the complete b240 SVG/Scene hashes
+above. The required unprofiled400 comparison uses the same frozen327 control
+and identical input/resources, without simultaneous local renders:
+
+| Variant | Wall s | User CPU s | Peak RSS bytes | Peak memory footprint bytes | Raw time |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Control327 | 1142.30 | 931.07 | not recorded | not recorded | [time](assets-1734/s2-control400.stderr) |
+| One-slot a490ca49e | 1120.51 | 933.81 | 360071168 | 238618944 | [time](assets-1734/s2-one-slot400.stderr) |
+| FIFO12 a0b991b9c | 828.44 | 698.50 | 409059328 | 381061824 | [time](assets-1734/s2-fifo12-candidate400.stderr) |
+
+Every400 render returns `status: ok`; complete SVG/Scene bytes match the400
+hashes above. CPU saving is approximately25% in this single400 comparison;
+the240 ABBA candidate CPU observations also both improve. Memory is not free:
+240 RSS increases, and400 FIFO12 adds48,988,160 RSS bytes /142,442,880 peak
+footprint bytes versus the one-slot variant, not an unmeasured control RSS.
+Decision: retain the small Layout-private fixed working set for these measured
+end-to-end savings at bounded retention; reject the ineffective predecessors.
+No general speed SLA, new tuning knob or further cache expansion is proposed.
+
+### Final default-preset reconciliation
+
+Reviewer PR1748 changes axis geometry; do not compare its bytes to old-default
+controls. Serial unprofiled240 measurements use public control
+`1de259e6998d24be0cd146a3a9bf3a0775887f04` (1748 on ready d451) versus candidate
+`aa6cc026a468795219e51567c51081293374346a` (same resources plus unchanged FIFO12
+code and review records), before its final main landing. The400 table remains
+explicitly the frozen327 experiment, not a claim about the new default.
+
+| Variant | Wall s | User CPU s | Peak RSS bytes | Raw receipt / time |
+| --- | ---: | ---: | ---: | --- |
+| New default, control | 50.48 | 42.36 | 356925440 | [receipt](assets-1734/s2-final-default-control240.stdout) / [time](assets-1734/s2-final-default-control240.stderr) |
+| New default, FIFO12 | 47.28 | 39.55 | 408961024 | [receipt](assets-1734/s2-final-default-candidate240.stdout) / [time](assets-1734/s2-final-default-candidate240.stderr) |
+
+Both return `status: ok`, and complete SVG/Scene bytes match each other:
+`8aa063b203f33a76f10a644d5f8519f405886ae6ac1cbf494ba7eb02d0a87b53` /
+`9f7dbc434ed36586811cfd4188a25cd955e3b0738dcca5f6fca08f696fd741a5`.
+After1748 merged at `fb910bf203c42ac1868590b0b03c96142c4135fe`, integration
+`319268867b01fdc5e89b83c5b0e15aa81eb372bf` follows that actual main.
+`git diff aa6cc026a..319268867 -- src packages schemas pyproject.toml` is empty:
+the measured new-default runtime is unchanged by final main reconciliation.
+
+[Official snapshot proof](https://github.com/tya5/chrona/pull/1750#issuecomment-6254678925):
+run39162339047, candidate a0b991b9c, synthetic merge0418a2cc1 over newer main
+d45140e66; artifact12149895144, ZIP SHA256
+`f9817a73f8e5210ace196c58b610e9a90032835256af4fbb86b60b01d2892ba3`.
+All50 SVGs and50 Scenes are byte-identical, with zero primitive/label/route
+deltas or retirements. Eight other reports match; diagnostic inventory changes
+source positions plus one inherited #1749 vertical-tag warning site, not a graph
+reuse diagnostic. Final-head release and measured adoption remain unverified.
 
 ## Programme-level criteria (optional)
 
-Pending publication and required exact-main release evidence. This report
-changes no product algorithm, schema, defaults or layer ownership.
+Measurements, adoption decision and pre-landing byte checks are complete.
+Final ready-tip PR checks and exact-main three-OS release remain pending;
+no experimental optimizer has reached main yet. Do not close on the earlier
+stale-base CI: all shards passed but derived-ready rejected the advanced main.
