@@ -8,7 +8,7 @@ from chrona.presentation.layout import surface_member_labels as owner
 from chrona.presentation.layout.labels import LabelPlacement, LabelRect, LabelRequest
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
-from chrona.presentation.layout.surface_quality import CollisionDomain, TextPlacement
+from chrona.presentation.layout.surface_quality import CollisionDomain, MarkPlacement, TextPlacement
 
 
 def _request():
@@ -31,7 +31,7 @@ def test_route_only_probe_retains_preceding_text_and_rule_and_uses_exact_footpri
     index = _index()
     before = index.all()
 
-    def probe(context, requests, obstacles, *, reserve_only):
+    def probe(context, requests, obstacles, *, reserve_only, _prepared=None):
         assert reserve_only and len(requests) == 1
         if requests[0].candidates == ("start",):
             return owner.SurfaceMemberLabelsBatch((), (), (), (), (), (), (), frozenset())
@@ -66,7 +66,7 @@ def test_visible_later_rung_does_not_trigger_a_retry_probe(monkeypatch):
 def _candidate_probe(monkeypatch, *, end=(10, 10, 20, 20), start=(40, 10, 50, 20)):
     boxes = {"end": ObstacleRect(*end), "start": ObstacleRect(*start)}
 
-    def probe(_context, requests, obstacles, *, reserve_only):
+    def probe(_context, requests, obstacles, *, reserve_only, _prepared=None):
         assert reserve_only and len(requests) == 1
         request = requests[0]
         side = request.candidates[0]
@@ -197,13 +197,90 @@ def test_real_owner_selects_a_route_blocked_candidate_only_after_suppression():
     assert {item.obstacle_class for item in result.route_blocked_candidates[0].obstacles} == {"text", "label-visual"}
 
 
+def test_top_level_reuses_admitted_span_footprints_only_within_its_probe_family(monkeypatch):
+    from tests.unit.chrona.presentation.layout.test_member_label_required_phase import _placement_context
+
+    context = _placement_context()
+    context.request.theme_tokens.optional_number = lambda *_args: None
+    admitted = MarkPlacement("planned:admitted", "a", Rect(Decimal(0), Decimal(0), Decimal(8), Decimal(8)),
+        (0, 4), (8, 4), mark_shape="span")
+    absent = MarkPlacement("planned:absent", "b", Rect(Decimal(10), Decimal(0), Decimal(8), Decimal(8)),
+        (10, 4), (18, 4), mark_shape="span")
+    context = replace(context, marks=(admitted, absent))
+    request = replace(_request(), anchor=LabelRect(80, 40, 10, 10), content="Owner")
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle(admitted.placement_id, "mark", "timeline",
+                              ObstacleRect(0, 0, 8, 8)))
+    index.add(SurfaceObstacle("route:all", "dependency-route", "timeline",
+                              ObstacleRect(0, 0, 200, 100), route_owner_id="relation:one"))
+
+    footprint_calls = []
+    original_footprint = owner.span_mark_footprint
+
+    def count_footprint(mark, theme):
+        footprint_calls.append(mark.placement_id)
+        return original_footprint(mark, theme)
+
+    membership_checks = []
+    original_has = SurfaceObstacleIndex.has
+
+    def record_membership(obstacles, identifier):
+        result = original_has(obstacles, identifier)
+        if identifier in {admitted.placement_id, absent.placement_id}:
+            membership_checks.append((obstacles, identifier, result))
+        return result
+
+    monkeypatch.setattr(owner, "span_mark_footprint", count_footprint)
+    monkeypatch.setattr(SurfaceObstacleIndex, "has", record_membership)
+
+    first = owner.place_member_labels(context, (request,), index)
+
+    assert first.text[0].overflow == "suppressed"
+    assert footprint_calls == [admitted.placement_id]
+    assert len({item[0] for item in membership_checks if item[1] == admitted.placement_id}) >= 3
+    assert any(item[1] == absent.placement_id and not item[2] for item in membership_checks)
+
+    owner.place_member_labels(context, (request,), index)
+
+    assert footprint_calls == [admitted.placement_id, admitted.placement_id]
+
+
+def test_prepared_span_footprint_is_not_substituted_when_current_index_lacks_mark(monkeypatch):
+    from tests.unit.chrona.presentation.layout.test_member_label_required_phase import _placement_context
+
+    context = _placement_context()
+    context.request.theme_tokens.optional_number = lambda *_args: None
+    mark = MarkPlacement("planned:cached", "cached", Rect(Decimal(0), Decimal(0), Decimal(8), Decimal(8)),
+        (0, 4), (8, 4), mark_shape="span")
+    context = replace(context, marks=(mark,))
+    source_index = SurfaceObstacleIndex()
+    source_index.add(SurfaceObstacle(mark.placement_id, "mark", "timeline", ObstacleRect(0, 0, 8, 8)))
+    prepared = owner._prepare_member_label_facts(context, source_index)
+    assert mark.placement_id in prepared.span_paint_footprints
+
+    copies = []
+    original_copy = SurfaceObstacleIndex.copy
+
+    def capture_overrides(obstacles, *, geometry_overrides=None):
+        copies.append(dict(geometry_overrides or {}))
+        return original_copy(obstacles, geometry_overrides=geometry_overrides)
+
+    monkeypatch.setattr(SurfaceObstacleIndex, "copy", capture_overrides)
+    request = replace(_request(), anchor=LabelRect(80, 40, 10, 10), content="Owner")
+
+    owner.place_member_labels(context, (request,), SurfaceObstacleIndex(), _prepared=prepared)
+
+    assert copies
+    assert all(mark.placement_id not in item for item in copies)
+
+
 @pytest.mark.parametrize("reason", ("mark-or-rule", "same-rung", "not-route", "first-choice", "required"))
 def test_unrelated_or_nonimproving_obstruction_does_not_trigger_repair(monkeypatch, reason):
     request = replace(_request(), required_before_routes=reason == "required")
     selected = LabelPlacement("end" if reason == "first-choice" else "start", LabelRect(0, 0, 10, 10))
     index = _index()
 
-    def probe(_context, _requests, obstacles, *, reserve_only):
+    def probe(_context, _requests, obstacles, *, reserve_only, _prepared=None):
         assert reason not in {"first-choice", "required"}
         if reason == "mark-or-rule":
             return owner.SurfaceMemberLabelsBatch((), (), (), (), (), (), (), frozenset())
