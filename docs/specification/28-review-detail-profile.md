@@ -181,6 +181,11 @@ admitted gradients/patterns and line terminals where drawn. Reuse the shared
 paint resolvers and completed witnesses; do not introduce a second paint
 interpretation. Equal figures remain faithful to the chart: diagnostics never
 invent ink, change glyphs, coalesce different meanings, or repair project YAML.
+Catalogue-pattern keys retain completed catalogue admission when selecting the
+shared paint family and witness. Their tile primitives own intrinsic stroke
+widths; comparison must not require an unused host-role `strokeWidth` or treat
+the admitted substrate as an ordinary outline. Ordinary stroke validation stays
+unchanged. This is the same paint contract used by Scene, not a diagnostic fallback.
 
 For composed point keys, Layout retains a canonical local completed geometry
 witness from the same selected-symbol/outline kernels as the placed figure.
