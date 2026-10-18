@@ -116,6 +116,7 @@ def render(directory: Path, source: Mapping[str, Any], *, presentation: Mapping[
            actual: Mapping[str, Any] | None = None, viewport: tuple[int, int | None] = (1600, 900),
            icon_catalogs: tuple[Path, ...] = (), summary: Mapping[str, Any] | None = None,
            detail: Mapping[str, Any] | None = None,
+           style: Mapping[str, Any] | None = None,
            font_metrics_path: Path | None = None,
            visual_profile: str = "chrona-output/visual/v0.5-baseline") -> RenderedReview:
     """Render `source` through `presentation` (default: the packaged preset bundle) and return the review.
@@ -131,6 +132,7 @@ def render(directory: Path, source: Mapping[str, Any], *, presentation: Mapping[
         actual_path=_write(directory / "actual.yaml", actual) if actual is not None else None,
         summary_path=_write(directory / "summary.yaml", summary) if summary is not None else None,
         detail_path=_write(directory / "detail.yaml", detail) if detail is not None else None,
+        style_path=_write(directory / "style.yaml", style) if style is not None else None,
         icon_catalog_paths=icon_catalogs, viewport=viewport, font_metrics_path=font_metrics_path,
         visual_profile=visual_profile)
     return render_review(RenderRequest(

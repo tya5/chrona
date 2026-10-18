@@ -111,7 +111,7 @@ def _surface_content(items: tuple[ReviewItem, ...], scale: ResolvedColorScale):
                    for item in items), rows_resolved=True)
     return normalize_v05_surface_content(
         projection, {"relations": (), "annotations": {}}, _surface_view(),
-        summary=SummaryContent(()), color_scale=scale,
+        summary=SummaryContent(()), color_scale=scale, view_id="legacy-view",
     )
 
 

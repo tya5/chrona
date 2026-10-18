@@ -8,7 +8,7 @@ from chrona.presentation.model.style_rules import (
 from chrona.presentation.review.style_intent import lower_legacy_color_encoding
 from chrona.presentation.review.v05_content import _style_legend_entries, _style_match_index
 from chrona.presentation.style import (
-    StyleEncodingOutcome, StyleFieldSource, StyleLegend, StyleRule, StyleSelector,
+    EncodingSource, StyleEncodingOutcome, StyleFieldSource, StyleLegend, StyleRule, StyleSelector,
     bind_style_rules,
 )
 
@@ -21,6 +21,19 @@ def _rule(rule_id, selector, title=None):
                              "owners", "firstAppearance", legend),
         f"/body/rules/{rule_id}",
     )
+
+
+def _encoding_sources(rules):
+    result = {}
+    for rule in rules:
+        if not isinstance(rule.outcome, StyleEncodingOutcome):
+            continue
+        if rule.style_id is None:
+            result[rule.rule_id] = EncodingSource("view", "test-view", rule.source_ref)
+        else:
+            result[rule.rule_id] = EncodingSource(
+                "style", rule.style_id, rule.source_ref + "/then/encode", rule.authored_rule_id)
+    return result
 
 
 def test_coalesced_authored_rules_keep_separate_scoped_legend_identity_and_matches():
@@ -48,7 +61,8 @@ def test_coalesced_authored_rules_keep_separate_scoped_legend_identity_and_match
         "colorScales": {"owners": {"palette": ["first"]}},
         "categorySlots": {"first": "#112233"},
     }}
-    fills = complete_style_fills(intents, occurrences, theme=theme, other_color="#999999")
+    fills = complete_style_fills(intents, occurrences, theme=theme, other_color="#999999",
+                                 encoding_sources=_encoding_sources((*lowered_view, *authored)))
 
     style_matches = _style_match_index(intents, (*lowered_view, *authored))
     entries, paints = _style_legend_entries(authored, intents, occurrences, fills)
@@ -86,9 +100,17 @@ def test_view_lowered_rule_does_not_create_style_match_metadata_or_legend():
         "domain": "firstAppearance", "target": "planned",
     })
     intents = OccurrenceStyleIndex(evaluate_style_rules(lowered, (occurrence,)))
+    fills = complete_style_fills(
+        intents, (occurrence,),
+        theme={"body": {"colorScales": {"owners": {"palette": ["first"]}},
+                         "categorySlots": {"first": "#112233"}}},
+        encoding_sources=_encoding_sources(lowered),
+    )
 
     assert _style_match_index(intents, lowered).get(key) is None
     assert _style_legend_entries(lowered, intents, (occurrence,), object()) == ((), ())
+    assert fills.completed(key).encoding.sources == (
+        EncodingSource("view", "test-view", "/body/colorEncoding"),)
 
 
 def test_folded_other_identity_does_not_alias_literal_domain_value_other():
@@ -106,7 +128,10 @@ def test_folded_other_identity_does_not_alias_literal_domain_value_other():
         "colorScales": {"owners": {"palette": ["first"]}},
         "categorySlots": {"first": "#112233"},
     }}
-    fills = complete_style_fills(intents, occurrences, theme=theme, other_color="#999999")
+    fills = complete_style_fills(intents, occurrences, theme=theme, other_color="#999999",
+                                 encoding_sources=_encoding_sources(authored))
+    assert fills.completed(keys[0]).encoding.sources == (
+        EncodingSource("style", "style-1", "/body/rules/global/then/encode", "global"),)
 
     entries, _paints = _style_legend_entries(authored, intents, occurrences, fills)
 
@@ -129,7 +154,8 @@ def test_literal_scale_ref_ending_in_other_suffix_is_not_folded_other():
         "colorScales": {"owners": {"palette": ["first", "second"]}},
         "categorySlots": {"first": "#112233", "second": "#445566"},
     }}
-    fills = complete_style_fills(intents, occurrences, theme=theme, other_color="#999999")
+    fills = complete_style_fills(intents, occurrences, theme=theme, other_color="#999999",
+                                 encoding_sources=_encoding_sources(authored))
 
     entries, _paints = _style_legend_entries(authored, intents, occurrences, fills)
 

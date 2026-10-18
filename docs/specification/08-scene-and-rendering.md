@@ -696,6 +696,32 @@ text fitting under Specification28.
 
 ### 5.2 Standard primitives
 
+#### Encoded fill provenance (#1702)
+
+A completed mark whose fill actually uses a View/Style encoding carries optional
+`encoding: {channel: fill, scaleId, field, value, sources}` in Scene v0.7.
+`value` is the exact canonical scale-domain string (booleans use `true`/`false`),
+not its folded Other label. `sources` is a non-empty, unique, stable list of
+`{kind: view | style, id, sourceRef, ruleId?}` records naming the originating
+resource and encoding pointer; a Style source also names its authored rule.
+The resource kind/id joins Scene provenance. Equal coalesced assignments retain
+all their sources; object ID alone never merges occurrence values.
+
+Model completes this witness with the concrete scale fill. Existing Layout
+occurrence keys carry it through projection; paint completion attaches it only
+where that encoding actually supplies the final fill. Explicit glyph colours,
+stroke-only parts and unused/overridden encodings carry no witness. This is an
+exact completion decision, not colour-equality inference or a second Style
+evaluator. Geometry, paint precedence and adapter output remain unchanged.
+
+The closed optional metadata is added to v0.7 in place; v0.6 stays frozen.
+Absent metadata preserves prior Scene reading but cannot prove the new encoded
+channel check: re-render old evidence for that acceptance. Malformed witnesses
+or resource joins are structural Scene errors, not contrast-policy exceptions.
+Inspection Scenes intentionally include the encoded field value; author-facing
+diagnostic messages use the existing bounded-value formatting. Spec46 owns the
+independent data-channel contrast obligation.
+
 The initial renderer-neutral vocabulary is intentionally small:
 
 | Primitive | Purpose |

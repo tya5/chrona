@@ -150,9 +150,14 @@ def collect_render_warnings(
                                      getattr(item, "subjects", ())))
     for item in contrast_warnings:
         # A decoration below its floor (#995): a typed warning that fails nothing unless the Theme asks it to.
-        records.append(_with_subjects(_record(item.code, {"scenePath": item.scene_path, "primitiveIds": list(item.primitive_ids)},
+        encoding = item.encoding.as_mapping() if getattr(item, "encoding", None) is not None else None
+        identity = {"scenePath": item.scene_path, "primitiveIds": list(item.primitive_ids)}
+        if encoding is not None:
+            identity["encoding"] = encoding
+        records.append(_with_subjects(_record(item.code, identity,
                                findingCode=item.finding_code, scenePath=item.scene_path,
                                primitiveIds=list(item.primitive_ids), measuredFacts=dict(item.measured_facts),
+                               **({"encoding": encoding} if encoding is not None else {}),
                                **({"disposition": item.disposition} if item.disposition is not None else {})),
                                      getattr(item, "subjects", ())))
     for item in scale_collisions:
