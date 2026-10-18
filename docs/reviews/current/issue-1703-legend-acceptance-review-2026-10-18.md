@@ -30,3 +30,9 @@ distinct paint, and a pointed warning for colliding meanings. The public
 count-table README is the single source for trial-6 counts and renders; this
 review does not duplicate them. All three literal criteria have functional
 evidence; exact-main full release remains the sole pending acceptance gate.
+
+Boundary review: Layout owns completed key geometry, final filtering and
+ambiguity diagnostics. Canonical local geometry and the shared paint resolver
+match Scene emission under Spec28 without invented paint or fallback behavior;
+Scene/adapters do not acquire placement responsibilities. Earlier CI failure
+dispositions remain in the [published pre-release review](https://github.com/tya5/chrona/blob/9e59e3f024171811d45b0f6b7b1f6c89f1587754/docs/reviews/current/issue-1703-legend-acceptance-review-2026-10-18.md).

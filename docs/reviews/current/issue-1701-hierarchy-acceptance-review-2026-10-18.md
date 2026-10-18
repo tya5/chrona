@@ -11,6 +11,14 @@ was inspected; actual names are present in rendered output. The only remaining
 gate is exact-main three-OS full release [39115747584](https://github.com/tya5/chrona/actions/runs/39115747584),
 which is pending. This review does not claim release acceptance or issue closure.
 
+Boundary review: Model owns source-local ancestry and display ranges; Layout
+consumes typed name facts with the existing text placement/fit rules. Scene
+and adapters receive completed placements. Core dates/relations and View
+selection/packing are unchanged, consistent with Specs06/38/50. The
+[shared PR/artifact review](issue-1703-legend-acceptance-review-2026-10-18.md)
+is complete; its custom public Views do not substitute for the separate
+all-preset native witnesses above.
+
 ## Literal issue acceptance
 
 ### Issue #1701
