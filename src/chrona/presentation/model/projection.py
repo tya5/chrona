@@ -671,6 +671,9 @@ def _dependency_network_projection(project: dict[str, Any], selected: list[Revie
     """Close Project relation facts at the View boundary for a network surface."""
     if view.surface != "dependency-network":
         return None
+    relation_visibility = view.visibility.relations
+    relation_mode = (relation_visibility.get("mode", "none")
+                     if isinstance(relation_visibility, Mapping) else relation_visibility)
     selected_ids = {item.object_id for item in selected}
     selected_containers = {item.object_id for item in selected
                            if project.get("objects", {}).get(item.object_id, {}).get("type") == "group"}
@@ -690,16 +693,21 @@ def _dependency_network_projection(project: dict[str, Any], selected: list[Revie
                   for item in selected)
     edges = []
     for index, relation in enumerate(project.get("relations", ())):
+        if relation_mode == "none":
+            continue
         source = relation.get("from", {})
         target = relation.get("to", {})
         source_id, target_id = source.get("object"), target.get("object")
         if source_id not in selected_ids or target_id not in selected_ids:
             continue
         identity = relation_identity(index, relation)
+        critical = (identity in driving_relations
+                    and source_id in critical_ids and target_id in critical_ids)
+        if relation_mode == "critical" and not critical:
+            continue
         edge = DependencyNetworkEdge(identity, str(source_id), str(target_id),
                                            str(source.get("endpoint", "end")), str(target.get("endpoint", "start")),
-                                           identity in driving_relations
-                                           and source_id in critical_ids and target_id in critical_ids)
+                                           critical)
         edges.append((relation.get("id") or identity, edge))
     return DependencyNetworkProjection(nodes, tuple(edge for _, edge in sorted(
         edges, key=lambda item: (item[0], item[1].relation_id))))

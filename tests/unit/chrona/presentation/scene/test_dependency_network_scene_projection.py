@@ -1,6 +1,8 @@
 from decimal import Decimal
 from types import SimpleNamespace
 
+import pytest
+
 from chrona.presentation.layout.dependency_network import (
     DependencyNetworkLayout, NetworkNodePlacement,
 )
@@ -17,7 +19,7 @@ from chrona.presentation.model.diagnostic_sources import (
 )
 from chrona.presentation.model.theme_paint import PaintFamily, resolve_theme_paint_witness
 from chrona.presentation.model.theme_tokens import ThemeTokenView
-from chrona.presentation.scene.v05_builder import SceneBuildInput, project_review_surface
+from chrona.presentation.scene.v05_builder import SceneBuildError, SceneBuildInput, project_review_surface
 from tests.unit.chrona.presentation.scene.test_v05_builder import _theme, surface_content
 
 
@@ -72,6 +74,7 @@ def test_dependency_network_scene_projects_completed_groups_nodes_routes_and_leg
                                                      PathCommand("line", ((120, 55),))),
         marker_start=start, marker_end=end, slot_id="network", source_ref="edge-source",
         from_instance_id="task-a", to_instance_id="task-b", paint_clip=None,
+        paint_bounds=(78, 52, 44, 6),
     )
     legend_slot = SlotPlacement("legend-completed", "legend", _rect(205, 15, 85, 35), "required")
     mark_part = SymbolPartPlacement((PathCommand("move", ((1, 1),)),
@@ -92,6 +95,7 @@ def test_dependency_network_scene_projects_completed_groups_nodes_routes_and_leg
         semantic_id="criticalEdge", path_commands=(PathCommand("move", ((230, 24),)),
                                                      PathCommand("line", ((240, 24),))),
         slot_id="legend-completed", source_ref="critical-edge",
+        paint_bounds=(230, 23, 10, 2),
     )
     legend_text = _text("legend-label:critical", "critical-edge", "Critical", 245, 20,
                         "legend-completed", "legendLabel")
@@ -123,6 +127,7 @@ def test_dependency_network_scene_projects_completed_groups_nodes_routes_and_leg
     assert projected_route.marker_start is start and projected_route.marker_end is end
     assert projected_route.path_commands == route.path_commands
     assert projected_route.points == route.points
+    assert projected_route.bounds == route.paint_bounds
     assert (projected_route.from_instance_id, projected_route.to_instance_id) == ("task-a", "task-b")
     assert projected_route.slot_id == "network"
     assert by_id["legend-mark:critical:part0"].bounds == (210.0, 20.0, 8.0, 8.0)
@@ -167,3 +172,12 @@ def test_network_group_header_falls_back_to_body_ink_without_changing_semantic_p
 
     assert projected.purpose == semantic_binding("groupHeader").purpose
     assert projected.visual_role == "text"
+
+
+def test_network_scene_rejects_missing_layout_paint_bounds_instead_of_reconstructing_them():
+    route = RelationPlacement("unclosed", "a:out", "b:in", points=((20, 30), (80, 30)),
+                              semantic_id="networkEdge")
+    layout = DependencyNetworkLayout((), (), (route,), _rect(0, 0, 100, 100))
+
+    with pytest.raises(SceneBuildError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        project_review_surface(_scene_input(layout))

@@ -53,8 +53,13 @@ def place_network_bands(
         return result
 
     def ordinary_demand(parent: str | None) -> Decimal:
-        return max((sum((sizes[node.object_id][cross] for node in siblings), Decimal(0))
-                    + gap * (len(siblings) - 1) for siblings in ordinary(parent).values()), default=Decimal(0))
+        largest = Decimal(0)
+        for siblings in ordinary(parent).values():
+            size = gap * (len(siblings) - 1)
+            for node in siblings:
+                size += sizes[node.object_id][cross]
+            largest = max(largest, size)
+        return largest
 
     demands: dict[str, Decimal] = {}
 
@@ -62,7 +67,10 @@ def place_network_bands(
         parts = [ordinary_demand(parent)]
         parts.extend(group_demand(node) for node in children[parent] if node.is_container)
         occupied = [part for part in parts if part > 0]
-        return sum(occupied, Decimal(0)) + gap * max(0, len(occupied) - 1)
+        size = gap * max(0, len(occupied) - 1)
+        for part in occupied:
+            size += part
+        return size
 
     def group_demand(node: DependencyNetworkNode) -> Decimal:
         if node.object_id in demands:

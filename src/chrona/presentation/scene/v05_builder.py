@@ -1514,15 +1514,10 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
 
     def emit_relation(relation: Any, *, legend_relation: bool = False) -> None:
         binding = semantic_binding(relation.semantic_id)
-        bounds = relation.paint_clip.bounds if relation.paint_clip is not None else (0, 0, 0, 0)
-        if legend_relation and relation.points:
-            # Layout supplies the path; this envelope is only its Scene bounds representation.
-            xs, ys = [point[0] for point in relation.points], [point[1] for point in relation.points]
-            try:
-                half = float(value.theme_tokens.number(binding.scene_role, "strokeWidth")) / 2
-            except Exception:
-                half = 0.0
-            bounds = (min(xs), min(ys) - half, max(xs) - min(xs), max(ys) - min(ys) + 2 * half)
+        if relation.paint_bounds is None:
+            raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", "/layout/network/relations",
+                                  "network relation requires Layout-completed paint bounds")
+        bounds = relation.paint_clip.bounds if relation.paint_clip is not None else relation.paint_bounds
         primitives.append(ScenePrimitive(
             (relation.relation_id if legend_relation else f"network-edge:{relation.relation_id}"), PrimitiveKind.PATH,
             relation.source_ref if legend_relation and relation.source_ref else relation.relation_id,

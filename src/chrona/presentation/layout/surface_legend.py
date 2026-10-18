@@ -436,7 +436,8 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
                             theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                             overflow=disposition, collision_region="legend",
                             collision_domain=CollisionDomain("legend", "content"), source_content=label,
-                            available_inline_start=x, available_inline_size=available)
+                            available_inline_start=x, available_inline_size=available,
+                            semantic_id="legendLabel", slot_id=legend.slot_id)
         text.append(placed)
         label_targets.append((entry.role, placed.placement_id))
         if ellipsized:

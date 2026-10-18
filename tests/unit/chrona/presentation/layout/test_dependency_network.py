@@ -1,4 +1,4 @@
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
@@ -11,7 +11,29 @@ from chrona.presentation.layout.model import LayoutDecision, LayoutError, Layout
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.model.theme_tokens import ThemeTokenView
-from tests.unit.chrona.presentation.layout.test_sources import theme
+from tests.unit.chrona.presentation.layout.test_sources import theme as _text_theme
+
+
+@dataclass(frozen=True)
+class _Content:
+    slot_heading_text: tuple = ()
+    legend_entries: tuple = ()
+
+
+def theme():
+    result = _text_theme()
+    result["body"]["values"].update({
+        "edge-width": {"type": "number", "value": 1},
+        "edge-terminal": {"type": "marker", "value": {
+            "shape": "triangle", "headLength": 3, "headWidth": 3}},
+    })
+    result["body"]["roles"].update({
+        "network-edge": {"strokeWidth": "edge-width"},
+        "critical-edge": {"strokeWidth": "edge-width"},
+        "relationSourceTerminal": {"marker": "edge-terminal"},
+        "relationTargetTerminal": {"marker": "edge-terminal"},
+    })
+    return result
 
 
 def _network(nodes, edges):
@@ -61,8 +83,15 @@ class _DeadlineTheme:
         return Decimal("1.5"), 3
 
     def number(self, role, prop):
-        assert (role, prop) == ("deadline-mark", "strokeWidth")
+        assert role in {"deadline-mark", "network-edge", "critical-edge"} and prop == "strokeWidth"
         return Decimal(2)
+
+    def optional_number(self, role, prop):
+        return None
+
+    def marker(self, role):
+        assert role in {"relationSourceTerminal", "relationTargetTerminal"}
+        return {"shape": "none", "headLength": 3, "headWidth": 3}
 
     def deadline_outline_width(self, role):
         assert role == "deadline-mark"
@@ -168,7 +197,7 @@ def test_network_layout_grows_canvas_for_a_natural_title():
 
 
 def test_network_layout_completes_rect_pattern_on_each_exact_node_placement():
-    class Theme:
+    class Theme(_DeadlineTheme):
         def optional_pattern(self, role):
             assert role == "network-node"
             return {
@@ -229,7 +258,7 @@ def test_network_deadline_footer_is_measured_before_nodes_ports_and_per_stroke_g
 def test_network_zero_width_deadline_keeps_date_without_glyph_or_em_gap():
     class ZeroInk(_DeadlineTheme):
         def number(self, role, prop):
-            return Decimal(0)
+            return Decimal(0) if role == "deadline-mark" else super().number(role, prop)
 
         def wobble_intent(self, role):
             return None
@@ -305,7 +334,7 @@ def test_native_network_heading_reduces_graph_viewport_and_route_region():
                        run_measurements={**measured.run_measurements, "title": title_measurement.run_measurements["title"]})
     request = SurfaceLayoutRequest(
         projection=SimpleNamespace(network=_network(("a", "b"), (("ab", "a", "b"),))),
-        surface_content=SimpleNamespace(slot_heading_text=()), layout_manifest=manifest,
+        surface_content=_Content(), layout_manifest=manifest,
         measured_sources=measured, theme_tokens=tokens, font_metrics=metrics)
     layout = compose_dependency_network_surface(request)
     by_id = {item.placement_id: item for item in layout.text}
@@ -338,7 +367,7 @@ def test_network_wrapper_keeps_native_title_on_raw_runs_without_aggregate_measur
                        run_measurements={**measured.run_measurements, "title": (transformed,)})
     request = SurfaceLayoutRequest(
         projection=SimpleNamespace(network=_network(("object-1",), ())),
-        surface_content=SimpleNamespace(slot_heading_text=()), layout_manifest=manifest,
+        surface_content=_Content(), layout_manifest=manifest,
         measured_sources=measured, theme_tokens=ThemeTokenView(resolved), font_metrics=metrics)
 
     layout = compose_dependency_network_surface(request)
@@ -374,7 +403,7 @@ def test_title_caption_reserves_only_its_own_slot_not_graph_or_routes(direction)
     measured = _measured("a", "b", "c")
     graph = _network(("a", "b", "c"), (("ab", "a", "b"), ("bc", "b", "c")))
     request = SurfaceLayoutRequest(
-        projection=SimpleNamespace(network=graph), surface_content=SimpleNamespace(slot_heading_text=()),
+        projection=SimpleNamespace(network=graph), surface_content=_Content(),
         layout_manifest=manifest, measured_sources=measured,
         theme_tokens=ThemeTokenView(resolved), font_metrics=metrics)
     plain = compose_dependency_network_surface(request)
@@ -412,7 +441,7 @@ def test_missing_network_slot_names_selected_surface_and_layout_action():
     )
     request = SurfaceLayoutRequest(
         projection=SimpleNamespace(network=_network(("a",), ())),
-        surface_content=SimpleNamespace(slot_heading_text=()), layout_manifest=manifest,
+        surface_content=_Content(), layout_manifest=manifest,
         measured_sources=_measured("a"), theme_tokens=ThemeTokenView(theme()), font_metrics=object())
     with pytest.raises(LayoutError) as caught:
         compose_dependency_network_surface(request)

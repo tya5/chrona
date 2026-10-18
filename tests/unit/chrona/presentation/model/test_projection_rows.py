@@ -43,7 +43,8 @@ def test_network_projection_closes_selected_project_containers_and_preserves_gro
                 for object_id in ("outer", "inner", "task", "leaf", "empty")]
     view = replace(typed_view({"body": {"rows": {"mode": "automatic"},
                                  "window": {"mode": "selected-planned"},
-                                 "comparison": {"actual": "optional"}}}), surface="dependency-network")
+                                 "comparison": {"actual": "optional"},
+                                 "visibility": {"relations": "semantic"}}}), surface="dependency-network")
 
     hierarchy_entries = {entry.object_id: entry for entry in normalize_hierarchy(project)}
     network = _dependency_network_projection(project, selected, view, hierarchy_entries)
@@ -59,6 +60,50 @@ def test_network_projection_closes_selected_project_containers_and_preserves_gro
     edge, = network.edges
     assert (edge.relation_id, edge.source_id, edge.source_endpoint, edge.target_id, edge.target_endpoint) == (
         "relation:0:group-port", "inner", "start", "task", "finish")
+
+
+@pytest.mark.parametrize(("mode", "expected_ids"), [
+    ("none", ()),
+    ("semantic", ("relation:0:driving-critical", "relation:2:driving-noncritical", "relation:1:not-driving")),
+    ("critical", ("relation:0:driving-critical",)),
+])
+def test_network_projection_closes_edges_to_view_relation_visibility(mode, expected_ids):
+    project = {"objects": {
+        "a": {"type": "task", "title": "A"},
+        "b": {"type": "task", "title": "B"},
+        "c": {"type": "task", "title": "C"},
+        "d": {"type": "task", "title": "D"},
+        "hidden": {"type": "task", "title": "Hidden"},
+    }, "relations": (
+        {"id": "driving-critical", "from": {"object": "a"}, "to": {"object": "b"}},
+        {"id": "not-driving", "from": {"object": "b"}, "to": {"object": "c"}},
+        {"id": "driving-noncritical", "from": {"object": "a"}, "to": {"object": "d"}},
+        {"id": "unselected-endpoint", "from": {"object": "a"}, "to": {"object": "hidden"}},
+    )}
+    selected = [
+        ReviewItem("a", "A", "span", {}, None, None, (), critical=True),
+        ReviewItem("b", "B", "span", {}, None, None, (), critical=True),
+        ReviewItem("c", "C", "span", {}, None, None, (), critical=True),
+        ReviewItem("d", "D", "span", {}, None, None, (), critical=False),
+    ]
+    view = replace(typed_view({"body": {"rows": {"mode": "automatic"},
+                                 "window": {"mode": "selected-planned"},
+                                 "comparison": {"actual": "optional"},
+                                 "visibility": {"relations": mode}}}), surface="dependency-network")
+    hierarchy_entries = {entry.object_id: entry for entry in normalize_hierarchy(project)}
+
+    network = _dependency_network_projection(
+        project, selected, view, hierarchy_entries,
+        frozenset({"relation:0:driving-critical", "relation:2:driving-noncritical"}))
+
+    assert network is not None
+    assert tuple(edge.relation_id for edge in network.edges) == expected_ids
+    if mode == "semantic":
+        assert {edge.relation_id: edge.critical for edge in network.edges} == {
+            "relation:0:driving-critical": True,
+            "relation:1:not-driving": False,
+            "relation:2:driving-noncritical": False,
+        }
 
 
 def test_network_keeps_a_selected_group_when_all_project_children_are_unselected():
@@ -97,6 +142,7 @@ def typed_view(value):
         parsed_rows.append(ViewRow(str(row["id"]), row.get("label"), int(row["depth"]), row.get("parentRow"),
                                    row.get("group"), row.get("tableSubject"), items))
     selection = body.get("selection", {}).get("include", {})
+    visibility = body.get("visibility", {})
     grouping = body.get("grouping")
     ordering = body.get("ordering")
     return ViewInput(
@@ -105,7 +151,7 @@ def typed_view(value):
         ViewOrdering(ordering["by"], ordering["direction"], ordering["tieBreak"]) if ordering else None,
         ViewWindow(body["window"]["mode"], body["window"].get("start"), body["window"].get("end"), body["window"].get("marginDays", 0)),
         ViewComparison(None, body["comparison"]["actual"], None, None, tuple(body["comparison"].get("facets", ()))),
-        ViewVisibility(False, "none", "none"), (), (),
+        ViewVisibility(False, visibility.get("relations", "none"), "none"), (), (),
         ViewRows(rows["mode"], tuple(parsed_rows)), None, (), None, None, None)
 
 
@@ -339,6 +385,7 @@ def test_selected_dependency_identity_keeps_its_full_project_index(surface):
         "selection": {"include": {"ids": ["a", "b"]}},
         "rows": {"mode": "lanes" if surface == "table-timeline" else "automatic"},
         "window": {"mode": "selected-planned"}, "comparison": {"actual": "optional"},
+        "visibility": {"relations": "semantic"},
     }})
     view = replace(view, surface=surface, rows=replace(view.rows, packing=("chain",)))
     result = schedule(source)
