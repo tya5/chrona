@@ -139,6 +139,69 @@ does not infer aliases. An absent final role keeps the existing invalid-target
 diagnostic and does not recreate a filtered key. Exact placement-ID selectors
 retain their single-target contract.
 
+## Default comparison keys and ambiguity diagnostics (#1703; implementation pending)
+
+Snapshot and deadline marks contribute default semantic key candidates, using
+the existing `snapshot` and `deadlineMark` roles and labels `Baseline` and
+`Deadline`. Reserve candidates only when the selected projection can draw those
+meanings. Final completed painted occurrences decide admission, as above;
+source availability alone does not prove that a key is visible. This does not
+create a legend slot in a Layout Profile that declares none.
+
+An explicit Detail legend entry for either role supplies its existing order,
+label and finite-shape choice instead of a second default entry. Preserve the
+relative order of authored entries. Append missing defaults in the order
+Snapshot, Deadline, before scale-derived entries; the existing Forecast and
+Progress insertion rules remain unchanged. View `wording.legend.snapshot` and
+`wording.legend.deadlineMark` override the selected labels, including defaults,
+without creating keys for absent final occurrences.
+
+Detail body MAY declare `unkeyedLegendRoles`, a unique array whose closed values
+are `snapshot` and `deadlineMark`. Omission is the empty array: neither default
+is opted out. A listed role contributes no candidate. Declaring that same role
+in `legend` is a contradictory policy and fails before Layout with
+`E_DETAIL_LEGEND_POLICY` at the corresponding
+`/body/unkeyedLegendRoles/<index>` pointer. This optional v0.1 addition does not
+retype existing Detail fields. The owner-approved default-key correction may
+change existing visible legends; it is not a byte-preservation promise.
+
+After final filtering and recomposition, Layout emits
+`W_LEGEND_LABEL_DUPLICATE` for different surviving key meanings with the same
+displayed label, including text transformation, scope qualification and
+ellipsis. It emits `W_LEGEND_SWATCH_COLLISION` when different meanings have the
+same realized key figure. Both warnings identify the two meanings, roles and
+completed key identities. Repeated witnesses of one coalesced meaning do not
+warn, and filtered-away candidates participate in neither check.
+
+Swatch comparison uses completed glyph/path geometry relative to its key box
+and the effective emitted paint, not semantic IDs, placement translation,
+resource names or a fill-only palette. Retain ordered multipart glyph parts,
+finite shape distinctions, stroke/fill channels, opacity, width, dash,
+admitted gradients/patterns and line terminals where drawn. Reuse the shared
+paint resolvers and completed witnesses; do not introduce a second paint
+interpretation. Equal figures remain faithful to the chart: diagnostics never
+invent ink, change glyphs, coalesce different meanings, or repair project YAML.
+Catalogue-pattern keys retain completed catalogue admission when selecting the
+shared paint family and witness. Their tile primitives own intrinsic stroke
+widths; comparison must not require an unused host-role `strokeWidth` or treat
+the admitted substrate as an ordinary outline. Ordinary stroke validation stays
+unchanged. This is the same paint contract used by Scene, not a diagnostic fallback.
+Completed shape kind and channel selection also determine the shared paint family:
+stroke-only shapes and paths use path paint; fill-only hosts use solid paint.
+Do not infer a mark family that requires an unpainted fill for a completed edge path.
+
+For composed point keys, Layout retains a canonical local completed geometry
+witness from the same selected-symbol/outline kernels as the placed figure.
+Compare that witness and the completed part paints, not a reconstruction from
+translated floating-point contours. Preserve normalized shape traits and ordered
+parts, including completed outlines; placement-dependent numerical noise must
+not defeat translation/footprint invariance. This witness is internal to Layout;
+Scene/SVG geometry and physical stroke paint are unchanged.
+
+These are semantic diagnostics on the existing general Layout-to-Scene
+diagnostic/provenance path, not fit fallbacks. Scene carries them unchanged;
+adapters and render-warning collection do not infer legend meaning.
+
 ## Finite legend key shapes (#1562)
 
 A `legend` entry MAY declare `swatchShape: circle|rule-pair`. Omission retains

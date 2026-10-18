@@ -20,6 +20,9 @@ def diagnostics(profile):
     groups = [entry.get("groupId") for entry in body.get("groupDetails", [])]
     if len(groups) != len(set(groups)):
         result.append("E_DETAIL_DUPLICATE_GROUP")
+    legend_roles = {entry.get("role") for entry in body.get("legend", [])}
+    if any(role in legend_roles for role in body.get("unkeyedLegendRoles", [])):
+        result.append("E_DETAIL_LEGEND_POLICY")
     observations = body.get("observations", {})
     columns = [entry.get("id") for entry in observations.get("columns", [])]
     if len(columns) != len(set(columns)):
@@ -40,6 +43,11 @@ def main():
     validator = validator_for_schema(schema)
     validator.validate(fixture)
     assert diagnostics(fixture) == ()
+
+    opted_out = deepcopy(fixture)
+    opted_out["body"]["unkeyedLegendRoles"] = ["snapshot", "deadlineMark"]
+    validator.validate(opted_out)
+    assert diagnostics(opted_out) == ()
 
     negative = []
     duplicate_group = deepcopy(fixture)
@@ -63,7 +71,19 @@ def main():
     missing_source = deepcopy(fixture)
     del missing_source["body"]["observations"]["rows"][0]["source"]
     assert not validator.is_valid(missing_source)
-    print("Review Detail Profile conformance: PASS (1 positive, 5 negative)")
+
+    duplicate_unkeyed = deepcopy(fixture)
+    duplicate_unkeyed["body"]["unkeyedLegendRoles"] = ["snapshot", "snapshot"]
+    assert not validator.is_valid(duplicate_unkeyed)
+    invalid_unkeyed = deepcopy(fixture)
+    invalid_unkeyed["body"]["unkeyedLegendRoles"] = ["planned"]
+    assert not validator.is_valid(invalid_unkeyed)
+    conflicting_unkeyed = deepcopy(fixture)
+    conflicting_unkeyed["body"]["legend"] = [{"role": "snapshot", "label": "Baseline"}]
+    conflicting_unkeyed["body"]["unkeyedLegendRoles"] = ["snapshot"]
+    validator.validate(conflicting_unkeyed)
+    assert diagnostics(conflicting_unkeyed) == ("E_DETAIL_LEGEND_POLICY",)
+    print("Review Detail Profile conformance: PASS (2 positive, 8 negative)")
 
 
 if __name__ == "__main__":

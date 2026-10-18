@@ -226,13 +226,14 @@ def test_default_burst_fit_keeps_circle_outline_and_svg_bytes(tmp_path):
 def test_absent_shape_preserves_characterized_scene_and_svg_bytes(tmp_path):
     rendered = _render_asof(tmp_path)
     scene = serialize_scene(rendered.scene)
-    # Scene provenance now includes the wheel-owned vocabulary; geometry, paint and SVG bytes remain characterized.
+    # The Scene digest includes the builtin View provenance change from #1701;
+    # geometry and SVG bytes remain characterized.
     assert len(scene) == 26369
     vocabulary = builtin_semantic_vocabulary()
     assert [resource for resource in rendered.scene.provenance.resources if resource[0] == "semantic-vocabulary"] == [
         ("semantic-vocabulary", vocabulary.id, "v0.1", vocabulary.content_identity),
     ]
-    assert sha256(scene).hexdigest() == "4d3e390261a306744f1e7f006d03da37c765a467b1a1430d7dc302d0d60db476"
+    assert sha256(scene).hexdigest() == "701e6c37b89b023591154f0f012a51a6d470f460451943bbe282af887051208d"
     assert len(rendered.artifact.content) == 8173
     assert sha256(rendered.artifact.content).hexdigest() == "f5031fb8939295b170a188ec7971b109dc5f8372f7011a21e40584d32451964a"
 

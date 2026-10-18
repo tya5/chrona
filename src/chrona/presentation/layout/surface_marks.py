@@ -349,7 +349,7 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                     if key is not None else {})
         base_role = "groupHeader"
         return tuple((side, measure_label_footprint(
-            f"member-label:{instance_id}", folded.item.title or "",
+            f"member-label:{instance_id}", request.surface_content.member_name(folded.item, folded.group_id),
             (selected.get(side).role if selected.get(side) and selected[side].role else base_role),
             "memberLabel", request)) for side in candidates)
 
@@ -429,7 +429,7 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                 width = max((measure.size[0] for measure in title_measures), default=0.0)
             else:
                 width = measure_text_width(
-                    folded.item.title or "", font_size=float(label_treatment.font_size),
+                    request.surface_content.member_name(folded.item, folded.group_id), font_size=float(label_treatment.font_size),
                     font_metrics=metric_for_role(request.theme_tokens, "groupHeader", request.font_metrics),
                     letter_spacing=float(label_treatment.letter_spacing),
                     text_transform=label_treatment.transform, numeric_spacing="proportional")

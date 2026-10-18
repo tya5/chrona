@@ -290,7 +290,11 @@ def test_halcyon_gates_measures_the_colour_scale_legend_before_layout(tmp_path):
     context = yaml.safe_load((ROOT / "examples/halcyon-1/contexts/26-gates.yaml").read_text(encoding="utf-8"))
     block = float(context["body"]["environment"]["viewport"]["blockSize"])
     baselines = [float(match) for match in re.findall(r'data-purpose="legend-label"[^>]* y="([0-9.]+)"', svg)]
-    assert len(baselines) == 5 and max(baselines) < block
+    assert len(baselines) == 6 and max(baselines) < block
+    svg_root = ET.fromstring(svg)
+    legend_labels = [item for item in svg_root.iter() if item.get("data-purpose") == "legend-label"]
+    snapshot = next(item for item in legend_labels if item.get("data-scene-id") == "legend:snapshot")
+    assert "Baseline" in "".join(snapshot.itertext())
     assert 'data-scene-id="legend:scale:model:FM"' in svg
     assert 'data-purpose="progress-fill"' in svg
     scene = json.loads((tmp_path / "gates/review.scene.json").read_text(encoding="utf-8"))

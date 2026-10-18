@@ -337,8 +337,11 @@ with an invented anchor. Membership and the table remain unchanged, and the
 source-keyed member suppression count includes that absence exactly once.
 Window-admitted names share the normalized component intent in Spec 50 across
 preflight and final placement. A lane-mode `visibility.labels` object MUST select plot placement
-and `title`; omitted `content` means `[title, finishDelta]`, while a declared
-list may omit `finishDelta`. Omitted `side` means `auto`, and an authored
+and one name source, `title` or `path` (Spec06 §6.0); omitted `content` means
+`[title, finishDelta]`, while a declared list may omit `finishDelta`. A path
+name removes only source-identical ancestors already shown by its enclosing
+header/lane, never an entity/field group merely bearing the same title.
+Omitted `side` means `auto`, and an authored
 `side` and `visibility.fallback.labels` order (including `inside`) are honored.
 With no declared fallback, `auto` tries end, start and the bounded
 side-neighborhood stagger; an explicit side tries that side and its bounded

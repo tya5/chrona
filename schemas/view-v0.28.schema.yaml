@@ -162,7 +162,16 @@ allOf:
                     additionalProperties: false
                     properties:
                       placement: {enum: [plot, table, both, none]}
-                      content: {type: array, minItems: 1, uniqueItems: true, items: {enum: [title, finishDelta]}}
+                      content:
+                        description: "Optional member-label facts: at most one name source (`title` or hierarchy `path`), plus `finishDelta`. Omitted, the existing row-mode default applies."
+                        type: array
+                        minItems: 1
+                        uniqueItems: true
+                        items: {enum: [title, path, finishDelta]}
+                        not:
+                          allOf:
+                            - {contains: {const: title}}
+                            - {contains: {const: path}}
                       side: {enum: [auto, above, below, start, end, inside]}
                       overflow: {enum: [suppress, visible-overflow]}
                       textRole: {description: "Named Theme text role in which the plot member labels (the bar labels, outside or inside the bar) are measured and set (#1141): size, weight, letter spacing and transform, `viewerFit` and, when the Theme binds `<role>.fill`, the colour of an outside label. Absent, the labels keep `text`, shared with table cells. A role the Theme does not declare is `E_THEME_ROLE_REQUIRED` at `/body/visibility/labels/textRole`.", examples: [bar-label], type: string, minLength: 1}
@@ -660,7 +669,10 @@ allOf:
                       required: [placement]
                       properties:
                         placement: {const: plot}
-                        content: {contains: {const: title}}
+                        content:
+                          anyOf:
+                            - {contains: {const: title}}
+                            - {contains: {const: path}}
                         overflow: {const: suppress}
               not: {anyOf: [{required: [hierarchyColumn]}, {required: [tableColumns]}]}
             else:

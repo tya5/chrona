@@ -17,6 +17,7 @@ from chrona.presentation.review.v05_content import (
     _column_width, _group_headers, _resource_body, compose_heading, legend_entries, normalize_axis_tiers, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content,
 )
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
+from chrona.presentation.model.hierarchy_names import member_name_key
 from chrona.presentation.contracts.resources import (
     LegendEntry, ReviewDetailInput, SummaryMetric, SummaryPanelInput, SummaryProfileInput, TableColumn, ViewComparison, ViewGroupHeader, ViewGrouping, ViewInput,
     ViewHeading, ViewLaneColumn, ViewLaneLabel, ViewLaneTable, ViewRows, ViewVisibility, ViewWindow, freeze,
@@ -24,6 +25,79 @@ from chrona.presentation.contracts.resources import (
 
 
 EMPTY_SUMMARY = SummaryContent(())
+
+
+def test_path_name_closes_table_plot_and_title_links_to_the_same_occurrence_text():
+    from chrona.presentation.contracts.resources import _PrivateGroupingMode
+    item = ReviewItem("task", "Provision", "point", {"at": date(2026, 1, 2)}, None, None, (),
+                      group_id="root", item_id="task", hierarchy_path=("root", "phase", "task"),
+                      hierarchy_titles=("Platform", "Infrastructure", "Provision"))
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 3)), (), (),
+                                  rows=(ReviewRowProjection("row", "", "root", "task", (item,)),))
+    view = typed_view({"body": {
+        "grouping": {"by": _PrivateGroupingMode.PROJECT_ROOT_GROUP, "presentation": "header"},
+        "tableColumns": [{"id": "Task", "source": "path", "missing": "dash"},
+                         {"id": "OldTitle", "source": "title", "missing": "dash"}],
+        "visibility": {"labels": {"placement": "both", "content": ["path"], "side": "end"}},
+    }})
+    table = normalize_v05_table_content(projection, {}, view)
+    content = normalize_v05_surface_content(projection, {"relations": ()}, view,
+                                            summary=EMPTY_SUMMARY, table=table)
+    assert table.cells[0].content == "Infrastructure / Provision"
+    assert content.member_name(item, "row") == table.cells[0].content
+    assert content.member_names is table.member_names
+    assert content.label_content == ("title",)
+    assert content.title_link_columns == ("Task",)
+    assert item.title == "Provision"
+
+    legacy = replace(view, visibility=replace(view.visibility, labels=freeze({
+        "placement": "both", "content": ["title"], "side": "end"})))
+    old = normalize_v05_surface_content(projection, {"relations": ()}, legacy, summary=EMPTY_SUMMARY)
+    assert old.table_cells[0].content == "Platform / Infrastructure / Provision"
+    assert old.member_name(item, "row") == "Provision"
+    assert old.title_link_columns == ("OldTitle",)
+
+
+def test_path_attached_point_keeps_the_existing_date_and_delta_suffix():
+    item = ReviewItem("gate", "Approve", "point", {"at": date(2026, 1, 2)},
+                      {"at": date(2026, 1, 3)}, None, (), item_id="gate", attached_to="span",
+                      hierarchy_path=("phase", "gate"), hierarchy_titles=("Infrastructure", "Approve"))
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 4)), (), (),
+                                  rows=(ReviewRowProjection("row", "", "", "gate", (item,)),))
+    view = typed_view({"body": {"tableColumns": (), "visibility": {
+        "labels": {"placement": "plot", "content": ["path"], "side": "end"}}}})
+    content = normalize_v05_surface_content(projection, {"relations": ()}, view, summary=EMPTY_SUMMARY)
+    assert dict(content.attached_labels)[member_name_key(item, "row")] == (
+        "Infrastructure / Approve · 02 Jan · +1d")
+
+
+def test_attached_composites_keep_source_local_identity_when_object_ids_collide():
+    from chrona.presentation.review.v05_content import _attached_labels
+
+    primary = ReviewItem("gate", "Primary approval", "point", {"at": date(2026, 1, 2)},
+        {"at": date(2026, 1, 3)}, 1, (), item_id="primary-gate", source_kind="primary",
+        attached_to="host", hierarchy_path=("primary-root", "gate"),
+        hierarchy_titles=("Primary program", "Primary approval"))
+    snapshot = ReviewItem("gate", "Snapshot approval", "point", {"at": date(2026, 2, 4)},
+        {"at": date(2026, 2, 7)}, 3, (), item_id="snapshot-gate", source_kind="snapshot",
+        attached_to="host", hierarchy_path=("snapshot-root", "gate"),
+        hierarchy_titles=("Archived program", "Snapshot approval"))
+    lane_id = "lane-shared"
+    projection = ReviewProjection((primary, snapshot),
+        (date(2026, 1, 1), date(2026, 3, 1)), (), (),
+        lane_membership=object(), lane_rows=(ReviewLaneRowProjection(
+            lane_id, "", (primary, snapshot), (primary.item_id, snapshot.item_id)),))
+    names = {
+        member_name_key(primary, lane_id): "Primary program / Primary approval",
+        member_name_key(snapshot, lane_id): "Archived program / Snapshot approval",
+    }
+
+    labels = dict(_attached_labels(projection, "en-US", names))
+
+    assert labels[member_name_key(primary, lane_id)] == (
+        "Primary program / Primary approval · 02 Jan · +1d")
+    assert labels[member_name_key(snapshot, lane_id)] == (
+        "Archived program / Snapshot approval · 04 Feb · +3d")
 
 
 def test_axis_band_fill_scale_is_retained_as_typed_intent_and_absence_stays_none():

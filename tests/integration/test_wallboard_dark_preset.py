@@ -46,7 +46,8 @@ def test_the_view_uses_the_generic_vocabulary_for_each_treatment():
     body = safe_load((BUNDLE / "view.yaml").read_bytes())["body"]
     assert body["grouping"] == {"by": "none"}
     assert body["colorEncoding"]["target"] == "planned" and body["colorEncoding"]["domain"] == "firstAppearance"
-    assert [column["source"] for column in body["tableColumns"]] == ["title", {"fieldRole": "responsible"}]
+    assert [column["source"] for column in body["tableColumns"]] == ["path", {"fieldRole": "responsible"}]
+    assert "path" in body["visibility"]["labels"]["content"]
     bands = [tier for tier in body["axis"]["tiers"] if tier["role"] == "band"]
     assert [tier["unit"] for tier in bands] == ["quarter", "month"]
     assert bands[0]["fillScale"]["key"] == "alternating"

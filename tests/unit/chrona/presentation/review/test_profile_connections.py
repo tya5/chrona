@@ -258,6 +258,49 @@ def test_progress_legend_wording_is_valid_without_detail_but_does_not_create_an_
     assert with_entry.detail.legend == (LegendEntry("progressFill", "Observed progress"),)
 
 
+@pytest.mark.parametrize("role", ("snapshot", "deadlineMark"))
+def test_default_semantic_legend_wording_is_valid_without_detail_or_explicit_entry(role):
+    view = _view(wording={"legend": {role: "Reviewer label"}})
+
+    without_detail = resolve_profile_connections(view, None, None, project_object_ids=frozenset())
+    assert without_detail.detail is None
+    assert without_detail.view.wording["legend"] == {role: "Reviewer label"}
+
+    detail = ReviewDetailInput((), (), (LegendEntry("planned", "Plan"),), None)
+    with_detail = resolve_profile_connections(view, None, detail, project_object_ids=frozenset())
+    assert with_detail.detail.legend == (LegendEntry("planned", "Plan"),)
+    assert with_detail.view.wording["legend"] == {role: "Reviewer label"}
+
+
+@pytest.mark.parametrize("role", ("snapshot", "deadlineMark"))
+def test_explicit_default_role_keeps_order_while_view_wording_overrides_label(role):
+    view = _view(wording={"legend": {role: "Reviewer label"}})
+    detail = ReviewDetailInput((), (), (LegendEntry("planned", "Plan"),
+                                        LegendEntry(role, "Detail label"),
+                                        LegendEntry("actual", "Actual")), None)
+
+    result = resolve_profile_connections(view, None, detail, project_object_ids=frozenset())
+
+    assert tuple(entry.role for entry in result.detail.legend) == ("planned", role, "actual")
+    assert result.detail.legend[1].label == "Reviewer label"
+
+
+@pytest.mark.parametrize(("roles", "explicit_role", "expected_index"), (
+    (("snapshot",), "snapshot", 0),
+    (("snapshot", "deadlineMark"), "deadlineMark", 1),
+))
+def test_detail_unkeyed_role_conflicting_with_explicit_entry_is_pointed_error(
+        roles, explicit_role, expected_index):
+    detail = ReviewDetailInput((), (), (LegendEntry(explicit_role, "Label"),), None,
+                              unkeyed_legend_roles=roles)
+
+    with pytest.raises(ProfileConnectionError) as error:
+        resolve_profile_connections(_view(), None, detail, project_object_ids=frozenset())
+
+    assert error.value.code == "E_DETAIL_LEGEND_POLICY"
+    assert error.value.source_ref == f"/body/unkeyedLegendRoles/{expected_index}"
+
+
 def test_actual_qualifier_wording_requires_actual_candidate_and_keeps_fragments_in_view():
     wording = {"legend": {
         "actual": "Observed",
