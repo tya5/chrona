@@ -5,7 +5,6 @@ from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
 import json
-from types import MappingProxyType
 from typing import Any, Callable, Mapping
 
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, BELOW_PLOT_FALLBACK, as_of_label_typography_role
@@ -88,27 +87,6 @@ class MemberLabelReservation:
 
 
 @dataclass(frozen=True)
-class _PreparedMemberLabelFacts:
-    """Immutable one-call maps and admitted mark paint geometry for label probes."""
-
-    rows: Mapping[str, RowPlacement]
-    marks: Mapping[str, MarkPlacement]
-    span_paint_footprints: Mapping[str, ObstacleRect]
-
-
-def _prepare_member_label_facts(context: SurfaceMemberLabelContext,
-                                obstacles: SurfaceObstacleIndex) -> _PreparedMemberLabelFacts:
-    rows = MappingProxyType({row.row_id: row for row in context.rows})
-    marks = MappingProxyType({mark.placement_id: mark for mark in context.marks})
-    footprints = MappingProxyType({
-        mark.placement_id: span_mark_footprint(mark, context.request.theme_tokens)
-        for mark in context.marks
-        if mark.mark_shape == "span" and obstacles.has(mark.placement_id)
-    })
-    return _PreparedMemberLabelFacts(rows, marks, footprints)
-
-
-@dataclass(frozen=True)
 class SurfaceMemberLabelsBatch:
     text: tuple[TextPlacement, ...]
     shapes: tuple[ShapePlacement, ...]
@@ -125,9 +103,7 @@ class SurfaceMemberLabelsBatch:
 
 def _route_blocked_candidate(context: SurfaceMemberLabelContext, request: LabelRequest,
                              selected: LabelPlacement | None,
-                             obstacles: SurfaceObstacleIndex, *,
-                             _prepared: _PreparedMemberLabelFacts | None = None
-                             ) -> tuple[MemberLabelReservation, ...]:
+                             obstacles: SurfaceObstacleIndex) -> tuple[MemberLabelReservation, ...]:
     """Return ordered route-minimal declared rungs for an initially suppressed name."""
     if (request.semantic_id != "memberLabel" or request.is_required_before_routes
             or not request.candidates or selected is not None):
@@ -142,8 +118,7 @@ def _route_blocked_candidate(context: SurfaceMemberLabelContext, request: LabelR
     for rank, side in enumerate(request.candidates):
         probe_index = preceding.copy()
         candidate_request = replace(request, candidates=(side,), visible_fallback_side=None)
-        probe = place_member_labels(context, (candidate_request,), probe_index,
-                                    reserve_only=True, _prepared=_prepared)
+        probe = place_member_labels(context, (candidate_request,), probe_index, reserve_only=True)
         if not probe.text:
             continue
         text = probe.text[0]
@@ -515,21 +490,16 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
 
 def place_member_labels(context: SurfaceMemberLabelContext,
                         requests: tuple[LabelRequest, ...],
-                        obstacles: SurfaceObstacleIndex, *, reserve_only: bool = False,
-                        _prepared: _PreparedMemberLabelFacts | None = None) -> SurfaceMemberLabelsBatch:
+                        obstacles: SurfaceObstacleIndex, *, reserve_only: bool = False) -> SurfaceMemberLabelsBatch:
     """Place labels, or provisionally reserve only fitted optional member-name footprints."""
     request, projection = context.request, context.projection
     layout_manifest = context.layout_manifest
     style_index = getattr(request.surface_content, "style_intents", None)
     timeline_rect = LabelRect(*context.timeline_bounds)
-    prepared_facts = (_prepared if _prepared is not None
-                      else _prepare_member_label_facts(context, obstacles))
-    rows, marks = prepared_facts.rows, prepared_facts.marks
-    # Probe indexes may differ from the top-level inventory; only substitute
-    # paint geometry for marks still admitted by this call's fresh index.
-    paint_footprints = {identifier: footprint
-                        for identifier, footprint in prepared_facts.span_paint_footprints.items()
-                        if obstacles.has(identifier)}
+    rows = {row.row_id: row for row in context.rows}
+    marks = {mark.placement_id: mark for mark in context.marks}
+    paint_footprints = {mark.placement_id: span_mark_footprint(mark, request.theme_tokens)
+                        for mark in context.marks if mark.mark_shape == "span" and obstacles.has(mark.placement_id)}
     measured_lane = {item.placement_id: item for item in
         (request.fixed_lane_preflight.measured_labels if request.fixed_lane_preflight else ())}
     row_requirements = (dict(request.fixed_lane_preflight.row_requirements)
@@ -725,8 +695,7 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                 overflow=effective_overflow, placement_id=label_request.placement_id)
         if not reserve_only:
             route_blocked_candidates.extend(
-                _route_blocked_candidate(context, label_request, candidate, obstacles,
-                                         _prepared=prepared_facts))
+                _route_blocked_candidate(context, label_request, candidate, obstacles))
         ladder = label_request.candidates + ((label_request.visible_fallback_side,)
             if label_request.visible_fallback_side is not None and
             label_request.visible_fallback_side not in label_request.candidates else ())
