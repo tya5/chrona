@@ -28,7 +28,7 @@ body:
   visibility:
     labels:
       placement: plot
-      content: [title]
+      content: [path]
       side: end
       overflow: suppress
     fallback:

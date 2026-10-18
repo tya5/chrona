@@ -50,7 +50,7 @@ body:
     labels:
       placement: table
       content:
-      - title
+      - path
       - finishDelta
       side: end
       overflow: suppress
@@ -65,7 +65,7 @@ body:
     source: actual
   tableColumns:
   - id: Task
-    source: title
+    source: path
     missing: em-dash
     align: start
     width: {minmax: {min: content, max: {fr: 1}}}
