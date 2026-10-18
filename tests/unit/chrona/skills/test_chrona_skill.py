@@ -153,15 +153,39 @@ def test_typed_fields_fences_equal_their_example_files_and_the_example_runs(tmp_
                             flags=re.DOTALL | re.MULTILINE))
 
     assert set(shown) == {"examples/typed-fields/team.yaml", "examples/typed-fields/plan.yaml",
-                          "examples/typed-fields/risk-view.yaml"}
+                          "examples/typed-fields/risk-view.yaml",
+                          "examples/typed-fields/style.yaml"}
     for path, body in shown.items():
         assert body == (SKILL_DIR / path).read_text(encoding="utf-8"), path
     plan = str(SKILL_DIR / "examples" / "typed-fields" / "plan.yaml")
     status, out, _err = run_cli(monkeypatch, capsys, "validate", plan)
     assert (status, json.loads(out)) == (0, {"status": "ok", "diagnostics": []})
+    examples = SKILL_DIR / "examples" / "typed-fields"
     output = tmp_path / "typed.svg"
-    status, out, _err = run_cli(monkeypatch, capsys, "render", plan, "--preset", "mission-light", "--view",
-                                str(SKILL_DIR / "examples" / "typed-fields" / "risk-view.yaml"), "--output", str(output))
+    status, out, _err = run_cli(monkeypatch, capsys, "render", plan, "--preset", "wallboard-dark", "--view",
+                                str(examples / "risk-view.yaml"), "--output", str(output))
     assert status == 0 and json.loads(out)["status"] == "ok"
     painted = output.read_text(encoding="utf-8")
-    assert {"#E8EFFA", "#E4F4EE", "#FBF0E1"} <= set(re.findall(r'fill="(#[0-9A-F]{6})"', painted))
+    assert len(set(re.findall(r'fill="(#[0-9A-F]{6})"', painted))) >= 4
+    # #1726: the guide example shows axis labels and a legend naming the values
+    assert "Nov 2026" in painted and all(f">{value}<" in painted for value in ("low", "medium", "high"))
+    styled = tmp_path / "styled.svg"
+    status, out, _err = run_cli(monkeypatch, capsys, "render", plan, "--preset", "wallboard-dark", "--style",
+                                str(examples / "style.yaml"), "--output", str(styled))
+    assert status == 0 and json.loads(out)["status"] == "ok"
+    assert "Platform risk: low" in styled.read_text(encoding="utf-8")
+
+
+def test_style_example_failures_name_what_to_change(tmp_path, monkeypatch, capsys):
+    """#1726: target-b has no `series` scale mapping and a rule without `semantic: planned` hits labels."""
+    examples = SKILL_DIR / "examples" / "typed-fields"
+    plan, style = str(examples / "plan.yaml"), examples / "style.yaml"
+    status, out, _err = run_cli(monkeypatch, capsys, "render", plan, "--preset", "target-b", "--style", str(style),
+                                "--output", str(tmp_path / "tb.svg"))
+    message = json.loads(out)["diagnostics"][0]["message"]
+    assert status == 1 and "no scale->slot mapping" in message and "colorScales.series.slots" in message
+    loose = tmp_path / "loose.yaml"
+    loose.write_text(style.read_text(encoding="utf-8").replace("semantic: planned, ", ""), encoding="utf-8")
+    status, out, _err = run_cli(monkeypatch, capsys, "render", plan, "--preset", "wallboard-dark", "--style",
+                                str(loose), "--output", str(tmp_path / "loose.svg"))
+    assert status == 1 and json.loads(out)["diagnostics"][0]["code"] == "E_STYLE_TARGET"

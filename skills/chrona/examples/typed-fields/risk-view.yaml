@@ -21,3 +21,14 @@ body:
   rows:
     mode: lanes
     laneTable: {label: lane}
+  axis:
+    tiers:
+    - unit: auto
+      every: 1
+      role: labels
+      label:
+        forms: {month: short-month-year, quarter: year-quarter, half: half-year, year: year}
+        align: center
+        overflow: thin-with-record
+        orientation: horizontal
+    - {unit: month, every: 1, role: grid-minor}

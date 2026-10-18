@@ -218,7 +218,10 @@ def resolve_color_scale(encoding: Mapping[str, object] | None,
     else:
         slots = declared.get("slots") if isinstance(declared, Mapping) else None
     if not isinstance(slots, Mapping):
-        raise _invalid_mapping(f"Theme scale {_brief(scale_id)} has slots={_brief(slots)}; expected a slots mapping or nonempty palette", theme_pointer)
+        raise _invalid_mapping(f"Theme scale {_brief(scale_id)} has slots={_brief(slots)}; the Theme declares no scale->slot mapping for "
+            f"{_brief(scale_id)}. Declare it in the Theme as colorScales.{scale_id}.slots "
+            f"(one Scheme category per domain value) or colorScales.{scale_id}.palette "
+            f"(a nonempty list of Scheme categories), or use a preset whose Theme declares this scale", theme_pointer)
     if set(slots) != set(domain):
         raise _invalid_mapping(f"Theme scale {_brief(scale_id)} does not exactly cover the {len(domain)} encoding.domain values; {_key_summary(slots, tuple(domain))}", theme_pointer)
     colors: list[tuple[str, str]] = []
