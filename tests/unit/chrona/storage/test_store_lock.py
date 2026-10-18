@@ -219,3 +219,43 @@ def test_file_lock_uses_lazy_windows_adapter_without_fcntl(tmp_path, monkeypatch
         file_lock.lock_file(handle)
         file_lock.unlock_file(handle)
     assert [mode for _, mode, _ in calls] == [fake.LK_LOCK, fake.LK_UNLCK]
+
+
+@pytest.mark.parametrize("contents", (b"", b"\0", b"existing-private-content"))
+def test_windows_lock_never_accesses_content_before_acquisition(tmp_path, monkeypatch, contents):
+    """Another Windows handle may already hold a mandatory lock over byte zero."""
+    calls = []
+    fake = SimpleNamespace(LK_LOCK=1, LK_UNLCK=2,
+                           locking=lambda descriptor, mode, length: calls.append((descriptor, mode, length)))
+    # Replace this module's binding, not global os.name/pathlib platform behavior.
+    monkeypatch.setattr(file_lock, "os", SimpleNamespace(name="nt"))
+    monkeypatch.setitem(sys.modules, "msvcrt", fake)
+    lock = tmp_path / "lock"
+    lock.write_bytes(contents)
+
+    class GuardedHandle:
+        def __init__(self, handle):
+            self.handle = handle
+
+        def seek(self, offset):
+            return self.handle.seek(offset)
+
+        def fileno(self):
+            return self.handle.fileno()
+
+        def read(self, *_args):
+            raise PermissionError("another handle owns this mandatory byte range")
+
+        def write(self, *_args):
+            raise AssertionError("lock-file contents must not be initialized")
+
+        def flush(self):
+            raise AssertionError("lock acquisition must not flush content")
+
+    with lock.open("a+b") as handle:
+        guarded = GuardedHandle(handle)
+        descriptor = handle.fileno()
+        file_lock.lock_file(guarded)
+        file_lock.unlock_file(guarded)
+    assert calls == [(descriptor, fake.LK_LOCK, 1), (descriptor, fake.LK_UNLCK, 1)]
+    assert lock.read_bytes() == contents
