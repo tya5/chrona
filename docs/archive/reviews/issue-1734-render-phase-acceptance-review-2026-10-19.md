@@ -13,9 +13,9 @@
 | ---: | --- | --- | --- | --- |
 | 1 | A phase table for 240 tasks (and for 400 if run) on one machine, with how it was measured. | met | Exclusive240 and400 tables below; [240 control ledger](assets-1734/profile.json), [400 candidate ledger](assets-1734/s1-candidate400-profile.json), exact methods and caveats. | — |
 | 2 | A recommendation, or a documented stop, if no phase offers a worthwhile intervention. | met | Retain bounded FIFO12 geometry reuse on the measured time/memory evidence below; reject member reuse and one-slot caching. [400 receipt](assets-1734/s2-fifo12-candidate400.stderr). | — |
-| 3 | These are pure speed changes, so SVG and Scene stay byte-identical on the 50 public slides and on b240. | met | [FIFO12 official50-slide proof](https://github.com/tya5/chrona/pull/1750#issuecomment-6254678925) and four b240 outputs match complete control SVG/Scene hashes below. Final-head release remains pending. | — |
+| 3 | These are pure speed changes, so SVG and Scene stay byte-identical on the 50 public slides and on b240. | met | [Final-head official50-slide proof](https://github.com/tya5/chrona/pull/1750#issuecomment-6255031688) and b240 control/candidate complete SVG/Scene hashes below, including the updated-default pair. | — |
 | 4 | Measure end-to-end on 240 and once on 400 after each change, on the same machine. | met | Member, [one-slot400](assets-1734/s2-one-slot400.stderr), FIFO12 ABBA240 and [FIFO12 400](assets-1734/s2-fifo12-candidate400.stderr) complete; final-default240 comparison below also passes. | — |
-| 5 | Keep a change only if its end-to-end gain is worth its added complexity, and say why in the PR. Revert it otherwise; that is the stop condition. | met | [PR1750](https://github.com/tya5/chrona/pull/1750): retain FIFO12 for measured CPU savings with bounded memory; reject one-slot; member candidate reverted at [cd8ac0983](https://github.com/tya5/chrona/commit/cd8ac098358ed4a0ba3072e58b7bba468d4eb096). Final release gate remains pending. | — |
+| 5 | Keep a change only if its end-to-end gain is worth its added complexity, and say why in the PR. Revert it otherwise; that is the stop condition. | met | [PR1750](https://github.com/tya5/chrona/pull/1750): retain FIFO12 for measured CPU savings with bounded memory; reject one-slot; member candidate reverted at [cd8ac0983](https://github.com/tya5/chrona/commit/cd8ac098358ed4a0ba3072e58b7bba468d4eb096). [Exact-main release](https://github.com/tya5/chrona/actions/runs/39166500349) succeeded. | — |
 | 6 | Do not touch the algorithm, defaults or acceptance rules here. | met | [Approved scope](https://github.com/tya5/chrona/issues/1734#issuecomment-6253352192); candidate only reuses exact immutable Layout geometry; collision checks, candidate order, recovery, quotas and acceptance remain fresh. | — |
 
 ## Measurement
@@ -117,7 +117,7 @@ originally admitted span footprints within one top-level placement call.
 Each probe still filters current index membership and performs fresh
 collision checks. It was rejected and [reverted publicly](https://github.com/tya5/chrona/commit/cd8ac098358ed4a0ba3072e58b7bba468d4eb096).
 The reverted tree is identical to ready main `ee4f85938`; the original18
-focused obstruction tests pass. No experimental optimizer reached main.
+focused obstruction tests pass. This member optimizer never reached main.
 Control `c30a2d58db114394e42688520972f8528c26a2f2` and candidate have the
 same relevant resources, Python and non-editable package versions.
 
@@ -282,18 +282,24 @@ After1748 merged at `fb910bf203c42ac1868590b0b03c96142c4135fe`, integration
 `git diff aa6cc026a..319268867 -- src packages schemas pyproject.toml` is empty:
 the measured new-default runtime is unchanged by final main reconciliation.
 
-[Official snapshot proof](https://github.com/tya5/chrona/pull/1750#issuecomment-6254678925):
-run39162339047, candidate a0b991b9c, synthetic merge0418a2cc1 over newer main
-d45140e66; artifact12149895144, ZIP SHA256
-`f9817a73f8e5210ace196c58b610e9a90032835256af4fbb86b60b01d2892ba3`.
+[Final-head snapshot proof](https://github.com/tya5/chrona/pull/1750#issuecomment-6255031688):
+run39165091087, head `eee37799485018807b595450f43446512c0de1b1`, synthetic
+merge `c4aeb1253cc14305da99593a616dfca151b76a37` over ready main
+`fb910bf203c42ac1868590b0b03c96142c4135fe`; artifact12150551218, ZIP SHA256
+`1234682eceab174c5844116bb2f467ba9fee37eda4010bafca96ebd23837d944`.
 All50 SVGs and50 Scenes are byte-identical, with zero primitive/label/route
 deltas or retirements. Eight other reports match; diagnostic inventory changes
-source positions plus one inherited #1749 vertical-tag warning site, not a graph
-reuse diagnostic. Final-head release and measured adoption remain unverified.
+only source positions in the two owned files, with no added/removed diagnostic
+identities. The post-merge bot inventory is byte-identical to this snapshot.
 
 ## Programme-level criteria (optional)
 
-Measurements, adoption decision and pre-landing byte checks are complete.
-Final ready-tip PR checks and exact-main three-OS release remain pending;
-no experimental optimizer has reached main yet. Do not close on the earlier
-stale-base CI: all shards passed but derived-ready rejected the advanced main.
+Final head `eee37799485018807b595450f43446512c0de1b1` passed all required
+[PR checks39165091087](https://github.com/tya5/chrona/actions/runs/39165091087).
+PR1750 merged at `8365bce8314e20d8b3dc48159e32d094d9b586f5`; exact
+review-containing ready main `af76f393787091c0fe040113c058f3d0571eb7d7` passed
+[release39166500349](https://github.com/tya5/chrona/actions/runs/39166500349):
+Windows/Linux/macOS full pytest, conformance and wheel/smoke, newest-Python
+public reproduction and MCP floor. Individual required step outcomes were
+checked. All six literal rows are
+[accepted and the issue is closed](https://github.com/tya5/chrona/issues/1734#issuecomment-6255646340).
