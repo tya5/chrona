@@ -480,3 +480,15 @@ def test_the_member_lists_are_the_design_half_of_the_reviewed_classification():
         "comparison": {"baselineMarks", "missingActualScope", "deltaUnit", "facets"},
         "rows": {"mode", "trackAllocation", "packing", "laneTable", "points", "items"}, "window": {"marginDays"},
         "grouping": {"presentation", "header", "tint"}, "colorEncoding": {"scale", "target"}}
+
+
+def test_a_lanes_view_with_the_automatic_point_policy_names_the_conflict_in_words(tmp_path):
+    parts = sr.bundle("executive-light")
+    parts["view"]["body"]["rows"]["points"] = "group-header"
+
+    with pytest.raises(Exception) as raised:
+        _render(tmp_path, parts)
+    assert str(raised.value) == "E_VIEW_SCHEMA" and raised.value.source_ref == "/body/rows/points"
+    message = raised.value.detail
+    assert "property 'points'" in message and "not allowed with mode 'lanes'" in message
+    assert "should not be valid" not in message
