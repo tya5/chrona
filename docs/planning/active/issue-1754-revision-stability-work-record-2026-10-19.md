@@ -192,6 +192,27 @@ before changing that rule. Do not expand S1 into hint/routing or Theme policy.
   modes explain themselves, and no-hint selection is unchanged by S2 itself.
   Real target-b and five-week trial evidence remain the integrated issue gate.
 
+## S3 implementation plan
+
+- Extend `SurfaceObstacleIndex.copy` with an exact `excluded_ids` query option.
+  Keep the original inventory intact; detach only prepared selections whose
+  exact contents change. Combine exclusions with existing paint-footprint
+  overrides without reusing a geometry-dependent memo under different content.
+- In `surface_member_labels.py`, exclude only `as-of` for `memberLabel` query
+  snapshots. Both contact generation and collision checks already consume that
+  snapshot; final/reserve/recovery paths share this owner. Keep all registrations
+  on the original index. No generic label-ladder or adapter policy is added.
+- Focused tests: `test_obstacles.py` for independent snapshots, exclusions plus
+  overrides, exact selections and absent exclusions; `test_member_label_required_phase.py`
+  for final/reserved names crossing as-of while deadline rules still block;
+  `test_member_label_route_obstruction.py` for the same route-blocked probe.
+  Retain as-of-label and annotation-asof tests as negative controls. Run routing
+  working-set regressions because the copy helper shares immutable query data.
+- Publish a coherent implementation/test commit in the same issue PR; use one
+  CI/public snapshot and final trial batch for the combined slices. No schema,
+  example or manual generated-output changes. A label/chip or other obstruction
+  remains truthful; this is not a general guarantee that all names always fit.
+
 ## Current implementation evidence
 
 S1 is implemented locally; publication/public-output review and CI are pending.
