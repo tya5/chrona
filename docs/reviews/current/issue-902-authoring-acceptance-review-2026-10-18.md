@@ -25,7 +25,14 @@ receipt verification and the gate before reads. No renderer policy changes.
 
 ## Programme-level criteria (optional)
 
-**Release not accepted.** Ready main `5fe41db8e` includes merged item3. Repair
+**Release not accepted.** Item2 merged in [1708](https://github.com/tya5/chrona/pull/1708)
+at `0bd24fd4a`; ready main `b12cbd7b4` includes items3/2 and this literal review.
+Final-head CI39109600057 succeeded, including all three pytest shards,
+conformance, MCP floor and newest-Python public reproduction. Official artifact
+12130285877 has109 paths: all50 SVG/Scene pairs byte-identical, no retirements,
+only two fully classified diagnostic inventories intentionally changed. Every
+new helper construction carries explicit path context. Full exact-main release
+39110885313 is running; no claim of full release success is made here. Repair
 `8030a353e` follows [plan6247290279](https://github.com/tya5/chrona/issues/902#issuecomment-6247290279);
 the combined diagnostics/operational/recovery/agent/transaction/lock/MCP-stdio
 batch passes112. Import-direction and literal-review checks pass. Earlier

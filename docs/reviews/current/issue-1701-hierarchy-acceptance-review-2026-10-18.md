@@ -37,6 +37,11 @@ full paths. Existing fit policies and diagnostics are not waived.
 Point/path/style159, composite152 and preset/closure62 focused tests pass
 (overlapping); schema equivalence preserves all five invalid baseline verdicts.
 The final combined PR artifact and exact-main full release are still required.
+Ready-base integration `da37f3919` follows `b12cbd7b4` (902 item2 merged).
+The final hierarchy/legend/native batch passes66; schema equivalence retains
+one additive/one delta/40 equal and the same five invalid baseline documents.
+Import-direction and literal-review checks pass. Independent final review found
+no source-locality, header-coverage or dev-B selection/summary boundary gap.
 
 ## Literal issue acceptance
 

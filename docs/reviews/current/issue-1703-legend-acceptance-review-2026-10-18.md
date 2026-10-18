@@ -19,12 +19,14 @@
 
 ### Evidence and release status
 
-Prepared integration `e7243add0` follows ready main `5fe41db8e` and combines
+Prepared integration `da37f3919` follows ready main `b12cbd7b4` and combines
 independently reviewed1701 rows1/2. Legend focus36 and combined date/legend/native64
 pass; row2's separate native18 and point/path/style159 batches pass. The
 [1701 review](issue-1701-hierarchy-acceptance-review-2026-10-18.md) records its
 public15-preset PNG evidence. The published batching amendment retains both
 literal reviews and current-head artifact/exact-main full release gates.
+The final ready-base hierarchy/legend/native batch passes66; schema-equivalence,
+import-direction and literal-review checks pass without new waivers.
 
 Implementation candidate: `192129bd9`; reviewer correction [1705](https://github.com/tya5/chrona/pull/1705) restores owner-approved target-b Actual ink. Final integrated focused tests pass290 (18.03 s), including the native equal-black multipart keys and exact placed-geometry parity. Detail validation passes2 positive/8 negative; schema equivalence passes L1 (1 additive,40 equal) and L2/L3 with five pre-existing invalid documents. PR/main publication, official snapshot and full three-OS release remain unverified. Issue #1703 remains open.
 

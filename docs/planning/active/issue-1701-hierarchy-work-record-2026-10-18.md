@@ -2,7 +2,10 @@
 
 ## Published baseline and literal acceptance
 
-Ready main `5fe41db8e`; row1 candidate `c0e78982c`, review `73192c558`, on
+Ready main `b12cbd7b4`; integration `da37f3919` includes merged902 item2.
+Final hierarchy/legend/native batch66, import-direction and literal-review
+checks pass. Schema equivalence: one additive/one delta/40 equal, unchanged
+five invalid corpus verdicts. Row1 candidate `c0e78982c`, review `73192c558`, on
 `wip/issue-1703-1701-display-followups`, integrated with independently reviewed
 legend code as `163ba8725`. Row1 is focused-tested, not released. The
 [issue record](https://github.com/tya5/chrona/issues/1701#issuecomment-6246724848)
