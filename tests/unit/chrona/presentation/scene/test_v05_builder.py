@@ -269,6 +269,9 @@ def test_scene_input_rejects_a_layout_without_a_required_source():
                           resolved_theme=_theme(), font_metrics=object(), measured_sources=_measurements(),
                           capabilities={"svg": True})
     assert error.value.path == "/layoutManifest/sources/timeline-axis"
+    assert "surface=table-timeline" in error.value.detail
+    assert "missing source='timeline-axis'" in error.value.detail
+    assert "matching Layout Profile" in error.value.detail and "--layout <profile>" in error.value.detail
 
 
 def test_scene_input_requires_surface_specific_network_slot_set():
@@ -286,7 +289,8 @@ def test_scene_input_requires_surface_specific_network_slot_set():
 
 
 def test_scene_dispatches_completed_network_layout_through_registry_semantics_only():
-    node = SimpleNamespace(object_id="a", title="A", order_key=("a",), critical=True, source_kind="primary")
+    node = SimpleNamespace(object_id="a", title="A", order_key=("a",), critical=True,
+                           source_kind="primary", is_container=False, container_id=None)
     projection = SimpleNamespace(surface="dependency-network", network=SimpleNamespace(nodes=(node,), edges=()))
     title_bounds = Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(40))
     network_bounds = Rect(Decimal(0), Decimal(50), Decimal(400), Decimal(200))

@@ -585,8 +585,14 @@ class RelationPlacement:
     terminal_label: bool = False
     fragment_endpoint: Literal["source", "target"] | None = None
     halo: RelationHaloPlacement | None = None
+    # Optional for existing surfaces; native network paths complete this in Layout.
+    paint_bounds: tuple[float, float, float, float] | None = None
 
     def __post_init__(self) -> None:
+        if self.paint_bounds is not None and (
+                len(self.paint_bounds) != 4 or not all(isfinite(value) for value in self.paint_bounds)
+                or min(self.paint_bounds[2:]) < 0):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: invalid completed relation paint bounds")
         if self.halo is not None and (self.suppressed or self.halo.points != self.points
                 or self.halo.path_commands != self.path_commands or self.halo.paint_clip != self.paint_clip
                 or self.halo.paint_order != self.paint_order - 1):

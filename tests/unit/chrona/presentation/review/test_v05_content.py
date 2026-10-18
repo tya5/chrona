@@ -561,6 +561,56 @@ def test_relation_critical_fact_is_scheduler_membership_not_selected_paint(
     assert all(not fact.critical for fact in content.relations if fact.relation_id == "relation:0:preceding")
 
 
+def test_network_critical_legend_key_uses_visible_critical_edge_and_honors_authorship():
+    from chrona.presentation.model.projection import (
+        DependencyNetworkEdge, DependencyNetworkNode, DependencyNetworkProjection,
+    )
+
+    items = (
+        ReviewItem("a", "A", "span", {}, None, None, (), critical=True),
+        ReviewItem("b", "B", "span", {}, None, None, (), critical=True),
+    )
+    network = DependencyNetworkProjection((
+        DependencyNetworkNode("a", "A", (), True, "primary"),
+        DependencyNetworkNode("b", "B", (), True, "primary"),
+    ), (
+        DependencyNetworkEdge("relation:0:drive", "a", "b", "end", "start", True),
+    ))
+    projection = ReviewProjection(items, (date(2026, 1, 1), date(2026, 1, 3)), (), (),
+                                  network=network, driving_relations=frozenset({"relation:0:drive"}))
+    project = {"relations": ({"id": "drive", "from": {"object": "a", "endpoint": "end"},
+                              "to": {"object": "b", "endpoint": "start"}},)}
+    view = replace(typed_view({"body": {"tableColumns": (), "visibility": {
+        "relations": {"mode": "semantic"}}}}), surface="dependency-network")
+
+    default = normalize_v05_surface_content(
+        projection, project, view, summary=EMPTY_SUMMARY, dependency_critical_role_available=False)
+    assert [entry for entry in default.legend_entries if entry.role == "critical-edge"] == [
+        SurfaceLegendEntry("critical-edge", "Critical dependency")]
+    assert not any(entry.role == "dependency-critical" for entry in default.legend_entries)
+
+    custom_wording = replace(view, wording=freeze({"legend": {"critical-edge": "Critical link"}}))
+    worded = normalize_v05_surface_content(projection, project, custom_wording, summary=EMPTY_SUMMARY)
+    assert [entry for entry in worded.legend_entries if entry.role == "critical-edge"] == [
+        SurfaceLegendEntry("critical-edge", "Critical link")]
+    authored = ReviewDetailInput((), (), (LegendEntry("critical-edge", "Authored critical"),), None)
+    selected = normalize_v05_surface_content(
+        projection, project, view, summary=EMPTY_SUMMARY, detail=authored)
+    assert [entry for entry in selected.legend_entries if entry.role == "critical-edge"] == [
+        SurfaceLegendEntry("critical-edge", "Authored critical")]
+
+    hidden = replace(view, visibility=replace(view.visibility, relations="none"))
+    no_edge = normalize_v05_surface_content(
+        projection, project, hidden, summary=EMPTY_SUMMARY)
+    assert not any(entry.role == "critical-edge" for entry in no_edge.legend_entries)
+
+    nondriving = replace(projection, network=DependencyNetworkProjection((), (
+        DependencyNetworkEdge("relation:0:drive", "a", "b", "end", "start", False),
+    )))
+    no_critical_edge = normalize_v05_surface_content(nondriving, project, view, summary=EMPTY_SUMMARY)
+    assert not any(entry.role == "critical-edge" for entry in no_critical_edge.legend_entries)
+
+
 def test_critical_relation_mode_uses_only_scheduler_driving_relations():
     projection = ReviewProjection((
         ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, (), critical=True),
@@ -603,8 +653,8 @@ def test_critical_relation_fact_closes_real_scheduler_analysis_through_projectio
     assert scheduled.ok and scheduled.analysis is not None
     assert "relation:1:start-short" in scheduled.analysis.driving_relations
     assert "short" not in scheduled.analysis.critical
-    view = typed_view({"body": {"tableColumns": (), "visibility": {
-        "relations": {"mode": "semantic"}, "annotations": "none"}}})
+    view = replace(typed_view({"body": {"tableColumns": (), "visibility": {
+        "relations": {"mode": "semantic"}, "annotations": "none"}}}), surface="dependency-network")
     projection = build_review_projection(project, scheduled.placements, view, None,
                                          analysis=scheduled.analysis)
     content = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
@@ -622,6 +672,9 @@ def test_critical_relation_fact_closes_real_scheduler_analysis_through_projectio
     assert {fact.relation_id: fact.semantic_id for fact in themed.relations} == {
         "relation:0:start-long": "dependency-critical", "relation:1:start-short": "dependency",
         "relation:2:long-finish": "dependency-critical", "relation:3:short-finish": "dependency"}
+    assert {edge.relation_id: edge.critical for edge in projection.network.edges} == {
+        "relation:0:start-long": True, "relation:1:start-short": False,
+        "relation:2:long-finish": True, "relation:3:short-finish": False}
     assert {fact.relation_id: fact.critical for fact in themed.relations} == {
         "relation:0:start-long": True, "relation:1:start-short": False,
         "relation:2:long-finish": True, "relation:3:short-finish": False}

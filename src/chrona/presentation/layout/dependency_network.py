@@ -11,19 +11,28 @@ from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.pattern_placement import PatternedPlacement, complete_pattern_placement
 from chrona.presentation.layout.stroke_alignment import complete_aligned_strokes
 from chrona.presentation.layout.surface_quality import AlignedStrokePlacement, ShapePlacement
-from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
+from chrona.presentation.layout.network_routes import complete_network_routes
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun
 from chrona.presentation.layout.canvas_texture import CanvasTexture, complete_canvas_texture
 from chrona.presentation.layout.canvas_overlays import CanvasOverlays, complete_canvas_overlays
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, RelationPlacement, TextPlacement, intersects
 from chrona.presentation.layout.surface_quality import SlotPlacement, SurfaceLayoutRequest
-from chrona.presentation.layout.slot_heading import complete_slot_headings, content_slot
+from chrona.presentation.layout.surface_quality import GroupPlacement
+from chrona.presentation.layout.surface_legend import SurfaceLegendBatch
+from chrona.presentation.layout.network_group_bands import place_network_bands
+from chrona.presentation.layout.network_ink import network_ink_bounds
+from chrona.presentation.layout.network_legend import prepare_network_legend, complete_network_legend
+from chrona.presentation.layout.slot_heading import (
+    complete_slot_headings, content_slot, inline_content_slot, full_slot, inline_full_slot,
+)
+from chrona.presentation.layout.text import translate_text_block
 from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.layout.surface_heading import place_surface_headings
 from chrona.presentation.layout.surface_deadlines import (
     DeadlineInkStyle, complete_deadline_ink, deadline_ink_style,
 )
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
+from chrona.presentation.model.semantic_registry import semantic_binding
 
 
 @dataclass(frozen=True)
@@ -36,6 +45,7 @@ class NetworkNodePlacement:
     critical: bool
     slot_id: str = "network"
     paint_order: int = 200
+    is_container: bool = False
 
     @property
     def placement_id(self) -> str:
@@ -58,6 +68,8 @@ class DependencyNetworkLayout:
     canvas_overlays: CanvasOverlays | None = None
     canvas_warning: CanvasViewportWarning | None = None
     shapes: tuple[ShapePlacement, ...] = ()
+    groups: tuple[GroupPlacement, ...] = ()
+    legend: SurfaceLegendBatch | None = None
 
 
 def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None, bounds: Rect,
@@ -101,18 +113,23 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None
     by_rank: dict[int, list[Any]] = {}
     for node in sorted(nodes, key=lambda item: (ranks[item.object_id], item.order_key, item.object_id)):
         by_rank.setdefault(ranks[node.object_id], []).append(node)
-    placed = _place_nodes(by_rank, ranks, measured, bounds, min_inline, min_block, gap,
-                          flow_direction == "horizontal", deadline_measured, deadline_style)
+    placed, groups = _place_nodes(by_rank, ranks, measured, bounds, min_inline, min_block, gap,
+                          flow_direction == "horizontal", deadline_measured, deadline_style,
+                          padding_inline=metric.get("network.node.paddingInline"),
+                          padding_block=metric.get("network.node.paddingBlock"))
+    headers = {group.group_id: group.header_bounds for group in groups}
+    text_hosts = [replace(node, bounds=headers[node.object_id]) if node.is_container else node
+                  for node in placed]
     if deadline_contents:
         node_text, deadline_text, deadline_shapes = _place_node_contents(
-            placed, measured, deadline_contents, deadline_measured, deadline_style)
+            text_hosts, measured, deadline_contents, deadline_measured, deadline_style)
         text = heading_text + node_text + deadline_text
         deadline_ink = complete_deadline_ink(
             deadline_shapes, deadline_style,
             outline_placement_id=lambda shape: f"deadline-outline:{shape.placement_id}")
         deadline_shapes = (*deadline_ink.outlines, *deadline_shapes)
     else:
-        node_text = tuple(_place_node_text(node, measured[node.object_id]) for node in placed)
+        node_text = tuple(_place_node_text(node, measured[node.object_id]) for node in text_hosts)
         text = heading_text + node_text
         deadline_shapes = ()
     _assert_surface_quality(placed, node_text + (deadline_text if deadline_contents else ()))
@@ -121,7 +138,10 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None
                                tuple(item.bounds for item in text))
     route_region = _expand_route_bounds(route_bounds, placed) if route_bounds is not None else canvas
     relations, route_warnings = _route_edges(edges, placed, route_region, max_bends, max_detour_ratio,
-                                            progress=progress)
+                                            groups=groups, theme_tokens=theme_tokens, progress=progress)
+    group_shapes = _network_group_shapes(groups, theme_tokens)
+    occupied = network_ink_bounds(placed, text, (*group_shapes, *deadline_shapes), relations, theme_tokens)
+    canvas = _completed_canvas(canvas, None, occupied, ())
     patterns: tuple[PatternedPlacement, ...] = ()
     optional_pattern = getattr(theme_tokens, "optional_pattern", None)
     if callable(optional_pattern):
@@ -129,7 +149,12 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None
         if isinstance(token, Mapping) and token.get("kind") == "catalog":
             patterns = tuple(PatternedPlacement(
                 node.placement_id, complete_pattern_placement(token, node.bounds))
-                for node in placed)
+                for node in placed if not node.is_container)
+        for shape in group_shapes:
+            token = optional_pattern(semantic_binding(shape.semantic_id).theme_role)
+            if isinstance(token, Mapping) and token.get("kind") == "catalog":
+                patterns += (PatternedPlacement(
+                    shape.placement_id, complete_pattern_placement(token, shape.bounds)),)
     texture = complete_canvas_texture(theme_tokens, canvas)
     completed_overlays = complete_canvas_overlays(theme_tokens, canvas)
     canvas_overlays = completed_overlays if (
@@ -154,12 +179,13 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None
         ) if item is not None
     ) + route_warnings
     stroke_shapes = tuple(ShapePlacement(node.placement_id, node.object_id, "Rect", node.bounds,
-                                        semantic_id="networkNode") for node in placed)
+                                        semantic_id="networkNode") for node in placed if not node.is_container) + group_shapes
     if texture is not None:
         stroke_shapes = (texture.shape, *stroke_shapes)
     strokes = complete_aligned_strokes((), stroke_shapes, (), theme_tokens)
     return DependencyNetworkLayout(tuple(placed), text, relations, canvas, warnings, patterns, texture, strokes,
-                                   canvas_overlays=canvas_overlays, shapes=tuple(deadline_shapes))
+                                   canvas_overlays=canvas_overlays, shapes=(*group_shapes, *deadline_shapes),
+                                   groups=groups)
 
 
 def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> DependencyNetworkLayout:
@@ -170,11 +196,17 @@ def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> Depende
         raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/network")
     decisions = {item.source: item for item in manifest.decisions
                  if item.kind == "slot" and item.source in {
-                     "title", "network", "heading.title", "heading.kicker", "heading.subtitle"}}
+                     "title", "network", "legend", "heading.title", "heading.kicker", "heading.subtitle"}}
     if "network" not in decisions:
-        raise LayoutError("E_PRESENTATION_PRIMITIVE_MISSING", "/layoutManifest/sources/network")
+        raise LayoutError(
+            "E_PRESENTATION_PRIMITIVE_MISSING", "/layoutManifest/sources/network",
+            detail=("surface=dependency-network; missing source='network'; add this slot to a matching "
+                    "Layout Profile and select it with --layout <profile>"))
     slots = {source: SlotPlacement(item.node_id, source, item.bounds,
-                                   item.priority or "required", item.overflow or "visible-overflow")
+                                   item.priority or "required", item.overflow or "visible-overflow",
+                                   direction=item.direction or "block", gap=item.gap,
+                                   item_min_inline_size=item.item_min_inline_size, columns=item.columns,
+                                   column_distribution=item.column_distribution)
              for source, item in decisions.items()}
     headings = complete_slot_headings(request=request, slots=slots, decisions=decisions)
     network_reserve = headings.reserved("network")
@@ -185,6 +217,12 @@ def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> Depende
     if title_slot is None:
         heading_batch = place_surface_headings(request, content_slots, request.measured_sources)
     network_slot = content_slot(slots["network"], network_reserve)
+    authored_legend = content_slots.get("legend")
+    if authored_legend is not None:
+        authored_legend = inline_content_slot(authored_legend, headings.reserved_inline("legend"))
+    legend_plan = prepare_network_legend(request, network_slot, authored_legend,
+                                         heading_block=headings.reserved("legend"))
+    network_slot = legend_plan.graph_slot
     route_bounds = None
     if network_reserve:
         # Routes are contained in the network's content viewport, with its lower edge
@@ -219,19 +257,56 @@ def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> Depende
         shapes=tuple(replace(item, slot_id=slots["network"].slot_id) for item in placed.shapes))
     if headings.text:
         placed = replace(placed, text=(*headings.text, *placed.text))
+    graph_ink = network_ink_bounds(
+        placed.nodes, tuple(item for item in placed.text if item.slot_id == slots["network"].slot_id),
+        placed.shapes, placed.relations, request.theme_tokens)
+    legend = complete_network_legend(legend_plan, placed.relations, graph_ink)
+    if legend is not None:
+        if authored_legend is not None:
+            delta = legend.slot.bounds.block - authored_legend.bounds.block
+            original = slots["legend"]
+            legend = replace(legend, slot=inline_full_slot(original,
+                full_slot(original, legend.slot, headings.reserved("legend")),
+                headings.reserved_inline("legend")))
+            placed = replace(placed, text=tuple(
+                translate_text_block(item, delta) if item.slot_id == original.slot_id else item
+                for item in placed.text))
+        legend_ink = network_ink_bounds((), legend.text, legend.shapes, legend.relations, request.theme_tokens)
+        completed_canvas = _completed_canvas(placed.canvas_bounds, None, (legend.slot.bounds, *legend_ink), ())
+        placed = replace(placed, legend=legend, canvas_bounds=completed_canvas)
+        placed = _refresh_canvas_paint(placed, request.theme_tokens)
     warning = canvas_viewport_warning(
         surface_id="dependency-network", declared=request.declared_viewport, actual=placed.canvas_bounds,
         contributors=chain(
             ((slot.slot_id, slot.bounds) for slot in slots.values()),
             ((item.slot_id, item.bounds) for item in (*placed.nodes, *placed.text)),
+            ((legend.slot.slot_id, rect) for rect in (legend.slot.bounds, *legend_ink))
+            if legend is not None else (),
             ((relation.slot_id, Rect(Decimal(str(inline)), Decimal(str(block)), Decimal(0), Decimal(0)))
              for relation in placed.relations for inline, block in relation.points)))
     return replace(placed, fit_warnings=(*headings.warnings,
                                         *(heading_batch.warnings if heading_batch is not None else ()),
+                                        *(legend.warnings if legend is not None else ()),
                                         *placed.fit_warnings),
                    diagnostics=(*headings.diagnostics,
-                                *(heading_batch.diagnostics if heading_batch is not None else ())),
+                                *(heading_batch.diagnostics if heading_batch is not None else ()),
+                                *(legend.diagnostics if legend is not None else ())),
                    canvas_warning=warning)
+
+
+def _refresh_canvas_paint(placed: DependencyNetworkLayout, tokens: Any) -> DependencyNetworkLayout:
+    """Reclose canvas-owned paint after the legend completes natural canvas growth."""
+    previous = placed.texture
+    texture = complete_canvas_texture(tokens, placed.canvas_bounds)
+    patterns = tuple(item for item in placed.patterns if previous is None or item is not previous.pattern)
+    strokes = tuple(item for item in placed.aligned_strokes
+                    if previous is None or item.primitive_id != previous.shape.placement_id)
+    if texture is not None:
+        patterns = (texture.pattern, *patterns)
+        strokes += complete_aligned_strokes((), (texture.shape,), (), tokens)
+    overlays = complete_canvas_overlays(tokens, placed.canvas_bounds)
+    return replace(placed, texture=texture, patterns=patterns, aligned_strokes=strokes,
+                   canvas_overlays=overlays if overlays.pattern is not None or overlays.radial is not None else None)
 
 
 def _title_measurement(measured_sources: MeasuredSources) -> MeasuredTextRun:
@@ -285,45 +360,47 @@ def _place_nodes(by_rank: Mapping[int, list[Any]], ranks: Mapping[str, int],
                  measured: Mapping[str, MeasuredTextRun], bounds: Rect,
                  min_inline: Decimal, min_block: Decimal, gap: Decimal,
                  horizontal: bool, deadline_measured: Mapping[str, MeasuredTextRun] | None = None,
-                 deadline_style: DeadlineInkStyle | None = None) -> list[NetworkNodePlacement]:
-    if deadline_measured:
-        dimensions = {node.object_id: _node_content_size(
-            measured[node.object_id], deadline_measured.get(node.object_id), deadline_style,
-            min_inline, min_block) for members in by_rank.values() for node in members}
-    else:
-        dimensions = {node.object_id: (max(min_inline, measured[node.object_id].inline_size),
-                                       max(min_block, measured[node.object_id].block_size))
-                      for members in by_rank.values() for node in members}
-    rank_ids = tuple(sorted(by_rank))
-    extent = {rank: max(dimensions[node.object_id][0 if horizontal else 1] for node in members)
-              for rank, members in by_rank.items()}
-    primary_size = bounds.inline_size if horizontal else bounds.block_size
-    starts, cursor = {}, (bounds.inline if horizontal else bounds.block) + gap
-    for rank in rank_ids:
-        starts[rank] = cursor
-        cursor += extent[rank] + gap
+                 deadline_style: DeadlineInkStyle | None = None, *,
+                 padding_inline: Decimal | None = None,
+                 padding_block: Decimal | None = None) -> tuple[list[NetworkNodePlacement], tuple[GroupPlacement, ...]]:
+    dimensions = {node.object_id: _node_content_size(
+        measured[node.object_id], (deadline_measured or {}).get(node.object_id), deadline_style,
+        min_inline, min_block, padding_inline=padding_inline, padding_block=padding_block)
+        for members in by_rank.values() for node in members}
+    nodes = tuple(node for rank in sorted(by_rank) for node in by_rank[rank])
+    insets = {node.object_id: (
+        Decimal(str(measured[node.object_id].font_size)) / 2 if padding_inline is None else padding_inline,
+        Decimal(str(measured[node.object_id].font_size)) / 2 if padding_block is None else padding_block)
+        for node in nodes}
+    boxes, groups = place_network_bands(nodes, ranks=ranks, sizes=dimensions, insets=insets,
+                                        bounds=bounds, gap=gap, horizontal=horizontal)
     result: list[NetworkNodePlacement] = []
-    secondary_origin = bounds.block if horizontal else bounds.inline
-    secondary_size = bounds.block_size if horizontal else bounds.inline_size
-    for rank in rank_ids:
-        members = by_rank[rank]
-        cross_total = sum((dimensions[node.object_id][1 if horizontal else 0] for node in members), Decimal(0))
-        cursor = secondary_origin + gap
-        for node in members:
-            inline_size, block_size = dimensions[node.object_id]
-            if horizontal:
-                rect = Rect(starts[rank], cursor, inline_size, block_size)
-                cursor += block_size + gap
-                input_port = (float(rect.inline), float(rect.block + rect.block_size / 2))
-                output_port = (float(rect.inline + rect.inline_size), float(rect.block + rect.block_size / 2))
-            else:
-                rect = Rect(cursor, starts[rank], inline_size, block_size)
-                cursor += inline_size + gap
-                input_port = (float(rect.inline + rect.inline_size / 2), float(rect.block))
-                output_port = (float(rect.inline + rect.inline_size / 2), float(rect.block + rect.block_size))
-            result.append(NetworkNodePlacement(node.object_id, ranks[node.object_id], rect,
-                                                input_port, output_port, node.critical))
-    return result
+    for node in nodes:
+        rect = boxes[node.object_id]
+        if horizontal:
+            input_port = (float(rect.inline), float(rect.block + rect.block_size / 2))
+            output_port = (float(rect.inline + rect.inline_size), float(rect.block + rect.block_size / 2))
+        else:
+            input_port = (float(rect.inline + rect.inline_size / 2), float(rect.block))
+            output_port = (float(rect.inline + rect.inline_size / 2), float(rect.block + rect.block_size))
+        result.append(NetworkNodePlacement(node.object_id, ranks[node.object_id], rect,
+                                          input_port, output_port, node.critical, is_container=node.is_container))
+    return result, groups
+
+
+def _network_group_shapes(groups: tuple[GroupPlacement, ...], theme_tokens: Any) -> tuple[ShapePlacement, ...]:
+    if theme_tokens is None:
+        return ()
+    shapes = []
+    for group in groups:
+        subject = DiagnosticSubject.project_object(group.group_id)
+        for semantic, role, bounds in (("groupBand", "group-band", group.content_bounds),
+                                       ("groupHeaderBand", "group-header-band", group.header_bounds)):
+            treatment, order = theme_tokens.background(role)
+            if treatment != "none":
+                shapes.append(ShapePlacement(f"network-{semantic}:{group.group_id}", group.group_id, "Rect",
+                    bounds, slot_id="network", semantic_id=semantic, paint_order=order, subjects=(subject,)))
+    return tuple(shapes)
 
 
 def _deadline_footer_size(measured: MeasuredTextRun, style: DeadlineInkStyle | None) -> tuple[Decimal, Decimal, Decimal, Decimal]:
@@ -341,12 +418,17 @@ def _deadline_footer_size(measured: MeasuredTextRun, style: DeadlineInkStyle | N
 
 def _node_content_size(title: MeasuredTextRun, footer: MeasuredTextRun | None,
                        style: DeadlineInkStyle | None, min_inline: Decimal,
-                       min_block: Decimal) -> tuple[Decimal, Decimal]:
-    if footer is None:
-        return max(min_inline, title.inline_size), max(min_block, title.block_size)
-    footer_inline, footer_block, _, _ = _deadline_footer_size(footer, style)
+                       min_block: Decimal, *, padding_inline: Decimal | None = None,
+                       padding_block: Decimal | None = None) -> tuple[Decimal, Decimal]:
+    default_padding = Decimal(str(title.font_size)) / 2
+    inline_inset = default_padding if padding_inline is None else padding_inline
+    block_inset = default_padding if padding_block is None else padding_block
+    footer_inline, footer_block = Decimal(0), Decimal(0)
+    if footer is not None:
+        footer_inline, footer_block, _, _ = _deadline_footer_size(footer, style)
     _, _, title_height = _text_vertical_envelope(title)
-    return max(min_inline, title.inline_size, footer_inline), max(min_block, title_height + footer_block)
+    return (max(min_inline, max(title.inline_size, footer_inline) + 2 * inline_inset),
+            max(min_block, title_height + footer_block + 2 * block_inset))
 
 
 def _text_vertical_envelope(measured: MeasuredTextRun) -> tuple[Decimal, Decimal, Decimal]:
@@ -429,7 +511,9 @@ def _place_node_text_at(node: NetworkNodePlacement, measured: MeasuredTextRun,
 
 def _place_node_text(node: NetworkNodePlacement, measured: MeasuredTextRun) -> TextPlacement:
     inline = node.bounds.inline + (node.bounds.inline_size - measured.inline_size) / 2
-    baseline = node.bounds.block + (node.bounds.block_size - measured.block_size) / 2 + measured.baseline
+    envelope_top, _, envelope_height = _text_vertical_envelope(measured)
+    baseline = (node.bounds.block + (node.bounds.block_size - envelope_height) / 2
+                - envelope_top + measured.baseline)
     return TextPlacement(
         f"network-label:{node.object_id}", node.object_id, measured.content,
         Rect(inline, baseline - Decimal(str(measured.font_size)), measured.inline_size, measured.block_size),
@@ -439,7 +523,8 @@ def _place_node_text(node: NetworkNodePlacement, measured: MeasuredTextRun) -> T
         letter_spacing=measured.letter_spacing, text_transform=measured.text_transform,
         numeric_spacing=measured.numeric_spacing, horizontal_scale=measured.horizontal_scale,
         font_asset_identity=measured.font_asset_identity, runs=measured.fallback_runs, collision_region="network",
-        collision_domain=CollisionDomain("network", "nodes"), slot_id="network", semantic_id="networkLabel")
+        collision_domain=CollisionDomain("network", "nodes"), slot_id="network",
+        semantic_id="groupHeader" if node.is_container else "networkLabel")
 
 
 def _place_title(measured: MeasuredTextRun, bounds: Rect) -> TextPlacement:
@@ -457,42 +542,25 @@ def _place_title(measured: MeasuredTextRun, bounds: Rect) -> TextPlacement:
 
 def _route_edges(edges: tuple[Any, ...], nodes: list[NetworkNodePlacement], bounds: Rect,
                  max_bends: int, max_detour_ratio: float, *,
+                 groups: tuple[GroupPlacement, ...] = (),
+                 theme_tokens: Any | None = None,
                  progress: RenderProgress | None = None) -> tuple[tuple[RelationPlacement, ...], tuple[FitWarning, ...]]:
-    by_id = {node.object_id: node for node in nodes}
-    boxes = {node.object_id: _box(node.bounds) for node in nodes}
-    relations = []
-    warnings = []
-    observed_edges = progress.routing(edges, pass_name="network") if progress is not None else edges
-    for edge in observed_edges:
-        source, target = by_id[edge.source_id], by_id[edge.target_id]
-        try:
-            points = place_relation_route(source_port=source.output_port, target_port=target.input_port,
-                                          obstacles=tuple(box for node_id, box in boxes.items()
-                                                          if node_id not in {source.object_id, target.object_id}),
-                                          bounds=(float(bounds.inline), float(bounds.block),
-                                                  float(bounds.inline + bounds.inline_size),
-                                                  float(bounds.block + bounds.block_size)))
-        except ValueError as error:
-            points = (source.output_port, target.input_port)
-            warnings.append(FitWarning("W_LAYOUT_ROUTE_FALLBACK", edge.relation_id,
-                                       f"/projection/network/edges/{edge.relation_id}", "relation-route",
-                                       "direct-path", 0.0, 0.0, float(bounds.inline_size), float(bounds.block_size)))
-        if not relation_route_quality(points, max_bends=max_bends, max_detour_ratio=max_detour_ratio):
-            points = (source.output_port, target.input_port)
-            warnings.append(FitWarning("W_LAYOUT_ROUTE_FALLBACK", edge.relation_id,
-                                       f"/projection/network/edges/{edge.relation_id}", "relation-route",
-                                       "direct-path", 0.0, 0.0, float(bounds.inline_size), float(bounds.block_size)))
-        relations.append(RelationPlacement(edge.relation_id, f"{edge.source_id}:output", f"{edge.target_id}:input",
-                                           tuple(points), semantic_id="dependency-critical" if edge.critical else "dependency",
-                                           slot_id="network", paint_order=100))
-    return tuple(relations), tuple(warnings)
+    obstacles = {node.object_id: node.bounds for node in nodes if not node.is_container}
+    obstacles.update({group.group_id: group.header_bounds for group in groups})
+    return complete_network_routes(
+        edges, ports={node.object_id: (node.input_port, node.output_port) for node in nodes},
+        obstacles=obstacles,
+        subjects={node.object_id: DiagnosticSubject.project_object(node.object_id) for node in nodes},
+        bounds=bounds, max_bends=max_bends, max_detour_ratio=max_detour_ratio,
+        theme_tokens=theme_tokens, progress=progress)
 
 
 def _assert_surface_quality(nodes: list[NetworkNodePlacement], text: tuple[TextPlacement, ...]) -> None:
     for index, node in enumerate(nodes):
         if node.input_port == node.output_port:
             raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/network")
-        if any(intersects(node.bounds, other.bounds) for other in nodes[index + 1:]):
+        if not node.is_container and any(intersects(node.bounds, other.bounds)
+                                        for other in nodes[index + 1:] if not other.is_container):
             raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/network")
     by_id = {node.object_id: node for node in nodes}
     for label in text:
@@ -502,16 +570,19 @@ def _assert_surface_quality(nodes: list[NetworkNodePlacement], text: tuple[TextP
 
 
 def _completed_canvas(requested: Rect, title_bounds: Rect | None, nodes: tuple[Rect, ...], text: tuple[Rect, ...]) -> Rect:
-    """Return Layout's natural network extent, anchored at the requested origin."""
+    """Contain the requested viewport and completed ink, including outward strokes."""
+    inline_start, block_start = requested.inline, requested.block
     inline_end = requested.inline + requested.inline_size
     block_end = requested.block + requested.block_size
     if title_bounds is not None:
         inline_end = max(inline_end, title_bounds.inline + title_bounds.inline_size)
         block_end = max(block_end, title_bounds.block + title_bounds.block_size)
     for item in nodes + text:
+        inline_start = min(inline_start, item.inline)
+        block_start = min(block_start, item.block)
         inline_end = max(inline_end, item.inline + item.inline_size)
         block_end = max(block_end, item.block + item.block_size)
-    return Rect(requested.inline, requested.block, inline_end - requested.inline, block_end - requested.block)
+    return Rect(inline_start, block_start, inline_end - inline_start, block_end - block_start)
 
 
 def _expand_route_bounds(requested: Rect, nodes: list[NetworkNodePlacement]) -> Rect:
@@ -537,8 +608,3 @@ def _contains(outer: Rect, inner: Rect) -> bool:
     return (outer.inline <= inner.inline and outer.block <= inner.block and
             inner.inline + inner.inline_size <= outer.inline + outer.inline_size and
             inner.block + inner.block_size <= outer.block + outer.block_size)
-
-
-def _box(rect: Rect) -> tuple[float, float, float, float]:
-    return (float(rect.inline), float(rect.block),
-            float(rect.inline + rect.inline_size), float(rect.block + rect.block_size))

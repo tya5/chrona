@@ -256,7 +256,9 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
             for item in block_resolution.short_sources)
     elif value.content_sized:
         raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/projection/surface",
-                          detail=f"surface={view.surface}")
+                          detail=(f"surface={view.surface}; choose a fixed WIDTHxHEIGHT viewport "
+                                  "(for example, --viewport 1600x900); auto height is supported only "
+                                  "for table-timeline"))
     manifest = solve_layout(
         resolved_layout, viewport_inline=viewport["inlineSize"],
         viewport_block=viewport["blockSize"], measurements=measurements,

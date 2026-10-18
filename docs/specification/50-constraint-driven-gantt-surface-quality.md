@@ -1319,7 +1319,12 @@ the role is required when a drawable label request is consumed, at `/body/roles/
 The shared `period-label-chip` treatment is unchanged. Scene purpose, period `sourceRef`, placement identity and
 collision policy do not vary with the role. A Theme that selects no label declares no label role.
 
-A Layout `legend` slot is the sole authority for legend geometry. When it exists, every selected legend entry emits one swatch and one measured label. When absent, there are no legend primitives. It is a resource choice, not a renderer fallback. Header or row capacity shortfall completes visible stacked/natural geometry and a warning rather than rejecting the surface.
+A Layout `legend` slot owns legend geometry. When it exists, every selected
+legend entry emits one swatch and one measured label. When absent, there are
+no legend primitives, except the explicit intrinsic network critical key below.
+This remains a resource choice on other surfaces, never renderer fallback.
+Header or row capacity shortfall completes visible stacked/natural geometry
+and a warning rather than rejecting the surface.
 
 A Detail Profile entry with `sourceRef` bound to a selected period uses that
 period's selected band role and the same completed edge geometry as its area
@@ -1341,6 +1346,56 @@ matching the period's declared absence; this is the exception to the one-swatch
 rule above. It does not make a valid source binding an error.
 Entries without `sourceRef` retain
 their existing behavior and identity.
+
+#### Dependency-network composition (#1727)
+
+Model closes selected Project containment separately from View lane grouping
+(Spec06). Layout uses the existing completed group/header geometry to enclose
+selected descendants; group objects are not emitted as orphan task nodes.
+Allocate disjoint secondary-axis bands to unrelated containers, preserving
+the existing deterministic rank/order within them. Nested containers enclose
+their child bands. Empty selected containers remain visible containers.
+Group endpoints retain ports on the completed container boundary; no relation
+or ancestor is invented or silently removed. These are network-native groups,
+not the table-only region frames of Spec33.
+
+Node size encloses the full measured title/footer footprint plus the Theme
+insets in Spec07 before applying node minima. Header, footer, glyph, terminal
+and stroke ink participate in completed canvas bounds and normal natural
+growth/visible-overflow; never crop text to force the declared viewport.
+Layout completes existing shared Theme relation terminals and endpoint
+metadata, including an explicitly selected terminal `none`. Scene projects
+them just as for other completed relations; adapters do not infer direction.
+Network relations and their line keys carry Layout-completed paint bounds;
+Scene copies these without choosing a stroke envelope. Shared legend text
+carries the completed `legendLabel` semantic identity before Scene projection.
+
+Retain deterministic obstacle-aware routing and its declared quality limits.
+Check completed paths and terminal ink against unrelated nodes and headers.
+The existing direct visible-overflow fallback remains permitted, but records
+the actual failure class (search/bounds, quality limit or obstacle crossing)
+and affected node subjects in `W_LAYOUT_ROUTE_FALLBACK`. A direct path that
+crosses an unrelated node must explicitly say so; it is not a normal clear
+route. Neither criticality nor failure is inferred from the line's paint.
+
+When a selected network edge actually draws the existing `critical-edge` role, normalized
+content includes one key for that role unless an authored key already exists.
+Use its authored wording when provided, otherwise `Critical dependency`.
+The shared line-key machinery uses that role's actual stroke, width and
+opacity, not timeline `dependency-critical` ink. Relation visibility and
+selected endpoint admission apply before this candidate is added.
+An authored legend slot is the sole owner. Without one, Layout reserves a
+measured intrinsic legend band at the block end of the network source before
+placing graph content, and completes a real child slot with source `legend`.
+Reuse existing legend entry, measurement, swatch and placement machinery;
+never overlay a key on nodes or create a second legend. Without a drawn
+critical-role edge there is no intrinsic slot. Overflow uses the normal
+completed canvas/warning rules, not omission of the key.
+If the graph grows into the reserved legend band, complete that band below
+the grown graph without replaying its placement. An authored band's inline
+allocation, direction and key content remain authored; only an actual overlap
+requires this block-axis flow. An intrinsic band contains the critical key,
+not unrelated key candidates from an otherwise unallocated Detail Profile.
 
 ### 3.5 Physical point hosting (#1373)
 

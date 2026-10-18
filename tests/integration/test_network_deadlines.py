@@ -4,6 +4,8 @@ from xml.etree import ElementTree
 
 import pytest
 
+from chrona.presentation.layout.path_geometry import flatten_path
+from chrona.presentation.layout.relation_terminals import project_marker_outline
 from chrona.presentation.scene.serialization import scene_document, validate_scene_document
 from chrona.presentation.scene.contrast_policy import evaluate_scene_contrast
 from tests.integration.test_deadline_mark import MIXED, _parts, _render, _source
@@ -38,6 +40,18 @@ def _footers(rendered):
             if item.scene_id.startswith("deadline-network-label:")}
 
 
+def _semantic_terminal_anchor(edge, side):
+    """Round terminal centres retain the port while their painted line is set back."""
+    marker = edge.marker_start if side == "start" else edge.marker_end
+    if marker is None or not marker.centred:
+        return edge.points[0 if side == "start" else -1]
+    outline = project_marker_outline(marker, side=side, points=edge.points,
+        path_commands=edge.path_commands, stroke_width=edge.paint.stroke_width)
+    points = flatten_path(outline)
+    return ((min(x for x, _ in points) + max(x for x, _ in points)) / 2,
+            (min(y for _, y in points) + max(y for _, y in points)) / 2)
+
+
 @pytest.mark.parametrize("flow", ["horizontal", "vertical-rl", "vertical-lr"])
 def test_network_deadlines_close_dates_state_and_caption_inside_node_before_svg(tmp_path, flow):
     parts = _network_parts(flow=flow, caption={"template": "{daysLate} days late", "format": {"form": "english-words"}})
@@ -59,10 +73,11 @@ def test_network_deadlines_close_dates_state_and_caption_inside_node_before_svg(
     edge, = [item for key, item in primitives.items() if key.startswith("network-edge:")]
     host = primitives["network-node:a"]
     target = primitives["network-node:g"]
-    assert edge.points[0] == pytest.approx(
+    assert (edge.from_instance_id, edge.to_instance_id) == ("a", "g")
+    assert _semantic_terminal_anchor(edge, "start") == pytest.approx(
         (host.bounds[0] + host.bounds[2], host.bounds[1] + host.bounds[3] / 2)
         if flow == "horizontal" else (host.bounds[0] + host.bounds[2] / 2, host.bounds[1] + host.bounds[3]))
-    assert edge.points[-1] == pytest.approx(
+    assert _semantic_terminal_anchor(edge, "end") == pytest.approx(
         (target.bounds[0], target.bounds[1] + target.bounds[3] / 2)
         if flow == "horizontal" else (target.bounds[0] + target.bounds[2] / 2, target.bounds[1]))
     for object_id, footer in footers.items():

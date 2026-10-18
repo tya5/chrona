@@ -11,6 +11,7 @@ import pytest
 
 from chrona.presentation.layout.model import LayoutDecision, LayoutManifest, Rect
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun
+from chrona.presentation.model.projection import DependencyNetworkNode
 from chrona.presentation.model.surface_content import AxisTier
 from chrona.presentation.scene.capabilities import (
     theme_catalog_pattern_consumer,
@@ -51,7 +52,8 @@ def _table_timeline(theme: dict):
 
 
 def _network(theme: dict):
-    node = SimpleNamespace(object_id="a", title="A", order_key=("a",), critical=True, source_kind="primary")
+    node = DependencyNetworkNode(object_id="a", title="A", order_key=("a",), critical=True,
+                                 source_kind="primary", is_container=False, container_id=None)
     projection = SimpleNamespace(surface="dependency-network", network=SimpleNamespace(nodes=(node,), edges=()))
     title_bounds = Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(40))
     network_bounds = Rect(Decimal(0), Decimal(50), Decimal(400), Decimal(200))
