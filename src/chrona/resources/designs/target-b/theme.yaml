@@ -767,8 +767,8 @@ body:
     snapshot.fill: surface
     snapshot.stroke: accent
     summary-bar.fill: accent
-    actual.fill: accent
-    actual.stroke: accent
+    actual.fill: category:actualInk
+    actual.stroke: category:actualInk
     milestone.fill: text
     missing-actual.fill: surface
     missing-actual.stroke: accent
