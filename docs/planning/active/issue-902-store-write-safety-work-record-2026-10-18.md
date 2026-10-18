@@ -8,10 +8,16 @@ and its official artifact12128521189 has all50 SVG/Scene pairs unchanged, with
 two intended diagnostic inventories. Item3 is accepted independently on
 review-containing exact main `5fe41db8e8512e5438e9ecbe67f5c56c1d18d152` by
 [release39108421823](https://github.com/tya5/chrona/actions/runs/39108421823).
-Item2 PR1708 is merged at `0bd24fd4a` on current main `b12cbd7b4`; its exact-main
+Item2 PR1708 is merged at `0bd24fd4a`; its review-containing main `b12cbd7b4`
 full release [39110885313](https://github.com/tya5/chrona/actions/runs/39110885313)
-is in progress, so item2 is not yet release-accepted. Parent902 remains open
-for item2's successful release and parked4/814/815; board454 is unchanged.
+failed two Windows test portability expectations (Linux/macOS passed; Windows
+wheel skipped). [Repair plan](https://github.com/tya5/chrona/issues/902#issuecomment-6247905669)
+and [publication amendment](https://github.com/tya5/chrona/issues/902#issuecomment-6247917297)
+batch the test-only corrections into PR1712; exact LF/CRLF bytes and known-scratch
+error paths are covered without runtime/golden/native-lock changes. Full CLI,
+authoring, recovery, process and MCP focused verification passes199. Item2 still
+requires successful candidate checks and native three-OS full release. Parent902
+remains open for that gate and parked4/814/815; board454 is unchanged.
 
 ## Scope and literal acceptance
 
@@ -285,9 +291,8 @@ the use case. Remove the old public CAS-callback wiring, not emulate it.
 | A3 front ends/release | `app/cli.py`, `app/agent_tools.py`, import guard, registry/CLI/MCP tests and literal review | Tool-set v0.6/new tool and honest annotations; gate before missing/malformed/escaped files open; canonical/symlink scope; exact CLI/tool results, stale/replay/no-overwrite over real stdio. Run focused tests per owner, then combined tests and planned CI full three-OS/conformance/wheel/MCP; inspect official materializer deltas as a batch. No renderer policy/source change intended. |
 
 Implementation was prepared in isolation and PR1708 opened after item3 merged
-on a ready base. It passed its current-head checks and review; item2's exact-main
-full-release result is now in progress as specified in the scheduling amendment
-below. Do not publish partially safe main slices. Return to design before
+on a ready base. It passed its current-head checks and review; release disposition
+is recorded once in Status above. Do not publish partially safe main slices. Return to design before
 addressing any new transaction/schema/layer contract gap. Acceptance is the
 literal item2 row above; parked4/814/815 remain open.
 
@@ -308,11 +313,10 @@ Verification batches overlapped (not additive): authoring/containment/registry/
 CLI/Store/MCP **1010 passed**; final recovery/helper migration **489 passed**;
 case/staging/process **58 passed**; import direction is 11 packages/37 inward
 edges. Publication preflight repaired diagnostic inventory findings without
-policy waivers or generated-report edits. Item2 merged as PR1708 at `0bd24fd4a`
-on current main `b12cbd7b4`; its exact-main full release
-[39110885313](https://github.com/tya5/chrona/actions/runs/39110885313) is in
-progress, so item2 remains unaccepted until that run succeeds. Focused evidence
-does not substitute for the native release gate. Parked4/814/815 remain open.
+policy waivers or generated-report edits. Item2 merged as PR1708 at `0bd24fd4a`;
+the current release disposition and repair evidence are in Status above and
+the literal review. Focused evidence does not substitute for the native release
+gate. Parked4/814/815 remain open.
 
 ### Publication versus acceptance (reviewed scheduling amendment)
 
@@ -322,8 +326,8 @@ repaired and release-verified first. A shared exact-main full run containing
 both item3 and item2 source/reviews is permitted but not required: each item may
 be accepted independently when its own review-containing exact main passes the
 full three-OS pytest/conformance/wheel/MCP/public-reproduction gate. Item3 met
-that condition in release39108421823; item2's corresponding run39110885313 is
-currently in progress. Neither merge alone is acceptance. Preserve all
+that condition in release39108421823; item2 remains pending as recorded in Status.
+Neither merge alone is acceptance. Preserve all
 inverse/legacy/replay and authoring tests in the applicable full suite. Any
 newly red predecessor becomes the priority; never use a narrower run as proof.
 This scheduling disposition changes no contract, test scope or release gate.
