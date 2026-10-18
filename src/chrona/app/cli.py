@@ -19,11 +19,12 @@ from chrona.core.diagnostics import Diagnostic
 from chrona.core.identity import content_identity, json_value
 from chrona.core.source_ranges import attach_ranges
 from chrona.core.validation import load_yaml
-from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, RenderClosure, resolve_guided_draft_render, resolve_render_context
+from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, RenderClosure, resolve_render_context
 from chrona.presentation.contracts import TypesetterIdentity
 from chrona.presentation.model.render_progress import RenderAdvisoryEvent, RenderProgress, RenderProgressEvent
 from chrona.usecases.diagnostic_messages import describe_warning, warning_message
 from chrona.usecases.draft_render import DraftRenderRequest, parse_viewport, render_draft, typesetter_identity, warning_payloads
+from chrona.usecases.guided_render import WorkspaceRenderRequest, render_workspace
 from chrona.usecases.failure_report import FailureReport, StableFailure, diagnostic_record, rejection_report, report_failure
 from chrona.usecases.project_checks import schedule_project_mapping, validate_project_mapping
 from chrona.usecases.render_review import RenderRejected, RenderRequest, RenderedReview, render_review
@@ -399,6 +400,8 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--locale", choices=("en-US", "ja-JP"), default="en-US",
                          help="render locale: en-US or ja-JP (default: en-US)")
     _add_draft_target_arguments(command)
+    command.add_argument("--progress", action="store_true",
+                         help="report render phases and routing counts on stderr (automatic for terminal stderr)")
     command.add_argument("--provenance", help="write a JSON record of which inputs the render used")
     command.add_argument("--output", "-o", required=True)
 
@@ -822,21 +825,17 @@ def _write_render_outputs(rendered: RenderedReview, args: argparse.Namespace) ->
 
 def _run_guided_draft_render(args: argparse.Namespace) -> None:
     target_kind = _resolve_output_target(args.output, args.format)
-    draft = resolve_guided_draft_render(
-        workspace_path=Path(args.workspace), viewport=_parse_viewport(args.viewport),
+    result = render_workspace(WorkspaceRenderRequest(
+        workspace=Path(args.workspace), target_kind=target_kind, viewport=args.viewport,
+        locale=args.locale, visual_profile=args.visual_profile,
+        typesetter=_draft_typesetter_identity(args, target_kind), forecast=getattr(args, "forecast", False),
+        progress=_draft_render_progress(getattr(args, "progress", False)),
         package_reader=_draft_package_reader(args, Path(args.workspace)),
-        locale=args.locale, target_kind=target_kind, visual_profile=args.visual_profile,
-        typesetter=_draft_typesetter_identity(args, target_kind),
-        forecast=getattr(args, "forecast", False),
-    )
-    args.draft_auto_block = draft.auto_block
-    rendered = _render_review(draft.closure, args, asset_root=draft.asset_root,
-                              preset_visual_profile_fallback=draft.preset_visual_profile_fallback)
-    Path(args.output).write_bytes(rendered.artifact.content)
+    ))
+    rendered = result.rendered
+    Path(args.output).write_bytes(result.artifact.content)
     if args.provenance:
-        provenance = draft.closure.guided_provenance
-        if provenance is None:  # defensive: this route must never become an explicit Draft alias
-            raise CliFailure("E_AUTHORING_PROVENANCE", "guided closure provenance is required", "authoring")
+        provenance = result.provenance
         destination = Path(args.provenance)
         if destination.exists():
             raise CliFailure("E_AUTHORING_PROVENANCE_OUTPUT", "provenance destination already exists", "authoring", exit_code=2)

@@ -23,6 +23,12 @@ from chrona.presentation.contracts import (
 class AuthoringError(ValueError):
     """A guided workspace cannot produce one closed existing-resource bundle."""
 
+    def __init__(self, diagnostic_id: str, detail: str | None = None, source_ref: str = "/"):
+        super().__init__(f"{diagnostic_id}: {detail}" if detail is not None else diagnostic_id)
+        self.diagnostic_id = diagnostic_id
+        self.source_ref = source_ref
+        self.detail = detail
+
 
 @dataclass(frozen=True)
 class NormalizedAuthoring:
@@ -66,10 +72,14 @@ def normalize_authoring_workspace(
     it never searches a directory or selects a fallback.
     """
     if workspace.mode != "guided" or workspace.binding is None:
-        raise AuthoringError(f"E_AUTHORING_EXPLICIT_MODE: workspace mode={workspace.mode!r}, bindingPresent={workspace.binding is not None}; expected guided mode with preset binding")
+        raise AuthoringError("E_AUTHORING_EXPLICIT_MODE", f"workspace mode={workspace.mode!r}, bindingPresent={workspace.binding is not None}; expected guided mode with preset binding")
     binding_preset = workspace.binding["preset"]
     if binding_preset["id"] != preset.identity.id or binding_preset["version"] != preset.package_version:
-        raise AuthoringError(f"E_AUTHORING_PRESET_IDENTITY: bound preset id/version={binding_preset['id']!r}/{binding_preset['version']!r}, selected={preset.identity.id!r}/{preset.package_version!r}")
+        raise AuthoringError(
+            "E_AUTHORING_PRESET_IDENTITY",
+            f"bound preset id/version={binding_preset['id']!r}/{binding_preset['version']!r}, selected={preset.identity.id!r}/{preset.package_version!r}",
+            "/body/presentation/binding/preset",
+        )
     declared = preset.resources
     loaded = {
         name: _declared_resource(name, declared[name], resources_by_path)
@@ -94,16 +104,16 @@ def normalize_authoring_workspace(
         for kind, source in sources.items()
     }
     if not isinstance(contracts["project"], ProjectContract) or not isinstance(contracts["view"], ViewContract):
-        raise AuthoringError(f"E_AUTHORING_NORMALIZATION: projectType={type(contracts['project']).__name__}, viewType={type(contracts['view']).__name__}; expected ProjectContract and ViewContract")
+        raise AuthoringError("E_AUTHORING_NORMALIZATION", f"projectType={type(contracts['project']).__name__}, viewType={type(contracts['view']).__name__}; expected ProjectContract and ViewContract")
     if (style is not None and not isinstance(contracts["style"], StyleContract)):
-        raise AuthoringError(f"E_AUTHORING_NORMALIZATION: styleType={type(contracts['style']).__name__}; expected StyleContract")
+        raise AuthoringError("E_AUTHORING_NORMALIZATION", f"styleType={type(contracts['style']).__name__}; expected StyleContract")
     if not isinstance(contracts["theme"], ThemeContract) or not isinstance(contracts["color-scheme"], ColorSchemeContract):
-        raise AuthoringError(f"E_AUTHORING_NORMALIZATION: themeType={type(contracts['theme']).__name__}, colorSchemeType={type(contracts['color-scheme']).__name__}; expected ThemeContract and ColorSchemeContract")
+        raise AuthoringError("E_AUTHORING_NORMALIZATION", f"themeType={type(contracts['theme']).__name__}, colorSchemeType={type(contracts['color-scheme']).__name__}; expected ThemeContract and ColorSchemeContract")
     if not isinstance(contracts["layout-profile"], LayoutProfileContract):
-        raise AuthoringError(f"E_AUTHORING_NORMALIZATION: layoutProfileType={type(contracts['layout-profile']).__name__}; expected LayoutProfileContract")
+        raise AuthoringError("E_AUTHORING_NORMALIZATION", f"layoutProfileType={type(contracts['layout-profile']).__name__}; expected LayoutProfileContract")
     actual = contracts.get("actual-set")
     if actual is not None and not isinstance(actual, ActualSetContract):
-        raise AuthoringError(f"E_AUTHORING_NORMALIZATION: actualSetType={type(actual).__name__}; expected ActualSetContract")
+        raise AuthoringError("E_AUTHORING_NORMALIZATION", f"actualSetType={type(actual).__name__}; expected ActualSetContract")
     return NormalizedAuthoring(contracts["project"], actual, contracts["view"], contracts.get("style"), sources.get("style"), contracts["theme"],
                                contracts["color-scheme"], contracts["layout-profile"], sources["project"],
                                sources.get("actual-set"), sources["view"], sources["theme"],
@@ -117,7 +127,7 @@ def _declared_resource(name: str, declaration: Mapping[str, Any], resources: Map
     # has no literal ``kind`` member; its declared preset slot supplies that type.
     actual_kind = document.get("kind", expected_kind) if isinstance(document, Mapping) else None
     if not isinstance(document, Mapping) or actual_kind != expected_kind or document.get("id") != declaration["id"]:
-        raise AuthoringError(f"E_AUTHORING_PRESET_RESOURCE: resource slot={name!r}, path={declaration['path']!r}, expected kind/id={expected_kind!r}/{declaration['id']!r}, actual kind/id={actual_kind!r}/{document.get('id') if isinstance(document, Mapping) else None!r}, documentType={type(document).__name__}")
+        raise AuthoringError("E_AUTHORING_PRESET_RESOURCE", f"resource slot={name!r}, path={declaration['path']!r}, expected kind/id={expected_kind!r}/{declaration['id']!r}, actual kind/id={actual_kind!r}/{document.get('id') if isinstance(document, Mapping) else None!r}, documentType={type(document).__name__}")
     return document
 
 
@@ -131,13 +141,13 @@ def _select_scheme(
     for declaration in preset.compatible_color_schemes:
         if declaration["id"] == requested:
             return _declared_resource("colorScheme", declaration, resources)
-    raise AuthoringError(f"E_AUTHORING_COLOR_SCHEME: requested={requested!r}; compatible schemes={tuple(item['id'] for item in preset.compatible_color_schemes)!r}")
+    raise AuthoringError("E_AUTHORING_COLOR_SCHEME", f"requested={requested!r}; compatible schemes={tuple(item['id'] for item in preset.compatible_color_schemes)!r}")
 
 
 def _apply_view_overrides(view: dict[str, Any], overrides: Mapping[str, Any]) -> None:
     body = view.get("body")
     if not isinstance(body, dict):
-        raise AuthoringError(f"E_AUTHORING_PRESET_RESOURCE: View body type={type(body).__name__}; expected mutable mapping for guided overrides")
+        raise AuthoringError("E_AUTHORING_PRESET_RESOURCE", f"View body type={type(body).__name__}; expected mutable mapping for guided overrides")
     if "window" in overrides:
         window = overrides["window"]
         body["window"] = {"mode": "explicit", "start": window["start"], "end": window["end"]}
@@ -154,7 +164,7 @@ def _apply_view_overrides(view: dict[str, Any], overrides: Mapping[str, Any]) ->
         added = [item["id"] for item in additions]
         if identifiers.intersection(added) or len(set(added)) != len(added):
             duplicates = tuple(dict.fromkeys(identifier for identifier in added if identifier in identifiers or added.count(identifier) > 1))
-            raise AuthoringError(f"E_AUTHORING_ANNOTATION_ID: duplicate annotation ids={duplicates!r}; existing ids collide or additions repeat")
+            raise AuthoringError("E_AUTHORING_ANNOTATION_ID", f"duplicate annotation ids={duplicates!r}; existing ids collide or additions repeat")
         body["annotations"] = [*existing, *additions]
 
 

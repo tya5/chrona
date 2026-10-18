@@ -207,7 +207,9 @@ def encoding_contrast_detail(payload: Mapping[str, object]) -> str:
     ground = _bounded_text(payload.get("groundId") or payload.get("groundKind") or "ground")
     measured = (f"{_number(ratio)}:1 vs {_number(floor)}:1" if ratio is not None and floor is not None
                 else "contrast could not be computed")
-    return f"{source_text}; {field}={value} (scale {scale}), {measured} over {ground}"
+    count = payload.get("occurrenceCount")
+    occurrences = f"; {count} occurrences" if isinstance(count, int) else ""
+    return f"{source_text}; {field}={value} (scale {scale}), {measured} over {ground}{occurrences}"
 
 
 def _describe_warning(payload: Mapping[str, object]) -> WarningText:
@@ -325,9 +327,12 @@ def collapse_warnings(payloads: Iterable[Mapping[str, object]]) -> list[dict[str
     gains ``count`` (2 or more) and ``occurrences`` (the distinct identities in order, at most 20), and its
     message names the first subject and how many more there were.
     """
-    groups: dict[tuple[str, str, str], list[Mapping[str, object]]] = {}
+    groups: dict[tuple[str, str, str, str], list[Mapping[str, object]]] = {}
     for payload in payloads:
-        key = (str(payload.get("code")), str(payload.get("severity")), describe_warning(payload).cause)
+        # Encoded-fill warnings already represent complete realised pairs at the
+        # render boundary. Do not co-collapse distinct pairs or truncate their IDs.
+        pair = str(payload.get("diagnostic", "")) if payload.get("encodingPair") else ""
+        key = (str(payload.get("code")), str(payload.get("severity")), describe_warning(payload).cause, pair)
         groups.setdefault(key, []).append(payload)
     rows: list[dict[str, object]] = []
     for members in groups.values():

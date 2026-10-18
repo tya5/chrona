@@ -12,7 +12,7 @@
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
 | 1 | a synthetic 8-value domain on a 6-slot scheme gives distinct paints or a legend-keyed Other. | met | [CSV import, explicit responsible mapping, mission-light six-slot scheme, local legend Layout, distinct retained paints and emitted Other key](../../../tests/integration/test_categorical_hues_not_cycled.py). Existing folding works; neither trial inputs nor packaged resources are changed. | — |
-| 2 | find why the gate does not judge this pair; a synthetic twin raises the warning. | met | Existing figure visibility intentionally chooses the readable outline. [Independent encoded-fill twin and unencoded negative, multipart/opacity/policy cases](../../../tests/unit/chrona/presentation/scene/test_contrast_policy.py); [real View and Style → Scene/SVG warning/error transport](../../../tests/integration/test_encoding_contrast.py). | — |
+| 2 | find why the gate does not judge this pair; a synthetic twin raises the warning. | met | Shape visibility chooses the readable outline. [Independent fill observation](../../../tests/unit/chrona/presentation/scene/test_contrast_policy.py), [View/Style render transport](../../../tests/integration/test_encoding_contrast.py), and [pair identity, count, full IDs and CLI separation](../../../tests/unit/chrona/usecases/test_encoding_pair_warnings.py). Follow-up publication/release remains pending below. | — |
 | 3 | the message names the missing role, the View member that needs it, and what to declare (one sentence plus the pointer). | not met | [Dev B lane](https://github.com/tya5/chrona/issues/454); not accepted by the rows1–2 implementation. | — |
 | 4 | both read in words, with the author's pointer (same mechanism as #1683 row 1). | not met | [Dev B lane](https://github.com/tya5/chrona/issues/454); not accepted by the rows1–2 implementation. | — |
 | 5 | a synthetic case and the PNG. | not met | [Dev B lane](https://github.com/tya5/chrona/issues/454); not accepted by the rows1–2 implementation. | — |
@@ -35,31 +35,27 @@ observations as warnings; an explicit caller-only policy separates them without
 changing the legacy strict evaluator or adding a Theme knob. Scene-v0.7 widens in place; v0.6 is
 unchanged. No new Theme policy or project-specific branch is introduced.
 
-Focused component/caller batch: 1,471 passed; final targeted additions: 39 and
-34 passed. Schema equivalence against ready `bd499a5a1` passes with the two
-intended Scene paths (one changed schema) and no newly invalid documents.
-The #1700/base integration targets pass55; schema-identifier targets pass18.
-Updated header/period/preset/opt-in targets pass205 and CLI characterization
-passes4. Their ordinary shape/text checks remain strict; the three explicitly
-enforced low-contrast encoding cases now require the intended error. The three
-CLI records retain every old warning, artifact description and exit status,
-adding only one aggregated encoding-warning record (16 findings) each.
-Independent review also found
-and corrected a direct-observer admission gap; raw non-mark/Text witnesses
-now fail structurally, including when no serializer is involved (81 focused
-observer/policy/report tests passed).
+The [pair-warning follow-up plan and architecture review](https://github.com/tya5/chrona/issues/1702#issuecomment-6250346803)
+and Spec46 `a1e13e00a` precede its implementation. The observer retains each
+occurrence and measured paint pair. One shared use-case projection groups only
+computable warning-severity encoded-fill misses; runtime and corpus report use
+the same key. Every primitive/ground ID and subject remains available; CLI
+collapse preserves distinct pair identities without truncating their IDs.
+Errors, accepted exceptions, unknown grounds and ordinary findings are unchanged.
 
 ## Programme-level criteria (optional)
 
-Official candidate [CI39122240206](https://github.com/tya5/chrona/actions/runs/39122240206),
-source `8b92a6495`, artifact12134274661: all50 SVGs are byte-identical. Seven
-Scenes gain149 passive encoding witnesses and148 warning identities; after
-removing only those new fields/diagnostics, every Scene is unchanged. The
-contrast report keeps all existing findings: 8,514→8,663 findings, 0→0 errors,
-417→565 warnings. No geometry, paint, text, route or existing diagnostic changes.
-The final candidate must repeat that comparison after following #1714's ready
-main. CI identified stale diagnostic/snapshot expectations and missing schema
-annotations, which must pass before publication.
+Baseline [PR1717](https://github.com/tya5/chrona/pull/1717) merged after
+[CI39123658948](https://github.com/tya5/chrona/actions/runs/39123658948) passed.
+Its final artifact12134834769 has all50 SVGs unchanged,149 passive witnesses
+and148 added diagnostic IDs across seven Scenes, with no other Scene change.
+The reviewer accepted this delta and requested pair aggregation.
+
+Follow-up focused observer/render tests:89 passed; grouping/report/transport
+targets:32 passed. A read-only check of the seven committed Scenes groups148
+encoded warning occurrences into45 pairs (01:5/16,02:8/26,11:8/26,12:7/18,
+15:6/26,19:8/26,26:3/10). All occurrence observations are retained. The official
+new snapshot must confirm these counts and unchanged SVG/primitive witnesses.
 
 Release pending: focused checks and the candidate snapshot are not substitutes
 for final-head checks and exact-main three-OS release. This shared issue stays

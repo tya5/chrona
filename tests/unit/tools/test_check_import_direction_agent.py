@@ -107,12 +107,14 @@ def test_the_real_tool_core_imports_only_use_cases_the_path_guard_the_validator_
                 seen.update(item.name for item in node.names if item.name.startswith("chrona"))
     assert {module for module in seen if not module.startswith("chrona.usecases.")} == {
         "chrona.app.agent_workspace", "chrona.core.store_address", "chrona.resources", "chrona.operational.store_commands",
-        "chrona.operational.store_reads", "chrona.operational.authoring_commands"}
+        "chrona.operational.store_reads", "chrona.operational.authoring_commands",
+        "chrona.operational.workspace_initialization"}
 
 
 OPERATIONAL = {**PRODUCT, "operational/store_commands.py": "Q = 1\n", "operational/command_engine.py": "E = 1\n",
                "operational/store_reads.py": "R = 1\n", "operational/baselines.py": "B = 1\n",
-               "operational/authoring_commands.py": "A = 1\n"}
+               "operational/authoring_commands.py": "A = 1\n",
+               "operational/workspace_initialization.py": "P = 1\n"}
 
 
 def test_the_tool_core_may_import_the_one_shared_store_command_module(tmp_path, monkeypatch, capsys):
@@ -143,7 +145,13 @@ def test_the_tool_core_may_import_the_shared_authoring_command_port(tmp_path, mo
     assert (code, out.splitlines()[-1].endswith("all inward")) == (0, True), out
 
 
-@pytest.mark.parametrize("module", ["store_commands", "store_reads", "authoring_commands"])
+def test_the_tool_core_may_import_the_exclusive_workspace_initialization_port(tmp_path, monkeypatch, capsys):
+    code, out = _run(tmp_path, monkeypatch, capsys,
+                     {**OPERATIONAL, "app/agent_tools.py": "from chrona.operational.workspace_initialization import P\n"})
+    assert (code, out.splitlines()[-1].endswith("all inward")) == (0, True), out
+
+
+@pytest.mark.parametrize("module", ["store_commands", "store_reads", "authoring_commands", "workspace_initialization"])
 def test_the_binding_gets_no_operational_edge(tmp_path, monkeypatch, capsys, module):
     code, out = _run(tmp_path, monkeypatch, capsys,
                      {**OPERATIONAL, "app/mcp_server.py": f"from chrona.operational.{module} import Q\n"})

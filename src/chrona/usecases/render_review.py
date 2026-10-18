@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from chrona.usecases.previous_scene import decode_previous_scene
+from chrona.usecases.contrast_grouping import group_contrast_findings
 
 from chrona.core.diagnostics import Diagnostic
 from chrona.usecases.diagnostic_messages import encoding_contrast_detail, error_message
@@ -215,6 +216,8 @@ class SceneContrastWarning:
     disposition: str | None
     subjects: tuple[DiagnosticSubject, ...] = ()
     encoding: EncodingWitness | None = None
+    encoding_pair: tuple[tuple[str, str | float], ...] = ()
+    ground_ids: tuple[str, ...] = ()
 
 
 class ClosureReadLedger:
@@ -682,7 +685,8 @@ def _contrast_warnings_from_findings(
     findings: tuple[SceneContrastFinding, ...], provenance: tuple[PrimitiveProvenance, ...] = (),
 ) -> tuple[SceneContrastWarning, ...]:
     warnings = []
-    for finding in findings:
+    for group in group_contrast_findings(findings):
+        finding = group[0]
         if finding.severity != "warning":
             continue
         facts: list[tuple[str, float | str]] = []
@@ -697,12 +701,17 @@ def _contrast_warnings_from_findings(
             facts.extend((name, value) for name, value in (
                 ("scaleId", finding.encoding.scale_id), ("field", finding.encoding.field),
                 ("value", finding.encoding.value)))
+        primitive_ids = tuple(dict.fromkeys(item.primitive_id for item in group if item.primitive_id is not None))
+        pair = tuple(finding.encoding_pair.as_mapping().items()) if (
+            finding.code == "W_SCENE_ENCODING_CONTRAST" and finding.encoding_pair is not None) else ()
+        ground_ids = tuple(dict.fromkeys(item.ground_id for item in group if item.ground_id is not None))
+        if pair:
+            facts.extend((name, value) for name, value in pair if name not in {"contrastRatio", "floor"})
         warnings.append(SceneContrastWarning(
             finding.code, finding.accepted_code or WARNING_BLOCKING_CODES.get(finding.code, finding.code),
             finding.scene_path,
-            (finding.primitive_id,) if finding.primitive_id is not None else (), tuple(facts), finding.disposition,
-            _finding_subjects((finding.primitive_id,) if finding.primitive_id is not None else (), provenance),
-            finding.encoding))
+            primitive_ids, tuple(facts), finding.disposition,
+            _finding_subjects(primitive_ids, provenance), finding.encoding, pair, ground_ids))
     return tuple(warnings)
 
 
