@@ -3,10 +3,13 @@
 ## Published baseline and literal acceptance
 
 Main `381cf404a`; row1 candidate `c0e78982c`, review `73192c558`, on
-`wip/issue-1701-group-range`. Row1 is focused-tested, not released. The
+`wip/issue-1703-1701-display-followups`, integrated with independently reviewed
+legend code as `163ba8725`. Row1 is focused-tested, not released. The
 [issue record](https://github.com/tya5/chrona/issues/1701#issuecomment-6246724848)
 owns its fast-path plan; the [acceptance review](../../reviews/current/issue-1701-hierarchy-acceptance-review-2026-10-18.md)
 keeps the full issue open. This record plans **row2 only; no row2 code yet**.
+The joint display-followup publication follows the902 predecessors and retains
+both literal reviews and full gates; integrated focused tests64 pass.
 
 1. Synthetic: a group with a child gate after its last span shows a range ending on the gate date.
 2. Design record for nested grouping (levels, header depth, folding, how presets declare it), reviewed before code; then a synthetic 3-level twin rendered by the bundled presets with no level lost.

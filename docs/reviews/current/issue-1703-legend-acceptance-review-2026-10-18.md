@@ -19,6 +19,11 @@
 
 ### Evidence and release status
 
+Prepared integration `163ba8725` follows ready main `381cf404a` and combines
+the independently reviewed1701 row1 date correction. Current-main legend
+focus36 and combined date/legend/native64 pass. Both issue reviews and required
+artifact/full release gates remain in force;1701 row2 is design-only.
+
 Implementation candidate: `192129bd9`; reviewer correction [1705](https://github.com/tya5/chrona/pull/1705) restores owner-approved target-b Actual ink. Final integrated focused tests pass290 (18.03 s), including the native equal-black multipart keys and exact placed-geometry parity. Detail validation passes2 positive/8 negative; schema equivalence passes L1 (1 additive,40 equal) and L2/L3 with five pre-existing invalid documents. PR/main publication, official snapshot and full three-OS release remain unverified. Issue #1703 remains open.
 
 Design correction `6888d036f` precedes repair `192129bd9`: Spec28 and independent

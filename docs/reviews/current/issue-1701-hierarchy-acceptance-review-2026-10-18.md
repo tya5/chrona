@@ -11,6 +11,8 @@ confirms consistency with Spec06's display/Core boundary. No preset edits.
 
 Focused command: `.venv/bin/python -m pytest -q tests/unit/chrona/presentation/model/test_date_range_display.py tests/unit/chrona/presentation/model/test_working_day_date_basis.py tests/integration/test_group_rollup_display_range.py --tb=short`.
 The broader dates/projection/forecast/grouping/native batch passed132 tests.
+Integration `163ba8725` with the independently reviewed legend correction on
+ready main `381cf404a` passes64 combined date/legend/native tests.
 The native regression fails before the correction and passes afterward;
 work-calendar, tied/late point, folded membership, nested and comparison cases
 are covered. Official PR artifact and exact-main full release remain pending.
