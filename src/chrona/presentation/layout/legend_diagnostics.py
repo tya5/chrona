@@ -102,7 +102,13 @@ def _shape_signature(request, entry, shape):
         completed_catalog = (shape.kind == "Rect" and isinstance(declared_pattern, Mapping)
                              and declared_pattern.get("kind") == "catalog")
         fill_override = dict(request.surface_content.scale_legend_paints).get(shape.source_ref)
-        paint_identity = _role_paint(request, role, fill_override=fill_override,
+        if shape.paint_channels == "fill":
+            family = PaintFamily.SOLID
+        elif shape.paint_channels == "stroke" or (shape.kind == "Path" and not completed_catalog):
+            family = PaintFamily.PATH
+        else:
+            family = mark_paint_family(tokens, role, has_completed_catalog_pattern=completed_catalog)
+        paint_identity = _role_paint(request, role, family=family, fill_override=fill_override,
                                      completed_catalog=completed_catalog)
         pattern = pattern_ink_identity(tokens, role, completed_catalog=completed_catalog)
     if shape.legend_swatch_shape is None and shape.paint_channels is not None:
@@ -124,8 +130,8 @@ def _shape_signature(request, entry, shape):
                      round(shape.corner_radius / min(bounds[2:]), 9)
                      if min(bounds[2:]) else 0.0),)
     mode = ("fill" if shape.legend_swatch_shape == "circle" else
-            "stroke" if shape.legend_swatch_shape == "rule-pair" or shape.kind == "Path" else
-            shape.paint_channels)
+            "stroke" if shape.legend_swatch_shape == "rule-pair" else
+            shape.paint_channels or ("stroke" if shape.kind == "Path" else None))
     parts = ((mode, None, None, geometry),)
     return (parts, (paint_identity,), (pattern,))
 

@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from chrona.presentation.layout.legend_diagnostics import completed_legend_diagnostics
+from chrona.presentation.layout.legend_diagnostics import _shape_signature, completed_legend_diagnostics
 from chrona.presentation.layout.mark_geometry import complete_point_outline, symbol_parts
 from chrona.presentation.layout.surface_legend import _completed_point_key_parts
 from chrona.presentation.layout.surface_quality import PathCommand
@@ -119,6 +119,49 @@ def test_shape_channel_restriction_removes_unused_paint_from_collision_identity(
         (SimpleNamespace(placement_id=left.text_placement_id, content="Work", overflow="fit"),
          SimpleNamespace(placement_id=right.text_placement_id, content="Observed", overflow="fit")))
     assert "W_LEGEND_SWATCH_COLLISION" in result[0]
+
+
+@pytest.mark.parametrize("channels", ("stroke", None))
+def test_stroke_only_path_shape_does_not_require_unused_fill_channel(channels):
+    theme = ThemeTokenView({
+        "version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme",
+        "body": {"values": {"band-stroke": {"type": "color", "value": "#172033"},
+                             "width": {"type": "number", "value": 1}},
+                 "roles": {"period-band": {"stroke": "band-stroke", "strokeWidth": "width"}},
+                 "catalogAssets": {}},
+    })
+    request = SimpleNamespace(theme_tokens=theme, paint_capabilities=PaintWitnessCapabilities(),
+                               surface_content=SimpleNamespace(scale_legend_paints=()))
+    entry = SurfaceLegendEntry("period-band", "Launch", source_ref="period:launch")
+    shape = SimpleNamespace(source_ref=entry.source_identity, bounds=_box(0, 0, 20, 10),
+        kind="Path", legend_paint=None, legend_swatch_shape=None, visual_role="period-band",
+        path_commands=(), points=((0, 5), (20, 5)), corner_radius=0, paint_channels=channels)
+    text = SimpleNamespace(placement_id=entry.text_placement_id, content="Launch", overflow="fit")
+
+    diagnostics, _ = completed_legend_diagnostics(request, (entry,), (), (shape,), (), (text,))
+
+    assert diagnostics == ()
+
+
+def test_fill_only_path_uses_solid_family_and_fill_geometry_mode():
+    theme = ThemeTokenView({
+        "version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme",
+        "body": {"values": {"band-fill": {"type": "color", "value": "#176B87"}},
+                 "roles": {"period-band": {"fill": "band-fill"}},
+                 "catalogAssets": {}},
+    })
+    request = SimpleNamespace(theme_tokens=theme, paint_capabilities=PaintWitnessCapabilities(),
+                               surface_content=SimpleNamespace(scale_legend_paints=()))
+    entry = SurfaceLegendEntry("period-band", "Launch", source_ref="period:launch")
+    shape = SimpleNamespace(source_ref=entry.source_identity, bounds=_box(0, 0, 20, 10),
+        kind="Path", legend_paint=None, legend_swatch_shape=None, visual_role="period-band",
+        path_commands=(), points=((0, 5), (20, 5)), corner_radius=0, paint_channels="fill")
+
+    signature = _shape_signature(request, entry, shape)
+
+    assert signature[0][0][0] == "fill"
+    assert signature[1][0][0] == ("solid", "#176B87")
+    assert signature[1][0][1:4] == (None, None, ())
 
 
 def test_finite_circle_and_completed_circle_glyph_share_same_figure_identity():
