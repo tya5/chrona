@@ -1,12 +1,13 @@
 # Issue 1680 — forecast deadline
 
-Status: I1/I2 implemented and reviewed at `42e25bd10`; I3 local acceptance
-evidence is complete. PR/full CI and exact-main release remain pending.
+Status: accepted and closed. I1/I2 implementation `42e25bd10` merged in PR1689;
+all three literal rows and review-containing exact-main `4e30fbc3f`
+release39094741641 passed, including all three OSes and public reproduction.
 S2 is merged as `5bfa5356b`; publication base is trusted generated main
 `d9a10d4ea3484096d5fdedc09dde3d9d0b016589`. Normal squash/bot integration
 preserves the reviewed implementation tree; the generated reports are bot-owned.
 [Issue](https://github.com/tya5/chrona/issues/1680);
-[preceding Style work](issue-419-semantic-resource-work-record-2026-10-17.md).
+[preceding Style work](../../planning/active/issue-419-semantic-resource-work-record-2026-10-17.md).
 Keep this record current; Git retains superseded decisions.
 
 ## Baseline and literal acceptance
@@ -109,5 +110,5 @@ gap is covered by the native test. Inward imports and module reachability pass.
 Public materializer check passes all50 slides without a SVG/Scene change.
 Pinned trial5 now has2 late runs and2 forecast warnings, with no existing
 primitive, route or label changes; the actual PNG was inspected.
-See the [literal acceptance review](../../reviews/current/issue-1680-forecast-deadline-acceptance-review-2026-10-18.md)
-for counts, command and artifact hashes. Do not equate local evidence with release.
+See the [literal acceptance review](../reviews/issue-1680-forecast-deadline-acceptance-review-2026-10-18.md)
+for counts, command, artifact hashes and the successful exact-main release.

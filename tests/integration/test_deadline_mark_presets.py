@@ -20,7 +20,8 @@ from tests.support import synthetic_review as sr
 
 BUNDLES = Path(__file__).resolve().parents[2] / "src/chrona/resources/presets/bundles"
 PRESETS = ["mission-light", "print-mono", "executive-light", "elevated-light", "technical-print", "control-room-dark",
-           "editorial", "chrona-default-draft"]
+           "editorial", "chrona-default-draft", "target-b", "marquee", "sunday", "titlecard", "yuya", "muted-executive",
+           "wallboard-dark"]
 
 
 def _source() -> dict:

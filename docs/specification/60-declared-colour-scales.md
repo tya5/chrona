@@ -58,7 +58,7 @@ text `true` or `false`. Number and date sources are not admitted (binning is def
 
 ## 2. Total mapping and diagnostics
 
-For authored Style encodings (#419 S2; implementation pending), a named
+For authored Style encodings (#419 S2), a named
 first-appearance scale has one value-to-colour map per render. Its domain is
 the union of matched source values in stable View occurrence order, retaining
 the preclosed View-encoding domain as a prefix. Source-local field-role aliases

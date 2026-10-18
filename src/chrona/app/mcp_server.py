@@ -45,15 +45,15 @@ _BASE_INSTRUCTIONS = (
     "picture. Tools: validate_project (structure and dependency cycles, no dates), schedule_project "
     "(computed placements; it also rejects contradictory fixed dates and bounds, so run it to read dates), "
     "render_draft (a PNG preview by default, SVG on request), list_presets, render_review and compare_baseline "
-    "(pinned evidence from a Store), and check_command and apply_command "
-    "(preview and apply a Store command: an Actual intake batch or a named baseline). Paths are relative to the "
+    "(pinned evidence from a Store), check_command and apply_command "
+    "(preview and apply a Store command), and apply_authoring_command (edit a guided workspace). Paths are relative to the "
     "workspace root. A result's status is ok, rejected (the input is refused: read each diagnostic's code and "
     "sourceRef) or failed (the call could not run); a rejection is a normal result, so read status, not only "
     "isError. The "
     f"resources {AUTHORING_URI} and {DIAGNOSTICS_URI} explain the model, the plan-update loop and every diagnostic code."
 )
-INSTRUCTIONS = _BASE_INSTRUCTIONS + " Writes are off: apply_command is refused unless the server is started with --allow-write."
-WRITE_INSTRUCTIONS = _BASE_INSTRUCTIONS + " Writes are on (--allow-write): apply_command executes directly, with no approval step."
+INSTRUCTIONS = _BASE_INSTRUCTIONS + " Writes are off: apply_command and apply_authoring_command require --allow-write."
+WRITE_INSTRUCTIONS = _BASE_INSTRUCTIONS + " Writes are on (--allow-write): write tools execute directly, with no approval step."
 _LOG = logging.getLogger("chrona.mcp")
 _FRONT_MATTER = "---"
 

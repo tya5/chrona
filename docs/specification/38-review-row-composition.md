@@ -205,6 +205,8 @@ labels, icons, stroke widths, mark bounds, Actual dates, Scene geometry,
 collision obstacles or the output target. The same Project and View therefore
 produce identical membership under every Theme and renderer.
 
+`rows.points` is an `automatic`-mode member (#1683). Declared in a `lanes` (or `explicit`) `rows`, the schema rejects it as `E_VIEW_SCHEMA` at `/body/rows/points`, and the schema diagnostic names the member, its pointer and the mode in words (`property 'points' (/body/rows/points) is not allowed with mode 'lanes'`) rather than printing the raw `not` rule. The rule itself is unchanged.
+
 Generated lane row order preserves resolved View group order. Within a group,
 each lane takes the minimum selected View-row rank among its countable members,
 with lane ID as the stable tie-break. Comparison facets do not add ranks or

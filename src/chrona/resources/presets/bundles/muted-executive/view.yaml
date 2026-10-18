@@ -13,8 +13,11 @@ body:
       objectTypes:
       - group
   grouping:
-    by: objectType
-    order: {by: earliestPlannedStart}
+    by: {fieldRole: responsible}
+    fallback: hierarchy
+    missing: Other
+    order:
+      by: earliestPlannedStart
     presentation: header
   ordering:
     by: plannedStart

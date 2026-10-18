@@ -34,7 +34,7 @@ from chrona.operational.store_commands import OPERATIONS, run_store_command
 from chrona.operational.store_reads import DraftExtensionPackageReader, PackageAwareReader, compare_store_baseline, load_reference, snapshot_reader_for
 from chrona.usecases.context_review import render_context_closure, resolve_context_closure
 from chrona.usecases.authoring_commands import apply_authoring_command, parse_authoring_command, workspace_revision
-from chrona.operational.authoring_commands import cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
+from chrona.operational.authoring_commands import read_authoring_workspace, transact_authoring_command
 from chrona.operational.resources import parse_command, parse_document
 from chrona.usecases.materialize import MaterializationError, materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
@@ -456,9 +456,9 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--output", "-o", help="empty or absent output directory; the same as the positional DIR (give one of the two)")
 
     command = sub.add_parser("mcp", help="serve chrona to an AI agent over MCP (read-only unless --allow-write)",
-                             description="serve validate_project, schedule_project, render_draft, list_presets, render_review, compare_baseline, check_command and apply_command to an MCP client; render_review and compare_baseline read a Store inside the workspace; apply_command writes a Store only with --allow-write; needs the optional chrona[mcp] extra")
-    command.add_argument("--workspace", help="the only directory the tools may read, and below which a Store may be written (default: the current directory)")
-    command.add_argument("--allow-write", action="store_true", help="let apply_command write the Store (configuration, not approval: it has no approval step); without it the server is read-only and the call is refused with E_MCP_WRITE_DISABLED")
+                             description="serve project, rendering, Store and guided-authoring tools to an MCP client; apply_command and apply_authoring_command write only with --allow-write; needs the optional chrona[mcp] extra")
+    command.add_argument("--workspace", help="the only directory the tools may read or write below (default: the current directory)")
+    command.add_argument("--allow-write", action="store_true", help="enable Store and guided-workspace writes (configuration, not approval); without it write tools are refused with E_MCP_WRITE_DISABLED")
     command.add_argument("--list-tools", action="store_true", help="print the tool registry as JSON and exit (needs no MCP SDK)")
 
     preset = sub.add_parser("preset", help="list the built-in looks or copy one to edit")
@@ -839,8 +839,7 @@ def _run_guided_draft_render(args: argparse.Namespace) -> None:
 
 def _run_authoring_command(args: argparse.Namespace) -> None:
     result = apply_authoring_command(Path(args.workspace), parse_authoring_command(Path(args.authoring_command)),
-                                     read_workspace=read_authoring_workspace, cas_write=cas_write_authoring_workspace,
-                                     cas_write_aggregate=cas_write_authoring_aggregate)
+                                     transact=transact_authoring_command)
     _write_result(Path(args.result), result)
     if result["status"] != "accepted":
         raise SystemExit(2)

@@ -92,6 +92,46 @@ def test_an_explicit_store_config_is_used(work):
     assert call(work, "check_command", {"command": path, "storeConfig": "elsewhere/store.yaml"}).structured["status"] == "ok"
 
 
+def test_actual_history_results_and_store_bytes_equal_the_command_line(tmp_path, monkeypatch, capsys):
+    cli_side, tool_side = StoreWorkspace(tmp_path / "cli"), StoreWorkspace(tmp_path / "tool")
+    target = None
+    for command_id, kind, payload in (
+        ("intake", "applyActualIntakeBatch", None),
+        ("revert", "revertActualCommand", {"commandId": "intake"}),
+        ("redo", "redoActualCommand", {"revertCommandId": "revert"}),
+    ):
+        for side in (cli_side, tool_side):
+            if payload is None:
+                command = side.intake(command_id, side.batch("history-batch"))
+            else:
+                command = {"version": "chrona/command/v0.4", "commandId": command_id,
+                           "type": kind, "target": target, "baseRevision": target["revision"]["token"],
+                           "payload": payload}
+            side.write_command(f"{command_id}.yaml", command)
+        code, cli_output = run_cli(monkeypatch, capsys, cli_side.root, "command-apply", "--command",
+                          f"commands/{command_id}.yaml", "--store-config", ".chrona/store.yaml",
+                          "--result", f"{command_id}-result.json")
+        result = call(tool_side, "apply_command", {"command": f"commands/{command_id}.yaml"})
+        assert code == 0 and result.structured["status"] == "ok", (cli_output, result.structured)
+        automation = result.structured["automationResult"]
+        assert json.dumps(automation, sort_keys=True) == (cli_side.root / f"{command_id}-result.json").read_text(encoding="utf-8")
+        assert cli_side.snapshot() == tool_side.snapshot()
+        target = automation["resultTarget"]
+
+
+@pytest.mark.parametrize("kind,field", [("revertActualCommand", "commandId"),
+                                        ("redoActualCommand", "revertCommandId")])
+def test_missing_history_points_to_the_history_payload_reference(work, kind, field):
+    command = {"version": "chrona/command/v0.4", "commandId": "missing-history",
+               "type": kind, "target": work.target, "baseRevision": work.initial_revision,
+               "payload": {field: "absent-command"}}
+    before = work.snapshot()
+    result = apply(work, command)
+    assert CODES(result) == ["E_COMMAND_HISTORY_UNAVAILABLE"]
+    assert result.structured["diagnostics"][0]["sourceRef"] == f"/payload/{field}"
+    assert work.snapshot() == before
+
+
 # --- the write gate ---------------------------------------------------------------------------------------------
 
 def test_with_the_write_flag_off_apply_is_refused_and_nothing_is_opened_or_written(work):

@@ -293,3 +293,16 @@ def test_view_axis_fill_scale_is_closed_and_band_only():
                                    "fillScale": {"scale": "phase", "key": "other"}})
     assert not validator.is_valid({"unit": "month", "every": 1, "role": "band",
                                    "fillScale": {"scale": "phase", "key": "interval", "containingTier": -1}})
+
+
+def test_forbidden_member_rule_names_the_member_pointer_and_mode_in_words():
+    schema = {"type": "object", "if": {"properties": {"mode": {"const": "lanes"}}, "required": ["mode"]},
+              "then": {"not": {"anyOf": [{"required": ["items"]}, {"required": ["points"]}]}}}
+
+    violation = _violation({"type": "object", "properties": {"rows": schema}},
+                           {"rows": {"mode": "lanes", "points": "group-header"}})
+
+    assert violation.pointer == "/rows/points"
+    assert violation.rule == "not"
+    assert violation.message == "property 'points' (/rows/points) is not allowed with mode 'lanes'; remove it or change the mode"
+    assert "should not be valid" not in violation.message

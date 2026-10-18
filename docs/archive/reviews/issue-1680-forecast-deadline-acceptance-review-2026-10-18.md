@@ -3,15 +3,17 @@
 <!-- chrona:literal-acceptance/v1 -->
 
 Implementation: `42e25bd10`; native regression publication: `82f96bdc5`.
-[Current plan/design](../../planning/active/issue-1680-forecast-deadline-work-record-2026-10-18.md).
+[Plan/design](../planning/issue-1680-forecast-deadline-work-record-2026-10-18.md).
 Merged [PR1689](https://github.com/tya5/chrona/pull/1689) at `82c1e96b6`;
 head `955190f29` passed [CI39084366543](https://github.com/tya5/chrona/actions/runs/39084366543).
 Trusted main `53f83ad721549ed6ab023b3d45a07a19b5285e1d` passed the full three-OS,
 wheel/smoke and newest-Python reproduction gates in
 [release39085607822](https://github.com/tya5/chrona/actions/runs/39085607822).
 The official PR artifact preserves all50 SVG/Scene pairs; only diagnostic
-inventory source coordinates change. Keep the issue open until the release
-gate on the main commit containing this final review also succeeds.
+inventory source coordinates change. Accepted and closed after review-containing
+main `4e30fbc3f8ce3728b1639cbef8747c5b98ccebf5` passed
+[release39094741641](https://github.com/tya5/chrona/actions/runs/39094741641):
+three-OS full pytest/conformance/wheel, newest-Python reproduction and MCP floor.
 
 ## Literal issue acceptance
 

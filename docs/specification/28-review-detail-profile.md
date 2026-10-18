@@ -27,7 +27,7 @@ The complete M23 surface set has four members:
 This keeps external supplier notes visibly attributable without fabricating Actual or
 turning slide content into scheduling input.
 
-## Style encoding legends (#419 S2; implementation pending)
+## Style encoding legends (#419 S2)
 
 Style-derived entries coexist with semantic Detail keys without replacing
 their ownership. A scoped entry displays `title: value`; its authored title is
