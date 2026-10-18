@@ -234,18 +234,24 @@ diagnostic error changes, and a plan with a missed deadline is still scheduled a
 
 The finish of an object is `at` for a point and `end` for a span (the stored value that `constraints.end.max` also
 compares, Section 9); a rollup's finish is its `end`. The warning is raised when the finish is strictly later than the
-deadline; a finish equal to the deadline keeps it. Only planned placements are judged: an Actual never counts
-(Section 17), and a scenario is judged only when it is the scheduled Project. The evaluation is a pure function of the
-Project and its placements, applied after scheduling; the scheduler itself never reads `deadline`. A `deadline` that is
+deadline; a finish equal to the deadline keeps it. By default planned placements are judged: an Actual input alone
+never changes the basis (Section 17), and a scenario is judged only when it is the scheduled Project.
+An explicit forecast render selects the forecast finish for eligible primary temporal occurrences
+(Spec06 §7.3/§8.5), and the original planned finish for other objects. This is an explicit comparison
+of the separate forecast schedule, not a mutation of the source plan. The evaluation is a pure function of the
+Project and selected placements, applied after scheduling; the scheduler itself never reads `deadline`. A `deadline` that is
 not a calendar date is `E_SCHEMA` at `/objects/<id>/deadline`.
 
 The warning carries `details` with the stable keys `object`, `endpoint` (`at` or `end`), `finish`, `deadline` (ISO
 dates) and `daysLate` (calendar days, at least 1), and the pointer `/objects/<id>/deadline`. Warnings follow Project
 object order. `chrona schedule` prints them as the `warnings` array of its result, beside an empty `diagnostics`;
 `chrona validate` computes no placements and does not judge a deadline.
+In explicit forecast renders, each warning also carries `finishBasis: forecast | planned`
+and names that basis in its message; its finish and late-day count use the same selected status
+as the drawn deadline. Without forecast, existing warning messages/details and scheduling behavior are unchanged.
 
 A View may draw the finished verdict (Spec 06 section 7.3): a tick at the deadline date and, for a slipped deadline, a run
-to the planned finish. The verdict is the same one `W_DEADLINE` names (`core/deadlines.py` `deadline_statuses`), so the
+to the selected forecast or planned finish. The verdict is the same one `W_DEADLINE` names (`core/deadlines.py` `deadline_statuses`), so the
 picture and the warning cannot disagree, and drawing it changes no placement, verdict or analysis.
 
 ## 11. Span amount rule

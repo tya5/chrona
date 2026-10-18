@@ -52,7 +52,7 @@ from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_role_consumers import unread_diagnostics as unread_theme_diagnostics
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
 from chrona.core.attachments import AttachmentWarning, attachment_warnings
-from chrona.core.deadlines import deadline_statuses, deadline_warnings
+from chrona.core.deadlines import DeadlineStatus, deadline_statuses, deadline_warnings_from_statuses
 from chrona.presentation.count_text import CountTextError
 from chrona.core.figures import FigureCounts, FigureResolution, resolve_figures
 from chrona.core.periods import period_range_diagnostics, resolve_periods
@@ -65,7 +65,7 @@ from chrona.presentation.model.axis_color_scale import (
     AxisBandScaleError, resolve_axis_band_scales, validate_axis_band_fill_targets,
 )
 from chrona.presentation.model.projection import (
-    NetworkDeadlineContent, ReviewDeadline, ReviewPeriod, build_review_projection,
+    NetworkDeadlineContent, ReviewDeadline, ReviewPeriod, build_review_projection, forecast_deadline_placements,
 )
 from chrona.presentation.model.actual_variance_paint import resolve_actual_variance_colors
 from chrona.presentation.model.surface_content import SurfaceContentInput
@@ -894,13 +894,16 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         figure_diagnostics.extend(error.diagnostics)
     if figure_diagnostics:
         raise RenderRejected(figure_diagnostics)
-    shown_deadlines = _shown_deadlines(project, result.placements, view)
+    finish_overrides = forecast_deadline_placements(projection) if forecast is not None else None
+    deadline_results = deadline_statuses(project, result.placements, finish_overrides)
+    shown_deadlines = _shown_deadlines(project, deadline_results, view)
     network = _network_deadline_projection(projection.network, shown_deadlines)
     projection = replace(projection, periods=_selected_periods(project, result.placements, view, dict(global_figures)),
                          figures=global_figures, group_figures=group_figures,
                          unavailable_figures=unavailable_figures,
                          deadlines=shown_deadlines, network=network)
-    return projection, tuple(provenance), attachment_warnings(project, result.placements), deadline_warnings(project, result.placements)
+    return (projection, tuple(provenance), attachment_warnings(project, result.placements),
+            deadline_warnings_from_statuses(deadline_results, forecast_mode=forecast is not None))
 
 
 def _require_forecast_presentation(view: ViewInput, layout: Mapping[str, Any]) -> None:
@@ -1098,11 +1101,11 @@ def _resolved_group_figures(project: dict[str, Any], placements: dict[str, dict[
     return tuple(values)
 
 
-def _shown_deadlines(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput) -> tuple[ReviewDeadline, ...]:
-    """The Project deadlines the View asks to draw, judged by the Core (#822).
+def _shown_deadlines(project: dict[str, Any], statuses: tuple[DeadlineStatus, ...], view: ViewInput) -> tuple[ReviewDeadline, ...]:
+    """The Project deadlines the View asks to draw, using Core's selected finish basis (#822).
 
-    ``slipped`` keeps the objects planned to finish after their deadline, the set `W_DEADLINE` names; ``all`` keeps
-    every object that has a deadline. Layout receives the verdict and draws it; it compares no dates.
+    ``slipped`` keeps the objects whose selected planned/forecast finish is after deadline; ``all`` keeps every object
+    that has a deadline. Layout receives the verdict and draws it; it compares no dates.
     """
     if view.deadlines is None:
         return ()
@@ -1115,7 +1118,7 @@ def _shown_deadlines(project: dict[str, Any], placements: dict[str, dict[str, An
                                f"deadline override names object {object_id}, which the Project does not declare (declared: {known})",
                                "view", f"/body/deadlines/overrides/{object_id}")
     shown = []
-    for item in deadline_statuses(project, placements):
+    for item in statuses:
         show = overrides.get(item.object_id, view.deadlines.show)
         if show == "hidden" or (not item.slipped and show != "all"):
             continue

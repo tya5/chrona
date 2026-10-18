@@ -1201,7 +1201,8 @@ carries on the projection, each with the Core's slipped verdict (`ReviewDeadline
 lateness). For every completed planned/forecast mark of the object (a snapshot or scenario mark never hosts one),
 including a point folded into a group header, the tick is the vertical segment at the deadline date, mapped through the scale that
 places marks, centred on the mark and `markReach` times its block size tall (placement id `deadline-tick:<mark instance>`);
-a slipped deadline adds the run, the horizontal segment from the tick's lower end to the planned finish clipped to the plot's
+a slipped deadline adds the run, the horizontal segment from the tick's lower end to the selected forecast/planned finish
+carried on `ReviewDeadline` (Spec06 §7.3), clipped to the plot's
 inline end (`deadline-run:<mark instance>`). Both carry `sourceRef` the object id, semantic `deadlineMark`, slot `timeline`
 and paint order the mark base plus Theme `markPaintOrder`. A deadline outside the View window (the closed range, both
 edges inclusive) is recorded as `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>`.
