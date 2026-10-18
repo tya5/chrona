@@ -44,8 +44,9 @@ occurrence closure described below: when every planned occurrence has an encodin
 planned/forecast key is omitted; a mixed encoded and unencoded set retains the
 base key.
 After selecting the final route/label option, recompose filtered Style entries
-inside the conservatively allocated legend/footer slots; do not shrink those
-slots or restart row, route or annotation layout.
+inside the conservatively allocated legend/footer slots. Final canvas completion
+uses the filtered legend extent, not candidate-only growth; it does not restart
+row, route or annotation layout.
 All scale-derived finite keys use their completed category colour as key ink.
 For a `rule-pair` key that colour is its stroke; width/opacity come from the
 canonical scale-legend Theme role. This also corrects the older View key's
@@ -69,20 +70,22 @@ actual-trait/Style ink. A declared comparison with no available bound source
 contributes no comparison key; a supplied source with blank values retains its
 declared missing-value behavior.
 
-Key identity is semantic family plus completed key-relevant paint, not RGB
-alone. Actual and Progress remain separate at equal ink; equal-painted Actual
-occurrences coalesce even across variance classes. Paint identity includes
-effective fill/stroke, width/dash/opacity, pattern and admitted gradient ink,
-not object identity, placement bounds, shadows or glow. Existing finite key
-shapes remain deliberate ink projections, not copies of source geometry.
+Actual grouping identity is semantic meaning plus the set of effective emitted
+ink colours, including opacity, admitted gradients and pattern treatment.
+Fill, stroke, outline, width, dash and glyph geometry are drawing variants,
+not separate meanings. Equal-ink Actual occurrences coalesce across variance
+classes in first-seen order; their first complete witness represents the group.
+The full paint witness is retained for projection, not weakened to this grouping
+identity. Distinct semantic families otherwise remain separate. Existing finite
+key shapes remain deliberate ink projections, not copies of source geometry.
 
 A multipart Actual glyph is one realized mark, not several independent
 coloured marks. Its key preserves the ordered completed part paints and the
 glyph geometry as one miniature figure with one label. Composite identity
-includes the ordered effective paints and canonical glyph geometry/part
-structure; it excludes resource names, translations and placement bounds.
-Equal ink alone does not merge different glyph structures. Scalar Actual and
-Progress keys retain their existing identities. A declared finite circle or
+retains the ordered effective paints and canonical glyph geometry/part
+structure, excluding resource names, translations and placement bounds. Those
+details select its representative miniature, not extra same-colour keys.
+A declared finite circle or
 rule-pair remains an intentional projection of the composite's first visible
 part ink, rather than a separate key for every internal colour.
 
@@ -95,12 +98,12 @@ applies unchanged: an internal part is not tested as a standalone Rect against
 canvas. No palette substitution, contrast exemption or corpus-specific branch
 is introduced.
 
-The authored Actual label is retained. If Actual has multiple paint groups,
-append the group's realized Ahead / On track / Behind qualifiers in that order.
-Style variants within one class remain distinct swatches with the same label;
-do not invent colour names or expose hashes. An unclassified group retains the
-base label. View wording targets `actual-ahead`, `actual-on-track`, and
-`actual-behind` override those qualifier fragments, not Theme paint roles.
+The authored Actual label is retained for one colour group. With multiple groups,
+a group representing exactly one variance class uses only its own Ahead / On
+track / Behind qualifier. An unclassified or shared-class group uses the base
+label rather than asserting one class or listing several qualifiers. No colour
+names or hashes are invented. View wording targets `actual-ahead`,
+`actual-on-track`, and `actual-behind` override those qualifiers, not Theme roles.
 The base `actual` wording still overrides the authored base label. These
 derived targets exist when an Actual legend candidate is declared; an unused
 valid override does not create a key.
@@ -110,15 +113,20 @@ existing `progressFill` semantic. Its default label is `Progress`; a declared
 Detail `progressFill` entry supplies label/order/shape instead, and
 `wording.legend.progressFill` overrides the label. Without an explicit entry,
 place it immediately after Actual, else after Planned/Forecast, else last.
-Zero-width or absent submarks contribute none. These rules add no semantic
+Zero-width or absent submarks contribute none. A Progress key is redundant when
+every visible progress submark has the same effective ink-colour set as its
+completed host; omit it in that case. Compare each typed host identity, not the
+union of unrelated Actual colours. These rules add no semantic
 registry role or project-specific YAML repair.
 
 Before measurement, candidate sizing reserves a superset of all potential
 Actual paint groups and positive-progress keys, including distinct Style
 paints; final filtering must not discover an unreserved key. After final
 route/label selection, Layout recomposes the filtered entries once
-inside the conservatively allocated legend/footer slots. It does not shrink
-those slots or retry route, row, or annotation layout.
+inside the conservatively allocated legend/footer slots. Canvas completion
+replaces candidate-only legend growth with the final caption-restored extent,
+retaining the declared allocation minimum and all other completed geometry.
+It does not retry route, row, or annotation layout.
 
 ## Finite legend key shapes (#1562)
 

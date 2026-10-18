@@ -24,8 +24,9 @@ absent host, or zero fraction produces no submark.  A fraction of one is a
 full-host submark; no alternative fill, estimate, or interpolation is inferred.
 
 The legend uses a separate `Progress` key when a positive completed progress
-submark is painted. Its swatch uses the realized `progressFill` paint; an absent
-or zero-width submark contributes no key. The default label is `Progress`,
+submark is painted with ink different from its completed host. Its swatch uses
+the realized `progressFill` paint; absent, zero-width, or same-ink submarks
+contribute no key. The default label is `Progress`,
 overridable through Detail Profile or View wording. Plan and Actual keys do not
 repeat a progress inset. Key visibility and deduplication follow the shared
 realized-key closure in Specification 60 §4; Scene and adapters do not infer a
