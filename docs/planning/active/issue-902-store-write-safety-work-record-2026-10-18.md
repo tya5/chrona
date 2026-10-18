@@ -1,8 +1,9 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: selected design/whole-architecture review published at `69273a1bf`;
-#1679/PR1692 remains the active release. Published baseline `ee99b2d78`.
-No item5 product code is changed.
+Status: item5 L1/L2 implemented in WIP; L3 transaction and L4 overlap tests are
+in progress. Design/review `69273a1bf`, implementation plan `54b9ddd20` precede
+code. Baseline `ee99b2d78`; #1679/PR1692 remains the priority release, with its
+code explicitly parked during live CI. No902 product PR before1679 merges.
 
 ## Scope and literal acceptance
 
@@ -75,17 +76,21 @@ No revision/ledger schema migration or generated-output edits are planned.
 Acquisition errors are mapped narrowly; a simulated publication I/O failure
 must retain its original failure rather than claim a safe pre-write rejection.
 
-Baseline evidence (`ee99b2d78`, own venv): two independent Python subprocesses
-opened the same seed and signalled readiness before either write. Releasing A
-then stale B accepted both (`actual:2:6c52833a6e1c`, `actual:3:84aa7f2ec6b7`);
-reopening returned B's content and lost A's update. This deterministic temporary
-Store experiment uses explicit pipe handshakes, not sleeps. L2 must reproduce
-this failure as a committed regression, then prove B conflicts after the fix.
-Committed regression: `tests/integration/test_actual_store_concurrency.py`,
-`test_two_processes_opening_one_base_preserve_first_commit_and_reject_stale_writer`.
-Before L2 it fails in0.95s because stale B returns `actual:3:84aa7f2ec6b7`
-instead of a conflict; both spawned workers exit cleanly. This is intentional
-pre-fix evidence, not an accepted green implementation.
+## Current item5 evidence
+
+- Regression `tests/integration/test_actual_store_concurrency.py` (`605232991`):
+  two spawned adapters open one base, then Event handshakes release A before B.
+  Baseline fails in0.95s: stale B returns `actual:3:84aa7f2ec6b7`, losing A.
+  L2 `9dcf22c16` passes: B conflicts, A stays current, every Store file and
+  immutable revision byte remains unchanged after A. Both workers exit cleanly.
+- L1 `a4c7fe08c`: canonical/reentrant thread/process/fork, acquisition/body/unlock
+  errors and interrupted-acquisition cleanup tests pass (11). Authoring wrapper
+  preserves its platform diagnostics (39 existing tests).
+- L2 adapter/address/concurrency batch:504 passed. Focused operational/authoring/
+  lock batch:67 passed; transaction errors/direct concurrency batch:18 passed
+  (overlapping batches, not summed). Import direction:11 packages/37 edges inward.
+- Pending: deterministic overlapping engine/ledger/snapshot transactions, real
+  MCP stdio stale/replay/no-overwrite verification, CI/release and literal review.
 
 ## Next-item baseline (design not yet selected)
 
