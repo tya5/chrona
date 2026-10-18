@@ -16,6 +16,7 @@ import yaml
 from chrona.core.store_address import Charset, StoreAddressError, check_store_address, resolve_store_address
 from chrona.operational.resources import OperationalResourceError, content_identity
 from chrona.resources import safe_load
+from chrona.storage.file_lock import lock_file, unlock_file
 
 
 def read_authoring_workspace(path: Path) -> dict[str, Any]:
@@ -129,39 +130,22 @@ def _aggregate_lock(path: Path):
 
 def _lock_file(handle: Any, *, workspace_path: Path | None = None, lock_path: Path | None = None) -> None:
     """Acquire the one-byte advisory aggregate lock on the active platform."""
-    if os.name == "nt":
-        import msvcrt
-        handle.seek(0)
-        if not handle.read(1):
-            handle.seek(0)
-            handle.write(b"\0")
-            handle.flush()
-        handle.seek(0)
-        try:
-            msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
-        except OSError as error:
-            if error.errno not in {errno.EACCES, errno.EAGAIN}:
-                raise
-            workspace = workspace_path if workspace_path is not None else "<unknown workspace>"
-            lock = lock_path if lock_path is not None else "<unknown lock>"
-            raise OperationalResourceError(
-                "E_AUTHORING_LOCK_TIMEOUT",
-                f"timed out acquiring authoring aggregate lock {lock} for workspace {workspace}; "
-                "wait for the active authoring command to finish and retry",
-            ) from error
-        return
-    import fcntl
-    fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+    try:
+        lock_file(handle)
+    except OSError as error:
+        if os.name != "nt" or error.errno not in {errno.EACCES, errno.EAGAIN}:
+            raise
+        workspace = workspace_path if workspace_path is not None else "<unknown workspace>"
+        lock = lock_path if lock_path is not None else "<unknown lock>"
+        raise OperationalResourceError(
+            "E_AUTHORING_LOCK_TIMEOUT",
+            f"timed out acquiring authoring aggregate lock {lock} for workspace {workspace}; "
+            "wait for the active authoring command to finish and retry",
+        ) from error
 
 
 def _unlock_file(handle: Any) -> None:
-    if os.name == "nt":
-        import msvcrt
-        handle.seek(0)
-        msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
-        return
-    import fcntl
-    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+    unlock_file(handle)
 
 
 def _transaction_marker(path: Path) -> Path:

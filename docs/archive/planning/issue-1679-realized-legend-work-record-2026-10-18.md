@@ -1,10 +1,9 @@
 # Issue 1679: realized legend work record (2026-10-18)
 
-Status: implementing reviewer [6244640261](https://github.com/tya5/chrona/pull/1692#issuecomment-6244640261).
-Selected correction/design review `ccf2f99df`, implementation amendment
-`4a497c1df`, and fill/border clarification `69c6a33f3` are published before
-their product edits. PR1692 still needs the coherent correction push, official
-snapshot counts and exact-main release. No release acceptance is claimed.
+Status: accepted and closed. PR1692 merged `6de463805`; final6cf CI39093575302
+and review-containing exact-main `4e30fbc3f` release39094741641 passed all
+required gates. All four literal rows are met; the final artifact preserves
+the reviewed50-slide counts and PNG evidence. Board454 remains read-only.
 
 ## Baseline and literal acceptance
 
@@ -118,10 +117,9 @@ remains orchestration-only (394 lines); import and literal-review gates pass.
   source locations. Conformance, reproduction and MCP pass. Pytest shard1 finds
   the retired-example-reference regression; shards2/3 pass. Correction
   `e77fff742` restores fixture ownership without weakening the guard; its guard
-  and affected tests pass11. Current-head rerun remains required.
+  and affected tests pass11. Final6cf CI39093575302 subsequently passed.
 - Sunday has seven keys and no legend overflow; Gates five and no viewport
   warning. Reviewer accepts true contrast findings; no corpus repair is planned.
-- [Literal acceptance review](../../reviews/current/issue-1679-realized-legend-acceptance-review-2026-10-18.md)
-  contains official counts/PNG evidence and must receive final current CI links.
-  Confirm every row and exact-main release before deliberate closure/ledger
-  update; archive only after closure. Keep board454 read-only.
+- [Literal acceptance review](../reviews/issue-1679-realized-legend-acceptance-review-2026-10-18.md)
+  contains official counts/PNG evidence and final CI/release links. Closure and
+  exact-main acceptance precede this archival publication.

@@ -12,6 +12,7 @@ import yaml
 from chrona.resources import safe_load
 from chrona.core.store_address import StoreAddressError, check_store_segment, resolve_store_address
 from chrona.core.suggestions import nearest
+from chrona.storage.store_lock import store_write_lock
 from chrona.storage.snapshot_paths import snapshot_directory
 
 
@@ -99,20 +100,24 @@ class LocalActualStore:
             raise ValueError(f"E_STORE_REFERENCE: Actual set id {self.actual_set_id!r} is not a safe file name inside the Store") from error
         self.tip = tip
         self._commands: dict[str, tuple[dict[str, Any], dict[str, Any], bool]] = {}
-        if self.tip.is_file():
-            self._revision, self._actual_set = self._load_tip()
-        else:
-            self._revision, self._actual_set = self._persist(actual_set, 1)
+        with store_write_lock(self.root):
+            if self.tip.is_file():
+                self._load_tip()
+            else:
+                self._persist(actual_set, 1)
 
     def read(self) -> tuple[str, dict[str, Any]]:
-        return self._revision, deepcopy(self._actual_set)
+        return self._load_tip()
 
     def write(self, expected_revision: str, actual_set: dict[str, Any]) -> tuple[str, dict[str, Any]] | None:
-        if expected_revision != self._revision or actual_set.get("id") != self.actual_set_id:
+        if actual_set.get("id") != self.actual_set_id:
             return None
-        counter = int(json.loads(self.tip.read_text(encoding="utf-8"))["counter"]) + 1
-        self._revision, self._actual_set = self._persist(actual_set, counter)
-        return self.read()
+        with store_write_lock(self.root):
+            revision, _ = self._load_tip()
+            if expected_revision != revision:
+                return None
+            counter = int(json.loads(self.tip.read_text(encoding="utf-8"))["counter"]) + 1
+            return self._persist(actual_set, counter)
 
     def record_command(self, command_id: str, before: dict[str, Any], after: dict[str, Any]) -> None:
         self._commands[command_id] = (deepcopy(before), deepcopy(after), False)
