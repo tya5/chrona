@@ -277,6 +277,10 @@ explicitly the frozen327 experiment, not a claim about the new default.
 Both return `status: ok`, and complete SVG/Scene bytes match each other:
 `8aa063b203f33a76f10a644d5f8519f405886ae6ac1cbf494ba7eb02d0a87b53` /
 `9f7dbc434ed36586811cfd4188a25cd955e3b0738dcca5f6fca08f696fd741a5`.
+After1748 merged at `fb910bf203c42ac1868590b0b03c96142c4135fe`, integration
+`319268867b01fdc5e89b83c5b0e15aa81eb372bf` follows that actual main.
+`git diff aa6cc026a..319268867 -- src packages schemas pyproject.toml` is empty:
+the measured new-default runtime is unchanged by final main reconciliation.
 
 [Official snapshot proof](https://github.com/tya5/chrona/pull/1750#issuecomment-6254678925):
 run39162339047, candidate a0b991b9c, synthetic merge0418a2cc1 over newer main
