@@ -35,6 +35,16 @@ class StyleFillIndex:
         return self._by_key.get(key) if key is not None else None
 
 
+def _profile_lacks_field(facts, field_name: str) -> bool:
+    """True when the occurrence's object has a declared profile that does not declare ``field_name``.
+
+    A typed fact (``kind`` set) comes only from a declaration, so an object with none is untyped and keeps the
+    Spec 60 behaviour. A field the object nevertheless carries a value for is never exempt.
+    """
+    typed = [fact for fact in facts if fact.kind is not None]
+    return bool(typed) and not any(fact.name == field_name and (fact.kind is not None or fact.present) for fact in facts)
+
+
 def complete_style_fills(
     intents: OccurrenceStyleIndex, occurrences: tuple[StyleOccurrence, ...],
     *, theme: Mapping[str, object] | None = None,
@@ -138,6 +148,8 @@ def complete_style_fills(
                            else replace(scale, source_field=field_name,
                                         encoding_source_ref=source_ref))
             fields = {field_name: value}
+            if _profile_lacks_field(facts[intent.key].fields, field_name):
+                continue  # the occurrence's declared profile has no such field: the encoding does not apply (#1682)
             if local_scale.covers(fields):
                 fills.append((intent.key, local_scale.color_for(intent.key.subject_id, fields)))
     return StyleFillIndex(tuple(fills), tuple(scales))

@@ -19,6 +19,8 @@ class FieldDescriptor:
     kind: str
     cardinality: str = "one"
     enum_values: tuple[str, ...] = ()
+    default: Any = None
+    has_default: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "enum_values", tuple(self.enum_values))
@@ -32,6 +34,7 @@ class FieldRead:
     present: bool
     value: Any
     descriptor: FieldDescriptor | None = None
+    defaulted: bool = False  # the value is the declared profile default of an absent field (#1682)
 
 
 @dataclass(frozen=True)
@@ -130,6 +133,9 @@ class FieldRoleBindings:
             return FieldRead(None, False, None)
         present = fields is not None and field_name in fields
         descriptor = self.descriptor_for(object_id, field_name)
+        if not present and descriptor is not None and descriptor.has_default:
+            # The one fill path: an absent declared field reads its profile default, for every consumer of this source.
+            return FieldRead(field_name, True, descriptor.default, descriptor, True)
         return FieldRead(field_name, present, fields[field_name] if present else None,
                          descriptor)
 
