@@ -19,12 +19,22 @@ square, chevron or catalogue glyph; those retain their native symbol contour.
 Bars keep their independent corner treatment. Layout completes this shape
 identity before Scene projection.
 
-On a table-timeline with semantic relations, declaring the optional Theme
+On a table-timeline or dependency network with semantic relations, declaring the optional Theme
 role `dependency-critical` selects it for the existing scheduling-derived
 critical relation facts (#1561). Absence keeps `dependency`. It supplies the
 ordinary path paint and width, not a criticality classifier; existing shared
 relation-terminal policy still applies, without a new role-specific marker;
 the wider stroke participates in Layout safety, halos and Scene contrast.
+
+Dependency-network node content has optional Theme metrics
+`network.node.paddingInline` and `network.node.paddingBlock` (#1727). Each
+binds a finite nonnegative named number in px through the existing metrics
+channel; zero is an explicit choice. When unbound, Layout derives that axis's
+inset as half the resolved node-title `text` role's font size. Insets surround the
+complete measured title/footer ink envelope before node minima, ports and
+obstacles are closed. They are not annotation-container padding or Layout
+Profile page padding. Existing Themes need no new required token; explicit
+bindings override the derived defaults.
 
 The **Style** layer maps the semantic objects and comparison facets emitted by the View Model to named visual roles. The **Theme** layer supplies concrete visual tokens for those roles. Together they make the same Project and View usable in a compact engineering review, a plan-versus-actual review, or a presentation-oriented timeline while preserving a small, reviewable semantic source.
 

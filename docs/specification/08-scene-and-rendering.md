@@ -1015,6 +1015,10 @@ construction, never adapter fallback.
 Family presence is conditional only on an explicit resolved slot, visibility policy,
 and authorized source.  Absence of an authorized required member is
 `E_PRESENTATION_PRIMITIVE_MISSING`; an absent optional source emits no substitute.
+The dependency-network critical key in Spec50 is an explicit exception: Layout
+may close an intrinsic legend child slot when the profile has no legend source.
+Scene receives that actual slot and the shared completed legend primitives;
+it never invents a slot, key, group, terminal or placement from network facts.
 Paths contain ordered Scene-owned points and endpoint port identifiers.  Text always
 contains its one `TextLayout`; Rect/Symbol/Path bounds are the union of their emitted
 geometry.  The deterministic z-order is: background/frame, bands/group/row surfaces,
