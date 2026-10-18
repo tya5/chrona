@@ -85,14 +85,24 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
     columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width), column.header_orientation,
                                        text_wrap=column.text_wrap, column_source=column.source)
                     for column in active_columns)
+    group_ranges = {
+        mode: projection.group_date_ranges(end_display=mode)
+        for mode in {column.end_display for column in active_columns
+                     if column.format == "dateRange" and isinstance(column.source, Mapping)
+                     and column.source.get("facet") == "planned"}
+    }
     as_of = date.fromisoformat(str(actual_body["asOf"])) if isinstance(actual_body.get("asOf"), str) else None
     def cell_parts(item: Any, column: Any, row_index: int) -> tuple[str, str, str]:
         """The cell's (prefix, core, suffix): the affix of its state wraps the formatted text (#588)."""
         value = table_value(item, dict(project), column.source, row_index)
         if column.format == "dateRange":
+            planned = isinstance(column.source, Mapping) and column.source.get("facet") == "planned"
+            if planned and item.is_rollup and item.source_kind in {"primary", "combined"}:
+                resolved = group_ranges[column.end_display].get(item.object_id)
+                if resolved is not None:
+                    value = resolved
             value = date_range_display(
-                value, basis=(item.date_basis if isinstance(column.source, Mapping)
-                              and column.source.get("facet") == "planned" else ItemDateBasis()),
+                value, basis=item.date_basis if planned else ItemDateBasis(),
                 end_display=column.end_display)
         missing = column.missing
         if value is None and column.missing_by:

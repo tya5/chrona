@@ -16,7 +16,7 @@ from chrona.core.observations import latest_observations
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.contracts.resources import ViewInput, _PrivateGroupingMode
 from chrona.presentation.model.actual_observation import finish_variance
-from chrona.presentation.model.date_basis import ItemDateBasis, endpoint_distance
+from chrona.presentation.model.date_basis import DisplayDateRange, ItemDateBasis, aggregate_date_ranges, endpoint_distance
 from chrona.presentation.model.field_roles import FieldRoleBindings
 from chrona.presentation.model.field_role_view import resolve_role_grouping
 from chrona.presentation.review.lane_membership import (
@@ -303,6 +303,30 @@ class ReviewProjection:
         if ordinary:
             return ordinary
         return tuple(item for point in self.folded_points if point.group_id == group_id for item in point.all_items)
+
+    def group_date_ranges(self, *, end_display: str) -> dict[str, DisplayDateRange]:
+        """Complete display-only rollup ranges from the resolved View occurrences.
+
+        Resolved rows are authoritative: neither omitted Project descendants nor
+        comparison-only tracks may extend this range. Nested rollup ranges are
+        resolved first, so their mixed endpoints are not closed a second time.
+        """
+        ordinary = (item for row in self.rows for item in row.items) if self.has_rows else iter(self.items)
+        folded = (item for point in self.folded_points for item in point.all_items)
+        members = tuple(item for item in chain(ordinary, folded) if item.source_kind in {"primary", "combined"})
+        groups = {item.object_id: item for item in members if item.is_rollup and item.hierarchy_path}
+        ranges: dict[str, DisplayDateRange] = {}
+        # Close child rollups once before parents; never recursively expand the
+        # same descendant subtree for every ancestor or table cell.
+        for group in sorted(groups.values(), key=lambda item: len(item.hierarchy_path), reverse=True):
+            path = group.hierarchy_path
+            resolved = aggregate_date_ranges(
+                ((ranges.get(item.object_id, item.planned), item.date_basis) for item in members
+                 if len(item.hierarchy_path) > len(path) and item.hierarchy_path[:len(path)] == path),
+                end_display=end_display)
+            if resolved is not None:
+                ranges[group.object_id] = resolved
+        return ranges
 
 
 def forecast_deadline_placements(projection: ReviewProjection) -> dict[str, dict[str, date]]:

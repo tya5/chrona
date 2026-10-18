@@ -1,0 +1,118 @@
+# Issue 1701 — hierarchy work record
+
+## Published baseline and literal acceptance
+
+Main `381cf404a`; row1 candidate `c0e78982c`, review `73192c558`, on
+`wip/issue-1701-group-range`. Row1 is focused-tested, not released. The
+[issue record](https://github.com/tya5/chrona/issues/1701#issuecomment-6246724848)
+owns its fast-path plan; the [acceptance review](../../reviews/current/issue-1701-hierarchy-acceptance-review-2026-10-18.md)
+keeps the full issue open. This record plans **row2 only; no row2 code yet**.
+
+1. Synthetic: a group with a child gate after its last span shows a range ending on the gate date.
+2. Design record for nested grouping (levels, header depth, folding, how presets declare it), reviewed before code; then a synthetic 3-level twin rendered by the bundled presets with no level lost.
+
+Authority: [issue1701](https://github.com/tya5/chrona/issues/1701), Spec06 §6,
+Spec38 [row composition](../../specification/38-review-row-composition.md), and
+the existing View/Theme/Layout contracts. Trial6 `531f5007e` is reproduction
+evidence, not a project-specific core policy. The reviewer requests row1 first.
+
+## Design plan
+
+- **Use cases:** imported three-level containment with/without field-role
+  bindings; authored hierarchy/field/object-type/no-group Views; ordinary/lane
+  rows; horizontal headers, vertical tags and table-less plot labels; explicit
+  selection, comparison tracks, rollups and folded points.
+- **Verified:** Core retains parent/depth/path. Explicit hierarchy expansion
+  and unbound-role `fallback: hierarchy` are different contracts; the latter
+  currently retains only rootmost group identity. Current headers are flat;
+  their writing mode is not a declaration of nested-depth support. Existing
+  `path` table sources and hierarchy columns must be evaluated before adding
+  a new topology or capability mechanism. Lane schema restrictions matter.
+- **D1 — capability/closure inventory:** classify every public bundled preset,
+  not only the failing fallback presets. Identify how each preserves every
+  level and where its declared row/group/label strategy cannot do so. Resolve
+  how the all-presets acceptance treats intentionally ungrouped Views; do not
+  silently exempt them or change their grouping by inference.
+- **D2 — selected contract:** specify visible levels versus depth-limited
+  selection; stable group/occurrence identity and order; header-depth support
+  versus inner-label-column fallback; folding, rollup and comparison behavior;
+  exact authorable preset declarations and missing-capability diagnostics.
+  Prefer existing resource mechanisms where they express the rule. Specify
+  intentional migrations rather than preserving lossy behavior.
+- **Ownership:** Core owns containment/scheduling; View owns selected semantic
+  topology and content. Theme/Style describe paint; Layout completes header,
+  column, indentation and label geometry; Scene/adapters do not recover paths.
+  Review against Specs06/07/08/28/38/49/50/56 and adjacent designs.
+- **D3 — architecture review:** check every grouping/row family, source-local
+  identities, preset closure, schema/version policy, table measurement, lane
+  membership and diagnostics. Coordinate shared projection seams with B's
+  #1700; do not absorb its retained-gate/one-summary-mark/guide requirements.
+- **Evidence:** synthetic three-level twins through all bundled presets,
+  Scene **and native adapter** level/name evidence, counts and affected visual
+  outputs inspected as a batch; selection/folding/comparison negative cases.
+  Exact public-materializer deltas and full CI remain release conditions.
+- **Publication:** publish this plan; then complete the selected design,
+  normative specification changes and architecture review; then publish the
+  implementation slices/files/tests/acceptance/publication boundaries here.
+  Only afterward implement row2. No implementation plan or design-completion
+  claim is made by this planning publication.
+
+## Capability inventory (selected design still pending)
+
+The public library has15 effective closures:7 lane and8 automatic. Layout
+`viewDefaults` contribute grouping/header declarations; raw View YAML alone is
+not the closure. All use table-timeline surfaces.
+
+| Presets | Rows | Grouping / current label route |
+| --- | --- | --- |
+| mission-light, control-room-dark, print-mono, executive-light, elevated-light | lanes | responsible-role groups; only executive-light falls back to hierarchy; plot titles |
+| editorial, technical-print | lanes | no grouping; plot titles |
+| marquee, sunday, target-b, titlecard, yuya | automatic | responsible-role groups with hierarchy fallback; Task title/Phase columns; Yuya uses vertical tags |
+| muted-executive | automatic | responsible-role groups with hierarchy fallback; Task title/Owner columns |
+| wallboard-dark | automatic | no grouping; Task title/Owner columns |
+| chrona-default-draft | automatic | explicit hierarchy, depth all, rollup header; Task hierarchy column |
+
+Existing `tableColumnSource: path` displays full ancestor-title breadcrumbs.
+However, lane schema forbids `tableColumns`, `hierarchyColumn` and explicit
+hierarchy grouping; its separate lane-table columns have their own contract.
+Therefore adding an ordinary path column alone cannot satisfy all-presets
+acceptance. Resolve the lane-compatible representation and intentionally
+ungrouped preset policy before selecting a contract. Bound field-role grouping
+also needs review: fixing only unbound-role fallback would be incomplete.
+
+## Row2 proposed design — review pending, not implementation authority
+
+[Review request6246887625](https://github.com/tya5/chrona/issues/1701#issuecomment-6246887625)
+asks whether lane per-member path labels satisfy the issue's label-column
+fallback. Do not implement that substitution before its disposition.
+
+- Keep grouping keys, selection, ordering, lane packing, folding and rollup
+  semantics unchanged. Hierarchy display is independent of presentation groups.
+  Current flat/vertical headers are not nested-depth-capable; no new header
+  capability framework is proposed.
+- Ordinary table closures use existing `source: path`; lane closures would use
+  one finite `path` member-label component. The default hierarchy closure may
+  retain its already lossless depth-all header/Task-column representation.
+  All15 effective preset closures must declare a lossless representation,
+  including intentionally ungrouped and bound-role designs.
+- A path is the ordered source-local ancestor-title breadcrumb including the
+  selected item, not a new group identity. Close its text before Layout from
+  the occurrence's own Project, including Snapshot/scenario sources. Omitted
+  ancestor rows are not invented; names may still appear in the breadcrumb.
+  Object IDs provide the label fallback for absent/blank titles; titles are
+  never parsed into identities.
+- Proposed label admission: `path` is an alternate name source to `title`,
+  alongside existing optional `finishDelta`; do not emit two name components.
+  Lane name requirements and `placement: both` name-column checks must admit
+  the selected path route. Existing declarations keep their current behavior.
+  View optional admission follows Spec56; evaluate schema equivalence explicitly.
+- Share name composition across lane/non-lane/folded label measurement and
+  placement; treat path as the existing name component for visibility/style/link
+  rules. Table paths and plot paths must use the same source-local text fact.
+  Layout still owns measurement, wrapping and overflow; Scene receives completed
+  text. Do not hide ancestor loss in elision/suppression without the existing
+  pointed fit evidence; the synthetic all-preset gate requires visible names.
+- Root and independent reviews favor this reuse over new nested geometry or
+  lane-founder-only labels. Public wording approval, exact overflow behavior,
+  normative changes and final whole-architecture review are still outstanding.
+  No row2 implementation plan is final, and no row2 code has been written.
