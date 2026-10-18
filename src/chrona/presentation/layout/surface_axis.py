@@ -281,6 +281,9 @@ def _axis_contains(outer: Rect, inner: Rect, *, inline_only: bool = False) -> bo
                  and inner.block + inner.block_size <= outer.block + outer.block_size + tolerance)))
 
 
+_BRIDGE_OVERLAP = Decimal("0.5")
+
+
 @dataclass(frozen=True)
 class AxisBandCellIndex:
     """Exact-interval lookup and ordered native tier searches, built once."""
@@ -325,18 +328,8 @@ class AxisBandCellIndex:
         return max(candidates, key=lambda item: item[:2])[2] if candidates else None
 
 
-    def host_ground(self, host: AxisBandCellGeometry | None, run: Rect) -> Rect | None:
-        """The host's box, widened over native cells that continue it (#1724).
-
-        A run that starts or ends beyond its host stays contained when the
-        overhang lies on cells of the same tier whose natural intervals abut
-        the host's, for example a week label across the year boundary of a
-        year band. The cells are one continuous painted run; their ``cellGap``
-        is the only break. A cell that does not abut (a retained ``every``
-        step) never extends the ground.
-        """
-        if host is None:
-            return None
+    def _ground_span(self, host: AxisBandCellGeometry, run: Rect) -> tuple[AxisBandCellGeometry, ...]:
+        """The host and the abutting same-tier cells that a run overhanging the host continues over."""
         cells = [cell for _, cell in next(
             items for starts, items in self.by_tier if items and items[0][1].tier_index == host.tier_index)]
         position = next(index for index, cell in enumerate(cells) if cell is host)
@@ -348,9 +341,38 @@ class AxisBandCellIndex:
         while (run_end > cells[right].bounds.inline + cells[right].bounds.inline_size + GEOMETRY_TOLERANCE
                and right + 1 < len(cells) and cells[right].interval.end == cells[right + 1].interval.start):
             right += 1
-        first, last = cells[left].bounds, cells[right].bounds
+        return tuple(cells[left:right + 1])
+
+    def host_ground(self, host: AxisBandCellGeometry | None, run: Rect) -> Rect | None:
+        """The host's box, widened over native cells that continue it (#1724).
+
+        A run that starts or ends beyond its host stays contained when the
+        overhang lies on cells of the same tier whose natural intervals abut
+        the host's, for example a week label across the year boundary of a
+        year band. The cells are one continuous painted run; their ``cellGap``
+        is the only break, and ``ground_bridges`` closes it under the text. A
+        cell that does not abut (a retained ``every`` step) never extends the ground.
+        """
+        if host is None:
+            return None
+        span = self._ground_span(host, run)
+        first, last = span[0].bounds, span[-1].bounds
         return Rect(first.inline, host.bounds.block, last.inline + last.inline_size - first.inline,
                     host.bounds.block_size)
+
+    def ground_bridges(self, host: AxisBandCellGeometry | None, run: Rect) -> tuple[Rect, ...]:
+        """The cell gaps a run crosses on its widened ground, as boxes of the run's block extent (#1724)."""
+        if host is None:
+            return ()
+        span = self._ground_span(host, run)
+        bridges = []
+        for before, after in zip(span, span[1:]):
+            start = before.bounds.inline + before.bounds.inline_size
+            size = after.bounds.inline - start
+            if size > GEOMETRY_TOLERANCE:
+                # Overlap both cells by half a pixel so no antialiasing seam shows at the edges.
+                bridges.append(Rect(start - _BRIDGE_OVERLAP, run.block, size + 2 * _BRIDGE_OVERLAP, run.block_size))
+        return tuple(bridges)
 
 
 def _axis_text_run_geometry(*, content: str, inline: float, baseline_block: float,
@@ -969,6 +991,7 @@ def _prepare_surface_axis_local(request: SurfaceLayoutRequest, frame: SurfaceAxi
     scale, timeline, axis = frame.scale, frame.timeline, frame.axis
     tokens, font_metrics = request.theme_tokens, request.font_metrics
     shapes: list[ShapePlacement | AxisPlotGrid] = []
+    bridges: list[tuple[str | None, Rect]] = []
     text: list[TextPlacement] = []
     outcomes: list[AxisTierOutcome] = []
     decisions: list[PlacementDecision] = []
@@ -1081,6 +1104,9 @@ def _prepare_surface_axis_local(request: SurfaceLayoutRequest, frame: SurfaceAxi
                 placed = replace(placed, semantic_id=label_semantic_id,
                                  host_placement_id=host_id, paint_order=HOSTED_TEXT_PAINT_ORDER)
                 text.append(placed)
+                for run in (primary.bounds, *((geometry.secondary.bounds,) if geometry.secondary else ())):
+                    bridges.extend((host_id, bridge) for bridge in cell_index.ground_bridges(
+                        cell_index.host(primary.bounds), run))
                 if geometry.secondary is not None:
                     secondary = geometry.secondary
                     text.append(replace(place_text(
@@ -1103,6 +1129,13 @@ def _prepare_surface_axis_local(request: SurfaceLayoutRequest, frame: SurfaceAxi
         else:
             raise LayoutError("E_PRESENTATION_AXIS_INVALID", "/view/body/axis/tiers")
 
+    # A label across abutting band cells sits on one ground: fill the cell gap under its text (#1724).
+    cell_shapes = {shape.placement_id: shape for shape in shapes if isinstance(shape, ShapePlacement)}
+    for index, (host_id, bounds) in enumerate(bridges):
+        cell = cell_shapes.get(host_id)
+        if cell is not None:
+            shapes.append(ShapePlacement(f"axis-band-bridge:{index}", "timeline-axis", "Rect", bounds,
+                                         semantic_id=cell.semantic_id, paint_order=cell.paint_order))
     if tokens.has_role("axis-cell-separator"):
         for index, (x, bounds) in enumerate(_axis_separator_bounds(separator_marks)):
             shapes.append(ShapePlacement(f"axis-separator:{index}", "timeline-axis", "Path",
