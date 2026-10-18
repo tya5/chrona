@@ -126,35 +126,39 @@ def evaluate_committed_scenes(paths: Iterable[Path], *, root: Path = ROOT) -> tu
 
 def report_document(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
     """Aggregate the report's deterministic per-purpose, role, and disposition rows."""
-    grouped: dict[tuple[str, str, str, float | None], list[dict[str, Any]]] = {}
     ordered = tuple(records)
-    for record in ordered:
-        finding = record["finding"]
-        key = (finding["purpose"], finding["visualRole"], finding["disposition"], finding["floor"])
-        grouped.setdefault(key, []).append(record)
+    grouped: dict[tuple[str, str, str, float | None], list[tuple[int, dict[str, Any], dict[str, Any]]]] = {}
+    for group_index, record in enumerate(ordered):
+        for observation in record.get("observations", (record["finding"],)):
+            key = (observation["purpose"], observation["visualRole"],
+                   observation["disposition"], observation["floor"])
+            grouped.setdefault(key, []).append((group_index, record, observation))
     rows: list[dict[str, Any]] = []
     for key in sorted(grouped):
         values = grouped[key]
-        observations = [observation for item in values
-                        for observation in item.get("observations", (item["finding"],))]
+        observations = [observation for _, _, observation in values]
         ratios = sorted(item["contrastRatio"] for item in observations if item["contrastRatio"] is not None)
+        warning_groups = {group_index for group_index, record, _ in values
+                          if record["finding"]["severity"] == "warning"}
+        error_groups = {group_index for group_index, record, _ in values
+                        if record["finding"]["severity"] == "error"}
         rows.append({
             "purpose": key[0], "visualRole": key[1], "disposition": key[2], "floor": key[3],
-            "slideCount": len({item["scene"] for item in values}),
+            "slideCount": len({record["scene"] for _, record, _ in values}),
             "primitiveCount": sum(item["primitiveId"] is not None for item in observations),
             "minimumContrast": min(ratios) if ratios else None,
             "medianContrast": statistics.median(ratios) if ratios else None,
-            "errorCount": sum(item["finding"]["severity"] == "error" for item in values),
-            "warningCount": sum(item["finding"]["severity"] == "warning" for item in values),
+            "errorCount": len(error_groups),
+            "warningCount": len(warning_groups),
         })
     decoration_roles = {binding.scene_role for binding in contrast_bindings(ContrastClass.DECORATION)}
     by_scene: dict[str, set[str]] = {}
     corpus_roles: set[str] = set()
     for record in ordered:
-        finding = record["finding"]
-        if finding["visualRole"] in decoration_roles and finding["disposition"] == "enabled":
-            by_scene.setdefault(record["scene"], set()).add(finding["visualRole"])
-            corpus_roles.add(finding["visualRole"])
+        for finding in record.get("observations", (record["finding"],)):
+            if finding["visualRole"] in decoration_roles and finding["disposition"] == "enabled":
+                by_scene.setdefault(record["scene"], set()).add(finding["visualRole"])
+                corpus_roles.add(finding["visualRole"])
     # Coverage is corpus-wide. Members of a shared decoration concept may
     # coexist; every emitted role is still evaluated and reported separately.
     coverage_concepts = (
@@ -203,6 +207,7 @@ def render_markdown(report: Mapping[str, Any]) -> str:
              "decoration below its floor (or on a ground that cannot be read) is a warning. For any other Theme every "
              "miss is a warning: it is listed and counted, and fails nothing. Independent encoded-fill misses are "
              "reported as warnings; authored Theme enforcement is checked by the render before Scene output.", "",
+             "A grouped encoded-fill warning may contribute to multiple purpose/role summary rows; row warning counts are not additive.", "",
              "| Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |",
              "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"]
     for row in report["rows"]:

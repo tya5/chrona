@@ -56,6 +56,29 @@ def test_report_names_measured_primitive_ground_and_channel(tmp_path):
     assert "`planned` | `planned` | 25.000, 10.000 | `host` | flat | `#FFFFFF` | fill" in render_markdown(report)
 
 
+def test_one_pair_warning_contributes_to_each_observed_role_row():
+    representative = {
+        "code": "W_SCENE_ENCODING_CONTRAST", "severity": "warning", "purpose": "planned",
+        "visualRole": "planned", "disposition": "below-floor", "floor": 3.0,
+        "contrastRatio": 2.0, "primitiveId": "plan-mark",
+    }
+    second = {**representative, "purpose": "forecast", "visualRole": "forecast",
+              "primitiveId": "forecast-mark"}
+    records = ({"scene": "slide.scene.json", "theme": "demo", "optedIn": False,
+                "finding": representative, "occurrenceCount": 2,
+                "observations": [representative, second]},)
+
+    report = report_document(records)
+
+    assert report["findingCount"] == report["warningCount"] == 1
+    assert report["observationCount"] == 2
+    assert [(row["purpose"], row["visualRole"], row["primitiveCount"], row["warningCount"])
+            for row in report["rows"]] == [
+                ("forecast", "forecast", 1, 1),
+                ("planned", "planned", 1, 1),
+            ]
+
+
 # --- #995: a decoration warns, text and marks fail --------------------------------------------------------
 
 
@@ -259,7 +282,7 @@ def test_opted_in_theme_keeps_shape_errors_but_encoded_fill_is_reported_as_warni
     assert encoded_finding["severity"] == "warning"
     assert encoded_record["occurrenceCount"] == 2
     assert encoded_record["primitiveIds"] == ["encoded", "encoded-again"]
-    assert encoded_record["groundIds"] == ["dark-host", "dark-host"]
+    assert encoded_record["groundIds"] == ["dark-host"]
     assert len(encoded_record["observations"]) == 2
     assert report["findingCount"] == report["observationCount"] - 1
     assert "2 occurrences" in render_markdown(report)
