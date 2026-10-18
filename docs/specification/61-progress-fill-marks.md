@@ -23,9 +23,13 @@ the actual mark, while `planned` uses the planned mark.  An absent source,
 absent host, or zero fraction produces no submark.  A fraction of one is a
 full-host submark; no alternative fill, estimate, or interpolation is inferred.
 
-When the matching Plan or Actual legend key is declared, it repeats a full
-progress inset using the same progress-fill treatment. The other host's key
-does not gain a progress inset; no separate legend entry is inferred.
+The legend uses a separate `Progress` key when a positive completed progress
+submark is painted. Its swatch uses the realized `progressFill` paint; an absent
+or zero-width submark contributes no key. The default label is `Progress`,
+overridable through Detail Profile or View wording. Plan and Actual keys do not
+repeat a progress inset. Key visibility and deduplication follow the shared
+realized-key closure in Specification 60 §4; Scene and adapters do not infer a
+key from the declaration or source fraction.
 
 ## 2. Layout and Scene boundary
 

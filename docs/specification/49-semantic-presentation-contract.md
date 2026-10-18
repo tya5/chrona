@@ -115,6 +115,31 @@ Layout owns measurement and geometry. It produces immutable `LayoutPlacement` re
 
 Scene owns semantic-to-primitive emission only. Scene may select a primitive's z-order and content from `PresentationContract`, but may not calculate column width, row height, track allocation, endpoint identity, or label-fit geometry.
 
+For realized legend selection (#1679), the pure presentation model supplies
+one shared, geometry-free key-relevant paint result: effective channels,
+override precedence, gradient token identity and selected-profile admission.
+The existing use-case/pipeline adapter supplies a neutral capability set and
+optional-omission flag from the selected profile to both consumers; Layout
+does not import Scene's `VisualProfile`. The shared result carries effective
+channels, admitted gradient identity or its omission, and the existing
+diagnostic identity/pointer on failure, not Scene primitives or coordinates.
+Layout consumes it with completed positive, clipped-visible placements to
+select keys; Scene consumes the same result while assembling paint. Extract
+the relevant existing channel/gradient admission rules, do not introduce a
+second resolver or import Scene types into Layout. Actual variance applies
+only under the existing unoverridden Actual/non-outline branch; Style and
+explicit paint-role precedence remain unchanged. A replaced gradient neither
+participates in identity nor reports an omission. An omitted optional gradient
+leaves the emitted solid ink as witness; a required capability still fails.
+Scene retains bounds-dependent gradient/effect construction and adapter-ready
+paint assembly. Finite key shapes use the shared ink projection defined in
+Specification 28; they do not inherit source effects.
+
+After final route/label selection, Layout recomposes legend entries once in
+the conservatively reserved slot. No legend-driven row, route or annotation
+retry is introduced. Comparison-source absence is normalized before measuring
+the table (Specification 06), never in Scene or adapters.
+
 ## 5. Verification closure
 
 `assert_presentation_contract` validates, before materialization:
@@ -124,6 +149,12 @@ Scene owns semantic-to-primitive emission only. Scene may select a primitive's z
 3. every required placement exists and is non-overlapping where applicable;
 4. emitted Scene primitives cover each enabled registry purpose;
 5. each example manifest selects its declared context and public materializer output reproduces byte-for-byte.
+
+Realized-key tests additionally cover paint-result parity between Layout and
+Scene, semantic-family/paint deduplication, positive progress, encoded versus
+unencoded planned witnesses, absent versus supplied-empty comparison sources,
+and actual adapter PNGs. A declaration or Scene-only count is not proof of a
+visible matching key.
 
 Tests are organized by contract boundary:
 

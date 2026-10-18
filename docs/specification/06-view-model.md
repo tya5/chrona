@@ -816,7 +816,23 @@ Summary keys address the exact joined identifiers, without splitting on dots;
 if multiple metric or panel-title targets have that joined key, an override is ambiguous.
 An unknown or ambiguous key is `E_VIEW_WORDING_UNKNOWN` or
 `E_VIEW_WORDING_AMBIGUOUS` at its original View pointer. An omitted override
-retains the profile label. No entries or panels are synthesized.
+retains the profile label. No panels or arbitrary semantic entries are
+synthesized. The bounded realized Actual variants and positive-progress key
+in Specification 28 are explicit exceptions, like the Forecast key in §8:
+`progressFill` addresses its label, while `actual-ahead`, `actual-on-track`,
+and `actual-behind` address qualifier fragments appended to the authored
+Actual label. These are wording targets, not new paint or registry roles.
+
+Before table measurement, omit comparison-dependent columns whose closed
+source is absent (#1679). Actual/progress/missing-Actual sources require a
+supplied Actual Set; a supplied but empty set retains the column and its
+declared missing-value policy. Ordinary finish delta requires Actual, not
+Snapshot alone. An explicit forecast fact instead supplies forecast delta
+against its already resolved primary/Snapshot baseline. Snapshot and scenario
+columns require their corresponding bound source. Use the selected source
+contract, never a scan for blank cells or inferred dates. This omission does
+not relax required-source, unknown-reference or malformed-fact errors, and
+does not mutate the authored View or comparison inputs.
 
 The use-case boundary closes profile connections before fact resolution and
 text measurement, preserving authored resource identities in provenance.

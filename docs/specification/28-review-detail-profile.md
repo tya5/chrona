@@ -12,8 +12,9 @@ alignment, or summary metric semantics. Its structural authority is
 
 The complete M23 surface set has four members:
 
-- `legend`: ordered semantic roles (`planned`, `actual`, `variance`, `milestone`,
-  `dependency`) with user-facing labels, owned by the Detail Profile;
+- `legend`: ordered semantic roles (including `planned`, `actual`, `variance`,
+  `milestone`, `dependency`, and the bounded `progressFill` key below) with
+  user-facing labels, owned by the Detail Profile;
 - `groupDetails`: presentation-only label and bounded description keyed by the
   View-selected group ID;
 - `milestones`: a View-selected ordered list of point object IDs; their title and
@@ -38,7 +39,10 @@ domain order and the existing folded Other entry.
 Source sizing may reserve potential entries. Layout filters them against final
 visible placements and effective paint channels, then places only values
 actually painted; explicit glyph colours and stroke-only parts do not create
-encoded fill swatches. Existing View encoding legend policy is unchanged.
+encoded fill swatches. View encoding keys follow the same final-painted
+occurrence closure described below: when every planned occurrence has an encoding key, the base
+planned/forecast key is omitted; a mixed encoded and unencoded set retains the
+base key.
 After selecting the final route/label option, recompose filtered Style entries
 inside the conservatively allocated legend/footer slots; do not shrink those
 slots or restart row, route or annotation layout.
@@ -53,6 +57,49 @@ the primary label; append that qualifier only when it is measurable and fits the
 allocation. A qualifier-only failure omits it without rejecting the encoding or
 its primary title/value. Canonical scope metadata remains beside the completed
 Scene swatch whether or not that optional qualifier is visible.
+
+## Realized semantic keys (#1679)
+
+Semantic and scale-derived legend candidates are admitted from final completed
+painted-occurrence witnesses, not from declarations or source availability
+alone. Layout and the pure presentation model share the completed paint and
+visibility closure; Scene and adapters project the resulting entries and do
+not infer, select, or suppress keys. Actual-range keys use the realized
+actual-trait/Style ink. A declared comparison with no available bound source
+contributes no comparison key; a supplied source with blank values retains its
+declared missing-value behavior.
+
+Key identity is semantic family plus completed key-relevant paint, not RGB
+alone. Actual and Progress remain separate at equal ink; equal-painted Actual
+occurrences coalesce even across variance classes. Paint identity includes
+effective fill/stroke, width/dash/opacity, pattern and admitted gradient ink,
+not object identity, placement bounds, shadows or glow. Existing finite key
+shapes remain deliberate ink projections, not copies of source geometry.
+
+The authored Actual label is retained. If Actual has multiple paint groups,
+append the group's realized Ahead / On track / Behind qualifiers in that order.
+Style variants within one class remain distinct swatches with the same label;
+do not invent colour names or expose hashes. An unclassified group retains the
+base label. View wording targets `actual-ahead`, `actual-on-track`, and
+`actual-behind` override those qualifier fragments, not Theme paint roles.
+The base `actual` wording still overrides the authored base label. These
+derived targets exist when an Actual legend candidate is declared; an unused
+valid override does not create a key.
+
+A positive completed progress submark contributes a separate key using the
+existing `progressFill` semantic. Its default label is `Progress`; a declared
+Detail `progressFill` entry supplies label/order/shape instead, and
+`wording.legend.progressFill` overrides the label. Without an explicit entry,
+place it immediately after Actual, else after Planned/Forecast, else last.
+Zero-width or absent submarks contribute none. These rules add no semantic
+registry role or project-specific YAML repair.
+
+Before measurement, candidate sizing reserves a superset of all potential
+Actual paint groups and positive-progress keys, including distinct Style
+paints; final filtering must not discover an unreserved key. After final
+route/label selection, Layout recomposes the filtered entries once
+inside the conservatively allocated legend/footer slots. It does not shrink
+those slots or retry route, row, or annotation layout.
 
 ## Finite legend key shapes (#1562)
 

@@ -1,12 +1,12 @@
 # Issue 1679: realized legend work record (2026-10-18)
 
-Status: planning only. No behavior or implementation has been selected.
+Status: design complete; implementation planning is next. No product changes.
 
 ## Baseline and order
 
-- Published `main`: `e69d4541a`. Preparation base: published S2 `2cdcc31e5` (PR 1687), not yet merged at plan drafting. The issue was found against `d11fd42b0`; reviewer-trial inputs are at `9fa6062de` on `reviewer/trial-5-inputs`.
-- Start implementation only after #1680 and S2/PR 1687 are integrated. The issue comment explicitly calls for first inspecting semantic/scale-key identity and empty-column ownership, then publishing design and implementation plans.
-- Current public Spec60 §4 separates semantic legend ownership from scale legends. The requested realized-paint completeness/suppression behavior therefore needs normative design and review before code.
+- Published `main`: `d9a10d4ea`, including S2/PR1687 (`5bfa5356b`). PR1689 (#1680) is the active landing; its exact-head CI is running. Inputs: `reviewer/trial-5-inputs` at `9fa6062de`.
+- Start product implementation after #1680 integration and publication of the implementation plan. Dev B owns #1682/#1681/#1683 and the next main landing window after1689; do not duplicate its profile/packing changes.
+- Design proposal and reviewer approval: [6243827642](https://github.com/tya5/chrona/issues/1679#issuecomment-6243827642), [6243861925](https://github.com/tya5/chrona/issues/1679#issuecomment-6243861925). No further pre-code reviewer approval is required; the PR receives review.
 
 ## Literal acceptance criteria
 
@@ -15,23 +15,21 @@ Status: planning only. No behavior or implementation has been selected.
 3. target-b without snapshot or actual has no baseline, actual or in-progress keys and no empty Δ column.
 4. A count table of the public example changes, and the PNGs checked.
 
-## Published facts and unresolved design questions
+## Evidence and selected design
 
-- S2 supplies completed paint/occurrence filtering in Layout; current filtering covers Style occurrences, not all final painted marks or progress shapes. Actual-range paint and progress are produced through distinct paths. Confirm the final paint witness and how it covers actual and progress without moving policy into Scene.
-- Spec28 owns Detail semantic legend roles/labels and lists planned, actual, variance, milestone, and dependency. It does not settle progress-key naming, paint identity, deduplication, or how keys correspond to heterogeneous realized paints. Resolve these with Specs06/07/08/28/33/49/60 and #1682's field-profile/encoding work; do not duplicate that work's source defaults or resolver.
-- Spec61 §1 currently requires a progress inset on its host legend key and forbids an inferred separate entry; Spec06 wording closure forbids synthesizing entries. Reconcile these explicit adjacent contracts with criterion1 before implementing derived progress keys.
-- Determine whether semantic identity is a role, realized paint, source occurrence, or a composed key; how labels and ordering attach; and what “exactly one” means for equal paints from distinct semantic sources. No choice is made here.
-- Define the observation domain for actual/progress keys and for planned encoding replacement: final painted occurrences, including cases with several actual colors, progress absent at zero, all planned marks encoded, and mixed encoded/unencoded marks. Decide identity/equality granularity only in design.
-- “No snapshot or actual” and “no empty Δ column” need a precise source-availability/normalization rule. Existing table construction preserves declared columns and renders missing cells blank; existing omission paths concern unbound fields, not a general all-empty-column rule. Decide whether absence of the comparison source differs from a present source with blank values; no normalization behavior is selected here.
+- Reproduced the public executive-light command: 13 actual primitives use green `#269D79`, four progress primitives use brown `#8D530F`; the Actual legend key's brown progress inset hides its green ink. The no-comparison target-b PNG retains unavailable keys and a blank delta column. Both PNGs were inspected, not merely Scene counts.
+- Normative authorities: [Spec28](../../specification/28-review-detail-profile.md) owns identity, wording/order and bounded derived keys; [Spec60 §4](../../specification/60-declared-colour-scales.md) owns encoded/base coverage; [Spec61](../../specification/61-progress-fill-marks.md) replaces the host inset with a positive-progress key; [Spec06 §9.3](../../specification/06-view-model.md) owns source absence and wording targets; [Spec49](../../specification/49-semantic-presentation-contract.md) defines the shared paint witness/handoff.
+- Distinct meanings never collapse because their RGB is equal. Same-class Style variants may have distinct swatches with identical authored wording; this is intentional, not a new colour-label API. Existing authored scale labels remain independent.
+- Compatibility impact is intentional: unused/mismatching keys and unavailable comparison columns disappear; actual/progress keys now explain emitted ink. No source YAML or domain data is changed, no new semantic role or schema version is needed. Additive wording targets use the existing open string-key map.
 
-## Responsibility boundaries and design slices
+## Whole-architecture review
 
-1. **Evidence and ownership audit:** trace semantic and scale legend construction, final Layout paint/occurrence production, Scene projection, and table-column inputs. Keep key selection and empty-column policy out of Scene; avoid project-specific branches and source-YAML repairs.
-2. **Design and normative correction:** settle the open identity, label, witness, and absence/normalization questions; define Layout/model ownership and compatibility/migration effects. Review against Specs06, 07, 08, 28, 33, 49, 60 and 61, plus B #1682. Publish the design, architecture review, and required living-spec correction before finalizing implementation planning.
-3. **Implementation planning (later):** split the approved work by owner and public materializer; name focused tests, synthetic fixtures, generated evidence, and publication gates. Do not begin implementation in this planning slice.
+- **Model/Theme (Specs07/49):** reuse `theme_paint` channels and extract only effective override/gradient admission into a shared typed ink witness. No duplicate Scene resolver, Scene-type import into Layout, or broad paint-framework move. Scene retains bounds-dependent effects and serialization paint assembly. Required capability failures and optional-gradient solid fallback keep existing diagnostics.
+- **Layout (Specs28/33/60/61):** reserve all potential Actual paint groups/progress candidates before measurement; final geometry/visibility selects witnesses and one recomposition stays inside those conservative slots, with no routing/reflow loop. The pipeline supplies the same neutral selected-profile capabilities to Layout and Scene. S2 Style scope/scale identity survives; no new selector evaluation in Scene.
+- **View/content (Spec06):** normalize source absence when constructing `TableContent`, before measurement. Supplied-empty is not absent; Snapshot alone cannot supply ordinary Actual delta. Existing required-input errors remain errors. No scan for blank cells, domain changes, or defaulting overlap with B1682.
+- **Scene/adapters (Spec08):** consume completed entries and shared ink, not domain facts or source declarations to infer legends. Existing finite circle/rule-pair projections remain intentional; pattern/effect geometry is not copied to those shapes.
+- Independent Luna audits identified the two genuine gaps (within-class Style wording and paint/capability parity); the rules above close both before implementation. Remaining risk is implementation parity, covered by synthetic and adapter tests, not another owner decision.
 
-## Owners and acceptance evidence to plan
+## Implementation planning next
 
-- Likely owners to confirm in design: Layout's completed paint witnesses/composition and table normalization; the pure presentation model's semantic-key composition; Scene/adapters only as projections/materializers. Confirm exact file ownership after the audit.
-- Evidence plan must include focused synthetic cases for realized actual/progress paint, all-encoded versus mixed planned marks, absent comparisons and column normalization; a public-example change-count table; and inspected PNGs for the literal acceptance rows. Include conformance and affected public materializers, not Scene-only evidence.
-- Open until design review: paint/key identity and labels, absent-versus-empty comparison semantics, exact public examples/artifacts to compare, and migration consequences. Any gap or layer conflict pauses implementation for a published design correction.
+Finalize file-owned slices for shared paint parity, source normalization, candidate/witness composition, and final acceptance. Publish that plan before product edits. Required evidence includes synthetic actual/progress/trait/Style variants; equal-ink distinct meanings; all-encoded and mixed planned marks; absent versus supplied-empty sources and explicit forecast delta; focused conformance; one batched public 50-slide count table; and inspected executive-light/target-b PNGs. Full pytest, wheel and reproduction gates run in CI; close only after exact-main release and all four literal rows are verified.

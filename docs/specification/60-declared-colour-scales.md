@@ -120,6 +120,25 @@ scale-derived entry for the same scale.  Existing semantic legends retain their
 separate role/label ownership and may coexist; they do not claim to enumerate
 the scale domain.
 
+Scale-derived and semantic candidates are included only when a final completed
+painted-occurrence witness establishes that their meaning and paint are
+visible. The pure presentation model and Layout share this paint/visibility
+closure; Scene and adapters do not infer or filter legend entries. Identity is
+semantic-family plus completed key-relevant paint, not RGB alone; the exact
+identity and wording rules are in Specification 28. Semantic Actual keys use
+realized actual-trait/Style ink. A positive
+completed progress submark contributes its separate Progress key; it does not
+repeat as an inset in the Plan or Actual key (Specification 61 §1). A declared
+comparison with no available bound source contributes no comparison key; a
+supplied source with blank values keeps its missing-value behavior.
+
+For planned occurrences, an encoding key replaces the base planned/forecast
+key when every planned occurrence is encoded. A mixed set with any unencoded
+planned occurrence retains the base key. After final route/label selection,
+Layout recomposes the candidates once in the conservatively allocated legend
+slot; it neither shrinks that slot nor retries route, row, or annotation
+layout.
+
 ## 5. Migration boundary
 
 This is an atomic replacement of the current category mechanism.  The next
@@ -148,8 +167,10 @@ Rendering continues. Committed evidence carries no such diagnostic.
 Within the legacy View input, multiple simultaneous encodings and predicates
 remain outside this contract; authored Style rules are governed by Spec07.
 Ranges, continuous scales,
-per-object literals, rule ordering, conditional style, and progress/disposition
-paint are outside this contract.  Progress fill remains a distinct mark
+per-object literals, rule ordering, and conditional style remain outside this
+scale-resolution contract. Progress/disposition paint is not resolved as a
+colour scale; its completed occurrences may contribute semantic legend keys
+under the shared realized-key closure above. Progress remains a distinct mark
 vocabulary decision.
 
 A per-group band tint (View `grouping.tint`, [Specification 50](50-constraint-driven-gantt-surface-quality.md)
