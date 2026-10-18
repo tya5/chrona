@@ -108,7 +108,10 @@ def test_publisher_refuses_destination_symlink_without_touching_target(tmp_path)
     sentinel = target / "keep.txt"
     sentinel.write_text("safe", encoding="utf-8")
     destination = tmp_path / "link"
-    destination.symlink_to(target, target_is_directory=True)
+    try:
+        destination.symlink_to(target, target_is_directory=True)
+    except OSError:
+        pytest.skip("symlink creation is not available")
 
     with pytest.raises(FileExistsError, match="E_AUTHORING_WORKSPACE_EXISTS"):
         publish_workspace_directory(destination, {"workspace.yaml": b"{}"})
