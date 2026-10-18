@@ -1,12 +1,13 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
 Status: item5 PR1698 merged `076be666c`; final CI39100063943 passed.
-Trusted generated main `ca1e0bbe8` passed gate39101119087; its full three-OS
-release39101259252 is running. Final artifact12126645488 retains all50 SVG/
-50 Scene bytes; only diagnostic source coordinates/helper names differ.
-Design `69273a1bf` and plan `54b9ddd20` precede code. Reviewer1704 merged
-`2af41d6bf`; item3 follows its ready main. Item3 may open PR CI while item5
-release runs, but may not merge before that release succeeds.
+Release39101259252 passed Linux/macOS but failed four Windows process/replay
+tests because pre-lock byte reads conflict with Windows mandatory locks.
+Urgent repair PR1707 (design `d0ea4f635`, code `3e993a87f`, review `a0f42ce9a`)
+precedes item3/item2; its focused58 tests pass but native Windows proof is pending.
+Current ready main is `72652b687` after reviewer1704/1705. This authoring WIP
+also preserves item3 CI repairs `d0a2ff526`/`ae21a166c` (185 focused tests pass),
+without restarting PR1706 before its final repaired predecessor base is ready.
 #1679/#1680 are closed after exact-main39094741641 passed all
 three OSes, public reproduction and MCP. Their archival/ledger update is an
 independent commit in PR1698; separate docs PR1699 was superseded to avoid
