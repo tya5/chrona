@@ -246,6 +246,29 @@ relations:
 
 If `lag` is omitted, it normalizes to `0d`.
 
+**Canonical relation identity (#1754).** Identity is computed over the complete
+normalized Project relation list, before filtering, sorting or projection. A
+non-empty declared `id` that occurs exactly once has identity
+`relation:id:<id>`. Otherwise the base is
+`relation:edge:<type>:<from object>:<from endpoint>:<to object>:<to endpoint>`.
+Each component uses UTF-8 percent encoding (RFC 3986 unreserved characters
+only), so delimiters and author IDs cannot alias another identity namespace.
+When multiple fallback relations have the same base, append `:occurrence:<n>`
+to each, counting from 1 in their relative declaration order. This suffix is
+not the global declaration index. An empty or repeated declared ID uses the
+fallback; repeated IDs do not become a new schema error. Lag, calendar, title,
+schedule and presentation values do not change identity. A unique declared ID
+also survives endpoint edits; route hints still revalidate the endpoints.
+
+Scheduler driving relations, lane/network projection, presentation facts and
+Scene source references MUST use this same core identity. Removing or inserting
+an unrelated relation therefore leaves existing identities unchanged. Exact
+duplicates have no independently recoverable identity beyond their occurrence;
+authors needing stable identity across duplicate insertion/removal declare
+unique IDs. This replaces index-prefixed derived identities intentionally:
+old Scene/source-reference IDs may miss when used as hints and MUST NOT be
+guessed or remapped by declaration position. Project syntax is unchanged.
+
 For Core v0.3 Date scheduling, dependency lag accepts signed `d`, `w`, or `wd`.
 Month/year lag is not part of required scheduler conformance.
 

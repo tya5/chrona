@@ -2,7 +2,8 @@
 
 ## Published baseline and scope
 
-Design planning; no implementation approved yet. Source: [issue 1754](https://github.com/tya5/chrona/issues/1754), including its later comments, on ready main `6c3b4e4e2d4064e924a8b9703c3f31ab7a62bc39`.
+Design planning for the whole issue; S1 identity design completed below.
+Source: [issue 1754](https://github.com/tya5/chrona/issues/1754), including its later comments, on ready main `6c3b4e4e2d4064e924a8b9703c3f31ab7a62bc39`.
 Trial evidence is reference-only: [`reviewer/trial-8-inputs@bf3940dbe9af487ac6cace5458554762594f3477`](https://github.com/tya5/chrona/tree/bf3940dbe9af487ac6cace5458554762594f3477/trial-8).
 
 Published facts: core relation identities include the declaration index;
@@ -73,5 +74,35 @@ Review before selecting contracts:
    use CI for full three-OS pytest/conformance/wheel/materializer evidence.
 5. Publish one literal acceptance review and release on exact main containing
    it. Close only after every row and required release job succeeds.
+
+## S1 selected design and whole-architecture review
+
+The canonical contract is [Spec 05 §7](../../specification/05-project-format.md#7-relations).
+Core computes all identities together from the normalized relation list;
+consumers receive the resulting immutable ordered tuple and never recompute an
+identity after filtering. Unique declared IDs use an author-ID namespace;
+anonymous, empty-ID and repeated-ID relations use an endpoint/type namespace.
+Only indistinguishable fallback duplicates need a local occurrence suffix.
+UTF-8 component escaping makes both namespaces collision-free. No new Project
+syntax or schema version is needed. The old scalar index-based helper is
+removed rather than retained as a contradictory compatibility path.
+
+Architecture review: Spec 02 semantic identity, Spec 05 normalized relations,
+Spec 57 driving/critical relations, Spec 06 projection and Spec 08 stable Scene
+identity remain consistent when every consumer shares the core tuple. Spec 09
+and ADR-0004 keep format/semantic ownership separate. ADR-0031 and Spec 50 keep
+geometry and hint validation in Layout; this slice does not select a route or
+change a schedule. Scene and adapters retain opaque source IDs and completed
+primitives. No adapter interprets the new spelling. Old Scene hints fail closed
+on an exact identity miss, as required by the existing previous-Scene contract.
+No trial/preset-specific rule, declaration uniqueness error, or migration alias
+is introduced. Dependency-network ordering may change where it used the old
+derived ID; disclose generated output changes rather than preserving unstable
+order. Exact duplicate removal cannot promise per-copy identity; unique IDs
+are the explicit extension point. No unresolved S1 contract remains.
+
+S2 will separately complete the all-policy hint/corridor design, then the
+moving-decoration design. S1 is independently testable and does not claim any
+full issue acceptance row met until integrated hints and trial evidence exist.
 
 No product implementation or trial reproduction is complete at this stage.
