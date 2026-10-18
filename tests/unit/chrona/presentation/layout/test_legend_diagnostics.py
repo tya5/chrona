@@ -1,0 +1,254 @@
+from decimal import Decimal
+from types import SimpleNamespace
+
+from chrona.presentation.layout.legend_diagnostics import completed_legend_diagnostics
+from chrona.presentation.layout.mark_geometry import symbol_parts
+from chrona.presentation.layout.surface_quality import PathCommand
+from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
+from chrona.presentation.model.legend_paint import RealizedLegendKey
+from chrona.presentation.model.surface_content import SurfaceLegendEntry
+from chrona.presentation.model.theme_paint import (
+    GradientPaintIntent, PaintFamily, ThemePaintInputs, ThemePaintWitness,
+)
+from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
+from chrona.presentation.model.theme_tokens import ThemeTokenView
+
+
+def _paint(*, fill="#176B87", stroke=None, width=None, dash=(), opacity=Decimal(1), gradient=None):
+    channels = ThemePaintInputs(fill, stroke, width, dash, opacity, False)
+    return ThemePaintWitness(channels, channels, PaintFamily.SOLID, None, gradient)
+
+
+def _entry(role, key, label, *, pattern_identity=None):
+    realized = RealizedLegendKey(role, role, key, pattern_identity=pattern_identity, base_label=label)
+    return SurfaceLegendEntry(role, label, realized_key=realized)
+
+
+def _batch(entries, figures, contents=None, request=None):
+    marks, shapes, relations, text = [], [], [], []
+    contents = contents or {entry.source_identity: entry.label for entry in entries}
+    for entry, figure in zip(entries, figures):
+        if figure[0] == "mark":
+            _, bounds, parts, paints = figure
+            marks.append(SimpleNamespace(source_ref=entry.source_identity, bounds=bounds,
+                symbol_parts=parts, legend_paints=paints, mark_shape="point", corner_radius=0))
+        elif figure[0] == "shape":
+            _, bounds, shape_kind, paint, swatch_shape, *path_commands = figure
+            shapes.append(SimpleNamespace(source_ref=entry.source_identity, bounds=bounds,
+                kind=shape_kind, legend_paint=paint, legend_swatch_shape=swatch_shape,
+                visual_role=entry.role, path_commands=path_commands[0] if path_commands else (),
+                points=(), corner_radius=0, paint_channels=None))
+        else:
+            _, relation = figure
+            relations.append(relation)
+        text.append(SimpleNamespace(placement_id=entry.text_placement_id,
+                                    content=contents[entry.source_identity], overflow="fit"))
+    request = request or SimpleNamespace(theme_tokens=None, paint_capabilities=None,
+        surface_content=SimpleNamespace(scale_legend_paints=()))
+    return completed_legend_diagnostics(request, entries, marks, shapes, relations, text)
+
+
+def _box(x, y, width, height):
+    return SimpleNamespace(inline=x, block=y, inline_size=width, block_size=height)
+
+
+def _theme_request(*, scale_paints=(), different_line=False):
+    theme = ThemeTokenView({
+        "version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme",
+        "body": {"values": {"planned-fill": {"type": "color", "value": "#176B87"},
+                             "actual-fill": {"type": "color", "value": "#176B87"},
+                             "planned-stroke": {"type": "color", "value": "#172033"},
+                             "actual-stroke": {"type": "color", "value": "#172033"},
+                             "deadline-stroke": {"type": "color", "value": "#B91C1C"},
+                             "width": {"type": "number", "value": 2}},
+                 "roles": {"planned": {"fill": "planned-fill", "stroke": "planned-stroke",
+                                        "strokeWidth": "width"},
+                           "actual": {"fill": "actual-fill", "stroke": "actual-stroke",
+                                       "strokeWidth": "width"},
+                           "dependency": {"stroke": "planned-stroke", "strokeWidth": "width"},
+                           "deadline-mark": {"stroke": "deadline-stroke" if different_line else "actual-stroke",
+                                             "strokeWidth": "width"}},
+                 "catalogAssets": {}},
+    })
+    return SimpleNamespace(theme_tokens=theme, paint_capabilities=PaintWitnessCapabilities(),
+        surface_content=SimpleNamespace(scale_legend_paints=scale_paints))
+
+
+def test_figure_comparison_ignores_translation_and_footprint_but_keeps_finite_shapes_and_ink():
+    same = _paint()
+    left, right = _entry("planned", same, "Work"), _entry("actual", same, "Observed")
+    signature = lambda entry, shape: (entry, ("shape", _box(0, 0, 20, 10), "Rect", same, shape))
+
+    # Unit-box normalization suppresses a false difference from allocation position/size.
+    collision = _batch((left, right), (
+        signature(left, None)[1],
+        ("shape", _box(100, 40, 40, 20), "Rect", same, None),
+    ))
+    assert "W_LEGEND_SWATCH_COLLISION" in collision[0]
+
+    circle_vs_pair = _batch((left, right), (
+        ("shape", _box(0, 0, 20, 10), "Symbol", same, "circle"),
+        ("shape", _box(100, 40, 40, 20), "Path", same, "rule-pair"),
+    ), request=_theme_request())
+    assert "W_LEGEND_SWATCH_COLLISION" not in circle_vs_pair[0]
+
+    different_stroke = _paint(stroke="#172033", width=Decimal(2), opacity=Decimal("0.5"))
+    right_stroke = _entry("actual", different_stroke, "Observed")
+    changed_ink = _batch((left, right_stroke), (
+        ("shape", _box(0, 0, 20, 10), "Rect", same, None),
+        ("shape", _box(100, 40, 40, 20), "Rect", different_stroke, None),
+    ))
+    assert "W_LEGEND_SWATCH_COLLISION" not in changed_ink[0]
+
+
+def test_shape_channel_restriction_removes_unused_paint_from_collision_identity():
+    left_paint = _paint(fill="#176B87", stroke="#172033", width=Decimal(2))
+    right_paint = _paint(fill="#D99024", stroke="#172033", width=Decimal(2))
+    left, right = _entry("planned", left_paint, "Work"), _entry("actual", right_paint, "Observed")
+    def shape(entry, paint, x):
+        return SimpleNamespace(source_ref=entry.source_identity, bounds=_box(x, 0, 20, 10),
+            kind="Path", legend_paint=paint, legend_swatch_shape=None, visual_role=entry.role,
+            path_commands=(), points=(), corner_radius=0, paint_channels="stroke")
+    result = completed_legend_diagnostics(SimpleNamespace(theme_tokens=None, paint_capabilities=None,
+        surface_content=SimpleNamespace(scale_legend_paints=())), (left, right), (),
+        (shape(left, left_paint, 0), shape(right, right_paint, 50)), (),
+        (SimpleNamespace(placement_id=left.text_placement_id, content="Work", overflow="fit"),
+         SimpleNamespace(placement_id=right.text_placement_id, content="Observed", overflow="fit")))
+    assert "W_LEGEND_SWATCH_COLLISION" in result[0]
+
+
+def test_finite_circle_and_completed_circle_glyph_share_same_figure_identity():
+    paint = _paint()
+    finite_entry = _entry("planned", paint, "Planned")
+    glyph_entry = _entry("actual", paint, "Observed")
+    shape_part = symbol_parts({"shape": "circle"}, (0, 0, 10, 10))[0]
+    mark_part = symbol_parts({"shape": "circle"}, (40, 30, 20, 20))[0]
+    commands = shape_part.commands
+    part = SimpleNamespace(paint_mode="fill", line_cap=None, line_join=None, commands=mark_part.commands)
+    request = _theme_request()
+    result = completed_legend_diagnostics(request, (finite_entry, glyph_entry),
+        (SimpleNamespace(source_ref=glyph_entry.source_identity, bounds=_box(40, 30, 20, 20),
+            symbol_parts=(part,), legend_paints=(paint,), mark_shape="point", corner_radius=0),),
+        (SimpleNamespace(source_ref=finite_entry.source_identity, bounds=_box(0, 0, 10, 10),
+            kind="Symbol", legend_paint=paint, legend_swatch_shape="circle", visual_role="planned",
+            path_commands=commands, points=(), corner_radius=0, paint_channels=None),), (),
+        (SimpleNamespace(placement_id=finite_entry.text_placement_id, content="Planned", overflow="fit"),
+         SimpleNamespace(placement_id=glyph_entry.text_placement_id, content="Observed", overflow="fit")))
+    assert "W_LEGEND_SWATCH_COLLISION" in result[0]
+
+
+def test_scale_key_figure_uses_closed_value_fill_overrides():
+    left = SurfaceLegendEntry("scale:owner", "A", source_ref="scale:owner:a")
+    right = SurfaceLegendEntry("scale:owner", "B", source_ref="scale:owner:b")
+    figures = (
+        ("shape", _box(0, 0, 10, 10), "Rect", None, None),
+        ("shape", _box(20, 30, 20, 20), "Rect", None, None),
+    )
+    different = _batch((left, right), figures,
+        request=_theme_request(scale_paints=((left.source_identity, "#176B87"),
+                                             (right.source_identity, "#D99024"))))
+    assert "W_LEGEND_SWATCH_COLLISION" not in different[0]
+    equal = _batch((left, right), figures,
+        request=_theme_request(scale_paints=((left.source_identity, "#176B87"),
+                                             (right.source_identity, "#176B87"))))
+    assert "W_LEGEND_SWATCH_COLLISION" in equal[0]
+
+
+def test_multipart_figure_compares_ordered_completed_geometry_and_paint():
+    first, second = _paint(fill="#176B87"), _paint(fill="#D99024")
+    left, right = _entry("actual", first, "Observed"), _entry("snapshot", first, "Baseline")
+    def part(mode, x, y):
+        return SimpleNamespace(paint_mode=mode, line_cap="round", line_join="round",
+            commands=(PathCommand("move", ((x, y + 5),)), PathCommand("line", ((x + 10, y),))))
+    part_a, part_b = part("fill", 0, 0), part("stroke", 0, 0)
+    other_a = SimpleNamespace(paint_mode="fill", line_cap="round", line_join="round",
+        commands=(PathCommand("move", ((20, 40),)), PathCommand("line", ((40, 30),))))
+    other_b = SimpleNamespace(paint_mode="stroke", line_cap="round", line_join="round",
+        commands=(PathCommand("move", ((20, 40),)), PathCommand("line", ((40, 30),))))
+    equal = _batch((left, right), (
+        ("mark", _box(0, 0, 10, 10), (part_a, part_b), (first, second)),
+        ("mark", _box(20, 30, 20, 20), (other_a, other_b), (first, second)),
+    ))
+    assert "W_LEGEND_SWATCH_COLLISION" in equal[0]
+    reversed_parts = _batch((left, right), (
+        ("mark", _box(0, 0, 10, 10), (part_a, part_b), (first, second)),
+        ("mark", _box(20, 30, 20, 20), (other_b, other_a), (second, first)),
+    ))
+    assert "W_LEGEND_SWATCH_COLLISION" not in reversed_parts[0]
+
+
+def test_omitted_gradient_has_solid_identity_and_duplicate_uses_final_text():
+    omitted = GradientPaintIntent("#FFFFFF", "#000000", Decimal(90), "decorative-optional", False)
+    solid, no_omission = _paint(gradient=omitted), _paint()
+    left, right = _entry("actual", solid, "Actual"), _entry("planned", no_omission, "Planned")
+    result = _batch((left, right), (
+        ("shape", _box(0, 0, 10, 10), "Rect", solid, None),
+        ("shape", _box(50, 50, 30, 30), "Rect", no_omission, None),
+    ), contents={left.source_identity: "Shared…", right.source_identity: "Shared…"})
+    assert "W_LEGEND_SWATCH_COLLISION" in result[0]
+    assert "W_LEGEND_LABEL_DUPLICATE" in result[0]
+    warning = result[1][result[0].index("W_LEGEND_LABEL_DUPLICATE")]
+    assert warning.subjects == (
+        DiagnosticSubject(f"legend-key:{left.realized_key.key_id}", "Actual (actual)"),
+        DiagnosticSubject(f"legend-key:{right.realized_key.key_id}", "Planned (planned)"),
+    )
+
+
+def test_unemitted_pattern_declaration_does_not_distinguish_keys():
+    declared_only = ThemePaintWitness(
+        _paint().channels, _paint().effective_channels, PaintFamily.SOLID,
+        (("kind", ("catalog",)), ("asset", ("unused-pattern",))), None)
+    left = _entry("actual", declared_only, "Actual")
+    right = _entry("planned", _paint(), "Planned")
+    # The closed key witness says no pattern was emitted. Raw Theme declarations
+    # are deliberately not copied into RealizedLegendKey.pattern_identity.
+    result = _batch((left, right), (
+        ("shape", _box(0, 0, 10, 10), "Rect", declared_only, None),
+        ("shape", _box(20, 30, 20, 20), "Rect", _paint(), None),
+    ))
+    assert "W_LEGEND_SWATCH_COLLISION" in result[0]
+    admitted = _entry("actual", declared_only, "Actual",
+                      pattern_identity=("catalog", 8, 8, 0, 5000, (("circle",),)))
+    patterned = _batch((admitted, right), (
+        ("shape", _box(0, 0, 10, 10), "Rect", declared_only, None),
+        ("shape", _box(20, 30, 20, 20), "Rect", _paint(), None),
+    ))
+    assert "W_LEGEND_SWATCH_COLLISION" not in patterned[0]
+
+
+def test_line_marker_difference_and_filtered_label_are_not_reported():
+    paint = _paint(stroke="#176B87", fill=None, width=Decimal(2))
+    left, right = _entry("dependency", paint, "Link"), _entry("deadlineMark", paint, "Deadline")
+    def relation(entry, marker):
+        return SimpleNamespace(relation_id=entry.swatch_placement_id, suppressed=False,
+            semantic_id=entry.role, points=((0, 5), (10, 5)), path_commands=(),
+            marker_start=None, marker_end=marker)
+    request = SimpleNamespace(theme_tokens=None, paint_capabilities=None, surface_content=None)
+    text = [SimpleNamespace(placement_id=entry.text_placement_id, content=entry.label, overflow="fit")
+            for entry in (left, right)]
+    # Different terminal shapes are different figures even with the same line ink.
+    result = completed_legend_diagnostics(request, (left, right), (), (),
+        (relation(left, None), relation(right, "triangle")), text)
+    assert "W_LEGEND_SWATCH_COLLISION" not in result[0]
+
+    # A final candidate missing its label is filtered and cannot form a warning pair.
+    result = completed_legend_diagnostics(request, (left, right), (), (),
+        (relation(left, None), relation(right, None)), text[:1])
+    assert result == ((), ())
+
+
+def test_line_keys_use_canonical_theme_roles_and_full_completed_stroke():
+    left = SurfaceLegendEntry("dependency", "Dependency")
+    right = SurfaceLegendEntry("deadlineMark", "Deadline")
+    def relation(entry):
+        return SimpleNamespace(relation_id=entry.swatch_placement_id, suppressed=False,
+            semantic_id=entry.role, points=((0, 5), (10, 5)), path_commands=(),
+            marker_start=None, marker_end=None)
+    text = [SimpleNamespace(placement_id=entry.text_placement_id, content=entry.label, overflow="fit")
+            for entry in (left, right)]
+    equal_ink = completed_legend_diagnostics(_theme_request(), (left, right), (), (),
+        (relation(left), relation(right)), text)
+    assert "W_LEGEND_SWATCH_COLLISION" in equal_ink[0]
+    different_ink = completed_legend_diagnostics(_theme_request(different_line=True), (left, right), (), (),
+        (relation(left), relation(right)), text)
+    assert "W_LEGEND_SWATCH_COLLISION" not in different_ink[0]

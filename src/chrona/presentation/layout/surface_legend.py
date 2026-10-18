@@ -16,6 +16,7 @@ from chrona.presentation.layout.legend_ink import actual_symbol_token
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.semantic_registry import semantic_binding, mark_style_role
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
+from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance
 from chrona.presentation.model.font_metrics import FontMetricsError
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.layout.surface_quality import (
@@ -50,6 +51,8 @@ class SurfaceLegendBatch:
     warnings: tuple[FitWarning, ...]
     allocated_slot: SlotPlacement
     label_targets: tuple[tuple[str, str], ...] = ()
+    diagnostics: tuple[str, ...] = ()
+    diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
 
 
 def _legacy_swatch_size(legend_size: float) -> float:

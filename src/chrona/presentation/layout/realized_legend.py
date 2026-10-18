@@ -2,6 +2,7 @@
 from dataclasses import replace
 
 from chrona.presentation.layout.legend_candidates import actual_key_label, coalesce_actual_keys
+from chrona.presentation.layout.legend_diagnostics import completed_legend_diagnostics
 from chrona.presentation.layout.legend_ink import actual_mark_keys, mark_ink_keys
 from chrona.presentation.layout.style_legend import painted_style_occurrences
 from chrona.presentation.layout.surface_legend import SurfaceLegendContext, place_legend
@@ -162,4 +163,6 @@ def recompose_realized_legend(request, legend, marks, shapes, relations, text,
         replace(request, surface_content=replace(request.surface_content, legend_entries=entries)),
         legend.allocated_slot, metric_values, metric_for))
     warnings.extend(completed.warnings)
-    return completed
+    diagnostics, provenance = completed_legend_diagnostics(
+        request, entries, completed.marks, completed.shapes, completed.relations, completed.text)
+    return replace(completed, diagnostics=diagnostics, diagnostic_provenance=provenance)

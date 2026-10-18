@@ -328,6 +328,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         tuple(relations), tuple(text), metric_values, metric_for, side_content_warnings)
 
     if legend_batch is not None:
+        diagnostics.extend(legend_batch.diagnostics)
+        diagnostic_provenance.extend(legend_batch.diagnostic_provenance)
         slots = completed_legend_slots(slots, footer_provisional_slots, legend_batch, headings)
         by_source = {slot.source_ref: slot for slot in slots}
         marks.extend(legend_batch.marks)
