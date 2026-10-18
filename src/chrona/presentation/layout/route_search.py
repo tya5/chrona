@@ -58,6 +58,7 @@ SparseGraph = tuple[
     tuple[tuple[Edge, ...], ...],
     tuple[tuple[tuple[int, int], tuple[int, float]], ...],
 ]
+SparseGraphGeometry = tuple[tuple[Point, ...], tuple[tuple[Edge, ...], ...]]
 
 HistoryEntry = tuple[float, float, float, tuple[Point, Point]]
 _PROJECTION_LINE_LIMIT = 16
@@ -476,6 +477,7 @@ def orthogonal_route_candidates(
                 for left, top, right, bottom in (obstacle_envelope(item.geometry),)
             )
         visibility_base = None
+        scope = None
         if index is not None:
             scope = index.route_visibility_scope(classes, regions, port_ids)
             base_key = ("visibility-base-v1", repr((grid_offset, bounds)), scope.port_ids)
@@ -486,9 +488,23 @@ def orthogonal_route_candidates(
                     previous=cast(_VisibilityBase | None, scope.previous_bases.get(base_key)),
                     clear_additions=lambda a, b: scope.clears_additions(ObstacleSegment(a, b)))
                 scope.bases[base_key] = visibility_base
-        graph = _build_sparse_graph(
-            start, end, event_rects, grid_offset=grid_offset, bounds=bounds, clear=clear,
-            visibility_base=visibility_base, **({"exact_bound": False} if not exact_bound else {}))
+        geometry_key = (repr((start, end, grid_offset, bounds)), scope.port_ids) if scope is not None else None
+        geometry = (cast(SparseGraphGeometry | None,
+                         scope.endpoint_geometry.get(geometry_key))
+                    if scope is not None and geometry_key is not None else None)
+        if geometry is not None:
+            ordered, adjacency = geometry
+            remaining_bounds = (_reverse_bounds(adjacency, bisect_left(ordered, end)) if exact_bound else ())
+            graph = ordered, adjacency, remaining_bounds
+        else:
+            graph = _build_sparse_graph(
+                start, end, event_rects, grid_offset=grid_offset, bounds=bounds, clear=clear,
+                visibility_base=visibility_base,
+                **({"exact_bound": False} if not exact_bound else {}))
+            if scope is not None and geometry_key is not None:
+                ordered, adjacency, _ = graph
+                scope.endpoint_geometry.clear()
+                scope.endpoint_geometry[geometry_key] = (ordered, adjacency)
         if memo is not None and graph_key is not None:
             nodes, edges, heuristic = graph
             records = 1 + 2 * len(nodes) + sum(map(len, edges)) + len(heuristic)

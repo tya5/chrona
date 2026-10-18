@@ -44,6 +44,143 @@ def test_bound_modes_partition_graph_memo_but_share_visibility_geometry(monkeypa
     assert len(visibility_calls) == 1
 
 
+def test_endpoint_geometry_is_shared_across_bound_modes_without_changing_order_or_budget(monkeypatch):
+    from itertools import islice
+
+    original_builder = route_search._build_sparse_graph
+    original_reverse = route_search._reverse_bounds
+    builds, reversals = [], []
+
+    def counted_builder(*args, **kwargs):
+        builds.append(None)
+        return original_builder(*args, **kwargs)
+
+    def counted_reverse(*args, **kwargs):
+        reversals.append(None)
+        return original_reverse(*args, **kwargs)
+
+    monkeypatch.setattr(route_search, "_build_sparse_graph", counted_builder)
+    monkeypatch.setattr(route_search, "_reverse_bounds", counted_reverse)
+
+    def candidates(index, exact_bound):
+        budget = route_search.RelationExpansionBudget(4096)
+        found = tuple(islice(route_search.orthogonal_route_candidates(
+            (0, 0), (10, 0), index, bounds=(-2, -5, 12, 5),
+            exact_bound=exact_bound, budget=budget), 2))
+        return found, budget.expansions
+
+    index = _index()
+    before = candidates(index, False)
+    assert len(index._route_memo.results) == 1
+    relaxed_graph = next(iter(index._route_memo.results.values()))
+    assert relaxed_graph[2] == ()
+
+    after = candidates(index, True)
+    assert len(builds) == 1  # only identical ordered graph geometry is reused
+    assert len(reversals) == 1  # exact reverse data is completed for this mode
+    assert len(index._route_memo.results) == 2  # existing exact/relaxed memo keys remain separate
+    exact_graph = next(value for value in index._route_memo.results.values() if value[2])
+    assert relaxed_graph[:2] == exact_graph[:2]
+
+    # Reusing a previously completed endpoint geometry must match the same
+    # candidate prefix and expansion accounting from a cold selection.
+    cold = candidates(_index(), False)
+    assert before == cold
+    assert after == candidates(_index(), True)
+    assert candidates(index, False) == before
+    assert candidates(index, True) == after
+    assert len(builds) == 3  # each cold selection builds its own geometry
+    assert len(reversals) == 2
+
+
+def test_endpoint_geometry_is_a_single_evicted_slot_per_selection(monkeypatch):
+    index = _index()
+    index.add(SurfaceObstacle("port:one", "port", "timeline", ObstacleRect(20, 20, 21, 21)))
+    # Disable the separate bounded result memo so this test measures only the
+    # active per-selection geometry slot, including its last-key eviction.
+    memo = index._route_memo
+    serial = 0
+    while memo.content_id((f"occupied:{serial}",)) is not None:
+        serial += 1
+    assert memo.content_records < ROUTE_MEMO_LIMIT
+    assert memo.content_id(tuple(repr(item) for item in index.select())) is None
+
+    original_builder = route_search._build_sparse_graph
+    calls = []
+
+    def counted_builder(*args, **kwargs):
+        calls.append(None)
+        return original_builder(*args, **kwargs)
+
+    monkeypatch.setattr(route_search, "_build_sparse_graph", counted_builder)
+
+    def query(start=(0, 0), *, bounds=(-2, -5, 12, 5), grid_offset=2.0, port_ids=()):
+        return next(route_search.orthogonal_route_candidates(
+            start, (10, 0), index, bounds=bounds, grid_offset=grid_offset,
+            port_ids=port_ids, limit=4096))
+
+    scope = index.route_visibility_scope(None, None, ())
+    assert scope.endpoint_geometry == {}
+    query()
+    assert len(scope.endpoint_geometry) == 1
+    query()
+    query((1, 0))
+    query(bounds=(-3, -5, 12, 5))
+    query(grid_offset=3.0)
+    query(port_ids=("port:one",))
+    assert len(scope.endpoint_geometry) == 1
+    assert len(calls) == 5
+
+
+def test_endpoint_geometry_does_not_survive_selection_content_changes(monkeypatch):
+    original_builder = route_search._build_sparse_graph
+    calls = []
+
+    def counted_builder(*args, **kwargs):
+        calls.append(None)
+        return original_builder(*args, **kwargs)
+
+    monkeypatch.setattr(route_search, "_build_sparse_graph", counted_builder)
+    index = _index()
+    first_scope = index.route_visibility_scope(None, None, ())
+    next(route_search.orthogonal_route_candidates(
+        (0, 0), (10, 0), index, bounds=(-2, -5, 12, 5)))
+    assert len(first_scope.endpoint_geometry) == 1
+    unchanged = index.copy()
+    assert unchanged.route_visibility_scope(None, None, ()).endpoint_geometry is first_scope.endpoint_geometry
+
+    index.add(SurfaceObstacle("mark:two", "mark", "timeline", ObstacleRect(7, -3, 8, 3)))
+    added_scope = index.route_visibility_scope(None, None, ())
+    assert added_scope.endpoint_geometry is not first_scope.endpoint_geometry
+    assert added_scope.endpoint_geometry == {}
+    next(route_search.orthogonal_route_candidates(
+        (0, 0), (10, 0), index, bounds=(-2, -5, 12, 5)))
+    assert len(added_scope.endpoint_geometry) == 1
+    assert unchanged.route_visibility_scope(None, None, ()).endpoint_geometry is first_scope.endpoint_geometry
+
+    overridden = index.copy(geometry_overrides={
+        "mark:one": ObstacleRect(3, -3, 5, 3),
+    })
+    override_scope = overridden.route_visibility_scope(None, None, ())
+    assert override_scope.endpoint_geometry is not added_scope.endpoint_geometry
+    assert override_scope.endpoint_geometry == {}
+    next(route_search.orthogonal_route_candidates(
+        (0, 0), (10, 0), overridden, bounds=(-2, -5, 12, 5)))
+    assert len(override_scope.endpoint_geometry) == 1
+    assert len(calls) == 3
+
+
+def test_unselected_addition_preserves_the_existing_geometry_slot():
+    index = _index()
+    next(route_search.orthogonal_route_candidates(
+        (0, 0), (10, 0), index, bounds=(-2, -5, 12, 5), classes=("mark",)))
+    before = index.route_visibility_scope(("mark",), None, ()).endpoint_geometry
+    assert len(before) == 1
+    index.add(SurfaceObstacle("text:excluded", "text", "timeline", ObstacleRect(1, -1, 2, 1)))
+    assert index.route_visibility_scope(("mark",), None, ()).endpoint_geometry is before
+    assert len(before) == 1
+
+
 def test_cheap_bound_keeps_alternative_prefixes_and_budget_accounting():
     from itertools import islice
     index = _index()
@@ -111,7 +248,9 @@ def test_record_capacity_bypasses_graphs_without_changing_candidates(monkeypatch
     repeated = candidates(index.copy())
     assert fresh == first == repeated
     assert fresh[0] and fresh[1] == "E_PRESENTATION_ROUTE_LIMIT"
-    assert len(calls) == 3
+    # The full result memo remains exhausted, but an identical copied
+    # selection can reuse its one active endpoint-geometry slot.
+    assert len(calls) == 2
     assert list(memo.results) == [("occupied",)]
     assert memo.result_records == ROUTE_MEMO_LIMIT - 1
 
