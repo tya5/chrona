@@ -112,3 +112,19 @@ must retain its original failure rather than claim a safe pre-write rejection.
   authoring code echoes commandId but has no durable replay; successful retry
   becomes stale-CAS rejection. Resolve that contract before claiming honest
   idempotent annotations or the item's replay acceptance. No item3/2 code yet.
+
+## Item3 design plan (preparation; code waits for item5 release)
+
+- Use case: an agent reverses an accepted Actual write, then reapplies its intent,
+  without overwriting intervening changes or rewinding immutable revision history.
+- Review Spec10 §8 against Store ownership (Spec15), command/reference contracts
+  (Spec65), and CLI/MCP shared dispatch/write gates (Spec66). Preserve snapshot
+  non-reversibility; do not extend this item to generic Project history.
+- Resolve history authority, origin/revert eligibility, replay identity, current
+  base/content checks, and missing/corrupt historical bytes. Existing ledger
+  before/after refs can restore content, but its request hash cannot supply the
+  original semantic intent required by redo. Decide the smallest durable intent
+  representation and an explicit closed-command-schema migration before code.
+- Order: selected contract/specification + whole-architecture review → implementation
+  plan → shared engine/adapter/schema work → stale/replay/no-overwrite and real
+  MCP stdio evidence → one reviewed release. Literal acceptance is listed above.
