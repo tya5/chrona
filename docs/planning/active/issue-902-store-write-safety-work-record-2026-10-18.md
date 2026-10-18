@@ -1,12 +1,13 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 PR1698 passed every product check in39094985183; readiness alone
-failed after main advanced. Normal integration `30d957743` follows main
-`e9432fb85` after B's1697 landing; that update changes CI/AGENTS only, not the
-product code verified by107 focused command/adapter/process/docs tests and
-11/37 inward imports. Final push requires successful derived-main on this exact
-current tip. Design `69273a1bf` and plan `54b9ddd20`
-precede code. #1679/#1680 are closed after exact-main39094741641 passed all
+Status: item5 PR1698 follows ready main `8e25a4232` after B's1695 landing.
+CI39099136587 passed every product check; readiness failed when main advanced.
+The final official artifact12126176185 retains all50 SVG/50 Scene bytes; only
+diagnostic source coordinates differ from the prior snapshot. Current-base
+Store/engine/process tests pass21; earlier focused107 and inward imports11/37
+also passed. Final-head CI and exact-main release remain required. Design
+`69273a1bf` and plan `54b9ddd20` precede code.
+#1679/#1680 are closed after exact-main39094741641 passed all
 three OSes, public reproduction and MCP. Their archival/ledger update is an
 independent commit in PR1698; separate docs PR1699 was superseded to avoid
 another serial snapshot/sync cycle. This adds no item3/item2 product code.
