@@ -1350,6 +1350,9 @@ growth/visible-overflow; never crop text to force the declared viewport.
 Layout completes existing shared Theme relation terminals and endpoint
 metadata, including an explicitly selected terminal `none`. Scene projects
 them just as for other completed relations; adapters do not infer direction.
+Network relations and their line keys carry Layout-completed paint bounds;
+Scene copies these without choosing a stroke envelope. Shared legend text
+carries the completed `legendLabel` semantic identity before Scene projection.
 
 Retain deterministic obstacle-aware routing and its declared quality limits.
 Check completed paths and terminal ink against unrelated nodes and headers.
