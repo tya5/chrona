@@ -333,6 +333,11 @@ batch **1010 passed**; final recovery/helper migration **489 passed** and
 case/staging/process batch **58 passed**. These batches overlap, not additive.
 `tools/check_import_direction.py`: 11 packages/37 inward edges; diff check clean.
 Full local pytest/public-materializer reruns deliberately delegated to CI.
+Publication preflight incorporates the predecessor's inventory/schema migration
+repairs and registers the extracted receipt/request/CAS identity guards with
+their existing producers. Classification validation and70 focused authoring,
+recovery, process/MCP and inventory tests pass. No product behavior or generated
+report was changed to satisfy the inventory. Item2 remains WIP, not released.
 Current-base integration of predecessor `64c8a6094`/ready `9e224db6c` preserves
 item2 product code;40 focused history/authoring/process/stdio/docs cases pass.
 Design `cdf0289f8`, plan `fa31cc79c`, code `fa831e384` and review `0b79e65a0`
