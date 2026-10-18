@@ -26,8 +26,9 @@ def test_content_phases_follow_routes_and_relation_labels_in_source_order(tmp_pa
     for attribute, name in (("compose_surface_routes", "routes"), ("place_relation_labels", "relation-labels")):
         monkeypatch.setattr(surface_route_label_plan, attribute,
                             spy(name, getattr(surface_route_label_plan, attribute)))
-    for attribute, name in (("place_legend", "legend"), ("place_notes", "notes"),
-                            ("complete_footer_band", "footer"), ("place_summary", "summary")):
+    for attribute, name in (("reserve_potential_legend", "legend"), ("place_notes", "notes"),
+                            ("complete_footer_band", "footer"), ("place_summary", "summary"),
+                            ("recompose_realized_legend", "realized-legend")):
         monkeypatch.setattr(surface_composer, attribute, spy(name, getattr(surface_composer, attribute)))
     example = ROOT / "examples/halcyon-1"
     project_path = example / "project.yaml"
@@ -48,7 +49,7 @@ def test_content_phases_follow_routes_and_relation_labels_in_source_order(tmp_pa
     trials = events.count("routes")
     assert trials in {1, 2}
     assert events[:2 * trials] == ["routes", "relation-labels"] * trials
-    assert events[2 * trials:] == ["legend", "footer", "summary"]  # #1649: an empty notes source has no phase
+    assert events[2 * trials:] == ["legend", "footer", "summary", "realized-legend"]
 
 
 def test_source_content_phases_take_no_obstacle_index() -> None:

@@ -413,22 +413,23 @@ def test_object_binding_keeps_selection_unavailability_separate_from_unknown_obj
     assert failure.value.source_ref == "/body/bindings/milestone/object"
 
 
-def test_view_legend_wording_keeps_arbitrary_role_and_key_geometry(tmp_path):
+def test_view_legend_wording_keeps_realized_role_and_key_geometry(tmp_path):
     parts = _parts(slot=False)
     parts["layout"]["root"]["children"].insert(1, dict(SLOT, id="legend", source="legend"))
-    parts["view"]["body"]["wording"] = {"legend": {"project-role": "PROJECT WINDOW"}}
-    parts["theme"]["body"]["roles"]["project-role"] = {}
-    parts["theme"]["body"]["colorBindings"]["project-role.fill"] = "text"
+    parts["view"]["body"]["wording"] = {"legend": {"actual": "PROJECT WINDOW"}}
     detail = {"version": "chrona/review-detail-profile/v0.1", "id": "legend",
-              "body": {"legend": [{"role": "project-role", "label": "DEFAULT"}]}}
-    rendered = sr.render(tmp_path, _source(), presentation=parts, detail=detail)
+              "body": {"legend": [{"role": "actual", "label": "DEFAULT"}]}}
+    actual = deepcopy(ACTUAL)
+    actual["body"]["observations"] = [{"id": "a-observed", "sequence": 1, "projectObjectId": "a",
+                                        "actual": {"start": "2026-01-05", "finish": "2026-02-14", "progress": 1.0}}]
+    rendered = sr.render(tmp_path, _source(), presentation=parts, detail=detail, actual=actual)
     assert b">PROJECT WINDOW<" in rendered.artifact.content
     assert b">DEFAULT<" not in rendered.artifact.content
     explicit_dir = tmp_path / "explicit"
     explicit_dir.mkdir()
     parts["view"]["body"].pop("wording")
     detail["body"]["legend"][0]["label"] = "PROJECT WINDOW"
-    explicit = sr.render(explicit_dir, _source(), presentation=parts, detail=detail)
+    explicit = sr.render(explicit_dir, _source(), presentation=parts, detail=detail, actual=actual)
     assert rendered.artifact.content == explicit.artifact.content
     assert rendered.surface.primitives == explicit.surface.primitives
 

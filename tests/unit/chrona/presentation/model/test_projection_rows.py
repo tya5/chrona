@@ -136,6 +136,23 @@ def test_explicit_row_selects_each_named_scenario_by_its_declared_id():
             "late": ({"objects": {"task": {"title": "Late", "fields": {}}}}, {"task": {"start": date(2026, 3, 1), "end": date(2026, 3, 2)}}),
         })
     assert [(item.scenario_id, item.title) for item in projection.rows[0].items] == [("early", "Early"), ("late", "Late")]
+    assert projection.bound_comparison_sources == frozenset({"scenario"})
+
+
+def test_projection_records_supplied_scenario_even_when_explicit_rows_do_not_select_it():
+    project = {"objects": {"task": {"title": "Current", "fields": {}}}, "entities": {}}
+    view = ViewInput(None, None, None, ViewWindow("selected-planned", None, None, 0),
+        ViewComparison(None, "optional", None, None, ()), ViewVisibility(False, "none", "none"), (), (),
+        ViewRows("explicit", (ViewRow("r", None, 0, None, None, "current", (
+            ViewRowItem("current", "primary", "task", "stacked"),)),)), None, (), None, None, None)
+    scenario = {"objects": {"task": {"title": "Risk case", "fields": {}}}}
+
+    projection = build_review_projection(
+        project, {"task": {"start": date(2026, 2, 1), "end": date(2026, 2, 2)}}, view, None,
+        scenarios={"risk": (scenario, {"task": {"start": date(2026, 3, 1), "end": date(2026, 3, 2)}})})
+
+    assert projection.rows[0].table_subject_id == "current"
+    assert projection.bound_comparison_sources == frozenset({"scenario"})
 
 
 def test_automatic_rows_overlay_the_selected_scenario_on_the_shared_track():

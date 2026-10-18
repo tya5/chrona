@@ -131,6 +131,7 @@ def _compose(value: SurfaceRenderPlanInput, plan: PreparedSurfaceRenderPlan):
                            if value.view.surface == "table-timeline" else None),
         theme_tokens=ThemeTokenView(value.theme), font_metrics=value.font_metrics,
         capabilities=dict(value.capabilities), icon_assets=value.icon_assets,
+        paint_capabilities=value.paint_capabilities,
         visual_requests=value.visual_requests, capacity_short_sources=plan.capacity_short_sources,
         declared_viewport=plan.declared_viewport, auto_block_limit=plan.profile.distances.get("/reviewSurface/maxBlockSize"),
         progress=value.progress, previous_route_hints=value.previous_route_hints))

@@ -187,8 +187,7 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
     contract = request.presentation_contract
     visibility_index = getattr(request, "mark_visibility_index", None)
     style_index = getattr(request.surface_content, "style_intents", None)
-    style_sources = (StyleSourceOccurrences.from_projection(projection, as_of=contract.time.as_of)
-                     if style_index is not None and style_index.intents else None)
+    style_sources = StyleSourceOccurrences.from_projection(projection, as_of=contract.time.as_of)
 
     def prepared_style(item: Any, *, kind: MarkOccurrenceKind,
                        container_id: str, source_kind: str, member_id: str | None = None):
@@ -212,12 +211,17 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
 
     window_marks: list[CompletedWindowMark] = []
 
-    def completed_marks(composition, visibility, instance_id):
+    def completed_marks(composition, visibility, instance_id, source_occurrence):
+        from chrona.presentation.model.mark_semantics import canonical_mark_semantic
+        completed_marks = tuple(replace(mark,
+            source_occurrence_key=source_occurrence.style_key(canonical_mark_semantic(
+                mark.semantic_id, mark.mark_shape, gate_declared=request.theme_tokens.has_role("gate"))))
+            for mark in composition.marks)
         if visibility is None:
-            return composition.marks
+            return completed_marks
         facets = {facet.source.placement_id(instance_id): facet for facet in visibility.facets}
         result = []
-        for mark in composition.marks:
+        for mark in completed_marks:
             facet = facets.get(mark.placement_id)
             if facet is None:
                 raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/items",
@@ -288,12 +292,14 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                     if owner is not None else True),
                 selection=admitted_source_selection(visibility) if visibility is not None else None,
                 style_intents=prepared_style(item, kind=occurrence_kind,
-                                             container_id=occurrence_container, source_kind=source_kind,
-                                             member_id=owner[1] if owner is not None else None),
+                                             container_id=occurrence_container, source_kind=source_kind),
             )
             marks.extend(replace(mark, lane_row_id=owner[0], lane_member_id=owner[1],
                                  lane_source_kind=source_kind) if owner is not None else mark
-                         for mark in completed_marks(composition, visibility, instance_id))
+                         for mark in completed_marks(composition, visibility, instance_id,
+                             style_sources.occurrence(occurrence_kind, occurrence_container,
+                                 item.item_id or item.object_id,
+                                 item.object_id, source_kind)))
             diagnostics.extend(composition.diagnostics)
             diagnostic_provenance.extend(composition.diagnostic_provenance)
             absences.extend(composition.absences)
@@ -486,7 +492,9 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                     style_intents=prepared_style(item, kind=MarkOccurrenceKind.FOLDED,
                                                  container_id=folded.group_id, source_kind=item.source_kind),
                 )
-                marks.extend(completed_marks(composition, visibility, instance_id))
+                marks.extend(completed_marks(composition, visibility, instance_id,
+                    style_sources.occurrence(MarkOccurrenceKind.FOLDED, folded.group_id,
+                        item.item_id or item.object_id, item.object_id, item.source_kind)))
                 diagnostics.extend(composition.diagnostics)
                 diagnostic_provenance.extend(composition.diagnostic_provenance)
                 absences.extend(composition.absences)

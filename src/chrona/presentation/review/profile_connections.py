@@ -204,10 +204,16 @@ def resolve_profile_connections(view: ViewInput, summary: SummaryProfileInput | 
     legend_wording = wording.get("legend", {})
     if legend_wording:
         declared_roles = {entry.role for entry in (detail.legend if detail is not None else ())}
+        actual_candidate = "actual" in declared_roles
+        actual_qualifiers = {"actual-ahead", "actual-on-track", "actual-behind"}
         for role in legend_wording:
-            if role not in declared_roles and role != "forecast":
+            if role in actual_qualifiers:
+                valid = actual_candidate
+            else:
+                valid = role in declared_roles or role in {"forecast", "progressFill"}
+            if not valid:
                 pointer = f"/body/wording/legend/{_pointer_token(str(role))}"
-                raise ProfileConnectionError("E_VIEW_WORDING_UNKNOWN", f"legend wording role {role!r} is not declared by the selected Detail Profile", pointer)
+                raise ProfileConnectionError("E_VIEW_WORDING_UNKNOWN", f"legend wording target {role!r} has no declared legend candidate", pointer)
         if detail is not None:
             effective_detail = replace(
                 detail,
