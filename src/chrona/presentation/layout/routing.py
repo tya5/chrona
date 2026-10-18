@@ -463,7 +463,9 @@ def select_relation_route(
     The order is the caller's declared deterministic candidate order.
     Without a rank, the first accepted pair wins. With a rank, eligible
     candidates found within deterministic per-pair quotas are compared and
-    exact ties keep the first. A search failure is
+    exact ties keep the first. A fully revalidated preferred route precedes
+    ordinary selection under either policy; rank never displaces that hint.
+    A search failure is
     distinguished from unrelated invalid input; endpoint
     labels are never exempted from either corridor or body collisions.
     Explicit first-fit sorts admitted ports and tries finite shapes before
@@ -514,7 +516,7 @@ def select_relation_route(
             for port_id in (f"port:{host_id or relation_scene_id}:{side}",) if obstacles.has(port_id))
         return blockers, port_ids
 
-    for pair, middle in (preferred_routes if search_policy == "first-fit" else ()):
+    for pair, middle in preferred_routes:
         blockers, port_ids = pair_domain(*pair)
         if pair not in port_pairs or blockers:
             hint_rejection = "egress-collision" if blockers else "unadmitted-port-pair"

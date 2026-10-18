@@ -15,7 +15,7 @@ from chrona.storage.revision_store import LocalSnapshotReader, snapshot_director
 from chrona.usecases.materialize import _OverlayBuilder
 from chrona.usecases.failure_report import report_failure
 from chrona.resources import default_preset_resource, default_preset_root
-from chrona.presentation.model.info_diagnostics import RelationHintSummary
+from chrona.presentation.model.info_diagnostics import RelationHintReceipt, RelationHintSummary
 
 
 @pytest.fixture(scope="module")
@@ -122,20 +122,58 @@ def test_draft_refuses_wrong_project_input(tmp_path, previous_bytes):
         render_draft(DraftRenderRequest(project, "svg", previous_scene=previous))
 
 
-def test_best_ignores_valid_prior_geometry_without_output_or_receipt_changes(tmp_path, previous_bytes):
+@pytest.mark.parametrize("search_policy", ["first-fit", "best"])
+def test_both_policies_revalidate_prior_geometry_and_report_receipts(tmp_path, previous_bytes, search_policy):
     project = Path(__file__).resolve().parents[3] / "fixtures/routing_revision/project-v1.yaml"
     preset = yaml.safe_load(default_preset_resource().read_bytes())
     layout = yaml.safe_load((default_preset_root() / preset["body"]["resources"]["layout"]["path"]).read_bytes())
-    layout["relationRouting"]["search"] = "best"
+    layout["relationRouting"]["search"] = search_policy
     layout_path = tmp_path / "best.yaml"
     layout_path.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
     previous = tmp_path / "prior.scene.json"
     previous.write_bytes(previous_bytes)
     baseline = render_draft(DraftRenderRequest(project, "svg", layout=layout_path)).rendered
     hinted = render_draft(DraftRenderRequest(project, "svg", layout=layout_path, previous_scene=previous)).rendered
-    assert hinted.artifact.content == baseline.artifact.content
-    assert serialize_scene(hinted.scene) == serialize_scene(baseline.scene)
-    assert hinted.info_diagnostics == baseline.info_diagnostics
+    assert not any(isinstance(item, RelationHintSummary) for item in baseline.info_diagnostics)
+    summary, = [item for item in hinted.info_diagnostics if isinstance(item, RelationHintSummary)]
+    receipts = [item for item in hinted.info_diagnostics if isinstance(item, RelationHintReceipt)]
+    assert summary.payload()["accepted"] > 0
+    assert summary.payload()["relationInstances"] == len(receipts)
+    prior_routes = {primitive["id"]: primitive["points"]
+                    for surface in json.loads(previous_bytes)["surfaces"]
+                    for primitive in surface["primitives"] if primitive.get("kind") == "Path"}
+    current_routes = {primitive.scene_id: primitive.points for primitive in hinted.surface.primitives
+                      if primitive.kind == "Path"}
+    for receipt in receipts:
+        if receipt.disposition == "accepted":
+            assert not receipt.searched
+            assert current_routes[receipt.relation_id] == tuple(tuple(point) for point in prior_routes[receipt.relation_id])
+
+
+@pytest.mark.parametrize("search_policy", ["first-fit", "best"])
+@pytest.mark.parametrize("mode", ["overlap", "stub"])
+def test_modes_bypassing_normal_routing_explain_unusable_hints(tmp_path, previous_bytes, search_policy, mode):
+    project = Path(__file__).resolve().parents[3] / "fixtures/routing_revision/project-v1.yaml"
+    preset = yaml.safe_load(default_preset_resource().read_bytes())
+    layout = yaml.safe_load((default_preset_root() / preset["body"]["resources"]["layout"]["path"]).read_bytes())
+    layout["relationRouting"].update(search=search_policy, unroutable=mode)
+    layout_path, previous = tmp_path / "layout.yaml", tmp_path / "prior.scene.json"
+    layout_path.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
+    previous.write_bytes(previous_bytes)
+    view = yaml.safe_load((default_preset_root() / preset["body"]["resources"]["view"]["path"]).read_bytes())
+    # Receipt behavior is independent of plot-name packing. The default plot
+    # names expose a pre-existing stub/text overlap tracked separately in1763.
+    view["body"]["visibility"]["labels"]["placement"] = "table"
+    view_path = tmp_path / "table-labels.yaml"
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+    hinted = render_draft(DraftRenderRequest(project, "svg", view=view_path, layout=layout_path,
+                                           previous_scene=previous)).rendered
+    receipts = [item for item in hinted.info_diagnostics if isinstance(item, RelationHintReceipt)]
+    summary, = [item for item in hinted.info_diagnostics if isinstance(item, RelationHintSummary)]
+    assert receipts
+    assert all(item.disposition == "unusable" and item.reason == "mode-bypasses-normal"
+               and item.code == "I_LAYOUT_RELATION_HINT" and not item.searched for item in receipts)
+    assert summary.payload()["unusable"] == len(receipts)
 
 
 @pytest.mark.parametrize("duplicate", [False, True])

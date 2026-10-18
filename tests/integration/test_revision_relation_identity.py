@@ -2,10 +2,12 @@
 from datetime import date, timedelta
 import json
 
+import pytest
 import yaml
 
 from chrona.presentation.model.info_diagnostics import RelationHintReceipt
 from chrona.presentation.scene.serialization import serialize_scene
+from chrona.resources import default_preset_resource, default_preset_root
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
 from tests.support import synthetic_review as sr
 
@@ -17,7 +19,8 @@ def _routes(rendered):
             and primitive.from_instance_id and primitive.to_instance_id}
 
 
-def test_removed_and_appended_relation_keeps_other_primitive_ids_and_hints(tmp_path):
+@pytest.mark.parametrize("search_policy", ["first-fit", "best"])
+def test_removed_and_appended_relation_keeps_other_primitive_ids_and_hints(tmp_path, search_policy):
     start = date(2026, 2, 2)
     objects = {f"{pair}-{side}": sr.span(f"{pair}-{side}", start + timedelta(days=offset), 2)
                for pair in range(4) for side, offset in (("a", 0), ("b", 7))}
@@ -26,16 +29,21 @@ def test_removed_and_appended_relation_keeps_other_primitive_ids_and_hints(tmp_p
                   "to": {"object": f"{pair}-b", "endpoint": "start"}}
                  for pair in range(4)]
     project = sr.project(objects, relations[:3])
+    preset = yaml.safe_load(default_preset_resource().read_bytes())
+    layout = yaml.safe_load((default_preset_root() / preset["body"]["resources"]["layout"]["path"]).read_bytes())
+    layout["relationRouting"]["search"] = search_policy
+    layout_path = tmp_path / "layout.yaml"
+    layout_path.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
     path, previous = tmp_path / "project.yaml", tmp_path / "previous.scene.json"
     path.write_text(yaml.safe_dump(project, sort_keys=False), encoding="utf-8")
-    before = render_draft(DraftRenderRequest(path, "svg")).rendered
+    before = render_draft(DraftRenderRequest(path, "svg", layout=layout_path)).rendered
     before_routes = _routes(before)
     assert len(before_routes) == 3
     previous.write_bytes(serialize_scene(before.scene))
 
     project["relations"] = [*relations[1:3], relations[3]]
     path.write_text(yaml.safe_dump(project, sort_keys=False), encoding="utf-8")
-    after = render_draft(DraftRenderRequest(path, "svg", previous_scene=previous)).rendered
+    after = render_draft(DraftRenderRequest(path, "svg", layout=layout_path, previous_scene=previous)).rendered
     after_routes = _routes(after)
     retained = {"relation:id:link-1", "relation:id:link-2"}
     assert {key: before_routes[key] for key in retained} == {key: after_routes[key] for key in retained}
@@ -52,7 +60,7 @@ def test_removed_and_appended_relation_keeps_other_primitive_ids_and_hints(tmp_p
             if primitive.get("sourceRef", "").startswith("relation:id:"):
                 primitive["sourceRef"] = primitive["sourceRef"].replace("relation:id:", "relation:0:", 1)
     previous.write_text(json.dumps(old_scene), encoding="utf-8")
-    legacy = render_draft(DraftRenderRequest(path, "svg", previous_scene=previous)).rendered
+    legacy = render_draft(DraftRenderRequest(path, "svg", layout=layout_path, previous_scene=previous)).rendered
     legacy_receipts = [item for item in legacy.info_diagnostics if isinstance(item, RelationHintReceipt)]
     assert len(legacy_receipts) == 3
     assert all(item.disposition == "absent" for item in legacy_receipts)

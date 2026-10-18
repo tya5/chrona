@@ -205,4 +205,13 @@ again (15 tests). Eight migrated integration modules compile and collect
 (183 cases); their expensive corpus checks remain assigned to CI. Independent
 S1 review found no remaining identity/ownership blocker; the uniqueness-change
 limitation above is explicit. No schema, preset or generated output is edited.
-S2 product implementation and the full trial-8 acceptance remain incomplete.
+S2 now validates hints under both policies and preserves an accepted hint
+before optional back-route ranking. Focused routing/hint/recovery/revision
+batch: 52 passed; previous-Scene and update-guide batch: 22 passed. These
+include best accepting retained IDs, failed hints falling through, unchanged
+old-ID miss behavior, and explicit overlap/stub unusable receipts. A default
+plot-name/stub collision reproduced on public `1de259e69` is independently
+tracked in [1763](https://github.com/tya5/chrona/issues/1763); the receipt test
+uses a valid table-label View without changing product behavior for that bug.
+Public snapshot/CI, the slip/detour synthetic and full trial-8 acceptance are
+still pending. S3 product implementation has not started.
