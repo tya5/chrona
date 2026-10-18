@@ -27,8 +27,8 @@ Redo revalidates intent; revert creates a new immutable revision. Legacy
 unrecoverable intent is diagnosed, not guessed. No renderer or project YAML
 changes; generic Project history is unchanged.
 
-Prepared integration includes reviewer1704/1705; the final PR must follow
-the Windows repair's trusted-ready main before publication.
+Prepared integration `bf83da0e0` includes reviewer1704/1705 and Windows repair
+main `381cf404a`; final publication requires its successful trusted-ready gate.
 History/process/locking/MCP focused19 and agent/ledger/schema-packaging/CLI115
 pass; the literal-review checker passes. Schema equivalence passes: L1 added1/
 equal41, L2/L3 with the same five baseline-invalid documents. Independent final
@@ -41,7 +41,9 @@ focused tests. Independent repair review passes228 address-version, resources,
 history, ledger and schema tests: supported v0.3 dispatch remains tested, and
 baseline-invalid documents retain their exact declared-version mapping.
 Actual-byte identities and canonical request identities are classified
-separately. The initial artifact preserves all50 SVG/Scene pairs. Neither
+separately. Repaired-main lock/history/process/coverage tests45 and the
+history/process/agent batch64 pass. The initial artifact preserves all50
+SVG/Scene pairs. Neither
 that failed run nor the prepared corrections establish release acceptance.
 
 Release is **not accepted yet**: final current-head PR CI, official artifact

@@ -115,8 +115,8 @@ must retain its original failure rather than claim a safe pre-write rejection.
   checks:6 passed. An initial broader run had63 pass/2 render failures because
   this WT lacked render extras; installing `.[render]` plus the Noto provider in
   its own venv resolved both. No product workaround or weakened assertion.
-- Current-main integration and PR CI passed; exact-main release39101259252
-  on `ca1e0bbe8` remains pending.
+- Original release39101259252 failed Windows; repair1707 is merged as
+  `381cf404a`. Its successful native/full release remains required.
 
 ## Item5 literal acceptance review (release pending)
 
@@ -131,7 +131,7 @@ Implementation `ab376c78e` with L1 `a4c7fe08c`, L2 `9dcf22c16`; public WIP
 | --- | --- | --- |
 | Acceptance for 2, 3 and 5: each has its own stale-base, replay and no-overwrite tests, plus an MCP stdio test where it is a tool. | met (item5) | `tests/integration/test_actual_store_concurrency.py`, `test_store_write_lock.py`, `test_store_transaction_span.py`; MCP stdio gate/stale/replay/no-overwrite checks recorded above. Not evidence for items2/3. |
 | Item 5 needs a two-process test that shows a lost update today and none after the fix. | met | Regression605232991 fails on baseline and passes after9dcf22c16, with all post-A Store files unchanged. |
-| Required release gate on current main containing this review. | not met | PR1698 merged after all final-head checks39100063943 passed; exact-main three-OS39101259252 remains pending. |
+| Required release gate on current main containing this review. | not met | Original release39101259252 failed Windows. Repair1707 passed final CI39104093015 and merged381cf404a; successful repaired exact-main three-OS release remains required. |
 
 Engine owns the complete replay/CAS/publication/record scope; storage owns root/
 thread/process exclusion. Authoring keeps separate workspace identity. No new
