@@ -220,7 +220,9 @@ groups, object-type groups and ungrouped rows do not cover ancestors by text
 or coincident identifier. Omitted/hidden headers cover nothing. Keep the leaf.
 Explicit hierarchy depth, folding, selection and stable occurrence identities
 retain their existing meanings. Depth-limited selection is not overridden to
-invent missing rows.
+invent missing rows. Selected points below a finite hierarchy cutoff remain
+members of the nearest retained ancestor row, not extra rows (Specification
+38 section 2, #1700); Model closes that membership before Layout.
 
 Content normalization closes the name once before Layout; table and plot
 carriers consume the same path fact and existing path separator. An existing
