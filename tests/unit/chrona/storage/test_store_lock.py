@@ -219,4 +219,3 @@ def test_file_lock_uses_lazy_windows_adapter_without_fcntl(tmp_path, monkeypatch
         file_lock.lock_file(handle)
         file_lock.unlock_file(handle)
     assert [mode for _, mode, _ in calls] == [fake.LK_LOCK, fake.LK_UNLCK]
-
