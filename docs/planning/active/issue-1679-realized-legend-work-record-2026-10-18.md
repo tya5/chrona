@@ -100,29 +100,28 @@ I4 checker alignment compares complete ordered milestone part paints, exact
 Progress hosts and fill-first redundancy, and respects optional legend regions.
 Wrong ink, missing nonredundant keys, corrupt/missing parts, unrelated hosts and
 relation bounds retain negative tests. Official50-scene reevaluation has zero
-findings. Read-only public evidence tests consume canonical manifest outputs
-from the official snapshot, not a second stale fixture-output mirror. Mutating
-resource tests retain isolated fixtures. No source-YAML or generated-repo edits.
+findings. Controller regression tests retain independent `tests/fixtures/`
+inputs, as required by the retired-example guard. Their affected private golden
+SVG/Scene outputs are refreshed for the approved legend change; public canonical
+outputs remain CI-owned. No source-YAML or public generated-repo edits.
 These corrections preserve the published contracts; role-visual fanout is the
 explicit pre-code design correction above. Current-head CI must verify all fixes.
 Focused evidence (overlapping batches, not summed): lane/forecast/source identity79;
 paint/legend/checker/ownership67; phase/date/terminal30; legend visual/extent8;
-canonical public snapshot tests7 plus relation-label1. Native role visuals cover
+fixture materializer tests7 plus relation-label1. Native role visuals cover
 one and three hashed Actual groups; absent Planned still fails closed. Composer
 remains orchestration-only (394 lines); import and literal-review gates pass.
 
-- I1/I2 and native encoding/source tests pass; all50 public materializers were
-  batched once, then only affected slides rerendered. Preliminary table is
-  explicitly not final; replace it from the next official CI snapshot, not
-  another full local render batch.
-- PR head `1ecf36452` [CI39088644589](https://github.com/tya5/chrona/actions/runs/39088644589)
-  failed snapshot generation on flattened glyph-part contrast. Reproduction
-  and readiness failed downstream; tests were skipped. Complete composite
-  correction `02bcefa7f` passes strict targeted glyph contrast with zero errors.
-- Targeted reviewed Gates has five keys and no canvas warning. Sunday has no
-  legend overflow; fill-first redundant Progress removal is under verification.
-  Reviewer accepts the genuine contrast findings; no corpus repair is planned.
+- Official66f snapshot [CI39092648869](https://github.com/tya5/chrona/actions/runs/39092648869):
+  all50 SVG/Scene pairs are byte-identical to the counted a7fc snapshot. Coverage
+  and contrast reports are unchanged; diagnostics inventory differs only in
+  source locations. Conformance, reproduction and MCP pass. Pytest shard1 finds
+  the retired-example-reference regression; shards2/3 pass. Correction
+  `e77fff742` restores fixture ownership without weakening the guard; its guard
+  and affected tests pass11. Current-head rerun remains required.
+- Sunday has seven keys and no legend overflow; Gates five and no viewport
+  warning. Reviewer accepts true contrast findings; no corpus repair is planned.
 - [Literal acceptance review](../../reviews/current/issue-1679-realized-legend-acceptance-review-2026-10-18.md)
-  must receive corrected official counts/PNG evidence and current CI links.
+  contains official counts/PNG evidence and must receive final current CI links.
   Confirm every row and exact-main release before deliberate closure/ledger
   update; archive only after closure. Keep board454 read-only.

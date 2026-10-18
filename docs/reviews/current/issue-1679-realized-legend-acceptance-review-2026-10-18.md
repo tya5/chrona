@@ -5,13 +5,16 @@
 Implementation source `a7fc836ac8f386be589bc86fd20ee632152db71c`, based on
 `0c81797404e3af616c0ae08e9b07ffc8ad21e767`. [Current design/plan](../../planning/active/issue-1679-realized-legend-work-record-2026-10-18.md).
 Official derived snapshot [CI39090738185](https://github.com/tya5/chrona/actions/runs/39090738185)
-provides the 50-slide table below. Snapshot generation, MCP and reproduction
-pass; conformance fails on the legend checker's stale multipart/Progress rules
-(15 findings), and the three pytest shards failed12/12/10 tests. Checker
-alignment now passes32 unit/7 native tests and the archived official50 Scenes
-with zero findings. Source-identity/error/fixture corrections and explicit
-legend-role visual fanout pass focused regression batches; the next exact-head
-CI must verify them. No failed gate is treated as acceptance.
+provides the 50-slide table below. Official correction66f snapshot
+[CI39092648869](https://github.com/tya5/chrona/actions/runs/39092648869)
+is byte-identical across all50 SVG/Scene pairs, coverage and contrast reports;
+diagnostic inventory differences are source locations only. Conformance,
+snapshot, MCP, reproduction and pytest shards2/3 pass. Pytest shard1 finds one
+test-input ownership regression (explicit retired-example references).
+Correction `e77fff742` restores independent fixture inputs and refreshes only
+affected private golden outputs, retaining the guard (11 focused tests pass).
+Current-head pytest and exact-main release remain required. No failed gate is
+treated as acceptance.
 Supplemental Sunday, Gates and glyph-gates PNGs were inspected; their input SVGs
 are byte-identical to the official artifact. The artifact shows Sunday's seven expected
 keys without overflow and Gates’ five keys without a viewport warning. It adds
