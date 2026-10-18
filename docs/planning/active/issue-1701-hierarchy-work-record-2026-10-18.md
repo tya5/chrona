@@ -7,9 +7,15 @@ Main `381cf404a`; row1 candidate `c0e78982c`, review `73192c558`, on
 legend code as `163ba8725`. Row1 is focused-tested, not released. The
 [issue record](https://github.com/tya5/chrona/issues/1701#issuecomment-6246724848)
 owns its fast-path plan; the [acceptance review](../../reviews/current/issue-1701-hierarchy-acceptance-review-2026-10-18.md)
-keeps the full issue open. This record plans **row2 only; no row2 code yet**.
+keeps the full issue open. This record owns **row2; implementation in progress**.
 The joint display-followup publication follows the902 predecessors and retains
 both literal reviews and full gates; integrated focused tests64 pass.
+
+Row2 WIP: `wip/issue-1701-hierarchy-names`, source closure `62fa2895d`,
+admission/Layout `ad30b5aaf`. Combined focused tests293 pass; schema annotation
+and equivalence checks pass (one additive/one delta/39 equal; the same five
+invalid corpus verdicts). Preset/native three-level evidence and all release
+gates remain pending; these commits are not acceptance.
 
 1. Synthetic: a group with a child gate after its last span shows a range ending on the gate date.
 2. Design record for nested grouping (levels, header depth, folding, how presets declare it), reviewed before code; then a synthetic 3-level twin rendered by the bundled presets with no level lost.
@@ -133,7 +139,7 @@ contract is Spec06 §6.0, Spec38's lane names and Spec50 §3.2.
   Preserve unknown/hidden ancestors in the path. Explicit path selection also
   supplies the matching ordinary path column; legacy path columns retain full
   breadcrumbs. This avoids a second path-scope setting.
-- **Architecture review — accepted design, implementation not yet started.**
+- **Architecture review — accepted design.**
   Specs06/38 keep grouping separate from containment and preserve all existing
   selection/folding/depth contracts. Specs07/28/49 retain Theme/Detail/Style
   ownership and occurrence identity; paths are name content, not new semantic
