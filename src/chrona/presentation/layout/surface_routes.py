@@ -47,6 +47,21 @@ from chrona.presentation.layout.relation_resolution import (
 )
 from chrona.presentation.layout.path_geometry import flatten_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
+
+ROUTE_EDGE_CLEARANCE = 4.0
+
+
+def inset_route_bounds(bounds: tuple[float, float, float, float],
+                       port_inlines: list[float]) -> tuple[float, float, float, float]:
+    """The route region without the plot's own inline edges (#1683).
+
+    A corridor on the edge reads as running into the table area, so each inline side is inset by
+    ROUTE_EDGE_CLEARANCE, except as far as a mark port already lies beyond the inset (ports stay reachable).
+    """
+    left, top, right, bottom = bounds
+    low = min([left + ROUTE_EDGE_CLEARANCE] + [x for x in port_inlines if x >= left])
+    high = max([right - ROUTE_EDGE_CLEARANCE] + [x for x in port_inlines if x <= right])
+    return (low, top, high, bottom)
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, MarkPlacement, PaintClip, PathCommand, RelationPlacement, RowPlacement, ShapePlacement,
     SurfaceLayoutRequest, TextPlacement, TemporalEndpointPlacement,
@@ -290,6 +305,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                        plot_clip.bounds[0] + plot_clip.bounds[2], plot_clip.bounds[1] + plot_clip.bounds[3])
                       if plot_clip is not None else
                       (timeline_bounds[0], route_top, timeline_bounds[0] + timeline_bounds[2], route_bottom))
+    routing_bounds = inset_route_bounds(routing_bounds, [float(mark.bounds.inline) for mark in marks] + [
+        float(mark.bounds.inline + mark.bounds.inline_size) for mark in marks])
     channels = (shape_channels(obstacles, bounds=routing_bounds, row_edges=tuple(row_edges.values()),
                               classes=route_classes) if search_policy == "first-fit" else None)
     relation_instances = shape_settled = fallback_search = 0

@@ -1,11 +1,13 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 PR1698 waits for current-base/B landing reconciliation; every
-product check passed and only readiness failed after main advanced. Item3 code
-`c2984c018` now integrates ready main `f5a51c099` via `499d2ad27`; no item3 PR
-before item5 release. Item2 code/review is separate WIP `0b79e65a0`, not included
-here. Publication order remains5→3→2. #1679/#1680 exact-main release39094741641
-has Linux/macOS success and Windows running; board454 stays reviewer-owned.
+Status: item5 PR1698 passed every product check in39094985183; final current-
+base CI/release is pending. Item3 code `c2984c018` integrates ready main
+`9e224db6c` and predecessor release-review `950d79001`; no item3 PR before
+item5 release. Item2 code/review `0b79e65a0` is separate, not included here.
+Publication order remains5→3→2. #1679/#1680 are closed after exact-main
+39094741641 passed all three OSes, public reproduction and MCP. Their archival
+is batched in1698; docs1699 was superseded to avoid another cycle. Board454 is
+reviewer-owned. No unmerged branch is claimed as released main functionality.
 
 ## Scope and literal acceptance
 
@@ -103,17 +105,28 @@ must retain its original failure rather than claim a safe pre-write rejection.
   its own venv resolved both. No product workaround or weakened assertion.
 - Pending: current-main integration, CI/release and literal acceptance review.
 
-## Next-item baseline (design not yet selected)
+## Item5 literal acceptance review (release pending)
 
-- Item3: Spec10 §8 requires new-revision undo/redo with unsafe inverses rejected.
-  Accepted replay results already retain before/after immutable references;
-  investigate reusing that authority instead of a duplicate content journal.
-  The closed command-request schema needs an explicit version/operation decision.
-- Item2: reuse the authoring use case and CLI persistence adapters behind the
-  existing MCP write gate. Adding a tool changes the tool-set contract. Current
-  authoring code echoes commandId but has no durable replay; successful retry
-  becomes stale-CAS rejection. Resolve that contract before claiming honest
-  idempotent annotations or the item's replay acceptance. No item3/2 code yet.
+Implementation `ab376c78e` with L1 `a4c7fe08c`, L2 `9dcf22c16`; public WIP
+`wip/issue-902-store-write-safety`. This reviews item5 only; items2/3 and parked
+4/814/815 remain open. No issue closure or current-main release claim.
+
+| Literal item5 acceptance | Disposition | Direct evidence |
+| --- | --- | --- |
+| Acceptance for 2, 3 and 5: each has its own stale-base, replay and no-overwrite tests, plus an MCP stdio test where it is a tool. | met (item5) | `tests/integration/test_actual_store_concurrency.py`, `test_store_write_lock.py`, `test_store_transaction_span.py`; MCP stdio gate/stale/replay/no-overwrite checks recorded above. Not evidence for items2/3. |
+| Item 5 needs a two-process test that shows a lost update today and none after the fix. | met | Regression605232991 fails on baseline and passes after9dcf22c16, with all post-A Store files unchanged. |
+| Required release gate on current main containing this review. | not met | Final current-ready-base PR CI and exact-main three-OS release remain pending. |
+
+Engine owns the complete replay/CAS/publication/record scope; storage owns root/
+thread/process exclusion. Authoring keeps separate workspace identity. No new
+ledger, renderer behavior, schema or crash-atomicity promise. Body/unlock errors
+remain raw; acquisition failures happen before mutation.
+
+Official artifact12124072125 (96e657289, CI39094985183), archive SHA-256
+`235288f64f486b80fd2422bc7b9a96ad99ae3a889899db95db35d503614b6c9c`:
+all50 SVGs/50 Scenes unchanged from final1679; no added/removed paths. Only two
+inventories change, for source coordinates and two helper-owner names; seven
+other reports unchanged. This does not waive final CI/release.
 
 ## Item3 design plan
 
@@ -131,7 +144,7 @@ must retain its original failure rather than claim a safe pre-write rejection.
   plan → shared engine/adapter/schema work → stale/replay/no-overwrite and real
   MCP stdio evidence → one reviewed release. Literal acceptance is listed above.
 
-## Item3 selected contract (pre-code design branch; no product code)
+## Item3 selected contract
 
 Normative contract: [Spec35 §4.3](../../specification/35-operational-review-workflows.md),
 connected by Specs10/66. Command v0.4 adds Actual revert/redo; MCP tool-set v0.5
@@ -197,3 +210,11 @@ passed99 focused command/adapter/CLI/process tests, three real MCP history
 tests and an independent11-test history/concurrency audit; no conflict or new
 architecture gap. Remaining: item5 release, final current-ready-base PR CI/public
 evidence and exact-main release. No item3 PR has been opened prematurely.
+Following ready `9e224db6c` and predecessor review `950d79001` changes no item3
+engine/schema code;31 focused history/concurrency/documentation cases pass.
+
+## Item2 (separate branch)
+
+Design `cdf0289f8`, plan `fa31cc79c`, code `fa831e384` and review `0b79e65a0`
+are on `wip/issue-902-authoring-design`; that branch owns durable authoring/MCPv0.6.
+Its PR/release follows item3. Parked4/814/815 remain open.
