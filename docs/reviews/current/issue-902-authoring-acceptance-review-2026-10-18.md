@@ -1,0 +1,38 @@
+<!-- chrona:literal-acceptance/v1 -->
+
+# Issue 902 — authoring MCP (item 2)
+
+Design `cdf0289f8`, plan `fa31cc79c`, code `fa831e384` and focused review
+`0b79e65a0` precede prepared integration `5c363da7d`. Current authority is the
+[living work record](../../planning/active/issue-902-store-write-safety-work-record-2026-10-18.md)
+and Specs15/35/66. Preparation owns validated candidates; the operational port
+owns locking, durable replay, receipt recovery and publication. CLI/MCP share
+that path and exact result; the engine does not interpret authoring operations.
+Independent review covered containment, crash/retry cleanup, canonical scope,
+receipt verification and the gate before reads. No renderer policy changes.
+
+## Literal issue acceptance
+
+### Issue #902
+
+- Source: [Issue #902](https://github.com/tya5/chrona/issues/902)
+- Observed: 2026-10-18
+
+| # | Literal acceptance criterion | Disposition | Evidence | Successor |
+| ---: | --- | --- | --- | --- |
+| 1 | `apply_authoring_command` as an MCP tool over the guided authoring workspace (`authoring-command-apply` and `workspace revision` exist on the CLI only), with the same write gate and honest annotations. | met | [Tool gate/annotations/exact CLI result](../../../tests/unit/chrona/app/test_agent_authoring.py) and [real MCP stdio](../../../tests/mcp/test_authoring_stdio.py). MCP toolsetv0.6 adds the tool without a separate writer path. Focused evidence only; release pending below. | — |
+| 2 | Acceptance for 2, 3 and 5: each has its own stale-base, replay and no-overwrite tests, plus an MCP stdio test where it is a tool. | met | Item2 [authoring transaction](../../../tests/unit/chrona/operational/test_authoring_commands.py), [durable receipt/recovery](../../../tests/unit/chrona/operational/test_authoring_recovery_receipts.py), [spawned writers](../../../tests/integration/test_authoring_command_transaction.py) and [stdio stale/replay/no-overwrite](../../../tests/mcp/test_authoring_stdio.py). This does not accept other items. | — |
+
+## Programme-level criteria (optional)
+
+**Release not accepted.** This is prepared WIP, not a main/PR release claim.
+The work record contains focused1010/489/58/70 batches (overlap, not additive).
+Repaired-main operational/recovery/agent/transaction/lock/stdio batch:95 passed;
+dedicated real authoring stdio:2 passed, using
+`.venv/bin/python -m pytest -q tests/mcp/test_authoring_stdio.py --tb=short`.
+Current-head PR checks, official artifact comparison and successful
+exact-main full three-OS release containing this review remain required.
+Item5 must first have repaired native/full acceptance; item3 must merge/ready
+before the item2 PR. The published scheduling amendment allows items3/2 to
+share a later exact-main full run containing both implementations/reviews,
+without waiving either PR's checks. Parked4/#814/#815 keep parent902 open.

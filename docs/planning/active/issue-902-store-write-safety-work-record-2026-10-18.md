@@ -336,12 +336,7 @@ Independent reviews found and resolved committed-cleanup replay and marker-to-
 receipt cross-check gaps. Owned-stage validation preserves unexpected files.
 No renderer/schema/source-YAML or generated artifact changes in this slice.
 
-| Literal item2 acceptance | Result | Direct evidence |
-| --- | --- | --- |
-| MCP tool over guided authoring workspace, same write gate and honest annotations | met locally | `test_agent_authoring.py`, `test_authoring_stdio.py`: both paths contained, gate before reads, writer/destructive/idempotent annotations, exact CLI result, canonical aliases and failed preflight envelopes. |
-| Own stale-base, replay and no-overwrite tests | met locally | Operational authoring/recovery tests and `test_authoring_command_transaction.py`: restart/after-later-write replay, changed-ID refusal, corrupt receipts/markers, no-op, rollback, replace-then-raise acceptance, two spawned writers. |
-| MCP stdio test where it is a tool | met locally | `tests/mcp/test_authoring_stdio.py`: enabled/disabled server, exact retry, stale base and ID reuse without overwriting receipts/workspace. |
-| Required release evidence | not met | Item5 then item3 must release first; item2 PR CI, exact-main three-OS/conformance/wheel/MCP and official materializer comparison remain pending. |
+Current literal acceptance/release authority: [item2 review](../../reviews/current/issue-902-authoring-acceptance-review-2026-10-18.md).
 
 Verification: combined focused authoring/containment/registry/CLI/Store/MCP
 batch **1010 passed**; final recovery/helper migration **489 passed** and
@@ -353,6 +348,10 @@ repairs and registers the extracted receipt/request/CAS identity guards with
 their existing producers. Classification validation and70 focused authoring,
 recovery, process/MCP and inventory tests pass. No product behavior or generated
 report was changed to satisfy the inventory. Item2 remains WIP, not released.
+Prepared integration `5c363da7d` follows repaired ready main `381cf404a` and
+final item3 head `1489598c7`. Operational/recovery/agent/transaction/lock/stdio95
+and dedicated real authoring stdio2 pass. Both are focused evidence, not
+native Windows or release acceptance. Publication gates remain unchanged.
 Current-base integration of predecessor `64c8a6094`/ready `9e224db6c` preserves
 item2 product code;40 focused history/authoring/process/stdio/docs cases pass.
 Design `cdf0289f8`, plan `fa31cc79c`, code `fa831e384` and review `0b79e65a0`
