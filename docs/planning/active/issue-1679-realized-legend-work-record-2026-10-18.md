@@ -1,6 +1,12 @@
 # Issue 1679: realized legend work record (2026-10-18)
 
-Status: I1–I3 and local I4 verification published on the WIP branch; official artifact, reviewer disposition of seven disclosed warnings, and release acceptance remain open. Design/architecture review `e1ede946c`, plan `492c8512e`; #1680 merged at `82c1e96b6`.
+Status: implementation paused for a composite-key design correction. PR1692 head `1ecf36452` fails snapshot generation in [CI39088644589](https://github.com/tya5/chrona/actions/runs/39088644589): two strict glyph-gates legend contrast errors. Reproduction cannot download the absent snapshot; readiness consequently fails; pytest/conformance did not run. #1680 is merged and released, but final review-publication release remains open.
+
+## Current design-correction plan
+
+- The initial implementation turns each Actual glyph part into a separate Rect key. A dark internal part is not an independent mark; separating it from the complete figure changes its paint context and loses the source glyph's contrast. Review key identity and grouping at the complete-mark boundary, including Style glyphs, while preserving scalar Actual/Progress meanings and explicit finite key projections.
+- Select a typed composite ink/geometry handoff whose Layout-owned miniature preserves the ordered glyph parts. Check candidate sizing, final witness identity, source clipping, Scene passive projection and existing whole-figure contrast together. Do not change palettes, exempt keys, weaken contrast policy or edit corpus YAML. Independent diagnostic-only copying of the complete Actual Symbol group to the key yields contrast7.607 and no error under the existing figure rule; no contrast-policy change is justified.
+- Publish the selected design/specification correction and whole-architecture review, amend the implementation plan, then resume code. Add a dark-substrate multipart synthetic regression and strict public glyph check; official CI supplies the next full snapshot, not another whole local materializer batch. The preliminary table contains two strict contrast errors and five warnings, not seven non-gating warnings.
 
 ## Baseline and order
 
