@@ -644,10 +644,14 @@ Forecast requires a table-timeline View with a declared per-item `finishDelta`
 channel and a Layout legend slot. Unsupported presentation is
 `E_FORECAST_PRESENTATION_REQUIRED`, with the missing capability named; do not
 invent a slot, change View selection, unhide rollups or synthesize adapter text.
-The content layer replaces the ordinary planned legend key with a `forecast`
-key, or adds it when absent, labelled `Forecast (* estimated)` by default.
+The content layer replaces the ordinary planned legend candidate with a
+`forecast` candidate, or adds it when absent, labelled `Forecast (* estimated)` by default.
 `wording.legend.forecast` may provide declared wording; its swatch reuses planned
 paint. Do not leave a misleading current-plan key for the replacement bars.
+Final painted-occurrence filtering follows Specification 60 §4: if encoding
+replaces every forecast mark's base paint, its scale keys replace this base
+swatch too. The required delta and its estimated `*` remain; source capability
+checks still require the declared delta channel and legend slot.
 
 Every selected primary temporal item needs a complete, visible forecast delta.
 Table cells use measured full comparison text; plot deltas are independent
