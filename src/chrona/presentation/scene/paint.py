@@ -57,6 +57,7 @@ class ScenePaintError(ValueError):
 class PaintResolution:
     paint: ScenePaint
     omissions: tuple[PaintOmission, ...] = ()
+    fill_override_applied: bool = False
 
 
 def resolve_legend_shape_paint(tokens: ThemeTokenView, role: str, shape: str,
@@ -161,7 +162,8 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                           (wobble_omitted, "wobble", "wobbleAmplitude", frozenset((WOBBLE,))),
                           (finish_omitted, "stroke-finish", "strokeLineCap", frozenset((LINE_CAP, LINE_JOIN))),
                       ) if omitted)
-    return PaintResolution(paint, omissions)
+    return PaintResolution(paint, omissions,
+                           witness.channels.solid_override and channels.fill is not None)
 
 
 AS_OF_CONE_ROLE = "as-of-cone"

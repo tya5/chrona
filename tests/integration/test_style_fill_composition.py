@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 
-from chrona.presentation.contracts.resources import ClosureIdentity, parse_contract
 from chrona.presentation.layout import surface_count_closure
 from chrona.presentation.layout import surface_render_plan
 from chrona.presentation.model.semantic_registry import semantic_binding
@@ -21,11 +20,8 @@ _ENCODED_COLOR = "#28c7b8"
 
 
 def _style(rules):
-    resource = {"version": "chrona/style/v0.2", "kind": "style", "id": "fill-composition",
-                "body": {"rules": list(rules)}}
-    return parse_contract(
-        ClosureIdentity("style", "fill-composition", "test-v1", "sha256:" + "0" * 64), resource,
-    ).rules
+    return {"version": "chrona/style/v0.2", "kind": "style", "id": "fill-composition",
+            "body": {"rules": list(rules)}}
 
 
 def _parts(*, custom_mark_role=False, duplicate_owner_columns=False):
@@ -96,7 +92,6 @@ def _render(tmp_path, monkeypatch, *, source, parts, rules):
         return result
 
     def normalize(*args, **kwargs):
-        kwargs["style_rules"] = rules
         kwargs.setdefault("gate_declared", "gate" in parts["theme"]["body"]["roles"])
         content = _ORIGINAL_NORMALIZE(
             *args, **kwargs,
@@ -108,7 +103,7 @@ def _render(tmp_path, monkeypatch, *, source, parts, rules):
     monkeypatch.setattr(render_review_usecase, "normalize_v05_surface_content", normalize)
     directory = Path(tmp_path)
     directory.mkdir(parents=True, exist_ok=True)
-    rendered = sr.render(directory, source, presentation=parts)
+    rendered = sr.render(directory, source, presentation=parts, style=rules if rules else None)
     assert captured
     return rendered, captured[-1][1], normalized[-1]
 
@@ -128,6 +123,12 @@ def test_fill_only_rule_changes_only_matching_mark_paint(tmp_path, monkeypatch):
     styled_mark = _mark(rendered, "task")
     plain_mark = _mark(control, "task")
     assert styled_mark.paint.fill == _ENCODED_COLOR
+    assert styled_mark.encoding.value == "bus"
+    assert styled_mark.encoding.sources[0].kind == "style"
+    assert styled_mark.encoding.sources[0].resource_id == "fill-composition"
+    assert styled_mark.encoding.sources[0].rule_id == "owner-fill"
+    assert styled_mark.encoding.sources[0].source_ref == "/body/rules/0/then/encode"
+    assert plain_mark.encoding is None
     assert styled_mark.theme_role is None
     assert styled_mark.semantic_id is None
     assert styled_mark.purpose == plain_mark.purpose

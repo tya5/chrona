@@ -394,7 +394,7 @@ def test_scale_legend_entry_label_prefers_the_entitys_declared_title():
     color_scale = ResolvedColorScale("owner", "planned", "owner", ("bus", "ground"),
                                      (("bus", "#111111"), ("ground", "#222222")))
     value = normalize_v05_surface_content(projection, project, typed_view(view), summary=EMPTY_SUMMARY,
-                                          color_scale=color_scale)
+                                          color_scale=color_scale, view_id="synthetic-view")
     legend = {entry.role: entry.label for entry in value.legend_entries}
     assert legend["scale:owner:bus"] == "Spacecraft bus"
     assert legend["scale:owner:ground"] == "ground"
@@ -1167,7 +1167,8 @@ def test_legend_entries_are_the_drawn_entries_detail_first_then_one_per_used_sca
                        SurfaceLegendEntry("scale:owner:ground", "ground"))
     drawn = normalize_v05_surface_content(_scale_projection(), project,
                                           typed_view({"body": {"tableColumns": (), "visibility": {}}}),
-                                          summary=EMPTY_SUMMARY, color_scale=color_scale, detail=detail)
+                                          summary=EMPTY_SUMMARY, color_scale=color_scale, detail=detail,
+                                          view_id="synthetic-view")
     assert tuple(replace(entry, style_occurrences=()) for entry in drawn.legend_entries) == entries
     assert tuple(key.subject_id for key in drawn.legend_entries[1].style_occurrences) == ("a",)
     assert tuple(key.subject_id for key in drawn.legend_entries[2].style_occurrences) == ("b",)

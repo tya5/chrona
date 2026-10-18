@@ -19,7 +19,7 @@ import pytest
 import yaml
 
 from chrona.presentation.model.closure import ClosureError
-from chrona.presentation.scene.contrast_policy import evaluate_scene_contrast
+from chrona.presentation.scene.contrast_policy import DEFAULT_POLICY, evaluate_scene_contrast
 from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
 from chrona.presentation.scene.serialization import scene_document, validate_scene_document
 from chrona.resources import builtin_preset_source_root
@@ -68,7 +68,20 @@ def _render_with(tmp_path: Path, parts: dict, *, period: bool = True):
 def _findings(rendered):
     document = scene_document(rendered.scene)
     validate_scene_document(document)
-    return document, evaluate_scene_contrast(document)
+    # Corpus observations retain strict ordinary shape/text checks while the new independently measured encoded
+    # fill channel follows the report's explicit warning-default policy.
+    return document, evaluate_scene_contrast(document, encoded_fill_policy=DEFAULT_POLICY)
+
+
+def _assert_encoded_fill_measurements(findings):
+    encoded = [item for item in findings if item.encoding is not None]
+    for item in encoded:
+        assert item.code == ("W_SCENE_ENCODING_CONTRAST" if item.contrast_ratio < item.floor
+                             else "E_SCENE_ENCODING_CONTRAST")
+        assert item.encoding.channel == "fill" and item.floor == 3.0
+        assert item.contrast_ratio is not None
+        assert item.severity == ("warning" if item.contrast_ratio < item.floor else "info")
+    return encoded
 
 
 def _body(theme: str) -> dict:
@@ -127,9 +140,14 @@ def test_what_lies_on_the_band_is_judged_on_the_tinted_ground_and_passes(tmp_pat
     _, findings = _findings(_render(tmp_path, theme))
 
     assert [(item.visual_role, item.code) for item in findings if item.severity == "error"] == []
-    assert [(item.visual_role, item.code) for item in findings if item.severity == "warning" and (
+    encoded = _assert_encoded_fill_measurements(findings)
+    if theme in {"control-room-dark", "mission-light", "print-mono"}:
+        assert encoded
+    assert [(item.visual_role, item.code) for item in findings if item.encoding is None
+            and item.severity == "warning" and (
         item.visual_role in {"period-band", "period-label"} or (item.ground_id or "").startswith("period-band"))] == []
-    assert {item.visual_role for item in findings if (item.ground_id or "").startswith("period-band")} >= {"planned", "text"}
+    assert {item.visual_role for item in findings if item.encoding is None
+            and (item.ground_id or "").startswith("period-band")} >= {"planned", "text"}
 
 
 @pytest.mark.parametrize("theme", THEMES)
@@ -177,5 +195,8 @@ def test_a_filled_band_survives_every_packaged_scheme_override(tmp_path, theme, 
     colors = parts["scheme"]["body"]["colors"]
     assert band.paint.fill in {colors["accent"], colors["text"]} and band.paint.opacity < 1
     document, findings = _findings(with_period)
+    encoded = _assert_encoded_fill_measurements(findings)
+    if theme in {"control-room-dark", "mission-light", "print-mono"}:
+        assert encoded
     assert [item for item in findings if item.severity == "error"] == []
     assert [item for item in evaluate_scene_perceptibility(document) if item.severity == "error"] == []

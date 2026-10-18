@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from decimal import Decimal
 from enum import StrEnum
+from typing import Literal
 
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 
@@ -104,14 +105,23 @@ def _canonical_color(value: str) -> str:
     return value.upper() if _HEX_COLOR.fullmatch(value) else value
 
 
+@dataclass(frozen=True)
+class SelectedFillOverride:
+    """Selected priority branch, independent of accidental colour equality."""
+
+    color: str
+    source: Literal["legend", "style", "actual"]
+
+
 def choose_fill_override(*, style_fill: str | None, legend_fill: str | None,
-                         actual_eligible: bool, actual_fill: str | None) -> str | None:
+                         actual_eligible: bool, actual_fill: str | None) -> SelectedFillOverride | None:
     """Preserve Scene precedence: declared legend ink, then Style, then eligible Actual."""
     if legend_fill is not None:
-        return legend_fill
+        return SelectedFillOverride(legend_fill, "legend")
     if style_fill is not None:
-        return style_fill
-    return actual_fill if actual_eligible else None
+        return SelectedFillOverride(style_fill, "style")
+    return (SelectedFillOverride(actual_fill, "actual")
+            if actual_eligible and actual_fill is not None else None)
 
 
 def _effective_channels(channels: ThemePaintInputs, family: PaintFamily, role: str,

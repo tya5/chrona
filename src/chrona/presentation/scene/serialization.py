@@ -13,7 +13,8 @@ from chrona.presentation.scene.model import (
     TextLayout, requires_lane_member_provenance, MarkerGeometry, PathCommand, completed_marker_outline,
     _validate_style_semantic_metadata,
 )
-from chrona.presentation.model.semantic_registry import semantic_binding
+from chrona.presentation.model.semantic_registry import contrast_binding_for_primitive, semantic_binding
+from chrona.presentation.style import EncodingWitness
 from chrona.resources import schema_validator
 from chrona.resources.semantic_vocabulary import KIND as VOCABULARY_KIND, builtin_semantic_vocabulary
 from chrona.presentation.scene.pattern_host import completed_pattern_host_valid
@@ -80,11 +81,13 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
     has_style_provenance_metadata = any(
         primitive.style_match is not None or primitive.legend_scope is not None
         for surface in scene.surfaces for primitive in surface.primitives)
+    has_encoding_metadata = any(primitive.encoding is not None
+                                for surface in scene.surfaces for primitive in surface.primitives)
     return {
         "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale
                     or has_runs or has_fit or has_marker_axis or has_stroke_clip or has_paint_clip
                     or has_relation_endpoint_identity or has_window_absences or has_style_semantic_metadata
-                    or has_style_provenance_metadata
+                    or has_style_provenance_metadata or has_encoding_metadata
                     else "chrona/scene/v0.6"),
         "kind": "scene",
         "provenance": {
@@ -194,6 +197,31 @@ def validate_scene_document(document: Mapping[str, Any]) -> None:
                         or primitive["sourceKind"] != "legend"
                         or primitive["purpose"] != semantic_binding("legendEntry").purpose):
                     raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: legendScope requires canonical selector JSON on a Style legend swatch")
+    if any("encoding" in primitive
+           for surface in document.get("surfaces", ())
+           for primitive in surface.get("primitives", ())):
+        resources = document["provenance"]["resources"]
+        for surface in document.get("surfaces", ()):
+            for primitive in surface.get("primitives", ()):
+                raw = primitive.get("encoding")
+                if raw is None:
+                    continue
+                try:
+                    witness = EncodingWitness.from_mapping(raw)
+                except (TypeError, ValueError, KeyError) as error:
+                    raise _scene_error(f"E_PRESENTATION_PRIMITIVE_INVALID: encoding metadata is malformed ({type(error).__name__})") from error
+                binding = contrast_binding_for_primitive(
+                    primitive.get("visualRole"), primitive.get("kind"), primitive.get("purpose"))
+                paint = primitive.get("paint")
+                if (primitive.get("kind") not in {"Rect", "Symbol", "Path"}
+                        or not isinstance(paint, Mapping) or paint.get("fill") is None
+                        or binding is None or binding.contrast_class.value != "mark"):
+                    raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: encoding requires a filled MARK-classified Rect, Symbol, or Path")
+                for source in witness.sources:
+                    matches = [item for item in resources
+                               if item["kind"] == source.kind and item["id"] == source.resource_id]
+                    if len(matches) != 1:
+                        raise _scene_error("E_RESOURCE_IDENTITY_MISMATCH: Scene encoding source must join exactly one pinned provenance resource")
     try:
         for surface in document.get("surfaces", ()):
             for primitive in surface.get("primitives", ()):
@@ -684,6 +712,7 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
                             if item.legend_scope.title is not None else {}),
                          "showScope": item.legend_scope.show_scope}
                         if item.legend_scope is not None else None),
+        "encoding": item.encoding.as_mapping() if item.encoding is not None else None,
         "text": item.text, "baseline": _point(item.baseline) if item.baseline is not None else None,
         "textLayout": _text_layout(item.text_layout) if item.text_layout is not None else None,
         "paint": _paint(item.paint) if item.paint is not None else None,
