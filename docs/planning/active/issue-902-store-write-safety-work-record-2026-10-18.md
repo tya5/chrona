@@ -154,3 +154,20 @@ Spec10 and Spec66 connect the ownership and agent contract. Publish this design
 before implementation planning; item3 code waits for item5 release. This branch
 is separate from the item5 product/release branch, avoiding an unimplemented
 tool-set claim in that release.
+
+## Item3 implementation plan
+
+Design/specification/architecture review `a79ab0307` is published on
+`wip/issue-902-actual-history-design`. One coherent product PR after item5 release;
+the following are owned implementation/test slices, not partial main releases.
+
+| Slice | Owned files | Acceptance evidence |
+| --- | --- | --- |
+| H1 durable engine | New command v0.4 schema and required resource packaging/registry; `operational/resources.py`, `references.py`, `command_engine.py`; `commands/actual_commands.py` and corresponding tests | v0.3 still parses; verified canonical request retention; legacy replay/revert and explicit unavailable redo; new immutable revisions; original bytes unchanged; stale base, changed whole state, wrong Store/Actual, no-op/snapshot/revert origin, missing/corrupt/cyclic history, malformed retained request and command-ID reuse reject without writes. Shared semantic dispatch validates redo normally. Remove unused adapter history; migrate its tests rather than dropping coverage. |
+| H2 agent exposure | `app/agent_tools.py`, tool registry/version descriptions, affected docs and MCP tests | Tool-set v0.5 admits inverse types only through existing tools. Disabled gate opens no files; paths stay contained; history diagnostics name the payload reference; CLI/tool Automation Results agree. Real stdio fresh/stale/replay/no-overwrite cases for revert and redo. |
+| H3 release | Synthetic engine/CLI/MCP integration tests, Store process tests, literal review | Two ordinary writes → both reverted in order → both redone in order; repeat a revert/redo cycle; fresh processes reopen each step; inverse replay changes no bytes; concurrent inverse/normal writes serialize and reject unsafe state. Focused tests, schema packaging/equivalence and import checks; CI full three-OS pytest/conformance/wheel/MCP. No render policy or public materializer source change. |
+
+Retain all item5 concurrency tests. Inspect any generated schema/inventory
+evidence with its source and compare public artifact changes as a batch. Return
+to design on a history/schema/ownership discrepancy. Item3 acceptance is the
+literal row above; item2 and owner-parked requirements remain open.
