@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
 from enum import StrEnum
 
@@ -39,6 +39,23 @@ class ThemePaintInputs:
     dash: tuple[float, ...]
     opacity: Decimal | None
     solid_override: bool
+
+
+def restrict_shape_paint_inputs(paint: ThemePaintInputs, channels: str | None,
+                                role: str, *, patterned_fill: bool = False) -> ThemePaintInputs:
+    """One shared finite shape-channel projection, separate from glyph parts."""
+    if channels is None:
+        return paint
+    if channels == "fill":
+        if paint.fill is None:
+            raise ThemePaintError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}/fill")
+        return paint if patterned_fill else replace(paint, stroke=None, stroke_width=None, dash=())
+    if channels == "stroke":
+        if paint.stroke is None or paint.stroke_width is None:
+            missing = "stroke" if paint.stroke is None else "strokeWidth"
+            raise ThemePaintError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}/{missing}")
+        return replace(paint, fill=None)
+    raise ThemePaintError("E_PRESENTATION_PAINT_INVALID", f"/body/roles/{role}")
 
 
 @dataclass(frozen=True)

@@ -17,6 +17,7 @@ from chrona.presentation.model.surface_content import (
 from chrona.presentation.table_presentation import affix_state
 from chrona.presentation.review.detail import normalize_v05_review_detail_profile
 from chrona.presentation.review.profile_connections import validate_period_legend_sources
+from chrona.presentation.review.view_legend_witnesses import bind_view_legend_witnesses
 from chrona.presentation.review.figure_facts import projected_counts
 from chrona.presentation.review.annotation_expansion import expand_annotations
 from chrona.presentation.model.placement_candidates import legacy_candidate_order, parse_candidates
@@ -683,8 +684,11 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                                   for target in (annotation_kind_also or {}).get(item.kind, ())))),
                                actual_variance_paints=select_actual_variance_paints(
                                    projection, actual_variance_colors or {}))
+    needs_actual_candidates = any(entry.role == "actual" for entry in content.legend_entries)
+    facts = (collect_surface_style_facts(projection, content, gate_declared=gate_declared)
+             if style_rules or encoding_rules or needs_actual_candidates else None)
     if style_rules or encoding_rules:
-        facts = collect_surface_style_facts(projection, content, gate_declared=gate_declared)
+        assert facts is not None
         intents = OccurrenceStyleIndex(evaluate_style_rules(
             (*encoding_rules, *style_rules), facts.occurrences, field_catalogue=facts.field_catalogue))
         style_fills = complete_style_fills(
@@ -704,7 +708,25 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
             validate_style_mark_paint(
                 intents, facts.occurrences, content.style_fills, ThemeTokenView(theme),
                 source_refs={rule.rule_id: rule.source_ref for rule in (*encoding_rules, *style_rules)})
-    return content
+    content = bind_view_legend_witnesses(content, facts.occurrences if facts else (), encoding_rules, color_scale)
+    return replace(content,
+        legend_wording=tuple(sorted((view.wording or {}).get("legend", {}).items())),
+        legend_mark_occurrences=tuple(item for item in (facts.occurrences if facts else ())
+                                      if item.primitive_family == "mark"),
+        legend_progress_possible=_positive_legend_progress(projection, view.progress_fill))
+
+
+def _positive_legend_progress(projection: ReviewProjection, source: str | None) -> bool:
+    """Potential ink only; completed host/clip admission remains Layout-owned."""
+    if source is None:
+        return False
+    items = (*projection.items, *(item for row in projection.rows for item in row.items),
+             *(item for folded in projection.folded_points for item in folded.all_items))
+    for item in items:
+        value = (item.actual or {}).get("progress") if source == "actual" else item.planned_progress
+        if isinstance(value, (float, int)) and not isinstance(value, bool) and 0 < value <= 1:
+            return True
+    return False
 
 
 def _group_header_facts(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> dict[str, Any] | None:

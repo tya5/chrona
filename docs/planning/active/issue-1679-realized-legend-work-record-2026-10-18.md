@@ -1,10 +1,10 @@
 # Issue 1679: realized legend work record (2026-10-18)
 
-Status: design/architecture review `e1ede946c` and plan `492c8512e` published; #1680 merged at `82c1e96b6`. I1/I2 are implemented in WIP and under integration review; I3/I4 remain open.
+Status: I1–I3 implemented on the WIP branch; I4 public-output/release acceptance remains open. Design/architecture review `e1ede946c`, plan `492c8512e`; #1680 merged at `82c1e96b6`.
 
 ## Baseline and order
 
-- Published `main`: `d9a10d4ea`, including S2/PR1687 (`5bfa5356b`). PR1689 (#1680) is the active landing; its exact-head CI is running. Inputs: `reviewer/trial-5-inputs` at `9fa6062de`.
+- Implementation base: `82c1e96b6`, including S2/PR1687 and #1680/PR1689. Reconcile the latest ready `main` after B's landing window before the final product-PR push. Inputs: `reviewer/trial-5-inputs` at `9fa6062de`.
 - Start product implementation after #1680 integration and publication of the implementation plan. Dev B owns #1682/#1681/#1683 and the next main landing window after1689; do not duplicate its profile/packing changes.
 - Design proposal and reviewer approval: [6243827642](https://github.com/tya5/chrona/issues/1679#issuecomment-6243827642), [6243861925](https://github.com/tya5/chrona/issues/1679#issuecomment-6243861925). No further pre-code reviewer approval is required; the PR receives review.
 
@@ -48,7 +48,8 @@ The code PR's exact-head CI supplies pytest shards, conformance and newest-Pytho
 
 ## Current implementation evidence
 
-- I1: shared model channels/gradient admission and Scene consumers; focused model/Scene66 and native Actual/Style20 passed in the isolated slice. Integration review is checking observable paint fingerprint normalization before final key grouping; this is not release acceptance.
+- I1: shared model channels/gradient admission and Scene consumers; emitted-ink fingerprints normalize equivalent colours and omitted gradients. Layout passes the selected witness to Scene; bounds-dependent effects stay in Scene.
 - I2: one normalized column list drives columns and cells; comparison-source presence is captured from closure independently of selected rows. Absent/supplied-empty, forecast, scenario and explicit-row tests:147 passed. View input remains unchanged.
-- I3 wording validation:17 passed; neutral selected-profile admission adapter:5 passed. No product PR or public artifact acceptance yet. Final candidate sizing, completed-placement filtering, swatch bridge and batched render/count evidence remain.
+- I3: potential Actual groups and positive Progress reserve space before measurement; completed source identities filter/recompose once. View scale entries bind exact lowered-rule occurrences, not RGB. Progress retains its own full paint; stroked period edges count as visible despite zero rectangular area. No corpus source changes.
+- Focused combined model/Scene/content/candidate/checker run:179 passed; native synthetic acceptance:6 passed, including exact Progress paint and SVG parity. Independent architecture review found no blocker. Legacy geometry fixtures now supply the semantic sources they test rather than preserving unused keys. Executive-light Actual and target-b absent-comparison PNGs inspected; all-public count table and exact-head CI remain required before acceptance.
 - Design-phase documentation checks:28 passed; conformance passed before the product slices. Do not reuse that run as verification of the implemented slices.

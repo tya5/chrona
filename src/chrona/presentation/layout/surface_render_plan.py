@@ -28,6 +28,7 @@ from chrona.presentation.layout.surface_source_inputs import (
     surface_source_inputs,
 )
 from chrona.presentation.layout.style_text import resolve_table_cell_typography
+from chrona.presentation.layout.legend_candidates import prepare_realized_legend_candidates
 from chrona.presentation.model.font_metrics import FontMetricsError
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.render_progress import RenderProgress
@@ -92,6 +93,10 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
     project, view, projection = value.project, value.view, value.projection
     selected_content, summary, table_content = value.content, value.summary, value.table
     theme, font_metrics, layout = value.theme, value.font_metrics, value.profile
+    selected_content = prepare_realized_legend_candidates(
+        selected_content, ThemeTokenView(theme),
+        mark_block_size=float(resolve_theme_metrics(theme)["timeline.mark.blockSize"]),
+        paint_capabilities=value.paint_capabilities)
     selected_content, table_content = resolve_table_cell_typography(
         selected_content, table_content, ThemeTokenView(theme))
     actual_observations, heading_content = value.actual, value.heading

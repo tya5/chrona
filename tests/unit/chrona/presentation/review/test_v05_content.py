@@ -1094,7 +1094,9 @@ def test_legend_entries_are_the_drawn_entries_detail_first_then_one_per_used_sca
     drawn = normalize_v05_surface_content(_scale_projection(), project,
                                           typed_view({"body": {"tableColumns": (), "visibility": {}}}),
                                           summary=EMPTY_SUMMARY, color_scale=color_scale, detail=detail)
-    assert drawn.legend_entries == entries
+    assert tuple(replace(entry, style_occurrences=()) for entry in drawn.legend_entries) == entries
+    assert tuple(key.subject_id for key in drawn.legend_entries[1].style_occurrences) == ("a",)
+    assert tuple(key.subject_id for key in drawn.legend_entries[2].style_occurrences) == ("b",)
 
 
 def test_forecast_delta_table_cells_are_required_and_mark_unfinished_estimates():

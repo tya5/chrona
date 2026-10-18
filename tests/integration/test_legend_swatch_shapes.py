@@ -23,14 +23,24 @@ def _parts():
 
 def _render(path, *, shape=None, role="planned", parts=None):
     path.mkdir()
-    source = sr.with_calendar(sr.project({"a": sr.span("a", date(2026, 2, 2), 20),
-                                          "g": sr.point("g", date(2026, 2, 25))}))
+    dependency = role == "dependency"
+    relations = ([{"id": "dependency-a-b", "type": "dependency", "lag": "0d",
+                   "from": {"object": "a", "endpoint": "end"},
+                   "to": {"object": "b", "endpoint": "start"}}]
+                 if dependency else [])
+    objects = {"a": sr.span("a", date(2026, 2, 2), 20)}
+    objects["b" if dependency else "g"] = (sr.span("b", date(2026, 2, 25), 10)
+                                              if dependency else sr.point("g", date(2026, 2, 25)))
+    source = sr.with_calendar(sr.project(objects, relations))
     entry = {"role": role, "label": role}
     if shape is not None:
         entry["swatchShape"] = shape
     detail = {"version": "chrona/review-detail-profile/v0.1", "id": "shape-detail",
               "body": {"legend": [entry]}}
-    return sr.render(path, source, presentation=parts or _parts(), detail=detail)
+    actual = ({"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "shape-actual",
+               "body": {"asOf": "2026-02-20", "observations": []}}
+              if role == "asOf" else None)
+    return sr.render(path, source, presentation=parts or _parts(), detail=detail, actual=actual)
 
 
 @pytest.mark.parametrize("role", ["planned", "milestone", "dependency", "asOf", "calendar-closed"])
@@ -99,6 +109,7 @@ def test_theme_default_applies_to_generated_scale_keys_and_uses_drawn_extent(tmp
     source = sr.with_calendar(sr.project({
         "a": sr.span("a", date(2026, 2, 2), 20, owner="a"),
         "b": sr.span("b", date(2026, 2, 4), 18, owner="b"),
+        "c": sr.span("c", date(2026, 2, 6), 16),
     }))
     result = sr.render(
         tmp_path,
@@ -110,8 +121,7 @@ def test_theme_default_applies_to_generated_scale_keys_and_uses_drawn_extent(tmp
     keys = [item for item in result.surface.primitives if item.scene_id.startswith("legend-swatch:scale:owners:")]
     assert len(keys) == 2
     assert all(item.kind == "Symbol" and item.bounds[2] == item.bounds[3] for item in keys)
-    planned = next(item for item in result.surface.primitives if item.scene_id == "legend-swatch:planned")
-    assert planned.kind == "Path"  # The Detail shape overrides the Theme default.
+    assert not any(item.scene_id == "legend-swatch:planned" for item in result.surface.primitives)
 
 
 def test_theme_circle_default_uses_the_same_extent_for_measurement_and_emission(tmp_path):

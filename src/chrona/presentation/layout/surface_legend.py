@@ -6,9 +6,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any, Callable
 
 from chrona.presentation.layout.model import LayoutError, Rect
-from chrona.presentation.layout.surface_marks import (
-    MARK_GEOMETRY_ROLES, progress_fill_bounds,
-)
+from chrona.presentation.layout.surface_marks import MARK_GEOMETRY_ROLES
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
 from chrona.presentation.layout.relation_terminals import marker_geometry
@@ -57,7 +55,7 @@ def _swatch_paint_role(role: str, tokens: Any) -> str:
     if role.startswith("scale:"):
         return semantic_binding("scaleLegendEntry").scene_role
     role = mark_style_role(role)
-    if role in ("asOf", "deadlineMark"):
+    if role in ("asOf", "deadlineMark", "progressFill"):
         return semantic_binding(role).scene_role
     return resolve_point_paint_role(role, gate_declared=tokens.has_role("gate"), legend=True)
 
@@ -262,7 +260,8 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             if entry.source_ref is not None and entry.style_scope is None and request.theme_tokens.background(role)[0] == "none":
                 return
             bounds = Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height)))
-            paint_role = _swatch_paint_role(role, request.theme_tokens)
+            paint_role = (entry.realized_key.paint_role if entry.realized_key is not None
+                          else _swatch_paint_role(role, request.theme_tokens))
             if bucket == "circle":
                 commands = symbol_parts({"shape": "circle"}, (x, y, width, height))[0].commands
             else:
@@ -275,7 +274,22 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
                                          points=(tuple(command.points[0] for command in commands)
                                                  if bucket == "rule-pair" else ()),
                                          path_commands=commands, visual_role=paint_role, slot_id=legend.slot_id,
-                                         semantic_id="legendEntry", legend_swatch_shape=bucket))
+                                         semantic_id="legendEntry", legend_swatch_shape=bucket,
+                                         legend_paint=entry.realized_key.paint if entry.realized_key else None))
+            return
+        if entry.realized_key is not None:
+            corner_radius = 0.0
+            if bucket == "mark":
+                corner_ratio = request.theme_tokens.mark_geometry(role)[3]
+                corner_radius = resolve_corner_radius(
+                    request.theme_tokens.optional_token(role, "cornerRadius", "radius"),
+                    width=width, height=height,
+                    legacy_radius=min(float(corner_ratio) * min(width, height), min(width, height) / 2))
+            shapes.append(ShapePlacement(
+                swatch_id, entry.source_identity, "Rect",
+                Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),
+                slot_id=legend.slot_id, semantic_id="legendEntry", corner_radius=corner_radius,
+                visual_role=entry.realized_key.paint_role, legend_paint=entry.realized_key.paint))
             return
         if entry.style_scope is not None:
             shapes.append(ShapePlacement(swatch_id, entry.source_identity, "Rect",
@@ -316,15 +330,6 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             shapes.append(ShapePlacement(swatch_id, role, "Rect",
                                          Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),
                                          slot_id=legend.slot_id, corner_radius=corner_radius, paint_order=paint_order))
-            if (role in {"planned", "actual"} and role == request.surface_content.progress_fill_source
-                    and request.theme_tokens.has_role("progress-fill")):
-                # The selected host's key repeats its progress fill, full, in its track.
-                inset, fill_radius = request.theme_tokens.progress_track("progress-fill")
-                fill = progress_fill_bounds(shapes[-1].bounds, 1.0, inset)
-                if fill is not None and fill.inline_size > 0:
-                    shapes.append(ShapePlacement(f"{swatch_id}:progress-fill", "progress-fill", "Rect", fill,
-                                                 slot_id=legend.slot_id, paint_order=paint_order + 1,
-                                                 corner_radius=float(fill_radius) * float(min(fill.inline_size, fill.block_size))))
         elif bucket == "line":
             marker_token = request.theme_tokens.optional_token(role, "marker", "marker")
             relations.append(RelationPlacement(swatch_id, f"{swatch_id}:start",

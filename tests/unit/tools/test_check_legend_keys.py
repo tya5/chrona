@@ -24,11 +24,12 @@ def _scene(*surfaces: list[dict]) -> dict:
 
 @pytest.mark.parametrize("role", ["planned", "actual", "snapshot", "scenario"])
 def test_bar_key_family_and_paint_match(role):
-    scene = _scene([_rect(f"{role}:host"), _rect(f"legend-swatch:{role}")])
+    suffix = ":ink-a" if role == "actual" else ""
+    scene = _scene([_rect(f"{role}:host"), _rect(f"legend-swatch:{role}{suffix}")])
     assert legend_key_findings(scene) == []
 
 
-@pytest.mark.parametrize("role", ["planned", "actual", "snapshot", "scenario"])
+@pytest.mark.parametrize("role", ["planned", "snapshot", "scenario"])
 @pytest.mark.parametrize("wrong_kind", ["Symbol", "Path"])
 def test_bar_key_rejects_wrong_shape_family(role, wrong_kind):
     scene = _scene([_rect(f"{role}:host"), _rect(f"legend-swatch:{role}", kind=wrong_kind)])
@@ -37,7 +38,8 @@ def test_bar_key_rejects_wrong_shape_family(role, wrong_kind):
 
 @pytest.mark.parametrize("role", ["planned", "actual", "snapshot", "scenario"])
 def test_bar_key_rejects_wrong_paint(role):
-    scene = _scene([_rect(f"{role}:host"), _rect(f"legend-swatch:{role}", fill=None)])
+    suffix = ":ink-a" if role == "actual" else ""
+    scene = _scene([_rect(f"{role}:host"), _rect(f"legend-swatch:{role}{suffix}", fill=None)])
     assert any(role in finding and "paint" in finding.lower() for finding in legend_key_findings(scene))
 
 
@@ -83,39 +85,52 @@ def test_planned_progress_does_not_require_an_actual_progress_key():
         _rect("planned:campaign"),
         _rect("legend-swatch:planned"),
         _rect("progress-fill:planned:campaign"),
-        _rect("legend-swatch:planned:progress-fill"),
+        _rect("legend-swatch:progressFill:progress-ink"),
         _rect("legend-swatch:actual"),
     ])
     assert legend_key_findings(scene) == []
 
 
 @pytest.mark.parametrize("role", ["planned", "actual"])
-def test_progress_fill_requires_its_owning_role_key_overlay(role):
+def test_positive_progress_requires_a_separate_progress_key(role):
     scene = _scene([_rect(f"{role}:host"), _rect(f"legend-swatch:{role}"),
                     _rect(f"progress-fill:{role}:host")])
     findings = legend_key_findings(scene)
-    assert any(role in finding and "progress" in finding.lower() for finding in findings)
+    assert any("Progress" in finding and "separate" in finding for finding in findings)
 
 
 @pytest.mark.parametrize("role", ["planned", "actual"])
-def test_progress_overlay_paint_presence_matches_its_hosted_fill(role):
-    scene = _scene([_rect(f"{role}:host"), _rect(f"legend-swatch:{role}"),
-                    _rect(f"progress-fill:{role}:host", fill="#D09030"),
-                    _rect(f"legend-swatch:{role}:progress-fill", fill="#D09030")])
+def test_progress_key_paint_matches_positive_progress_marks(role):
+    fill = _rect(f"progress-fill:{role}:host", fill="#D09030")
+    key = _rect("legend-swatch:progressFill:progress-ink", fill="#D09030")
+    fill["paint"]["stroke"] = key["paint"]["stroke"] = "#123456"
+    scene = _scene([_rect(f"{role}:host"), _rect(f"legend-swatch:{role}"), fill, key])
     assert legend_key_findings(scene) == []
 
     broken = deepcopy(scene)
     broken["surfaces"][0]["primitives"][-1]["paint"]["fill"] = None
     findings = legend_key_findings(broken)
-    assert any(role in finding and "progress" in finding.lower() and "paint" in finding.lower()
+    assert any("progress" in finding.lower() and "paint" in finding.lower()
                for finding in findings)
 
     broken = deepcopy(scene)
-    broken["surfaces"][0]["primitives"][-1]["paint"]["fill"] = "#00AA00"
-    findings = legend_key_findings(broken)
-    assert any(role in finding and "progress" in finding.lower() and "paint" in finding.lower()
-               for finding in findings)
+    broken["surfaces"][0]["primitives"][-1]["paint"]["stroke"] = "#ABCDEF"
+    assert any("progress" in finding.lower() and "paint" in finding.lower()
+               for finding in legend_key_findings(broken))
 
+
+def test_each_actual_paint_group_matches_some_actual_mark_not_only_the_first():
+    scene = _scene([
+        _rect("actual:first", fill="#AA0000"),
+        _rect("actual:second", fill="#0000AA"),
+        _rect("legend-swatch:actual:paint-red", fill="#AA0000"),
+        _rect("legend-swatch:actual:paint-blue", fill="#0000AA"),
+    ])
+    assert legend_key_findings(scene) == []
+
+    broken = deepcopy(scene)
+    broken["surfaces"][0]["primitives"][-1]["paint"]["fill"] = "#00AA00"
+    assert any("no Actual mark" in finding for finding in legend_key_findings(broken))
 
 def test_path_key_bounds_must_enclose_its_points():
     path = {"id": "legend-swatch:dependency", "kind": "Path",
@@ -131,9 +146,9 @@ def test_path_key_bounds_must_enclose_its_points():
 
 def test_legend_findings_cover_each_surface_not_only_the_first():
     clean = [_rect("planned:host"), _rect("legend-swatch:planned")]
-    broken = [_rect("actual:host"), _rect("legend-swatch:actual", kind="Symbol")]
+    broken = [_rect("scenario:host"), _rect("legend-swatch:scenario", kind="Symbol")]
     findings = legend_key_findings(_scene(clean, broken))
-    assert any("actual" in finding and "shape" in finding.lower() for finding in findings)
+    assert any("scenario" in finding and "shape" in finding.lower() for finding in findings)
 
 
 def _write_manifest_scene(root: Path, *, scene_payload: str = '{"surfaces": [{"primitives": []}]}') -> Path:

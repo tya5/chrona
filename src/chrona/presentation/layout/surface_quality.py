@@ -18,6 +18,7 @@ from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, D
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, axis_label_semantic_ids
 from chrona.presentation.model.style_rules import StyleOccurrenceKey
 from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
+from chrona.presentation.model.theme_paint import ThemePaintWitness
 
 if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement.
     from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
@@ -369,6 +370,8 @@ class MarkPlacement:
     # Style appearance is recorded only when this exact source occurrence was evaluated.
     theme_role: str | None = None
     style_occurrence_key: StyleOccurrenceKey | None = None
+    # Source identity is independent of whether an authored Style matched.
+    source_occurrence_key: StyleOccurrenceKey | None = None
 
 @dataclass(frozen=True)
 class LayoutImageFill:
@@ -426,6 +429,8 @@ class ShapePlacement:
     # Logical mark owner, independent of a renderer clip host (e.g. a glyph
     # progress contour already completed by Layout).
     host_placement_id: str | None = None
+    # Completed semantic-key ink; Scene projects it without selecting another paint.
+    legend_paint: ThemePaintWitness | None = None
 
     def __post_init__(self) -> None:
         if self.legend_swatch_shape not in (None, "circle", "rule-pair"):

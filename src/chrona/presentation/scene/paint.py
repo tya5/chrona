@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from decimal import Decimal
 from math import cos, radians, sin
 from typing import Mapping
 
@@ -14,6 +15,7 @@ from chrona.presentation.model.theme_paint import (
     ThemePaintWitness,
     resolve_legend_shape_ink,
     resolve_theme_paint_witness,
+    ThemePaintInputs, restrict_shape_paint_inputs,
 )
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 from chrona.presentation.scene.model import (
@@ -77,19 +79,25 @@ def restrict_paint_channels(paint: ScenePaint, channels: str | None, role: str,
     """Apply completed shape intent, separately from catalogue-part precedence."""
     if channels is None:
         return paint
+    try:
+        ink = restrict_shape_paint_inputs(ThemePaintInputs(
+            paint.fill, paint.stroke,
+            Decimal(str(paint.stroke_width)) if paint.stroke_width is not None else None,
+            paint.dash, Decimal(str(paint.opacity)), False),
+            channels, role, patterned_fill=patterned_fill)
+    except ThemePaintError as error:
+        raise ScenePaintError(error.diagnostic_id, error.path, error.detail) from error
+    paint = replace(paint, fill=ink.fill, stroke=ink.stroke,
+                    stroke_width=float(ink.stroke_width) if ink.stroke_width is not None else None,
+                    dash=ink.dash)
     if channels == "fill":
-        if paint.fill is None:
-            raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}/fill")
         if patterned_fill:
             # Catalogue ink is fill content, not an outline of the host shape.
             return replace(paint, stroke_finish=None, wobble=None)
-        return replace(paint, stroke=None, stroke_width=None, dash=(), stroke_finish=None, wobble=None)
+        return replace(paint, stroke_finish=None, wobble=None)
     if channels == "stroke":
-        if paint.stroke is None or paint.stroke_width is None:
-            missing = "stroke" if paint.stroke is None else "strokeWidth"
-            raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}/{missing}")
         return replace(paint, fill=None, gradient=None, radial_gradient=None, image=None)
-    raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"/body/roles/{role}")
+    raise AssertionError("validated shape channel")
 
 
 @dataclass(frozen=True)
