@@ -517,3 +517,33 @@ def test_pinned_default_draft_guides_every_bar_across_the_plot_and_names_it_at_i
         assert (label["inline"] >= host["inline"] + host["inlineSize"] - 0.5
                 or label["inline"] + label["inlineSize"] <= host["inline"] + 0.5), key
     assert len(member_labels) + len(suppressed) == 29  # every selected item: 28 named before #488, 1 suppressed
+
+
+def test_default_axis_keeps_the_week_label_that_crosses_the_year_band_boundary(tmp_path, monkeypatch) -> None:
+    """#1724: the week owning 2026-12-28 straddles the 2026/2027 year-band cells and keeps its label.
+
+    Window-edge cells that cannot fit their own logical interval stay omitted; only
+    host overhang onto the abutting cell of the same band tier is admitted.
+    """
+    project = tmp_path / "two-year.yaml"
+    project.write_text(yaml.safe_dump({
+        "version": "timeline/v0.7", "project": {"id": "syn", "title": "Two-year plan", "calendar": "c"},
+        "calendars": {"c": {"working_days": ["mon", "tue", "wed", "thu", "fri"]}},
+        "objects": {
+            "start": {"type": "gate", "title": "Start", "schedule": {"mode": "fixed-point", "at": "2026-10-19"}},
+            "a": {"type": "task", "title": "Design", "schedule": {"mode": "scheduled", "amount": "30wd"}},
+            "b": {"type": "task", "title": "Build", "schedule": {"mode": "scheduled", "amount": "32wd"}}},
+        "relations": [
+            {"id": "r1", "type": "dependency", "from": {"object": "start", "endpoint": "at"},
+             "to": {"object": "a", "endpoint": "start"}, "lag": "0d"},
+            {"id": "r2", "type": "dependency", "from": {"object": "a", "endpoint": "end"},
+             "to": {"object": "b", "endpoint": "start"}, "lag": "0d"}]}), encoding="utf-8")
+    scene, _ = _render_project(tmp_path, monkeypatch, "two-year", project)
+    primitives = {item["id"]: item for item in _primitives(scene)}
+    labels = sorted(int(key.rsplit(":", 1)[1]) for key in primitives if key.startswith("axis-label:2:"))
+    label = primitives["axis-label:2:12"]["bounds"]
+    first, second = primitives["axis-band-rect:0:0"]["bounds"], primitives["axis-band-rect:0:1"]["bounds"]
+    assert label["inline"] < first["inline"] + first["inlineSize"] < label["inline"] + label["inlineSize"]
+    assert label["inline"] + label["inlineSize"] <= second["inline"] + second["inlineSize"]
+    # No blank column between retained labels; only the clipped window-edge cells are omitted.
+    assert labels == list(range(1, 15))
