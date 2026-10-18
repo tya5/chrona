@@ -47,6 +47,8 @@ Selected design and whole-architecture review: Specs28/61 now own colour-group i
 
 ## Implementation plan
 
+Current reviewer correction (design `ccf2f99df`, published): R1 delegates `model/legend_paint.py`, `layout/legend_candidates.py`, `layout/realized_legend.py` and candidate unit tests: add a channel-independent ink grouping signature, coalesce once in both candidate/final paths, choose qualifier-only wording, and suppress Progress using its typed completed host. Preserve full paint/glyph witnesses. R2 root owns `surface_composer.py` final caption-restored legend-slot replacement and a synthetic canvas regression; do not move other completed geometry. R3 native synthetic tests cover same-colour geometry variants/host progress and different-colour qualifiers; existing composite/strict contrast tests stay. Run focused integration/ownership and targeted Sunday/Gates renders, then one current-ready-main PR push; official snapshot replaces all preliminary counts. No second full local materializer run or example edits.
+
 All slices are independently focused-testable WIP publications; one coherent product PR includes I1–I4 after #1680 integration. Do not land the paint bridge or progress migration halfway through the fix. Main landing follows B's promised window; reconcile its current profile/packing changes without taking ownership.
 
 ### Composite correction implementation amendment
