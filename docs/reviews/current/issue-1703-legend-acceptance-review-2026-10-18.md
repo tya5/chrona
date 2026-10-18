@@ -19,6 +19,15 @@
 
 ### Evidence and release status
 
+Current release: PR1712 is merged, ready main is `9e59e3f02`.
+[Full release39115747584](https://github.com/tya5/chrona/actions/runs/39115747584)
+failed one corpus relation test on macOS/Linux: the retired Controller fixture's
+old Scene lacks the intentionally added Snapshot key (166→168 primitives).
+The unchanged Context now renders into scratch before the original seven-route,
+unique-source and no-ghost-route assertions. All three HALCYON byte checks remain
+unchanged. The complete relation corpus, native label regression and retirement
+guards pass8. No runtime, fixture or golden changes; fresh full release is required.
+
 Prepared integration `5a2acd12a` follows ready main `a27a86cd3` and combines
 independently reviewed1701 rows1/2. Legend focus36 and combined date/legend/native64
 pass; row2's separate native18 and point/path/style159 batches pass. The
