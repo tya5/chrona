@@ -149,6 +149,13 @@ compare only with planned points and intervals only with planned spans. Actual i
 use Core's half-open `[start, finish)` form; a human-facing inclusive finish label never
 changes it. Progress is observed only and has no implied forecast or rescheduling effect.
 
+A rollup's displayed planned date range covers its contained View occurrences,
+including folded points. Resolve each member span's `endDisplay` using its own
+date basis before taking the earliest start and latest finish; point dates are
+unchanged. Nested rollup display ranges are already resolved. Comparison-only
+tracks and descendants omitted by explicit rows do not extend the range.
+This display fact never changes the Core rollup endpoint or dependency ports.
+
 ## 5. Projection Pipeline
 
 The View pipeline is separate from styling and scene construction.
