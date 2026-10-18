@@ -168,3 +168,34 @@ def test_comparison_rollup_table_subject_keeps_its_own_date_range():
                          "missing": "blank", "endDisplay": "inclusive"}])
     table = normalize_v05_table_content(projection, {}, view)
     assert next(cell.content for cell in table.cells if cell.object_id == snapshot.item_id) == "01 Mar – 08 Mar"
+
+
+def test_years_visible_puts_the_year_on_every_date_range_date_and_locale_form():
+    a = {"start": date(2027, 4, 27), "end": date(2027, 5, 3)}
+    b = {"start": date(2028, 2, 22), "end": date(2028, 3, 1)}
+    one_day = {"start": date(2028, 2, 22), "end": date(2028, 2, 23)}
+
+    assert display_value(a, "blank", "dateRange") == "27 Apr – 03 May"  # default: unchanged (#1724)
+    assert display_value(a, "blank", "dateRange", years_visible=True) == "27 Apr 2027 – 03 May 2027"
+    assert display_value(b, "blank", "dateRange", years_visible=True) == "22 Feb 2028 – 01 Mar 2028"
+    assert display_value(one_day, "blank", "dateRange", end_display="inclusive", years_visible=True) == "22 Feb 2028"
+    assert display_value(a, "blank", "dateRange", locale="ja-JP", years_visible=True) == "2027年4月27日 – 2027年5月3日"
+    assert display_value(a, "blank", "dateRange", locale="ja-JP") == "4月27日 – 5月3日"
+
+
+def _window_table(window, planned):
+    from tests.unit.chrona.presentation.review.test_v05_content import typed_view
+    item = ReviewItem("t", "Task", "span", planned, None, None, (), item_id="t")
+    projection = ReviewProjection((item,), window, (), (),
+                                  rows=(ReviewRowProjection("row", "", "t", "t", (item,)),))
+    view = typed_view({"body": {"tableColumns": [
+        {"id": "Plan", "source": {"facet": "planned"}, "format": "dateRange", "missing": "em-dash"}]}})
+    return normalize_v05_table_content(projection, {}, view).cells[0].content
+
+
+def test_table_dates_carry_the_year_only_when_the_visible_window_spans_years():
+    planned = {"start": date(2027, 4, 27), "end": date(2027, 5, 3)}
+    assert _window_table((date(2027, 1, 1), date(2029, 6, 1)), planned) == "27 Apr 2027 – 03 May 2027"
+    # the plan may span years, but a window that shows one year keeps the short form
+    assert _window_table((date(2027, 1, 1), date(2028, 1, 1)), planned) == "27 Apr – 03 May"
+    assert _window_table((date(2027, 3, 1), date(2027, 8, 1)), planned) == "27 Apr – 03 May"

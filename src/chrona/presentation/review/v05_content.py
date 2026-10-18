@@ -94,6 +94,9 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
                      and column.source.get("facet") == "planned"}
     }
     as_of = date.fromisoformat(str(actual_body["asOf"])) if isinstance(actual_body.get("asOf"), str) else None
+    # A date drops its year only while the whole visible window stays inside one calendar year (#1724).
+    window = getattr(projection, "window", None)
+    years_visible = bool(window) and window[0].year != (window[1] - timedelta(days=1)).year
     def cell_parts(item: Any, column: Any, row_index: int, container_id: str = "") -> tuple[str, str, str]:
         """The cell's (prefix, core, suffix): the affix of its state wraps the formatted text (#588)."""
         value = table_value(item, dict(project), column.source, row_index)
@@ -118,7 +121,8 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
             core = _missing_actual_display(item, as_of)
         else:
             core = display_value(value, missing, column.format, locale=locale, zero=column.zero,
-                                 end_display=column.end_display, transform=column.transform)
+                                 end_display=column.end_display, transform=column.transform,
+                                 years_visible=years_visible)
             if column.transform == "initials" and isinstance(value, str) and not initials(value):
                 value = None  # no letter or digit: the cell reads as absent, so the `missing` affix applies (#1373)
         if column.suffix is not None:
