@@ -548,3 +548,23 @@ def test_default_axis_keeps_the_week_label_that_crosses_the_year_band_boundary(t
     assert label["inline"] + label["inlineSize"] <= second["inline"] + second["inlineSize"]
     # No blank column between retained labels; only the clipped window-edge cells are omitted.
     assert labels == list(range(1, 15))
+    # The cell gap between the two year cells must not strike through the label: a bridge in the
+    # band's colour covers the gap over the label's block extent, painted above the cells and below the text.
+    gap = (first["inline"] + first["inlineSize"], second["inline"])
+    bridges = [item for key, item in primitives.items() if key.startswith("axis-band-bridge:")]
+    assert len(bridges) == 1
+    bridge = bridges[0]
+    text = primitives["axis-label:3:12"]
+    assert bridge["bounds"]["inline"] <= gap[0] and bridge["bounds"]["inline"] + bridge["bounds"]["inlineSize"] >= gap[1]
+    assert bridge["bounds"]["block"] <= text["bounds"]["block"] + 0.01
+    assert bridge["bounds"]["block"] + bridge["bounds"]["blockSize"] >= text["bounds"]["block"] + text["bounds"]["blockSize"] - 0.01
+    assert bridge["paint"]["fill"] == primitives["axis-band-rect:0:0"]["paint"]["fill"]
+    assert bridge["paintOrder"] < text["paintOrder"]
+    # No other axis line or gap-revealing primitive crosses the label's text box: separators and
+    # plot grid lines (zero inline size) stay out of the label's block extent.
+    box = text["bounds"]
+    for key, item in primitives.items():
+        b = item["bounds"]
+        if b["inlineSize"] == 0 and key.startswith(("axis-separator", "axis-grid")):
+            assert not (box["inline"] < b["inline"] < box["inline"] + box["inlineSize"]
+                        and b["block"] < box["block"] + box["blockSize"] and b["block"] + b["blockSize"] > box["block"]), key
