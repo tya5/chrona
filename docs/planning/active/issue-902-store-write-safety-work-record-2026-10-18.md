@@ -230,6 +230,21 @@ engine/schema code;31 focused history/concurrency/documentation cases pass.
 Design `cdf0289f8`, plan `fa31cc79c`, code `fa831e384` and review `0b79e65a0`
 are on `wip/issue-902-authoring-design`; that branch owns durable authoring/MCPv0.6.
 Item2 PR may open after item3 merges and derived-main is ready, alongside
-item3's full release; item2 merge still waits for item3's successful full
-release. Any predecessor release failure remains that predecessor owner's
-priority and blocks the dependent merge. Parked4/814/815 remain open.
+item3's full release. Item2 may merge after its own current-head checks and
+artifact/architecture review pass on that ready base; it need not wait for
+item3's OS matrix to finish. Known predecessor failures still take priority
+and block the dependent merge. Parked4/814/815 remain open.
+
+### Publication versus acceptance (reviewed scheduling amendment)
+
+The separate item3/item2 PRs, current-ready-base checks, literal reviews and
+5→3→2 publication order remain required. Item5's failed Windows foundation must
+be repaired and release-verified first. Once item3 and item2 are both published,
+one successful exact-main three-OS full pytest/conformance/wheel/MCP/public
+reproduction run containing both source changes and both literal reviews may
+prove their acceptance together. Neither merge alone is acceptance. Keep the
+existing item3 full run until the combined exact-SHA run exists; preserve all
+inverse/legacy/replay and authoring tests in the combined suite. Any newly red
+predecessor becomes the priority; never use a narrower run as shared proof.
+Independent workflow/architecture review confirms this changes scheduling only,
+not a contract, test scope or gate. Publish the amendment before using it.
