@@ -18,7 +18,7 @@
 
 ## Architecture and verification
 
-Implementation: `2a14a6689`.
+Implementation: `2a14a6689`; strict-YAML closure correction: `3e4541198`.
 
 The [pre-code plan](https://github.com/tya5/chrona/issues/1725#issuecomment-6250424023)
 and [architecture review/implementation plan](https://github.com/tya5/chrona/issues/1725#issuecomment-6250489534)
@@ -36,6 +36,11 @@ checks passed (107). Final import-direction/startup instruction checks passed
 67 tests. The exact diagnostic code, detail and source pointer are checked
 separately (64 focused tests). Final CLI/MCP lifecycle and guide tests pass14.
 The documented-command reference and import-direction guards pass.
+Initial CI39133011499 found the effective-View mapping subclass could not be
+YAML-serialized and the review lacked its required programme-section heading;
+both are corrected. The shared closure emits plain documents before guided
+normalization, retaining provenance on the typed sources. Strict-YAML and
+isolated Python3.11 stdio target-b regression checks pass.
 
 ## Programme-level criteria (optional)
 
