@@ -2,20 +2,25 @@
 
 ## Published baseline and literal acceptance
 
-Main `381cf404a`; row1 candidate `c0e78982c`, review `73192c558`, on
+Ready main `5fe41db8e`; row1 candidate `c0e78982c`, review `73192c558`, on
 `wip/issue-1703-1701-display-followups`, integrated with independently reviewed
 legend code as `163ba8725`. Row1 is focused-tested, not released. The
 [issue record](https://github.com/tya5/chrona/issues/1701#issuecomment-6246724848)
 owns its fast-path plan; the [acceptance review](../../reviews/current/issue-1701-hierarchy-acceptance-review-2026-10-18.md)
-keeps the full issue open. This record owns **row2; implementation in progress**.
+keeps the full issue open. Row2 is implemented and focused-reviewed; PR/public
+artifact and exact-main full release remain pending.
 The joint display-followup publication follows the902 predecessors and retains
 both literal reviews and full gates; integrated focused tests64 pass.
 
-Row2 WIP: `wip/issue-1701-hierarchy-names`, source closure `62fa2895d`,
-admission/Layout `ad30b5aaf`. Combined focused tests293 pass; schema annotation
-and equivalence checks pass (one additive/one delta/39 equal; the same five
-invalid corpus verdicts). Preset/native three-level evidence and all release
-gates remain pending; these commits are not acceptance.
+Row2 source: closure `62fa2895d`, admission/Layout `ad30b5aaf`, declarations
+`d27e086d9`, exact-source composites/point-policy admission `1ca25a3e0`.
+Both display WIP refs contain the candidate. Focused path/point/style159,
+source-composite152, preset/closure62 and native18 tests pass (overlapping).
+Schema annotation/equivalence pass against5fe41db8e: one additive/one delta/
+40 equal, the same five invalid corpus verdicts; upstream retired deltas stay
+retired. All15 native PNGs were inspected and
+[published with SVG/Scene and inputs](https://github.com/tya5/chrona/tree/cfb05a1eb28ac10a0b1b30fb6588ad1c451832e9/review-evidence/issue-1701).
+The one-full-window suppression case remains an explicit negative regression.
 
 1. Synthetic: a group with a child gate after its last span shows a range ending on the gate date.
 2. Design record for nested grouping (levels, header depth, folding, how presets declare it), reviewed before code; then a synthetic 3-level twin rendered by the bundled presets with no level lost.
