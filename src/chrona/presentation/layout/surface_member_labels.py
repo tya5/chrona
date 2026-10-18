@@ -459,6 +459,9 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/placement/{placement_id}")
                 candidates = tuple(side for side in (request.surface_content.label_fallback or
                     ("end", "start", "above", "below")) if side not in {"suppress", "inside"})
+                if getattr(row, "key_row", False):
+                    # Like its title, a key-row delta stays inside its own lane band (#1501, #1681).
+                    candidates = key_row_label_ladder(contract.labels.side)
                 forecast_requests.append(LabelRequest(
                     placement_id, item.object_id, finish_delta_text(item), LabelRect(*bounds_from_rect(mark.bounds)),
                     candidates, request.surface_content.label_text_role or "text", "plot-label", CollisionDomain("timeline", "overlay"),
@@ -588,6 +591,27 @@ def place_member_labels(context: SurfaceMemberLabelContext,
         candidate_geometries = {side: value[2] for side, value in prepared.items()} if prepared else None
         label_size, label_gap, placement_bounds = geometry.size, geometry.gap, geometry.bounds
         reach, association, final_association = geometry.maximum_end_gap, geometry.association, geometry.final_association
+        anchor_with_delta = label_request.anchor
+        sibling = obstacles.get(f"variance:{label_request.placement_id.split(':', 1)[-1]}")
+        if associated_member and sibling is not None and sibling.obstacle_class == "text":
+            # A finish delta is a member of its title's label packing (#1681): when it already holds a side of
+            # the title's mark, the title is measured from the delta, so it keeps the label gap from the delta as
+            # it does from the mark, and its end reach counts the delta.
+            host_left, _, host_width, _ = bounds_from_rect(host.bounds)
+            anchor = label_request.anchor
+            if sibling.geometry.left >= host_left + host_width - label_gap:
+                extra = sibling.geometry.right - (host_left + host_width)
+                reach += extra
+                if association is not None:
+                    association = replace(association, maximum_distance=association.maximum_distance + extra)
+                if final_association is not None:
+                    final_association = replace(final_association,
+                                                maximum_distance=final_association.maximum_distance + extra)
+                anchor_with_delta = LabelRect(anchor.x, anchor.y, max(anchor.width, sibling.geometry.right - anchor.x),
+                                              anchor.height)
+            elif sibling.geometry.right <= host_left + label_gap:
+                anchor_with_delta = LabelRect(sibling.geometry.left, anchor.y,
+                                              max(anchor.width, anchor.right - sibling.geometry.left), anchor.height)
         if label_request.rule_host_obstacle_id:
             label_classes = ("mark", "text", "label-visual", "rule")
         elif reserve_only:
@@ -613,7 +637,7 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                     candidate is None or not candidate.side.startswith("plot-below")):
                 diagnostics.append(f"{BELOW_PLOT_FALLBACK}:{label_request.placement_id}")
         elif associated_member:
-            candidate = place_member_name(label_request.anchor, label_size, label_request.candidates,
+            candidate = place_member_name(anchor_with_delta, label_size, label_request.candidates,
                 bounds=placement_bounds, obstacles=placement_obstacles, gap=label_gap, maximum_end_gap=reach,
                 text_inline_inset=geometry.text_inline_inset, inside_host_obstacle_id=label_request.inside_host_obstacle_id,
                 classes=label_classes,

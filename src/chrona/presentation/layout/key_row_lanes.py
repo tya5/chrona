@@ -11,6 +11,7 @@ from typing import Any
 
 from chrona.presentation.layout.chip_geometry import chip_padding
 from chrona.presentation.layout.mark_facet_visibility import admitted_source_selection
+from chrona.presentation.layout.label_footprint_measurement import measure_label_footprint
 from chrona.presentation.layout.mark_geometry import compose_item_marks
 from chrona.presentation.layout.presentation import MarkBandFrame
 from chrona.presentation.layout.surface_marks import pack_extent_lanes
@@ -18,6 +19,7 @@ from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, M
 from chrona.presentation.layout.style_occurrences import StyleSourceOccurrences
 from chrona.presentation.layout.style_text import resolve_label_candidate_styles
 from chrona.presentation.layout.text import measure_text_width, metric_for_role
+from chrona.presentation.model.projection import finish_delta_semantic, finish_delta_text
 from chrona.presentation.model.semantic_registry import label_chip_semantic
 
 
@@ -40,6 +42,7 @@ def assign_key_row_lanes(review_rows: tuple[Any, ...], *, request: Any, scale: A
                        float(treatment.font_size) * float(treatment.line_height))[0]
     label_at_start = request.presentation_contract.labels.side == "start"
     metrics = metric_for_role(theme, role, request.font_metrics)
+    finish_delta_labelled = "finishDelta" in request.presentation_contract.labels.content
     probe = MarkBandFrame.zero_origin(scale, mark_block_size, role_geometries, mark_band_allocation)
     index = request.mark_visibility_index
     style_index = getattr(request.surface_content, "style_intents", None)
@@ -104,7 +107,26 @@ def assign_key_row_lanes(review_rows: tuple[Any, ...], *, request: Any, scale: A
                 width = max(width, *(candidate_width for candidate_width, _ in candidate_widths))
                 span = max(span, *(candidate_width + candidate_gap
                                    for candidate_width, candidate_gap in candidate_widths))
+        forecast_items = [item for item in point_items if getattr(item, "forecast", None) is not None
+                          and finish_delta_text(item) is not None]
+        if forecast_items and getattr(request.presentation_contract.labels, "enabled", True) \
+                and "finishDelta" in request.presentation_contract.labels.content:
+            # A forecast delta is a member of the title's label packing (#1681): the point's extent holds the
+            # delta and its gap on either side the delta may take, as a folded group-header point does.
+            delta = measure_label_footprint(f"variance:{row.row_id}:{forecast_items[0].item_id or forecast_items[0].object_id}",
+                finish_delta_text(forecast_items[0]), role, finish_delta_semantic(forecast_items[0]), request)
+            reach = span + delta.size[0] + delta.gap
+            return (min(lefts) - reach, max(rights) + reach)
         return (min(lefts) - span, max(rights)) if label_at_start else (min(lefts), max(rights) + span)
+
+    # A lane is at least as tall as the labels it holds, so a label never meets the one in the next lane (#1681).
+    allocation = mark_band_allocation
+    base_pitch = float(allocation.outer_extent if allocation is not None else mark_block_size)
+    label_block = float(measure_label_footprint("key-row-probe", "M", role, "memberLabel", request).size[1])
+    if finish_delta_labelled:
+        label_block = max(label_block, float(measure_label_footprint(
+            "key-row-probe", "+0d", role, "finishDelta", request).size[1]))
+    lane_pitch = label_block if label_block > base_pitch else None
 
     result = []
     for row in review_rows:
@@ -120,5 +142,5 @@ def assign_key_row_lanes(review_rows: tuple[Any, ...], *, request: Any, scale: A
             by_object.setdefault(item.object_id, []).append(item)
         lanes = pack_extent_lanes([extent(row, by_object[object_id]) for object_id in order])
         lane_of = dict(zip(order, lanes, strict=True))
-        result.append(replace(row, items=tuple(replace(item, key_lane=lane_of[item.object_id]) for item in row.items)))
+        result.append(replace(row, items=tuple(replace(item, key_lane=lane_of[item.object_id], key_pitch=lane_pitch) for item in row.items)))
     return tuple(result)
