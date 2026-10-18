@@ -2,20 +2,21 @@
 
 ## Published baseline and scope
 
-Design planning for the whole issue; S1 identity design completed below.
+S1–S4 design, architecture review and implementation are complete in the issue
+branch; integrated trial evidence, public-output review and release remain open.
 Source: [issue 1754](https://github.com/tya5/chrona/issues/1754), including its later comments, on ready main `6c3b4e4e2d4064e924a8b9703c3f31ab7a62bc39`.
 Trial evidence is reference-only: [`reviewer/trial-8-inputs@bf3940dbe9af487ac6cace5458554762594f3477`](https://github.com/tya5/chrona/tree/bf3940dbe9af487ac6cace5458554762594f3477/trial-8).
 
-Published facts: core relation identities include the declaration index;
+Original baseline facts: core relation identities include the declaration index;
 Layout consumes previous-Scene hints only under first-fit; Spec 50 explicitly
 excludes best and makes the as-of rule obstruct member names; Specs 08/46
-include the cone in completed contrast grounds. These contracts must change
-before code. Trial measurements are reported evidence, not yet independently
-reproduced on the implementation. Duplicate declared-ID handling, best-mode
-hint preference and the Theme ground opt-in remain design decisions.
+include the cone in completed contrast grounds. The selected corrections below
+were specified and published before their implementation. The pinned trial's
+measurements are reference evidence; candidate reproduction is in progress.
 
 Dev A owns this item. Dev B owns baseline/forecast 1755 and customisation
-1756. Coordinate shared-file changes before implementation; do not alter trial
+1756 rows 3–5; dev A's 1756 rows 1–2 are a subsequent item, not this scope.
+Coordinate shared-file changes before implementation; do not alter trial
 inputs or preset YAML to satisfy a general rule. Completed 1734 geometry reuse
 and its safety/accounting rules remain the routing baseline.
 
