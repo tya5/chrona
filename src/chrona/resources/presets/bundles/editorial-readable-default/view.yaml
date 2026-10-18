@@ -60,12 +60,21 @@ body:
       typographyRole: axisQuarter
       label:
         forms:
-          day: localized-date
-          week: start-day-month
           month: short-month-year
-          quarter: year-quarter
           half: half-year
           year: year
+        align: center
+        overflow: thin-with-record
+        orientation: horizontal
+    - unit: auto
+      every: 1
+      role: labels
+      typographyRole: axisMonth
+      label:
+        forms:
+          day: localized-date
+          week: start-day-month
+          quarter: quarter
         align: center
         overflow: thin-with-record
         orientation: horizontal

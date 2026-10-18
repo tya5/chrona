@@ -183,6 +183,13 @@ def test_readable_default_resources_are_selected_from_the_packaged_authority():
                 "strokeWidth": "deadline-mark-width", "markReach": "deadline-mark-reach",
                 "markPaintOrder": "deadline-mark-order"}
             migrated["colorBindings"]["deadline-mark.stroke"] = "text"
+            # The packaged default stacks a year-bearing tier over a week tier, both light on the
+            # navy band, and sizes the axis as the sum of the two lanes (#1724 P2).
+            migrated["values"]["axis-lane-quarter"]["value"] = 32
+            migrated["values"]["axis-lane-month"]["value"] = 34
+            migrated["values"]["timeline-axis-height"]["value"] = {
+                "expr": "{axis-lane-quarter} + {axis-lane-month}"}
+            migrated["colorBindings"]["axis-label3.fill"] = "surface"
             assert declared == expected  # keep every unaffected Theme declaration
     assert resources["view"] == {
         "id": "chrona-preset-editorial-readable-default", "kind": "view",
