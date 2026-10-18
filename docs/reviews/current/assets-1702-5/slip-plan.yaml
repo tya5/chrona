@@ -1,0 +1,53 @@
+version: timeline/v0.7
+project:
+  id: slip
+  title: Finish slip
+  calendar: standard
+calendars:
+  standard:
+    working_days:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+objects:
+  design:
+    type: task
+    title: Design
+    schedule:
+      mode: scheduled
+      amount: 8wd
+      anchor:
+        start: '2027-01-11'
+  build:
+    type: task
+    title: Build
+    schedule:
+      mode: scheduled
+      amount: 8wd
+  ship:
+    type: task
+    title: Ship
+    schedule:
+      mode: scheduled
+      amount: 5wd
+relations:
+- id: design-build
+  type: dependency
+  from:
+    object: design
+    endpoint: end
+  to:
+    object: build
+    endpoint: start
+  lag: 0d
+- id: build-ship
+  type: dependency
+  from:
+    object: build
+    endpoint: end
+  to:
+    object: ship
+    endpoint: start
+  lag: 0d

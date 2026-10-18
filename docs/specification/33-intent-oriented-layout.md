@@ -756,6 +756,12 @@ gap past the delta, and its end reach counts the delta. A key-row point's extent
 either side, as a folded point's does, and a key-row delta stays on the start or end side inside its own lane band. A
 key-row lane is at least as tall as the labels it holds, so labels in adjacent lanes never meet.
 
+An ordinary (non-forecast) finish delta is placed before dependency routes, as a forecast delta is, so its preferred
+end side is judged against marks and titles only (#1702). A route that leaves the finish edge routes around the delta; it
+never pushes the delta to the bar's start, where it would read as a start slip.
+A title packs beyond such a delta only while it stays within its reach of its nearest own mark; past that it takes
+another side of its mark, so a member label never floats away from its mark (Spec 50 association bound).
+
 After canonical side candidates fail, optional plot/item/delta and relation labels may use
 a finite side-relative displacement with at most 512 actual collision queries.
 Member-name candidates are bounded by the row and the completed own marks'

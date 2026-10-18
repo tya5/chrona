@@ -200,7 +200,9 @@ def test_nearest_stub_exit_can_be_rejected_before_the_other_exit_enters_horizont
     with monkeypatch.context() as old:
         _prior_source_first(old)
         prior = _relation_path(_compose(search="best")).points
-    assert _bends(prior) == 2
+    # #1702 row 5: the finish delta now holds the end slot before routes, so the prior rule's route jogs around it
+    # (4 bends instead of 2); the current rule's route is unchanged.
+    assert _bends(prior) == 4
     assert prior[-2][0] == prior[-1][0], "the previous source-first rule takes the vertical target entry"
 
 
@@ -210,18 +212,15 @@ def test_actual_finish_delta_text_and_detached_snapshot_ghost_are_real_scene_con
     variance = next(item for item in surface.primitives if item.scene_id == "variance:a:a")
     assert variance.kind == "Text" and variance.text == "+1d"
     actual = next(item for item in surface.primitives if item.scene_id == "actual:a:a")
-    # The end slot is occupied, so the approved canonical ladder takes start
-    # on the actual bar's line, rather than retaining the old end-edge alignment.
-    assert actual.bounds[0] - (variance.bounds[0] + variance.bounds[2]) == pytest.approx(3.5)
+    # #1702 row 5: a finish delta sits at the finish side of its bar. It is placed before routes, so the route
+    # leaving the finish edge goes around it and the delta never falls back to the bar's start.
+    gap = variance.bounds[0] - (actual.bounds[0] + actual.bounds[2])
+    assert gap == pytest.approx(3.5)
     assert variance.bounds[1] + variance.bounds[3] / 2 == pytest.approx(
         actual.bounds[1] + actual.bounds[3] / 2)
-    fallback, = [json.loads(item.split(":", 1)[1]) for item in surface.diagnostics
-                 if item.startswith("I_LAYOUT_FINISH_DELTA_ANCHOR_FALLBACK:")
-                 and json.loads(item.split(":", 1)[1])["placementId"] == variance.scene_id]
-    assert (fallback["preferredSide"], fallback["selectedSide"], fallback["outsideBounds"]) == (
-        "end", "start", False)
-    assert "member-label:a:a" in fallback["blockerPlacementIds"]
-    assert path.scene_id + ":segment:0" in fallback["blockerPlacementIds"]
+    assert not any(item.startswith("I_LAYOUT_FINISH_DELTA_ANCHOR_FALLBACK:")
+                   and json.loads(item.split(":", 1)[1])["placementId"] == variance.scene_id
+                   for item in surface.diagnostics)
     ghost = next(item for item in surface.primitives if item.scene_id == "planned:b:snapshot:b")
     target = next(item for item in surface.primitives if item.scene_id == "planned:b:b")
     stub_tip = float(target.bounds[0]) - 11
