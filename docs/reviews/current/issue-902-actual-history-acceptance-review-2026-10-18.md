@@ -27,6 +27,13 @@ Redo revalidates intent; revert creates a new immutable revision. Legacy
 unrecoverable intent is diagnosed, not guessed. No renderer or project YAML
 changes; generic Project history is unchanged.
 
+Final integration uses trusted-ready main `6d68834de` (reviewer1704 included).
+History/process/locking/MCP focused19 and agent/ledger/schema-packaging/CLI115
+pass; the literal-review checker passes. Schema equivalence passes: L1 added1/
+equal41, L2/L3 with the same five baseline-invalid documents. Independent final
+review confirms post-publication record I/O errors propagate rather than being
+mislabeled safe rejections. Main-derived changes were merged, not hand-edited.
+
 Release is **not accepted yet**: current-head PR CI, official materializer
 artifact audit and full exact-main three-OS pytest/conformance/wheel release
 remain required. The item3 merge additionally waits for item5's exact-main
