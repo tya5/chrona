@@ -156,6 +156,34 @@ schema, Theme role, threshold or project-specific exception is needed. Cone
 contrast is a separate S4 rule, not a reason to alter this placement boundary.
 No unresolved S3 contract remains.
 
+## S4 selected design and whole-architecture review
+
+Specs [07](../../specification/07-style-and-theme.md#9-boundary-to-scene-and-rendering),
+[08](../../specification/08-scene-and-rendering.md) and
+[46](../../specification/46-completed-scene-paint.md) own the cone-ground rule.
+One optional boolean author opt-in becomes one completed cone fact. A runtime-
+only evaluator switch was rejected: Scene-only corpus analysis could not then
+honour the Theme choice. A new extensible ground-policy language or additional
+enum is unnecessary for this binary choice. Put metadata on the primitive,
+not gradient paint, so adapter paint identities cannot change merely because
+an observation policy changes. Do not make severity imply ground membership.
+
+Architecture review: Theme resolution validates author intent; Scene paint
+completion projects that intent onto the emitted cone. The shared Scene
+observer reads only completed facts and selects the cone set once per
+classified mark observation, including encoded fills, patterns and multipart
+marks. Recursive grounds use that same selected set. Text retains all physical
+cones. Physical surface-treatment samples retain their separate actual-paint
+contract. Layout geometry, Scene geometry and all adapters are unchanged.
+The optional Theme/Scene boolean is an in-place input widening (Spec 56);
+the default mark-ground interpretation is an intentional normative correction,
+not a claim of behavioral compatibility. Older v0.7 Scenes without metadata
+adopt it; v0.6 admission is unchanged. Revalidate default and opt-in severities,
+ground IDs and exception disposition. No project/preset branch or resource
+migration is required; updated generated diagnostics will be reviewed as a
+batch. Independent review supports Scene-carried policy and this separation
+from physical paint. No unresolved S4 contract remains.
+
 ## S1 implementation plan
 
 | Slice | Owners/files | Acceptance and focused evidence | Publication |
