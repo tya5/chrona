@@ -55,6 +55,8 @@ MCP floor and newest-Python public reproduction.
 The additional design-only [review request](https://github.com/tya5/chrona/issues/1723#issuecomment-6251245796)
 is addressed by the published [three-option comparison and architecture review](https://github.com/tya5/chrona/issues/1723#issuecomment-6252067725).
 It distinguishes existing default first-fit/relax, critical-first and hint
-reuse from new work; unknown gains are not invented. Reviewer disposition
-remains pending. No algorithm implementation is authorized;
-issue1723 stays open.
+reuse from new work; unknown gains are not invented. The requested table is
+delivered; a reviewer reply is not an additional acceptance condition.
+No algorithm implementation is selected or authorized. Further profiling is
+a proposal, not a deferred literal criterion. All three rows are met and
+issue1723 is [closed](https://github.com/tya5/chrona/issues/1723#issuecomment-6252586373).

@@ -60,8 +60,8 @@ checks. No validator weakening or generated-file edits. Affected tests pass49;
 final CI supplies conformance, all three pytest shards and reproduction.
 
 Derived sync and the exact-SHA trusted gate pass on ready main
-`a59fe7c68c094a970c2e1465e62bfa669c8c2f48`. Remaining:
+`a59fe7c68c094a970c2e1465e62bfa669c8c2f48`.
 [native release39144628668](https://github.com/tya5/chrona/actions/runs/39144628668)
-(three-OS pytest/conformance/wheel, MCP floor and newest-Python public
-reproduction). Keep issue1727 open until that gate completes; PR CI alone
-is not release acceptance.
+passes three-OS pytest/conformance/wheel, MCP floor and newest-Python public
+reproduction. All three literal rows are met and issue1727 is
+[closed](https://github.com/tya5/chrona/issues/1727#issuecomment-6252720230).
