@@ -105,7 +105,7 @@ _S, _D, _G, _U = "single-role", "distinct", "gap", "unpainted"
 _PURPOSES = (
     # Marks and time decorations.
     _p("planned", _D), _p("actual", _S, "one actual-progress bar; the planned/actual contrast is carried by the two purposes"),
-    _p("forecast", _U, "a forecast is painted with the planned Scene purpose and role, so this purpose is never emitted"),
+    _p("forecast", _U, "purpose=forecast is preserved by the vocabulary and the Scene; only its fallback role is planned, and the committed corpus draws no forecast purpose"),
     _p("snapshot", _S, "one baseline-snapshot mark"), _p("missingActual", _S, "one missing-observation marker"),
     _p("summary-bar", _S, "one summary-bar fill"), _p("progress-fill", _S, "one progress fill"),
     _p("icon-mark", _U, "no committed slide draws a standalone icon mark"),

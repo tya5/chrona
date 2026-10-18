@@ -120,6 +120,8 @@ class ReviewItem:
     temporal_paint: bool = True
     # Lane of a key-row point, assigned by Layout from measured extents (#1501); None everywhere else.
     key_lane: int | None = None
+    # Block pitch of that lane when a label is taller than the mark lane, so adjacent lanes' labels never meet (#1681).
+    key_pitch: float | None = None
     # Project-declared link retained separately from lane-derived ``attached_to`` (#1373).
     declared_attaches_to: str | None = None
     field_bindings: FieldRoleBindings = FieldRoleBindings()

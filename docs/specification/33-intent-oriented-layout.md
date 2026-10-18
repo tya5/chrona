@@ -749,6 +749,13 @@ existing required-label refusal when it cannot be placed; do not add a forecast
 placement algorithm or extra rehearsal loop. Table comparison text retains its
 atomic full-text feasibility check. Ordinary optional deltas are unchanged.
 
+A finish-delta label is a member of the same label packing as the title it annotates (#1681), in key-row and
+group-header packing and in ordinary rows. Between the delta and the title it keeps the Theme's label gap, the same gap
+used between a mark and its title: a title placed beside a delta that already holds its mark's end side starts a label
+gap past the delta, and its end reach counts the delta. A key-row point's extent holds its forecast delta and gap on
+either side, as a folded point's does, and a key-row delta stays on the start or end side inside its own lane band. A
+key-row lane is at least as tall as the labels it holds, so labels in adjacent lanes never meet.
+
 After canonical side candidates fail, optional plot/item/delta and relation labels may use
 a finite side-relative displacement with at most 512 actual collision queries.
 Member-name candidates are bounded by the row and the completed own marks'
