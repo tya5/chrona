@@ -246,7 +246,12 @@ that exact SHA, and waits for successful `derived-main` and `derived-ready`
 checks before fast-forwarding `main`. The gate also posts `derived-ready` as a
 commit status on that exact SHA: a protected branch's push hook does not count
 a check run created by a dispatched workflow, but it counts a status. A non-fast-forward or failed gate stops
-publication; never patch generated output manually. After publication the
+publication; never patch generated output manually. The sync and gate jobs
+carry `timeout-minutes` bounds (`synchronize` 20, `derived-main` 10,
+`derived-ready` 5; the PR-side `derived-ready` poller 45). A timed-out sync
+publishes nothing, like a failed one. If a sync exceeds its bound or stalls,
+dispatch `derived-sync` on main (`gh workflow run derived-sync.yml --ref main`);
+never patch generated output. After publication the
 sync dispatches the full three-OS pytest/conformance/wheel-smoke run on the
 same immutable ref and SHA. Main pushes do not run that matrix on the stale
 pre-sync source SHA. No-op syncs use the existing main SHA for both checks.

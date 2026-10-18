@@ -17,6 +17,7 @@ jobs:
   synchronize:
     if: ${{ github.event_name != 'schedule' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - id: target
         name: Reject invalid event refs before checkout
