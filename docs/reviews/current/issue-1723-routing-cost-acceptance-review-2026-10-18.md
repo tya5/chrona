@@ -36,8 +36,17 @@ progress tests pass. After rejecting the geometry candidate, obstacle,
 workload, typed-advisory and CLI/MCP feedback checks pass33. The import-direction
 guard passes. No local full suite or additional corpus sweep was run.
 
+PR run39138383520 exposed the same integer-count expression in conformance
+and pytest shard1: the geometry accumulation guard cannot classify a sum of
+endpoint multiplicity products. Explicit integer accumulation preserves the
+count and warning threshold without weakening that guard; focused workload
+and guard tests pass20.
+
 ## Programme-level criteria (optional)
 
 Pending: final-head CI, official generated output comparison,
 and exact-main three-OS pytest/conformance/wheel/public-materializer evidence.
 Local acceptance is not release acceptance; issue1723 remains open.
+After issue1727, the additional algorithm cost-benefit design requested in
+[review](https://github.com/tya5/chrona/issues/1723#issuecomment-6251245796)
+also remains open; this PR does not authorize algorithm implementation.

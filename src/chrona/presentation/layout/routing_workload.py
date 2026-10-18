@@ -30,11 +30,11 @@ def routing_cost_advisory(
     if not multiplicities:
         return None
 
-    potential_pairs = sum(
-        multiplicities.get(relation.source_object_id, 0)
-        * multiplicities.get(relation.target_object_id, 0)
-        for relation in content.relations
-    )
+    # This is a count of possible endpoint pairs, not accumulated geometry.
+    potential_pairs = 0
+    for relation in content.relations:
+        potential_pairs += (multiplicities.get(relation.source_object_id, 0)
+                            * multiplicities.get(relation.target_object_id, 0))
     if potential_pairs < ROUTING_COST_ADVISORY_THRESHOLD:
         return None
     return RoutingCostAdvisory("table-timeline", potential_pairs)
