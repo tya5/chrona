@@ -1,9 +1,11 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 L1–L3 and local L4 implemented/reviewed; PR CI/release pending.
-Design/review `69273a1bf` and plan `54b9ddd20` precede code. Ready main
-`4e30fbc3f` is normally integrated at `0dc884a65`; post-integration83 focused
-tests pass and imports11/37 stay inward. #1679 is merged; its release is running.
+Status: item5 PR1698 passed every product check in39094985183; readiness alone
+failed after main advanced. Normal integration `9c049b878` follows ready
+`f5a51c099`;16 focused process/lock tests pass. Final push follows B's PR1691
+landing and successful derived-main. Design `69273a1bf` and plan `54b9ddd20`
+precede code. #1679/#1680 are closed after exact-main39094741641 passed all
+three OSes, public reproduction and MCP; their archival is batched in PR1699.
 
 ## Scope and literal acceptance
 
@@ -119,14 +121,20 @@ authoring retains its own workspace lock identity/diagnostics. No second ledger,
 renderer behavior, schema migration, approval or crash-atomicity promise added.
 Acquisition errors reject before mutation; publication/unlock errors remain raw.
 
+Official artifact12124072125 (source96e657289, CI39094985183), archive SHA-256
+`235288f64f486b80fd2422bc7b9a96ad99ae3a889899db95db35d503614b6c9c`:
+all50 SVGs/50 Scenes byte-identical to final reviewed1679 artifact; no added or
+removed paths. Only two inventories change, for source coordinates and two
+helper-owner names. All seven other reports are unchanged. Final current-base
+CI and exact-main release remain required; the old failed ready gate is not waived.
+
 ## Later items (not part of the item5 release)
 
 - Item3 design/review `a79ab0307`, implementation plan `504478877` and code
-  `c2984c018` are published separately at `db9caca1d` on
+  `c2984c018` are published separately at `d0048bf2c` on
   `wip/issue-902-actual-history-design`. That branch owns its current contract and
   focused evidence; its PR/release follows item5. It is not yet main functionality.
-- Item2: reuse the authoring use case and CLI persistence adapters behind the
-  existing MCP write gate. Adding a tool changes the tool-set contract. Current
-  authoring code echoes commandId but has no durable replay; successful retry
-  becomes stale-CAS rejection. Resolve that contract before claiming honest
-  idempotent annotations or the item's replay acceptance. No item2 code yet.
+- Item2 design `cdf0289f8`, plan `fa31cc79c`, code `fa831e384` and review
+  `0b79e65a0` are separate `wip/issue-902-authoring-design` work. That branch
+  owns durable authoring replay and MCPv0.6; neither is included in item5.
+  Its PR/release follows item3. Parked4/814/815 still remain open.
