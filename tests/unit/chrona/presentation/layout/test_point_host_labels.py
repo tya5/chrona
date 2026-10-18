@@ -78,7 +78,8 @@ def _label_request_context():
         (0.0, 45.0), (50.0, 45.0), mark_shape="span")
     labels = SimpleNamespace(enabled=True, content=("title",), side="end", overflow="suppress")
     content = SimpleNamespace(attached_labels=(), as_of=None, label_fallback=("end",),
-                              label_text_role=None, as_of_placement=None)
+                              label_text_role=None, as_of_placement=None,
+                              member_name=lambda item, _container_id="": item.title)
     measured_label = SimpleNamespace(placement_id="member-label:child-row:gate", content="Review gate",
         wrap="forbid", candidates=("end",))
     request = SimpleNamespace(

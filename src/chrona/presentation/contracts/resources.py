@@ -1096,10 +1096,18 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
     periods = _view_periods(body.get("periods", ()))
     _validate_period_figures(periods, figures)
     labels = visibility.labels
-    if (isinstance(labels, Mapping) and labels.get("placement") == "both"
-            and not any(column.source == "title" for column in table_columns)):
-        raise ContractError("E_VIEW_LABELS_BOTH_TABLE_TITLE",
-                            "visibility.labels placement both draws labels on the plot and in the table, so a tableColumns entry with source title is required")
+    if isinstance(labels, Mapping) and labels.get("placement") == "both":
+        # A path name opts into its matching table carrier. Every legacy form
+        # (omitted/title name, including delta-only content) retains the title
+        # column requirement.
+        label_content = labels.get("content", ())
+        name_source = "path" if "path" in label_content else "title"
+        if not any(column.source == name_source for column in table_columns):
+            raise ContractError(
+                "E_VIEW_LABELS_BOTH_TABLE_TITLE",
+                "visibility.labels placement both requires a tableColumns entry "
+                f"with source {name_source!r} to match its selected name source",
+            )
     return ViewInput(
         selection, grouping, ordering, window, comparison, visibility,
         table_columns,

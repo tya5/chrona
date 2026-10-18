@@ -101,7 +101,7 @@ def measure_lane_member_labels(projection: Any, surface_content: Any, *,
             elif not surface_content.show_member_labels:
                 continue
             if attached is None and "title" in surface_content.label_content:
-                components.append(("title", item.title))
+                components.append(("title", surface_content.member_name(item, lane_row.lane_id)))
             if (attached is None and getattr(item, "forecast", None) is None and "finishDelta" in surface_content.label_content
                     and item.finish_delta is not None):
                 components.append(("finishDelta", f"{item.finish_delta:+d}d"))

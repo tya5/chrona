@@ -45,7 +45,7 @@ class _Item:
     presentation: dict | None = None
 
 
-def _inputs(items, member_ids=None, *, attached=(), fallback=("start", "end")):
+def _inputs(items, member_ids=None, *, attached=(), fallback=("start", "end"), name=None):
     member_ids = member_ids or tuple(item.item_id for item in items)
     projection = SimpleNamespace(
         rows=(SimpleNamespace(row_id="source-row", items=tuple(items)),),
@@ -54,7 +54,8 @@ def _inputs(items, member_ids=None, *, attached=(), fallback=("start", "end")):
     )
     content = SimpleNamespace(show_member_labels=True, label_content=("title", "finishDelta"),
                               label_side="auto", label_fallback=fallback, label_text_role=None,
-                              attached_labels=tuple(attached))
+                              attached_labels=tuple(attached),
+                              member_name=name or (lambda item, _container_id="": item.title))
     return projection, content
 
 
@@ -101,3 +102,28 @@ def test_measures_wrap_font_icons_and_chip_padding_as_one_box():
     assert (measured.font_family, measured.font_weight, measured.font_size) == ("Test", 400, 10.0)
     assert (measured.leading_advance, measured.trailing_advance) == (12.0, 12.0)
     assert len(measured.visuals) == 2
+
+
+def test_lane_preflight_uses_closed_member_name_for_both_legacy_and_path_names():
+    item = _Item("leaf", "leaf-instance", "Leaf", 3)
+
+    projection, legacy_content = _inputs((item,))
+    (legacy,) = measure_lane_member_labels(
+        projection, legacy_content, timeline_inline_size=100, theme_tokens=_Theme(),
+        font_metrics=_Metrics(), visual_requests=(), icon_assets={},
+    )
+
+    projection, path_content = _inputs(
+        (item,), name=lambda _item, container_id: "Program / Release / Leaf"
+        if container_id == "lane-a" else "unexpected",
+    )
+    (path,) = measure_lane_member_labels(
+        projection, path_content, timeline_inline_size=100, theme_tokens=_Theme(),
+        font_metrics=_Metrics(), visual_requests=(), icon_assets={},
+    )
+
+    assert legacy.content == "Leaf +3d"
+    assert path.content == "Program / Release / Leaf +3d"
+    assert path.width > legacy.width
+    assert path.placement_id == legacy.placement_id
+    assert path.source_ref == legacy.source_ref
