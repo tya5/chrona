@@ -246,6 +246,7 @@ class ViewLaneColumn:
     text_role: str | None = None
     transform: str | None = None
     suffix: str | None = None  # a literal appended to a `rowIndex` cell (#1545)
+    header: str | FrozenDict | None = None  # a literal or `{wording: key}`; absent, the header is the id (#1724)
 
 
 @dataclass(frozen=True)
@@ -1514,7 +1515,9 @@ def _lane_table_columns(raw: Any) -> tuple[ViewLaneColumn, ...]:
                                    str(column.get("align", "start")),
                                    str(column["textRole"]) if "textRole" in column else None,
                                    str(column["transform"]) if "transform" in column else None,
-                                   str(column["suffix"]) if "suffix" in column else None)
+                                   str(column["suffix"]) if "suffix" in column else None,
+                                   (freeze(column["header"]) if isinstance(column["header"], Mapping) else str(column["header"]))
+                                   if "header" in column else None)
                     for column in raw)
     if not columns:
         return columns

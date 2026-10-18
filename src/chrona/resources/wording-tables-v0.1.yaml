@@ -23,6 +23,16 @@ tables:
     legend.deadlineMark: Deadline
     missing.unknown: unknown
     missing.inProgress: in progress
+    legend.planned-plain: Planned
+    legend.baseline: baseline
+    legend.current-plan: current plan
+    legend.gate: gate
+    legend.holiday: holiday
+    column.owner: Owner
+    column.number: "No."
+    column.phase: Phase
+    column.finishDelta: "Δ finish"
+    summary.days: DAYS
   ja-JP:
     column.task: タスク
     column.plan: 計画
@@ -46,3 +56,13 @@ tables:
     legend.deadlineMark: 期限
     missing.unknown: 不明
     missing.inProgress: 進行中
+    legend.planned-plain: 予定
+    legend.baseline: 基準計画
+    legend.current-plan: 現行計画
+    legend.gate: ゲート
+    legend.holiday: 祝日
+    column.owner: 担当
+    column.number: 番号
+    column.phase: フェーズ
+    column.finishDelta: Δ完了
+    summary.days: 日数

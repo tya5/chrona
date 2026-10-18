@@ -288,7 +288,8 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
     if projection.lane_membership is None or not projection.lane_rows or lane_table is None:
         raise ValueError(f"E_REVIEW_LANE_TABLE_PROJECTION: laneMembership={projection.lane_membership is not None}, laneRows={len(projection.lane_rows)}, laneTable={lane_table is not None}")
     declared = lane_table.columns  # #1517: empty keeps the single `Lane` column byte-for-byte
-    columns = tuple(TableColumnContent("Lane" if column.source == "label" else column.id, column.id, column.align,
+    columns = tuple(TableColumnContent("Lane" if column.source == "label" else column.id,
+                                       resolver.resolve(column.header) if column.header is not None else column.id, column.align,
                                        TableColumnWidth("content", "content"), text_wrap=lane_table.text_wrap,
                                        column_source=column.source if isinstance(column.source, Mapping) else None)
                     for column in declared) or (

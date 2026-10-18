@@ -25,6 +25,8 @@ BUILT_IN_WORDING_KEYS = (
     "legend.actual-ahead", "legend.actual-on-track", "legend.actual-behind",
     "legend.snapshot", "legend.deadlineMark",
     "missing.unknown", "missing.inProgress",
+    "legend.planned-plain", "legend.baseline", "legend.current-plan", "legend.gate", "legend.holiday",
+    "column.owner", "column.number", "column.phase", "column.finishDelta", "summary.days",
 )
 LOCALES = ("en-US", "ja-JP")
 
@@ -244,3 +246,56 @@ def test_a_declared_progress_entry_resolves_its_reference_and_layout_defaults_fo
         assert wording_resolver("ja-JP", None).legend_text(role) == ja_text
         assert wording_resolver("ja-JP", {"legend": {role: "X"}}).legend_text(role) == "X"
         assert wording_resolver("ja-JP", {"keys": {f"legend.{role}": "Y"}}).legend_text(role) == "Y"
+
+
+# --- P4c follow-up: preset literals as keys, and the two new schema places -----------------------------------
+
+def test_the_keys_that_replace_preset_literals_read_as_the_literal_in_en_us_and_in_japanese_otherwise():
+    en, ja = wording_catalog()["en-US"], wording_catalog()["ja-JP"]
+    assert {key: en[key] for key in ("legend.planned-plain", "legend.baseline", "legend.current-plan", "legend.gate",
+                                      "legend.holiday", "column.owner", "column.number", "column.phase",
+                                      "column.finishDelta", "summary.days")} == {
+        "legend.planned-plain": "Planned", "legend.baseline": "baseline", "legend.current-plan": "current plan",
+        "legend.gate": "gate", "legend.holiday": "holiday", "column.owner": "Owner", "column.number": "No.",
+        "column.phase": "Phase", "column.finishDelta": "Δ finish", "summary.days": "DAYS"}
+    assert en["legend.planned-plain"] != en["legend.planned"]  # `Planned` is not `Task duration`
+    assert all(re.search(r"[぀-ヿ一-鿿]", ja[key]) for key in en)
+
+
+def test_the_layout_marker_label_and_the_lane_table_header_accept_a_reference_and_reject_an_unknown_key():
+    layout = schema_validator("layout-profile-v0.10.schema.yaml")
+    probe = deepcopy(sr.bundle("editorial")["layout"])
+    probe.setdefault("viewDefaults", {})["markerPresentation"] = {"kind": "asOf", "label": {"wording": "marker.asOf"}}
+    assert not list(layout.iter_errors(probe))
+    probe["viewDefaults"]["markerPresentation"]["label"] = {"wording": "marker.nope"}
+    assert list(layout.iter_errors(probe))
+    view = schema_validator("view-v0.28.schema.yaml")
+    lane = sr.lane_view(sr.bundle("editorial")["view"])
+    lane["body"]["rows"]["laneTable"]["columns"] = [
+        {"id": "Task", "source": "label", "header": {"wording": "column.task"}},
+        {"id": "Owner", "source": {"field": "owner"}, "header": "Resp."}]
+    assert not list(view.iter_errors(lane))
+    lane["body"]["rows"]["laneTable"]["columns"][0]["header"] = {"wording": "column.nope"}
+    assert list(view.iter_errors(lane))
+
+
+def _lane_parts():
+    parts = sr.bundle("editorial")
+    parts["view"] = sr.lane_view(parts["view"])
+    parts["view"]["body"]["rows"]["laneTable"]["columns"] = [
+        {"id": "Task", "source": "label", "header": {"wording": "column.task"}},
+        {"id": "Owner", "source": {"field": "owner"}, "header": {"wording": "column.owner"}},
+    ]
+    parts["view"]["body"]["rows"]["laneTable"]["count"] = False
+    for marker in parts["view"]["body"]["markers"]:
+        marker.pop("label", None)
+    parts["layout"].setdefault("viewDefaults", {})["markerPresentation"] = {"kind": "asOf", "label": {"wording": "marker.asOf"}}
+    return parts
+
+
+@pytest.mark.parametrize("locale, expected", [("en-US", {"Task", "Owner", "As of"}), ("ja-JP", {"タスク", "担当", "基準日"})])
+def test_the_lane_table_header_and_the_layout_marker_label_resolve_per_locale(tmp_path, locale, expected):
+    source = sr.with_calendar(sr.project({"a": sr.span("a", date(2026, 1, 5), 20)}))
+    texts = {text.strip() for text in _texts(sr.render(tmp_path, source, presentation=_lane_parts(), actual=_ACTUAL,
+                                                       locale=locale))}
+    assert expected <= texts, (expected, texts)
