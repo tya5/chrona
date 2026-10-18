@@ -139,7 +139,7 @@ does not infer aliases. An absent final role keeps the existing invalid-target
 diagnostic and does not recreate a filtered key. Exact placement-ID selectors
 retain their single-target contract.
 
-## Default comparison keys and ambiguity diagnostics (#1703; implementation pending)
+## Default comparison keys and ambiguity diagnostics (#1703)
 
 Snapshot and deadline marks contribute default semantic key candidates, using
 the existing `snapshot` and `deadlineMark` roles and labels `Baseline` and
