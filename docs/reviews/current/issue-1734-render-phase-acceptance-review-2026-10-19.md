@@ -12,10 +12,10 @@
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
 | 1 | A phase table for 240 tasks (and for 400 if run) on one machine, with how it was measured. | met | Exclusive240 and400 tables below; [240 control ledger](assets-1734/profile.json), [400 candidate ledger](assets-1734/s1-candidate400-profile.json), exact methods and caveats. | — |
-| 2 | A recommendation, or a documented stop, if no phase offers a worthwhile intervention. | met | Recommendation below follows the [measured phase costs](assets-1734/profile.json): investigate member-label probes before choosing an algorithm change; use existing explicit hints for the measured edit case. No unmeasured speedup claim or product change. | — |
+| 2 | A recommendation, or a documented stop, if no phase offers a worthwhile intervention. | met | Retain bounded FIFO12 geometry reuse on the measured time/memory evidence below; reject member reuse and one-slot caching. [400 receipt](assets-1734/s2-fifo12-candidate400.stderr). | — |
 | 3 | These are pure speed changes, so SVG and Scene stay byte-identical on the 50 public slides and on b240. | met | [FIFO12 official50-slide proof](https://github.com/tya5/chrona/pull/1750#issuecomment-6254678925) and four b240 outputs match complete control SVG/Scene hashes below. Final-head release remains pending. | — |
-| 4 | Measure end-to-end on 240 and once on 400 after each change, on the same machine. | not met | Member and [one-slot graph400](assets-1734/s2-one-slot400.stderr) measurements below are complete; FIFO12 comparison remains pending. | — |
-| 5 | Keep a change only if its end-to-end gain is worth its added complexity, and say why in the PR. Revert it otherwise; that is the stop condition. | not met | Member candidate reverted publicly at [cd8ac0983](https://github.com/tya5/chrona/commit/cd8ac098358ed4a0ba3072e58b7bba468d4eb096), restoring its measured ready-main product tree. Final graph disposition and PR publication remain pending. | — |
+| 4 | Measure end-to-end on 240 and once on 400 after each change, on the same machine. | met | Member, [one-slot400](assets-1734/s2-one-slot400.stderr), FIFO12 ABBA240 and [FIFO12 400](assets-1734/s2-fifo12-candidate400.stderr) complete; final-default240 comparison below also passes. | — |
+| 5 | Keep a change only if its end-to-end gain is worth its added complexity, and say why in the PR. Revert it otherwise; that is the stop condition. | met | [PR1750](https://github.com/tya5/chrona/pull/1750): retain FIFO12 for measured CPU savings with bounded memory; reject one-slot; member candidate reverted at [cd8ac0983](https://github.com/tya5/chrona/commit/cd8ac098358ed4a0ba3072e58b7bba468d4eb096). Final release gate remains pending. | — |
 | 6 | Do not touch the algorithm, defaults or acceptance rules here. | met | [Approved scope](https://github.com/tya5/chrona/issues/1734#issuecomment-6253352192); candidate only reuses exact immutable Layout geometry; collision checks, candidate order, recovery, quotas and acceptance remain fresh. | — |
 
 ## Measurement
@@ -242,8 +242,41 @@ packages (own `.venv-perf313`), used `/usr/bin/time -lp` for peak RSS:
 | Control repeat | 50.53 | 42.46 | 349061120 | [receipt](assets-1734/s2-fifo12-control240-repeat.stdout) / [time](assets-1734/s2-fifo12-control240-repeat.stderr) |
 
 All four runs return `status: ok` and match the complete b240 SVG/Scene hashes
-above. CPU improves in both candidate observations, but RSS increases; required
-400 comparison is running. No adoption decision until its time/memory evidence.
+above. The required unprofiled400 comparison uses the same frozen327 control
+and identical input/resources, without simultaneous local renders:
+
+| Variant | Wall s | User CPU s | Peak RSS bytes | Peak memory footprint bytes | Raw time |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Control327 | 1142.30 | 931.07 | not recorded | not recorded | [time](assets-1734/s2-control400.stderr) |
+| One-slot a490ca49e | 1120.51 | 933.81 | 360071168 | 238618944 | [time](assets-1734/s2-one-slot400.stderr) |
+| FIFO12 a0b991b9c | 828.44 | 698.50 | 409059328 | 381061824 | [time](assets-1734/s2-fifo12-candidate400.stderr) |
+
+Every400 render returns `status: ok`; complete SVG/Scene bytes match the400
+hashes above. CPU saving is approximately25% in this single400 comparison;
+the240 ABBA candidate CPU observations also both improve. Memory is not free:
+240 RSS increases, and400 FIFO12 adds48,988,160 RSS bytes /142,442,880 peak
+footprint bytes versus the one-slot variant, not an unmeasured control RSS.
+Decision: retain the small Layout-private fixed working set for these measured
+end-to-end savings at bounded retention; reject the ineffective predecessors.
+No general speed SLA, new tuning knob or further cache expansion is proposed.
+
+### Final default-preset reconciliation
+
+Reviewer PR1748 changes axis geometry; do not compare its bytes to old-default
+controls. Serial unprofiled240 measurements use public control
+`1de259e6998d24be0cd146a3a9bf3a0775887f04` (1748 on ready d451) versus candidate
+`aa6cc026a468795219e51567c51081293374346a` (same resources plus unchanged FIFO12
+code and review records), before its final main landing. The400 table remains
+explicitly the frozen327 experiment, not a claim about the new default.
+
+| Variant | Wall s | User CPU s | Peak RSS bytes | Raw receipt / time |
+| --- | ---: | ---: | ---: | --- |
+| New default, control | 50.48 | 42.36 | 356925440 | [receipt](assets-1734/s2-final-default-control240.stdout) / [time](assets-1734/s2-final-default-control240.stderr) |
+| New default, FIFO12 | 47.28 | 39.55 | 408961024 | [receipt](assets-1734/s2-final-default-candidate240.stdout) / [time](assets-1734/s2-final-default-candidate240.stderr) |
+
+Both return `status: ok`, and complete SVG/Scene bytes match each other:
+`8aa063b203f33a76f10a644d5f8519f405886ae6ac1cbf494ba7eb02d0a87b53` /
+`9f7dbc434ed36586811cfd4188a25cd955e3b0738dcca5f6fca08f696fd741a5`.
 
 [Official snapshot proof](https://github.com/tya5/chrona/pull/1750#issuecomment-6254678925):
 run39162339047, candidate a0b991b9c, synthetic merge0418a2cc1 over newer main
@@ -256,6 +289,7 @@ reuse diagnostic. Final-head release and measured adoption remain unverified.
 
 ## Programme-level criteria (optional)
 
-Member and one-slot measurements/dispositions, FIFO12 identity evidence and
-official public byte checks are complete. FIFO12 required400, adoption decision
-and exact-main release remain pending. No experimental optimizer has reached main.
+Measurements, adoption decision and pre-landing byte checks are complete.
+Final ready-tip PR checks and exact-main three-OS release remain pending;
+no experimental optimizer has reached main yet. Do not close on the earlier
+stale-base CI: all shards passed but derived-ready rejected the advanced main.
