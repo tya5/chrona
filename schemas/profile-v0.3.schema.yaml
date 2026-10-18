@@ -53,6 +53,7 @@ $defs:
         enum: [string, boolean, integer, number, date, enum, objectReference, resourceReference]
       cardinality: {description: "Whether the field accepts one value or many.", enum: [one, many]}
       required: {description: "Whether each object must supply this field.", type: boolean}
+      default: {description: "Optional value of the declared type that projection reads when an object leaves this field absent; an explicit null stays null. Not allowed for reference or many-valued fields.", examples: [false, medium]}
       enumValues:
         type: array
         description: "Allowed literals when the field type is enum."

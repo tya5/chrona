@@ -247,6 +247,10 @@ def resolve_profile_field_catalogue(
                 ))
             continue
 
+        bad_default = _invalid_default(project, manifest)
+        if bad_default is not None and package_id != PACKAGE_ID:
+            diagnostics.append(Diagnostic("E_PROFILE_PACKAGE_INVALID", f"Profile package {package_id} is invalid: {bad_default}", f"/extensions/{index}"))
+            continue
         for profile_id in manifest["profiles"]:
             profile_fields = resolve_profile_field_definitions(manifest, profile_id)
             if profile_fields is None:
@@ -304,7 +308,7 @@ def validate_generic_profiles(project: dict[str, Any], package_manifests: dict[s
                 diagnostics.append(Diagnostic("E_PROFILE_FIELD_UNKNOWN", f"Field {name!r} is not declared by profile {item['type']!r}{hint}", f"{path}/{_pointer(name)}"))
         for name, spec in profile_fields.items():
             if name not in values:
-                if spec.get("required"):
+                if spec.get("required") and "default" not in spec:
                     diagnostics.append(Diagnostic("E_PROFILE_FIELD_REQUIRED", f"Required field {name!r} is absent", path))
             elif values[name] is None:
                 if spec.get("required"):
@@ -369,3 +373,17 @@ def _is_date(value: Any) -> bool:
     except ValueError:
         return False
     return True
+
+
+def _invalid_default(project: dict[str, Any], manifest: dict[str, Any]) -> str | None:
+    """The first declared ``default`` that is not a value of its field's declared type (#1682), else None."""
+    groups = [("package", manifest.get("fields", {}))] + [(profile_id, profile.get("fields", {})) for profile_id, profile in manifest["profiles"].items()]
+    for owner, fields in groups:
+        for name, spec in fields.items():
+            if "default" not in spec:
+                continue
+            if spec.get("type") in {"objectReference", "resourceReference"} or spec.get("cardinality") == "many":
+                return f"{owner} field {name!r} cannot declare a default for a reference or many-valued field"
+            if spec["default"] is None or _generic_value(project, name, spec["default"], spec, ""):
+                return f"{owner} field {name!r} default is not a {spec.get('type')} value"
+    return None
