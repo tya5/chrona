@@ -619,7 +619,8 @@ def test_scenario_table_facts_use_the_table_subject_and_missing_policy():
     primary = ReviewItem("task", "Current", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)},
                          None, None, (), item_id="current", source_kind="primary")
     projection = ReviewProjection((primary,), (date(2026, 1, 1), date(2026, 2, 2)), (), (),
-                                  (ReviewRowProjection("scenario", "Scenario", "", "delayed", (primary, scenario)),))
+                                  (ReviewRowProjection("scenario", "Scenario", "", "delayed", (primary, scenario)),),
+                                  bound_comparison_sources=frozenset({"scenario"}))
     view = {"body": {"tableColumns": (
         {"id": "Scenario", "source": {"scenario": "title"}, "missing": "em-dash"},
         {"id": "Scenario id", "source": {"scenario": "id"}, "missing": "em-dash"},
@@ -1173,20 +1174,36 @@ def test_forecast_fact_supplies_finish_delta_without_actual_but_snapshot_alone_d
     assert snapshot_table.cells == ()
 
 
-def test_scenario_column_requires_a_projected_scenario_table_subject():
+def test_scenario_column_uses_bound_source_presence_even_without_scenario_table_subject():
     primary = ReviewItem("a", "A", "span", {}, None, None, (), item_id="a")
-    scenario = replace(primary, item_id="scenario:a", source_kind="scenario", scenario_id="risk")
     view = typed_view({"body": {"tableColumns": [
         {"id": "Scenario", "source": {"scenario": "title"}, "format": "text", "missing": "blank"},
     ], "visibility": {}}})
 
     absent = normalize_v05_table_content(ReviewProjection((primary,), (date(2026, 1, 1), date(2026, 1, 2)), (), ()),
                                          {"scenarios": {"risk": {"title": "Risk case"}}}, view)
-    bound = normalize_v05_table_content(ReviewProjection((scenario,), (date(2026, 1, 1), date(2026, 1, 2)), (), ()),
+    bound_projection = ReviewProjection((primary,), (date(2026, 1, 1), date(2026, 1, 2)), (), (),
+                                        bound_comparison_sources=frozenset({"scenario"}))
+    bound = normalize_v05_table_content(bound_projection,
                                         {"scenarios": {"risk": {"title": "Risk case"}}}, view)
 
     assert absent.columns == () and absent.cells == ()
-    assert [cell.content for cell in bound.cells] == ["Risk case"]
+    assert [column.column_id for column in bound.columns] == ["Scenario"]
+    assert [cell.content for cell in bound.cells] == [""]  # empty policy is applied to the unselected source
+
+
+def test_bound_scenario_column_survives_resolved_empty_table_rows():
+    view = typed_view({"body": {"tableColumns": [
+        {"id": "Scenario", "source": {"scenario": "title"}, "format": "text", "missing": "blank"},
+    ], "visibility": {}}})
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), (),
+                                  rows=(), rows_resolved=True,
+                                  bound_comparison_sources=frozenset({"scenario"}))
+
+    table = normalize_v05_table_content(projection, {"scenarios": {"risk": {"title": "Risk case"}}}, view)
+
+    assert [column.column_id for column in table.columns] == ["Scenario"]
+    assert table.cells == ()
 
 
 def test_forecast_legend_replaces_planned_key_or_adds_it_and_accepts_wording():

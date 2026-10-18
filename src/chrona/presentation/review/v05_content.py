@@ -189,7 +189,7 @@ def _table_column_source_available(source: Any, projection: ReviewProjection,
         return True
     subjects = _table_subjects(projection)
     if "scenario" in source:
-        return any(item.source_kind == "scenario" for item in subjects)
+        return "scenario" in projection.bound_comparison_sources
     if "facet" in source:
         facet = source["facet"]
         if facet == "actual":
