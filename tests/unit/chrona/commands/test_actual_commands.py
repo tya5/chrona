@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from chrona.commands.actual_commands import (
     MemoryActualStore,
     LocalActualStore,
@@ -133,6 +135,28 @@ def test_local_actual_store_publishes_new_immutable_token_and_reopens(tmp_path):
     reopened = LocalActualStore(tmp_path, _actual_set_v02())
     assert reopened.read()[0] == accepted.result_revision
     assert (snapshot_directory(tmp_path, accepted.result_revision) / "actuals" / "supplier-observed.yaml").is_file()
+
+
+def test_local_actual_store_reads_fresh_tip_and_rejects_stale_cached_writer(tmp_path):
+    first = LocalActualStore(tmp_path, _actual_set_v02())
+    stale = LocalActualStore(tmp_path, _actual_set_v02())
+    base, original = first.read()
+    committed_value = deepcopy(original)
+    committed_value["body"]["observations"].append({"id": "first", "sequence": 1,
+        "externalIdentity": {"system": "supplier", "key": "first"}, "actual": {"finish": "2026-04-18"}})
+
+    committed = first.write(base, committed_value)
+
+    assert committed is not None and committed[0] != base
+    assert stale.read() == committed
+    immutable_before = {path: path.read_bytes() for path in tmp_path.glob("revision-*/actuals/*.yaml")}
+    stale_value = deepcopy(original)
+    stale_value["body"]["observations"].append({"id": "stale", "sequence": 2,
+        "externalIdentity": {"system": "supplier", "key": "stale"}, "actual": {"finish": "2026-04-19"}})
+
+    assert stale.write(base, stale_value) is None
+    assert stale.read() == committed
+    assert {path: path.read_bytes() for path in tmp_path.glob("revision-*/actuals/*.yaml")} == immutable_before
 
 
 def test_actual_result_diagnostics_name_expected_operand_without_echoing_record():
