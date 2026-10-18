@@ -1,6 +1,10 @@
 # Issue 1679: realized legend work record (2026-10-18)
 
-Status: composite design/review `a6d6870b2` and implementation amendment `97f7d72ca` published before correction `02bcefa7f`. Strict targeted glyph-gates materialization now has zero contrast errors; native composite/paint regression passes. PR1692's old head `1ecf36452` failed [CI39088644589](https://github.com/tya5/chrona/actions/runs/39088644589); the next coherent ready-main push must replace that failed run and the preliminary count table. #1680 is merged and released, but final review-publication release remains open.
+Status: reviewer [6244640261](https://github.com/tya5/chrona/pull/1692#issuecomment-6244640261) requires an ink-colour coalescing and final-reservation correction before landing. Composite correction `02bcefa7f` is locally verified but not yet on the PR. The old head `1ecf36452` failed [CI39088644589](https://github.com/tya5/chrona/actions/runs/39088644589). No release acceptance is claimed.
+
+## Current correction design plan
+
+Reconcile Specs28/60/61 with the review: distinguish semantic colour groups from representative geometry, retain whole multipart figures, suppress redundant same-ink Progress, and release unused candidate-only canvas extent without rerouting chart content. Questions to settle before code: deterministic representative and qualifier wording, gradients/multipart ink identity, host-specific Progress matching, and ownership of final footer extent. Root owns normative design/publication; independent read-only audits cover identity and canvas completion. Then publish selected design/whole-architecture review and the implementation amendment. Verify synthetic fill/stroke/outline equivalence, different colours, qualifiers, equal/different host progress and final canvas; use the next official snapshot for the public table and targeted Sunday/Gates PNG checks. Source YAML stays unchanged; literal acceptance below remains authoritative.
 
 ## Composite-key design correction
 
