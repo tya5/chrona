@@ -92,6 +92,13 @@ from the file bytes) are reported by the same checker. It runs wherever a Projec
 `schedule`, draft `render`, the MCP `validate_project`/`schedule_project`/`render_draft` tools and Context
 render (#1682). `path` is resolved beside the Project file; a local file that omits `contentIdentity` takes the
 SHA-256 of its bytes. `resource` declarations need a Store and are resolved by the Context path.
+A field definition may declare an optional `default` (a value of its declared scalar type; not for reference or
+many-valued fields; a non-conforming default is `E_PROFILE_PACKAGE_INVALID`). The source-local field accessor (`FieldRoleBindings.read_result`, one per source Project, so Snapshot, scenario, row and folded occurrences alike) reads the default when the
+field is absent from an object of that profile, and Style predicates and View encodings both see it (an explicit `null` stays `null`), and an absent `required` field with
+a default is satisfied. `default` is an additive optional `profile-v0.3` member (Spec 56 section 3.2). A colour encoding
+(Spec 60) on a field that an object's declared profile does not declare does not apply to that object: it keeps its
+base paint and the legend's base key stays; an object whose profile declares the field without a value or default is
+still refused with `E_PRESENTATION_SCALE_VALUE`. Objects typed by no declared profile behave as before.
 Objects whose `type` names no declared profile are not checked. The delivery package keeps its `IDP-*` codes.
 Within one Project, two declared packages MUST NOT claim the same profile ID
 (Spec11 §4.1). Report `E_PROFILE_PACKAGE_INVALID` at the conflicting extension;

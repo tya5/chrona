@@ -65,3 +65,13 @@ def test_an_escaping_path_and_a_wrong_identity_are_pointed(tmp_path):
     assert _codes(validate_project_file(escaping)) == [("E_SCHEMA", "/extensions/0")]  # the Project schema already refuses it
     wrong = _write(tmp_path, identity="sha256:" + "0" * 64)
     assert _codes(validate_project_file(wrong)) == [("E_CONTENT_IDENTITY", "/extensions/0/path")]
+
+
+def test_a_draft_snapshot_project_resolves_its_own_extensions(tmp_path):
+    primary = _write(tmp_path, identity="real")
+    snapshot_dir = tmp_path / "snap"
+    snapshot_dir.mkdir()
+    base = _write(snapshot_dir, path="extensions/nope.yaml", package=False)
+    with pytest.raises(RenderRejected) as caught:
+        render_draft(DraftRenderRequest(project=primary, target_kind="svg", snapshot=base))
+    assert [(d.id, d.path) for d in caught.value.diagnostics] == [("E_EXTENSION_UNRESOLVED", "/snapshot/extensions/0/path")]
