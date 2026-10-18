@@ -56,3 +56,14 @@ L2 expected transition and synthetic serialized-schema/endpoint assertions
 cover it. Focused tests pass38, and L2/L3 with all50 official Scene payloads
 overlaid in memory passes without modifying tracked generated output.
 The superseded run's pytest shards were cancelled, not accepted as green.
+
+Corrected run39141777418 passes conformance and official reproduction. Its
+three pytest shards report eight stale-fixture/assertion failures: three
+network mocks omit typed containment facts, three deadline cases equate the
+painted line endpoint with a centred round terminal's semantic port, and two
+capability-free adapter tests consume the now marker-capable corpus Scene.
+Use the typed node; verify actual terminal centres and paired endpoint IDs
+on all flow axes; use a schema-validated capability-free synthetic Scene for
+the standalone adapter while retaining its corpus capability-refusal test.
+All assertions retain their intent; no product or capability-validator change.
+The combined affected network/terminal/adapter/texture tests pass49.
