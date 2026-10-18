@@ -524,7 +524,7 @@ def test_layout_indents_only_the_named_nonleading_hierarchy_column_and_aligns_ce
     assert title.bounds[0] == title_column.bounds[0] + 24
 
 
-def test_scene_projects_layout_completed_rollup_summary_bar():
+def test_scene_projects_the_existing_planned_mark_as_rollup_summary():
     rollup = ReviewItem("programme", "Programme", "span",
                         {"start": date(2026, 1, 1), "end": date(2026, 1, 10)},
                         None, None, (), item_id="programme", source_kind="primary")
@@ -540,13 +540,14 @@ def test_scene_projects_layout_completed_rollup_summary_bar():
                               capabilities={"svg": True})
 
     surface = compose_review_surface(value)
-    summary_bar = next(item for item in surface.primitives if item.scene_id == "summary-bar:programme")
+    summary = next(item for item in surface.primitives
+                   if item.source_ref == "programme" and item.purpose == "planned")
 
-    assert summary_bar.kind == "Rect"
-    assert summary_bar.purpose == "summary-bar"
-    assert summary_bar.visual_role == "summary-bar"
-    assert summary_bar.bounds[2] > 0
-    assert summary_bar.bounds[3] == 3
+    assert summary.kind == "Rect"
+    assert summary.visual_role == "planned"
+    assert summary.bounds[2] > 0
+    assert summary.bounds[3] == 9
+    assert not any(item.scene_id.startswith("summary-bar:") for item in surface.primitives)
 
 
 def test_scene_projects_selected_inside_label_with_its_host_mark_role():

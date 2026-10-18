@@ -72,19 +72,21 @@ def test_default_renders_all_nested_group_headers_once(tmp_path):
 def test_rollup_modes_preserve_relation_date_ports_without_fake_painted_hosts(tmp_path, mode):
     view = _view()
     view["body"]["grouping"]["rollup"] = mode
-    theme = None
+    actual = None
     if mode == "bar":
-        preset = yaml.safe_load(default_preset_resource().read_bytes())
-        theme = yaml.safe_load(default_preset_root().joinpath(preset["body"]["resources"]["theme"]["path"]).read_bytes())
-        # The default selects headers and does not promise a summary-bar role.
-        # Supply that existing role explicitly when testing the bar policy.
-        theme["body"]["roles"]["summary-bar"] = {"markHeight": theme["body"]["roles"]["planned"]["markHeight"]}
-        theme["body"]["colorBindings"]["summary-bar.fill"] = theme["body"]["colorBindings"]["planned.stroke"]
-    rendered = _render(tmp_path / mode, _source(), view, theme)
+        actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "observations",
+                  "body": {"asOf": "2027-01-25", "observations": [
+                      {"id": "root-actual", "sequence": 1, "projectObjectId": "root",
+                       "actual": {"start": "2027-01-04", "finish": "2027-01-22"}},
+                  ]}}
+    rendered = _render(tmp_path / mode, _source(), view, actual=actual)
     root_marks = [item for item in rendered.surface.primitives
                   if item.scene_id.startswith("planned:root:")]
-    assert bool(root_marks) == (mode == "bar")
-    assert any(item.scene_id == "summary-bar:root" for item in rendered.surface.primitives) == (mode == "bar")
+    root_actuals = [item for item in rendered.surface.primitives
+                    if item.source_ref == "root" and item.purpose == "actual"]
+    assert len(root_marks) == (1 if mode == "bar" else 0)
+    assert len(root_actuals) == (1 if mode == "bar" else 0)
+    assert not any(item.scene_id.startswith("summary-bar:") for item in rendered.surface.primitives)
     assert any(item.scene_id == "cell:root:Task" and item.purpose == "group-header"
                for item in rendered.surface.primitives) == (mode == "header")
     if mode != "bar":
@@ -106,6 +108,49 @@ def test_rollup_modes_preserve_relation_date_ports_without_fake_painted_hosts(tm
     root_row = next(row for row in rendered.surface.rows if row.row_id == "root")
     assert root_row.bounds[1] <= centre[1] <= root_row.bounds[1] + root_row.bounds[3]
     assert not any("E_SCENE_RELATION_THROUGH_MARK" in code for code in rendered.surface.diagnostics)
+
+
+def test_depth_one_rollup_stacks_ordinary_nested_gates_in_native_output(tmp_path):
+    source = sr.project({
+        "root": {"type": "group", "title": "Programme", "schedule": {"mode": "rollup"}},
+        "nested": {"type": "group", "title": "Subsystem", "parent": "root",
+                   "schedule": {"mode": "rollup"}},
+        "span": {**sr.span("span", date(2027, 1, 1), 20, title="Work window"), "parent": "nested"},
+        "gate-a": {**sr.point("gate-a", date(2027, 1, 8), title="Design sign-off"), "parent": "nested"},
+        "gate-b": {**sr.point("gate-b", date(2027, 1, 10), title="Public launch"), "parent": "nested"},
+    })
+    assert all("parent" in source["objects"][item] for item in ("gate-a", "gate-b"))
+    assert all("attachesTo" not in source["objects"][item] for item in ("gate-a", "gate-b"))
+    view = _view()
+    view["body"]["grouping"] = {"by": "hierarchy", "depth": 1, "rollup": "bar"}
+
+    rendered = _render(tmp_path / "stacked", source, view)
+    marks = [item for item in rendered.surface.primitives
+             if item.purpose == "planned" and item.source_ref in {"nested", "gate-a", "gate-b"}]
+    assert {item.source_ref for item in marks} == {"nested", "gate-a", "gate-b"}
+    bands = {}
+    for item in marks:
+        top, height = item.bounds[1], item.bounds[3]
+        prior = bands.get(item.source_ref)
+        bands[item.source_ref] = (min(top, prior[0]) if prior else top,
+                                  max(top + height, prior[1]) if prior else top + height)
+    ordered_bands = sorted(bands.items(), key=lambda entry: entry[1][0])
+    assert len({band for _, band in ordered_bands}) == 3
+    assert all(left[1][1] <= right[1][0]
+               for left, right in zip(ordered_bands, ordered_bands[1:]))
+
+    nested_row = next(row for row in rendered.surface.rows if row.row_id == "nested")
+    assert all(nested_row.bounds[1] <= top and bottom <= nested_row.bounds[1] + nested_row.bounds[3]
+               for _, (top, bottom) in ordered_bands)
+    assert not any(item.scene_id.startswith("summary-bar:") for item in rendered.surface.primitives)
+    labels = {item.text for item in rendered.surface.primitives if item.purpose == "member-label"}
+    assert {"Design sign-off", "Public launch"} <= labels
+
+    svg = ElementTree.fromstring(rendered.artifact.content)
+    svg_ids = {element.get("data-scene-id", element.get("id")) for element in svg.iter()}
+    assert {item.scene_id for item in marks} <= svg_ids
+    svg_text = "".join(svg.itertext())
+    assert "Design sign-off" in svg_text and "Public launch" in svg_text
 
 
 def test_clipped_unpainted_endpoint_is_not_replaced_by_a_window_edge(tmp_path):

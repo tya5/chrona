@@ -546,6 +546,56 @@ def test_hierarchy_selection_expands_predicate_roots_to_the_inclusive_depth_limi
     assert table_value(design, project, "path") == "Programme / Design"
 
 
+@pytest.mark.parametrize("depth", [0, 1, "all"])
+@pytest.mark.parametrize("with_snapshot", [False, True])
+def test_finite_hierarchy_keeps_descendant_points_on_nearest_retained_row(depth, with_snapshot):
+    project = {"objects": {
+        "root": {"title": "Root", "schedule": {"mode": "rollup"}},
+        "phase-a": {"title": "A", "parent": "root", "schedule": {"mode": "rollup"}},
+        "nested": {"title": "Nested", "parent": "phase-a", "schedule": {"mode": "rollup"}},
+        "work": {"title": "Work", "parent": "nested"},
+        "gate-a": {"title": "Sign-off", "parent": "nested"},
+        "phase-b": {"title": "B", "parent": "root", "schedule": {"mode": "rollup"}},
+        "gate-b": {"title": "Launch", "parent": "phase-b"},
+        "outside": {"title": "Not selected"},
+    }, "entities": {}}
+    placements = {identifier: {"start": date(2027, 1, 4), "end": date(2027, 1, 10)}
+                  for identifier in ("root", "phase-a", "nested", "work", "phase-b")}
+    placements.update({"gate-a": {"at": date(2027, 1, 12)},
+                       "gate-b": {"at": date(2027, 1, 15)},
+                       "outside": {"at": date(2027, 2, 1)}})
+    view = typed_view({"body": {
+        "selection": {"include": {"ids": ["root"]}},
+        "grouping": {"by": "hierarchy", "depth": depth, "rollup": "bar"},
+        "ordering": {"by": "id", "direction": "ascending", "tieBreak": "id"},
+        "comparison": {"actual": "optional"}, "window": {"mode": "selected-planned"},
+        "rows": {"mode": "automatic"},
+    }})
+    if with_snapshot:
+        view = replace(view, comparison=replace(view.comparison,
+                       baseline="snapshot", baseline_marks="ghost"))
+    projection = build_review_projection(
+        project, placements, view, None,
+        snapshot_project=project if with_snapshot else None,
+        snapshot_placements=placements if with_snapshot else None,
+    )
+    expected_rows = ({"root"} if depth == 0 else
+                     {"root", "phase-a", "phase-b"} if depth == 1 else
+                     set(project["objects"]) - {"outside"})
+    assert {row.row_id for row in projection.rows} == expected_rows
+    for gate, phase, parent in (("gate-a", "phase-a", "nested"), ("gate-b", "phase-b", "phase-b")):
+        containing = [row for row in projection.rows if any(item.object_id == gate for item in row.items)]
+        assert len(containing) == 1
+        assert containing[0].row_id == ("root" if depth == 0 else phase if depth == 1 else gate)
+        members = [item for item in containing[0].items if item.object_id == gate]
+        assert {item.source_kind for item in members} == ({"combined", "snapshot"} if with_snapshot else {"combined"})
+        assert {item.track for item in members} == ({"shared"} if with_snapshot else {"stacked"})
+        assert all(item.parent_id == parent and item.attached_to is None for item in members)
+        assert all(item.planned == placements[gate] for item in members)
+    assert projection.window[0] <= date(2027, 1, 4)
+    assert date(2027, 1, 15) <= projection.window[1] < placements["outside"]["at"]
+
+
 def test_object_type_selection_intersects_geometry_and_exclusion_before_rows():
     project = {"objects": {
         "task-span": {"type": "task", "title": "Task", "fields": {}},
