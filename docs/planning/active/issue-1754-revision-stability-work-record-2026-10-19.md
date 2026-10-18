@@ -105,4 +105,18 @@ S2 will separately complete the all-policy hint/corridor design, then the
 moving-decoration design. S1 is independently testable and does not claim any
 full issue acceptance row met until integrated hints and trial evidence exist.
 
+## S1 implementation plan
+
+| Slice | Owners/files | Acceptance and focused evidence | Publication |
+| --- | --- | --- | --- |
+| Canonical closure | `core/relation_identity.py`; scheduler driving/critical consumers; Model lane/network projection; review `v05_content.py` | One batch helper, no old index helper/call site. Unique IDs and fallback endpoints/types remain stable across unrelated insertion/removal/reorder; duplicates and delimiter/Unicode collisions covered. Scheduling dates/critical membership and projection roles remain correct. | One implementation commit with synthetic consumer tests; no example/schema edits. |
+| Consumer migration | Core, scheduler, Model/Scene and previous-Scene tests that pin the old derived spelling | Replace only intended derived-ID expectations. Keep authored IDs/coordinates/diagnostics unchanged unless directly required by the contract. Test an older Scene produces explicit hint misses rather than positional reassignment. | Same S1 PR; no compatibility shim. |
+| S1 gate | Core identity tests; scheduler tests; projection rows/network and review content tests; previous-Scene/revision integration tests | Focused suites locally. CI three Ubuntu shards/conformance/MCP/newest-Python reproduction. Batch the official before/after snapshot: count renamed primitives separately from moved geometry, inspect any actual geometry/diagnostic changes. No manual generated-file edit. | Publish after pre-code design and this plan; disclose identity migration in PR. Keep issue open for S2 and integrated acceptance. |
+
+Run schema equivalence only if implementation reveals a real schema change;
+none is planned for S1. Full three-OS/wheel release evidence remains required
+on the exact main containing the final issue acceptance review. If a consumer
+cannot use the shared identity without a new semantic rule, return to design
+before changing that rule. Do not expand S1 into hint/routing or Theme policy.
+
 No product implementation or trial reproduction is complete at this stage.
