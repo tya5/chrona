@@ -51,6 +51,13 @@ glyph colours and stroke-only parts remain unchanged (Spec07). Earlier View
 completion skipped every catalogue part, including inherited fill. The shared
 path corrects that omission rather than retaining a separate legacy paint rule.
 
+Completion retains the exact occurrence's canonical domain value and all
+encoding origins with its resolved fill, including when values fold into Other
+(#1702). Paint completion projects that passive witness only onto marks actually
+painted by the encoding (Spec08); Spec46 checks the encoded fill independently
+of shape visibility. Neither the existing map/legend policy nor category
+separability changes, and no renderer reconstructs source fields.
+
 A field declared by a resolved profile package (Spec 17, `E_PROFILE_FIELD_*`) is read by the same
 `{field: ...}` accessor. Admitted source values are strings and booleans; a boolean matches the domain
 text `true` or `false`. Number and date sources are not admitted (binning is deferred) and fail with

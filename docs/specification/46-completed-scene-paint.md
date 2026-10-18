@@ -529,6 +529,24 @@ outlines may therefore preserve a category-coloured fill when the same
 category also colours its background. No outline is inferred by Scene or an
 adapter (#459).
 
+**Encoded mark fill (#1702).** Separately from shape visibility, a mark fill
+identified by completed Spec08 `encoding` metadata must meet the same3.0:1 floor
+against its actual completed ground. A readable stroke cannot discharge this
+data-colour obligation. The finding names the encoding source/scale, canonical
+field value, primitive, fill sample, ground and ratio; it is
+`W_SCENE_ENCODING_CONTRAST` by default or `E_SCENE_ENCODING_CONTRAST` under
+`contrastPolicy.mark: error`. Existing `none` and accepted-exception semantics
+apply; no threshold or policy member is added. An uncomputable ground follows
+the existing `unsupportedGround` policy; invalid metadata remains structural.
+Unencoded fills and stroke-only marks gain no encoding finding, and their
+either-channel visibility rule above is unchanged. Encoded table-cell text
+retains its existing fill-only text legibility check, not a new mark floor.
+For multipart marks, independently inspect every fill-bearing encoded part
+against external grounds, excluding siblings as for the shape check. The
+shape's best-part reduction must not discard these data-channel findings.
+Observe completed paint/provenance only: do not reload Project/Style resources,
+infer encoding from colours or preset IDs, or repaint the mark.
+
 **Multipart mark figures (#1178).** MARK-classified `Symbol` parts of one
 completed placement are one contrast figure, not substrates for each other.
 The existing terminal identity forms `:partN` and `:part:N` identify that
