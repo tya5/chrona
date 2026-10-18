@@ -1,33 +1,19 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 PR1698 merged `076be666c` after final CI39100063943 passed.
-Release39101259252 on `ca1e0bbe8` passed Linux/macOS but failed four Windows
-process/replay tests: pre-lock reading of byte0 collides with the other handle's
-mandatory lock. Repair PR1707 merged `381cf404a` after all final-head checks
-39104093015 passed; official artifact109 paths are unchanged. Trusted
-sync39104963215/gate39105119741 passed. Exact-main native/full release39105269292
-is running; item5 acceptance and item3/item2 merges still wait for its success.
-Item3 final PR1706 at `1489598c7` passed CI39105280589; its official artifact
-retains all50 SVG/Scene pairs, with only the two reviewed diagnostic inventories
-changed. This authoring WIP includes the repaired kernel and final history source.
-Published correction `d0ea4f635` and issue plan6246530666 precede repair code.
-Independent architecture review confirms the shared Windows primitive can lock
-past EOF without sentinel initialization; Store/authoring transaction ownership,
-persistent inode identity, diagnostics and formats remain unchanged. Portable
-guarded-handle regression fails3 cases before the fix; the repaired focused
-storage/authoring/process batch passes58. Native Windows proof remains required.
-#1679/#1680 are closed after exact-main39094741641 passed all
-three OSes, public reproduction and MCP. Their archival/ledger update is an
-independent commit in PR1698; separate docs PR1699 was superseded to avoid
-another serial snapshot/sync cycle. Item3 code `c2984c018` and item2
-code/review `fa831e384`/`0b79e65a0` remain unreleased; this branch is not a main
-release claim. Publication order remains5→3→2. Item3 PR may open only after
-item5 merges and derived-main is ready; its merge waits for item5's successful
-full release. Item2 PR may open only after item3 merges and derived-main is
-ready; its own current-head checks/review still precede merge. The reviewed
-scheduling amendment below allows one latest exact-main full run to accept
-items3/2 together. Known predecessor failures remain the priority. Board454 is
-reviewer-owned and unchanged.
+Status: item5 accepted on exact main `381cf404a`: [release39105269292](https://github.com/tya5/chrona/actions/runs/39105269292)
+passed all three native OS suites, conformance, wheel/smoke, MCP and newest-Python
+public reproduction. Repair PR1707 retains all four Windows lock/replay tests;
+no retry/diagnostic/format policy changed and its109-path artifact is unchanged.
+Item3 PR1706 merged `ea6873b5d` after final-head CI39105280589 succeeded;
+all50 SVG/Scene pairs are unchanged, with two intended diagnostic inventories.
+Its new main sync/ready/full release remains pending. This item2 WIP includes
+the repaired kernel, final history source and its own formal literal review;
+focused operational/agent/recovery/process/stdio95 and dedicated stdio2 pass.
+Next: follow item3's ready main once and publish item2's current-base PR.
+Each PR retains its own checks and official artifact review; the published
+scheduling amendment below permits one later exact-main full release containing
+both implementations/reviews to accept items3/2 together. A merge is not release
+acceptance. Parent902 stays open for parked4/814/815; board454 is unchanged.
 
 ## Scope and literal acceptance
 
