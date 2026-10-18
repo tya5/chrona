@@ -3,7 +3,7 @@ id: chrona-builtin-editorial-detail
 body:
   legend:
     - {role: planned, label: Task duration}
-    - {role: actual, label: Progress}
+    - {role: actual, label: Actual}
     - {role: milestone, label: Milestone}
     - {role: dependency, label: Dependency}
     - {role: asOf, label: Today}
