@@ -94,9 +94,8 @@ def _render(tmp_path, monkeypatch, *, mode: str, styled: bool):
     def normalize(*args, **kwargs):
         if not styled:
             return _ORIGINAL_NORMALIZE(*args, **kwargs)
-        return _ORIGINAL_NORMALIZE(
-            *args, **kwargs, style_rules=rules,
-        )
+        kwargs["style_rules"] = rules
+        return _ORIGINAL_NORMALIZE(*args, **kwargs)
 
     monkeypatch.setattr(surface_count_closure, "compose_surface_layout", compose)
     monkeypatch.setattr(render_review_usecase, "normalize_v05_surface_content", normalize)

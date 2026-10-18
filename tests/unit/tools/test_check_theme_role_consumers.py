@@ -38,6 +38,41 @@ def test_a_role_one_of_several_closures_names_is_not_dead(tmp_path):
     assert dead_declarations(tmp_path) == ()
 
 
+def test_a_style_named_role_counts_as_consumed_in_a_context_even_without_a_match(tmp_path):
+    _example(tmp_path, theme_roles={"style-only-emphasis": {}},
+             bindings={"style-only-emphasis.fill": "accent"},
+             views={"a": {"surface": "table-timeline"}})
+    base = tmp_path / "examples" / "demo"
+    _write(base / "styles/s.yaml", {
+        "version": "chrona/style/v0.2", "kind": "style", "id": "s",
+        "body": {"rules": [{"id": "emphasis", "when": {"roles": ["critical"]},
+                             "then": {"role": "style-only-emphasis"}}]},
+    })
+    context_path = base / "contexts/a.yaml"
+    context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
+    context["body"]["style"] = {"address": "styles/s.yaml"}
+    _write(context_path, context)
+
+    assert dead_declarations(tmp_path) == ()
+
+
+def test_a_bundled_style_yaml_names_roles_for_the_preset_closure(tmp_path):
+    bundle = tmp_path / "src/chrona/resources/presets/bundles/styled"
+    _write(bundle / "theme.yaml", {
+        "version": "chrona/theme/v0.15", "kind": "theme", "id": "t",
+        "body": {"roles": {"style-only-emphasis": {}},
+                 "colorBindings": {"style-only-emphasis.fill": "accent"}},
+    })
+    _write(bundle / "view.yaml", {"version": "chrona/view/v0.28", "kind": "view", "id": "v", "body": {}})
+    _write(bundle / "style.yaml", {
+        "version": "chrona/style/v0.2", "kind": "style", "id": "s",
+        "body": {"rules": [{"id": "emphasis", "when": {"roles": ["critical"]},
+                             "then": {"role": "style-only-emphasis"}}]},
+    })
+
+    assert dead_declarations(tmp_path) == ()
+
+
 def test_registered_roles_group_names_and_derived_themes_are_not_reported(tmp_path):
     _example(tmp_path, theme_roles={"planned": {}}, bindings={"planned.fill": "accent", "group:team-a.fill": "accent"},
              views={"a": {"surface": "table-timeline"}})

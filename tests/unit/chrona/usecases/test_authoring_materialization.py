@@ -18,7 +18,7 @@ def _root() -> Path:
     return next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 
 
-def _workspace(tmp_path: Path) -> Path:
+def _workspace(tmp_path: Path, *, with_style: bool = False) -> Path:
     root = _root()
     preset_root = tmp_path / "preset"
     preset_root.mkdir()
@@ -28,17 +28,27 @@ def _workspace(tmp_path: Path) -> Path:
         "scheme.yaml": yaml.safe_load((root / "tests/fixtures/aster-ssd/schemes/executive-light.yaml").read_text(encoding="utf-8")),
         "layout.yaml": yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8")),
     }
+    if with_style:
+        resources["style.yaml"] = {
+            "version": "chrona/style/v0.2", "kind": "style", "id": "starter-style",
+            "body": {"rules": [{"id": "critical", "when": {"roles": ["critical"]},
+                                  "then": {"role": "emphasis"}}]},
+        }
     resources["view.yaml"]["body"]["selection"] = {"include": {"types": ["span"]}}
     for name, document in resources.items():
         (preset_root / name).write_text(yaml.safe_dump(document, sort_keys=False), encoding="utf-8")
-    preset = {
-        "version": "chrona/presentation-preset/v0.1", "kind": "presentation-preset", "id": "starter",
-        "body": {"package": {"version": "1"}, "resources": {
+    declarations = {
             "view": {"id": resources["view.yaml"]["id"], "kind": "view", "path": "view.yaml"},
             "theme": {"id": resources["theme.yaml"]["id"], "kind": "theme", "path": "theme.yaml"},
             "colorScheme": {"id": resources["scheme.yaml"]["id"], "kind": "color-scheme", "path": "scheme.yaml"},
             "layout": {"id": resources["layout.yaml"]["id"], "kind": "layout-profile", "path": "layout.yaml"},
-        }, "compatibleColorSchemes": [{"id": resources["scheme.yaml"]["id"], "kind": "color-scheme", "path": "scheme.yaml"}]},
+        }
+    if with_style:
+        declarations["style"] = {"id": resources["style.yaml"]["id"], "kind": "style", "path": "style.yaml"}
+    preset = {
+        "version": "chrona/presentation-preset/v0.1", "kind": "presentation-preset", "id": "starter",
+        "body": {"package": {"version": "1"}, "resources": declarations,
+                 "compatibleColorSchemes": [{"id": resources["scheme.yaml"]["id"], "kind": "color-scheme", "path": "scheme.yaml"}]},
     }
     (preset_root / "starter.yaml").write_text(yaml.safe_dump(preset, sort_keys=False), encoding="utf-8")
     document = {
@@ -57,6 +67,7 @@ def _explicit_bytes(root: Path) -> bytes:
         project_path=root / "presentation/project.yaml", view_path=root / "presentation/view.yaml",
         theme_path=root / "presentation/theme.yaml", scheme_path=root / "presentation/scheme.yaml",
         layout_path=root / "presentation/layout.yaml", actual_path=root / "presentation/actual.yaml",
+        style_path=(root / "presentation/style.yaml") if (root / "presentation/style.yaml").is_file() else None,
     )
     return _render_bytes(draft)
 
@@ -268,3 +279,19 @@ def test_materialize_relative_still_accepts_plain_relative_directories(value):
     from chrona.usecases.authoring_materialization import _relative
 
     _relative(value)
+
+
+def test_materialization_copies_optional_style_into_explicit_context(tmp_path):
+    workspace = _workspace(tmp_path, with_style=True)
+    guided_bytes = _render_bytes(resolve_guided_draft_render(workspace_path=workspace))
+
+    result = _materialize(workspace)
+
+    assert result["status"] == "accepted"
+    explicit = yaml.safe_load(workspace.read_text(encoding="utf-8"))
+    resources = explicit["body"]["presentation"]["resources"]
+    assert resources["style"]["id"] == "starter-style"
+    assert (tmp_path / "presentation/style.yaml").is_file()
+    context = yaml.safe_load((tmp_path / "presentation/context.yaml").read_text(encoding="utf-8"))
+    assert context["body"]["style"]["id"] == "starter-style"
+    assert _explicit_bytes(tmp_path) == guided_bytes

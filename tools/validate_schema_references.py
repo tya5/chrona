@@ -19,13 +19,22 @@ VERSION = re.compile(r"^\s*version:\s*([A-Za-z0-9_./-]+)\s*$")
 
 def live_versions(schema_root: Path, inventory_path: Path) -> set[str]:
     values: set[str] = set()
+
+    def collect_root_versions(schema: dict) -> None:
+        const = schema.get("properties", {}).get("version", {}).get("const")
+        if isinstance(const, str):
+            values.add(const)
+        # Shared resource envelopes put the document's own version in allOf.
+        # Do not inspect $defs or child properties: those describe other values.
+        for branch in schema.get("allOf", ()):
+            if isinstance(branch, dict):
+                collect_root_versions(branch)
+
     for entry in validate_inventory(schema_root, inventory_path):
         if entry["state"] != "live":
             continue
         schema = safe_load((schema_root / entry["file"]).read_bytes())
-        const = schema.get("properties", {}).get("version", {}).get("const")
-        if isinstance(const, str):
-            values.add(const)
+        collect_root_versions(schema)
     return values
 
 

@@ -23,6 +23,7 @@ from chrona.presentation.layout.surface_content import (
     validate_detail_panel_placement,
 )
 from chrona.presentation.layout.surface_legend import SurfaceLegendContext, place_legend
+from chrona.presentation.layout.style_legend import initial_style_legend_warnings, recompose_scoped_style_legend
 from chrona.presentation.layout.slot_heading import (SlotHeadings, content_slot, full_slot, inline_content_slot,
                                                     inline_full_slot)
 from chrona.presentation.layout.surface_completion import (
@@ -279,7 +280,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         legend_batch = place_legend(SurfaceLegendContext(
             request, inline_content_slot(content_slot(legend, headings.reserved("legend")),
                                          headings.reserved_inline("legend")), metric_values, metric_for))
-        side_content_warnings.extend(legend_batch.warnings)
+        side_content_warnings.extend(initial_style_legend_warnings(request, legend_batch))
         legend_slot = inline_full_slot(legend, full_slot(legend, legend_batch.slot, headings.reserved("legend")),
                                        headings.reserved_inline("legend"))
         slots = tuple(legend_slot if slot.source_ref == "legend" else slot for slot in slots)
@@ -330,6 +331,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     text.extend(relation_labels.text)
     diagnostics.extend(relation_labels.diagnostics)
     visible_label_overflows.extend(relation_labels.visible_label_overflows)
+
+    legend_batch = recompose_scoped_style_legend(
+        request, legend_batch, tuple(marks), tuple(text), metric_values, metric_for, side_content_warnings)
 
     if legend_batch is not None:
         marks.extend(legend_batch.marks)

@@ -107,9 +107,8 @@ def _render_capture(tmp_path, monkeypatch, *, mode, parts, rules, styled):
         if not styled:
             return _ORIGINAL_NORMALIZE_V05_SURFACE_CONTENT(*args, **kwargs)
         expected_keys.update(_source_keys(args[0], parts))
-        return _ORIGINAL_NORMALIZE_V05_SURFACE_CONTENT(
-            *args, **kwargs, style_rules=rules,
-        )
+        kwargs["style_rules"] = rules
+        return _ORIGINAL_NORMALIZE_V05_SURFACE_CONTENT(*args, **kwargs)
 
     monkeypatch.setattr(surface_count_closure, "compose_surface_layout", capture_compose)
     monkeypatch.setattr(render_review_usecase, "normalize_v05_surface_content", normalize_with_style)

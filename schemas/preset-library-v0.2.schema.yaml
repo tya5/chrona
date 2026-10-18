@@ -40,6 +40,7 @@ properties:
             theme: {$ref: "#/$defs/theme"}
             colorScheme: {$ref: "#/$defs/colorScheme"}
             layout: {$ref: "#/$defs/layout"}
+            style: {$ref: "#/$defs/style"}
             detailProfile: {$ref: "#/$defs/detailProfile"}
             summaryProfile: {$ref: "#/$defs/summaryProfile"}
             iconCatalogs:
@@ -100,6 +101,16 @@ $defs:
     properties:
       id: {type: string, minLength: 1, description: Stable layout-profile resource identifier.}
       kind: {const: layout-profile, description: Resource kind discriminator.}
+      sourceRoot: {$ref: "#/$defs/address"}
+      sourcePath: {$ref: "#/$defs/address"}
+  style:
+    type: object
+    description: Reference to an optional Style resource.
+    required: [id, kind, sourceRoot, sourcePath]
+    additionalProperties: false
+    properties:
+      id: {type: string, minLength: 1, description: Stable Style resource identifier.}
+      kind: {const: style, description: Resource kind discriminator.}
       sourceRoot: {$ref: "#/$defs/address"}
       sourcePath: {$ref: "#/$defs/address"}
   detailProfile:

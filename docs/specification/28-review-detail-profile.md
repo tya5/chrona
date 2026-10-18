@@ -26,6 +26,34 @@ The complete M23 surface set has four members:
 This keeps external supplier notes visibly attributable without fabricating Actual or
 turning slide content into scheduling input.
 
+## Style encoding legends (#419 S2; implementation pending)
+
+Style-derived entries coexist with semantic Detail keys without replacing
+their ownership. A scoped entry displays `title: value`; its authored title is
+required and non-blank. Global Style entries display the domain value, prefixed
+by an authored title when present. Stable identity uses Style/rule/scale,
+canonical selector and value, never title or current match count. Preserve scale
+domain order and the existing folded Other entry.
+
+Source sizing may reserve potential entries. Layout filters them against final
+visible placements and effective paint channels, then places only values
+actually painted; explicit glyph colours and stroke-only parts do not create
+encoded fill swatches. Existing View encoding legend policy is unchanged.
+After selecting the final route/label option, recompose filtered Style entries
+inside the conservatively allocated legend/footer slots; do not shrink those
+slots or restart row, route or annotation layout.
+All scale-derived finite keys use their completed category colour as key ink.
+For a `rule-pair` key that colour is its stroke; width/opacity come from the
+canonical scale-legend Theme role. This also corrects the older View key's
+ignored colour override; it does not change the chart encoding's channel.
+`showScope` opts into an extra qualifier, exactly `when ` plus canonical selector
+JSON (all selector keys and compound predicates follow its canonical order).
+No independent formatter or executable language is introduced. Allocate using
+the primary label; append that qualifier only when it is measurable and fits the final
+allocation. A qualifier-only failure omits it without rejecting the encoding or
+its primary title/value. Canonical scope metadata remains beside the completed
+Scene swatch whether or not that optional qualifier is visible.
+
 ## Finite legend key shapes (#1562)
 
 A `legend` entry MAY declare `swatchShape: circle|rule-pair`. Omission retains

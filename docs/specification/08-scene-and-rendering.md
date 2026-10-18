@@ -677,6 +677,23 @@ Every Scene node has:
 
 One source may emit several nodes. For example, a planned span may emit a bar, label, baseline comparison mark, and accessible hit target. The `sceneId` must include a stable primitive-purpose suffix so a renderer can distinguish them without relying on array position.
 
+### Style provenance metadata (#419 S2; implementation pending)
+
+Treated primitives may carry `styleMatch: {styleId, ruleIds}`: non-empty unique
+authored rule IDs belonging to the one pinned Style provenance resource. A
+Style-derived legend swatch primitive may also carry
+`legendScope: {styleId, ruleId, scaleId, selector, title?, showScope}`. `selector`
+is canonical normalized selector JSON retained as provenance, not an executable
+Scene selector; its text primitive joins through the same stable source identity.
+Both metadata shapes are closed and their Style ID must join
+the Scene's own resource provenance. They do not replace canonical semantic,
+purpose, visual role, selected Theme role or contrast classification.
+
+Scene replay validates transport and resource joins; adapters only serialize
+completed paint, geometry and text. No Style means these optional members are
+absent. Layout, not Scene, decides actual legend membership and optional scope
+text fitting under Specification28.
+
 ### 5.2 Standard primitives
 
 The initial renderer-neutral vocabulary is intentionally small:
