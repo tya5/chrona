@@ -27,14 +27,23 @@ Redo revalidates intent; revert creates a new immutable revision. Legacy
 unrecoverable intent is diagnosed, not guessed. No renderer or project YAML
 changes; generic Project history is unchanged.
 
-Final integration uses trusted-ready main `6d68834de` (reviewer1704 included).
+Prepared integration includes reviewer1704/1705; the final PR must follow
+the Windows repair's trusted-ready main before publication.
 History/process/locking/MCP focused19 and agent/ledger/schema-packaging/CLI115
 pass; the literal-review checker passes. Schema equivalence passes: L1 added1/
 equal41, L2/L3 with the same five baseline-invalid documents. Independent final
 review confirms post-publication record I/O errors propagate rather than being
 mislabeled safe rejections. Main-derived changes were merged, not hand-edited.
 
-Release is **not accepted yet**: current-head PR CI, official materializer
-artifact audit and full exact-main three-OS pytest/conformance/wheel release
-remain required. The item3 merge additionally waits for item5's exact-main
-release39101259252 to succeed. No issue closure is authorized by this review.
+PR1706's initial CI39102611347 exposed three unclassified identity guards and
+schema-migration test expectations. Corrections `d0a2ff526`/`ae21a166c` pass185
+focused tests; the initial artifact preserves all50 SVG/Scene pairs. Neither
+that failed run nor the prepared corrections establish release acceptance.
+
+Release is **not accepted yet**: final current-head PR CI, official artifact
+audit and successful exact-main three-OS full release remain required. Item5's
+release39101259252 failed Windows; item3 cannot merge until repair PR1707 has
+successful native/full release evidence. Under the published scheduling
+amendment `146707fc1`, a later successful exact-main run containing BOTH item3
+and item2 source changes and literal reviews may accept them together. All
+per-item tests and separate PR gates remain mandatory. Parent902 stays open.
