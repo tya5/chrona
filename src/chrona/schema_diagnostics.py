@@ -190,6 +190,9 @@ def _explain(error: ValidationError, echo_values: bool = False) -> SchemaViolati
             expected = _FORMAT_DESCRIPTIONS["date"]
             return SchemaViolation(pointer, rule, (expected,), actual_kind,
                                    f"expected {_with_article(expected)}" + _echo(error.instance, True))
+        unsafe = _unsafe_path_sentence(error)
+        if unsafe:
+            return SchemaViolation(pointer, rule, (pattern,), actual_kind, unsafe)
         return SchemaViolation(pointer, rule, (pattern,), actual_kind,
                                f"expected value matching pattern {pattern!r}" + _echo(error.instance, echo_values))
     if rule == "format":
@@ -200,12 +203,39 @@ def _explain(error: ValidationError, echo_values: bool = False) -> SchemaViolati
                                f"expected {_with_article(expected)}" + _echo(error.instance, echo_values))
     if rule in {"oneOf", "anyOf"}:
         forms = _union_forms(error)
-        return SchemaViolation(pointer, "union", forms, actual_kind, "expected one permitted form" + (": " + "; ".join(forms) if forms else ""))
+        message = "expected one permitted form" + (": " + "; ".join(forms) if forms else "")
+        for child in error.context:
+            unsafe = _unsafe_path_sentence(child) if child.validator == "pattern" else None
+            if unsafe:
+                message += "; " + unsafe
+                break
+        return SchemaViolation(pointer, "union", forms, actual_kind, message)
     if rule == "not":
         forbidden = _forbidden_members(error)
         if forbidden:
             return forbidden
     return SchemaViolation(pointer, rule, (), actual_kind, error.message)
+
+
+_SAFE_RELATIVE_PATH_PATTERN = r"^(?!.*(?:^|/)\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"
+
+
+def _unsafe_path_sentence(error: ValidationError) -> str | None:
+    """Say why a `safeRelativePath` value was refused and what is allowed (#1756 row 5), or None for any other pattern."""
+    if str(error.validator_value) != _SAFE_RELATIVE_PATH_PATTERN or not isinstance(error.instance, str):
+        return None
+    value, where = error.instance, json_pointer(error.absolute_path)
+    segments = value.split("/")
+    if ".." in segments:
+        reason = "a parent directory ('..') is not permitted"
+    elif value.startswith("/") or value[1:2] == ":":
+        reason = "an absolute path is not permitted"
+    elif "." in segments:
+        reason = "a '.' segment is not permitted"
+    else:
+        reason = "it must start with a letter or digit and use only letters, digits, '.', '_', '-' and '/'"
+    return (f"'{tuple(error.absolute_path)[-1] if error.absolute_path else 'path'}' ({where}): {reason}; "
+            "write a relative path below the file's own directory, such as 'extensions/example.yaml'")
 
 
 def _forbidden_members(error: ValidationError) -> SchemaViolation | None:
