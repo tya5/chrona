@@ -96,7 +96,7 @@ def test_a_similarly_named_module_is_not_the_sdk(tmp_path, monkeypatch, capsys):
     assert code == 0, out
 
 
-def test_the_real_tool_core_imports_only_use_cases_the_path_guard_the_validator_factory_and_the_two_shared_store_modules():
+def test_the_real_tool_core_imports_only_use_cases_the_path_guard_the_validator_factory_and_shared_operational_ports():
     seen: set[str] = set()
     import ast
     for name in ("agent_tools.py", "agent_workspace.py"):
@@ -107,11 +107,12 @@ def test_the_real_tool_core_imports_only_use_cases_the_path_guard_the_validator_
                 seen.update(item.name for item in node.names if item.name.startswith("chrona"))
     assert {module for module in seen if not module.startswith("chrona.usecases.")} == {
         "chrona.app.agent_workspace", "chrona.core.store_address", "chrona.resources", "chrona.operational.store_commands",
-        "chrona.operational.store_reads"}
+        "chrona.operational.store_reads", "chrona.operational.authoring_commands"}
 
 
 OPERATIONAL = {**PRODUCT, "operational/store_commands.py": "Q = 1\n", "operational/command_engine.py": "E = 1\n",
-               "operational/store_reads.py": "R = 1\n", "operational/baselines.py": "B = 1\n"}
+               "operational/store_reads.py": "R = 1\n", "operational/baselines.py": "B = 1\n",
+               "operational/authoring_commands.py": "A = 1\n"}
 
 
 def test_the_tool_core_may_import_the_one_shared_store_command_module(tmp_path, monkeypatch, capsys):
@@ -136,7 +137,13 @@ def test_no_other_operational_import_is_allowed_to_the_tool_core(tmp_path, monke
     assert code == 1 and "chrona.app.agent_tools must not import chrona.operational" in out
 
 
-@pytest.mark.parametrize("module", ["store_commands", "store_reads"])
+def test_the_tool_core_may_import_the_shared_authoring_command_port(tmp_path, monkeypatch, capsys):
+    code, out = _run(tmp_path, monkeypatch, capsys,
+                     {**OPERATIONAL, "app/agent_tools.py": "from chrona.operational.authoring_commands import A\n"})
+    assert (code, out.splitlines()[-1].endswith("all inward")) == (0, True), out
+
+
+@pytest.mark.parametrize("module", ["store_commands", "store_reads", "authoring_commands"])
 def test_the_binding_gets_no_operational_edge(tmp_path, monkeypatch, capsys, module):
     code, out = _run(tmp_path, monkeypatch, capsys,
                      {**OPERATIONAL, "app/mcp_server.py": f"from chrona.operational.{module} import Q\n"})

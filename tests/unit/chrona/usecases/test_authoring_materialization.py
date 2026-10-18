@@ -7,7 +7,7 @@ import pytest
 import yaml
 
 from chrona.presentation.model.closure import resolve_draft_render, resolve_guided_draft_render
-from chrona.operational.authoring_commands import cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
+from chrona.operational.authoring_commands import transact_authoring_command
 from chrona.operational.resources import content_identity
 from chrona.operational.resources import OperationalResourceError
 from chrona.usecases.authoring_commands import apply_authoring_command
@@ -77,9 +77,7 @@ def _materialize(path: Path, *, base: str | None = None) -> dict:
     command = {"version": "chrona/authoring-command/v0.1", "commandId": "eject", "type": "materializePresentationPreset",
                "target": {"kind": "authoring-workspace", "path": path.name},
                "baseRevision": base or content_identity(current), "payload": {"directory": "presentation"}}
-    return apply_authoring_command(path, command, read_workspace=read_authoring_workspace,
-                                   cas_write=cas_write_authoring_workspace,
-                                   cas_write_aggregate=cas_write_authoring_aggregate)
+    return apply_authoring_command(path, command, transact=transact_authoring_command)
 
 
 def test_materialization_ejects_to_a_closed_explicit_bundle_with_identical_bytes(tmp_path):
@@ -160,13 +158,11 @@ def test_materialization_preserves_actionable_operational_lock_detail(tmp_path):
     command = {"version": "chrona/authoring-command/v0.1", "commandId": "eject", "type": "materializePresentationPreset",
                "target": {"kind": "authoring-workspace", "path": workspace.name},
                "baseRevision": content_identity(current), "payload": {"directory": "presentation"}}
-    result = apply_authoring_command(workspace, command, read_workspace=read_authoring_workspace,
-                                     cas_write=cas_write_authoring_workspace, cas_write_aggregate=locked)
+    with pytest.raises(OperationalResourceError) as raised:
+        apply_authoring_command(workspace, command, transact=locked)
 
-    assert result["diagnostics"] == [{
-        "code": "E_AUTHORING_LOCK_TIMEOUT",
-        "detail": "timed out acquiring authoring aggregate lock /tmp/.workspace.lock for workspace /tmp/workspace.yaml; retry",
-    }]
+    assert raised.value.code == "E_AUTHORING_LOCK_TIMEOUT"
+    assert raised.value.detail == "timed out acquiring authoring aggregate lock /tmp/.workspace.lock for workspace /tmp/workspace.yaml; retry"
     assert workspace.read_bytes() == original
 
 
@@ -257,8 +253,7 @@ def test_authoring_command_directory_guard_matrix(tmp_path, value, parses, downs
         assert detail.startswith("E_AUTHORING_COMMAND_SCHEMA: /payload/directory"), detail
     if downstream is None:
         return
-    result = apply_authoring_command(workspace, command, read_workspace=read_authoring_workspace,
-                                     cas_write=cas_write_authoring_workspace, cas_write_aggregate=cas_write_authoring_aggregate)
+    result = apply_authoring_command(workspace, command, transact=transact_authoring_command)
     verdict = "accepted" if result["status"] == "accepted" else result["diagnostics"][0]["code"].partition(":")[0]
     assert verdict == downstream
     # The guard only moves a rejection earlier: it never refuses a value that apply accepts.

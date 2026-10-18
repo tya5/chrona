@@ -1,25 +1,19 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 PR1698 merged `076be666c` after final CI39100063943 passed.
-Release39101259252 on `ca1e0bbe8` passed Linux/macOS but failed four Windows
-process/replay tests: pre-lock reading of byte0 collides with the other handle's
-mandatory lock. Repair PR1707 merged `381cf404a` after all final-head checks
-39104093015 passed; official artifact109 paths are unchanged. Its trusted
-sync39104963215 and native/full release must succeed before item5 acceptance
-or an item3/item2 merge. Item3 PR CI may proceed on the repaired ready main.
-Published correction `d0ea4f635` and issue plan6246530666 precede repair code.
-Independent architecture review confirms the shared Windows primitive can lock
-past EOF without sentinel initialization; Store/authoring transaction ownership,
-persistent inode identity, diagnostics and formats remain unchanged. Portable
-guarded-handle regression fails3 cases before the fix; the repaired focused
-storage/authoring/process batch passes58. Native Windows proof remains required.
-#1679/#1680 are closed after exact-main39094741641 passed all
-three OSes, public reproduction and MCP. Their archival/ledger update is an
-independent commit in PR1698; separate docs PR1699 was superseded to avoid
-another serial snapshot/sync cycle. Item3 code `c2984c018` and item2
-code/review `fa831e384`/`0b79e65a0` remain unreleased; this branch is not a main
-release claim. Merge/release order remains5→3→2. Board454 is reviewer-owned
-and unchanged.
+Status: item5 accepted on exact main `381cf404a`: [release39105269292](https://github.com/tya5/chrona/actions/runs/39105269292)
+passed all three native OS suites, conformance, wheel/smoke, MCP and newest-Python
+public reproduction. Repair PR1707 retains all four Windows lock/replay tests;
+no retry/diagnostic/format policy changed and its109-path artifact is unchanged.
+Item3 PR1706 merged `ea6873b5d` after final-head CI39105280589 succeeded;
+all50 SVG/Scene pairs are unchanged, with two intended diagnostic inventories.
+Its new main sync/ready/full release remains pending. This item2 WIP includes
+the repaired kernel, final history source and its own formal literal review;
+focused operational/agent/recovery/process/stdio95 and dedicated stdio2 pass.
+Next: follow item3's ready main once and publish item2's current-base PR.
+Each PR retains its own checks and official artifact review; the published
+scheduling amendment below permits one later exact-main full release containing
+both implementations/reviews to accept items3/2 together. A merge is not release
+acceptance. Parent902 stays open for parked4/814/815; board454 is unchanged.
 
 ## Scope and literal acceptance
 
@@ -234,8 +228,118 @@ timing only; acceptance is unchanged.
 Following ready `9e224db6c` and predecessor review `950d79001` changes no item3
 engine/schema code;31 focused history/concurrency/documentation cases pass.
 
-## Item2 (separate branch)
+## Item2 design plan
 
+- Baseline: CLI-only authoring use case/adapter (Spec51) echoes commandId but
+  cannot replay an accepted retry; ordinary CAS lacks the aggregate OS lock.
+  The existing transaction marker is recovery metadata, not accepted history.
+- Scope: one new MCP `apply_authoring_command` tool through the same CLI/operational
+  entry point, unchanged workspace containment and write gate. Decide tool-set
+  v0.6, honest annotations, exact result/pointer contract and prospective migration.
+- Design slices: pure prepare/validate versus operational commit ownership;
+  durable accepted-request/result receipts within the existing workspace lock
+  and transaction boundary; MCP exposure; architecture/migration review.
+- Resolve before code: canonical request/target identity and ID collision;
+  replay before stale-base checks; receipt/resource/workspace commit ordering;
+  no-op commit identity; crash recovery and post-commit cleanup failures. Do not
+  fake success from a CAS callback or add an unsynchronized second ledger.
+- Evidence: literal item2 stale/replay/no-overwrite and real stdio acceptance
+  above, restart/retry after later writes, changed-ID reuse, containment/gate,
+  ordinary/materializing/no-op transactions, failure before/after commit and
+  unchanged workspace/resource bytes on rejection. CI supplies the full gate.
+- Publication: design/implementation preparation may pipeline on its isolated
+  branch. Item2 PR opens only after item3 merges and derived-main is ready; the
+  item2 merge requires its own checks/review, while final acceptance follows
+  the shared exact-main release amendment below. Any known item3 release
+  failure remains its owner's priority and blocks item2 merge. This changes PR
+  timing only; item2 acceptance is unchanged.
+
+## Item2 selected design and architecture review
+
+Normative authority: Spec51 §4.2 and Spec66 §2.3/tool-set v0.6. Keep the
+existing command/result v0.1 and return the exact durable result on retry, with
+no new replay flag. Canonical workspace identity also unifies lock/receipt scope;
+alias callers must name the canonical filename in `target.path`.
+
+Use case preparation produces complete validated candidate bytes, next content
+identity and an opaque exact result, without canonical writes. One injected
+transaction port coordinates both CLI/MCP; it invokes preparation under the
+workspace lock and owns receipt/recovery/commit. It never interprets authoring
+operation payloads or presentation types. Remove the old two-CAS-callback path,
+not preserve it as a compatibility bypass. Update the tool import-direction
+guard for this one named port, retaining all other layer restrictions.
+
+Whole-architecture questions: Spec10 idempotent intent versus authoring-local
+content revisions; Spec15 Store locks versus the separate workspace scope;
+Spec51 prepare/materialization proof and publication ownership; Spec66 gate,
+containment, honest annotations and exact result parity. Receipts are accepted
+history, the marker is transient recovery, and existing materialization receipts
+remain provenance. No duplicated ledger, new workspace schema or renderer rule.
+Two independent architecture reviews found no remaining contract blocker.
+Resolved findings: explicit no-op receipt commit, committed-marker replay when
+cleanup fails, hashed/verified receipts and owned-output recovery, legacy marker
+fail-closed migration, canonical alias refusal, and gate before file reads.
+The aggregate writer must extend ownership/recovery to receipt plus resources;
+its old single-directory rollback cannot be reused unchanged. Implementation
+must not delete prior receipts or post-commit resources, or claim CAS success
+before publication. Publish this design before finalizing its implementation plan.
+
+## Item2 implementation plan
+
+Selected design/whole-architecture review `cdf0289f8` precedes this plan.
+Use one neutral `storage.file_transaction.PreparedFileMutation(files,
+result_revision, result)` with named byte candidates, next workspace identity
+(null for refusal) and an opaque exact result.
+The use case supplies `prepare(canonical_path, current)` and
+`reject(code, observed_identity, detail)` and
+`verify_receipt(request, result, before_identity, after_identity)` callbacks to
+`operational.authoring_commands.transact_authoring_command`.
+It returns the prepared/stored result; the Engine never imports authoring types
+or interprets operation payloads. CLI/MCP inject this same transaction port into
+the use case. Remove the old public CAS-callback wiring, not emulate it.
+
+| Slice | Owned files | Acceptance evidence |
+| --- | --- | --- |
+| A1 prepare | `usecases/authoring_commands.py` and use-case tests | Validate full ordinary/materializing candidates, receipt command/result schemas/identities and exact results before publication; preserve proof, closure, overrides and failure details. No canonical writes or fake successful CAS. Canonical target mismatch is actionable; migrate callback tests without losing stale/collision coverage. |
+| A2 transaction | `storage/file_transaction.py`, `operational/authoring_commands.py` and persistence/recovery/process tests | One lock for every command; durable exact replay before base comparison, changed-ID reuse, verified receipt corruption/path guards, no overwrite. Marker distinguishes changed workspace/no-op commits; injected failures/restarts before/after publication preserve old or fully committed state, including legacy recovery and post-commit cleanup/replay. Earlier receipts/resources survive. |
+| A3 front ends/release | `app/cli.py`, `app/agent_tools.py`, import guard, registry/CLI/MCP tests and literal review | Tool-set v0.6/new tool and honest annotations; gate before missing/malformed/escaped files open; canonical/symlink scope; exact CLI/tool results, stale/replay/no-overwrite over real stdio. Run focused tests per owner, then combined tests and planned CI full three-OS/conformance/wheel/MCP; inspect official materializer deltas as a batch. No renderer policy/source change intended. |
+
+Implement as isolated WIP while predecessor releases run; one coherent item2 PR
+may open after item3 merges and derived-main is ready. Item2 merge requires its
+own current-head checks/review; shared full-release acceptance is specified in
+the scheduling amendment below. Do not publish partially safe main slices.
+Return to design before addressing any new transaction/schema/layer contract
+gap. Acceptance is the literal item2 row above; parked4/814/815 remain open.
+
+## Item2 implementation review
+
+Code: `fa831e384`, following design `cdf0289f8` and plan `fa31cc79c`.
+CLI/MCP share the preparation/transaction port; no writer compatibility bypass
+remains. Engine retains no authoring operation/presentation interpretation.
+Canonical filename spelling is preserved; case normalization affects identity
+only, and staging identity includes workspace scope as well as command ID.
+Independent reviews found and resolved committed-cleanup replay and marker-to-
+receipt cross-check gaps. Owned-stage validation preserves unexpected files.
+No renderer/schema/source-YAML or generated artifact changes in this slice.
+
+Current literal acceptance/release authority: [item2 review](../../reviews/current/issue-902-authoring-acceptance-review-2026-10-18.md).
+
+Verification: combined focused authoring/containment/registry/CLI/Store/MCP
+batch **1010 passed**; final recovery/helper migration **489 passed** and
+case/staging/process batch **58 passed**. These batches overlap, not additive.
+`tools/check_import_direction.py`: 11 packages/37 inward edges; diff check clean.
+Full local pytest/public-materializer reruns deliberately delegated to CI.
+Publication preflight incorporates the predecessor's inventory/schema migration
+repairs and registers the extracted receipt/request/CAS identity guards with
+their existing producers. Classification validation and70 focused authoring,
+recovery, process/MCP and inventory tests pass. No product behavior or generated
+report was changed to satisfy the inventory. Item2 remains WIP, not released.
+Prepared integration `5c363da7d` follows repaired ready main `381cf404a` and
+final item3 head `1489598c7`. Operational/recovery/agent/transaction/lock/stdio95
+and dedicated real authoring stdio2 pass. Both are focused evidence, not
+native Windows or release acceptance. Publication gates remain unchanged.
+Current-base integration of predecessor `64c8a6094`/ready `9e224db6c` preserves
+item2 product code;40 focused history/authoring/process/stdio/docs cases pass.
 Design `cdf0289f8`, plan `fa31cc79c`, code `fa831e384` and review `0b79e65a0`
 are on `wip/issue-902-authoring-design`; that branch owns durable authoring/MCPv0.6.
 Item2 PR may open after item3 merges and derived-main is ready, alongside
