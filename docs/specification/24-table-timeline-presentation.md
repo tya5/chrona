@@ -46,6 +46,16 @@ Omission means `exclusive` and preserves existing authored output. The property
 is valid only for `dateRange`; invalid values or formatter combinations fail
 View validation. The live View schema adds this optional property in place.
 
+**Year in table dates (#1724).** A `dateRange` cell shows a date without its
+year only while every date displayed in the table's `dateRange` cells (the
+range ends actually rendered, after `endDisplay`) lies in one calendar year; the
+padded axis window alone never adds a year. A range crossing a year inside one
+cell shows both years as before. When the displayed dates span more than one
+calendar year, every date in every `dateRange` cell carries its year
+(`27 Apr 2027 – 03 May 2027`; `2027年4月27日 – 2027年5月3日` for `ja-JP`, the year
+leading the month and day). A table whose displayed dates share one year renders
+exactly as before, whatever the plan or window span.
+
 For a complete half-open interval with date-valued `start < end`, exclusive
 display formats the stored endpoint. Inclusive display of a planned span whose
 schedule is a WorkPeriod in working days (`wd`) formats the last working day

@@ -430,8 +430,12 @@ def initials(text: str) -> str:
 
 def display_value(value: Any, missing: str | Mapping[str, Any], formatter: str | BooleanPresencePresentation = "text", *,
                   locale: str = "en-US", zero: str = "signed", end_display: str = "exclusive",
-                  transform: str | None = None) -> str:
-    """Format a normalized table value according to its declared View contract."""
+                  transform: str | None = None, years_visible: bool = False) -> str:
+    """Format a normalized table value according to its declared View contract.
+
+    ``years_visible`` is true when the visible window spans more than one calendar year: every
+    ``dateRange`` date then carries its year (#1724).
+    """
     if value is None:
         if isinstance(missing, Mapping):
             return str(missing["text"])  # an author-chosen literal, shown exactly (#1288)
@@ -455,16 +459,16 @@ def display_value(value: Any, missing: str | Mapping[str, Any], formatter: str |
             return point.isoformat() if isinstance(point, date) else str(point)
     if formatter == "dateRange" and isinstance(value, DisplayDateRange):
         if value.start == value.end:
-            return _format_compact_date(value.start, include_year=False, locale=locale)
-        return _format_date_range(value.start, value.end, locale=locale)
+            return _format_compact_date(value.start, include_year=years_visible, locale=locale)
+        return _format_date_range(value.start, value.end, locale=locale, years_visible=years_visible)
     if formatter == "dateRange" and isinstance(value, dict):
         start, end = value.get("start"), value.get("end", value.get("finish"))
         if isinstance(start, date) and isinstance(end, date):
             if end_display == "inclusive" and start < end:
                 end -= timedelta(days=1)
                 if start == end:
-                    return _format_compact_date(start, include_year=False, locale=locale)
-            return _format_date_range(start, end, locale=locale)
+                    return _format_compact_date(start, include_year=years_visible, locale=locale)
+            return _format_date_range(start, end, locale=locale, years_visible=years_visible)
         if isinstance(start, date) and end is None:
             return f"{_format_compact_date(start, include_year=True, locale=locale)} –"
         if isinstance(value.get("at"), date):
@@ -476,10 +480,10 @@ def display_value(value: Any, missing: str | Mapping[str, Any], formatter: str |
     return str(value)
 
 
-def _format_date_range(start: date, end: date, *, locale: str) -> str:
+def _format_date_range(start: date, end: date, *, locale: str, years_visible: bool = False) -> str:
     if start == end:
         return _format_compact_date(start, include_year=True, locale=locale)
-    if start.year == end.year:
+    if start.year == end.year and not years_visible:
         return f"{_format_compact_date(start, include_year=False, locale=locale)} – {_format_compact_date(end, include_year=False, locale=locale)}"
     return f"{_format_compact_date(start, include_year=True, locale=locale)} – {_format_compact_date(end, include_year=True, locale=locale)}"
 

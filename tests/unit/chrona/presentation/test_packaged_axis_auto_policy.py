@@ -21,6 +21,19 @@ SHORT_AXIS_PRESETS = {
     "chrona-preset-wallboard-dark",
 }
 
+READABLE_DEFAULT = "chrona-preset-editorial-readable-default"
+# The bundled default stacks two automatic tiers (#1724 P2): a year-bearing tier (month with its
+# year, else half or year) over a fine tier (day or week, else a bare quarter), so a short plan
+# names its months and years above the weeks and a long plan never repeats one unit twice.
+READABLE_DEFAULT_LABELS = [
+    {"unit": "auto", "every": 1, "role": "labels", "typographyRole": "axisQuarter",
+     "label": {"forms": {"month": "short-month-year", "half": "half-year", "year": "year"},
+               "align": "center", "overflow": "thin-with-record", "orientation": "horizontal"}},
+    {"unit": "auto", "every": 1, "role": "labels", "typographyRole": "axisMonth",
+     "label": {"forms": {"day": "localized-date", "week": "start-day-month", "quarter": "quarter"},
+               "align": "center", "overflow": "thin-with-record", "orientation": "horizontal"}},
+]
+
 
 def _fixed_labels(unit: str, form: str, typography: str) -> dict:
     return {
@@ -41,8 +54,7 @@ def _assert_axis_policy(document: dict, *, source: str) -> None:
             "role": "labels",
             "typographyRole": "axisQuarter",
             "label": {
-                "forms": ({"day": "localized-date", "week": "start-day-month", **EXPECTED_FORMS}
-                          if document["id"] == "chrona-preset-editorial-readable-default" else EXPECTED_FORMS),
+                "forms": EXPECTED_FORMS,
                 "align": "center",
                 "overflow": "thin-with-record",
                 "orientation": "horizontal",
@@ -50,6 +62,12 @@ def _assert_axis_policy(document: dict, *, source: str) -> None:
         },
         {"unit": "month", "every": 1, "role": "grid-minor"},
     ]
+    if document["id"] == READABLE_DEFAULT:
+        expected_policy = [
+            {"unit": "quarter", "every": 1, "role": "grid-major"},
+            *READABLE_DEFAULT_LABELS,
+            {"unit": "month", "every": 1, "role": "grid-minor"},
+        ]
     if document["id"] in SHORT_AXIS_PRESETS:
         expected_policy = [
             {"unit": "quarter", "every": 1, "role": "grid-major"},
@@ -124,8 +142,10 @@ def test_every_builtin_preset_resolves_to_its_declared_axis_policy():
                 _fixed_labels("month", "short-month", "axisMonth"),
             ]
             continue
-        expected = ({"day": "localized-date", "week": "start-day-month", **EXPECTED_FORMS}
-                    if source["id"] == "chrona-preset-editorial-readable-default" else EXPECTED_FORMS)
+        if source["id"] == READABLE_DEFAULT:
+            assert labels == READABLE_DEFAULT_LABELS
+            continue
+        expected = EXPECTED_FORMS
         assert len(labels) == 1
         assert labels[0]["unit"] == "auto"
         assert labels[0]["label"]["forms"] == expected

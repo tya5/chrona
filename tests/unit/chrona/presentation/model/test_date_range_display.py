@@ -168,3 +168,38 @@ def test_comparison_rollup_table_subject_keeps_its_own_date_range():
                          "missing": "blank", "endDisplay": "inclusive"}])
     table = normalize_v05_table_content(projection, {}, view)
     assert next(cell.content for cell in table.cells if cell.object_id == snapshot.item_id) == "01 Mar – 08 Mar"
+
+
+def test_years_visible_puts_the_year_on_every_date_range_date_and_locale_form():
+    a = {"start": date(2027, 4, 27), "end": date(2027, 5, 3)}
+    b = {"start": date(2028, 2, 22), "end": date(2028, 3, 1)}
+    one_day = {"start": date(2028, 2, 22), "end": date(2028, 2, 23)}
+
+    assert display_value(a, "blank", "dateRange") == "27 Apr – 03 May"  # default: unchanged (#1724)
+    assert display_value(a, "blank", "dateRange", years_visible=True) == "27 Apr 2027 – 03 May 2027"
+    assert display_value(b, "blank", "dateRange", years_visible=True) == "22 Feb 2028 – 01 Mar 2028"
+    assert display_value(one_day, "blank", "dateRange", end_display="inclusive", years_visible=True) == "22 Feb 2028"
+    assert display_value(a, "blank", "dateRange", locale="ja-JP", years_visible=True) == "2027年4月27日 – 2027年5月3日"
+    assert display_value(a, "blank", "dateRange", locale="ja-JP") == "4月27日 – 5月3日"
+
+
+def _table_cells(window, *spans, locale="en-US"):
+    from tests.unit.chrona.presentation.review.test_v05_content import typed_view
+    items = tuple(ReviewItem(f"t{n}", "Task", "span", {"start": a, "end": b}, None, None, (), item_id=f"t{n}")
+                  for n, (a, b) in enumerate(spans))
+    projection = ReviewProjection(items, window, (), (), rows=tuple(
+        ReviewRowProjection(f"row{n}", "", f"t{n}", f"t{n}", (item,)) for n, item in enumerate(items)))
+    view = typed_view({"body": {"tableColumns": [
+        {"id": "Plan", "source": {"facet": "planned"}, "format": "dateRange", "missing": "em-dash"}]}})
+    return [cell.content for cell in normalize_v05_table_content(projection, {}, view, locale=locale).cells]
+
+
+def test_table_dates_carry_the_year_only_when_the_displayed_dates_span_years():
+    window = (date(2026, 12, 28), date(2029, 6, 1))
+    first = (date(2027, 4, 27), date(2027, 5, 3))
+    second = (date(2028, 2, 22), date(2028, 3, 1))
+    assert _table_cells(window, first, second) == ["27 Apr 2027 – 03 May 2027", "22 Feb 2028 – 01 Mar 2028"]
+    assert _table_cells(window, first, second, locale="ja-JP")[1] == "2028年2月22日 – 2028年3月1日"
+    # a single displayed year stays short even when the padded window reaches into another year
+    assert _table_cells(window, first) == ["27 Apr – 03 May"]
+    assert _table_cells((date(2026, 12, 28), date(2027, 3, 1)), first) == ["27 Apr – 03 May"]

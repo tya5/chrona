@@ -540,8 +540,9 @@ def test_default_axis_keeps_the_week_label_that_crosses_the_year_band_boundary(t
              "to": {"object": "b", "endpoint": "start"}, "lag": "0d"}]}), encoding="utf-8")
     scene, _ = _render_project(tmp_path, monkeypatch, "two-year", project)
     primitives = {item["id"]: item for item in _primitives(scene)}
-    labels = sorted(int(key.rsplit(":", 1)[1]) for key in primitives if key.startswith("axis-label:2:"))
-    label = primitives["axis-label:2:12"]["bounds"]
+    # Tier 3 is the default day/week labels tier; tier 2 above it carries the month and year.
+    labels = sorted(int(key.rsplit(":", 1)[1]) for key in primitives if key.startswith("axis-label:3:"))
+    label = primitives["axis-label:3:12"]["bounds"]
     first, second = primitives["axis-band-rect:0:0"]["bounds"], primitives["axis-band-rect:0:1"]["bounds"]
     assert label["inline"] < first["inline"] + first["inlineSize"] < label["inline"] + label["inlineSize"]
     assert label["inline"] + label["inlineSize"] <= second["inline"] + second["inlineSize"]
