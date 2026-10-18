@@ -1,0 +1,31 @@
+version: timeline/v0.7
+project:
+  id: typed-demo
+  title: Typed fields demo
+  calendar: office
+extensions:
+- packageId: team-delivery
+  path: team.yaml
+  revision: git:0123456789abcdef0123456789abcdef01234567
+calendars:
+  office:
+    working_days: [mon, tue, wed, thu, fri]
+objects:
+  design:
+    type: work
+    title: Design
+    fields: {risk: low}
+    schedule: {mode: fixed-span, start: 2026-11-02, end: 2026-11-09}
+  build:
+    type: work
+    title: Build
+    fields: {risk: high}
+    schedule: {mode: scheduled, amount: 10wd}
+  test:
+    type: work
+    title: Test
+    fields: {risk: medium}
+    schedule: {mode: scheduled, amount: 5wd}
+relations:
+- {id: design-to-build, type: dependency, from: {object: design, endpoint: end}, to: {object: build, endpoint: start}, lag: 0d}
+- {id: build-to-test, type: dependency, from: {object: build, endpoint: end}, to: {object: test, endpoint: start}, lag: 0d}

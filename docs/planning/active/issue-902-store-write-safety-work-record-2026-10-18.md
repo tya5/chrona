@@ -1,28 +1,13 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 accepted on exact main `381cf404a`: [release39105269292](https://github.com/tya5/chrona/actions/runs/39105269292)
-passed all three native OS suites, conformance, wheel/smoke, MCP and newest-Python
-public reproduction. Item3 PR1706 merged at `ea6873b5d`; final-head
-[CI39105280589](https://github.com/tya5/chrona/actions/runs/39105280589) passed
-and its official artifact12128521189 has all50 SVG/Scene pairs unchanged, with
-two intended diagnostic inventories. Item3 is accepted independently on
-review-containing exact main `5fe41db8e8512e5438e9ecbe67f5c56c1d18d152` by
-[release39108421823](https://github.com/tya5/chrona/actions/runs/39108421823).
-Item2's PR1708 merge `0bd24fd4a` had exact-main release
-[39110885313](https://github.com/tya5/chrona/actions/runs/39110885313) fail two
-Windows test portability expectations (Linux/macOS passed; Windows wheel
-skipped). The reviewed test-only repair was included in PR1712, merged at
-`3d915fbc930e59c039e04309c4a49eb0f2b5ae25`. The final candidate artifact
-12132160084 has 109 paths, no retirements, and all50 SVG/Scene pairs byte-identical
-to the prior reviewed candidate. This is candidate evidence, not release
-acceptance. On ready main `9e59e3f024171811d45b0f6b7b1f6c89f1587754`, the
-derived sync [39115421872](https://github.com/tya5/chrona/actions/runs/39115421872)
-and trusted gate [39115536520](https://github.com/tya5/chrona/actions/runs/39115536520)
-passed; all109 generated paths match official artifact12132160084. Exact-main
-three-OS full release [39115747584](https://github.com/tya5/chrona/actions/runs/39115747584)
-is still running (MCP and newest-Python reproduction have passed). Item2 remains
-unaccepted until that release succeeds. Parent902 remains open for that gate and
-parked4/814/815; board454 is unchanged.
+Status: selected items5, 3 and2 are accepted. Item5 passed review-containing
+exact-main release [39105269292](https://github.com/tya5/chrona/actions/runs/39105269292);
+item3 passed [39108421823](https://github.com/tya5/chrona/actions/runs/39108421823).
+Item2 is accepted on exact main `96bdfbb7c` by
+[release39119120797](https://github.com/tya5/chrona/actions/runs/39119120797):
+Linux pytest/conformance/probe/wheel/smoke (13,563), macOS (13,568), and Windows
+(13,560) passed, along with MCP and newest-Python public reproduction. Parent
+#902 remains open for owner-parked items4, #814 and #815; board454 is unchanged.
 
 ## Scope and literal acceptance
 
@@ -30,11 +15,11 @@ parked4/814/815; board454 is unchanged.
 item5 → item3 → item2. Items4,814 and815 remain parked; completing this lane
 does not silently close those requirements.
 
-| Item | Literal remaining requirement | Literal acceptance |
+| Item | Requirement | Literal acceptance |
 | --- | --- | --- |
-| 5, current | A multi-process write lock for one actual/snapshot Store. The authoring workspace already takes an OS file lock (`operational/authoring_commands.py`, fcntl/msvcrt), but a command line and a server writing one Store at once are not guaranteed. | Acceptance for 2, 3 and 5: each has its own stale-base, replay and no-overwrite tests, plus an MCP stdio test where it is a tool. Item 5 needs a two-process test that shows a lost update today and none after the fix. |
-| 3, next | A revert path for a write. Today a revert is a compare-and-set write of an earlier revision's content through the Store. `LocalActualStore.undo` and `redo` return `None` (`src/chrona/commands/actual_commands.py:120`). | Same per-item stale-base, replay, no-overwrite and applicable MCP stdio acceptance above. |
-| 2, after3 | `apply_authoring_command` as an MCP tool over the guided authoring workspace (`authoring-command-apply` and `workspace revision` exist on the CLI only), with the same write gate and honest annotations. | Same per-item stale-base, replay, no-overwrite and applicable MCP stdio acceptance above. |
+| 5 | A multi-process write lock for one actual/snapshot Store. The authoring workspace already takes an OS file lock (`operational/authoring_commands.py`, fcntl/msvcrt), but a command line and a server writing one Store at once are not guaranteed. | Acceptance for 2, 3 and 5: each has its own stale-base, replay and no-overwrite tests, plus an MCP stdio test where it is a tool. Item 5 needs a two-process test that shows a lost update today and none after the fix. |
+| 3 | A revert path for a write. Today a revert is a compare-and-set write of an earlier revision's content through the Store. `LocalActualStore.undo` and `redo` return `None` (`src/chrona/commands/actual_commands.py:120`). | Same per-item stale-base, replay, no-overwrite and applicable MCP stdio acceptance above. |
+| 2 | `apply_authoring_command` as an MCP tool over the guided authoring workspace (`authoring-command-apply` and `workspace revision` exist on the CLI only), with the same write gate and honest annotations. | Same per-item stale-base, replay, no-overwrite and applicable MCP stdio acceptance above. |
 
 ## Item5 design plan
 
@@ -118,8 +103,8 @@ must retain its original failure rather than claim a safe pre-write rejection.
   checks:6 passed. An initial broader run had63 pass/2 render failures because
   this WT lacked render extras; installing `.[render]` plus the Noto provider in
   its own venv resolved both. No product workaround or weakened assertion.
-- Original release39101259252 failed Windows; repair1707 merged as
-  `381cf404a` and is accepted by successful exact-main release39105269292.
+- The Windows lock correction was included in PR1707 at `381cf404a` and accepted
+  by successful exact-main release39105269292.
 
 ## Item5 literal acceptance review (release accepted)
 
@@ -128,8 +113,8 @@ including the Windows correction and required native release disposition.
 
 Implementation `ab376c78e` with L1 `a4c7fe08c`, L2 `9dcf22c16`; public WIP
 `wip/issue-902-store-write-safety`. This reviews item5 only; item3 is now
-accepted separately, while item2 and parked4/814/815 remain open. This does not
-close parent #902.
+accepted separately and item2 is accepted in its own review. Parent #902 remains
+open only for owner-parked items4/#814/#815.
 
 | Literal item5 acceptance | Disposition | Direct evidence |
 | --- | --- | --- |
@@ -206,7 +191,7 @@ not partial main releases.
 Retain all item5 concurrency tests. Inspect any generated schema/inventory
 evidence with its source and compare public artifact changes as a batch. Return
 to design on a history/schema/ownership discrepancy. Item3 acceptance is the
-literal row above; item2 and owner-parked requirements remain open.
+literal row above; only owner-parked requirements remain open.
 
 ### Item3 acceptance status
 
@@ -216,8 +201,8 @@ and two intended diagnostic inventories. PR1706 merged as `ea6873b5d`. The
 review-containing exact main `5fe41db8e8512e5438e9ecbe67f5c56c1d18d152` passed
 [release39108421823](https://github.com/tya5/chrona/actions/runs/39108421823).
 See the [item3 acceptance review](../../reviews/current/issue-902-actual-history-acceptance-review-2026-10-18.md)
-for the literal row and full gate evidence. This does not accept item2 or
-parked4/814/815.
+for the literal row and full gate evidence. Items5 and2 are accepted separately;
+parked4/#814/#815 remain outside item3.
 
 ## Item2 design plan
 
@@ -296,10 +281,11 @@ the use case. Remove the old public CAS-callback wiring, not emulate it.
 | A3 front ends/release | `app/cli.py`, `app/agent_tools.py`, import guard, registry/CLI/MCP tests and literal review | Tool-set v0.6/new tool and honest annotations; gate before missing/malformed/escaped files open; canonical/symlink scope; exact CLI/tool results, stale/replay/no-overwrite over real stdio. Run focused tests per owner, then combined tests and planned CI full three-OS/conformance/wheel/MCP; inspect official materializer deltas as a batch. No renderer policy/source change intended. |
 
 Implementation was prepared in isolation and PR1708 opened after item3 merged
-on a ready base. It passed its current-head checks and review; release disposition
-is recorded once in Status above. Do not publish partially safe main slices. Return to design before
+on a ready base. The Windows portability repair was reviewed and included in
+PR1712. Item2 passed its review-containing exact-main release recorded in Status
+above. Do not publish partially safe main slices. Return to design before
 addressing any new transaction/schema/layer contract gap. Acceptance is the
-literal item2 row above; parked4/814/815 remain open.
+literal item2 row above; parked4/#814/#815 remain open.
 
 ## Item2 implementation review
 
@@ -319,20 +305,16 @@ CLI/Store/MCP **1010 passed**; final recovery/helper migration **489 passed**;
 case/staging/process **58 passed**; import direction is 11 packages/37 inward
 edges. Publication preflight repaired diagnostic inventory findings without
 policy waivers or generated-report edits. Item2 merged as PR1708 at `0bd24fd4a`;
-the current release disposition and repair evidence are in Status above and
-the literal review. Focused evidence does not substitute for the native release
-gate. Parked4/814/815 remain open.
+the reviewed Windows test-only repair landed in PR1712. Exact-main release
+39119120797 passed all three OS gates, MCP and newest-Python public reproduction.
+Parked4/#814/#815 remain open.
 
 ### Publication versus acceptance (reviewed scheduling amendment)
 
-The separate item3/item2 PRs, current-ready-base checks, literal reviews and
-5→3→2 publication order remain required. Item5's Windows foundation was
-repaired and release-verified first. A shared exact-main full run containing
-both item3 and item2 source/reviews is permitted but not required: each item may
-be accepted independently when its own review-containing exact main passes the
-full three-OS pytest/conformance/wheel/MCP/public-reproduction gate. Item3 met
-that condition in release39108421823; item2 remains pending as recorded in Status.
-Neither merge alone is acceptance. Preserve all
-inverse/legacy/replay and authoring tests in the applicable full suite. Any
-newly red predecessor becomes the priority; never use a narrower run as proof.
-This scheduling disposition changes no contract, test scope or release gate.
+The separate item3/item2 PRs, ready-base checks, literal reviews and 5→3→2
+publication order were preserved. Each selected item has its own successful
+review-containing exact-main full release: item5 39105269292, item3 39108421823,
+and item2 39119120797. These releases passed the required three-OS pytest/
+conformance/wheel gates and applicable MCP/newest-Python checks. No acceptance
+is inferred from a merge or focused test alone. Items4/#814/#815 remain
+owner-parked and outside this lane.

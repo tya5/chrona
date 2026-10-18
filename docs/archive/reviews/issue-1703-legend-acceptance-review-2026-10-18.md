@@ -2,12 +2,12 @@
 
 # Acceptance Review — Realized Legend Keys
 
-Implementation is merged in PR1712 at `3d915fbc9`; ready main is
-`9e59e3f024171811d45b0f6b7b1f6c89f1587754`. Final PR CI39114476434 passed;
-official artifact12132160084 contains109 paths with no retirements, and its
-50 SVG/Scene pairs match the reviewed candidate. The exact-main three-OS full
-release [39115747584](https://github.com/tya5/chrona/actions/runs/39115747584)
-is pending; this review does not claim release acceptance or issue closure.
+Implementation is merged in PR1712 at `3d915fbc9`; exact-main
+`96bdfbb7cc2869782905dbc7626ddfdc03f2ef5f` passed native three-OS full release
+[39119120797](https://github.com/tya5/chrona/actions/runs/39119120797): Linux
+13,563, macOS 13,568, and Windows 13,560 tests passed, as did conformance,
+platform probes, wheel build/smoke, newest-Python public reproduction, and the
+MCP floor. Earlier pending/failed release notes are superseded by this run.
 
 ## Literal issue acceptance
 
@@ -26,13 +26,14 @@ is pending; this review does not claim release acceptance or issue closure.
 
 Design correction `6888d036f` and whole-architecture review preceded code. The
 synthetic native tests verify faithful completed paint, distinct swatches for
-distinct paint, and a pointed warning for colliding meanings. The public
-count-table README is the single source for trial-6 counts and renders; this
-review does not duplicate them. All three literal criteria have functional
-evidence; exact-main full release remains the sole pending acceptance gate.
+distinct paint, and a pointed warning for colliding meanings. Trial-6 counts,
+Scenes, and inspected PNGs are published in the evidence bundle above. All
+three literal criteria and the exact-main release gate are met; issue #1703 is
+closed.
 
 Boundary review: Layout owns completed key geometry, final filtering and
 ambiguity diagnostics. Canonical local geometry and the shared paint resolver
 match Scene emission under Spec28 without invented paint or fallback behavior;
-Scene/adapters do not acquire placement responsibilities. Earlier CI failure
-dispositions remain in the [published pre-release review](https://github.com/tya5/chrona/blob/9e59e3f024171811d45b0f6b7b1f6c89f1587754/docs/reviews/current/issue-1703-legend-acceptance-review-2026-10-18.md).
+Scene/adapters do not acquire placement responsibilities. PR1713 repaired only
+the retired-fixture test path; its official 109-file artifact had zero payload
+changes. The subsequent exact-main run above passed all release gates.

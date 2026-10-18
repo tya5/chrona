@@ -88,7 +88,8 @@ def test_the_table_names_the_key_row_in_its_first_column(tmp_path):
 def test_it_works_with_any_grouping(tmp_path, grouping):
     rendered = _render(tmp_path, {**NEAR, **FAR}, grouping=grouping)
     assert set(_lane_blocks(rendered)) == {"p1", "p2", "p3"}
-    texts = {getattr(item, "text", None) for item in rendered.surface.primitives}
+    texts = {getattr(item, "text", None) for item in rendered.surface.primitives
+             if getattr(item, "purpose", None) != "table-cell"}  # an Owner cell reads the entity title too (#1683)
     assert (grouping is None) == ("Team a" not in texts)  # headers keep their place below the key row
 
 

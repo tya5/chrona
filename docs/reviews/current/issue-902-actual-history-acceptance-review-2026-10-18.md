@@ -2,7 +2,8 @@
 
 # Issue 902 — Actual history (item 3)
 
-This accepts neither item2 nor the parked item4/#814/#815; the parent stays open.
+This review accepts item3 only; items5 and2 are accepted separately. Parent
+#902 remains open for owner-parked items4/#814/#815.
 
 ## Literal issue acceptance
 
@@ -35,13 +36,9 @@ intended diagnostic inventories changed. Item3 merged as PR1706 at
 `5fe41db8e8512e5438e9ecbe67f5c56c1d18d152` passed
 [full release39108421823](https://github.com/tya5/chrona/actions/runs/39108421823):
 all three native OS pytest/conformance/wheel gates, MCP floor and newest-Python
-public-materializer reproduction. **Item3 is accepted independently.** This
-does not accept item2 or parked item4/#814/#815; parent #902 remains open.
+public-materializer reproduction. **Item3 is accepted independently.** Items5
+and2 are accepted in their own reviews; parked item4/#814/#815 remain outside
+this review, and parent #902 remains open for those owner-parked requirements.
 
-The initial PR CI findings concerning diagnostic classifications and schema
-migration expectations were corrected before final CI; supported v0.3 dispatch
-and the unchanged baseline-invalid population remain covered. The final artifact,
-merge and exact-main release above establish item3 acceptance. Item5 and item3
-are accepted independently; item2 is tracked in its own review and remains
-pending its exact-main full-release result. Parked item4/#814/#815 remain outside
-this review, and parent #902 remains open.
+Supported v0.3 dispatch and the unchanged baseline-invalid population remain
+covered.

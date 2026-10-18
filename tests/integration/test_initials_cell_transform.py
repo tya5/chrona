@@ -74,6 +74,7 @@ def _owner_cells(tmp_path, *, transform=None, source=None, fmt="text", affixes=N
     objects = {key: sr.span(key, date(2026, 2, 2), 5, owner=owner or "-", title=key.upper()) for key, owner in OWNERS.items()}
     objects["c"]["fields"]["owner"] = ""
     source_doc = sr.project(objects)
+    source_doc["entities"] = {}  # owner values are person names here, not entity ids (#1683)
     parts = sr.bundle("executive-light")
     column = {"id": "Owner", "source": source or {"field": "owner"}, "format": fmt, "missing": "em-dash", "align": "start",
               "width": "content", "headerOrientation": "horizontal"}

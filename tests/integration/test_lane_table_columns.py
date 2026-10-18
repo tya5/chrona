@@ -24,7 +24,9 @@ def _render(tmp_path, columns, *, label="lane", count=False):
     rows["laneTable"] = {"label": label, "count": count}
     if columns is not None:
         rows["laneTable"]["columns"] = deepcopy(columns)
-    return sr.render(tmp_path, sr.project(objects), presentation=parts)
+    source = sr.project(objects)
+    source["entities"] = {}  # the owner values are person names here, not entity ids (#1683 shows an entity's title)
+    return sr.render(tmp_path, source, presentation=parts)
 
 
 def _cells(review):
@@ -77,3 +79,22 @@ def test_misdeclared_columns_are_refused(tmp_path, columns, code):
         _render(tmp_path, columns)
 
     assert code in str(getattr(caught.value, "code", "")) + str(caught.value)
+
+
+def test_a_field_column_naming_a_project_entity_shows_the_entity_title(tmp_path):
+    """#1683: `backend` is an entity id; the cell reads its title. A value that is no entity is shown as written."""
+    objects = {"a": sr.span("a", date(2026, 2, 2), 5, owner="backend", title="Task A"),
+               "b": sr.span("b", date(2026, 3, 2), 5, owner="Priya Raman", title="Task B")}
+    source = sr.project(objects)
+    source["entities"] = {"backend": {"type": "team", "title": "Backend Platform"}}
+    parts = sr.bundle("executive-light")
+    parts["view"] = sr.lane_view(parts["view"])
+    parts["view"]["body"]["rows"]["laneTable"] = {"label": "lane", "count": False, "columns": [
+        {"id": "Task", "source": "label"},
+        {"id": "Owner", "source": {"fieldRole": "responsible"}},
+        {"id": "Short", "source": {"field": "owner"}, "transform": "initials"}]}
+
+    table = _cells(sr.render(tmp_path, source, presentation=parts))
+
+    assert sorted(table["Owner"].values()) == ["Backend Platform", "Priya Raman"]
+    assert sorted(table["Short"].values()) == ["BP", "PR"]

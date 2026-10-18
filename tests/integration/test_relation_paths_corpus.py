@@ -10,6 +10,12 @@ from pathlib import Path
 
 import pytest
 
+from chrona.presentation.model.closure import resolve_render_context
+from chrona.presentation.scene.serialization import serialize_scene
+from chrona.scheduling.scheduler import ReferenceScheduler
+from chrona.storage.revision_store import LocalSnapshotReader
+from chrona.usecases.materialize import copy_context_closure
+from chrona.usecases.render_review import RenderRequest, render_review
 from tools.materialize_example import materialize
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -29,9 +35,23 @@ def _relation_paths(node) -> list[dict]:
 @pytest.mark.corpus
 @pytest.mark.parametrize(("example", "slide", "relations"), GHOST_SLIDES)
 def test_a_slide_with_ghosts_draws_each_relation_once_between_plan_marks(tmp_path, example, slide, relations):
-    inputs = ROOT / ("tests/fixtures" if example == "controller-z" else "examples")
-    materialize(inputs / example / "manifest.yaml", slide, tmp_path / slide, write=False)
-    paths = _relation_paths(json.loads((tmp_path / slide / "review.scene.json").read_text(encoding="utf-8")))
+    if example == "controller-z":
+        fixture = ROOT / "tests/fixtures/controller-z"
+        snapshot = tmp_path / "snapshot"
+        reference, _ = copy_context_closure(
+            fixture, fixture / "contexts/baseline-ghosts.yaml", snapshot,
+        )
+        # Retired, unpinned fixture output is not a current byte oracle.
+        # Render its unchanged Context and inspect the completed relation paths.
+        closure = resolve_render_context(reference, LocalSnapshotReader(
+            snapshot, "controller-z-example", require_content_identity=False,
+        ))
+        rendered = render_review(RenderRequest(closure, snapshot, ReferenceScheduler()))
+        scene = json.loads(serialize_scene(rendered.scene))
+    else:
+        materialize(ROOT / "examples" / example / "manifest.yaml", slide, tmp_path / slide, write=False)
+        scene = json.loads((tmp_path / slide / "review.scene.json").read_text(encoding="utf-8"))
+    paths = _relation_paths(scene)
 
     assert len(paths) == relations
     assert max(Counter(path["sourceRef"] for path in paths).values()) == 1

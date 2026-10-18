@@ -13,7 +13,7 @@ from chrona.presentation.model.hierarchy_names import close_member_names, member
 from chrona.presentation.model.projection import ObservationState, ReviewProjection, display_finish_delta
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
-    AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, SurfaceLegendEntry, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, initials, table_value,
+    AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, SurfaceLegendEntry, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, entity_title_or_value, initials, table_value,
 )
 from chrona.presentation.table_presentation import affix_state
 from chrona.presentation.review.detail import normalize_v05_review_detail_profile
@@ -325,7 +325,8 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
                 value: Any = row_number
             else:
                 founder = next((item for item in row.items if lane.member_item_ids and item.item_id == lane.member_item_ids[0]), None)
-                value = founder.field_bindings.read(founder.fields, column.source) if founder is not None else None
+                value = (entity_title_or_value(founder.field_bindings.read(founder.fields, column.source), project)
+                         if founder is not None else None)
             cells.append(TableCellContent(row.lane_id, column.id,
                                           display_value(value, column.missing, "text", transform=column.transform)
                                           + (column.suffix or ""),
