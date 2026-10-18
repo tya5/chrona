@@ -85,9 +85,11 @@ def collect_render_warnings(
     for item in glyph_warnings:
         records.append(_record("W_FONT_GLYPH_SUBSTITUTED",
                                {"requestedFamily": item.requested_family, "fallbackFamily": item.fallback_family,
-                                "weight": item.weight, "codepoint": item.codepoint, "text": item.text},
+                                "weight": item.weight, "codepoint": item.codepoint, "text": item.text,
+                                "script": item.script, "count": item.count},
                                requestedFamily=item.requested_family, fallbackFamily=item.fallback_family,
                                weight=item.weight, codepoint=f"U+{item.codepoint:04X}", text=item.text,
+                               script=item.script, count=item.count,
                                **({"drawn": item.drawn} if item.drawn is not None else {})))
     for item in fit_warnings:
         records.append(_with_subjects(_record(item.code, {"placementId": item.placement_id, "sourceRef": item.source_ref,

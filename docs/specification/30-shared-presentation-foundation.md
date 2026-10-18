@@ -109,8 +109,13 @@ actual weight, asset identity and measured advance), composing with small caps
 and text transforms. Scene projects these facts; adapters serialize the supplied
 faces without discovery or measurement. PNG and PDF draw from the same closed
 files; PDF embeds each measured run face, not the Latin parent face for CJK text.
-The substitution is `I_FONT_GLYPH_SUBSTITUTED`, with requested/used families,
-weight, codepoint and source text, not a warning. An absent optional provider
+The substitution is `I_FONT_GLYPH_SUBSTITUTED`, not a warning. It is one entry per
+(requested family, used family, weight, script), never per glyph (#1724): the payload
+carries the families, weight, `script` (a closed Unicode-block name: Hiragana,
+Katakana, CJK Unified Ideographs, CJK Symbols and Punctuation, Halfwidth and
+Fullwidth Forms, Hangul, or `other`), `count` (distinct codepoints) and the first
+sample (`codepoint` and source `text`, lowest codepoint). The warning form
+`W_FONT_GLYPH_SUBSTITUTED` groups the same way. An absent optional provider
 permits OS fallback; malformed available resources still fail validation.
 Viewer alternatives do not change Layout measurement, geometry or glyph coverage.
 Output that uses an installed face depends on the fonts installed where it is rendered.
