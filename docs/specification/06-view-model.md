@@ -227,7 +227,10 @@ For an explicitly selected path name, omit only ancestor segments represented
 by an enclosing, actually displayed header/row/lane for that same source
 object. Project-root hierarchy fallback can cover its ancestor; field/entity
 groups, object-type groups and ungrouped rows do not cover ancestors by text
-or coincident identifier. Omitted/hidden headers cover nothing. Keep the leaf.
+or coincident identifier. Omitted/hidden headers cover nothing. A vertical group tag that gave
+way for want of room (Specification 07, #1726) is not displayed: Layout then sets the path column
+cells of that group's rows with the full path, covered ancestor included; groups whose tags are
+drawn keep the covered path. Keep the leaf.
 Explicit hierarchy depth, folding, selection and stable occurrence identities
 retain their existing meanings. Depth-limited selection is not overridden to
 invent missing rows. Selected points below a finite hierarchy cutoff remain
