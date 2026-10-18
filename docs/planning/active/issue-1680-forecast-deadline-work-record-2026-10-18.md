@@ -2,10 +2,9 @@
 
 Status: I1/I2 implemented and reviewed at `42e25bd10`; I3 local acceptance
 evidence is complete. PR/full CI and exact-main release remain pending.
-I2 may run on the published, reviewer-approved S2 source while its test-only CI
-repair runs. The single implementation PR still waits for Issue419 S2 to merge.
-Published execution baseline: main `e69d4541a2e6829d568a2f5a5ab077aadda499bb`;
-Core and its deadline tests are byte-identical to the original planning base `cd3622754`.
+S2 is merged as `5bfa5356b`; publication base is trusted generated main
+`d9a10d4ea3484096d5fdedc09dde3d9d0b016589`. Normal squash/bot integration
+preserves the reviewed implementation tree; the generated reports are bot-owned.
 [Issue](https://github.com/tya5/chrona/issues/1680);
 [preceding Style work](issue-419-semantic-resource-work-record-2026-10-17.md).
 Keep this record current; Git retains superseded decisions.
@@ -78,15 +77,10 @@ no compatibility switch, source-plan mutation or project-specific rule.
 ## Implementation plan and publication
 
 Design/architecture publication: `293d0cc52`, before this finalized plan.
-Create this worktree's Python venv (`.[dev,render]` and Noto CJK). Core-only I1
-may be implemented/tested on the published S1 base while S2 CI/review runs:
-it imports no View/Layout/Scene owner and S2 changes no Core file. This is
-isolated WIP, not another concurrent code PR. S2's product contract is now
-reviewer-approved and its remaining CI repair changes test inputs only. Reconcile
-I2 with that published S2 source and implement in parallel; before opening the
-single PR, reconcile again with merged S2 and its trusted generated main. This
-changes execution order only, not the reviewed design or publication dependency.
-No schema/resource migration.
+The worktree has its own Python venv (`.[dev,render]` and Noto CJK). I1/I2/I3
+are integrated as one atomic implementation PR after S2, on its trusted main.
+The published execution amendment permitted isolated WIP while S2 CI ran;
+no second concurrent PR was opened. No schema/resource migration.
 
 | Commit slice (one atomic implementation PR) | Files and acceptance evidence |
 | --- | --- |
