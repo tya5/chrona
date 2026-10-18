@@ -317,3 +317,17 @@ def test_a_forbidden_constant_names_the_member_pointer_and_value_in_words():
 
     assert violation.pointer == "/grouping/by" and violation.rule == "not"
     assert violation.message == "'by' (/grouping/by) cannot be 'hierarchy' in this form; choose another value or change the mode"
+
+
+def test_an_extension_path_with_a_parent_directory_says_so_and_names_the_allowed_form():
+    """#1756 row 5: `path: ../../profile.yaml` read 'expected one permitted form' and nothing more."""
+    project = {
+        "version": "timeline/v0.7", "project": {"id": "p", "title": "P", "calendar": "c"},
+        "extensions": [{"packageId": "team", "path": "../../profile.yaml", "revision": "git:" + "0" * 40}],
+        "calendars": {"c": {"working_days": ["mon"]}}, "objects": {},
+    }
+    messages = [row.message for row in validate_project(project) if row.path == "/extensions/0"]
+    assert messages, "the extension entry is refused"
+    assert (
+        "'path' (/extensions/0/path): a parent directory ('..') is not permitted; "
+        "write a relative path below the file's own directory, such as 'folder/file.yaml'") in messages[0]
