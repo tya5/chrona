@@ -8,7 +8,7 @@ import json
 from typing import Any, Mapping
 
 from chrona.presentation.model.actual_variance_paint import select_actual_variance_paints
-from chrona.presentation.model.date_basis import ItemDateBasis, date_range_display
+from chrona.presentation.model.date_basis import DisplayDateRange, ItemDateBasis, date_range_display
 from chrona.presentation.model.hierarchy_names import close_member_names, member_name_key, path_name_selected
 from chrona.presentation.model.projection import ObservationState, ReviewProjection, display_finish_delta
 from chrona.core.relation_identity import relation_identity
@@ -94,9 +94,10 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
                      and column.source.get("facet") == "planned"}
     }
     as_of = date.fromisoformat(str(actual_body["asOf"])) if isinstance(actual_body.get("asOf"), str) else None
-    # A date drops its year only while the whole visible window stays inside one calendar year (#1724).
-    window = getattr(projection, "window", None)
-    years_visible = bool(window) and window[0].year != (window[1] - timedelta(days=1)).year
+    # A date drops its year only while every date displayed in the table's dateRange cells stays inside one
+    # calendar year; the padded axis window alone never adds it (#1724). Found by a first pass over the cells.
+    displayed_years: set[int] = set()
+    years_visible = False
     def cell_parts(item: Any, column: Any, row_index: int, container_id: str = "") -> tuple[str, str, str]:
         """The cell's (prefix, core, suffix): the affix of its state wraps the formatted text (#588)."""
         value = table_value(item, dict(project), column.source, row_index)
@@ -112,6 +113,7 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
             value = date_range_display(
                 value, basis=item.date_basis if planned else ItemDateBasis(),
                 end_display=column.end_display)
+            displayed_years.update(_displayed_years(value, column.end_display))
         missing = column.missing
         if value is None and column.missing_by:
             # The text of an absent value follows the item's observation state when the column declares it (#991).
@@ -150,6 +152,13 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
             return "missingActualCell"
         return "tableCell"
     if projection.has_rows:
+        for row_index, row in enumerate(projection.rows, 1):
+            if not row.key_row:
+                subject = next(item for item in row.items if item.item_id == row.table_subject_id)
+                for column in active_columns:
+                    if column.format == "dateRange":
+                        cell_parts(subject, column, row_index, row.row_id)
+        years_visible = len(displayed_years) > 1
         def row_cell(row: Any, column: Any, row_index: int) -> TableCellContent:
             if row.key_row:
                 # The key row names itself in the first column and leaves the others empty (#1501).
@@ -178,6 +187,11 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         row_levels = tuple(TableRowLevel((row.row_id, row.table_subject_id), bool(row.group_id), row.depth)
                            for row in projection.rows)
     else:
+        for row_index, item in enumerate(projection.items, 1):
+            for column in active_columns:
+                if column.format == "dateRange":
+                    cell_parts(item, column, row_index)
+        years_visible = len(displayed_years) > 1
         cells = tuple(TableCellContent(item.object_id, column.id, cell(item, column, row_index), cell_semantic(item, column), cell_typography_role(column), *cell_affixes(item, column, row_index), required=_is_forecast_delta(item, column.source),
                                        style_key=_table_style_key(item, item.object_id, column.id, cell_semantic(item, column)))
                       for row_index, item in enumerate(projection.items, 1) for column in active_columns)
@@ -186,6 +200,19 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         row_levels = tuple(TableRowLevel((item.object_id,), bool(item.group_id)) for item in projection.items)
     return TableContent(columns, cells, table_cell_objects, view.hierarchy_column, row_levels,
                         indent_under_headers=_indents_under_headers(view), member_names=member_names)
+
+
+def _displayed_years(value: Any, end_display: str) -> set[int]:
+    """Calendar years of the dates a dateRange cell displays (an inclusive end shows the day before the stored end)."""
+    if isinstance(value, DisplayDateRange):
+        start, end = value.start, value.end
+    elif isinstance(value, dict):
+        start, end = value.get("start", value.get("at")), value.get("end", value.get("finish"))
+    else:
+        return set()
+    if isinstance(start, date) and isinstance(end, date) and end_display == "inclusive" and start < end:
+        end -= timedelta(days=1)
+    return {point.year for point in (start, end) if isinstance(point, date)}
 
 
 def _table_subjects(projection: ReviewProjection) -> tuple[Any, ...]:
