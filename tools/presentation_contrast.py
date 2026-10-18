@@ -82,7 +82,15 @@ def evaluate_committed_scenes(paths: Iterable[Path], *, root: Path = ROOT) -> tu
             document = json.loads(path.read_text(encoding="utf-8"))
             theme = scene_theme_id(document)
             held = theme in opted_in
-            findings = evaluate_scene_contrast(document, policy=None if held else DEFAULT_POLICY)
+            findings = evaluate_scene_contrast(
+                document,
+                policy=None if held else DEFAULT_POLICY,
+                # Encoded data fills are an observer warning in the corpus report.
+                # A repository Theme opt-in still holds ordinary shape/text
+                # contrast to error; it does not silently opt encoded domains
+                # into a guarantee that runtime Theme policy does not provide.
+                encoded_fill_policy=DEFAULT_POLICY,
+            )
         except (OSError, ValueError, SceneContrastPolicyError) as error:
             records.append({"scene": relative, "theme": theme, "optedIn": False, "finding": {
                 "code": "E_SCENE_CONTRAST_DOCUMENT", "severity": "error", "scenePath": "/",

@@ -226,6 +226,37 @@ def test_the_opt_in_registry_is_what_holds_a_theme_to_the_floors(tmp_path, monke
     assert tool.main(("--root", str(tmp_path), "--output", str(tmp_path / "report.md"))) == 0
 
 
+def test_opted_in_theme_keeps_shape_errors_but_encoded_fill_is_reported_as_warning(tmp_path, monkeypatch):
+    encoded = {
+        "id": "encoded", "kind": "Rect", "visualRole": "planned", "purpose": "planned",
+        "paintOrder": 100,
+        "bounds": {"inline": 10, "block": 5, "inlineSize": 30, "blockSize": 10},
+        "paint": {"fill": "#2C2138", "opacity": 1}, "sourceRef": "task-a", "sourceKind": "project",
+        "encoding": {"channel": "fill", "scaleId": "status-colors", "field": "status", "value": "gate",
+                      "sources": [{"kind": "view", "id": "view-a", "sourceRef": "/body/colorEncoding"}]},
+    }
+    host = {"id": "dark-host", "kind": "Rect", "visualRole": "unclassified", "purpose": "panel",
+            "paintOrder": 10, "bounds": {"inline": 0, "block": 0, "inlineSize": 60, "blockSize": 40},
+            "paint": {"fill": "#16213A", "opacity": 1}}
+    tool = _corpus(tmp_path, monkeypatch, host, encoded)
+    path = tmp_path / "examples/demo/generated/slide.scene.json"
+    document = json.loads(path.read_text(encoding="utf-8"))
+    document["version"] = "chrona/scene/v0.7"
+    document["provenance"]["resources"].append({"kind": "view", "id": "view-a"})
+    path.write_text(json.dumps(document), encoding="utf-8")
+
+    report = tool.report_document(tool.evaluate_committed_scenes((path,), root=tmp_path))
+    encoded_finding = next(item["finding"] for item in report["findings"]
+                           if item["finding"].get("encoding") is not None)
+    shape_finding = next(item["finding"] for item in report["findings"]
+                         if item["finding"]["code"] == "E_SCENE_MARK_CONTRAST")
+
+    assert encoded_finding["code"] == "W_SCENE_ENCODING_CONTRAST"
+    assert encoded_finding["severity"] == "warning"
+    assert shape_finding["severity"] == "error"
+    assert report["errorCount"] == 1
+
+
 def test_a_scene_without_a_theme_in_its_provenance_is_not_opted_in(tmp_path, monkeypatch):
     tool = _corpus(tmp_path, monkeypatch, _ILLEGIBLE_MARK)
     path = tmp_path / "examples/demo/generated/slide.scene.json"

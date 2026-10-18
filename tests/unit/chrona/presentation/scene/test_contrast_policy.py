@@ -336,6 +336,43 @@ def test_encoded_fill_obeys_mark_policy_none_error_and_accepted_exception():
     assert accepted.encoding.as_mapping() == _encoding_witness()
 
 
+def test_encoded_fill_policy_override_is_scoped_to_encoded_findings():
+    scene = _encoded_scene(_dark_host(), _encoded_mark())
+    findings = evaluate_scene_contrast(
+        scene, policy={"mark": "error"},
+        encoded_fill_policy={"mark": "warning", "unsupportedGround": "warning"})
+
+    encoded = next(item for item in findings if item.encoding is not None)
+    ordinary = next(item for item in findings if item.code == "E_SCENE_MARK_CONTRAST")
+    assert encoded.code == "W_SCENE_ENCODING_CONTRAST"
+    assert encoded.severity == "warning"
+    assert ordinary.severity == "info"
+    assert ordinary.paint_channel == "stroke"
+
+
+def test_encoded_fill_policy_override_applies_to_encoded_unsupported_ground_only():
+    top = _primitive("unreadable", "unclassified", "panel", "#101010", order=90,
+                     bounds={"inline": 0, "block": 0, "inlineSize": 60, "blockSize": 40})
+    top["paint"]["gradient"] = {"invalid": True}
+    scene = _encoded_scene(_dark_host(), top, _encoded_mark())
+    findings = evaluate_scene_contrast(
+        scene, policy={"mark": "error", "unsupportedGround": "error"},
+        encoded_fill_policy={"mark": "warning", "unsupportedGround": "warning"})
+
+    encoded = next(item for item in findings if item.encoding is not None)
+    ordinary = next(item for item in findings
+                    if item.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED" and item.encoding is None)
+    assert encoded.code == "W_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+    assert encoded.severity == "warning"
+    assert ordinary.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+    assert ordinary.severity == "error"
+
+    inherited = evaluate_scene_contrast(scene, policy={"mark": "none", "unsupportedGround": "error"})
+    inherited_encoded = next(item for item in inherited if item.encoding is not None)
+    assert inherited_encoded.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+    assert inherited_encoded.severity == "error"
+
+
 def test_encoded_fill_uses_completed_opacity_and_reports_unsupported_ground():
     translucent = _encoded_mark()
     translucent["paint"]["opacity"] = 0.5

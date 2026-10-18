@@ -185,7 +185,9 @@ class SceneContrastFinding:
 
 def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity: str = "warning",
                             policy: Mapping[str, str] | None = None,
-                            exceptions: Sequence[Mapping[str, Any]] = ()) -> tuple[SceneContrastFinding, ...]:
+                            exceptions: Sequence[Mapping[str, Any]] = (),
+                            encoded_fill_policy: Mapping[str, str] | None = None,
+                            ) -> tuple[SceneContrastFinding, ...]:
     """Evaluate every finite classified role from serialized completed facts.
 
     `policy` maps each class (`mark`, `stateText`, `groundText`, `decoration`, `unsupportedGround`) to `none`,
@@ -194,10 +196,14 @@ def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity:
     `exceptions` are a Theme's validated `contrastPolicy.exceptions` (#1134): a floor `error` that an entry matches
     and that measures at or above the entry's `minimum` becomes `W_SCENE_CONTRAST_ACCEPTED`; an entry that matched
     nothing is reported as `W_SCENE_CONTRAST_EXCEPTION_UNUSED`. No entries leaves every finding untouched.
+    `encoded_fill_policy`, when supplied, overrides policy only for encoded-fill and its unsupported-ground findings;
+    the repository corpus report uses it because that observer has no Theme policy to read.
     """
     if decoration_severity not in DECORATION_SEVERITIES:
         raise ValueError(f"unsupported decoration severity {decoration_severity!r}")
     severities = _resolve_severities(policy, decoration_severity)
+    encoded_severities = (_resolve_severities(encoded_fill_policy, decoration_severity)
+                          if encoded_fill_policy is not None else severities)
     version = document.get("version")
     _require(version == "chrona/scene/v0.6" or version == "chrona/scene/v0.7",
              "unsupported scene version")
@@ -258,7 +264,7 @@ def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity:
                     findings.extend(_encoded_fill_findings(
                         scene_path, primitive, canvas=ground, primitives=external, index=index,
                         catalog_patterns=version == "chrona/scene/v0.7", cones=cones,
-                        severities=severities, witness=witness,
+                        severities=encoded_severities, witness=witness,
                     ))
             if index in sibling_indices:
                 continue
