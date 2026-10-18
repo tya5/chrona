@@ -72,7 +72,7 @@ body:
   markers:
   - kind: asOf
     source: actual
-    label: TODAY
+    label: {wording: marker.today}
   shading:
     nonWorking: true
     exceptions: true
