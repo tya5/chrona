@@ -232,6 +232,33 @@ def _text_occurrences(projection: ReviewProjection, content: SurfaceContentInput
     return tuple(occurrences)
 
 
+def _selected_mark_facets(projection, content, source_items, *, gate_declared):
+    """One source-facet selection for Style facts and semantic key candidates."""
+    for source in source_items:
+        emit_missing_actual = (
+            source.occurrence_kind != "folded"
+            and (source.occurrence_kind != "lane-source"
+                 or not projection.comparison_facets
+                 or "missingActual" in projection.comparison_facets)
+        )
+        selection = select_item_mark_facets(
+            item=source.item, source_kind=source.source_kind, as_of=content.as_of,
+            emit_missing_actual=emit_missing_actual, emit_diagnostics=False,
+        )
+        for facet in selection.facets:
+            yield source, canonical_mark_semantic(
+                facet.semantic_id, facet.shape, gate_declared=gate_declared), facet.shape
+
+
+def surface_comparison_mark_semantics(projection: ReviewProjection, content: SurfaceContentInput,
+                                      *, gate_declared: bool = False) -> frozenset[str]:
+    """Potential comparison meanings without inspecting unrelated primary facets."""
+    sources = tuple(source for source in _source_items(projection)
+                    if source.source_kind in {"snapshot", "scenario"})
+    return frozenset(semantic for _source, semantic, _shape in _selected_mark_facets(
+        projection, content, sources, gate_declared=gate_declared))
+
+
 def collect_surface_style_facts(
     projection: ReviewProjection,
     content: SurfaceContentInput,
@@ -254,25 +281,9 @@ def collect_surface_style_facts(
             # Leave diagnosis at the common evaluator's duplicate-key gate.
             facts.append(occurrence)
 
-    for source in source_items:
-        item = source.item
-        emit_missing_actual = (
-            source.occurrence_kind != "folded"
-            and (source.occurrence_kind != "lane-source"
-                 or not projection.comparison_facets
-                 or "missingActual" in projection.comparison_facets)
-        )
-        selection = select_item_mark_facets(
-            item=item,
-            source_kind=source.source_kind,
-            as_of=content.as_of,
-            emit_missing_actual=emit_missing_actual,
-            emit_diagnostics=False,
-        )
-        for facet in selection.facets:
-            semantic_id = canonical_mark_semantic(
-                facet.semantic_id, facet.shape, gate_declared=gate_declared)
-            add(_occurrence(source.key(semantic_id), item, mark_shape=facet.shape))
+    for source, semantic_id, shape in _selected_mark_facets(
+            projection, content, source_items, gate_declared=gate_declared):
+        add(_occurrence(source.key(semantic_id), source.item, mark_shape=shape))
 
     for occurrence in _cell_occurrences(projection, content):
         add(occurrence)

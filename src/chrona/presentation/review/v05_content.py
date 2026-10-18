@@ -35,7 +35,7 @@ from chrona.presentation.style import (
     StyleEncodingOutcome, StyleLegendScope, StyleMatch, StyleRule,
     canonical_style_selector,
 )
-from chrona.presentation.review.style_occurrences import collect_surface_style_facts
+from chrona.presentation.review.style_occurrences import collect_surface_style_facts, surface_comparison_mark_semantics
 from chrona.presentation.model.style_fills import complete_style_fills
 from chrona.presentation.model.style_mark_paint import validate_style_mark_paint
 from chrona.presentation.model.theme_tokens import ThemeTokenView
@@ -401,6 +401,21 @@ def _style_match_index(intents: OccurrenceStyleIndex,
     return StyleMatchIndex(tuple(matches))
 
 
+def _default_legend_entries(entries: tuple[SurfaceLegendEntry, ...],
+                            detail: ReviewDetailInput | None, *,
+                            potential_roles: frozenset[str],
+                            wording: Mapping[str, str]) -> tuple[SurfaceLegendEntry, ...]:
+    """Reserve missing comparison keys; completed Layout still owns admission."""
+    opted_out = frozenset(detail.unkeyed_legend_roles if detail is not None else ())
+    declared = {entry.role for entry in entries}
+    defaults = tuple(SurfaceLegendEntry(role, wording.get(role, label))
+                     for role, label in (("snapshot", "Baseline"), ("deadlineMark", "Deadline"))
+                     if role in potential_roles and role not in declared and role not in opted_out)
+    insertion = next((index for index, entry in enumerate(entries)
+                      if entry.role.startswith("scale:")), len(entries))
+    return (*entries[:insertion], *defaults, *entries[insertion:])
+
+
 def _style_legend_entries(
     rules: tuple[StyleRule, ...], intents: OccurrenceStyleIndex,
     occurrences: tuple[Any, ...], style_fills: Any,
@@ -687,6 +702,14 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     needs_actual_candidates = any(entry.role == "actual" for entry in content.legend_entries)
     facts = (collect_surface_style_facts(projection, content, gate_declared=gate_declared)
              if style_rules or encoding_rules or needs_actual_candidates else None)
+    potential_roles = (frozenset(item.key.semantic_id for item in facts.occurrences
+                                if item.primitive_family == "mark") if facts is not None
+                       else surface_comparison_mark_semantics(projection, content, gate_declared=gate_declared))
+    if projection.deadlines:
+        potential_roles |= {"deadlineMark"}
+    content = replace(content, legend_entries=_default_legend_entries(
+        content.legend_entries, detail, potential_roles=potential_roles,
+        wording=legend_wording if isinstance(legend_wording, Mapping) else {}))
     if style_rules or encoding_rules:
         assert facts is not None
         intents = OccurrenceStyleIndex(evaluate_style_rules(
