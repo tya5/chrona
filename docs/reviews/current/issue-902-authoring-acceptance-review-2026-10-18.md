@@ -25,14 +25,14 @@ receipt verification and the gate before reads. No renderer policy changes.
 
 ## Programme-level criteria (optional)
 
-**Release not accepted.** This is prepared WIP, not a main/PR release claim.
-The work record contains focused1010/489/58/70 batches (overlap, not additive).
-Repaired-main operational/recovery/agent/transaction/lock/stdio batch:95 passed;
-dedicated real authoring stdio:2 passed, using
-`.venv/bin/python -m pytest -q tests/mcp/test_authoring_stdio.py --tb=short`.
+**Release not accepted.** Prepared integration `14ccd0f15` follows ready
+main `5fe41db8e` (item3 merged); the combined operational/recovery/agent/
+transaction/lock/MCP-stdio/authoring-stdio batch passes97. Import-direction and
+literal-review checks pass. The work record retains earlier focused batches
+(overlapping, not additive).
 Current-head PR checks, official artifact comparison and successful
 exact-main full three-OS release containing this review remain required.
-Item5 must first have repaired native/full acceptance; item3 must merge/ready
-before the item2 PR. The published scheduling amendment allows items3/2 to
+Item5's repaired exact-main release39105269292 passed all native gates. The
+published scheduling amendment allows items3/2 to
 share a later exact-main full run containing both implementations/reviews,
 without waiving either PR's checks. Parked4/#814/#815 keep parent902 open.
