@@ -3,4 +3,4 @@ id: chrona-builtin-legend
 body:
   legend:
     - {role: planned, label: Planned}
-    - {role: actual, label: Actual}
+    - {role: actual, label: {wording: legend.actual}}

@@ -96,6 +96,7 @@ body:
     width: content
     headerOrientation: horizontal
   - id: Task
+    header: {wording: column.task}
     text: {wrap: allow}
     source: path
     missing: em-dash

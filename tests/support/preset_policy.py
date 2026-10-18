@@ -3,6 +3,8 @@ from pathlib import Path
 
 import yaml
 
+from chrona.presentation.model.wording_tables import is_wording_ref, wording_catalog
+
 
 def assert_view_copy_except_axis(packaged: Path, corpus: Path, *, first_run: bool = False) -> None:
     package_document = yaml.safe_load(packaged.read_bytes())
@@ -31,6 +33,18 @@ def assert_view_copy_except_axis(packaged: Path, corpus: Path, *, first_run: boo
         migrated = ["path" if name == "title" else name for name in corpus_names]
         assert packaged_names == migrated
         corpus_labels["content"] = migrated
+    # #1724 P4b: packaged Views reference built-in wording keys where the corpus
+    # copy keeps the literal. Guard that each reference reads exactly the corpus
+    # literal in en-US (a column header defaults to its id), then normalize.
+    for column in package_document["body"].get("tableColumns", ()):
+        if is_wording_ref(column.get("header")):
+            assert wording_catalog()["en-US"][column.pop("header")["wording"]] == column["id"]
+    for packaged_marker, corpus_marker in zip(package_document["body"].get("markers", ()),
+                                              corpus_document["body"].get("markers", ())):
+        if is_wording_ref(packaged_marker.get("label")):
+            text = wording_catalog()["en-US"][packaged_marker["label"]["wording"]]
+            assert text == corpus_marker.get("label")
+            packaged_marker["label"] = text
     lane_table = package_document["body"].get("rows", {}).get("laneTable", {})
     if lane_table.get("count") == "auto":
         reference_table = corpus_document["body"]["rows"]["laneTable"]
