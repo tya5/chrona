@@ -37,7 +37,7 @@ checks passed (107). Final import-direction/startup instruction checks passed
 separately (64 focused tests). Final CLI/MCP lifecycle and guide tests pass14.
 The documented-command reference and import-direction guards pass.
 
-## Release
+## Programme-level criteria (optional)
 
 Pending: final-head CI, official generated snapshot comparison and exact-main
 three-OS pytest/conformance/wheel/public-materializer gate. Local evidence is
