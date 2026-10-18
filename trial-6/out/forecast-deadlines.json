@@ -1,0 +1,1 @@
+{"status": "rejected", "diagnostics": [{"code": "E_THEME_ROLE_REQUIRED", "severity": "error", "component": "presentation", "sourceRef": "/body/roles/deadline-mark", "revisionRefs": [], "message": "theme role required: no further detail is recorded for this code (E_THEME_ROLE_REQUIRED)"}]}

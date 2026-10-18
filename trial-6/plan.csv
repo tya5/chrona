@@ -1,0 +1,42 @@
+id,title,type,start,end,duration,parent,predecessors,deadline,owner
+kickoff,Programme kickoff,gate,2027-01-11,,,,,,Priya
+ws-product,Product,group,,,,,,,
+ph-discovery,Discovery,group,,,,ws-product,,,
+interviews,Customer interviews,task,2027-01-12,,10wd,ph-discovery,kickoff,,Priya
+market,Market sizing,task,,,8wd,ph-discovery,kickoff,,Tomás
+reqs,Requirements baseline,task,,,6wd,ph-discovery,"interviews, market",,Priya
+ph-design,Design,group,,,,ws-product,,,
+ux-flows,UX flows,task,,,10wd,ph-design,reqs,,Mei
+visual,Visual design system,task,,,12wd,ph-design,ux-flows.start +5wd,,Mei
+proto,Clickable prototype,task,,,8wd,ph-design,ux-flows,,Mei
+usability,Usability testing,task,,,5wd,ph-design,proto,2027-04-23,Priya
+design-ok,Design sign-off,gate,,,,ph-design,"usability, visual",2027-04-30,
+ws-platform,Platform,group,,,,,,,
+ph-infra,Infrastructure,group,,,,ws-platform,,,
+cloud,Cloud account setup,task,2027-01-12,,5wd,ph-infra,kickoff,,Jonas
+network,Network and VPC,task,,,8wd,ph-infra,cloud,,Jonas
+cicd,CI/CD pipelines,task,,,10wd,ph-infra,cloud,,Aiko
+observ,Observability stack,task,,,10wd,ph-infra,network,,Aiko
+ph-services,Core services,group,,,,ws-platform,,,
+auth,Authentication service,task,,,15wd,ph-services,"reqs, cicd",,Jonas
+payments,Payments service,task,,,20wd,ph-services,auth.start +5wd,2027-05-28,Ravi
+catalog,Catalogue service,task,,,15wd,ph-services,reqs,,Ravi
+search,Search indexing,task,,,10wd,ph-services,catalog,,Aiko
+api-gw,API gateway,task,,,8wd,ph-services,"auth, network",,Jonas
+ph-data,Data,group,,,,ws-platform,,,
+schema,Data model,task,,,6wd,ph-data,reqs,,Tomás
+migration,Legacy data migration,task,,,15wd,ph-data,schema,,Tomás
+analytics,Analytics events,task,,,8wd,ph-data,"schema, observ",,Tomás
+ws-launch,Go to market,group,,,,,,,
+ph-build,Client build,group,,,,ws-launch,,,
+web,Web client,task,,,25wd,ph-build,"design-ok, api-gw",,Mei
+mobile,Mobile client,task,,,30wd,ph-build,"design-ok, api-gw",,Lena
+ph-ready,Readiness,group,,,,ws-launch,,,
+qa,End-to-end QA,task,,,10wd,ph-ready,"web, mobile, payments",,Lena
+perf,Load and performance test,task,,,5wd,ph-ready,qa.start +3wd,,Aiko
+security,Security review,task,,,8wd,ph-ready,"auth, payments",2027-07-02,Jonas
+docs,Help centre content,task,,,10wd,ph-ready,proto,,Sara
+training,Support training,task,,,5wd,ph-ready,docs,,Sara
+marketing,Launch campaign,task,,,15wd,ph-ready,design-ok,,Sara
+beta,Private beta,task,,,10wd,ph-ready,"qa, security",,Lena
+launch,Public launch,gate,,,,ph-ready,"beta, perf, training, marketing",2027-09-15,Priya

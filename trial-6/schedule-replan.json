@@ -1,0 +1,358 @@
+{
+  "placements": {
+    "kickoff": {
+      "at": "2027-01-11"
+    },
+    "ws-product": {
+      "start": "2027-01-11",
+      "end": "2027-03-08"
+    },
+    "ph-discovery": {
+      "start": "2027-01-11",
+      "end": "2027-02-03"
+    },
+    "interviews": {
+      "start": "2027-01-12",
+      "end": "2027-01-26"
+    },
+    "market": {
+      "start": "2027-01-11",
+      "end": "2027-01-21"
+    },
+    "reqs": {
+      "start": "2027-01-26",
+      "end": "2027-02-03"
+    },
+    "ph-design": {
+      "start": "2027-02-03",
+      "end": "2027-03-08"
+    },
+    "ux-flows": {
+      "start": "2027-02-03",
+      "end": "2027-02-17"
+    },
+    "visual": {
+      "start": "2027-02-10",
+      "end": "2027-02-26"
+    },
+    "proto": {
+      "start": "2027-02-17",
+      "end": "2027-03-01"
+    },
+    "usability": {
+      "start": "2027-03-01",
+      "end": "2027-03-08"
+    },
+    "design-ok": {
+      "at": "2027-03-08"
+    },
+    "ws-platform": {
+      "start": "2027-01-12",
+      "end": "2027-03-26"
+    },
+    "ph-infra": {
+      "start": "2027-01-12",
+      "end": "2027-03-03"
+    },
+    "cloud": {
+      "start": "2027-01-12",
+      "end": "2027-02-05"
+    },
+    "network": {
+      "start": "2027-02-05",
+      "end": "2027-02-17"
+    },
+    "cicd": {
+      "start": "2027-02-05",
+      "end": "2027-02-19"
+    },
+    "observ": {
+      "start": "2027-02-17",
+      "end": "2027-03-03"
+    },
+    "ph-services": {
+      "start": "2027-02-03",
+      "end": "2027-03-26"
+    },
+    "auth": {
+      "start": "2027-02-19",
+      "end": "2027-03-12"
+    },
+    "payments": {
+      "start": "2027-02-26",
+      "end": "2027-03-26"
+    },
+    "catalog": {
+      "start": "2027-02-03",
+      "end": "2027-02-24"
+    },
+    "search": {
+      "start": "2027-02-24",
+      "end": "2027-03-10"
+    },
+    "api-gw": {
+      "start": "2027-03-12",
+      "end": "2027-03-24"
+    },
+    "ph-data": {
+      "start": "2027-02-03",
+      "end": "2027-03-15"
+    },
+    "schema": {
+      "start": "2027-02-03",
+      "end": "2027-02-11"
+    },
+    "migration": {
+      "start": "2027-02-11",
+      "end": "2027-03-04"
+    },
+    "analytics": {
+      "start": "2027-03-03",
+      "end": "2027-03-15"
+    },
+    "ws-launch": {
+      "start": "2027-03-01",
+      "end": "2027-06-02"
+    },
+    "ph-build": {
+      "start": "2027-03-24",
+      "end": "2027-05-05"
+    },
+    "web": {
+      "start": "2027-03-24",
+      "end": "2027-04-28"
+    },
+    "mobile": {
+      "start": "2027-03-24",
+      "end": "2027-05-05"
+    },
+    "ph-ready": {
+      "start": "2027-03-01",
+      "end": "2027-06-02"
+    },
+    "qa": {
+      "start": "2027-05-05",
+      "end": "2027-05-19"
+    },
+    "perf": {
+      "start": "2027-05-10",
+      "end": "2027-05-17"
+    },
+    "security": {
+      "start": "2027-03-26",
+      "end": "2027-04-07"
+    },
+    "docs": {
+      "start": "2027-03-01",
+      "end": "2027-03-15"
+    },
+    "training": {
+      "start": "2027-03-15",
+      "end": "2027-03-22"
+    },
+    "marketing": {
+      "start": "2027-03-08",
+      "end": "2027-03-29"
+    },
+    "beta": {
+      "start": "2027-05-19",
+      "end": "2027-06-02"
+    },
+    "launch": {
+      "at": "2027-06-02"
+    }
+  },
+  "diagnostics": [],
+  "warnings": [
+    {
+      "code": "W_DEADLINE",
+      "severity": "warning",
+      "component": "core",
+      "sourceRef": "/objects/launch/deadline",
+      "revisionRefs": [],
+      "message": "launch finishes 2027-06-02, 1 day after its deadline 2027-06-01",
+      "details": {
+        "object": "launch",
+        "endpoint": "at",
+        "finish": "2027-06-02",
+        "deadline": "2027-06-01",
+        "daysLate": 1
+      },
+      "sourceRange": {
+        "line": 274,
+        "column": 5,
+        "endLine": 274,
+        "endColumn": 13
+      }
+    }
+  ],
+  "analysis": {
+    "criticalObjectIds": [
+      "cloud",
+      "cicd",
+      "auth",
+      "api-gw",
+      "mobile",
+      "qa",
+      "beta",
+      "launch"
+    ],
+    "totalFloat": {
+      "kickoff": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "interviews": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "market": {
+        "value": 15,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "reqs": {
+        "value": 12,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "ux-flows": {
+        "value": 12,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "visual": {
+        "value": 18,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "proto": {
+        "value": 12,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "usability": {
+        "value": 12,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "design-ok": {
+        "value": 12,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "cloud": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "network": {
+        "value": 17,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "cicd": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "observ": {
+        "value": 57,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "auth": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "payments": {
+        "value": 28,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "catalog": {
+        "value": 60,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "search": {
+        "value": 60,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "api-gw": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "schema": {
+        "value": 64,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "migration": {
+        "value": 64,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "analytics": {
+        "value": 57,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "web": {
+        "value": 5,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "mobile": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "qa": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "perf": {
+        "value": 12,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "security": {
+        "value": 30,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "docs": {
+        "value": 52,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "training": {
+        "value": 52,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "marketing": {
+        "value": 47,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "beta": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "launch": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      }
+    }
+  }
+}

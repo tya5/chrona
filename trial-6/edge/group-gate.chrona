@@ -1,0 +1,4 @@
+project grp "Group range and its closing gate"
+phase "Phase 1" group
+  build "Build" task 2027-03-01..2027-03-06
+  signoff "Sign-off" gate after build

@@ -1,0 +1,1 @@
+{"status": "rejected", "diagnostics": [{"code": "E_THEME_ROLE_REQUIRED", "severity": "error", "component": "presentation", "sourceRef": "/body/roles/summary-bar/markHeight", "revisionRefs": [], "message": "role='summary-bar', property='markHeight'; bindingType=NoneType; expected token-name string"}]}

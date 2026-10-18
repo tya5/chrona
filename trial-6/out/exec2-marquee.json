@@ -1,0 +1,1 @@
+{"status": "rejected", "diagnostics": [{"code": "E_VIEW_GROUP_HEADER_UNUSABLE", "severity": "error", "component": "closure", "sourceRef": "/", "revisionRefs": [], "message": "header needs presentation header and grouping by field or objectType"}]}

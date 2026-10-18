@@ -1,0 +1,9 @@
+version: timeline/v0.7
+project: {id: bad, title: Bad plan}
+objects:
+  a: {type: task, title: A, schedule: {mode: fixed-span, start: '2027-02-30', end: '2027-03-05'}}
+  b: {type: task, title: B, schedule: {mode: scheduled, amount: 5d}}
+  c: {type: task, title: C, schedule: {mode: fixed-span, start: '2027-03-01', end: '2027-03-08'}, parent: nosuch}
+  d: {type: gate, title: D, schedule: {mode: fixed-point, date: '2027-03-10'}}
+relations:
+  - {id: r1, type: dependency, from: {object: a, endpoint: end}, to: {object: zz, endpoint: start}, lag: 0d}

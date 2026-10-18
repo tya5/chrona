@@ -1,0 +1,1 @@
+{"status": "rejected", "diagnostics": [{"code": "E_VIEW_GROUP_TINT_UNUSABLE", "severity": "error", "component": "closure", "sourceRef": "/", "revisionRefs": [], "message": "tint needs groups that have values (grouping by field or objectType)"}]}

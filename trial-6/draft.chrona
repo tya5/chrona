@@ -1,0 +1,16 @@
+terse 0.1
+project relaunch-draft "Platform relaunch (draft)"
+calendar standard mon-fri except 2027-04-02
+
+kickoff "Kickoff" gate 2027-01-11
+product "Product" group
+  discovery "Discovery" group
+    interviews "Customer interviews" task 10wd after kickoff
+    reqs "Requirements" task 6wd after interviews
+  design "Design" group
+    ux "UX flows" task 10wd after reqs
+    proto "Prototype" task 8wd after ux
+platform "Platform" group
+  cloud "Cloud setup" task 5wd after kickoff
+  auth "Auth service" task 15wd after cloud, reqs
+launch "Launch" gate after proto, auth +2wd deadline 2027-04-30

@@ -1,0 +1,6 @@
+project long "A plan with long task names exported from a spreadsheet"
+calendar standard mon-fri
+alpha "Negotiate and sign the master services agreement with the selected cloud infrastructure vendor including legal review" task 8wd from 2027-01-11
+beta "Migrate customer accounts" task 3wd after alpha
+gamma "Run the joint security and privacy impact assessment across all European and Asia-Pacific data residency regions" task 10wd after beta
+done "Go-live" gate after gamma

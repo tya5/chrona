@@ -1,0 +1,7 @@
+project relaunch-draft "Platform relaunch (draft)"
+calendar standard mon-fri
+
+kickoff "Kickoff" gate 2027-1-11
+interviews Customer interviews task 10wd after kickof
+reqs "Requirements" task 6 after interviews
+launch "Launch" gate 2027-02-01 after reqs

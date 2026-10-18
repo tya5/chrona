@@ -1,0 +1,102 @@
+version: chrona/view/v0.28
+kind: view
+id: chrona-preset-editorial-readable-default
+body:
+  heading: {text: {wrap: allow}}
+  surface: table-timeline
+  selection:
+    include:
+      ids: [kickoff, ws-product, ph-discovery, ph-design, design-ok, ws-platform, ph-infra, ph-services, ph-data, ws-launch, ph-build, ph-ready, launch]
+  grouping:
+    by: hierarchy
+    depth: 1
+    rollup: header
+  hierarchyColumn: Task
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: selected-planned
+  comparison:
+    baseline: primary
+    actual: optional
+    observationSelection: latest
+    deltaUnit: working-days
+    facets:
+    - planned
+  progressFill:
+    source: actual
+  visibility:
+    labels:
+      placement: plot
+      content:
+      - title
+      side: end
+      overflow: suppress
+    fallback:
+      labels:
+      - end
+      - start
+      - suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations: none
+  axis:
+    tiers:
+    - unit: year
+      every: 1
+      role: band
+      typographyRole: axisQuarter
+    - unit: quarter
+      every: 1
+      role: grid-major
+    - unit: auto
+      every: 1
+      role: labels
+      typographyRole: axisQuarter
+      label:
+        forms:
+          day: localized-date
+          week: start-day-month
+          month: short-month-year
+          quarter: year-quarter
+          half: half-year
+          year: year
+        align: center
+        overflow: thin-with-record
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: grid-minor
+  backgroundDecoration:
+    rows: rules
+    groups: all
+  tableColumns:
+  - id: Task
+    text: {wrap: allow}
+    source: title
+    missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
+  - id: Plan
+    text: {wrap: allow}
+    source:
+      facet: planned
+    format: dateRange
+    endDisplay: inclusive
+    missing: em-dash
+    align: start
+    width: content
+    headerOrientation: horizontal
+  rows:
+    mode: automatic
+  markers:
+  - kind: asOf
+    source: actual
+    label: TODAY
+  shading:
+    nonWorking: true
+    exceptions: true

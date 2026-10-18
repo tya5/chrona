@@ -1,0 +1,10 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: relaunch-observed
+body:
+  asOf: '2027-01-18'
+  observations:
+    - {id: kickoff-1, sequence: 1, projectObjectId: kickoff, actual: {at: '2027-01-11'}}
+    - {id: market-1, sequence: 1, projectObjectId: market, actual: {start: '2027-01-11', openUntil: asOf, progress: 0.5}}
+    - {id: interviews-1, sequence: 1, projectObjectId: interviews, actual: {start: '2027-01-12', openUntil: asOf, progress: 0.4}}
+    - {id: cloud-1, sequence: 1, projectObjectId: cloud, actual: {start: '2027-01-12', openUntil: asOf, progress: 0.6}}
