@@ -192,3 +192,26 @@ S2 deltas retired; the five reported invalid documents are unchanged baseline
 findings. Imports11 packages/37 edges inward. No public render policy/source
 or canonical generated outputs changed. Remaining: current-main integration,
 final CI/public evidence and exact-main release after item5 publication.
+
+## Item2 design plan (no item2 product code)
+
+- Baseline: CLI-only authoring use case/adapter (Spec51) echoes commandId but
+  cannot replay an accepted retry; ordinary CAS lacks the aggregate OS lock.
+  The existing transaction marker is recovery metadata, not accepted history.
+- Scope: one new MCP `apply_authoring_command` tool through the same CLI/operational
+  entry point, unchanged workspace containment and write gate. Decide tool-set
+  v0.6, honest annotations, exact result/pointer contract and prospective migration.
+- Design slices: pure prepare/validate versus operational commit ownership;
+  durable accepted-request/result receipts within the existing workspace lock
+  and transaction boundary; MCP exposure; architecture/migration review.
+- Resolve before code: canonical request/target identity and ID collision;
+  replay before stale-base checks; receipt/resource/workspace commit ordering;
+  no-op commit identity; crash recovery and post-commit cleanup failures. Do not
+  fake success from a CAS callback or add an unsynchronized second ledger.
+- Evidence: literal item2 stale/replay/no-overwrite and real stdio acceptance
+  above, restart/retry after later writes, changed-ID reuse, containment/gate,
+  ordinary/materializing/no-op transactions, failure before/after commit and
+  unchanged workspace/resource bytes on rejection. CI supplies the full gate.
+- Publication: publish this plan, then Spec51/66 selected design and whole-
+  architecture review, then implementation plan before code. One coherent item2
+  release follows item3; design preparation may pipeline without mixing releases.
