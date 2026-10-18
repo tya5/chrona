@@ -25,7 +25,11 @@ and exact-main three-OS release remain required. Keep the issue open.
 
 ## Public count table
 
-Baseline: committed materializer evidence on implementation base `82c1e96b6`.
+Local snapshot: `0fe79a9f6`; baseline: committed materializer evidence on
+implementation base `82c1e96b6`. The later allocation-preservation correction
+restores final fit warnings; its official artifact must confirm or update this
+table before release acceptance. Do not treat this preliminary table as the
+final merged-main output.
 Counts are added/removed/changed **by primitive ID**; text counts are a subset.
 Every slide has **0/0/0 dependency-route changes** (legend line keys are not
 routes). No source YAML or canonical generated output was edited.
