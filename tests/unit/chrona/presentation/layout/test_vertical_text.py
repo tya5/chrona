@@ -107,10 +107,10 @@ def test_a_label_longer_than_its_span_is_cut_at_a_segment_with_a_sideways_ellips
     assert [item.content for item in placed[:-1]] == list("漢字漢字漢字")[: len(placed) - 1]
 
 
-def test_a_label_that_fits_is_not_cut_and_one_whose_marker_does_not_fit_is_shown_whole():
+def test_a_label_that_fits_is_not_cut_and_one_whose_marker_does_not_fit_gives_way_entirely():
     assert {item.overflow for item in _place("漢字", available=100.0)} == {"fit"}
-    whole = _place("漢字", available=25.0)
-    assert [item.content for item in whole] == ["漢", "字"] and {item.overflow for item in whole} == {"visible-overflow"}
+    gone = _place("漢字", available=25.0)  # #1726: never drawn across the neighbouring lane
+    assert [item.content for item in gone] == ["漢", "字"] and {item.overflow for item in gone} == {"suppressed"}
 
 
 def test_text_transform_applies_before_segmentation():

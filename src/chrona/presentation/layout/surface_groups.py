@@ -171,14 +171,13 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                     collision_domain=CollisionDomain("group-header", group.group_id), semantic_id="groupHeader",
                     align=align)
                 text.extend(fitted.placements)
-                # A tag cut or overrunning its group's rows is reported, never silently shortened (#981).
+                # A tag cut or given way is reported, never silently shortened (#981, #1726).
                 shown = fitted.placements[0].overflow if fitted.placements else "fit"
-                if shown in {"ellipsized", "visible-overflow"}:
+                if shown in {"ellipsized", "suppressed"}:
                     ellipsized = shown == "ellipsized"
                     tag_warnings.append(FitWarning(
-                        "W_LAYOUT_TEXT_ELLIPSIZED" if ellipsized else "W_LAYOUT_VISIBLE_OVERFLOW",
-                        fitted.placements[0].placement_id, group.group_id, "group-tag-text",
-                        "ellipsize-with-source" if ellipsized else "visible-overflow",
+                        "W_LAYOUT_TEXT_ELLIPSIZED", fitted.placements[0].placement_id, group.group_id,
+                        "group-tag-text", "ellipsize-with-source" if ellipsized else "suppress-with-source",
                         float(cell.inline_size), fitted.required_block, float(cell.inline_size),
                         fitted.available_block))
         return SurfaceGroupPresentation(tuple(text), tuple(tag_warnings))

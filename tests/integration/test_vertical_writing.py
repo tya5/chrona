@@ -280,3 +280,41 @@ def test_align_on_a_horizontal_group_header_is_refused(tmp_path):
         _render(tmp_path, vertical=False, mutate=_align("end"))
 
     assert "E_THEME_ROLE_PROPERTY_UNSUPPORTED" in str(failure.value) + repr(getattr(failure.value, "__cause__", ""))
+
+
+# --- #1726: a vertical tag never crosses its lane ------------------------------------------------------------
+
+ONE_ROW_SIZE = 30
+
+
+def one_row_lane_project():
+    """Three lanes: team-0 and team-2 hold three rows, team-1 exactly one."""
+    from datetime import date, timedelta
+    objects = {}
+    for group, count in ((0, 3), (1, 1), (2, 3)):
+        for index in range(count):
+            key = f"g{group}-t{index}"
+            objects[key] = sr.span(key, date(2026, 1, 5) + timedelta(days=index * 3), 40, owner=f"team-{group}",
+                                   title=f"Synthetic task {group}.{index}")
+    return sr.project(objects)
+
+
+def render_one_row_lane(directory):
+    parts = sr.bundle()
+    tt.with_vertical_groups(parts, size=ONE_ROW_SIZE, header_text="One row lane vendor team")
+    return tt.render(directory, one_row_lane_project(), parts)
+
+
+def test_a_tag_that_cannot_keep_an_ellipsis_gives_way_and_never_crosses_its_one_row_lane(tmp_path):
+    rendered = render_one_row_lane(tmp_path)
+    lane = _group_rows(rendered, "team-1")
+    visible = _tags(rendered, "team-1")  # a suppressed tag emits no Text, so none can lie across the lane
+    assert all(item.bounds[1] >= lane[0] - 1e-6 and item.bounds[1] + item.bounds[3] <= lane[1] + 1e-6
+               for item in visible) and not visible
+    assert all(item.bounds[1] + item.bounds[3] <= _group_rows(rendered, "team-0")[1] + 1e-6
+               for item in _tags(rendered, "team-0"))
+    warnings = [item for item in rendered.surface.fit_warnings
+                if item.failure_kind == "group-tag-text" and item.source_ref == "team-1"]
+    assert [(item.code, item.behaviour) for item in warnings] == [("W_LAYOUT_TEXT_ELLIPSIZED", "suppress-with-source")]
+    assert not [item for item in rendered.surface.fit_warnings if item.code == "W_LAYOUT_VISIBLE_OVERFLOW"
+                and item.failure_kind == "group-tag-text"]
