@@ -1,18 +1,23 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 PR1698 passed every product check in39094985183; readiness alone
-failed after main advanced. Normal integration `30d957743` follows main
-`e9432fb85` after B's1697 landing; that update changes CI/AGENTS only, not the
-product code verified by107 focused command/adapter/process/docs tests and
-11/37 inward imports. Final push requires successful derived-main on that
-current tip. This branch follows ready main `9e224db6c` and the reviewed
-predecessors; item3 code `c2984c018` and item2 code/review
-`fa831e384`/`0b79e65a0` remain unreleased. Publication order remains5→3→2;
-there is no premature item3/item2 PR. #1679/#1680 are closed after
-exact-main39094741641 passed all three OSes, public reproduction and MCP. Their
-archival/ledger update is an independent commit in PR1698; separate docs PR1699
-was superseded to avoid another serial snapshot/sync cycle. Board454 is
-reviewer-owned. No unmerged branch is claimed as released main functionality.
+Status: item5 PR1698 follows ready main `8e25a4232` after B's1695 landing.
+CI39099136587 passed every product check; readiness failed when main advanced.
+The final official artifact12126176185 retains all50 SVG/50 Scene bytes; only
+diagnostic source coordinates differ from the prior snapshot. Current-base
+Store/engine/process tests pass21; earlier focused107 and inward imports11/37
+also passed. Final-head CI and exact-main release remain required. Design
+`69273a1bf` and plan `54b9ddd20` precede code.
+#1679/#1680 are closed after exact-main39094741641 passed all
+three OSes, public reproduction and MCP. Their archival/ledger update is an
+independent commit in PR1698; separate docs PR1699 was superseded to avoid
+another serial snapshot/sync cycle. Item3 code `c2984c018` and item2
+code/review `fa831e384`/`0b79e65a0` remain unreleased; this branch is not a main
+release claim. Merge/release order remains5→3→2. Item3 PR may open only after
+item5 merges and derived-main is ready; its merge waits for item5's successful
+full release. Item2 PR may open only after item3 merges and derived-main is
+ready; its merge waits for item3's successful full release. Any predecessor
+release failure remains that predecessor owner's priority. Board454 is
+reviewer-owned and unchanged.
 
 ## Scope and literal acceptance
 
@@ -171,18 +176,21 @@ Store/Actual; full identities are verified from immutable bytes, never trusted
 from a ledger digest alone. Fresh-base CAS remains independent of state equality.
 No unresolved architecture finding remains. Normative authority is Spec35 §4.3;
 Spec10 and Spec66 connect the ownership and agent contract. Publish this design
-before implementation planning. Item3 may pipeline as isolated WIP on the
-verified public item5 implementation; its PR/release waits for item5 release. This branch
-is separate from the item5 product/release branch, avoiding an unimplemented
-tool-set claim in that release.
+before implementation planning. Item3 remains isolated WIP on the verified
+public item5 implementation. Its PR may open after item5 merges and derived-main
+is ready, concurrently with item5's full release; item3 merge remains blocked
+until that release succeeds. This branch is separate from item5's product and
+release acceptance, avoiding an unimplemented tool-set claim in that release.
 
 ## Item3 implementation plan
 
 Design/specification/architecture review `a79ab0307` is published on
-`wip/issue-902-actual-history-design`. One coherent product PR after item5 release;
-the following are owned implementation/test slices, not partial main releases.
-WIP implementation may proceed during item5's publication wait; never merge
-unimplemented item3 contracts into the separate item5 release branch.
+`wip/issue-902-actual-history-design`. One coherent product PR may open after
+item5 merges and derived-main is ready; item3 merge still waits for item5's
+successful full release. The following are owned implementation/test slices,
+not partial main releases. WIP implementation may proceed during item5's
+publication wait; never merge unimplemented item3 contracts into the separate
+item5 release branch.
 
 | Slice | Owned files | Acceptance evidence |
 | --- | --- | --- |
@@ -213,8 +221,10 @@ findings. Imports11 packages/37 edges inward. No public render policy/source
 or canonical generated outputs changed. Ready-main integration `499d2ad27`
 passed99 focused command/adapter/CLI/process tests, three real MCP history
 tests and an independent11-test history/concurrency audit; no conflict or new
-architecture gap. Remaining: item5 release, final current-ready-base PR CI/public
-evidence and exact-main release. No item3 PR has been opened prematurely.
+architecture gap. Remaining: item5 final-head/current-ready-base CI and full
+release. Item3 PR may open after item5 merges and derived-main is ready, but
+item3 merge remains blocked until item5 full release succeeds. This changes PR
+timing only; acceptance is unchanged.
 Following ready `9e224db6c` and predecessor review `950d79001` changes no item3
 engine/schema code;31 focused history/concurrency/documentation cases pass.
 
@@ -237,9 +247,11 @@ engine/schema code;31 focused history/concurrency/documentation cases pass.
   above, restart/retry after later writes, changed-ID reuse, containment/gate,
   ordinary/materializing/no-op transactions, failure before/after commit and
   unchanged workspace/resource bytes on rejection. CI supplies the full gate.
-- Publication: publish this plan, then Spec51/66 selected design and whole-
-  architecture review, then implementation plan before code. One coherent item2
-  release follows item3; design preparation may pipeline without mixing releases.
+- Publication: design/implementation preparation may pipeline on its isolated
+  branch. Item2 PR opens only after item3 merges and derived-main is ready; the
+  item2 merge waits until item3's successful full release. Any item3 release
+  failure remains its owner's priority and blocks item2 merge. This changes PR
+  timing only; item2 acceptance is unchanged.
 
 ## Item2 selected design and architecture review
 
@@ -291,10 +303,11 @@ the use case. Remove the old public CAS-callback wiring, not emulate it.
 | A2 transaction | `storage/file_transaction.py`, `operational/authoring_commands.py` and persistence/recovery/process tests | One lock for every command; durable exact replay before base comparison, changed-ID reuse, verified receipt corruption/path guards, no overwrite. Marker distinguishes changed workspace/no-op commits; injected failures/restarts before/after publication preserve old or fully committed state, including legacy recovery and post-commit cleanup/replay. Earlier receipts/resources survive. |
 | A3 front ends/release | `app/cli.py`, `app/agent_tools.py`, import guard, registry/CLI/MCP tests and literal review | Tool-set v0.6/new tool and honest annotations; gate before missing/malformed/escaped files open; canonical/symlink scope; exact CLI/tool results, stale/replay/no-overwrite over real stdio. Run focused tests per owner, then combined tests and planned CI full three-OS/conformance/wheel/MCP; inspect official materializer deltas as a batch. No renderer policy/source change intended. |
 
-Implement as isolated WIP while prior releases run; one coherent item2 PR/release
-after item3, not partially safe main slices. Return to design before addressing
-any new transaction/schema/layer contract gap. Acceptance is the literal item2
-row above; parked4/814/815 remain open.
+Implement as isolated WIP while predecessor releases run; one coherent item2 PR
+may open after item3 merges and derived-main is ready, but item2 merge waits for
+item3's successful full release. Do not publish partially safe main slices.
+Return to design before addressing any new transaction/schema/layer contract
+gap. Acceptance is the literal item2 row above; parked4/814/815 remain open.
 
 ## Item2 implementation review
 
@@ -321,3 +334,7 @@ case/staging/process batch **58 passed**. These batches overlap, not additive.
 Full local pytest/public-materializer reruns deliberately delegated to CI.
 Current-base integration of predecessor `64c8a6094`/ready `9e224db6c` preserves
 item2 product code;40 focused history/authoring/process/stdio/docs cases pass.
+Design `cdf0289f8`, plan `fa31cc79c`, code `fa831e384` and review `0b79e65a0`
+are on `wip/issue-902-authoring-design`; that branch owns durable authoring/MCPv0.6.
+Item2 PR may open after item3 merges and derived-main is ready; item2 merge waits
+for item3's successful full release. Parked4/814/815 remain open.
