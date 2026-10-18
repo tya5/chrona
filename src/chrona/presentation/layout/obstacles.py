@@ -424,6 +424,9 @@ class SurfaceObstacleIndex:
     def has(self, placement_id: str) -> bool:
         return placement_id in self._by_id
 
+    def get(self, placement_id: str) -> SurfaceObstacle | None:
+        return self._by_id.get(placement_id)
+
     def select(self, *, classes: Iterable[str] | None = None,
                regions: Iterable[str] | None = None) -> tuple[SurfaceObstacle, ...]:
         return self._selection(classes, regions).items
