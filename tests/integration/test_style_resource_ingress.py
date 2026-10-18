@@ -58,6 +58,8 @@ def _render(draft, closure=None, snapshot_root=None):
 
 
 def _assert_style(rendered):
+    from tools.semantic_realization_coverage import appearance_role
+
     assert "style" in rendered.read_inputs
     selected = [node for node in rendered.surface.primitives
                 if node.source_ref == "one" and node.purpose == "planned"]
@@ -67,6 +69,9 @@ def _assert_style(rendered):
                for node in selected)
     document = scene_document(rendered.scene)
     validate_scene_document(document)
+    assert {appearance_role(node) for surface in document["surfaces"]
+            for node in surface["primitives"]
+            if node["sourceRef"] == "one" and node["purpose"] == "planned"} == {"authored-mark"}
     style, = [item for item in document["provenance"]["resources"] if item["kind"] == "style"]
     assert style["id"] == "authored-style"
 
