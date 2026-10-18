@@ -1,16 +1,10 @@
-from pathlib import Path
-
-import yaml
-
 from chrona.presentation.contracts import ClosureIdentity, StyleContract, parse_contract
 from chrona.presentation.model.authoring import normalize_authoring_workspace
+from chrona.resources import builtin_preset_source_root, safe_load
 
 
-ROOT = Path(__file__).resolve().parents[5]
-
-
-def _resource(path: str) -> dict:
-    return yaml.safe_load((ROOT / path).read_text(encoding="utf-8"))
+def _resource(name: str) -> dict:
+    return safe_load(builtin_preset_source_root("presets/bundles/executive-light").joinpath(name).read_bytes())
 
 
 def _contract(kind: str, document: dict):
@@ -19,10 +13,10 @@ def _contract(kind: str, document: dict):
 
 def test_guided_authoring_copies_optional_preset_style_as_typed_resource():
     resources = {
-        "view.yaml": _resource("examples/aster-ssd/views/01-overview.yaml"),
-        "theme.yaml": _resource("examples/aster-ssd/themes/executive-light.yaml"),
-        "scheme.yaml": _resource("examples/aster-ssd/schemes/executive-light.yaml"),
-        "layout.yaml": _resource("conformance/layout-profile-intent-v0.2.yaml"),
+        "view.yaml": _resource("view.yaml"),
+        "theme.yaml": _resource("theme.yaml"),
+        "scheme.yaml": _resource("scheme.yaml"),
+        "layout.yaml": _resource("layout.yaml"),
         "style.yaml": {
             "version": "chrona/style/v0.2", "kind": "style", "id": "guide-style",
             "body": {"rules": [{"id": "emphasis", "when": {"roles": ["critical"]},
@@ -57,10 +51,10 @@ def test_guided_authoring_copies_optional_preset_style_as_typed_resource():
 
 def test_guided_authoring_rejects_preset_style_kind_or_id_mismatch():
     resources = {
-        "view.yaml": _resource("examples/aster-ssd/views/01-overview.yaml"),
-        "theme.yaml": _resource("examples/aster-ssd/themes/executive-light.yaml"),
-        "scheme.yaml": _resource("examples/aster-ssd/schemes/executive-light.yaml"),
-        "layout.yaml": _resource("conformance/layout-profile-intent-v0.2.yaml"),
+        "view.yaml": _resource("view.yaml"),
+        "theme.yaml": _resource("theme.yaml"),
+        "scheme.yaml": _resource("scheme.yaml"),
+        "layout.yaml": _resource("layout.yaml"),
         "style.yaml": {"version": "chrona/style/v0.2", "kind": "theme", "id": "wrong"},
     }
     preset = {
