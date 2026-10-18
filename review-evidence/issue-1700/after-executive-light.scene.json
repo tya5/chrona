@@ -1,0 +1,349 @@
+{
+  "version": "chrona/scene/v0.6",
+  "kind": "scene",
+  "provenance": {
+    "mode": "draft",
+    "chronaVersion": "0.1.0a0",
+    "resources": [
+      {
+        "kind": "color-scheme",
+        "id": "executive-light",
+        "revision": "draft",
+        "contentIdentity": "sha256:5149b75b980d3ada449116299cbaefc08a032f37682c4d657f6c32d595d6a7d4"
+      },
+      {
+        "kind": "layout-profile",
+        "id": "chrona-builtin-executive-light",
+        "revision": "draft",
+        "contentIdentity": "sha256:6d55a3fd9889b667895a2e9d8cc75e69db89f9e2335d696e32be00fe2c8b92fa"
+      },
+      {
+        "kind": "project",
+        "id": "product-relaunch",
+        "revision": "draft",
+        "contentIdentity": "sha256:3599c7d6887257aeb09fb2849b1c563ef1e8bc7ef9ad25297a8f03965ebbdb61"
+      },
+      {
+        "kind": "review-detail-profile",
+        "id": "chrona-builtin-legend",
+        "revision": "draft",
+        "contentIdentity": "sha256:ab27dd21f63ef47c79f2eec76e3af277fb1615ecb8769451385aef83767b41ea"
+      },
+      {
+        "kind": "semantic-vocabulary",
+        "id": "chrona-core",
+        "revision": "v0.1",
+        "contentIdentity": "sha256:7fbb34ad6c0eb98ce3f6fe78dbef5cf44a4fdf99d54c1816457711ac7a31ff88"
+      },
+      {
+        "kind": "theme",
+        "id": "chrona-builtin-executive-light",
+        "revision": "draft",
+        "contentIdentity": "sha256:48893d4568deb4f20998946d456c183a65a4c67e58bbcaa6bcac74918625af15"
+      },
+      {
+        "kind": "view",
+        "id": "executive-summary",
+        "revision": "draft",
+        "contentIdentity": "sha256:5928f5b3b55ac80eadcc048e4494c36f15452f0497af0c9bedc72a215f11fa36"
+      }
+    ]
+  },
+  "viewport": {
+    "inlineSize": 1600.0,
+    "blockSize": 295.0
+  },
+  "requiredCapabilities": [
+    "mark.symbol-outline"
+  ],
+  "surfaces": [
+    {
+      "id": "table-timeline",
+      "slots": [
+        {
+          "id": "group-details",
+          "source": "group-details",
+          "bounds": {
+            "inline": 24.0,
+            "block": 251.4,
+            "inlineSize": 180.0,
+            "blockSize": 19.6
+          },
+          "priority": "optional",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "legend",
+          "source": "legend",
+          "bounds": {
+            "inline": 1396.0,
+            "block": 253.938,
+            "inlineSize": 180.0,
+            "blockSize": 16.8
+          },
+          "priority": "optional",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "milestones",
+          "source": "milestones",
+          "bounds": {
+            "inline": 481.3333333333333,
+            "block": 251.4,
+            "inlineSize": 180.0,
+            "blockSize": 19.6
+          },
+          "priority": "optional",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "observations",
+          "source": "observations",
+          "bounds": {
+            "inline": 938.6666666666666,
+            "block": 251.4,
+            "inlineSize": 180.0,
+            "blockSize": 19.6
+          },
+          "priority": "optional",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "table",
+          "source": "table",
+          "bounds": {
+            "inline": 24.0,
+            "block": 68.8,
+            "inlineSize": 458.4,
+            "blockSize": 166.6
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "timeline",
+          "source": "timeline",
+          "scaleId": "primary",
+          "bounds": {
+            "inline": 506.4,
+            "block": 114.8,
+            "inlineSize": 1069.6,
+            "blockSize": 120.6
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "timeline-axis",
+          "source": "timeline-axis",
+          "scaleId": "primary",
+          "bounds": {
+            "inline": 506.4,
+            "block": 68.8,
+            "inlineSize": 1069.6,
+            "blockSize": 46.0
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "title",
+          "source": "title",
+          "bounds": {
+            "inline": 702.956,
+            "block": 24.0,
+            "inlineSize": 194.088,
+            "blockSize": 28.8
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "review-surface",
+          "source": "review-surface",
+          "bounds": {
+            "inline": 24.0,
+            "block": 68.8,
+            "inlineSize": 1552.0,
+            "blockSize": 166.6
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        }
+      ],
+      "rows": [
+        {
+          "id": "programme",
+          "objectId": "programme",
+          "groupId": "",
+          "bounds": {
+            "inline": 506.4,
+            "block": 114.8,
+            "inlineSize": 1069.6,
+            "blockSize": 40.0
+          }
+        },
+        {
+          "id": "design",
+          "objectId": "design",
+          "groupId": "",
+          "bounds": {
+            "inline": 506.4,
+            "block": 154.8,
+            "inlineSize": 1069.6,
+            "blockSize": 40.0
+          }
+        },
+        {
+          "id": "delivery",
+          "objectId": "delivery",
+          "groupId": "",
+          "bounds": {
+            "inline": 506.4,
+            "block": 194.8,
+            "inlineSize": 1069.6,
+            "blockSize": 40.0
+          }
+        }
+      ],
+      "columns": [
+        {
+          "id": "Work item",
+          "label": "Work item",
+          "bounds": {
+            "inline": 24.0,
+            "block": 68.8,
+            "inlineSize": 458.4,
+            "blockSize": 166.6
+          }
+        }
+      ],
+      "groups": [
+        {
+          "id": "",
+          "contentBounds": {
+            "inline": 506.4,
+            "block": 114.8,
+            "inlineSize": 1069.6,
+            "blockSize": 120.0
+          }
+        }
+      ],
+      "primitives": [
+        {"id":"title","kind":"Text","sourceRef":"title","sourceKind":"review","purpose":"title-text","visualRole":"text","bounds":{"inline":702.956,"block":28.055999999999997,"inlineSize":194.088,"blockSize":28.799999999999997},"slotId":"title","text":"Product relaunch","baseline":[702.956,52.056],"textLayout":{"bounds":{"inline":702.956,"block":28.055999999999997,"inlineSize":194.088,"blockSize":28.799999999999997},"baseline":[702.956,52.056],"lines":["Product relaunch"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":24.0,"lineHeight":1.2,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#172033","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"column:Work item","kind":"Text","sourceRef":"view:tableColumns","sourceKind":"review","purpose":"table-column-label","visualRole":"text","bounds":{"inline":24.0,"block":68.8,"inlineSize":68.04,"blockSize":19.599999999999998},"slotId":"table","text":"Work item","baseline":[24.0,82.8],"textLayout":{"bounds":{"inline":24.0,"block":68.8,"inlineSize":68.04,"blockSize":19.599999999999998},"baseline":[24.0,82.8],"lines":["Work item"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":14.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#172033","dash":[],"opacity":1.0},"tableColumnId":"Work item","paintOrder":300},
+        {"id":"cell:programme:Work item","kind":"Text","sourceRef":"programme","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":24.0,"block":125.0,"inlineSize":113.21799999999999,"blockSize":19.599999999999998},"slotId":"table","text":"Product relaunch","baseline":[24.0,139.0],"textLayout":{"bounds":{"inline":24.0,"block":125.0,"inlineSize":113.21799999999999,"blockSize":19.599999999999998},"baseline":[24.0,139.0],"lines":["Product relaunch"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":14.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#172033","dash":[],"opacity":1.0},"tableRowId":"programme","tableColumnId":"Work item","paintOrder":300},
+        {"id":"cell:design:Work item","kind":"Text","sourceRef":"design","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":40.0,"block":165.0,"inlineSize":45.696,"blockSize":19.599999999999998},"slotId":"table","text":"Design","baseline":[40.0,179.0],"textLayout":{"bounds":{"inline":40.0,"block":165.0,"inlineSize":45.696,"blockSize":19.599999999999998},"baseline":[40.0,179.0],"lines":["Design"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":14.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#172033","dash":[],"opacity":1.0},"tableRowId":"design","tableColumnId":"Work item","paintOrder":300},
+        {"id":"cell:delivery:Work item","kind":"Text","sourceRef":"delivery","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":40.0,"block":205.0,"inlineSize":53.27,"blockSize":19.599999999999998},"slotId":"table","text":"Delivery","baseline":[40.0,219.0],"textLayout":{"bounds":{"inline":40.0,"block":205.0,"inlineSize":53.27,"blockSize":19.599999999999998},"baseline":[40.0,219.0],"lines":["Delivery"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":14.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#172033","dash":[],"opacity":1.0},"tableRowId":"delivery","tableColumnId":"Work item","paintOrder":300},
+        {"id":"group:","kind":"Rect","sourceRef":"","sourceKind":"decoration","purpose":"group-decoration","visualRole":"group-band","bounds":{"inline":24.0,"block":114.8,"inlineSize":458.4,"blockSize":120.0},"slotId":"table","paint":{"fill":"#EEF3F8","dash":[],"opacity":1.0},"paintOrder":10},
+        {"id":"calendar-closed:2027-01-09","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":602.1999999999999,"block":114.8,"inlineSize":17.56000000000006,"blockSize":120.0},"slotId":"timeline","paint":{"stroke":"#C9CED8","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-01-10","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":619.76,"block":114.8,"inlineSize":17.559999999999945,"blockSize":120.0},"slotId":"timeline","paint":{"stroke":"#C9CED8","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-01-16","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":725.1199999999999,"block":114.8,"inlineSize":17.56000000000006,"blockSize":120.0},"slotId":"timeline","paint":{"stroke":"#C9CED8","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-01-17","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":742.68,"block":114.8,"inlineSize":17.56000000000006,"blockSize":120.0},"slotId":"timeline","paint":{"stroke":"#C9CED8","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-01-23","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":848.04,"block":114.8,"inlineSize":17.559999999999945,"blockSize":120.0},"slotId":"timeline","paint":{"stroke":"#C9CED8","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-01-24","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":865.5999999999999,"block":114.8,"inlineSize":17.56000000000006,"blockSize":120.0},"slotId":"timeline","paint":{"stroke":"#C9CED8","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-01-30","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":970.9599999999999,"block":114.8,"inlineSize":17.56000000000006,"blockSize":120.0},"slotId":"timeline","paint":{"stroke":"#C9CED8","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-01-31","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":988.52,"block":114.8,"inlineSize":17.559999999999945,"blockSize":120.0},"slotId":"timeline","paint":{"stroke":"#C9CED8","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-06","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1093.8799999999999,"block":114.8,"inlineSize":17.560000000000173,"blockSize":120.0},"slotId":"timeline","paint":{"stroke":"#C9CED8","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-07","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1111.44,"block":114.8,"inlineSize":17.559999999999945,"blockSize":120.0},"slotId":"timeline","paint":{"stroke":"#C9CED8","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-13","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1216.8,"block":114.8,"inlineSize":17.559999999999945,"blockSize":120.0},"slotId":"timeline","paint":{"stroke":"#C9CED8","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-14","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1234.36,"block":114.8,"inlineSize":17.560000000000173,"blockSize":120.0},"slotId":"timeline","paint":{"stroke":"#C9CED8","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-20","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1339.7199999999998,"block":114.8,"inlineSize":17.559999999999945,"blockSize":120.0},"slotId":"timeline","paint":{"stroke":"#C9CED8","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-21","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1357.2799999999997,"block":114.8,"inlineSize":17.560000000000173,"blockSize":120.0},"slotId":"timeline","paint":{"stroke":"#C9CED8","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-27","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1462.6399999999999,"block":114.8,"inlineSize":17.559999999999945,"blockSize":120.0},"slotId":"timeline","paint":{"stroke":"#C9CED8","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-28","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1480.1999999999998,"block":114.8,"inlineSize":17.559999999999945,"blockSize":120.0},"slotId":"timeline","paint":{"stroke":"#C9CED8","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"planned:programme:programme","kind":"Rect","sourceRef":"programme","sourceKind":"object","purpose":"planned","visualRole":"planned","bounds":{"inline":637.3199999999999,"block":126.8,"inlineSize":807.76,"blockSize":16.0},"slotId":"timeline","paint":{"fill":"#3986E6","stroke":"#172033","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":0.0,"paintOrder":101},
+        {"id":"member-label:programme:programme","kind":"Text","sourceRef":"programme","sourceKind":"review","purpose":"member-label","visualRole":"text","bounds":{"inline":1448.58,"block":125.0,"inlineSize":113.21799999999999,"blockSize":19.599999999999998},"slotId":"timeline","text":"Product relaunch","baseline":[1448.58,139.0],"textLayout":{"bounds":{"inline":1448.58,"block":125.0,"inlineSize":113.21799999999999,"blockSize":19.599999999999998},"baseline":[1448.58,139.0],"lines":["Product relaunch"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":14.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#172033","dash":[],"opacity":1.0},"paintOrder":300,"hostPlacementId":"planned:programme:programme"},
+        {"id":"planned:design:design","kind":"Rect","sourceRef":"design","sourceKind":"object","purpose":"planned","visualRole":"planned","bounds":{"inline":637.3199999999999,"block":158.8,"inlineSize":316.0799999999999,"blockSize":16.0},"slotId":"timeline","paint":{"fill":"#3986E6","stroke":"#172033","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":0.0,"paintOrder":101},
+        {"id":"member-label:design:design","kind":"Text","sourceRef":"design","sourceKind":"review","purpose":"member-label","visualRole":"text","bounds":{"inline":956.8999999999999,"block":155.20000000000002,"inlineSize":45.696,"blockSize":19.599999999999998},"slotId":"timeline","text":"Design","baseline":[956.8999999999999,169.20000000000002],"textLayout":{"bounds":{"inline":956.8999999999999,"block":155.20000000000002,"inlineSize":45.696,"blockSize":19.599999999999998},"baseline":[956.8999999999999,169.20000000000002],"lines":["Design"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":14.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#172033","dash":[],"opacity":1.0},"paintOrder":300,"hostPlacementId":"planned:design:design"},
+        {"id":"planned:design:design-signoff","kind":"Symbol","sourceRef":"design-signoff","sourceKind":"object","purpose":"planned","visualRole":"planned","bounds":{"inline":945.3999999999999,"block":174.8,"inlineSize":16.0,"blockSize":16.0},"slotId":"timeline","paint":{"fill":"#3986E6","stroke":"#172033","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":0.0,"symbol":{"outline":[{"kind":"move","points":[[953.3999999999999,174.8]]},{"kind":"line","points":[[961.3999999999999,182.8]]},{"kind":"line","points":[[953.3999999999999,190.8]]},{"kind":"line","points":[[945.3999999999999,182.8]]},{"kind":"line","points":[[953.3999999999999,174.8]]}]},"paintOrder":101},
+        {"id":"member-label:design:design-signoff","kind":"Text","sourceRef":"design-signoff","sourceKind":"review","purpose":"member-label","visualRole":"text","bounds":{"inline":964.8999999999999,"block":174.8,"inlineSize":99.526,"blockSize":19.599999999999998},"slotId":"timeline","text":"Design sign-off","baseline":[964.8999999999999,188.8],"textLayout":{"bounds":{"inline":964.8999999999999,"block":174.8,"inlineSize":99.526,"blockSize":19.599999999999998},"baseline":[964.8999999999999,188.8],"lines":["Design sign-off"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":14.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#172033","dash":[],"opacity":1.0},"paintOrder":300,"hostPlacementId":"planned:design:design-signoff"},
+        {"id":"planned:delivery:delivery","kind":"Rect","sourceRef":"delivery","sourceKind":"object","purpose":"planned","visualRole":"planned","bounds":{"inline":1006.0799999999999,"block":198.8,"inlineSize":439.0,"blockSize":16.0},"slotId":"timeline","paint":{"fill":"#3986E6","stroke":"#172033","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":0.0,"paintOrder":101},
+        {"id":"member-label:delivery:delivery","kind":"Text","sourceRef":"delivery","sourceKind":"review","purpose":"member-label","visualRole":"text","bounds":{"inline":1448.58,"block":195.20000000000002,"inlineSize":53.27,"blockSize":19.599999999999998},"slotId":"timeline","text":"Delivery","baseline":[1448.58,209.20000000000002],"textLayout":{"bounds":{"inline":1448.58,"block":195.20000000000002,"inlineSize":53.27,"blockSize":19.599999999999998},"baseline":[1448.58,209.20000000000002],"lines":["Delivery"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":14.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#172033","dash":[],"opacity":1.0},"paintOrder":300,"hostPlacementId":"planned:delivery:delivery"},
+        {"id":"planned:delivery:launch","kind":"Symbol","sourceRef":"launch","sourceKind":"object","purpose":"planned","visualRole":"planned","bounds":{"inline":1437.08,"block":214.8,"inlineSize":16.0,"blockSize":16.0},"slotId":"timeline","paint":{"fill":"#3986E6","stroke":"#172033","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":0.0,"symbol":{"outline":[{"kind":"move","points":[[1445.08,214.8]]},{"kind":"line","points":[[1453.08,222.8]]},{"kind":"line","points":[[1445.08,230.8]]},{"kind":"line","points":[[1437.08,222.8]]},{"kind":"line","points":[[1445.08,214.8]]}]},"paintOrder":101},
+        {"id":"member-label:delivery:launch","kind":"Text","sourceRef":"launch","sourceKind":"review","purpose":"member-label","visualRole":"text","bounds":{"inline":1456.58,"block":214.8,"inlineSize":87.458,"blockSize":19.599999999999998},"slotId":"timeline","text":"Public launch","baseline":[1456.58,228.8],"textLayout":{"bounds":{"inline":1456.58,"block":214.8,"inlineSize":87.458,"blockSize":19.599999999999998},"baseline":[1456.58,228.8],"lines":["Public launch"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":14.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#172033","dash":[],"opacity":1.0},"paintOrder":300,"hostPlacementId":"planned:delivery:launch"},
+        {"id":"axis-label:0:0","kind":"Text","sourceRef":"timeline-axis","sourceKind":"review","purpose":"axis-label","visualRole":"text","bounds":{"inline":736.7379999999999,"block":68.8,"inlineSize":47.004,"blockSize":14.399999999999999},"slotId":"timeline-axis","text":"Jan 2027","baseline":[736.7379999999999,80.8],"textLayout":{"bounds":{"inline":736.7379999999999,"block":68.8,"inlineSize":47.004,"blockSize":14.399999999999999},"baseline":[736.7379999999999,80.8],"lines":["Jan 2027"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":12.0,"lineHeight":1.2,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#172033","dash":[],"opacity":1.0},"paintOrder":200},
+        {"id":"axis-label:0:1","kind":"Text","sourceRef":"timeline-axis","sourceKind":"review","purpose":"axis-label","visualRole":"text","bounds":{"inline":1226.9419999999998,"block":68.8,"inlineSize":49.956,"blockSize":14.399999999999999},"slotId":"timeline-axis","text":"Feb 2027","baseline":[1226.9419999999998,80.8],"textLayout":{"bounds":{"inline":1226.9419999999998,"block":68.8,"inlineSize":49.956,"blockSize":14.399999999999999},"baseline":[1226.9419999999998,80.8],"lines":["Feb 2027"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":12.0,"lineHeight":1.2,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#172033","dash":[],"opacity":1.0},"paintOrder":200},
+        {"id":"axis-label:0:2","kind":"Text","sourceRef":"timeline-axis","sourceKind":"review","purpose":"axis-label","visualRole":"text","bounds":{"inline":1506.8039999999999,"block":68.8,"inlineSize":52.152,"blockSize":14.399999999999999},"slotId":"timeline-axis","text":"Mar 2027","baseline":[1506.8039999999999,80.8],"textLayout":{"bounds":{"inline":1506.8039999999999,"block":68.8,"inlineSize":52.152,"blockSize":14.399999999999999},"baseline":[1506.8039999999999,80.8],"lines":["Mar 2027"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":12.0,"lineHeight":1.2,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#172033","dash":[],"opacity":1.0},"paintOrder":200},
+        {"id":"axis-separator:0","kind":"Path","sourceRef":"timeline-axis","sourceKind":"axis","purpose":"axis-cell-separator","visualRole":"axis-cell-separator","bounds":{"inline":1006.08,"block":68.8,"inlineSize":0.0,"blockSize":46.0},"slotId":"timeline-axis","paint":{"stroke":"#EAF0F8","strokeWidth":1.0,"dash":[],"opacity":1.0},"points":[[1006.08,68.8],[1006.08,114.8]],"paintOrder":12},
+        {"id":"axis-separator:1","kind":"Path","sourceRef":"timeline-axis","sourceKind":"axis","purpose":"axis-cell-separator","visualRole":"axis-cell-separator","bounds":{"inline":1497.76,"block":68.8,"inlineSize":0.0,"blockSize":46.0},"slotId":"timeline-axis","paint":{"stroke":"#EAF0F8","strokeWidth":1.0,"dash":[],"opacity":1.0},"points":[[1497.76,68.8],[1497.76,114.8]],"paintOrder":12},
+        {"id":"axis-rule","kind":"Path","sourceRef":"timeline-axis","sourceKind":"axis","purpose":"axis-rule","visualRole":"axis-rule","bounds":{"inline":506.4,"block":114.8,"inlineSize":1069.6,"blockSize":0.0},"slotId":"timeline-axis","paint":{"stroke":"#172033","strokeWidth":1.0,"dash":[],"opacity":1.0},"points":[[506.4,114.8],[1576.0,114.8]],"paintOrder":12},
+        {"id":"legend-swatch:planned","kind":"Rect","sourceRef":"planned","sourceKind":"legend","purpose":"legend-swatch","visualRole":"planned","bounds":{"inline":1396.0,"block":254.338,"inlineSize":32.0,"blockSize":16.0},"slotId":"legend","paint":{"fill":"#3986E6","stroke":"#172033","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":1},
+        {"id":"legend:planned","kind":"Text","sourceRef":"planned","sourceKind":"review","purpose":"legend-label","visualRole":"text","bounds":{"inline":1432.8,"block":253.938,"inlineSize":46.068,"blockSize":16.799999999999997},"slotId":"legend","text":"Planned","baseline":[1432.8,265.938],"textLayout":{"bounds":{"inline":1432.8,"block":253.938,"inlineSize":46.068,"blockSize":16.799999999999997},"baseline":[1432.8,265.938],"lines":["Planned"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":12.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#172033","dash":[],"opacity":1.0},"paintOrder":300}
+      ],
+      "scale": {
+        "surfaceId": "table-timeline",
+        "scaleId": "primary",
+        "domainStart": "2027-01-04",
+        "domainEnd": "2027-03-05",
+        "rangeStart": 514.4,
+        "rangeEnd": 1568.0,
+        "origin": 514.4,
+        "unitRatio": 17.56
+      },
+      "canvasPaint": {
+        "fill": "#FFFFFF",
+        "dash": [],
+        "opacity": 1.0
+      },
+      "canvasBounds": {
+        "inline": 0.0,
+        "block": 0.0,
+        "inlineSize": 1600.0,
+        "blockSize": 295.0
+      }
+    }
+  ],
+  "manifest": {
+    "version": "chrona/scene-manifest/v0.1",
+    "settingsVersion": "chrona/render-context/v0.17",
+    "viewport": {
+      "inlineSize": 1600.0,
+      "blockSize": 295.0
+    },
+    "selectedObjectIds": [
+      "programme",
+      "design",
+      "design-signoff",
+      "delivery",
+      "launch"
+    ],
+    "fontAssetIdentities": [
+      "sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3"
+    ],
+    "contentFamilyCounts": {
+      "relations": 0,
+      "annotations": 0,
+      "notes": 0,
+      "legendEntries": 1,
+      "summaryPanels": 0,
+      "groupDetails": 0,
+      "milestones": 0,
+      "observationRows": 0
+    },
+    "surfaceScales": [
+      {
+        "surfaceId": "table-timeline",
+        "scaleId": "primary",
+        "domainStart": "2027-01-04",
+        "domainEnd": "2027-03-05",
+        "rangeStart": 514.4,
+        "rangeEnd": 1568.0,
+        "origin": 514.4,
+        "unitRatio": 17.56
+      }
+    ],
+    "visualRoleCounts": {
+      "axis-cell-separator": 2,
+      "axis-rule": 1,
+      "calendar-closed": 16,
+      "group-band": 1,
+      "planned": 6,
+      "text": 14
+    }
+  },
+  "diagnostics": [
+    "I_LAYOUT_RELATION_ROUTING:{\"fallbackSearch\":0,\"relationInstances\":0,\"shapeSettled\":0,\"surfaceId\":\"table-timeline\"}",
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED:{\"layoutMember\":\"relationRouting.unroutable\",\"layoutValue\":\"relax\",\"surfaceId\":\"table-timeline\",\"viewMember\":\"visibility.relations.overflow\",\"viewValue\":\"suppress\"}"
+  ]
+}

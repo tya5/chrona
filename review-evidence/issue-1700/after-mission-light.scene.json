@@ -1,0 +1,294 @@
+{
+  "version": "chrona/scene/v0.6",
+  "kind": "scene",
+  "provenance": {
+    "mode": "draft",
+    "chronaVersion": "0.1.0a0",
+    "resources": [
+      {
+        "kind": "color-scheme",
+        "id": "mission-light",
+        "revision": "draft",
+        "contentIdentity": "sha256:9618cc1f4d7525493824efae55c191a97dfcd2ea4487410dd6cfecd985cdd172"
+      },
+      {
+        "kind": "layout-profile",
+        "id": "chrona-builtin-mission-light",
+        "revision": "draft",
+        "contentIdentity": "sha256:555a83ad35a89602fe8b32fc3d6635c73d467dd8fea6de9f18924a4c6f9f45a4"
+      },
+      {
+        "kind": "project",
+        "id": "product-relaunch",
+        "revision": "draft",
+        "contentIdentity": "sha256:3599c7d6887257aeb09fb2849b1c563ef1e8bc7ef9ad25297a8f03965ebbdb61"
+      },
+      {
+        "kind": "semantic-vocabulary",
+        "id": "chrona-core",
+        "revision": "v0.1",
+        "contentIdentity": "sha256:7fbb34ad6c0eb98ce3f6fe78dbef5cf44a4fdf99d54c1816457711ac7a31ff88"
+      },
+      {
+        "kind": "theme",
+        "id": "chrona-builtin-mission-light",
+        "revision": "draft",
+        "contentIdentity": "sha256:b096c6a8761df861ef75c515e46b791ac50995a6fd33eb329fe5af37e74eb5d6"
+      },
+      {
+        "kind": "view",
+        "id": "executive-summary",
+        "revision": "draft",
+        "contentIdentity": "sha256:5928f5b3b55ac80eadcc048e4494c36f15452f0497af0c9bedc72a215f11fa36"
+      }
+    ]
+  },
+  "viewport": {
+    "inlineSize": 1600.0,
+    "blockSize": 900.0
+  },
+  "requiredCapabilities": [
+    "mark.symbol-outline"
+  ],
+  "surfaces": [
+    {
+      "id": "table-timeline",
+      "slots": [
+        {
+          "id": "table",
+          "source": "table",
+          "bounds": {
+            "inline": 36.0,
+            "block": 95.1,
+            "inlineSize": 150.0,
+            "blockSize": 768.9
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "timeline",
+          "source": "timeline",
+          "scaleId": "primary",
+          "bounds": {
+            "inline": 222.0,
+            "block": 141.1,
+            "inlineSize": 1342.0,
+            "blockSize": 722.9
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "timeline-axis",
+          "source": "timeline-axis",
+          "scaleId": "primary",
+          "bounds": {
+            "inline": 222.0,
+            "block": 95.1,
+            "inlineSize": 1342.0,
+            "blockSize": 46.0
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "title",
+          "source": "title",
+          "bounds": {
+            "inline": 36.0,
+            "block": 36.0,
+            "inlineSize": 292.12800000000004,
+            "blockSize": 39.1
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "review-surface",
+          "source": "review-surface",
+          "bounds": {
+            "inline": 36.0,
+            "block": 95.1,
+            "inlineSize": 1528.0,
+            "blockSize": 768.9
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        }
+      ],
+      "rows": [
+        {
+          "id": "programme",
+          "objectId": "programme",
+          "groupId": "",
+          "bounds": {
+            "inline": 222.0,
+            "block": 141.1,
+            "inlineSize": 1342.0,
+            "blockSize": 240.96666666666667
+          }
+        },
+        {
+          "id": "design",
+          "objectId": "design",
+          "groupId": "",
+          "bounds": {
+            "inline": 222.0,
+            "block": 382.06666666666666,
+            "inlineSize": 1342.0,
+            "blockSize": 240.96666666666667
+          }
+        },
+        {
+          "id": "delivery",
+          "objectId": "delivery",
+          "groupId": "",
+          "bounds": {
+            "inline": 222.0,
+            "block": 623.0333333333333,
+            "inlineSize": 1342.0,
+            "blockSize": 240.96666666666667
+          }
+        }
+      ],
+      "columns": [
+        {
+          "id": "Work item",
+          "label": "Work item",
+          "bounds": {
+            "inline": 36.0,
+            "block": 95.1,
+            "inlineSize": 150.0,
+            "blockSize": 768.9
+          }
+        }
+      ],
+      "groups": [
+        {
+          "id": "",
+          "contentBounds": {
+            "inline": 222.0,
+            "block": 141.1,
+            "inlineSize": 1342.0,
+            "blockSize": 722.9
+          }
+        }
+      ],
+      "primitives": [
+        {"id":"title","kind":"Text","sourceRef":"title","sourceKind":"review","purpose":"title-text","visualRole":"text","bounds":{"inline":36.0,"block":40.89599999999999,"inlineSize":292.12800000000004,"blockSize":39.099999999999994},"slotId":"title","text":"Product relaunch","baseline":[36.0,74.89599999999999],"textLayout":{"bounds":{"inline":36.0,"block":40.89599999999999,"inlineSize":292.12800000000004,"blockSize":39.099999999999994},"baseline":[36.0,74.89599999999999],"lines":["Product relaunch"],"family":"Noto Sans, sans-serif","weight":700,"fontSize":34.0,"lineHeight":1.15,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"column:Work item","kind":"Text","sourceRef":"view:tableColumns","sourceKind":"review","purpose":"table-column-label","visualRole":"text","bounds":{"inline":36.0,"block":95.1,"inlineSize":72.9,"blockSize":21.0},"slotId":"table","text":"Work item","baseline":[36.0,110.1],"textLayout":{"bounds":{"inline":36.0,"block":95.1,"inlineSize":72.9,"blockSize":21.0},"baseline":[36.0,110.1],"lines":["Work item"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":15.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"tableColumnId":"Work item","paintOrder":300},
+        {"id":"cell:programme:Work item","kind":"Text","sourceRef":"programme","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":36.0,"block":251.08333333333331,"inlineSize":121.30499999999999,"blockSize":21.0},"slotId":"table","text":"Product relaunch","baseline":[36.0,266.0833333333333],"textLayout":{"bounds":{"inline":36.0,"block":251.08333333333331,"inlineSize":121.30499999999999,"blockSize":21.0},"baseline":[36.0,266.0833333333333],"lines":["Product relaunch"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":15.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"tableRowId":"programme","tableColumnId":"Work item","paintOrder":300},
+        {"id":"cell:design:Work item","kind":"Text","sourceRef":"design","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":52.0,"block":492.05,"inlineSize":48.959999999999994,"blockSize":21.0},"slotId":"table","text":"Design","baseline":[52.0,507.05],"textLayout":{"bounds":{"inline":52.0,"block":492.05,"inlineSize":48.959999999999994,"blockSize":21.0},"baseline":[52.0,507.05],"lines":["Design"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":15.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"tableRowId":"design","tableColumnId":"Work item","paintOrder":300},
+        {"id":"cell:delivery:Work item","kind":"Text","sourceRef":"delivery","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":52.0,"block":733.0166666666667,"inlineSize":57.075,"blockSize":21.0},"slotId":"table","text":"Delivery","baseline":[52.0,748.0166666666667],"textLayout":{"bounds":{"inline":52.0,"block":733.0166666666667,"inlineSize":57.075,"blockSize":21.0},"baseline":[52.0,748.0166666666667],"lines":["Delivery"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":15.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"tableRowId":"delivery","tableColumnId":"Work item","paintOrder":300},
+        {"id":"group:","kind":"Rect","sourceRef":"","sourceKind":"decoration","purpose":"group-decoration","visualRole":"group-band","bounds":{"inline":36.0,"block":141.1,"inlineSize":150.0,"blockSize":722.9},"slotId":"table","paint":{"fill":"#EEF2F7","dash":[],"opacity":1.0},"paintOrder":10},
+        {"id":"calendar-closed:2027-01-09","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":338.0,"block":141.1,"inlineSize":22.19999999999999,"blockSize":722.9},"slotId":"timeline","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-01-10","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":360.2,"block":141.1,"inlineSize":22.19999999999999,"blockSize":722.9},"slotId":"timeline","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-01-16","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":493.4,"block":141.1,"inlineSize":22.199999999999932,"blockSize":722.9},"slotId":"timeline","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-01-17","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":515.5999999999999,"block":141.1,"inlineSize":22.200000000000045,"blockSize":722.9},"slotId":"timeline","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-01-23","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":648.8,"block":141.1,"inlineSize":22.200000000000045,"blockSize":722.9},"slotId":"timeline","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-01-24","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":671.0,"block":141.1,"inlineSize":22.200000000000045,"blockSize":722.9},"slotId":"timeline","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-01-30","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":804.1999999999999,"block":141.1,"inlineSize":22.200000000000045,"blockSize":722.9},"slotId":"timeline","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-01-31","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":826.4,"block":141.1,"inlineSize":22.200000000000045,"blockSize":722.9},"slotId":"timeline","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-06","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":959.6,"block":141.1,"inlineSize":22.199999999999932,"blockSize":722.9},"slotId":"timeline","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-07","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":981.8,"block":141.1,"inlineSize":22.200000000000045,"blockSize":722.9},"slotId":"timeline","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-13","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1115.0,"block":141.1,"inlineSize":22.199999999999818,"blockSize":722.9},"slotId":"timeline","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-14","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1137.1999999999998,"block":141.1,"inlineSize":22.200000000000273,"blockSize":722.9},"slotId":"timeline","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-20","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1270.3999999999999,"block":141.1,"inlineSize":22.200000000000045,"blockSize":722.9},"slotId":"timeline","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-21","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1292.6,"block":141.1,"inlineSize":22.200000000000045,"blockSize":722.9},"slotId":"timeline","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-27","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1425.8,"block":141.1,"inlineSize":22.200000000000045,"blockSize":722.9},"slotId":"timeline","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-28","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1448.0,"block":141.1,"inlineSize":22.200000000000045,"blockSize":722.9},"slotId":"timeline","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"planned:programme:programme","kind":"Rect","sourceRef":"programme","sourceKind":"object","purpose":"planned","visualRole":"planned","bounds":{"inline":382.4,"block":256.5833333333333,"inlineSize":1021.1999999999999,"blockSize":10.0},"slotId":"timeline","paint":{"fill":"#1D5FD1","stroke":"#101828","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":0.0,"paintOrder":101},
+        {"id":"member-label:programme:programme","kind":"Text","sourceRef":"programme","sourceKind":"review","purpose":"member-label","visualRole":"text","bounds":{"inline":832.3475,"block":231.83333333333331,"inlineSize":121.30499999999999,"blockSize":21.0},"slotId":"timeline","text":"Product relaunch","baseline":[832.3475,246.83333333333331],"textLayout":{"bounds":{"inline":832.3475,"block":231.83333333333331,"inlineSize":121.30499999999999,"blockSize":21.0},"baseline":[832.3475,246.83333333333331],"lines":["Product relaunch"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":15.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"paintOrder":300,"hostPlacementId":"planned:programme:programme"},
+        {"id":"planned:design:design","kind":"Rect","sourceRef":"design","sourceKind":"object","purpose":"planned","visualRole":"planned","bounds":{"inline":382.4,"block":492.55,"inlineSize":399.6,"blockSize":10.0},"slotId":"timeline","paint":{"fill":"#1D5FD1","stroke":"#101828","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":0.0,"paintOrder":101},
+        {"id":"member-label:design:design","kind":"Text","sourceRef":"design","sourceKind":"review","purpose":"member-label","visualRole":"text","bounds":{"inline":557.72,"block":467.8,"inlineSize":48.959999999999994,"blockSize":21.0},"slotId":"timeline","text":"Design","baseline":[557.72,482.8],"textLayout":{"bounds":{"inline":557.72,"block":467.8,"inlineSize":48.959999999999994,"blockSize":21.0},"baseline":[557.72,482.8],"lines":["Design"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":15.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"paintOrder":300,"hostPlacementId":"planned:design:design"},
+        {"id":"planned:design:design-signoff","kind":"Symbol","sourceRef":"design-signoff","sourceKind":"object","purpose":"planned","visualRole":"planned","bounds":{"inline":777.0,"block":502.55,"inlineSize":10.0,"blockSize":10.0},"slotId":"timeline","paint":{"fill":"#1D5FD1","stroke":"#101828","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":0.0,"symbol":{"outline":[{"kind":"move","points":[[782.0,502.55]]},{"kind":"line","points":[[787.0,507.55]]},{"kind":"line","points":[[782.0,512.55]]},{"kind":"line","points":[[777.0,507.55]]},{"kind":"line","points":[[782.0,502.55]]}]},"paintOrder":101},
+        {"id":"member-label:design:design-signoff","kind":"Text","sourceRef":"design-signoff","sourceKind":"review","purpose":"member-label","visualRole":"text","bounds":{"inline":728.6825,"block":471.05,"inlineSize":106.635,"blockSize":21.0},"slotId":"timeline","text":"Design sign-off","baseline":[728.6825,486.05],"textLayout":{"bounds":{"inline":728.6825,"block":471.05,"inlineSize":106.635,"blockSize":21.0},"baseline":[728.6825,486.05],"lines":["Design sign-off"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":15.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"paintOrder":300,"hostPlacementId":"planned:design:design-signoff"},
+        {"id":"planned:delivery:delivery","kind":"Rect","sourceRef":"delivery","sourceKind":"object","purpose":"planned","visualRole":"planned","bounds":{"inline":848.6,"block":733.5166666666667,"inlineSize":554.9999999999999,"blockSize":10.0},"slotId":"timeline","paint":{"fill":"#1D5FD1","stroke":"#101828","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":0.0,"paintOrder":101},
+        {"id":"member-label:delivery:delivery","kind":"Text","sourceRef":"delivery","sourceKind":"review","purpose":"member-label","visualRole":"text","bounds":{"inline":1097.5625,"block":708.7666666666667,"inlineSize":57.075,"blockSize":21.0},"slotId":"timeline","text":"Delivery","baseline":[1097.5625,723.7666666666667],"textLayout":{"bounds":{"inline":1097.5625,"block":708.7666666666667,"inlineSize":57.075,"blockSize":21.0},"baseline":[1097.5625,723.7666666666667],"lines":["Delivery"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":15.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"paintOrder":300,"hostPlacementId":"planned:delivery:delivery"},
+        {"id":"planned:delivery:launch","kind":"Symbol","sourceRef":"launch","sourceKind":"object","purpose":"planned","visualRole":"planned","bounds":{"inline":1398.6,"block":743.5166666666667,"inlineSize":10.0,"blockSize":10.0},"slotId":"timeline","paint":{"fill":"#1D5FD1","stroke":"#101828","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":0.0,"symbol":{"outline":[{"kind":"move","points":[[1403.6,743.5166666666667]]},{"kind":"line","points":[[1408.6,748.5166666666667]]},{"kind":"line","points":[[1403.6,753.5166666666667]]},{"kind":"line","points":[[1398.6,748.5166666666667]]},{"kind":"line","points":[[1403.6,743.5166666666667]]}]},"paintOrder":101},
+        {"id":"member-label:delivery:launch","kind":"Text","sourceRef":"launch","sourceKind":"review","purpose":"member-label","visualRole":"text","bounds":{"inline":1356.7475,"block":712.0166666666667,"inlineSize":93.705,"blockSize":21.0},"slotId":"timeline","text":"Public launch","baseline":[1356.7475,727.0166666666667],"textLayout":{"bounds":{"inline":1356.7475,"block":712.0166666666667,"inlineSize":93.705,"blockSize":21.0},"baseline":[1356.7475,727.0166666666667],"lines":["Public launch"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":15.0,"lineHeight":1.4,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"paintOrder":300,"hostPlacementId":"planned:delivery:launch"},
+        {"id":"axis-label:0:0","kind":"Text","sourceRef":"timeline-axis","sourceKind":"review","purpose":"axis-label","visualRole":"text","bounds":{"inline":511.176,"block":95.1,"inlineSize":53.248000000000005,"blockSize":18.2},"slotId":"timeline-axis","text":"Jan 2027","baseline":[511.176,108.1],"textLayout":{"bounds":{"inline":511.176,"block":95.1,"inlineSize":53.248000000000005,"blockSize":18.2},"baseline":[511.176,108.1],"lines":["Jan 2027"],"family":"Noto Sans, sans-serif","weight":700,"fontSize":13.0,"lineHeight":1.4,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"paintOrder":200},
+        {"id":"axis-label:0:1","kind":"Text","sourceRef":"timeline-axis","sourceKind":"review","purpose":"axis-label","visualRole":"text","bounds":{"inline":1131.489,"block":95.1,"inlineSize":55.821999999999996,"blockSize":18.2},"slotId":"timeline-axis","text":"Feb 2027","baseline":[1131.489,108.1],"textLayout":{"bounds":{"inline":1131.489,"block":95.1,"inlineSize":55.821999999999996,"blockSize":18.2},"baseline":[1131.489,108.1],"lines":["Feb 2027"],"family":"Noto Sans, sans-serif","weight":700,"fontSize":13.0,"lineHeight":1.4,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"paintOrder":200},
+        {"id":"axis-label:0:2","kind":"Text","sourceRef":"timeline-axis","sourceKind":"review","purpose":"axis-label","visualRole":"text","bounds":{"inline":1485.3175,"block":95.1,"inlineSize":58.565,"blockSize":18.2},"slotId":"timeline-axis","text":"Mar 2027","baseline":[1485.3175,108.1],"textLayout":{"bounds":{"inline":1485.3175,"block":95.1,"inlineSize":58.565,"blockSize":18.2},"baseline":[1485.3175,108.1],"lines":["Mar 2027"],"family":"Noto Sans, sans-serif","weight":700,"fontSize":13.0,"lineHeight":1.4,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"paintOrder":200},
+        {"id":"axis-separator:0","kind":"Path","sourceRef":"timeline-axis","sourceKind":"axis","purpose":"axis-cell-separator","visualRole":"axis-cell-separator","bounds":{"inline":848.6,"block":95.1,"inlineSize":0.0,"blockSize":46.0},"slotId":"timeline-axis","paint":{"stroke":"#EEF2F7","strokeWidth":1.0,"dash":[],"opacity":1.0},"points":[[848.6,95.1],[848.6,141.1]],"paintOrder":12},
+        {"id":"axis-separator:1","kind":"Path","sourceRef":"timeline-axis","sourceKind":"axis","purpose":"axis-cell-separator","visualRole":"axis-cell-separator","bounds":{"inline":1470.2,"block":95.1,"inlineSize":0.0,"blockSize":46.0},"slotId":"timeline-axis","paint":{"stroke":"#EEF2F7","strokeWidth":1.0,"dash":[],"opacity":1.0},"points":[[1470.2,95.1],[1470.2,141.1]],"paintOrder":12},
+        {"id":"axis-rule","kind":"Path","sourceRef":"timeline-axis","sourceKind":"axis","purpose":"axis-rule","visualRole":"axis-rule","bounds":{"inline":222.0,"block":141.1,"inlineSize":1342.0,"blockSize":0.0},"slotId":"timeline-axis","paint":{"stroke":"#101828","strokeWidth":1.0,"dash":[],"opacity":1.0},"points":[[222.0,141.1],[1564.0,141.1]],"paintOrder":12}
+      ],
+      "scale": {
+        "surfaceId": "table-timeline",
+        "scaleId": "primary",
+        "domainStart": "2027-01-04",
+        "domainEnd": "2027-03-05",
+        "rangeStart": 227.0,
+        "rangeEnd": 1559.0,
+        "origin": 227.0,
+        "unitRatio": 22.2
+      },
+      "canvasPaint": {
+        "fill": "#FFFFFF",
+        "dash": [],
+        "opacity": 1.0
+      },
+      "canvasBounds": {
+        "inline": 0.0,
+        "block": 0.0,
+        "inlineSize": 1600.0,
+        "blockSize": 900.0
+      }
+    }
+  ],
+  "manifest": {
+    "version": "chrona/scene-manifest/v0.1",
+    "settingsVersion": "chrona/render-context/v0.17",
+    "viewport": {
+      "inlineSize": 1600.0,
+      "blockSize": 900.0
+    },
+    "selectedObjectIds": [
+      "programme",
+      "design",
+      "design-signoff",
+      "delivery",
+      "launch"
+    ],
+    "fontAssetIdentities": [
+      "sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3",
+      "sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f"
+    ],
+    "contentFamilyCounts": {
+      "relations": 0,
+      "annotations": 0,
+      "notes": 0,
+      "legendEntries": 0,
+      "summaryPanels": 0,
+      "groupDetails": 0,
+      "milestones": 0,
+      "observationRows": 0
+    },
+    "surfaceScales": [
+      {
+        "surfaceId": "table-timeline",
+        "scaleId": "primary",
+        "domainStart": "2027-01-04",
+        "domainEnd": "2027-03-05",
+        "rangeStart": 227.0,
+        "rangeEnd": 1559.0,
+        "origin": 227.0,
+        "unitRatio": 22.2
+      }
+    ],
+    "visualRoleCounts": {
+      "axis-cell-separator": 2,
+      "axis-rule": 1,
+      "calendar-closed": 16,
+      "group-band": 1,
+      "planned": 5,
+      "text": 13
+    }
+  },
+  "diagnostics": [
+    "I_LAYOUT_RELATION_ROUTING:{\"fallbackSearch\":0,\"relationInstances\":0,\"shapeSettled\":0,\"surfaceId\":\"table-timeline\"}",
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED:{\"layoutMember\":\"relationRouting.unroutable\",\"layoutValue\":\"relax\",\"surfaceId\":\"table-timeline\",\"viewMember\":\"visibility.relations.overflow\",\"viewValue\":\"suppress\"}"
+  ]
+}
