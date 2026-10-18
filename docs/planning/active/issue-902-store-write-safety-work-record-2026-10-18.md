@@ -172,18 +172,21 @@ Store/Actual; full identities are verified from immutable bytes, never trusted
 from a ledger digest alone. Fresh-base CAS remains independent of state equality.
 No unresolved architecture finding remains. Normative authority is Spec35 §4.3;
 Spec10 and Spec66 connect the ownership and agent contract. Publish this design
-before implementation planning. Item3 may pipeline as isolated WIP on the
-verified public item5 implementation; its PR/release waits for item5 release.
-This branch is separate from the item5 product/release branch, avoiding an
-unimplemented tool-set claim in that release.
+before implementation planning. Item3 remains isolated WIP on the verified
+public item5 implementation. Its PR may open after item5 merges and derived-main
+is ready, concurrently with item5's full release; item3 merge remains blocked
+until that release succeeds. This branch is separate from item5's product and
+release acceptance, avoiding an unimplemented tool-set claim in that release.
 
 ## Item3 implementation plan
 
 Design/specification/architecture review `a79ab0307` is published on
-`wip/issue-902-actual-history-design`. One coherent product PR after item5
-release; the following are owned implementation/test slices, not partial main
-releases. WIP implementation may proceed during item5's publication wait; never
-merge unimplemented item3 contracts into the separate item5 release branch.
+`wip/issue-902-actual-history-design`. One coherent product PR may open after
+item5 merges and derived-main is ready; item3 merge still waits for item5's
+successful full release. The following are owned implementation/test slices,
+not partial main releases. WIP implementation may proceed during item5's
+publication wait; never merge unimplemented item3 contracts into the separate
+item5 release branch.
 
 | Slice | Owned files | Acceptance evidence |
 | --- | --- | --- |
@@ -214,8 +217,10 @@ findings. Imports11 packages/37 edges inward. No public render policy/source
 or canonical generated outputs changed. Ready-main integration `499d2ad27`
 passed99 focused command/adapter/CLI/process tests, three real MCP history
 tests and an independent11-test history/concurrency audit; no conflict or new
-architecture gap. Remaining: item5 release, final current-ready-base PR CI/public
-evidence and exact-main release. No item3 PR has been opened prematurely.
+architecture gap. Remaining: item5 final-head/current-ready-base CI and full
+release. Item3 PR may open after item5 merges and derived-main is ready, but
+item3 merge remains blocked until item5 full release succeeds. This changes PR
+timing only; acceptance is unchanged.
 Following ready `9e224db6c` and predecessor review `950d79001` changes no item3
 engine/schema code;31 focused history/concurrency/documentation cases pass.
 
@@ -223,4 +228,7 @@ engine/schema code;31 focused history/concurrency/documentation cases pass.
 
 Design `cdf0289f8`, plan `fa31cc79c`, code `fa831e384` and review `0b79e65a0`
 are on `wip/issue-902-authoring-design`; that branch owns durable authoring/MCPv0.6.
-Its PR/release follows item3. Parked4/814/815 remain open.
+Item2 PR may open after item3 merges and derived-main is ready, alongside
+item3's full release; item2 merge still waits for item3's successful full
+release. Any predecessor release failure remains that predecessor owner's
+priority and blocks the dependent merge. Parked4/814/815 remain open.
