@@ -41,6 +41,12 @@ YAML-serialized and the review lacked its required programme-section heading;
 both are corrected. The shared closure emits plain documents before guided
 normalization, retaining provenance on the typed sources. Strict-YAML and
 isolated Python3.11 stdio target-b regression checks pass.
+Later CI exposed an overbroad structural-test substring and a stale packaged
+tool table; exact AST guards and registry-derived coverage correct both.
+CI39134683708 passes shards1/2 and fails only the skill's 200-line limit in
+shard3. Moving MCP-only guidance to a linked reference keeps the entrypoint at
+199 lines without removing lifecycle rules; all44 packaged-skill tests and
+the skill validator pass. The test limit is unchanged.
 
 ## Programme-level criteria (optional)
 
