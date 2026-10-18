@@ -118,7 +118,7 @@ Scene owns semantic-to-primitive emission only. Scene may select a primitive's z
 For realized legend selection (#1679), the pure presentation model supplies
 one shared, geometry-free key-relevant paint result: effective channels,
 override precedence, gradient token identity and selected-profile admission.
-The existing use-case/pipeline adapter supplies a neutral capability set and
+The existing use-case/pipeline adapter supplies neutral capability support and
 optional-omission flag from the selected profile to both consumers; Layout
 does not import Scene's `VisualProfile`. The shared result carries effective
 channels, admitted gradient identity or its omission, and the existing

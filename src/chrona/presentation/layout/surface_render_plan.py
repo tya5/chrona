@@ -1,7 +1,7 @@
 """Owns source measurement, allocation and native preparation; reads resolved surface intent and resources."""
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import date
 from decimal import Decimal, ROUND_CEILING
 from typing import Any, Mapping
@@ -33,6 +33,7 @@ from chrona.presentation.model.presentation_contract import normalize_presentati
 from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, SurfaceContentInput, TableContent
 from chrona.presentation.model.theme_tokens import ThemeTokenView
+from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.presentation.review.v05_content import compose_heading
 
@@ -60,6 +61,7 @@ class SurfaceRenderPlanInput:
     visual_requests: tuple[VisualRequest, ...]
     progress: RenderProgress | None = None
     previous_route_hints: PreviousRouteHints | None = None
+    paint_capabilities: PaintWitnessCapabilities = field(default_factory=PaintWitnessCapabilities)
 
 
 @dataclass(frozen=True)
@@ -220,6 +222,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
                                if view.surface == "table-timeline" else None),
             theme_tokens=ThemeTokenView(theme), font_metrics=font_metrics,
             capabilities=dict(value.capabilities),
+            paint_capabilities=value.paint_capabilities,
             icon_assets=icon_assets, visual_requests=visual_requests,
             capacity_short_sources=short_sources,
             as_of_chip_measurement=as_of_chip_measurement,

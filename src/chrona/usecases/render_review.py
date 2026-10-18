@@ -97,6 +97,7 @@ from chrona.presentation.scene.visual_capabilities import (
     resolve_visual_profile,
     validate_surface_visual_profile,
     visual_capability_message,
+    paint_witness_capabilities,
 )
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.storage.snapshot_paths import snapshot_directory
@@ -431,6 +432,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             detail=profile_connections.detail,
             viewport_inline=environment.viewport_inline, viewport_block=environment.viewport_block,
             content_sized=request.draft_auto_block, locale=environment.locale,
+            paint_capabilities=paint_witness_capabilities(visual_profile),
             capabilities={name: True for name in render_closure.context.target.capabilities},
             icon_assets=icon_assets, visual_requests=visual_requests, progress=request.progress))
         plan = prepare_surface_render_plan(count_input.value) if not count_input.active else None

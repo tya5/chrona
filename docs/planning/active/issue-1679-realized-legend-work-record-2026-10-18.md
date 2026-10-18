@@ -1,6 +1,6 @@
 # Issue 1679: realized legend work record (2026-10-18)
 
-Status: design/architecture review published at `e1ede946c`; implementation plan finalized below. Product work waits for #1680 integration.
+Status: design/architecture review `e1ede946c` and plan `492c8512e` published; #1680 merged at `82c1e96b6`. I1/I2 are implemented in WIP and under integration review; I3/I4 remain open.
 
 ## Baseline and order
 
@@ -44,3 +44,10 @@ All slices are independently focused-testable WIP publications; one coherent pro
 I1 and the non-overlapping I2 may run through Luna agents after the baseline is integrated; root owns I3 and serial publication. Publish completed slices with focused evidence; a contract gap returns to normative design before code continues. No new schema version or resource migration is planned; if a schema edit proves necessary, apply Spec56 equivalence checks before publication.
 
 The code PR's exact-head CI supplies pytest shards, conformance and newest-Python reproduction. After merge, publish the batched literal acceptance/release review and verify full three-OS pytest/conformance/wheel evidence on the exact main containing that review. Close only when every literal row is met, inspected PNGs and the public count table are linked, and release checks pass; update the specification closure ledger. No local full pytest duplicate is planned.
+
+## Current implementation evidence
+
+- I1: shared model channels/gradient admission and Scene consumers; focused model/Scene66 and native Actual/Style20 passed in the isolated slice. Integration review is checking observable paint fingerprint normalization before final key grouping; this is not release acceptance.
+- I2: one normalized column list drives columns and cells; comparison-source presence is captured from closure independently of selected rows. Absent/supplied-empty, forecast, scenario and explicit-row tests:147 passed. View input remains unchanged.
+- I3 wording validation:17 passed; neutral selected-profile admission adapter:5 passed. No product PR or public artifact acceptance yet. Final candidate sizing, completed-placement filtering, swatch bridge and batched render/count evidence remain.
+- Design-phase documentation checks:28 passed; conformance passed before the product slices. Do not reuse that run as verification of the implemented slices.

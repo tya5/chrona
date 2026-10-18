@@ -17,6 +17,7 @@ from chrona.presentation.layout.relation_hint_model import PreviousRouteHints
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, axis_label_semantic_ids
 from chrona.presentation.model.style_rules import StyleOccurrenceKey
+from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 
 if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement.
     from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
@@ -706,6 +707,7 @@ class SurfaceLayoutRequest:
     mark_visibility_index: ItemMarkVisibilityIndex | None = None
     previous_route_hints: PreviousRouteHints | None = None
     temporal_capacity: TemporalInlineCapacity | None = None
+    paint_capabilities: PaintWitnessCapabilities = field(default_factory=PaintWitnessCapabilities)
 
 
 @dataclass(frozen=True)
