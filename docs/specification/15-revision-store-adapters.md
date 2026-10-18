@@ -109,7 +109,12 @@ from disk; a cached revision cannot authorize a write.
 
 Same-thread nested acquisition is reentrant; other threads and processes remain
 excluded. The lock file is not removed or replaced during release. Root aliases
-resolve to the same lock identity. Failure to open/acquire the lock rejects the
+resolve to the same lock identity. Private lock-file content is not a sentinel
+or protocol: empty and nonempty files coordinate the same way. Windows acquires
+the byte range at offset0 without first reading or initializing it; the CRT
+permits locks past EOF, and another handle's mandatory lock forbids pre-lock
+content access. See [Microsoft CRT `_locking`](https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/locking?view=msvc-170).
+Failure to open/acquire the lock rejects the
 command with `E_STORE_LOCK_UNAVAILABLE` before canonical mutation; direct adapter
 calls raise that typed storage failure. Existing revision/ledger formats and
 conflict/replay behavior do not change. The advisory lock protects cooperating
