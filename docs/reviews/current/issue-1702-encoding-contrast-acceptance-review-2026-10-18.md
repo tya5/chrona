@@ -11,8 +11,8 @@
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | a synthetic 8-value domain on a 6-slot scheme gives distinct paints or a legend-keyed Other. | met | [CSV import, explicit responsible mapping, mission-light six-slot scheme, local legend Layout, distinct retained paints and emitted Other key](../../../tests/integration/test_categorical_hues_not_cycled.py). Existing folding works; neither trial inputs nor packaged resources are changed. | — |
-| 2 | find why the gate does not judge this pair; a synthetic twin raises the warning. | met | Shape visibility chooses the readable outline. [Independent fill observation](../../../tests/unit/chrona/presentation/scene/test_contrast_policy.py), [View/Style render transport](../../../tests/integration/test_encoding_contrast.py), and [pair identity, count, full IDs and CLI separation](../../../tests/unit/chrona/usecases/test_encoding_pair_warnings.py). Follow-up publication/release remains pending below. | — |
+| 1 | a synthetic 8-value domain on a 6-slot scheme gives distinct paints or a legend-keyed Other. | met | [CSV import, explicit responsible mapping, mission-light six-slot scheme, local legend Layout, distinct retained paints and emitted Other key](../../../tests/integration/test_categorical_hues_not_cycled.py). Existing folding works; neither trial inputs nor packaged resources are changed. Included in final [three-OS release run](https://github.com/tya5/chrona/actions/runs/39136683440). | — |
+| 2 | find why the gate does not judge this pair; a synthetic twin raises the warning. | met | Shape visibility chooses the readable outline. [Independent fill observation](../../../tests/unit/chrona/presentation/scene/test_contrast_policy.py), [View/Style render transport](../../../tests/integration/test_encoding_contrast.py), and [pair identity, count, full IDs and CLI separation](../../../tests/unit/chrona/usecases/test_encoding_pair_warnings.py). Final [derived snapshot](https://github.com/tya5/chrona/actions/runs/39135333129) and [three-OS release run](https://github.com/tya5/chrona/actions/runs/39136683440) pass. | — |
 | 3 | the message names the missing role, the View member that needs it, and what to declare (one sentence plus the pointer). | not met | [Dev B lane](https://github.com/tya5/chrona/issues/454); not accepted by the rows1–2 implementation. | — |
 | 4 | both read in words, with the author's pointer (same mechanism as #1683 row 1). | not met | [Dev B lane](https://github.com/tya5/chrona/issues/454); not accepted by the rows1–2 implementation. | — |
 | 5 | a synthetic case and the PNG. | not met | [Dev B lane](https://github.com/tya5/chrona/issues/454); not accepted by the rows1–2 implementation. | — |
@@ -54,9 +54,20 @@ The reviewer accepted this delta and requested pair aggregation.
 Follow-up focused observer/render tests:89 passed; grouping/report/transport
 targets:32 passed. A read-only check of the seven committed Scenes groups148
 encoded warning occurrences into45 pairs (01:5/16,02:8/26,11:8/26,12:7/18,
-15:6/26,19:8/26,26:3/10). All occurrence observations are retained. The official
-new snapshot must confirm these counts and unchanged SVG/primitive witnesses.
+15:6/26,19:8/26,26:3/10). All occurrence observations are retained.
 
-Release pending: focused checks and the candidate snapshot are not substitutes
-for final-head checks and exact-main three-OS release. This shared issue stays
-open until all six literal rows and the release gate are accepted.
+The final PR [#1728](https://github.com/tya5/chrona/pull/1728) merged as
+`376fe993e70597bee8b24b5d8db32646627535cc`. Its final [CI run
+39135333129](https://github.com/tya5/chrona/actions/runs/39135333129) passed
+derived preview, conformance, all three pytest shards, MCP floor, and newest
+Python reproduction; official derived artifact `12139518376` contains all 50
+SVGs byte-identical to baseline. Seven Scenes carry the intended diagnostic
+aggregation change (148 encoded-fill records to 45 grouped warnings); no
+unrelated Scene change was reported. The post-merge [three-OS release run
+39136683440](https://github.com/tya5/chrona/actions/runs/39136683440) passed on
+source `02226224db444c9b1476cfee0ff3290dd480601f` for Ubuntu, macOS, Windows,
+newest Python, and MCP floor.
+
+Rows 1–2 now have final-release evidence. Rows 3–6 remain unmet and owned by
+the separate follow-up; this shared issue stays open until all six literal
+rows are accepted.

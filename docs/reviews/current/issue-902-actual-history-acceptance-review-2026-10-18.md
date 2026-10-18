@@ -2,7 +2,8 @@
 
 # Issue 902 — Actual history (item 3)
 
-This accepts neither item2 nor the parked item4/#814/#815; the parent stays open.
+This review accepts item3 only; items5 and2 are accepted separately. Parent
+#902 remains open for owner-parked items4/#814/#815.
 
 ## Literal issue acceptance
 
@@ -27,29 +28,17 @@ Redo revalidates intent; revert creates a new immutable revision. Legacy
 unrecoverable intent is diagnosed, not guessed. No renderer or project YAML
 changes; generic Project history is unchanged.
 
-Prepared integration `bf83da0e0` includes reviewer1704/1705 and Windows repair
-main `381cf404a`; final publication requires its successful trusted-ready gate.
-History/process/locking/MCP focused19 and agent/ledger/schema-packaging/CLI115
-pass; the literal-review checker passes. Schema equivalence passes: L1 added1/
-equal41, L2/L3 with the same five baseline-invalid documents. Independent final
-review confirms post-publication record I/O errors propagate rather than being
-mislabeled safe rejections. Main-derived changes were merged, not hand-edited.
+Final item3 head `1489598c75744cc3323d79a5fd1df784d8a7d72e` passed
+[PR CI39105280589](https://github.com/tya5/chrona/actions/runs/39105280589).
+Official artifact12128521189 has all50 SVG/Scene pairs unchanged and only two
+intended diagnostic inventories changed. Item3 merged as PR1706 at
+`ea6873b5d5767258408dc5709d0361ee0b8bf20e`. The review-containing exact main
+`5fe41db8e8512e5438e9ecbe67f5c56c1d18d152` passed
+[full release39108421823](https://github.com/tya5/chrona/actions/runs/39108421823):
+all three native OS pytest/conformance/wheel gates, MCP floor and newest-Python
+public-materializer reproduction. **Item3 is accepted independently.** Items5
+and2 are accepted in their own reviews; parked item4/#814/#815 remain outside
+this review, and parent #902 remains open for those owner-parked requirements.
 
-PR1706's initial CI39102611347 exposed three unclassified identity guards and
-schema-migration test expectations. Corrections `d0a2ff526`/`ae21a166c` pass185
-focused tests. Independent repair review passes228 address-version, resources,
-history, ledger and schema tests: supported v0.3 dispatch remains tested, and
-baseline-invalid documents retain their exact declared-version mapping.
-Actual-byte identities and canonical request identities are classified
-separately. Repaired-main lock/history/process/coverage tests45 and the
-history/process/agent batch64 pass. The initial artifact preserves all50
-SVG/Scene pairs. Neither
-that failed run nor the prepared corrections establish release acceptance.
-
-Release is **not accepted yet**: final current-head PR CI, official artifact
-audit and successful exact-main three-OS full release remain required. Item5's
-release39101259252 failed Windows; item3 cannot merge until repair PR1707 has
-successful native/full release evidence. Under the published scheduling
-amendment `146707fc1`, a later successful exact-main run containing BOTH item3
-and item2 source changes and literal reviews may accept them together. All
-per-item tests and separate PR gates remain mandatory. Parent902 stays open.
+Supported v0.3 dispatch and the unchanged baseline-invalid population remain
+covered.

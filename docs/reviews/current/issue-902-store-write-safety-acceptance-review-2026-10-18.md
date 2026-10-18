@@ -11,7 +11,7 @@
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | Acceptance for 2, 3 and 5: each has its own stale-base, replay and no-overwrite tests, plus an MCP stdio test where it is a tool. | met | Item5 focused evidence: [stale adapter/process](../../../tests/integration/test_actual_store_concurrency.py), [replay/no-overwrite](../../../tests/integration/test_store_write_lock.py), [transaction span](../../../tests/integration/test_store_transaction_span.py) and [MCP stdio](../../../tests/mcp/test_mcp_stdio_e2e.py). This does not accept items2/3. | — |
+| 1 | Acceptance for 2, 3 and 5: each has its own stale-base, replay and no-overwrite tests, plus an MCP stdio test where it is a tool. | met | Item5 focused evidence: [stale adapter/process](../../../tests/integration/test_actual_store_concurrency.py), [replay/no-overwrite](../../../tests/integration/test_store_write_lock.py), [transaction span](../../../tests/integration/test_store_transaction_span.py) and [MCP stdio](../../../tests/mcp/test_mcp_stdio_e2e.py). Items2/3 are accepted separately in their reviews. | — |
 | 2 | Item 5 needs a two-process test that shows a lost update today and none after the fix. | met | [Two spawned adapters](../../../tests/integration/test_actual_store_concurrency.py): regression605232991 fails before9dcf22c16 and passes after; immutable post-A files are unchanged. [Persistent process exclusion](../../../tests/unit/chrona/storage/test_store_lock.py) remains mandatory native Windows evidence below. | — |
 
 ## Programme-level criteria (optional)
@@ -34,4 +34,4 @@ passes afterward; the focused storage/authoring/process batch passes58.
 Repair PR1707 head `a0f42ce9a` passed final CI39104093015; its official artifact
 12127409514 has all109 generated paths unchanged. The exact-main full release
 above supplies native Windows proof beyond that portable regression. Parent902
-remains open: this accepts item5 only, not item3, item2 or parked requirements.
+remains open for owner-parked items4/#814/#815; this review accepts item5 only.

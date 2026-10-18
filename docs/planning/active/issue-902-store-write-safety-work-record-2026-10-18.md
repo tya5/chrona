@@ -1,19 +1,13 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 accepted on exact main `381cf404a`: [release39105269292](https://github.com/tya5/chrona/actions/runs/39105269292)
-passed all three native OS suites, conformance, wheel/smoke, MCP and newest-Python
-public reproduction. Repair PR1707 retains all four Windows lock/replay tests;
-no retry/diagnostic/format policy changed and its109-path artifact is unchanged.
-Item3 PR1706 merged `ea6873b5d` after final-head CI39105280589 succeeded;
-all50 SVG/Scene pairs are unchanged, with two intended diagnostic inventories.
-Its new main sync/ready/full release remains pending. This item2 WIP includes
-the repaired kernel, final history source and its own formal literal review;
-focused operational/agent/recovery/process/stdio95 and dedicated stdio2 pass.
-Next: follow item3's ready main once and publish item2's current-base PR.
-Each PR retains its own checks and official artifact review; the published
-scheduling amendment below permits one later exact-main full release containing
-both implementations/reviews to accept items3/2 together. A merge is not release
-acceptance. Parent902 stays open for parked4/814/815; board454 is unchanged.
+Status: selected items5, 3 and2 are accepted. Item5 passed review-containing
+exact-main release [39105269292](https://github.com/tya5/chrona/actions/runs/39105269292);
+item3 passed [39108421823](https://github.com/tya5/chrona/actions/runs/39108421823).
+Item2 is accepted on exact main `96bdfbb7c` by
+[release39119120797](https://github.com/tya5/chrona/actions/runs/39119120797):
+Linux pytest/conformance/probe/wheel/smoke (13,563), macOS (13,568), and Windows
+(13,560) passed, along with MCP and newest-Python public reproduction. Parent
+#902 remains open for owner-parked items4, #814 and #815; board454 is unchanged.
 
 ## Scope and literal acceptance
 
@@ -21,11 +15,11 @@ acceptance. Parent902 stays open for parked4/814/815; board454 is unchanged.
 item5 → item3 → item2. Items4,814 and815 remain parked; completing this lane
 does not silently close those requirements.
 
-| Item | Literal remaining requirement | Literal acceptance |
+| Item | Requirement | Literal acceptance |
 | --- | --- | --- |
-| 5, current | A multi-process write lock for one actual/snapshot Store. The authoring workspace already takes an OS file lock (`operational/authoring_commands.py`, fcntl/msvcrt), but a command line and a server writing one Store at once are not guaranteed. | Acceptance for 2, 3 and 5: each has its own stale-base, replay and no-overwrite tests, plus an MCP stdio test where it is a tool. Item 5 needs a two-process test that shows a lost update today and none after the fix. |
-| 3, next | A revert path for a write. Today a revert is a compare-and-set write of an earlier revision's content through the Store. `LocalActualStore.undo` and `redo` return `None` (`src/chrona/commands/actual_commands.py:120`). | Same per-item stale-base, replay, no-overwrite and applicable MCP stdio acceptance above. |
-| 2, after3 | `apply_authoring_command` as an MCP tool over the guided authoring workspace (`authoring-command-apply` and `workspace revision` exist on the CLI only), with the same write gate and honest annotations. | Same per-item stale-base, replay, no-overwrite and applicable MCP stdio acceptance above. |
+| 5 | A multi-process write lock for one actual/snapshot Store. The authoring workspace already takes an OS file lock (`operational/authoring_commands.py`, fcntl/msvcrt), but a command line and a server writing one Store at once are not guaranteed. | Acceptance for 2, 3 and 5: each has its own stale-base, replay and no-overwrite tests, plus an MCP stdio test where it is a tool. Item 5 needs a two-process test that shows a lost update today and none after the fix. |
+| 3 | A revert path for a write. Today a revert is a compare-and-set write of an earlier revision's content through the Store. `LocalActualStore.undo` and `redo` return `None` (`src/chrona/commands/actual_commands.py:120`). | Same per-item stale-base, replay, no-overwrite and applicable MCP stdio acceptance above. |
+| 2 | `apply_authoring_command` as an MCP tool over the guided authoring workspace (`authoring-command-apply` and `workspace revision` exist on the CLI only), with the same write gate and honest annotations. | Same per-item stale-base, replay, no-overwrite and applicable MCP stdio acceptance above. |
 
 ## Item5 design plan
 
@@ -109,23 +103,24 @@ must retain its original failure rather than claim a safe pre-write rejection.
   checks:6 passed. An initial broader run had63 pass/2 render failures because
   this WT lacked render extras; installing `.[render]` plus the Noto provider in
   its own venv resolved both. No product workaround or weakened assertion.
-- Original release39101259252 failed Windows; repair1707 is merged as
-  `381cf404a`. Its successful native/full release remains required.
+- The Windows lock correction was included in PR1707 at `381cf404a` and accepted
+  by successful exact-main release39105269292.
 
-## Item5 literal acceptance review (release pending)
+## Item5 literal acceptance review (release accepted)
 
 Current authority: [item5 acceptance review](../../reviews/current/issue-902-store-write-safety-acceptance-review-2026-10-18.md),
 including the Windows correction and required native release disposition.
 
 Implementation `ab376c78e` with L1 `a4c7fe08c`, L2 `9dcf22c16`; public WIP
-`wip/issue-902-store-write-safety`. This reviews item5 only; items2/3 and parked
-4/814/815 remain open. No issue closure or current-main release claim.
+`wip/issue-902-store-write-safety`. This reviews item5 only; item3 is now
+accepted separately and item2 is accepted in its own review. Parent #902 remains
+open only for owner-parked items4/#814/#815.
 
 | Literal item5 acceptance | Disposition | Direct evidence |
 | --- | --- | --- |
 | Acceptance for 2, 3 and 5: each has its own stale-base, replay and no-overwrite tests, plus an MCP stdio test where it is a tool. | met (item5) | `tests/integration/test_actual_store_concurrency.py`, `test_store_write_lock.py`, `test_store_transaction_span.py`; MCP stdio gate/stale/replay/no-overwrite checks recorded above. Not evidence for items2/3. |
 | Item 5 needs a two-process test that shows a lost update today and none after the fix. | met | Regression605232991 fails on baseline and passes after9dcf22c16, with all post-A Store files unchanged. |
-| Required release gate on current main containing this review. | not met | Original release39101259252 failed Windows. Repair1707 passed final CI39104093015 and merged381cf404a; successful repaired exact-main three-OS release remains required. |
+| Required release gate on current main containing this review. | met | Review-containing exact main `381cf404ac678446b68ede5f34125a1c1164c6d3` passed [release39105269292](https://github.com/tya5/chrona/actions/runs/39105269292): three-OS pytest/conformance/wheel-smoke, MCP and newest-Python public-materializer reproduction. |
 
 Engine owns the complete replay/CAS/publication/record scope; storage owns root/
 thread/process exclusion. Authoring keeps separate workspace identity. No new
@@ -176,21 +171,16 @@ Store/Actual; full identities are verified from immutable bytes, never trusted
 from a ledger digest alone. Fresh-base CAS remains independent of state equality.
 No unresolved architecture finding remains. Normative authority is Spec35 §4.3;
 Spec10 and Spec66 connect the ownership and agent contract. Publish this design
-before implementation planning. Item3 remains isolated WIP on the verified
-public item5 implementation. Its PR may open after item5 merges and derived-main
-is ready, concurrently with item5's full release; item3 merge remains blocked
-until that release succeeds. This branch is separate from item5's product and
-release acceptance, avoiding an unimplemented tool-set claim in that release.
+before implementation planning. The implementation and release follow the
+separate item3 plan below; item3 is now accepted independently as recorded in
+its final review. Item2 followed after item3 merged on a ready base.
 
 ## Item3 implementation plan
 
-Design/specification/architecture review `a79ab0307` is published on
-`wip/issue-902-actual-history-design`. One coherent product PR may open after
-item5 merges and derived-main is ready; item3 merge still waits for item5's
-successful full release. The following are owned implementation/test slices,
-not partial main releases. WIP implementation may proceed during item5's
-publication wait; never merge unimplemented item3 contracts into the separate
-item5 release branch.
+Design/specification/architecture review `a79ab0307` was published on
+`wip/issue-902-actual-history-design`. The following owned implementation/test
+slices were delivered as PR1706 after item5 merged on a ready base; they were
+not partial main releases.
 
 | Slice | Owned files | Acceptance evidence |
 | --- | --- | --- |
@@ -201,32 +191,18 @@ item5 release branch.
 Retain all item5 concurrency tests. Inspect any generated schema/inventory
 evidence with its source and compare public artifact changes as a batch. Return
 to design on a history/schema/ownership discrepancy. Item3 acceptance is the
-literal row above; item2 and owner-parked requirements remain open.
+literal row above; only owner-parked requirements remain open.
 
-### Item3 current implementation evidence
+### Item3 acceptance status
 
-WIP implementation `c2984c018` follows design `a79ab0307` and plan `504478877`.
-It is not merged or release-accepted. Independent review closed normalized
-optional target identities, shared check/apply ancestry, malformed history,
-snapshot/no-op classification and missing schema-packaging tests. Retained
-requests are parsed against their closed schema and checked against their ledger
-key as well as their hash; no unknown payload can silently become redo intent.
-
-Focused batches (overlap, not summed): operational/command/tool/CLI/process223;
-agent registry/Store reads293; final history/tool/concurrency64; schema/ledger61;
-retirement/packaging45; adapter10; real history MCP/CLI-pointer batch5.
-Schema equivalence passes with one declared v0.4 addition and three proven stale
-S2 deltas retired; the five reported invalid documents are unchanged baseline
-findings. Imports11 packages/37 edges inward. No public render policy/source
-or canonical generated outputs changed. Ready-main integration `499d2ad27`
-passed99 focused command/adapter/CLI/process tests, three real MCP history
-tests and an independent11-test history/concurrency audit; no conflict or new
-architecture gap. Remaining: item5 full release and item3 current-head PR/
-exact-main gates. Item3 PR may open after item5 merges and derived-main is ready, but
-item3 merge remains blocked until item5 full release succeeds. This changes PR
-timing only; acceptance is unchanged.
-Following ready `9e224db6c` and predecessor review `950d79001` changes no item3
-engine/schema code;31 focused history/concurrency/documentation cases pass.
+Item3 is accepted independently: final PR1706 head `1489598c7` passed CI
+39105280589; official artifact12128521189 has all50 SVG/Scene pairs unchanged
+and two intended diagnostic inventories. PR1706 merged as `ea6873b5d`. The
+review-containing exact main `5fe41db8e8512e5438e9ecbe67f5c56c1d18d152` passed
+[release39108421823](https://github.com/tya5/chrona/actions/runs/39108421823).
+See the [item3 acceptance review](../../reviews/current/issue-902-actual-history-acceptance-review-2026-10-18.md)
+for the literal row and full gate evidence. Items5 and2 are accepted separately;
+parked4/#814/#815 remain outside item3.
 
 ## Item2 design plan
 
@@ -304,12 +280,12 @@ the use case. Remove the old public CAS-callback wiring, not emulate it.
 | A2 transaction | `storage/file_transaction.py`, `operational/authoring_commands.py` and persistence/recovery/process tests | One lock for every command; durable exact replay before base comparison, changed-ID reuse, verified receipt corruption/path guards, no overwrite. Marker distinguishes changed workspace/no-op commits; injected failures/restarts before/after publication preserve old or fully committed state, including legacy recovery and post-commit cleanup/replay. Earlier receipts/resources survive. |
 | A3 front ends/release | `app/cli.py`, `app/agent_tools.py`, import guard, registry/CLI/MCP tests and literal review | Tool-set v0.6/new tool and honest annotations; gate before missing/malformed/escaped files open; canonical/symlink scope; exact CLI/tool results, stale/replay/no-overwrite over real stdio. Run focused tests per owner, then combined tests and planned CI full three-OS/conformance/wheel/MCP; inspect official materializer deltas as a batch. No renderer policy/source change intended. |
 
-Implement as isolated WIP while predecessor releases run; one coherent item2 PR
-may open after item3 merges and derived-main is ready. Item2 merge requires its
-own current-head checks/review; shared full-release acceptance is specified in
-the scheduling amendment below. Do not publish partially safe main slices.
-Return to design before addressing any new transaction/schema/layer contract
-gap. Acceptance is the literal item2 row above; parked4/814/815 remain open.
+Implementation was prepared in isolation and PR1708 opened after item3 merged
+on a ready base. The Windows portability repair was reviewed and included in
+PR1712. Item2 passed its review-containing exact-main release recorded in Status
+above. Do not publish partially safe main slices. Return to design before
+addressing any new transaction/schema/layer contract gap. Acceptance is the
+literal item2 row above; parked4/#814/#815 remain open.
 
 ## Item2 implementation review
 
@@ -324,40 +300,21 @@ No renderer/schema/source-YAML or generated artifact changes in this slice.
 
 Current literal acceptance/release authority: [item2 review](../../reviews/current/issue-902-authoring-acceptance-review-2026-10-18.md).
 
-Verification: combined focused authoring/containment/registry/CLI/Store/MCP
-batch **1010 passed**; final recovery/helper migration **489 passed** and
-case/staging/process batch **58 passed**. These batches overlap, not additive.
-`tools/check_import_direction.py`: 11 packages/37 inward edges; diff check clean.
-Full local pytest/public-materializer reruns deliberately delegated to CI.
-Publication preflight incorporates the predecessor's inventory/schema migration
-repairs and registers the extracted receipt/request/CAS identity guards with
-their existing producers. Classification validation and70 focused authoring,
-recovery, process/MCP and inventory tests pass. No product behavior or generated
-report was changed to satisfy the inventory. Item2 remains WIP, not released.
-Prepared integration `5c363da7d` follows repaired ready main `381cf404a` and
-final item3 head `1489598c7`. Operational/recovery/agent/transaction/lock/stdio95
-and dedicated real authoring stdio2 pass. Both are focused evidence, not
-native Windows or release acceptance. Publication gates remain unchanged.
-Current-base integration of predecessor `64c8a6094`/ready `9e224db6c` preserves
-item2 product code;40 focused history/authoring/process/stdio/docs cases pass.
-Design `cdf0289f8`, plan `fa31cc79c`, code `fa831e384` and review `0b79e65a0`
-are on `wip/issue-902-authoring-design`; that branch owns durable authoring/MCPv0.6.
-Item2 PR may open after item3 merges and derived-main is ready, alongside
-item3's full release. Item2 may merge after its own current-head checks and
-artifact/architecture review pass on that ready base; it need not wait for
-item3's OS matrix to finish. Known predecessor failures still take priority
-and block the dependent merge. Parked4/814/815 remain open.
+Verification batches overlapped (not additive): authoring/containment/registry/
+CLI/Store/MCP **1010 passed**; final recovery/helper migration **489 passed**;
+case/staging/process **58 passed**; import direction is 11 packages/37 inward
+edges. Publication preflight repaired diagnostic inventory findings without
+policy waivers or generated-report edits. Item2 merged as PR1708 at `0bd24fd4a`;
+the reviewed Windows test-only repair landed in PR1712. Exact-main release
+39119120797 passed all three OS gates, MCP and newest-Python public reproduction.
+Parked4/#814/#815 remain open.
 
 ### Publication versus acceptance (reviewed scheduling amendment)
 
-The separate item3/item2 PRs, current-ready-base checks, literal reviews and
-5→3→2 publication order remain required. Item5's failed Windows foundation must
-be repaired and release-verified first. Once item3 and item2 are both published,
-one successful exact-main three-OS full pytest/conformance/wheel/MCP/public
-reproduction run containing both source changes and both literal reviews may
-prove their acceptance together. Neither merge alone is acceptance. Keep the
-existing item3 full run until the combined exact-SHA run exists; preserve all
-inverse/legacy/replay and authoring tests in the combined suite. Any newly red
-predecessor becomes the priority; never use a narrower run as shared proof.
-Independent workflow/architecture review confirms this changes scheduling only,
-not a contract, test scope or gate. Publish the amendment before using it.
+The separate item3/item2 PRs, ready-base checks, literal reviews and 5→3→2
+publication order were preserved. Each selected item has its own successful
+review-containing exact-main full release: item5 39105269292, item3 39108421823,
+and item2 39119120797. These releases passed the required three-OS pytest/
+conformance/wheel gates and applicable MCP/newest-Python checks. No acceptance
+is inferred from a merge or focused test alone. Items4/#814/#815 remain
+owner-parked and outside this lane.

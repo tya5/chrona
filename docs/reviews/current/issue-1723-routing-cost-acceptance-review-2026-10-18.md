@@ -44,9 +44,17 @@ and guard tests pass20.
 
 ## Programme-level criteria (optional)
 
-Pending: final-head CI, official generated output comparison,
-and exact-main three-OS pytest/conformance/wheel/public-materializer evidence.
-Local acceptance is not release acceptance; issue1723 remains open.
-After issue1727, the additional algorithm cost-benefit design requested in
-[review](https://github.com/tya5/chrona/issues/1723#issuecomment-6251245796)
-also remains open; this PR does not authorize algorithm implementation.
+PR1731 merged `b5f5e24b57bbcafbcde8f158bb153149c7ff85a8`; final
+[CI39139341764](https://github.com/tya5/chrona/actions/runs/39139341764)
+passes. Exact artifact12140942825 retains all50 SVG/50 Scene bytes; only
+diagnostic source locations change. Exact-main native
+[release39140760742](https://github.com/tya5/chrona/actions/runs/39140760742) on
+`5f93db26707b6ca3695c05ef281d93666a60a060` passes all three OS matrices,
+MCP floor and newest-Python public reproduction.
+
+The additional design-only [review request](https://github.com/tya5/chrona/issues/1723#issuecomment-6251245796)
+is addressed by the published [three-option comparison and architecture review](https://github.com/tya5/chrona/issues/1723#issuecomment-6252067725).
+It distinguishes existing default first-fit/relax, critical-first and hint
+reuse from new work; unknown gains are not invented. Reviewer disposition
+remains pending. No algorithm implementation is authorized;
+issue1723 stays open.

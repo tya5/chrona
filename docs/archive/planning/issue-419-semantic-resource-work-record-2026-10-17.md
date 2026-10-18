@@ -1,12 +1,14 @@
 # Issue419 — semantic mapping resource
 
-Status: V1/S1/S2 and C1 are merged. The [current parent acceptance review](../../reviews/current/issue-419-semantic-resource-acceptance-review-2026-10-17.md)
+Status: closed. V1/S1/S2 and C1 are merged; the [final literal acceptance review](../reviews/issue-419-semantic-resource-acceptance-review-2026-10-17.md)
 records all seven literal rows met; its row3 scope audit follows consolidated
 #433 proposal2, which retains Python classifications of resource/Scene-derived
 rows. No state-to-role witness matrix is claimed (decision6243966086).
-Coverage tests16 and report `--check` pass. Publish the corrected review and
-verify its exact-main full release before closing419; earlier release39094741641
-does not contain that correction. Historical slice evidence follows.
+Coverage tests16 and report `--check` pass. The review-containing main
+`5fe41db8e8512e5438e9ecbe67f5c56c1d18d152` passed exact-main release
+[39108421823](https://github.com/tya5/chrona/actions/runs/39108421823), including
+three-OS full pytest/conformance/wheel gates, MCP floor, and newest-Python
+public-materializer reproduction. Historical slice evidence follows.
 Source base: trusted-ready published main
 `890af301d31ab3896296caefaa5864691e60d69a`.
 [Reviewed scope](https://github.com/tya5/chrona/issues/419#issuecomment-6234966527):
@@ -339,7 +341,7 @@ published separately before code, without creating another design authority.
   and architecture review before code resumes.
 
 Current verification, artifact counts, CI findings and release status are
-recorded once in the [literal acceptance review](../../reviews/current/issue-419-semantic-resource-acceptance-review-2026-10-17.md).
+recorded once in the [literal acceptance review](../reviews/issue-419-semantic-resource-acceptance-review-2026-10-17.md).
 
 ## S1 implementation contract and architecture review
 

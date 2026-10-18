@@ -7,7 +7,7 @@
 ### Issue #1725
 
 - Source: [Issue #1725](https://github.com/tya5/chrona/issues/1725)
-- Observed: 2026-10-18
+- Observed: 2026-10-19
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
@@ -48,8 +48,17 @@ shard3. Moving MCP-only guidance to a linked reference keeps the entrypoint at
 199 lines without removing lifecycle rules; all44 packaged-skill tests and
 the skill validator pass. The test limit is unchanged.
 
-## Programme-level criteria (optional)
+## Final release
 
-Pending: final-head CI, official generated snapshot comparison and exact-main
-three-OS pytest/conformance/wheel/public-materializer gate. Local evidence is
-not release acceptance; keep issue1725 open until those gates are recorded.
+PR [#1730](https://github.com/tya5/chrona/pull/1730) merged as
+`063fc97e2c7e1de541598c80a323c8d93e55c329`; final PR CI
+[39136788182](https://github.com/tya5/chrona/actions/runs/39136788182) passed.
+Official artifact `12140545789` was reviewed: all 50 SVG and 50 Scene files
+are byte-identical; only declared diagnostic/source-position evidence changed.
+The literal review is present on exact ready main
+`3ee4d0fec82c2008b3c88cdc90c52a625fbbcfa4`. Native release
+[39138121367](https://github.com/tya5/chrona/actions/runs/39138121367) passed
+full pytest, conformance and wheel checks on Ubuntu, macOS and Windows, plus
+oldest-MCP stdio and newest-Python materializer reproduction. All four literal
+rows are met, with none deferred. See the [closing acceptance
+comment](https://github.com/tya5/chrona/issues/1725#issuecomment-6251828895).

@@ -42,28 +42,26 @@ subjects instead of representing a direct crossing as a clear route.
 
 ## Programme-level criteria (optional)
 
-Pending: final-head PR CI and official batched SVG/Scene delta review, followed
-by the exact-main three-OS pytest/conformance/wheel and materializer gate.
-Local literal acceptance is not release acceptance; keep issue1727 open.
+[PR1732](https://github.com/tya5/chrona/pull/1732) merged at
+`d14aabc7c63f0402f0ed4afef75d585bf7294252`. Final head
+`3b409d001ffa11dd240d5936bf35cfe0b1398d41` passes all checks in
+[CI39143120950](https://github.com/tya5/chrona/actions/runs/39143120950).
+Final artifact12141738990 (SHA256
+`c6d0546e49c50c05b6fb66dcefdb87ddc503c3dd40b237fcbc86374e64769019`)
+covers109 safe paths, no retirements. Only slide05 SVG/Scene and associated
+reports change:44→44 primitives (0 added/removed;43 changed:16 nodes,
+16 labels,11 routes). All11 routes and terminals remain; the other49 SVG/Scene
+pairs are unchanged. [Final artifact review](https://github.com/tya5/chrona/pull/1732#issuecomment-6252057784).
 
-Initial PR run39140856471 artifact12141478084 covers109 safe paths with no
-retirements. Only slide05 SVG/Scene and their contrast/source inventory reports
-change:44 primitives remain44 (0 added/removed;43 changed:16 nodes,16 labels,
-11 routes). All11 routes and their terminals remain; no other slide changes.
-The one conformance failure is the intended valid Scene v0.6→v0.7 transition,
-not invalid geometry. Spec08 records this impact at `140ae489f`; one precise
-L2 expected transition and synthetic serialized-schema/endpoint assertions
-cover it. Focused tests pass38, and L2/L3 with all50 official Scene payloads
-overlaid in memory passes without modifying tracked generated output.
-The superseded run's pytest shards were cancelled, not accepted as green.
+All earlier failures are resolved: the exact L2 valid Scene v0.6→v0.7
+transition is recorded; typed node mocks, round-terminal centre assertions
+and the schema-validated capability-free adapter fixture retain their intended
+checks. No validator weakening or generated-file edits. Affected tests pass49;
+final CI supplies conformance, all three pytest shards and reproduction.
 
-Corrected run39141777418 passes conformance and official reproduction. Its
-three pytest shards report eight stale-fixture/assertion failures: three
-network mocks omit typed containment facts, three deadline cases equate the
-painted line endpoint with a centred round terminal's semantic port, and two
-capability-free adapter tests consume the now marker-capable corpus Scene.
-Use the typed node; verify actual terminal centres and paired endpoint IDs
-on all flow axes; use a schema-validated capability-free synthetic Scene for
-the standalone adapter while retaining its corpus capability-refusal test.
-All assertions retain their intent; no product or capability-validator change.
-The combined affected network/terminal/adapter/texture tests pass49.
+Derived sync and the exact-SHA trusted gate pass on ready main
+`a59fe7c68c094a970c2e1465e62bfa669c8c2f48`. Remaining:
+[native release39144628668](https://github.com/tya5/chrona/actions/runs/39144628668)
+(three-OS pytest/conformance/wheel, MCP floor and newest-Python public
+reproduction). Keep issue1727 open until that gate completes; PR CI alone
+is not release acceptance.

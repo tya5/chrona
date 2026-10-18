@@ -2,30 +2,20 @@
 
 ## Published baseline and literal acceptance
 
-Ready main `a27a86cd3`; integration `5a2acd12a` includes merged902 item2 and
-B's1709 diagnostic explanation, without changing schema admission. Repair
-`3abc8479d` passes197 focused presentation/native/schema tests; preset/schema
-batch89 passes (overlapping). Literal-review and schema checks pass: one
-additive/one delta/40 equal, unchanged
-five invalid corpus verdicts. Row1 candidate `c0e78982c`, review `73192c558`, on
-`wip/issue-1703-1701-display-followups`, integrated with independently reviewed
-legend code as `163ba8725`. Row1 is focused-tested, not released. The
-[issue record](https://github.com/tya5/chrona/issues/1701#issuecomment-6246724848)
-owns its fast-path plan; the [acceptance review](../../reviews/current/issue-1701-hierarchy-acceptance-review-2026-10-18.md)
-keeps the full issue open. Row2 is implemented and focused-reviewed; PR/public
-artifact and exact-main full release remain pending.
-The joint display-followup publication follows the902 predecessors and retains
-both literal reviews and full gates; integrated focused tests64 pass.
+## Release status
 
-Row2 source: closure `62fa2895d`, admission/Layout `ad30b5aaf`, declarations
-`d27e086d9`, exact-source composites/point-policy admission `1ca25a3e0`.
-Both display WIP refs contain the candidate. Focused path/point/style159,
-source-composite152, preset/closure62 and native18 tests pass (overlapping).
-Schema annotation/equivalence pass against5fe41db8e: one additive/one delta/
-40 equal, the same five invalid corpus verdicts; upstream retired deltas stay
-retired. All15 native PNGs were inspected and
-[published with SVG/Scene and inputs](https://github.com/tya5/chrona/tree/cfb05a1eb28ac10a0b1b30fb6588ad1c451832e9/review-evidence/issue-1701).
-The one-full-window suppression case remains an explicit negative regression.
+Implementation is merged in PR1712 at `3d915fbc9`. Published main
+`96bdfbb7cc2869782905dbc7626ddfdc03f2ef5f` passed the exact-main three-OS run
+[39119120797](https://github.com/tya5/chrona/actions/runs/39119120797): Linux
+13,563, macOS 13,568, and Windows 13,560 tests passed, along with conformance,
+platform probes, wheel build/smoke, newest-Python public reproduction, and the
+MCP floor. Both literal criteria are met and issue #1701 is closed.
+
+The [acceptance review](../reviews/issue-1701-hierarchy-acceptance-review-2026-10-18.md)
+records the two criteria and [public 15-preset PNG/SVG/Scene evidence](https://github.com/tya5/chrona/tree/cfb05a1eb28ac10a0b1b30fb6588ad1c451832e9/review-evidence/issue-1701).
+The implementation preserves grouping and packing while showing every
+hierarchy level through the existing member-name and path-column mechanisms.
+This completed record is archived with that review.
 
 1. Synthetic: a group with a child gate after its last span shows a range ending on the gate date.
 2. Design record for nested grouping (levels, header depth, folding, how presets declare it), reviewed before code; then a synthetic 3-level twin rendered by the bundled presets with no level lost.
@@ -70,11 +60,10 @@ evidence, not a project-specific core policy. The reviewer requests row1 first.
   Scene **and native adapter** level/name evidence, counts and affected visual
   outputs inspected as a batch; selection/folding/comparison negative cases.
   Exact public-materializer deltas and full CI remain release conditions.
-- **Publication:** publish this plan; then complete the selected design,
-  normative specification changes and architecture review; then publish the
-  implementation slices/files/tests/acceptance/publication boundaries here.
-  Only afterward implement row2. No implementation plan or design-completion
-  claim is made by this planning publication.
+- **Publication:** design `f4475ec01`, reviewer approval `6247026872`, the
+  normative Spec06/38/50 changes and implementation slices were published
+  before code. PR1712 and the exact-main release above complete the planned
+  slices and acceptance. The issue record and review are archived together.
 
 ## Capability inventory
 
@@ -180,7 +169,7 @@ their independent tested base; do not waive a gate to preserve the batch.
 | H1 source/name closure | `model/projection.py`, `model/surface_content.py`, `review/v05_content.py`; a small shared pure name helper if needed | Primary/Snapshot/scenario ID/title segments; exact enclosing-ancestor coverage; no text/entity collision; missing-title fallback; hidden/depth-limited ancestors retained; legacy path output and selected-current links preserved. Test table/plot parity and same IDs with different source titles. |
 | H2 authoring and Layout consumers | `schemas/view-v0.28.schema.yaml`, `contracts/resources.py`, label-content normalization; `layout/lane_label_intent.py`, `surface_member_labels.py`, `surface_marks.py`, `key_row_lanes.py` | Admit path and reject title+path; retain delta-only and omitted-content verdicts; matching-source both/link checks. Preflight and final text agree for ordinary, lane, attached, folded and key-row names; existing explicit-window absences and Style identities unchanged. No Scene/adapter hierarchy logic. |
 | H3 packaged declarations | Effective View/Layout declarations and source mirrors for all15 preset closures | Explicit name-path choice and ordinary path column except the already-lossless default depth-all route; preserve grouping/packing/rollup. A neutral three-level fixture (also bound-role, no-group and differing-source negatives) proves no intermediate name lost. Render all15 native PNGs as one batch, inspect every level and retain Scene/SVG/source counts. Diagnose rather than silently waive an unreadable level. |
-| H4 release review | Existing literal acceptance review; official public-materializer artifact | Schema-equivalence/annotation checks, import-direction and focused presentation tests; official before/after50 SVG/Scene pairs and report diffs inspected as a batch. CI supplies full three-OS pytest/conformance, wheel/smoke, MCP and newest-Python materializer release on the exact main SHA containing both literal acceptance rows. Only then close1701. |
+| H4 release review | Existing literal acceptance review; official public-materializer artifact | Schema-equivalence/annotation checks, import-direction and focused presentation tests; official before/after50 SVG/Scene pairs and report diffs inspected as a batch. The review-containing exact-main release passed all three OSes, conformance, wheel/smoke, MCP and newest-Python materializer gates; both literal rows are met and the issue is closed. |
 
 Expected changes are opted-in preset names, their measured text/fit geometry,
 and source-local comparison path repairs; do not assert byte identity for
