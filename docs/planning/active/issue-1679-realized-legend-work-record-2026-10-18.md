@@ -1,78 +1,94 @@
 # Issue 1679: realized legend work record (2026-10-18)
 
-Status: reviewer [6244640261](https://github.com/tya5/chrona/pull/1692#issuecomment-6244640261) requires an ink-colour coalescing and final-reservation correction before landing. Composite correction `02bcefa7f` is locally verified but not yet on the PR. The old head `1ecf36452` failed [CI39088644589](https://github.com/tya5/chrona/actions/runs/39088644589). No release acceptance is claimed.
+Status: implementing reviewer [6244640261](https://github.com/tya5/chrona/pull/1692#issuecomment-6244640261).
+Selected correction/design review `ccf2f99df`, implementation amendment
+`4a497c1df`, and fill/border clarification `69c6a33f3` are published before
+their product edits. PR1692 still needs the coherent correction push, official
+snapshot counts and exact-main release. No release acceptance is claimed.
 
-## Current correction design plan
+## Baseline and literal acceptance
 
-Reconcile Specs28/60/61 with the review: distinguish semantic colour groups from representative geometry, retain whole multipart figures, suppress redundant same-ink Progress, and release unused candidate-only canvas extent without rerouting chart content. Questions to settle before code: deterministic representative and qualifier wording, gradients/multipart ink identity, host-specific Progress matching, and ownership of final footer extent. Root owns normative design/publication; independent read-only audits cover identity and canvas completion. Then publish selected design/whole-architecture review and the implementation amendment. Verify synthetic fill/stroke/outline equivalence, different colours, qualifiers, equal/different host progress and final canvas; use the next official snapshot for the public table and targeted Sunday/Gates PNG checks. Source YAML stays unchanged; literal acceptance below remains authoritative.
-
-Selected design and whole-architecture review: Specs28/61 now own colour-group identity separately from the exact rendering witness. A multipart palette stays one figure; first-seen representation is stable, with maximum compatible glyph footprint. Gradients/opacity/pattern treatment remain meaningful ink, while channel/width/dash/geometry variants do not split a meaning. A single-class split uses qualifier-only wording; shared/unclassified groups keep the base rather than mislabelling their class. Progress compares each completed typed host, not unrelated colour unions. Layout replaces only the final legend slot's candidate growth for canvas completion, preserving authored minimums and other completed placements; no rerouting or annotation retry. The independent identity/canvas audits confirm these seams. Model stores pure ink facts, Layout groups/measures/finalizes, Scene retains exact paints and complete figures, and adapters/contrast stay unchanged. No schema, domain, source-YAML or B-owned packing changes. This supersedes earlier full-paint grouping, equal-ink Progress separation and retained-slot-growth text in this record; Git preserves that history.
-
-## Composite-key design correction
-
-- The initial implementation turns each Actual glyph part into a separate Rect key. A dark internal part is not an independent mark; separating it from the complete figure changes its paint context and loses the source glyph's contrast. Review key identity and grouping at the complete-mark boundary, including Style glyphs, while preserving scalar Actual/Progress meanings and explicit finite key projections.
-- **Selected contract:** [Spec28](../../specification/28-review-detail-profile.md) now defines one Actual key for each complete multipart paint/geometry stack, not one per internal colour. A pure model composite payload carries the closed symbol-role selection, canonical geometry identity, ordered paint witnesses and required footprint. Canonical geometry comes from the shared glyph completion at an origin-independent unit box, not resource names or translated float coordinates. Source point visibility is contained/omitted, while clipped spans remain scalar; final keys must still match premeasured candidates. Coalescing retains the maximum candidate footprint. Scalar identities and explicit finite ink projections remain unchanged.
-- **Handoff:** Layout completes one miniature point placement with the existing symbol/outline helpers and exact ordered paints. Existing `pointSwatchSize` remains the author override; otherwise the completed glyph footprint applies. A consumed typed paint tuple on the legend mark feeds the Scene sidecar under its existing completed part IDs. Scene uses the selected role and projects ordinary sibling Symbols with shared source, role, purpose, bounds and slot; it neither regroups sources nor chooses key ink. No new serialized Scene fields or schema version is needed.
-- **Whole-architecture review:** Model carries closed ink/identity, not Layout types or domain selectors. Layout owns measurement, glyph geometry and final visibility; Scene owns existing effect assembly; SVG/PNG and contrast consume the same completed Symbol figure. Independent review confirms the composite direction. Its proposed contrast-policy expansion was rejected after a diagnostic-only copy of the actual Symbol group to the key produced contrast7.607 with no error under the existing whole-figure rule. No palette change, contrast exemption, new role, source-YAML repair, renderer special case, routing or layer-ownership change is justified. Candidate footprint, part order and exact paint parity are the implementation risks, not open owner choices.
-- **Publication gate:** publish this selected design/review before the implementation amendment and code. The preliminary table contains two strict contrast errors and five warnings, not seven non-gating warnings; it must be replaced by the next official CI snapshot. No second whole local materializer batch is planned.
-
-## Baseline and order
-
-- Implementation base: `82c1e96b6`, including S2/PR1687 and #1680/PR1689. Reconcile the latest ready `main` after B's landing window before the final product-PR push. Inputs: `reviewer/trial-5-inputs` at `9fa6062de`.
-- Start product implementation after #1680 integration and publication of the implementation plan. Dev B owns #1682/#1681/#1683 and the next main landing window after1689; do not duplicate its profile/packing changes.
-- Design proposal and reviewer approval: [6243827642](https://github.com/tya5/chrona/issues/1679#issuecomment-6243827642), [6243861925](https://github.com/tya5/chrona/issues/1679#issuecomment-6243861925). No further pre-code reviewer approval is required; the PR receives review.
-
-## Literal acceptance criteria
+Implementation base `82c1e96b6` includes S2/PR1687 and #1680/PR1689.
+Integrate the latest ready `main` before the product push; dev B owns
+#1682/#1681/#1683 and its current landing window. Trial inputs are public
+`reviewer/trial-5-inputs` at `9fa6062de`; no previous private files are assumed.
 
 1. A synthetic project with actuals, rendered with executive-light: every distinct realized mark paint has exactly one legend key, and the actual and progress keys use the realized paints.
 2. When an encoding replaces the planned paint on every planned mark, no base planned swatch remains; the encoding's entries stand in its place. A mixed case (some planned marks unencoded) keeps the base key.
 3. target-b without snapshot or actual has no baseline, actual or in-progress keys and no empty Δ column.
 4. A count table of the public example changes, and the PNGs checked.
 
-## Evidence and selected design
+## Design plan and selected design
 
-- Reproduced the public executive-light command: 13 actual primitives use green `#269D79`, four progress primitives use brown `#8D530F`; the Actual legend key's brown progress inset hides its green ink. The no-comparison target-b PNG retains unavailable keys and a blank delta column. Both PNGs were inspected, not merely Scene counts.
-- Normative authorities: [Spec28](../../specification/28-review-detail-profile.md) owns identity, wording/order and bounded derived keys; [Spec60 §4](../../specification/60-declared-colour-scales.md) owns encoded/base coverage; [Spec61](../../specification/61-progress-fill-marks.md) replaces the host inset with a positive-progress key; [Spec06 §9.3](../../specification/06-view-model.md) owns source absence and wording targets; [Spec49](../../specification/49-semantic-presentation-contract.md) defines the shared paint witness/handoff.
-- Distinct meanings never collapse because their RGB is equal. Same-class Style variants may have distinct swatches with identical authored wording; this is intentional, not a new colour-label API. Existing authored scale labels remain independent.
-- Compatibility impact is intentional: unused/mismatching keys and unavailable comparison columns disappear; actual/progress keys now explain emitted ink. No source YAML or domain data is changed, no new semantic role or schema version is needed. Additive wording targets use the existing open string-key map.
+Use cases: explain the actual range and progress ink; remove unused base/encoded
+keys; omit unavailable comparison columns; avoid redundant same-colour keys or
+canvas growth caused only by conservative candidates. No open owner question.
+
+Normative ownership: [Spec28](../../specification/28-review-detail-profile.md)
+owns grouping, representative geometry, wording and final extent;
+[Spec60 §4](../../specification/60-declared-colour-scales.md) owns encoded/base
+coverage; [Spec61](../../specification/61-progress-fill-marks.md) owns Progress;
+[Spec06](../../specification/06-view-model.md) owns source absence/wording;
+[Spec49](../../specification/49-semantic-presentation-contract.md) owns the shared
+paint witness. Do not duplicate those contracts here.
+
+Compatibility impact: unavailable columns, unused/mismatching keys and redundant
+Progress keys disappear; split Actual groups use their own qualifier instead of
+repeating the base. Whole glyph figures remain intact. No source YAML, project
+data, schema version or semantic registry role changes. First premeasured group
+representation stays stable when final visibility changes its member witnesses.
 
 ## Whole-architecture review
 
-- **Model/Theme (Specs07/49):** reuse `theme_paint` channels and extract only effective override/gradient admission into a shared typed ink witness. No duplicate Scene resolver, Scene-type import into Layout, or broad paint-framework move. Scene retains bounds-dependent effects and serialization paint assembly. Required capability failures and optional-gradient solid fallback keep existing diagnostics.
-- **Layout (Specs28/33/60/61):** reserve all potential Actual paint groups/progress candidates before measurement; final geometry/visibility selects witnesses and one recomposition stays inside those conservative slots, with no routing/reflow loop. The pipeline supplies the same neutral selected-profile capabilities to Layout and Scene. S2 Style scope/scale identity survives; no new selector evaluation in Scene.
-- **View/content (Spec06):** normalize source absence when constructing `TableContent`, before measurement. Supplied-empty is not absent; Snapshot alone cannot supply ordinary Actual delta. Existing required-input errors remain errors. No scan for blank cells, domain changes, or defaulting overlap with B1682.
-- **Forecast connection:** Spec06 §8's content key is a potential candidate, subject to Spec60's final encoded/base coverage rule. All-encoded forecasts retain their required delta/estimated marker and declared capability checks, not a misleading base swatch. This clarification precedes final-filter activation; it adds no estimated paint or routing policy.
-- **Scene/adapters (Spec08):** consume completed entries and shared ink, not domain facts or source declarations to infer legends. Existing finite circle/rule-pair projections remain intentional; pattern/effect geometry is not copied to those shapes.
-- Independent Luna audits identified the two genuine gaps (within-class Style wording and paint/capability parity); the rules above close both before implementation. Remaining risk is implementation parity, covered by synthetic and adapter tests, not another owner decision.
+- Model/Theme carry pure completed ink and neutral renderer capabilities;
+  colour grouping is separate from exact rendering paint. No Scene imports in
+  Layout or duplicate paint resolver. Scene retains bounds-dependent effects.
+- Layout measures potential candidates, closes visibility from completed
+  placements, selects one final entry set and replaces candidate-only legend
+  extent for canvas completion. Chart rows/routes/annotations are not retried.
+  Typed Progress host identities prevent comparing unrelated colours.
+- View normalizes source absence before table measurement; supplied-empty is
+  not absent, Snapshot alone cannot supply ordinary Actual delta, and required
+  input errors remain errors. No B-owned field/default/label-packing changes.
+- Scene projects exact scalar or completed sibling Symbol paints. SVG/PNG and
+  strict contrast see the same whole figure. No contrast exemption or palette
+  substitution. Finite circle/rule-pair keys remain intentional projections.
+- Independent Luna identity/canvas audits confirmed the owner seams. Regression
+  risks are representation/footprint stability, fill-versus-border identity,
+  typed host matching, caption restoration and accidental non-legend movement.
 
 ## Implementation plan
 
-Targeted Sunday verification clarified the ink boundary: Progress's red fill has a cream border. Spec28 now explicitly uses filled-figure fill inks (all filled multipart parts), falling back to stroke only for an unfilled figure; borders are drawing variants, not semantic colour groups. Extend R1's shared pure palette projection and its host comparison with a same-fill/different-border regression. Keep exact border paint in Scene. Final groups retain their premeasured representative and copy only completed occurrence/class facts, avoiding an unreserved geometry change when an earlier source is clipped. The focused Gates render has five keys and no canvas warning; Sunday already has no overflow, with redundant Progress removal still to verify under this clarified rule.
+One coherent product PR1692, not partial main landings. Published initial plan
+`492c8512e` preceded I1–I4; corrective plans above precede current edits.
 
-Current reviewer correction (design `ccf2f99df`, published): R1 delegates `model/legend_paint.py`, `layout/legend_candidates.py`, `layout/realized_legend.py` and candidate unit tests: add a channel-independent ink grouping signature, coalesce once in both candidate/final paths, choose qualifier-only wording, and suppress Progress using its typed completed host. Preserve full paint/glyph witnesses. R2 root owns `surface_composer.py` final caption-restored legend-slot replacement and a synthetic canvas regression; do not move other completed geometry. R3 native synthetic tests cover same-colour geometry variants/host progress and different-colour qualifiers; existing composite/strict contrast tests stay. Run focused integration/ownership and targeted Sunday/Gates renders, then one current-ready-main PR push; official snapshot replaces all preliminary counts. No second full local materializer run or example edits.
-
-All slices are independently focused-testable WIP publications; one coherent product PR includes I1–I4 after #1680 integration. Do not land the paint bridge or progress migration halfway through the fix. Main landing follows B's promised window; reconcile its current profile/packing changes without taking ownership.
-
-### Composite correction implementation amendment
-
-Design/review `a6d6870b2` is published before this amendment. C1 (root): add the pure composite payload in `model/legend_paint.py`; `layout/legend_ink.py` builds one ordered stack and canonical glyph identity, while coalescing retains maximum footprint. Scalar keys/Progress stay unchanged. C2 (root Layout, delegated Scene): all legend measurement/emission paths use that same footprint; `MarkPlacement` carries a consumed ordered legend-paint tuple; `scene/v05_builder.py` projects normal multipart Symbols and maps each completed part ID to its exact witness. No Scene schema/DTO, paint resolver or contrast-rule change. C3 (delegated tests, root acceptance): dark-substrate synthetic Actual glyph, strict whole-figure contrast, exact ordered source/key paints and one label; retain scalar/Style/finite-key/progress/clipping regressions and structure/ownership gates. Focused tests accompany each slice; one coherent PR push after all slices and current-ready-main integration triggers the official snapshot/full planned CI. Update counts from that artifact; do not regenerate all50 locally again or edit source/canonical generated YAML/SVG/Scene. Publish implementation, then the corrected literal acceptance review; exact-main release remains required before closing.
-
-| Slice | Owned files/boundary | Acceptance and focused evidence |
+| Slice | Owned files/boundary | Tests and publication gate |
 | --- | --- | --- |
-| I1 shared paint parity | `model/theme_paint.py` or a small adjacent model module; `scene/paint.py`, `scene/v05_builder.py`; neutral profile adaptation in `surface_pipeline.py`/existing request preparation | One consumed channel/override/gradient-admission result, no duplicate resolver or Scene dependency in Layout. Test Style/Actual/explicit-role precedence, outline/fixed glyph channels, replaced gradient, required failure/optional solid fallback, finite circle/rule-pair ink. Existing `test_actual_variance_fill_resolution.py`, `test_style_fill_scene_bridge.py`, `test_capabilities.py` remain gates. Ordinary Scene output unchanged in this structural slice. |
-| I2 source normalization | `review/v05_content.py::normalize_v05_table_content`; the existing lane path only where its declared source needs it | Columns and cells use the same normalized list before measurement. `test_v05_content.py`/`test_surface_content.py`: absent versus supplied-empty Actual, Snapshot-alone no ordinary delta, explicit forecast delta, bound scenario/Snapshot columns and preserved required-source errors. No `examples/` repair or B-owned field accessor change. |
-| I3 candidate and witness composition | `review/v05_content.py::legend_entries`, `review/profile_connections.py`; `model/surface_content.py`; `layout/style_legend.py`, `surface_legend.py`, `surface_marks.py` and composer call only as needed | Reserve possible variants/progress before sizing; final completed marks/shapes/text filter once and recompose fixed slots. Add consumed typed witness/entry fields only. Tests cover multiple trait paints, same-class Style variants, equal-painted Actual coalescing, Actual/Progress equal-ink separation, zero/absent/clipped progress, all-encoded versus mixed planned/forecast, unused keys and wording validation. Remove host-key progress inset atomically with separate keys. Preserve S2 scope/domain order and diagnostics. |
-| I4 adapter and release acceptance | Synthetic integration fixtures and existing legend/actual/progress integration tests; one concise acceptance review | Run focused tests for all four literal rows, inward-import/reachability/ownership checks and conformance. Batch all public materializers once; disclose per-slide primitive/route/label/diagnostic counts, not byte-preservation expectations. Inspect before/after executive-light actual and target-b absent/encoded/forecast PNGs. Public source YAML remains unchanged. |
+| I1 paint parity | `model/theme_paint.py`, neutral capabilities, Scene paint bridge | Shared channel/override/gradient resolution; Style/Actual/finite-shape tests, Scene ownership. Exact full paints retained. |
+| I2 source normalization | `review/v05_content.py`, source-presence closure | Absent versus supplied-empty Actual, Snapshot-only, forecast/scenario columns; one column list drives both cells and measurement. |
+| I3 final legend | `legend_ink.py`, `legend_candidates.py`, `realized_legend.py`, `surface_legend.py`, composer | Premeasured groups, typed occurrences, final encoded/base filtering; complete composite miniatures and exact part handoff. |
+| R1 reviewed coalescing | `model/legend_paint.py`, candidate/final filter | Shared fill-first palette with stroke-only fallback; same-colour geometry variants merge, qualifier-only splits, host-specific redundant Progress omitted; representative/footprint stability. |
+| R2 final extent | `surface_composer.py` | Restore final legend slot against original allocation and captions; synthetic excess candidate growth leaves final canvas and non-legend geometry unchanged. |
+| I4 release | Synthetic integration tests and acceptance review | Focused tests, ownership/conformance; official snapshot all50 count table, targeted Sunday/Gates/glyph and native Trial PNGs. Exact-head CI, then exact-main three-OS/full release containing review. |
 
-I1 and the non-overlapping I2 may run through Luna agents after the baseline is integrated; root owns I3 and serial publication. Publish completed slices with focused evidence; a contract gap returns to normative design before code continues. No new schema version or resource migration is planned; if a schema edit proves necessary, apply Spec56 equivalence checks before publication.
+Root owns integration/publication; up to three Luna agents own disjoint bounded
+code/tests or read-only review. Source YAML and canonical generated output stay
+untouched. A discovered contract gap returns to design before product edits.
 
-The code PR's exact-head CI supplies pytest shards, conformance and newest-Python reproduction. After merge, publish the batched literal acceptance/release review and verify full three-OS pytest/conformance/wheel evidence on the exact main containing that review. Close only when every literal row is met, inspected PNGs and the public count table are linked, and release checks pass; update the specification closure ledger. No local full pytest duplicate is planned.
+## Evidence and remaining gate
 
-## Current implementation evidence
-
-- I1: shared model channels/gradient admission and Scene consumers; emitted-ink fingerprints normalize equivalent colours and omitted gradients. Layout passes the selected witness to Scene; bounds-dependent effects stay in Scene.
-- I2: one normalized column list drives columns and cells; comparison-source presence is captured from closure independently of selected rows. Absent/supplied-empty, forecast, scenario and explicit-row tests:147 passed. View input remains unchanged.
-- I3: potential Actual groups and positive Progress reserve space before measurement; completed source identities filter/recompose once against the original allocation, not an expanded painted extent. View scale entries bind exact lowered-rule occurrences, not RGB. Progress retains its own full paint; stroked period edges count as visible despite zero rectangular area. No corpus source changes.
-- Focused combined model/Scene/content/candidate/checker run:179 passed; native synthetic acceptance:7 passed; migrated legend-native batch:58 passed. Independent architecture review found no layer breach. Legacy geometry fixtures now supply the semantic sources they test rather than preserving unused keys. [Acceptance review](../../reviews/current/issue-1679-realized-legend-acceptance-review-2026-10-18.md) records all50 public counts, inspected PNGs, and seven disclosed warnings. Source glyph dashes match the baseline after the shared-witness correction; no canonical generated output was edited. Official exact-head and exact-main CI remain required.
-- Design-phase documentation checks:28 passed; conformance passed before the product slices. Do not reuse that run as verification of the implemented slices.
-- Final allocation/Scene/ownership regression batch:79 passed; composite/finite/Scene regression batch:98 passed; composite/checker batch:48 passed; strict native module:8 passed. The targeted public glyph-gates SVG/PNG was reinspected after whole-figure grouping and strict errors are0; no contrast policy changed. Independent audit found and closed a selected-role rule-pair measurement mismatch with a regression. The preliminary public table is pinned to `0fe79a9f6`; the official artifact after current-main integration must replace it, including restored fit diagnostics, without repeating the whole local public batch.
+- I1/I2 and native encoding/source tests pass; all50 public materializers were
+  batched once, then only affected slides rerendered. Preliminary table is
+  explicitly not final; replace it from the next official CI snapshot, not
+  another full local render batch.
+- PR head `1ecf36452` [CI39088644589](https://github.com/tya5/chrona/actions/runs/39088644589)
+  failed snapshot generation on flattened glyph-part contrast. Reproduction
+  and readiness failed downstream; tests were skipped. Complete composite
+  correction `02bcefa7f` passes strict targeted glyph contrast with zero errors.
+- Targeted reviewed Gates has five keys and no canvas warning. Sunday has no
+  legend overflow; fill-first redundant Progress removal is under verification.
+  Reviewer accepts the genuine contrast findings; no corpus repair is planned.
+- [Literal acceptance review](../../reviews/current/issue-1679-realized-legend-acceptance-review-2026-10-18.md)
+  must receive corrected official counts/PNG evidence and current CI links.
+  Confirm every row and exact-main release before deliberate closure/ledger
+  update; archive only after closure. Keep board454 read-only.

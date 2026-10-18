@@ -133,7 +133,7 @@ def test_executive_light_actual_and_progress_keys_match_distinct_completed_paint
 
     labels = {item.source_ref: item.text for item in rendered.surface.primitives if item.purpose == "legend-label"}
     assert {labels[item.source_ref] for item in actual_keys} == {
-        "Actual — Ahead", "Actual — On track", "Actual — Behind"}
+        "Ahead", "On track", "Behind"}
     svg_fills = _svg_fills(rendered)
     for item in (*actual_marks, *actual_keys, *progress_marks, *progress_keys):
         assert svg_fills[item.scene_id] == item.paint.fill
@@ -259,7 +259,7 @@ def test_final_actual_qualifiers_follow_visible_paint_groups_after_clip(tmp_path
     actual_keys = _swatches(rendered, "actual")
     labels = {item.source_ref: item.text for item in rendered.surface.primitives if item.purpose == "legend-label"}
     assert {item.paint.fill for item in actual_keys} == {"#4B5563", "#269D79"}
-    assert {labels[item.source_ref] for item in actual_keys} == {"Actual — Ahead", "Actual — On track"}
+    assert {labels[item.source_ref] for item in actual_keys} == {"Ahead", "On track"}
 
 
 def test_fully_clipped_actual_groups_leave_one_unqualified_key_and_no_progress_key(tmp_path):
@@ -344,3 +344,74 @@ def test_dark_canvas_composite_actual_glyph_has_one_complete_key_and_keeps_scala
     assert {item.scene_id for item in (*actual_point, *glyph_key)} <= svg_ids
     findings = evaluate_scene_contrast(scene_document(rendered.scene))
     assert not [item for item in findings if item.severity == "error"]
+
+
+def _ink_colors(paint):
+    return frozenset(color for color in (paint.fill, paint.stroke) if color is not None)
+
+
+def test_equal_red_actual_span_point_and_outline_share_one_key_and_same_ink_progress_is_omitted(tmp_path):
+    parts = _parts(progress=True)
+    bindings = parts["theme"]["body"]["colorBindings"]
+    parts["scheme"]["body"]["categories"]["legend-red"] = "#FF0000"
+    parts["scheme"]["body"]["categories"]["legend-cream"] = "#FFFDF0"
+    for role in ("actual", "actual-ahead", "actual-on-track", "actual-behind", "progress-fill"):
+        bindings[f"{role}.fill"] = "category:legend-red"
+    bindings["progress-fill.stroke"] = "category:legend-cream"
+    source = sr.project({
+        "span": sr.span("span", date(2026, 2, 2), 10),
+        "point": sr.point("point", date(2026, 2, 13)),
+    })
+    actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "same-red-actual",
+              "body": {"asOf": "2026-02-20", "observations": [
+                  {"id": "span-observed", "sequence": 1, "projectObjectId": "span",
+                   "actual": {"start": "2026-02-02", "finish": "2026-02-12", "progress": 0.4}},
+                  {"id": "point-observed", "sequence": 1, "projectObjectId": "point",
+                   "actual": {"at": "2026-02-13"}},
+              ]}}
+
+    rendered = _render(tmp_path, source, actual=actual, parts=parts,
+                       detail=_detail(("actual", "Actual"), ("progressFill", "Progress")))
+    marks = tuple(item for item in rendered.surface.primitives if item.purpose == "actual")
+    keys = _swatches(rendered, "actual")
+    progress_marks = tuple(item for item in rendered.surface.primitives if item.purpose == "progress-fill")
+
+    assert {item.kind.value for item in marks} >= {"Rect", "Symbol"}
+    assert all(item.paint.fill == "#FF0000" for item in marks)
+    assert len(keys) == 1
+    assert keys[0].paint.fill == "#FF0000"
+    assert any(item.kind.value == "Symbol" and item.paint.stroke != item.paint.fill for item in marks)
+    assert progress_marks and all(item.paint.fill == next(
+        mark.paint.fill for mark in marks if mark.source_ref == item.source_ref) for item in progress_marks)
+    assert all(item.paint.stroke == "#FFFDF0" for item in progress_marks)
+    assert not _swatches(rendered, "progress-fill")
+
+
+def test_progress_key_compares_its_host_not_an_unrelated_equal_paint_actual(tmp_path):
+    parts = _parts(progress=True)
+    bindings = parts["theme"]["body"]["colorBindings"]
+    bindings["actual-behind.fill"] = "warning"
+    source = sr.project({
+        "host": sr.span("host", date(2026, 2, 2), 10),
+        "other": sr.span("other", date(2026, 2, 2), 10),
+    })
+    actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "typed-progress-host",
+              "body": {"asOf": "2026-02-20", "observations": [
+                  {"id": "host-observed", "sequence": 1, "projectObjectId": "host",
+                   "actual": {"start": "2026-02-02", "finish": "2026-02-07", "progress": 0.4}},
+                  {"id": "other-observed", "sequence": 1, "projectObjectId": "other",
+                   "actual": {"start": "2026-02-02", "finish": "2026-02-16"}},
+              ]}}
+
+    rendered = _render(tmp_path, source, actual=actual, parts=parts,
+                       detail=_detail(("actual", "Actual"), ("progressFill", "Progress")))
+    host = next(item for item in rendered.surface.primitives
+                if item.purpose == "actual" and item.source_ref == "host")
+    other = next(item for item in rendered.surface.primitives
+                 if item.purpose == "actual" and item.source_ref == "other")
+    progress = tuple(item for item in rendered.surface.primitives if item.purpose == "progress-fill")
+    progress_keys = _swatches(rendered, "progress-fill")
+
+    assert progress and len(progress_keys) == 1
+    assert _ink_colors(progress[0].paint) == _ink_colors(other.paint)
+    assert _ink_colors(progress[0].paint) != _ink_colors(host.paint)

@@ -22,10 +22,10 @@ from chrona.presentation.layout.surface_content import (
     complete_footer_band, compose_detail_panel_blocks, place_notes, place_summary,
     validate_detail_panel_placement,
 )
-from chrona.presentation.layout.surface_legend import SurfaceLegendContext, place_legend
-from chrona.presentation.layout.realized_legend import recompose_realized_legend
-from chrona.presentation.layout.slot_heading import (SlotHeadings, content_slot, full_slot, inline_content_slot,
-                                                    inline_full_slot)
+from chrona.presentation.layout.realized_legend import (
+    completed_legend_slots, recompose_realized_legend, reserve_potential_legend,
+)
+from chrona.presentation.layout.slot_heading import SlotHeadings, content_slot, full_slot
 from chrona.presentation.layout.surface_completion import (
     SurfaceCompletionContext, SurfaceLayoutComposition, complete_surface_layout,
 )
@@ -274,16 +274,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     side_content_warnings.extend(headings.warnings)
     side_content_warnings.extend(table_batch.warnings)
     side_content_warnings.extend(heading_batch.warnings)
-    legend = by_source.get("legend")
-    legend_batch = None
-    if legend:
-        legend_batch = place_legend(SurfaceLegendContext(
-            request, inline_content_slot(content_slot(legend, headings.reserved("legend")),
-                                         headings.reserved_inline("legend")), metric_values, metric_for))
-        # Potential keys reserve slots; only final realized entries report fit warnings.
-        legend_slot = inline_full_slot(legend, full_slot(legend, legend_batch.slot, headings.reserved("legend")),
-                                       headings.reserved_inline("legend"))
-        slots = tuple(legend_slot if slot.source_ref == "legend" else slot for slot in slots)
+    legend_batch, slots = reserve_potential_legend(
+        request, by_source.get("legend"), slots, headings, metric_values, metric_for)
     notes = by_source.get("notes")
     narrative_receipts = []
     notes_batch = None
@@ -336,6 +328,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         tuple(relations), tuple(text), metric_values, metric_for, side_content_warnings)
 
     if legend_batch is not None:
+        slots = completed_legend_slots(slots, footer_provisional_slots, legend_batch, headings)
+        by_source = {slot.source_ref: slot for slot in slots}
         marks.extend(legend_batch.marks)
         shapes.extend(legend_batch.shapes)
         relations.extend(legend_batch.relations)

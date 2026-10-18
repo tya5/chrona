@@ -5,7 +5,30 @@ from chrona.presentation.layout.legend_candidates import actual_key_label, coale
 from chrona.presentation.layout.legend_ink import actual_mark_keys, mark_ink_keys
 from chrona.presentation.layout.style_legend import painted_style_occurrences
 from chrona.presentation.layout.surface_legend import SurfaceLegendContext, place_legend
+from chrona.presentation.layout.slot_heading import content_slot, full_slot, inline_content_slot, inline_full_slot
+from chrona.presentation.model.legend_paint import effective_ink_identity
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
+
+
+def completed_legend_slots(slots, allocated_slots, legend, headings):
+    """Restore caption bands without retaining potential-only legend growth."""
+    if legend is None:
+        return slots
+    allocated = next(slot for slot in allocated_slots if slot.source_ref == "legend")
+    completed = inline_full_slot(allocated,
+        full_slot(allocated, legend.slot, headings.reserved("legend")),
+        headings.reserved_inline("legend"))
+    return tuple(completed if slot.source_ref == "legend" else slot for slot in slots)
+
+
+def reserve_potential_legend(request, legend_slot, slots, headings, metric_values, metric_for):
+    """Complete the conservative batch for earlier fixed geometry decisions."""
+    if legend_slot is None:
+        return None, slots
+    batch = place_legend(SurfaceLegendContext(request,
+        inline_content_slot(content_slot(legend_slot, headings.reserved("legend")),
+                            headings.reserved_inline("legend")), metric_values, metric_for))
+    return batch, completed_legend_slots(slots, slots, batch, headings)
 
 
 def visible_placement(placement):
@@ -48,17 +71,46 @@ def _same_base_ink(mark, content, tokens, capabilities):
     return ink(realized) == ink(base)
 
 
+def _progress_adds_actual_ink(progress_key, progress_shapes, drawn_marks, content, tokens, capabilities):
+    """Keep Progress only when a visible host has distinct completed Actual ink."""
+    hosts = {mark.placement_id: mark for mark in drawn_marks}
+    for shape in progress_shapes:
+        host = hosts.get(shape.host_placement_id)
+        if host is None:
+            return True
+        host_keys = (actual_mark_keys(host, content, tokens, capabilities)
+                     if host.semantic_id == "actual"
+                     else mark_ink_keys(host, content, tokens, capabilities))
+        if not host_keys:
+            return True
+        paints = tuple(paint for key in host_keys
+                       for paint in (key.glyph.paints if key.glyph is not None else (key.paint,)))
+        pattern_set = {key.pattern_identity for key in host_keys if key.pattern_identity is not None}
+        patterns = next(iter(pattern_set)) if len(pattern_set) == 1 else (
+            tuple(sorted(pattern_set, key=repr)) if pattern_set else None)
+        if effective_ink_identity(paints, patterns) != progress_key.ink_identity:
+            return True
+    return False
+
+
+def _final_actual_representative(candidate, realized):
+    """Keep the premeasured witness while updating only final occurrence facts."""
+    return replace(candidate, occurrences=realized.occurrences,
+                    variance_classes=realized.variance_classes)
+
+
 def filtered_realized_entries(request, marks, shapes, relations, text):
     content, tokens, capabilities = request.surface_content, request.theme_tokens, request.paint_capabilities
     drawn_marks = tuple(mark for mark in marks if visible_placement(mark))
     actual = coalesce_actual_keys(tuple(key for mark in drawn_marks
         for key in actual_mark_keys(mark, content, tokens, capabilities)))
-    by_ink = {key.identity: key for key in actual}
-    reserved = {entry.realized_key.identity for entry in content.legend_entries
+    by_ink = {key.grouping_identity: key for key in actual}
+    reserved = {entry.realized_key.grouping_identity for entry in content.legend_entries
                 if entry.realized_key is not None and entry.realized_key.family == "actual"}
     if reserved:
         assert by_ink.keys() <= reserved, "final Actual ink must have a premeasured candidate"
-    progress_drawn = any(shape.semantic_id == "progressFill" and visible_placement(shape) for shape in shapes)
+    progress_shapes = tuple(shape for shape in shapes
+                            if shape.semantic_id == "progressFill" and visible_placement(shape))
     painted = painted_style_occurrences(drawn_marks, text, fills=content.style_fills, tokens=tokens)
     roles = {_scene_role(mark.semantic_id) for mark in drawn_marks}
     roles.update(_scene_role(shape.semantic_id) for shape in shapes
@@ -71,14 +123,16 @@ def filtered_realized_entries(request, marks, shapes, relations, text):
         key = entry.realized_key
         if key is not None:
             if key.family == "actual":
-                selected = by_ink.get(key.identity)
-                if selected is None:
+                realized = by_ink.get(key.grouping_identity)
+                if realized is None:
                     continue
-                selected = replace(selected, base_label=key.base_label)
+                selected = replace(_final_actual_representative(key, realized), base_label=key.base_label)
                 result.append(replace(entry, realized_key=selected,
                     label=actual_key_label(key.base_label, selected, multiple=len(actual) > 1,
                                            wording=dict(content.legend_wording))))
-            elif progress_drawn and key.paint.effective_channels.opacity != 0:
+            elif (progress_shapes and key.paint.effective_channels.opacity != 0
+                  and _progress_adds_actual_ink(key, progress_shapes, drawn_marks,
+                                                content, tokens, capabilities)):
                 result.append(entry)
             continue
         if entry.style_scope is not None or entry.role.startswith("scale:"):

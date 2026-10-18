@@ -31,7 +31,7 @@ def coalesce_actual_keys(keys: tuple[RealizedLegendKey, ...]) -> tuple[RealizedL
     """Merge equal actual ink in first-seen order while retaining all witnesses."""
     grouped: dict[tuple[object, ...], list[RealizedLegendKey]] = {}
     for key in keys:
-        grouped.setdefault(key.identity, []).append(key)
+        grouped.setdefault(key.grouping_identity, []).append(key)
     result = []
     for group in grouped.values():
         first = group[0]
@@ -39,8 +39,9 @@ def coalesce_actual_keys(keys: tuple[RealizedLegendKey, ...]) -> tuple[RealizedL
         classes = _ordered_classes(tuple(group))
         glyph = first.glyph
         if glyph is not None:
+            glyphs = tuple(key.glyph for key in group if key.glyph is not None)
             glyph = replace(glyph, footprint=tuple(
-                max(key.glyph.footprint[axis] for key in group) for axis in (0, 1)))
+                max(item.footprint[axis] for item in glyphs) for axis in (0, 1)))
         result.append(replace(first, occurrences=occurrences, variance_classes=classes, glyph=glyph))
     return tuple(result)
 
@@ -49,9 +50,11 @@ def actual_key_label(base: str, key: RealizedLegendKey, *, multiple: bool,
                      wording: dict[str, str]) -> str:
     if not multiple:
         return base
-    fragments = tuple(wording.get(_VARIANCE_LABELS[category][0], _VARIANCE_LABELS[category][1])
-                      for category in _ordered_classes((key,)))
-    return f"{base} — {' / '.join(fragments)}" if fragments else base
+    classes = _ordered_classes((key,))
+    if len(classes) != 1:
+        return base
+    category = classes[0]
+    return wording.get(_VARIANCE_LABELS[category][0], _VARIANCE_LABELS[category][1])
 
 
 def prepare_realized_legend_candidates(
