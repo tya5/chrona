@@ -40,9 +40,12 @@ the rules below.
 Consequently a normal point with the declared `gate` paint role is not encoded
 by `target: planned`, while its forecast occurrence remains `forecast` and is
 eligible (#1756). This is the general semantic-target rule, not a target-b or
-Project-specific exception. To colour both, keep the View encoding and add a
-Style encoding selecting `gate` with the same field, scale and domain. A Theme
-role or forecast mode does not implicitly broaden an authored selector.
+Project-specific exception. A Theme that omits the optional `gate` role keeps
+ordinary points on their existing `planned` fallback, so this encoding applies
+to both ordinary and forecast points. A Theme that declares `gate` instead
+gives ordinary points its static gate paint. An explicit `gate` Style fill
+encoding is not currently admitted; do not suggest it as an author workaround.
+Forecast mode does not implicitly broaden an authored selector.
 
 Style encodings use the same scale resolver (Spec07), with eligibility already
 established by their source occurrence. The resolver's legacy `target` metadata
