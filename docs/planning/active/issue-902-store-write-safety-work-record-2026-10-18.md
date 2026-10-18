@@ -113,7 +113,7 @@ must retain its original failure rather than claim a safe pre-write rejection.
   becomes stale-CAS rejection. Resolve that contract before claiming honest
   idempotent annotations or the item's replay acceptance. No item3/2 code yet.
 
-## Item3 design plan (preparation; code waits for item5 release)
+## Item3 design plan
 
 - Use case: an agent reverses an accepted Actual write, then reapplies its intent,
   without overwriting intervening changes or rewinding immutable revision history.
@@ -151,7 +151,8 @@ Store/Actual; full identities are verified from immutable bytes, never trusted
 from a ledger digest alone. Fresh-base CAS remains independent of state equality.
 No unresolved architecture finding remains. Normative authority is Spec35 §4.3;
 Spec10 and Spec66 connect the ownership and agent contract. Publish this design
-before implementation planning; item3 code waits for item5 release. This branch
+before implementation planning. Item3 may pipeline as isolated WIP on the
+verified public item5 implementation; its PR/release waits for item5 release. This branch
 is separate from the item5 product/release branch, avoiding an unimplemented
 tool-set claim in that release.
 
@@ -160,6 +161,8 @@ tool-set claim in that release.
 Design/specification/architecture review `a79ab0307` is published on
 `wip/issue-902-actual-history-design`. One coherent product PR after item5 release;
 the following are owned implementation/test slices, not partial main releases.
+WIP implementation may proceed during item5's publication wait; never merge
+unimplemented item3 contracts into the separate item5 release branch.
 
 | Slice | Owned files | Acceptance evidence |
 | --- | --- | --- |
