@@ -4,7 +4,9 @@ from typing import Mapping
 import pytest
 import yaml
 
-from chrona.presentation.model.closure import ClosureError, resolve_guided_draft_render
+from chrona.presentation.model.closure import (
+    ClosureError, _acquire_draft_preset_members, _load_draft_resource, resolve_guided_draft_render,
+)
 from chrona.usecases.authoring_workspace import create_workspace
 from chrona.usecases.guided_render import WorkspaceRenderRequest, render_workspace
 
@@ -33,6 +35,25 @@ def test_render_workspace_renders_copied_builtin_preset(preset: str, tmp_path: P
     assert result.artifact.content.startswith(b"<svg")
     assert result.provenance.workspace_identity
     assert result.provenance.preset_identity.startswith("sha256:")
+
+
+def test_target_b_view_defaults_are_plain_documents_for_strict_yaml_identity(tmp_path: Path):
+    created = create_workspace(
+        tmp_path / "target-b",
+        {"id": "guided-test", "tasks": [
+            {"id": "task", "title": "Task", "planned": {"start": "2027-01-04", "finish": "2027-01-09"}},
+        ]},
+        "target-b",
+        publish=_publish,
+    )
+    preset_path = created.workspace.parent / "preset" / "preset.yaml"
+    preset = _load_draft_resource("presentation-preset", preset_path)
+    members = _acquire_draft_preset_members(preset, preset_path)
+    view_path = preset.contract.resources["view"]["path"]
+    view_document = members.documents_by_path[view_path]
+
+    assert type(view_document) is dict
+    assert yaml.safe_dump(view_document, sort_keys=True)
 
 
 def test_guided_closure_preserves_preset_identity_diagnostic_envelope(tmp_path: Path):

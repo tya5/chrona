@@ -484,7 +484,7 @@ def _acquire_draft_preset_members(
                                declaring_preset_id=preset.id) from error
         if resource.id != declaration["id"]:
             raise ClosureError("E_DRAFT_PRESET_RESOURCE", detail=f"preset {preset.id!r} declares {name} id {declaration['id']!r}, but {path.name} has id {resource.id!r}")
-        documents_by_path[str(declaration["path"])] = source.value
+        documents_by_path[str(declaration["path"])] = _plain_value(source.value)
     catalog_declarations = preset.contract.resources.get("iconCatalogs", ()) if include_catalogs else ()
     if not isinstance(catalog_declarations, (tuple, list)):
         raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail="resources.iconCatalogs of the preset must be a list")
@@ -500,14 +500,14 @@ def _acquire_draft_preset_members(
             raise ClosureError("E_DRAFT_PRESET_RESOURCE", detail=f"preset {preset.id!r} declares icon catalog id {declaration['id']!r}, but {path.name} has id {resource.id!r}")
         catalog_paths.append(path)
         catalog_sources.append(source)
-        documents_by_path[str(declaration["path"])] = source.value
+        documents_by_path[str(declaration["path"])] = _plain_value(source.value)
     # Compatible schemes are selectable by the guided binding. Acquire each through the
     # same Theme/reference resolver, but only the selected scheme enters the render closure.
     if include_compatible_schemes:
         for declaration in preset.contract.compatible_color_schemes:
             path = _declared_child(preset_root or preset_path.parent, str(declaration["path"]))
             source = _load_draft_source("color-scheme", path)
-            documents_by_path[str(declaration["path"])] = source.value
+            documents_by_path[str(declaration["path"])] = _plain_value(source.value)
     return DraftPresetMembers(paths, (*effective_sources, *catalog_sources), tuple(catalog_paths), documents_by_path)
 
 
