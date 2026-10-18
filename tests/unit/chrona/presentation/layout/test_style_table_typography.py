@@ -64,7 +64,8 @@ def test_plan_measures_and_places_table_cell_with_same_selected_role(tmp_path, m
     original_normalize = usecase.normalize_v05_surface_content
 
     def normalize_with_style(*args, **kwargs):
-        return original_normalize(*args, **kwargs, style_rules=rules)
+        kwargs["style_rules"] = rules
+        return original_normalize(*args, **kwargs)
 
     def prepare(value):
         cell = next(item for item in value.table.cells if item.style_key is not None)

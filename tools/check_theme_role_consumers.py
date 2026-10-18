@@ -19,7 +19,7 @@ from chrona.resources import safe_load
 
 ROOT = Path(__file__).resolve().parents[1]
 _THEME_KINDS = ("chrona/theme/v0.15",)
-_DOCUMENT_KEYS = ("view", "layout", "detailProfile", "summaryProfile")
+_DOCUMENT_KEYS = ("view", "style", "layout", "detailProfile", "summaryProfile")
 
 
 def _load(path: Path) -> Mapping[str, Any] | None:
@@ -47,7 +47,8 @@ def _context_documents(example: Path, context: Mapping[str, Any]) -> tuple[Path 
     theme_path = _reference_path(example, body.get("theme"))
     documents: list[Any] = []
     inputs = body.get("inputs") if isinstance(body.get("inputs"), Mapping) else {}
-    for reference in (body.get("view"), body.get("layout"), inputs.get("detailProfile"), inputs.get("summaryProfile")):
+    for reference in (body.get("view"), body.get("style"), body.get("layout"),
+                      inputs.get("detailProfile"), inputs.get("summaryProfile")):
         if (path := _reference_path(example, reference)) is not None:
             document = _load(path)
             if document is not None:
@@ -64,7 +65,7 @@ def _closures(root: Path) -> Iterable[tuple[Path, list[Any]]]:
         if theme_path is not None:
             yield theme_path, documents
     for bundle in sorted(root.glob("src/chrona/resources/presets/bundles/*")):
-        documents = [document for name in ("view.yaml", "layout.yaml", "detail.yaml", "summary.yaml")
+        documents = [document for name in ("view.yaml", "style.yaml", "layout.yaml", "detail.yaml", "summary.yaml")
                      if (bundle / name).is_file() and (document := _load(bundle / name)) is not None]
         if (bundle / "theme.yaml").is_file():
             yield bundle / "theme.yaml", documents

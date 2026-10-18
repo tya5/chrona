@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import date, timedelta
+from hashlib import sha256
+import json
 from typing import Any, Mapping
 
 from chrona.presentation.model.actual_variance_paint import select_actual_variance_paints
@@ -24,11 +26,14 @@ from chrona.presentation.contracts.resources import (
 from chrona.presentation.group_header_text import GroupHeaderTextError, HeaderTemplate, compose_group_header_runs, compose_group_headers
 from chrona.presentation.figure_text import FigureTextProgram
 from chrona.presentation.heading_text import HeadingTextPrograms, close_heading
-from chrona.presentation.model.color_scale import OTHER_LABEL, ResolvedColorScale, scale_text
+from chrona.presentation.model.color_scale import OTHER_LABEL, OTHER_REF_SUFFIX, ResolvedColorScale, scale_text
 from chrona.presentation.model.style_rules import (
-    OccurrenceStyleIndex, StyleOccurrenceKey, evaluate_style_rules,
+    OccurrenceStyleIndex, StyleMatchIndex, StyleOccurrenceKey, evaluate_style_rules,
 )
-from chrona.presentation.style import StyleRule
+from chrona.presentation.style import (
+    StyleEncodingOutcome, StyleLegendScope, StyleMatch, StyleRule,
+    canonical_style_selector,
+)
 from chrona.presentation.review.style_occurrences import collect_surface_style_facts
 from chrona.presentation.model.style_fills import complete_style_fills
 from chrona.presentation.model.style_mark_paint import validate_style_mark_paint
@@ -335,6 +340,97 @@ def legend_entries(detail: ReviewDetailInput | None, project: Mapping[str, Any],
         for ref, label, _color in color_scale.legend_items(used))
 
 
+def _style_match_index(intents: OccurrenceStyleIndex,
+                       rules: tuple[StyleRule, ...]) -> StyleMatchIndex:
+    """Project authored rule provenance; lowered View rules have no Style identity."""
+    authored = {rule.rule_id: rule for rule in rules
+                if rule.style_id is not None and rule.authored_rule_id is not None}
+    matches = []
+    for intent in intents.intents:
+        by_style: dict[str, list[str]] = {}
+        for internal_id in intent.matched_rule_ids:
+            rule = authored.get(internal_id)
+            if rule is not None:
+                rule_ids = by_style.setdefault(str(rule.style_id), [])
+                authored_id = str(rule.authored_rule_id)
+                if authored_id not in rule_ids:
+                    rule_ids.append(authored_id)
+        for style_id, rule_ids in by_style.items():
+            matches.append((intent.key, StyleMatch(style_id, tuple(rule_ids))))
+    return StyleMatchIndex(tuple(matches))
+
+
+def _style_legend_entries(
+    rules: tuple[StyleRule, ...], intents: OccurrenceStyleIndex,
+    occurrences: tuple[Any, ...], style_fills: Any,
+) -> tuple[tuple[SurfaceLegendEntry, ...], tuple[tuple[str, str], ...]]:
+    """Build potential authored Style keys from evaluated occurrences and completed scales."""
+    authored = tuple(rule for rule in rules
+                     if rule.style_id is not None and rule.authored_rule_id is not None
+                     and isinstance(rule.outcome, StyleEncodingOutcome))
+    if not authored or not style_fills.scales:
+        return (), ()
+    occurrence_by_key = {occurrence.key: occurrence for occurrence in occurrences}
+    intents_by_rule: dict[str, list[tuple[StyleOccurrenceKey, str]]] = {
+        rule.rule_id: [] for rule in authored
+    }
+    for intent in intents.intents:
+        if intent.fill is None:
+            continue
+        occurrence = occurrence_by_key.get(intent.key)
+        if occurrence is None:
+            continue
+        field_name = intent.fill.source.field_name
+        value = next((fact.value for fact in occurrence.fields
+                      if fact.name == field_name and fact.present), None)
+        value_text = scale_text(value)
+        if value_text is None:
+            continue
+        for rule_id in intent.fill_rule_ids:
+            if rule_id in intents_by_rule:
+                intents_by_rule[rule_id].append((intent.key, value_text))
+
+    scales_by_id = {scale.scale_id: scale for scale in style_fills.scales}
+    entries: list[SurfaceLegendEntry] = []
+    paints: list[tuple[str, str]] = []
+    for rule in authored:
+        outcome = rule.outcome
+        assert isinstance(outcome, StyleEncodingOutcome)
+        scale = scales_by_id.get(outcome.scale_id)
+        matched = intents_by_rule[rule.rule_id]
+        if scale is None or not matched:
+            continue
+        used = {value for _key, value in matched}
+        selector = canonical_style_selector(rule.selector)
+        title = outcome.legend.title if outcome.legend is not None else None
+        show_scope = outcome.legend.show_scope if outcome.legend is not None else False
+        scope = StyleLegendScope(str(rule.style_id), str(rule.authored_rule_id),
+                                 outcome.scale_id, selector, title, show_scope)
+        folded = set(scale.folded)
+        for scale_ref, value_label, color in scale.legend_items(used):
+            is_other = scale_ref == f"scale:{scale.scale_id}{OTHER_REF_SUFFIX}"
+            value_keys = tuple(dict.fromkeys(
+                key for key, value in matched
+                if (value in folded if is_other else value == value_label)
+            ))
+            if not value_keys:
+                continue
+            identity_value: str | dict[str, str] = (
+                {"folded": OTHER_LABEL} if is_other else value_label
+            )
+            identity_payload = json.dumps(
+                [scope.style_id, scope.rule_id, scope.scale_id, scope.selector, identity_value],
+                ensure_ascii=False, separators=(",", ":"),
+            )
+            identity = "scale:style:" + sha256(identity_payload.encode("utf-8")).hexdigest()
+            entries.append(SurfaceLegendEntry(
+                identity, value_label, source_ref=identity, style_scope=scope,
+                style_value=value_label, style_occurrences=value_keys,
+            ))
+            paints.append((identity, color))
+    return tuple(entries), tuple(paints)
+
+
 def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
                                   *, actual_set: Mapping[str, Any] | None = None,
                                   detail: ReviewDetailInput | None = None, summary: SummaryContent,
@@ -551,12 +647,19 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         facts = collect_surface_style_facts(projection, content, gate_declared=gate_declared)
         intents = OccurrenceStyleIndex(evaluate_style_rules(
             (*encoding_rules, *style_rules), facts.occurrences, field_catalogue=facts.field_catalogue))
+        style_fills = complete_style_fills(
+            intents, facts.occurrences, theme=theme, legacy_scale=color_scale,
+            reserved=scale_reserved, other_color=scale_other_color,
+            source_refs={rule.rule_id: rule.source_ref
+                         for rule in (*encoding_rules, *style_rules)})
+        style_legend, style_legend_paints = _style_legend_entries(
+            style_rules, intents, facts.occurrences, style_fills)
         content = replace(content, style_intents=intents,
-                          style_fills=complete_style_fills(
-                              intents, facts.occurrences, theme=theme, legacy_scale=color_scale,
-                              reserved=scale_reserved, other_color=scale_other_color,
-                              source_refs={rule.rule_id: rule.source_ref
-                                           for rule in (*encoding_rules, *style_rules)}))
+                          style_matches=_style_match_index(intents, style_rules),
+                          style_fills=style_fills,
+                          legend_entries=(*content.legend_entries, *style_legend),
+                          scale_legend_paints=(*content.scale_legend_paints,
+                                               *style_legend_paints))
         if theme is not None:
             validate_style_mark_paint(
                 intents, facts.occurrences, content.style_fills, ThemeTokenView(theme),

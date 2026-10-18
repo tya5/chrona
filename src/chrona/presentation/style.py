@@ -7,7 +7,7 @@ does not evaluate rules or resolve Project fields.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import json
 import math
 from typing import Any
@@ -62,11 +62,44 @@ StyleOutcome = StyleRoleOutcome | StyleEncodingOutcome
 
 
 @dataclass(frozen=True)
+class StyleMatch:
+    """Passive provenance for authored Style rules that treated one occurrence."""
+
+    style_id: str
+    rule_ids: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class StyleLegendScope:
+    """Passive authored scope attached to a completed Style legend swatch."""
+
+    style_id: str
+    rule_id: str
+    scale_id: str
+    selector: str
+    title: str | None
+    show_scope: bool
+
+
+@dataclass(frozen=True)
 class StyleRule:
     rule_id: str
     selector: StyleSelector
     outcome: StyleOutcome
     source_ref: str
+    style_id: str | None = None
+    authored_rule_id: str | None = None
+
+
+def bind_style_rules(style_id: str, rules: tuple[StyleRule, ...]) -> tuple[StyleRule, ...]:
+    """Qualify immutable rule identities without losing authored diagnostics.
+
+    JSON tuple framing cannot alias a lowered View rule or another resource's
+    local ID. Neither display labels nor host paths are identity inputs.
+    """
+    return tuple(replace(rule, rule_id="style:" + _canonical_json([style_id, rule.rule_id]),
+                         style_id=style_id, authored_rule_id=rule.rule_id)
+                 for rule in rules)
 
 
 class StyleRuleError(ValueError):
@@ -237,6 +270,9 @@ def _parse_outcome(raw: Mapping[str, Any], source_ref: str) -> StyleOutcome:
         if not isinstance(raw_legend, Mapping):
             raise StyleRuleError("E_RESOURCE_SCHEMA", "legend must be an object", f"{source_ref}/encode/legend")
         title = _optional_string(raw_legend, "title", f"{source_ref}/encode/legend")
+        if title is not None and not title.strip():
+            raise StyleRuleError("E_STYLE_LEGEND_TITLE_REQUIRED", "A provided legend title must be non-blank",
+                                 f"{source_ref}/encode/legend/title")
         show_scope = raw_legend.get("showScope", False)
         if not isinstance(show_scope, bool):
             raise StyleRuleError("E_RESOURCE_SCHEMA", "showScope must be a boolean",

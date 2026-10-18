@@ -11,8 +11,9 @@ from chrona.presentation.model.axis_color_scale import AxisBandFillSpec
 from chrona.presentation.model.date_basis import DisplayDateRange
 from chrona.presentation.model.placement_candidates import PlacementCandidate
 from chrona.presentation.model.projection import ObservationState, ReviewItem, display_finish_delta
-from chrona.presentation.model.style_rules import OccurrenceStyleIndex, StyleOccurrenceKey
+from chrona.presentation.model.style_rules import OccurrenceStyleIndex, StyleMatchIndex, StyleOccurrenceKey
 from chrona.presentation.model.style_fills import StyleFillIndex
+from chrona.presentation.style import StyleLegendScope
 
 
 def _diagnostic_error(code: str, detail: str) -> ValueError:
@@ -225,6 +226,18 @@ class SurfaceLegendEntry:
     label: str
     source_ref: str | None = None
     swatch_shape: str | None = None
+    style_scope: StyleLegendScope | None = None
+    style_value: str | None = None
+    style_occurrences: tuple[StyleOccurrenceKey, ...] = ()
+
+    def __post_init__(self) -> None:
+        if self.style_scope is not None:
+            if not isinstance(self.style_value, str):
+                raise ValueError("Style legend scope requires its completed domain value")
+            title = self.style_scope.title
+            object.__setattr__(self, "label", f"{title}: {self.style_value}" if title else self.style_value)
+        elif self.style_value is not None:
+            raise ValueError("Style legend value requires its scope provenance")
 
     @property
     def source_identity(self) -> str:
@@ -315,6 +328,8 @@ class SurfaceContentInput:
     actual_variance_paints: tuple[tuple[str, str], ...] = ()
     # Evaluated Style intent remains attached to exact source occurrence identity.
     style_intents: OccurrenceStyleIndex = field(default_factory=OccurrenceStyleIndex)
+    # Authored Style treatment provenance only; Layout joins by exact occurrence.
+    style_matches: StyleMatchIndex = field(default_factory=StyleMatchIndex)
 
 
 @dataclass(frozen=True)

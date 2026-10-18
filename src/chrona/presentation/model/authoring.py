@@ -16,7 +16,7 @@ import yaml
 from chrona.presentation.contracts import (
     ActualSetContract, AuthoringWorkspaceContract, ClosureIdentity, ColorSchemeContract,
     ContractError, LayoutProfileContract, PresentationPresetContract, ProjectContract,
-    ThemeContract, ViewContract, parse_contract,
+    StyleContract, ThemeContract, ViewContract, parse_contract,
 )
 
 
@@ -31,6 +31,8 @@ class NormalizedAuthoring:
     project: ProjectContract
     actual_set: ActualSetContract | None
     view: ViewContract
+    style: StyleContract | None
+    style_source: Mapping[str, Any] | None
     theme: ThemeContract
     color_scheme: ColorSchemeContract
     layout: LayoutProfileContract
@@ -47,6 +49,7 @@ class NormalizedAuthoring:
             ("project", self.project_source),
             *(((("actual-set", self.actual_source),) if self.actual_source is not None else ())),
             ("view", self.view_source), ("theme", self.theme_source),
+            *(((("style", self.style_source),) if self.style_source is not None else ())),
             ("color-scheme", self.color_scheme_source), ("layout-profile", self.layout_source),
         )
 
@@ -72,6 +75,8 @@ def normalize_authoring_workspace(
         name: _declared_resource(name, declared[name], resources_by_path)
         for name in ("view", "theme", "colorScheme", "layout")
     }
+    style = (_declared_resource("style", declared["style"], resources_by_path)
+             if "style" in declared else None)
     selected_scheme = _select_scheme(workspace, preset, resources_by_path, loaded["colorScheme"])
     view = deepcopy(loaded["view"])
     _apply_view_overrides(view, workspace.binding.get("overrides", {}).get("view", {}))
@@ -79,6 +84,7 @@ def normalize_authoring_workspace(
         "project": _project_document(workspace),
         **({"actual-set": _actual_document(workspace)} if workspace.actuals else {}),
         "view": view,
+        **({"style": style} if style is not None else {}),
         "theme": loaded["theme"],
         "color-scheme": selected_scheme,
         "layout-profile": loaded["layout"],
@@ -89,6 +95,8 @@ def normalize_authoring_workspace(
     }
     if not isinstance(contracts["project"], ProjectContract) or not isinstance(contracts["view"], ViewContract):
         raise AuthoringError(f"E_AUTHORING_NORMALIZATION: projectType={type(contracts['project']).__name__}, viewType={type(contracts['view']).__name__}; expected ProjectContract and ViewContract")
+    if (style is not None and not isinstance(contracts["style"], StyleContract)):
+        raise AuthoringError(f"E_AUTHORING_NORMALIZATION: styleType={type(contracts['style']).__name__}; expected StyleContract")
     if not isinstance(contracts["theme"], ThemeContract) or not isinstance(contracts["color-scheme"], ColorSchemeContract):
         raise AuthoringError(f"E_AUTHORING_NORMALIZATION: themeType={type(contracts['theme']).__name__}, colorSchemeType={type(contracts['color-scheme']).__name__}; expected ThemeContract and ColorSchemeContract")
     if not isinstance(contracts["layout-profile"], LayoutProfileContract):
@@ -96,7 +104,7 @@ def normalize_authoring_workspace(
     actual = contracts.get("actual-set")
     if actual is not None and not isinstance(actual, ActualSetContract):
         raise AuthoringError(f"E_AUTHORING_NORMALIZATION: actualSetType={type(actual).__name__}; expected ActualSetContract")
-    return NormalizedAuthoring(contracts["project"], actual, contracts["view"], contracts["theme"],
+    return NormalizedAuthoring(contracts["project"], actual, contracts["view"], contracts.get("style"), sources.get("style"), contracts["theme"],
                                contracts["color-scheme"], contracts["layout-profile"], sources["project"],
                                sources.get("actual-set"), sources["view"], sources["theme"],
                                sources["color-scheme"], sources["layout-profile"])
@@ -104,7 +112,7 @@ def normalize_authoring_workspace(
 
 def _declared_resource(name: str, declaration: Mapping[str, Any], resources: Mapping[str, Mapping[str, Any]]) -> Mapping[str, Any]:
     document = resources.get(str(declaration["path"]))
-    expected_kind = {"view": "view", "theme": "theme", "colorScheme": "color-scheme", "layout": "layout-profile"}[name]
+    expected_kind = {"view": "view", "style": "style", "theme": "theme", "colorScheme": "color-scheme", "layout": "layout-profile"}[name]
     # Layout Profile v0.3 predates the common presentation envelope and therefore
     # has no literal ``kind`` member; its declared preset slot supplies that type.
     actual_kind = document.get("kind", expected_kind) if isinstance(document, Mapping) else None

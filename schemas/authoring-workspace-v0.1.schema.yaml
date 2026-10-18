@@ -51,7 +51,7 @@ properties:
         description: "Choose guided preset binding or a complete explicit resource bundle, never both."
         examples:
           - {mode: guided, binding: {preset: {id: starter, version: '1', path: presets/starter.yaml}}}
-          - {mode: explicit, resources: {view: {id: view, kind: view, path: view.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, theme: {id: theme, kind: theme, path: theme.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, colorScheme: {id: scheme, kind: color-scheme, path: scheme.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, layout: {id: layout, kind: layout-profile, path: layout.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, renderContext: {id: context, kind: render-context, path: context.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}}, receipt: {id: receipt, kind: presentation-materialization-receipt, path: receipt.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}}
+          - {mode: explicit, resources: {view: {id: view, kind: view, path: view.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, theme: {id: theme, kind: theme, path: theme.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, colorScheme: {id: scheme, kind: color-scheme, path: scheme.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, layout: {id: layout, kind: layout-profile, path: layout.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, renderContext: {id: context, kind: render-context, path: context.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, style: {id: style, kind: style, path: style.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}}, receipt: {id: receipt, kind: presentation-materialization-receipt, path: receipt.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}}
         oneOf:
           - type: object
             description: "A pinned preset with the closed guided customization vocabulary."
@@ -75,6 +75,7 @@ properties:
                   colorScheme: {description: "Local explicit Color Scheme reference.", $ref: "#/$defs/localReference"}
                   layout: {description: "Local explicit Layout Profile reference.", $ref: "#/$defs/localReference"}
                   renderContext: {description: "Local explicit Render Context reference.", $ref: "#/$defs/localReference"}
+                  style: {description: "Optional locally owned Style reference.", $ref: "#/$defs/localStyleReference"}
               receipt: {description: "Materialization provenance receipt reference.", $ref: "#/$defs/localReference"}
 $defs:
   date: {description: "Date-only ISO 8601 calendar value.", examples: ["2026-09-23"], $ref: "urn:chrona:common-v0.1#/$defs/isoDate"}
@@ -105,6 +106,13 @@ $defs:
       kind: {description: "Resource kind expected at the local path.", type: string, minLength: 1}
       path: {description: "Safe relative path to the local resource.", examples: ["resources/view.yaml"], minLength: 1, $ref: "urn:chrona:common-v0.1#/$defs/safeRelativePath"}
       contentIdentity: {description: "SHA-256 identity of the exact local resource bytes.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+  localStyleReference:
+    description: "Locally owned explicit Style reference."
+    allOf:
+      - {$ref: "#/$defs/localReference"}
+      - description: "Constrain the local resource reference to a Style."
+        properties:
+          kind: {description: "The referenced resource must be a Style.", const: style}
   binding:
     type: object
     description: "Pinned preset and the closed Stage-2 presentation override vocabulary."

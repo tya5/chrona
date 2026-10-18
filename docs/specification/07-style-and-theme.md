@@ -58,37 +58,7 @@ This boundary is normative. Moving a concern upward is allowed only when it does
 ### 4.1 Historical v0.1 Style proposal
 
 The historical v0.1 proposal is not an accepted Style resource format. It described
-an ordered list of declarative rules. A rule matches only facts already
-exposed by the View Projection and adds named visual roles; it cannot set a colour,
-font, coordinate, or token value.
-
-```yaml
-# chrona-contract: historical
-version: chrona/style/v0.1
-kind: style
-id: plan-actual
-body:
-  rules:
-    - id: planned-span
-      when: { facet: planned, sourceType: span }
-      addRoles: [planned]
-    - id: actual-span
-      when: { facet: actual, sourceType: span }
-      addRoles: [actual]
-    - id: finish-behind
-      when: { facet: finishDelta, category: behind }
-      addRoles: [variance-behind]
-    - id: actual-missing
-      when: { facet: missingActual }
-      addRoles: [actual-missing]
-```
-
-Rule order is the only v0.1 precedence mechanism: matching rules append roles in source
-order, while duplicate roles are removed. `when` is an intersection of its fields;
-unknown fields and undeclared facets are diagnostics. This enables a changed Actual to
-re-evaluate rules only for its affected View items and emit local `SceneDelta` upserts or
-token updates. A rule set has no catch-all code expression and cannot depend on title
-text, geometry, renderer state, or local time.
+an ordered role-append mechanism; use the closed v0.2 contract below instead.
 
 ### 4.1.1 Style v0.2 rule contract (#419)
 
@@ -100,6 +70,27 @@ an assignment never changes what another rule matches. Source order is not
 precedence. Equal assignments coalesce; different roles or different encodings
 for the same channel on one occurrence fail with both rule IDs. Role and fill
 assignments are independent; fill overrides only the selected role's fill.
+
+For example, a design whose Theme declares a complete `custom-planned` mark
+treatment can select it without changing product code:
+
+```yaml
+# chrona-contract: current
+version: chrona/style/v0.2
+kind: style
+id: custom-style
+body:
+  rules:
+    - id: planned-treatment
+      when: {semantic: planned}
+      then: {role: custom-planned}
+```
+
+Use `chrona render project.yaml --preset design/preset.yaml --style custom-style.yaml -o plan.svg`.
+To reuse it through a preset, declare
+`resources.style: {id: custom-style, kind: style, path: style.yaml}` in the
+preset body. Explicit `--style` wins. Immutable Contexts use the pinned
+`body.style` reference defined by [Specification13](13-presentation-format.md).
 
 The initial selectors are closed and combine by intersection:
 
@@ -133,6 +124,9 @@ Existing View `colorEncoding` remains accepted and lowers to the same intent;
 legacy opaque encoding fields do not become typed predicate declarations.
 Encoding paint identity is resolved source, scale, domain and channel, not
 legend wording. A scoped encoding requires a non-blank authored legend title.
+Any provided legend title must be non-blank; a global encoding may omit it
+to show values alone. Reject blank titles at the Style resource pointer,
+not during Scene provenance validation.
 Its canonical selector is retained with legend provenance. `showScope` opts in
 to a derived visible qualifier; that qualifier is not forced and does not
 replace the title. New selectors/channels need their own contract.
@@ -149,6 +143,10 @@ specialized fill-only state roles, unknown properties or catalogue-pattern
 applicability. A selected role must supply the bindings its actual primitive
 family uses; incomplete treatment fails with `E_STYLE_ROLE_INCOMPATIBLE`
 before measurement rather than inheriting the old role's geometry.
+Style evaluation failures retain their code and authored rule pointer through
+the shared CLI/MCP failure report. Its optional `details` carries `ruleIds`
+(resource-qualified IDs) and, when occurrence-specific, `subject` with the
+source occurrence key fields. Do not reduce them to a generic rejection.
 
 Theme/Scheme completes matched fill encodings into concrete colours keyed by
 the full source occurrence before Layout. Completed placements retain that key
@@ -534,11 +532,13 @@ Text, and contrast reads their actual fill rather than their enclosing bounds.
 
 **Deadline mark (#822).** Theme role `deadline-mark` paints a deadline's tick and run (Spec 06 section 7.3) as Scene
 `Path` primitives: `stroke`, `strokeWidth`, `dash` and `opacity` as for `as-of`, plus `markReach` (a named number, `0 < reach
-<= 4`: the tick's block extent as a ratio of the planned mark's, centred on it, so a reach above 1 stands above and
+<= 4`: the tick's block extent as a ratio of the primary planned/forecast mark's, centred on it, so a reach above 1 stands above and
 below the bar) and `markPaintOrder` (a non-negative integer added to the mark base). The role is required when a View shows
 deadlines (`E_THEME_ROLE_REQUIRED`); there is no fallback to another role. Its contrast class is `mark` (3:1, Spec 49), judged
 against the ground under each primitive's centre, so a tick that crosses a bar must be visible on the bar and every
 primitive on the row ground. `markReach` is added in place to the live Theme schemas (Spec 56 section 3.2).
+Forecast deadline runs use this same role and stroke; the forecast delta/legend
+identifies the estimate (Spec06 §8.5). No estimated-only Theme role is required.
 
 Optional `outlineWidth` (#1397) names a nonnegative physical-pixel margin around
 the tick and run strokes; absent/zero preserves flat output. Layout completes
@@ -940,7 +940,7 @@ Legend swatch sizing (#1111, [work record](../planning/active/issue-1111-legend-
 
 Legend shape default (#1580): the `legend-swatch` role MAY declare `swatchShape` as `circle` or `rule-pair`, using the same closed vocabulary as a Detail entry. It applies to every legend key, including generated palette/scale keys; a Detail entry's `swatchShape` takes precedence. With neither declaration the existing geometry is unchanged. Layout resolves the effective shape in the shared swatch extent used for both measurement and drawing.
 Gate paint (#991): a Theme MAY declare the role `gate` (fill, stroke, strokeWidth, optional pattern; classified as a mark for the contrast and perceptibility gates). Where it is declared, the primary and combined point marks (gates) and the legend's `milestone` key take that role's paint; a baseline or scenario gate keeps `snapshot`, and the mark's purpose, geometry (`milestoneSymbol`, the `planned` mark geometry) and lanes are unchanged. A Theme without `gate` paints gates with `planned` as before. It is a new role rather than the legend-only `milestone`, which bundled Themes already bind.
-Role consumers (#1117, [work record](../planning/active/issue-1117-theme-role-consumers-2026-10-04.md)): a role name a Theme declares in `roles` or `colorBindings` must have a consumer. A registered role and a `group:<id>` colour name have one; any other name is read only if a document of the render (the View, Layout Profile, Detail Profile or Summary Profile) carries it, for example as an axis tier `typographyRole`, a column `textRole` or a legend entry `role`. A declaration no document names is reported on every render as the warning `W_THEME_ROLE_UNREAD:<pointer>`, never silently accepted; a Theme shared by several Views may keep a role another View names. `tools/check_theme_role_consumers.py` fails when a non-derived Theme declares a name that no Render Context using it and no bundled preset closure reads.
+Role consumers (#1117, [work record](../planning/active/issue-1117-theme-role-consumers-2026-10-04.md)): a role name a Theme declares in `roles` or `colorBindings` must have a consumer. A registered role and a `group:<id>` colour name have one; any other name is read only if a document of the render (the View, optional Style, Layout Profile, Detail Profile or Summary Profile) carries it, for example as an axis tier `typographyRole`, a column `textRole`, a Style outcome `role` or a legend entry `role`. A Style declaration counts even if its predicate currently has no match. A declaration no document names is reported on every render as the warning `W_THEME_ROLE_UNREAD:<pointer>`, never silently accepted; a Theme shared by several Views may keep a role another View names. `tools/check_theme_role_consumers.py` fails when a non-derived Theme declares a name that no Render Context using it and no bundled preset closure reads.
 As-of label ink and typography (#1110, [work record](../planning/active/issue-1110-asof-label-ink-2026-10-04.md)): a Theme MAY declare the role `as-of-label` with the text measurement properties (a `fontSize` makes it a typography role: font family, weight, size, line height, letter spacing, text transform, numeric spacing) and a `fill` (and `opacity`). Where it declares a `fontSize`, Layout measures and sets the as-of label in it, so the label chip's block size, its padding (a ratio of that size) and the block reserved for a `below-plot` chip follow the role; without a `fontSize` the label is measured in `text` as before. Where it declares a `fill`, the as-of label is painted with it, and the contrast gate judges that ink against the label's chip (the chip is the label's own ground); without it the label keeps the `text` ink. `as-of-label` admits no other colour property: a binding such as `as-of-label.stroke` that no primitive reads fails at its pointer with `E_THEME_ROLE_PROPERTY_UNSUPPORTED`.
 Note padding (#991): `contentInsetEm` (top, right, bottom, left, in em of the annotation text size) is honoured by every container outline, not only `image`. A rectangle or balloon that declares it measures its text into the smaller box and grows the paint box by the inset, so the text keeps that padding inside the box edge (the kind bar, accent and header sit inside it too); omitted, the inset is zero and the note is today's output. A negative or non-numeric side is `E_THEME_TOKEN_TYPE` at the property; an `image` outline still requires it.
 Symbol size (#1066, [work record](../planning/active/issue-1063-1066-target-b-top-items-2026-10-03.md)): a mark role (`planned`, `actual`, `snapshot`, `scenario`) MAY declare the optional number tokens `symbolHeight` and `symbolOffset`, ratios of the track block size like `markHeight` and `markOffset`. They apply to the role's **point** marks (gates and milestones) only: the symbol is a square of side `symbolHeight` times the track at block offset `symbolOffset` times the track, centred on the date, so an `actual` gate can be as large as the planned gate and overlaid on it while the role's bars keep `markHeight`. Each is independent. The following omission rules apply to roles with an explicit `markOffset`; offset-free roles use the alignment rule above (#1149). For `planned`, `snapshot` and `scenario` an absent `symbolHeight` is `markHeight` and an absent `symbolOffset` is `markOffset`. For `actual` the default is the actual gate being no smaller than the planned gate (#1074): an absent `symbolHeight` is the larger of the actual `markHeight` and the planned symbol's height (its `symbolHeight`, else its `markHeight`), and an absent `symbolOffset`, once the symbol is taller than the actual band, centres it on the planned symbol (otherwise it is `markOffset`); a declared value is always kept. Declaring `symbolHeight` equal to the actual `markHeight` and `symbolOffset` equal to the actual `markOffset` restores the earlier thin symbol exactly. `symbolHeight` must be above 0, `symbolOffset` not below 0, and offset plus height at most 1 (`E_THEME_TOKEN_TYPE` for a single value out of range, `E_LAYOUT_MARK_OVERFLOW` for a pair that leaves the track). `missing-actual` is span-only and takes neither. Migration: every slide with an actual gate draws it larger than before unless its Theme declares the restoring pair; baseline ghosts are unchanged.

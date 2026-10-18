@@ -58,7 +58,19 @@ text `true` or `false`. Number and date sources are not admitted (binning is def
 
 ## 2. Total mapping and diagnostics
 
-For every View domain value, Theme must provide exactly one mapping to a Scheme
+For authored Style encodings (#419 S2; implementation pending), a named
+first-appearance scale has one value-to-colour map per render. Its domain is
+the union of matched source values in stable View occurrence order, retaining
+the preclosed View-encoding domain as a prefix. Source-local field-role aliases
+do not create contradictory palettes for the same value. Source reads and
+missing/type diagnostics remain local to each occurrence; independent palette
+domains use different scale IDs. Scope/title provenance is not paint identity.
+Complete once per scale ID, not once per resolved field alias. Incompatible
+domain policies under one ID reject with `E_PRESENTATION_SCALE_MAPPING`;
+first-appearance completion uses the existing Theme palette policy, including
+folded Other, over the completed union.
+
+For a closed explicit domain, Theme must provide exactly one mapping to a Scheme
 slot, and the Scheme must provide that slot.  The mapping keys must exactly
 equal the View domain.  At evaluation, every selected eligible object must
 have a scalar source value in that domain.  Missing, non-scalar, or undeclared
@@ -133,7 +145,9 @@ Rendering continues. Committed evidence carries no such diagnostic.
 
 ## 6. Non-goals
 
-Multiple simultaneous encodings, predicates, ranges, continuous scales,
+Within the legacy View input, multiple simultaneous encodings and predicates
+remain outside this contract; authored Style rules are governed by Spec07.
+Ranges, continuous scales,
 per-object literals, rule ordering, conditional style, and progress/disposition
 paint are outside this contract.  Progress fill remains a distinct mark
 vocabulary decision.

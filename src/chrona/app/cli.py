@@ -318,6 +318,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("project", help="Draft Project YAML path, or a terse .chrona plan")
     command.add_argument("--preset", help="Presentation preset YAML path, or a builtin catalogue id (see `chrona preset list`); omit it to use bundled chrona-default-draft; explicit resource flags override its members")
     command.add_argument("--view", help="View YAML path")
+    command.add_argument("--style", help="Style YAML path; overrides the selected preset's Style")
     command.add_argument("--theme", help="Theme YAML path")
     command.add_argument("--scheme", help="Color Scheme YAML path")
     command.add_argument("--layout", help="Layout Profile YAML path")
@@ -768,7 +769,8 @@ def _draft_package_reader(args: argparse.Namespace, source: Path) -> DraftExtens
 def _run_draft_render(args: argparse.Namespace) -> None:
     target_kind = _resolve_output_target(args.output, args.format)
     result = render_draft(DraftRenderRequest(
-        project=args.project, target_kind=target_kind, preset=args.preset, view=args.view, theme=args.theme,
+        project=args.project, target_kind=target_kind, preset=args.preset, view=args.view,
+        style=getattr(args, "style", None), theme=args.theme,
         scheme=args.scheme, layout=args.layout, actual=args.actual, summary=args.summary, detail=args.detail,
         icon_catalogs=tuple(args.icon_catalog), font_metrics=args.font_metrics, system_fonts=args.system_fonts,
         viewport=args.viewport, locale=args.locale, visual_profile=args.visual_profile,

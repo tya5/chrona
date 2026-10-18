@@ -9,7 +9,7 @@ command-line arguments, writes files, or prints.
 from __future__ import annotations
 
 from collections import Counter
-from dataclasses import dataclass, field, replace
+from dataclasses import asdict, dataclass, field, replace
 from datetime import date
 from importlib.metadata import version
 from pathlib import Path
@@ -52,7 +52,7 @@ from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_role_consumers import unread_diagnostics as unread_theme_diagnostics
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
 from chrona.core.attachments import AttachmentWarning, attachment_warnings
-from chrona.core.deadlines import deadline_statuses, deadline_warnings
+from chrona.core.deadlines import DeadlineStatus, deadline_statuses, deadline_warnings_from_statuses
 from chrona.presentation.count_text import CountTextError
 from chrona.core.figures import FigureCounts, FigureResolution, resolve_figures
 from chrona.core.periods import period_range_diagnostics, resolve_periods
@@ -65,10 +65,11 @@ from chrona.presentation.model.axis_color_scale import (
     AxisBandScaleError, resolve_axis_band_scales, validate_axis_band_fill_targets,
 )
 from chrona.presentation.model.projection import (
-    NetworkDeadlineContent, ReviewDeadline, ReviewPeriod, build_review_projection,
+    NetworkDeadlineContent, ReviewDeadline, ReviewPeriod, build_review_projection, forecast_deadline_placements,
 )
 from chrona.presentation.model.actual_variance_paint import resolve_actual_variance_colors
 from chrona.presentation.model.surface_content import SurfaceContentInput
+from chrona.presentation.model.style_rules import StyleEvaluationError
 from chrona.presentation.contracts.resources import ViewInput
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.presentation.review.figure_facts import deferred_layout_figures, projected_counts, projected_last_planned_finish
@@ -78,6 +79,7 @@ from chrona.presentation.annotation_kind_text import AnnotationKindTextError, he
 from chrona.presentation.figure_text import FigureTextError, FigureTextReadError, resolve_figure_text
 from chrona.presentation.review.v05_content import (
     compose_heading, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
+from chrona.presentation.style import bind_style_rules
 from chrona.presentation.scene.model import (
     ContentFamilyCounts, InspectionScene, SceneManifest, SceneProvenance,
     SceneSurface,
@@ -118,12 +120,14 @@ class RenderRejected(Exception):
 class RenderFailed(Exception):
     """The render cannot proceed, reported as one stable diagnostic code."""
 
-    def __init__(self, code: str, message: str, component: str, source_ref: str = "/"):
+    def __init__(self, code: str, message: str, component: str, source_ref: str = "/",
+                 *, details: Mapping[str, Any] | None = None):
         super().__init__(code)
         self.code = code
         self.message = message
         self.component = component
         self.source_ref = source_ref
+        self.details = dict(details) if details is not None else None
 
 
 @dataclass(frozen=True)
@@ -231,6 +235,9 @@ class ClosureReadLedger:
     def summary(self) -> None:
         self.read.add("summary-profile")
 
+    def style(self) -> None:
+        self.read.add("style")
+
     def packages(self) -> None:
         self.read.add("profile-package")
 
@@ -247,6 +254,12 @@ def render_review(request: RenderRequest) -> RenderedReview:
         return _render_review(request)
     except ColorScaleError as error:
         raise RenderFailed(error.code, error.detail, "presentation", error.source_ref) from error
+    except StyleEvaluationError as error:
+        raise RenderFailed(
+            error.diagnostic_id, error.detail, "presentation", error.source_ref,
+            details={"ruleIds": list(error.rule_ids),
+                     **({"subject": asdict(error.subject)} if error.subject is not None else {})},
+        ) from error
     except AnnotationExpansionError as error:
         raise RenderFailed(error.diagnostic_id, error.detail, "presentation", error.source_ref) from error
     except ProfileConnectionError as error:
@@ -327,7 +340,6 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                                       reserved=tuple(c for c in legend_colors if chroma(c) >= MINIMUM_RESERVED_CHROMA),
                                       other_color=_other_color(theme, legend_colors))
     group_tints, group_tint_collisions, _group_tint_scale = _resolve_group_tints(view, projection, theme)
-    profile_info += tuple(_scale_folded_info(scale) for scale in (color_scale, _group_tint_scale) if scale is not None and scale.folded)
     if render_closure.actual_set is not None:
         ledger.actual()
     if render_closure.snapshot is not None:
@@ -384,11 +396,21 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         dependency_critical_role_available=ThemeTokenView(theme).has_role("dependency-critical"),
         annotation_kind_also=_annotation_kind_also(theme), theme=theme,
         gate_declared=ThemeTokenView(theme).has_role("gate"),
+        style_rules=(bind_style_rules(render_closure.style.identity.id, render_closure.style.rules)
+                     if render_closure.style is not None else ()),
         scale_reserved=tuple(c for c in legend_colors if chroma(c) >= MINIMUM_RESERVED_CHROMA),
         scale_other_color=_other_color(theme, legend_colors))
+    if render_closure.style is not None:
+        ledger.style()
+    # A Style domain union replaces the provisional View map of that name;
+    # diagnostics describe the completed map once, not both generations.
+    if color_scale is not None:
+        color_scale = next((scale for scale in selected_content.style_fills.scales
+                            if scale.scale_id == color_scale.scale_id), color_scale)
     style_scales = tuple(scale for scale in selected_content.style_fills.scales
                          if scale is not color_scale)
-    profile_info += tuple(_scale_folded_info(scale) for scale in style_scales if scale.folded)
+    profile_info += tuple(_scale_folded_info(scale) for scale in (color_scale, _group_tint_scale, *style_scales)
+                          if scale is not None and scale.folded)
     try:
         validate_axis_band_fill_targets(selected_content.axis_tiers, ThemeTokenView(theme))
         axis_band_scale = resolve_axis_band_scales(
@@ -468,6 +490,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         theme["body"], (view, *((render_closure.view.view,) if field_role_info else ()),  # omitted unbound-role columns still read their roles (#1616)
                         layout, render_closure.detail_profile.detail if render_closure.detail_profile else None,
                         render_closure.summary_profile.summary if render_closure.summary_profile else None,
+                        render_closure.style.rules if render_closure.style is not None else (),
                         selected_content.style_intents.intents))
     if unread_roles:
         surface = replace(surface, diagnostics=(*surface.diagnostics, *unread_roles))
@@ -874,13 +897,16 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         figure_diagnostics.extend(error.diagnostics)
     if figure_diagnostics:
         raise RenderRejected(figure_diagnostics)
-    shown_deadlines = _shown_deadlines(project, result.placements, view)
+    finish_overrides = forecast_deadline_placements(projection) if forecast is not None else None
+    deadline_results = deadline_statuses(project, result.placements, finish_overrides)
+    shown_deadlines = _shown_deadlines(project, deadline_results, view)
     network = _network_deadline_projection(projection.network, shown_deadlines)
     projection = replace(projection, periods=_selected_periods(project, result.placements, view, dict(global_figures)),
                          figures=global_figures, group_figures=group_figures,
                          unavailable_figures=unavailable_figures,
                          deadlines=shown_deadlines, network=network)
-    return projection, tuple(provenance), attachment_warnings(project, result.placements), deadline_warnings(project, result.placements)
+    return (projection, tuple(provenance), attachment_warnings(project, result.placements),
+            deadline_warnings_from_statuses(deadline_results, forecast_mode=forecast is not None))
 
 
 def _require_forecast_presentation(view: ViewInput, layout: Mapping[str, Any]) -> None:
@@ -1078,11 +1104,11 @@ def _resolved_group_figures(project: dict[str, Any], placements: dict[str, dict[
     return tuple(values)
 
 
-def _shown_deadlines(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput) -> tuple[ReviewDeadline, ...]:
-    """The Project deadlines the View asks to draw, judged by the Core (#822).
+def _shown_deadlines(project: dict[str, Any], statuses: tuple[DeadlineStatus, ...], view: ViewInput) -> tuple[ReviewDeadline, ...]:
+    """The Project deadlines the View asks to draw, using Core's selected finish basis (#822).
 
-    ``slipped`` keeps the objects planned to finish after their deadline, the set `W_DEADLINE` names; ``all`` keeps
-    every object that has a deadline. Layout receives the verdict and draws it; it compares no dates.
+    ``slipped`` keeps the objects whose selected planned/forecast finish is after deadline; ``all`` keeps every object
+    that has a deadline. Layout receives the verdict and draws it; it compares no dates.
     """
     if view.deadlines is None:
         return ()
@@ -1095,7 +1121,7 @@ def _shown_deadlines(project: dict[str, Any], placements: dict[str, dict[str, An
                                f"deadline override names object {object_id}, which the Project does not declare (declared: {known})",
                                "view", f"/body/deadlines/overrides/{object_id}")
     shown = []
-    for item in deadline_statuses(project, placements):
+    for item in statuses:
         show = overrides.get(item.object_id, view.deadlines.show)
         if show == "hidden" or (not item.slipped and show != "all"):
             continue
