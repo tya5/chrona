@@ -2,22 +2,18 @@
 
 <!-- chrona:literal-acceptance/v1 -->
 
-Implementation `19c89498b`, glyph-dash correction `0fe79a9f6`, clipping test
-`380cab8b3`. [Current design/plan](../../planning/active/issue-1679-realized-legend-work-record-2026-10-18.md).
-Local evidence below is not release acceptance. [PR1692](https://github.com/tya5/chrona/pull/1692)
-head `1ecf36452` fails snapshot generation in
-[CI39088644589](https://github.com/tya5/chrona/actions/runs/39088644589): two
-strict glyph legend contrast errors. Reproduction fails because the snapshot
-was never uploaded; readiness fails on that dependency; tests were skipped.
-Composite correction `02bcefa7f` retains complete ordered glyph figures.
-Reviewer correction `b928566f4` groups semantic fill inks across drawing
-variants, omits same-ink host Progress and releases candidate-only legend
-extent. Focused native/finite/ownership tests:52 passed. Targeted Sunday has
-the expected seven keys and no overflow; Gates has five keys and no viewport
-warning. Both PNGs and the composite glyph PNG were inspected. Glyph-gates'
-canvas warning already exists in committed baseline; it is not introduced here.
-The next official snapshot must replace the preliminary table below. Keep the
-issue open; current exact-head CI and exact-main release remain required.
+Implementation source `a7fc836ac8f386be589bc86fd20ee632152db71c`, based on
+`0c81797404e3af616c0ae08e9b07ffc8ad21e767`. [Current design/plan](../../planning/active/issue-1679-realized-legend-work-record-2026-10-18.md).
+Official derived snapshot [CI39090738185](https://github.com/tya5/chrona/actions/runs/39090738185)
+provides the 50-slide table below. Snapshot generation, MCP and reproduction
+pass; conformance fails on the legend checker's stale multipart/Progress rules
+(15 findings), with checker alignment in progress. Exact-head CI remains required.
+Supplemental Sunday, Gates and glyph-gates PNGs were inspected; their input SVGs
+are byte-identical to the official artifact. The artifact shows Sunday's seven expected
+keys without overflow and Gates’ five keys without a viewport warning. It adds
+two Yuya progress-swatch contrast warnings; no glyph-gates strict contrast
+errors or source-YAML repairs. Keep the issue open pending exact-head CI and
+exact-main release evidence.
 
 ## Literal issue acceptance
 
@@ -28,32 +24,34 @@ issue open; current exact-head CI and exact-main release remain required.
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | --- | --- | --- | --- | --- |
-| 1 | A synthetic project with actuals, rendered with executive-light: every distinct realized mark paint has exactly one legend key, and the actual and progress keys use the realized paints. | met | [Native/SVG tests](../../../tests/integration/test_realized_legends.py) cover scalar paints, exact Progress paint and one composite key per complete ordered glyph. The dark-canvas synthetic fixture passes strict contrast; targeted public glyph-gates has zero strict errors after `02bcefa7f`. Official CI confirmation remains pending. | — |
+| 1 | A synthetic project with actuals, rendered with executive-light: every distinct realized mark paint has exactly one legend key, and the actual and progress keys use the realized paints. | met | [Native/SVG tests](../../../tests/integration/test_realized_legends.py) cover scalar paints, exact Progress paint and one composite key per complete ordered glyph. The dark-canvas synthetic fixture passes strict contrast. Official snapshot `a7fc836ac8f386be589bc86fd20ee632152db71c` has the realized glyph-gates keys and no glyph-gates strict contrast errors; two Yuya progress-swatch contrast warnings remain reported, not suppressed. | — |
 | 2 | When an encoding replaces the planned paint on every planned mark, no base planned swatch remains; the encoding's entries stand in its place. A mixed case (some planned marks unencoded) keeps the base key. | met | [Native encoding tests](../../../tests/integration/test_realized_legends.py): all-covered View encoding removes Planned; selective Style encoding retains the unencoded base witness. Existing scoped-legend and finite-swatch tests retain their geometry/paint assertions. | — |
 | 3 | target-b without snapshot or actual has no baseline, actual or in-progress keys and no empty Δ column. | met | [Pinned trial5](https://github.com/tya5/chrona/tree/9fa6062de/trial-5) target-b native PNG/Scene inspected: unavailable keys and Δ cells/header removed. Native synthetic absent/supplied-empty and Snapshot-only tests retain source-presence distinctions. | — |
-| 4 | A count table of the public example changes, and the PNGs checked. | not met | [Preliminary table](#public-count-table) is superseded by the reviewer correction; the current official snapshot table is pending. Corrected Sunday/Gates/glyph PNGs inspected locally; no source YAML repair. | — |
+| 4 | A count table of the public example changes, and the PNGs checked. | met | [Official snapshot](https://github.com/tya5/chrona/actions/runs/39090738185), source `a7fc836ac`, base `0c8179740`; all50 Scene slides counted below. Inspected supplemental Sunday (`7ade16309f14ef9df042875a71a555075f980b57ead6fd9c68493f32f26f0554`), Gates (`8c13abe5f30903f34efbfebd5362012760b7ffaf23fd7f45516b99dc72982ee1`) and glyph (`187866160bad64b1ef2a3ac57e86b339a656698b10ac5d3364a29c6cb7a8ca03`) PNGs; their input SVGs are byte-identical to official artifacts. | — |
 
 ## Programme-level criteria (optional)
 
 ## Public count table
 
-Local snapshot: `0fe79a9f6`; baseline: committed materializer evidence on
-implementation base `82c1e96b6`. The later allocation-preservation correction
-restores final fit warnings; its official artifact must confirm or update this
-table before release acceptance. Do not treat this preliminary table as the
-final merged-main output.
-Counts are added/removed/changed **by primitive ID**; text counts are a subset.
-Every slide has **0/0/0 dependency-route changes** (legend line keys are not
-routes). No source YAML or canonical generated output was edited.
+Official snapshot source: `a7fc836ac8f386be589bc86fd20ee632152db71c`; base:
+`0c81797404e3af616c0ae08e9b07ffc8ad21e767`. Counts are added/removed/changed
+**by Scene primitive ID**; text counts are a subset. Across 50 slides: 160 / 168
+/ 189 total primitive changes, of which 160 / 168 / 164 are legend primitives.
+There are 25 changed nonlegend primitives, all Text placement/bounds changes;
+no nonlegend primitive was added or removed, and no text content changed.
+There are zero actual dependency-route changes. Twelve changed dependency
+entries are the `legend-swatch:dependency` line-key positions, not routes. Two
+new diagnostics are Yuya progress-swatch `W_SCENE_MARK_CONTRAST` warnings.
+No source YAML or canonical generated output was edited.
 
 | Slide | Primitives +/−/~ | Text +/−/~ | New diagnostics |
 | --- | --- | --- | --- |
 | aster-ssd/overview | 2/2/0 | 1/1/0 | — |
-| chrona-roadmap/roadmap | 6/6/7 | 3/3/3 | — |
-| chrona-roadmap/roadmap-yuya | 8/7/12 | 4/3/3 | contrast×1 |
-| chrona-roadmap/roadmap-titlecard | 8/5/7 | 4/2/3 | — |
-| chrona-roadmap/roadmap-marquee | 8/7/5 | 4/3/2 | — |
-| chrona-roadmap/roadmap-sunday | 8/7/7 | 4/3/3 | legend overflow×1 |
+| chrona-roadmap/roadmap | 2/6/7 | 1/3/3 | — |
+| chrona-roadmap/roadmap-yuya | 4/7/12 | 2/3/3 | contrast×1 |
+| chrona-roadmap/roadmap-titlecard | 4/5/7 | 2/2/3 | — |
+| chrona-roadmap/roadmap-marquee | 4/7/5 | 2/3/2 | — |
+| chrona-roadmap/roadmap-sunday | 2/7/7 | 1/3/3 | — |
 | controller-z/executive | 4/3/0 | 2/1/0 | — |
 | controller-z/annotations | 4/3/0 | 2/1/0 | — |
 | controller-z/plan-only | 0/0/0 | 0/0/0 | — |
@@ -87,33 +85,26 @@ routes). No source YAML or canonical generated output was edited.
 | halcyon-1/flight-readiness | 0/0/0 | 0/0/0 | — |
 | halcyon-1/replan-baseline | 0/0/0 | 0/0/0 | — |
 | halcyon-1/overlay-briefing | 0/0/0 | 0/0/0 | — |
-| halcyon-1/glyph-gates | 10/5/16 | 5/2/7 | contrast errors×2 |
+| halcyon-1/glyph-gates | 8/5/16 | 3/2/7 | — |
 | halcyon-1/gallery-editorial | 4/3/13 | 2/1/8 | — |
 | halcyon-1/gallery-image-notes | 4/7/12 | 2/3/6 | — |
 | halcyon-1/gallery-editorial-lanes | 4/3/13 | 2/1/8 | — |
 | halcyon-1/gallery-text-compression | 4/7/12 | 2/3/6 | — |
-| halcyon-1/target-b | 8/5/9 | 4/2/4 | — |
-| halcyon-1/yuya | 8/5/14 | 4/2/4 | contrast×1 |
-| halcyon-1/titlecard | 8/5/7 | 4/2/3 | — |
-| halcyon-1/marquee | 8/5/7 | 4/2/3 | — |
-| halcyon-1/sunday | 8/5/11 | 4/2/5 | legend overflow×1 |
-| halcyon-1/gates | 4/5/25 | 2/2/22 | canvas exceeds viewport×1 |
+| halcyon-1/target-b | 4/5/9 | 2/2/4 | — |
+| halcyon-1/yuya | 4/5/14 | 2/2/4 | contrast×1 |
+| halcyon-1/titlecard | 4/5/7 | 2/2/3 | — |
+| halcyon-1/marquee | 4/5/7 | 2/2/3 | — |
+| halcyon-1/sunday | 2/5/9 | 1/2/4 | — |
+| halcyon-1/gates | 4/5/25 | 2/2/22 | — |
 
-Contrast means `W_SCENE_MARK_CONTRAST`; legend overflow means
-`W_LAYOUT_VISIBLE_OVERFLOW`; canvas means `W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT`.
-The two glyph contrast errors in this preliminary snapshot are corrected in
-the targeted local render; official CI must confirm their removal. The five
-warnings require explicit reviewer disposition. Sunday's
-fixed key frame no longer contains every correct entry; no core rule hides a
-key or enlarges project-specific frames. New low-contrast swatches expose the
-existing realized ink. No diagnostic gate was weakened.
-
-Outside legend primitives, editorial/editorial-lanes move their three note
-texts17px downward to reserve Progress. Gates shifts19 side-content texts as
-the legend reservation grows. No mark/route geometry changes. The initial
-batch detected lost snapshot-glyph dashes; the shared witness correction was
-regression-tested and only the affected five roadmap slides rerendered. All
-their nonlegend snapshot records now exactly match the baseline.
+Contrast means `W_SCENE_MARK_CONTRAST`. The only newly reported diagnostics
+are one progress-swatch contrast warning each in chrona-roadmap/roadmap-yuya
+and halcyon-1/yuya; glyph-gates has no new contrast diagnostic. The Sunday
+slides retain their expected keys without overflow (Halcyon7, roadmap6). Gates retains five
+keys without a viewport warning. Outside legend primitives, all 25 changes
+are text placements only: three note texts in each editorial slide move 17px
+down, and 19 gates content texts move 18px up. Their text strings are
+unchanged. No nonlegend mark geometry or actual dependency route changed.
 
 ## PNG and architecture evidence
 
@@ -128,15 +119,14 @@ Inspected Actual PNG SHA-256:
 `b39b30e17ee9268ab1bb3bb3db2032f90be6961877a0f342140304f6f024582a`;
 no-comparison PNG:
 `f82b947d22c793752f33e03aa3b647c3fddc982084da181fd30882703a45c498`.
-Supplemental before/after public SVG rasterizations use installed resvg and
-repository Noto fonts: glyph-gates, editorial, gates, Yuya and Sunday inspected.
-The new keys fit except the disclosed Sunday fixed-frame overflow; no new
-mark/note collision or image crop was observed. These are local inspection
-records, not claimed CI artifacts.
+Supplemental Sunday, Gates and glyph-gates PNG rasterizations use SVGs verified
+byte-identical to the official snapshot; PNG hashes are recorded in criterion 4.
+Sunday has seven keys with no overflow; Gates has five keys with no viewport
+warning. The two new Yuya progress-key contrast warnings remain visible and
+unexempted.
 
 Shared model paint remains project-independent; Layout owns potential/final
 key selection and completed geometry; Scene consumes ink witnesses and owns
 bounds-dependent effects; adapters infer no meaning. Independent review found
-no layer breach. Combined focused unit run179 passed; migrated legend-native
-batch58 passed; final Actual/paint batch24 passed. Scene delivery:33 dataclasses,
-249 fields explicitly owned; reachability:299 modules, no orphans.
+no layer breach. Exact-head CI and the exact-main release gate are still
+pending.
