@@ -1,13 +1,21 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 PR1698 merged `076be666c`; final CI39100063943 passed.
-Release39101259252 passed Linux/macOS but failed four Windows process/replay
-tests because pre-lock byte reads conflict with Windows mandatory locks.
-Urgent repair PR1707 (design `d0ea4f635`, code `3e993a87f`, review `a0f42ce9a`)
-precedes item3/item2; its focused58 tests pass but native Windows proof is pending.
-Current ready main is `72652b687` after reviewer1704/1705. This authoring WIP
-also preserves item3 CI repairs `d0a2ff526`/`ae21a166c` (185 focused tests pass),
-without restarting PR1706 before its final repaired predecessor base is ready.
+Status: item5 PR1698 merged `076be666c` after final CI39100063943 passed.
+Release39101259252 on `ca1e0bbe8` passed Linux/macOS but failed four Windows
+process/replay tests: pre-lock reading of byte0 collides with the other handle's
+mandatory lock. Repair PR1707 merged `381cf404a` after all final-head checks
+39104093015 passed; official artifact109 paths are unchanged. Trusted
+sync39104963215/gate39105119741 passed. Exact-main native/full release39105269292
+is running; item5 acceptance and item3/item2 merges still wait for its success.
+Item3 final PR1706 at `1489598c7` passed CI39105280589; its official artifact
+retains all50 SVG/Scene pairs, with only the two reviewed diagnostic inventories
+changed. This authoring WIP includes the repaired kernel and final history source.
+Published correction `d0ea4f635` and issue plan6246530666 precede repair code.
+Independent architecture review confirms the shared Windows primitive can lock
+past EOF without sentinel initialization; Store/authoring transaction ownership,
+persistent inode identity, diagnostics and formats remain unchanged. Portable
+guarded-handle regression fails3 cases before the fix; the repaired focused
+storage/authoring/process batch passes58. Native Windows proof remains required.
 #1679/#1680 are closed after exact-main39094741641 passed all
 three OSes, public reproduction and MCP. Their archival/ledger update is an
 independent commit in PR1698; separate docs PR1699 was superseded to avoid
@@ -115,10 +123,13 @@ must retain its original failure rather than claim a safe pre-write rejection.
   checks:6 passed. An initial broader run had63 pass/2 render failures because
   this WT lacked render extras; installing `.[render]` plus the Noto provider in
   its own venv resolved both. No product workaround or weakened assertion.
-- Current-main integration and PR CI passed; exact-main release39101259252
-  on `ca1e0bbe8` remains pending.
+- Original release39101259252 failed Windows; repair1707 is merged as
+  `381cf404a`. Its successful native/full release remains required.
 
 ## Item5 literal acceptance review (release pending)
+
+Current authority: [item5 acceptance review](../../reviews/current/issue-902-store-write-safety-acceptance-review-2026-10-18.md),
+including the Windows correction and required native release disposition.
 
 Implementation `ab376c78e` with L1 `a4c7fe08c`, L2 `9dcf22c16`; public WIP
 `wip/issue-902-store-write-safety`. This reviews item5 only; items2/3 and parked
@@ -128,7 +139,7 @@ Implementation `ab376c78e` with L1 `a4c7fe08c`, L2 `9dcf22c16`; public WIP
 | --- | --- | --- |
 | Acceptance for 2, 3 and 5: each has its own stale-base, replay and no-overwrite tests, plus an MCP stdio test where it is a tool. | met (item5) | `tests/integration/test_actual_store_concurrency.py`, `test_store_write_lock.py`, `test_store_transaction_span.py`; MCP stdio gate/stale/replay/no-overwrite checks recorded above. Not evidence for items2/3. |
 | Item 5 needs a two-process test that shows a lost update today and none after the fix. | met | Regression605232991 fails on baseline and passes after9dcf22c16, with all post-A Store files unchanged. |
-| Required release gate on current main containing this review. | not met | PR1698 merged after all final-head checks39100063943 passed; exact-main three-OS39101259252 remains pending. |
+| Required release gate on current main containing this review. | not met | Original release39101259252 failed Windows. Repair1707 passed final CI39104093015 and merged381cf404a; successful repaired exact-main three-OS release remains required. |
 
 Engine owns the complete replay/CAS/publication/record scope; storage owns root/
 thread/process exclusion. Authoring keeps separate workspace identity. No new
