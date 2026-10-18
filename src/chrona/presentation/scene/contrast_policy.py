@@ -239,10 +239,15 @@ def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity:
                                            scene_path=scene_path, primitive_index=index)
                 binding = contrast_binding_for_primitive(
                     primitive.get("visualRole"), primitive.get("kind"), primitive.get("purpose"))
+                paint = primitive.get("paint")
+                _require(
+                    primitive.get("kind") in {"Rect", "Symbol", "Path"}
+                    and binding is not None and binding.contrast_class == ContrastClass.MARK
+                    and isinstance(paint, Mapping) and is_hex_color(paint.get("fill")),
+                    f"encoding metadata requires a completed filled MARK-classified Rect, Symbol, or Path "
+                    f"at {scene_path}/primitives/{index}",
+                )
                 if binding is not None and binding.contrast_class == ContrastClass.MARK:
-                    paint = primitive.get("paint")
-                    _require(isinstance(paint, Mapping) and is_hex_color(paint.get("fill")),
-                             f"encoded mark fill is not a completed flat fill at {scene_path}/primitives/{index}")
                     parts = figure_parts.get(index)
                     if parts is None:
                         external = primitives

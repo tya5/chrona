@@ -372,6 +372,21 @@ def test_malformed_or_unjoined_encoding_witness_is_structural():
         evaluate_scene_contrast(_scene(wrong_version))
 
 
+@pytest.mark.parametrize("kind,visual_role,purpose", [
+    ("Rect", "unclassified", "panel"),
+    ("Text", "planned", "planned"),
+])
+def test_encoding_witness_on_non_mark_or_non_shape_is_structural(kind, visual_role, purpose):
+    primitive = _encoded_mark()
+    primitive.update(kind=kind, visualRole=visual_role, purpose=purpose)
+
+    with pytest.raises(
+        ValueError,
+        match="E_SCENE_CONTRAST_DOCUMENT: encoding metadata requires a completed filled MARK-classified",
+    ):
+        evaluate_scene_contrast(_encoded_scene(primitive))
+
+
 def test_style_encoding_witness_joins_resource_and_authored_rule():
     mark = _encoded_mark()
     mark["encoding"] = {"channel": "fill", "scaleId": "status-colors", "field": "status", "value": "gate",
