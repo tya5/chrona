@@ -1372,6 +1372,11 @@ Reuse existing legend entry, measurement, swatch and placement machinery;
 never overlay a key on nodes or create a second legend. Without a drawn
 critical-role edge there is no intrinsic slot. Overflow uses the normal
 completed canvas/warning rules, not omission of the key.
+If the graph grows into the reserved legend band, complete that band below
+the grown graph without replaying its placement. An authored band's inline
+allocation, direction and key content remain authored; only an actual overlap
+requires this block-axis flow. An intrinsic band contains the critical key,
+not unrelated key candidates from an otherwise unallocated Detail Profile.
 
 ### 3.5 Physical point hosting (#1373)
 
