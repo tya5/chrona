@@ -86,6 +86,12 @@ effect and the later package's duplicate is not used), `E_PROFILE_FIELD_UNKNOWN`
 `E_PROFILE_FIELD_TYPE` (value is not the declared scalar, array or reference shape),
 `E_PROFILE_FIELD_ENUM` (value outside `enumValues`) and `E_PROFILE_FIELD_REQUIRED` (required field absent
 or null). An absent optional field is valid and an explicit `null` is valid only for an optional field.
+`E_EXTENSION_UNRESOLVED` (a `path` extension whose file is missing, escapes the Project directory or is not a
+YAML mapping; pointer `/extensions/<i>/path`) and `E_CONTENT_IDENTITY` (declared `contentIdentity` differs
+from the file bytes) are reported by the same checker. It runs wherever a Project is validated: `chrona validate`,
+`schedule`, draft `render`, the MCP `validate_project`/`schedule_project`/`render_draft` tools and Context
+render (#1682). `path` is resolved beside the Project file; a local file that omits `contentIdentity` takes the
+SHA-256 of its bytes. `resource` declarations need a Store and are resolved by the Context path.
 Objects whose `type` names no declared profile are not checked. The delivery package keeps its `IDP-*` codes.
 Within one Project, two declared packages MUST NOT claim the same profile ID
 (Spec11 §4.1). Report `E_PROFILE_PACKAGE_INVALID` at the conflicting extension;
