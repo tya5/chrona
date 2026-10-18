@@ -57,7 +57,7 @@ Inputs are closed objects (`additionalProperties: false`). A tool accepts no int
 switch, no font-metrics or icon-catalog path, no typesetter descriptor, no output path, no Store root and no
 `allow-missing-content-identity`. The registry (`registry_document()`, served as the tool list) carries the exact
 JSON Schema 2020-12 input and output schema of each tool, and its annotations: for a read-only tool `readOnlyHint:
-true`, `destructiveHint: false`; for both write tools `readOnlyHint: false`, `destructiveHint: true` (the metadata does
+true`, `destructiveHint: false`; for mutating tools `readOnlyHint: false`, `destructiveHint: true` (the metadata does
 not understate a write, whatever it overwrites); `idempotentHint: true` and `openWorldHint: false` for every tool.
 
 - `validate_project {project}`: result `projectIdentity` (the SHA-256 of the file bytes) when the file was read.
@@ -282,7 +282,7 @@ present only when `status` is `ok` (a field a call had already produced, such as
 ## 4. Workspace rules
 
 A tool call reads files below one directory, resolved once when the server starts, the Store tools read a Store below
-it, and the two write tools modify only a contained Store or guided workspace.
+it, and mutating tools modify only a contained Store or guided workspace bundle.
 A filesystem root is refused (`E_MCP_WORKSPACE_TOO_BROAD`).
 
 1. Every path argument passes `resolve_store_address(workspace, value, charset="file-name")` of
@@ -323,7 +323,7 @@ rasterizer of the `render` extra.
 ## 7. The MCP binding
 
 `chrona mcp [--workspace DIR] [--allow-write] [--list-tools]` serves the tool set over MCP on standard input and output;
-it is the only transport. `--allow-write` enables the two write tools (sections2.1/2.3); without it the server is read-only
+it is the only transport. `--allow-write` enables mutating tools (sections2.1/2.3/2.4); without it the server is read-only
 and the registry is unchanged. The binding is the one module that imports the SDK (`chrona.app.mcp_server`, optional extra
 `chrona[mcp]`, `mcp>=2.0,<3`); `chrona mcp --list-tools` prints the registry and needs no SDK.
 
