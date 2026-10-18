@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from chrona.core.relation_identity import relation_identity
+from chrona.core.relation_identity import relation_identities
 from tests.support.context_references import reference_path
 from tools.materialize_example import materialize
 
@@ -22,9 +22,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def _declared_relation_identity(identifier):
     project = yaml.safe_load((ROOT / "examples/halcyon-1/project.yaml").read_bytes())
-    index, relation = next((index, relation) for index, relation in enumerate(project["relations"])
-                           if relation.get("id") == identifier)
-    return relation_identity(index, relation)
+    relations = project["relations"]
+    return next(identity for relation, identity in zip(relations, relation_identities(relations))
+                if relation.get("id") == identifier)
 
 
 def _relation_paths(node) -> list[dict]:

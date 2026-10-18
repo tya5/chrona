@@ -57,7 +57,11 @@ def test_scheduler_derives_total_float_and_critical_chain_to_project_finish():
     assert {key: value.value for key, value in result.analysis.total_float.items()} == {
         "start": 0, "critical": 0, "slack": 2, "finish": 0}
     assert result.analysis.critical == frozenset({"start", "critical", "finish"})
-    assert result.analysis.driving_relations == frozenset({"relation:0", "relation:1", "relation:2"})
+    assert result.analysis.driving_relations == frozenset({
+        "relation:edge:dependency:start:end:critical:start",
+        "relation:edge:dependency:critical:end:finish:start",
+        "relation:edge:dependency:start:end:slack:start",
+    })
 
 
 def test_scheduler_does_not_mark_disconnected_fixed_singletons_critical():
@@ -83,7 +87,7 @@ def test_scheduler_distinguishes_driving_relations_from_zero_float_endpoints():
     )
     result = schedule(project)
     assert result.ok and result.analysis is not None
-    assert result.analysis.driving_relations == frozenset({"relation:0:drives"})
+    assert result.analysis.driving_relations == frozenset({"relation:id:drives"})
 
 
 def test_scheduler_identifies_a_driving_working_calendar_lag():
@@ -101,7 +105,7 @@ def test_scheduler_identifies_a_driving_working_calendar_lag():
     result = schedule(project)
     assert result.ok and result.analysis is not None
     assert result.placements["b"]["start"] == date(2026, 10, 5)
-    assert result.analysis.driving_relations == frozenset({"relation:0:working-lag"})
+    assert result.analysis.driving_relations == frozenset({"relation:id:working-lag"})
 
 
 def test_project_object_link_is_typed_and_does_not_affect_scheduling():

@@ -6,7 +6,7 @@ from time import perf_counter, process_time
 import pytest
 import yaml
 
-from chrona.core.relation_identity import relation_identity
+from chrona.core.relation_identity import relation_identities
 from chrona.presentation.layout import route_search, routing
 from chrona.presentation.layout import surface_route_label_plan, surface_routes
 from chrona.resources import builtin_preset_source_root, safe_load
@@ -99,10 +99,7 @@ def test_sunday_owner_chain_routes_are_visible_with_bounded_search(
     assert all(limit is not None for limit in search_limits)
     assert counters["expansions"] <= routing.RELATION_SEARCH_EXPANSIONS * counters["selections"]
 
-    expected_ids = {
-        relation_identity(index, relation)
-        for index, relation in enumerate(relations)
-    }
+    expected_ids = set(relation_identities(relations))
     route_primitives = [primitive for primitive in rendered.surface.primitives
                         if primitive.source_kind == "relation"
                         and primitive.scene_id.startswith("relation:")]

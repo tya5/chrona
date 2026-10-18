@@ -38,6 +38,8 @@ profiles:
 
 The Project lists the package under `extensions`: its `packageId`, a `path` relative to the Project
 file, and a pinned `revision: git:<40 hex>` (a moving branch name or an unpinned "latest" is invalid).
+The `path` must stay inside the Project's directory: a parent directory (`../`), an absolute path or a
+`.` segment is not permitted, so write `extensions/typed-team.yaml`, not `../../profile.yaml`.
 An object then uses the profile as its `type` and gives each field a value under `fields`. Dates
 still come from `schedule`; a field never moves a bar.
 

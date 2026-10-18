@@ -14,3 +14,8 @@ def test_delivery_manifest_covers_each_field_once():
 def test_legend_swatch_shape_is_owned_by_scene_completion_not_export():
     owners = [owner for owner in OWNERS["ScenePrimitive"] if "legend_swatch_shape" in owner.fields]
     assert [(owner.delivery, owner.consumer) for owner in owners] == [("derived", "scene/v05_builder.py")]
+
+
+def test_cone_mark_ground_is_serialized_inspection_metadata_not_adapter_policy():
+    owners = [owner for owner in OWNERS["ScenePrimitive"] if "mark_ground" in owner.fields]
+    assert [(owner.delivery, owner.consumer) for owner in owners] == [("inspection", "scene/serialization.py")]

@@ -458,8 +458,16 @@ the candidate region beyond the clipped tile.
 
 **The as-of light cone as a translucent ground (#890).** The cone (role `as-of-cone`,
 a Symbol with a gradient whose stops carry opacities) is never an ordinary opaque host.
-`_ground_under` skips it, and an explicit step composites it over the host a mark, state
-text or ground text truly lies on: the cone applies when it is painted after that host
+`_ground_under` skips it. Classified MARK contrast (#1754), including encoded
+fill and multipart marks, ignores the moving cone by default and evaluates
+the same own grounds without its tint. A cone carrying completed
+`markGround: true` opts into compositing for those observations; Theme
+`contrastPolicy.asOfConeGround` supplies this fact (Specs 07/08). The default
+also applies to older v0.7 Scenes with no field: their observation semantics
+change intentionally, including ground IDs and possible unused exceptions.
+State text and ground text retain the physical cone ground. An explicit step
+composites each admitted cone over the host the observed primitive truly lies
+on: the cone applies when it is painted after that host
 and before the primitive (an opaque host painted after it hides it). The gradient is
 linear and the polygon convex, so the worst ground over the stops a primitive spans is
 found at the two ends of its block extent inside the gradient range: at each end where its
@@ -472,6 +480,12 @@ cone's identifier as `groundId`, the blended colour as `groundColor` and `ground
 `cone-blend`; a canvas texture's or pattern's two colours are each blended. A decoration
 is not judged against the cone. No floor changes, and an unreadable cone is a malformed
 Scene document (`E_SCENE_CONTRAST_DOCUMENT`), never a silent skip.
+
+This is a classified contrast-ground rule, not a change to physical paint.
+Standalone Scene contrast reports read the completed cone choice and need no
+Theme lookup. Physical surface-treatment samples (`I_SCENE_PAINT_CONTRAST`)
+continue reporting actual paint composites; text grounds, floors, and severity
+remain unchanged. No cone is hidden or repainted by an adapter.
 
 **A translucent host is composited over its own ground (#1013).** A host (a label chip, a region
 frame, a panel) whose `paint.opacity` is in [0, 1) is not refused: a mark or text (the `legibility` class) on it is

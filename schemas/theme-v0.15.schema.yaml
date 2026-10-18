@@ -575,6 +575,7 @@ properties:
         additionalProperties: false
         properties:
           mark: {description: "A data mark below its 3:1 floor.", enum: [none, warning, error]}
+          asOfConeGround: {description: "Whether the moving as-of cone participates in classified MARK contrast grounds. Absent or false keeps the mark's own grounds; true explicitly composites the cone. Text grounds and severity are unchanged.", type: boolean, examples: [true]}
           stateText: {description: "A state text (variance cell, note, period label) below its treatment floor.", enum: [none, warning, error]}
           groundText: {description: "Ink that shares the text role on a ground (a group header, the as-of label) below 4.5:1.", enum: [none, warning, error]}
           decoration: {description: "A decoration below its 1.10:1 floor, or on a ground that cannot be read.", enum: [none, warning, error]}

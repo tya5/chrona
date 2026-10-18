@@ -2,20 +2,21 @@
 
 ## Published baseline and scope
 
-Design planning for the whole issue; S1 identity design completed below.
+S1–S4 design, architecture review and implementation are complete in the issue
+branch; integrated trial evidence, public-output review and release remain open.
 Source: [issue 1754](https://github.com/tya5/chrona/issues/1754), including its later comments, on ready main `6c3b4e4e2d4064e924a8b9703c3f31ab7a62bc39`.
 Trial evidence is reference-only: [`reviewer/trial-8-inputs@bf3940dbe9af487ac6cace5458554762594f3477`](https://github.com/tya5/chrona/tree/bf3940dbe9af487ac6cace5458554762594f3477/trial-8).
 
-Published facts: core relation identities include the declaration index;
+Original baseline facts: core relation identities include the declaration index;
 Layout consumes previous-Scene hints only under first-fit; Spec 50 explicitly
 excludes best and makes the as-of rule obstruct member names; Specs 08/46
-include the cone in completed contrast grounds. These contracts must change
-before code. Trial measurements are reported evidence, not yet independently
-reproduced on the implementation. Duplicate declared-ID handling, best-mode
-hint preference and the Theme ground opt-in remain design decisions.
+include the cone in completed contrast grounds. The selected corrections below
+were specified and published before their implementation. The pinned trial's
+measurements are reference evidence; candidate reproduction is in progress.
 
 Dev A owns this item. Dev B owns baseline/forecast 1755 and customisation
-1756. Coordinate shared-file changes before implementation; do not alter trial
+1756 rows 3–5; dev A's 1756 rows 1–2 are a subsequent item, not this scope.
+Coordinate shared-file changes before implementation; do not alter trial
 inputs or preset YAML to satisfy a general rule. Completed 1734 geometry reuse
 and its safety/accounting rules remain the routing baseline.
 
@@ -99,11 +100,90 @@ No trial/preset-specific rule, declaration uniqueness error, or migration alias
 is introduced. Dependency-network ordering may change where it used the old
 derived ID; disclose generated output changes rather than preserving unstable
 order. Exact duplicate removal cannot promise per-copy identity; unique IDs
-are the explicit extension point. No unresolved S1 contract remains.
+are the explicit extension point. Removing a repeated declared ID can make its
+survivor unique and therefore move it from fallback to author-ID identity;
+uniqueness is itself changed input under rule 1, not an unrelated edit. The
+synthetic removal criterion exercises relations whose identity inputs stay
+unchanged; no cross-revision alias or stateful identity registry is introduced.
+No unresolved S1 contract remains.
 
-S2 will separately complete the all-policy hint/corridor design, then the
-moving-decoration design. S1 is independently testable and does not claim any
+S1 is independently testable and does not claim any
 full issue acceptance row met until integrated hints and trial evidence exist.
+
+## S2 selected design and whole-architecture review
+
+[Spec 50 §3.3](../../specification/50-constraint-driven-gantt-surface-quality.md)
+owns the revised all-policy hint-first contract. Issue rule 3 settles the
+ranking question: a currently valid prior corridor wins, even if fresh best
+search could rank another route higher. Without a valid hint, ordinary ranked
+best behavior is unchanged. No trusted/forced-route API or persisted geometry
+is added. Reuse the existing candidate preparation, admitted port pairs,
+completed terminal/mark/obstacle/self-overlap/quality validators, and expansion
+accounting. Hints are normal-domain proposals only. A post-selection optional
+back-route improvement must not replace an accepted hint.
+
+Architecture review: core identity remains S1-owned; immutable prior Scene
+ingress and materializer integrity stay in the application/closure layer.
+Layout alone reconstructs/reanchors/validates geometry and emits existing
+typed hint receipts and summary under both policies. Explicit overlap/stub
+report why they bypass hint selection. Scene emits completed paths and adapters
+remain serializers (ADR-0031, Specs 08/09/50). No schema, Scene mutation,
+budget increase, or quality exemption is needed. Existing staged detour-before-
+mark relaxation remains authoritative; trial 8's Observability stack is a
+primary work mark, not a header. A newly invalid hint must fall through to
+safe ordinary routing, not become reusable in a relaxed domain. Bounded search
+is not mathematical feasibility proof; tests must provide a known legal
+detour and verify actual completed geometry, not merely a warning count.
+No unresolved S2 contract remains.
+
+## S3 selected design and whole-architecture review
+
+Spec 50 owns the as-of-line exception for member names. Apply one exact-ID
+query exclusion to their placement snapshot, before both candidate contact
+generation and collision checks. Use the same path for final names, required
+names, reserve-only names and route-blocked reservation probes. Do not remove
+the shared `as-of` obstacle, omit the `rule` class, or weaken generic overlap
+checks. Deadline rules, the separate as-of label/chip, required text, marks,
+routes and annotations retain their existing contracts and treatment.
+
+Architecture review: Layout retains sole geometry and obstacle-policy
+ownership (ADR-0031/Spec 50). A generic exact-ID exclusion on the existing
+independent obstacle-query snapshot avoids a second label pipeline. Accepted
+labels still register in the original inventory; exclusions do not leak to
+later annotations or routes. Existing geometry overrides remain applicable;
+prepared-query sharing/memo scopes may be retained only for exact unaffected
+content (1734). Scene/paint treatment and adapters are unchanged; no new
+schema, Theme role, threshold or project-specific exception is needed. Cone
+contrast is a separate S4 rule, not a reason to alter this placement boundary.
+No unresolved S3 contract remains.
+
+## S4 selected design and whole-architecture review
+
+Specs [07](../../specification/07-style-and-theme.md#9-boundary-to-scene-and-rendering),
+[08](../../specification/08-scene-and-rendering.md) and
+[46](../../specification/46-completed-scene-paint.md) own the cone-ground rule.
+One optional boolean author opt-in becomes one completed cone fact. A runtime-
+only evaluator switch was rejected: Scene-only corpus analysis could not then
+honour the Theme choice. A new extensible ground-policy language or additional
+enum is unnecessary for this binary choice. Put metadata on the primitive,
+not gradient paint, so adapter paint identities cannot change merely because
+an observation policy changes. Do not make severity imply ground membership.
+
+Architecture review: Theme resolution validates author intent; Scene paint
+completion projects that intent onto the emitted cone. The shared Scene
+observer reads only completed facts and selects the cone set once per
+classified mark observation, including encoded fills, patterns and multipart
+marks. Recursive grounds use that same selected set. Text retains all physical
+cones. Physical surface-treatment samples retain their separate actual-paint
+contract. Layout geometry, Scene geometry and all adapters are unchanged.
+The optional Theme/Scene boolean is an in-place input widening (Spec 56);
+the default mark-ground interpretation is an intentional normative correction,
+not a claim of behavioral compatibility. Older v0.7 Scenes without metadata
+adopt it; v0.6 admission is unchanged. Revalidate default and opt-in severities,
+ground IDs and exception disposition. No project/preset branch or resource
+migration is required; updated generated diagnostics will be reviewed as a
+batch. Independent review supports Scene-carried policy and this separation
+from physical paint. No unresolved S4 contract remains.
 
 ## S1 implementation plan
 
@@ -119,4 +199,130 @@ on the exact main containing the final issue acceptance review. If a consumer
 cannot use the shared identity without a new semantic rule, return to design
 before changing that rule. Do not expand S1 into hint/routing or Theme policy.
 
-No product implementation or trial reproduction is complete at this stage.
+## S2 implementation plan
+
+- Owners: `layout/routing.py` validates preferred routes under both policies;
+  `surface_routes.py` proposes/records hints under both, protects accepted hints
+  from optional back-route ranking, and retains explicit unusable receipts.
+  Update the CLI-reference description and link it from `update-a-plan.md`.
+- Tests: replace the two obsolete best-ignores-hints tests in
+  `test_preferred_relation_route.py` and `usecases/test_previous_scene.py`;
+  exercise accepted, rejected, unadmitted and obstacle-invalidated hints under
+  both policies, including a better-ranked fresh candidate, no search on a hit,
+  honest expansion receipts, and overlap/stub unusable diagnostics. Extend the
+  revision integration synthetic with an unrelated slip and a known mark-safe
+  detour. Keep recovery/shape/quality/critical tests as regression controls.
+- Publication: a separate reviewed implementation commit in the issue branch;
+  batch S1/S2 in the issue PR after the design publication, rather than spending
+  another main-ready cycle per helper. CI and one official public snapshot cover
+  the combined slice; disclose ID/geometry/diagnostic changes separately.
+- Acceptance: synthetic retained primitive IDs and accepted hints under best,
+  an invalid hint falls through without a mark crossing, existing unsupported
+  modes explain themselves, and no-hint selection is unchanged by S2 itself.
+  Real target-b and five-week trial evidence remain the integrated issue gate.
+
+## S3 implementation plan
+
+- Extend `SurfaceObstacleIndex.copy` with an exact `excluded_ids` query option.
+  Keep the original inventory intact; detach only prepared selections whose
+  exact contents change. Combine exclusions with existing paint-footprint
+  overrides without reusing a geometry-dependent memo under different content.
+- In `surface_member_labels.py`, exclude only `as-of` for `memberLabel` query
+  snapshots. Both contact generation and collision checks already consume that
+  snapshot; final/reserve/recovery paths share this owner. Keep all registrations
+  on the original index. No generic label-ladder or adapter policy is added.
+- Focused tests: `test_obstacles.py` for independent snapshots, exclusions plus
+  overrides, exact selections and absent exclusions; `test_member_label_required_phase.py`
+  for final/reserved names crossing as-of while deadline rules still block;
+  `test_member_label_route_obstruction.py` for the same route-blocked probe.
+  Retain as-of-label and annotation-asof tests as negative controls. Run routing
+  working-set regressions because the copy helper shares immutable query data.
+- Publish a coherent implementation/test commit in the same issue PR; use one
+  CI/public snapshot and final trial batch for the combined slices. No schema,
+  example or manual generated-output changes. A label/chip or other obstruction
+  remains truthful; this is not a general guarantee that all names always fit.
+
+## S4 implementation plan
+
+- `schemas/theme-v0.15.schema.yaml`, `color_scheme.py`: add/validate boolean
+  `contrastPolicy.asOfConeGround`. Keep it out of severity maps in
+  `usecases/render_review.py`; resolved Theme carries it unchanged.
+- `scene/model.py`, `v05_builder.py`, `serialization.py` and Scene-v0.7 schema:
+  add optional cone-only `markGround`; complete true from resolved Theme after
+  paint resolution; serialize/validate it without adapter or gradient changes.
+  Keep v0.6 schema untouched and force v0.7 if the metadata is present.
+- `scene/cone_ground.py`, `contrast_policy.py`: read/validate the fact and
+  share the filtered mark-cone set across ordinary, encoded and multipart
+  observations; text keeps the full set. Leave physical surface-paint queries
+  unchanged and always reject malformed cone data, even when mark tint is off.
+- Focused tests: Theme resolution/invalid booleans, Scene model/schema/roundtrip
+  and non-cone rejection; default/opt-in cone ground with unchanged text,
+  encoded/multipart/pattern marks, severity and exceptions; real render carries
+  the opt-in. Run schema equivalence against the current public main and record
+  only explained deltas (including any independently merged diagnostic change).
+- Publish one implementation/test/schema commit in the issue PR. CI supplies
+  conformance and public reproduction; inspect diagnostic changes and generated
+  artifacts once for S1–S4. Then batch all trial-8 revisions with hints, post
+  the literal metric table, inspect output, and publish final acceptance before
+  exact-main three-OS release. No preset/trial data edits or local full pytest.
+
+## Current implementation evidence
+
+S1 is implemented locally; publication/public-output review and CI are pending.
+The batch helper replaces every runtime scalar caller. Scheduler passes the
+same identified tuple to its critical-path closure. Focused batches passed:
+171 scheduler/identity/lane/network/Model tests; 150 review-content, hosted-point,
+critical-role, previous-Scene and revision-regression tests; one new integrated
+remove/append test with accepted retained hints and explicit old-ID misses.
+After threading the Scheduler tuple, its identity/scheduler subset passed
+again (15 tests). Eight migrated integration modules compile and collect
+(183 cases); their expensive corpus checks remain assigned to CI. Independent
+S1 review found no remaining identity/ownership blocker; the uniqueness-change
+limitation above is explicit. No schema, preset or generated output is edited.
+S2 now validates hints under both policies and preserves an accepted hint
+before optional back-route ranking. Focused routing/hint/recovery/revision
+batch: 52 passed; previous-Scene and update-guide batch: 22 passed. These
+include best accepting retained IDs, failed hints falling through, unchanged
+old-ID miss behavior, and explicit overlap/stub unusable receipts. A default
+plot-name/stub collision reproduced on public `1de259e69` is independently
+tracked in [1763](https://github.com/tya5/chrona/issues/1763); the receipt test
+uses a valid table-label View without changing product behavior for that bug.
+The real three-row slip/detour synthetic passes under both policies (2 cases):
+an irrelevant slip keeps the validated corridor; moving a primary mark across
+it invalidates the hint and accepts a mark-clear detour in NORMAL, before mark
+relaxation. Endpoint geometry is unchanged and actual paths are compared.
+
+S3 exact-ID query exclusions and all placement paths are implemented. The
+obstacle/member-name/as-of-label/route-memo/annotation negative-control batch
+passes (77 cases). The original inventory and other rule obstacles remain
+intact. Public snapshot/CI and full trial-8 acceptance are still pending;
+S4 is implemented: Theme boolean, cone-only completed metadata and shared
+classified observer selection. Focused Theme/Scene/schema/real-cone-render
+batch passes (164 cases), including multipart/pattern/encoded marks, unchanged
+text, severity and exceptions, and legacy-v0.6 rejection. Independent review
+found no ownership/contract blocker. L1 schema equivalence against public
+main passes: one additive Theme widening, one explained Scene delta, 41 equal.
+The tool retired seven already-merged L1 entries and records the two precise
+Scene pointers. Full local equivalence found no L2/L3 verdict/diagnostic
+failure, but its timing guard failed (75.4s > 60s while focused render tests
+ran concurrently). The limit is unchanged; CI must supply the authoritative
+isolated conformance gate. No local full pytest is run.
+
+Integrated source is based on ready main
+`718ed1adbfa1b7ab89cacd014be8b74d7ba849b9`. Its schema-equivalence merge
+retains B's 27 pointed-diagnostic L3 entries and this issue's two Scene L1
+entries, without resurrecting five already-merged L1 exceptions. L1 and the
+schema-diagnostic/delivery focused tests pass (27 cases). The trial batch completed weeks
+1–4 with three independent design pipelines and weekly hint chains, reusing
+identical week-1 outputs. All six week-5 commands retain forecast and fail
+`E_FORECAST_BASELINE_UNAVAILABLE: be-ratelimit`, dependent on B issue 1755.
+Same-candidate raw changed primitives total 667 plain versus 670 hinted;
+row-normalized changes total 56 versus 54. Do not claim uniform improvement or
+waive literal acceptance. Target-b has accepted hint receipts in every
+available hinted week. The issue Status publishes the comparison table.
+The [acceptance review](../../reviews/current/issue-1754-revision-stability-acceptance-review-2026-10-19.md)
+records residual route-driven label changes and through-mark findings, actual
+PNG inspection, pending public snapshot/CI, and every literal criterion.
+Publish the independent implementation as one PR; leave this issue open for
+the full trial and release gates. No trial/preset data or forecast command is
+changed to satisfy the criterion.

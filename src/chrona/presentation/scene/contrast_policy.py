@@ -251,6 +251,7 @@ def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity:
             cones = cones_in(primitives)
         except ValueError as error:
             raise SceneContrastPolicyError(f"E_SCENE_CONTRAST_DOCUMENT: invalid as-of cone at {scene_path}") from error
+        mark_cones = tuple(cone for cone in cones if cone.mark_ground)
         figures = _mark_figures(primitives)
         sibling_indices = {position for parts in figures.values() for position, _ in parts[1:]}
         figure_parts = {position: parts for parts in figures.values() for position, _ in parts}
@@ -283,7 +284,7 @@ def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity:
                                     for position, item in enumerate(primitives)]
                     findings.extend(_encoded_fill_findings(
                         scene_path, primitive, canvas=ground, primitives=external, index=index,
-                        catalog_patterns=version == "chrona/scene/v0.7", cones=cones,
+                        catalog_patterns=version == "chrona/scene/v0.7", cones=mark_cones,
                         severities=encoded_severities, witness=witness,
                     ))
             if index in sibling_indices:
@@ -291,10 +292,14 @@ def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity:
             if index in figures:
                 findings.extend(_figure_findings(scene_path, figures[index], ground, primitives,
                                                 catalog_patterns=version == "chrona/scene/v0.7",
-                                                cones=cones, severities=severities))
+                                                cones=mark_cones, severities=severities))
                 continue
+            binding = contrast_binding_for_primitive(
+                primitive.get("visualRole"), primitive.get("kind"), primitive.get("purpose"))
+            observation_cones = (mark_cones if binding is not None
+                                 and binding.contrast_class == ContrastClass.MARK else cones)
             findings.extend(_primitive_findings(scene_path, primitive, ground, primitives, index,
-                                                catalog_patterns=version == "chrona/scene/v0.7", cones=cones,
+                                                catalog_patterns=version == "chrona/scene/v0.7", cones=observation_cones,
                                                 severities=severities))
         findings.extend(_absence_findings(scene_path, raw_surface.get("decorationDispositions", [])))
         if exceptions:

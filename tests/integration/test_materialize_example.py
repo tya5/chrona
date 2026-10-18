@@ -174,11 +174,32 @@ def test_derived_theme_materializer_copies_pinned_base_and_rejects_tampering(tmp
 def test_controller_executive_public_evidence_exercises_inside_and_fallback_labels(tmp_path):
     materialize(ROOT / "tests/fixtures/controller-z/manifest.yaml", "executive", tmp_path / "controller", write=False)
     artifact = (tmp_path / "controller/review.svg").read_text(encoding="utf-8")
-    assert 'data-scene-id="member-label:firmware:firmware"' in artifact
-    # DVT uses its declared exterior fallback when the completed route blocks
-    # the inside slot; the retained name uses the ordinary exterior text ink.
-    assert 'data-scene-id="member-label:dvt:dvt"' in artifact and 'opacity="1" fill="#172033">DVT Qualification' in artifact
-    assert 'data-scene-id="member-label:evb-arrival:evb-arrival"' in artifact and 'opacity="1" fill="#172033">EVB Arrival' in artifact
+    elements = {item.get("data-scene-id"): item for item in ET.fromstring(artifact).iter()}
+    assert "member-label:firmware:firmware" in elements
+    # #1754: DVT's declared inside candidate may cross the as-of line. Check
+    # its own ink, not a substring that could belong to another text element.
+    dvt = elements["member-label:dvt:dvt"]
+    assert dvt.get("fill") == "#000000" and dvt.get("opacity") == "1"
+    assert dvt.text == "DVT Qualification"
+    # EVB still exercises the declared exterior fallback and its exterior ink.
+    evb = elements["member-label:evb-arrival:evb-arrival"]
+    assert evb.get("fill") == "#172033" and evb.get("opacity") == "1"
+    assert evb.text == "EVB Arrival"
+    scene = json.loads((tmp_path / "controller/review.scene.json").read_text(encoding="utf-8"))
+    primitives = {item["id"]: item for item in scene["surfaces"][0]["primitives"]}
+    label = primitives["member-label:dvt:dvt"]
+    assert label["visualRole"] == "member-label-inside-planned"
+    bounds, host = label["bounds"], primitives["planned:dvt:dvt"]["bounds"]
+    assert host["inline"] <= bounds["inline"] < bounds["inline"] + bounds["inlineSize"] <= host["inline"] + host["inlineSize"]
+    assert host["block"] <= bounds["block"] < bounds["block"] + bounds["blockSize"] <= host["block"] + host["blockSize"]
+    assert bounds["inline"] < primitives["as-of"]["bounds"]["inline"] < bounds["inline"] + bounds["inlineSize"]
+    assert primitives["member-label:evb-arrival:evb-arrival"]["visualRole"] == "text"
+    fallback = primitives["member-label:evb-arrival:evb-arrival"]["bounds"]
+    point = primitives["planned:evb-arrival:evb-arrival"]["bounds"]
+    assert (fallback["inline"] + fallback["inlineSize"] <= point["inline"]
+            or point["inline"] + point["inlineSize"] <= fallback["inline"]
+            or fallback["block"] + fallback["blockSize"] <= point["block"]
+            or point["block"] + point["blockSize"] <= fallback["block"])
 
 
 def test_controller_annotation_evidence_realizes_each_purpose_through_layout_completed_primitives(tmp_path):

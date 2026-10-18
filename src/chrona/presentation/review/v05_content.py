@@ -12,7 +12,7 @@ from chrona.presentation.model.date_basis import DisplayDateRange, ItemDateBasis
 from chrona.presentation.model.hierarchy_names import close_member_names, member_name_key, path_name_selected
 from chrona.presentation.model.wording_tables import WordingResolver, wording_resolver
 from chrona.presentation.model.projection import ObservationState, ReviewProjection, display_finish_delta
-from chrona.core.relation_identity import relation_identity
+from chrona.core.relation_identity import relation_identities
 from chrona.presentation.model.surface_content import (
     AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, SurfaceLegendEntry, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, entity_title_or_value, initials, table_value,
 )
@@ -622,27 +622,29 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     endpoint_titles.update({identity: str(value.get("title", identity))
                            for identity, value in project.get("objects", {}).items()
                            if identity not in endpoint_titles})
-    def relation_fact(index: int, relation: Mapping[str, Any], semantic_id: str) -> RelationPresentationFact:
+    project_relations = project.get("relations", ())
+    identified_relations = tuple(zip(relation_identities(project_relations), project_relations))
+    def relation_fact(identity: str, relation: Mapping[str, Any], semantic_id: str) -> RelationPresentationFact:
         source, target = relation["from"], relation["to"]
         lag = relation.get("lag", "0d")
-        critical = (relation_identity(index, relation) in projection.driving_relations
+        critical = (identity in projection.driving_relations
                     and source["object"] in critical_objects and target["object"] in critical_objects)
         selected_semantic_id = ("dependency-critical"
                                 if relation_mode == "semantic" and dependency_critical_role_available and critical
                                 else semantic_id)
-        return RelationPresentationFact(relation_identity(index, relation), str(source["object"]), str(source.get("endpoint", "end")),
+        return RelationPresentationFact(identity, str(source["object"]), str(source.get("endpoint", "end")),
                                         str(target["object"]), str(target.get("endpoint", "start")), lag,
                                         str(lag.get("calendar")) if isinstance(lag, Mapping) and lag.get("calendar") is not None else None,
                                         selected_semantic_id, relation_content, critical=critical,
                                         source_title=str(endpoint_titles.get(source["object"], source["object"])),
                                         target_title=str(endpoint_titles.get(target["object"], target["object"])))
     if relation_mode == "critical":
-        relations = tuple(relation_fact(index, relation, "dependency-critical")
-                          for index, relation in enumerate(project.get("relations", ()))
-                          if relation_identity(index, relation) in projection.driving_relations)
+        relations = tuple(relation_fact(identity, relation, "dependency-critical")
+                          for identity, relation in identified_relations
+                          if identity in projection.driving_relations)
     elif relation_mode != "none":
-        relations = tuple(relation_fact(index, relation, "dependency")
-                          for index, relation in enumerate(project.get("relations", ())))
+        relations = tuple(relation_fact(identity, relation, "dependency")
+                          for identity, relation in identified_relations)
     else:
         relations = ()
     project_notes = project.get("annotations", {})

@@ -588,6 +588,16 @@ that carries stop opacities (the gradient identity includes them; any other grad
 byte-identical); PNG is that SVG through resvg. A Scene that carries stop opacities is
 written as `chrona/scene/v0.7` (optional `opacity` on a gradient stop).
 
+The cone Symbol may carry completed boolean `markGround` (#1754), resolved
+from Theme `contrastPolicy.asOfConeGround`; it is omitted by default. Only an
+`as-of-cone` Symbol with completed gradient paint may carry this metadata.
+Absent/false means that classified mark contrast excludes the moving cone;
+true includes it. Text contrast still observes its physical cone ground.
+Scene v0.7 admits this optional field in place; v0.6 is unchanged. Updated
+observers intentionally interpret an older v0.7 cone without the field as
+false, rather than retaining the former always-composited mark observation.
+Geometry, gradient paint, and renderer serialization are unchanged.
+
 **Region frames (#889, #1165).** Each declared frame whose selected Theme role exists adds one Rect
 primitive to the table-timeline surface. Layout completes it (Specification 33 section 3): the Rect,
 its corner radius, and the pseudo-slot `frame:<node id>` (source `frame:<node id>`, bounds the Rect) that

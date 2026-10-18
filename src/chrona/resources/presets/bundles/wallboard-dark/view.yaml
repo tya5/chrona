@@ -91,6 +91,7 @@ body:
     groups: all
   tableColumns:
   - id: Task
+    header: {wording: column.task}
     text: {wrap: allow}
     source: path
     missing: em-dash

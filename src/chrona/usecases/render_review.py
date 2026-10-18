@@ -652,6 +652,9 @@ def _scene_contrast_warnings(
     """
     declared = dict(theme["body"].get("contrastPolicy", {}))
     exceptions = declared.pop("exceptions", ())
+    # Ground participation is already completed onto the cone in Scene. It
+    # is not a severity class or a runtime-only observation override.
+    declared.pop("asOfConeGround", None)
     findings = evaluate_scene_contrast(scene_document(scene), policy={**DEFAULT_POLICY, **declared},
                                        exceptions=exceptions)
     blocking = [item for item in findings if item.severity == "error" and item.code in BLOCKING_CODES]

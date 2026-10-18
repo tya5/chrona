@@ -668,7 +668,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
 
                 normal_domain = RelationObstacleDomain.normal(obstacles)
                 hint_proposal = None
-                if request.previous_route_hints is not None and search_policy == "first-fit":
+                if request.previous_route_hints is not None:
                     if context.layout_manifest.relation_unroutable.value in {"overlap", "stub"}:
                         hint_proposal = HintProposal("unusable", "mode-bypasses-normal")
                     else:
@@ -761,7 +761,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         rank=candidate_rank)
                     pair, route = selection.selected_pair, selection.points
                     used_back_route = False
-                    if (context.layout_manifest.relation_entry == "side" and target_mark is not None
+                    if (not selection.settled_by_hint
+                            and context.layout_manifest.relation_entry == "side" and target_mark is not None
                             and not (pair is not None and enters_along(relation, route))):
                         backed = back_route(relation, source_mark, target_mark, source_id, target_id,
                                             source_nominal, domain=domain)
@@ -1036,7 +1037,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         comparison_clusters, tuple(diagnostics),
         (*budget_hits, *hint_receipts,
          *((RelationHintSummary("table-timeline", tuple(hint_receipts)),)
-           if request.previous_route_hints is not None and search_policy == "first-fit" else ()),
+           if request.previous_route_hints is not None else ()),
          *((RelationRoutingSummary("table-timeline", relation_instances,
             shape_settled, fallback_search),) if search_policy == "first-fit" else ())),
         completed_resolution_info)
