@@ -17,9 +17,11 @@ and exact-main three-OS release remain required. Keep the issue open.
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | --- | --- | --- | --- | --- |
 | 1 | A synthetic project with actuals, rendered with executive-light: every distinct realized mark paint has exactly one legend key, and the actual and progress keys use the realized paints. | met | [Native/SVG tests](../../../tests/integration/test_realized_legends.py): three distinct Actual paints coalesce four marks into three keys; Progress has exact full paint parity and its own meaning. Zero/fully clipped progress has no key; final visible Actual groups determine qualifiers. | — |
-| 2 | When an encoding replaces the planned paint on every planned mark, no base planned swatch remains; the encoding's entries stand in its place. A mixed case (some planned marks unencoded) keeps the base key. | met | Same native module: all-covered View encoding removes Planned; selective Style encoding retains the unencoded base witness. Existing scoped-legend and finite-swatch tests retain their geometry/paint assertions. | — |
-| 3 | target-b without snapshot or actual has no baseline, actual or in-progress keys and no empty Δ column. | met | Pinned trial5 target-b native PNG/Scene inspected: unavailable keys and Δ cells/header removed. Native synthetic absent/supplied-empty and Snapshot-only tests retain source-presence distinctions. | — |
-| 4 | A count table of the public example changes, and the PNGs checked. | met | All50 materializers completed into disposable outputs;42 SVG/Scene pairs change,8 remain identical. Table and inspected PNGs below. New warnings are disclosed, not repaired through corpus edits. | — |
+| 2 | When an encoding replaces the planned paint on every planned mark, no base planned swatch remains; the encoding's entries stand in its place. A mixed case (some planned marks unencoded) keeps the base key. | met | [Native encoding tests](../../../tests/integration/test_realized_legends.py): all-covered View encoding removes Planned; selective Style encoding retains the unencoded base witness. Existing scoped-legend and finite-swatch tests retain their geometry/paint assertions. | — |
+| 3 | target-b without snapshot or actual has no baseline, actual or in-progress keys and no empty Δ column. | met | [Pinned trial5](https://github.com/tya5/chrona/tree/9fa6062de/trial-5) target-b native PNG/Scene inspected: unavailable keys and Δ cells/header removed. Native synthetic absent/supplied-empty and Snapshot-only tests retain source-presence distinctions. | — |
+| 4 | A count table of the public example changes, and the PNGs checked. | met | [Count table and PNG evidence](#public-count-table): all50 materializers completed into disposable outputs;42 SVG/Scene pairs change,8 remain identical. New warnings are disclosed, not repaired through corpus edits. | — |
+
+## Programme-level criteria (optional)
 
 ## Public count table
 

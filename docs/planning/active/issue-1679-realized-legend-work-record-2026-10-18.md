@@ -1,6 +1,6 @@
 # Issue 1679: realized legend work record (2026-10-18)
 
-Status: I1–I3 implemented on the WIP branch; I4 public-output/release acceptance remains open. Design/architecture review `e1ede946c`, plan `492c8512e`; #1680 merged at `82c1e96b6`.
+Status: I1–I3 and local I4 verification published on the WIP branch; official artifact, reviewer disposition of seven disclosed warnings, and release acceptance remain open. Design/architecture review `e1ede946c`, plan `492c8512e`; #1680 merged at `82c1e96b6`.
 
 ## Baseline and order
 
@@ -51,5 +51,5 @@ The code PR's exact-head CI supplies pytest shards, conformance and newest-Pytho
 - I1: shared model channels/gradient admission and Scene consumers; emitted-ink fingerprints normalize equivalent colours and omitted gradients. Layout passes the selected witness to Scene; bounds-dependent effects stay in Scene.
 - I2: one normalized column list drives columns and cells; comparison-source presence is captured from closure independently of selected rows. Absent/supplied-empty, forecast, scenario and explicit-row tests:147 passed. View input remains unchanged.
 - I3: potential Actual groups and positive Progress reserve space before measurement; completed source identities filter/recompose once. View scale entries bind exact lowered-rule occurrences, not RGB. Progress retains its own full paint; stroked period edges count as visible despite zero rectangular area. No corpus source changes.
-- Focused combined model/Scene/content/candidate/checker run:179 passed; native synthetic acceptance:6 passed, including exact Progress paint and SVG parity. Independent architecture review found no blocker. Legacy geometry fixtures now supply the semantic sources they test rather than preserving unused keys. Executive-light Actual and target-b absent-comparison PNGs inspected; all-public count table and exact-head CI remain required before acceptance.
+- Focused combined model/Scene/content/candidate/checker run:179 passed; native synthetic acceptance:7 passed; migrated legend-native batch:58 passed. Independent architecture review found no layer breach. Legacy geometry fixtures now supply the semantic sources they test rather than preserving unused keys. [Acceptance review](../../reviews/current/issue-1679-realized-legend-acceptance-review-2026-10-18.md) records all50 public counts, inspected PNGs, and seven disclosed warnings. Source glyph dashes match the baseline after the shared-witness correction; no canonical generated output was edited. Official exact-head and exact-main CI remain required.
 - Design-phase documentation checks:28 passed; conformance passed before the product slices. Do not reuse that run as verification of the implemented slices.
