@@ -4,6 +4,7 @@ from xml.etree import ElementTree
 
 from chrona.presentation.layout.path_geometry import flatten_path
 from chrona.presentation.layout.relation_terminals import project_marker_outline
+from chrona.presentation.scene.serialization import scene_document, validate_scene_document
 from chrona.presentation.model.semantic_registry import semantic_binding
 from tests.integration.test_title_ink import _network_parts
 from tests.support import synthetic_review as sr
@@ -40,6 +41,9 @@ def test_network_layout_closes_groups_critical_key_footer_and_terminals_in_real_
     parts, source = _fixture()
     rendered = sr.render(tmp_path, source, presentation=parts)
     scene = rendered.surface
+    document = scene_document(rendered.scene)
+    assert document["version"] == "chrona/scene/v0.7"
+    validate_scene_document(document)
     primitives = {item.scene_id: item for item in scene.primitives}
     svg = ElementTree.fromstring(rendered.artifact.content)
     svg_by_id = {item.attrib["data-scene-id"]: item for item in svg.iter()
@@ -73,6 +77,7 @@ def test_network_layout_closes_groups_critical_key_footer_and_terminals_in_real_
     edge = next(item for item in scene.primitives if item.scene_id.startswith("network-edge:"))
     assert edge.purpose == "critical-edge"
     assert edge.visual_role == "critical-edge"
+    assert (edge.from_instance_id, edge.to_instance_id) == ("alpha", "beta")
     key = next(item for item in scene.primitives
                if item.source_ref == "critical-edge" and item.kind == "Path")
     assert key.paint.stroke == edge.paint.stroke

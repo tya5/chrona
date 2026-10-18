@@ -45,3 +45,14 @@ subjects instead of representing a direct crossing as a clear route.
 Pending: final-head PR CI and official batched SVG/Scene delta review, followed
 by the exact-main three-OS pytest/conformance/wheel and materializer gate.
 Local literal acceptance is not release acceptance; keep issue1727 open.
+
+Initial PR run39140856471 artifact12141478084 covers109 safe paths with no
+retirements. Only slide05 SVG/Scene and their contrast/source inventory reports
+change:44 primitives remain44 (0 added/removed;43 changed:16 nodes,16 labels,
+11 routes). All11 routes and their terminals remain; no other slide changes.
+The one conformance failure is the intended valid Scene v0.6→v0.7 transition,
+not invalid geometry. Spec08 records this impact at `140ae489f`; one precise
+L2 expected transition and synthetic serialized-schema/endpoint assertions
+cover it. Focused tests pass38, and L2/L3 with all50 official Scene payloads
+overlaid in memory passes without modifying tracked generated output.
+The superseded run's pytest shards were cancelled, not accepted as green.
