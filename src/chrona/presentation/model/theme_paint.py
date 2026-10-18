@@ -61,6 +61,8 @@ class ThemePaintWitness:
 
     channels: ThemePaintInputs
     effective_channels: ThemePaintInputs
+    family: PaintFamily
+    pattern_identity: tuple[object, ...] | None
     gradient: GradientPaintIntent | None
 
     @property
@@ -68,8 +70,8 @@ class ThemePaintWitness:
         """Effective emitted ink identity; an omitted gradient is not paint."""
         channels = self.effective_channels
         gradient = self.gradient.identity if self.gradient is not None and self.gradient.admitted else None
-        return (channels.fill, channels.stroke, channels.stroke_width, channels.dash,
-                channels.opacity, gradient)
+        return (self.family.value, channels.fill, channels.stroke, channels.stroke_width,
+                channels.dash, channels.opacity, self.pattern_identity, gradient)
 
 
 def choose_fill_override(*, style_fill: str | None, legend_fill: str | None,
@@ -111,6 +113,26 @@ def _effective_channels(channels: ThemePaintInputs, family: PaintFamily, role: s
     return ThemePaintInputs(None, part_stroke, Decimal(str(part_width)), (), channels.opacity, False)
 
 
+def _freeze_pattern_identity(value: object) -> tuple[object, ...] | None:
+    if value is None:
+        return None
+    if isinstance(value, Mapping):
+        return tuple((str(key), _freeze_pattern_identity(item))
+                     for key, item in sorted(value.items(), key=lambda pair: str(pair[0])))
+    if isinstance(value, (list, tuple)):
+        return tuple(_freeze_pattern_identity(item) for item in value)
+    if isinstance(value, (str, int, float, bool, Decimal)):
+        return (value,)
+    return (type(value).__name__,)
+
+
+def _pattern_identity(tokens: ThemeTokenView, role: str) -> tuple[object, ...] | None:
+    try:
+        return _freeze_pattern_identity(tokens.optional_pattern(role))
+    except ThemeTokenError as error:
+        raise ThemePaintError(error.diagnostic_id, error.path, error.detail) from error
+
+
 @dataclass(frozen=True)
 class LegendShapeInk:
     """The finite fill/stroke projection borrowed by a legend key shape."""
@@ -148,10 +170,11 @@ def resolve_theme_paint_witness(
         ink_only_pattern=ink_only_pattern, pattern_has_substrate=pattern_has_substrate,
         catalog_glyph_stroke_width=catalog_glyph_stroke_width,
     )
-    effective = _effective_channels(channels, family, role, part_mode, part_color,
-                                    catalog_glyph_stroke_width)
     if channels.solid_override:
-        return ThemePaintWitness(channels, effective, None)
+        pattern_identity = _pattern_identity(tokens, role)
+        effective = _effective_channels(channels, family, role, part_mode, part_color,
+                                        catalog_glyph_stroke_width)
+        return ThemePaintWitness(channels, effective, family, pattern_identity, None)
 
     path = f"/body/roles/{role}"
     try:
@@ -159,7 +182,10 @@ def resolve_theme_paint_witness(
         end = tokens.optional_color(role, "gradientEnd")
         angle = tokens.optional_number(role, "gradientAngle")
         if start is None and end is None and angle is None:
-            return ThemePaintWitness(channels, effective, None)
+            pattern_identity = _pattern_identity(tokens, role)
+            effective = _effective_channels(channels, family, role, part_mode, part_color,
+                                            catalog_glyph_stroke_width)
+            return ThemePaintWitness(channels, effective, family, pattern_identity, None)
         if start is None or end is None or angle is None:
             raise ThemePaintError(
                 "E_VISUAL_CAPABILITY_VALUE", f"{path}/gradientAngle",
@@ -185,7 +211,11 @@ def resolve_theme_paint_witness(
     admitted = gradient_supported
     if not admitted and not (fidelity == "decorative-optional" and optional_gradient_omission):
         raise ThemePaintError("E_VISUAL_CAPABILITY_UNSUPPORTED", f"{path}/gradientAngle")
-    return ThemePaintWitness(channels, effective, GradientPaintIntent(start, end, angle, fidelity, admitted))
+    pattern_identity = _pattern_identity(tokens, role)
+    effective = _effective_channels(channels, family, role, part_mode, part_color,
+                                    catalog_glyph_stroke_width)
+    return ThemePaintWitness(channels, effective, family, pattern_identity,
+                             GradientPaintIntent(start, end, angle, fidelity, admitted))
 
 
 def resolve_legend_shape_ink(tokens: ThemeTokenView, role: str, shape: str,

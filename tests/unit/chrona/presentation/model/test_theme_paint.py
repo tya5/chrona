@@ -136,7 +136,7 @@ def test_witness_optional_omission_uses_solid_identity_and_solid_override_replac
     )
 
     assert omitted.gradient is not None and not omitted.gradient.admitted
-    assert omitted.identity == ("#112233", None, None, (), None, None)
+    assert omitted.identity == ("solid", "#112233", None, None, (), None, None, None)
     assert replaced.channels.fill == "#abcdef" and replaced.channels.solid_override
     assert replaced.gradient is None
 
@@ -162,5 +162,30 @@ def test_witness_identity_uses_effective_glyph_channels_not_replaced_role_channe
 
     assert filled.effective_channels.fill == "#fedcba"
     assert filled.effective_channels.stroke is None
-    assert filled.identity[:4] == ("#fedcba", None, None, ())
+    assert filled.identity[:5] == ("solid", "#fedcba", None, None, ())
     assert outlined.effective_channels.fill is None
+
+
+def test_witness_identity_retains_pattern_and_paint_family():
+    base_values = {
+        "fill": {"type": "color", "value": "#112233"},
+        "stroke": {"type": "color", "value": "#445566"},
+        "width": {"type": "number", "value": 1.5},
+    }
+    common = {"fill": "fill", "stroke": "stroke", "strokeWidth": "width"}
+    outline_tokens = _tokens({**common, "pattern": "pattern"}, {
+        **base_values,
+        "pattern": {"type": "pattern", "value": {"kind": "outline", "gap": 3}},
+    })
+    hatch_tokens = _tokens({**common, "pattern": "pattern"}, {
+        **base_values,
+        "pattern": {"type": "pattern", "value": {"kind": "diagonal-hatch", "angle": 45}},
+    })
+
+    outline = resolve_theme_paint_witness(outline_tokens, "role", PaintFamily.SOLID)
+    hatch = resolve_theme_paint_witness(hatch_tokens, "role", PaintFamily.SOLID)
+    family = resolve_theme_paint_witness(hatch_tokens, "role", PaintFamily.OUTLINE)
+
+    assert outline.identity != hatch.identity
+    assert hatch.identity != family.identity
+    assert outline.pattern_identity == (("gap", (3,)), ("kind", ("outline",)))

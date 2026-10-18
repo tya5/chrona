@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from chrona.presentation.model.theme_tokens import ThemeTokenView
+from chrona.presentation.model.theme_paint import resolve_theme_paint_witness
 from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, resolve_scene_paint
 from chrona.presentation.scene.visual_capabilities import BASELINE_PROFILE, SVG_PROFILE, resolve_visual_profile
 
@@ -75,6 +76,36 @@ def test_resolver_completes_bounded_gradient_shadow_and_stroke_finish():
     assert paint.gradient and paint.gradient.start == (0, 0)
     assert paint.shadow and paint.shadow.blur == 3
     assert paint.stroke_finish and paint.stroke_finish.line_cap == "round"
+
+
+def test_gradient_witness_matches_adapter_paint_for_outline_and_stroke_glyph_channels():
+    values = {
+        "fill": {"type": "color", "value": "#112233"},
+        "stroke": {"type": "color", "value": "#445566"},
+        "width": {"type": "number", "value": 1.5},
+        "start": {"type": "color", "value": "#112233"},
+        "end": {"type": "color", "value": "#445566"},
+        "angle": {"type": "number", "value": 45},
+    }
+    role = {"fill": "fill", "stroke": "stroke", "strokeWidth": "width",
+            "gradientStart": "start", "gradientEnd": "end", "gradientAngle": "angle"}
+    tokens = _tokens(role, values)
+
+    for family, part_mode, part_color in (
+        (PaintFamily.OUTLINE, None, None),
+        (PaintFamily.SOLID, "stroke", "#abcdef"),
+    ):
+        witness = resolve_theme_paint_witness(tokens, "role", family,
+                                              part_mode=part_mode, part_color=part_color)
+        paint = resolve_scene_paint(tokens, "role", family, part_mode=part_mode,
+                                    part_color=part_color, gradient_bounds=(0, 0, 10, 10)).paint
+        assert witness.gradient is not None and witness.gradient.admitted
+        assert paint.gradient is not None
+        assert witness.identity[-1] == witness.gradient.identity
+        if part_mode == "stroke":
+            assert paint.fill is None and paint.stroke == "#abcdef"
+        else:
+            assert paint.fill is None
 
 
 def test_baseline_omits_decorative_optional_treatment_during_scene_completion():

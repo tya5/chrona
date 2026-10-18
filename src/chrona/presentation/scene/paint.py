@@ -122,12 +122,11 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
             pattern_has_substrate=pattern_has_substrate,
             catalog_glyph_stroke_width=catalog_glyph_stroke_width,
         )
-        channels = witness.channels
+        channels = witness.effective_channels
     except ThemePaintError as error:
         raise ScenePaintError(error.diagnostic_id, error.path, error.detail) from error
     fill, stroke, width = channels.fill, channels.stroke, channels.stroke_width
-    dash, opacity, solid_override = channels.dash, channels.opacity, channels.solid_override
-    path = f"/body/roles/{role}"
+    dash, opacity = channels.dash, channels.opacity
     try:
         # A selected solid fill replaces, rather than tints, the base gradient.
         # Do not resolve a replaced effect or report its capability omission.
@@ -138,30 +137,12 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
         finish, finish_omitted = _stroke_finish(tokens, role, visual_profile)
     except ThemeTokenError as error:
         raise ScenePaintError(error.diagnostic_id, error.path) from error
-    if family == PaintFamily.OUTLINE and not solid_override:
-        fill = None
     paint = ScenePaint(fill, stroke, float(width) if width is not None else None, dash,
                        1.0 if opacity is None else float(opacity), gradient, shadow, finish, glow=glow, wobble=wobble)
-    if part_mode is not None:
-        if part_mode not in {"fill", "stroke"}:
-            raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path)
-        if family == PaintFamily.OUTLINE:
-            paint = replace(paint, fill=None)
-        elif part_mode == "fill":
-            part_fill = part_color if part_color is not None else paint.fill
-            if part_fill is None:
-                raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/fill")
-            paint = replace(paint, fill=part_fill, stroke=None, stroke_width=None, dash=())
-        else:
-            part_stroke = part_color if part_color is not None else paint.stroke
-            part_width = (catalog_glyph_stroke_width if catalog_glyph_stroke_width is not None
-                          else paint.stroke_width)
-            if part_stroke is None or part_width is None:
-                raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/stroke")
-            paint = replace(paint, fill=None, stroke=part_stroke, stroke_width=part_width,
-                            stroke_finish=(StrokeFinish(catalog_glyph_line_cap, catalog_glyph_line_join, "required")
-                                           if catalog_glyph_line_cap is not None and catalog_glyph_line_join is not None
-                                           else paint.stroke_finish))
+    if (part_mode == "stroke" and catalog_glyph_line_cap is not None
+            and catalog_glyph_line_join is not None):
+        paint = replace(paint, stroke_finish=StrokeFinish(
+            catalog_glyph_line_cap, catalog_glyph_line_join, "required"))
     omissions = tuple(_omission(role, treatment, property_name, visual_profile, required)
                       for omitted, treatment, property_name, required in (
                           (gradient_omitted, "linear-gradient", "gradientAngle", frozenset((LINEAR_GRADIENT,))),
