@@ -240,3 +240,28 @@ The aggregate writer must extend ownership/recovery to receipt plus resources;
 its old single-directory rollback cannot be reused unchanged. Implementation
 must not delete prior receipts or post-commit resources, or claim CAS success
 before publication. Publish this design before finalizing its implementation plan.
+
+## Item2 implementation plan
+
+Selected design/whole-architecture review `cdf0289f8` precedes this plan.
+Use one neutral `storage.file_transaction.PreparedFileMutation(files,
+result_revision, result)` with named byte candidates, next workspace identity
+(null for refusal) and an opaque exact result.
+The use case supplies `prepare(canonical_path, current)` and
+`reject(code, observed_identity, detail)` and
+`verify_receipt(request, result, before_identity, after_identity)` callbacks to
+`operational.authoring_commands.transact_authoring_command`.
+It returns the prepared/stored result; the Engine never imports authoring types
+or interprets operation payloads. CLI/MCP inject this same transaction port into
+the use case. Remove the old public CAS-callback wiring, not emulate it.
+
+| Slice | Owned files | Acceptance evidence |
+| --- | --- | --- |
+| A1 prepare | `usecases/authoring_commands.py` and use-case tests | Validate full ordinary/materializing candidates, receipt command/result schemas/identities and exact results before publication; preserve proof, closure, overrides and failure details. No canonical writes or fake successful CAS. Canonical target mismatch is actionable; migrate callback tests without losing stale/collision coverage. |
+| A2 transaction | `storage/file_transaction.py`, `operational/authoring_commands.py` and persistence/recovery/process tests | One lock for every command; durable exact replay before base comparison, changed-ID reuse, verified receipt corruption/path guards, no overwrite. Marker distinguishes changed workspace/no-op commits; injected failures/restarts before/after publication preserve old or fully committed state, including legacy recovery and post-commit cleanup/replay. Earlier receipts/resources survive. |
+| A3 front ends/release | `app/cli.py`, `app/agent_tools.py`, import guard, registry/CLI/MCP tests and literal review | Tool-set v0.6/new tool and honest annotations; gate before missing/malformed/escaped files open; canonical/symlink scope; exact CLI/tool results, stale/replay/no-overwrite over real stdio. Run focused tests per owner, then combined tests and planned CI full three-OS/conformance/wheel/MCP; inspect official materializer deltas as a batch. No renderer policy/source change intended. |
+
+Implement as isolated WIP while prior releases run; one coherent item2 PR/release
+after item3, not partially safe main slices. Return to design before addressing
+any new transaction/schema/layer contract gap. Acceptance is the literal item2
+row above; parked4/814/815 remain open.
