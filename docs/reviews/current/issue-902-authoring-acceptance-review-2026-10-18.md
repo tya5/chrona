@@ -25,37 +25,26 @@ receipt verification and the gate before reads. No renderer policy changes.
 
 ## Programme-level criteria (optional)
 
-**Release not accepted.** Item2 merged in [1708](https://github.com/tya5/chrona/pull/1708)
-at `0bd24fd4a`; ready main `b12cbd7b4` includes items3/2 and this literal review.
-Final-head CI39109600057 succeeded, including all three pytest shards,
-conformance, MCP floor and newest-Python public reproduction. Official artifact
-12130285877 has109 paths: all50 SVG/Scene pairs byte-identical, no retirements,
-only two fully classified diagnostic inventories intentionally changed. Every
-new helper construction carries explicit path context. Full exact-main release
-39110885313 is running; no claim of full release success is made here. Repair
-`8030a353e` follows [plan6247290279](https://github.com/tya5/chrona/issues/902#issuecomment-6247290279);
-the combined diagnostics/operational/recovery/agent/transaction/lock/MCP-stdio
-batch passes112. Import-direction and literal-review checks pass. Earlier
-focused batches overlap and are not additive.
+**Release not accepted.** [PR1708](https://github.com/tya5/chrona/pull/1708)
+merged as `0bd24fd4a` after final-head CI39109600057 succeeded. Official
+artifact12130285877 preserved all50 SVG/Scene pairs; only two fully classified
+diagnostic inventories changed. Earlier diagnostic, CLI-reference, import-set
+and skill-length failures were repaired without changing runtime permissions.
 
-CI39108636652 on199272f90 failed conformance and pytest shards2/3. All failures
-are accounted for: four helper calls lacked following diagnostic context; the
-CLI reference was stale (also shard2); the exact import-set test omitted the
-approved authoring port (shard2); and the skill exceeded its200-line limit
-(shard3). Private guards now take `(code, path)` with identical runtime messages
-and failure predicates; direct tests retain those owner paths. Diagnostic
-validation has no bare/unclassified sites or policy exclusions. The existing
-CLI-reference generator refreshed only MCP help copy; grammar is unchanged.
-The import expectation now includes only the approved port, with positive and
-SDK-binding rejection coverage; production permissions are unchanged. The skill
-is200 lines, preserving write authorization, stale-base and durable replay rules.
-The exact affected import/CLI/skill batch passes78 tests; skill validation,
-import-direction and generated CLI-reference checks pass. No gate was weakened.
-Its official artifact12129351876 retains all50 SVG/Scene pairs and changes only
-two reviewed diagnostic inventories; that old artifact is not final acceptance.
-Current-head PR checks, official artifact comparison and successful
-exact-main full three-OS release containing this review remain required.
-Item5's repaired exact-main release39105269292 passed all native gates. The
-published scheduling amendment allows items3/2 to
-share a later exact-main full run containing both implementations/reviews,
-without waiving either PR's checks. Parked4/#814/#815 keep parent902 open.
+[Native full release39110885313](https://github.com/tya5/chrona/actions/runs/39110885313)
+passed Linux/macOS but failed two Windows test expectations; Windows wheel was
+skipped. The recovery assertion incorrectly reconstructed LF instead of checking
+preserved original CRLF bytes. The CLI normalizer missed the absolute filename
+from Windows strict path resolution. Under
+[the reviewed repair plan](https://github.com/tya5/chrona/issues/902#issuecomment-6247905669),
+the tests exercise exact LF/CRLF preservation and normalize only the known
+scratch prefix in OS-error filenames, retaining nested filename identity and
+external absolute paths. No product code, golden, native lock test or gate
+changes. [The publication amendment](https://github.com/tya5/chrona/issues/902#issuecomment-6247917297)
+batches this test-only repair into PR1712 before fresh candidate checks and the
+mandatory exact-main three-OS full release; the failed run is not acceptance.
+
+Items5/3 are independently accepted on native releases39105269292 and39108421823.
+Item2 still requires current-head PR/artifact review and a successful native
+full release containing these repairs and this literal review. Parked4/#814/#815
+keep parent902 open.
