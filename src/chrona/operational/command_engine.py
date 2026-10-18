@@ -13,6 +13,7 @@ from chrona.operational.references import ReplayLedger
 from chrona.operational.resources import content_identity, diagnostic_row, stamp_automation_result
 from chrona.storage.revision_store import ProjectSnapshot
 from chrona.storage.snapshots import LocalBaselineRegistry, capture_baseline_v02
+from chrona.storage.store_lock import StoreLockError, store_write_lock
 
 
 SUPPORTED = {"applyActualIntakeBatch", "resolveActualObservation", "captureSnapshot"}
@@ -50,13 +51,23 @@ def apply_actual_command(reader: Any, command: dict[str, Any]) -> dict[str, Any]
         checked["operation"] = "command-apply"
         return checked
     target = checked["inputs"][0]
+    selector = command["payload"]["registry"] if command["type"] == "captureSnapshot" else target["store"]
+    root = reader.roots.get((selector["provider"], selector["identity"]))
+    if root is None:
+        return _rejected(command, f"E_AUTOMATION_TARGET_CLOSURE: the Store config declares no Store "
+                                  f"{selector['provider']}/{selector['identity']} for the command destination")
+    try:
+        with store_write_lock(root):
+            return _apply_checked_command(reader, command, target, root)
+    except StoreLockError as error:
+        return _rejected(command, f"{error.diagnostic_id}: {error.detail}")
+
+
+def _apply_checked_command(reader: Any, command: dict[str, Any], target: dict[str, Any], root: Path) -> dict[str, Any]:
+    """Keep replay, fresh CAS, publication and recording in one Store transaction."""
     if command["type"] == "captureSnapshot":
         verified = verify_reference(reader, target, kind="project")
         registry_selector = command["payload"]["registry"]
-        root = reader.roots.get((registry_selector["provider"], registry_selector["identity"]))
-        if root is None:
-            return _rejected(command, f"E_AUTOMATION_TARGET_CLOSURE: the Store config declares no Store "
-                                      f"{registry_selector['provider']}/{registry_selector['identity']} for the snapshot registry")
         ledger = ReplayLedger(root / "command-replays.json")
         try:
             replay = ledger.lookup(command["commandId"], command, target)
@@ -74,7 +85,6 @@ def apply_actual_command(reader: Any, command: dict[str, Any]) -> dict[str, Any]
         ledger.record(command["commandId"], command, target, accepted)
         return accepted
     store_info = target["store"]
-    root = reader.roots.get((store_info["provider"], store_info["identity"]))
     tip = None
     if root:
         try:

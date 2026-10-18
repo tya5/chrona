@@ -108,8 +108,12 @@ commands of Spec 10 through the one dispatch the command line uses (`operational
   call is `failed` with `E_MCP_WRITE_DISABLED` before any file is opened. The flag is configuration, not approval: it is
   read once at start and no argument, file or environment variable changes it. Both tools are listed whatever the flag is,
   so the registry is one document; `check_command` works without the flag.
-- Not guaranteed: two processes writing one Store at once (a command line and a server). The server serializes only its
-  own calls; a lost race on a revision directory fails and never overwrites.
+- Cooperating local Actual/snapshot writers (a command line and a server) share
+  the Store transaction lock of Spec15 §7. Replay lookup, fresh-tip CAS,
+  publication and replay recording cannot interleave across them.
+  `E_STORE_LOCK_UNAVAILABLE` is a rejected Automation Result before canonical
+  mutation. This advisory local lock is not protection against arbitrary file
+  edits, a distributed lock or crash-atomic publication plus replay recording.
 
 ### 2.2 The Store read tools
 

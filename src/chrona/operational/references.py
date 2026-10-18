@@ -11,6 +11,7 @@ import yaml
 
 from chrona.operational.resources import canonical_bytes, content_identity, json_value
 from chrona.resources import safe_load
+from chrona.storage.store_lock import store_write_lock
 
 
 class ImmutableReader(Protocol):
@@ -86,6 +87,10 @@ class ReplayLedger:
         return ReplayRecord(command_id, request_identity, target_identity, dict(entry["result"]))
 
     def record(self, command_id: str, request: dict[str, Any], target: dict[str, Any], result: dict[str, Any]) -> ReplayRecord:
+        with store_write_lock(self.path.parent):
+            return self._record(command_id, request, target, result)
+
+    def _record(self, command_id: str, request: dict[str, Any], target: dict[str, Any], result: dict[str, Any]) -> ReplayRecord:
         existing = self.lookup(command_id, request, target)
         if existing is not None:
             return existing
