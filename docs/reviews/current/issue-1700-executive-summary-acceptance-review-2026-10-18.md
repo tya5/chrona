@@ -17,15 +17,17 @@
 
 ## Programme-level criteria (optional)
 
-Release pending: the implementation is public WIP, not yet merged or accepted.
-The official generated snapshot and exact-main three-OS full release remain
-required. Focused projection/Layout/Scene/native/docs tests pass181 on the
-published source; no local full pytest or whole-materializer sweep was duplicated.
-The additional materializer test file passes37; three checks stop on the old
-flight-readiness/replan-baseline bytes before generation. Those public rollup
-Scenes still contain the overlay deliberately removed here. Their assertions
-and byte checks are unchanged; the official CI snapshot must regenerate and
-verify them before release. No local expected-output replacement is accepted.
+Release pending: final-base PR CI and exact-main three-OS release remain required.
+Focused projection/Layout/Scene/native/docs tests pass181; no local full pytest
+or whole-materializer sweep was duplicated. Official snapshot
+[12133549157 / source70a8a2faa](https://github.com/tya5/chrona/actions/runs/39119974142)
+was compared across all109 payloads: eight paths change (two Scene/SVG pairs
+and four reports). Flight-readiness75→74 and replan-baseline144→143 each remove
+one overlay, add0 and change0 retained primitives. Labels29/48, Paths15/37,
+warnings417 and errors0 remain unchanged. All four native before/after public
+SVG rasterizations were inspected; no generated files or test assertions were
+hand-edited. Newest-Python public reproduction and PR conformance pass on that
+source. The final-base run follows the separate typed-fields docs merge.
 
 [Pre-code design/architecture/implementation plan](https://github.com/tya5/chrona/issues/1700#issuecomment-6248519700)
 and normative correction `bba2cf919` precede code `05695184a`.
