@@ -1,4 +1,4 @@
-"""Public Controller evidence for retained relation labels and their shared-node routes (#1158)."""
+"""Frozen Context evidence for retained relation labels and shared-node routes (#1158)."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -7,7 +7,11 @@ import xml.etree.ElementTree as ET
 
 from chrona.presentation.layout.obstacles import ObstacleSegment, obstacles_intersect
 from chrona.core.relation_identity import relation_identity
-from chrona.usecases.materialize import materialize
+from chrona.presentation.model.closure import resolve_render_context
+from chrona.scheduling.scheduler import ReferenceScheduler
+from chrona.storage.revision_store import LocalSnapshotReader
+from chrona.usecases.materialize import copy_context_closure
+from chrona.usecases.render_review import RenderRequest, render_review
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -15,13 +19,19 @@ SVG_NS = "{http://www.w3.org/2000/svg}"
 
 
 def test_controller_baseline_ghosts_emits_start_start_label_without_shared_node_route_overlap(tmp_path):
-    result = materialize(
-        ROOT / "examples/controller-z/manifest.yaml", "baseline-ghosts",
-        tmp_path / "controller-baseline-ghosts", write=False,
+    fixture = ROOT / "tests/fixtures/controller-z"
+    snapshot = tmp_path / "snapshot"
+    reference, _ = copy_context_closure(
+        fixture, fixture / "contexts/baseline-ghosts.yaml", snapshot,
     )
-    rendered = result.rendered
+    # These authored Contexts are unpinned by design (ADR-0030); their frozen
+    # whole-SVG serialization is not the oracle for this geometry regression.
+    closure = resolve_render_context(reference, LocalSnapshotReader(
+        snapshot, "controller-z-example", require_content_identity=False,
+    ))
+    rendered = render_review(RenderRequest(closure, snapshot, ReferenceScheduler()))
     svg = ET.fromstring(rendered.artifact.content)
-    project = yaml.safe_load((ROOT / "examples/controller-z/project.yaml").read_bytes())
+    project = yaml.safe_load((fixture / "project.yaml").read_bytes())
     identities = {relation["id"]: relation_identity(index, relation)
                   for index, relation in enumerate(project["relations"])}
     incoming_id = identities["evb-to-bringup"]

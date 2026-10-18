@@ -45,11 +45,23 @@ and Spec28 `3810b0671` precede the completed-shape repair: explicit channels
 precede Path kind and ordinary mark inference, matching Scene; neutral stroke/
 fill Path and the native outline-period regressions pass. Other failures were
 approved title→path/default-key expectation migrations, two chip Scene hashes
-whose only changed field is View provenance (SVGs identical), and a route test
-reading a stale duplicate fixture rather than public materializer evidence.
-That test now checks the public corpus with `write=False`; all route/nonoverlap
-assertions and byte/contrast/viewport guards remain. Both bounded materializer
-tests pass against official artifact12130617086 copied only into scratch.
+whose only changed field is View provenance (SVGs identical), and a relation
+regression whose frozen whole-SVG serialization predates the new legend keys.
+The frozen Context now renders through the existing closure/renderer services
+into scratch, retaining every native SVG label, diagnostic, route identity and
+exact segment-nonintersection assertion. No fixture/golden is rewritten and no
+`write=True` is used. Public materializer byte checks stay in the separate
+official50-pair artifact/reproduction gate.
+CI39113295569 passed shards1/2, conformance, reproduction and MCP; shard3 caught
+the attempted direct reference to the retired public Controller example.
+[The pre-code repair plan](https://github.com/tya5/chrona/issues/1703#issuecomment-6248062438)
+restores independent fixture ownership without weakening the retirement guard
+or changing product code. The exact regression plus frozen-input guard pass4.
+All1120 tools-component tests pass locally (158.58s), including repository
+structural/documentation/publication guards; this is not a local full pytest
+run. Independent review confirms the original label/route assertions remain
+and the fixture Project/View match the tested input; only its explicit font
+asset identity pins differ from the retired example Context.
 The current-head CI/artifact must be refreshed on the new ready base; no stale
 run is treated as acceptance and no canonical generated file was hand-edited.
 
