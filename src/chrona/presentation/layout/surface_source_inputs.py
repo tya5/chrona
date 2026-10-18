@@ -70,7 +70,7 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
         "timeline-axis": SourceInput(span_days=span_days, typography_role="axis",
                                      axis_tiers=content.axis_tiers),
         "network": SourceInput(
-            runs=tuple(SourceTextRun(node.title, "text", node.object_id)
+            runs=tuple(SourceTextRun(node.title, "groupHeader" if node.is_container else "text", node.object_id)
                        for node in network.nodes) if network is not None else (),
             typography_role="text"),
         "summary": _summary_source(summary),

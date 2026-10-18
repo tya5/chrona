@@ -36,7 +36,8 @@ def theme():
     return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme",
             "body": {"values": values, "metrics": {name: f"metric.{i}" for i, name in enumerate(metrics)},
                      "roles": {"text": text, "heading": heading, "axis": text, "legend": text,
-                               "annotation": text, "summary": text, "metric": heading}}}
+                               "annotation": text, "summary": text, "metric": heading,
+                               "groupHeader": heading}}}
 
 
 def test_sources_are_measured_once_from_semantic_inputs_and_theme_metrics():
@@ -118,6 +119,18 @@ def test_corner_radius_metrics_are_optional_and_explicitly_allow_zero():
     value["body"]["metrics"]["timeline.mark.cornerRadius"] = "mark-radius"
     assert resolve_theme_metrics(value)["timeline.mark.cornerRadius"] == Decimal(0)
     value["body"]["values"]["mark-radius"]["value"] = -1
+    with pytest.raises(LayoutError, match="E_LAYOUT_TOKEN_TYPE"):
+        resolve_theme_metrics(value)
+
+
+@pytest.mark.parametrize("name", ("network.node.paddingInline", "network.node.paddingBlock"))
+def test_network_node_padding_metrics_are_optional_and_allow_zero(name):
+    value = theme()
+    assert name not in resolve_theme_metrics(value)
+    value["body"]["values"]["node-padding"] = {"type": "number", "value": 0}
+    value["body"]["metrics"][name] = "node-padding"
+    assert resolve_theme_metrics(value)[name] == Decimal(0)
+    value["body"]["values"]["node-padding"]["value"] = -1
     with pytest.raises(LayoutError, match="E_LAYOUT_TOKEN_TYPE"):
         resolve_theme_metrics(value)
 

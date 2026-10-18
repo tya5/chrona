@@ -15,7 +15,8 @@ from tests.unit.chrona.presentation.layout.test_sources import theme
 
 
 def _network(nodes, edges):
-    return SimpleNamespace(nodes=tuple(SimpleNamespace(object_id=item, title=item, order_key=(item,), critical=False, source_kind="primary") for item in nodes),
+    return SimpleNamespace(nodes=tuple(SimpleNamespace(object_id=item, title=item, order_key=(item,), critical=False,
+                                                       source_kind="primary", is_container=False, container_id=None) for item in nodes),
                            edges=tuple(SimpleNamespace(relation_id=relation, source_id=source, target_id=target,
                                                        source_endpoint="end", target_endpoint="start", critical=False)
                                        for relation, source, target in edges))
@@ -37,6 +38,7 @@ def _deadline_network(*, slipped=True):
         nodes=tuple(SimpleNamespace(
             object_id=node.object_id, title=node.title, order_key=node.order_key,
             critical=node.critical, source_kind=node.source_kind,
+            is_container=node.is_container, container_id=node.container_id,
             deadline=(SimpleNamespace(object_id=node.object_id, label=f"2026-03-0{5 if node.object_id == 'a' else 6}",
                                       slipped=slipped if node.object_id == "a" else False)
                       if node.object_id == "a" else None)) for node in base.nodes),

@@ -6,7 +6,7 @@ import pytest
 import yaml
 
 from chrona.presentation.model.projection import (
-    ObservationState, ReviewItem, ReviewRowProjection, _observation_state, _roles,
+    ObservationState, ReviewItem, ReviewRowProjection, _dependency_network_projection, _observation_state, _roles,
     _validate_explicit_row_hierarchy, build_review_projection, shared_track_member_key,
 )
 from chrona.presentation.model.surface_content import table_value
@@ -16,6 +16,7 @@ from chrona.presentation.contracts.resources import (
 )
 from chrona.scheduling.scheduler import ScheduleAnalysis, TotalFloat
 from chrona.scheduling.scheduler import schedule
+from chrona.core.hierarchy import normalize_hierarchy
 
 
 def test_shared_track_member_order_is_one_finite_model_policy():
@@ -24,6 +25,64 @@ def test_shared_track_member_order_is_one_finite_model_policy():
     assert [item.source_kind for _, item in sorted(enumerate(members), key=lambda pair: shared_track_member_key(pair[1], pair[0]))] == [
         "snapshot", "scenario", "primary", "actual",
     ]
+
+
+def test_network_projection_closes_selected_project_containers_and_preserves_group_ports():
+    project = {"objects": {
+        "outer": {"type": "group", "title": "Outer"},
+        "inner": {"type": "group", "title": "Inner", "parent": "outer"},
+        "task": {"type": "task", "title": "Task", "parent": "inner"},
+        "unselected": {"type": "group", "title": "Unselected", "parent": "outer"},
+        "leaf": {"type": "task", "title": "Leaf", "parent": "unselected"},
+        "empty": {"type": "group", "title": "Empty", "parent": "outer"},
+    }, "relations": (
+        {"id": "group-port", "from": {"object": "inner", "endpoint": "start"},
+         "to": {"object": "task", "endpoint": "finish"}},
+    )}
+    selected = [ReviewItem(object_id, object_id.title(), "span", {}, None, None, ())
+                for object_id in ("outer", "inner", "task", "leaf", "empty")]
+    view = replace(typed_view({"body": {"rows": {"mode": "automatic"},
+                                 "window": {"mode": "selected-planned"},
+                                 "comparison": {"actual": "optional"}}}), surface="dependency-network")
+
+    hierarchy_entries = {entry.object_id: entry for entry in normalize_hierarchy(project)}
+    network = _dependency_network_projection(project, selected, view, hierarchy_entries)
+
+    assert network is not None
+    nodes = {node.object_id: node for node in network.nodes}
+    assert set(nodes) == {"outer", "inner", "task", "leaf", "empty"}
+    assert "unselected" not in nodes
+    assert [(node.object_id, node.is_container, node.container_id) for node in network.nodes] == [
+        ("outer", True, None), ("inner", True, "outer"), ("task", False, "inner"),
+        ("leaf", False, "outer"), ("empty", True, "outer"),
+    ]
+    edge, = network.edges
+    assert (edge.relation_id, edge.source_id, edge.source_endpoint, edge.target_id, edge.target_endpoint) == (
+        "relation:0:group-port", "inner", "start", "task", "finish")
+
+
+def test_network_keeps_a_selected_group_when_all_project_children_are_unselected():
+    project = {"objects": {
+        "programme": {"type": "group", "title": "Programme", "schedule": {"mode": "rollup"}},
+        "hidden-work": {"type": "task", "title": "Hidden work", "parent": "programme",
+                        "schedule": {"mode": "fixed-span", "start": "2027-01-04", "end": "2027-01-05"}},
+    }, "version": "timeline/v0.7", "project": {"id": "network-container"},
+        "entities": {}, "relations": []}
+    analysis = schedule(project)
+    assert analysis.ok
+    view = replace(typed_view({"body": {
+        "surface": "dependency-network", "selection": {"include": {"ids": ["programme"]}},
+        "window": {"mode": "selected-planned"}, "comparison": {"actual": "optional"},
+        "rows": {"mode": "automatic"},
+    }}), surface="dependency-network")
+
+    projection = build_review_projection(
+        project, analysis.placements, view, None, analysis=analysis.analysis)
+
+    assert [item.object_id for item in projection.items] == ["programme"]
+    assert projection.network is not None and len(projection.network.nodes) == 1
+    node, = projection.network.nodes
+    assert (node.object_id, node.is_container, node.container_id) == ("programme", True, None)
 
 
 def typed_view(value):

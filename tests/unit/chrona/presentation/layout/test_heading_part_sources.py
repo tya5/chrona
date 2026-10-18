@@ -68,6 +68,35 @@ def test_network_keeps_legacy_project_title_source_while_advertising_view_parts(
     assert sources["heading.subtitle"].text_runs()[0].typography_role == "subtitle"
 
 
+def test_network_container_titles_use_group_header_typography():
+    nodes = (
+        SimpleNamespace(object_id="group", title="Platform stream", is_container=True,
+                       container_id=None),
+        SimpleNamespace(object_id="task", title="Build adapter", is_container=False,
+                       container_id="group"),
+    )
+    view = SimpleNamespace(rows=SimpleNamespace(mode=ViewRowMode.AUTOMATIC),
+                           table_columns=(), surface="dependency-network")
+    projection = SimpleNamespace(lane_rows=(), rows=(), items=(),
+                                 window=(date(2026, 1, 1), date(2026, 1, 2)),
+                                 network=SimpleNamespace(nodes=nodes, edges=()))
+    content = SimpleNamespace(axis_tiers=(), group_details=(), milestones=(),
+                              observation_rows=(), observation_columns=(), notes=())
+    sources = _source_inputs(
+        {"project": {"title": "Project title"}}, view, projection,
+        SummaryContent(()), content=content)
+
+    assert sources["network"].runs == (
+        SourceTextRun("Platform stream", "groupHeader", "group"),
+        SourceTextRun("Build adapter", "text", "task"),
+    )
+    measured = measure_sources({"network": sources["network"]}, theme(), font_metrics=_Metrics())
+    assert [run.typography_role for run in measured.run_measurements["network"]] == [
+        "groupHeader", "text"]
+    assert [run.inline_size for run in measured.run_measurements["network"]] == [
+        Decimal(len("Platform stream") * 34 / 2), Decimal(len("Build adapter") * 14 / 2)]
+
+
 def test_empty_declared_heading_part_has_zero_measurement_and_no_runs():
     resolved_theme = theme()
     measured = measure_sources({"heading.kicker": SourceInput(content_present=False)},
