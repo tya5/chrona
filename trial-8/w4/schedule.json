@@ -1,0 +1,565 @@
+{
+ "status": "ok",
+ "placements": {
+  "plat-env": {
+   "start": "2026-11-02",
+   "end": "2026-11-09"
+  },
+  "plat-ci": {
+   "start": "2026-11-09",
+   "end": "2026-11-17"
+  },
+  "plat-secrets": {
+   "start": "2026-11-09",
+   "end": "2026-11-13"
+  },
+  "plat-obs": {
+   "start": "2026-11-17",
+   "end": "2026-12-11"
+  },
+  "plat-cdn": {
+   "start": "2026-11-09",
+   "end": "2026-11-12"
+  },
+  "plat-db": {
+   "start": "2026-11-13",
+   "end": "2026-11-27"
+  },
+  "plat-queue": {
+   "start": "2026-11-27",
+   "end": "2026-12-07"
+  },
+  "plat-flags": {
+   "start": "2026-11-17",
+   "end": "2026-11-23"
+  },
+  "plat-dr": {
+   "start": "2026-11-27",
+   "end": "2026-12-02"
+  },
+  "plat-perf": {
+   "start": "2026-12-11",
+   "end": "2026-12-21"
+  },
+  "plat-prod": {
+   "start": "2026-12-21",
+   "end": "2026-12-30"
+  },
+  "plat-runbook": {
+   "start": "2026-12-30",
+   "end": "2027-01-07"
+  },
+  "plat-hyper": {
+   "start": "2027-01-26",
+   "end": "2027-02-02"
+  },
+  "be-api-spec": {
+   "start": "2026-11-02",
+   "end": "2026-11-09"
+  },
+  "be-auth": {
+   "start": "2026-11-13",
+   "end": "2026-11-25"
+  },
+  "be-cart": {
+   "start": "2026-11-09",
+   "end": "2026-11-23"
+  },
+  "be-pricing": {
+   "start": "2026-11-23",
+   "end": "2026-12-09"
+  },
+  "be-pay": {
+   "start": "2026-11-25",
+   "end": "2026-12-09"
+  },
+  "be-tax": {
+   "start": "2026-12-09",
+   "end": "2026-12-17"
+  },
+  "be-inv": {
+   "start": "2026-12-07",
+   "end": "2026-12-16"
+  },
+  "be-notif": {
+   "start": "2026-12-16",
+   "end": "2026-12-23"
+  },
+  "be-refund": {
+   "start": "2026-12-09",
+   "end": "2026-12-17"
+  },
+  "be-fraud": {
+   "start": "2026-12-09",
+   "end": "2026-12-16"
+  },
+  "be-migr": {
+   "start": "2026-11-27",
+   "end": "2026-12-09"
+  },
+  "be-api-freeze": {
+   "start": "2026-11-25",
+   "end": "2026-12-01"
+  },
+  "be-hyper": {
+   "start": "2027-01-26",
+   "end": "2027-02-02"
+  },
+  "be-docs": {
+   "start": "2026-12-17",
+   "end": "2026-12-23"
+  },
+  "mob-design": {
+   "start": "2026-11-02",
+   "end": "2026-11-10"
+  },
+  "mob-kit": {
+   "start": "2026-11-10",
+   "end": "2026-11-20"
+  },
+  "mob-cart-ui": {
+   "start": "2026-11-25",
+   "end": "2026-12-03"
+  },
+  "mob-pay-ui": {
+   "start": "2026-12-09",
+   "end": "2026-12-21"
+  },
+  "mob-addr": {
+   "start": "2026-11-20",
+   "end": "2026-11-27"
+  },
+  "mob-push": {
+   "start": "2026-12-23",
+   "end": "2027-01-04"
+  },
+  "mob-offline": {
+   "start": "2026-12-03",
+   "end": "2026-12-11"
+  },
+  "mob-a11y": {
+   "start": "2026-12-21",
+   "end": "2026-12-29"
+  },
+  "mob-analytics": {
+   "start": "2026-12-03",
+   "end": "2026-12-09"
+  },
+  "mob-ios": {
+   "start": "2027-01-04",
+   "end": "2027-01-07"
+  },
+  "mob-android": {
+   "start": "2027-01-04",
+   "end": "2027-01-07"
+  },
+  "mob-store": {
+   "start": "2027-01-07",
+   "end": "2027-01-14"
+  },
+  "mob-beta": {
+   "start": "2027-01-14",
+   "end": "2027-01-21"
+  },
+  "mob-hyper": {
+   "start": "2027-01-26",
+   "end": "2027-02-02"
+  },
+  "qa-plan": {
+   "start": "2026-11-02",
+   "end": "2026-11-06"
+  },
+  "qa-auto": {
+   "start": "2026-11-17",
+   "end": "2026-11-27"
+  },
+  "qa-contract": {
+   "start": "2026-11-27",
+   "end": "2026-12-07"
+  },
+  "qa-pay": {
+   "start": "2026-12-09",
+   "end": "2026-12-18"
+  },
+  "qa-e2e": {
+   "start": "2026-12-11",
+   "end": "2026-12-29"
+  },
+  "qa-perf": {
+   "start": "2026-12-21",
+   "end": "2026-12-30"
+  },
+  "qa-sec": {
+   "start": "2026-12-09",
+   "end": "2026-12-17"
+  },
+  "qa-a11y": {
+   "start": "2026-12-29",
+   "end": "2027-01-05"
+  },
+  "qa-regress": {
+   "start": "2027-01-04",
+   "end": "2027-01-14"
+  },
+  "qa-uat": {
+   "start": "2027-01-14",
+   "end": "2027-01-22"
+  },
+  "qa-signoff": {
+   "start": "2027-01-22",
+   "end": "2027-01-26"
+  },
+  "qa-hyper": {
+   "start": "2027-01-26",
+   "end": "2027-02-02"
+  },
+  "kickoff": {
+   "at": "2026-11-02"
+  },
+  "api-freeze": {
+   "at": "2026-11-25"
+  },
+  "code-freeze": {
+   "at": "2027-01-04"
+  },
+  "go-live": {
+   "at": "2027-01-26"
+  },
+  "steerco": {
+   "at": "2027-01-13"
+  },
+  "be-ratelimit": {
+   "start": "2026-11-25",
+   "end": "2026-12-01"
+  },
+  "mob-deeplink": {
+   "start": "2026-11-20",
+   "end": "2026-11-25"
+  }
+ },
+ "diagnostics": [],
+ "warnings": [],
+ "analysis": {
+  "criticalObjectIds": [
+   "plat-env",
+   "plat-secrets",
+   "plat-db",
+   "plat-queue",
+   "plat-hyper",
+   "be-inv",
+   "be-notif",
+   "be-hyper",
+   "mob-push",
+   "mob-hyper",
+   "qa-regress",
+   "qa-uat",
+   "qa-signoff",
+   "qa-hyper",
+   "kickoff",
+   "code-freeze",
+   "go-live"
+  ],
+  "totalFloat": {
+   "plat-env": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "plat-ci": {
+    "value": 13,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "plat-secrets": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "plat-obs": {
+    "value": 13,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "plat-cdn": {
+    "value": 54,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "plat-db": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "plat-queue": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "plat-flags": {
+    "value": 47,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "plat-dr": {
+    "value": 26,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "plat-perf": {
+    "value": 13,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "plat-prod": {
+    "value": 13,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "plat-runbook": {
+    "value": 13,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "plat-hyper": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "be-api-spec": {
+    "value": 6,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "be-auth": {
+    "value": 2,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "be-cart": {
+    "value": 8,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "be-pricing": {
+    "value": 8,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "be-pay": {
+    "value": 2,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "be-tax": {
+    "value": 8,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "be-inv": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "be-notif": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "be-refund": {
+    "value": 8,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "be-fraud": {
+    "value": 9,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "be-migr": {
+    "value": 30,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "be-api-freeze": {
+    "value": 41,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "be-hyper": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "be-docs": {
+    "value": 25,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "mob-design": {
+    "value": 15,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "mob-kit": {
+    "value": 15,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "mob-cart-ui": {
+    "value": 12,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "mob-pay-ui": {
+    "value": 2,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "mob-addr": {
+    "value": 18,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "mob-push": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "mob-offline": {
+    "value": 12,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "mob-a11y": {
+    "value": 2,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "mob-analytics": {
+    "value": 14,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "mob-ios": {
+    "value": 3,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "mob-android": {
+    "value": 3,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "mob-store": {
+    "value": 3,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "mob-beta": {
+    "value": 3,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "mob-hyper": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "qa-plan": {
+    "value": 40,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "qa-auto": {
+    "value": 33,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "qa-contract": {
+    "value": 37,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "qa-pay": {
+    "value": 28,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "qa-e2e": {
+    "value": 23,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "qa-perf": {
+    "value": 15,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "qa-sec": {
+    "value": 22,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "qa-a11y": {
+    "value": 20,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "qa-regress": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "qa-uat": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "qa-signoff": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "qa-hyper": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "kickoff": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "api-freeze": {
+    "value": 12,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "code-freeze": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "go-live": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "steerco": {
+    "value": 0,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "be-ratelimit": {
+    "value": 20,
+    "unit": "working-days",
+    "calendar": "office"
+   },
+   "mob-deeplink": {
+    "value": 24,
+    "unit": "working-days",
+    "calendar": "office"
+   }
+  }
+ }
+}

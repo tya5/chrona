@@ -1,0 +1,1966 @@
+{
+ "version": "timeline/v0.7",
+ "project": {
+  "id": "checkout-v2",
+  "title": "Checkout v2 programme",
+  "calendar": "office"
+ },
+ "extensions": [
+  {
+   "packageId": "trial8-delivery",
+   "path": "profile.yaml",
+   "revision": "git:0123456789abcdef0123456789abcdef01234567"
+  }
+ ],
+ "calendars": {
+  "office": {
+   "working_days": [
+    "mon",
+    "tue",
+    "wed",
+    "thu",
+    "fri"
+   ],
+   "exceptions": [
+    {
+     "date": "2026-12-24",
+     "working": false
+    },
+    {
+     "date": "2026-12-25",
+     "working": false
+    },
+    {
+     "date": "2026-12-31",
+     "working": false
+    },
+    {
+     "date": "2027-01-01",
+     "working": false
+    }
+   ]
+  }
+ },
+ "objects": {
+  "plat-env": {
+   "type": "work",
+   "title": "Provision staging environments",
+   "calendar": "office",
+   "fields": {
+    "team": "platform",
+    "risk": "low",
+    "owner": "Aiko Sato"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "5wd"
+   }
+  },
+  "plat-ci": {
+   "type": "work",
+   "title": "CI pipeline hardening",
+   "calendar": "office",
+   "fields": {
+    "team": "platform",
+    "risk": "medium",
+    "owner": "Ben Ortiz"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "6wd"
+   }
+  },
+  "plat-secrets": {
+   "type": "work",
+   "title": "Secrets rotation service",
+   "calendar": "office",
+   "fields": {
+    "team": "platform",
+    "risk": "medium",
+    "owner": "Aiko Sato"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "4wd"
+   }
+  },
+  "plat-obs": {
+   "type": "work",
+   "title": "Observability stack",
+   "calendar": "office",
+   "fields": {
+    "team": "platform",
+    "risk": "low",
+    "owner": "Ben Ortiz"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "8wd"
+   }
+  },
+  "plat-cdn": {
+   "type": "work",
+   "title": "CDN edge config",
+   "calendar": "office",
+   "fields": {
+    "team": "platform",
+    "risk": "low",
+    "owner": "Aiko Sato"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "3wd"
+   }
+  },
+  "plat-db": {
+   "type": "work",
+   "title": "Database cluster upgrade",
+   "calendar": "office",
+   "fields": {
+    "team": "platform",
+    "risk": "high",
+    "owner": "Ben Ortiz"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "10wd"
+   }
+  },
+  "plat-queue": {
+   "type": "work",
+   "title": "Message queue rollout",
+   "calendar": "office",
+   "fields": {
+    "team": "platform",
+    "risk": "medium",
+    "owner": "Aiko Sato"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "6wd"
+   }
+  },
+  "plat-flags": {
+   "type": "work",
+   "title": "Feature flag service",
+   "calendar": "office",
+   "fields": {
+    "team": "platform",
+    "risk": "low",
+    "owner": "Ben Ortiz"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "4wd"
+   }
+  },
+  "plat-dr": {
+   "type": "work",
+   "title": "Disaster recovery drill",
+   "calendar": "office",
+   "fields": {
+    "team": "platform",
+    "risk": "high",
+    "owner": "Aiko Sato"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "3wd"
+   }
+  },
+  "plat-cost": {
+   "type": "work",
+   "title": "Cost guardrails",
+   "calendar": "office",
+   "fields": {
+    "team": "platform",
+    "risk": "low",
+    "owner": "Ben Ortiz"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "4wd"
+   }
+  },
+  "plat-perf": {
+   "type": "work",
+   "title": "Load test harness",
+   "calendar": "office",
+   "fields": {
+    "team": "platform",
+    "risk": "medium",
+    "owner": "Aiko Sato"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "6wd"
+   }
+  },
+  "plat-prod": {
+   "type": "work",
+   "title": "Production cutover prep",
+   "calendar": "office",
+   "fields": {
+    "team": "platform",
+    "risk": "high",
+    "owner": "Ben Ortiz"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "5wd"
+   }
+  },
+  "plat-runbook": {
+   "type": "work",
+   "title": "Runbooks and on-call",
+   "calendar": "office",
+   "fields": {
+    "team": "platform",
+    "risk": "low",
+    "owner": "Aiko Sato"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "4wd"
+   }
+  },
+  "plat-hyper": {
+   "type": "work",
+   "title": "Hypercare platform",
+   "calendar": "office",
+   "fields": {
+    "team": "platform",
+    "risk": "medium",
+    "owner": "Ben Ortiz"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "5wd"
+   }
+  },
+  "be-api-spec": {
+   "type": "work",
+   "title": "Checkout API specification",
+   "calendar": "office",
+   "fields": {
+    "team": "backend",
+    "risk": "medium",
+    "owner": "Chen Wei"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "5wd"
+   }
+  },
+  "be-auth": {
+   "type": "work",
+   "title": "Token auth service",
+   "calendar": "office",
+   "fields": {
+    "team": "backend",
+    "risk": "high",
+    "owner": "Dana Kim"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "8wd"
+   }
+  },
+  "be-cart": {
+   "type": "work",
+   "title": "Cart service",
+   "calendar": "office",
+   "fields": {
+    "team": "backend",
+    "risk": "medium",
+    "owner": "Chen Wei"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "10wd"
+   }
+  },
+  "be-pricing": {
+   "type": "work",
+   "title": "Pricing engine",
+   "calendar": "office",
+   "fields": {
+    "team": "backend",
+    "risk": "high",
+    "owner": "Dana Kim"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "12wd"
+   }
+  },
+  "be-pay": {
+   "type": "work",
+   "title": "Payment gateway adapter",
+   "calendar": "office",
+   "fields": {
+    "team": "backend",
+    "risk": "high",
+    "owner": "Chen Wei"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "10wd"
+   },
+   "deadline": "2026-12-23"
+  },
+  "be-tax": {
+   "type": "work",
+   "title": "Tax calculation",
+   "calendar": "office",
+   "fields": {
+    "team": "backend",
+    "risk": "medium",
+    "owner": "Dana Kim"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "6wd"
+   }
+  },
+  "be-inv": {
+   "type": "work",
+   "title": "Inventory reservation",
+   "calendar": "office",
+   "fields": {
+    "team": "backend",
+    "risk": "medium",
+    "owner": "Chen Wei"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "7wd"
+   }
+  },
+  "be-notif": {
+   "type": "work",
+   "title": "Order notifications",
+   "calendar": "office",
+   "fields": {
+    "team": "backend",
+    "risk": "low",
+    "owner": "Dana Kim"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "5wd"
+   }
+  },
+  "be-refund": {
+   "type": "work",
+   "title": "Refund workflow",
+   "calendar": "office",
+   "fields": {
+    "team": "backend",
+    "risk": "medium",
+    "owner": "Chen Wei"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "6wd"
+   }
+  },
+  "be-fraud": {
+   "type": "work",
+   "title": "Fraud scoring hook",
+   "calendar": "office",
+   "fields": {
+    "team": "backend",
+    "risk": "high",
+    "owner": "Dana Kim"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "5wd"
+   }
+  },
+  "be-migr": {
+   "type": "work",
+   "title": "Legacy order migration",
+   "calendar": "office",
+   "fields": {
+    "team": "backend",
+    "risk": "high",
+    "owner": "Chen Wei"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "8wd"
+   }
+  },
+  "be-api-freeze": {
+   "type": "work",
+   "title": "API freeze fixes",
+   "calendar": "office",
+   "fields": {
+    "team": "backend",
+    "risk": "low",
+    "owner": "Dana Kim"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "4wd"
+   }
+  },
+  "be-hyper": {
+   "type": "work",
+   "title": "Hypercare backend",
+   "calendar": "office",
+   "fields": {
+    "team": "backend",
+    "risk": "low",
+    "owner": "Chen Wei"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "5wd"
+   }
+  },
+  "be-docs": {
+   "type": "work",
+   "title": "API reference docs",
+   "calendar": "office",
+   "fields": {
+    "team": "backend",
+    "risk": "low",
+    "owner": "Dana Kim"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "4wd"
+   }
+  },
+  "mob-design": {
+   "type": "work",
+   "title": "Checkout UX design",
+   "calendar": "office",
+   "fields": {
+    "team": "mobile",
+    "risk": "medium",
+    "owner": "Eli Novak"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "6wd"
+   }
+  },
+  "mob-kit": {
+   "type": "work",
+   "title": "Design system components",
+   "calendar": "office",
+   "fields": {
+    "team": "mobile",
+    "risk": "low",
+    "owner": "Fumi Ito"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "8wd"
+   }
+  },
+  "mob-cart-ui": {
+   "type": "work",
+   "title": "Cart screen",
+   "calendar": "office",
+   "fields": {
+    "team": "mobile",
+    "risk": "medium",
+    "owner": "Eli Novak"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "6wd"
+   }
+  },
+  "mob-pay-ui": {
+   "type": "work",
+   "title": "Payment sheet",
+   "calendar": "office",
+   "fields": {
+    "team": "mobile",
+    "risk": "high",
+    "owner": "Fumi Ito"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "8wd"
+   }
+  },
+  "mob-addr": {
+   "type": "work",
+   "title": "Address and shipping form",
+   "calendar": "office",
+   "fields": {
+    "team": "mobile",
+    "risk": "low",
+    "owner": "Eli Novak"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "5wd"
+   }
+  },
+  "mob-push": {
+   "type": "work",
+   "title": "Push notification opt-in",
+   "calendar": "office",
+   "fields": {
+    "team": "mobile",
+    "risk": "low",
+    "owner": "Fumi Ito"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "4wd"
+   }
+  },
+  "mob-offline": {
+   "type": "work",
+   "title": "Offline cart cache",
+   "calendar": "office",
+   "fields": {
+    "team": "mobile",
+    "risk": "medium",
+    "owner": "Eli Novak"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "6wd"
+   }
+  },
+  "mob-a11y": {
+   "type": "work",
+   "title": "Accessibility pass",
+   "calendar": "office",
+   "fields": {
+    "team": "mobile",
+    "risk": "medium",
+    "owner": "Fumi Ito"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "4wd"
+   }
+  },
+  "mob-analytics": {
+   "type": "work",
+   "title": "Funnel analytics events",
+   "calendar": "office",
+   "fields": {
+    "team": "mobile",
+    "risk": "low",
+    "owner": "Eli Novak"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "4wd"
+   }
+  },
+  "mob-ios": {
+   "type": "work",
+   "title": "iOS release build",
+   "calendar": "office",
+   "fields": {
+    "team": "mobile",
+    "risk": "medium",
+    "owner": "Fumi Ito"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "3wd"
+   }
+  },
+  "mob-android": {
+   "type": "work",
+   "title": "Android release build",
+   "calendar": "office",
+   "fields": {
+    "team": "mobile",
+    "risk": "medium",
+    "owner": "Eli Novak"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "3wd"
+   }
+  },
+  "mob-store": {
+   "type": "work",
+   "title": "Store review submission",
+   "calendar": "office",
+   "fields": {
+    "team": "mobile",
+    "risk": "high",
+    "owner": "Fumi Ito"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "5wd"
+   },
+   "deadline": "2027-03-01"
+  },
+  "mob-beta": {
+   "type": "work",
+   "title": "Beta cohort rollout",
+   "calendar": "office",
+   "fields": {
+    "team": "mobile",
+    "risk": "medium",
+    "owner": "Eli Novak"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "5wd"
+   }
+  },
+  "mob-hyper": {
+   "type": "work",
+   "title": "Hypercare mobile",
+   "calendar": "office",
+   "fields": {
+    "team": "mobile",
+    "risk": "low",
+    "owner": "Fumi Ito"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "5wd"
+   }
+  },
+  "qa-plan": {
+   "type": "work",
+   "title": "Test strategy",
+   "calendar": "office",
+   "fields": {
+    "team": "qa",
+    "risk": "low",
+    "owner": "Gita Rao"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "4wd"
+   }
+  },
+  "qa-auto": {
+   "type": "work",
+   "title": "Automation framework",
+   "calendar": "office",
+   "fields": {
+    "team": "qa",
+    "risk": "medium",
+    "owner": "Hugo Lind"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "8wd"
+   }
+  },
+  "qa-contract": {
+   "type": "work",
+   "title": "API contract tests",
+   "calendar": "office",
+   "fields": {
+    "team": "qa",
+    "risk": "low",
+    "owner": "Gita Rao"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "6wd"
+   }
+  },
+  "qa-pay": {
+   "type": "work",
+   "title": "Payment test matrix",
+   "calendar": "office",
+   "fields": {
+    "team": "qa",
+    "risk": "high",
+    "owner": "Hugo Lind"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "7wd"
+   }
+  },
+  "qa-e2e": {
+   "type": "work",
+   "title": "End-to-end suite",
+   "calendar": "office",
+   "fields": {
+    "team": "qa",
+    "risk": "medium",
+    "owner": "Gita Rao"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "10wd"
+   }
+  },
+  "qa-perf": {
+   "type": "work",
+   "title": "Performance test run",
+   "calendar": "office",
+   "fields": {
+    "team": "qa",
+    "risk": "high",
+    "owner": "Hugo Lind"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "5wd"
+   }
+  },
+  "qa-sec": {
+   "type": "work",
+   "title": "Security review",
+   "calendar": "office",
+   "fields": {
+    "team": "qa",
+    "risk": "high",
+    "owner": "Gita Rao"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "6wd"
+   }
+  },
+  "qa-a11y": {
+   "type": "work",
+   "title": "Accessibility audit",
+   "calendar": "office",
+   "fields": {
+    "team": "qa",
+    "risk": "low",
+    "owner": "Hugo Lind"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "3wd"
+   }
+  },
+  "qa-regress": {
+   "type": "work",
+   "title": "Full regression",
+   "calendar": "office",
+   "fields": {
+    "team": "qa",
+    "risk": "medium",
+    "owner": "Gita Rao"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "8wd"
+   }
+  },
+  "qa-uat": {
+   "type": "work",
+   "title": "User acceptance testing",
+   "calendar": "office",
+   "fields": {
+    "team": "qa",
+    "risk": "medium",
+    "owner": "Hugo Lind"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "6wd"
+   }
+  },
+  "qa-signoff": {
+   "type": "work",
+   "title": "Release sign-off",
+   "calendar": "office",
+   "fields": {
+    "team": "qa",
+    "risk": "high",
+    "owner": "Gita Rao"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "2wd"
+   }
+  },
+  "qa-hyper": {
+   "type": "work",
+   "title": "Hypercare triage",
+   "calendar": "office",
+   "fields": {
+    "team": "qa",
+    "risk": "low",
+    "owner": "Hugo Lind"
+   },
+   "schedule": {
+    "mode": "scheduled",
+    "amount": "5wd"
+   }
+  },
+  "kickoff": {
+   "type": "milestone-gate",
+   "title": "Kickoff",
+   "fields": {
+    "team": "platform",
+    "risk": "high",
+    "owner": "PMO"
+   },
+   "schedule": {
+    "mode": "fixed-point",
+    "at": "2026-11-02"
+   }
+  },
+  "api-freeze": {
+   "type": "milestone-gate",
+   "title": "API freeze",
+   "fields": {
+    "team": "qa",
+    "risk": "high",
+    "owner": "PMO"
+   },
+   "schedule": {
+    "mode": "scheduled-point"
+   },
+   "deadline": "2027-01-08"
+  },
+  "code-freeze": {
+   "type": "milestone-gate",
+   "title": "Code freeze",
+   "fields": {
+    "team": "qa",
+    "risk": "high",
+    "owner": "PMO"
+   },
+   "schedule": {
+    "mode": "scheduled-point"
+   },
+   "deadline": "2027-02-12"
+  },
+  "go-live": {
+   "type": "milestone-gate",
+   "title": "Go-live",
+   "fields": {
+    "team": "qa",
+    "risk": "high",
+    "owner": "PMO"
+   },
+   "schedule": {
+    "mode": "scheduled-point"
+   },
+   "deadline": "2027-03-19"
+  },
+  "steerco": {
+   "type": "milestone-gate",
+   "title": "Steering committee",
+   "fields": {
+    "team": "platform",
+    "risk": "high",
+    "owner": "PMO"
+   },
+   "schedule": {
+    "mode": "fixed-point",
+    "at": "2027-01-20"
+   }
+  }
+ },
+ "relations": [
+  {
+   "id": "kickoff--plat-env",
+   "type": "dependency",
+   "from": {
+    "object": "kickoff",
+    "endpoint": "at"
+   },
+   "to": {
+    "object": "plat-env",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-env--plat-ci",
+   "type": "dependency",
+   "from": {
+    "object": "plat-env",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "plat-ci",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-env--plat-secrets",
+   "type": "dependency",
+   "from": {
+    "object": "plat-env",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "plat-secrets",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-ci--plat-obs",
+   "type": "dependency",
+   "from": {
+    "object": "plat-ci",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "plat-obs",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-env--plat-cdn",
+   "type": "dependency",
+   "from": {
+    "object": "plat-env",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "plat-cdn",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-secrets--plat-db",
+   "type": "dependency",
+   "from": {
+    "object": "plat-secrets",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "plat-db",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-db--plat-queue",
+   "type": "dependency",
+   "from": {
+    "object": "plat-db",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "plat-queue",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-ci--plat-flags",
+   "type": "dependency",
+   "from": {
+    "object": "plat-ci",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "plat-flags",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-db--plat-dr",
+   "type": "dependency",
+   "from": {
+    "object": "plat-db",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "plat-dr",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-obs--plat-cost",
+   "type": "dependency",
+   "from": {
+    "object": "plat-obs",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "plat-cost",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-obs--plat-perf",
+   "type": "dependency",
+   "from": {
+    "object": "plat-obs",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "plat-perf",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-queue--plat-perf",
+   "type": "dependency",
+   "from": {
+    "object": "plat-queue",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "plat-perf",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-dr--plat-prod",
+   "type": "dependency",
+   "from": {
+    "object": "plat-dr",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "plat-prod",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-perf--plat-prod",
+   "type": "dependency",
+   "from": {
+    "object": "plat-perf",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "plat-prod",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-prod--plat-runbook",
+   "type": "dependency",
+   "from": {
+    "object": "plat-prod",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "plat-runbook",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "go-live--plat-hyper",
+   "type": "dependency",
+   "from": {
+    "object": "go-live",
+    "endpoint": "at"
+   },
+   "to": {
+    "object": "plat-hyper",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "kickoff--be-api-spec",
+   "type": "dependency",
+   "from": {
+    "object": "kickoff",
+    "endpoint": "at"
+   },
+   "to": {
+    "object": "be-api-spec",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-api-spec--be-auth",
+   "type": "dependency",
+   "from": {
+    "object": "be-api-spec",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "be-auth",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-secrets--be-auth",
+   "type": "dependency",
+   "from": {
+    "object": "plat-secrets",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "be-auth",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-api-spec--be-cart",
+   "type": "dependency",
+   "from": {
+    "object": "be-api-spec",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "be-cart",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-cart--be-pricing",
+   "type": "dependency",
+   "from": {
+    "object": "be-cart",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "be-pricing",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-auth--be-pay",
+   "type": "dependency",
+   "from": {
+    "object": "be-auth",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "be-pay",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-pricing--be-tax",
+   "type": "dependency",
+   "from": {
+    "object": "be-pricing",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "be-tax",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-cart--be-inv",
+   "type": "dependency",
+   "from": {
+    "object": "be-cart",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "be-inv",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-queue--be-inv",
+   "type": "dependency",
+   "from": {
+    "object": "plat-queue",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "be-inv",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-inv--be-notif",
+   "type": "dependency",
+   "from": {
+    "object": "be-inv",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "be-notif",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-pay--be-refund",
+   "type": "dependency",
+   "from": {
+    "object": "be-pay",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "be-refund",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-pay--be-fraud",
+   "type": "dependency",
+   "from": {
+    "object": "be-pay",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "be-fraud",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-db--be-migr",
+   "type": "dependency",
+   "from": {
+    "object": "plat-db",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "be-migr",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "api-freeze--be-api-freeze",
+   "type": "dependency",
+   "from": {
+    "object": "api-freeze",
+    "endpoint": "at"
+   },
+   "to": {
+    "object": "be-api-freeze",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "go-live--be-hyper",
+   "type": "dependency",
+   "from": {
+    "object": "go-live",
+    "endpoint": "at"
+   },
+   "to": {
+    "object": "be-hyper",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-tax--be-docs",
+   "type": "dependency",
+   "from": {
+    "object": "be-tax",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "be-docs",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-refund--be-docs",
+   "type": "dependency",
+   "from": {
+    "object": "be-refund",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "be-docs",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "kickoff--mob-design",
+   "type": "dependency",
+   "from": {
+    "object": "kickoff",
+    "endpoint": "at"
+   },
+   "to": {
+    "object": "mob-design",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-design--mob-kit",
+   "type": "dependency",
+   "from": {
+    "object": "mob-design",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "mob-kit",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-kit--mob-cart-ui",
+   "type": "dependency",
+   "from": {
+    "object": "mob-kit",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "mob-cart-ui",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "api-freeze--mob-cart-ui",
+   "type": "dependency",
+   "from": {
+    "object": "api-freeze",
+    "endpoint": "at"
+   },
+   "to": {
+    "object": "mob-cart-ui",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-kit--mob-pay-ui",
+   "type": "dependency",
+   "from": {
+    "object": "mob-kit",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "mob-pay-ui",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-pay--mob-pay-ui",
+   "type": "dependency",
+   "from": {
+    "object": "be-pay",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "mob-pay-ui",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-kit--mob-addr",
+   "type": "dependency",
+   "from": {
+    "object": "mob-kit",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "mob-addr",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-notif--mob-push",
+   "type": "dependency",
+   "from": {
+    "object": "be-notif",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "mob-push",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-cart-ui--mob-offline",
+   "type": "dependency",
+   "from": {
+    "object": "mob-cart-ui",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "mob-offline",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-pay-ui--mob-a11y",
+   "type": "dependency",
+   "from": {
+    "object": "mob-pay-ui",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "mob-a11y",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-addr--mob-a11y",
+   "type": "dependency",
+   "from": {
+    "object": "mob-addr",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "mob-a11y",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-cart-ui--mob-analytics",
+   "type": "dependency",
+   "from": {
+    "object": "mob-cart-ui",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "mob-analytics",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "code-freeze--mob-ios",
+   "type": "dependency",
+   "from": {
+    "object": "code-freeze",
+    "endpoint": "at"
+   },
+   "to": {
+    "object": "mob-ios",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "code-freeze--mob-android",
+   "type": "dependency",
+   "from": {
+    "object": "code-freeze",
+    "endpoint": "at"
+   },
+   "to": {
+    "object": "mob-android",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-ios--mob-store",
+   "type": "dependency",
+   "from": {
+    "object": "mob-ios",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "mob-store",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-android--mob-store",
+   "type": "dependency",
+   "from": {
+    "object": "mob-android",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "mob-store",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-store--mob-beta",
+   "type": "dependency",
+   "from": {
+    "object": "mob-store",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "mob-beta",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "go-live--mob-hyper",
+   "type": "dependency",
+   "from": {
+    "object": "go-live",
+    "endpoint": "at"
+   },
+   "to": {
+    "object": "mob-hyper",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "kickoff--qa-plan",
+   "type": "dependency",
+   "from": {
+    "object": "kickoff",
+    "endpoint": "at"
+   },
+   "to": {
+    "object": "qa-plan",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "qa-plan--qa-auto",
+   "type": "dependency",
+   "from": {
+    "object": "qa-plan",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "qa-auto",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-ci--qa-auto",
+   "type": "dependency",
+   "from": {
+    "object": "plat-ci",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "qa-auto",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "qa-auto--qa-contract",
+   "type": "dependency",
+   "from": {
+    "object": "qa-auto",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "qa-contract",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-api-spec--qa-contract",
+   "type": "dependency",
+   "from": {
+    "object": "be-api-spec",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "qa-contract",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-pay--qa-pay",
+   "type": "dependency",
+   "from": {
+    "object": "be-pay",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "qa-pay",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "qa-auto--qa-pay",
+   "type": "dependency",
+   "from": {
+    "object": "qa-auto",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "qa-pay",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-cart-ui--qa-e2e",
+   "type": "dependency",
+   "from": {
+    "object": "mob-cart-ui",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "qa-e2e",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "qa-auto--qa-e2e",
+   "type": "dependency",
+   "from": {
+    "object": "qa-auto",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "qa-e2e",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-perf--qa-perf",
+   "type": "dependency",
+   "from": {
+    "object": "plat-perf",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "qa-perf",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-auth--qa-sec",
+   "type": "dependency",
+   "from": {
+    "object": "be-auth",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "qa-sec",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-pay--qa-sec",
+   "type": "dependency",
+   "from": {
+    "object": "be-pay",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "qa-sec",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-a11y--qa-a11y",
+   "type": "dependency",
+   "from": {
+    "object": "mob-a11y",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "qa-a11y",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "code-freeze--qa-regress",
+   "type": "dependency",
+   "from": {
+    "object": "code-freeze",
+    "endpoint": "at"
+   },
+   "to": {
+    "object": "qa-regress",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "qa-regress--qa-uat",
+   "type": "dependency",
+   "from": {
+    "object": "qa-regress",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "qa-uat",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "qa-uat--qa-signoff",
+   "type": "dependency",
+   "from": {
+    "object": "qa-uat",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "qa-signoff",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "qa-perf--qa-signoff",
+   "type": "dependency",
+   "from": {
+    "object": "qa-perf",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "qa-signoff",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "qa-sec--qa-signoff",
+   "type": "dependency",
+   "from": {
+    "object": "qa-sec",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "qa-signoff",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "go-live--qa-hyper",
+   "type": "dependency",
+   "from": {
+    "object": "go-live",
+    "endpoint": "at"
+   },
+   "to": {
+    "object": "qa-hyper",
+    "endpoint": "start"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-cart--api-freeze",
+   "type": "dependency",
+   "from": {
+    "object": "be-cart",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "api-freeze",
+    "endpoint": "at"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-auth--api-freeze",
+   "type": "dependency",
+   "from": {
+    "object": "be-auth",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "api-freeze",
+    "endpoint": "at"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-offline--code-freeze",
+   "type": "dependency",
+   "from": {
+    "object": "mob-offline",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "code-freeze",
+    "endpoint": "at"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-a11y--code-freeze",
+   "type": "dependency",
+   "from": {
+    "object": "mob-a11y",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "code-freeze",
+    "endpoint": "at"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-analytics--code-freeze",
+   "type": "dependency",
+   "from": {
+    "object": "mob-analytics",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "code-freeze",
+    "endpoint": "at"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-push--code-freeze",
+   "type": "dependency",
+   "from": {
+    "object": "mob-push",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "code-freeze",
+    "endpoint": "at"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-tax--code-freeze",
+   "type": "dependency",
+   "from": {
+    "object": "be-tax",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "code-freeze",
+    "endpoint": "at"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-refund--code-freeze",
+   "type": "dependency",
+   "from": {
+    "object": "be-refund",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "code-freeze",
+    "endpoint": "at"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-fraud--code-freeze",
+   "type": "dependency",
+   "from": {
+    "object": "be-fraud",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "code-freeze",
+    "endpoint": "at"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-inv--code-freeze",
+   "type": "dependency",
+   "from": {
+    "object": "be-inv",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "code-freeze",
+    "endpoint": "at"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "qa-signoff--go-live",
+   "type": "dependency",
+   "from": {
+    "object": "qa-signoff",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "go-live",
+    "endpoint": "at"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "mob-beta--go-live",
+   "type": "dependency",
+   "from": {
+    "object": "mob-beta",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "go-live",
+    "endpoint": "at"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "plat-runbook--go-live",
+   "type": "dependency",
+   "from": {
+    "object": "plat-runbook",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "go-live",
+    "endpoint": "at"
+   },
+   "lag": "0d"
+  },
+  {
+   "id": "be-migr--go-live",
+   "type": "dependency",
+   "from": {
+    "object": "be-migr",
+    "endpoint": "end"
+   },
+   "to": {
+    "object": "go-live",
+    "endpoint": "at"
+   },
+   "lag": "0d"
+  }
+ ],
+ "fieldRoles": {
+  "responsible": "team"
+ }
+}

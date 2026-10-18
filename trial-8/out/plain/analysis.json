@@ -1,0 +1,909 @@
+{
+ "pairs": [
+  {
+   "design": "executive-light",
+   "pair": "w1->w2",
+   "unchangedObjects": 46,
+   "unchangedRelations": 50,
+   "primsOfUnchanged": 208,
+   "raw": 7,
+   "removed": 7,
+   "row-normalised": 2,
+   "rn:member-label": 1,
+   "rn:rel": 1,
+   "added": 5,
+   "labelSideFlips": [
+    "qa-regress"
+   ],
+   "canvas": [
+    2696.0,
+    2696.0
+   ],
+   "warnDelta": {
+    "I_LAYOUT_RELATION_RESOLUTION_SUMMARY": 2,
+    "W_SCENE_DECORATION_CONTRAST": 1,
+    "W_SCENE_RELATION_THROUGH_MARK": 2,
+    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": 5,
+    "W_LAYOUT_LABEL_SUPPRESSED": 5,
+    "I_LAYOUT_RELATION_RESOLUTION": 2
+   },
+   "examples": {
+    "removed": [
+     "member-label:review-lane:[\"generated\",\"backend\",\"be-inv\"]:be-inv",
+     "member-label:review-lane:[\"generated\",\"mobile\",\"mob-offline\"]:mob-offline",
+     "member-label:review-lane:[\"generated\",\"platform\",\"plat-ci\"]:plat-ci",
+     "member-label:review-lane:[\"generated\",\"platform\",\"plat-secrets\"]:plat-secrets",
+     "member-label:review-lane:[\"generated\",\"platform\",\"steerco\"]:steerco",
+     "member-label:review-lane:[\"generated\",\"qa\",\"qa-e2e\"]:qa-e2e",
+     "row-band:review-lane:[\"generated\",\"platform\",\"plat-queue\"]"
+    ],
+    "rn:member-label": [
+     "qa-regress"
+    ],
+    "rn:rel": [
+     "qa-sec--qa-signoff"
+    ],
+    "added": [
+     "member-label:review-lane:[\"generated\",\"backend\",\"be-pay\"]:be-pay",
+     "member-label:review-lane:[\"generated\",\"backend\",\"be-pricing\"]:be-pricing",
+     "member-label:review-lane:[\"generated\",\"qa\",\"code-freeze\"]:code-freeze",
+     "member-label:review-lane:[\"generated\",\"qa\",\"qa-uat\"]:qa-uat",
+     "row-band:review-lane:[\"generated\",\"platform\",\"plat-dr\"]"
+    ]
+   }
+  },
+  {
+   "design": "executive-light",
+   "pair": "w2->w3",
+   "unchangedObjects": 41,
+   "unchangedRelations": 31,
+   "primsOfUnchanged": 173,
+   "raw": 152,
+   "removed": 16,
+   "id-renumbered": 26,
+   "row-normalised": 3,
+   "rn:rel": 3,
+   "added": 13,
+   "labelSideFlips": [],
+   "canvas": [
+    2696.0,
+    2736.0
+   ],
+   "warnDelta": {
+    "W_SCENE_MARK_CONTRAST": 5
+   },
+   "examples": {
+    "removed": [
+     "member-label:review-lane:[\"generated\",\"backend\",\"be-fraud\"]:be-fraud",
+     "member-label:review-lane:[\"generated\",\"backend\",\"be-refund\"]:be-refund",
+     "member-label:review-lane:[\"generated\",\"backend\",\"be-tax\"]:be-tax",
+     "row-band:review-lane:[\"generated\",\"backend\",\"be-docs\"]",
+     "row-band:review-lane:[\"generated\",\"backend\",\"be-fraud\"]",
+     "row-band:review-lane:[\"generated\",\"backend\",\"be-tax\"]",
+     "row-band:review-lane:[\"generated\",\"mobile\",\"mob-design\"]",
+     "row-band:review-lane:[\"generated\",\"platform\",\"plat-prod\"]",
+     "row-band:review-lane:[\"generated\",\"platform\",\"steerco\"]",
+     "row-band:review-lane:[\"generated\",\"qa\",\"qa-a11y\"]",
+     "row-band:review-lane:[\"generated\",\"qa\",\"qa-e2e\"]",
+     "row-band:review-lane:[\"generated\",\"qa\",\"qa-hyper\"]"
+    ],
+    "rn:rel": [
+     "go-live--mob-hyper",
+     "kickoff--mob-design",
+     "kickoff--qa-plan"
+    ],
+    "added": [
+     "member-label:review-lane:[\"generated\",\"mobile\",\"mob-design\"]:mob-design",
+     "member-label:review-lane:[\"generated\",\"platform\",\"plat-cdn\"]:plat-cdn",
+     "row-band:review-lane:[\"generated\",\"backend\",\"be-hyper\"]",
+     "row-band:review-lane:[\"generated\",\"backend\",\"be-inv\"]",
+     "row-band:review-lane:[\"generated\",\"backend\",\"be-notif\"]",
+     "row-band:review-lane:[\"generated\",\"backend\",\"be-refund\"]",
+     "row-band:review-lane:[\"generated\",\"platform\",\"plat-hyper\"]",
+     "row-band:review-lane:[\"generated\",\"platform\",\"plat-perf\"]",
+     "row-band:review-lane:[\"generated\",\"platform\",\"plat-runbook\"]",
+     "row-band:review-lane:[\"generated\",\"qa\",\"go-live\"]",
+     "row-band:review-lane:[\"generated\",\"qa\",\"qa-pay\"]",
+     "row-band:review-lane:[\"generated\",\"qa\",\"qa-perf\"]"
+    ]
+   }
+  },
+  {
+   "design": "executive-light",
+   "pair": "w3->w4",
+   "unchangedObjects": 47,
+   "unchangedRelations": 58,
+   "primsOfUnchanged": 234,
+   "raw": 18,
+   "removed": 7,
+   "row-normalised": 13,
+   "rn:rel": 13,
+   "id-renumbered": 22,
+   "added": 12,
+   "labelSideFlips": [],
+   "canvas": [
+    2736.0,
+    2736.0
+   ],
+   "warnDelta": {
+    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": -5,
+    "W_LAYOUT_LABEL_SUPPRESSED": -5
+   },
+   "examples": {
+    "removed": [
+     "member-label:review-lane:[\"generated\",\"backend\",\"be-docs\"]:be-docs",
+     "member-label:review-lane:[\"generated\",\"backend\",\"be-notif\"]:be-notif",
+     "member-label:review-lane:[\"generated\",\"mobile\",\"mob-push\"]:mob-push",
+     "member-label:review-lane:[\"generated\",\"platform\",\"plat-db\"]:plat-db",
+     "member-label:review-lane:[\"generated\",\"platform\",\"plat-perf\"]:plat-perf",
+     "member-label:review-lane:[\"generated\",\"platform\",\"plat-prod\"]:plat-prod",
+     "row-band:review-lane:[\"generated\",\"qa\",\"qa-pay\"]"
+    ],
+    "rn:rel": [
+     "be-fraud--code-freeze",
+     "be-inv--code-freeze",
+     "be-refund--code-freeze",
+     "be-tax--code-freeze",
+     "code-freeze--mob-android",
+     "code-freeze--mob-ios",
+     "mob-a11y--code-freeze",
+     "mob-a11y--qa-a11y",
+     "mob-deeplink--code-freeze",
+     "mob-push--code-freeze",
+     "plat-perf--qa-perf",
+     "qa-auto--qa-pay"
+    ],
+    "added": [
+     "member-label:review-lane:[\"generated\",\"backend\",\"be-api-spec\"]:be-api-spec",
+     "member-label:review-lane:[\"generated\",\"backend\",\"be-fraud\"]:be-fraud",
+     "member-label:review-lane:[\"generated\",\"backend\",\"be-inv\"]:be-inv",
+     "member-label:review-lane:[\"generated\",\"backend\",\"be-refund\"]:be-refund",
+     "member-label:review-lane:[\"generated\",\"backend\",\"be-tax\"]:be-tax",
+     "member-label:review-lane:[\"generated\",\"platform\",\"plat-ci\"]:plat-ci",
+     "member-label:review-lane:[\"generated\",\"platform\",\"plat-env\"]:plat-env",
+     "member-label:review-lane:[\"generated\",\"platform\",\"plat-runbook\"]:plat-runbook",
+     "member-label:review-lane:[\"generated\",\"platform\",\"plat-secrets\"]:plat-secrets",
+     "member-label:review-lane:[\"generated\",\"qa\",\"api-freeze\"]:api-freeze",
+     "member-label:review-lane:[\"generated\",\"qa\",\"qa-pay\"]:qa-pay",
+     "row-band:review-lane:[\"generated\",\"qa\",\"qa-sec\"]"
+    ]
+   }
+  },
+  {
+   "design": "executive-light",
+   "pair": "w4->w5",
+   "unchangedObjects": 44,
+   "unchangedRelations": 50,
+   "primsOfUnchanged": 230,
+   "removed": 2,
+   "added": 3,
+   "labelSideFlips": [],
+   "canvas": [
+    2736.0,
+    2736.0
+   ],
+   "warnDelta": {
+    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": 2,
+    "W_LAYOUT_LABEL_SUPPRESSED": 2,
+    "W_SNAPSHOT_NOT_DRAWN": 1,
+    "W_SCENE_MARK_CONTRAST": 4
+   },
+   "examples": {
+    "removed": [
+     "member-label:review-lane:[\"generated\",\"mobile\",\"mob-a11y\"]:mob-a11y",
+     "member-label:review-lane:[\"generated\",\"mobile\",\"mob-cart-ui\"]:mob-cart-ui"
+    ],
+    "added": [
+     "member-label:review-lane:[\"generated\",\"backend\",\"be-cart\"]:be-cart",
+     "member-label:review-lane:[\"generated\",\"backend\",\"be-notif\"]:be-notif",
+     "member-label:review-lane:[\"generated\",\"mobile\",\"mob-kit\"]:mob-kit"
+    ]
+   }
+  },
+  {
+   "design": "target-b",
+   "pair": "w1->w2",
+   "unchangedObjects": 46,
+   "unchangedRelations": 50,
+   "primsOfUnchanged": 255,
+   "raw": 12,
+   "row-normalised": 4,
+   "rn:rel": 3,
+   "rn:row-rule": 1,
+   "labelSideFlips": [],
+   "canvas": [
+    1581.0,
+    1581.0
+   ],
+   "warnDelta": {},
+   "examples": {
+    "rn:rel": [
+     "go-live--mob-hyper",
+     "mob-push--code-freeze",
+     "qa-sec--qa-signoff"
+    ],
+    "rn:row-rule": [
+     "plat-queue"
+    ]
+   }
+  },
+  {
+   "design": "target-b",
+   "pair": "w2->w3",
+   "unchangedObjects": 41,
+   "unchangedRelations": 31,
+   "primsOfUnchanged": 220,
+   "raw": 214,
+   "id-renumbered": 26,
+   "labelSideFlips": [],
+   "canvas": [
+    1581.0,
+    1603.0
+   ],
+   "warnDelta": {
+    "I_LAYOUT_RELATION_RESOLUTION_SUMMARY": 2,
+    "I_LAYOUT_RELATION_RESOLUTION": 2,
+    "W_SCENE_MARK_CONTRAST": 1,
+    "W_SCENE_RELATION_THROUGH_MARK": 2
+   },
+   "examples": {}
+  },
+  {
+   "design": "target-b",
+   "pair": "w3->w4",
+   "unchangedObjects": 47,
+   "unchangedRelations": 58,
+   "primsOfUnchanged": 290,
+   "raw": 11,
+   "row-normalised": 3,
+   "rn:rel": 2,
+   "id-renumbered": 22,
+   "rn:row-rule": 1,
+   "labelSideFlips": [],
+   "canvas": [
+    1603.0,
+    1603.0
+   ],
+   "warnDelta": {},
+   "examples": {
+    "rn:rel": [
+     "qa-auto--qa-pay",
+     "qa-sec--qa-signoff"
+    ],
+    "rn:row-rule": [
+     "qa-sec"
+    ]
+   }
+  },
+  {
+   "design": "target-b",
+   "pair": "w4->w5",
+   "unchangedObjects": 44,
+   "unchangedRelations": 50,
+   "primsOfUnchanged": 280,
+   "raw": 1,
+   "row-normalised": 1,
+   "rn:rel": 1,
+   "labelSideFlips": [],
+   "canvas": [
+    1603.0,
+    1603.0
+   ],
+   "warnDelta": {},
+   "examples": {
+    "rn:rel": [
+     "be-auth--be-ratelimit"
+    ]
+   }
+  },
+  {
+   "design": "marquee",
+   "pair": "w1->w2",
+   "unchangedObjects": 46,
+   "unchangedRelations": 50,
+   "primsOfUnchanged": 255,
+   "raw": 15,
+   "row-normalised": 7,
+   "rn:rel": 6,
+   "rn:row-rule": 1,
+   "labelSideFlips": [],
+   "canvas": [
+    1467.0,
+    1467.0
+   ],
+   "warnDelta": {
+    "I_LAYOUT_RELATION_RESOLUTION_SUMMARY": 1,
+    "I_LAYOUT_RELATION_RESOLUTION": 1,
+    "W_SCENE_RELATION_THROUGH_MARK": 1,
+    "W_SCENE_ENCODING_CONTRAST": -1
+   },
+   "examples": {
+    "rn:rel": [
+     "api-freeze--mob-cart-ui",
+     "code-freeze--mob-android",
+     "go-live--mob-hyper",
+     "mob-push--code-freeze",
+     "plat-env--plat-cdn",
+     "qa-sec--qa-signoff"
+    ],
+    "rn:row-rule": [
+     "plat-queue"
+    ]
+   }
+  },
+  {
+   "design": "marquee",
+   "pair": "w2->w3",
+   "unchangedObjects": 41,
+   "unchangedRelations": 31,
+   "primsOfUnchanged": 220,
+   "raw": 214,
+   "id-renumbered": 26,
+   "labelSideFlips": [],
+   "canvas": [
+    1467.0,
+    1486.0
+   ],
+   "warnDelta": {
+    "I_LAYOUT_RELATION_RESOLUTION_SUMMARY": 2,
+    "I_LAYOUT_RELATION_RESOLUTION": 2,
+    "W_SCENE_MARK_CONTRAST": 1,
+    "W_SCENE_RELATION_THROUGH_MARK": 2,
+    "W_SCENE_ENCODING_CONTRAST": 2
+   },
+   "examples": {}
+  },
+  {
+   "design": "marquee",
+   "pair": "w3->w4",
+   "unchangedObjects": 47,
+   "unchangedRelations": 58,
+   "primsOfUnchanged": 290,
+   "raw": 12,
+   "row-normalised": 4,
+   "rn:rel": 3,
+   "id-renumbered": 22,
+   "rn:row-rule": 1,
+   "labelSideFlips": [],
+   "canvas": [
+    1486.0,
+    1486.0
+   ],
+   "warnDelta": {
+    "W_SCENE_ENCODING_CONTRAST": -3
+   },
+   "examples": {
+    "rn:rel": [
+     "plat-prod--plat-runbook",
+     "qa-auto--qa-pay",
+     "qa-sec--qa-signoff"
+    ],
+    "rn:row-rule": [
+     "qa-sec"
+    ]
+   }
+  },
+  {
+   "design": "marquee",
+   "pair": "w4->w5",
+   "unchangedObjects": 44,
+   "unchangedRelations": 50,
+   "primsOfUnchanged": 281,
+   "labelSideFlips": [],
+   "canvas": [
+    1486.0,
+    1486.0
+   ],
+   "warnDelta": {},
+   "examples": {}
+  }
+ ],
+ "weeks": {
+  "executive-light-w1": {
+   "canvas": {
+    "inlineSize": 1600.0,
+    "blockSize": 2696.0
+   },
+   "textOverlaps": 0,
+   "overlapExamples": [],
+   "clippedText": [],
+   "legend": [
+    "Actual",
+    "Progress",
+    "low",
+    "medium",
+    "high"
+   ],
+   "warnings": {
+    "W_LAYOUT_LABEL_SUPPRESSED": 25,
+    "W_SCENE_MARK_CONTRAST": 3,
+    "W_SCENE_ENCODING_CONTRAST": 4,
+    "I_LAYOUT_RELATION_ROUTING": 2,
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED": 1,
+    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": 25
+   },
+   "seconds": 20.59,
+   "domain": [
+    "2026-10-23",
+    "2027-02-12"
+   ]
+  },
+  "executive-light-w2": {
+   "canvas": {
+    "inlineSize": 1600.0,
+    "blockSize": 2696.0
+   },
+   "textOverlaps": 0,
+   "overlapExamples": [],
+   "clippedText": [],
+   "legend": [
+    "Actual",
+    "Progress",
+    "low",
+    "medium",
+    "high"
+   ],
+   "warnings": {
+    "W_LAYOUT_LABEL_SUPPRESSED": 30,
+    "W_SCENE_RELATION_THROUGH_MARK": 2,
+    "W_SCENE_MARK_CONTRAST": 3,
+    "W_SCENE_DECORATION_CONTRAST": 1,
+    "W_SCENE_ENCODING_CONTRAST": 4,
+    "I_LAYOUT_RELATION_ROUTING": 2,
+    "I_LAYOUT_RELATION_RESOLUTION": 2,
+    "I_LAYOUT_RELATION_RESOLUTION_SUMMARY": 2,
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED": 1,
+    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": 30
+   },
+   "seconds": 30.89,
+   "domain": [
+    "2026-10-23",
+    "2027-02-12"
+   ]
+  },
+  "executive-light-w3": {
+   "canvas": {
+    "inlineSize": 1600.0,
+    "blockSize": 2736.0
+   },
+   "textOverlaps": 0,
+   "overlapExamples": [],
+   "clippedText": [],
+   "legend": [
+    "Actual",
+    "Progress",
+    "low",
+    "medium",
+    "high"
+   ],
+   "warnings": {
+    "W_LAYOUT_LABEL_SUPPRESSED": 30,
+    "W_SCENE_RELATION_THROUGH_MARK": 2,
+    "W_SCENE_MARK_CONTRAST": 8,
+    "W_SCENE_DECORATION_CONTRAST": 1,
+    "W_SCENE_ENCODING_CONTRAST": 4,
+    "I_LAYOUT_RELATION_ROUTING": 2,
+    "I_LAYOUT_RELATION_RESOLUTION": 2,
+    "I_LAYOUT_RELATION_RESOLUTION_SUMMARY": 2,
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED": 1,
+    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": 30
+   },
+   "seconds": 35.26,
+   "domain": [
+    "2026-10-23",
+    "2027-02-12"
+   ]
+  },
+  "executive-light-w4": {
+   "canvas": {
+    "inlineSize": 1600.0,
+    "blockSize": 2736.0
+   },
+   "textOverlaps": 0,
+   "overlapExamples": [],
+   "clippedText": [],
+   "legend": [
+    "Actual",
+    "Progress",
+    "low",
+    "medium",
+    "high"
+   ],
+   "warnings": {
+    "W_LAYOUT_LABEL_SUPPRESSED": 25,
+    "W_SCENE_RELATION_THROUGH_MARK": 2,
+    "W_SCENE_MARK_CONTRAST": 8,
+    "W_SCENE_DECORATION_CONTRAST": 1,
+    "W_SCENE_ENCODING_CONTRAST": 4,
+    "I_LAYOUT_RELATION_ROUTING": 2,
+    "I_LAYOUT_RELATION_RESOLUTION": 2,
+    "I_LAYOUT_RELATION_RESOLUTION_SUMMARY": 2,
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED": 1,
+    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": 25
+   },
+   "seconds": 32.75,
+   "domain": [
+    "2026-10-23",
+    "2027-02-12"
+   ]
+  },
+  "executive-light-w5": {
+   "canvas": {
+    "inlineSize": 1600.0,
+    "blockSize": 2736.0
+   },
+   "textOverlaps": 0,
+   "overlapExamples": [],
+   "clippedText": [],
+   "legend": [
+    "Actual",
+    "Progress",
+    "low",
+    "medium",
+    "high"
+   ],
+   "warnings": {
+    "W_LAYOUT_LABEL_SUPPRESSED": 27,
+    "W_SCENE_RELATION_THROUGH_MARK": 2,
+    "W_SCENE_MARK_CONTRAST": 12,
+    "W_SCENE_DECORATION_CONTRAST": 1,
+    "W_SCENE_ENCODING_CONTRAST": 4,
+    "I_LAYOUT_RELATION_ROUTING": 2,
+    "I_LAYOUT_RELATION_RESOLUTION": 2,
+    "I_LAYOUT_RELATION_RESOLUTION_SUMMARY": 2,
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED": 1,
+    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": 27,
+    "W_SNAPSHOT_NOT_DRAWN": 1
+   },
+   "seconds": 39.31,
+   "domain": [
+    "2026-10-23",
+    "2027-02-12"
+   ]
+  },
+  "target-b-w1": {
+   "canvas": {
+    "inlineSize": 1600.0,
+    "blockSize": 1581.0
+   },
+   "textOverlaps": 0,
+   "overlapExamples": [],
+   "clippedText": [],
+   "legend": [
+    "actual",
+    "Progress",
+    "gate",
+    "non-working day",
+    "calendar exception",
+    "dependency",
+    "low",
+    "medium",
+    "high"
+   ],
+   "warnings": {
+    "W_SCENE_MARK_CONTRAST": 1,
+    "W_SCENE_STATE_TEXT_CONTRAST": 1,
+    "W_SCENE_ENCODING_CONTRAST": 6,
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED": 1,
+    "I_VIEW_FIELD_ROLE_UNBOUND": 1
+   },
+   "seconds": 28.16,
+   "domain": [
+    "2026-10-23",
+    "2027-02-12"
+   ]
+  },
+  "target-b-w2": {
+   "canvas": {
+    "inlineSize": 1600.0,
+    "blockSize": 1581.0
+   },
+   "textOverlaps": 0,
+   "overlapExamples": [],
+   "clippedText": [],
+   "legend": [
+    "baseline",
+    "actual",
+    "Progress",
+    "gate",
+    "non-working day",
+    "calendar exception",
+    "dependency",
+    "low",
+    "medium",
+    "high"
+   ],
+   "warnings": {
+    "W_SCENE_MARK_CONTRAST": 1,
+    "W_SCENE_STATE_TEXT_CONTRAST": 1,
+    "W_SCENE_ENCODING_CONTRAST": 6,
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED": 1,
+    "I_VIEW_FIELD_ROLE_UNBOUND": 1
+   },
+   "seconds": 31.63,
+   "domain": [
+    "2026-10-23",
+    "2027-02-12"
+   ]
+  },
+  "target-b-w3": {
+   "canvas": {
+    "inlineSize": 1600.0,
+    "blockSize": 1603.0
+   },
+   "textOverlaps": 0,
+   "overlapExamples": [],
+   "clippedText": [],
+   "legend": [
+    "baseline",
+    "actual",
+    "Progress",
+    "gate",
+    "non-working day",
+    "calendar exception",
+    "dependency",
+    "low",
+    "medium",
+    "high"
+   ],
+   "warnings": {
+    "W_SCENE_RELATION_THROUGH_MARK": 2,
+    "W_SCENE_MARK_CONTRAST": 2,
+    "W_SCENE_STATE_TEXT_CONTRAST": 1,
+    "W_SCENE_ENCODING_CONTRAST": 6,
+    "I_LAYOUT_RELATION_RESOLUTION": 2,
+    "I_LAYOUT_RELATION_RESOLUTION_SUMMARY": 2,
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED": 1,
+    "I_VIEW_FIELD_ROLE_UNBOUND": 1
+   },
+   "seconds": 38.06,
+   "domain": [
+    "2026-10-23",
+    "2027-02-12"
+   ]
+  },
+  "target-b-w4": {
+   "canvas": {
+    "inlineSize": 1600.0,
+    "blockSize": 1603.0
+   },
+   "textOverlaps": 0,
+   "overlapExamples": [],
+   "clippedText": [],
+   "legend": [
+    "baseline",
+    "actual",
+    "Progress",
+    "gate",
+    "non-working day",
+    "calendar exception",
+    "dependency",
+    "low",
+    "medium",
+    "high"
+   ],
+   "warnings": {
+    "W_SCENE_RELATION_THROUGH_MARK": 2,
+    "W_SCENE_MARK_CONTRAST": 2,
+    "W_SCENE_STATE_TEXT_CONTRAST": 1,
+    "W_SCENE_ENCODING_CONTRAST": 6,
+    "I_LAYOUT_RELATION_RESOLUTION": 2,
+    "I_LAYOUT_RELATION_RESOLUTION_SUMMARY": 2,
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED": 1,
+    "I_VIEW_FIELD_ROLE_UNBOUND": 1
+   },
+   "seconds": 38.54,
+   "domain": [
+    "2026-10-23",
+    "2027-02-12"
+   ]
+  },
+  "target-b-w5": {
+   "canvas": {
+    "inlineSize": 1600.0,
+    "blockSize": 1603.0
+   },
+   "textOverlaps": 0,
+   "overlapExamples": [],
+   "clippedText": [],
+   "legend": [
+    "baseline",
+    "actual",
+    "Progress",
+    "gate",
+    "non-working day",
+    "calendar exception",
+    "dependency",
+    "low",
+    "medium",
+    "high"
+   ],
+   "warnings": {
+    "W_SCENE_RELATION_THROUGH_MARK": 2,
+    "W_SCENE_MARK_CONTRAST": 2,
+    "W_SCENE_STATE_TEXT_CONTRAST": 1,
+    "W_SCENE_ENCODING_CONTRAST": 6,
+    "I_LAYOUT_RELATION_RESOLUTION": 2,
+    "I_LAYOUT_RELATION_RESOLUTION_SUMMARY": 2,
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED": 1,
+    "I_VIEW_FIELD_ROLE_UNBOUND": 1
+   },
+   "seconds": 42.1,
+   "domain": [
+    "2026-10-23",
+    "2027-02-12"
+   ]
+  },
+  "marquee-w1": {
+   "canvas": {
+    "inlineSize": 1600.0,
+    "blockSize": 1467.0
+   },
+   "textOverlaps": 0,
+   "overlapExamples": [],
+   "clippedText": [],
+   "legend": [
+    "ACTUAL",
+    "PROGRESS",
+    "GATE",
+    "HOLIDAY",
+    "DEPENDENCY",
+    "LOW",
+    "MEDIUM",
+    "HIGH"
+   ],
+   "warnings": {
+    "W_SCENE_MARK_CONTRAST": 1,
+    "W_SCENE_ENCODING_CONTRAST": 8,
+    "I_PRESET_VISUAL_PROFILE_FALLBACK": 1,
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED": 1,
+    "I_VIEW_FIELD_ROLE_UNBOUND": 1
+   },
+   "seconds": 34.63,
+   "domain": [
+    "2026-10-23",
+    "2027-02-12"
+   ]
+  },
+  "marquee-w2": {
+   "canvas": {
+    "inlineSize": 1600.0,
+    "blockSize": 1467.0
+   },
+   "textOverlaps": 0,
+   "overlapExamples": [],
+   "clippedText": [],
+   "legend": [
+    "BASELINE",
+    "ACTUAL",
+    "PROGRESS",
+    "GATE",
+    "HOLIDAY",
+    "DEPENDENCY",
+    "LOW",
+    "MEDIUM",
+    "HIGH"
+   ],
+   "warnings": {
+    "W_SCENE_RELATION_THROUGH_MARK": 1,
+    "W_SCENE_MARK_CONTRAST": 1,
+    "W_SCENE_ENCODING_CONTRAST": 7,
+    "I_PRESET_VISUAL_PROFILE_FALLBACK": 1,
+    "I_LAYOUT_RELATION_RESOLUTION": 1,
+    "I_LAYOUT_RELATION_RESOLUTION_SUMMARY": 1,
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED": 1,
+    "I_VIEW_FIELD_ROLE_UNBOUND": 1
+   },
+   "seconds": 38.6,
+   "domain": [
+    "2026-10-23",
+    "2027-02-12"
+   ]
+  },
+  "marquee-w3": {
+   "canvas": {
+    "inlineSize": 1600.0,
+    "blockSize": 1486.0
+   },
+   "textOverlaps": 0,
+   "overlapExamples": [],
+   "clippedText": [],
+   "legend": [
+    "BASELINE",
+    "ACTUAL",
+    "PROGRESS",
+    "GATE",
+    "HOLIDAY",
+    "DEPENDENCY",
+    "LOW",
+    "MEDIUM",
+    "HIGH"
+   ],
+   "warnings": {
+    "W_SCENE_RELATION_THROUGH_MARK": 3,
+    "W_SCENE_MARK_CONTRAST": 2,
+    "W_SCENE_ENCODING_CONTRAST": 9,
+    "I_PRESET_VISUAL_PROFILE_FALLBACK": 1,
+    "I_LAYOUT_RELATION_RESOLUTION": 3,
+    "I_LAYOUT_RELATION_RESOLUTION_SUMMARY": 3,
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED": 1,
+    "I_VIEW_FIELD_ROLE_UNBOUND": 1
+   },
+   "seconds": 45.2,
+   "domain": [
+    "2026-10-23",
+    "2027-02-12"
+   ]
+  },
+  "marquee-w4": {
+   "canvas": {
+    "inlineSize": 1600.0,
+    "blockSize": 1486.0
+   },
+   "textOverlaps": 0,
+   "overlapExamples": [],
+   "clippedText": [],
+   "legend": [
+    "BASELINE",
+    "ACTUAL",
+    "PROGRESS",
+    "GATE",
+    "HOLIDAY",
+    "DEPENDENCY",
+    "LOW",
+    "MEDIUM",
+    "HIGH"
+   ],
+   "warnings": {
+    "W_SCENE_RELATION_THROUGH_MARK": 3,
+    "W_SCENE_MARK_CONTRAST": 2,
+    "W_SCENE_ENCODING_CONTRAST": 6,
+    "I_PRESET_VISUAL_PROFILE_FALLBACK": 1,
+    "I_LAYOUT_RELATION_RESOLUTION": 3,
+    "I_LAYOUT_RELATION_RESOLUTION_SUMMARY": 3,
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED": 1,
+    "I_VIEW_FIELD_ROLE_UNBOUND": 1
+   },
+   "seconds": 47.03,
+   "domain": [
+    "2026-10-23",
+    "2027-02-12"
+   ]
+  },
+  "marquee-w5": {
+   "canvas": {
+    "inlineSize": 1600.0,
+    "blockSize": 1486.0
+   },
+   "textOverlaps": 0,
+   "overlapExamples": [],
+   "clippedText": [],
+   "legend": [
+    "BASELINE",
+    "ACTUAL",
+    "PROGRESS",
+    "GATE",
+    "HOLIDAY",
+    "DEPENDENCY",
+    "LOW",
+    "MEDIUM",
+    "HIGH"
+   ],
+   "warnings": {
+    "W_SCENE_RELATION_THROUGH_MARK": 3,
+    "W_SCENE_MARK_CONTRAST": 2,
+    "W_SCENE_ENCODING_CONTRAST": 6,
+    "I_PRESET_VISUAL_PROFILE_FALLBACK": 1,
+    "I_LAYOUT_RELATION_RESOLUTION": 3,
+    "I_LAYOUT_RELATION_RESOLUTION_SUMMARY": 3,
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED": 1,
+    "I_VIEW_FIELD_ROLE_UNBOUND": 1
+   },
+   "seconds": 49.35,
+   "domain": [
+    "2026-10-23",
+    "2027-02-12"
+   ]
+  }
+ }
+}

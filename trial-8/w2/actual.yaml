@@ -1,0 +1,208 @@
+{
+ "version": "chrona/actual-set/v0.3",
+ "kind": "actual-set",
+ "id": "checkout-observed",
+ "body": {
+  "asOf": "2026-11-23",
+  "observations": [
+   {
+    "id": "plat-env-1",
+    "sequence": 1,
+    "projectObjectId": "plat-env",
+    "actual": {
+     "start": "2026-11-03",
+     "finish": "2026-11-10",
+     "progress": 1
+    }
+   },
+   {
+    "id": "plat-ci-1",
+    "sequence": 1,
+    "projectObjectId": "plat-ci",
+    "actual": {
+     "start": "2026-11-10",
+     "finish": "2026-11-16",
+     "progress": 1
+    }
+   },
+   {
+    "id": "plat-secrets-1",
+    "sequence": 1,
+    "projectObjectId": "plat-secrets",
+    "actual": {
+     "start": "2026-11-10",
+     "finish": "2026-11-15",
+     "progress": 1
+    }
+   },
+   {
+    "id": "plat-cdn-1",
+    "sequence": 1,
+    "projectObjectId": "plat-cdn",
+    "actual": {
+     "start": "2026-11-09",
+     "finish": "2026-11-13",
+     "progress": 1
+    }
+   },
+   {
+    "id": "plat-db-1",
+    "sequence": 1,
+    "projectObjectId": "plat-db",
+    "actual": {
+     "start": "2026-11-14",
+     "openUntil": "asOf",
+     "progress": 0.14
+    }
+   },
+   {
+    "id": "be-api-spec-1",
+    "sequence": 1,
+    "projectObjectId": "be-api-spec",
+    "actual": {
+     "start": "2026-11-03",
+     "finish": "2026-11-08",
+     "progress": 1
+    }
+   },
+   {
+    "id": "be-auth-1",
+    "sequence": 1,
+    "projectObjectId": "be-auth",
+    "actual": {
+     "start": "2026-11-14",
+     "openUntil": "asOf",
+     "progress": 0.16
+    }
+   },
+   {
+    "id": "be-cart-1",
+    "sequence": 1,
+    "projectObjectId": "be-cart",
+    "actual": {
+     "start": "2026-11-09",
+     "openUntil": "asOf",
+     "progress": 0.45
+    }
+   },
+   {
+    "id": "mob-design-1",
+    "sequence": 1,
+    "projectObjectId": "mob-design",
+    "actual": {
+     "start": "2026-11-02",
+     "finish": "2026-11-11",
+     "progress": 1
+    }
+   },
+   {
+    "id": "mob-kit-1",
+    "sequence": 1,
+    "projectObjectId": "mob-kit",
+    "actual": {
+     "start": "2026-11-11",
+     "openUntil": "asOf",
+     "progress": 0.5
+    }
+   },
+   {
+    "id": "qa-plan-1",
+    "sequence": 1,
+    "projectObjectId": "qa-plan",
+    "actual": {
+     "start": "2026-11-02",
+     "finish": "2026-11-08",
+     "progress": 1
+    }
+   },
+   {
+    "id": "kickoff-1",
+    "sequence": 1,
+    "projectObjectId": "kickoff",
+    "actual": {
+     "at": "2026-11-02"
+    }
+   },
+   {
+    "id": "plat-obs-1",
+    "sequence": 1,
+    "projectObjectId": "plat-obs",
+    "actual": {
+     "start": "2026-11-17",
+     "openUntil": "asOf",
+     "progress": 0.23
+    }
+   },
+   {
+    "id": "plat-db-2",
+    "sequence": 2,
+    "projectObjectId": "plat-db",
+    "actual": {
+     "start": "2026-11-14",
+     "openUntil": "asOf",
+     "progress": 0.62
+    }
+   },
+   {
+    "id": "plat-flags-1",
+    "sequence": 1,
+    "projectObjectId": "plat-flags",
+    "actual": {
+     "start": "2026-11-18",
+     "finish": "2026-11-22",
+     "progress": 1
+    }
+   },
+   {
+    "id": "be-auth-2",
+    "sequence": 2,
+    "projectObjectId": "be-auth",
+    "actual": {
+     "start": "2026-11-14",
+     "openUntil": "asOf",
+     "progress": 0.74
+    }
+   },
+   {
+    "id": "be-cart-2",
+    "sequence": 2,
+    "projectObjectId": "be-cart",
+    "actual": {
+     "start": "2026-11-09",
+     "openUntil": "asOf",
+     "progress": 0.9
+    }
+   },
+   {
+    "id": "mob-kit-2",
+    "sequence": 2,
+    "projectObjectId": "mob-kit",
+    "actual": {
+     "start": "2026-11-11",
+     "finish": "2026-11-20",
+     "progress": 1
+    }
+   },
+   {
+    "id": "mob-addr-1",
+    "sequence": 1,
+    "projectObjectId": "mob-addr",
+    "actual": {
+     "start": "2026-11-20",
+     "openUntil": "asOf",
+     "progress": 0.39
+    }
+   },
+   {
+    "id": "qa-auto-1",
+    "sequence": 1,
+    "projectObjectId": "qa-auto",
+    "actual": {
+     "start": "2026-11-17",
+     "openUntil": "asOf",
+     "progress": 0.54
+    }
+   }
+  ]
+ }
+}

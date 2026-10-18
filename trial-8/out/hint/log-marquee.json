@@ -1,0 +1,3082 @@
+[
+ {
+  "design": "marquee",
+  "week": 1,
+  "rc": 0,
+  "seconds": 34.2,
+  "status": "ok",
+  "warnings": [
+   {
+    "code": "W_SCENE_MARK_CONTRAST",
+    "diagnostic": "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:kickoff:kickoff:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "findingCode": "E_SCENE_MARK_CONTRAST",
+    "measuredFacts": {
+     "contrastRatio": 1.5987884764069435,
+     "floor": 3.0,
+     "groundId": "planned:kickoff:kickoff:part0",
+     "groundKind": "flat",
+     "paintChannel": "fill"
+    },
+    "message": "a mark is fainter than its 3:1 visibility floor against the ground it lies on: actual:kickoff:kickoff:part0",
+    "primitiveIds": [
+     "actual:kickoff:kickoff:part0"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"high\"},\"encodingPair\":{\"contrastRatio\":2.7666030940674284,\"fillColor\":\"#F25C5C\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#524834\",\"sampledFill\":\"#F25C5C\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "high"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.7666030940674284,
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#524834",
+     "sampledFill": "#F25C5C"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.7666030940674284,
+     "field": "risk",
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#524834",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#F25C5C",
+     "scaleId": "series",
+     "value": "high"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Token auth service' (/objects/be-auth); view:chrona-preset-design-default; risk='high' (scale series), 2.7666:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:be-auth:be-auth"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-auth",
+    "sourceTitle": "Token auth service"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.1088090596315765,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#403829\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.1088090596315765,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#403829",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.1088090596315765,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#403829",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Address and shipping form' (/objects/mob-addr); view:chrona-preset-design-default; risk='low' (scale series), 2.10881:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:mob-addr:mob-addr"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/mob-addr",
+    "sourceTitle": "Address and shipping form"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":1.8812233036105706,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#493F2F\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 1.8812233036105706,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#493F2F",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 1.8812233036105706,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#493F2F",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Design system components' (/objects/mob-kit); view:chrona-preset-design-default; risk='low' (scale series), 1.88122:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:mob-kit:mob-kit"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/mob-kit",
+    "sourceTitle": "Design system components"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.6283367927846695,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#2F291E\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.6283367927846695,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#2F291E",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.6283367927846695,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#2F291E",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'CDN edge config' (/objects/plat-cdn); view:chrona-preset-design-default; risk='low' (scale series), 2.62834:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:plat-cdn:plat-cdn"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/plat-cdn",
+    "sourceTitle": "CDN edge config"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.592992700923459,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#302A1F\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.592992700923459,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#302A1F",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.592992700923459,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#302A1F",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Provision staging environments' (/objects/plat-env); view:chrona-preset-design-default; risk='low' (scale series), 2.59299:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:plat-env:plat-env"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/plat-env",
+    "sourceTitle": "Provision staging environments"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.768228443792921,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#2B251B\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.768228443792921,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#2B251B",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.768228443792921,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#2B251B",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Feature flag service' (/objects/plat-flags); view:chrona-preset-design-default; risk='low' (scale series), 2.76823:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:plat-flags:plat-flags"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/plat-flags",
+    "sourceTitle": "Feature flag service"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.557736985202756,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#312B20\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.557736985202756,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#312B20",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.557736985202756,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#312B20",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Observability stack' (/objects/plat-obs); view:chrona-preset-design-default; risk='low' (scale series), 2.55774:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:plat-obs:plat-obs"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/plat-obs",
+    "sourceTitle": "Observability stack"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.4909739934701514,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#58151A\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.4909739934701514,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#58151A",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "calendar-exception:2027-01-01"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.4909739934701514,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#58151A",
+     "groundId": "calendar-exception:2027-01-01",
+     "groundKind": "translucent-over-canvas",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Accessibility audit' (/objects/qa-a11y); view:chrona-preset-design-default; risk='low' (scale series), 2.49097:1 vs 3:1 over calendar-exception:2027-01-01; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:qa-a11y:qa-a11y"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/qa-a11y",
+    "sourceTitle": "Accessibility audit"
+   },
+   {
+    "code": "I_PRESET_VISUAL_PROFILE_FALLBACK",
+    "message": "preset chrona-builtin-marquee prefers chrona-output/visual/v0.7-svg; selected chrona-output/visual/v0.7-png for png",
+    "preferredProfile": "chrona-output/visual/v0.7-svg",
+    "presetId": "chrona-builtin-marquee",
+    "selectedProfile": "chrona-output/visual/v0.7-png",
+    "severity": "info",
+    "targetKind": "png"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED",
+    "layoutMember": "relationRouting.unroutable",
+    "layoutValue": "relax",
+    "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing",
+    "severity": "info",
+    "surfaceId": "table-timeline",
+    "viewMember": "visibility.relations.overflow",
+    "viewValue": "suppress"
+   },
+   {
+    "code": "I_VIEW_FIELD_ROLE_UNBOUND",
+    "count": 1,
+    "fieldRole": "phase",
+    "message": "Project does not declare field role 'phase'; 1 View declarations use their fallback or are omitted",
+    "severity": "info",
+    "sourceRefs": [
+     "/body/tableColumns/1/source/fieldRole"
+    ]
+   }
+  ],
+  "diagnostics": [],
+  "stderr": ""
+ },
+ {
+  "design": "marquee",
+  "week": 2,
+  "rc": 0,
+  "seconds": 39.53,
+  "status": "ok",
+  "warnings": [
+   {
+    "code": "W_SCENE_RELATION_THROUGH_MARK",
+    "diagnostic": "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:8:plat-db--plat-dr:plat-db:plat-db:plat-dr:plat-dr\",\"planned:plat-obs:plat-obs\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "findingCode": "E_SCENE_RELATION_THROUGH_MARK",
+    "measuredFacts": {
+     "inside": 6.0,
+     "relation": "relation:8:plat-db--plat-dr"
+    },
+    "message": "a dependency line runs through a primary mark: 'Observability stack' (/objects/plat-obs); {\"primitiveIds\":[\"relation:relation:8:plat-db--plat-dr:plat-db:plat-db:plat-dr:plat-dr\",\"planned:plat-obs:plat-obs\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "primitiveIds": [
+     "relation:relation:8:plat-db--plat-dr:plat-db:plat-db:plat-dr:plat-dr",
+     "planned:plat-obs:plat-obs"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/plat-obs",
+    "sourceTitle": "Observability stack"
+   },
+   {
+    "code": "W_SCENE_MARK_CONTRAST",
+    "diagnostic": "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:kickoff:kickoff:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "findingCode": "E_SCENE_MARK_CONTRAST",
+    "measuredFacts": {
+     "contrastRatio": 1.5987884764069435,
+     "floor": 3.0,
+     "groundId": "planned:kickoff:kickoff:part0",
+     "groundKind": "flat",
+     "paintChannel": "fill"
+    },
+    "message": "a mark is fainter than its 3:1 visibility floor against the ground it lies on: actual:kickoff:kickoff:part0",
+    "primitiveIds": [
+     "actual:kickoff:kickoff:part0"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"high\"},\"encodingPair\":{\"contrastRatio\":2.7666030940674284,\"fillColor\":\"#F25C5C\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#524834\",\"sampledFill\":\"#F25C5C\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "high"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.7666030940674284,
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#524834",
+     "sampledFill": "#F25C5C"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.7666030940674284,
+     "field": "risk",
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#524834",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#F25C5C",
+     "scaleId": "series",
+     "value": "high"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Token auth service' (/objects/be-auth); view:chrona-preset-design-default; risk='high' (scale series), 2.7666:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:be-auth:be-auth"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-auth",
+    "sourceTitle": "Token auth service"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"high\"},\"encodingPair\":{\"contrastRatio\":2.8103298298827344,\"fillColor\":\"#F25C5C\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#514733\",\"sampledFill\":\"#F25C5C\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "high"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.8103298298827344,
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#514733",
+     "sampledFill": "#F25C5C"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.8103298298827344,
+     "field": "risk",
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#514733",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#F25C5C",
+     "scaleId": "series",
+     "value": "high"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Pricing engine' (/objects/be-pricing); view:chrona-preset-design-default; risk='high' (scale series), 2.81033:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:be-pricing:be-pricing"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-pricing",
+    "sourceTitle": "Pricing engine"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.1088090596315765,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#403829\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.1088090596315765,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#403829",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.1088090596315765,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#403829",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Address and shipping form' (/objects/mob-addr); view:chrona-preset-design-default; risk='low' (scale series), 2.10881:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:mob-addr:mob-addr"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/mob-addr",
+    "sourceTitle": "Address and shipping form"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":1.8812233036105706,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#493F2F\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 1.8812233036105706,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#493F2F",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 1.8812233036105706,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#493F2F",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Design system components' (/objects/mob-kit); view:chrona-preset-design-default; risk='low' (scale series), 1.88122:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:mob-kit:mob-kit"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/mob-kit",
+    "sourceTitle": "Design system components"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.768228443792921,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#2B251B\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.768228443792921,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#2B251B",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.768228443792921,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#2B251B",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Feature flag service' (/objects/plat-flags); view:chrona-preset-design-default; risk='low' (scale series), 2.76823:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:plat-flags:plat-flags"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/plat-flags",
+    "sourceTitle": "Feature flag service"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.557736985202756,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#312B20\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.557736985202756,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#312B20",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.557736985202756,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#312B20",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Observability stack' (/objects/plat-obs); view:chrona-preset-design-default; risk='low' (scale series), 2.55774:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:plat-obs:plat-obs"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/plat-obs",
+    "sourceTitle": "Observability stack"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.4909739934701514,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#58151A\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.4909739934701514,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#58151A",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "calendar-exception:2027-01-01"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.4909739934701514,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#58151A",
+     "groundId": "calendar-exception:2027-01-01",
+     "groundKind": "translucent-over-canvas",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Accessibility audit' (/objects/qa-a11y); view:chrona-preset-design-default; risk='low' (scale series), 2.49097:1 vs 3:1 over calendar-exception:2027-01-01; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:qa-a11y:qa-a11y"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/qa-a11y",
+    "sourceTitle": "Accessibility audit"
+   },
+   {
+    "code": "I_PRESET_VISUAL_PROFILE_FALLBACK",
+    "message": "preset chrona-builtin-marquee prefers chrona-output/visual/v0.7-svg; selected chrona-output/visual/v0.7-png for png",
+    "preferredProfile": "chrona-output/visual/v0.7-svg",
+    "presetId": "chrona-builtin-marquee",
+    "selectedProfile": "chrona-output/visual/v0.7-png",
+    "severity": "info",
+    "targetKind": "png"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_RESOLUTION",
+    "critical": false,
+    "message": "Relation relation:relation:8:plat-db--plat-dr:plat-db:plat-db:plat-dr:plat-dr uses marks resolution; critical=False; not a safety/completeness claim",
+    "relationId": "relation:relation:8:plat-db--plat-dr:plat-db:plat-db:plat-dr:plat-dr",
+    "severity": "info",
+    "stage": "marks",
+    "surfaceId": "table-timeline"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_RESOLUTION_SUMMARY",
+    "count": 1,
+    "message": "1 relations on table-timeline use recovery",
+    "severity": "info",
+    "stages": {
+     "marks": 1
+    },
+    "surfaceId": "table-timeline"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED",
+    "layoutMember": "relationRouting.unroutable",
+    "layoutValue": "relax",
+    "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing",
+    "severity": "info",
+    "surfaceId": "table-timeline",
+    "viewMember": "visibility.relations.overflow",
+    "viewValue": "suppress"
+   },
+   {
+    "code": "I_VIEW_FIELD_ROLE_UNBOUND",
+    "count": 1,
+    "fieldRole": "phase",
+    "message": "Project does not declare field role 'phase'; 1 View declarations use their fallback or are omitted",
+    "severity": "info",
+    "sourceRefs": [
+     "/body/tableColumns/1/source/fieldRole"
+    ]
+   }
+  ],
+  "diagnostics": [],
+  "stderr": ""
+ },
+ {
+  "design": "marquee",
+  "week": 3,
+  "rc": 0,
+  "seconds": 47.07,
+  "status": "ok",
+  "warnings": [
+   {
+    "code": "W_SCENE_RELATION_THROUGH_MARK",
+    "count": 3,
+    "diagnostic": "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay\",\"planned:be-pricing:be-pricing\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "findingCode": "E_SCENE_RELATION_THROUGH_MARK",
+    "measuredFacts": {
+     "inside": 6.0,
+     "relation": "relation:20:be-auth--be-pay"
+    },
+    "message": "a dependency line runs through a primary mark: 'Pricing engine' (/objects/be-pricing); {\"primitiveIds\":[\"relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay\",\"planned:be-pricing:be-pricing\"],\"scenePath\":\"/surfaces/0:table-timeline\"} and 2 more",
+    "occurrences": [
+     "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay\",\"planned:be-pricing:be-pricing\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+     "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:6:plat-db--plat-queue:plat-db:plat-db:plat-queue:plat-queue\",\"planned:plat-obs:plat-obs\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+     "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:8:plat-db--plat-dr:plat-db:plat-db:plat-dr:plat-dr\",\"planned:plat-obs:plat-obs\"],\"scenePath\":\"/surfaces/0:table-timeline\"}"
+    ],
+    "primitiveIds": [
+     "relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay",
+     "planned:be-pricing:be-pricing"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-pricing",
+    "sourceTitle": "Pricing engine"
+   },
+   {
+    "code": "W_SCENE_MARK_CONTRAST",
+    "count": 2,
+    "diagnostic": "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:api-freeze:api-freeze:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "findingCode": "E_SCENE_MARK_CONTRAST",
+    "measuredFacts": {
+     "contrastRatio": 1.5987884764069435,
+     "floor": 3.0,
+     "groundId": "planned:api-freeze:api-freeze:part0",
+     "groundKind": "flat",
+     "paintChannel": "fill"
+    },
+    "message": "a mark is fainter than its 3:1 visibility floor against the ground it lies on: actual:api-freeze:api-freeze:part0 and 1 more",
+    "occurrences": [
+     "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:api-freeze:api-freeze:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+     "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:kickoff:kickoff:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}"
+    ],
+    "primitiveIds": [
+     "actual:api-freeze:api-freeze:part0"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":1.5581977799748241,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#564B37\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 1.5581977799748241,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#564B37",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 1.5581977799748241,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#564B37",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'API freeze fixes' (/objects/be-api-freeze); view:chrona-preset-design-default; risk='low' (scale series), 1.5582:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:be-api-freeze:be-api-freeze"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-api-freeze",
+    "sourceTitle": "API freeze fixes"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"high\"},\"encodingPair\":{\"contrastRatio\":2.908658657529468,\"fillColor\":\"#F25C5C\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#4E4532\",\"sampledFill\":\"#F25C5C\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "high"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.908658657529468,
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#4E4532",
+     "sampledFill": "#F25C5C"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.908658657529468,
+     "field": "risk",
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#4E4532",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#F25C5C",
+     "scaleId": "series",
+     "value": "high"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Payment gateway adapter' (/objects/be-pay); view:chrona-preset-design-default; risk='high' (scale series), 2.90866:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:be-pay:be-pay"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-pay",
+    "sourceTitle": "Payment gateway adapter"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"high\"},\"encodingPair\":{\"contrastRatio\":2.8103298298827344,\"fillColor\":\"#F25C5C\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#514733\",\"sampledFill\":\"#F25C5C\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "high"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.8103298298827344,
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#514733",
+     "sampledFill": "#F25C5C"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.8103298298827344,
+     "field": "risk",
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#514733",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#F25C5C",
+     "scaleId": "series",
+     "value": "high"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Pricing engine' (/objects/be-pricing); view:chrona-preset-design-default; risk='high' (scale series), 2.81033:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:be-pricing:be-pricing"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-pricing",
+    "sourceTitle": "Pricing engine"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.1313399229464434,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#403729\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.1313399229464434,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#403729",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.1313399229464434,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#403729",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Address and shipping form' (/objects/mob-addr); view:chrona-preset-design-default; risk='low' (scale series), 2.13134:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:mob-addr:mob-addr"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/mob-addr",
+    "sourceTitle": "Address and shipping form"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.008613271760718,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#443B2B\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.008613271760718,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#443B2B",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.008613271760718,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#443B2B",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Funnel analytics events' (/objects/mob-analytics); view:chrona-preset-design-default; risk='low' (scale series), 2.00861:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:mob-analytics:mob-analytics"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/mob-analytics",
+    "sourceTitle": "Funnel analytics events"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":1.947766806585454,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#463D2D\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 1.947766806585454,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#463D2D",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 1.947766806585454,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#463D2D",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Deep link handling' (/objects/mob-deeplink); view:chrona-preset-design-default; risk='low' (scale series), 1.94777:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:mob-deeplink:mob-deeplink"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/mob-deeplink",
+    "sourceTitle": "Deep link handling"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.837063196245986,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#29231A\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.837063196245986,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#29231A",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.837063196245986,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#29231A",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Feature flag service' (/objects/plat-flags); view:chrona-preset-design-default; risk='low' (scale series), 2.83706:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:plat-flags:plat-flags"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/plat-flags",
+    "sourceTitle": "Feature flag service"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.6178308089213806,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#30291F\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.6178308089213806,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#30291F",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.6178308089213806,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#30291F",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Observability stack' (/objects/plat-obs); view:chrona-preset-design-default; risk='low' (scale series), 2.61783:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:plat-obs:plat-obs"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/plat-obs",
+    "sourceTitle": "Observability stack"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.4909739934701514,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#58151A\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.4909739934701514,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#58151A",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "calendar-exception:2027-01-01"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.4909739934701514,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#58151A",
+     "groundId": "calendar-exception:2027-01-01",
+     "groundKind": "translucent-over-canvas",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Accessibility audit' (/objects/qa-a11y); view:chrona-preset-design-default; risk='low' (scale series), 2.49097:1 vs 3:1 over calendar-exception:2027-01-01; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:qa-a11y:qa-a11y"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/qa-a11y",
+    "sourceTitle": "Accessibility audit"
+   },
+   {
+    "code": "I_PRESET_VISUAL_PROFILE_FALLBACK",
+    "message": "preset chrona-builtin-marquee prefers chrona-output/visual/v0.7-svg; selected chrona-output/visual/v0.7-png for png",
+    "preferredProfile": "chrona-output/visual/v0.7-svg",
+    "presetId": "chrona-builtin-marquee",
+    "selectedProfile": "chrona-output/visual/v0.7-png",
+    "severity": "info",
+    "targetKind": "png"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_RESOLUTION",
+    "critical": true,
+    "message": "Relation relation:relation:6:plat-db--plat-queue:plat-db:plat-db:plat-queue:plat-queue uses marks resolution; critical=True; not a safety/completeness claim",
+    "relationId": "relation:relation:6:plat-db--plat-queue:plat-db:plat-db:plat-queue:plat-queue",
+    "severity": "info",
+    "stage": "marks",
+    "surfaceId": "table-timeline"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_RESOLUTION",
+    "critical": false,
+    "message": "Relation relation:relation:8:plat-db--plat-dr:plat-db:plat-db:plat-dr:plat-dr uses marks resolution; critical=False; not a safety/completeness claim",
+    "relationId": "relation:relation:8:plat-db--plat-dr:plat-db:plat-db:plat-dr:plat-dr",
+    "severity": "info",
+    "stage": "marks",
+    "surfaceId": "table-timeline"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_RESOLUTION",
+    "critical": false,
+    "message": "Relation relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay uses marks resolution; critical=False; not a safety/completeness claim",
+    "relationId": "relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay",
+    "severity": "info",
+    "stage": "marks",
+    "surfaceId": "table-timeline"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_RESOLUTION_SUMMARY",
+    "count": 3,
+    "message": "3 relations on table-timeline use recovery",
+    "severity": "info",
+    "stages": {
+     "marks": 3
+    },
+    "surfaceId": "table-timeline"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED",
+    "layoutMember": "relationRouting.unroutable",
+    "layoutValue": "relax",
+    "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing",
+    "severity": "info",
+    "surfaceId": "table-timeline",
+    "viewMember": "visibility.relations.overflow",
+    "viewValue": "suppress"
+   },
+   {
+    "code": "I_VIEW_FIELD_ROLE_UNBOUND",
+    "count": 1,
+    "fieldRole": "phase",
+    "message": "Project does not declare field role 'phase'; 1 View declarations use their fallback or are omitted",
+    "severity": "info",
+    "sourceRefs": [
+     "/body/tableColumns/1/source/fieldRole"
+    ]
+   }
+  ],
+  "diagnostics": [],
+  "stderr": ""
+ },
+ {
+  "design": "marquee",
+  "week": 4,
+  "rc": 0,
+  "seconds": 48.25,
+  "status": "ok",
+  "warnings": [
+   {
+    "code": "W_SCENE_RELATION_THROUGH_MARK",
+    "count": 3,
+    "diagnostic": "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay\",\"planned:be-pricing:be-pricing\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "findingCode": "E_SCENE_RELATION_THROUGH_MARK",
+    "measuredFacts": {
+     "inside": 6.0,
+     "relation": "relation:20:be-auth--be-pay"
+    },
+    "message": "a dependency line runs through a primary mark: 'Pricing engine' (/objects/be-pricing); {\"primitiveIds\":[\"relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay\",\"planned:be-pricing:be-pricing\"],\"scenePath\":\"/surfaces/0:table-timeline\"} and 2 more",
+    "occurrences": [
+     "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay\",\"planned:be-pricing:be-pricing\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+     "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:6:plat-db--plat-queue:plat-db:plat-db:plat-queue:plat-queue\",\"planned:plat-obs:plat-obs\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+     "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:8:plat-db--plat-dr:plat-db:plat-db:plat-dr:plat-dr\",\"planned:plat-obs:plat-obs\"],\"scenePath\":\"/surfaces/0:table-timeline\"}"
+    ],
+    "primitiveIds": [
+     "relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay",
+     "planned:be-pricing:be-pricing"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-pricing",
+    "sourceTitle": "Pricing engine"
+   },
+   {
+    "code": "W_SCENE_MARK_CONTRAST",
+    "count": 2,
+    "diagnostic": "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:api-freeze:api-freeze:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "findingCode": "E_SCENE_MARK_CONTRAST",
+    "measuredFacts": {
+     "contrastRatio": 1.5987884764069435,
+     "floor": 3.0,
+     "groundId": "planned:api-freeze:api-freeze:part0",
+     "groundKind": "flat",
+     "paintChannel": "fill"
+    },
+    "message": "a mark is fainter than its 3:1 visibility floor against the ground it lies on: actual:api-freeze:api-freeze:part0 and 1 more",
+    "occurrences": [
+     "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:api-freeze:api-freeze:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+     "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:kickoff:kickoff:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}"
+    ],
+    "primitiveIds": [
+     "actual:api-freeze:api-freeze:part0"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"high\"},\"encodingPair\":{\"contrastRatio\":2.8081514353814376,\"fillColor\":\"#F25C5C\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#514734\",\"sampledFill\":\"#F25C5C\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "high"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.8081514353814376,
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#514734",
+     "sampledFill": "#F25C5C"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.8081514353814376,
+     "field": "risk",
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#514734",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#F25C5C",
+     "scaleId": "series",
+     "value": "high"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Fraud scoring hook' (/objects/be-fraud); view:chrona-preset-design-default; risk='high' (scale series), 2.80815:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:be-fraud:be-fraud"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-fraud",
+    "sourceTitle": "Fraud scoring hook"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"high\"},\"encodingPair\":{\"contrastRatio\":2.908658657529468,\"fillColor\":\"#F25C5C\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#4E4532\",\"sampledFill\":\"#F25C5C\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "high"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.908658657529468,
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#4E4532",
+     "sampledFill": "#F25C5C"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.908658657529468,
+     "field": "risk",
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#4E4532",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#F25C5C",
+     "scaleId": "series",
+     "value": "high"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Payment gateway adapter' (/objects/be-pay); view:chrona-preset-design-default; risk='high' (scale series), 2.90866:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:be-pay:be-pay"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-pay",
+    "sourceTitle": "Payment gateway adapter"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"high\"},\"encodingPair\":{\"contrastRatio\":2.8103298298827344,\"fillColor\":\"#F25C5C\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#514733\",\"sampledFill\":\"#F25C5C\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "high"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.8103298298827344,
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#514733",
+     "sampledFill": "#F25C5C"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.8103298298827344,
+     "field": "risk",
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#514733",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#F25C5C",
+     "scaleId": "series",
+     "value": "high"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Pricing engine' (/objects/be-pricing); view:chrona-preset-design-default; risk='high' (scale series), 2.81033:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:be-pricing:be-pricing"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-pricing",
+    "sourceTitle": "Pricing engine"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.008613271760718,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#443B2B\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.008613271760718,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#443B2B",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.008613271760718,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#443B2B",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Funnel analytics events' (/objects/mob-analytics); view:chrona-preset-design-default; risk='low' (scale series), 2.00861:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:mob-analytics:mob-analytics"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/mob-analytics",
+    "sourceTitle": "Funnel analytics events"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.6178308089213806,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#30291F\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.6178308089213806,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#30291F",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.6178308089213806,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#30291F",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Observability stack' (/objects/plat-obs); view:chrona-preset-design-default; risk='low' (scale series), 2.61783:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:plat-obs:plat-obs"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/plat-obs",
+    "sourceTitle": "Observability stack"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.4909739934701514,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#58151A\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.4909739934701514,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#58151A",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "calendar-exception:2027-01-01"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.4909739934701514,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#58151A",
+     "groundId": "calendar-exception:2027-01-01",
+     "groundKind": "translucent-over-canvas",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Accessibility audit' (/objects/qa-a11y); view:chrona-preset-design-default; risk='low' (scale series), 2.49097:1 vs 3:1 over calendar-exception:2027-01-01; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:qa-a11y:qa-a11y"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/qa-a11y",
+    "sourceTitle": "Accessibility audit"
+   },
+   {
+    "code": "I_PRESET_VISUAL_PROFILE_FALLBACK",
+    "message": "preset chrona-builtin-marquee prefers chrona-output/visual/v0.7-svg; selected chrona-output/visual/v0.7-png for png",
+    "preferredProfile": "chrona-output/visual/v0.7-svg",
+    "presetId": "chrona-builtin-marquee",
+    "selectedProfile": "chrona-output/visual/v0.7-png",
+    "severity": "info",
+    "targetKind": "png"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_RESOLUTION",
+    "critical": true,
+    "message": "Relation relation:relation:6:plat-db--plat-queue:plat-db:plat-db:plat-queue:plat-queue uses marks resolution; critical=True; not a safety/completeness claim",
+    "relationId": "relation:relation:6:plat-db--plat-queue:plat-db:plat-db:plat-queue:plat-queue",
+    "severity": "info",
+    "stage": "marks",
+    "surfaceId": "table-timeline"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_RESOLUTION",
+    "critical": false,
+    "message": "Relation relation:relation:8:plat-db--plat-dr:plat-db:plat-db:plat-dr:plat-dr uses marks resolution; critical=False; not a safety/completeness claim",
+    "relationId": "relation:relation:8:plat-db--plat-dr:plat-db:plat-db:plat-dr:plat-dr",
+    "severity": "info",
+    "stage": "marks",
+    "surfaceId": "table-timeline"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_RESOLUTION",
+    "critical": false,
+    "message": "Relation relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay uses marks resolution; critical=False; not a safety/completeness claim",
+    "relationId": "relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay",
+    "severity": "info",
+    "stage": "marks",
+    "surfaceId": "table-timeline"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_RESOLUTION_SUMMARY",
+    "count": 3,
+    "message": "3 relations on table-timeline use recovery",
+    "severity": "info",
+    "stages": {
+     "marks": 3
+    },
+    "surfaceId": "table-timeline"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED",
+    "layoutMember": "relationRouting.unroutable",
+    "layoutValue": "relax",
+    "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing",
+    "severity": "info",
+    "surfaceId": "table-timeline",
+    "viewMember": "visibility.relations.overflow",
+    "viewValue": "suppress"
+   },
+   {
+    "code": "I_VIEW_FIELD_ROLE_UNBOUND",
+    "count": 1,
+    "fieldRole": "phase",
+    "message": "Project does not declare field role 'phase'; 1 View declarations use their fallback or are omitted",
+    "severity": "info",
+    "sourceRefs": [
+     "/body/tableColumns/1/source/fieldRole"
+    ]
+   }
+  ],
+  "diagnostics": [],
+  "stderr": ""
+ },
+ {
+  "design": "marquee",
+  "week": 5,
+  "rc": 0,
+  "seconds": 51.6,
+  "status": "ok",
+  "warnings": [
+   {
+    "code": "W_SCENE_RELATION_THROUGH_MARK",
+    "count": 3,
+    "diagnostic": "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay\",\"planned:be-pricing:be-pricing\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "findingCode": "E_SCENE_RELATION_THROUGH_MARK",
+    "measuredFacts": {
+     "inside": 6.0,
+     "relation": "relation:20:be-auth--be-pay"
+    },
+    "message": "a dependency line runs through a primary mark: 'Pricing engine' (/objects/be-pricing); {\"primitiveIds\":[\"relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay\",\"planned:be-pricing:be-pricing\"],\"scenePath\":\"/surfaces/0:table-timeline\"} and 2 more",
+    "occurrences": [
+     "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay\",\"planned:be-pricing:be-pricing\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+     "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:6:plat-db--plat-queue:plat-db:plat-db:plat-queue:plat-queue\",\"planned:plat-obs:plat-obs\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+     "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:8:plat-db--plat-dr:plat-db:plat-db:plat-dr:plat-dr\",\"planned:plat-obs:plat-obs\"],\"scenePath\":\"/surfaces/0:table-timeline\"}"
+    ],
+    "primitiveIds": [
+     "relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay",
+     "planned:be-pricing:be-pricing"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-pricing",
+    "sourceTitle": "Pricing engine"
+   },
+   {
+    "code": "W_SCENE_MARK_CONTRAST",
+    "count": 2,
+    "diagnostic": "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:api-freeze:api-freeze:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "findingCode": "E_SCENE_MARK_CONTRAST",
+    "measuredFacts": {
+     "contrastRatio": 1.5987884764069435,
+     "floor": 3.0,
+     "groundId": "planned:api-freeze:api-freeze:part0",
+     "groundKind": "flat",
+     "paintChannel": "fill"
+    },
+    "message": "a mark is fainter than its 3:1 visibility floor against the ground it lies on: actual:api-freeze:api-freeze:part0 and 1 more",
+    "occurrences": [
+     "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:api-freeze:api-freeze:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+     "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:kickoff:kickoff:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}"
+    ],
+    "primitiveIds": [
+     "actual:api-freeze:api-freeze:part0"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":1.7771705983304456,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#4C4331\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 1.7771705983304456,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#4C4331",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 1.7771705983304456,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#4C4331",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'API reference docs' (/objects/be-docs); view:chrona-preset-design-default; risk='low' (scale series), 1.77717:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:be-docs:be-docs"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-docs",
+    "sourceTitle": "API reference docs"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"high\"},\"encodingPair\":{\"contrastRatio\":2.8081514353814376,\"fillColor\":\"#F25C5C\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#514734\",\"sampledFill\":\"#F25C5C\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "high"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.8081514353814376,
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#514734",
+     "sampledFill": "#F25C5C"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.8081514353814376,
+     "field": "risk",
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#514734",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#F25C5C",
+     "scaleId": "series",
+     "value": "high"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Fraud scoring hook' (/objects/be-fraud); view:chrona-preset-design-default; risk='high' (scale series), 2.80815:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:be-fraud:be-fraud"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-fraud",
+    "sourceTitle": "Fraud scoring hook"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":1.7509666808347768,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#4D4431\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 1.7509666808347768,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#4D4431",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 1.7509666808347768,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#4D4431",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Order notifications' (/objects/be-notif); view:chrona-preset-design-default; risk='low' (scale series), 1.75097:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:be-notif:be-notif"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-notif",
+    "sourceTitle": "Order notifications"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.008613271760718,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#443B2B\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.008613271760718,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#443B2B",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.008613271760718,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#443B2B",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Funnel analytics events' (/objects/mob-analytics); view:chrona-preset-design-default; risk='low' (scale series), 2.00861:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:mob-analytics:mob-analytics"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/mob-analytics",
+    "sourceTitle": "Funnel analytics events"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.6178308089213806,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#30291F\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.6178308089213806,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#30291F",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.6178308089213806,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#30291F",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Observability stack' (/objects/plat-obs); view:chrona-preset-design-default; risk='low' (scale series), 2.61783:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:plat-obs:plat-obs"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/plat-obs",
+    "sourceTitle": "Observability stack"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.4909739934701514,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#58151A\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.4909739934701514,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#58151A",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "calendar-exception:2027-01-01"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.4909739934701514,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#58151A",
+     "groundId": "calendar-exception:2027-01-01",
+     "groundKind": "translucent-over-canvas",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Accessibility audit' (/objects/qa-a11y); view:chrona-preset-design-default; risk='low' (scale series), 2.49097:1 vs 3:1 over calendar-exception:2027-01-01; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:qa-a11y:qa-a11y"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/qa-a11y",
+    "sourceTitle": "Accessibility audit"
+   },
+   {
+    "code": "I_PRESET_VISUAL_PROFILE_FALLBACK",
+    "message": "preset chrona-builtin-marquee prefers chrona-output/visual/v0.7-svg; selected chrona-output/visual/v0.7-png for png",
+    "preferredProfile": "chrona-output/visual/v0.7-svg",
+    "presetId": "chrona-builtin-marquee",
+    "selectedProfile": "chrona-output/visual/v0.7-png",
+    "severity": "info",
+    "targetKind": "png"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_RESOLUTION",
+    "critical": true,
+    "message": "Relation relation:relation:6:plat-db--plat-queue:plat-db:plat-db:plat-queue:plat-queue uses marks resolution; critical=True; not a safety/completeness claim",
+    "relationId": "relation:relation:6:plat-db--plat-queue:plat-db:plat-db:plat-queue:plat-queue",
+    "severity": "info",
+    "stage": "marks",
+    "surfaceId": "table-timeline"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_RESOLUTION",
+    "critical": false,
+    "message": "Relation relation:relation:8:plat-db--plat-dr:plat-db:plat-db:plat-dr:plat-dr uses marks resolution; critical=False; not a safety/completeness claim",
+    "relationId": "relation:relation:8:plat-db--plat-dr:plat-db:plat-db:plat-dr:plat-dr",
+    "severity": "info",
+    "stage": "marks",
+    "surfaceId": "table-timeline"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_RESOLUTION",
+    "critical": false,
+    "message": "Relation relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay uses marks resolution; critical=False; not a safety/completeness claim",
+    "relationId": "relation:relation:20:be-auth--be-pay:be-auth:be-auth:be-pay:be-pay",
+    "severity": "info",
+    "stage": "marks",
+    "surfaceId": "table-timeline"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_RESOLUTION_SUMMARY",
+    "count": 3,
+    "message": "3 relations on table-timeline use recovery",
+    "severity": "info",
+    "stages": {
+     "marks": 3
+    },
+    "surfaceId": "table-timeline"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED",
+    "layoutMember": "relationRouting.unroutable",
+    "layoutValue": "relax",
+    "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing",
+    "severity": "info",
+    "surfaceId": "table-timeline",
+    "viewMember": "visibility.relations.overflow",
+    "viewValue": "suppress"
+   },
+   {
+    "code": "I_VIEW_FIELD_ROLE_UNBOUND",
+    "count": 1,
+    "fieldRole": "phase",
+    "message": "Project does not declare field role 'phase'; 1 View declarations use their fallback or are omitted",
+    "severity": "info",
+    "sourceRefs": [
+     "/body/tableColumns/1/source/fieldRole"
+    ]
+   }
+  ],
+  "diagnostics": [],
+  "stderr": ""
+ },
+ {
+  "design": "marquee",
+  "week": "5f",
+  "rc": 0,
+  "seconds": 46.45,
+  "status": "ok",
+  "warnings": [
+   {
+    "code": "W_SCENE_MARK_CONTRAST",
+    "count": 2,
+    "diagnostic": "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:api-freeze:api-freeze:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "findingCode": "E_SCENE_MARK_CONTRAST",
+    "measuredFacts": {
+     "contrastRatio": 2.398588681658095,
+     "floor": 3.0,
+     "groundId": "planned:api-freeze:api-freeze:part0",
+     "groundKind": "flat",
+     "paintChannel": "fill"
+    },
+    "message": "a mark is fainter than its 3:1 visibility floor against the ground it lies on: actual:api-freeze:api-freeze:part0 and 1 more",
+    "occurrences": [
+     "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:api-freeze:api-freeze:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+     "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:kickoff:kickoff:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}"
+    ],
+    "primitiveIds": [
+     "actual:api-freeze:api-freeze:part0"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"high\"},\"encodingPair\":{\"contrastRatio\":2.8081514353814376,\"fillColor\":\"#F25C5C\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#514734\",\"sampledFill\":\"#F25C5C\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "high"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.8081514353814376,
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#514734",
+     "sampledFill": "#F25C5C"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.8081514353814376,
+     "field": "risk",
+     "fillColor": "#F25C5C",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#514734",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#F25C5C",
+     "scaleId": "series",
+     "value": "high"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Fraud scoring hook' (/objects/be-fraud); view:chrona-preset-design-default; risk='high' (scale series), 2.80815:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:be-fraud:be-fraud"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-fraud",
+    "sourceTitle": "Fraud scoring hook"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":1.7509666808347768,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#4D4431\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 1.7509666808347768,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#4D4431",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 1.7509666808347768,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#4D4431",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Order notifications' (/objects/be-notif); view:chrona-preset-design-default; risk='low' (scale series), 1.75097:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:be-notif:be-notif"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/be-notif",
+    "sourceTitle": "Order notifications"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.008613271760718,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#443B2B\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.008613271760718,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#443B2B",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.008613271760718,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#443B2B",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Funnel analytics events' (/objects/mob-analytics); view:chrona-preset-design-default; risk='low' (scale series), 2.00861:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:mob-analytics:mob-analytics"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/mob-analytics",
+    "sourceTitle": "Funnel analytics events"
+   },
+   {
+    "code": "W_SCENE_ENCODING_CONTRAST",
+    "diagnostic": "W_SCENE_ENCODING_CONTRAST:{\"encoding\":{\"channel\":\"fill\",\"field\":\"risk\",\"scaleId\":\"series\",\"sources\":[{\"id\":\"chrona-preset-design-default\",\"kind\":\"view\",\"sourceRef\":\"/body/colorEncoding\"}],\"value\":\"low\"},\"encodingPair\":{\"contrastRatio\":2.6178308089213806,\"fillColor\":\"#5B6B7A\",\"fillOpacity\":1.0,\"floor\":3.0,\"groundColor\":\"#30291F\",\"sampledFill\":\"#5B6B7A\"},\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "disposition": "required",
+    "encoding": {
+     "channel": "fill",
+     "field": "risk",
+     "scaleId": "series",
+     "sources": [
+      {
+       "id": "chrona-preset-design-default",
+       "kind": "view",
+       "sourceRef": "/body/colorEncoding"
+      }
+     ],
+     "value": "low"
+    },
+    "encodingPair": {
+     "contrastRatio": 2.6178308089213806,
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#30291F",
+     "sampledFill": "#5B6B7A"
+    },
+    "findingCode": "E_SCENE_ENCODING_CONTRAST",
+    "groundIds": [
+     "as-of-cone"
+    ],
+    "measuredFacts": {
+     "contrastRatio": 2.6178308089213806,
+     "field": "risk",
+     "fillColor": "#5B6B7A",
+     "fillOpacity": 1.0,
+     "floor": 3.0,
+     "groundColor": "#30291F",
+     "groundId": "as-of-cone",
+     "groundKind": "cone-blend",
+     "paintChannel": "fill",
+     "sampledFill": "#5B6B7A",
+     "scaleId": "series",
+     "value": "low"
+    },
+    "message": "an encoded fill is below its independent 3:1 data-colour floor against its ground: 'Observability stack' (/objects/plat-obs); view:chrona-preset-design-default; risk='low' (scale series), 2.61783:1 vs 3:1 over as-of-cone; 1 occurrences",
+    "occurrenceCount": 1,
+    "primitiveIds": [
+     "planned:plat-obs:plat-obs"
+    ],
+    "scenePath": "/surfaces/0:table-timeline",
+    "severity": "warning",
+    "sourceRef": "/objects/plat-obs",
+    "sourceTitle": "Observability stack"
+   },
+   {
+    "code": "W_FORECAST_OBSERVED_START_BEFORE_BOUND",
+    "details": {
+     "beforeBoundDays": 1,
+     "earliest": "2026-11-10",
+     "endpoint": "start",
+     "forcedBy": "plat-env--plat-cdn",
+     "from": {
+      "endpoint": "end",
+      "object": "plat-env",
+      "value": "2026-11-10"
+     },
+     "lag": "0d",
+     "object": "plat-cdn",
+     "overlapDays": 1,
+     "placed": "2026-11-09",
+     "relation": "plat-env--plat-cdn",
+     "required": "2026-11-10",
+     "sourceDateBasis": "observed"
+    },
+    "diagnostic": "W_FORECAST_OBSERVED_START_BEFORE_BOUND:{\"endpoint\":\"start\",\"object\":\"plat-cdn\",\"relation\":\"plat-env--plat-cdn\"}",
+    "endpoint": "start",
+    "message": "Work on plat-cdn started on 2026-11-09, 1 calendar day(s) before predecessor plat-env's observed finish on 2026-11-10; relation plat-env--plat-cdn requires 2026-11-10 after lag 0d. The observed start is retained.",
+    "path": "/relations/plat-env--plat-cdn",
+    "relation": "plat-env--plat-cdn",
+    "severity": "warning",
+    "sourceRef": "plat-cdn"
+   },
+   {
+    "code": "W_FORECAST_OBSERVED_START_BEFORE_BOUND",
+    "details": {
+     "beforeBoundDays": 1,
+     "earliest": "2026-11-15",
+     "endpoint": "start",
+     "forcedBy": "plat-secrets--plat-db",
+     "from": {
+      "endpoint": "end",
+      "object": "plat-secrets",
+      "value": "2026-11-15"
+     },
+     "lag": "0d",
+     "object": "plat-db",
+     "overlapDays": 1,
+     "placed": "2026-11-14",
+     "relation": "plat-secrets--plat-db",
+     "required": "2026-11-15",
+     "sourceDateBasis": "observed"
+    },
+    "diagnostic": "W_FORECAST_OBSERVED_START_BEFORE_BOUND:{\"endpoint\":\"start\",\"object\":\"plat-db\",\"relation\":\"plat-secrets--plat-db\"}",
+    "endpoint": "start",
+    "message": "Work on plat-db started on 2026-11-14, 1 calendar day(s) before predecessor plat-secrets's observed finish on 2026-11-15; relation plat-secrets--plat-db requires 2026-11-15 after lag 0d. The observed start is retained.",
+    "path": "/relations/plat-secrets--plat-db",
+    "relation": "plat-secrets--plat-db",
+    "severity": "warning",
+    "sourceRef": "plat-db"
+   },
+   {
+    "code": "W_FORECAST_OBSERVED_START_BEFORE_BOUND",
+    "details": {
+     "beforeBoundDays": 1,
+     "earliest": "2026-11-28",
+     "endpoint": "start",
+     "forcedBy": "plat-db--plat-dr",
+     "from": {
+      "endpoint": "end",
+      "object": "plat-db",
+      "value": "2026-11-28"
+     },
+     "lag": "0d",
+     "object": "plat-dr",
+     "overlapDays": 1,
+     "placed": "2026-11-27",
+     "relation": "plat-db--plat-dr",
+     "required": "2026-11-28",
+     "sourceDateBasis": "observed"
+    },
+    "diagnostic": "W_FORECAST_OBSERVED_START_BEFORE_BOUND:{\"endpoint\":\"start\",\"object\":\"plat-dr\",\"relation\":\"plat-db--plat-dr\"}",
+    "endpoint": "start",
+    "message": "Work on plat-dr started on 2026-11-27, 1 calendar day(s) before predecessor plat-db's observed finish on 2026-11-28; relation plat-db--plat-dr requires 2026-11-28 after lag 0d. The observed start is retained.",
+    "path": "/relations/plat-db--plat-dr",
+    "relation": "plat-db--plat-dr",
+    "severity": "warning",
+    "sourceRef": "plat-dr"
+   },
+   {
+    "code": "W_FORECAST_OBSERVED_START_BEFORE_BOUND",
+    "details": {
+     "beforeBoundDays": 1,
+     "earliest": "2026-11-15",
+     "endpoint": "start",
+     "forcedBy": "plat-secrets--be-auth",
+     "from": {
+      "endpoint": "end",
+      "object": "plat-secrets",
+      "value": "2026-11-15"
+     },
+     "lag": "0d",
+     "object": "be-auth",
+     "overlapDays": 1,
+     "placed": "2026-11-14",
+     "relation": "plat-secrets--be-auth",
+     "required": "2026-11-15",
+     "sourceDateBasis": "observed"
+    },
+    "diagnostic": "W_FORECAST_OBSERVED_START_BEFORE_BOUND:{\"endpoint\":\"start\",\"object\":\"be-auth\",\"relation\":\"plat-secrets--be-auth\"}",
+    "endpoint": "start",
+    "message": "Work on be-auth started on 2026-11-14, 1 calendar day(s) before predecessor plat-secrets's observed finish on 2026-11-15; relation plat-secrets--be-auth requires 2026-11-15 after lag 0d. The observed start is retained.",
+    "path": "/relations/plat-secrets--be-auth",
+    "relation": "plat-secrets--be-auth",
+    "severity": "warning",
+    "sourceRef": "be-auth"
+   },
+   {
+    "code": "W_FORECAST_OBSERVED_START_BEFORE_BOUND",
+    "details": {
+     "beforeBoundDays": 1,
+     "earliest": "2026-11-25",
+     "endpoint": "start",
+     "forcedBy": "be-cart--be-pricing",
+     "from": {
+      "endpoint": "end",
+      "object": "be-cart",
+      "value": "2026-11-25"
+     },
+     "lag": "0d",
+     "object": "be-pricing",
+     "overlapDays": 1,
+     "placed": "2026-11-24",
+     "relation": "be-cart--be-pricing",
+     "required": "2026-11-25",
+     "sourceDateBasis": "observed"
+    },
+    "diagnostic": "W_FORECAST_OBSERVED_START_BEFORE_BOUND:{\"endpoint\":\"start\",\"object\":\"be-pricing\",\"relation\":\"be-cart--be-pricing\"}",
+    "endpoint": "start",
+    "message": "Work on be-pricing started on 2026-11-24, 1 calendar day(s) before predecessor be-cart's observed finish on 2026-11-25; relation be-cart--be-pricing requires 2026-11-25 after lag 0d. The observed start is retained.",
+    "path": "/relations/be-cart--be-pricing",
+    "relation": "be-cart--be-pricing",
+    "severity": "warning",
+    "sourceRef": "be-pricing"
+   },
+   {
+    "code": "W_FORECAST_OBSERVED_START_BEFORE_BOUND",
+    "details": {
+     "beforeBoundDays": 1,
+     "earliest": "2026-11-27",
+     "endpoint": "start",
+     "forcedBy": "be-auth--be-pay",
+     "from": {
+      "endpoint": "end",
+      "object": "be-auth",
+      "value": "2026-11-27"
+     },
+     "lag": "0d",
+     "object": "be-pay",
+     "overlapDays": 1,
+     "placed": "2026-11-26",
+     "relation": "be-auth--be-pay",
+     "required": "2026-11-27",
+     "sourceDateBasis": "observed"
+    },
+    "diagnostic": "W_FORECAST_OBSERVED_START_BEFORE_BOUND:{\"endpoint\":\"start\",\"object\":\"be-pay\",\"relation\":\"be-auth--be-pay\"}",
+    "endpoint": "start",
+    "message": "Work on be-pay started on 2026-11-26, 1 calendar day(s) before predecessor be-auth's observed finish on 2026-11-27; relation be-auth--be-pay requires 2026-11-27 after lag 0d. The observed start is retained.",
+    "path": "/relations/be-auth--be-pay",
+    "relation": "be-auth--be-pay",
+    "severity": "warning",
+    "sourceRef": "be-pay"
+   },
+   {
+    "code": "W_FORECAST_OBSERVED_START_BEFORE_BOUND",
+    "details": {
+     "beforeBoundDays": 1,
+     "earliest": "2026-12-11",
+     "endpoint": "start",
+     "forcedBy": "be-pricing--be-tax",
+     "from": {
+      "endpoint": "end",
+      "object": "be-pricing",
+      "value": "2026-12-11"
+     },
+     "lag": "0d",
+     "object": "be-tax",
+     "overlapDays": 1,
+     "placed": "2026-12-10",
+     "relation": "be-pricing--be-tax",
+     "required": "2026-12-11",
+     "sourceDateBasis": "observed"
+    },
+    "diagnostic": "W_FORECAST_OBSERVED_START_BEFORE_BOUND:{\"endpoint\":\"start\",\"object\":\"be-tax\",\"relation\":\"be-pricing--be-tax\"}",
+    "endpoint": "start",
+    "message": "Work on be-tax started on 2026-12-10, 1 calendar day(s) before predecessor be-pricing's observed finish on 2026-12-11; relation be-pricing--be-tax requires 2026-12-11 after lag 0d. The observed start is retained.",
+    "path": "/relations/be-pricing--be-tax",
+    "relation": "be-pricing--be-tax",
+    "severity": "warning",
+    "sourceRef": "be-tax"
+   },
+   {
+    "code": "W_FORECAST_OBSERVED_START_BEFORE_BOUND",
+    "details": {
+     "beforeBoundDays": 1,
+     "earliest": "2026-11-28",
+     "endpoint": "start",
+     "forcedBy": "plat-db--be-migr",
+     "from": {
+      "endpoint": "end",
+      "object": "plat-db",
+      "value": "2026-11-28"
+     },
+     "lag": "0d",
+     "object": "be-migr",
+     "overlapDays": 1,
+     "placed": "2026-11-27",
+     "relation": "plat-db--be-migr",
+     "required": "2026-11-28",
+     "sourceDateBasis": "observed"
+    },
+    "diagnostic": "W_FORECAST_OBSERVED_START_BEFORE_BOUND:{\"endpoint\":\"start\",\"object\":\"be-migr\",\"relation\":\"plat-db--be-migr\"}",
+    "endpoint": "start",
+    "message": "Work on be-migr started on 2026-11-27, 1 calendar day(s) before predecessor plat-db's observed finish on 2026-11-28; relation plat-db--be-migr requires 2026-11-28 after lag 0d. The observed start is retained.",
+    "path": "/relations/plat-db--be-migr",
+    "relation": "plat-db--be-migr",
+    "severity": "warning",
+    "sourceRef": "be-migr"
+   },
+   {
+    "code": "W_FORECAST_OBSERVED_START_BEFORE_BOUND",
+    "details": {
+     "beforeBoundDays": 2,
+     "earliest": "2026-12-05",
+     "endpoint": "start",
+     "forcedBy": "mob-cart-ui--mob-offline",
+     "from": {
+      "endpoint": "end",
+      "object": "mob-cart-ui",
+      "value": "2026-12-05"
+     },
+     "lag": "0d",
+     "object": "mob-offline",
+     "overlapDays": 2,
+     "placed": "2026-12-03",
+     "relation": "mob-cart-ui--mob-offline",
+     "required": "2026-12-05",
+     "sourceDateBasis": "observed"
+    },
+    "diagnostic": "W_FORECAST_OBSERVED_START_BEFORE_BOUND:{\"endpoint\":\"start\",\"object\":\"mob-offline\",\"relation\":\"mob-cart-ui--mob-offline\"}",
+    "endpoint": "start",
+    "message": "Work on mob-offline started on 2026-12-03, 2 calendar day(s) before predecessor mob-cart-ui's observed finish on 2026-12-05; relation mob-cart-ui--mob-offline requires 2026-12-05 after lag 0d. The observed start is retained.",
+    "path": "/relations/mob-cart-ui--mob-offline",
+    "relation": "mob-cart-ui--mob-offline",
+    "severity": "warning",
+    "sourceRef": "mob-offline"
+   },
+   {
+    "code": "W_FORECAST_OBSERVED_START_BEFORE_BOUND",
+    "details": {
+     "beforeBoundDays": 1,
+     "earliest": "2026-12-05",
+     "endpoint": "start",
+     "forcedBy": "mob-cart-ui--mob-analytics",
+     "from": {
+      "endpoint": "end",
+      "object": "mob-cart-ui",
+      "value": "2026-12-05"
+     },
+     "lag": "0d",
+     "object": "mob-analytics",
+     "overlapDays": 1,
+     "placed": "2026-12-04",
+     "relation": "mob-cart-ui--mob-analytics",
+     "required": "2026-12-05",
+     "sourceDateBasis": "observed"
+    },
+    "diagnostic": "W_FORECAST_OBSERVED_START_BEFORE_BOUND:{\"endpoint\":\"start\",\"object\":\"mob-analytics\",\"relation\":\"mob-cart-ui--mob-analytics\"}",
+    "endpoint": "start",
+    "message": "Work on mob-analytics started on 2026-12-04, 1 calendar day(s) before predecessor mob-cart-ui's observed finish on 2026-12-05; relation mob-cart-ui--mob-analytics requires 2026-12-05 after lag 0d. The observed start is retained.",
+    "path": "/relations/mob-cart-ui--mob-analytics",
+    "relation": "mob-cart-ui--mob-analytics",
+    "severity": "warning",
+    "sourceRef": "mob-analytics"
+   },
+   {
+    "code": "W_FORECAST_OBSERVED_START_BEFORE_BOUND",
+    "details": {
+     "beforeBoundDays": 1,
+     "earliest": "2026-11-28",
+     "endpoint": "start",
+     "forcedBy": "qa-auto--qa-contract",
+     "from": {
+      "endpoint": "end",
+      "object": "qa-auto",
+      "value": "2026-11-28"
+     },
+     "lag": "0d",
+     "object": "qa-contract",
+     "overlapDays": 1,
+     "placed": "2026-11-27",
+     "relation": "qa-auto--qa-contract",
+     "required": "2026-11-28",
+     "sourceDateBasis": "observed"
+    },
+    "diagnostic": "W_FORECAST_OBSERVED_START_BEFORE_BOUND:{\"endpoint\":\"start\",\"object\":\"qa-contract\",\"relation\":\"qa-auto--qa-contract\"}",
+    "endpoint": "start",
+    "message": "Work on qa-contract started on 2026-11-27, 1 calendar day(s) before predecessor qa-auto's observed finish on 2026-11-28; relation qa-auto--qa-contract requires 2026-11-28 after lag 0d. The observed start is retained.",
+    "path": "/relations/qa-auto--qa-contract",
+    "relation": "qa-auto--qa-contract",
+    "severity": "warning",
+    "sourceRef": "qa-contract"
+   },
+   {
+    "code": "W_FORECAST_OBSERVED_START_BEFORE_BOUND",
+    "details": {
+     "beforeBoundDays": 1,
+     "earliest": "2026-11-27",
+     "endpoint": "start",
+     "forcedBy": "be-auth--be-ratelimit",
+     "from": {
+      "endpoint": "end",
+      "object": "be-auth",
+      "value": "2026-11-27"
+     },
+     "lag": "0d",
+     "object": "be-ratelimit",
+     "overlapDays": 1,
+     "placed": "2026-11-26",
+     "relation": "be-auth--be-ratelimit",
+     "required": "2026-11-27",
+     "sourceDateBasis": "observed"
+    },
+    "diagnostic": "W_FORECAST_OBSERVED_START_BEFORE_BOUND:{\"endpoint\":\"start\",\"object\":\"be-ratelimit\",\"relation\":\"be-auth--be-ratelimit\"}",
+    "endpoint": "start",
+    "message": "Work on be-ratelimit started on 2026-11-26, 1 calendar day(s) before predecessor be-auth's observed finish on 2026-11-27; relation be-auth--be-ratelimit requires 2026-11-27 after lag 0d. The observed start is retained.",
+    "path": "/relations/be-auth--be-ratelimit",
+    "relation": "be-auth--be-ratelimit",
+    "severity": "warning",
+    "sourceRef": "be-ratelimit"
+   },
+   {
+    "code": "I_PRESET_VISUAL_PROFILE_FALLBACK",
+    "message": "preset chrona-builtin-marquee prefers chrona-output/visual/v0.7-svg; selected chrona-output/visual/v0.7-png for png",
+    "preferredProfile": "chrona-output/visual/v0.7-svg",
+    "presetId": "chrona-builtin-marquee",
+    "selectedProfile": "chrona-output/visual/v0.7-png",
+    "severity": "info",
+    "targetKind": "png"
+   },
+   {
+    "code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED",
+    "layoutMember": "relationRouting.unroutable",
+    "layoutValue": "relax",
+    "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing",
+    "severity": "info",
+    "surfaceId": "table-timeline",
+    "viewMember": "visibility.relations.overflow",
+    "viewValue": "suppress"
+   },
+   {
+    "code": "I_VIEW_FIELD_ROLE_UNBOUND",
+    "count": 1,
+    "fieldRole": "phase",
+    "message": "Project does not declare field role 'phase'; 1 View declarations use their fallback or are omitted",
+    "severity": "info",
+    "sourceRefs": [
+     "/body/tableColumns/1/source/fieldRole"
+    ]
+   },
+   {
+    "code": "E_FIXED_TARGET_VIOLATION",
+    "details": {
+     "earliest": "2026-11-27",
+     "endpoint": "at",
+     "forcedBy": "be-auth--api-freeze",
+     "from": {
+      "endpoint": "end",
+      "object": "be-auth",
+      "value": "2026-11-27"
+     },
+     "lag": "0d",
+     "object": "api-freeze",
+     "placed": "2026-11-25",
+     "relation": "be-auth--api-freeze",
+     "required": "2026-11-27"
+    },
+    "message": "api-freeze.at is fixed at 2026-11-25, but relation be-auth--api-freeze (be-auth.end 2026-11-27 + 0d) requires 2026-11-27 or later. The earliest feasible date for api-freeze.at is 2026-11-27 (forced by be-auth--api-freeze).",
+    "path": "/relations/be-auth--api-freeze",
+    "severity": "info"
+   },
+   {
+    "code": "I_FORECAST_MOVED",
+    "details": {
+     "count": 32
+    },
+    "message": "Forecast moved 32 Project objects",
+    "path": "/objects",
+    "severity": "info"
+   }
+  ],
+  "diagnostics": [],
+  "stderr": ""
+ }
+]

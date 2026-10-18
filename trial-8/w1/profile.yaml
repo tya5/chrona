@@ -1,0 +1,17 @@
+version: chrona/profile/v0.3
+packageId: trial8-delivery
+requires:
+  projectFormat: timeline/v0.7
+profiles:
+  work:
+    extends: task
+    fields:
+      team: {type: enum, enumValues: [platform, backend, mobile, qa], required: true}
+      risk: {type: enum, enumValues: [low, medium, high], required: true}
+      owner: {type: string, required: true}
+  milestone-gate:
+    extends: gate
+    fields:
+      team: {type: enum, enumValues: [platform, backend, mobile, qa], required: true}
+      risk: {type: enum, enumValues: [low, medium, high], required: true}
+      owner: {type: string, required: true}
