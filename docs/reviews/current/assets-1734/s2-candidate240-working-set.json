@@ -1,0 +1,1067 @@
+{
+  "argv": [
+    "render",
+    "/tmp/chrona-1734-evidence.qW1pl7/b240.yaml",
+    "--preset",
+    "chrona-default-draft",
+    "--progress",
+    "--output",
+    "/tmp/chrona-1734-evidence.qW1pl7/s2-candidate240-working-set.svg",
+    "--emit-scene",
+    "/tmp/chrona-1734-evidence.qW1pl7/s2-candidate240-working-set.scene.json"
+  ],
+  "argv_paths_sha256": "f986422e3b1224ebed73bc216504a857ec3911da5955994f8cbb6cd349767cb9",
+  "exclusive_total_seconds": 50.12416100129485,
+  "git_dirty": false,
+  "git_head": "a490ca49e524bfed1e9d434fc0fb83e297dee353",
+  "graph_endpoint_sequences": {
+    "actual_one_slot_hits": 0,
+    "actual_one_slot_misses": 144,
+    "groups": [
+      {
+        "events": [
+          {
+            "exact_bound": false,
+            "geometry_key": "5e9f4620a95bb60c5ca762b421f8a6e68b12d3c621f5f333399d5da9265a69b8",
+            "identity": "f75a71b3cc27c07463a5b189b32b1938f0809512251dc65f461ed81262a5ed35",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "eb6c98bbdcd9ebe6418f0ea069f4920630882eb6fca9d031e764d60d85a4b986",
+            "identity": "fc2d65e9d46f18d8d26c5ae91bdd522f3146192639ffcc00ef30d71a6bd2c9a0",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "ba0dd8b092224a1891001febbf50b69e507b6922d60f9f69c16bdeb3f1fcfb69",
+            "identity": "9ad2f92cd4f6e0f641b27850ebf0f5b10097f602fa3cd344adb6a47724c545e9",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "75ec6f1bbb09465be5cd6e790c34f5a1be020cfafd8c9a680b719317e8e6cbef",
+            "identity": "5fdda7c8af49a23a935503bbe7e32895faf600cb13dd8ef8cc8f57f40c4f0666",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "c855d1c17e41876ae5c72b3c240200b4b7ae96b39e1ac7ef7aed07b6f2f4c8a5",
+            "identity": "29d6dd1ca86f678c5ff61c24010a6704fbb6d0823c475602209585cb312b0f3c",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "feaed0760a07ec8e297d01f24bf5a94eba578d65737df4acbfa4261c7123ded3",
+            "identity": "f12c0358ae1e1206cb26f624792c0c23bb471e6b18795ac42d9bf74497ef4f26",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "facf05808c7af3695d63b110d53439fb891fb96a678c78d31a9d34ff48b001ec",
+            "identity": "884d053ca70a141ccb454b2d92fe8b7a9c2693b2a544cc56c07195aba631d4cf",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "fe091eec1e2ac72f5f5494db6144a24c580fd15b51823dd56c455c51a612ffaf",
+            "identity": "0ee7192d83a2e68c87b27e12f9e6cdfe08655a308b5c8b3188763bae3cd8ac80",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "f3bffcd9258ed9e965c36f866de7dfbf120f1447c638516937ee7a0b37e97765",
+            "identity": "7b37bc655e302b0c68f2726b7cf964be5ca98395662b8490a64801574e7603b6",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "82d0fb6df252cae6cc08d8517134d8e3b5bf55b90df7955180f7e9d0c7d96d11",
+            "identity": "55d20edb1c20190f60af86fc9ca09ccbdfc9a1eeece5ea224ceffb1c9aff506c",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "061faabdc4f91d191b51ea63b30e8b683c5647828a0116b2480e375537a01552",
+            "identity": "4d459f4bb743118a1762118cc4382e06c6b6a01651dae55fdfde1983b3224f60",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "0b3efc7e93d73f01ec1ea1dedddfec1c17658c6b18ec136cd15f18914ececc4e",
+            "identity": "990f52d75ff938e56febe7f35e8ae55070ceb7243b6550592264763f8a0b244f",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "68c639c3ca709fd09f99277cfe1a2089aa84e33b56e91d4435523e30c7aca700",
+            "identity": "7836ef4f6fd876c58f30b2c9979acb38100b8b7bf2504e9c3f7e2a1877addcae",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "82d0fb6df252cae6cc08d8517134d8e3b5bf55b90df7955180f7e9d0c7d96d11",
+            "identity": "55d20edb1c20190f60af86fc9ca09ccbdfc9a1eeece5ea224ceffb1c9aff506c",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "eb6c98bbdcd9ebe6418f0ea069f4920630882eb6fca9d031e764d60d85a4b986",
+            "identity": "fc2d65e9d46f18d8d26c5ae91bdd522f3146192639ffcc00ef30d71a6bd2c9a0",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "feaed0760a07ec8e297d01f24bf5a94eba578d65737df4acbfa4261c7123ded3",
+            "identity": "f12c0358ae1e1206cb26f624792c0c23bb471e6b18795ac42d9bf74497ef4f26",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "0b3efc7e93d73f01ec1ea1dedddfec1c17658c6b18ec136cd15f18914ececc4e",
+            "identity": "990f52d75ff938e56febe7f35e8ae55070ceb7243b6550592264763f8a0b244f",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "061faabdc4f91d191b51ea63b30e8b683c5647828a0116b2480e375537a01552",
+            "identity": "4d459f4bb743118a1762118cc4382e06c6b6a01651dae55fdfde1983b3224f60",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "68c639c3ca709fd09f99277cfe1a2089aa84e33b56e91d4435523e30c7aca700",
+            "identity": "7836ef4f6fd876c58f30b2c9979acb38100b8b7bf2504e9c3f7e2a1877addcae",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "75ec6f1bbb09465be5cd6e790c34f5a1be020cfafd8c9a680b719317e8e6cbef",
+            "identity": "5fdda7c8af49a23a935503bbe7e32895faf600cb13dd8ef8cc8f57f40c4f0666",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "ba0dd8b092224a1891001febbf50b69e507b6922d60f9f69c16bdeb3f1fcfb69",
+            "identity": "9ad2f92cd4f6e0f641b27850ebf0f5b10097f602fa3cd344adb6a47724c545e9",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "c855d1c17e41876ae5c72b3c240200b4b7ae96b39e1ac7ef7aed07b6f2f4c8a5",
+            "identity": "29d6dd1ca86f678c5ff61c24010a6704fbb6d0823c475602209585cb312b0f3c",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "fe091eec1e2ac72f5f5494db6144a24c580fd15b51823dd56c455c51a612ffaf",
+            "identity": "0ee7192d83a2e68c87b27e12f9e6cdfe08655a308b5c8b3188763bae3cd8ac80",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "facf05808c7af3695d63b110d53439fb891fb96a678c78d31a9d34ff48b001ec",
+            "identity": "884d053ca70a141ccb454b2d92fe8b7a9c2693b2a544cc56c07195aba631d4cf",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "f3bffcd9258ed9e965c36f866de7dfbf120f1447c638516937ee7a0b37e97765",
+            "identity": "7b37bc655e302b0c68f2726b7cf964be5ca98395662b8490a64801574e7603b6",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "98dcdda625335bf45f9e66285ba4ed3e5036d773e232dcc62a5234ab29bc6ba7",
+            "identity": "3d95fa30c9e529d40b2fae83c3226585ce5c560f59a0ef0e600531a58f8c6901",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "d7f1cd000b6e40a9646e9db2def108681d303fb10c13758e06900c8c49f6ce25",
+            "identity": "13ddd207bfc1c6e38f756225463747adcca53d17324a4b9eaffca973f5ffdbc4",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "70b129adb57c462c5c76799f44ad66399375be37e21e016b21b61226696189f1",
+            "identity": "597e7d313ba3ee3f53906177192b8531a7534ea969f16922fa7ead24e466e9d1",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "7b2ce9c745ff44c18adcc25d881bc33e2f7f21a2a1e6c295293fd2d7df03e1c6",
+            "identity": "81a8e84fe90287461100e47545fd4c68c9ae79cb964db5857a0578c07f9cba9c",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "35dabe8c507cfc83fc8bec919fa8161a31824a339f616759d64846ab52978054",
+            "identity": "9b5f467f42f8f0816b19d139f76da50a8dfb2f3aa598eb729c9fa5e8008d6c88",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "d96283651011653cfc89069dd02a5a33997f90c91e565bc8aa4f42bedcffc746",
+            "identity": "7424211f130db2d492386110eb641cf7f393a3666290be3adf4b338b0ba21e2e",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "541238271383dd1809247cdd78678c04044847b97336c030f998368f655e00cf",
+            "identity": "6eaa167252ea32fd3ddd7f0461370e7a49360e1469238c39540285d8744c4ef4",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "83283d41145911c639e988417b5035327b7f09f4eb4a2348e2770fe4077dd807",
+            "identity": "29d021aa967786d4f2ae92c00efd3a037c6331f5fae9c8ceef006eae429e2e55",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "09d0745a4faf72a4916ed69897dba24e1f735a60f2174e39995c224bee496104",
+            "identity": "17769041d741a0ed6152fd60cfcd810e4e39faa3dd3770f213a5f6d8899d4a7f",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "83283d41145911c639e988417b5035327b7f09f4eb4a2348e2770fe4077dd807",
+            "identity": "29d021aa967786d4f2ae92c00efd3a037c6331f5fae9c8ceef006eae429e2e55",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "541238271383dd1809247cdd78678c04044847b97336c030f998368f655e00cf",
+            "identity": "6eaa167252ea32fd3ddd7f0461370e7a49360e1469238c39540285d8744c4ef4",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "09d0745a4faf72a4916ed69897dba24e1f735a60f2174e39995c224bee496104",
+            "identity": "17769041d741a0ed6152fd60cfcd810e4e39faa3dd3770f213a5f6d8899d4a7f",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "d7f1cd000b6e40a9646e9db2def108681d303fb10c13758e06900c8c49f6ce25",
+            "identity": "13ddd207bfc1c6e38f756225463747adcca53d17324a4b9eaffca973f5ffdbc4",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "98dcdda625335bf45f9e66285ba4ed3e5036d773e232dcc62a5234ab29bc6ba7",
+            "identity": "3d95fa30c9e529d40b2fae83c3226585ce5c560f59a0ef0e600531a58f8c6901",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "70b129adb57c462c5c76799f44ad66399375be37e21e016b21b61226696189f1",
+            "identity": "597e7d313ba3ee3f53906177192b8531a7534ea969f16922fa7ead24e466e9d1",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "35dabe8c507cfc83fc8bec919fa8161a31824a339f616759d64846ab52978054",
+            "identity": "9b5f467f42f8f0816b19d139f76da50a8dfb2f3aa598eb729c9fa5e8008d6c88",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "7b2ce9c745ff44c18adcc25d881bc33e2f7f21a2a1e6c295293fd2d7df03e1c6",
+            "identity": "81a8e84fe90287461100e47545fd4c68c9ae79cb964db5857a0578c07f9cba9c",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "d96283651011653cfc89069dd02a5a33997f90c91e565bc8aa4f42bedcffc746",
+            "identity": "7424211f130db2d492386110eb641cf7f393a3666290be3adf4b338b0ba21e2e",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "da6b03cc42c18d756242579da6e64a5ed26093c5a1dab86bc0b7410e7fc3848b",
+            "identity": "eca69f412765da7f8e986e32f199d9e45743d099bb8a70344905d93461b04e3a",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "4cad2157ddbe88906593d8bdc5869b583087df27257fc07eedc7d14364230f27",
+            "identity": "b93a6d12e37c61408b1097465964faf86740f1abb9d363353774f217df9d8def",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "20bb891f44a292782a339b29bcef0407dc0347cc8d3e4fda5244de7475bda87c",
+            "identity": "44b92f7a9dee9ef67988c3ad41a4a662c75d72974626b80ea9eb0d03052beb41",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "abb595f380b89ee7efa60179285355ff68cd98630e7944e06babe2bc10d19617",
+            "identity": "7236dc446bb65902ae93f528b7ea9ec12df4abe1abf844a6bbb44723a59a0416",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "6375aee33f5fe35d977e0622feb6b2b22d54af18a9a5d22258455383f7cf7a59",
+            "identity": "298890f3d82ed34ba62aeaabd883dae8e785f74f369de3e37dd0e5b988ae1890",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "49c2f9160cd3b778e1d5a501406c26dfb30c617f00387b1af67e082515f091e6",
+            "identity": "06044cd0151844186b146bbcbaa80b2a86464fd7f55dd2d04e37541bf745f0dd",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "24d2de7875dcdb5c9402c30b34759dbbc87565060174a058acbe01795fa4275f",
+            "identity": "399911edac927ed2a92b7ec9002c7eb299cfd5856c5644775f5c04ee30680649",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "f550c4b33521d178ec032f88124ab32819932b109a553c99627202fda072e79d",
+            "identity": "99d088ad8c73795b99b7d025ddd65a9d5abf9ef31b40c94f6bcc6d1ed51a29d8",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "b15289bffc59867467ca9ad7cd7b4d32cd9a8685e97b145b65842fead472cddf",
+            "identity": "fbee714e688816c8c07f6ad2cef3cd4711167382559399b69094478055e1fdaa",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "f550c4b33521d178ec032f88124ab32819932b109a553c99627202fda072e79d",
+            "identity": "99d088ad8c73795b99b7d025ddd65a9d5abf9ef31b40c94f6bcc6d1ed51a29d8",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "24d2de7875dcdb5c9402c30b34759dbbc87565060174a058acbe01795fa4275f",
+            "identity": "399911edac927ed2a92b7ec9002c7eb299cfd5856c5644775f5c04ee30680649",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "b15289bffc59867467ca9ad7cd7b4d32cd9a8685e97b145b65842fead472cddf",
+            "identity": "fbee714e688816c8c07f6ad2cef3cd4711167382559399b69094478055e1fdaa",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "4cad2157ddbe88906593d8bdc5869b583087df27257fc07eedc7d14364230f27",
+            "identity": "b93a6d12e37c61408b1097465964faf86740f1abb9d363353774f217df9d8def",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "da6b03cc42c18d756242579da6e64a5ed26093c5a1dab86bc0b7410e7fc3848b",
+            "identity": "eca69f412765da7f8e986e32f199d9e45743d099bb8a70344905d93461b04e3a",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "20bb891f44a292782a339b29bcef0407dc0347cc8d3e4fda5244de7475bda87c",
+            "identity": "44b92f7a9dee9ef67988c3ad41a4a662c75d72974626b80ea9eb0d03052beb41",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "6375aee33f5fe35d977e0622feb6b2b22d54af18a9a5d22258455383f7cf7a59",
+            "identity": "298890f3d82ed34ba62aeaabd883dae8e785f74f369de3e37dd0e5b988ae1890",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "abb595f380b89ee7efa60179285355ff68cd98630e7944e06babe2bc10d19617",
+            "identity": "7236dc446bb65902ae93f528b7ea9ec12df4abe1abf844a6bbb44723a59a0416",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "49c2f9160cd3b778e1d5a501406c26dfb30c617f00387b1af67e082515f091e6",
+            "identity": "06044cd0151844186b146bbcbaa80b2a86464fd7f55dd2d04e37541bf745f0dd",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "3c87e2733c2a0880d1679f165ad6393aa60b7c7aebaf5282714b5926e0800e44",
+            "identity": "cdfea828b9296bd32671f5deeaaba45c0b73728f122316b3ddcb01b757a92d3d",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "e49d45025799770f06abbb2547cfcdedd664f89d7b8a1b6cb3f3a201695a1542",
+            "identity": "35680229eba4f08088642ac54bdf301c3f1364d954bfd480fb6d550a7b35967b",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "387f6774c6497fb5b518012fd4c63f6ddc345f9d82fd014e08cd323c2a4f3d6a",
+            "identity": "127836e4fdb9787881202572a48045fa867cf91243c6d78b1180205207f94b3c",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "ec5819f471201f2140cb0c3ac590c238f8e46327baa6b3f9b3c68e9e0c398f9b",
+            "identity": "c3777b7051be25dbc3b0d89ff06aacdf2ea285652b06c69a05bc79b0a05d3174",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "95895e14c116040b294f22b3c15e0a4fef079de0c40c8242cdbcdc903bd064fc",
+            "identity": "40a6dc88c2f42ab9836790c8c490c4ae088a7fa9ada16fdffe752bfd109800e7",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "190ad964dffa7937b4696fb7b0544625e23da9b21becf1a96c3d57760b5d3a3c",
+            "identity": "0bd106056a8afd6efbdea65d8b851f59f2b77b0662c3258e5f8f9d16794f364f",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "009eb3d8786aef68f416f5fdfcf1add77ea8e45a63547ec47b195b4e759116c2",
+            "identity": "0a4eb849be2b2b69bde8469a3e6a36d04b2ab0fd3e2ff4c7a51d77290997176e",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "a8b67fd5553926575ac3e11883de004612e8956e2932af7e66663822075cf505",
+            "identity": "9fc0d2b1265aa9a296078319fd2d0608df347ebe0bf0e6bfbb94cf7d6399460e",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "26efa8142e46d12cb94472131e7cccc0b72bbd77dd6388faffbcaa89816b53ca",
+            "identity": "840326ae2eff42e63f6c2e1f4bc4fb9e78031bf84fde725fdafa08d69ca66b80",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "b9c40cd4482cd409d70afef10bc9c1ef93ae9cc2f93818f75fc2102830f03433",
+            "identity": "61ab0459eb7fb6972ee2457cc40387635cfd7194852db4566210424df006559f",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "6602a107349905d0014c24e121452b123ff734d729ebe0986e7a4f1fecb4dbc0",
+            "identity": "70195e3e1e2f593dd02fe123ff5bf9a33307fdea80660f2db1a3307ebfd19f19",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "1e4191c8c79d464c5f4ec4a0c47fc346c2e7c075d478942b00e2674f47f9c550",
+            "identity": "5e5e5cfc8430c6e929ea0bc61a3e96aa991d71aa33760a1a702f069ca3aa3423",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "6602a107349905d0014c24e121452b123ff734d729ebe0986e7a4f1fecb4dbc0",
+            "identity": "70195e3e1e2f593dd02fe123ff5bf9a33307fdea80660f2db1a3307ebfd19f19",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "b9c40cd4482cd409d70afef10bc9c1ef93ae9cc2f93818f75fc2102830f03433",
+            "identity": "61ab0459eb7fb6972ee2457cc40387635cfd7194852db4566210424df006559f",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "1e4191c8c79d464c5f4ec4a0c47fc346c2e7c075d478942b00e2674f47f9c550",
+            "identity": "5e5e5cfc8430c6e929ea0bc61a3e96aa991d71aa33760a1a702f069ca3aa3423",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "95895e14c116040b294f22b3c15e0a4fef079de0c40c8242cdbcdc903bd064fc",
+            "identity": "40a6dc88c2f42ab9836790c8c490c4ae088a7fa9ada16fdffe752bfd109800e7",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "ec5819f471201f2140cb0c3ac590c238f8e46327baa6b3f9b3c68e9e0c398f9b",
+            "identity": "c3777b7051be25dbc3b0d89ff06aacdf2ea285652b06c69a05bc79b0a05d3174",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "190ad964dffa7937b4696fb7b0544625e23da9b21becf1a96c3d57760b5d3a3c",
+            "identity": "0bd106056a8afd6efbdea65d8b851f59f2b77b0662c3258e5f8f9d16794f364f",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "a8b67fd5553926575ac3e11883de004612e8956e2932af7e66663822075cf505",
+            "identity": "9fc0d2b1265aa9a296078319fd2d0608df347ebe0bf0e6bfbb94cf7d6399460e",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "009eb3d8786aef68f416f5fdfcf1add77ea8e45a63547ec47b195b4e759116c2",
+            "identity": "0a4eb849be2b2b69bde8469a3e6a36d04b2ab0fd3e2ff4c7a51d77290997176e",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "26efa8142e46d12cb94472131e7cccc0b72bbd77dd6388faffbcaa89816b53ca",
+            "identity": "840326ae2eff42e63f6c2e1f4bc4fb9e78031bf84fde725fdafa08d69ca66b80",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "e3471426010dd1274bd4480977bc20f46544daddf890622aaa0a60065f8ce51d",
+            "identity": "a9f7ea24c66822a1e9d3401385cb5a37aef5170bd9cfef6a28b5c60f334a6bbe",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "47d54240915cfe1dd9086ce4e9d143bea69bb1bddc1536d9e5d006aacdb3812a",
+            "identity": "927d8df5997e08218104e440c0956264987cf57bcd95497a789ba534b6cecfb0",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "1009289908adf4facc573367cf93fafb95925297efe1ca3def49c030a3cf1094",
+            "identity": "900e5be4297359cae729d3706b5f91d814bbb8f35b5b2dcf7581ab87e726af18",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "ca07f316bd63f0bd790469d3696568f3bf463607f8f1f0c81c8b9e7807316eb3",
+            "identity": "18ae7f02a7aed79ed4f046950d6617325da4ef745ba2a39a1bdd3e8a3e25f6a3",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "22407a410878c0a466712c1ceea7fb59bddd731f239f35808c00dcaf8a634ca4",
+            "identity": "b886f36ef9ef57f0a6bffa46e10105465cfb40f97559312a6501af06811e7611",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "75c6357be2a6eaeafe14f61fb08a359a34024438f09b3d45e39d1e2bbc0bfbf1",
+            "identity": "1d2626e30a1ce40069d0916dc53f2b1bf41d883c8fbf306e64398875f264cd72",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "113c5b6bbcc8a71fe961e80afac8068ba1aa7c1da1ea2174c1d5b0fafa2ea2b6",
+            "identity": "85b5b9d77a84a2ba024eface2076e9eef4dc5b5c38d31d55591d2861e7841d9e",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "2235bcce5851a4c3b492c4c9454b2d1a10ebb335be27d44764452af0fbdf3f32",
+            "identity": "2627f061090808f136441959e4ddc637376bc5a8e2fceadd38abf1de19225bee",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "69037e7e6afb4648cd59ef65f3705962bd797b54152860381e400b1868b67422",
+            "identity": "9170ea7e9ddd90c162e833bd2e6a9287cea04868c5db1b8a79a62377881b2d9d",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "2235bcce5851a4c3b492c4c9454b2d1a10ebb335be27d44764452af0fbdf3f32",
+            "identity": "2627f061090808f136441959e4ddc637376bc5a8e2fceadd38abf1de19225bee",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "113c5b6bbcc8a71fe961e80afac8068ba1aa7c1da1ea2174c1d5b0fafa2ea2b6",
+            "identity": "85b5b9d77a84a2ba024eface2076e9eef4dc5b5c38d31d55591d2861e7841d9e",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "69037e7e6afb4648cd59ef65f3705962bd797b54152860381e400b1868b67422",
+            "identity": "9170ea7e9ddd90c162e833bd2e6a9287cea04868c5db1b8a79a62377881b2d9d",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "47d54240915cfe1dd9086ce4e9d143bea69bb1bddc1536d9e5d006aacdb3812a",
+            "identity": "927d8df5997e08218104e440c0956264987cf57bcd95497a789ba534b6cecfb0",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "e3471426010dd1274bd4480977bc20f46544daddf890622aaa0a60065f8ce51d",
+            "identity": "a9f7ea24c66822a1e9d3401385cb5a37aef5170bd9cfef6a28b5c60f334a6bbe",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "1009289908adf4facc573367cf93fafb95925297efe1ca3def49c030a3cf1094",
+            "identity": "900e5be4297359cae729d3706b5f91d814bbb8f35b5b2dcf7581ab87e726af18",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "22407a410878c0a466712c1ceea7fb59bddd731f239f35808c00dcaf8a634ca4",
+            "identity": "b886f36ef9ef57f0a6bffa46e10105465cfb40f97559312a6501af06811e7611",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "ca07f316bd63f0bd790469d3696568f3bf463607f8f1f0c81c8b9e7807316eb3",
+            "identity": "18ae7f02a7aed79ed4f046950d6617325da4ef745ba2a39a1bdd3e8a3e25f6a3",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "75c6357be2a6eaeafe14f61fb08a359a34024438f09b3d45e39d1e2bbc0bfbf1",
+            "identity": "1d2626e30a1ce40069d0916dc53f2b1bf41d883c8fbf306e64398875f264cd72",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "b44f44badf89cffb00d98b57e58b00968189dde860c7ae7fcbfc50b0c16bbd21",
+            "identity": "3e132b784916c53d64684b0697980dbfb8802da37ee5029991178d4b8c25a3b7",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "c82e7b73347ed64253d9961584490823ced6f2196570bd2f54c44d6a552b1d40",
+            "identity": "ede7612de1df53152de77cf4d2ecb3da1f962142934cb5898c4acc7e6ed8a187",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "2936d76dcf8054626d7d94d5c5d118354b3b68ab30a914b1c9d6888e4637efc5",
+            "identity": "ef77ac36d62eba0a975f3815566ca4b1e5903edc3141c39ecea7c81348949479",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "5bd55705c245b8bf2801d194fea1a57ea16b7230d9a421956a49c3e9e7ccb2ce",
+            "identity": "686873556b11d6c16198bc01e6d47a7db8f3d1c6d1af262e586e02ac1c2645e4",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "b4ee008e9aba41d73dc5b7552c2d638ab0fe29ee3f8c6a2564b13c81defc2737",
+            "identity": "8997ed4f12e7803e47633b3dbaaf89deaad578244e7df3d06b7be293de89cbdc",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "01944946cf73bce6c3d0f35fed554b7009b2fb4aaca58f625fd8edcb67828c0c",
+            "identity": "541005e7f5159fa27a37d988ecdcd41cce242cd1afa236ff4e16b64adca2ec86",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "69b7618cafc1f345ca05e7354afbb0e461a930a051fec5637cbcccf6caee1659",
+            "identity": "cfcd9a335100bb111aadefd210f0e828910f70610d667fde8d66129f9c3fd88a",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "ecf21d600d19cc193dc97e74d2b383a80b0ae753933e200d3b413474c789027a",
+            "identity": "a32fb118899480a8bf68f6a26d7244bfa851ad18377dd663fd7924ac87b2d20e",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "c57345d7bfd7f410931ab81ce7e57b32eff42a938b6cc09a43d2b8bb87bd2783",
+            "identity": "32459bb6bc96d1c17da16d3b5c4e60ab8f8f2fdb184c5628937ee174f4e4b9ef",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "3058de538c112a079da12bd1e608ca488c9c8d32642242cf4a55f2404ca05ecb",
+            "identity": "9f58aa1e8292a27056382ddc6e8dacc6f8f56178e3dbf0b340948f585cc26f88",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "9b323472e2345efc7091634bade2601a64ff31b0569bedf36b903de564c3e111",
+            "identity": "d368ef51491bdde5db4c9256d821bb420a4ebf92badd7503fd4518ceeb514a15",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "60877d34ac285ed2b1f46073dfb72f8b1372d2db25b3cc1e5f23caae044ec676",
+            "identity": "01570f9dd00010d28aa6e58accac7f5da185fb6d39d0790a654ba79fb22f9158",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "7fb13b040cb753b55720a1385ec1a67f7c5a8d3927b1ec426a575732fa58a7cc",
+            "identity": "f3853877054334f05bc4e87fb5f813e16871f97c35e65690d5e66d1020bbbaee",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "d46a298f90db9f1d3bbd08a81a7865f752a5c22dd7ce96d3ffe200d1846e63c8",
+            "identity": "75272032ea9f906652bb0f9fc19769efb1f27ad1647409396834ab704432c221",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "a9fc1154b1725f8d064f23897aac168a77c632a54db21704beef21d10727ce30",
+            "identity": "c4ae5b91bbf927b3ce4d3b8e4578021a859572c96cd7fe57b782eb5dd3c635d8",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "60877d34ac285ed2b1f46073dfb72f8b1372d2db25b3cc1e5f23caae044ec676",
+            "identity": "01570f9dd00010d28aa6e58accac7f5da185fb6d39d0790a654ba79fb22f9158",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "5bd55705c245b8bf2801d194fea1a57ea16b7230d9a421956a49c3e9e7ccb2ce",
+            "identity": "686873556b11d6c16198bc01e6d47a7db8f3d1c6d1af262e586e02ac1c2645e4",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "ecf21d600d19cc193dc97e74d2b383a80b0ae753933e200d3b413474c789027a",
+            "identity": "a32fb118899480a8bf68f6a26d7244bfa851ad18377dd663fd7924ac87b2d20e",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "d46a298f90db9f1d3bbd08a81a7865f752a5c22dd7ce96d3ffe200d1846e63c8",
+            "identity": "75272032ea9f906652bb0f9fc19769efb1f27ad1647409396834ab704432c221",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "7fb13b040cb753b55720a1385ec1a67f7c5a8d3927b1ec426a575732fa58a7cc",
+            "identity": "f3853877054334f05bc4e87fb5f813e16871f97c35e65690d5e66d1020bbbaee",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "a9fc1154b1725f8d064f23897aac168a77c632a54db21704beef21d10727ce30",
+            "identity": "c4ae5b91bbf927b3ce4d3b8e4578021a859572c96cd7fe57b782eb5dd3c635d8",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "01944946cf73bce6c3d0f35fed554b7009b2fb4aaca58f625fd8edcb67828c0c",
+            "identity": "541005e7f5159fa27a37d988ecdcd41cce242cd1afa236ff4e16b64adca2ec86",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "b4ee008e9aba41d73dc5b7552c2d638ab0fe29ee3f8c6a2564b13c81defc2737",
+            "identity": "8997ed4f12e7803e47633b3dbaaf89deaad578244e7df3d06b7be293de89cbdc",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "69b7618cafc1f345ca05e7354afbb0e461a930a051fec5637cbcccf6caee1659",
+            "identity": "cfcd9a335100bb111aadefd210f0e828910f70610d667fde8d66129f9c3fd88a",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "3058de538c112a079da12bd1e608ca488c9c8d32642242cf4a55f2404ca05ecb",
+            "identity": "9f58aa1e8292a27056382ddc6e8dacc6f8f56178e3dbf0b340948f585cc26f88",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "c57345d7bfd7f410931ab81ce7e57b32eff42a938b6cc09a43d2b8bb87bd2783",
+            "identity": "32459bb6bc96d1c17da16d3b5c4e60ab8f8f2fdb184c5628937ee174f4e4b9ef",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": true,
+            "geometry_key": "9b323472e2345efc7091634bade2601a64ff31b0569bedf36b903de564c3e111",
+            "identity": "d368ef51491bdde5db4c9256d821bb420a4ebf92badd7503fd4518ceeb514a15",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "384e3022fd5792a2480f5964b4910eb3988de88d416aaa8a011ba076ebb0b8c8",
+            "identity": "3f0d3e3220774cf6b4e253c5b0b8ebf27e57a16169a967f625c2b722f27a5b53",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "f2130b87d92633f878d8172cf197df03bf9761e3ef35837bb65c6073381e6e9b",
+            "identity": "86c048ce6b3de9df7023605ce2765dbdcc935432749e08372ec5b0159125f6e2",
+            "slot_hit": false
+          }
+        ],
+        "selection": 0
+      },
+      {
+        "events": [
+          {
+            "exact_bound": false,
+            "geometry_key": "5e9f4620a95bb60c5ca762b421f8a6e68b12d3c621f5f333399d5da9265a69b8",
+            "identity": "b83ac9a1463207e9e8409f66601afa91165748a9b349661c86059e4d48e59808",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "1aafc712fd2d385b8ee0cd991164684e19c35618aadc4c3c38a9755d028bd965",
+            "identity": "cb672c6f0b292b459c6cb4c716758f7f8db4c7a336011ecd27ab3844142606e1",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "eaa5d185ebc9a139498df469229113184d12dbf496916d975627a0e2dcc48a83",
+            "identity": "39cc0438fb9f6a8ae2e354e0004fd74c1cd8d195ef237d26c7ca3daf771ca695",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "d841b0a6d2c018c036932aa0e95a1633d47cbb30986f2eea4d5d4366f72489f3",
+            "identity": "65a0cdd73fef9c6646e46da8205baa76191c11e3255f14dab9dddd6e16b1f8f3",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "eb6c98bbdcd9ebe6418f0ea069f4920630882eb6fca9d031e764d60d85a4b986",
+            "identity": "6f309991db7eccf6915ec6ac904e36572bc39d20f88f6efa96dc00f12361531e",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "3c87e2733c2a0880d1679f165ad6393aa60b7c7aebaf5282714b5926e0800e44",
+            "identity": "b04358a9a61c1255935936c8d3785a4d52f1a29d26248e57f1bf3ad9ca4b53ca",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "e49d45025799770f06abbb2547cfcdedd664f89d7b8a1b6cb3f3a201695a1542",
+            "identity": "3beec0f78489fa6ef9cf75044fa271e054330b4d3faadcf5c72fb51612ba37a5",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "387f6774c6497fb5b518012fd4c63f6ddc345f9d82fd014e08cd323c2a4f3d6a",
+            "identity": "e708d0f57968f6d0170955430d2276e938661d8eb62c01d75840b7da6001cf62",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "b44f44badf89cffb00d98b57e58b00968189dde860c7ae7fcbfc50b0c16bbd21",
+            "identity": "2a0bee680c60ec44dafce98d4268e4705df2e885236fdeceacbf101d95af6a03",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "4c71b4be8bc9e9e7153263ba54ccade0e59c9fa9ebcf58ff93eb334dbdb9ce7a",
+            "identity": "eb986636d7790e0db7e75f288fc85b07e38c6f085354889a932961a11c91aa4d",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "368f2ce27b4d020565d475783306f2b55ff828b1d78788bb39c9fd0861dc538c",
+            "identity": "3cd0ea890e493b29c5914cebd02212d2ad739960f321e8a14a9ec0d0dcf305b5",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "7421ee0bde9f40d9eecd6b2c43e704f096c273995787a0437fbf1a294e8c827e",
+            "identity": "539a096ca062cf41aa29d9c6574a4e77ae7a8f35429c638466609dd0d97508a9",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "5fe691c073ac92798084b4d27ace440e51a2881a959da22204b8cb7f4dd69491",
+            "identity": "b8c64d6fcff21e512f43cead39a1f4c1537783c73895c44824c5f539ceaf6ac0",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "45da7e05a050d6b355f83c703f6a4fd49c651a9e29916a6f4f569b3d4b398ac2",
+            "identity": "544f7c8d8e83a730b77743e5abdb9cab40e82b70a408201128679827c6d69c42",
+            "slot_hit": false
+          },
+          {
+            "exact_bound": false,
+            "geometry_key": "1eddd7a87451f70ab3258cfea74d2d77822e941f3de235b5960f016eae0d8c4a",
+            "identity": "81f74485cdd527cfece89983ca02263692a850bd5c1854283a667e477d09db1e",
+            "slot_hit": false
+          }
+        ],
+        "selection": 1
+      }
+    ],
+    "request_count": 144,
+    "requests_by_bound_mode": {
+      "exact": 60,
+      "relaxed": 84
+    },
+    "selection_count": 2,
+    "skipped_unknown_requests": 0
+  },
+  "graph_input_identities": {
+    "calls_by_exact_bound": {
+      "exact": 60,
+      "relaxed": 84
+    },
+    "distinct_input_identities": 84,
+    "identities_seen_in_both_modes": 60,
+    "observed_calls": 144,
+    "paired_call_count": 60,
+    "same_mode_duplicate_calls": 0,
+    "skipped_unknown_closure": 0
+  },
+  "graph_memo_admission": {
+    "attempted_records": 4012742,
+    "over_limit_attempts": 144,
+    "refused_entries": 144,
+    "refused_records": 4012742
+  },
+  "patch_alias_counts": {
+    "graph.endpoint_requests": 1,
+    "graph.envelope": 1,
+    "graph.reverse_bounds": 1,
+    "graph.sparse_graph": 1,
+    "graph.visibility_base": 1,
+    "labels.member": 2,
+    "labels.relation": 2,
+    "labels.span_paint": 1,
+    "routing.compose_surface_routes": 2,
+    "routing.label_trial_other": 1,
+    "routing.resolution": 2,
+    "routing.selection_other": 2
+  },
+  "phases": {
+    "route-label-baseline/normal/candidate.accept": {
+      "calls": 553,
+      "exclusive_seconds": 0.12655051983892918
+    },
+    "route-label-baseline/normal/candidate.prepare": {
+      "calls": 403,
+      "exclusive_seconds": 0.014041654765605927
+    },
+    "route-label-baseline/normal/candidate.rank": {
+      "calls": 56,
+      "exclusive_seconds": 0.0012386264279484749
+    },
+    "route-label-baseline/normal/graph.envelope": {
+      "calls": 61920,
+      "exclusive_seconds": 0.013298173900693655
+    },
+    "route-label-baseline/normal/graph.reverse_bounds": {
+      "calls": 60,
+      "exclusive_seconds": 2.840099790133536
+    },
+    "route-label-baseline/normal/graph.sparse_graph": {
+      "calls": 129,
+      "exclusive_seconds": 7.992358959745616
+    },
+    "route-label-baseline/normal/graph.visibility_base": {
+      "calls": 1,
+      "exclusive_seconds": 0.05034045781940222
+    },
+    "route-label-baseline/normal/routing.resolution_attempt_other": {
+      "calls": 336,
+      "exclusive_seconds": 0.003258864860981703
+    },
+    "route-label-baseline/normal/routing.selection_other": {
+      "calls": 336,
+      "exclusive_seconds": 8.740947159938514
+    },
+    "route-label-baseline/unspecified/labels.member": {
+      "calls": 209,
+      "exclusive_seconds": 14.290133710484952
+    },
+    "route-label-baseline/unspecified/labels.relation": {
+      "calls": 1,
+      "exclusive_seconds": 6.950041279196739e-05
+    },
+    "route-label-baseline/unspecified/labels.span_paint": {
+      "calls": 50160,
+      "exclusive_seconds": 0.3650025394745171
+    },
+    "route-label-baseline/unspecified/routing.compose_surface_routes": {
+      "calls": 1,
+      "exclusive_seconds": 0.34042274579405785
+    },
+    "route-label-baseline/unspecified/routing.label_trial_other": {
+      "calls": 1,
+      "exclusive_seconds": 0.0001127081923186779
+    },
+    "route-label-baseline/unspecified/routing.resolution": {
+      "calls": 336,
+      "exclusive_seconds": 0.00433713011443615
+    },
+    "route-label-recovery/normal/candidate.accept": {
+      "calls": 516,
+      "exclusive_seconds": 0.144560219720006
+    },
+    "route-label-recovery/normal/candidate.prepare": {
+      "calls": 412,
+      "exclusive_seconds": 0.10425911005586386
+    },
+    "route-label-recovery/normal/graph.envelope": {
+      "calls": 21600,
+      "exclusive_seconds": 0.004636211320757866
+    },
+    "route-label-recovery/normal/graph.sparse_graph": {
+      "calls": 15,
+      "exclusive_seconds": 4.113630580250174
+    },
+    "route-label-recovery/normal/graph.visibility_base": {
+      "calls": 1,
+      "exclusive_seconds": 0.5631625419482589
+    },
+    "route-label-recovery/normal/routing.resolution_attempt_other": {
+      "calls": 336,
+      "exclusive_seconds": 0.0032455846667289734
+    },
+    "route-label-recovery/normal/routing.selection_other": {
+      "calls": 336,
+      "exclusive_seconds": 8.538882495835423
+    },
+    "route-label-recovery/unspecified/labels.member": {
+      "calls": 1,
+      "exclusive_seconds": 1.340527746360749
+    },
+    "route-label-recovery/unspecified/labels.relation": {
+      "calls": 1,
+      "exclusive_seconds": 3.133295103907585e-05
+    },
+    "route-label-recovery/unspecified/labels.span_paint": {
+      "calls": 240,
+      "exclusive_seconds": 0.0027955034747719765
+    },
+    "route-label-recovery/unspecified/routing.compose_surface_routes": {
+      "calls": 1,
+      "exclusive_seconds": 0.38806932931765914
+    },
+    "route-label-recovery/unspecified/routing.label_trial_other": {
+      "calls": 1,
+      "exclusive_seconds": 0.13402720913290977
+    },
+    "route-label-recovery/unspecified/routing.resolution": {
+      "calls": 336,
+      "exclusive_seconds": 0.002846469171345234
+    },
+    "unclassified/unspecified/labels.member": {
+      "calls": 1,
+      "exclusive_seconds": 0.0003218981437385082
+    },
+    "unclassified/unspecified/labels.span_paint": {
+      "calls": 240,
+      "exclusive_seconds": 0.0009522270411252975
+    }
+  },
+  "platform": "macOS-26.3.1-arm64-arm-64bit-Mach-O",
+  "probe_sha256": "6e87e64bf63ffe8caacb526d369f564a2d33c03edbbf072bf53e97437dbcc79a",
+  "process_outcome": "returned",
+  "python": "3.13.7 (main, Sep  6 2025, 01:18:26) [Clang 13.1.6 (clang-1316.0.21.2)]",
+  "residual_category": "unwrapped CLI/projection/other runtime",
+  "residual_seconds": 8.073460916057229,
+  "return_code": 0,
+  "source_root": "/private/tmp/chrona-1715-auto-warning.TW0LNy",
+  "wall_seconds": 58.19762191735208
+}

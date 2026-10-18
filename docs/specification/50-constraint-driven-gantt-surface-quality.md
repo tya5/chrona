@@ -928,15 +928,20 @@ order, heuristic or candidate allowance. Projection-line preparation counters
 remain separate from base builds and endpoint assemblies; its active retained
 geometry must remain O(M), not grow with all endpoint pairs or render history.
 
-The prepared selection may also keep at most one completed endpoint-graph
-geometry (ordered nodes and ordered adjacency), across all of its visibility
-bases, as active O(M) data (#1734). Its exact identity includes start/end,
+The prepared selection may also keep a bounded working set of at most12
+completed endpoint-graph geometries (ordered nodes and ordered adjacency),
+across all of its visibility bases, as active O(M) data (#1734). This private,
+fixed capacity is independent of project size and the number of endpoint
+pairs or renders; it is not a routing allowance or user-configurable policy.
+Its exact identity includes start/end,
 bounds, grid offset and selected port exemptions; selected obstacle content
 and class/region filters are fixed by its owning prepared selection. A new key
-replaces the previous geometry; changed selected content starts empty and
+at capacity evicts the oldest admitted geometry (FIFO); a hit does not reorder
+the working set. Changed selected content starts empty and
 does not inherit endpoint geometry through a previous visibility generation.
-Equal-content copies may share these immutable facts. This single slot is
-separate from, and does not enlarge, the4096-record retained search memo.
+Equal-content copies may share these immutable facts, released with their
+owning selection. This active working set is separate from, and does not
+enlarge, the4096-record retained search memo.
 Bound modes may share only that geometry: exact reverse bounds are completed
 for exact mode, while frontier history, expansion accounting, route completion
 and acceptance remain fresh. No route or acceptance verdict is retained here.
