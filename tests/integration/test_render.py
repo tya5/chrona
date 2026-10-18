@@ -882,7 +882,7 @@ def test_draft_wallboard_visual_inventory_reaches_completed_slots(tmp_path):
     view["body"]["visuals"] = [
         {"target": {"kind": "axis-band", "level": "quarter", "index": 0}, "ref": "chrona:risk", "decorative": True},
         {"target": {"kind": "axis-label", "level": "month", "index": 0}, "ref": "chrona:risk", "decorative": True},
-        {"target": {"kind": "legend", "role": "planned"}, "ref": "chrona:risk", "decorative": True},
+        {"target": {"kind": "legend", "role": "actual"}, "ref": "chrona:risk", "decorative": True},
         {"target": {"kind": "as-of-label"}, "ref": "chrona:risk", "decorative": True},
         {"target": {"kind": "summary", "panel": "key-figures"}, "ref": "chrona:risk", "decorative": True},
         {"target": {"kind": "summary", "panel": "key-figures", "metric": "launch", "part": "value"}, "ref": "chrona:risk", "decorative": True},
@@ -897,7 +897,8 @@ def test_draft_wallboard_visual_inventory_reaches_completed_slots(tmp_path):
         viewport=(1920, 1080)))
     by_id = {primitive.scene_id: primitive for primitive in rendered.surface.primitives}
     assert "visual:axis-band-rect:0:0" in by_id
-    for placement_id in ("axis-label:3:0", "legend:planned", "summary:key-figures",
+    assert any(scene_id.startswith("visual:legend:actual:") for scene_id in by_id)
+    for placement_id in ("axis-label:3:0", "summary:key-figures",
                           "summary:key-figures:launch:value", "summary:key-figures:launch:caption", "as-of-label"):
         assert f"visual:{placement_id}:leading" in by_id
 

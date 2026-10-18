@@ -41,7 +41,12 @@ def _render(tmp_path, *, inline, block, item_min=None, direction="inline"):
     source = sr.with_calendar(sr.project({"a": sr.span("a", date(2026, 2, 2), 30), "g": sr.point("g", date(2026, 3, 9))}))
     detail = {"version": "chrona/review-detail-profile/v0.1", "id": "legend-detail",
               "body": {"legend": [{"role": role, "label": LABELS[role]} for role in ROLES]}}
-    return sr.render(tmp_path, source, presentation=parts, detail=detail)
+    actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "legend-actual",
+              "body": {"asOf": "2026-03-15", "observations": [
+                  {"id": "a-observed", "sequence": 1, "projectObjectId": "a",
+                   "actual": {"start": "2026-02-02", "finish": "2026-02-28"}},
+              ]}}
+    return sr.render(tmp_path, source, presentation=parts, detail=detail, actual=actual)
 
 
 def _track(rendered):

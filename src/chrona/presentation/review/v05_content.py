@@ -17,6 +17,7 @@ from chrona.presentation.model.surface_content import (
 from chrona.presentation.table_presentation import affix_state
 from chrona.presentation.review.detail import normalize_v05_review_detail_profile
 from chrona.presentation.review.profile_connections import validate_period_legend_sources
+from chrona.presentation.review.view_legend_witnesses import bind_view_legend_witnesses
 from chrona.presentation.review.figure_facts import projected_counts
 from chrona.presentation.review.annotation_expansion import expand_annotations
 from chrona.presentation.model.placement_candidates import legacy_candidate_order, parse_candidates
@@ -79,9 +80,11 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
     if getattr(view.rows.mode, "value", view.rows.mode) == "lanes":
         return _lane_table_content(projection, project, view)
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
+    active_columns = tuple(column for column in view.table_columns
+                           if _table_column_source_available(column.source, projection, actual_set))
     columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width), column.header_orientation,
                                        text_wrap=column.text_wrap, column_source=column.source)
-                    for column in view.table_columns)
+                    for column in active_columns)
     as_of = date.fromisoformat(str(actual_body["asOf"])) if isinstance(actual_body.get("asOf"), str) else None
     def cell_parts(item: Any, column: Any, row_index: int) -> tuple[str, str, str]:
         """The cell's (prefix, core, suffix): the affix of its state wraps the formatted text (#588)."""
@@ -131,7 +134,7 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         def row_cell(row: Any, column: Any, row_index: int) -> TableCellContent:
             if row.key_row:
                 # The key row names itself in the first column and leaves the others empty (#1501).
-                text = row.label if column.id == view.table_columns[0].id else ""
+                text = row.label if active_columns and column.id == active_columns[0].id else ""
                 return TableCellContent(row.row_id, column.id, text, "tableCell", cell_typography_role(column),
                                         style_key=_table_style_key(None, row.row_id, column.id, "tableCell"))
             item = next(item for item in row.items if item.item_id == row.table_subject_id)
@@ -146,24 +149,62 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
                                                               "groupHeader" if header else cell_semantic(item, column)))
         cells = tuple(
             row_cell(row, column, row_index)
-            for row_index, row in enumerate(projection.rows, 1) for column in view.table_columns)
+            for row_index, row in enumerate(projection.rows, 1) for column in active_columns)
         table_cell_objects = tuple(
             (row.row_id, column.id,
              next(item for item in row.items if item.item_id == row.table_subject_id).object_id,
              next(item for item in row.items if item.item_id == row.table_subject_id).source_kind in {"primary", "combined"}
              and not row.key_row)
-            for row in projection.rows for column in view.table_columns)
+            for row in projection.rows for column in active_columns)
         row_levels = tuple(TableRowLevel((row.row_id, row.table_subject_id), bool(row.group_id), row.depth)
                            for row in projection.rows)
     else:
         cells = tuple(TableCellContent(item.object_id, column.id, cell(item, column, row_index), cell_semantic(item, column), cell_typography_role(column), *cell_affixes(item, column, row_index), required=_is_forecast_delta(item, column.source),
                                        style_key=_table_style_key(item, item.object_id, column.id, cell_semantic(item, column)))
-                      for row_index, item in enumerate(projection.items, 1) for column in view.table_columns)
+                      for row_index, item in enumerate(projection.items, 1) for column in active_columns)
         table_cell_objects = tuple((item.object_id, column.id, item.object_id, True)
-                                   for item in projection.items for column in view.table_columns)
+                                   for item in projection.items for column in active_columns)
         row_levels = tuple(TableRowLevel((item.object_id,), bool(item.group_id)) for item in projection.items)
     return TableContent(columns, cells, table_cell_objects, view.hierarchy_column, row_levels,
                         indent_under_headers=_indents_under_headers(view))
+
+
+def _table_subjects(projection: ReviewProjection) -> tuple[Any, ...]:
+    """Return only the items that supply table cells, not comparison/plot-only tracks."""
+    if not projection.has_rows:
+        return projection.items
+    subjects = []
+    for row in projection.rows:
+        if row.key_row:
+            continue
+        item = next((candidate for candidate in row.items if candidate.item_id == row.table_subject_id), None)
+        if item is not None:
+            subjects.append(item)
+    return tuple(subjects)
+
+
+def _table_column_source_available(source: Any, projection: ReviewProjection,
+                                   actual_set: Mapping[str, Any] | None) -> bool:
+    """Keep a comparison column only when its declared data source is bound."""
+    if not isinstance(source, Mapping):
+        return True
+    subjects = _table_subjects(projection)
+    if "scenario" in source:
+        return "scenario" in projection.bound_comparison_sources
+    if "facet" in source:
+        facet = source["facet"]
+        if facet == "actual":
+            return actual_set is not None
+        if facet == "finishDelta":
+            return actual_set is not None or any(item.forecast is not None for item in subjects)
+        return True
+    facet = source.get("comparisonFacet")
+    if facet == "finishDelta":
+        return (actual_set is not None
+                or any(item.forecast is not None for item in subjects))
+    if facet in {"startDelta", "atDelta", "progress", "missingActual"}:
+        return actual_set is not None
+    return True
 
 
 def _indents_under_headers(view: ViewInput) -> bool:
@@ -643,8 +684,11 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                                   for target in (annotation_kind_also or {}).get(item.kind, ())))),
                                actual_variance_paints=select_actual_variance_paints(
                                    projection, actual_variance_colors or {}))
+    needs_actual_candidates = any(entry.role == "actual" for entry in content.legend_entries)
+    facts = (collect_surface_style_facts(projection, content, gate_declared=gate_declared)
+             if style_rules or encoding_rules or needs_actual_candidates else None)
     if style_rules or encoding_rules:
-        facts = collect_surface_style_facts(projection, content, gate_declared=gate_declared)
+        assert facts is not None
         intents = OccurrenceStyleIndex(evaluate_style_rules(
             (*encoding_rules, *style_rules), facts.occurrences, field_catalogue=facts.field_catalogue))
         style_fills = complete_style_fills(
@@ -664,7 +708,25 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
             validate_style_mark_paint(
                 intents, facts.occurrences, content.style_fills, ThemeTokenView(theme),
                 source_refs={rule.rule_id: rule.source_ref for rule in (*encoding_rules, *style_rules)})
-    return content
+    content = bind_view_legend_witnesses(content, facts.occurrences if facts else (), encoding_rules, color_scale)
+    return replace(content,
+        legend_wording=tuple(sorted((view.wording or {}).get("legend", {}).items())),
+        legend_mark_occurrences=tuple(item for item in (facts.occurrences if facts else ())
+                                      if item.primitive_family == "mark"),
+        legend_progress_possible=_positive_legend_progress(projection, view.progress_fill))
+
+
+def _positive_legend_progress(projection: ReviewProjection, source: str | None) -> bool:
+    """Potential ink only; completed host/clip admission remains Layout-owned."""
+    if source is None:
+        return False
+    items = (*projection.items, *(item for row in projection.rows for item in row.items),
+             *(item for folded in projection.folded_points for item in folded.all_items))
+    for item in items:
+        value = (item.actual or {}).get("progress") if source == "actual" else item.planned_progress
+        if isinstance(value, (float, int)) and not isinstance(value, bool) and 0 < value <= 1:
+            return True
+    return False
 
 
 def _group_header_facts(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> dict[str, Any] | None:

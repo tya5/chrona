@@ -449,8 +449,9 @@ empty; no locale substitution) and is `E_VIEW_KEY_ROW_TITLE_REQUIRED` when absen
 other policy, `E_VIEW_KEY_ROW_MODE` outside `automatic`. It works with any grouping, including none; group headers
 stay below it. The View must show titles on the plot (`E_REVIEW_POINT_KEY_ROW_LABEL_REQUIRED`). Layout packs the
 points into lanes by the greedy interval rule of folded group-header points: a point's extent is its marks plus its
-title label on the placed side, a point takes the lowest lane whose last extent ends at or before its start, so the
-lane count is the clique number of the extents and the row height is that many mark lanes. Labels stay on the start
+title label on the placed side (and its forecast finish delta with the label gap, #1681), a point takes the lowest lane whose last extent ends at or before its start, so the
+lane count is the clique number of the extents and the row height is that many lanes, each as tall as the mark lane or
+the label it holds, whichever is taller. Labels stay on the start
 or end side inside their lane and use `visible-overflow`: a label that cannot clear its neighbours is drawn
 overlapping, never suppressed. A View with no point draws no key row. Other policies and the default are unchanged.
 

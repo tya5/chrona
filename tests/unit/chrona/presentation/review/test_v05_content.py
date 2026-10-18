@@ -428,7 +428,8 @@ def test_table_cell_semantics_follow_declared_source_not_item_role_order():
          "format": {"kind": "presence", "whenTrue": "Missing", "whenFalse": "Recorded"}, "missing": "em-dash"},
         {"id": "Title", "source": "title", "missing": "em-dash"},
     ), "visibility": {"relations": "none", "annotations": "none"}}}
-    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view), summary=EMPTY_SUMMARY)
+    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
+                                          summary=EMPTY_SUMMARY, actual_set={"body": {"observations": []}})
     selected = {(cell.object_id, cell.column_id): cell.semantic_id for cell in value.table_cells}
     assert [selected[(item, "Delta")] for item in ("ahead", "plan", "behind", "unknown")] == ["tableVarianceAhead", "tableVarianceOnTrack", "tableVarianceBehind", "tableCell"]
     assert selected[("missing", "Missing")] == "missingActualCell"
@@ -618,7 +619,8 @@ def test_scenario_table_facts_use_the_table_subject_and_missing_policy():
     primary = ReviewItem("task", "Current", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)},
                          None, None, (), item_id="current", source_kind="primary")
     projection = ReviewProjection((primary,), (date(2026, 1, 1), date(2026, 2, 2)), (), (),
-                                  (ReviewRowProjection("scenario", "Scenario", "", "delayed", (primary, scenario)),))
+                                  (ReviewRowProjection("scenario", "Scenario", "", "delayed", (primary, scenario)),),
+                                  bound_comparison_sources=frozenset({"scenario"}))
     view = {"body": {"tableColumns": (
         {"id": "Scenario", "source": {"scenario": "title"}, "missing": "em-dash"},
         {"id": "Scenario id", "source": {"scenario": "id"}, "missing": "em-dash"},
@@ -1092,7 +1094,9 @@ def test_legend_entries_are_the_drawn_entries_detail_first_then_one_per_used_sca
     drawn = normalize_v05_surface_content(_scale_projection(), project,
                                           typed_view({"body": {"tableColumns": (), "visibility": {}}}),
                                           summary=EMPTY_SUMMARY, color_scale=color_scale, detail=detail)
-    assert drawn.legend_entries == entries
+    assert tuple(replace(entry, style_occurrences=()) for entry in drawn.legend_entries) == entries
+    assert tuple(key.subject_id for key in drawn.legend_entries[1].style_occurrences) == ("a",)
+    assert tuple(key.subject_id for key in drawn.legend_entries[2].style_occurrences) == ("b",)
 
 
 def test_forecast_delta_table_cells_are_required_and_mark_unfinished_estimates():
@@ -1123,6 +1127,85 @@ def test_completed_forecast_delta_is_still_required_without_estimated_marker():
     ], "visibility": {}}})
     cell, = normalize_v05_table_content(projection, {}, view).cells
     assert (cell.content, cell.required) == ("+2d", True)
+
+
+def test_table_columns_and_cells_omit_only_comparison_sources_absent_from_context():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)},
+                      None, None, (), item_id="a")
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 5)), (), ())
+    view = typed_view({"body": {"tableColumns": [
+        {"id": "Planned", "source": {"facet": "planned"}, "format": "dateRange", "missing": "em-dash"},
+        {"id": "Actual", "source": {"facet": "actual"}, "format": "dateRange", "missing": "em-dash"},
+        {"id": "Delta", "source": {"comparisonFacet": "finishDelta"}, "format": "signedDays", "missing": "blank"},
+        {"id": "Progress", "source": {"comparisonFacet": "progress"}, "format": "text", "missing": "blank"},
+        {"id": "Missing", "source": {"comparisonFacet": "missingActual"},
+         "format": {"whenTrue": "yes", "whenFalse": "no"}, "missing": "blank"},
+    ], "visibility": {}}})
+    original_columns = view.table_columns
+
+    absent = normalize_v05_table_content(projection, {}, view)
+    supplied_empty = normalize_v05_table_content(projection, {}, view,
+                                                  actual_set={"body": {"observations": []}})
+
+    assert [column.column_id for column in absent.columns] == ["Planned"]
+    assert [cell.column_id for cell in absent.cells] == ["Planned"]
+    assert [column.column_id for column in supplied_empty.columns] == [
+        "Planned", "Actual", "Delta", "Progress", "Missing"]
+    assert [cell.column_id for cell in supplied_empty.cells] == [
+        "Planned", "Actual", "Delta", "Progress", "Missing"]
+    assert view.table_columns == original_columns  # normalization does not rewrite authored View input
+
+
+def test_forecast_fact_supplies_finish_delta_without_actual_but_snapshot_alone_does_not():
+    primary = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)},
+                         None, None, (), item_id="a")
+    forecast = replace(primary, forecast=ForecastComparisonFact(
+        ForecastItem({"start": date(2026, 1, 1), "end": date(2026, 1, 7)}, completed=False), 2))
+    snapshot = replace(primary, source_kind="snapshot", item_id="snapshot:a")
+    view = typed_view({"body": {"tableColumns": [
+        {"id": "Delta", "source": {"comparisonFacet": "finishDelta"}, "format": "signedDays", "missing": "blank"},
+    ], "visibility": {}}})
+
+    forecast_table = normalize_v05_table_content(
+        ReviewProjection((forecast,), (date(2026, 1, 1), date(2026, 1, 7)), (), ()), {}, view)
+    snapshot_table = normalize_v05_table_content(
+        ReviewProjection((snapshot,), (date(2026, 1, 1), date(2026, 1, 5)), (), ()), {}, view)
+
+    assert [cell.content for cell in forecast_table.cells] == ["+2d*"]
+    assert [column.column_id for column in snapshot_table.columns] == []
+    assert snapshot_table.cells == ()
+
+
+def test_scenario_column_uses_bound_source_presence_even_without_scenario_table_subject():
+    primary = ReviewItem("a", "A", "span", {}, None, None, (), item_id="a")
+    view = typed_view({"body": {"tableColumns": [
+        {"id": "Scenario", "source": {"scenario": "title"}, "format": "text", "missing": "blank"},
+    ], "visibility": {}}})
+
+    absent = normalize_v05_table_content(ReviewProjection((primary,), (date(2026, 1, 1), date(2026, 1, 2)), (), ()),
+                                         {"scenarios": {"risk": {"title": "Risk case"}}}, view)
+    bound_projection = ReviewProjection((primary,), (date(2026, 1, 1), date(2026, 1, 2)), (), (),
+                                        bound_comparison_sources=frozenset({"scenario"}))
+    bound = normalize_v05_table_content(bound_projection,
+                                        {"scenarios": {"risk": {"title": "Risk case"}}}, view)
+
+    assert absent.columns == () and absent.cells == ()
+    assert [column.column_id for column in bound.columns] == ["Scenario"]
+    assert [cell.content for cell in bound.cells] == [""]  # empty policy is applied to the unselected source
+
+
+def test_bound_scenario_column_survives_resolved_empty_table_rows():
+    view = typed_view({"body": {"tableColumns": [
+        {"id": "Scenario", "source": {"scenario": "title"}, "format": "text", "missing": "blank"},
+    ], "visibility": {}}})
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), (),
+                                  rows=(), rows_resolved=True,
+                                  bound_comparison_sources=frozenset({"scenario"}))
+
+    table = normalize_v05_table_content(projection, {"scenarios": {"risk": {"title": "Risk case"}}}, view)
+
+    assert [column.column_id for column in table.columns] == ["Scenario"]
+    assert table.cells == ()
 
 
 def test_forecast_legend_replaces_planned_key_or_adds_it_and_accepts_wording():

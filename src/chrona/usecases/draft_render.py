@@ -12,13 +12,13 @@ library's own typed exceptions (``StableFailure``, ``ClosureError``,
 from __future__ import annotations
 
 import tempfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Literal
 
 from chrona.core.ports import RenderArtifact, SnapshotReader
 from chrona.core.validation import load_yaml
-from chrona.extensions.profiles import check_project_extensions
+from chrona.extensions.profiles import resolve_local_extension_manifests
 from chrona.presentation.contracts import TypesetterIdentity
 from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, ClosureError, resolve_draft_render
 from chrona.presentation.model.info_diagnostics import (
@@ -199,7 +199,7 @@ def render_draft(request: DraftRenderRequest) -> DraftRenderResult:
             draft_auto_block=closure.auto_block, draft_font_resolution=closure.font_resolution,
             preset_visual_profile_fallback=closure.preset_visual_profile_fallback,
             progress=request.progress,
-            extension_diagnostics=_draft_extension_diagnostics(request),
+            **_draft_extensions(request),
         ))
     finally:
         if owned_tempdir is not None:
@@ -207,13 +207,24 @@ def render_draft(request: DraftRenderRequest) -> DraftRenderResult:
     return DraftRenderResult(rendered, _typesetter_version_notes(request) + _undrawn_input_notes(request, closure.closure))
 
 
-def _draft_extension_diagnostics(request: DraftRenderRequest) -> tuple[Any, ...]:
-    """Resolve ``path`` extensions beside the draft Project file with the shared checker (#1682)."""
-    project_path = Path(request.project)
-    project = load_yaml(project_path)
-    if not isinstance(project, dict) or not isinstance(project.get("extensions"), list):
-        return ()
-    return tuple(check_project_extensions(project, base_dir=project_path.parent))
+def _draft_extensions(request: DraftRenderRequest) -> dict[str, Any]:
+    """Resolve each source Project's ``path`` extensions beside its own file (#1682).
+
+    The primary and the Snapshot Project keep separate manifest sets; a failure to resolve either is reported.
+    """
+    resolved: dict[str, Any] = {}
+    failures: list[Any] = []
+    for key, path in (("extension_manifests", request.project), ("snapshot_extension_manifests", request.snapshot)):
+        if path is None:
+            continue
+        project = load_yaml(Path(path))
+        if not isinstance(project, dict) or not isinstance(project.get("extensions"), list):
+            continue
+        manifests, problems = resolve_local_extension_manifests(project, Path(path).parent)
+        resolved[key] = manifests
+        failures.extend(problems if key == "extension_manifests" else
+                        [replace(item, path=f"/snapshot{item.path}") for item in problems])
+    return {**resolved, "extension_diagnostics": tuple(failures)} if resolved else {}
 
 
 def _typesetter_version_notes(request: DraftRenderRequest) -> tuple[dict[str, Any], ...]:

@@ -51,6 +51,7 @@ from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
 from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_role_consumers import unread_diagnostics as unread_theme_diagnostics
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
+from chrona.presentation.model.theme_paint import ThemePaintError
 from chrona.core.attachments import AttachmentWarning, attachment_warnings
 from chrona.core.deadlines import DeadlineStatus, deadline_statuses, deadline_warnings_from_statuses
 from chrona.presentation.count_text import CountTextError
@@ -97,6 +98,7 @@ from chrona.presentation.scene.visual_capabilities import (
     resolve_visual_profile,
     validate_surface_visual_profile,
     visual_capability_message,
+    paint_witness_capabilities,
 )
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.storage.snapshot_paths import snapshot_directory
@@ -147,6 +149,10 @@ class RenderRequest:
     progress: RenderProgress | None = field(default=None, compare=False, repr=False)
     # Extension diagnostics a draft caller resolved beside the Project file (no Store); Context renders leave it empty.
     extension_diagnostics: tuple[Diagnostic, ...] = ()
+    # Draft renders have no Store closure: manifests resolved beside the Project file, one set per source Project.
+    # They apply only where the closure holds no profile package, so they can never shadow a pinned one.
+    extension_manifests: Mapping[str, Any] = field(default_factory=dict, compare=False, repr=False)
+    snapshot_extension_manifests: Mapping[str, Any] = field(default_factory=dict, compare=False, repr=False)
 
 
 @dataclass(frozen=True)
@@ -264,7 +270,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed(error.diagnostic_id, error.detail, "presentation", error.source_ref) from error
     except ProfileConnectionError as error:
         raise RenderFailed(error.code, error.detail, error.component, error.source_ref) from error
-    except (LayoutError, ThemeTokenError, ScenePaintError) as error:
+    except (LayoutError, ThemeTokenError, ThemePaintError, ScenePaintError) as error:
         message = error_message(error.diagnostic_id, getattr(error, "detail", None))
         node = getattr(error, "node_id", None)  # a Layout finding names the offending token or node here
         raise RenderFailed(error.diagnostic_id, f"{message} ({node})" if node else message,
@@ -309,13 +315,15 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed(error.diagnostic_id, error.message, "presentation", error.path) from error
     ledger.required()
     packages = render_closure.profile_packages
-    manifests = {item.package_id: item.profile_input
-                 for item in render_closure.profile_packages_for(render_closure.project)} if packages else {}
+    manifests = ({item.package_id: item.profile_input
+                  for item in render_closure.profile_packages_for(render_closure.project)} if packages
+                 else dict(request.extension_manifests))
     if packages:
         ledger.packages()
     if request.progress is not None:
         request.progress.phase("schedule")
-    projection, scenario_provenance, attachments, deadlines = _project_review(project, view, render_closure, manifests, request.scheduler, request.extension_diagnostics)
+    projection, scenario_provenance, attachments, deadlines = _project_review(project, view, render_closure, manifests, request.scheduler, request.extension_diagnostics,
+                                                                              request.snapshot_extension_manifests)
     profile_info += tuple(ForecastInfo(item) for item in projection.forecast_findings)
     if projection.omitted_group_summary_count:
         profile_info += (FieldGroupingSummariesOmitted(projection.omitted_group_summary_count),)
@@ -433,6 +441,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             detail=profile_connections.detail,
             viewport_inline=environment.viewport_inline, viewport_block=environment.viewport_block,
             content_sized=request.draft_auto_block, locale=environment.locale,
+            paint_capabilities=paint_witness_capabilities(visual_profile),
             capabilities={name: True for name in render_closure.context.target.capabilities},
             icon_assets=icon_assets, visual_requests=visual_requests, progress=request.progress))
         plan = prepare_surface_render_plan(count_input.value) if not count_input.active else None
@@ -771,7 +780,7 @@ def _observed_scale_values(encoding: Any, projection: Any) -> tuple[str, ...]:
         return ()
     values: list[str] = []
     for item in projection.items:
-        result = item.field_bindings.read_result(item.fields, source)
+        result = item.field_bindings.read_result(item.fields, source, object_id=item.object_id)
         if result.value is not None:
             values.append(scale_text(result.value) or str(result.value))
     return tuple(values)
@@ -804,7 +813,8 @@ def _visual_request(visual: Any, projection: Any, index: int, closure: RenderClo
 
 def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClosure,
                     manifests: dict[str, dict[str, Any]], scheduler: Scheduler,
-                    extra_diagnostics: tuple[Diagnostic, ...] = ()) -> Any:
+                    extra_diagnostics: tuple[Diagnostic, ...] = (),
+                    draft_snapshot_manifests: Mapping[str, Any] | None = None) -> Any:
     """Schedule the Project, and its Snapshot when one is bound, then project the review."""
     result = scheduler.schedule(project, extension_diagnostics=[*extra_diagnostics, *validate_profiles(project, manifests)])
     if not result.ok:
@@ -824,7 +834,8 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
     snapshot_project = closure.snapshot_project.scheduler_input if closure.snapshot_project is not None else None
     snapshot_manifests = ({item.package_id: item.profile_input
                           for item in closure.profile_packages_for(closure.snapshot_project)}
-                         if snapshot_project is not None and closure.profile_packages else {})
+                         if snapshot_project is not None and closure.profile_packages
+                         else dict(draft_snapshot_manifests or {}))
     snapshot_result = (scheduler.schedule(snapshot_project,
                                          extension_diagnostics=validate_profiles(snapshot_project, snapshot_manifests))
                        if snapshot_project is not None else None)

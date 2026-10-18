@@ -83,7 +83,8 @@ def test_table_normalization_applies_the_view_mode_to_planned_and_actual_once():
          "endDisplay": "inclusive"},
     ])
 
-    table = normalize_v05_table_content(projection, {}, view)
+    table = normalize_v05_table_content(projection, {}, view,
+                                        actual_set={"body": {"asOf": "2027-01-15"}})
 
     assert [(cell.column_id, cell.content) for cell in table.cells] == [
         ("Plan", "04 Jan"),

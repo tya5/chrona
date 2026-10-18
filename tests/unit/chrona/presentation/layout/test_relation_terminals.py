@@ -10,6 +10,7 @@ import pytest
 from PIL import Image
 
 from chrona.presentation.layout.relation_terminals import marker_geometry
+from chrona.presentation.model.projection import ReviewItem
 from chrona.presentation.layout.surface_quality import PathCommand
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
 from chrona.presentation.renderers.v05_svg import render_v05_svg
@@ -188,7 +189,14 @@ def test_the_legend_key_draws_the_same_terminal_as_the_relation(shape):
     theme = _theme()
     theme["body"]["values"]["dependency-marker"] = {"type": "marker", "value": {"shape": shape, **TOKEN}}
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "dependency-marker"}
-    swatch = next(node for node in _legend_surface((SurfaceLegendEntry("dependency", "Dependency"),), theme).primitives
+    items = (
+        ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()),
+        ReviewItem("b", "B", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()),
+    )
+    relation = {"id": "a-to-b", "from": {"object": "a", "endpoint": "end"},
+                "to": {"object": "b", "endpoint": "start"}}
+    swatch = next(node for node in _legend_surface((SurfaceLegendEntry("dependency", "Dependency"),), theme,
+                                                   items=items, content_overrides={"relations": (relation,)}).primitives
                   if node.scene_id == "legend-swatch:dependency")
     assert swatch.marker_end.outline == _outline(shape).outline
     assert swatch.marker_end.paint_mode == _outline(shape).paint_mode
