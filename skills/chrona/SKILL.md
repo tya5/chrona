@@ -108,10 +108,14 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 | `compare_baseline` | `chrona baseline-compare` | What changed between a named baseline and a candidate Project in a Store; read-only. |
 | `check_command` | `chrona command-check` | Previews a Store command (an Actual intake batch or a baseline capture); writes nothing. |
 | `apply_command` | `chrona command-apply` | Applies that command to the Store. It runs only if the user started the server with `--allow-write`. |
+| `apply_authoring_command` | `chrona authoring-command-apply` | Applies an authoring command file to a guided workspace; requires `--allow-write`. |
 
-No tool writes the plan: edit `project.yaml` yourself, then call the tools again. `apply_command`
-changes a Store, never the plan, and has no approval step: apply only what the user asked for. A
-stale `baseRevision` is rejected, a repeated `commandId` is a no-op, nothing is overwritten.
+For a standalone plan, edit `project.yaml` yourself. For a guided workspace, use
+`apply_authoring_command` with workspace and command paths. `apply_command` changes
+a Store, never the standalone plan. Neither writer has an approval step: apply only
+what the user asked for. A stale `baseRevision` is rejected; an exact accepted
+`commandId` retry returns its durable result without writing, and an ID reused for
+another request is rejected. Obtain a workspace base with `chrona workspace revision`.
 
 ## The model in five lines
 

@@ -17,6 +17,7 @@ EQUIVALENT_COMMANDS = {
     "render_draft": "chrona render", "list_presets": "chrona preset list",
     "render_review": "chrona render-review", "compare_baseline": "chrona baseline-compare",
     "check_command": "chrona command-check", "apply_command": "chrona command-apply",
+    "apply_authoring_command": "chrona authoring-command-apply",
 }
 
 

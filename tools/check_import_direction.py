@@ -53,7 +53,8 @@ ALLOWED: dict[str, set[str]] = {
 # closure it cannot hold (`operational` may not import `presentation`) is a use case, `usecases.context_review`.
 MODULE_RULES: dict[str, dict[str, set[str]]] = {
     "chrona.app.agent_": {"packages": {"usecases", "resources"}, "core_modules": {"chrona.core.store_address"},
-                          "modules": {"chrona.operational.store_commands", "chrona.operational.store_reads"}},
+                          "modules": {"chrona.operational.store_commands", "chrona.operational.store_reads",
+                                      "chrona.operational.authoring_commands"}},
     "chrona.app.mcp_server": {"packages": {"usecases", "resources"}, "core_modules": {"chrona.core.store_address"}},
 }
 

@@ -1780,7 +1780,7 @@ def test_cli_materializes_through_the_authoring_command_use_case(tmp_path, monke
 
     assert called["args"][0] == workspace
     assert called["args"][1]["type"] == "materializePresentationPreset"
-    assert called["kwargs"]["cas_write_aggregate"] is cli.cas_write_authoring_aggregate
+    assert called["kwargs"] == {"transact": cli.transact_authoring_command}
     assert json.loads(result.read_text(encoding="utf-8"))["status"] == "accepted"
 
 

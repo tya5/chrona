@@ -468,7 +468,7 @@ def test_standard_output_holds_only_json_rpc_frames_and_the_server_ends_with_its
         child.send({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
         assert [tool["name"] for tool in child.receive()["result"]["tools"]] == [
             "validate_project", "schedule_project", "render_draft", "list_presets", "render_review", "compare_baseline",
-            "check_command", "apply_command"]
+            "check_command", "apply_command", "apply_authoring_command"]
         child.send({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
                     "params": {"name": "render_draft", "arguments": {"project": "launch.yaml"}}})
         reply = child.receive()
