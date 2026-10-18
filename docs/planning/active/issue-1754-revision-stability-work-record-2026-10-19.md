@@ -309,7 +309,10 @@ ran concurrently). The limit is unchanged; CI must supply the authoritative
 isolated conformance gate. No local full pytest is run.
 
 Integrated source is based on ready main
-`bd6898017e3314bcfaffa3432d977d9a0f00fdd2`. The trial batch completed weeks
+`718ed1adbfa1b7ab89cacd014be8b74d7ba849b9`. Its schema-equivalence merge
+retains B's 27 pointed-diagnostic L3 entries and this issue's two Scene L1
+entries, without resurrecting five already-merged L1 exceptions. L1 and the
+schema-diagnostic/delivery focused tests pass (27 cases). The trial batch completed weeks
 1–4 with three independent design pipelines and weekly hint chains, reusing
 identical week-1 outputs. All six week-5 commands retain forecast and fail
 `E_FORECAST_BASELINE_UNAVAILABLE: be-ratelimit`, dependent on B issue 1755.

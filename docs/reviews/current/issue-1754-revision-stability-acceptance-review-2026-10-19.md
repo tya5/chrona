@@ -2,7 +2,7 @@
 
 Status: implementation review, **not release accepted**. Product source
 `e1d192890`; integrated with ready main
-`bd6898017e3314bcfaffa3432d977d9a0f00fdd2`. Current authority:
+`718ed1adbfa1b7ab89cacd014be8b74d7ba849b9`. Current authority:
 [work record](../../planning/active/issue-1754-revision-stability-work-record-2026-10-19.md).
 Trial inputs are unchanged
 [`bf3940dbe9af487ac6cace5458554762594f3477`](https://github.com/tya5/chrona/tree/bf3940dbe9af487ac6cace5458554762594f3477/trial-8).
