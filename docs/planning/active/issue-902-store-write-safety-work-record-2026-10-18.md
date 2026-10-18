@@ -1,9 +1,9 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 L1–L3 and local L4 implemented; PR/current-main release is pending.
-Design/review `69273a1bf`, implementation plan `54b9ddd20` precede
-code. Baseline `ee99b2d78`; #1679/PR1692 remains the priority release, with its
-code explicitly parked during live CI. No902 product PR before1679 merges.
+Status: item5 PR1698 (CI39094985183), item3 implementation WIP `db9caca1d`,
+item2 design in progress. No item2 product code. Publication order stays5→3→2.
+Item5 integrates ready main `4e30fbc3f`; #1679 is merged and its exact-main
+release39094741641 is running. This branch is item2 preparation, not main.
 
 ## Scope and literal acceptance
 
@@ -101,17 +101,12 @@ must retain its original failure rather than claim a safe pre-write rejection.
   its own venv resolved both. No product workaround or weakened assertion.
 - Pending: current-main integration, CI/release and literal acceptance review.
 
-## Next-item baseline (design not yet selected)
+## Publication branches
 
-- Item3: Spec10 §8 requires new-revision undo/redo with unsafe inverses rejected.
-  Accepted replay results already retain before/after immutable references;
-  investigate reusing that authority instead of a duplicate content journal.
-  The closed command-request schema needs an explicit version/operation decision.
-- Item2: reuse the authoring use case and CLI persistence adapters behind the
-  existing MCP write gate. Adding a tool changes the tool-set contract. Current
-  authoring code echoes commandId but has no durable replay; successful retry
-  becomes stale-CAS rejection. Resolve that contract before claiming honest
-  idempotent annotations or the item's replay acceptance. No item3/2 code yet.
+- Item5: PR1698, `wip/issue-902-store-write-safety` at `96e657289`.
+- Item3: `wip/issue-902-actual-history-design` at `db9caca1d`, implemented locally
+  and focused-tested; its PR/release follows item5.
+- Item2: this separate branch contains its design plan and proposed contract.
 
 ## Item3 design plan
 
@@ -215,3 +210,33 @@ final CI/public evidence and exact-main release after item5 publication.
 - Publication: publish this plan, then Spec51/66 selected design and whole-
   architecture review, then implementation plan before code. One coherent item2
   release follows item3; design preparation may pipeline without mixing releases.
+
+## Item2 selected design and architecture review (no product code)
+
+Normative authority: Spec51 §4.2 and Spec66 §2.3/tool-set v0.6. Keep the
+existing command/result v0.1 and return the exact durable result on retry, with
+no new replay flag. Canonical workspace identity also unifies lock/receipt scope;
+alias callers must name the canonical filename in `target.path`.
+
+Use case preparation produces complete validated candidate bytes, next content
+identity and an opaque exact result, without canonical writes. One injected
+transaction port coordinates both CLI/MCP; it invokes preparation under the
+workspace lock and owns receipt/recovery/commit. It never interprets authoring
+operation payloads or presentation types. Remove the old two-CAS-callback path,
+not preserve it as a compatibility bypass. Update the tool import-direction
+guard for this one named port, retaining all other layer restrictions.
+
+Whole-architecture questions: Spec10 idempotent intent versus authoring-local
+content revisions; Spec15 Store locks versus the separate workspace scope;
+Spec51 prepare/materialization proof and publication ownership; Spec66 gate,
+containment, honest annotations and exact result parity. Receipts are accepted
+history, the marker is transient recovery, and existing materialization receipts
+remain provenance. No duplicated ledger, new workspace schema or renderer rule.
+Two independent architecture reviews found no remaining contract blocker.
+Resolved findings: explicit no-op receipt commit, committed-marker replay when
+cleanup fails, hashed/verified receipts and owned-output recovery, legacy marker
+fail-closed migration, canonical alias refusal, and gate before file reads.
+The aggregate writer must extend ownership/recovery to receipt plus resources;
+its old single-directory rollback cannot be reused unchanged. Implementation
+must not delete prior receipts or post-commit resources, or claim CAS success
+before publication. Publish this design before finalizing its implementation plan.
