@@ -36,8 +36,15 @@ changing the legacy strict evaluator or adding a Theme knob. Scene-v0.7 widens i
 unchanged. No new Theme policy or project-specific branch is introduced.
 
 Focused component/caller batch: 1,471 passed; final targeted additions: 39 and
-34 passed. Schema equivalence against ready `96bdfbb7c` passes with two exact
-Scene deltas and no newly invalid documents. Independent review also found
+34 passed. Schema equivalence against ready `bd499a5a1` passes with the two
+intended Scene paths (one changed schema) and no newly invalid documents.
+The #1700/base integration targets pass55; schema-identifier targets pass18.
+Updated header/period/preset/opt-in targets pass205 and CLI characterization
+passes4. Their ordinary shape/text checks remain strict; the three explicitly
+enforced low-contrast encoding cases now require the intended error. The three
+CLI records retain every old warning, artifact description and exit status,
+adding only one aggregated encoding-warning record (16 findings) each.
+Independent review also found
 and corrected a direct-observer admission gap; raw non-mark/Text witnesses
 now fail structurally, including when no serializer is involved (81 focused
 observer/policy/report tests passed).
