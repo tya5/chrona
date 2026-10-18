@@ -1,9 +1,11 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 L1–L3 and local L4 implemented; PR/current-main release is pending.
-Design/review `69273a1bf`, implementation plan `54b9ddd20` precede
-code. Baseline `ee99b2d78`; #1679/PR1692 remains the priority release, with its
-code explicitly parked during live CI. No902 product PR before1679 merges.
+Status: item5 PR1698 waits for current-base/B landing reconciliation; every
+product check passed and only readiness failed after main advanced. Item3 code
+`c2984c018` now integrates ready main `f5a51c099` via `499d2ad27`; no item3 PR
+before item5 release. Item2 code/review is separate WIP `0b79e65a0`, not included
+here. Publication order remains5→3→2. #1679/#1680 exact-main release39094741641
+has Linux/macOS success and Windows running; board454 stays reviewer-owned.
 
 ## Scope and literal acceptance
 
@@ -190,5 +192,8 @@ retirement/packaging45; adapter10; real history MCP/CLI-pointer batch5.
 Schema equivalence passes with one declared v0.4 addition and three proven stale
 S2 deltas retired; the five reported invalid documents are unchanged baseline
 findings. Imports11 packages/37 edges inward. No public render policy/source
-or canonical generated outputs changed. Remaining: current-main integration,
-final CI/public evidence and exact-main release after item5 publication.
+or canonical generated outputs changed. Ready-main integration `499d2ad27`
+passed99 focused command/adapter/CLI/process tests, three real MCP history
+tests and an independent11-test history/concurrency audit; no conflict or new
+architecture gap. Remaining: item5 release, final current-ready-base PR CI/public
+evidence and exact-main release. No item3 PR has been opened prematurely.
