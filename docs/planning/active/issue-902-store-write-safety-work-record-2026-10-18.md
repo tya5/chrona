@@ -1,7 +1,7 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 L1/L2 implemented in WIP; L3 transaction and L4 overlap tests are
-in progress. Design/review `69273a1bf`, implementation plan `54b9ddd20` precede
+Status: item5 L1–L3 and local L4 implemented; PR/current-main release is pending.
+Design/review `69273a1bf`, implementation plan `54b9ddd20` precede
 code. Baseline `ee99b2d78`; #1679/PR1692 remains the priority release, with its
 code explicitly parked during live CI. No902 product PR before1679 merges.
 
@@ -89,8 +89,17 @@ must retain its original failure rather than claim a safe pre-write rejection.
 - L2 adapter/address/concurrency batch:504 passed. Focused operational/authoring/
   lock batch:67 passed; transaction errors/direct concurrency batch:18 passed
   (overlapping batches, not summed). Import direction:11 packages/37 edges inward.
-- Pending: deterministic overlapping engine/ledger/snapshot transactions, real
-  MCP stdio stale/replay/no-overwrite verification, CI/release and literal review.
+- L3 `ab376c78e`: engine replay→publication→record exclusion, concurrent ledger
+  records, snapshot replay/name collision and registry-vs-input-root tests pass.
+  A writer paused after publication blocks a competitor's replay lookup until
+  durable recording completes; then exactly one mutation and one replay result.
+  Independent review confirms transaction and failure ownership. Combined focused
+  engine/reference/Store/concurrency batch:23 passed.
+- MCP stdio Store gate/stale/replay/no-overwrite/path checks and two render parity
+  checks:6 passed. An initial broader run had63 pass/2 render failures because
+  this WT lacked render extras; installing `.[render]` plus the Noto provider in
+  its own venv resolved both. No product workaround or weakened assertion.
+- Pending: current-main integration, CI/release and literal acceptance review.
 
 ## Next-item baseline (design not yet selected)
 
