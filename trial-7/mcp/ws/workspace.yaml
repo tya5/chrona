@@ -1,0 +1,41 @@
+version: chrona/authoring-workspace/v0.1
+kind: authoring-workspace
+id: agent-plan
+body:
+  project:
+    id: agent-plan
+    title: "\u793E\u5185\u30DD\u30FC\u30BF\u30EB\u5237\u65B0"
+    tasks:
+    - id: discovery
+      title: "\u73FE\u72B6\u8ABF\u67FB"
+      planned:
+        start: '2026-11-02'
+        finish: '2026-11-13'
+    - id: design
+      title: "\u8A2D\u8A08"
+      planned:
+        start: '2026-11-16'
+        finish: '2026-11-27'
+    - id: build
+      title: "\u5B9F\u88C5"
+      planned:
+        start: '2026-11-30'
+        finish: '2026-12-18'
+    - id: test
+      title: "\u53D7\u5165\u30C6\u30B9\u30C8"
+      planned:
+        start: '2026-12-21'
+        finish: '2027-01-08'
+  presentation:
+    mode: guided
+    binding:
+      preset:
+        id: chrona-builtin-target-b
+        version: '1'
+        path: presets/target-b/preset.yaml
+  actuals:
+  - taskId: discovery
+    actual:
+      start: '2026-11-02'
+      finish: '2026-11-17'
+    progress: 1

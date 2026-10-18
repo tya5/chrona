@@ -1,0 +1,1 @@
+{"status": "rejected", "diagnostics": [{"code": "E_PRESENTATION_SCALE_VALUE", "severity": "error", "component": "presentation", "sourceRef": "/body/colorEncoding", "revisionRefs": [], "message": "object='kickoff', field='risk', value=None; expected domain 3 values ((\"'low'\", \"'medium'\", \"'high'\"))"}]}

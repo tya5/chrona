@@ -1,0 +1,9 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: ja-plan-observed
+body:
+  asOf: '2026-11-20'
+  observations:
+    - {id: kickoff-observed, sequence: 1, projectObjectId: kickoff, actual: {at: '2026-11-02'}}
+    - {id: req-hearing-observed, sequence: 2, projectObjectId: req-hearing, actual: {start: '2026-11-02', finish: '2026-11-10', progress: 1.0}}
+    - {id: req-doc-observed, sequence: 3, projectObjectId: req-doc, actual: {start: '2026-11-10', progress: 0.6}}

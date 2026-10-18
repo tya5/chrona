@@ -1,0 +1,31 @@
+id,title,type,start,end,duration,parent,predecessors,deadline,progress,actual_start,actual_finish,team
+kickoff,プロジェクト開始,gate,2026-11-02,,,,,,,2026-11-02,,企画部
+g-plan,企画・要件定義,group,,,,,,,,,,
+req-hearing,顧客ヒアリング,task,,,5wd,g-plan,kickoff,,100%,2026-11-02,2026-11-09,企画部
+req-doc,要件定義書の作成とレビュー（第一版）,task,,,8wd,g-plan,req-hearing,,60%,2026-11-10,,企画部
+req-approve,要件承認,gate,,,,g-plan,req-doc,,,,,企画部
+g-design,基本設計,group,,,,,,,,,,
+arch,アーキテクチャ設計,task,,,6wd,g-design,req-approve,,,,,開発一課
+db-design,データベース設計,task,,,5wd,g-design,arch,,,,,開発一課
+ui-design,画面設計・ワイヤーフレーム作成,task,,,7wd,g-design,req-approve,,,,,デザイン室
+api-design,外部API仕様の策定,task,,,4wd,g-design,arch,,,,,開発二課
+design-review,設計レビュー,gate,,,,g-design,"db-design, ui-design, api-design",,,,,品質保証部
+g-dev,開発,group,,,,,,,,,,
+dev-backend,バックエンド実装,task,,,15wd,g-dev,design-review,,,,,開発一課
+dev-frontend,フロントエンド実装,task,,,14wd,g-dev,design-review,,,,,デザイン室
+dev-api,外部連携モジュール実装,task,,,10wd,g-dev,design-review,,,,,開発二課
+dev-batch,夜間バッチ処理,task,,,6wd,g-dev,dev-backend.start +5wd,,,,,開発二課
+dev-auth,認証・認可基盤,task,,,8wd,g-dev,design-review,,,,,開発一課
+code-freeze,コードフリーズ,gate,,,,g-dev,"dev-backend, dev-frontend, dev-api, dev-batch, dev-auth",,,,,開発一課
+g-test,テスト,group,,,,,,,,,,
+test-unit,単体テスト,task,,,5wd,g-test,dev-backend.start +8wd,,,,,開発一課
+test-integ,結合テスト,task,,,8wd,g-test,code-freeze,,,,,品質保証部
+test-perf,性能テスト・負荷試験,task,,,5wd,g-test,test-integ.start +3wd,,,,,品質保証部
+test-sec,セキュリティ診断,task,,,4wd,g-test,code-freeze,,,,,外部ベンダー
+test-uat,受入テスト（ユーザー部門）,task,,,6wd,g-test,"test-integ, test-perf",,,,,企画部
+g-release,移行・リリース,group,,,,,,,,,,
+mig-plan,データ移行計画,task,,,4wd,g-release,design-review,,,,,開発二課
+mig-rehearsal,移行リハーサル,task,,,3wd,g-release,"mig-plan, test-integ",,,,,開発二課
+training,利用者向け研修,task,,,4wd,g-release,test-uat.start,,,,,企画部
+manual,操作マニュアル作成,task,,,6wd,g-release,ui-design,,,,,デザイン室
+go-live,本番稼働,gate,,,,g-release,"test-uat, mig-rehearsal, training, test-sec",2027-03-19,,,,企画部

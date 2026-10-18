@@ -1,0 +1,7 @@
+version: chrona/authoring-command/v0.1
+commandId: add-test
+type: setWorkspaceTask
+target: {kind: authoring-workspace, path: workspace.yaml}
+baseRevision: sha256:6514d14c9c0c96ca8b07c261f053eca1c2381ad805162376d83f6095288d8e6d
+payload:
+  task: {id: test, title: 受入テスト, planned: {start: '2026-12-21', finish: '2027-01-08'}}

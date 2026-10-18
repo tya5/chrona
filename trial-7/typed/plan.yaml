@@ -1,0 +1,48 @@
+version: timeline/v0.7
+project:
+  id: typed-trial
+  title: Typed fields trial
+  calendar: office
+extensions:
+- packageId: team-delivery
+  path: team.yaml
+  revision: git:0123456789abcdef0123456789abcdef01234567
+calendars:
+  office:
+    working_days: [mon, tue, wed, thu, fri]
+objects:
+  kickoff:
+    type: gate
+    title: Kickoff
+    schedule: {mode: fixed-point, at: 2026-11-02}
+  design:
+    type: work
+    title: Design
+    fields: {risk: low, team: platform}
+    schedule: {mode: fixed-span, start: 2026-11-02, end: 2026-11-09}
+  api:
+    type: work
+    title: API
+    fields: {risk: high, team: platform}
+    schedule: {mode: scheduled, amount: 10wd}
+  ui:
+    type: work
+    title: UI
+    fields: {risk: high, team: product}
+    schedule: {mode: scheduled, amount: 8wd}
+  docs:
+    type: work
+    title: Docs
+    fields: {risk: low, team: product}
+    schedule: {mode: scheduled, amount: 4wd}
+  test:
+    type: work
+    title: Test
+    fields: {risk: medium, team: platform}
+    schedule: {mode: scheduled, amount: 5wd}
+relations:
+- {id: k-d, type: dependency, from: {object: kickoff, endpoint: at}, to: {object: design, endpoint: start}, lag: 0d}
+- {id: d-a, type: dependency, from: {object: design, endpoint: end}, to: {object: api, endpoint: start}, lag: 0d}
+- {id: d-u, type: dependency, from: {object: design, endpoint: end}, to: {object: ui, endpoint: start}, lag: 0d}
+- {id: u-o, type: dependency, from: {object: ui, endpoint: end}, to: {object: docs, endpoint: start}, lag: 0d}
+- {id: a-t, type: dependency, from: {object: api, endpoint: end}, to: {object: test, endpoint: start}, lag: 0d}

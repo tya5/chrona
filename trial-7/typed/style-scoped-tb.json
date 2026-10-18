@@ -1,0 +1,1 @@
+{"status": "rejected", "diagnostics": [{"code": "E_PRESENTATION_SCALE_MAPPING", "severity": "error", "component": "presentation", "sourceRef": "/body/colorScales/series/slots", "revisionRefs": [], "message": "Theme scale 'series' has slots=None; expected a slots mapping or nonempty palette"}]}

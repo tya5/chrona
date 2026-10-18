@@ -1,0 +1,7 @@
+version: chrona/authoring-command/v0.1
+commandId: actual-discovery
+type: setWorkspaceActual
+target: {kind: authoring-workspace, path: workspace.yaml}
+baseRevision: sha256:f7ff9aa7de20709c98c881455621aa4ae59f314578e74399ed4f69a4053bc876
+payload:
+  actual: {taskId: discovery, actual: {start: '2026-11-02', finish: '2026-11-17'}, progress: 1}

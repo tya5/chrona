@@ -1,0 +1,7 @@
+version: chrona/authoring-command/v0.1
+commandId: probe-0
+type: setWorkspaceTask
+target: {kind: authoring-workspace, path: workspace.yaml}
+baseRevision: sha256:0000000000000000000000000000000000000000000000000000000000000000
+payload:
+  task: {id: design, title: 基本設計, planned: {start: '2026-11-16', finish: '2026-11-27'}}

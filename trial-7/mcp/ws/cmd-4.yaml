@@ -1,0 +1,7 @@
+version: chrona/authoring-command/v0.1
+commandId: revert-edit-design
+type: setWorkspaceTask
+target: {kind: authoring-workspace, path: workspace.yaml}
+baseRevision: sha256:5c64f8f31c6b4c037f80383e5d99265f3ef3830b2b7badf35985d2b66bdc5709
+payload:
+  task: {id: design, title: 設計, planned: {start: '2026-11-16', finish: '2026-11-27'}}

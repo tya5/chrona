@@ -1,0 +1,31 @@
+version: chrona/presentation-preset/v0.1
+kind: presentation-preset
+id: chrona-builtin-chrona-default-draft
+body:
+  package:
+    version: '1'
+  resources:
+    view:
+      id: chrona-preset-editorial-readable-default
+      kind: view
+      path: view.yaml
+    theme:
+      id: chrona-builtin-editorial-readable-default
+      kind: theme
+      path: theme.yaml
+    colorScheme:
+      id: chrona-builtin-editorial
+      kind: color-scheme
+      path: scheme.yaml
+    layout:
+      id: chrona-builtin-editorial
+      kind: layout-profile
+      path: layout.yaml
+    detailProfile:
+      id: chrona-builtin-editorial-detail
+      kind: review-detail-profile
+      path: detail.yaml
+  compatibleColorSchemes:
+  - id: chrona-builtin-editorial
+    kind: color-scheme
+    path: scheme.yaml

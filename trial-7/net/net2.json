@@ -1,0 +1,1 @@
+{"status": "rejected", "diagnostics": [{"code": "E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "severity": "error", "component": "presentation", "sourceRef": "/projection/surface", "revisionRefs": [], "message": "surface=dependency-network"}]}

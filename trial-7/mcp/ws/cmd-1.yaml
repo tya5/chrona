@@ -1,0 +1,7 @@
+version: chrona/authoring-command/v0.1
+commandId: edit-design
+type: setWorkspaceTask
+target: {kind: authoring-workspace, path: workspace.yaml}
+baseRevision: sha256:47a0bd6011d54fb1b1bc97c268f9475e1b89b7248cd277f927e2910f1bee4b3b
+payload:
+  task: {id: design, title: 基本設計・詳細設計, planned: {start: '2026-11-16', finish: '2026-12-04'}}

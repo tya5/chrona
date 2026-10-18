@@ -1,0 +1,124 @@
+id,title,type,start,duration,parent,predecessors
+g0,Platform stream,group,,,,
+t0-0,Platform work item 1,task,2027-01-04,4wd,g0,
+t0-1,Platform work item 2,task,,3wd,g0,t0-0
+t0-2,Platform work item 3,task,,5wd,g0,t0-1
+t0-3,Platform work item 4,task,,2wd,g0,t0-2
+t0-4,Platform work item 5,task,,2wd,g0,t0-3
+t0-5,Platform work item 6,task,,2wd,g0,t0-4
+t0-6,Platform work item 7,task,,3wd,g0,t0-5
+t0-7,Platform work item 8,task,,5wd,g0,"t0-6, t0-3"
+t0-8,Platform work item 9,task,,6wd,g0,"t0-7, t0-0"
+t0-9,Platform work item 10,task,,8wd,g0,t0-8
+t0-10,Platform work item 11,task,,3wd,g0,t0-9
+t0-11,Platform work item 12,task,,6wd,g0,t0-10
+t0-12,Platform work item 13,task,,6wd,g0,t0-11
+t0-13,Platform work item 14,task,,2wd,g0,t0-12
+t0-14,Platform work item 15,task,,2wd,g0,t0-13
+t0-15,Platform work item 16,task,,3wd,g0,t0-14
+t0-16,Platform work item 17,task,,6wd,g0,"t0-15, t0-2"
+t0-17,Platform work item 18,task,,6wd,g0,"t0-16, t0-9"
+t0-18,Platform work item 19,task,,3wd,g0,t0-17
+t0-19,Platform work item 20,task,,4wd,g0,"t0-18, t0-6"
+t0-20,Platform work item 21,task,,6wd,g0,"t0-19, t0-2"
+t0-21,Platform work item 22,task,,5wd,g0,"t0-20, t0-6"
+t0-22,Platform work item 23,task,,5wd,g0,t0-21
+t0-23,Platform work item 24,task,,5wd,g0,t0-22
+t0-24,Platform work item 25,task,,5wd,g0,t0-23
+t0-25,Platform work item 26,task,,3wd,g0,t0-24
+t0-26,Platform work item 27,task,,7wd,g0,t0-25
+t0-27,Platform work item 28,task,,2wd,g0,t0-26
+t0-28,Platform work item 29,task,,6wd,g0,t0-27
+t0-29,Platform work item 30,task,,4wd,g0,t0-28
+t0-30,Platform work item 31,task,,4wd,g0,t0-29
+t0-31,Platform work item 32,task,,2wd,g0,t0-30
+t0-32,Platform work item 33,task,,3wd,g0,"t0-31, t0-13"
+t0-33,Platform work item 34,task,,3wd,g0,t0-32
+t0-34,Platform work item 35,task,,5wd,g0,t0-33
+t0-35,Platform work item 36,task,,8wd,g0,"t0-34, t0-4"
+t0-36,Platform work item 37,task,,8wd,g0,t0-35
+t0-37,Platform work item 38,task,,4wd,g0,t0-36
+t0-38,Platform work item 39,task,,4wd,g0,t0-37
+t0-39,Platform work item 40,task,,6wd,g0,t0-38
+g1,Payments stream,group,,,,
+t1-0,Payments work item 1,task,2027-01-04,8wd,g1,
+t1-1,Payments work item 2,task,,8wd,g1,t1-0
+t1-2,Payments work item 3,task,,7wd,g1,"t1-1, t0-30"
+t1-3,Payments work item 4,task,,7wd,g1,"t1-2, t0-36"
+t1-4,Payments work item 5,task,,5wd,g1,t1-3
+t1-5,Payments work item 6,task,,5wd,g1,t1-4
+t1-6,Payments work item 7,task,,5wd,g1,t1-5
+t1-7,Payments work item 8,task,,5wd,g1,"t1-6, t1-2, t0-25"
+t1-8,Payments work item 9,task,,3wd,g1,t1-7
+t1-9,Payments work item 10,task,,3wd,g1,t1-8
+t1-10,Payments work item 11,task,,4wd,g1,t1-9
+t1-11,Payments work item 12,task,,7wd,g1,t1-10
+t1-12,Payments work item 13,task,,3wd,g1,t1-11
+t1-13,Payments work item 14,task,,3wd,g1,"t1-12, t1-2"
+t1-14,Payments work item 15,task,,4wd,g1,"t1-13, t1-9"
+t1-15,Payments work item 16,task,,6wd,g1,"t1-14, t1-6"
+t1-16,Payments work item 17,task,,7wd,g1,t1-15
+t1-17,Payments work item 18,task,,7wd,g1,t1-16
+t1-18,Payments work item 19,task,,5wd,g1,"t1-17, t0-25"
+t1-19,Payments work item 20,task,,5wd,g1,t1-18
+t1-20,Payments work item 21,task,,5wd,g1,"t1-19, t1-2"
+t1-21,Payments work item 22,task,,2wd,g1,"t1-20, t1-10"
+t1-22,Payments work item 23,task,,4wd,g1,"t1-21, t1-4"
+t1-23,Payments work item 24,task,,5wd,g1,"t1-22, t0-39"
+t1-24,Payments work item 25,task,,6wd,g1,"t1-23, t1-8"
+t1-25,Payments work item 26,task,,5wd,g1,"t1-24, t0-29"
+t1-26,Payments work item 27,task,,7wd,g1,"t1-25, t0-21"
+t1-27,Payments work item 28,task,,2wd,g1,"t1-26, t1-22"
+t1-28,Payments work item 29,task,,7wd,g1,"t1-27, t1-16"
+t1-29,Payments work item 30,task,,7wd,g1,"t1-28, t0-5"
+t1-30,Payments work item 31,task,,3wd,g1,t1-29
+t1-31,Payments work item 32,task,,6wd,g1,t1-30
+t1-32,Payments work item 33,task,,3wd,g1,t1-31
+t1-33,Payments work item 34,task,,8wd,g1,t1-32
+t1-34,Payments work item 35,task,,8wd,g1,t1-33
+t1-35,Payments work item 36,task,,3wd,g1,t1-34
+t1-36,Payments work item 37,task,,2wd,g1,t1-35
+t1-37,Payments work item 38,task,,5wd,g1,t1-36
+t1-38,Payments work item 39,task,,7wd,g1,"t1-37, t1-22"
+t1-39,Payments work item 40,task,,4wd,g1,t1-38
+g2,Search stream,group,,,,
+t2-0,Search work item 1,task,2027-01-04,2wd,g2,
+t2-1,Search work item 2,task,,3wd,g2,t2-0
+t2-2,Search work item 3,task,,4wd,g2,t2-1
+t2-3,Search work item 4,task,,7wd,g2,"t2-2, t2-0"
+t2-4,Search work item 5,task,,8wd,g2,t2-3
+t2-5,Search work item 6,task,,8wd,g2,t2-4
+t2-6,Search work item 7,task,,3wd,g2,t2-5
+t2-7,Search work item 8,task,,2wd,g2,t2-6
+t2-8,Search work item 9,task,,5wd,g2,t2-7
+t2-9,Search work item 10,task,,2wd,g2,t2-8
+t2-10,Search work item 11,task,,3wd,g2,t2-9
+t2-11,Search work item 12,task,,8wd,g2,"t2-10, t2-9"
+t2-12,Search work item 13,task,,6wd,g2,t2-11
+t2-13,Search work item 14,task,,4wd,g2,t2-12
+t2-14,Search work item 15,task,,6wd,g2,"t2-13, t2-8, t0-6"
+t2-15,Search work item 16,task,,2wd,g2,"t2-14, t0-13"
+t2-16,Search work item 17,task,,8wd,g2,"t2-15, t2-4"
+t2-17,Search work item 18,task,,5wd,g2,t2-16
+t2-18,Search work item 19,task,,7wd,g2,"t2-17, t1-29"
+t2-19,Search work item 20,task,,5wd,g2,t2-18
+t2-20,Search work item 21,task,,3wd,g2,t2-19
+t2-21,Search work item 22,task,,2wd,g2,t2-20
+t2-22,Search work item 23,task,,6wd,g2,t2-21
+t2-23,Search work item 24,task,,5wd,g2,"t2-22, t2-4"
+t2-24,Search work item 25,task,,7wd,g2,"t2-23, t0-20"
+t2-25,Search work item 26,task,,8wd,g2,t2-24
+t2-26,Search work item 27,task,,2wd,g2,t2-25
+t2-27,Search work item 28,task,,5wd,g2,"t2-26, t2-8, t0-32"
+t2-28,Search work item 29,task,,2wd,g2,t2-27
+t2-29,Search work item 30,task,,6wd,g2,t2-28
+t2-30,Search work item 31,task,,4wd,g2,t2-29
+t2-31,Search work item 32,task,,5wd,g2,t2-30
+t2-32,Search work item 33,task,,6wd,g2,t2-31
+t2-33,Search work item 34,task,,4wd,g2,t2-32
+t2-34,Search work item 35,task,,3wd,g2,t2-33
+t2-35,Search work item 36,task,,5wd,g2,"t2-34, t0-25"
+t2-36,Search work item 37,task,,5wd,g2,t2-35
+t2-37,Search work item 38,task,,8wd,g2,"t2-36, t2-19"
+t2-38,Search work item 39,task,,3wd,g2,"t2-37, t2-23, t0-29"
+t2-39,Search work item 40,task,,7wd,g2,"t2-38, t1-10"

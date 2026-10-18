@@ -1,0 +1,17 @@
+version: chrona/view/v0.28
+kind: view
+id: ja-network
+body:
+  surface: dependency-network
+  rows: {mode: automatic}
+  selection:
+    include: {types: [span, point]}
+  grouping: {by: none, missing: ungrouped}
+  ordering: {by: plannedStart, direction: ascending, tieBreak: id}
+  window: {mode: selected-planned}
+  comparison: {baseline: primary, actual: optional, observationSelection: latest, deltaUnit: working-days, facets: [planned]}
+  visibility:
+    labels: false
+    relations: semantic
+    annotations: none
+  deadlines: {show: all}

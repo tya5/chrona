@@ -1,0 +1,265 @@
+{
+  "placements": {
+    "kickoff": {
+      "at": "2026-11-02"
+    },
+    "g-plan": {
+      "start": "2026-11-02",
+      "end": "2026-11-20"
+    },
+    "req-hearing": {
+      "start": "2026-11-02",
+      "end": "2026-11-10"
+    },
+    "req-doc": {
+      "start": "2026-11-10",
+      "end": "2026-11-20"
+    },
+    "req-approve": {
+      "at": "2026-11-20"
+    },
+    "g-design": {
+      "start": "2026-11-20",
+      "end": "2026-12-08"
+    },
+    "arch": {
+      "start": "2026-11-20",
+      "end": "2026-12-01"
+    },
+    "db-design": {
+      "start": "2026-12-01",
+      "end": "2026-12-08"
+    },
+    "ui-design": {
+      "start": "2026-11-20",
+      "end": "2026-12-02"
+    },
+    "api-design": {
+      "start": "2026-12-01",
+      "end": "2026-12-07"
+    },
+    "design-review": {
+      "at": "2026-12-08"
+    },
+    "g-dev": {
+      "start": "2026-12-08",
+      "end": "2027-01-05"
+    },
+    "dev-backend": {
+      "start": "2026-12-08",
+      "end": "2027-01-05"
+    },
+    "dev-frontend": {
+      "start": "2026-12-08",
+      "end": "2026-12-28"
+    },
+    "dev-api": {
+      "start": "2026-12-08",
+      "end": "2026-12-22"
+    },
+    "dev-batch": {
+      "start": "2026-12-15",
+      "end": "2026-12-23"
+    },
+    "dev-auth": {
+      "start": "2026-12-08",
+      "end": "2026-12-18"
+    },
+    "code-freeze": {
+      "at": "2027-01-05"
+    },
+    "g-test": {
+      "start": "2026-12-18",
+      "end": "2027-01-26"
+    },
+    "test-unit": {
+      "start": "2026-12-18",
+      "end": "2026-12-25"
+    },
+    "test-integ": {
+      "start": "2027-01-05",
+      "end": "2027-01-18"
+    },
+    "test-perf": {
+      "start": "2027-01-08",
+      "end": "2027-01-18"
+    },
+    "test-sec": {
+      "start": "2027-01-05",
+      "end": "2027-01-12"
+    },
+    "test-uat": {
+      "start": "2027-01-18",
+      "end": "2027-01-26"
+    },
+    "g-release": {
+      "start": "2026-12-02",
+      "end": "2027-01-26"
+    },
+    "mig-plan": {
+      "start": "2026-12-08",
+      "end": "2026-12-14"
+    },
+    "mig-rehearsal": {
+      "start": "2027-01-18",
+      "end": "2027-01-21"
+    },
+    "training": {
+      "start": "2027-01-18",
+      "end": "2027-01-22"
+    },
+    "manual": {
+      "start": "2026-12-02",
+      "end": "2026-12-10"
+    },
+    "go-live": {
+      "at": "2027-01-26"
+    }
+  },
+  "diagnostics": [],
+  "warnings": [],
+  "analysis": {
+    "criticalObjectIds": [
+      "kickoff",
+      "req-hearing",
+      "req-doc",
+      "req-approve",
+      "arch",
+      "db-design",
+      "design-review",
+      "dev-backend",
+      "code-freeze",
+      "test-integ",
+      "test-perf",
+      "test-uat",
+      "go-live"
+    ],
+    "totalFloat": {
+      "kickoff": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "req-hearing": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "req-doc": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "req-approve": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "arch": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "db-design": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "ui-design": {
+        "value": 4,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "api-design": {
+        "value": 1,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "design-review": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "dev-backend": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "dev-frontend": {
+        "value": 1,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "dev-api": {
+        "value": 5,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "dev-batch": {
+        "value": 4,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "dev-auth": {
+        "value": 7,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "code-freeze": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "test-unit": {
+        "value": 16,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "test-integ": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "test-perf": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "test-sec": {
+        "value": 10,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "test-uat": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "mig-plan": {
+        "value": 22,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "mig-rehearsal": {
+        "value": 3,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "training": {
+        "value": 2,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "manual": {
+        "value": 27,
+        "unit": "working-days",
+        "calendar": "jp"
+      },
+      "go-live": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "jp"
+      }
+    }
+  }
+}
