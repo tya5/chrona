@@ -1098,5 +1098,41 @@
     "line": 1
    }
   }
+ ],
+ "field-key": [
+  {
+   "code": "E_TERSE_FIELD_KEY",
+   "sourceRange": {
+    "line": 2,
+    "column": 26,
+    "endLine": 2,
+    "endColumn": 28
+   },
+   "hint": true
+  }
+ ],
+ "field-value": [
+  {
+   "code": "E_TERSE_FIELD_VALUE",
+   "sourceRange": {
+    "line": 2,
+    "column": 26,
+    "endLine": 2,
+    "endColumn": 31
+   },
+   "hint": true
+  }
+ ],
+ "profile-required": [
+  {
+   "code": "E_TERSE_PROFILE_REQUIRED",
+   "sourceRange": {
+    "line": 2,
+    "column": 11,
+    "endLine": 2,
+    "endColumn": 20
+   },
+   "hint": true
+  }
  ]
 }

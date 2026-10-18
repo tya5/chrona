@@ -83,6 +83,26 @@ chrona validate typed-plan.yaml
 chrona schedule typed-plan.yaml
 ```
 
+The same declared profile works directly in a terse plan. Its package path is relative to the plan; `profile` follows
+the kind, and scalar assignments come last. The checked example below compiles, then renders both ways with this guide's
+View, demonstrating the same typed Project input without a separate YAML-edit step.
+
+<!-- chrona:doc-check file: typed-plan.chrona -->
+```text
+terse 0.1
+project typed-demo "Typed fields demo" calendar office extension team-delivery "typed-team.yaml" git:0123456789abcdef0123456789abcdef01234567
+calendar office mon-fri
+design "Design" task profile work 5wd from 2026-11-02 risk=low team=platform
+build "Build" task profile work 10wd after design risk=high team=platform
+test "Test" task profile work 5wd after build risk=medium team=product
+```
+
+```sh
+chrona compile typed-plan.chrona --output typed-plan-compiled.yaml
+chrona render typed-plan.chrona --preset wallboard-dark --view typed-risk-view.yaml --output typed-terse.svg
+chrona render typed-plan-compiled.yaml --preset wallboard-dark --view typed-risk-view.yaml --output typed-terse-compiled.svg
+```
+
 ## 3. Colour by the declared field
 
 Colour is the View's job, not the plan's. `colorEncoding` names a Theme colour `scale`, the `source`
