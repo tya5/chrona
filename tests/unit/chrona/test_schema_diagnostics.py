@@ -306,3 +306,14 @@ def test_forbidden_member_rule_names_the_member_pointer_and_mode_in_words():
     assert violation.rule == "not"
     assert violation.message == "property 'points' (/rows/points) is not allowed with mode 'lanes'; remove it or change the mode"
     assert "should not be valid" not in violation.message
+
+
+def test_a_forbidden_constant_names_the_member_pointer_and_value_in_words():
+    schema = {"type": "object", "properties": {"grouping": {"type": "object", "properties": {"by": {"type": "string"}}}},
+              "if": {"required": ["grouping"]}, "then": {"properties": {"grouping": {
+                  "not": {"properties": {"by": {"const": "hierarchy"}}, "required": ["by"]}}}}}
+
+    violation = _violation(schema, {"grouping": {"by": "hierarchy"}})
+
+    assert violation.pointer == "/grouping/by" and violation.rule == "not"
+    assert violation.message == "'by' (/grouping/by) cannot be 'hierarchy' in this form; choose another value or change the mode"
