@@ -14,7 +14,7 @@
 | 1 | A phase table for 240 tasks (and for 400 if run) on one machine, with how it was measured. | met | Exclusive240 and400 tables below; [240 control ledger](assets-1734/profile.json), [400 candidate ledger](assets-1734/s1-candidate400-profile.json), exact methods and caveats. | — |
 | 2 | A recommendation, or a documented stop, if no phase offers a worthwhile intervention. | met | Recommendation below follows the [measured phase costs](assets-1734/profile.json): investigate member-label probes before choosing an algorithm change; use existing explicit hints for the measured edit case. No unmeasured speedup claim or product change. | — |
 | 3 | These are pure speed changes, so SVG and Scene stay byte-identical on the 50 public slides and on b240. | not met | Six240 outputs match complete control bytes; [candidate plan/evidence](https://github.com/tya5/chrona/issues/1734#issuecomment-6253883958). Final published disposition and official50-slide snapshot remain pending. | — |
-| 4 | Measure end-to-end on 240 and once on 400 after each change, on the same machine. | met | [Unprofiled240 controls](assets-1734/s1-control240.stderr), candidate timings below and [required400 candidate](assets-1734/s1-candidate400-profile.stderr) completed. Instrumented400 is not treated as a causal speedup. Any graph product candidate needs its own240/400 gate. | — |
+| 4 | Measure end-to-end on 240 and once on 400 after each change, on the same machine. | not met | Member240/400 measurements below are complete. [Graph candidate plan](https://github.com/tya5/chrona/issues/1734#issuecomment-6254199502) requires separate same-base controls/candidate240/400; currently pending. | — |
 | 5 | Keep a change only if its end-to-end gain is worth its added complexity, and say why in the PR. Revert it otherwise; that is the stop condition. | not met | Member candidate reverted publicly at [cd8ac0983](https://github.com/tya5/chrona/commit/cd8ac098358ed4a0ba3072e58b7bba468d4eb096); product tree equals measured ready main. Final graph disposition and PR publication remain pending. | — |
 | 6 | Do not touch the algorithm, defaults or acceptance rules here. | met | [Approved scope](https://github.com/tya5/chrona/issues/1734#issuecomment-6253352192); candidate diff only prepares immutable private Layout facts and focused tests; collision checks/order/recovery remain fresh. No graph change proposed. | — |
 
@@ -185,7 +185,7 @@ label-visuals2/18, text2/18, marks2/4. Recovery1066.672717s already includes
 its graph and selection rows: never add these twice. Unlike240,400 repeatedly
 enters fallback stages; the raw ledger retains each stage separately.
 
-### Graph reuse: decision still under measurement
+### Graph reuse: measured duplicate and bounded candidate
 
 `SurfaceObstacleIndex.route_memo_scope` already keys pure graph results by
 exact selected content; `route_visibility_scope` retains selected-port and
@@ -195,16 +195,32 @@ remaining `_build_sparse_graph` overlays depend on start/end points and
 `_reverse_bounds` on their adjacency and target. A wider cache needs proven
 identical inputs/hits, not just a shared routing pass.
 
-The control v2 ledger attributes only0.017979s to uncached envelope conversion,
-versus seconds in sparse/reverse construction. Existing cache presence does
-not prove reuse: whole-graph admission is bounded to4096 retained records,
-and first-fit versus exact-bound calls differ only in reverse completion.
-Before stopping, measure identical geometry inputs across those modes and
-cache admission on240. Reuse may be possible within one relation attempt
-without a wider cache; no product change follows from that possibility alone.
-A graph candidate still needs its own end-to-end240/400 and byte gates. Do
-not change algorithms, bounds, defaults, candidate order or acceptance rules.
-Existing hints remain explicitly opt-in.
+The control v2 ledger attributes only0.017979s to envelope conversion, not a
+worthwhile target. The [v3 identity/admission probe](assets-1734/profile_render_phases_v3.py)
+on clean c30 instead records144 builds/84 distinct exact geometry identities:
+60 identities occur in both bound modes, no same-mode duplicates or skipped
+unknown closures. All144 stores refuse4,012,742 records at the existing4096
+capacity ([raw identity ledger](assets-1734/s2-control240-identities.json),
+[receipt](assets-1734/s2-control240-identities.stdout),
+[time](assets-1734/s2-control240-identities.stderr)). Full SVG/Scene bytes
+still match the240 control. Existing cache presence did not prove effective
+reuse; the preliminary stopping recommendation is withdrawn.
+
+[Pre-code design/architecture/implementation plan](https://github.com/tya5/chrona/issues/1734#issuecomment-6254199502)
+and [Spec50 publication](https://github.com/tya5/chrona/commit/e7ba1a147873fc70f05643fe071afcad2d8b0c3e)
+allow one geometry-only slot per prepared selection, across all visibility
+bases, keyed by exact endpoints/bounds/grid/selected exemptions. A per-base
+cache was rejected because its aggregate size could grow with endpoint pairs.
+New content starts empty; previous visibility generations carry no endpoint
+geometry; equal-content copies may share immutable geometry. Retained4096
+memo capacity and mode-specific keys remain unchanged. Reverse completion,
+frontiers, quotas, route validation and candidate order remain mode-correct.
+
+Current candidate owners are only `obstacles.py` and `route_search.py`, with
+synthetic graph-memo tests. Fresh ready3277619d0 controls account for the B
+integration before candidate measurements. End-to-end240/400, byte gates and
+keep/discard are pending; do not equate saved graph builds with speedup.
+No algorithms, bounds, defaults or acceptance rules change. Hints stay opt-in.
 
 ## Programme-level criteria (optional)
 
