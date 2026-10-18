@@ -141,7 +141,7 @@ def swatch_extent(role: str, tokens: Any, mark_block_size: float, legend_size: f
         # A declared size is the author's and is kept as written.
         inline = fallback_inline if declared_inline is not None else max(fallback_inline, 2.0 * block)
         return inline, block, "mark"
-    if role in ("asOf", "dependency", "dependency-critical", "deadlineMark"):
+    if role in ("asOf", "dependency", "dependency-critical", "critical-edge", "deadlineMark"):
         return fallback_inline, text_line_block, "line"
     if area_block is not None:
         # An area (background) key is a declared rectangle (#1111): opt-in through `swatchBlockSize`.
@@ -383,10 +383,11 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
                                          slot_id=legend.slot_id, corner_radius=corner_radius, paint_order=paint_order))
         elif bucket == "line":
             marker_token = request.theme_tokens.optional_token(role, "marker", "marker")
+            semantic_id = "criticalEdge" if role == "critical-edge" else role
             relations.append(RelationPlacement(swatch_id, f"{swatch_id}:start",
                                                f"{swatch_id}:end",
                                                points=((x, y + height / 2), (x + width, y + height / 2)),
-                                               semantic_id=role, slot_id=legend.slot_id, source_ref=role,
+                                               semantic_id=semantic_id, slot_id=legend.slot_id, source_ref=role,
                                                marker_end=marker_geometry(marker_token, stroke_width=float(
                                                    request.theme_tokens.number(role, "strokeWidth")))
                                                if marker_token else None))
@@ -435,7 +436,8 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
                             theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                             overflow=disposition, collision_region="legend",
                             collision_domain=CollisionDomain("legend", "content"), source_content=label,
-                            available_inline_start=x, available_inline_size=available)
+                            available_inline_start=x, available_inline_size=available,
+                            semantic_id="legendLabel", slot_id=legend.slot_id)
         text.append(placed)
         label_targets.append((entry.role, placed.placement_id))
         if ellipsized:

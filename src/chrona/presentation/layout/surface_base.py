@@ -98,7 +98,11 @@ def prepare_surface_slots(request: SurfaceLayoutRequest) -> SurfaceSlotAllocatio
     decisions = manifest.source_decisions()
     missing = next((slot.value for slot in REQUIRED_SLOTS if slot.value not in decisions), None)
     if missing is not None:
-        raise LayoutError("E_PRESENTATION_PRIMITIVE_MISSING", f"/layoutManifest/sources/{missing}")
+        surface = getattr(request.projection, "surface", "table-timeline")
+        raise LayoutError(
+            "E_PRESENTATION_PRIMITIVE_MISSING", f"/layoutManifest/sources/{missing}",
+            detail=(f"surface={surface}; missing source={missing!r}; add this slot to a matching Layout Profile "
+                    "and select it with --layout <profile>"))
     ordered = tuple(decisions[source] for source in sorted(decisions))
     slots = tuple(
         SlotPlacement(source, source, item.bounds, item.priority or "required",

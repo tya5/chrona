@@ -122,10 +122,12 @@ DERIVED_METRICS = ("timeline.mark.blockSize", "timeline.axis.blockSize", "table.
 OPTIONAL_METRICS = (
     "timeline.groupHeader.blockSize", "timeline.calendarClosed.minimumDayWidth",
     "timeline.mark.cornerRadius", "timeline.point.cornerRadius", "timeline.relation.cornerRadius",
+    "network.node.paddingInline", "network.node.paddingBlock",
 )
 
 _NON_NEGATIVE_METRICS = frozenset((
     "timeline.mark.cornerRadius", "timeline.point.cornerRadius", "timeline.relation.cornerRadius",
+    "network.node.paddingInline", "network.node.paddingBlock",
 ))
 
 

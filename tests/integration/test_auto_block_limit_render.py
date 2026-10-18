@@ -1,6 +1,8 @@
 """Completed Layout facts survive actual Scene/SVG and public warning transport."""
 from copy import deepcopy
 from datetime import date
+import json
+import sys
 
 import pytest
 
@@ -65,3 +67,33 @@ def test_limit_does_not_enable_unsupported_network_auto_height_or_warn_for_fixed
     with pytest.raises(RenderFailed) as caught:
         sr.render(tmp_path, source, presentation=parts, viewport=(1600, None))
     assert caught.value.code == "E_LAYOUT_DRAFT_AUTO_UNSUPPORTED"
+    assert caught.value.source_ref == "/projection/surface"
+    assert "surface=dependency-network" in caught.value.message
+    assert "fixed WIDTHxHEIGHT viewport" in caught.value.message
+    assert "--viewport 1600x900" in caught.value.message
+    assert "auto height is supported only for table-timeline" in caught.value.message
+
+
+def test_cli_transports_actionable_auto_height_diagnostic_and_pointer(tmp_path, monkeypatch, capsys):
+    from chrona.app.cli import main
+    from tests.integration.test_title_ink import _network_parts, _source
+
+    project_path = sr._write(tmp_path / "project.yaml", _source())
+    parts = _network_parts()
+    paths = {kind: sr._write(tmp_path / f"{kind}.yaml", value) for kind, value in parts.items()}
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(project_path), "--view", str(paths["view"]),
+        "--theme", str(paths["theme"]), "--scheme", str(paths["scheme"]),
+        "--layout", str(paths["layout"]), "--viewport", "1600xauto",
+        "--output", str(tmp_path / "network.svg"),
+    ])
+    with pytest.raises(SystemExit) as raised:
+        main()
+    payload = json.loads(capsys.readouterr().out)
+    diagnostic = payload["diagnostics"][0]
+    assert raised.value.code == 1
+    assert diagnostic["code"] == "E_LAYOUT_DRAFT_AUTO_UNSUPPORTED"
+    assert diagnostic["sourceRef"] == "/projection/surface"
+    assert "surface=dependency-network" in diagnostic["message"]
+    assert "fixed WIDTHxHEIGHT viewport" in diagnostic["message"]
+    assert "--viewport 1600x900" in diagnostic["message"]

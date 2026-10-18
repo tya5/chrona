@@ -531,7 +531,13 @@ def project_review_surface(value: SceneBuildInput) -> SceneSurface:
                                            value.completion.placement.shapes,
                                            value.completion.placement.marks))
     if surface == "dependency-network":
-        return _complete_surface_paint(_compose_dependency_network_surface(value), value.theme_tokens, value.visual_profile, value.viewport)
+        network = value.completion
+        legend = network.legend
+        return _complete_surface_paint(
+            _compose_dependency_network_surface(value), value.theme_tokens, value.visual_profile, value.viewport,
+            scale_legend_paints=dict(value.surface_content.scale_legend_paints),
+            legend_paints=(_completed_legend_paints(legend.shapes, legend.marks)
+                           if legend is not None else None))
     raise SceneBuildError("E_PRESENTATION_SURFACE_UNSUPPORTED", "/projection/surface")
 
 
@@ -1412,8 +1418,33 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                              float(item.bounds.inline_size), float(item.bounds.block_size)),
                             item.priority or "required", item.overflow or "visible-overflow")
                   for item in decisions)
+    legend = placed.legend
+    if legend is not None:
+        completed_slot = legend.slot
+        scene_slot = SceneSlot(
+            completed_slot.slot_id, completed_slot.source_ref, completed_slot.scale_id,
+            (float(completed_slot.bounds.inline), float(completed_slot.bounds.block),
+             float(completed_slot.bounds.inline_size), float(completed_slot.bounds.block_size)),
+            completed_slot.priority, completed_slot.overflow)
+        matches = [index for index, slot in enumerate(slots)
+                   if slot.source == "legend" or slot.slot_id == scene_slot.slot_id]
+        if len(matches) > 1:
+            raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", "/layout/legend/slot",
+                                  "completed legend slot has ambiguous authored owners")
+        if matches:
+            slots = (*slots[:matches[0]], scene_slot, *slots[matches[0] + 1:])
+        else:
+            slots += (scene_slot,)
     primitives: list[ScenePrimitive] = []
     primitive_provenance: list[PrimitiveProvenance] = []
+    groups = tuple(
+        SceneGroup(item.group_id,
+                   None if item.header_bounds is None else
+                   (float(item.header_bounds.inline), float(item.header_bounds.block),
+                    float(item.header_bounds.inline_size), float(item.header_bounds.block_size)),
+                   (float(item.content_bounds.inline), float(item.content_bounds.block),
+                    float(item.content_bounds.inline_size), float(item.content_bounds.block_size)))
+        for item in placed.groups)
     project_items = {node.object_id: node for node in network.nodes}
     project_items.update({item.object_id: item for item in getattr(projection, "items", ())})
     texture_slot: dict[str, str] = {}
@@ -1431,8 +1462,6 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
             paint_order=shape.paint_order))
         texture_slot[shape.placement_id] = shape.slot_id
     node_binding = semantic_binding("networkNode")
-    edge_bindings = {"dependency": semantic_binding("networkEdge"),
-                     "dependency-critical": semantic_binding("criticalEdge")}
     heading_part_slots = {item.node_id for item in value.layout_manifest.decisions
                           if item.kind == "slot" and item.source in {
                               "heading.title", "heading.kicker", "heading.subtitle"}}
@@ -1441,8 +1470,14 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
         heading_roles = {"titleText": "heading", "kickerText": "kicker", "subtitleText": "subtitle"}
         paint_role = (value.theme_tokens.title_paint_role("deadline-caption")
                       if text.semantic_id == "deadlineCaption" else
+                      ("legend" if value.theme_tokens.optional_color("legend", "fill") is not None else "text")
+                      if text.semantic_id == "legendLabel" else
+                      ("group-header" if value.theme_tokens.optional_color("group-header", "fill") is not None else "text")
+                      if text.semantic_id == "groupHeader" else
                       _heading_paint_role(value.theme_tokens, heading_roles[text.semantic_id])
                       if text.semantic_id in heading_roles else binding.scene_role)
+        source_kind = ("legend" if text.semantic_id == "legendLabel" else
+                       text.slot_id if text.slot_id in heading_part_slots else "network")
         layout = TextLayout((float(text.bounds.inline), float(text.bounds.block),
                              float(text.bounds.inline_size), float(text.bounds.block_size)),
                             text.baseline or (float(text.bounds.inline), float(text.bounds.block)),
@@ -1451,24 +1486,61 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                             _scene_transform(text.text_transform), text.numeric_spacing, text.orientation,
                             text.rotation_degrees, text.horizontal_scale, None, _scene_runs(text.runs))
         primitives.append(ScenePrimitive(text.placement_id, PrimitiveKind.TEXT, text.source_ref,
-                                         text.slot_id if text.slot_id in heading_part_slots else "network",
+                                         source_kind,
                                          binding.purpose, paint_role, layout.bounds, text=text.content,
                                          baseline=layout.baseline, text_layout=layout,
-                                         paint_order=text.paint_order, host_placement_id=text.host_placement_id))
+                                         paint_order=text.paint_order, host_placement_id=text.host_placement_id,
+                                         slot_id=text.slot_id))
         project_item = project_items.get(text.source_ref)
-        if project_item is not None:
+        if text.subjects:
+            primitive_provenance.append(PrimitiveProvenance(text.placement_id, text.subjects))
+        elif project_item is not None:
             subject = DiagnosticSubject.project_object(project_item.object_id, project_item.title)
             primitive_provenance.append(PrimitiveProvenance(text.placement_id, (subject,)))
+
+    group_semantics = {"groupBand", "groupHeaderBand", "groupHeaderStrip", "groupTab"}
+
+    def emit_shape(shape: Any) -> None:
+        binding = semantic_binding(shape.semantic_id)
+        paint = ({"paint": ScenePaint(fill=value.theme_tokens.color("background", "fill"),
+                                      stroke=None, stroke_width=None, dash=(), opacity=1)}
+                 if shape.semantic_id == "deadlineMarkOutline" else {})
+        source_kind = ("legend" if shape.semantic_id == "legendEntry" else
+                       "decoration" if shape.semantic_id in group_semantics | {"deadlineMarkOutline"} else "object")
+        role = shape.visual_role or binding.scene_role
+        primitives.append(_completed_shape_primitive(shape, source_kind, binding.purpose, role, **paint))
+        if shape.subjects:
+            primitive_provenance.append(PrimitiveProvenance(shape.placement_id, shape.subjects))
+
+    def emit_relation(relation: Any, *, legend_relation: bool = False) -> None:
+        binding = semantic_binding(relation.semantic_id)
+        if relation.paint_bounds is None:
+            raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", "/layout/network/relations",
+                                  "network relation requires Layout-completed paint bounds")
+        bounds = relation.paint_clip.bounds if relation.paint_clip is not None else relation.paint_bounds
+        primitives.append(ScenePrimitive(
+            (relation.relation_id if legend_relation else f"network-edge:{relation.relation_id}"), PrimitiveKind.PATH,
+            relation.source_ref if legend_relation and relation.source_ref else relation.relation_id,
+            "relation" if legend_relation else "network", binding.purpose, binding.scene_role,
+            bounds, marker_start=relation.marker_start, marker_end=relation.marker_end,
+            points=relation.points, path_commands=relation.path_commands,
+            paint_clip=relation.paint_clip, paint_order=relation.paint_order, slot_id=relation.slot_id,
+            from_instance_id=(relation.from_instance_id if relation.fragment_endpoint is None else None),
+            to_instance_id=(relation.to_instance_id if relation.fragment_endpoint is None else None),
+            fan_in=relation.fan_in))
+
+    # Group surfaces are ground geometry; they precede routes and node rectangles.
+    for shape in placed.shapes:
+        if shape.semantic_id in group_semantics:
+            emit_shape(shape)
     title_text = next((item for item in placed.text if item.placement_id == "title"), None)
     if title_text is not None:
         emit_text(title_text)
     for relation in placed.relations:
-        binding = edge_bindings[relation.semantic_id]
-        primitives.append(ScenePrimitive(f"network-edge:{relation.relation_id}", PrimitiveKind.PATH,
-                                         relation.relation_id, "network", binding.purpose, binding.scene_role,
-                                         (0, 0, 0, 0), points=relation.points,
-                                         paint_order=relation.paint_order))
+        emit_relation(relation)
     for node in placed.nodes:
+        if node.is_container:
+            continue
         bounds = (float(node.bounds.inline), float(node.bounds.block),
                   float(node.bounds.inline_size), float(node.bounds.block_size))
         primitives.append(ScenePrimitive(f"network-node:{node.object_id}", PrimitiveKind.RECT, node.object_id,
@@ -1477,23 +1549,46 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
         subject = DiagnosticSubject.project_object(node.object_id, getattr(node, "title", None))
         primitive_provenance.append(PrimitiveProvenance(f"network-node:{node.object_id}", (subject,)))
     for shape in placed.shapes:
-        binding = semantic_binding(shape.semantic_id)
-        paint = ({"paint": ScenePaint(fill=value.theme_tokens.color("background", "fill"),
-                                      stroke=None, stroke_width=None, dash=(), opacity=1)}
-                 if shape.semantic_id == "deadlineMarkOutline" else {})
-        primitives.append(_completed_shape_primitive(
-            shape, "decoration" if shape.semantic_id == "deadlineMarkOutline" else "object",
-            binding.purpose, shape.visual_role or binding.scene_role, **paint))
-        if shape.subjects:
-            primitive_provenance.append(PrimitiveProvenance(shape.placement_id, shape.subjects))
+        if shape.semantic_id not in group_semantics:
+            emit_shape(shape)
     for text in placed.text:
         if text.placement_id != "title":
+            emit_text(text)
+    if legend is not None:
+        legend_binding = semantic_binding("legendEntry")
+        for mark in legend.marks:
+            bounds = (float(mark.bounds.inline), float(mark.bounds.block),
+                      float(mark.bounds.inline_size), float(mark.bounds.block_size))
+            primitives.extend(_symbol_primitives(
+                mark.placement_id, mark.source_ref, "legend", legend_binding.purpose,
+                _legend_mark_role(mark, value.theme_tokens), bounds, mark.symbol_parts,
+                corner_radius=mark.corner_radius, slot_id=mark.slot_id, paint_order=mark.paint_order))
+        for shape in legend.shapes:
+            role = (semantic_binding("scaleLegendEntry").scene_role
+                    if shape.source_ref.startswith("scale:") else
+                    shape.visual_role or shape.source_ref)
+            primitives.append(_completed_shape_primitive(
+                shape, "legend", legend_binding.purpose, role,
+                corner_radius=shape.corner_radius or None))
+            if shape.subjects:
+                primitive_provenance.append(PrimitiveProvenance(shape.placement_id, shape.subjects))
+        for relation in legend.relations:
+            emit_relation(relation, legend_relation=True)
+        for text in legend.text:
             emit_text(text)
     ownership = {item.placement_id: item.slot_id for item in placed.text}
     ownership.update({item.relation_id: item.slot_id for item in placed.relations})
     ownership.update({f"network-node:{item.object_id}": item.slot_id for item in placed.nodes})
     ownership.update({f"network-edge:{item.relation_id}": item.slot_id for item in placed.relations})
     ownership.update({item.placement_id: item.slot_id for item in placed.shapes})
+    if legend is not None:
+        ownership.update({item.placement_id: item.slot_id for item in legend.marks})
+        ownership.update({primitive_id: mark.slot_id
+                          for mark in legend.marks
+                          for primitive_id in completed_symbol_primitive_ids(mark.placement_id, mark.symbol_parts)})
+        ownership.update({item.placement_id: item.slot_id for item in legend.shapes})
+        ownership.update({item.relation_id: item.slot_id for item in legend.relations})
+        ownership.update({item.placement_id: item.slot_id for item in legend.text})
     ownership.update(texture_slot)
     try:
         completed_primitives = tuple(replace(item, slot_id=ownership[item.scene_id]) for item in primitives)
@@ -1501,12 +1596,13 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
         raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", str(error)) from error
     completed_primitives = _attach_completed_patterns(completed_primitives, placed.patterns)
     completed_primitives = _attach_completed_strokes(completed_primitives, placed.aligned_strokes)
-    surface = SceneSurface("dependency-network", slots, (), (), None, completed_primitives,
-                        diagnostics=placed.diagnostics,
+    surface = SceneSurface("dependency-network", slots, (), groups, None, completed_primitives,
+                        diagnostics=(*placed.diagnostics, *(legend.diagnostics if legend is not None else ())),
                         canvas_bounds=(float(placed.canvas_bounds.inline), float(placed.canvas_bounds.block),
                                        float(placed.canvas_bounds.inline_size), float(placed.canvas_bounds.block_size)),
-                        fit_warnings=placed.fit_warnings,
-                        diagnostic_provenance=getattr(placed, "diagnostic_provenance", ()),
+                        fit_warnings=(*placed.fit_warnings, *(legend.warnings if legend is not None else ())),
+                        diagnostic_provenance=(*getattr(placed, "diagnostic_provenance", ()),
+                                               *(legend.diagnostic_provenance if legend is not None else ())),
                         primitive_provenance=tuple(primitive_provenance))
     surface = replace(surface, canvas_warning=placed.canvas_warning)
     return project_canvas_overlays(surface, placed.canvas_overlays, value.theme_tokens, value.visual_profile)

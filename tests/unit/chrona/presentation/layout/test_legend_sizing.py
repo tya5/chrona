@@ -4,6 +4,7 @@ Synthetic only: no `examples/` input. Text is measured with a fixed-advance font
 (7 px a character at the 14 px legend size) so every width below is exact.
 """
 from decimal import Decimal
+from types import SimpleNamespace
 
 import pytest
 
@@ -12,8 +13,10 @@ from chrona.presentation.layout.model import Measurement
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, measure_sources
 from chrona.presentation.layout.surface_legend import (
-    LegendArrangement, legend_arrangement, legend_source_input, swatch_extent,
+    LegendArrangement, SurfaceLegendContext, legend_arrangement, legend_source_input, place_legend, swatch_extent,
 )
+from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.surface_quality import SlotPlacement, SurfaceLayoutRequest
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
 from tests.unit.chrona.presentation.layout.test_sources import theme as measuring_theme
@@ -97,10 +100,35 @@ def test_every_swatch_bucket_has_a_declared_extent():
 
     legacy = swatch_extent("scale:owner:bus", tokens, 8.0, 14.0)
     line = swatch_extent("dependency", tokens, 8.0, 14.0)
+    critical_network_edge = swatch_extent("critical-edge", tokens, 8.0, 14.0)
 
     assert legacy[2] == "legacy"
     assert legacy[0] == pytest.approx(SWATCH) and legacy[1] == pytest.approx(SWATCH)
     assert line[2] == "line" and line[0] == pytest.approx(SWATCH)
+    assert critical_network_edge[2] == "line" and critical_network_edge[0] == pytest.approx(SWATCH)
+
+
+def test_critical_edge_legend_line_uses_canonical_scene_semantic_and_theme_source_role():
+    resolved = measuring_theme()
+    resolved["body"]["values"]["critical-edge-width"] = {"type": "number", "value": 2}
+    resolved["body"]["values"]["critical-edge-ink"] = {"type": "color", "value": "#B91C1C"}
+    resolved["body"]["roles"]["critical-edge"] = {
+        "stroke": "critical-edge-ink", "strokeWidth": "critical-edge-width",
+    }
+    tokens = ThemeTokenView(resolved)
+    entry = SurfaceLegendEntry("critical-edge", "Critical dependency")
+    request = SurfaceLayoutRequest(
+        surface_content=SimpleNamespace(legend_entries=(entry,)), theme_tokens=tokens,
+        font_metrics=_Metrics())
+    slot = SlotPlacement("legend", "legend", Rect(Decimal(0), Decimal(0), Decimal(240), Decimal(40)))
+    context = SurfaceLegendContext(request, slot, {"timeline.mark.blockSize": 8.0}, lambda _role: _Metrics())
+
+    batch = place_legend(context)
+
+    relation, = batch.relations
+    assert relation.semantic_id == "criticalEdge"
+    assert relation.source_ref == "critical-edge"
+    assert relation.slot_id == "legend"
 
 
 # --- what the content can shrink to ------------------------------------------------------------------------

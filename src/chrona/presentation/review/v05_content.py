@@ -669,6 +669,22 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     forecast_label = legend_wording.get("forecast") if isinstance(legend_wording, Mapping) else None
     legend = legend_entries(detail, project, projection, color_scale, closed_days_drawn=bool(calendar_closed),
                             forecast_label=forecast_label)
+    if view.surface == "dependency-network" and projection.network is not None:
+        visible_relation_ids = {fact.relation_id for fact in relations}
+        selected_network_ids = {node.object_id for node in projection.network.nodes}
+        has_visible_critical_edge = any(
+            edge.critical
+            and edge.relation_id in visible_relation_ids
+            and edge.source_id in selected_network_ids
+            and edge.target_id in selected_network_ids
+            for edge in projection.network.edges)
+    else:
+        has_visible_critical_edge = False
+    if (has_visible_critical_edge
+            and not any(entry.role == "critical-edge" for entry in legend)):
+        critical_label = (legend_wording.get("critical-edge", "Critical dependency")
+                          if isinstance(legend_wording, Mapping) else "Critical dependency")
+        legend = (*legend, SurfaceLegendEntry("critical-edge", str(critical_label)))
     detail_content = normalize_v05_review_detail_profile(detail, projection.items)
     scale_legend_paints: tuple[tuple[str, str], ...] = ()
     encoding_rules = ()

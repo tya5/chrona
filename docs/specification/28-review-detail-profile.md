@@ -147,6 +147,8 @@ the existing `snapshot` and `deadlineMark` roles and labels `Baseline` and
 meanings. Final completed painted occurrences decide admission, as above;
 source availability alone does not prove that a key is visible. This does not
 create a legend slot in a Layout Profile that declares none.
+That restriction concerns these comparison defaults; Spec50 separately defines
+the intrinsic dependency-network critical key (#1727).
 
 An explicit Detail legend entry for either role supplies its existing order,
 label and finite-shape choice instead of a second default entry. Preserve the

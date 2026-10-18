@@ -196,6 +196,16 @@ values in ascending order and before in descending order. The key `source` (also
 document declares them, not the scheduler's order; descending reverses it, and a group still
 keeps its members together.
 
+On a dependency network, Project containment remains distinct from these lanes
+(#1727). The projection identifies selected group objects as containers and
+closes each selected object's nearest selected container through its Project
+ancestor chain. Unselected ancestors are not implicitly selected. A selected
+container encloses its selected descendants, not an additional task node;
+an empty selected container retains its own header and empty content area.
+Selected relations retain their endpoint identity, including group endpoints.
+Critical edges use the existing scheduler-derived driving-relation and
+critical-endpoint facts, never paint or mere proximity to a critical node.
+
 A grouping with `presentation: header` may declare `header`, a text template for each
 group header (literal text, an ordinal in a declared form, the entity title and an entity
 field as a secondary title; a first-group variant). The text is View content; its

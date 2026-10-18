@@ -322,8 +322,12 @@ def test_allocation_preserves_existing_manifest_and_missing_source_diagnostics()
         prepare_surface_slots(replace(request, layout_manifest=None))
     manifest = replace(request.layout_manifest, decisions=tuple(
         decision for decision in request.layout_manifest.decisions if decision.source != "timeline"))
-    with pytest.raises(LayoutError, match="E_PRESENTATION_PRIMITIVE_MISSING"):
+    with pytest.raises(LayoutError, match="E_PRESENTATION_PRIMITIVE_MISSING") as caught:
         prepare_surface_slots(replace(request, layout_manifest=manifest))
+    assert caught.value.path == "/layoutManifest/sources/timeline"
+    assert "surface=table-timeline" in caught.value.detail
+    assert "missing source='timeline'" in caught.value.detail
+    assert "matching Layout Profile" in caught.value.detail and "--layout <profile>" in caught.value.detail
 
 
 def test_pre_row_host_demand_uses_natural_rows_not_fill_expanded_capacity():

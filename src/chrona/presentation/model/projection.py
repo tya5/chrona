@@ -204,6 +204,8 @@ class DependencyNetworkNode:
     critical: bool
     source_kind: str
     deadline: NetworkDeadlineContent | None = None
+    is_container: bool = False
+    container_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -550,7 +552,9 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         window,
         tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows,
         view.comparison.facets, hierarchy, view.surface,
-        _dependency_network_projection(project, selected, view),
+        _dependency_network_projection(
+            project, selected, view, hierarchy_entries,
+            frozenset(getattr(active_analysis, "driving_relations", ()))),
         frozenset(getattr(active_analysis, "driving_relations", ()),), folded_points,
         lane_membership, lane_rows, window_mode=WindowMode(view.window.mode),
         forecast_findings=forecast.findings if forecast is not None else (),
@@ -661,25 +665,49 @@ def _project_lane_membership(project: dict[str, Any], rows: tuple[ReviewRowProje
 
 
 def _dependency_network_projection(project: dict[str, Any], selected: list[ReviewItem],
-                                   view: ViewInput) -> DependencyNetworkProjection | None:
+                                   view: ViewInput,
+                                   hierarchy_entries: Mapping[str, HierarchyEntry],
+                                   driving_relations: frozenset[str] = frozenset()) -> DependencyNetworkProjection | None:
     """Close Project relation facts at the View boundary for a network surface."""
     if view.surface != "dependency-network":
         return None
+    relation_visibility = view.visibility.relations
+    relation_mode = (relation_visibility.get("mode", "none")
+                     if isinstance(relation_visibility, Mapping) else relation_visibility)
     selected_ids = {item.object_id for item in selected}
+    selected_containers = {item.object_id for item in selected
+                           if project.get("objects", {}).get(item.object_id, {}).get("type") == "group"}
+    critical_ids = {item.object_id for item in selected if item.critical}
+
+    def selected_container_parent(item: ReviewItem) -> str | None:
+        entry = hierarchy_entries.get(item.object_id)
+        if entry is None:
+            return None
+        return next((ancestor for ancestor in reversed(entry.path[:-1])
+                     if ancestor in selected_containers), None)
+
     nodes = tuple(DependencyNetworkNode(item.object_id, item.title,
-                                        _network_order_key(item, view), item.critical, item.source_kind)
+                                        _network_order_key(item, view), item.critical, item.source_kind,
+                                        is_container=item.object_id in selected_containers,
+                                        container_id=selected_container_parent(item))
                   for item in selected)
     edges = []
     for index, relation in enumerate(project.get("relations", ())):
+        if relation_mode == "none":
+            continue
         source = relation.get("from", {})
         target = relation.get("to", {})
         source_id, target_id = source.get("object"), target.get("object")
         if source_id not in selected_ids or target_id not in selected_ids:
             continue
         identity = relation_identity(index, relation)
+        critical = (identity in driving_relations
+                    and source_id in critical_ids and target_id in critical_ids)
+        if relation_mode == "critical" and not critical:
+            continue
         edge = DependencyNetworkEdge(identity, str(source_id), str(target_id),
                                            str(source.get("endpoint", "end")), str(target.get("endpoint", "start")),
-                                           all(item.critical for item in selected if item.object_id in {source_id, target_id}))
+                                           critical)
         edges.append((relation.get("id") or identity, edge))
     return DependencyNetworkProjection(nodes, tuple(edge for _, edge in sorted(
         edges, key=lambda item: (item[0], item[1].relation_id))))
@@ -739,7 +767,7 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
             ) if member is not None),
             depth=item.hierarchy_depth if view.grouping is not None and view.grouping.by == "hierarchy" else 0,
             rollup_presentation=(view.grouping.rollup or "none"
-                                 if item.is_rollup else "none"))
+                                if item.is_rollup and view.grouping is not None else "none"))
             for item in selected)
         collapsed: dict[str, list[ReviewItem]] = {}
         for row in rows:
