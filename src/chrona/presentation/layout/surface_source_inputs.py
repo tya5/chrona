@@ -64,7 +64,8 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
     sources = {
         "title": _title_source(project, heading),
         "table": (SourceInput(table_lines, row_count, len(view.table_columns) or 1, table=table)
-                  if lane_mode or view.table_columns else SourceInput(table=table, content_present=False)),
+                  if lane_mode or view.table_columns or getattr(projection, "group_ids", ())
+                  else SourceInput(table=table, content_present=False)),
         "timeline": SourceInput(item_count=row_count, span_days=span_days),
         "timeline-axis": SourceInput(span_days=span_days, typography_role="axis",
                                      axis_tiers=content.axis_tiers),
