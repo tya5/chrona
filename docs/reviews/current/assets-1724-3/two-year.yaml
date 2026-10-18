@@ -1,0 +1,24 @@
+version: timeline/v0.7
+project:
+  id: syn
+  title: 'Two-year plan'
+  calendar: c
+calendars:
+  c:
+    working_days: [mon, tue, wed, thu, fri]
+objects:
+  start:
+    type: gate
+    title: 'Start'
+    schedule: {mode: fixed-point, at: '2026-10-19'}
+  a:
+    type: task
+    title: 'Design'
+    schedule: {mode: scheduled, amount: 30wd}
+  b:
+    type: task
+    title: 'Build'
+    schedule: {mode: scheduled, amount: 32wd}
+relations:
+  - {id: r1, type: dependency, from: {object: start, endpoint: at}, to: {object: a, endpoint: start}, lag: 0d}
+  - {id: r2, type: dependency, from: {object: a, endpoint: end}, to: {object: b, endpoint: start}, lag: 0d}

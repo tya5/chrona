@@ -1157,7 +1157,11 @@ another block lane is not the label's cell and does not constrain it.
 Paint-host attribution may cross units (month labels on a quarter band): the
 topmost painted cell under the primary's centre is its host, ordered by paint
 order then native emission order. Hosted text must fit that host's full box;
-Layout never switches to a neighbouring cell to hide overflow. Without a painted
+Layout never switches to a neighbouring cell to hide overflow. The one extension (#1724): when the run overhangs the host onto the next or previous cell of the same band tier
+whose natural interval abuts the host's (for example a week label across the year boundary of a year band), those
+abutting cells are one continuous painted run and the host's box is widened over them; their `cellGap` is the only
+break. A cell that does not abut (a retained `every` step) never widens the box, and logical-interval containment
+still applies, so a window-clipped edge cell whose own interval cannot hold the label stays omitted. Without a painted
 host the identity is absent, but logical containment still applies.
 
 A non-fitting primary is thinned with `W_LAYOUT_AXIS_LABEL_THINNED`; its typed
