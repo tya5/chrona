@@ -22,7 +22,16 @@ S2 scoped legends and passive Scene provenance are implemented on the WIP
 branch. Combined ingress/legend/Scene/C1 checks pass67 tests; actual SVG/PNG
 scope output was inspected. Native serialized Style treatment also reaches
 C1's effective appearance-role lookup, not only an injected metadata fixture.
-S2 official artifact, reviewer and release evidence remain pending.
+S2 [PR1687](https://github.com/tya5/chrona/pull/1687) is open for reviewer approval.
+Its first official snapshot from
+[39081414706](https://github.com/tya5/chrona/actions/runs/39081414706)
+has all50 SVG/Scene pairs byte-identical to its S1 base; only two diagnostic
+inventories change (source coordinates and seven expected new emission sites).
+The first conformance run exposed a missing workspace schema annotation and
+an unclassified Style example; annotating the example exposed the checker’s
+missing root `allOf` version traversal. Those are corrected with a failing-then-
+passing regression and14 annotation/reference tests. Final-head CI, reviewer
+and exact-main release evidence remain required.
 Do not count WIP publication as release acceptance.
 
 ### S2 installed-wheel evidence
@@ -53,8 +62,8 @@ passes14 tests.
 The local 50-slide S2 batch introduces no SVG/Scene delta beyond the accepted
 S1 glyph migration. Corrected glyph output equals S1 exactly; S1's official
 final-head snapshot has109 paths, all byte-identical to the PNG-reviewed
-evidence. No generated file was edited. S2's own official PR artifact remains
-required against the now-generated S1 base.
+evidence. No generated file was edited. S2's first official artifact confirms
+the same50 unchanged pairs; the final-head artifact must retain that result.
 
 ## Literal issue acceptance
 

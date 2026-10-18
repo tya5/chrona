@@ -110,7 +110,9 @@ $defs:
     description: "Locally owned explicit Style reference."
     allOf:
       - {$ref: "#/$defs/localReference"}
-      - {properties: {kind: {const: style}}}
+      - description: "Constrain the local resource reference to a Style."
+        properties:
+          kind: {description: "The referenced resource must be a Style.", const: style}
   binding:
     type: object
     description: "Pinned preset and the closed Stage-2 presentation override vocabulary."

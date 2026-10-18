@@ -75,6 +75,7 @@ For example, a design whose Theme declares a complete `custom-planned` mark
 treatment can select it without changing product code:
 
 ```yaml
+# chrona-contract: current
 version: chrona/style/v0.2
 kind: style
 id: custom-style
