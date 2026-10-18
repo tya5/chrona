@@ -76,7 +76,8 @@ def legend_item_gap(declared: Any, legend_size: float) -> float:
 
 def swatch_extent(role: str, tokens: Any, mark_block_size: float, legend_size: float,
                   shape: str | None = None, *,
-                  glyph_footprint: tuple[float, float] | None = None) -> tuple[float, float, str]:
+                  glyph_footprint: tuple[float, float] | None = None,
+                  paint_role: str | None = None) -> tuple[float, float, str]:
     """Return one legend entry's (inline size, block size, dispatch bucket) (#427).
 
     The size is the role's own mark geometry against the document's own
@@ -101,7 +102,7 @@ def swatch_extent(role: str, tokens: Any, mark_block_size: float, legend_size: f
         side = area_block if area_block is not None else legacy
         return side, side, shape
     if shape == "rule-pair":
-        stroke = tokens.optional_number(_swatch_paint_role(role, tokens), "strokeWidth")
+        stroke = tokens.optional_number(paint_role or _swatch_paint_role(role, tokens), "strokeWidth")
         width = float(stroke) if stroke is not None else 0.0
         return max(fallback_inline, 3 * width), max(area_block or legacy, 2 * width), shape
     if glyph_footprint is not None:
@@ -129,7 +130,8 @@ def entry_swatch_extent(entry: SurfaceLegendEntry, tokens: Any, mark_block_size:
                         legend_size: float) -> tuple[float, float, str]:
     glyph = entry.realized_key.glyph if entry.realized_key is not None else None
     return swatch_extent(entry.role, tokens, mark_block_size, legend_size, entry.swatch_shape,
-                         glyph_footprint=glyph.footprint if glyph is not None else None)
+                         glyph_footprint=glyph.footprint if glyph is not None else None,
+                         paint_role=entry.realized_key.paint_role if entry.realized_key is not None else None)
 
 
 def swatch_label_gap(declared: Any, tokens: Any, legend_size: float) -> float:

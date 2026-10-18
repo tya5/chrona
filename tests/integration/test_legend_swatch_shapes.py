@@ -13,6 +13,26 @@ from chrona.presentation.color_scheme import resolve_theme
 from chrona.presentation.layout.mark_geometry import symbol_parts
 
 
+def test_realized_rule_pair_measures_the_same_selected_role_width_it_emits():
+    from chrona.presentation.layout.surface_legend import entry_swatch_extent
+    from chrona.presentation.model.legend_paint import RealizedLegendKey
+    from chrona.presentation.model.theme_paint import PaintFamily, resolve_theme_paint_witness
+
+    parts = _parts()
+    body = parts["theme"]["body"]
+    body["values"].update({"wide-key-stroke": {"type": "number", "value": 6},
+                           "tiny-key-side": {"type": "number", "value": 2}})
+    body["roles"]["wide-actual"] = {"strokeWidth": "wide-key-stroke"}
+    body["colorBindings"]["wide-actual.stroke"] = "text"
+    body["roles"]["legend-swatch"] = {"swatchInlineSize": "tiny-key-side", "swatchBlockSize": "tiny-key-side"}
+    tokens = ThemeTokenView(resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="synthetic"))
+    key = RealizedLegendKey("actual", "wide-actual",
+        resolve_theme_paint_witness(tokens, "wide-actual", PaintFamily.OUTLINE))
+    entry = SurfaceLegendEntry("actual", "Actual", swatch_shape="rule-pair", realized_key=key)
+
+    assert entry_swatch_extent(entry, tokens, 42, 12) == (18.0, 12.0, "rule-pair")
+
+
 def _parts():
     parts = sr.bundle("executive-light")
     body = parts["theme"]["body"]
