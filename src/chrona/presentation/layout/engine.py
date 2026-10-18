@@ -201,6 +201,13 @@ def _unbounded_spec_base(spec: Any, *, axis: str, measurement: Measurement | Non
         return fixed, fixed, ZERO
     if isinstance(spec, dict) and "aspectRatio" in spec:
         return ZERO, None, ZERO
+    if (isinstance(spec, dict) and "minmax" in spec and axis == "inline" and measurement is not None
+            and not any((measurement.min_inline, measurement.preferred_inline, measurement.max_inline))
+            and spec["minmax"]["min"] == "content"
+            and isinstance(spec["minmax"]["max"], dict) and "fr" in spec["minmax"]["max"]):
+        # A slot whose source holds nothing has no content to size to and claims no share of the free space:
+        # an empty table slot collapses to zero width (#1683).
+        return ZERO, ZERO, ZERO
     if isinstance(spec, dict) and "minmax" in spec:
         low, _, _ = _spec_base(spec["minmax"]["min"], axis=axis, measurement=measurement, profile=profile, path=path + "/minmax/min")
         _, high, weight = _spec_base(spec["minmax"]["max"], axis=axis, measurement=measurement, profile=profile, path=path + "/minmax/max")
