@@ -81,3 +81,15 @@ then stale B accepted both (`actual:2:6c52833a6e1c`, `actual:3:84aa7f2ec6b7`);
 reopening returned B's content and lost A's update. This deterministic temporary
 Store experiment uses explicit pipe handshakes, not sleeps. L2 must reproduce
 this failure as a committed regression, then prove B conflicts after the fix.
+
+## Next-item baseline (design not yet selected)
+
+- Item3: Spec10 §8 requires new-revision undo/redo with unsafe inverses rejected.
+  Accepted replay results already retain before/after immutable references;
+  investigate reusing that authority instead of a duplicate content journal.
+  The closed command-request schema needs an explicit version/operation decision.
+- Item2: reuse the authoring use case and CLI persistence adapters behind the
+  existing MCP write gate. Adding a tool changes the tool-set contract. Current
+  authoring code echoes commandId but has no durable replay; successful retry
+  becomes stale-CAS rejection. Resolve that contract before claiming honest
+  idempotent annotations or the item's replay acceptance. No item3/2 code yet.
