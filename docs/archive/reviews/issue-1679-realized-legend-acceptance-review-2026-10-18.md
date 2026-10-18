@@ -2,25 +2,26 @@
 
 <!-- chrona:literal-acceptance/v1 -->
 
-Implementation source `a7fc836ac8f386be589bc86fd20ee632152db71c`, based on
-`0c81797404e3af616c0ae08e9b07ffc8ad21e767`. [Current design/plan](../../planning/active/issue-1679-realized-legend-work-record-2026-10-18.md).
+Accepted and closed after PR1692 merge `6de463805`. Final source `6cfaa7075`
+passed [CI39093575302](https://github.com/tya5/chrona/actions/runs/39093575302).
+Review-containing main `4e30fbc3f8ce3728b1639cbef8747c5b98ccebf5` passed
+[release39094741641](https://github.com/tya5/chrona/actions/runs/39094741641):
+three-OS full pytest/conformance/wheel, newest-Python reproduction and MCP floor.
+[Design/plan](../planning/issue-1679-realized-legend-work-record-2026-10-18.md).
+The count-table source is `a7fc836ac8f386be589bc86fd20ee632152db71c`, based on
+`0c81797404e3af616c0ae08e9b07ffc8ad21e767`.
 Official derived snapshot [CI39090738185](https://github.com/tya5/chrona/actions/runs/39090738185)
 provides the 50-slide table below. Official correction66f snapshot
 [CI39092648869](https://github.com/tya5/chrona/actions/runs/39092648869)
 is byte-identical across all50 SVG/Scene pairs, coverage and contrast reports;
-diagnostic inventory differences are source locations only. Conformance,
-snapshot, MCP, reproduction and pytest shards2/3 pass. Pytest shard1 finds one
-test-input ownership regression (explicit retired-example references).
-Correction `e77fff742` restores independent fixture inputs and refreshes only
-affected private golden outputs, retaining the guard (11 focused tests pass).
-Current-head pytest and exact-main release remain required. No failed gate is
-treated as acceptance.
+diagnostic inventory differences are source locations only. Final6cf artifact
+12123836891 retains that byte identity; its fixture-ownership correction
+`e77fff742` restores independent inputs without weakening the guard.
 Supplemental Sunday, Gates and glyph-gates PNGs were inspected; their input SVGs
 are byte-identical to the official artifact. The artifact shows Sunday's seven expected
 keys without overflow and Gates’ five keys without a viewport warning. It adds
 two Yuya progress-swatch contrast warnings; no glyph-gates strict contrast
-errors or source-YAML repairs. Keep the issue open pending exact-head CI and
-exact-main release evidence.
+errors or source-YAML repairs. All four literal rows and the release gate are met.
 
 ## Literal issue acceptance
 
@@ -138,5 +139,4 @@ unexempted.
 Shared model paint remains project-independent; Layout owns potential/final
 key selection and completed geometry; Scene consumes ink witnesses and owns
 bounds-dependent effects; adapters infer no meaning. Independent review found
-no layer breach. Exact-head CI and the exact-main release gate are still
-pending.
+no layer breach. Final CI and review-containing exact-main release passed above.
