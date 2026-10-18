@@ -397,3 +397,25 @@ def test_title_caption_reserves_only_its_own_slot_not_graph_or_routes(direction)
     title = next(item for item in headed.text if item.placement_id == "title")
     caption = next(item for item in headed.text if item.placement_id == "slot-heading:title")
     assert title.bounds.block >= caption.bounds.block + caption.bounds.block_size
+
+
+def test_missing_network_slot_names_selected_surface_and_layout_action():
+    from chrona.presentation.layout.model import LayoutError
+
+    manifest = LayoutManifest(
+        "test", "sha256:test", "horizontal", "horizontal",
+        Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(300)),
+        (LayoutDecision("title", "slot", Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(60)),
+                        source="title"),),
+    )
+    request = SurfaceLayoutRequest(
+        projection=SimpleNamespace(network=_network(("a",), ())),
+        surface_content=SimpleNamespace(slot_heading_text=()), layout_manifest=manifest,
+        measured_sources=_measured("a"), theme_tokens=ThemeTokenView(theme()), font_metrics=object())
+    with pytest.raises(LayoutError) as caught:
+        compose_dependency_network_surface(request)
+    assert (caught.value.diagnostic_id, caught.value.path) == (
+        "E_PRESENTATION_PRIMITIVE_MISSING", "/layoutManifest/sources/network")
+    assert "surface=dependency-network" in caught.value.detail
+    assert "missing source='network'" in caught.value.detail
+    assert "matching Layout Profile" in caught.value.detail and "--layout <profile>" in caught.value.detail

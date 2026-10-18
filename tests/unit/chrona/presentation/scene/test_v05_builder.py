@@ -269,6 +269,9 @@ def test_scene_input_rejects_a_layout_without_a_required_source():
                           resolved_theme=_theme(), font_metrics=object(), measured_sources=_measurements(),
                           capabilities={"svg": True})
     assert error.value.path == "/layoutManifest/sources/timeline-axis"
+    assert "surface=table-timeline" in error.value.detail
+    assert "missing source='timeline-axis'" in error.value.detail
+    assert "matching Layout Profile" in error.value.detail and "--layout <profile>" in error.value.detail
 
 
 def test_scene_input_requires_surface_specific_network_slot_set():

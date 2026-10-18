@@ -83,7 +83,11 @@ def build_surface_input(*, projection: Any, surface_content: SurfaceContentInput
                         if decision.source and decision.priority in {None, "required"}}
     missing = sorted(_REQUIRED_SOURCES[surface] - required_sources)
     if missing:
-        raise SceneBuildError("E_PRESENTATION_PRIMITIVE_MISSING", "/layoutManifest/sources/" + missing[0])
+        source = missing[0]
+        raise SceneBuildError(
+            "E_PRESENTATION_PRIMITIVE_MISSING", "/layoutManifest/sources/" + source,
+            f"surface={surface}; missing source={source!r}; add this slot to a matching Layout Profile "
+            "and select it with --layout <profile>")
     if surface == "dependency-network":
         table_sources = {"table", "timeline", "timeline-axis"}
         if required_sources & table_sources:

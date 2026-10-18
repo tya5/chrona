@@ -39,6 +39,18 @@ def test_complete_profile_resolves_tokens_and_canonical_hash():
     assert not first.literal_distance_paths
 
 
+def test_unsorted_theme_token_requirements_show_exact_expected_order():
+    value = fixture("layout-profile-intent-v0.2.yaml")
+    declared = value["requiredThemeTokens"]
+    assert len(declared) >= 2 and declared == sorted(declared)
+    value["requiredThemeTokens"] = list(reversed(declared))
+    with pytest.raises(LayoutError) as caught:
+        resolve_layout_profile(value, available_sources=SOURCES, theme=theme())
+    assert (caught.value.diagnostic_id, caught.value.path) == (
+        "E_LAYOUT_TOKEN_REQUIREMENTS", "/requiredThemeTokens")
+    assert caught.value.detail == f"requiredThemeTokens must be sorted; expected order: {declared!r}"
+
+
 def test_stable_id_override_changes_only_named_nodes():
     base = fixture("layout-profile-intent-v0.2.yaml")
     override = fixture("layout-profile-override-v0.2.yaml")

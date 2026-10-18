@@ -172,7 +172,10 @@ def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> Depende
                  if item.kind == "slot" and item.source in {
                      "title", "network", "heading.title", "heading.kicker", "heading.subtitle"}}
     if "network" not in decisions:
-        raise LayoutError("E_PRESENTATION_PRIMITIVE_MISSING", "/layoutManifest/sources/network")
+        raise LayoutError(
+            "E_PRESENTATION_PRIMITIVE_MISSING", "/layoutManifest/sources/network",
+            detail=("surface=dependency-network; missing source='network'; add this slot to a matching "
+                    "Layout Profile and select it with --layout <profile>"))
     slots = {source: SlotPlacement(item.node_id, source, item.bounds,
                                    item.priority or "required", item.overflow or "visible-overflow")
              for source, item in decisions.items()}

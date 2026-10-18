@@ -247,7 +247,10 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
     collect_tokens(profile["reviewSurface"].get("maxBlockSize"))
     declared = tuple(profile["requiredThemeTokens"])
     if tuple(sorted(declared)) != declared:
-        raise LayoutError("E_LAYOUT_TOKEN_REQUIREMENTS", "/requiredThemeTokens")
+        expected = tuple(sorted(declared))
+        raise LayoutError(
+            "E_LAYOUT_TOKEN_REQUIREMENTS", "/requiredThemeTokens",
+            detail=f"requiredThemeTokens must be sorted; expected order: {list(expected)!r}")
     missing = sorted(used_tokens - set(declared))
     if missing:
         raise LayoutError("E_LAYOUT_TOKEN_REQUIREMENT_MISSING", "/requiredThemeTokens", missing[0])
