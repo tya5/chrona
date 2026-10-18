@@ -4,8 +4,14 @@
 
 Implementation: `42e25bd10`; native regression publication: `82f96bdc5`.
 [Current plan/design](../../planning/active/issue-1680-forecast-deadline-work-record-2026-10-18.md).
-Local acceptance evidence is complete. PR/full CI and exact-main three-OS release
-are pending; keep the issue open until those gates pass.
+Merged [PR1689](https://github.com/tya5/chrona/pull/1689) at `82c1e96b6`;
+head `955190f29` passed [CI39084366543](https://github.com/tya5/chrona/actions/runs/39084366543).
+Trusted main `53f83ad721549ed6ab023b3d45a07a19b5285e1d` passed the full three-OS,
+wheel/smoke and newest-Python reproduction gates in
+[release39085607822](https://github.com/tya5/chrona/actions/runs/39085607822).
+The official PR artifact preserves all50 SVG/Scene pairs; only diagnostic
+inventory source coordinates change. Keep the issue open until the release
+gate on the main commit containing this final review also succeeds.
 
 ## Literal issue acceptance
 
@@ -50,4 +56,4 @@ Scene and adapters acquire no date comparison or new estimated paint policy.
 Focused58/37 batches and7 native cases pass, including hidden/out-of-window
 marks with forecast warnings. Independent review found no contract defect;
 inward-import and reachability gates pass. No source-YAML or generated file
-was changed. Final release/CI links must be recorded before closing.
+was changed. Final review-publication release remains the closing gate.

@@ -644,10 +644,14 @@ Forecast requires a table-timeline View with a declared per-item `finishDelta`
 channel and a Layout legend slot. Unsupported presentation is
 `E_FORECAST_PRESENTATION_REQUIRED`, with the missing capability named; do not
 invent a slot, change View selection, unhide rollups or synthesize adapter text.
-The content layer replaces the ordinary planned legend key with a `forecast`
-key, or adds it when absent, labelled `Forecast (* estimated)` by default.
+The content layer replaces the ordinary planned legend candidate with a
+`forecast` candidate, or adds it when absent, labelled `Forecast (* estimated)` by default.
 `wording.legend.forecast` may provide declared wording; its swatch reuses planned
 paint. Do not leave a misleading current-plan key for the replacement bars.
+Final painted-occurrence filtering follows Specification 60 §4: if encoding
+replaces every forecast mark's base paint, its scale keys replace this base
+swatch too. The required delta and its estimated `*` remain; source capability
+checks still require the declared delta channel and legend slot.
 
 Every selected primary temporal item needs a complete, visible forecast delta.
 Table cells use measured full comparison text; plot deltas are independent
@@ -829,7 +833,23 @@ Summary keys address the exact joined identifiers, without splitting on dots;
 if multiple metric or panel-title targets have that joined key, an override is ambiguous.
 An unknown or ambiguous key is `E_VIEW_WORDING_UNKNOWN` or
 `E_VIEW_WORDING_AMBIGUOUS` at its original View pointer. An omitted override
-retains the profile label. No entries or panels are synthesized.
+retains the profile label. No panels or arbitrary semantic entries are
+synthesized. The bounded realized Actual variants and positive-progress key
+in Specification 28 are explicit exceptions, like the Forecast key in §8:
+`progressFill` addresses its label, while `actual-ahead`, `actual-on-track`,
+and `actual-behind` address qualifier fragments appended to the authored
+Actual label. These are wording targets, not new paint or registry roles.
+
+Before table measurement, omit comparison-dependent columns whose closed
+source is absent (#1679). Actual/progress/missing-Actual sources require a
+supplied Actual Set; a supplied but empty set retains the column and its
+declared missing-value policy. Ordinary finish delta requires Actual, not
+Snapshot alone. An explicit forecast fact instead supplies forecast delta
+against its already resolved primary/Snapshot baseline. Snapshot and scenario
+columns require their corresponding bound source. Use the selected source
+contract, never a scan for blank cells or inferred dates. This omission does
+not relax required-source, unknown-reference or malformed-fact errors, and
+does not mutate the authored View or comparison inputs.
 
 The use-case boundary closes profile connections before fact resolution and
 text measurement, preserving authored resource identities in provenance.

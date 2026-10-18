@@ -120,6 +120,8 @@ class ReviewItem:
     temporal_paint: bool = True
     # Lane of a key-row point, assigned by Layout from measured extents (#1501); None everywhere else.
     key_lane: int | None = None
+    # Block pitch of that lane when a label is taller than the mark lane, so adjacent lanes' labels never meet (#1681).
+    key_pitch: float | None = None
     # Project-declared link retained separately from lane-derived ``attached_to`` (#1373).
     declared_attaches_to: str | None = None
     field_bindings: FieldRoleBindings = FieldRoleBindings()
@@ -282,6 +284,8 @@ class ReviewProjection:
     rows_resolved: bool = False
     # Declared group containers in display order, including groups whose points were all folded into the header.
     group_order: tuple[str, ...] = ()
+    # Comparison sources resolved by Render Context closure, independent of selected table rows.
+    bound_comparison_sources: frozenset[str] = frozenset()
 
     @property
     def has_rows(self) -> bool:
@@ -521,7 +525,10 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         forecast_findings=forecast.findings if forecast is not None else (),
         forecast_warnings=forecast.warnings if forecast is not None else (),
         omitted_group_summary_count=omitted_group_summary_count,
-        rows_resolved=True, group_order=group_order)
+        rows_resolved=True, group_order=group_order,
+        bound_comparison_sources=frozenset(
+            ("snapshot",) if snapshot_project is not None else ()
+        ) | (frozenset({"scenario"}) if scenarios else frozenset()))
 
 
 def _group_order(selected: list[ReviewItem], rows: tuple[ReviewRowProjection, ...]) -> tuple[str, ...]:

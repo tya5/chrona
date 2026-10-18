@@ -245,6 +245,49 @@ def test_legend_wording_is_limited_to_profile_roles_without_closing_role_vocabul
     assert error.value.source_ref == "/body/wording/legend/not-present"
 
 
+def test_progress_legend_wording_is_valid_without_detail_but_does_not_create_an_entry():
+    view = _view(wording={"legend": {"progressFill": "Observed progress"}})
+
+    result = resolve_profile_connections(view, None, None, project_object_ids=frozenset())
+
+    assert result.detail is None
+    assert result.view.wording["legend"] == {"progressFill": "Observed progress"}
+
+    detail = ReviewDetailInput((), (), (LegendEntry("progressFill", "Progress"),), None)
+    with_entry = resolve_profile_connections(view, None, detail, project_object_ids=frozenset())
+    assert with_entry.detail.legend == (LegendEntry("progressFill", "Observed progress"),)
+
+
+def test_actual_qualifier_wording_requires_actual_candidate_and_keeps_fragments_in_view():
+    wording = {"legend": {
+        "actual": "Observed",
+        "actual-ahead": "early",
+        "actual-on-track": "on plan",
+        "actual-behind": "late",
+    }}
+    detail = ReviewDetailInput((), (), (
+        LegendEntry("planned", "Plan"), LegendEntry("actual", "Actual"),
+    ), None)
+
+    result = resolve_profile_connections(_view(wording=wording), None, detail,
+                                         project_object_ids=frozenset())
+
+    assert result.detail.legend == (
+        LegendEntry("planned", "Plan"), LegendEntry("actual", "Observed"),
+    )
+    assert result.view.wording["legend"] == wording["legend"]
+
+    for qualifier in ("actual-ahead", "actual-on-track", "actual-behind"):
+        with pytest.raises(ProfileConnectionError) as error:
+            resolve_profile_connections(
+                _view(wording={"legend": {qualifier: "fragment"}}), None,
+                ReviewDetailInput((), (), (LegendEntry("planned", "Plan"),), None),
+                project_object_ids=frozenset(),
+            )
+        assert error.value.code == "E_VIEW_WORDING_UNKNOWN"
+        assert error.value.source_ref == f"/body/wording/legend/{qualifier}"
+
+
 def test_period_legend_source_requires_one_selected_period_and_the_exact_visual_role():
     period = SimpleNamespace(period_id="p1", band_role="period-band:launch")
     validate_period_legend_sources(

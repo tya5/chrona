@@ -23,7 +23,7 @@ from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.model import SceneSurface
 from chrona.presentation.scene.v05_builder import SceneBuildError, SceneBuildInput, project_review_surface
-from chrona.presentation.scene.visual_capabilities import VisualProfile
+from chrona.presentation.scene.visual_capabilities import VisualProfile, paint_witness_capabilities
 
 
 @dataclass(frozen=True)
@@ -163,6 +163,7 @@ def _complete_table_timeline(value: PreparedSurfaceInput):
             temporal_capacity=TemporalInlineCapacity.from_manifest(value.layout_manifest, value.measured_sources),
             font_metrics=value.font_metrics,
             capabilities=dict(value.capabilities), icon_assets=value.icon_assets or {},
+            paint_capabilities=paint_witness_capabilities(value.visual_profile),
             visual_requests=value.visual_requests,
             fixed_lane_preflight=value.fixed_lane_preflight,
             capacity_short_sources=value.capacity_short_sources,

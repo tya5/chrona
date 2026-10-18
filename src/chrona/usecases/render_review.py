@@ -51,6 +51,7 @@ from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
 from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_role_consumers import unread_diagnostics as unread_theme_diagnostics
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
+from chrona.presentation.model.theme_paint import ThemePaintError
 from chrona.core.attachments import AttachmentWarning, attachment_warnings
 from chrona.core.deadlines import DeadlineStatus, deadline_statuses, deadline_warnings_from_statuses
 from chrona.presentation.count_text import CountTextError
@@ -97,6 +98,7 @@ from chrona.presentation.scene.visual_capabilities import (
     resolve_visual_profile,
     validate_surface_visual_profile,
     visual_capability_message,
+    paint_witness_capabilities,
 )
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.storage.snapshot_paths import snapshot_directory
@@ -268,7 +270,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed(error.diagnostic_id, error.detail, "presentation", error.source_ref) from error
     except ProfileConnectionError as error:
         raise RenderFailed(error.code, error.detail, error.component, error.source_ref) from error
-    except (LayoutError, ThemeTokenError, ScenePaintError) as error:
+    except (LayoutError, ThemeTokenError, ThemePaintError, ScenePaintError) as error:
         message = error_message(error.diagnostic_id, getattr(error, "detail", None))
         node = getattr(error, "node_id", None)  # a Layout finding names the offending token or node here
         raise RenderFailed(error.diagnostic_id, f"{message} ({node})" if node else message,
@@ -439,6 +441,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             detail=profile_connections.detail,
             viewport_inline=environment.viewport_inline, viewport_block=environment.viewport_block,
             content_sized=request.draft_auto_block, locale=environment.locale,
+            paint_capabilities=paint_witness_capabilities(visual_profile),
             capabilities={name: True for name in render_closure.context.target.capabilities},
             icon_assets=icon_assets, visual_requests=visual_requests, progress=request.progress))
         plan = prepare_surface_render_plan(count_input.value) if not count_input.active else None

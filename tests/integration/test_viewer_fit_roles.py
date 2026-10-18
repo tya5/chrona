@@ -119,7 +119,8 @@ def test_the_shared_text_role_pins_cells_and_bar_labels_alike(tmp_path):
 def test_legend_items_are_pinned_with_the_declared_adjust(tmp_path):
     rendered = _render(tmp_path, roles={"legend": {"viewerFit": FIT, "viewerFitAdjust": "spacingAndGlyphs"}})
     found = _pinned(rendered, lambda item: item.purpose == "legend-label")
-    assert len(found) == 2 and {item.text_layout.fit.adjust for item in found} == {"spacingAndGlyphs"}
+    assert len(found) == 1 and found[0].text == "Planned"
+    assert {item.text_layout.fit.adjust for item in found} == {"spacingAndGlyphs"}
     assert 'lengthAdjust="spacingAndGlyphs"' in _element(_svg(rendered), found[0].scene_id)
     _unpinned(rendered, lambda item: item.purpose == "table-cell")
 
