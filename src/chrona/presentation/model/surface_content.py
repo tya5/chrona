@@ -354,6 +354,17 @@ class ResolvedPresentationInput:
     surface_content: SurfaceContentInput
 
 
+def entity_title_or_value(value: Any, project: Mapping[str, Any]) -> Any:
+    """A text field value that names a Project entity reads as that entity's title (#1683); any other value as is."""
+    entities = project.get("entities")
+    if isinstance(value, str) and isinstance(entities, Mapping):
+        entity = entities.get(value)
+        title = entity.get("title") if isinstance(entity, Mapping) else None
+        if isinstance(title, str) and title:
+            return title
+    return value
+
+
 def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_index: int | None = None) -> Any:
     """Resolve one renderer-neutral table cell from normalized review data."""
     if isinstance(source, str):
@@ -364,7 +375,7 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
                 "entity": item.group_label, "rowIndex": row_index, "totalFloat": item.total_float,
                 "wbsCode": item.wbs_code}.get(source)
     if "field" in source or "fieldRole" in source:
-        return item.field_bindings.read(item.fields, source)
+        return entity_title_or_value(item.field_bindings.read(item.fields, source), project)
     if "facet" in source:
         return {"planned": item.planned, "actual": item.actual,
                 "finishDelta": display_finish_delta(item)}.get(source["facet"])
