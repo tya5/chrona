@@ -201,7 +201,38 @@ def _explain(error: ValidationError, echo_values: bool = False) -> SchemaViolati
     if rule in {"oneOf", "anyOf"}:
         forms = _union_forms(error)
         return SchemaViolation(pointer, "union", forms, actual_kind, "expected one permitted form" + (": " + "; ".join(forms) if forms else ""))
+    if rule == "not":
+        forbidden = _forbidden_members(error)
+        if forbidden:
+            return forbidden
     return SchemaViolation(pointer, rule, (), actual_kind, error.message)
+
+
+def _forbidden_members(error: ValidationError) -> SchemaViolation | None:
+    """Explain a `not: {required: [...]}` / `not: {anyOf: [{required: [...]}, ...]}` rule in words.
+
+    A schema forbids members for one mode by `if: mode=X then not: required ...`; the raw validator message would
+    print the whole instance and the rule. Name the offending members and the discriminator instead (#1683).
+    """
+    rule = error.validator_value
+    branches = rule.get("anyOf") if isinstance(rule, Mapping) and "anyOf" in rule else [rule]
+    forbidden: list[str] = []
+    for branch in branches if isinstance(branches, Sequence) else ():
+        required = branch.get("required") if isinstance(branch, Mapping) else None
+        if isinstance(required, Sequence) and not isinstance(required, str):
+            forbidden.extend(str(name) for name in required)
+    instance = error.instance
+    present = [name for name in dict.fromkeys(forbidden) if isinstance(instance, Mapping) and name in instance]
+    if not present:
+        return None
+    base = tuple(error.absolute_path)
+    pointers = tuple(json_pointer((*base, name)) for name in present)
+    mode = instance.get("mode")
+    context = f" with mode {_literal(mode)}" if isinstance(mode, str) else " in this form"
+    named = ", ".join(f"'{name}' ({pointer})" for name, pointer in zip(present, pointers))
+    noun, verb = ("property", "is") if len(present) == 1 else ("properties", "are")
+    return SchemaViolation(pointers[0], "not", pointers, _kind(instance),
+                           f"{noun} {named} {verb} not allowed{context}; remove it or change the mode")
 
 
 def _union_forms(error: ValidationError) -> tuple[str, ...]:
