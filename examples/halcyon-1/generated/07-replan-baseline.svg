@@ -1,7 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img">
 <rect width="1920" height="1080" opacity="1" fill="#0B1220"/>
 <defs><marker id="marker-e7408564aa39" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto"><path d="M0 0L10 5L0 10L0 0" fill="#8EA0BA"/></marker><marker id="marker-17d3ae52d57a" viewBox="0 0 5 5" refX="5" refY="2.5" markerWidth="5" markerHeight="5" orient="auto"><path d="M2.5 0Q5 0 5 2.5Q5 5 2.5 5Q0 5 0 2.5Q0 0 2.5 0" fill="#8EA0BA"/></marker></defs>
-<rect data-scene-id="summary-bar:spacecraft-ait" data-source-ref="spacecraft-ait" data-purpose="summary-bar" x="993.867" y="86" width="440.567" height="3.333" opacity="1" fill="#5FA8FF"/>
 <rect data-scene-id="group:" data-source-ref="" data-purpose="group-decoration" x="935.465" y="86" width="944.535" height="240" opacity="1" fill="#142642"/>
 <rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="935.465" y="40" width="25.026" height="46" opacity="1" fill="#2E3F5E"/>
 <rect data-scene-id="axis-band-rect:0:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="960.491" y="40" width="614.123" height="46" opacity="1" fill="#2E3F5E"/>
