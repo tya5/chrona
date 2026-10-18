@@ -1,7 +1,7 @@
 # Issue 1680 — forecast deadline
 
-Status: design, architecture review and implementation plan published; I1 implemented
-and reviewed (32 focused Core tests pass), not yet integrated or release-accepted.
+Status: I1/I2 implemented and reviewed at `42e25bd10`; I3 native regression
+evidence passes. Trial-5/public artifact and release acceptance remain pending.
 I2 may run on the published, reviewer-approved S2 source while its test-only CI
 repair runs. The single implementation PR still waits for Issue419 S2 to merge.
 Published execution baseline: main `e69d4541a2e6829d568a2f5a5ab077aadda499bb`;
@@ -101,3 +101,14 @@ short acceptance review with every literal row, exact commit, PR/CI links,
 count table and PNG evidence. Publish/release that review before closing1680.
 Issue1679 follows; the reviewer board stays untouched. A contract gap returns
 here and to the specification, is reviewed/published, then code resumes.
+
+## Current implementation review
+
+One Core status tuple now drives both warning formatting and selected deadlines.
+Focused Core/selection/caller/forecast/network checks pass58 tests; the bounded
+existing deadline/override/folded batch passes37. Native SVG regressions pass6
+cases (ordinary/folded late point/span, kept/equal, hidden and no-forecast), plus
+one explicit-window case retaining required deltas in table cells. The same late
+test fails against the published pre-fix installed wheel because no runs exist.
+Independent review found no ownership or contract defect; its window-evidence
+gap is covered by the native test. Inward imports and module reachability pass.
