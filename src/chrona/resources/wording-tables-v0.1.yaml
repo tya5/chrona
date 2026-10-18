@@ -3,6 +3,8 @@ tables:
   en-US:
     column.task: Task
     column.plan: Plan
+    column.lane: Lane
+    column.items: Items
     marker.today: TODAY
     marker.asOf: As of
     legend.planned: Task duration
@@ -14,6 +16,9 @@ tables:
     legend.critical-edge: Critical dependency
     legend.forecast: Forecast (* estimated)
     legend.progressFill: Progress
+    legend.actual-ahead: Ahead
+    legend.actual-on-track: On track
+    legend.actual-behind: Behind
     legend.snapshot: Baseline
     legend.deadlineMark: Deadline
     missing.unknown: unknown
@@ -21,6 +26,8 @@ tables:
   ja-JP:
     column.task: タスク
     column.plan: 計画
+    column.lane: レーン
+    column.items: 件数
     marker.today: 本日
     marker.asOf: 基準日
     legend.planned: 計画期間
@@ -32,6 +39,9 @@ tables:
     legend.critical-edge: クリティカルな依存関係
     legend.forecast: 予測（*は推定）
     legend.progressFill: 進捗
+    legend.actual-ahead: 前倒し
+    legend.actual-on-track: 予定どおり
+    legend.actual-behind: 遅れ
     legend.snapshot: 基準計画
     legend.deadlineMark: 期限
     missing.unknown: 不明

@@ -889,7 +889,7 @@ and `actual-behind` address qualifier fragments appended to the authored
 Actual label. These are wording targets, not new paint or registry roles.
 
 **Built-in wording keys (#1724).** Built-in text (table headers, the as-of marker,
-legend labels, the Forecast and Critical dependency keys, absent-value words) is
+legend labels, the Forecast, Progress, Actual-qualifier and Critical dependency keys, the default lane-table headers, absent-value words) is
 looked up by a closed key in the bundled wording table of
 [Axis Name Tables](63-axis-name-tables.md#built-in-wording-tables), one complete
 table per supported locale (`en-US`, `ja-JP`), selected by the Render Context locale

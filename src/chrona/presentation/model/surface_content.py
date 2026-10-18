@@ -342,6 +342,8 @@ class SurfaceContentInput:
     # Authored Style treatment provenance only; Layout joins by exact occurrence.
     style_matches: StyleMatchIndex = field(default_factory=StyleMatchIndex)
     legend_wording: tuple[tuple[str, str], ...] = ()
+    # Locale text of the Layout-owned default legend labels (progressFill, actual-*), by role (#1724).
+    legend_defaults: tuple[tuple[str, str], ...] = ()
     legend_mark_occurrences: tuple[StyleOccurrence, ...] = ()
     legend_progress_possible: bool = False
     member_names: Mapping[NameKey, str] = field(default_factory=lambda: MappingProxyType({}))
