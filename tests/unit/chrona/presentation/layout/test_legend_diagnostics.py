@@ -2,7 +2,8 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 from chrona.presentation.layout.legend_diagnostics import completed_legend_diagnostics
-from chrona.presentation.layout.mark_geometry import symbol_parts
+from chrona.presentation.layout.mark_geometry import complete_point_outline, symbol_parts
+from chrona.presentation.layout.surface_legend import _completed_point_key_parts
 from chrona.presentation.layout.surface_quality import PathCommand
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
 from chrona.presentation.model.legend_paint import RealizedLegendKey
@@ -175,6 +176,78 @@ def test_multipart_figure_compares_ordered_completed_geometry_and_paint():
         ("mark", _box(20, 30, 20, 20), (other_b, other_a), (second, first)),
     ))
     assert "W_LEGEND_SWATCH_COLLISION" not in reversed_parts[0]
+
+
+def test_canonical_legend_geometry_identity_ignores_fractional_translation_and_footprint():
+    paint = _paint(fill="#101828", stroke="#101828", width=Decimal(1))
+    left, right = _entry("actual", paint, "Actual"), _entry("milestone", paint, "Gate")
+    canonical = (("fill", None, None, (
+        ("move", ((0.0, 0.0),)), ("line", ((1.0, 0.0),)),
+        ("line", ((1.0, 1.0),)), ("line", ((0.0, 1.0),)),
+        ("line", ((0.0, 0.0),)),
+    )),)
+
+    def mark(entry, bounds, raw_path, mark_paint=paint):
+        part = SimpleNamespace(paint_mode="fill", line_cap=None, line_join=None,
+                               commands=(PathCommand("move", ((raw_path, raw_path),)),
+                                         PathCommand("line", ((raw_path + 4, raw_path + 4),))))
+        return SimpleNamespace(source_ref=entry.source_identity, bounds=bounds,
+            symbol_parts=(part,), legend_paints=(mark_paint,), legend_geometry_identity=canonical,
+            mark_shape="point", corner_radius=0)
+
+    result = completed_legend_diagnostics(
+        _theme_request(), (left, right),
+        (mark(left, _box(10.25, 20.75, 8.0, 8.0), 10.25),
+         mark(right, _box(100.125, 40.875, 20.0, 20.0), 100.125)),
+        (), (),
+        (SimpleNamespace(placement_id=left.text_placement_id, content="Actual", overflow="fit"),
+         SimpleNamespace(placement_id=right.text_placement_id, content="Gate", overflow="fit")))
+
+    assert "W_LEGEND_SWATCH_COLLISION" in result[0]
+
+    # A faithful ink difference still prevents a collision even with the same
+    # canonical completed geometry witness.
+    different = _paint(fill="#D99024", stroke="#D99024", width=Decimal(1))
+    different_right = _entry("milestone", different, "Gate")
+    changed = completed_legend_diagnostics(
+        _theme_request(), (left, different_right),
+        (mark(left, _box(10.25, 20.75, 8.0, 8.0), 10.25),
+         mark(different_right, _box(100.125, 40.875, 20.0, 20.0), 100.125, different)),
+        (), (),
+        (SimpleNamespace(placement_id=left.text_placement_id, content="Actual", overflow="fit"),
+         SimpleNamespace(placement_id=right.text_placement_id, content="Gate", overflow="fit")))
+    assert "W_LEGEND_SWATCH_COLLISION" not in changed[0]
+
+    # Before the canonical witness, these unrelated placed coordinates do not
+    # normalize to one figure; this guards the regression the witness fixes.
+    def without_canonical(entry, bounds, raw_path, mark_paint):
+        candidate = mark(entry, bounds, raw_path, mark_paint)
+        candidate.legend_geometry_identity = None
+        return candidate
+    legacy = completed_legend_diagnostics(
+        _theme_request(), (left, right),
+        (without_canonical(left, _box(10.25, 20.75, 8.0, 8.0), 10.25, paint),
+         without_canonical(right, _box(100.125, 40.875, 20.0, 20.0), 100.125, paint)),
+        (), (),
+        (SimpleNamespace(placement_id=left.text_placement_id, content="Actual", overflow="fit"),
+         SimpleNamespace(placement_id=right.text_placement_id, content="Gate", overflow="fit")))
+    assert "W_LEGEND_SWATCH_COLLISION" not in legacy[0]
+
+
+def test_completed_point_legend_witness_preserves_placed_parts_exactly():
+    theme = _theme_request().theme_tokens
+    token = {"shape": "circle"}
+    first_bounds = (10.25, 20.75, 8.0, 8.0)
+    second_bounds = (100.125, 40.875, 20.0, 20.0)
+
+    first_parts, first_identity = _completed_point_key_parts(token, first_bounds, "actual", theme)
+    second_parts, second_identity = _completed_point_key_parts(token, second_bounds, "actual", theme)
+    for bounds, completed in ((first_bounds, first_parts), (second_bounds, second_parts)):
+        before_change = complete_point_outline(
+            symbol_parts(token, bounds, catalog_glyphs=theme.catalog_glyphs),
+            paint_role="actual", theme_tokens=theme)
+        assert completed == before_change
+    assert first_identity == second_identity
 
 
 def test_omitted_gradient_has_solid_identity_and_duplicate_uses_final_text():

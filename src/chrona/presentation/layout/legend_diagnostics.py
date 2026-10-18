@@ -60,10 +60,12 @@ def _mark_signature(request, entry, mark):
                          for _ in (realized_key.glyph.paints if realized_key.glyph else (realized_key.paint,)))
     bounds = tuple(map(float, (mark.bounds.inline, mark.bounds.block,
                                mark.bounds.inline_size, mark.bounds.block_size)))
-    parts = tuple((part.paint_mode,
-                   part.line_cap if part.paint_mode == "stroke" else None,
-                   part.line_join if part.paint_mode == "stroke" else None,
-                   _commands(part.commands, bounds)) for part in mark.symbol_parts)
+    parts = getattr(mark, "legend_geometry_identity", None)
+    if parts is None:
+        parts = tuple((part.paint_mode,
+                       part.line_cap if part.paint_mode == "stroke" else None,
+                       part.line_join if part.paint_mode == "stroke" else None,
+                       _commands(part.commands, bounds)) for part in mark.symbol_parts)
     if not parts:
         shape = "Rect" if mark.mark_shape == "span" else mark.mark_shape
         radius = _unit(mark.corner_radius, 0, min(bounds[2:])) if min(bounds[2:]) else 0.0

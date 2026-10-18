@@ -11,7 +11,7 @@ from chrona.presentation.layout.sources import SourceInput, SourceTextRun
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.surface_periods import compose_period_decoration
-from chrona.presentation.layout.mark_geometry import complete_point_outline, symbol_parts
+from chrona.presentation.layout.mark_geometry import SymbolPartPlacement, complete_point_outline, symbol_parts
 from chrona.presentation.layout.legend_ink import actual_symbol_token
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.semantic_registry import semantic_binding, mark_style_role
@@ -53,6 +53,25 @@ class SurfaceLegendBatch:
     label_targets: tuple[tuple[str, str], ...] = ()
     diagnostics: tuple[str, ...] = ()
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
+
+
+def _completed_point_key_parts(token: Mapping[str, Any], bounds: tuple[float, float, float, float],
+                               paint_role: str, theme_tokens: Any
+                               ) -> tuple[tuple[SymbolPartPlacement, ...], tuple[object, ...]]:
+    """Pair the unchanged placed parts with their canonical local completed geometry."""
+    placed = complete_point_outline(
+        symbol_parts(token, bounds, catalog_glyphs=getattr(theme_tokens, "catalog_glyphs", None)),
+        paint_role=paint_role, theme_tokens=theme_tokens)
+    local = complete_point_outline(
+        symbol_parts(token, (0.0, 0.0, 1.0, 1.0),
+                     catalog_glyphs=getattr(theme_tokens, "catalog_glyphs", None)),
+        paint_role=paint_role, theme_tokens=theme_tokens)
+    identity = tuple((part.paint_mode,
+                      part.line_cap if part.paint_mode == "stroke" else None,
+                      part.line_join if part.paint_mode == "stroke" else None,
+                      tuple((command.kind, command.points) for command in part.commands))
+                     for part in local)
+    return placed, identity
 
 
 def _legacy_swatch_size(legend_size: float) -> float:
@@ -303,15 +322,15 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             key = entry.realized_key
             if key.glyph is not None:
                 bounds = Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height)))
-                parts = complete_point_outline(symbol_parts(
-                    actual_symbol_token(request.theme_tokens, key.glyph.selected_role), (x, y, width, height),
-                    catalog_glyphs=getattr(request.theme_tokens, "catalog_glyphs", None)),
-                    paint_role=key.paint_role, theme_tokens=request.theme_tokens)
+                parts, geometry_identity = _completed_point_key_parts(
+                    actual_symbol_token(request.theme_tokens, key.glyph.selected_role),
+                    (x, y, width, height), key.paint_role, request.theme_tokens)
                 assert len(parts) == len(key.glyph.paints), "composite key geometry and ink must stay aligned"
                 center = (x + width / 2, y + height / 2)
                 marks.append(MarkPlacement(swatch_id, entry.source_identity, bounds, center, center,
                     mark_shape="point", slot_id=legend.slot_id, semantic_id="actual",
-                    theme_role=key.paint_role, symbol_parts=parts, legend_paints=key.glyph.paints))
+                    theme_role=key.paint_role, symbol_parts=parts, legend_paints=key.glyph.paints,
+                    legend_geometry_identity=geometry_identity))
                 return
             corner_radius = 0.0
             if bucket == "mark":
@@ -344,19 +363,16 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             return
         if bucket == "point":
             bounds = Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height)))
-            parts = symbol_parts(
+            paint_role = resolve_point_paint_role(
+                role, gate_declared=request.theme_tokens.has_role("gate"), legend=True)
+            parts, geometry_identity = _completed_point_key_parts(
                 request.theme_tokens.variant_symbol("planned"), (x, y, width, height),
-                catalog_glyphs=getattr(request.theme_tokens, "catalog_glyphs", None),
-            )
-            parts = complete_point_outline(
-                parts, paint_role=resolve_point_paint_role(
-                    role, gate_declared=request.theme_tokens.has_role("gate"), legend=True),
-                theme_tokens=request.theme_tokens)
+                paint_role, request.theme_tokens)
             marks.append(MarkPlacement(swatch_id, role,
                                        bounds,
                                        (x + width / 2, y + height / 2), (x + width / 2, y + height / 2),
                                        mark_shape="point", slot_id=legend.slot_id, semantic_id="planned",
-                                       symbol_parts=parts))
+                                       symbol_parts=parts, legend_geometry_identity=geometry_identity))
         elif bucket == "mark":
             height_ratio, offset_ratio, paint_order, corner_ratio = request.theme_tokens.mark_geometry(role)
             corner_radius = min(float(corner_ratio) * min(width, height), min(width, height) / 2)
