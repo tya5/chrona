@@ -156,9 +156,14 @@ contract is Spec06 §6.0, Spec38's lane names and Spec50 §3.2.
 ## Row2 implementation plan
 
 Design publication: `f4475ec01`; reviewer wording approval6247026872.
-Implement on a separate row2 branch so the tested legend/row1 release can land
-without waiting for all-preset hierarchy evidence. Publish the following
-coherent commits in one row2 PR after the joint display followup's ready base.
+Develop on a separate row2 branch so it cannot hold the tested legend/row1
+release. Publication amendment: H1–H3 and all15 native PNG checks completed
+while the902 predecessor PRs were running. Batch this independently reviewed
+row2 candidate with legend/row1 in one display-followup PR after902's ready
+base, saving a serial ready-tip cycle. Keep both literal reviews, all focused
+and official-artifact gates, and the exact-main full release. If row2 has a
+known unresolved failure at publication, park it and publish legend/row1 from
+their independent tested base; do not waive a gate to preserve the batch.
 
 | Slice | Files / owners | Focused acceptance and evidence |
 | --- | --- | --- |
