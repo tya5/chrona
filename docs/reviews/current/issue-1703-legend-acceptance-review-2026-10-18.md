@@ -19,20 +19,24 @@
 
 ### Evidence and release status
 
-Implementation candidate: `f24a68430`; reviewer correction [1705](https://github.com/tya5/chrona/pull/1705) restores owner-approved target-b Actual ink. The focused suite previously passed (287 tests, 18.21 s); the Detail validator passed 2 positive and 8 negative cases. Schema equivalence passed for L1 (1 additive, 40 equal) and L2/L3; five pre-existing invalid documents were reported. PR/main publication, the official snapshot and full three-OS release remain unverified. Issue #1703 remains open.
+Implementation candidate: `192129bd9`; reviewer correction [1705](https://github.com/tya5/chrona/pull/1705) restores owner-approved target-b Actual ink. Final integrated focused tests pass290 (18.03 s), including the native equal-black multipart keys and exact placed-geometry parity. Detail validation passes2 positive/8 negative; schema equivalence passes L1 (1 additive,40 equal) and L2/L3 with five pre-existing invalid documents. PR/main publication, official snapshot and full three-OS release remain unverified. Issue #1703 remains open.
 
-The additional approved equal-figure warning is **not met yet** on restored
-target-b: fresh before/after renders have304 primitives and identical PNG/Scene,
-but no collision warning despite equal black Actual/Gate diamonds. Runtime
-signatures prove translated float32 outline noise causes false inequality.
-Spec28 now requires an internal canonical completed local-geometry witness;
-independent architecture review confirms Layout ownership, unchanged paint and
-passive Scene. Implement the shared point-key witness, then native synthetic
-translation/footprint regression and this one-case rerender before acceptance.
+Design correction `6888d036f` precedes repair `192129bd9`: Spec28 and independent
+whole-architecture review require the canonical completed local-geometry witness,
+not tolerance tuning over translated float32 contours. Native/unit regressions
+verify translation/footprint invariance, distinct paints and byte-identical placed
+geometry. The repaired target-b render now adds exactly one pointed collision
+warning naming `actual (actual)` and `gate (milestone)`; faithful black swatches
+remain unchanged. Root inspected the native PNG; its SHA256 is
+`c21d5439c20033b2c6f9fb0d625368550feffbf7dec50a4e34d2d9943e510d50`, identical
+to the1705 baseline. Scene surfaces are identical; only the expected diagnostic
+and CLI warning change (7 warning records,8 occurrences). The command uses the
+public trial inputs, actual-week2, baseline and target-b without a viewport
+override. The other two cases are unaffected by the target-b-only YAML correction.
 
-| trial-6 case | Scene primitives before → after | Added / removed / changed | Warning count before → after | Observed key result |
+| trial-6 case | Scene primitives before → after | Added / removed / changed | Scene diagnostics before → after | Observed key result |
 | --- | ---: | ---: | ---: | --- |
-| `compare-targetb` | 304 → 304 | 0 / 0 / 0 | unchanged | Restored owner-approved Actual/Gate ink `#101828`; their expected collision warning is missing (not accepted). |
+| `compare-targetb` | 304 → 304 | 0 / 0 / 0 | 29 → 30 | Restored owner-approved Actual/Gate ink `#101828`; adds one collision warning naming both meanings. PNG and full surface payload unchanged. |
 | `forecast-tp-deadlines` | 299 → 303 | 4 / 0 / 0 | 29 → 29 | Adds Baseline and Deadline swatch/label pairs; existing forecast `W_DEADLINE` remains, with no new warning code or duplicate-label warning. |
 | `starter` | 68 → 68 | 0 / 0 / 0 | 2 → 2 | One ACTUAL key; no duplicate-label warning. |
 
