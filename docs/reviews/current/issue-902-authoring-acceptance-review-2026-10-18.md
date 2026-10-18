@@ -25,11 +25,20 @@ receipt verification and the gate before reads. No renderer policy changes.
 
 ## Programme-level criteria (optional)
 
-**Release not accepted.** Prepared integration `14ccd0f15` follows ready
-main `5fe41db8e` (item3 merged); the combined operational/recovery/agent/
-transaction/lock/MCP-stdio/authoring-stdio batch passes97. Import-direction and
-literal-review checks pass. The work record retains earlier focused batches
-(overlapping, not additive).
+**Release not accepted.** Ready main `5fe41db8e` includes merged item3. Repair
+`8030a353e` follows [plan6247290279](https://github.com/tya5/chrona/issues/902#issuecomment-6247290279);
+the combined diagnostics/operational/recovery/agent/transaction/lock/MCP-stdio
+batch passes112. Import-direction and literal-review checks pass. Earlier
+focused batches overlap and are not additive.
+
+CI39108636652 on199272f90 failed two conformance subchecks: four helper calls
+presented their code without following context, and the CLI reference was
+stale. Private guards now take `(code, path)` with identical runtime messages
+and failure predicates; direct tests retain those owner paths. Diagnostic
+validation has no bare/unclassified sites or policy exclusions. The existing
+CLI-reference generator refreshed only MCP help copy; grammar is unchanged.
+Its official artifact12129351876 retains all50 SVG/Scene pairs and changes only
+two reviewed diagnostic inventories; that old artifact is not final acceptance.
 Current-head PR checks, official artifact comparison and successful
 exact-main full three-OS release containing this review remain required.
 Item5's repaired exact-main release39105269292 passed all native gates. The
