@@ -1,18 +1,19 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
-Status: item5 PR1698 passed every product check in39094985183; readiness alone
-failed after main advanced. Normal integration `30d957743` follows main
-`e9432fb85` after B's1697 landing; that update changes CI/AGENTS only, not the
-product code verified by107 focused command/adapter/process/docs tests and
-11/37 inward imports. Final push requires successful derived-main on this exact
-current tip. Item3 code `c2984c018` integrates ready main `9e224db6c` and
-predecessor release-review `950d79001`; no item3 PR before item5 release. Item2
-code/review `0b79e65a0` is separate, not included here. Publication order
-remains5→3→2. #1679/#1680 are closed after exact-main39094741641 passed all
+Status: item5 PR1698 follows ready main `8e25a4232` after B's1695 landing.
+CI39099136587 passed every product check; readiness failed when main advanced.
+The final official artifact12126176185 retains all50 SVG/50 Scene bytes; only
+diagnostic source coordinates differ from the prior snapshot. Current-base
+Store/engine/process tests pass21; earlier focused107 and inward imports11/37
+also passed. Final-head CI and exact-main release remain required. Design
+`69273a1bf` and plan `54b9ddd20` precede code.
+#1679/#1680 are closed after exact-main39094741641 passed all
 three OSes, public reproduction and MCP. Their archival/ledger update is an
 independent commit in PR1698; separate docs PR1699 was superseded to avoid
-another serial snapshot/sync cycle. Board454 is reviewer-owned. No unmerged
-branch is claimed as released main functionality.
+another serial snapshot/sync cycle. Item3 code `c2984c018` and item2
+code/review `fa831e384`/`0b79e65a0` remain unreleased; this branch is not a main
+release claim. Merge/release order remains5→3→2. Board454 is reviewer-owned
+and unchanged.
 
 ## Scope and literal acceptance
 
@@ -172,17 +173,17 @@ from a ledger digest alone. Fresh-base CAS remains independent of state equality
 No unresolved architecture finding remains. Normative authority is Spec35 §4.3;
 Spec10 and Spec66 connect the ownership and agent contract. Publish this design
 before implementation planning. Item3 may pipeline as isolated WIP on the
-verified public item5 implementation; its PR/release waits for item5 release. This branch
-is separate from the item5 product/release branch, avoiding an unimplemented
-tool-set claim in that release.
+verified public item5 implementation; its PR/release waits for item5 release.
+This branch is separate from the item5 product/release branch, avoiding an
+unimplemented tool-set claim in that release.
 
 ## Item3 implementation plan
 
 Design/specification/architecture review `a79ab0307` is published on
-`wip/issue-902-actual-history-design`. One coherent product PR after item5 release;
-the following are owned implementation/test slices, not partial main releases.
-WIP implementation may proceed during item5's publication wait; never merge
-unimplemented item3 contracts into the separate item5 release branch.
+`wip/issue-902-actual-history-design`. One coherent product PR after item5
+release; the following are owned implementation/test slices, not partial main
+releases. WIP implementation may proceed during item5's publication wait; never
+merge unimplemented item3 contracts into the separate item5 release branch.
 
 | Slice | Owned files | Acceptance evidence |
 | --- | --- | --- |
