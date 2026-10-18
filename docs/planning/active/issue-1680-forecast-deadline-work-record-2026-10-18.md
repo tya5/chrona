@@ -1,7 +1,7 @@
 # Issue 1680 — forecast deadline
 
-Status: I1/I2 implemented and reviewed at `42e25bd10`; I3 native regression
-evidence passes. Trial-5/public artifact and release acceptance remain pending.
+Status: I1/I2 implemented and reviewed at `42e25bd10`; I3 local acceptance
+evidence is complete. PR/full CI and exact-main release remain pending.
 I2 may run on the published, reviewer-approved S2 source while its test-only CI
 repair runs. The single implementation PR still waits for Issue419 S2 to merge.
 Published execution baseline: main `e69d4541a2e6829d568a2f5a5ab077aadda499bb`;
@@ -112,3 +112,8 @@ one explicit-window case retaining required deltas in table cells. The same late
 test fails against the published pre-fix installed wheel because no runs exist.
 Independent review found no ownership or contract defect; its window-evidence
 gap is covered by the native test. Inward imports and module reachability pass.
+Public materializer check passes all50 slides without a SVG/Scene change.
+Pinned trial5 now has2 late runs and2 forecast warnings, with no existing
+primitive, route or label changes; the actual PNG was inspected.
+See the [literal acceptance review](../../reviews/current/issue-1680-forecast-deadline-acceptance-review-2026-10-18.md)
+for counts, command and artifact hashes. Do not equate local evidence with release.
