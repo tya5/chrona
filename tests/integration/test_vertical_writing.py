@@ -318,3 +318,22 @@ def test_a_tag_that_cannot_keep_an_ellipsis_gives_way_and_never_crosses_its_one_
     assert [(item.code, item.behaviour) for item in warnings] == [("W_LAYOUT_TEXT_ELLIPSIZED", "suppress-with-source")]
     assert not [item for item in rendered.surface.fit_warnings if item.code == "W_LAYOUT_VISIBLE_OVERFLOW"
                 and item.failure_kind == "group-tag-text"]
+
+
+def test_a_suppressed_tag_keeps_its_covered_ancestor_name_in_the_path_column(tmp_path):
+    """yuya draws the root group as a vertical tag; its one row cannot hold it, so the path names it in full."""
+    from chrona.usecases.draft_render import DraftRenderRequest, render_draft
+    from tests.integration import test_hierarchy_preset_names as names
+
+    project = sr._write(tmp_path / "project.yaml", names._three_level_project())
+    actual = sr._write(tmp_path / "actual.yaml", {
+        "version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "synthetic-observations",
+        "body": {"asOf": "2027-01-01", "observations": []}})
+    rendered = render_draft(DraftRenderRequest(project=project, actual=actual, target_kind="svg", preset="yuya",
+                                               visual_profile=names._SVG)).rendered
+    texts = [item for item in rendered.surface.primitives if item.kind == "Text" and item.text]
+    assert not [item for item in texts if "group-tag:atlas" in str(item.scene_id)]
+    assert any(item.text == " / ".join(names._LEVEL_TITLES) for item in texts)
+    warnings = [item for item in rendered.surface.fit_warnings if item.failure_kind == "group-tag-text"]
+    assert [(item.source_ref, item.code, item.behaviour) for item in warnings] == [
+        ("atlas", "W_LAYOUT_TEXT_ELLIPSIZED", "suppress-with-source")]
