@@ -2,9 +2,11 @@
 
 ## Published baseline and literal acceptance
 
-Ready main `b12cbd7b4`; integration `da37f3919` includes merged902 item2.
-Final hierarchy/legend/native batch66, import-direction and literal-review
-checks pass. Schema equivalence: one additive/one delta/40 equal, unchanged
+Ready main `a27a86cd3`; integration `5a2acd12a` includes merged902 item2 and
+B's1709 diagnostic explanation, without changing schema admission. Repair
+`3abc8479d` passes197 focused presentation/native/schema tests; preset/schema
+batch89 passes (overlapping). Literal-review and schema checks pass: one
+additive/one delta/40 equal, unchanged
 five invalid corpus verdicts. Row1 candidate `c0e78982c`, review `73192c558`, on
 `wip/issue-1703-1701-display-followups`, integrated with independently reviewed
 legend code as `163ba8725`. Row1 is focused-tested, not released. The

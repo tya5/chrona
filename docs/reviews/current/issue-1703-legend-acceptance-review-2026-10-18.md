@@ -19,14 +19,15 @@
 
 ### Evidence and release status
 
-Prepared integration `da37f3919` follows ready main `b12cbd7b4` and combines
+Prepared integration `5a2acd12a` follows ready main `a27a86cd3` and combines
 independently reviewed1701 rows1/2. Legend focus36 and combined date/legend/native64
 pass; row2's separate native18 and point/path/style159 batches pass. The
 [1701 review](issue-1701-hierarchy-acceptance-review-2026-10-18.md) records its
 public15-preset PNG evidence. The published batching amendment retains both
 literal reviews and current-head artifact/exact-main full release gates.
-The final ready-base hierarchy/legend/native batch passes66; schema-equivalence,
-import-direction and literal-review checks pass without new waivers.
+Final correction `3abc8479d` passes197 focused presentation/native/schema tests;
+preset/schema89 passes (overlapping). Schema-equivalence and literal-review
+checks pass without new waivers.
 CI39111014852 correctly refused release: catalogue admission was dropped by
 the diagnostic paint-witness call, so roadmap-sunday's patterned period key
 failed before snapshot publication. Reproduction then had no artifact;
@@ -38,6 +39,19 @@ no paint defaults, YAML adaptation or relaxed ordinary-stroke validation.
 Two neutral missing-host-width cases fail before and pass after the correction;
 the ordinary-stroke negative still rejects. Catalogue/Scene/legend/hierarchy
 batch54 passes; final-head official artifact and full release remain required.
+CI39111590863 passed generation/conformance/reproduction/MCP but all three pytest
+shards failed14 cases. [Published parity plan/review](https://github.com/tya5/chrona/issues/1703#issuecomment-6247755604)
+and Spec28 `3810b0671` precede the completed-shape repair: explicit channels
+precede Path kind and ordinary mark inference, matching Scene; neutral stroke/
+fill Path and the native outline-period regressions pass. Other failures were
+approved title→path/default-key expectation migrations, two chip Scene hashes
+whose only changed field is View provenance (SVGs identical), and a route test
+reading a stale duplicate fixture rather than public materializer evidence.
+That test now checks the public corpus with `write=False`; all route/nonoverlap
+assertions and byte/contrast/viewport guards remain. Both bounded materializer
+tests pass against official artifact12130617086 copied only into scratch.
+The current-head CI/artifact must be refreshed on the new ready base; no stale
+run is treated as acceptance and no canonical generated file was hand-edited.
 
 Implementation candidate: `192129bd9`; reviewer correction [1705](https://github.com/tya5/chrona/pull/1705) restores owner-approved target-b Actual ink. Final integrated focused tests pass290 (18.03 s), including the native equal-black multipart keys and exact placed-geometry parity. Detail validation passes2 positive/8 negative; schema equivalence passes L1 (1 additive,40 equal) and L2/L3 with five pre-existing invalid documents. PR/main publication, official snapshot and full three-OS release remain unverified. Issue #1703 remains open.
 

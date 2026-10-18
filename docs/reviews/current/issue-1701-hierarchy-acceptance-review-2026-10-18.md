@@ -37,8 +37,12 @@ full paths. Existing fit policies and diagnostics are not waived.
 Point/path/style159, composite152 and preset/closure62 focused tests pass
 (overlapping); schema equivalence preserves all five invalid baseline verdicts.
 The final combined PR artifact and exact-main full release are still required.
-Ready-base integration `da37f3919` follows `b12cbd7b4` (902 item2 merged).
-The final hierarchy/legend/native batch passes66; schema equivalence retains
+Ready-base integration `5a2acd12a` follows `a27a86cd3` (902 item2 and B1709 merged).
+Final correction `3abc8479d` passes197 focused presentation/native/schema tests;
+preset/schema89 passes (overlapping). The scoped legacy fixture updates retain
+the exact source-name rule and independently authored reference Views; two chip
+Scene hash changes are proven View-provenance-only with identical SVG bytes.
+Schema equivalence retains
 one additive/one delta/40 equal and the same five invalid baseline documents.
 Import-direction and literal-review checks pass. Independent final review found
 no source-locality, header-coverage or dev-B selection/summary boundary gap.
