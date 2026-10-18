@@ -19,11 +19,20 @@
 
 ### Evidence and release status
 
-Implementation candidate: `ac6e3435bf97bdaa16a6bd064f469a4816b34dae`; reviewer preset source: `b70ed46d1c3ea8cfb6a8a85a858ddc8d7728afe1`. The focused suite passed (287 tests, 18.21 s); the Detail validator passed 2 positive and 8 negative cases. Schema equivalence passed for L1 (1 additive, 40 equal) and L2/L3; five pre-existing invalid documents were reported. This is candidate evidence only: PR/main publication, the official snapshot, and the full three-OS release gate have not been verified. Issue #1703 remains open.
+Implementation candidate: `f24a68430`; reviewer correction [1705](https://github.com/tya5/chrona/pull/1705) restores owner-approved target-b Actual ink. The focused suite previously passed (287 tests, 18.21 s); the Detail validator passed 2 positive and 8 negative cases. Schema equivalence passed for L1 (1 additive, 40 equal) and L2/L3; five pre-existing invalid documents were reported. PR/main publication, the official snapshot and full three-OS release remain unverified. Issue #1703 remains open.
+
+The additional approved equal-figure warning is **not met yet** on restored
+target-b: fresh before/after renders have304 primitives and identical PNG/Scene,
+but no collision warning despite equal black Actual/Gate diamonds. Runtime
+signatures prove translated float32 outline noise causes false inequality.
+Spec28 now requires an internal canonical completed local-geometry witness;
+independent architecture review confirms Layout ownership, unchanged paint and
+passive Scene. Implement the shared point-key witness, then native synthetic
+translation/footprint regression and this one-case rerender before acceptance.
 
 | trial-6 case | Scene primitives before → after | Added / removed / changed | Warning count before → after | Observed key result |
 | --- | ---: | ---: | ---: | --- |
-| `compare-targetb` | 304 → 304 | 0 / 0 / 0 | 28 → 28 | One Actual key; snapshot/planned/gate keys remain distinct. Actual ink `#1D5FD1`; gate ink `#101828`. |
+| `compare-targetb` | 304 → 304 | 0 / 0 / 0 | unchanged | Restored owner-approved Actual/Gate ink `#101828`; their expected collision warning is missing (not accepted). |
 | `forecast-tp-deadlines` | 299 → 303 | 4 / 0 / 0 | 29 → 29 | Adds Baseline and Deadline swatch/label pairs; existing forecast `W_DEADLINE` remains, with no new warning code or duplicate-label warning. |
 | `starter` | 68 → 68 | 0 / 0 / 0 | 2 → 2 | One ACTUAL key; no duplicate-label warning. |
 

@@ -182,6 +182,14 @@ paint resolvers and completed witnesses; do not introduce a second paint
 interpretation. Equal figures remain faithful to the chart: diagnostics never
 invent ink, change glyphs, coalesce different meanings, or repair project YAML.
 
+For composed point keys, Layout retains a canonical local completed geometry
+witness from the same selected-symbol/outline kernels as the placed figure.
+Compare that witness and the completed part paints, not a reconstruction from
+translated floating-point contours. Preserve normalized shape traits and ordered
+parts, including completed outlines; placement-dependent numerical noise must
+not defeat translation/footprint invariance. This witness is internal to Layout;
+Scene/SVG geometry and physical stroke paint are unchanged.
+
 These are semantic diagnostics on the existing general Layout-to-Scene
 diagnostic/provenance path, not fit fallbacks. Scene carries them unchanged;
 adapters and render-warning collection do not infer legend meaning.
