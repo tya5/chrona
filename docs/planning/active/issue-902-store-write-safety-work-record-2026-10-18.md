@@ -1,11 +1,14 @@
 # Issue 902 — Store write safety work record (2026-10-18)
 
 Status: item5 PR1698 passed every product check in39094985183; readiness alone
-failed after main advanced. Normal integration `9c049b878` follows ready
-`f5a51c099`;16 focused process/lock tests pass. Final push follows B's PR1691
-landing and successful derived-main. Design `69273a1bf` and plan `54b9ddd20`
+failed after main advanced. Normal integration `fa03faa4b` follows ready
+`9e224db6c`;107 focused command/adapter/process/docs tests pass and inward
+imports remain11/37. Final push must retain the current ready base and respect
+other current-tip green landings. Design `69273a1bf` and plan `54b9ddd20`
 precede code. #1679/#1680 are closed after exact-main39094741641 passed all
-three OSes, public reproduction and MCP; their archival is batched in PR1699.
+three OSes, public reproduction and MCP. Their archival/ledger update is an
+independent commit in PR1698; separate docs PR1699 was superseded to avoid
+another serial snapshot/sync cycle. This adds no item3/item2 product code.
 
 ## Scope and literal acceptance
 
