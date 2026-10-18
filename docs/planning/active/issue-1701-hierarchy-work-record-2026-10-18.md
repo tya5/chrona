@@ -60,7 +60,7 @@ evidence, not a project-specific core policy. The reviewer requests row1 first.
   Only afterward implement row2. No implementation plan or design-completion
   claim is made by this planning publication.
 
-## Capability inventory (selected design still pending)
+## Capability inventory
 
 The public library has15 effective closures:7 lane and8 automatic. Layout
 `viewDefaults` contribute grouping/header declarations; raw View YAML alone is
@@ -78,22 +78,25 @@ not the closure. All use table-timeline surfaces.
 Existing `tableColumnSource: path` displays full ancestor-title breadcrumbs.
 However, lane schema forbids `tableColumns`, `hierarchyColumn` and explicit
 hierarchy grouping; its separate lane-table columns have their own contract.
-Therefore adding an ordinary path column alone cannot satisfy all-presets
-acceptance. Resolve the lane-compatible representation and intentionally
-ungrouped preset policy before selecting a contract. Bound field-role grouping
-also needs review: fixing only unbound-role fallback would be incomplete.
+Therefore an ordinary path column alone cannot satisfy all-presets acceptance.
+The selected name-source contract below covers lanes, intentionally ungrouped
+Views and bound field-role grouping, not only unbound-role fallback.
 
-## Row2 proposed design — review pending, not implementation authority
+## Row2 design and architecture review
 
-[Review request6246887625](https://github.com/tya5/chrona/issues/1701#issuecomment-6246887625)
-asks whether lane per-member path labels satisfy the issue's label-column
-fallback. Do not implement that substitution before its disposition.
+[Reviewer answer6247026872](https://github.com/tya5/chrona/issues/1701#issuecomment-6247026872)
+approves per-member path labels in lanes; ordinary tables retain a literal
+path column. Omit ancestor levels already displayed by the enclosing header
+or lane, by source identity rather than matching title strings. Keep the
+existing separator/fit policy: no new ellipsis rule. All15 presets still need
+native three-level PNG evidence with every level readable once. The normative
+contract is Spec06 §6.0, Spec38's lane names and Spec50 §3.2.
 
 - Keep grouping keys, selection, ordering, lane packing, folding and rollup
   semantics unchanged. Hierarchy display is independent of presentation groups.
   Current flat/vertical headers are not nested-depth-capable; no new header
   capability framework is proposed.
-- Ordinary table closures use existing `source: path`; lane closures would use
+- Ordinary table closures use existing `source: path`; lane closures use
   one finite `path` member-label component. The default hierarchy closure may
   retain its already lossless depth-all header/Task-column representation.
   All15 effective preset closures must declare a lossless representation,
@@ -104,18 +107,42 @@ fallback. Do not implement that substitution before its disposition.
   ancestor rows are not invented; names may still appear in the breadcrumb.
   Object IDs provide the label fallback for absent/blank titles; titles are
   never parsed into identities.
-- Proposed label admission: `path` is an alternate name source to `title`,
-  alongside existing optional `finishDelta`; do not emit two name components.
+- Label admission: `path` is an alternate name source to `title`, alongside
+  existing optional `finishDelta`; admit at most one name source, not exactly
+  one globally. Existing non-lane `[finishDelta]` stays valid. Lanes require
+  a name; omitted content retains existing mode-specific defaults.
   Lane name requirements and `placement: both` name-column checks must admit
-  the selected path route. Existing declarations keep their current behavior.
-  View optional admission follows Spec56; evaluate schema equivalence explicitly.
+  the selected path route: explicit `path` requires/links a path column;
+  otherwise keep the current title-column rule, including delta-only content.
+  An unrelated path column must not change existing title links. View optional
+  admission follows Spec56; evaluate schema equivalence explicitly.
 - Share name composition across lane/non-lane/folded label measurement and
   placement; treat path as the existing name component for visibility/style/link
   rules. Table paths and plot paths must use the same source-local text fact.
   Layout still owns measurement, wrapping and overflow; Scene receives completed
   text. Do not hide ancestor loss in elision/suppression without the existing
   pointed fit evidence; the synthetic all-preset gate requires visible names.
-- Root and independent reviews favor this reuse over new nested geometry or
-  lane-founder-only labels. Public wording approval, exact overflow behavior,
-  normative changes and final whole-architecture review are still outstanding.
-  No row2 implementation plan is final, and no row2 code has been written.
+- Source audit: primary table paths currently look ancestor titles up in the
+  primary Project; Snapshot/scenario factories do not close their own ancestry.
+  Close immutable ID/title breadcrumbs at each source factory, then normalize
+  display names once for table and plot consumers. Preserve `ReviewItem.title`
+  for source diagnostics; do not extend the unrelated federation DTO contract.
+- Header coverage is typed and source-local: only an enclosing emitted
+  hierarchy object/header covers its ancestor segment. Match object identity,
+  not title text, entity IDs, relative depth or a header elsewhere on the slide.
+  Preserve unknown/hidden ancestors in the path. Explicit path selection also
+  supplies the matching ordinary path column; legacy path columns retain full
+  breadcrumbs. This avoids a second path-scope setting.
+- **Architecture review — accepted design, implementation not yet started.**
+  Specs06/38 keep grouping separate from containment and preserve all existing
+  selection/folding/depth contracts. Specs07/28/49 retain Theme/Detail/Style
+  ownership and occurrence identity; paths are name content, not new semantic
+  roles. Specs08/50 retain Layout measurement/fit/routing and passive Scene/
+  adapters. Spec56 permits widening View v0.28 in place; Layout v0.10's existing
+  visibility defaults carry the same declaration. Independent source-closure,
+  admission and consumer audits agree; root checked the schema and factories.
+  No new public diagnostics, header framework or federation contract is needed.
+  Preserve old View verdicts and outputs unless path is explicitly selected;
+  correcting Snapshot/scenario path ancestry is an intentional source-locality
+  repair. Migrate packaged declarations explicitly, never infer from project
+  names or change Project dates/data to make the acceptance twin pass.

@@ -72,7 +72,19 @@ visibility:
 
 `plot` creates ordered candidates at the eligible mark sides and ranks them against required table text, axis text, marks, accepted labels, required annotations, and viewport bounds. `auto` tries start then end in deterministic order. If no candidate fits, `visible-overflow` completes the first ranked candidate with a warning; explicit suppression remains an author choice. A plot member name with an own mark is a narrower exception: its visible fallback must also satisfy the completed mark-association rule below, or fail with `E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE`; other label families retain the general fallback.
 
-Generated lanes use Spec 38's plot-name contract: `title` is always selected,
+`path` is an alternative name source to `title`, not a second name component.
+Content admits at most one of them plus optional `finishDelta`; existing
+non-lane delta-only content remains valid. Explicit path selection consumes
+Spec06 §6.0's normalized name through both table and plot carriers, preserving
+the existing member-label semantic, Style occurrence identity, link and
+explicit-window admission rules. `placement: both` requires a `source: path`
+column when path is selected; otherwise its existing title-column rule stays
+unchanged, including delta-only content. Title links follow the selected name
+column; an unrelated path column does not change existing title links. Keep
+`E_VIEW_LABELS_BOTH_TABLE_TITLE`, with detail naming the required source.
+Attached point date/delta suffixes retain their existing composition.
+
+Generated lanes use Spec 38's plot-name contract: `title` or `path` is selected,
 `finishDelta` is selected by default but may be omitted, and an authored side
 and fallback take precedence over `auto`'s end/start/stagger default. The
 terminal outcome for a name that cannot fit is source-keyed suppression and

@@ -202,6 +202,32 @@ field as a secondary title; a first-group variant). The text is View content; it
 grammar, ordinal forms and diagnostics are owned by
 [Specification 50](50-constraint-driven-gantt-surface-quality.md) section 3.4.
 
+### 6.0 Hierarchy name preservation (#1701)
+
+Presentation grouping does not erase containment levels. A design retains
+them in depth-capable hierarchy rows/headers or selects `path` as the member
+name in its existing label channel. Ordinary tables use a `source: path`
+column; lanes use per-member plot names, not a founder-only lane-table cell.
+No new lane, selected item, rollup, or scheduling edge is inferred.
+
+Path segments are immutable source-local object-ID/title pairs, including the
+member itself. Snapshot and scenario segments come from their own Project,
+not the primary Project. Blank/missing titles use the segment's object ID.
+For an explicitly selected path name, omit only ancestor segments represented
+by an enclosing, actually displayed header/row/lane for that same source
+object. Project-root hierarchy fallback can cover its ancestor; field/entity
+groups, object-type groups and ungrouped rows do not cover ancestors by text
+or coincident identifier. Omitted/hidden headers cover nothing. Keep the leaf.
+Explicit hierarchy depth, folding, selection and stable occurrence identities
+retain their existing meanings. Depth-limited selection is not overridden to
+invent missing rows.
+
+Content normalization closes the name once before Layout; table and plot
+carriers consume the same path fact and existing path separator. An existing
+`source: path` column without the new explicit path-name selection keeps its
+full-breadcrumb behavior. Theme/Style do not select ancestry; Scene/adapters
+do not recover it. Fit and pointed absence diagnostics remain Spec50 policy.
+
 ### 6.1 Draft relation visibility override (#1299)
 
 For table-timeline spatial resolution, Layout Profile's
