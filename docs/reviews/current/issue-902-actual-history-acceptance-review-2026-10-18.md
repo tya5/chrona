@@ -37,7 +37,11 @@ mislabeled safe rejections. Main-derived changes were merged, not hand-edited.
 
 PR1706's initial CI39102611347 exposed three unclassified identity guards and
 schema-migration test expectations. Corrections `d0a2ff526`/`ae21a166c` pass185
-focused tests; the initial artifact preserves all50 SVG/Scene pairs. Neither
+focused tests. Independent repair review passes228 address-version, resources,
+history, ledger and schema tests: supported v0.3 dispatch remains tested, and
+baseline-invalid documents retain their exact declared-version mapping.
+Actual-byte identities and canonical request identities are classified
+separately. The initial artifact preserves all50 SVG/Scene pairs. Neither
 that failed run nor the prepared corrections establish release acceptance.
 
 Release is **not accepted yet**: final current-head PR CI, official artifact
