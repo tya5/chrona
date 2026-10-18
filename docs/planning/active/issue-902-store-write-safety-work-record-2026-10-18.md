@@ -15,9 +15,14 @@ skipped). The reviewed test-only repair was included in PR1712, merged at
 `3d915fbc930e59c039e04309c4a49eb0f2b5ae25`. The final candidate artifact
 12132160084 has 109 paths, no retirements, and all50 SVG/Scene pairs byte-identical
 to the prior reviewed candidate. This is candidate evidence, not release
-acceptance. Exact-main full release [39115421872](https://github.com/tya5/chrona/actions/runs/39115421872)
-is pending; item2 remains unaccepted until it succeeds. Parent902 remains open
-for that gate and parked4/814/815; board454 is unchanged.
+acceptance. On ready main `9e59e3f024171811d45b0f6b7b1f6c89f1587754`, the
+derived sync [39115421872](https://github.com/tya5/chrona/actions/runs/39115421872)
+and trusted gate [39115536520](https://github.com/tya5/chrona/actions/runs/39115536520)
+passed; all109 generated paths match official artifact12132160084. Exact-main
+three-OS full release [39115747584](https://github.com/tya5/chrona/actions/runs/39115747584)
+is still running (MCP and newest-Python reproduction have passed). Item2 remains
+unaccepted until that release succeeds. Parent902 remains open for that gate and
+parked4/814/815; board454 is unchanged.
 
 ## Scope and literal acceptance
 
