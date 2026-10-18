@@ -6,14 +6,13 @@ from collections.abc import Mapping, Sequence
 from typing import Any, Callable
 
 from chrona.presentation.layout.model import LayoutError, Rect
-from chrona.presentation.layout.surface_marks import (
-    MARK_GEOMETRY_ROLES, progress_fill_bounds,
-)
+from chrona.presentation.layout.surface_marks import MARK_GEOMETRY_ROLES
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.surface_periods import compose_period_decoration
 from chrona.presentation.layout.mark_geometry import complete_point_outline, symbol_parts
+from chrona.presentation.layout.legend_ink import actual_symbol_token
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.semantic_registry import semantic_binding, mark_style_role
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
@@ -41,12 +40,16 @@ class SurfaceLegendContext:
 
 @dataclass(frozen=True)
 class SurfaceLegendBatch:
+    """Completed extent plus the original allocation used for final fit checks."""
+
     slot: SlotPlacement
     marks: tuple[MarkPlacement, ...]
     shapes: tuple[ShapePlacement, ...]
     relations: tuple[RelationPlacement, ...]
     text: tuple[TextPlacement, ...]
     warnings: tuple[FitWarning, ...]
+    allocated_slot: SlotPlacement
+    label_targets: tuple[tuple[str, str], ...] = ()
 
 
 def _legacy_swatch_size(legend_size: float) -> float:
@@ -57,7 +60,7 @@ def _swatch_paint_role(role: str, tokens: Any) -> str:
     if role.startswith("scale:"):
         return semantic_binding("scaleLegendEntry").scene_role
     role = mark_style_role(role)
-    if role in ("asOf", "deadlineMark"):
+    if role in ("asOf", "deadlineMark", "progressFill"):
         return semantic_binding(role).scene_role
     return resolve_point_paint_role(role, gate_declared=tokens.has_role("gate"), legend=True)
 
@@ -73,7 +76,9 @@ def legend_item_gap(declared: Any, legend_size: float) -> float:
 
 
 def swatch_extent(role: str, tokens: Any, mark_block_size: float, legend_size: float,
-                  shape: str | None = None) -> tuple[float, float, str]:
+                  shape: str | None = None, *,
+                  glyph_footprint: tuple[float, float] | None = None,
+                  paint_role: str | None = None) -> tuple[float, float, str]:
     """Return one legend entry's (inline size, block size, dispatch bucket) (#427).
 
     The size is the role's own mark geometry against the document's own
@@ -98,9 +103,12 @@ def swatch_extent(role: str, tokens: Any, mark_block_size: float, legend_size: f
         side = area_block if area_block is not None else legacy
         return side, side, shape
     if shape == "rule-pair":
-        stroke = tokens.optional_number(_swatch_paint_role(role, tokens), "strokeWidth")
+        stroke = tokens.optional_number(paint_role or _swatch_paint_role(role, tokens), "strokeWidth")
         width = float(stroke) if stroke is not None else 0.0
         return max(fallback_inline, 3 * width), max(area_block or legacy, 2 * width), shape
+    if glyph_footprint is not None:
+        return ((point_size, point_size, "glyph") if point_size is not None
+                else (*glyph_footprint, "glyph"))
     if role == "milestone":
         height_ratio, *_ = tokens.mark_geometry("planned")
         side = point_size if point_size is not None else float(height_ratio) * mark_block_size
@@ -117,6 +125,14 @@ def swatch_extent(role: str, tokens: Any, mark_block_size: float, legend_size: f
         # An area (background) key is a declared rectangle (#1111): opt-in through `swatchBlockSize`.
         return (float(declared_inline) if declared_inline is not None else legacy), area_block, "legacy"
     return legacy, legacy, "legacy"
+
+
+def entry_swatch_extent(entry: SurfaceLegendEntry, tokens: Any, mark_block_size: float,
+                        legend_size: float) -> tuple[float, float, str]:
+    glyph = entry.realized_key.glyph if entry.realized_key is not None else None
+    return swatch_extent(entry.role, tokens, mark_block_size, legend_size, entry.swatch_shape,
+                         glyph_footprint=glyph.footprint if glyph is not None else None,
+                         paint_role=entry.realized_key.paint_role if entry.realized_key is not None else None)
 
 
 def swatch_label_gap(declared: Any, tokens: Any, legend_size: float) -> float:
@@ -177,7 +193,7 @@ def legend_source_input(entries: tuple[SurfaceLegendEntry, ...], *, tokens: Any,
     label_gap = swatch_label_gap(arrangement.gap, tokens, legend_size)
     if not entries:
         return SourceInput(("legend",), typography_role="legend")
-    extents = tuple(swatch_extent(entry.role, tokens, mark_block_size, legend_size, entry.swatch_shape)[0]
+    extents = tuple(entry_swatch_extent(entry, tokens, mark_block_size, legend_size)[0]
                     for entry in entries)
     runs = tuple(SourceTextRun(entry.label, "legend", entry.role,
                                Decimal(str(extent + label_gap))) for entry, extent in zip(entries, extents))
@@ -200,7 +216,7 @@ def legend_source_input(entries: tuple[SurfaceLegendEntry, ...], *, tokens: Any,
             min_inline = Decimal(str(max(extents) + label_gap + ellipsis))
     if grid:
         text_line = legend_size * float(treatment.line_height)
-        row_block = max([text_line] + [swatch_extent(entry.role, tokens, mark_block_size, legend_size, entry.swatch_shape)[1]
+        row_block = max([text_line] + [entry_swatch_extent(entry, tokens, mark_block_size, legend_size)[1]
                                        for entry in entries])
         return SourceInput(runs=runs, typography_role="legend", run_flow="grid", run_gap=Decimal(str(gap)),
                            columns=arrangement.columns, row_block=Decimal(str(row_block)))
@@ -211,8 +227,8 @@ def legend_source_input(entries: tuple[SurfaceLegendEntry, ...], *, tokens: Any,
         # float 12 * 1.4 is 16.799999999999997, below the minimum 16.8, and the slot would then be allocated less than
         # its own minimum and warn W_LAYOUT_VISIBLE_OVERFLOW though the row fits (#1649).
         row_block = max([treatment.font_size * treatment.line_height]
-                        + [Decimal(str(swatch_extent(entry.role, tokens, mark_block_size, legend_size,
-                                                     entry.swatch_shape)[1])) for entry in entries])
+                        + [Decimal(str(entry_swatch_extent(entry, tokens, mark_block_size, legend_size)[1]))
+                           for entry in entries])
     return SourceInput(runs=runs, typography_role="legend", run_flow="line" if line else "stack",
                        run_gap=Decimal(str(gap)), min_inline=min_inline, row_block=row_block)
 
@@ -241,6 +257,7 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
     shapes: list[ShapePlacement] = []
     relations: list[RelationPlacement] = []
     text: list[TextPlacement] = []
+    label_targets: list[tuple[str, str]] = []
     side_content_warnings: list[FitWarning] = []
     legend_treatment = request.theme_tokens.text_treatment("legend")
     legend_size = float(legend_treatment.font_size)
@@ -253,7 +270,7 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
     item_min_inline = float(legend.item_min_inline_size) if legend.item_min_inline_size is not None else None
 
     def swatch_geometry(entry: SurfaceLegendEntry) -> tuple[float, float, str]:
-        return swatch_extent(entry.role, request.theme_tokens, mark_block_size, legend_size, entry.swatch_shape)
+        return entry_swatch_extent(entry, request.theme_tokens, mark_block_size, legend_size)
 
     def emit_swatch(entry: SurfaceLegendEntry, x: float, y: float, width: float, height: float, bucket: str) -> None:
         role = mark_style_role(entry.role)
@@ -262,7 +279,8 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             if entry.source_ref is not None and entry.style_scope is None and request.theme_tokens.background(role)[0] == "none":
                 return
             bounds = Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height)))
-            paint_role = _swatch_paint_role(role, request.theme_tokens)
+            paint_role = (entry.realized_key.paint_role if entry.realized_key is not None
+                          else _swatch_paint_role(role, request.theme_tokens))
             if bucket == "circle":
                 commands = symbol_parts({"shape": "circle"}, (x, y, width, height))[0].commands
             else:
@@ -275,7 +293,35 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
                                          points=(tuple(command.points[0] for command in commands)
                                                  if bucket == "rule-pair" else ()),
                                          path_commands=commands, visual_role=paint_role, slot_id=legend.slot_id,
-                                         semantic_id="legendEntry", legend_swatch_shape=bucket))
+                                         semantic_id="legendEntry", legend_swatch_shape=bucket,
+                                         legend_paint=entry.realized_key.paint if entry.realized_key else None))
+            return
+        if entry.realized_key is not None:
+            key = entry.realized_key
+            if key.glyph is not None:
+                bounds = Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height)))
+                parts = complete_point_outline(symbol_parts(
+                    actual_symbol_token(request.theme_tokens, key.glyph.selected_role), (x, y, width, height),
+                    catalog_glyphs=getattr(request.theme_tokens, "catalog_glyphs", None)),
+                    paint_role=key.paint_role, theme_tokens=request.theme_tokens)
+                assert len(parts) == len(key.glyph.paints), "composite key geometry and ink must stay aligned"
+                center = (x + width / 2, y + height / 2)
+                marks.append(MarkPlacement(swatch_id, entry.source_identity, bounds, center, center,
+                    mark_shape="point", slot_id=legend.slot_id, semantic_id="actual",
+                    theme_role=key.paint_role, symbol_parts=parts, legend_paints=key.glyph.paints))
+                return
+            corner_radius = 0.0
+            if bucket == "mark":
+                corner_ratio = request.theme_tokens.mark_geometry(role)[3]
+                corner_radius = resolve_corner_radius(
+                    request.theme_tokens.optional_token(role, "cornerRadius", "radius"),
+                    width=width, height=height,
+                    legacy_radius=min(float(corner_ratio) * min(width, height), min(width, height) / 2))
+            shapes.append(ShapePlacement(
+                swatch_id, entry.source_identity, "Rect",
+                Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),
+                slot_id=legend.slot_id, semantic_id="legendEntry", corner_radius=corner_radius,
+                visual_role=entry.realized_key.paint_role, legend_paint=entry.realized_key.paint))
             return
         if entry.style_scope is not None:
             shapes.append(ShapePlacement(swatch_id, entry.source_identity, "Rect",
@@ -316,15 +362,6 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             shapes.append(ShapePlacement(swatch_id, role, "Rect",
                                          Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),
                                          slot_id=legend.slot_id, corner_radius=corner_radius, paint_order=paint_order))
-            if (role in {"planned", "actual"} and role == request.surface_content.progress_fill_source
-                    and request.theme_tokens.has_role("progress-fill")):
-                # The selected host's key repeats its progress fill, full, in its track.
-                inset, fill_radius = request.theme_tokens.progress_track("progress-fill")
-                fill = progress_fill_bounds(shapes[-1].bounds, 1.0, inset)
-                if fill is not None and fill.inline_size > 0:
-                    shapes.append(ShapePlacement(f"{swatch_id}:progress-fill", "progress-fill", "Rect", fill,
-                                                 slot_id=legend.slot_id, paint_order=paint_order + 1,
-                                                 corner_radius=float(fill_radius) * float(min(fill.inline_size, fill.block_size))))
         elif bucket == "line":
             marker_token = request.theme_tokens.optional_token(role, "marker", "marker")
             relations.append(RelationPlacement(swatch_id, f"{swatch_id}:start",
@@ -381,6 +418,7 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
                             collision_domain=CollisionDomain("legend", "content"), source_content=label,
                             available_inline_start=x, available_inline_size=available)
         text.append(placed)
+        label_targets.append((entry.role, placed.placement_id))
         if ellipsized:
             # An ellipsis is never silent: the Scene names the text, its natural size and the room it had (#497).
             side_content_warnings.append(FitWarning(
@@ -486,4 +524,4 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
     replacement = replace(legend, bounds=Rect(legend.bounds.inline, legend.bounds.block,
                                                legend.bounds.inline_size, final_size))
     return SurfaceLegendBatch(replacement, tuple(marks), tuple(shapes), tuple(relations), tuple(text),
-                              tuple(side_content_warnings))
+                              tuple(side_content_warnings), legend, tuple(label_targets))

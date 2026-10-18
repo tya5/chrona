@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from decimal import Decimal
 from math import cos, radians, sin
 from typing import Mapping
 
@@ -9,8 +10,12 @@ from chrona.presentation.layout.canvas_overlays import RadialOverlayPlacement
 from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.model.theme_paint import (
     PaintFamily,
+    GradientPaintIntent,
     ThemePaintError,
-    resolve_theme_paint_inputs,
+    ThemePaintWitness,
+    resolve_legend_shape_ink,
+    resolve_theme_paint_witness,
+    ThemePaintInputs, restrict_shape_paint_inputs,
 )
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 from chrona.presentation.scene.model import (
@@ -58,27 +63,15 @@ def resolve_legend_shape_paint(tokens: ThemeTokenView, role: str, shape: str,
                                *, fill_override: str | None = None) -> ScenePaint:
     """A finite key borrows its source role's ink, never its pattern geometry."""
     try:
-        opacity = tokens.optional_number(role, "opacity")
-        if opacity is not None and not 0 <= opacity <= 1:
-            raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"/body/roles/{role}/opacity")
-        if shape == "circle":
-            fill = fill_override or tokens.optional_color(role, "fill") or tokens.optional_color(role, "stroke")
-            if fill is None:
-                raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}/fill")
-            return ScenePaint(fill=fill, stroke=None, stroke_width=None, dash=(),
-                              opacity=float(opacity) if opacity is not None else 1.0)
-        if shape == "rule-pair":
-            # The completed category ink also colours a rule-pair key. Keep
-            # the selected role's width and opacity as its canonical shape.
-            stroke = fill_override or tokens.color(role, "stroke")
-            width = tokens.number(role, "strokeWidth")
-            if width <= 0:
-                raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"/body/roles/{role}/strokeWidth")
-            return ScenePaint(fill=None, stroke=stroke, stroke_width=float(width), dash=(),
-                              opacity=float(opacity) if opacity is not None else 1.0)
+        ink = resolve_legend_shape_ink(tokens, role, shape, fill_override=fill_override)
+        return ScenePaint(fill=ink.fill, stroke=ink.stroke,
+                          stroke_width=float(ink.stroke_width) if ink.stroke_width is not None else None,
+                          dash=(), opacity=float(ink.opacity))
+    except ThemePaintError as error:
+        raise ScenePaintError(error.diagnostic_id, error.path, error.detail) from error
     except ThemeTokenError as error:
         raise ScenePaintError(error.diagnostic_id, error.path) from error
-    raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"/body/roles/{role}")
+    raise AssertionError("unreachable")
 
 
 def restrict_paint_channels(paint: ScenePaint, channels: str | None, role: str,
@@ -86,19 +79,25 @@ def restrict_paint_channels(paint: ScenePaint, channels: str | None, role: str,
     """Apply completed shape intent, separately from catalogue-part precedence."""
     if channels is None:
         return paint
+    try:
+        ink = restrict_shape_paint_inputs(ThemePaintInputs(
+            paint.fill, paint.stroke,
+            Decimal(str(paint.stroke_width)) if paint.stroke_width is not None else None,
+            paint.dash, Decimal(str(paint.opacity)), False),
+            channels, role, patterned_fill=patterned_fill)
+    except ThemePaintError as error:
+        raise ScenePaintError(error.diagnostic_id, error.path, error.detail) from error
+    paint = replace(paint, fill=ink.fill, stroke=ink.stroke,
+                    stroke_width=float(ink.stroke_width) if ink.stroke_width is not None else None,
+                    dash=ink.dash)
     if channels == "fill":
-        if paint.fill is None:
-            raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}/fill")
         if patterned_fill:
             # Catalogue ink is fill content, not an outline of the host shape.
             return replace(paint, stroke_finish=None, wobble=None)
-        return replace(paint, stroke=None, stroke_width=None, dash=(), stroke_finish=None, wobble=None)
+        return replace(paint, stroke_finish=None, wobble=None)
     if channels == "stroke":
-        if paint.stroke is None or paint.stroke_width is None:
-            missing = "stroke" if paint.stroke is None else "strokeWidth"
-            raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}/{missing}")
         return replace(paint, fill=None, gradient=None, radial_gradient=None, image=None)
-    raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"/body/roles/{role}")
+    raise AssertionError("validated shape channel")
 
 
 @dataclass(frozen=True)
@@ -109,6 +108,7 @@ class RadialOverlayResolution:
 
 def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                         *, visual_profile: VisualProfile | None = None,
+                        completed_witness: ThemePaintWitness | None = None,
                         fill_override: str | None = None,
                         gradient_bounds: tuple[float, float, float, float] | None = None,
                         glow_extent: tuple[float, float, float, float] | None = None,
@@ -122,53 +122,37 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                         catalog_glyph_line_join: str | None = None) -> PaintResolution:
     """Resolve one closed role into renderer-neutral channels, without defaults."""
     try:
-        channels = resolve_theme_paint_inputs(
-            tokens, role, family, fill_override=fill_override,
-            part_mode=part_mode, part_color=part_color,
+        witness = completed_witness or resolve_theme_paint_witness(
+            tokens, role, family,
+            gradient_supported=(visual_profile is None or LINEAR_GRADIENT in visual_profile.capabilities),
+            optional_gradient_omission=(visual_profile.optional_omission
+                                        if visual_profile is not None else False),
+            fill_override=fill_override, part_mode=part_mode, part_color=part_color,
             catalog_pattern=catalog_pattern, ink_only_pattern=ink_only_pattern,
             pattern_has_substrate=pattern_has_substrate,
             catalog_glyph_stroke_width=catalog_glyph_stroke_width,
         )
+        channels = witness.effective_channels
     except ThemePaintError as error:
         raise ScenePaintError(error.diagnostic_id, error.path, error.detail) from error
     fill, stroke, width = channels.fill, channels.stroke, channels.stroke_width
-    dash, opacity, solid_override = channels.dash, channels.opacity, channels.solid_override
-    path = f"/body/roles/{role}"
+    dash, opacity = channels.dash, channels.opacity
     try:
         # A selected solid fill replaces, rather than tints, the base gradient.
         # Do not resolve a replaced effect or report its capability omission.
-        gradient, gradient_omitted = ((None, False) if solid_override else
-                                     _gradient(tokens, role, visual_profile, gradient_bounds))
+        gradient, gradient_omitted = _gradient_from_witness(witness.gradient, gradient_bounds, role)
         shadow, shadow_omitted = _shadow(tokens, role, visual_profile)
         glow, glow_omitted = _glow(tokens, role, visual_profile, glow_extent, canvas_bounds, shadow is not None or shadow_omitted)
         wobble, wobble_omitted = _wobble(tokens, role, visual_profile)
         finish, finish_omitted = _stroke_finish(tokens, role, visual_profile)
     except ThemeTokenError as error:
         raise ScenePaintError(error.diagnostic_id, error.path) from error
-    if family == PaintFamily.OUTLINE and not solid_override:
-        fill = None
     paint = ScenePaint(fill, stroke, float(width) if width is not None else None, dash,
                        1.0 if opacity is None else float(opacity), gradient, shadow, finish, glow=glow, wobble=wobble)
-    if part_mode is not None:
-        if part_mode not in {"fill", "stroke"}:
-            raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path)
-        if family == PaintFamily.OUTLINE:
-            paint = replace(paint, fill=None)
-        elif part_mode == "fill":
-            part_fill = part_color if part_color is not None else paint.fill
-            if part_fill is None:
-                raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/fill")
-            paint = replace(paint, fill=part_fill, stroke=None, stroke_width=None, dash=())
-        else:
-            part_stroke = part_color if part_color is not None else paint.stroke
-            part_width = (catalog_glyph_stroke_width if catalog_glyph_stroke_width is not None
-                          else paint.stroke_width)
-            if part_stroke is None or part_width is None:
-                raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/stroke")
-            paint = replace(paint, fill=None, stroke=part_stroke, stroke_width=part_width,
-                            stroke_finish=(StrokeFinish(catalog_glyph_line_cap, catalog_glyph_line_join, "required")
-                                           if catalog_glyph_line_cap is not None and catalog_glyph_line_join is not None
-                                           else paint.stroke_finish))
+    if (part_mode == "stroke" and catalog_glyph_line_cap is not None
+            and catalog_glyph_line_join is not None):
+        paint = replace(paint, stroke_finish=StrokeFinish(
+            catalog_glyph_line_cap, catalog_glyph_line_join, "required"))
     omissions = tuple(_omission(role, treatment, property_name, visual_profile, required)
                       for omitted, treatment, property_name, required in (
                           (gradient_omitted, "linear-gradient", "gradientAngle", frozenset((LINEAR_GRADIENT,))),
@@ -362,32 +346,24 @@ def _admit(profile: VisualProfile | None, required: frozenset[str], fidelity: st
     raise ThemeTokenError("E_VISUAL_CAPABILITY_UNSUPPORTED", path)
 
 
-def _gradient(tokens: ThemeTokenView, role: str, profile: VisualProfile | None,
-              bounds: tuple[float, float, float, float] | None) -> tuple[LinearGradient | None, bool]:
-    start, end = tokens.optional_color(role, "gradientStart"), tokens.optional_color(role, "gradientEnd")
-    angle = tokens.optional_number(role, "gradientAngle")
-    if start is None and end is None and angle is None: return None, False
-    if start is None or end is None or angle is None:
-        raise ScenePaintError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/gradientAngle",
-                              "gradientStart, gradientEnd, and gradientAngle must be declared together")
-    if not 0 <= float(angle) < 360:
-        raise ScenePaintError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/gradientAngle",
-                              f"gradientAngle {float(angle):g} must be in [0, 360)")
-    fidelity = _fidelity(tokens, role, "gradientFidelity")
-    if not _admit(profile, frozenset((LINEAR_GRADIENT,)), fidelity,
-                  f"/body/roles/{role}/gradientAngle"):
+def _gradient_from_witness(intent: GradientPaintIntent | None,
+                           bounds: tuple[float, float, float, float] | None,
+                           role: str) -> tuple[LinearGradient | None, bool]:
+    if intent is None:
+        return None, False
+    if not intent.admitted:
         return None, True
     if bounds is None:
         raise ScenePaintError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/gradientAngle",
                               "gradient bounds are required for a declared gradient")
     inline, block, inline_size, block_size = bounds
     centre = (inline + inline_size / 2, block + block_size / 2)
-    direction = (cos(radians(float(angle))), sin(radians(float(angle))))
+    direction = (cos(radians(float(intent.angle))), sin(radians(float(intent.angle))))
     extent = abs(inline_size / 2 * direction[0]) + abs(block_size / 2 * direction[1])
     coordinate = lambda value: 0.0 if abs(value) < 1e-12 else value
     endpoints = ((coordinate(centre[0] - direction[0] * extent), coordinate(centre[1] - direction[1] * extent)),
                  (coordinate(centre[0] + direction[0] * extent), coordinate(centre[1] + direction[1] * extent)))
-    return LinearGradient(*endpoints, ((0.0, start), (1.0, end)), fidelity), False
+    return LinearGradient(*endpoints, ((0.0, intent.start), (1.0, intent.end)), intent.fidelity), False
 
 
 def _shadow(tokens: ThemeTokenView, role: str, profile: VisualProfile | None) -> tuple[DropShadow | None, bool]:

@@ -16,6 +16,8 @@ from chrona.presentation.model.presentation_contract import normalize_presentati
 from chrona.presentation.model.surface_content import AnnotationIntent, AxisLabelIntent, AxisTier, SummaryContent, SurfaceContentInput, SurfaceLegendEntry, TableCellContent, TableColumnContent, TableColumnWidth
 from chrona.presentation.model.surface_content import RelationPresentationFact
 from chrona.presentation.model.projection import FoldedPointProjection, ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection
+from chrona.presentation.review.style_occurrences import collect_surface_style_facts
+from chrona.presentation.layout.surface_legend import swatch_extent
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.model import DecorationDisposition, ScenePrimitive, SceneSurface, SymbolGeometry, TextLayout, TextRun
@@ -687,11 +689,16 @@ def _legend_measurement():
                             "timeline.mark.blockSize": Decimal(8)})
 
 
-def _legend_surface(entries, theme):
+def _legend_surface(entries, theme, *, items=None, content_overrides=None):
     item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ())
-    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    projected = tuple(items) if items is not None else (item,)
+    projection = ReviewProjection(projected, (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    content = surface_content(legend_entries=entries, **(content_overrides or {}))
+    facts = collect_surface_style_facts(projection, content, gate_declared="gate" in theme["body"]["roles"])
+    content = replace(content, legend_mark_occurrences=tuple(
+        item for item in facts.occurrences if item.primitive_family == "mark"))
     value = build_surface_input(projection=projection,
-                              surface_content=surface_content(legend_entries=entries),
+                              surface_content=content,
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis", "legend"),
                               resolved_theme=theme, font_metrics=_Font(), measured_sources=_legend_measurement(),
                               capabilities={"svg": True})
@@ -704,7 +711,11 @@ def test_legend_milestone_entry_renders_as_the_bound_symbol_at_chart_size():
     theme = _theme()
     theme["body"]["roles"]["milestone"] = {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}
     theme["body"]["roles"].pop("gate")  # the fixture declares a role per registered semantic; a Theme with `gate` paints the key with it (#991)
-    surface = _legend_surface((SurfaceLegendEntry("milestone", "Milestone"),), theme)
+    gate = ReviewItem("gate", "Gate", "point", {"at": date(2026, 1, 1)}, None, None, ())
+    surface = _legend_surface((SurfaceLegendEntry("milestone", "Milestone"),), theme, items=(
+        ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()),
+        gate,
+    ))
 
     swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:milestone")
     assert swatch.kind == "Symbol"
@@ -733,7 +744,14 @@ def test_legend_dependency_entry_renders_as_a_stroke_with_its_terminal():
     # the role's own marker, not a filled rect.
     theme = _theme()
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "dependency-marker"}
-    surface = _legend_surface((SurfaceLegendEntry("dependency", "Dependency"),), theme)
+    surface = _legend_surface((SurfaceLegendEntry("dependency", "Dependency"),), theme,
+                              content_overrides={"relations": ({"id": "a-to-b",
+                                  "from": {"object": "a", "endpoint": "end"},
+                                  "to": {"object": "b", "endpoint": "start"}},)},
+                              items=(
+                                  ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()),
+                                  ReviewItem("b", "B", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()),
+                              ))
 
     swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:dependency")
     assert swatch.kind == "Path"
@@ -747,7 +765,8 @@ def test_legend_as_of_entry_renders_as_a_dashed_stroke():
     theme = _theme()
     theme["body"]["values"]["as-of-dash"] = {"type": "dashPattern", "value": [4, 3]}
     theme["body"]["roles"]["as-of"]["dash"] = "as-of-dash"
-    surface = _legend_surface((SurfaceLegendEntry("asOf", "As of"),), theme)
+    surface = _legend_surface((SurfaceLegendEntry("asOf", "As of"),), theme,
+                              content_overrides={"as_of": date(2026, 1, 1)})
 
     swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:asOf")
     assert swatch.kind == "Path"
@@ -759,13 +778,11 @@ def test_legend_unrecognized_role_keeps_the_fixed_square_fallback():
     # square, rather than failing or guessing a shape.
     theme = _theme()
     theme["body"]["roles"]["custom-note"] = {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}
-    surface = _legend_surface((SurfaceLegendEntry("custom-note", "Custom"),), theme)
-
-    swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:custom-note")
-    assert swatch.kind == "Rect"
+    inline, block, bucket = swatch_extent("custom-note", ThemeTokenView(theme), 8, 12)
+    assert bucket == "legacy"
     # legend_size(axis-size=12) * 0.8, today's exact formula.
-    assert swatch.bounds[2] == pytest.approx(9.6)
-    assert swatch.bounds[3] == pytest.approx(9.6)
+    assert inline == pytest.approx(9.6)
+    assert block == pytest.approx(9.6)
 
 
 def test_legend_inline_direction_flows_entries_left_to_right():
@@ -785,14 +802,22 @@ def test_legend_inline_direction_flows_entries_left_to_right():
     )
     manifest = LayoutManifest("review", "sha256:test", "horizontal", "horizontal", rect, decisions,
                               row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
+    actual_item = ReviewItem("a", "Actual", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)},
+                             {"start": date(2026, 1, 1), "finish": date(2026, 1, 2)}, None, ())
+    projection = ReviewProjection((actual_item,), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    content = surface_content(legend_entries=(SurfaceLegendEntry("planned", "Plan"), SurfaceLegendEntry("actual", "Act")))
+    facts = collect_surface_style_facts(projection, content)
+    content = replace(content, legend_mark_occurrences=tuple(
+        occurrence for occurrence in facts.occurrences if occurrence.primitive_family == "mark"))
     value = build_surface_input(projection=projection,
-                              surface_content=surface_content(legend_entries=(SurfaceLegendEntry("planned", "Plan"), SurfaceLegendEntry("actual", "Act"))),
+                              surface_content=content,
                               layout_manifest=manifest, resolved_theme=_theme(), font_metrics=_Font(),
                               measured_sources=_legend_measurement(), capabilities={"svg": True})
     surface = compose_review_surface(value)
 
     planned = next(node for node in surface.primitives if node.scene_id == "legend-swatch:planned")
-    actual = next(node for node in surface.primitives if node.scene_id == "legend-swatch:actual")
+    actual = next(node for node in surface.primitives
+                  if node.purpose == "legend-swatch" and node.visual_role == "actual")
     # Both entries sit on the same row (block-axis position unchanged) and
     # `actual` is to the right of `planned`, not stacked below it.
     assert planned.bounds[1] == actual.bounds[1]

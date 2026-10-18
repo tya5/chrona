@@ -17,6 +17,8 @@ from chrona.presentation.layout.relation_hint_model import PreviousRouteHints
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, axis_label_semantic_ids
 from chrona.presentation.model.style_rules import StyleOccurrenceKey
+from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
+from chrona.presentation.model.theme_paint import ThemePaintWitness
 
 if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement.
     from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
@@ -368,6 +370,10 @@ class MarkPlacement:
     # Style appearance is recorded only when this exact source occurrence was evaluated.
     theme_role: str | None = None
     style_occurrence_key: StyleOccurrenceKey | None = None
+    # Source identity is independent of whether an authored Style matched.
+    source_occurrence_key: StyleOccurrenceKey | None = None
+    # Ordered completed ink for a composite legend figure, consumed at Scene projection.
+    legend_paints: tuple[ThemePaintWitness, ...] = ()
 
 @dataclass(frozen=True)
 class LayoutImageFill:
@@ -425,6 +431,8 @@ class ShapePlacement:
     # Logical mark owner, independent of a renderer clip host (e.g. a glyph
     # progress contour already completed by Layout).
     host_placement_id: str | None = None
+    # Completed semantic-key ink; Scene projects it without selecting another paint.
+    legend_paint: ThemePaintWitness | None = None
 
     def __post_init__(self) -> None:
         if self.legend_swatch_shape not in (None, "circle", "rule-pair"):
@@ -706,6 +714,7 @@ class SurfaceLayoutRequest:
     mark_visibility_index: ItemMarkVisibilityIndex | None = None
     previous_route_hints: PreviousRouteHints | None = None
     temporal_capacity: TemporalInlineCapacity | None = None
+    paint_capabilities: PaintWitnessCapabilities = field(default_factory=PaintWitnessCapabilities)
 
 
 @dataclass(frozen=True)

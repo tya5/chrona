@@ -17,12 +17,36 @@ ENTRIES = {
     "variance-on-track": ("On schedule", "#444444"),
     "variance-behind": ("Overrun", "#B3241C"),
 }
+ACTUAL = {
+    "version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "variance-swatches",
+    "body": {"asOf": "2026-02-20", "observations": [
+        {"id": "ahead-observed", "sequence": 1, "projectObjectId": "ahead",
+         "actual": {"start": "2026-02-02", "finish": "2026-02-07"}},
+        {"id": "track-observed", "sequence": 1, "projectObjectId": "track",
+         "actual": {"start": "2026-02-02", "finish": "2026-02-11"}},
+        {"id": "behind-observed", "sequence": 1, "projectObjectId": "behind",
+         "actual": {"start": "2026-02-02", "finish": "2026-02-14"}},
+    ]},
+}
 
 
 def test_technical_print_variance_legend_rects_use_bound_inks_under_strict_contrast(tmp_path):
     parts = sr.bundle("technical-print")
     parts["theme"]["body"]["contrastPolicy"] = {member: "error" for member in POLICY_MEMBERS}
-    source = sr.project({"task": sr.span("task", date(2026, 2, 2), 10)})
+    parts["view"]["body"]["rows"] = {"mode": "automatic"}
+    parts["view"]["body"]["comparison"]["facets"] = ["planned", "actual", "finishDelta"]
+    parts["view"]["body"]["tableColumns"] = [
+        {"id": "Task", "source": "title", "missing": "em-dash", "align": "start",
+         "width": "content", "headerOrientation": "horizontal"},
+        {"id": "Finish delta", "source": {"comparisonFacet": "finishDelta"},
+         "format": "signedNumber", "missing": "blank", "align": "end",
+         "width": "content", "headerOrientation": "horizontal"},
+    ]
+    source = sr.project({
+        "ahead": sr.span("ahead", date(2026, 2, 2), 10),
+        "track": sr.span("track", date(2026, 2, 2), 9),
+        "behind": sr.span("behind", date(2026, 2, 2), 7),
+    })
     detail = {
         "version": "chrona/review-detail-profile/v0.1",
         "id": "variance-legend",
@@ -32,7 +56,7 @@ def test_technical_print_variance_legend_rects_use_bound_inks_under_strict_contr
         ]},
     }
 
-    rendered = sr.render(tmp_path, source, presentation=parts, detail=detail,
+    rendered = sr.render(tmp_path, source, presentation=parts, actual=ACTUAL, detail=detail,
                          icon_catalogs=(STARTER_CATALOG,), viewport=(1800, 1000))
     svg = ElementTree.fromstring(rendered.artifact.content)
     svg_rects = {
@@ -45,8 +69,13 @@ def test_technical_print_variance_legend_rects_use_bound_inks_under_strict_contr
         if item.scene_id.startswith("legend-swatch:variance-")
     }
 
-    # These Detail entries are explicit and are retained despite there being no Actual Set or variance data.
-    assert not [item for item in rendered.surface.primitives if item.purpose == "actual"]
+    # Each variance key is backed by a realized, bound-ink finish-delta cell.
+    actuals = {item.source_ref: item for item in rendered.surface.primitives if item.purpose == "actual"}
+    assert {item.source_ref for item in actuals.values()} == {"ahead", "track", "behind"}
+    assert {item.visual_role for item in actuals.values()} == {"actual"}
+    variance_cells = [item for item in rendered.surface.primitives
+                      if item.purpose == "table-cell" and item.visual_role.startswith("variance-")]
+    assert {item.visual_role for item in variance_cells} == set(ENTRIES)
     assert set(swatches) == set(ENTRIES)
     for role, (_label, color) in ENTRIES.items():
         swatch = swatches[role]

@@ -45,10 +45,13 @@ def test_builtin_catalogue_copy_and_no_asset_flag_render_are_visible_in_svg_and_
     svg = named_svg.read_bytes()
     assert svg == copied_svg.read_bytes()
     assert b"<pattern " in svg and b'patternTransform="translate(' in svg
-    assert b"Planned" in svg and b"Actual" in svg
+    assert b"Planned" in svg and b"Actual" not in svg
     scene = json.loads(scene_path.read_bytes())
     assert scene["version"] == "chrona/scene/v0.7"
     primitives = [item for surface in scene["surfaces"] for item in surface["primitives"]]
+    assert not any(item.get("id", "").startswith("legend-swatch:actual") for item in primitives)
+    assert not any(item.get("purpose") == "legend-label" and item.get("text") == "Actual"
+                   for item in primitives)
     assert any(item.get("visualRole") == "axis-band-decoration2" and item.get("pattern") for item in primitives)
     assert any(item.get("id", "").startswith("axis-label:") for item in primitives)
     assert any(item.get("id", "").startswith("legend-swatch:milestone") and item.get("kind") == "Symbol"

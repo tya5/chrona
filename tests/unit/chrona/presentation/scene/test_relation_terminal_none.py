@@ -74,10 +74,16 @@ def test_none_reserves_no_head_run_on_an_explicit_short_leg_and_svg_keeps_layout
 
 
 def test_the_legend_key_of_a_none_terminal_is_the_plain_stroke():
+    from datetime import date
+    from chrona.presentation.model.projection import ReviewItem
+
     theme = _theme()
     theme["body"]["values"]["dependency-marker"] = {"type": "marker", "value": {"shape": "none", **TOKEN}}
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "dependency-marker"}
-    swatch = next(node for node in _legend_surface((SurfaceLegendEntry("dependency", "Dependency"),), theme).primitives
+    items = tuple(ReviewItem(key, key, "span",
+        {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()) for key in ("a", "b"))
+    swatch = next(node for node in _legend_surface((SurfaceLegendEntry("dependency", "Dependency"),), theme,
+        items=items, content_overrides={"relations": (DEP,)}).primitives
                   if node.scene_id == "legend-swatch:dependency")
     assert swatch.kind == "Path" and swatch.marker_end is None and swatch.paint.stroke is not None
 
