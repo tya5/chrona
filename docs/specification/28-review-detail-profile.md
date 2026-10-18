@@ -72,9 +72,13 @@ declared missing-value behavior.
 
 Actual grouping identity is semantic meaning plus the set of effective emitted
 ink colours, including opacity, admitted gradients and pattern treatment.
+For a filled figure these are its visible fill inks; borders do not introduce
+another meaning. Only a figure with no visible fill uses its stroke inks.
+Multipart figures use all visible fill parts together, not one key per part.
 Fill, stroke, outline, width, dash and glyph geometry are drawing variants,
 not separate meanings. Equal-ink Actual occurrences coalesce across variance
-classes in first-seen order; their first complete witness represents the group.
+classes in first-seen order; their first premeasured complete witness represents
+the group even when an equivalent later occurrence supplies final visibility.
 The full paint witness is retained for projection, not weakened to this grouping
 identity. Distinct semantic families otherwise remain separate. Existing finite
 key shapes remain deliberate ink projections, not copies of source geometry.
