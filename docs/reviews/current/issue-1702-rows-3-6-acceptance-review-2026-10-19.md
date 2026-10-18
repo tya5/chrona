@@ -6,7 +6,7 @@ Observed on `main` at `41465471c`. Rows 3 to 6 of [issue #1702](https://github.c
 
 ## Rows 1-2
 
-Owned by dev A, see their review ([issue-1702-encoding-contrast-acceptance-review-2026-10-18.md](issue-1702-encoding-contrast-acceptance-review-2026-10-18.md)). This file makes no status claim about them. That file lists rows 3 to 6 as `not met` because it was written for the rows 1-2 implementation; this file is the review of rows 3 to 6.
+Owned by dev A; the current [consolidated literal acceptance review](issue-1702-encoding-contrast-acceptance-review-2026-10-18.md) now records all six rows as met, retaining A's evidence for rows 1–2 and linking this review for rows 3–6. This file provides the detailed B-owned evidence only.
 
 ## Method
 

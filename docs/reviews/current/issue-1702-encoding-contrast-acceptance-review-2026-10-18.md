@@ -1,6 +1,6 @@
 <!-- chrona:literal-acceptance/v1 -->
 
-# Trial 6 follow-up acceptance review
+# Trial 6 final acceptance review
 
 ## Literal issue acceptance
 
@@ -11,12 +11,12 @@
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | a synthetic 8-value domain on a 6-slot scheme gives distinct paints or a legend-keyed Other. | met | [CSV import, explicit responsible mapping, mission-light six-slot scheme, local legend Layout, distinct retained paints and emitted Other key](../../../tests/integration/test_categorical_hues_not_cycled.py). Existing folding works; neither trial inputs nor packaged resources are changed. Included in final [three-OS release run](https://github.com/tya5/chrona/actions/runs/39136683440). | — |
-| 2 | find why the gate does not judge this pair; a synthetic twin raises the warning. | met | Shape visibility chooses the readable outline. [Independent fill observation](../../../tests/unit/chrona/presentation/scene/test_contrast_policy.py), [View/Style render transport](../../../tests/integration/test_encoding_contrast.py), and [pair identity, count, full IDs and CLI separation](../../../tests/unit/chrona/usecases/test_encoding_pair_warnings.py). Final [derived snapshot](https://github.com/tya5/chrona/actions/runs/39135333129) and [three-OS release run](https://github.com/tya5/chrona/actions/runs/39136683440) pass. | — |
-| 3 | the message names the missing role, the View member that needs it, and what to declare (one sentence plus the pointer). | not met | [Dev B lane](https://github.com/tya5/chrona/issues/454); not accepted by the rows1–2 implementation. | — |
-| 4 | both read in words, with the author's pointer (same mechanism as #1683 row 1). | not met | [Dev B lane](https://github.com/tya5/chrona/issues/454); not accepted by the rows1–2 implementation. | — |
-| 5 | a synthetic case and the PNG. | not met | [Dev B lane](https://github.com/tya5/chrona/issues/454); not accepted by the rows1–2 implementation. | — |
-| 6 | the guide matches; the docs tests cover both statements. | not met | [Dev B lane](https://github.com/tya5/chrona/issues/454); not accepted by the rows1–2 implementation. | — |
+| 1 | a synthetic 8-value domain on a 6-slot scheme gives distinct paints or a legend-keyed Other. | met | [CSV import, explicit responsible mapping, mission-light six-slot scheme, local legend Layout, distinct retained paints and emitted Other key](../../../tests/integration/test_categorical_hues_not_cycled.py). Existing folding works; neither trial inputs nor packaged resources are changed. Retained in the exact-main [three-OS release run](https://github.com/tya5/chrona/actions/runs/39166500349). | — |
+| 2 | find why the gate does not judge this pair; a synthetic twin raises the warning. | met | Shape visibility chooses the readable outline. [Independent fill observation](../../../tests/unit/chrona/presentation/scene/test_contrast_policy.py), [View/Style render transport](../../../tests/integration/test_encoding_contrast.py), and [pair identity, count, full IDs and CLI separation](../../../tests/unit/chrona/usecases/test_encoding_pair_warnings.py). Final [derived snapshot](https://github.com/tya5/chrona/actions/runs/39135333129) and exact-main [three-OS release run](https://github.com/tya5/chrona/actions/runs/39166500349) pass. | — |
+| 3 | the message names the missing role, the View member that needs it, and what to declare (one sentence plus the pointer). | met | [Dev B row-3 review](issue-1702-rows-3-6-acceptance-review-2026-10-19.md) records the reproduced message and pointer; [deadline-mark integration test](../../../tests/integration/test_deadline_mark.py) asserts code, pointer and wording. Included in exact-main [release run](https://github.com/tya5/chrona/actions/runs/39166500349). | — |
+| 4 | both read in words, with the author's pointer (same mechanism as #1683 row 1). | met | [Dev B row-4 review](issue-1702-rows-3-6-acceptance-review-2026-10-19.md) records both messages and pointers; [View-default integration tests](../../../tests/integration/test_view_defaults.py) and [schema-diagnostic unit tests](../../../tests/unit/chrona/test_schema_diagnostics.py) cover them. Included in exact-main [release run](https://github.com/tya5/chrona/actions/runs/39166500349). | — |
+| 5 | a synthetic case and the PNG. | met | [Dev B row-5 review](issue-1702-rows-3-6-acceptance-review-2026-10-19.md) documents the synthetic finish-side case, its trial limitation and the [before](assets-1702-rows-3-6/row5-trial6-before.png)/[after](assets-1702-rows-3-6/row5-trial6-after.png) PNGs. The [finish-side integration test](../../../tests/integration/test_finish_delta_finish_side.py) checks the synthetic case. Included in exact-main [release run](https://github.com/tya5/chrona/actions/runs/39166500349). | — |
+| 6 | the guide matches; the docs tests cover both statements. | met | [Dev B row-6 review](issue-1702-rows-3-6-acceptance-review-2026-10-19.md) records both corrected guide statements and their tests; see [update-a-plan guide](../../guides/update-a-plan.md) and [guide integration tests](../../../tests/integration/test_update_a_plan_guide.py). Included in exact-main [release run](https://github.com/tya5/chrona/actions/runs/39166500349). | — |
 
 ## Architecture and release
 
@@ -68,6 +68,11 @@ unrelated Scene change was reported. The post-merge [three-OS release run
 source `02226224db444c9b1476cfee0ff3290dd480601f` for Ubuntu, macOS, Windows,
 newest Python, and MCP floor.
 
-Rows 1–2 now have final-release evidence. Rows 3–6 remain unmet and owned by
-the separate follow-up; this shared issue stays open until all six literal
-rows are accepted.
+The dev B rows 3–6 review is published in
+[issue-1702-rows-3-6-acceptance-review-2026-10-19.md](issue-1702-rows-3-6-acceptance-review-2026-10-19.md), added by merged [PR #1738](https://github.com/tya5/chrona/pull/1738). The exact-main release run
+[39166500349](https://github.com/tya5/chrona/actions/runs/39166500349) passed
+on `af76f393787091c0fe040113c058f3d0571eb7d7`, which contains both A's rows
+1–2 and B's rows 3–6 implementations and their prior reviews. All six literal
+rows above are met with the cited synthetic, diagnostic, guide and visual
+evidence. This consolidated review still needs to be published and pass the
+exact-main release gate before the issue can close.
