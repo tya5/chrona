@@ -6,7 +6,7 @@ owns levels 1, 3 and 4 for built-in text; level 2 is the caller keeping an autho
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cache
 from types import MappingProxyType
 from typing import Any, Mapping
@@ -68,8 +68,8 @@ class WordingResolver:
     """Resolve built-in wording for one Render Context locale and one View's overrides."""
 
     locale: str = DEFAULT_LOCALE
-    keys: Mapping[str, str] = MappingProxyType({})
-    legend: Mapping[str, str] = MappingProxyType({})
+    keys: Mapping[str, str] = field(default_factory=lambda: MappingProxyType({}))
+    legend: Mapping[str, str] = field(default_factory=lambda: MappingProxyType({}))
 
     def table_text(self, key: str) -> str:
         """The locale entry (level 1); the en-US entry stands in for an unsupported locale."""
