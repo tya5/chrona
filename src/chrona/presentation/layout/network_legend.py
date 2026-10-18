@@ -153,5 +153,3 @@ def _overlaps(left: Rect, right: Rect) -> bool:
             and right.inline < left.inline + left.inline_size
             and left.block < right.block + right.block_size
             and right.block < left.block + left.block_size)
-
-

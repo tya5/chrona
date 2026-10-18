@@ -222,4 +222,3 @@ def test_invalid_theme_geometry_error_is_not_converted_to_a_route_fallback():
 
     with pytest.raises(ValueError, match="E_THEME_TOKEN_TYPE"):
         _run((_edge(),), theme=BrokenTheme())
-
