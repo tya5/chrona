@@ -1,8 +1,9 @@
 # Issue 1680 — forecast deadline
 
-Status: design, architecture review and implementation plan complete; no code started.
-Implementation waits for Issue419 S2 to merge and baseline reconciliation.
-Published baseline: main `cd36227548aa349ed1fe3cb261184ef2b73ecd37`.
+Status: design, architecture review and implementation plan complete; I1 may start.
+I2 integration and the single implementation PR wait for Issue419 S2 to merge.
+Published execution baseline: main `e69d4541a2e6829d568a2f5a5ab077aadda499bb`;
+Core and its deadline tests are byte-identical to the original planning base `cd3622754`.
 [Issue](https://github.com/tya5/chrona/issues/1680);
 [preceding Style work](issue-419-semantic-resource-work-record-2026-10-17.md).
 Keep this record current; Git retains superseded decisions.
@@ -73,12 +74,15 @@ no compatibility switch, source-plan mutation or project-specific rule.
 ## Implementation plan and publication
 
 Design/architecture publication: `293d0cc52`, before this finalized plan.
-First reconcile the normative correction with merged S2 and create this
-worktree's Python venv (`.[dev,render]` and Noto CJK). No schema/resource migration.
+Create this worktree's Python venv (`.[dev,render]` and Noto CJK). Core-only I1
+may be implemented/tested on the published S1 base while S2 CI/review runs:
+it imports no View/Layout/Scene owner and S2 changes no Core file. This is
+isolated WIP, not another concurrent code PR. Before I2, reconcile the full
+normative correction and source with merged S2. No schema/resource migration.
 
 | Commit slice (one atomic implementation PR) | Files and acceptance evidence |
 | --- | --- |
-| I1 Core status and warnings | `core/deadlines.py`, `tests/unit/chrona/core/test_deadlines.py`: typed selected basis; one comparison authority and warning formatter; point/span, equal/late, per-object fallback/order, explicit forecast/planned warning basis and unchanged ordinary payloads. |
+| I1 Core status and warnings | `core/deadlines.py`, `tests/unit/chrona/core/test_deadlines.py`: typed `finish_basis`, optional forecast placement overrides and a formatter consuming completed statuses without recomparison. Keep the ordinary warning wrapper. Test point/span, equal/late, per-object fallback/order, explicit forecast/planned warning basis and unchanged ordinary payloads. No projection/Scene edits in this parallel slice. |
 | I2 Projection integration | `presentation/model/projection.py`, `usecases/render_review.py`, model/usecase tests: one eligible forecast map from final rows/folded members, one Core status tuple for warnings and `_shown_deadlines`. Cover combined/explicit/actual-only/hidden rollup/repeated/omitted-window cases. Existing `ReviewDeadline.finish` carries geometry; no new Scene or unused paint fields. I1/I2 must not merge separately. |
 | I3 Render evidence | New `tests/integration/test_forecast_deadlines.py` plus existing forecast-render, deadline overrides/caption, ordinary/folded and network regression modules. Assert actual SVG/Scene tick/run endpoints, late/kept warnings, unchanged no-forecast bytes and unchanged Theme stroke/outline. No trial-specific product branches. |
 | Release gate | Official public materializer batch: no-forecast SVG/Scene count table, inspect intentional/diagnostic report diffs without editing generated paths. Render trial-5 inputs at the pinned evidence ref and inspect both late runs in PNG. CI supplies full pytest/conformance, installed-wheel and three-OS exact-main evidence. |
