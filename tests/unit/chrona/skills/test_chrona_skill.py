@@ -86,7 +86,7 @@ def test_preset_ids_named_by_the_skill_are_builtin_ids():
 def test_the_doc_check_tool_discovers_and_will_run_every_skill_command():
     commands = [command for command in discover(ROOT) if command.path.parts[0] == "skills"]
 
-    assert {command.path.name for command in commands} == {"SKILL.md"}
+    assert {command.path.name for command in commands} == {"SKILL.md", "typed-fields.md"}  # the page runs its own (#1683)
     assert any(command.tokens[:2] == ("chrona", "init") for command in commands)
     assert any("launch.yaml" in token for command in commands for token in command.tokens)
     assert all(command.skip_reason is None for command in commands), "a skill command must be run, not skipped"
@@ -144,3 +144,24 @@ def test_the_update_loop_runs_on_the_shipped_files_from_inside_a_copy(tmp_path, 
 
     assert status == 0 and json.loads(out)["status"] == "ok"
     assert 'data-purpose="snapshot"' in (copied / "update.svg").read_text(encoding="utf-8")
+
+
+def test_typed_fields_fences_equal_their_example_files_and_the_example_runs(tmp_path, monkeypatch, capsys):
+    """#1683: the typed-fields page shows each example file verbatim (fence info `yaml PATH`); the files run."""
+    page = SKILL_DIR / "references" / "typed-fields.md"
+    shown = dict(re.findall(r"^```yaml (examples/typed-fields/\S+)\n(.*?)^```", page.read_text(encoding="utf-8"),
+                            flags=re.DOTALL | re.MULTILINE))
+
+    assert set(shown) == {"examples/typed-fields/team.yaml", "examples/typed-fields/plan.yaml",
+                          "examples/typed-fields/risk-view.yaml"}
+    for path, body in shown.items():
+        assert body == (SKILL_DIR / path).read_text(encoding="utf-8"), path
+    plan = str(SKILL_DIR / "examples" / "typed-fields" / "plan.yaml")
+    status, out, _err = run_cli(monkeypatch, capsys, "validate", plan)
+    assert (status, json.loads(out)) == (0, {"status": "ok", "diagnostics": []})
+    output = tmp_path / "typed.svg"
+    status, out, _err = run_cli(monkeypatch, capsys, "render", plan, "--preset", "mission-light", "--view",
+                                str(SKILL_DIR / "examples" / "typed-fields" / "risk-view.yaml"), "--output", str(output))
+    assert status == 0 and json.loads(out)["status"] == "ok"
+    painted = output.read_text(encoding="utf-8")
+    assert {"#E8EFFA", "#E4F4EE", "#FBF0E1"} <= set(re.findall(r'fill="(#[0-9A-F]{6})"', painted))
