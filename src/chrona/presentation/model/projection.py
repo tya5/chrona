@@ -16,9 +16,10 @@ from chrona.core.observations import latest_observations
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.contracts.resources import ViewInput, _PrivateGroupingMode
 from chrona.presentation.model.actual_observation import finish_variance
-from chrona.presentation.model.date_basis import ItemDateBasis, endpoint_distance
+from chrona.presentation.model.date_basis import DisplayDateRange, ItemDateBasis, aggregate_date_ranges, endpoint_distance
 from chrona.presentation.model.field_roles import FieldRoleBindings
 from chrona.presentation.model.field_role_view import resolve_role_grouping
+from chrona.presentation.model.hierarchy_names import plot_name_selected
 from chrona.presentation.review.lane_membership import (
     LaneItem, LaneMembership, LanePackingInput, PlannedPoint, PlannedSpan,
     SelectedFSRelation, derive_lane_membership,
@@ -130,6 +131,8 @@ class ReviewItem:
     forecast: ForecastComparisonFact | None = None
     # View-owned content eligibility, independent of temporal mark visibility.
     member_label_eligible: bool = True
+    # Source-local display titles aligned with ``hierarchy_path`` IDs.
+    hierarchy_titles: tuple[str, ...] = ()
 
     @property
     def at_delta(self) -> int | None:
@@ -304,6 +307,30 @@ class ReviewProjection:
             return ordinary
         return tuple(item for point in self.folded_points if point.group_id == group_id for item in point.all_items)
 
+    def group_date_ranges(self, *, end_display: str) -> dict[str, DisplayDateRange]:
+        """Complete display-only rollup ranges from the resolved View occurrences.
+
+        Resolved rows are authoritative: neither omitted Project descendants nor
+        comparison-only tracks may extend this range. Nested rollup ranges are
+        resolved first, so their mixed endpoints are not closed a second time.
+        """
+        ordinary = (item for row in self.rows for item in row.items) if self.has_rows else iter(self.items)
+        folded = (item for point in self.folded_points for item in point.all_items)
+        members = tuple(item for item in chain(ordinary, folded) if item.source_kind in {"primary", "combined"})
+        groups = {item.object_id: item for item in members if item.is_rollup and item.hierarchy_path}
+        ranges: dict[str, DisplayDateRange] = {}
+        # Close child rollups once before parents; never recursively expand the
+        # same descendant subtree for every ancestor or table cell.
+        for group in sorted(groups.values(), key=lambda item: len(item.hierarchy_path), reverse=True):
+            path = group.hierarchy_path
+            resolved = aggregate_date_ranges(
+                ((ranges.get(item.object_id, item.planned), item.date_basis) for item in members
+                 if len(item.hierarchy_path) > len(path) and item.hierarchy_path[:len(path)] == path),
+                end_display=end_display)
+            if resolved is not None:
+                ranges[group.object_id] = resolved
+        return ranges
+
 
 def forecast_deadline_placements(projection: ReviewProjection) -> dict[str, dict[str, date]]:
     """Select completed View occurrences that may supply per-object forecast deadline finishes.
@@ -420,6 +447,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         critical = object_id in active_analysis.critical if active_analysis is not None else False
         link = _object_link(project["objects"][object_id].get("link"))
         entry = hierarchy_entries.get(object_id)
+        hierarchy_path = entry.path if entry else ()
         group_id = (_root_group_ancestor(hierarchy_entries.get(object_id), root_groups)
                     if root_grouping else _group_id(project, object_id, source_type, grouping))
         selected.append(ReviewItem(
@@ -431,7 +459,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             parent_id=entry.parent_id if entry else None,
             hierarchy_depth=entry.depth if entry else 0,
             wbs_code=entry.display_wbs_code if entry else "",
-            hierarchy_path=entry.path if entry else (),
+            hierarchy_path=hierarchy_path,
+            hierarchy_titles=_hierarchy_titles(project, hierarchy_path),
             is_rollup=project["objects"][object_id].get("schedule", {}).get("mode") == "rollup",
             total_float=total_float, critical=critical, link=link,
             planned_progress=project["objects"][object_id].get("plannedProgress"),
@@ -786,11 +815,7 @@ def _fold_automatic_points(rows: tuple[ReviewRowProjection, ...], view: ViewInpu
     if view.rows.points == "group-header":
         if view.grouping is None or view.grouping.presentation != "header":
             raise ValueError("E_REVIEW_POINT_GROUP_HEADER_REQUIRED: rows.points group-header needs a grouping with presentation header")
-        labels = view.visibility.labels
-        has_title_label = (labels is True or
-                           (isinstance(labels, Mapping) and labels.get("placement") in {"plot", "both"}
-                            and "title" in labels.get("content", ())))
-        if not has_title_label:
+        if not plot_name_selected(view):
             raise ValueError("E_REVIEW_POINT_GROUP_HEADER_LABEL_REQUIRED: rows.points group-header needs visibility.labels "
                              "to show titles on the plot")
         folded = tuple(FoldedPointProjection(row.items[0], row.group_id, members=row.items[1:])
@@ -830,9 +855,7 @@ KEY_ROW_ID = "key-row"
 
 def _key_row(rows: tuple[ReviewRowProjection, ...], view: ViewInput) -> tuple[ReviewRowProjection, ...]:
     """Move every point row into one row placed first, under the axis (#1501); Layout packs it into lanes."""
-    labels = view.visibility.labels
-    if not (labels is True or (isinstance(labels, Mapping) and labels.get("placement") in {"plot", "both"}
-                               and "title" in labels.get("content", ()))):
+    if not plot_name_selected(view):
         raise ValueError("E_REVIEW_POINT_KEY_ROW_LABEL_REQUIRED: rows.points key-row needs visibility.labels "
                          "to show titles on the plot")
     points = sorted((row for row in rows if row.items and row.items[0].source_type == "point"),
@@ -911,15 +934,31 @@ def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[s
         total_float = float_value.value if float_value is not None else None
         critical = object_id in analysis.critical if analysis is not None else False
         entry = hierarchy_entries.get(object_id)
+        hierarchy_path = entry.path if entry else ()
         result[object_id] = ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
             planned, None, None, _roles(ObservationState.UNAVAILABLE, None, critical), "", "",
             dict(project["objects"][object_id].get("fields", {})), object_id, source_kind,
             parent_id=entry.parent_id if entry else None,
+            hierarchy_depth=entry.depth if entry else 0,
+            wbs_code=entry.display_wbs_code if entry else "",
+            hierarchy_path=hierarchy_path,
+            hierarchy_titles=_hierarchy_titles(project, hierarchy_path),
             total_float=total_float, critical=critical, link=_object_link(project["objects"][object_id].get("link")),
             declared_attaches_to=project["objects"][object_id].get("attachesTo"), field_bindings=bindings,
             date_basis=ItemDateBasis.from_project(project, object_id))
     return result
+
+
+def _hierarchy_titles(project: Mapping[str, Any], path: tuple[str, ...]) -> tuple[str, ...]:
+    """Close path titles from the same Project that supplied the path IDs."""
+    objects = project.get("objects", {})
+    titles = []
+    for object_id in path:
+        item = objects.get(object_id, {}) if isinstance(objects, Mapping) else {}
+        title = item.get("title") if isinstance(item, Mapping) else None
+        titles.append(title if isinstance(title, str) and title.strip() else object_id)
+    return tuple(titles)
 
 
 def _actual(observation: dict[str, Any] | None) -> dict[str, date | float | str] | None:

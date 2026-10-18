@@ -81,6 +81,12 @@ def error_message(code: str, message: str | None) -> str:
 # severity and cause are one finding that happened more than once, and collapse into one row (design D1).
 
 _SURFACE_CAUSES: Mapping[str, str] = {
+    "W_LEGEND_SWATCH_COLLISION": (
+        "two legend meanings use the same completed figure; distinguish their paint or shape so readers can tell them apart"
+    ),
+    "W_LEGEND_LABEL_DUPLICATE": (
+        "two legend meanings have the same displayed label; give each meaning a distinct label"
+    ),
     "W_SUMMARY_SLOT_UNBOUND": "the named Summary slot has no View binding; supply its binding to draw the metric; an empty summary frame is omitted",
     "W_SUMMARY_SLOT_UNAVAILABLE": "the named Summary slot has no date value; supply an Actual Set with asOf for a daysUntil origin, or selected planned dates for its target; the empty summary frame is omitted",
     "W_LAYOUT_OUTSIDE_WINDOW": "objects outside the explicit window were clipped or left out of the plot; their source data is unchanged",

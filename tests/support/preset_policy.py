@@ -22,6 +22,15 @@ def assert_view_copy_except_axis(packaged: Path, corpus: Path, *, first_run: boo
     if (comparison.get("deltaUnit") == "calendar-days"
             and package_document["body"].get("comparison", {}).get("deltaUnit") == "working-days"):
         comparison["deltaUnit"] = "working-days"
+    # Spec06/#1701 opts packaged names into lossless paths; independently
+    # authored references retain title names. Guard exactly that migration.
+    packaged_names = package_document["body"].get("visibility", {}).get("labels", {}).get("content", [])
+    corpus_labels = corpus_document["body"].get("visibility", {}).get("labels", {})
+    corpus_names = corpus_labels.get("content", [])
+    if "path" in packaged_names and "title" in corpus_names:
+        migrated = ["path" if name == "title" else name for name in corpus_names]
+        assert packaged_names == migrated
+        corpus_labels["content"] = migrated
     lane_table = package_document["body"].get("rows", {}).get("laneTable", {})
     if lane_table.get("count") == "auto":
         reference_table = corpus_document["body"]["rows"]["laneTable"]

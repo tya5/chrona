@@ -45,7 +45,8 @@ def test_the_view_uses_the_generic_vocabulary_for_each_treatment():
     body = safe_load((BUNDLE / "view.yaml").read_bytes())["body"]
     assert body["grouping"] == {"by": {"fieldRole": "responsible"}, "fallback": "hierarchy", "missing": "Other",
                                 "order": {"by": "earliestPlannedStart"}, "presentation": "header"}
-    assert [column["source"] for column in body["tableColumns"]] == ["rowIndex", "title", {"fieldRole": "responsible"}]
+    assert [column["source"] for column in body["tableColumns"]] == ["rowIndex", "path", {"fieldRole": "responsible"}]
+    assert "path" in body["visibility"]["labels"]["content"]
     assert body["comparison"]["baselineMarks"] == "ghost-when-changed"
     theme = safe_load((BUNDLE / "theme.yaml").read_bytes())["body"]
     assert theme["roles"]["snapshot"]["dash"] == "dash.baseline"  # the dashed baseline offset above the solid bar

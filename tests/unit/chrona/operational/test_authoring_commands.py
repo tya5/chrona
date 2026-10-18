@@ -260,9 +260,11 @@ def test_staging_identity_is_scoped_to_the_canonical_workspace(tmp_path):
     assert stages[0] == authoring_commands._stage_name("shared-command-id", scopes[0])
 
 
-def test_recovery_preserves_unowned_staging_entries(tmp_path, monkeypatch):
+@pytest.mark.parametrize("line_ending", [b"\n", b"\r\n"], ids=["lf", "crlf"])
+def test_recovery_preserves_unowned_staging_entries(tmp_path, monkeypatch, line_ending):
     workspace, path = _workspace(), tmp_path / "workspace.yaml"
-    _write(path, workspace)
+    original_bytes = yaml.safe_dump(workspace, sort_keys=False).encode("utf-8").replace(b"\n", line_ending)
+    path.write_bytes(original_bytes)
     command = _command(workspace, "setWorkspaceTask", {
         "task": {"id": "one", "title": "Candidate", "planned": {"start": "2026-01-03", "finish": "2026-01-04"}},
     })
@@ -285,7 +287,7 @@ def test_recovery_preserves_unowned_staging_entries(tmp_path, monkeypatch):
     _, scope_identity = authoring_commands._canonical_workspace(path)
     stage = tmp_path / authoring_commands._stage_name(command["commandId"], scope_identity)
     assert (stage / "unowned.txt").read_text(encoding="utf-8") == "preserve"
-    assert path.read_bytes() == yaml.safe_dump(workspace, sort_keys=False).encode("utf-8")
+    assert path.read_bytes() == original_bytes
 
 
 def test_transaction_switches_workspace_last_and_rejects_stale_or_colliding_destinations(tmp_path):

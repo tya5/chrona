@@ -164,6 +164,16 @@ declarations before each flip. Explicit policy controls prove prior output;
 omitted policy selects the new runtime default. Truthful resource identity
 changes remain visible. All other changes retain the ordinary version rule.
 
+**Bounded legend-default correction (#1703).** The
+[approved default-on decision](https://github.com/tya5/chrona/issues/1703#issuecomment-6246000720)
+is implemented in Review Detail v0.1 in place: drawn Snapshot/deadline meanings
+gain keys unless the Detail opts out. This is an explicit runtime-policy
+incompatibility, not behavior-preserving schema widening. Existing v0.1 renders
+may gain keys, change legend extent, or report semantic ambiguity warnings;
+`unkeyedLegendRoles` restores deliberate omission of either new default.
+The exact order, wording and conflict rules are in Specification 28. This
+disposition does not waive versioning for other Detail behavior or fields.
+
 Do not silently upgrade a
 stale resource; the unsupported-version behavior in §3.1 remains in force.
 

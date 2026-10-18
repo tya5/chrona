@@ -392,7 +392,22 @@ def _normalise(text: str, root: pathlib.Path) -> str:
     text = _OS_ERROR.sub("<os error>: ", text)
     # On Windows a relative path in a message carries a backslash, which the JSON text escapes as two
     # characters; the record uses the POSIX spelling so one golden file serves every OS.
-    return re.sub(r"\\{2,}", "/", text)
+    text = re.sub(r"\\{2,}", "/", text)
+
+    def relative_error_filename(match: re.Match[str]) -> str:
+        filename = match.group(1)
+        if filename.startswith("<tmp>/"):
+            filename = filename[len("<tmp>/"):]
+        elif re.match(r"^(?:[A-Za-z]:/|/)", filename):
+            # Windows strict resolution can spell an ancestor with its 8.3
+            # alias. The unique TemporaryDirectory component stays unchanged;
+            # retain everything below it, not just the failing basename.
+            _, separator, relative = filename.partition(f"/{root.name}/")
+            if separator:
+                filename = relative
+        return f"<os error>: '{filename}'"
+
+    return re.sub(r"<os error>: '([^'\n]*)'", relative_error_filename, text)
 
 
 def _stream(text: str, *, preserve: bool = False) -> object:
@@ -588,3 +603,28 @@ def test_normalise_uses_the_posix_spelling_of_a_windows_relative_path(tmp_path):
                    f"\'nowhere{backslashes}view.yaml\'\"}}")
         assert _normalise(windows, tmp_path) == expected
     assert _normalise(posix, tmp_path) == expected
+
+
+@pytest.mark.parametrize("prefix", [
+    "C:/Users/RUNNER~1/AppData/Local/Temp",
+    "C:/Users/runneradmin/AppData/Local/Temp",
+    "//?/C:/Users/RUNNER~1/AppData/Local/Temp",
+])
+@pytest.mark.parametrize("relative", ["missing.yaml", "nested/missing.yaml"])
+def test_normalise_preserves_scratch_relative_error_filename(tmp_path, prefix, relative):
+    root = tmp_path / "chrona-characterization-unique123"
+    filename = f"{prefix}/{root.name}/{relative}"
+    expected = json.dumps({"message": f"<os error>: '{relative}'"})
+    for spelling in (filename, filename.replace("/", "\\")):
+        message = json.dumps({"message": f"[WinError 2] File not found: '{spelling}'"})
+        assert _normalise(message, root) == expected
+    local = json.dumps({"message": f"[Errno 2] No such file: '{root}/{relative}'"})
+    assert _normalise(local, root) == expected
+
+
+def test_normalise_does_not_strip_external_error_filename(tmp_path):
+    root = tmp_path / "chrona-characterization-unique123"
+    filename = "C:/Users/RUNNER~1/AppData/Local/Temp/other/nested/missing.yaml"
+    message = json.dumps({"message": f"[WinError 2] File not found: '{filename}'"})
+    expected = json.dumps({"message": f"<os error>: '{filename}'"})
+    assert _normalise(message, root) == expected

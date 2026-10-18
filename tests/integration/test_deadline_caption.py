@@ -100,7 +100,10 @@ def test_cannot_fit_drops_only_caption_with_positive_count_and_cli_payload(tmp_p
     assert {item.source_ref for item in provenance.subjects} == {"/objects/a", "/objects/g"}
     payload = next(item for item in warning_payloads(rendered) if item["code"] == "I_LAYOUT_DEADLINE_CAPTION_DROPPED")
     assert payload["severity"] == "info" and payload["count"] == 2
-    assert len([item for item in rendered.surface.primitives if item.purpose == "deadline-mark"]) == 6
+    marks = [item for item in rendered.surface.primitives if item.purpose == "deadline-mark"]
+    assert len(marks) == 7  # six actual deadline placements and the explicit legend key
+    assert sum(item.purpose == "deadline-mark" and item.scene_id.startswith("deadline-")
+               for item in rendered.surface.primitives) == 6
 
 
 def test_caption_uses_ground_text_gate_not_mark_floor(tmp_path):

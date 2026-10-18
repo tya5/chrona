@@ -1,10 +1,15 @@
 """Display-only inclusive endpoints for View dateRange cells (#1293)."""
 from datetime import date
+from dataclasses import replace
 
 import pytest
 
 from chrona.presentation.contracts.resources import _view_input, freeze
-from chrona.presentation.model.projection import ReviewItem, ReviewProjection
+from chrona.core.temporal import Calendar
+from chrona.presentation.model.date_basis import ItemDateBasis
+from chrona.presentation.model.projection import (
+    FoldedPointProjection, ReviewItem, ReviewProjection, ReviewRowProjection,
+)
 from chrona.presentation.model.surface_content import display_value
 from chrona.presentation.review.v05_content import normalize_v05_table_content
 
@@ -90,3 +95,76 @@ def test_table_normalization_applies_the_view_mode_to_planned_and_actual_once():
         ("Plan", "04 Jan"),
         ("Actual", "04 Jan – 14 Jan"),
     ]
+
+
+def _group_range_table(*, point_date=date(2027, 3, 6), span_end=date(2027, 3, 6),
+                       start=date(2027, 3, 1), end_display="inclusive", basis=ItemDateBasis(), nested=False):
+    task = ReviewItem("task", "Task", "span", {"start": start, "end": span_end}, None, None, (),
+                      item_id="task", hierarchy_path=("phase", "task"), date_basis=basis)
+    gate = ReviewItem("gate", "Gate", "point", {"at": point_date}, None, None, (),
+                      item_id="gate", hierarchy_path=("phase", "gate"))
+    group = ReviewItem("phase", "Phase", "span", {"start": start, "end": max(span_end, point_date)},
+                       None, None, (), item_id="phase", hierarchy_path=("phase",), is_rollup=True)
+    ordinary = (group, task)
+    if nested:
+        inner = replace(group, object_id="inner", item_id="inner", hierarchy_path=("phase", "inner"))
+        task = replace(task, hierarchy_path=("phase", "inner", "task"))
+        gate = replace(gate, hierarchy_path=("phase", "inner", "gate"))
+        ordinary = (group, inner, task)
+    # Neither an unlisted selected-source item nor a folded comparison ghost is
+    # an eligible member of this resolved View's displayed group range.
+    unlisted = replace(gate, object_id="unlisted", item_id="unlisted",
+                       planned={"at": date(2027, 9, 1)}, hierarchy_path=("phase", "unlisted"))
+    ghost = replace(gate, item_id="snapshot:gate", source_kind="snapshot",
+                    planned={"at": date(2027, 10, 1)})
+    rows = tuple(ReviewRowProjection(item.item_id, item.title, "phase", item.item_id, (item,))
+                 for item in ordinary)
+    projection = ReviewProjection((group, task, gate, unlisted), (start, date(2027, 11, 1)), (), (),
+                                  rows=rows, rows_resolved=True,
+                                  folded_points=(FoldedPointProjection(gate, "phase", members=(ghost,)),))
+    view = _typed_view([{"id": "Plan", "source": {"facet": "planned"}, "format": "dateRange",
+                         "missing": "blank", "endDisplay": end_display}])
+    original = dict(group.planned)
+    table = normalize_v05_table_content(projection, {}, view)
+    assert group.planned == original
+    return next(cell.content for cell in table.cells if cell.object_id == "phase")
+
+
+@pytest.mark.parametrize("end_display", ["inclusive", "exclusive"])
+def test_group_range_keeps_a_folded_point_tied_with_the_span_endpoint(end_display):
+    assert _group_range_table(end_display=end_display) == "01 Mar – 06 Mar"
+
+
+def test_group_range_keeps_a_folded_point_after_the_last_span():
+    assert _group_range_table(point_date=date(2027, 3, 8)) == "01 Mar – 08 Mar"
+
+
+@pytest.mark.parametrize("point_date,expected", [(date(2027, 6, 11), "07 Jun – 11 Jun"),
+                                               (date(2027, 6, 12), "07 Jun – 12 Jun")])
+def test_group_range_closes_each_work_span_before_comparing_point_dates(point_date, expected):
+    basis = ItemDateBasis(True, Calendar.from_mapping({"working_days": ["mon", "tue", "wed", "thu", "fri"]}))
+    assert _group_range_table(start=date(2027, 6, 7), span_end=date(2027, 6, 14),
+                              point_date=point_date, basis=basis) == expected
+
+
+def test_nested_group_display_endpoints_are_not_closed_twice():
+    basis = ItemDateBasis(True, Calendar.from_mapping({"working_days": ["mon", "tue", "wed", "thu", "fri"]}))
+    assert _group_range_table(start=date(2027, 6, 7), span_end=date(2027, 6, 14),
+                              point_date=date(2027, 6, 12), basis=basis, nested=True) == "07 Jun – 12 Jun"
+
+
+def test_comparison_rollup_table_subject_keeps_its_own_date_range():
+    group = ReviewItem("phase", "Phase", "span", {"start": date(2027, 3, 1), "end": date(2027, 3, 6)},
+                       None, None, (), item_id="phase", hierarchy_path=("phase",), is_rollup=True)
+    gate = ReviewItem("gate", "Gate", "point", {"at": date(2027, 3, 6)}, None, None, (),
+                      item_id="gate", hierarchy_path=("phase", "gate"))
+    snapshot = replace(group, item_id="snapshot:phase", source_kind="snapshot",
+                       planned={"start": date(2027, 3, 1), "end": date(2027, 3, 9)})
+    rows = tuple(ReviewRowProjection(item.item_id, item.title, "phase", item.item_id, (item,))
+                 for item in (group, gate, snapshot))
+    projection = ReviewProjection((group, gate), (date(2027, 3, 1), date(2027, 3, 10)), (), (),
+                                  rows=rows, rows_resolved=True)
+    view = _typed_view([{"id": "Plan", "source": {"facet": "planned"}, "format": "dateRange",
+                         "missing": "blank", "endDisplay": "inclusive"}])
+    table = normalize_v05_table_content(projection, {}, view)
+    assert next(cell.content for cell in table.cells if cell.object_id == snapshot.item_id) == "01 Mar – 08 Mar"

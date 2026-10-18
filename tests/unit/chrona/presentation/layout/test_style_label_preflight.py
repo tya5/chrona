@@ -60,7 +60,8 @@ def _inputs(items):
     )
     content = SimpleNamespace(show_member_labels=True, label_content=("title",),
                               label_side="auto", label_fallback=("inside", "end"),
-                              label_text_role=None, attached_labels=())
+                              label_text_role=None, attached_labels=(),
+                              member_name=lambda item, _container_id="": item.title)
     return projection, content
 
 

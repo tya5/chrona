@@ -37,7 +37,7 @@ body:
     labels:
       placement: both
       content:
-      - title
+      - path
       - finishDelta
       side: end
       overflow: suppress
@@ -97,7 +97,7 @@ body:
     headerOrientation: horizontal
   - id: Task
     text: {wrap: allow}
-    source: title
+    source: path
     missing: em-dash
     align: start
     width: {minmax: {min: content, max: {fr: 1}}}

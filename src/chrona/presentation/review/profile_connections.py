@@ -201,6 +201,17 @@ def resolve_profile_connections(view: ViewInput, summary: SummaryProfileInput | 
                 ))
             effective_summary = replace(effective_summary, panels=tuple(panels))
 
+    if detail is not None:
+        legend_roles = {entry.role for entry in detail.legend}
+        for index, role in enumerate(detail.unkeyed_legend_roles):
+            if role in legend_roles:
+                raise ProfileConnectionError(
+                    "E_DETAIL_LEGEND_POLICY",
+                    f"legend role {role!r} cannot be both explicitly keyed and opted out",
+                    f"/body/unkeyedLegendRoles/{index}",
+                    component="review-detail-profile",
+                )
+
     legend_wording = wording.get("legend", {})
     if legend_wording:
         declared_roles = {entry.role for entry in (detail.legend if detail is not None else ())}
@@ -210,7 +221,9 @@ def resolve_profile_connections(view: ViewInput, summary: SummaryProfileInput | 
             if role in actual_qualifiers:
                 valid = actual_candidate
             else:
-                valid = role in declared_roles or role in {"forecast", "progressFill"}
+                valid = role in declared_roles or role in {
+                    "forecast", "progressFill", "snapshot", "deadlineMark",
+                }
             if not valid:
                 pointer = f"/body/wording/legend/{_pointer_token(str(role))}"
                 raise ProfileConnectionError("E_VIEW_WORDING_UNKNOWN", f"legend wording target {role!r} has no declared legend candidate", pointer)
