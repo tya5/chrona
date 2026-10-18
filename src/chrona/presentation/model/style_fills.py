@@ -11,28 +11,53 @@ from chrona.presentation.model.color_scale import (
 from chrona.presentation.model.style_rules import (
     OccurrenceStyleIndex, OccurrenceStyleIntent, StyleOccurrence, StyleOccurrenceKey,
 )
+from chrona.presentation.style import EncodingSource, EncodingWitness
+
+
+@dataclass(frozen=True)
+class CompletedStyleFill:
+    """One resolved colour and the passive encoding identity that selected it."""
+
+    color: str
+    encoding: EncodingWitness
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.color, str) or not self.color or not isinstance(self.encoding, EncodingWitness):
+            raise ValueError("completed Style fill requires a colour and typed encoding witness")
 
 
 @dataclass(frozen=True, init=False)
 class StyleFillIndex:
-    """Concrete colours, never a field lookup or an object-global override."""
+    """Concrete occurrence-local colours and their completed encoding witnesses."""
 
-    fills: tuple[tuple[StyleOccurrenceKey, str], ...]
+    completed_fills: tuple[tuple[StyleOccurrenceKey, CompletedStyleFill], ...]
     scales: tuple[ResolvedColorScale, ...]
-    _by_key: Mapping[StyleOccurrenceKey, str] = field(repr=False, compare=False)
+    _by_key: Mapping[StyleOccurrenceKey, CompletedStyleFill] = field(repr=False, compare=False)
 
-    def __init__(self, fills: tuple[tuple[StyleOccurrenceKey, str], ...] = (),
+    def __init__(self, completed_fills: tuple[tuple[StyleOccurrenceKey, CompletedStyleFill], ...] = (),
                  scales: tuple[ResolvedColorScale, ...] = ()) -> None:
-        values = tuple((key, color) for key, color in fills)
+        values = tuple((key, completed) for key, completed in completed_fills)
         index = dict(values)
         if len(index) != len(values):
             raise ValueError("duplicate completed Style fill occurrence")
-        object.__setattr__(self, "fills", values)
+        if any(not isinstance(value, CompletedStyleFill) for _, value in values):
+            raise ValueError("completed Style fills require color and encoding witness")
+        if any(not isinstance(key, StyleOccurrenceKey) for key, _ in values):
+            raise ValueError("completed Style fills require exact occurrence keys")
+        object.__setattr__(self, "completed_fills", values)
         object.__setattr__(self, "scales", tuple(scales))
         object.__setattr__(self, "_by_key", MappingProxyType(index))
 
     def get(self, key: StyleOccurrenceKey | None) -> str | None:
+        value = self._by_key.get(key) if key is not None else None
+        return value.color if value is not None else None
+
+    def completed(self, key: StyleOccurrenceKey | None) -> CompletedStyleFill | None:
         return self._by_key.get(key) if key is not None else None
+
+    @property
+    def fills(self) -> tuple[tuple[StyleOccurrenceKey, str], ...]:
+        return tuple((key, completed.color) for key, completed in self.completed_fills)
 
 
 def _profile_lacks_field(facts, field_name: str) -> bool:
@@ -50,7 +75,7 @@ def complete_style_fills(
     *, theme: Mapping[str, object] | None = None,
     legacy_scale: ResolvedColorScale | None = None,
     reserved: tuple[str, ...] = (), other_color: str | None = None,
-    source_refs: Mapping[str, str] | None = None,
+    encoding_sources: Mapping[str, EncodingSource],
 ) -> StyleFillIndex:
     """Use the existing total scale resolver against immutable original facts.
 
@@ -63,10 +88,17 @@ def complete_style_fills(
     policies: dict[str, tuple[str, ...] | str] = {}
     references: dict[str, str] = {}
 
+    def sources(intent: OccurrenceStyleIntent) -> tuple[EncodingSource, ...]:
+        try:
+            result = tuple(encoding_sources[rule_id] for rule_id in intent.fill_rule_ids)
+        except KeyError as error:
+            raise ValueError(f"missing encoding source for rule {error.args[0]!r}") from error
+        if not result or len(set(result)) != len(result):
+            raise ValueError("encoding origins must be non-empty and unique")
+        return result
+
     def source_reference(intent: OccurrenceStyleIntent) -> str:
-        fill_rule_ids = intent.fill_rule_ids
-        source_ref = (source_refs or {}).get(fill_rule_ids[0], "/body/rules")
-        return source_ref if source_ref == "/body/colorEncoding" else source_ref + "/then/encode"
+        return sources(intent)[0].source_ref
 
     # Iterate source occurrences, not rule or encoding declarations, so a
     # first-appearance scale follows the same order as the View projection.
@@ -87,6 +119,9 @@ def complete_style_fills(
             )
         policies[scale_id] = policy
         references.setdefault(scale_id, source_reference(intent))
+        # Resolve all origins now. A later unfillable value must not silently
+        # lose the identity that was needed to explain its encoded colour.
+        sources(intent)
         field_name = encoding.source.field_name
         value = next((fact.value for fact in occurrence.fields
                       if fact.name == field_name and fact.present), None)
@@ -98,7 +133,7 @@ def complete_style_fills(
             # the prior failure mode for a dangling index key.
             raise KeyError(intent.key)
     body = theme.get("body", {}) if isinstance(theme, Mapping) else {}
-    fills = []
+    fills: list[tuple[StyleOccurrenceKey, CompletedStyleFill]] = []
     scales = []
     for scale_id, group in groups.items():
         policy = policies[scale_id]
@@ -151,5 +186,16 @@ def complete_style_fills(
             if _profile_lacks_field(facts[intent.key].fields, field_name):
                 continue  # the occurrence's declared profile has no such field: the encoding does not apply (#1682)
             if local_scale.covers(fields):
-                fills.append((intent.key, local_scale.color_for(intent.key.subject_id, fields)))
+                color = local_scale.color_for(intent.key.subject_id, fields)
+                canonical_value = scale_text(value)
+                if canonical_value is None:  # color_for already enforces this for a covered scale
+                    raise ValueError("covered encoded value has no canonical scale text")
+                witness = EncodingWitness(
+                    channel=intent.fill.channel,
+                    scale_id=intent.fill.scale_id,
+                    field=str(field_name),
+                    value=canonical_value,
+                    sources=sources(intent),
+                )
+                fills.append((intent.key, CompletedStyleFill(color, witness)))
     return StyleFillIndex(tuple(fills), tuple(scales))

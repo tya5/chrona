@@ -332,7 +332,7 @@ switched, never retuned: a Theme cannot change a number.
 
 The corpus tool reads Scenes only. The repository keeps its own guarantee for the Themes it ships with the registry
 `conformance/contrast-opt-in.yaml`: it reads each committed Scene's Theme id from the Scene's provenance and
-evaluates a listed Theme with `mark`, `stateText`, `groundText` and `unsupportedGround` at `error` (and
+evaluates a listed Theme's existing shape-visibility `mark`, `stateText`, `groundText` and `unsupportedGround` checks at `error` (and
 `decoration` at `warning`) and an unlisted Theme with every class at `warning`; the report lists the unlisted Themes
 and their warnings. A Theme that declares `error` itself needs no entry, because the render that makes its Scene
 fails first. Listing a Theme is the repository's explicit choice; nothing is listed by default.
@@ -528,6 +528,32 @@ finding records the winning channel and its own ground. Theme-supplied mark
 outlines may therefore preserve a category-coloured fill when the same
 category also colours its background. No outline is inferred by Scene or an
 adapter (#459).
+
+**Encoded mark fill (#1702).** Separately from shape visibility, a mark fill
+identified by completed Spec08 `encoding` metadata must meet the same3.0:1 floor
+against its actual completed ground. A readable stroke cannot discharge this
+data-colour obligation. The finding names the encoding source/scale, canonical
+field value, primitive, fill sample, ground and ratio; it is
+`W_SCENE_ENCODING_CONTRAST` by default or `E_SCENE_ENCODING_CONTRAST` under
+`contrastPolicy.mark: error`. Existing `none` and accepted-exception semantics
+apply; no threshold or policy member is added. An uncomputable ground follows
+the existing `unsupportedGround` policy; invalid metadata remains structural.
+Unencoded fills and stroke-only marks gain no encoding finding, and their
+either-channel visibility rule above is unchanged. Encoded table-cell text
+retains its existing fill-only text legibility check, not a new mark floor.
+For multipart marks, independently inspect every fill-bearing encoded part
+against external grounds, excluding siblings as for the shape check. The
+shape's best-part reduction must not discard these data-channel findings.
+Observe completed paint/provenance only: do not reload Project/Style resources,
+infer encoding from colours or preset IDs, or repaint the mark.
+
+The repository registry above preserves its pre-existing figure-visibility
+guarantee; it does not author Theme enforcement for this new data-channel
+obligation. Scene-only corpus analysis explicitly requests warning policy for
+encoded-fill observations while keeping its other strict checks unchanged.
+Authored `contrastPolicy.mark: error` is still enforced by the render before
+adapter output. The evaluator's legacy strict default is unchanged: the corpus
+caller supplies this separate observation policy, not a new Theme or Scene knob.
 
 **Multipart mark figures (#1178).** MARK-classified `Symbol` parts of one
 completed placement are one contrast figure, not substrates for each other.

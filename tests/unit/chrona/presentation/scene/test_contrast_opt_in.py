@@ -162,4 +162,4 @@ def test_an_unknown_member_or_value_is_refused(policy):
 
 def test_every_blocking_code_is_a_floor_or_ground_code_with_a_warning_twin():
     assert BLOCKING_CODES == {"E_SCENE_MARK_CONTRAST", "E_SCENE_STATE_TEXT_CONTRAST", "E_SCENE_DECORATION_CONTRAST",
-                              "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"}
+                              "E_SCENE_ENCODING_CONTRAST", "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"}

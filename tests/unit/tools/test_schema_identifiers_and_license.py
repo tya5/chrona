@@ -77,8 +77,9 @@ ID_SITES: dict[tuple[str, str], int] = {
     ("project-v0.7.schema.yaml", "unconstrained-string"): 1,
     ("render-context-v0.17.schema.yaml", "non-empty-string"): 2,
     ("review-detail-profile-v0.1.schema.yaml", "bounded-non-empty-string"): 4,
-    # R6/#1292 generated identities and #419 passive Style/rule/scale provenance keep their source grammar.
-    ("scene-v0.7.schema.yaml", "scene-text"): 38,
+    # Generated identities and passive Style/rule/scale and encoding-source provenance
+    # keep the grammar of the resources they echo (#1292, #419, #1702).
+    ("scene-v0.7.schema.yaml", "scene-text"): 41,
     ("snapshot-ref-v0.3.schema.yaml", "non-empty-string"): 1,
     ("semantic-vocabulary-v0.1.schema.yaml", "host-vocabulary-id"): 1,
     ("semantic-vocabulary-v0.1.schema.yaml", "non-empty-string"): 1,

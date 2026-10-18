@@ -8,7 +8,7 @@ from chrona.presentation.model.style_rules import (
     evaluate_style_rules,
 )
 from chrona.presentation.style import (
-    StyleEncodingOutcome, StyleFieldSource, StyleRule, StyleSelector,
+    EncodingSource, StyleEncodingOutcome, StyleFieldSource, StyleRule, StyleSelector,
 )
 
 
@@ -37,6 +37,12 @@ def _intents(occurrences, rules):
     return OccurrenceStyleIndex(evaluate_style_rules(tuple(rules), tuple(occurrences)))
 
 
+def _sources(rules):
+    return {rule.rule_id: EncodingSource("style", "style-resource",
+                                         rule.source_ref + "/then/encode", rule.rule_id)
+            for rule in rules}
+
+
 def test_source_aliases_share_one_first_appearance_map_in_occurrence_order():
     actual = _occurrence("actual", "accountOwner", "B")
     planned = _occurrence("planned", "owner", "A")
@@ -46,13 +52,15 @@ def test_source_aliases_share_one_first_appearance_map_in_occurrence_order():
 
     fills = complete_style_fills(
         _intents(occurrences, rules), occurrences, theme=_theme(),
-        source_refs={rule.rule_id: rule.source_ref for rule in rules},
+        encoding_sources=_sources(rules),
     )
 
     assert len(fills.scales) == 1
     assert fills.scales[0].domain == ("B", "A")
     assert fills.get(actual.key) == "#112233"
     assert fills.get(planned.key) == "#445566"
+    assert fills.completed(actual.key).encoding.value == "B"
+    assert fills.completed(actual.key).encoding.sources == (_sources(rules)["a-actual"],)
 
 
 def test_legacy_view_domain_is_prefix_and_exact_scale_is_reused_when_union_adds_nothing():
@@ -69,7 +77,7 @@ def test_legacy_view_domain_is_prefix_and_exact_scale_is_reused_when_union_adds_
 
     fills = complete_style_fills(
         _intents(occurrences, rules), occurrences, theme=theme, legacy_scale=legacy,
-        source_refs={rule.rule_id: rule.source_ref for rule in rules},
+        encoding_sources=_sources(rules),
     )
 
     assert fills.scales == (legacy,)
@@ -91,7 +99,7 @@ def test_new_alias_value_extends_legacy_domain_after_its_prefix():
 
     fills = complete_style_fills(
         _intents(occurrences, rules), occurrences, theme=theme, legacy_scale=legacy,
-        source_refs={rule.rule_id: rule.source_ref for rule in rules},
+        encoding_sources=_sources(rules),
     )
 
     assert len(fills.scales) == 1
@@ -107,12 +115,36 @@ def test_boolean_and_string_alias_values_use_the_existing_scale_text_conversion(
 
     fills = complete_style_fills(
         _intents(occurrences, rules), occurrences, theme=_theme(),
-        source_refs={rule.rule_id: rule.source_ref for rule in rules},
+        encoding_sources=_sources(rules),
     )
 
     assert fills.scales[0].domain == ("true", "open")
     assert fills.get(boolean.key) == "#112233"
     assert fills.get(string.key) == "#445566"
+
+
+def test_coalesced_fill_assignment_retains_each_source_and_unfolded_other_value():
+    occurrence = _occurrence("planned", "owner", "B")
+    rules = (_rule("first-origin", "planned", "owner"),
+             _rule("second-origin", "planned", "owner"))
+    sources = _sources(rules)
+    fills = complete_style_fills(
+        _intents((occurrence,), rules), (occurrence,), theme=_theme(),
+        encoding_sources=sources,
+    )
+
+    completed = fills.completed(occurrence.key)
+    assert completed is not None
+    assert completed.encoding.value == "B"
+    assert completed.encoding.sources == (sources["first-origin"], sources["second-origin"])
+
+
+def test_missing_encoding_origin_fails_instead_of_returning_unwitnessed_fill():
+    occurrence = _occurrence("planned", "owner", "A")
+    rule = _rule("missing-origin", "planned", "owner")
+    with pytest.raises(ValueError, match="missing encoding source"):
+        complete_style_fills(_intents((occurrence,), (rule,)), (occurrence,), theme=_theme(),
+                             encoding_sources={})
 
 
 def test_incompatible_policies_for_one_scale_id_keep_mapping_diagnostic():
@@ -125,7 +157,7 @@ def test_incompatible_policies_for_one_scale_id_keep_mapping_diagnostic():
     with pytest.raises(ColorScaleError) as caught:
         complete_style_fills(
             _intents(occurrences, rules), occurrences, theme=_theme(),
-            source_refs={rule.rule_id: rule.source_ref for rule in rules},
+            encoding_sources=_sources(rules),
         )
 
     assert caught.value.code == "E_PRESENTATION_SCALE_MAPPING"
@@ -150,7 +182,7 @@ def test_invalid_or_missing_value_keeps_its_alias_field_and_rule_pointer(value, 
     with pytest.raises(ColorScaleError) as caught:
         complete_style_fills(
             _intents(occurrences, rules), occurrences, theme=theme,
-            source_refs={rule.rule_id: rule.source_ref for rule in rules},
+            encoding_sources=_sources(rules),
         )
 
     assert caught.value.code == "E_PRESENTATION_SCALE_VALUE"

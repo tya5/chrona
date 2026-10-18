@@ -12,8 +12,10 @@ from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
 from chrona.presentation.layout.surface_quality import AlignedStrokePlacement, ShapePlacement
 from chrona.presentation.layout.pattern_placement import PatternedPlacement
 from chrona.presentation.model.surface_content import SurfaceContentInput
+from chrona.presentation.model.style_fills import CompletedStyleFill
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, ContrastClass, PrimitiveKind, contrast_binding, contrast_bindings,
+    contrast_binding_for_primitive,
     inside_member_label_semantic, period_variant_role_base, semantic_binding, forecast_delta_semantic_ids)
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.point_paint import resolve_point_paint_role
@@ -112,13 +114,13 @@ def _placement_style_projection(mark: Any, fallback_binding: Any) -> tuple[Any, 
     return semantic_binding(semantic_id), {"semantic_id": semantic_id, "theme_role": theme_role}
 
 
-def _record_style_fill_overrides(target: dict[str, str], style_fills: Any,
+def _record_style_fill_overrides(target: dict[str, CompletedStyleFill], style_fills: Any,
                                 occurrence_key: Any,
                                 primitive_ids: tuple[str, ...] | list[str]) -> None:
     """Join concrete fills to actual Scene IDs through completed Layout keys."""
     if occurrence_key is None:
         return
-    fill = style_fills.get(occurrence_key)
+    fill = style_fills.completed(occurrence_key)
     if fill is None:
         return
     for primitive_id in primitive_ids:
@@ -250,9 +252,12 @@ def _complete_shape_channels(result: tuple[ScenePrimitive | None, tuple[PaintOmi
         return result
     if primitive.paint is None:
         raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", primitive.scene_id)
-    return replace(primitive, paint=restrict_paint_channels(
+    paint = restrict_paint_channels(
         primitive.paint, primitive.paint_channels, primitive.visual_role,
-        patterned_fill=primitive.pattern is not None), paint_channels=None), omissions
+        patterned_fill=primitive.pattern is not None)
+    return replace(primitive, paint=paint,
+                   encoding=primitive.encoding if paint.fill is not None else None,
+                   paint_channels=None), omissions
 
 
 def _completed_shape_primitive(placement: ShapePlacement, source_kind: str, purpose: str,
@@ -273,7 +278,7 @@ def _completed_shape_primitive(placement: ShapePlacement, source_kind: str, purp
 
 def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visual_profile: VisualProfile | None = None,
                             viewport: tuple[float, float] = (0.0, 0.0),
-                            *, style_fill_overrides: Mapping[str, str] | None = None,
+                            *, style_fill_overrides: Mapping[str, CompletedStyleFill] | None = None,
                             scale_legend_paints: Mapping[str, str] | None = None,
                             group_tints: Mapping[str, str] | None = None,
                             annotation_kind_paints: Mapping[str, str] | None = None,
@@ -383,7 +388,7 @@ def _require_followable_paint(primitive: ScenePrimitive) -> None:
 
 
 def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView, visual_profile: VisualProfile | None,
-                              style_fill_override: str | None,
+                              style_fill_override: CompletedStyleFill | None,
                               scale_legend_paints: Mapping[str, str],
                               group_tints: Mapping[str, str] = {},
                               canvas: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
@@ -424,7 +429,7 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
                        and primitive.purpose == "actual" and paint_role == "actual"
                        and family != PaintFamily.OUTLINE)
     fill_override = choose_fill_override(
-        style_fill=style_fill_override,
+        style_fill=style_fill_override.color if style_fill_override is not None else None,
         legend_fill=(scale_legend_paints.get(primitive.source_ref)
                      if primitive.source_kind == "legend" else None),
         actual_eligible=actual_eligible,
@@ -433,7 +438,7 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
     resolution = resolve_scene_paint(tokens, paint_role, family,
                                      completed_witness=legend_paint,
                                      visual_profile=visual_profile, gradient_bounds=primitive.bounds,
-                                     fill_override=fill_override,
+                                     fill_override=fill_override.color if fill_override is not None else None,
                                      glow_extent=_visible_extent(primitive), canvas_bounds=canvas,
                                      part_mode=primitive.glyph_paint_mode,
                                      part_color=primitive.glyph_paint_color,
@@ -481,7 +486,15 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
     # A completed stroke-only child shares its host role, not its fill content.
     treatment = (None if primitive.paint_channels == "stroke"
                  else tokens.optional_pattern(paint_role))
-    result = replace(primitive, paint=completed,
+    binding = contrast_binding_for_primitive(primitive.visual_role, primitive.kind, primitive.purpose)
+    encoding = (style_fill_override.encoding
+                if style_fill_override is not None and fill_override is not None
+                and fill_override.source == "style" and resolution.fill_override_applied
+                and primitive.kind in {"Rect", "Symbol", "Path"}
+                and binding is not None and binding.contrast_class == ContrastClass.MARK
+                and tint is None and axis_fill is None and also_paint is None and kind_paint is None
+                else None)
+    result = replace(primitive, paint=completed, encoding=encoding,
                      pattern=(primitive.pattern if primitive.pattern is not None and primitive.pattern.primitives
                               else pattern_geometry(treatment) if treatment is not None else None),
                      glyph_paint_mode=None, glyph_paint_color=None,
@@ -505,7 +518,7 @@ def project_review_surface(value: SceneBuildInput) -> SceneSurface:
     """Dispatch a typed surface intent to an adapter of completed Layout output."""
     surface = getattr(value.projection, "surface", "table-timeline")
     if surface == "table-timeline":
-        style_fill_overrides: dict[str, str] = {}
+        style_fill_overrides: dict[str, CompletedStyleFill] = {}
         projected = _compose_table_timeline_surface(value, style_fill_overrides)
         return _complete_surface_paint(projected, value.theme_tokens, value.visual_profile, value.viewport,
                                        style_fill_overrides=style_fill_overrides,
@@ -523,7 +536,7 @@ def project_review_surface(value: SceneBuildInput) -> SceneSurface:
 
 
 def _compose_table_timeline_surface(value: SceneBuildInput,
-                                    style_fill_overrides: dict[str, str] | None = None) -> SceneSurface:
+                                    style_fill_overrides: dict[str, CompletedStyleFill] | None = None) -> SceneSurface:
     """Build the core, fully measured table/timeline surface from the frozen closure."""
     projection = value.projection
     composition = value.completion

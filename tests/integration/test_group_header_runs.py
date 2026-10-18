@@ -224,7 +224,15 @@ def test_the_contrast_gate_judges_each_run_over_the_header_band(tmp_path):
     assert findings["group-header:team-0#run0"].severity == "error"
     assert findings["group-header:team-0#run1"].severity == "info" and findings["group-header:team-0#run2"].severity == "info"
     warned = {pid for item in rendered.contrast_warnings for pid in item.primitive_ids}
-    assert warned == {f"group-header:{group}#run0" for group in GROUPS}
+    header_warnings = {pid for item in rendered.contrast_warnings
+                       if item.finding_code != "E_SCENE_ENCODING_CONTRAST" for pid in item.primitive_ids}
+    encoded_warnings = [item for item in rendered.contrast_warnings
+                        if item.finding_code == "E_SCENE_ENCODING_CONTRAST"]
+    assert header_warnings == {f"group-header:{group}#run0" for group in GROUPS}
+    assert encoded_warnings
+    assert all(item.code == "W_SCENE_ENCODING_CONTRAST" and item.encoding is not None
+               and item.encoding.channel == "fill" for item in encoded_warnings)
+    assert warned == header_warnings | {pid for item in encoded_warnings for pid in item.primitive_ids}
 
 
 def test_unmarked_output_does_not_change_when_unused_roles_exist(tmp_path):
