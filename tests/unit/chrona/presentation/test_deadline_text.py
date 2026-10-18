@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from chrona.core.deadlines import deadline_statuses
 from chrona.presentation.contracts.resources import ContractError, _view_deadlines
 from chrona.presentation.count_text import CountTextError, CountTextFormat
 from chrona.presentation.deadline_text import compile_deadline_caption
@@ -54,7 +55,8 @@ def test_projection_passes_core_count_and_only_binds_slipped_deadlines():
     for item in source["objects"].values():
         item["deadline"] = "2026-01-05"
     selected = _view_deadlines({"show": "all", "caption": {"template": "{daysLate} d late"}})
-    shown = _shown_deadlines(source, schedule(source).placements, SimpleNamespace(deadlines=selected))
+    statuses = deadline_statuses(source, schedule(source).placements)
+    shown = _shown_deadlines(source, statuses, SimpleNamespace(deadlines=selected))
     assert [(item.object_id, item.slipped, item.days_late, item.caption) for item in shown] == [
         ("late", True, 3, "3 d late"), ("kept", False, 0, None)]
 
@@ -64,7 +66,8 @@ def test_projection_reports_format_range_at_caption_not_an_invented_figure():
     source["objects"]["late"]["deadline"] = "2026-01-01"
     selected = _view_deadlines({"show": "slipped", "caption": {
         "template": "{daysLate}", "format": {"form": "kanji"}}})
+    statuses = deadline_statuses(source, schedule(source).placements)
     with pytest.raises(RenderFailed) as raised:
-        _shown_deadlines(source, schedule(source).placements, SimpleNamespace(deadlines=selected))
+        _shown_deadlines(source, statuses, SimpleNamespace(deadlines=selected))
     assert (raised.value.code, raised.value.source_ref) == (
         "E_VIEW_FIGURE_FORMAT_RANGE", "/body/deadlines/caption/format")
