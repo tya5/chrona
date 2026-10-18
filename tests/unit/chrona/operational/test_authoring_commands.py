@@ -62,6 +62,12 @@ def test_authoring_command_updates_a_japanese_workspace_at_its_current_revision(
 
     assert result["status"] == "accepted"
     assert result["workspaceRevision"] == content_identity(workspace)
+    serialized = path.read_bytes()
+    assert "実装レビュー".encode("utf-8") in serialized
+    assert b"\\u5b9f\\u88c5" not in serialized
+    updated = yaml.safe_load(serialized)
+    assert list(updated) == ["version", "kind", "id", "body"]
+    assert list(updated["body"]["project"]["tasks"][0]) == ["id", "title", "planned"]
 
 
 def test_workspace_revision_is_the_first_command_precondition_without_writing(tmp_path):
@@ -130,7 +136,8 @@ def test_stale_or_illegal_command_leaves_workspace_bytes_unchanged(tmp_path):
     assert diagnostic["code"] == "E_AUTHORING_BASE_REVISION"
     assert diagnostic["expectedRevision"] == result["workspaceRevision"] == content_identity(workspace)
     assert diagnostic["receivedRevision"] == result["commandBaseRevision"] == stale["baseRevision"]
-    assert "chrona workspace revision workspace.yaml" in diagnostic["detail"]
+    assert "workspace_revision" in diagnostic["detail"]
+    assert "chrona " not in diagnostic["detail"]
     assert path.read_bytes() == original
 
     illegal = _command(workspace, "setPresentationOverride", {"overrides": {"view": {"offset": {"x": 1}}}})
