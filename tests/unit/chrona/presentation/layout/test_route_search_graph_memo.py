@@ -93,11 +93,11 @@ def test_endpoint_geometry_is_shared_across_bound_modes_without_changing_order_o
     assert len(reversals) == 2
 
 
-def test_endpoint_geometry_is_a_single_evicted_slot_per_selection(monkeypatch):
+def test_endpoint_geometry_is_twelve_entry_fifo_per_selection(monkeypatch):
     index = _index()
     index.add(SurfaceObstacle("port:one", "port", "timeline", ObstacleRect(20, 20, 21, 21)))
-    # Disable the separate bounded result memo so this test measures only the
-    # active per-selection geometry slot, including its last-key eviction.
+    # Disable the separate bounded result memo so this exercises only the active geometry
+    # cache, shared across visibility bases for the same prepared selection.
     memo = index._route_memo
     serial = 0
     while memo.content_id((f"occupied:{serial}",)) is not None:
@@ -115,21 +115,52 @@ def test_endpoint_geometry_is_a_single_evicted_slot_per_selection(monkeypatch):
     monkeypatch.setattr(route_search, "_build_sparse_graph", counted_builder)
 
     def query(start=(0, 0), *, bounds=(-2, -5, 12, 5), grid_offset=2.0, port_ids=()):
-        return next(route_search.orthogonal_route_candidates(
-            start, (10, 0), index, bounds=bounds, grid_offset=grid_offset,
-            port_ids=port_ids, limit=4096))
+        try:
+            return tuple(route_search.orthogonal_route_candidates(
+                start, (10, 0), index, bounds=bounds, grid_offset=grid_offset,
+                port_ids=port_ids, limit=8))
+        except route_search.RouteSearchFailure as failure:
+            assert str(failure) == "E_PRESENTATION_ROUTE_LIMIT"
+            return ()
 
     scope = index.route_visibility_scope(None, None, ())
     assert scope.endpoint_geometry == {}
-    query()
-    assert len(scope.endpoint_geometry) == 1
-    query()
-    query((1, 0))
-    query(bounds=(-3, -5, 12, 5))
-    query(grid_offset=3.0)
-    query(port_ids=("port:one",))
-    assert len(scope.endpoint_geometry) == 1
-    assert len(calls) == 5
+    entries = [
+        ((0, 0), (-2, -5, 12, 5), 2.0, ()),
+        ((0, 0), (-3, -5, 12, 5), 2.0, ()),
+        ((0, 0), (-2, -5, 12, 5), 3.0, ()),
+        ((0, 0), (-2, -5, 12, 5), 2.0, ("port:one",)),
+        *[((0, start_y / 4), (-2, -5, 12, 5), 2.0, ()) for start_y in range(1, 9)],
+    ]
+    assert len(entries) == 12
+    for start, bounds, grid_offset, port_ids in entries:
+        query(start, bounds=bounds, grid_offset=grid_offset, port_ids=port_ids)
+    assert len(scope.endpoint_geometry) == 12
+    assert len(scope.bases) > 1  # endpoint slots are shared across these bases
+    assert all(isinstance(value, tuple) and len(value) == 2
+               for value in scope.endpoint_geometry.values())  # (ordered, adjacency) only
+    fifo_keys = tuple(scope.endpoint_geometry)
+    assert len(calls) == 12
+
+    # A hit does not refresh insertion order; the next miss evicts the oldest
+    # key (the first entry), not the recently-hit entry.
+    query(entries[0][0], bounds=entries[0][1], grid_offset=entries[0][2],
+          port_ids=entries[0][3])
+    assert tuple(scope.endpoint_geometry) == fifo_keys
+    query((9, 0))
+    assert len(scope.endpoint_geometry) == 12
+    assert tuple(scope.endpoint_geometry) == fifo_keys[1:] + (
+        (repr(((9, 0), (10, 0), 2.0, (-2, -5, 12, 5))), frozenset()),)
+    assert len(calls) == 13
+
+    # A retained query still reuses geometry; the evicted first must rebuild.
+    query(entries[1][0], bounds=entries[1][1], grid_offset=entries[1][2],
+          port_ids=entries[1][3])
+    assert len(calls) == 13
+    query(entries[0][0], bounds=entries[0][1], grid_offset=entries[0][2],
+          port_ids=entries[0][3])
+    assert len(scope.endpoint_geometry) == 12
+    assert len(calls) == 14
 
 
 def test_endpoint_geometry_does_not_survive_selection_content_changes(monkeypatch):

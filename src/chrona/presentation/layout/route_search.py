@@ -62,6 +62,7 @@ SparseGraphGeometry = tuple[tuple[Point, ...], tuple[tuple[Edge, ...], ...]]
 
 HistoryEntry = tuple[float, float, float, tuple[Point, Point]]
 _PROJECTION_LINE_LIMIT = 16
+_ENDPOINT_GEOMETRY_LIMIT = 12
 
 
 def _build_projection_line(axis: int, coordinate: float, events: tuple[float, ...], clear
@@ -503,7 +504,8 @@ def orthogonal_route_candidates(
                 **({"exact_bound": False} if not exact_bound else {}))
             if scope is not None and geometry_key is not None:
                 ordered, adjacency, _ = graph
-                scope.endpoint_geometry.clear()
+                if len(scope.endpoint_geometry) >= _ENDPOINT_GEOMETRY_LIMIT:
+                    del scope.endpoint_geometry[next(iter(scope.endpoint_geometry))]
                 scope.endpoint_geometry[geometry_key] = (ordered, adjacency)
         if memo is not None and graph_key is not None:
             nodes, edges, heuristic = graph

@@ -273,7 +273,7 @@ class _PreparedSelection:
         self.content_id: int | None | object = _UNSET  # computed on first route-memo use
         # Input-sized active geometry, separate from the bounded result memo.
         self.visibility_bases: dict[tuple, object] = {}
-        # One geometry slot total across all endpoint/visibility-base queries.
+        # Bounded geometry working set across all endpoint/visibility-base queries.
         # Bound-mode state is completed by the caller and is not retained here.
         self.endpoint_geometry: dict[tuple, object] = {}
         # Keep at most one previous base generation, never a snapshot chain.
