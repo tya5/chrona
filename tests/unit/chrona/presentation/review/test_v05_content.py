@@ -26,6 +26,49 @@ from chrona.presentation.contracts.resources import (
 EMPTY_SUMMARY = SummaryContent(())
 
 
+def test_path_name_closes_table_plot_and_title_links_to_the_same_occurrence_text():
+    from chrona.presentation.contracts.resources import _PrivateGroupingMode
+    item = ReviewItem("task", "Provision", "point", {"at": date(2026, 1, 2)}, None, None, (),
+                      group_id="root", item_id="task", hierarchy_path=("root", "phase", "task"),
+                      hierarchy_titles=("Platform", "Infrastructure", "Provision"))
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 3)), (), (),
+                                  rows=(ReviewRowProjection("row", "", "root", "task", (item,)),))
+    view = typed_view({"body": {
+        "grouping": {"by": _PrivateGroupingMode.PROJECT_ROOT_GROUP, "presentation": "header"},
+        "tableColumns": [{"id": "Task", "source": "path", "missing": "dash"},
+                         {"id": "OldTitle", "source": "title", "missing": "dash"}],
+        "visibility": {"labels": {"placement": "both", "content": ["path"], "side": "end"}},
+    }})
+    table = normalize_v05_table_content(projection, {}, view)
+    content = normalize_v05_surface_content(projection, {"relations": ()}, view,
+                                            summary=EMPTY_SUMMARY, table=table)
+    assert table.cells[0].content == "Infrastructure / Provision"
+    assert content.member_name(item, "row") == table.cells[0].content
+    assert content.member_names is table.member_names
+    assert content.label_content == ("title",)
+    assert content.title_link_columns == ("Task",)
+    assert item.title == "Provision"
+
+    legacy = replace(view, visibility=replace(view.visibility, labels=freeze({
+        "placement": "both", "content": ["title"], "side": "end"})))
+    old = normalize_v05_surface_content(projection, {"relations": ()}, legacy, summary=EMPTY_SUMMARY)
+    assert old.table_cells[0].content == "Platform / Infrastructure / Provision"
+    assert old.member_name(item, "row") == "Provision"
+    assert old.title_link_columns == ("OldTitle",)
+
+
+def test_path_attached_point_keeps_the_existing_date_and_delta_suffix():
+    item = ReviewItem("gate", "Approve", "point", {"at": date(2026, 1, 2)},
+                      {"at": date(2026, 1, 3)}, None, (), item_id="gate", attached_to="span",
+                      hierarchy_path=("phase", "gate"), hierarchy_titles=("Infrastructure", "Approve"))
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 4)), (), (),
+                                  rows=(ReviewRowProjection("row", "", "", "gate", (item,)),))
+    view = typed_view({"body": {"tableColumns": (), "visibility": {
+        "labels": {"placement": "plot", "content": ["path"], "side": "end"}}}})
+    content = normalize_v05_surface_content(projection, {"relations": ()}, view, summary=EMPTY_SUMMARY)
+    assert dict(content.attached_labels)["gate"] == "Infrastructure / Approve · 02 Jan · +1d"
+
+
 def test_axis_band_fill_scale_is_retained_as_typed_intent_and_absence_stays_none():
     view = typed_view({"body": {"tableColumns": (), "visibility": {}, "axis": {"tiers": [
         {"unit": "quarter", "every": 1, "role": "band",

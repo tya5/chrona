@@ -130,6 +130,8 @@ class ReviewItem:
     forecast: ForecastComparisonFact | None = None
     # View-owned content eligibility, independent of temporal mark visibility.
     member_label_eligible: bool = True
+    # Source-local display titles aligned with ``hierarchy_path`` IDs.
+    hierarchy_titles: tuple[str, ...] = ()
 
     @property
     def at_delta(self) -> int | None:
@@ -444,6 +446,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         critical = object_id in active_analysis.critical if active_analysis is not None else False
         link = _object_link(project["objects"][object_id].get("link"))
         entry = hierarchy_entries.get(object_id)
+        hierarchy_path = entry.path if entry else ()
         group_id = (_root_group_ancestor(hierarchy_entries.get(object_id), root_groups)
                     if root_grouping else _group_id(project, object_id, source_type, grouping))
         selected.append(ReviewItem(
@@ -455,7 +458,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             parent_id=entry.parent_id if entry else None,
             hierarchy_depth=entry.depth if entry else 0,
             wbs_code=entry.display_wbs_code if entry else "",
-            hierarchy_path=entry.path if entry else (),
+            hierarchy_path=hierarchy_path,
+            hierarchy_titles=_hierarchy_titles(project, hierarchy_path),
             is_rollup=project["objects"][object_id].get("schedule", {}).get("mode") == "rollup",
             total_float=total_float, critical=critical, link=link,
             planned_progress=project["objects"][object_id].get("plannedProgress"),
@@ -935,15 +939,31 @@ def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[s
         total_float = float_value.value if float_value is not None else None
         critical = object_id in analysis.critical if analysis is not None else False
         entry = hierarchy_entries.get(object_id)
+        hierarchy_path = entry.path if entry else ()
         result[object_id] = ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
             planned, None, None, _roles(ObservationState.UNAVAILABLE, None, critical), "", "",
             dict(project["objects"][object_id].get("fields", {})), object_id, source_kind,
             parent_id=entry.parent_id if entry else None,
+            hierarchy_depth=entry.depth if entry else 0,
+            wbs_code=entry.display_wbs_code if entry else "",
+            hierarchy_path=hierarchy_path,
+            hierarchy_titles=_hierarchy_titles(project, hierarchy_path),
             total_float=total_float, critical=critical, link=_object_link(project["objects"][object_id].get("link")),
             declared_attaches_to=project["objects"][object_id].get("attachesTo"), field_bindings=bindings,
             date_basis=ItemDateBasis.from_project(project, object_id))
     return result
+
+
+def _hierarchy_titles(project: Mapping[str, Any], path: tuple[str, ...]) -> tuple[str, ...]:
+    """Close path titles from the same Project that supplied the path IDs."""
+    objects = project.get("objects", {})
+    titles = []
+    for object_id in path:
+        item = objects.get(object_id, {}) if isinstance(objects, Mapping) else {}
+        title = item.get("title") if isinstance(item, Mapping) else None
+        titles.append(title if isinstance(title, str) and title.strip() else object_id)
+    return tuple(titles)
 
 
 def _actual(observation: dict[str, Any] | None) -> dict[str, date | float | str] | None:

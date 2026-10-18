@@ -5,6 +5,7 @@ import re
 import unicodedata
 from datetime import date, timedelta
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any, Literal, Mapping
 
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec
@@ -14,6 +15,7 @@ from chrona.presentation.model.projection import ObservationState, ReviewItem, d
 from chrona.presentation.model.style_rules import OccurrenceStyleIndex, StyleMatchIndex, StyleOccurrenceKey, StyleOccurrence
 from chrona.presentation.model.style_fills import StyleFillIndex
 from chrona.presentation.model.legend_paint import RealizedLegendKey
+from chrona.presentation.model.hierarchy_names import NameKey, member_name_key, source_path
 from chrona.presentation.style import StyleLegendScope
 
 
@@ -154,6 +156,7 @@ class TableContent:
     # Rows of a header group sit one declared step under their header (#1065): field grouping with header
     # presentation, a hierarchy column, and no other nesting.
     indent_under_headers: bool = False
+    member_names: Mapping[NameKey, str] = field(default_factory=lambda: MappingProxyType({}))
 
 
 @dataclass(frozen=True)
@@ -341,6 +344,12 @@ class SurfaceContentInput:
     legend_wording: tuple[tuple[str, str], ...] = ()
     legend_mark_occurrences: tuple[StyleOccurrence, ...] = ()
     legend_progress_possible: bool = False
+    member_names: Mapping[NameKey, str] = field(default_factory=lambda: MappingProxyType({}))
+
+    def member_name(self, item: ReviewItem, container_id: str = "") -> str:
+        """A normalized occurrence name, not a replacement for source title."""
+        return self.member_names.get(member_name_key(item, container_id),
+                                     self.member_names.get(member_name_key(item), item.title))
 
 
 @dataclass(frozen=True)
@@ -358,8 +367,7 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
     """Resolve one renderer-neutral table cell from normalized review data."""
     if isinstance(source, str):
         if source == "path":
-            return " / ".join(str(project.get("objects", {}).get(object_id, {}).get("title", object_id))
-                              for object_id in item.hierarchy_path)
+            return " / ".join(title for _, title in source_path(item))
         return {"id": item.object_id, "title": item.title, "objectType": item.source_type,
                 "entity": item.group_label, "rowIndex": row_index, "totalFloat": item.total_float,
                 "wbsCode": item.wbs_code}.get(source)
