@@ -37,6 +37,14 @@ labels. A one-day window has one truthful day label, not duplicate periods or
 invented boundary labels. The two-label short-window acceptance applies when
 the window spans at least two units of its finest admitted tier.
 
+Whenever the bundled default's finest labelled tier resolves to weeks (or days),
+the default axis also carries a coarser tier above it: a month tier that names
+the year at its boundaries (`2026年12月` / `DEC 2026`), falling back to
+half-year and then year when months do not fit, and the finest tier falls back to
+quarter when weeks do not fit (#1724, the `editorial-readable-default` View;
+66 px instead of 95 px). The coarser tier is declared by the View, not
+synthesized by Layout.
+
 Window clipping does not participate in unit or cadence selection. After that
 selection, Layout applies completed logical-interval, painted-host and plot
 containment (Specification 50, #1291). An edge or host that cannot contain a
@@ -176,6 +184,7 @@ checked against the chip as the text's ground.
 
 - A labels tier whose typography role declares `laneBlockSize` is a declared lane. Lanes stack from the top of the axis slot in labels-tier order, and each label's line box is centred in its lane. A band tier with the same `unit` fills exactly that lane.
 - A band role's `cellGap` insets each cell by half the gap at both inline ends, except the outer end of a cell at the window edge, which reaches the plot edge (Spec 50, the plot, #880). A bound `axis-cell-separator` role draws a separator at each interval start inside the axis, spanning the declared lanes or the whole slot.
+- A label that crosses into the abutting cell of a band tier (a week across the year boundary, Spec 50, #1724) sits on one ground: Layout paints an `axis-band-bridge:N` Rect in the host's semantic role and paint order over the `cellGap`, exactly the label's block extent, below the text, so the gap between the cells never strikes through the label. The cell's own edges and the separators outside the label's lane are unchanged.
 - A bound `axis-rule` role draws the axis/plot boundary along the bottom of the axis slot; every shipped Theme binds it.
 - An axis label role's `labelInset`, a ratio of its font size, insets start-aligned labels from their cell edge.
 - A Theme that declares none of these renders the axis as before.
