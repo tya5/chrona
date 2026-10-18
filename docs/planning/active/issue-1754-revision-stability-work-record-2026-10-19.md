@@ -241,6 +241,30 @@ before changing that rule. Do not expand S1 into hint/routing or Theme policy.
   example or manual generated-output changes. A label/chip or other obstruction
   remains truthful; this is not a general guarantee that all names always fit.
 
+## S4 implementation plan
+
+- `schemas/theme-v0.15.schema.yaml`, `color_scheme.py`: add/validate boolean
+  `contrastPolicy.asOfConeGround`. Keep it out of severity maps in
+  `usecases/render_review.py`; resolved Theme carries it unchanged.
+- `scene/model.py`, `v05_builder.py`, `serialization.py` and Scene-v0.7 schema:
+  add optional cone-only `markGround`; complete true from resolved Theme after
+  paint resolution; serialize/validate it without adapter or gradient changes.
+  Keep v0.6 schema untouched and force v0.7 if the metadata is present.
+- `scene/cone_ground.py`, `contrast_policy.py`: read/validate the fact and
+  share the filtered mark-cone set across ordinary, encoded and multipart
+  observations; text keeps the full set. Leave physical surface-paint queries
+  unchanged and always reject malformed cone data, even when mark tint is off.
+- Focused tests: Theme resolution/invalid booleans, Scene model/schema/roundtrip
+  and non-cone rejection; default/opt-in cone ground with unchanged text,
+  encoded/multipart/pattern marks, severity and exceptions; real render carries
+  the opt-in. Run schema equivalence against the current public main and record
+  only explained deltas (including any independently merged diagnostic change).
+- Publish one implementation/test/schema commit in the issue PR. CI supplies
+  conformance and public reproduction; inspect diagnostic changes and generated
+  artifacts once for S1–S4. Then batch all trial-8 revisions with hints, post
+  the literal metric table, inspect output, and publish final acceptance before
+  exact-main three-OS release. No preset/trial data edits or local full pytest.
+
 ## Current implementation evidence
 
 S1 is implemented locally; publication/public-output review and CI are pending.
