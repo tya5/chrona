@@ -453,8 +453,9 @@ First-fit fallback uses an obstacle-independent Manhattan/minimum-turn lower
 bound instead of preparing the exact reverse bound. It retains canonical
 prefix histories and existing expansion quotas; it does not collapse different
 path-dependent prefixes using weighted-state dominance. Sparse-graph memo keys
-distinguish bound modes; endpoint-independent visibility preparation may be
-shared. `best` retains its exact reverse bound and candidate order.
+distinguish bound modes; identical ordered graph geometry may be shared
+independently of mode-specific reverse completion under the active-geometry
+bound below. `best` retains its exact reverse bound and candidate order.
 If all first-fit shapes and cheap searches fail, Layout performs one ranked
 `best` rescue for that relation, using the original admitted pair order and
 the same completed-route validators. An accepted fast route never invokes
@@ -926,6 +927,19 @@ these facts. Cache admission/eviction never changes graph membership, neighbor
 order, heuristic or candidate allowance. Projection-line preparation counters
 remain separate from base builds and endpoint assemblies; its active retained
 geometry must remain O(M), not grow with all endpoint pairs or render history.
+
+The prepared selection may also keep at most one completed endpoint-graph
+geometry (ordered nodes and ordered adjacency), across all of its visibility
+bases, as active O(M) data (#1734). Its exact identity includes start/end,
+bounds, grid offset and selected port exemptions; selected obstacle content
+and class/region filters are fixed by its owning prepared selection. A new key
+replaces the previous geometry; changed selected content starts empty and
+does not inherit endpoint geometry through a previous visibility generation.
+Equal-content copies may share these immutable facts. This single slot is
+separate from, and does not enlarge, the4096-record retained search memo.
+Bound modes may share only that geometry: exact reverse bounds are completed
+for exact mode, while frontier history, expansion accounting, route completion
+and acceptance remain fresh. No route or acceptance verdict is retained here.
 
 **Entry obstacles (#1109 R4).** A comparison-host corridor exempts only named,
 physically connected marks of that endpoint. A detached snapshot or actual
