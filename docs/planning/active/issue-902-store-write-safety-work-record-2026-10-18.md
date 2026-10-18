@@ -81,6 +81,11 @@ then stale B accepted both (`actual:2:6c52833a6e1c`, `actual:3:84aa7f2ec6b7`);
 reopening returned B's content and lost A's update. This deterministic temporary
 Store experiment uses explicit pipe handshakes, not sleeps. L2 must reproduce
 this failure as a committed regression, then prove B conflicts after the fix.
+Committed regression: `tests/integration/test_actual_store_concurrency.py`,
+`test_two_processes_opening_one_base_preserve_first_commit_and_reject_stale_writer`.
+Before L2 it fails in0.95s because stale B returns `actual:3:84aa7f2ec6b7`
+instead of a conflict; both spawned workers exit cleanly. This is intentional
+pre-fix evidence, not an accepted green implementation.
 
 ## Next-item baseline (design not yet selected)
 
