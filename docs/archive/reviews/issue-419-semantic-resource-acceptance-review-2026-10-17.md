@@ -2,7 +2,7 @@
 
 <!-- chrona:literal-acceptance/v1 -->
 
-**Current authority:** [work record](../../planning/active/issue-419-semantic-resource-work-record-2026-10-17.md), [Specification 07](../../specification/07-style-and-theme.md), [Specification 60](../../specification/60-declared-colour-scales.md), and the [C1 acceptance review](issues-419-c1-acceptance-review-2026-10-18.md).
+**Archived authority:** [work record](../planning/issue-419-semantic-resource-work-record-2026-10-17.md), [Specification 07](../../specification/07-style-and-theme.md), [Specification 60](../../specification/60-declared-colour-scales.md), and the [C1 acceptance review](issues-419-c1-acceptance-review-2026-10-18.md). The final release/closure state is recorded below.
 
 ## Published implementation and release evidence
 
@@ -13,14 +13,13 @@
 - **C1 report:** PR #1678 and the wording/rationale correction [PR #1690](https://github.com/tya5/chrona/pull/1690) are merged. Current derived main is `5c7627e90`; #1690 checks passed in [39088246770](https://github.com/tya5/chrona/actions/runs/39088246770). The committed report separates observed purpose/role evidence from admitted-model cardinality; it does not claim admitted states were drawn or provide a state-to-role witness matrix.
 - **Current artifact confirmation:** PR1692 source `a7fc836ac`, base `0c8179740`, [snapshot39090738185](https://github.com/tya5/chrona/actions/runs/39090738185) contains the identical checked C1 report (SHA-256 `88b4012eb86f829d26c95578d4b3ff4522229a62025e632e9f571c54207b6456`): 51/72 single-role drawn purposes, 83 registered, 11 unpainted. Its separate legend-checker conformance failure is not release acceptance; the final exact-main gate remains required.
 
-The final review-containing main `4e30fbc3f8ce3728b1639cbef8747c5b98ccebf5`
-passed [release39094741641](https://github.com/tya5/chrona/actions/runs/39094741641):
-three-OS full pytest/conformance/wheel, newest-Python reproduction and MCP floor.
-Final6cf PR1692 artifact12123836891 and item5 artifact12124072125 retain the
-identical checked C1 report. The row3 audit below corrects the earlier
-interpretation without changing acceptance or product behavior. Parent419
-remains open until this corrected review has successful exact-main release
-evidence; the earlier green run does not contain this correction.
+The final review-containing main `5fe41db8e8512e5438e9ecbe67f5c56c1d18d152`
+passed [exact-main release39108421823](https://github.com/tya5/chrona/actions/runs/39108421823):
+all three native OS pytest/conformance/wheel gates, MCP floor and newest-Python
+public-materializer reproduction. The official release succeeded; issue #419
+was closed after all seven literal acceptance rows were confirmed met. Final
+artifact/report evidence is recorded in the linked work record and the closure
+comment on [issue #419](https://github.com/tya5/chrona/issues/419).
 
 ## Literal issue acceptance
 

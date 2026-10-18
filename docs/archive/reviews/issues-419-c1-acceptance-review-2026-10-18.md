@@ -2,7 +2,7 @@
 
 # Literal acceptance review — #419 (slice C1 only)
 
-Observed on `main` at `ba46a837b`, which is the derived-sync bot commit ("Regenerate public derived evidence") after [PR #1678](https://github.com/tya5/chrona/pull/1678) (`348fa338`). This review covers **slice C1 only**: rows 3, 5, 6 and 7 of the numbering used in the earlier [#419 resource acceptance review](issue-419-semantic-resource-acceptance-review-2026-10-17.md), that is, the coverage-report row of the #419 acceptance list and the three rows from the consolidated "From #433" section. Rows 1, 2 and 4 are outside this slice and are not re-judged here. **Issue #419 stays OPEN**: slices S1 and S2 (authored Style rules that emit `themeRole`) remain, in [PR #1675](https://github.com/tya5/chrona/pull/1675) and follow-ups.
+Historical slice C1 review, observed on `main` at `ba46a837b`, the derived-sync bot commit after [PR #1678](https://github.com/tya5/chrona/pull/1678) (`348fa338`). It covers rows 3, 5, 6 and 7 of the numbering used in the [parent acceptance review](issue-419-semantic-resource-acceptance-review-2026-10-17.md); rows 1, 2 and 4 were outside this slice. Its intermediate `OPEN` status is superseded by the final parent review and closure: [issue #419](https://github.com/tya5/chrona/issues/419) closed after all seven rows were met and exact-main release39108421823 passed.
 
 Verification ran in a private venv (`PYTHONPATH=src:.`, `chrona-fonts-noto-cjk` and the runtime dependencies installed there, no install into a shared environment):
 
