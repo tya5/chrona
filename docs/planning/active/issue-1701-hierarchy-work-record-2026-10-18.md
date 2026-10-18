@@ -79,3 +79,40 @@ Therefore adding an ordinary path column alone cannot satisfy all-presets
 acceptance. Resolve the lane-compatible representation and intentionally
 ungrouped preset policy before selecting a contract. Bound field-role grouping
 also needs review: fixing only unbound-role fallback would be incomplete.
+
+## Row2 proposed design — review pending, not implementation authority
+
+[Review request6246887625](https://github.com/tya5/chrona/issues/1701#issuecomment-6246887625)
+asks whether lane per-member path labels satisfy the issue's label-column
+fallback. Do not implement that substitution before its disposition.
+
+- Keep grouping keys, selection, ordering, lane packing, folding and rollup
+  semantics unchanged. Hierarchy display is independent of presentation groups.
+  Current flat/vertical headers are not nested-depth-capable; no new header
+  capability framework is proposed.
+- Ordinary table closures use existing `source: path`; lane closures would use
+  one finite `path` member-label component. The default hierarchy closure may
+  retain its already lossless depth-all header/Task-column representation.
+  All15 effective preset closures must declare a lossless representation,
+  including intentionally ungrouped and bound-role designs.
+- A path is the ordered source-local ancestor-title breadcrumb including the
+  selected item, not a new group identity. Close its text before Layout from
+  the occurrence's own Project, including Snapshot/scenario sources. Omitted
+  ancestor rows are not invented; names may still appear in the breadcrumb.
+  Object IDs provide the label fallback for absent/blank titles; titles are
+  never parsed into identities.
+- Proposed label admission: `path` is an alternate name source to `title`,
+  alongside existing optional `finishDelta`; do not emit two name components.
+  Lane name requirements and `placement: both` name-column checks must admit
+  the selected path route. Existing declarations keep their current behavior.
+  View optional admission follows Spec56; evaluate schema equivalence explicitly.
+- Share name composition across lane/non-lane/folded label measurement and
+  placement; treat path as the existing name component for visibility/style/link
+  rules. Table paths and plot paths must use the same source-local text fact.
+  Layout still owns measurement, wrapping and overflow; Scene receives completed
+  text. Do not hide ancestor loss in elision/suppression without the existing
+  pointed fit evidence; the synthetic all-preset gate requires visible names.
+- Root and independent reviews favor this reuse over new nested geometry or
+  lane-founder-only labels. Public wording approval, exact overflow behavior,
+  normative changes and final whole-architecture review are still outstanding.
+  No row2 implementation plan is final, and no row2 code has been written.
