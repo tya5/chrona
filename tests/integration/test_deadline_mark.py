@@ -232,6 +232,9 @@ def test_a_missing_theme_role_is_refused_not_painted_by_another_role(tmp_path):
     with pytest.raises(RenderFailed) as raised:
         _render(tmp_path, parts=_parts(role=False))
     assert (raised.value.code, raised.value.source_ref) == ("E_THEME_ROLE_REQUIRED", "/body/roles/deadline-mark")
+    message = raised.value.message
+    assert "no further detail" not in message
+    assert "'deadline-mark'" in message and "'deadlines'" in message and "markReach" in message
 
 
 @pytest.mark.parametrize("reach", [0, -1, 4.5])
