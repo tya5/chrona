@@ -330,4 +330,4 @@ def test_an_extension_path_with_a_parent_directory_says_so_and_names_the_allowed
     assert messages, "the extension entry is refused"
     assert (
         "'path' (/extensions/0/path): a parent directory ('..') is not permitted; "
-        "write a relative path below the file's own directory, such as 'extensions/example.yaml'") in messages[0]
+        "write a relative path below the file's own directory, such as 'folder/file.yaml'") in messages[0]

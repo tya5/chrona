@@ -235,7 +235,7 @@ def _unsafe_path_sentence(error: ValidationError) -> str | None:
     else:
         reason = "it must start with a letter or digit and use only letters, digits, '.', '_', '-' and '/'"
     return (f"'{tuple(error.absolute_path)[-1] if error.absolute_path else 'path'}' ({where}): {reason}; "
-            "write a relative path below the file's own directory, such as 'extensions/example.yaml'")
+            "write a relative path below the file's own directory, such as 'folder/file.yaml'")
 
 
 def _forbidden_members(error: ValidationError) -> SchemaViolation | None:
