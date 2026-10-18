@@ -235,7 +235,7 @@ def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity:
                     primitive["encoding"], version=version, document=document,
                     scene_path=scene_path, primitive_index=index,
                 )
-                _validate_encoding_sources(witness, primitive, document,
+                _validate_encoding_sources(witness, document,
                                            scene_path=scene_path, primitive_index=index)
                 binding = contrast_binding_for_primitive(
                     primitive.get("visualRole"), primitive.get("kind"), primitive.get("purpose"))
@@ -508,10 +508,9 @@ def _read_encoding_witness(raw: Any, *, version: str, document: Mapping[str, Any
     return witness
 
 
-def _validate_encoding_sources(witness: EncodingWitness, primitive: Mapping[str, Any],
-                               document: Mapping[str, Any], *, scene_path: str,
+def _validate_encoding_sources(witness: EncodingWitness, document: Mapping[str, Any], *, scene_path: str,
                                primitive_index: int) -> None:
-    """Require every passive origin to join the Scene resource inventory and authored Style match."""
+    """Require every passive origin to join exactly one pinned Scene resource."""
     pointer = f"{scene_path}/primitives/{primitive_index}/encoding/sources"
     provenance = document.get("provenance")
     resources = provenance.get("resources") if isinstance(provenance, Mapping) else None
@@ -521,13 +520,6 @@ def _validate_encoding_sources(witness: EncodingWitness, primitive: Mapping[str,
                    and resource.get("kind") == source.kind and resource.get("id") == source.resource_id]
         _require(len(matches) == 1,
                  f"encoding source does not join exactly one Scene resource at {pointer}")
-        if source.kind == "style":
-            style_match = primitive.get("styleMatch")
-            _require(isinstance(style_match, Mapping)
-                     and style_match.get("styleId") == source.resource_id
-                     and isinstance(style_match.get("ruleIds"), (list, tuple))
-                     and source.rule_id in style_match["ruleIds"],
-                     f"Style encoding source does not join the primitive match at {pointer}")
 
 
 def _encoded_fill_findings(scene_path: str, primitive: Mapping[str, Any], canvas: str | None,

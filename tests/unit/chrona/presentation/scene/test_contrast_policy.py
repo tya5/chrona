@@ -387,12 +387,11 @@ def test_encoding_witness_on_non_mark_or_non_shape_is_structural(kind, visual_ro
         evaluate_scene_contrast(_encoded_scene(primitive))
 
 
-def test_style_encoding_witness_joins_resource_and_authored_rule():
+def test_style_encoding_witness_is_self_contained_and_joins_resource_without_style_match():
     mark = _encoded_mark()
     mark["encoding"] = {"channel": "fill", "scaleId": "status-colors", "field": "status", "value": "gate",
                          "sources": [{"kind": "style", "id": "style-a", "sourceRef": "/body/rules/then",
                                       "ruleId": "encode-status"}]}
-    mark["styleMatch"] = {"styleId": "style-a", "ruleIds": ["encode-status"]}
     scene = _encoded_scene(_dark_host(), mark)
     scene["provenance"]["resources"] = [{"kind": "style", "id": "style-a"}]
 
@@ -400,8 +399,13 @@ def test_style_encoding_witness_joins_resource_and_authored_rule():
                    if item.code == "W_SCENE_ENCODING_CONTRAST")
     assert finding.encoding.sources[0].rule_id == "encode-status"
 
-    mark["styleMatch"] = {"styleId": "style-a", "ruleIds": ["different-rule"]}
-    with pytest.raises(ValueError, match="Style encoding source does not join the primitive match"):
+    mark["encoding"]["sources"][0].pop("ruleId")
+    with pytest.raises(ValueError, match="malformed encoding witness"):
+        evaluate_scene_contrast(scene, policy={"mark": "warning"})
+
+    mark["encoding"]["sources"][0]["ruleId"] = "encode-status"
+    mark["encoding"]["sources"][0]["id"] = "missing-style"
+    with pytest.raises(ValueError, match="encoding source does not join exactly one Scene resource"):
         evaluate_scene_contrast(scene, policy={"mark": "warning"})
 
 
