@@ -544,3 +544,17 @@ def test_only_a_planned_mark_hosts_a_deadline_never_a_snapshot_or_scenario_mark(
         "deadline-tick:forecast:group-header:g:x", "deadline-run:forecast:group-header:g:x"]
     assert batch.shapes[0].bounds.inline == Decimal("40.0")
     assert batch.shapes[0].bounds.block_size == Decimal("12.0")  # 8 * the reach of 1.5
+
+
+def test_a_subtitle_without_a_theme_subtitle_role_names_the_role_and_what_to_declare(tmp_path):
+    """#1756 row 4: executive-light declares no `subtitle` role; the refusal says so instead of `bindingType=NoneType`."""
+    parts = _parts(None)
+    parts["view"]["body"]["heading"] = {"title": "T", "subtitle": "as of {asOf}"}
+    assert "subtitle" not in parts["theme"]["body"]["roles"]
+    with pytest.raises(RenderFailed) as raised:
+        _render(tmp_path, parts=parts)
+    assert raised.value.code == "E_THEME_ROLE_REQUIRED"
+    assert raised.value.message == (
+        "the Theme declares no role 'subtitle', which this View needs (it was read for 'fontFamily'); "
+        "declare roles.subtitle with its typography properties (fontFamily, fontSize, lineHeight, ...), "
+        "for example by copying the 'heading' role (Spec 07; at /body/roles/subtitle)")
