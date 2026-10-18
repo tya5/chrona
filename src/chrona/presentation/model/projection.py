@@ -133,6 +133,8 @@ class ReviewItem:
     member_label_eligible: bool = True
     # Source-local display titles aligned with ``hierarchy_path`` IDs.
     hierarchy_titles: tuple[str, ...] = ()
+    # View's finite-depth row owner; never a Project parent or attachment.
+    collapsed_row_id: str | None = None
 
     @property
     def at_delta(self) -> int | None:
@@ -728,16 +730,29 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
                 (replace(scenarios[view.comparison.scenario_id][item.object_id],
                          item_id=f"scenario:{view.comparison.scenario_id}:{item.object_id}",
                          source_kind="scenario", scenario_id=view.comparison.scenario_id, track="shared",
-                         temporal_paint=item.temporal_paint)
+                         temporal_paint=item.temporal_paint, collapsed_row_id=item.collapsed_row_id)
                  if scenario_ghost(item) else None),
                 (replace(snapshots[item.object_id], item_id=f"snapshot:{item.object_id}",
-                         source_kind="snapshot", track="shared", temporal_paint=item.temporal_paint)
+                         source_kind="snapshot", track="shared", temporal_paint=item.temporal_paint,
+                         collapsed_row_id=item.collapsed_row_id)
                  if snapshot_ghost(item) else None),
             ) if member is not None),
             depth=item.hierarchy_depth if view.grouping is not None and view.grouping.by == "hierarchy" else 0,
             rollup_presentation=(view.grouping.rollup or "none"
                                  if item.is_rollup else "none"))
             for item in selected)
+        collapsed: dict[str, list[ReviewItem]] = {}
+        for row in rows:
+            target = row.items[0].collapsed_row_id
+            if target is not None:
+                collapsed.setdefault(target, []).extend(row.items)
+        if collapsed:
+            retained_ids = {row.row_id for row in rows if row.items[0].collapsed_row_id is None}
+            missing = set(collapsed) - retained_ids
+            if missing:
+                raise ValueError(f"E_REVIEW_ROW_PARENT_UNAVAILABLE: collapsed points need retained rows {sorted(missing)}")
+            rows = tuple(replace(row, items=row.items + tuple(collapsed.get(row.row_id, ())))
+                         for row in rows if row.items[0].collapsed_row_id is None)
         rows = _forecast_member_label_ownership(rows)
         if view.rows.mode == "lanes":
             # Lane packing decides attachment only when that rule is declared.
@@ -1058,21 +1073,19 @@ def _expand_hierarchy_roots(items: list[ReviewItem], entries: dict[str, Hierarch
     limit = grouping.depth if grouping and grouping.depth is not None else 0
     output: list[ReviewItem] = []
 
-    def visit(object_id: str, relative_depth: int) -> None:
-        item = item_by_id.get(object_id)
-        if item is not None:
-            output.append(replace(item, hierarchy_depth=relative_depth))
-        if limit != "all" and relative_depth >= limit:
-            return
-        child_items = [item_by_id[child] for child in children.get(object_id, ()) if child in item_by_id]
-        _order(child_items, view, project)
-        for child in child_items:
-            visit(child.object_id, relative_depth + 1)
-
     root_items = [item_by_id[root] for root in roots]
     _order(root_items, view, project)
-    for root in root_items:
-        visit(root.object_id, 0)
+    pending = [(item, 0, None) for item in reversed(root_items)]
+    while pending:
+        item, relative_depth, collapsed_row_id = pending.pop()
+        if collapsed_row_id is None or item.source_type == "point":
+            output.append(replace(item, hierarchy_depth=relative_depth,
+                                  collapsed_row_id=collapsed_row_id))
+        if limit != "all" and relative_depth >= limit:
+            collapsed_row_id = collapsed_row_id or item.object_id
+        child_items = [item_by_id[child] for child in children.get(item.object_id, ()) if child in item_by_id]
+        _order(child_items, view, project)
+        pending.extend((child, relative_depth + 1, collapsed_row_id) for child in reversed(child_items))
     return output
 
 

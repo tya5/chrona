@@ -85,7 +85,6 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | snapshot | `snapshot` | required | 3.000 | 14 | 184 | 1.210 | 5.508 | 0 | 35 |
 | subtitle-text | `subtitle` | required | 4.500 | 10 | 10 | 4.747 | 6.667 | 0 | 0 |
 | subtitle-text | `text` | required | 4.500 | 1 | 1 | 16.268 | 16.268 | 0 | 0 |
-| summary-bar | `summary-bar` | required | 3.000 | 2 | 2 | 5.817 | 6.712 | 0 | 0 |
 | summary-caption | `summary-caption` | required | 4.500 | 2 | 2 | 15.382 | 15.382 | 0 | 0 |
 | summary-figure-caption | `subtitle` | required | 4.500 | 4 | 14 | 7.032 | 7.032 | 0 | 0 |
 | summary-figure-value | `metric` | required | 4.500 | 6 | 16 | 6.720 | 16.354 | 0 | 0 |
@@ -5601,7 +5600,6 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/06-flight-readiness.scene.json` | `planned:launch:scenario:tvac-slip:launch` | `snapshot` | 1232.450, 212.100 | `group:` | flat | `#EEF2F7` | stroke | 15.785 | 3.000 | info |
 | `examples/halcyon-1/generated/06-flight-readiness.scene.json` | `planned:leop:scenario:tvac-slip:leop` | `snapshot` | 1237.450, 242.100 | `group:` | flat | `#EEF2F7` | stroke | 15.785 | 3.000 | info |
 | `examples/halcyon-1/generated/06-flight-readiness.scene.json` | `planned:mission-closeout:scenario:tvac-slip:mission-closeout` | `snapshot` | 1125.179, 152.100 | `group:` | flat | `#EEF2F7` | stroke | 15.785 | 3.000 | info |
-| `examples/halcyon-1/generated/06-flight-readiness.scene.json` | `summary-bar:mission-closeout` | `summary-bar` | 1405.857, 138.767 | `canvas` | canvas | `#FFFFFF` | fill | 5.817 | 3.000 | info |
 | `examples/halcyon-1/generated/06-flight-readiness.scene.json` | `cell:first-light:Float` | `text` | 743.724, 272.100 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
 | `examples/halcyon-1/generated/06-flight-readiness.scene.json` | `cell:first-light:Scenario` | `text` | 791.416, 272.100 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
 | `examples/halcyon-1/generated/06-flight-readiness.scene.json` | `cell:first-light:WBS` | `text` | 46.590, 272.100 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
@@ -5704,7 +5702,6 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `note:station` | `text` | 213.257, 210.125 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `note:tvac` | `text` | 214.210, 188.375 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `note:window` | `text` | 218.815, 166.625 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
-| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `summary-bar:spacecraft-ait` | `summary-bar` | 1214.150, 87.667 | `canvas` | canvas | `#0B1220` | fill | 7.607 | 3.000 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:campaign:Baseline finish` | `text` | 817.580, 311.000 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:campaign:Work package` | `text` | 562.415, 311.000 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:campaign:Δ` | `text` | 872.965, 311.000 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
@@ -8595,4 +8592,4 @@ Every independently required decoration role has committed Scene or explicit syn
 - Synthetic `dependency-halo` (no public use): `tests/integration/test_unroutable_visible_obstacle.py`, `tests/integration/test_relation_resolution_wiring.py`, `tests/unit/chrona/presentation/scene/test_contrast_policy.py`
 - Synthetic `tableColumnRule` (no public use): `tests/integration/test_table_details_1545.py`, `tests/integration/test_technical_print_columns.py`
 
-Findings: 8514; errors: 0; warnings: 417.
+Findings: 8512; errors: 0; warnings: 417.

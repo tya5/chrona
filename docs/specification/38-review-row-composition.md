@@ -118,6 +118,17 @@ nonnegative integer depths retain their relative-depth cutoff. Core remains
 the only owner of containment, rollup dates and tree validity. View closes
 root selection and preorder, ordering siblings with the declared ordering.
 
+For a finite depth, the cutoff limits ordinary rows, not selected point facts
+(#1700). Model retains descendant points below each cutoff on that nearest
+retained ancestor's row as ordinary independently identified Review Items,
+including explicitly selected comparison occurrences. It does not create an
+extra row, change Project containment or infer an `attachesTo` relationship.
+Layout uses the same member mark, label, clipping, collision and relation-port
+rules as other multi-item rows; it does not traverse the Project hierarchy.
+An unavailable or unplaceable selected point follows the existing pointed
+diagnostic contract, never silent omission. Explicit rows, `depth: all` and
+non-hierarchy grouping are unchanged.
+
 A selected rollup is one ordinary Review row, not an additional field-group
 band. With `rollup: header`, its title in `hierarchyColumn` is `groupHeader`
 content and typography; other declared columns retain their source facts.
@@ -125,8 +136,13 @@ The same table measurement, fitting, indentation and row allocation close it.
 With `rollup: none`, the selected row retains ordinary table content, without
 header emphasis. Both modes suppress the rollup's temporal marks, progress,
 deadline decoration and optional plot/delta labels. They do not hide child
-rows or erase selected relation endpoints. `rollup: bar` retains the existing
-temporal facets and summary-bar overlay, labels and relation-host behavior.
+rows or erase selected relation endpoints. With `rollup: bar`, the existing
+primary planned/forecast temporal mark is the one summary mark. Selected
+comparison facets, progress, labels and relation-host behavior remain; they
+are not duplicate summary marks. No additional `summary-bar` overlay is drawn.
+This policy therefore does not activate the overlay-only `summary-bar` Theme
+role. Its removal supersedes the earlier dual-mark behavior (#1700); ordinary
+planned/forecast mark geometry, paint, identities and ports are retained.
 Non-rollup rows and non-hierarchy grouping are unchanged.
 
 View projects temporal-paint admission on each Review Item, including its

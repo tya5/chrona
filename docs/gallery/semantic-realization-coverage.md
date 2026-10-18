@@ -24,7 +24,7 @@ The states each family admits come from the registry and the View declarations, 
 
 ## Purpose coverage
 
-**51 of 72** drawn purposes resolve to exactly one realized appearance role; 21 resolve to more than one. 83 purposes are registered; 11 are registered but not drawn by any committed Scene and are listed separately, not counted in the denominator.
+**50 of 71** drawn purposes resolve to exactly one realized appearance role; 21 resolve to more than one. 83 purposes are registered; 12 are registered but not drawn by any committed Scene and are listed separately, not counted in the denominator.
 
 One row per registered purpose, derived from the semantic vocabulary and the committed Scenes. A realized role is the primitive's `themeRole` when it carries one, else its `visualRole`. Admitted model states (not observed) come from the family classification, where one exists. A purpose without a classification fails the check, as does a classification the Scenes contradict.
 
@@ -94,7 +94,6 @@ One row per registered purpose, derived from the semantic vocabulary and the com
 | `slot-heading` | `slot-heading` | 1 | 1 | — | **single-role**: one slot caption ink | chrona-roadmap/roadmap, chrona-roadmap/roadmap-marquee, chrona-roadmap/roadmap-sunday, chrona-roadmap/roadmap-titlecard, chrona-roadmap/roadmap-yuya, controller-z/slot-heading, halcyon-1/marquee, halcyon-1/sunday, halcyon-1/target-b, halcyon-1/titlecard, halcyon-1/yuya |
 | `snapshot` | `snapshot` | 1 | 1 | — | **single-role**: one baseline-snapshot mark | chrona-roadmap/roadmap, chrona-roadmap/roadmap-marquee, chrona-roadmap/roadmap-sunday, chrona-roadmap/roadmap-titlecard, chrona-roadmap/roadmap-yuya, controller-z/baseline-ghosts, halcyon-1/flight-readiness, halcyon-1/gates, halcyon-1/marquee, halcyon-1/sunday, halcyon-1/target-b, halcyon-1/titlecard, halcyon-1/tvac-slip, halcyon-1/yuya |
 | `subtitle-text` | `subtitle`, `text` | 2 | 1 | — | **distinct** | chrona-roadmap/roadmap, chrona-roadmap/roadmap-marquee, chrona-roadmap/roadmap-sunday, chrona-roadmap/roadmap-titlecard, chrona-roadmap/roadmap-yuya, controller-z/as-of-foot, halcyon-1/marquee, halcyon-1/sunday, halcyon-1/target-b, halcyon-1/titlecard, halcyon-1/yuya |
-| `summary-bar` | `summary-bar` | 1 | 1 | — | **single-role**: one summary-bar fill | halcyon-1/flight-readiness, halcyon-1/replan-baseline |
 | `summary-caption` | `summary-caption` | 1 | 1 | — | **single-role**: one caption ink | chrona-roadmap/roadmap-titlecard, halcyon-1/titlecard |
 | `summary-figure-caption` | `subtitle` | 1 | 1 | — | **single-role**: one figure caption ink | halcyon-1/gallery-image-notes, halcyon-1/gallery-text-compression, halcyon-1/glyph-gates, halcyon-1/programme-board |
 | `summary-figure-value` | `metric` | 1 | 1 | — | **single-role**: one figure value ink | chrona-roadmap/roadmap-titlecard, halcyon-1/gallery-image-notes, halcyon-1/gallery-text-compression, halcyon-1/glyph-gates, halcyon-1/programme-board, halcyon-1/titlecard |
@@ -119,4 +118,5 @@ One row per registered purpose, derived from the semantic vocabulary and the com
 | `forecast` | `planned` | purpose=forecast is preserved by the vocabulary and the Scene; only its fallback role is planned, and the committed corpus draws no forecast purpose |
 | `forecast-finish-delta` | `variance-ahead`, `variance-behind`, `variance-on-track` | no committed slide draws a forecast finish delta |
 | `icon-mark` | `icon-mark` | no committed slide draws a standalone icon mark |
+| `summary-bar` | `summary-bar` | rollup: bar uses the existing planned mark; the overlay-only role is not activated (#1700) |
 | `table-column-rule` | `tableColumnRule` | no committed slide draws the rule under column headers (#1545) |

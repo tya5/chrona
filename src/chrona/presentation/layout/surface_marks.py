@@ -26,8 +26,7 @@ from chrona.presentation.layout.surface_quality import GroupPlacement, MarkPlace
 from chrona.presentation.layout.mark_geometry import (
     CompletedWindowMark, MarkFacetAbsence, complete_mark_window_geometry, compose_item_marks,
 )
-from chrona.presentation.layout.mark_facet_visibility import FacetDisposition, admitted_source_selection
-from chrona.presentation.layout.window_span_geometry import complete_clipped_span_geometry
+from chrona.presentation.layout.mark_facet_visibility import admitted_source_selection
 from chrona.presentation.layout.filled_contour import (
     ContourUnionError, intersect_visible_host_contour, union_filled_contours,
 )
@@ -77,10 +76,9 @@ def pack_extent_lanes(extents: list[tuple[float, float]]) -> list[int]:
 
 @dataclass(frozen=True)
 class SurfaceMarksBatch:
-    """Completed source marks, progress/summary shapes and folded-host updates."""
+    """Completed source marks, progress shapes and folded-host updates."""
     marks: tuple[MarkPlacement, ...]
     progress_shapes: tuple[ShapePlacement, ...]
-    summary_shapes: tuple[ShapePlacement, ...]
     groups: tuple[GroupPlacement, ...]
     group_header_updates: tuple[GroupHeaderExtentUpdate, ...]
     diagnostics: tuple[str, ...]
@@ -529,47 +527,7 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                         lane_member_id=owner[1] if owner else None,
                         subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
 
-    summary_shapes: list[ShapePlacement] = []
-    for review_row, row in zip(review_rows, rows, strict=True):
-        if getattr(review_row, "rollup_presentation", "none") != "bar":
-            continue
-        subject = next((item for item in review_row.items
-                        if item.item_id == review_row.table_subject_id and item.source_kind != "actual"), None)
-        if subject is None or subject.source_type != "span":
-            continue
-        visibility = prepared_visibility(
-            subject, kind=MarkOccurrenceKind.ROW if projection.rows else MarkOccurrenceKind.AUTO,
-            container_id=review_row.row_id if projection.rows else subject.object_id,
-            source_kind=subject.source_kind if projection.rows else "combined",
-            as_of=contract.time.as_of)
-        planned_visibility = (next((facet for facet in visibility.facets
-                                    if facet.source.facet in {"planned", "forecast"}), None)
-                              if visibility is not None else None)
-        if visibility is not None and planned_visibility is None:
-            raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/items",
-                              detail="stage=summary; reason=unaccounted-facet")
-        if planned_visibility is not None and planned_visibility.disposition == FacetDisposition.OMITTED:
-            continue
-        start_at, end_at = active_placement(subject).get("start"), active_placement(subject).get("end")
-        if not isinstance(start_at, date) or not isinstance(end_at, date):
-            continue
-        x1, x2 = coordinate_for_date(start_at, scale), coordinate_for_date(end_at, scale)
-        height = float(request.theme_tokens.summary_bar_height("summary-bar")) * float(
-            base.metric_values["timeline.mark.blockSize"])
-        bounds = Rect(Decimal(str(x1)), row.bounds.block,
-                      Decimal(str(max(1.0, x2 - x1))), Decimal(str(height)))
-        commands, kind, paint_clip = (), "Rect", None
-        pattern_origin = None
-        if planned_visibility is not None and planned_visibility.disposition == FacetDisposition.CLIPPED:
-            pattern_origin = (float(bounds.inline), float(bounds.block))
-            geometry = complete_clipped_span_geometry(
-                bounds, (), 0.0, planned_visibility, scale, base.plot, source_ref=subject.object_id)
-            bounds, commands, kind, paint_clip = geometry.bounds, geometry.contour, "Symbol", geometry.paint_clip
-        summary_shapes.append(ShapePlacement(
-            f"summary-bar:{review_row.row_id}", subject.object_id, kind,
-            bounds, semantic_id="summaryBar", path_commands=commands, paint_clip=paint_clip,
-            pattern_origin=pattern_origin))
-    return SurfaceMarksBatch(tuple(marks), tuple(progress_shapes), tuple(summary_shapes), groups,
+    return SurfaceMarksBatch(tuple(marks), tuple(progress_shapes), groups,
                              tuple(updates), tuple(diagnostics), tuple(absences),
                              tuple(visible_header_overflows), tuple(diagnostic_provenance),
                              tuple(window_marks), tuple(temporal_endpoints))
