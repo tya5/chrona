@@ -25,6 +25,14 @@ No downstream component may read compact syntax, infer a preset, or retain works
 coordinates.  Scene, routes, font metrics, resolved dates, and View geometry remain
 derived output.
 
+Guided and ordinary Draft ingress share declared preset-member acquisition:
+safe paths, Theme inheritance/references/expressions, View defaults, member
+identity checks and optional Detail/Summary/catalogue resources. The Normalizer
+receives these acquired effective documents, not a second raw-file loader.
+CLI `render-workspace` and the MCP workspace renderer call one guided-render
+use case and forward the same completed font/environment decisions. Diagnostic
+codes never contain their explanation or JSON pointer.
+
 The terse plan syntax of Spec 65 is a different compact source with a different owner: a text syntax for
 the Project only, compiled by `chrona compile` at the adapter edge, with no presentation binding and no Actuals.
 It does not read, produce or extend an authoring workspace, and neither normaliser calls the other.
@@ -109,6 +117,20 @@ stale/collision cases, Stage-2-to-3 byte equivalence, closure validation, and pu
 materializer coverage.  A screenshot or hand-authored SVG is not sufficient evidence.
 
 ### 4.1 Workspace revision recovery
+
+Workspace initialization is separate from editing an existing revision. It
+accepts a compact `project` of this schema and a builtin preset ID, copies that
+preset through the existing preset-copy acquisition, and prepares/validates
+the complete guided bundle privately. It creates a new directory under an
+existing parent, containing `workspace.yaml` and the copied `preset/` tree;
+the workspace ID is `<project.id>-workspace`. An existing directory, file or
+symlink is a collision, never an overwrite. Publication exclusively reserves
+the destination, publishes the workspace file last, and removes only its own
+new destination on failure. A concurrent reader may see an unfinished new
+directory before successful completion; it is not a usable workspace yet.
+No CAS/replay or history policy is invented for initialization. Subsequent
+edits use the existing Engine transaction. Source serialization preserves
+Unicode and author key order; inverse edits create ordinary new revisions.
 
 Before the first `authoring-command/v0.1` mutation, a caller obtains the
 workspace-local compare-and-set precondition through:
