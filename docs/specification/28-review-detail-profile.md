@@ -132,6 +132,13 @@ replaces candidate-only legend growth with the final caption-restored extent,
 retaining the declared allocation minimum and all other completed geometry.
 It does not retry route, row, or annotation layout.
 
+A View visual targeting a legend role binds to each completed label of that
+role, including realized colour groups with stable hashed identities. Layout
+passes this explicit role-to-label mapping to text-visual composition; Scene
+does not infer aliases. An absent final role keeps the existing invalid-target
+diagnostic and does not recreate a filtered key. Exact placement-ID selectors
+retain their single-target contract.
+
 ## Finite legend key shapes (#1562)
 
 A `legend` entry MAY declare `swatchShape: circle|rule-pair`. Omission retains

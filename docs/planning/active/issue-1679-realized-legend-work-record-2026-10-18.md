@@ -77,6 +77,18 @@ untouched. A discovered contract gap returns to design before product edits.
 
 ## Evidence and remaining gate
 
+CI follow-up architecture correction: role-selected legend icons previously
+bound the single `legend:<role>` label, while realized labels have distinct
+hashed IDs. Spec28 now selects every final label of a requested role through
+an explicit Layout mapping; absent roles still fail closed. No Scene fields,
+schema, source-YAML changes or inferred ID aliases. Extend I3: `SurfaceLegendBatch`
+closes role→label targets; composer hands them to `place_text_visuals`, which
+expands only semantic legend selectors (exact-ID selectors remain singular).
+Synthetic tests cover one/multiple Actual groups, wrong/absent roles and
+preserved hashed IDs. The all-encoded Planned inventory fixture must instead
+use a surviving role. This keeps View intent, Layout identity/geometry and
+Scene projection responsibilities separate; publish before code resumes.
+
 CI39090738185's snapshot/reproduction/MCP pass, but conformance's
 `legend-key-scene-evidence` fails15 findings: the checker compares each
 multipart milestone key part against the first source part, and still requires
