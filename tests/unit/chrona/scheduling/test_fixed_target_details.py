@@ -190,3 +190,35 @@ def test_every_fixed_target_rejection_in_the_committed_corpus_carries_resolvable
             if item.id == "E_FIXED_TARGET_VIOLATION":
                 assert item.details and item.details["earliest"] >= item.details["required"], name
                 assert item.path.startswith("/relations/"), name
+
+
+def _contradictory_chain(length=4):
+    """A fixed-start task behind a predecessor that ends later, then a chain and a rollup that depend on it (#1726)."""
+    objects = {
+        "g": {"type": "group", "schedule": {"mode": "rollup"}},
+        "a": {"type": "task", "parent": "g", "schedule": {"mode": "scheduled", "amount": "5wd", "anchor": {"start": "2027-01-04"}}},
+        "b": {"type": "task", "parent": "g", "schedule": {"mode": "scheduled", "amount": "5wd", "anchor": {"start": "2027-01-04"}}},
+    }
+    relations = [_rel("a-b", "a", "end", "b", "start", "0d")]
+    for index in range(length):
+        objects[f"c{index}"] = {"type": "task", "schedule": {"mode": "scheduled", "amount": "2wd"}}
+        relations.append(_rel(f"link{index}", "b" if index == 0 else f"c{index - 1}", "end", f"c{index}", "start", "0d"))
+    return _project(objects, relations)
+
+
+def test_a_contradictory_anchor_names_dates_and_relation_and_poisons_no_downstream_object():
+    result = schedule(_contradictory_chain())
+    assert [(item.id, item.path) for item in result.diagnostics] == [("E_CONTRADICTORY_BOUNDS", "/objects/b/schedule/anchor")]
+    assert result.diagnostics[0].message == (
+        "Authoritative start anchor violates lower bound: b.start is anchored at 2027-01-04, "
+        "but relation a-b (a.end 2027-01-11 + 0d) requires 2027-01-11 or later")
+
+
+def test_a_contradictory_end_anchor_names_dates_and_relation():
+    project = _contradictory_chain(0)
+    project["objects"]["b"]["schedule"]["anchor"] = {"end": "2027-01-05"}
+    project["relations"] = [_rel("a-b", "a", "end", "b", "end", "0d")]
+    result = schedule(project)
+    assert [item.id for item in result.diagnostics] == ["E_CONTRADICTORY_BOUNDS"]
+    assert "b.end is anchored at 2027-01-05" in result.diagnostics[0].message
+    assert "relation a-b (a.end 2027-01-11 + 0d) requires 2027-01-11 or later" in result.diagnostics[0].message
