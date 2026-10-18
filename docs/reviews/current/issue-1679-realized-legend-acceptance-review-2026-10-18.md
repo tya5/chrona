@@ -9,8 +9,11 @@ head `1ecf36452` fails snapshot generation in
 [CI39088644589](https://github.com/tya5/chrona/actions/runs/39088644589): two
 strict glyph legend contrast errors. Reproduction fails because the snapshot
 was never uploaded; readiness fails on that dependency; tests were skipped.
-Implementation is paused for the composite-key correction in the work record.
-Keep the issue open; official artifact and exact-main release remain required.
+The published design/plan correction is implemented at `02bcefa7f`: Actual
+multipart keys retain the complete ordered figure, and targeted glyph-gates
+strict contrast now has zero errors. The next coherent PR push must replace
+the old failed run and preliminary table. Keep the issue open; official
+artifact and exact-main release remain required.
 
 ## Literal issue acceptance
 
@@ -21,7 +24,7 @@ Keep the issue open; official artifact and exact-main release remain required.
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | --- | --- | --- | --- | --- |
-| 1 | A synthetic project with actuals, rendered with executive-light: every distinct realized mark paint has exactly one legend key, and the actual and progress keys use the realized paints. | not met | [Native/SVG tests](../../../tests/integration/test_realized_legends.py) cover scalar paints and Progress, but [CI39088644589](https://github.com/tya5/chrona/actions/runs/39088644589) exposes multipart glyph parts incorrectly split into isolated keys. Composite regression/correction required. | — |
+| 1 | A synthetic project with actuals, rendered with executive-light: every distinct realized mark paint has exactly one legend key, and the actual and progress keys use the realized paints. | met | [Native/SVG tests](../../../tests/integration/test_realized_legends.py) cover scalar paints, exact Progress paint and one composite key per complete ordered glyph. The dark-canvas synthetic fixture passes strict contrast; targeted public glyph-gates has zero strict errors after `02bcefa7f`. Official CI confirmation remains pending. | — |
 | 2 | When an encoding replaces the planned paint on every planned mark, no base planned swatch remains; the encoding's entries stand in its place. A mixed case (some planned marks unencoded) keeps the base key. | met | [Native encoding tests](../../../tests/integration/test_realized_legends.py): all-covered View encoding removes Planned; selective Style encoding retains the unencoded base witness. Existing scoped-legend and finite-swatch tests retain their geometry/paint assertions. | — |
 | 3 | target-b without snapshot or actual has no baseline, actual or in-progress keys and no empty Δ column. | met | [Pinned trial5](https://github.com/tya5/chrona/tree/9fa6062de/trial-5) target-b native PNG/Scene inspected: unavailable keys and Δ cells/header removed. Native synthetic absent/supplied-empty and Snapshot-only tests retain source-presence distinctions. | — |
 | 4 | A count table of the public example changes, and the PNGs checked. | met | [Count table and PNG evidence](#public-count-table): all50 materializers completed into disposable outputs;42 SVG/Scene pairs change,8 remain identical. New warnings are disclosed, not repaired through corpus edits. | — |
@@ -94,8 +97,9 @@ routes). No source YAML or canonical generated output was edited.
 
 Contrast means `W_SCENE_MARK_CONTRAST`; legend overflow means
 `W_LAYOUT_VISIBLE_OVERFLOW`; canvas means `W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT`.
-Two glyph contrast errors block release and require the structural correction;
-the five warnings require explicit reviewer disposition. Sunday's
+The two glyph contrast errors in this preliminary snapshot are corrected in
+the targeted local render; official CI must confirm their removal. The five
+warnings require explicit reviewer disposition. Sunday's
 fixed key frame no longer contains every correct entry; no core rule hides a
 key or enlarges project-specific frames. New low-contrast swatches expose the
 existing realized ink. No diagnostic gate was weakened.
