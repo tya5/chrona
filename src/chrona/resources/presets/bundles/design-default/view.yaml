@@ -65,6 +65,7 @@ body:
     source: actual
   tableColumns:
   - id: Task
+    header: {wording: column.task}
     source: path
     missing: em-dash
     align: start

@@ -76,6 +76,7 @@ body:
     groups: all
   tableColumns:
   - id: Task
+    header: {wording: column.task}
     text: {wrap: allow}
     source: title
     missing: em-dash
@@ -94,7 +95,7 @@ body:
   markers:
   - kind: asOf
     source: actual
-    label: TODAY
+    label: {wording: marker.today}
   shading:
     nonWorking: true
     exceptions: true
