@@ -25,6 +25,8 @@ from chrona.presentation.contracts import parse_contract
 from chrona.presentation.contracts.resources import freeze
 from chrona.presentation.model.surface_content import SummaryContent, TableCellContent, TableColumnContent, TableColumnWidth, TableContent
 from chrona.presentation.model.closure import RenderClosure, resolve_render_context
+from chrona.presentation.model.info_diagnostics import RoutingCostAdvisory
+from chrona.presentation.model.render_progress import RenderAdvisoryEvent, RenderProgress
 from chrona.presentation.model.theme_tokens import ThemeTokenError
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.presentation.scene.paint import ScenePaintError
@@ -183,6 +185,30 @@ def test_render_review_renders_a_closure_without_the_cli():
     assert rendered.scene.provenance.mode == "immutable"
     assert rendered.scene.manifest.visual_role_counts
     assert {"project", "view", "layout-profile"} <= rendered.read_inputs
+
+
+def test_routing_cost_advisory_precedes_layout_work_and_is_retained_once(monkeypatch):
+    with tempfile.TemporaryDirectory() as temporary:
+        closure, snapshot = _closure(Path(temporary))
+        advisory = RoutingCostAdvisory("table-timeline", 336)
+        events = []
+        original_prepare = render_usecase.prepare_surface_render_plan
+
+        monkeypatch.setattr(render_usecase, "routing_cost_advisory", lambda _projection, _content: advisory)
+
+        def prepare_after_advisory(value):
+            assert RenderAdvisoryEvent(advisory) in events
+            return original_prepare(value)
+
+        monkeypatch.setattr(render_usecase, "prepare_surface_render_plan", prepare_after_advisory)
+        rendered = render_review(_request(closure, snapshot, progress=RenderProgress(events.append)))
+
+    assert events.count(RenderAdvisoryEvent(advisory)) == 1
+    assert rendered.surface.diagnostics.count(advisory.scene_diagnostic()) == 1
+    warning_records = [item for item in rendered.warning_records
+                       if item.payload.get("code") == advisory.code]
+    assert len(warning_records) == 1
+    assert warning_records[0].identity == advisory.scene_diagnostic()
 
 
 def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():

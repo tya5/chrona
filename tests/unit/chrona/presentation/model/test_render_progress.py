@@ -1,7 +1,10 @@
 """Observation preserves order, truthful completion, and failure isolation."""
 import pytest
 
-from chrona.presentation.model.render_progress import RenderProgress, RenderProgressEvent
+from chrona.presentation.model.info_diagnostics import RoutingCostAdvisory
+from chrona.presentation.model.render_progress import (
+    RenderAdvisoryEvent, RenderProgress, RenderProgressEvent,
+)
 
 
 def test_declarations_advance_only_after_their_work_and_keep_identity():
@@ -35,6 +38,15 @@ def test_interrupted_pass_does_not_claim_unfinished_declaration():
     assert events == [RenderProgressEvent("routing", 0, 2, "final")]
 
 
+def test_advisory_is_a_distinct_frozen_event():
+    events = []
+    advisory = RoutingCostAdvisory("table-timeline", 336)
+    RenderProgress(events.append).advisory(advisory)
+
+    assert events == [RenderAdvisoryEvent(advisory)]
+    assert events[0].advisory is advisory
+
+
 @pytest.mark.parametrize("failure", [BrokenPipeError, OSError, ValueError])
 def test_failed_observer_detaches_without_changing_iteration(failure):
     calls = []
@@ -44,7 +56,8 @@ def test_failed_observer_detaches_without_changing_iteration(failure):
         raise failure("sink unavailable")
 
     progress = RenderProgress(fail)
-    progress.phase("schedule")
+    advisory = RoutingCostAdvisory("table-timeline", 336)
+    progress.advisory(advisory)
     assert list(progress.routing(["a", "b"], pass_name="final")) == ["a", "b"]
     progress.phase("output")
-    assert calls == [RenderProgressEvent("schedule")]
+    assert calls == [RenderAdvisoryEvent(advisory)]

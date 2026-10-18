@@ -21,7 +21,8 @@ from chrona.core.source_ranges import attach_ranges
 from chrona.core.validation import load_yaml
 from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, RenderClosure, resolve_guided_draft_render, resolve_render_context
 from chrona.presentation.contracts import TypesetterIdentity
-from chrona.presentation.model.render_progress import RenderProgress, RenderProgressEvent
+from chrona.presentation.model.render_progress import RenderAdvisoryEvent, RenderProgress, RenderProgressEvent
+from chrona.usecases.diagnostic_messages import describe_warning, warning_message
 from chrona.usecases.draft_render import DraftRenderRequest, parse_viewport, render_draft, typesetter_identity, warning_payloads
 from chrona.usecases.failure_report import FailureReport, StableFailure, diagnostic_record, rejection_report, report_failure
 from chrona.usecases.project_checks import schedule_project_mapping, validate_project_mapping
@@ -512,6 +513,7 @@ def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_ro
         draft_auto_block=getattr(args, "draft_auto_block", False),
         draft_font_resolution=draft_font_resolution,
         preset_visual_profile_fallback=preset_visual_profile_fallback,
+        progress=_draft_render_progress(getattr(args, "progress", False)),
     )
     return render_review(request)
 
@@ -734,18 +736,27 @@ def _assert_context_format(closure: RenderClosure, format_name: str | None) -> N
 
 
 def _draft_render_progress(enabled: bool) -> RenderProgress | None:
-    """CLI owns terminal detection and formatting, never render decisions."""
+    """CLI formats advisories on every usable stderr; only phase feedback is opt-in."""
     stream = sys.stderr
     if stream is None:
         return None
-    if not enabled:
+    show_phases = enabled
+    if not show_phases:
         try:
-            if not stream.isatty():
-                return None
+            show_phases = stream.isatty()
         except (OSError, ValueError):
             return None
 
-    def report(event: RenderProgressEvent) -> None:
+    def report(event: RenderProgressEvent | RenderAdvisoryEvent) -> None:
+        if isinstance(event, RenderAdvisoryEvent):
+            advisory = event.advisory
+            message = warning_message(describe_warning({
+                "code": advisory.code, "diagnostic": advisory.scene_diagnostic(),
+            }))
+            print(f"chrona: {advisory.code}: {message}", file=stream, flush=True)
+            return
+        if not show_phases:
+            return
         detail = (f" [{event.pass_name}] {event.completed}/{event.total}"
                   if event.phase == "routing" else "")
         print(f"chrona: {event.phase}{detail}", file=stream, flush=True)

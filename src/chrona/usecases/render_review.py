@@ -25,6 +25,7 @@ from chrona.presentation.scene.viewer_fit import viewer_fit_fallbacks
 from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.routing_workload import routing_cost_advisory
 from chrona.presentation.layout.surface_count_closure import inspect_count_reads
 from chrona.presentation.layout.surface_render_plan import (
     SurfaceRenderPlanInput, SlotHeadingCopyError, SurfacePlanFontError, prepare_surface_render_plan,
@@ -433,6 +434,11 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed(error.code, error.detail, "presentation", error.path) from error
     selected_content = replace(selected_content, axis_band_paints=axis_band_scale.paints)
     selected_content = _complete_annotation_headers(selected_content, theme, projection, view)
+    routing_advisory = routing_cost_advisory(projection, selected_content)
+    if routing_advisory is not None:
+        profile_info += (routing_advisory,)
+        if request.progress is not None:
+            request.progress.advisory(routing_advisory)
     heading_content = (compose_heading(view, project, actual_observations, environment.locale)
                        if view.surface == "table-timeline" else None)
     try:

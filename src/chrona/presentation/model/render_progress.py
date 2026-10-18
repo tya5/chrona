@@ -5,6 +5,8 @@ from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass
 from typing import Literal, TypeVar
 
+from chrona.presentation.model.info_diagnostics import RoutingCostAdvisory
+
 
 RenderPhase = Literal["schedule", "layout", "routing", "output"]
 T = TypeVar("T")
@@ -18,6 +20,16 @@ class RenderProgressEvent:
     pass_name: str | None = None
 
 
+@dataclass(frozen=True)
+class RenderAdvisoryEvent:
+    """One early render advisory, distinct from phase/count progress events."""
+
+    advisory: RoutingCostAdvisory
+
+
+RenderEvent = RenderProgressEvent | RenderAdvisoryEvent
+
+
 class RenderProgress:
     """A best-effort sink shared by one render's use cases and Layout.
 
@@ -25,10 +37,10 @@ class RenderProgress:
     a failure. No clock, artifact, resource identity or search budget lives here.
     """
 
-    def __init__(self, observer: Callable[[RenderProgressEvent], None]):
-        self._observer: Callable[[RenderProgressEvent], None] | None = observer
+    def __init__(self, observer: Callable[[RenderEvent], None]):
+        self._observer: Callable[[RenderEvent], None] | None = observer
 
-    def emit(self, event: RenderProgressEvent) -> None:
+    def emit(self, event: RenderEvent) -> None:
         if self._observer is not None:
             try:
                 self._observer(event)
@@ -37,6 +49,9 @@ class RenderProgress:
 
     def phase(self, phase: RenderPhase) -> None:
         self.emit(RenderProgressEvent(phase))
+
+    def advisory(self, advisory: RoutingCostAdvisory) -> None:
+        self.emit(RenderAdvisoryEvent(advisory))
 
     def routing(self, declarations: Sequence[T], *, pass_name: str) -> Iterator[T]:
         """Advance only after a declaration's work returns, not per instance."""
